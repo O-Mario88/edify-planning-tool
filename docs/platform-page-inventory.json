@@ -10549,7 +10549,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23800,
+      "bytes": 28600,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -10557,7 +10557,7 @@
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Complete Drawer",
       "purpose": "Reusable complete drawer interface primitive",
@@ -11204,6 +11204,30 @@
       ],
       "tables": 0,
       "template": "partials/my_plan/readiness_panel.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 1668,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan/<str:activity_id>/register-school-search"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Register School Results",
+      "purpose": "Reusable register school results interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/register_school_results.html",
       "variants": []
     },
     {
@@ -15598,6 +15622,33 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 8767,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/create-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": " Onboard Form",
+      "purpose": "Reusable  onboard form interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/schools/_onboard_form.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 4539,
@@ -16009,30 +16060,121 @@
       ]
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
+      "accessibility_requirements": [],
+      "bytes": 1344,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/cluster-options",
+        "/schools/create-drawer"
       ],
-      "bytes": 6871,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Onboard Cluster Options",
+      "purpose": "Reusable onboard cluster options interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/schools/onboard_cluster_options.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 244,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/create-drawer"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 2,
+      "forms": 0,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Onboard Drawer",
       "purpose": "Reusable onboard drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "disabled"
+        "default"
       ],
       "tables": 0,
       "template": "partials/schools/onboard_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 764,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/create-drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Onboard Embedded",
+      "purpose": "Reusable onboard embedded interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/schools/onboard_embedded.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 1780,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/create-drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Onboard Possible Duplicate",
+      "purpose": "Reusable onboard possible duplicate interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/schools/onboard_possible_duplicate.html",
       "variants": [
-        "info"
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 393,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/create-drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Onboard Registered",
+      "purpose": "Reusable onboard registered interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/schools/onboard_registered.html",
+      "variants": [
+        "success"
       ]
     },
     {
@@ -18530,6 +18672,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22091,6 +22234,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22199,6 +22343,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22300,6 +22445,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22621,7 +22767,8 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /my-plan/{{ act.id }}/complete",
-        "GET /schools/create-drawer?cluster_id={{ act.clusterId }}"
+        "GET /my-plan/{{ act.id }}/register-school-search",
+        "GET /schools/create-drawer?embed=1&amp;activity_id={{ act.id }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -22652,7 +22799,7 @@
       ],
       "route": "/activities/<str:activity_id>/complete",
       "route_name": "complete_activity_drawer",
-      "search": "shared topbar search or none",
+      "search": "server-backed contextual selection search",
       "secondary_actions": [
         "/my-plan/{{ act.id }}/complete"
       ],
@@ -22663,6 +22810,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22764,6 +22912,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22864,6 +23013,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22965,6 +23115,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23068,6 +23219,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23174,6 +23326,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23278,6 +23431,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23378,6 +23532,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23558,6 +23713,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23659,6 +23815,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23759,6 +23916,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23860,6 +24018,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23960,6 +24119,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -24061,6 +24221,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -24161,6 +24322,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -24260,6 +24422,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -24356,6 +24519,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -46607,6 +46771,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -46701,6 +46866,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -60986,7 +61152,7 @@
       "drawers": true,
       "evidence": [
         "template:pages/ia/review_workspace.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_review_workspace"
       ],
       "filters": "none",
@@ -61058,7 +61224,7 @@
       "templates": [
         "pages/ia/review_workspace.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -61080,7 +61246,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_review_workspace"
       ],
       "filters": "none",
@@ -61147,7 +61313,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -61165,7 +61331,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_review_workspace"
       ],
       "filters": "none",
@@ -61232,7 +61398,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -67086,6 +67252,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67202,6 +67369,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67317,6 +67485,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67424,6 +67593,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67525,6 +67695,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67625,6 +67796,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67726,6 +67898,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67785,7 +67958,8 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /my-plan/{{ act.id }}/complete",
-        "GET /schools/create-drawer?cluster_id={{ act.clusterId }}"
+        "GET /my-plan/{{ act.id }}/register-school-search",
+        "GET /schools/create-drawer?embed=1&amp;activity_id={{ act.id }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -67816,7 +67990,7 @@
       ],
       "route": "/my-plan/<str:activity_id>/complete-drawer",
       "route_name": "complete_drawer",
-      "search": "shared topbar search or none",
+      "search": "server-backed contextual selection search",
       "secondary_actions": [
         "/my-plan/{{ act.id }}/complete"
       ],
@@ -67827,6 +68001,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67933,6 +68108,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68034,6 +68210,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68134,6 +68311,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68345,6 +68523,107 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.register_school_search_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/my_plan/register_school_results.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-355261508C",
+      "page_title": "Register School Search",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Register School Search",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Schools already in Edify, for a cluster session's attendance register.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/<str:activity_id>/register-school-search",
+      "route_name": "register_school_search",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/register_school_results.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
       "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
@@ -68403,6 +68682,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68498,6 +68778,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68598,6 +68879,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68697,6 +68979,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68795,6 +69078,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -78792,6 +79076,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -78883,6 +79168,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -78972,6 +79258,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -79061,6 +79348,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -79155,6 +79443,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -91291,6 +91580,101 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.school_onboard_cluster_options_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/schools/onboard_cluster_options.html",
+        "test:referenced-by-automated-test",
+        "permission:school_directory"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-0463A67C9B",
+      "page_title": "School Onboard Cluster Options",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "school_directory",
+      "primary_action": "School Onboard Cluster Options",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Add School form's cluster options, for the owner and place chosen.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL"
+      ],
+      "route": "/schools/cluster-options",
+      "route_name": "school_onboard_cluster_options",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.business_transformation.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.core_schools.services",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/schools/onboard_cluster_options.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.school_onboard_drawer_view",
@@ -91298,6 +91682,9 @@
       "charts": false,
       "drawers": true,
       "evidence": [
+        "template:partials/schools/onboard_possible_duplicate.html",
+        "template:partials/schools/onboard_registered.html",
+        "template:partials/schools/onboard_embedded.html",
         "template:partials/schools/onboard_drawer.html",
         "test:referenced-by-automated-test",
         "permission:school_directory"
@@ -91305,12 +91692,9 @@
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /schools/create-drawer",
-        "GET /schools/sub-counties?with_clusters=1"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -91323,7 +91707,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Create school",
+      "primary_action": "School Onboard Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate school onboard drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -91340,9 +91724,7 @@
       "route": "/schools/create-drawer",
       "route_name": "school_onboard_drawer",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/schools/create-drawer"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -91364,9 +91746,9 @@
         "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": true,
+        "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "drawer",
@@ -91378,6 +91760,9 @@
         "type": "none"
       },
       "templates": [
+        "partials/schools/onboard_possible_duplicate.html",
+        "partials/schools/onboard_registered.html",
+        "partials/schools/onboard_embedded.html",
         "partials/schools/onboard_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -91385,9 +91770,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[16px]"
+        "text-[13px]"
       ]
     },
     {
@@ -117364,6 +117747,20 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.my_plan_views.register_school_search_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/<str:activity_id>/register-school-search",
+      "route_name": "register_school_search",
+      "templates": [
+        "partials/my_plan/register_school_results.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.my_plan_views.request_budget_amendment_action",
       "kind": "action",
       "methods": [
@@ -120752,6 +121149,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.school_views.school_onboard_cluster_options_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_directory",
+      "required_permissions": [],
+      "route": "/schools/cluster-options",
+      "route_name": "school_onboard_cluster_options",
+      "templates": [
+        "partials/schools/onboard_cluster_options.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.school_views.school_onboard_drawer_view",
       "kind": "drawer",
       "methods": [
@@ -120763,6 +121174,9 @@
       "route": "/schools/create-drawer",
       "route_name": "school_onboard_drawer",
       "templates": [
+        "partials/schools/onboard_possible_duplicate.html",
+        "partials/schools/onboard_registered.html",
+        "partials/schools/onboard_embedded.html",
         "partials/schools/onboard_drawer.html"
       ]
     },
@@ -122389,30 +122803,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 607,
+    "accessibility_contract_pass": 609,
     "activity_states": 24,
-    "all_routes": 1408,
+    "all_routes": 1410,
     "api_routes": 364,
-    "component_templates": 696,
+    "component_templates": 702,
     "full_pages": 270,
-    "mobile_contract_pass": 607,
+    "mobile_contract_pass": 609,
     "nonvisual_actions": 288,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 622,
+      "interaction-fragment": 624,
       "operational-queue": 156,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 47
     },
-    "partials_and_drawers": 334,
-    "permission_gated": 914,
+    "partials_and_drawers": 336,
+    "permission_gated": 916,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 931,
+    "routed_surfaces": 933,
     "scheduled_jobs": 38,
     "severity_counts": {
       "critical": 0,
@@ -122420,8 +122834,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 607,
-    "test_referenced": 831,
-    "theme_contract_pass": 607
+    "tablet_contract_pass": 609,
+    "test_referenced": 836,
+    "theme_contract_pass": 609
   }
 }

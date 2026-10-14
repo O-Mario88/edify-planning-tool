@@ -14060,6 +14060,25 @@
     "PartnerFieldOfficer",
     "Admin"
    ],
+   "route": "/my-plan/<str:activity_id>/register-school-search",
+   "route_name": "register_school_search",
+   "view": "apps.frontend.views.my_plan_views.register_school_search_view"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
    "route": "/my-plan/<str:activity_id>/request-amendment",
    "route_name": "request_budget_amendment",
    "view": "apps.frontend.views.my_plan_views.request_budget_amendment_action"
@@ -18159,6 +18178,23 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/schools/cluster-options",
+   "route_name": "school_onboard_cluster_options",
+   "view": "apps.frontend.views.school_views.school_onboard_cluster_options_view"
+  },
+  {
+   "page_permission": "school_directory",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/schools/create-drawer",
    "route_name": "school_onboard_drawer",
    "view": "apps.frontend.views.school_views.school_onboard_drawer_view"
@@ -19748,27 +19784,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 462,
-  "Admin": 1112,
+  "Accountant": 463,
+  "Admin": 1114,
   "BusinessTransformationOfficer": 243,
-  "CCEO": 586,
-  "CountryDirector": 848,
+  "CCEO": 588,
+  "CountryDirector": 850,
   "HumanResources": 330,
-  "ImpactAssessment": 717,
+  "ImpactAssessment": 719,
   "MfiLoanOfficer": 138,
   "MfiPartnerAdmin": 141,
-  "PartnerAdmin": 240,
-  "PartnerFieldOfficer": 240,
-  "Program Lead": 696,
-  "ProjectCoordinator": 490,
-  "RegionalProgramLead": 357,
+  "PartnerAdmin": 241,
+  "PartnerFieldOfficer": 241,
+  "Program Lead": 698,
+  "ProjectCoordinator": 492,
+  "RegionalProgramLead": 358,
   "RegionalVicePresident": 430
  },
  "summary": {
   "page_keys_declared": 186,
   "page_keys_in_navigation": 203,
-  "routes_guarded": 1209,
-  "routes_total": 1408,
+  "routes_guarded": 1211,
+  "routes_total": 1410,
   "routes_unguarded": 199,
   "surfaces_no_role_can_reach": 0
  },

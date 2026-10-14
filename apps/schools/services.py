@@ -8,7 +8,7 @@ operational records is constrained by the resolved user scope — never all rows
 
 from __future__ import annotations
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -193,36 +193,65 @@ def create_one(data: dict, principal) -> School:
         if enrollment < 0:
             raise BadRequest("Enrollment cannot be negative.")
 
-    school = School.objects.create(
-        school_id=school_id,
-        name=name,
-        region=region,
-        district=district,
-        sub_county=sub_county,
-        latitude=data.get("latitude"),
-        longitude=data.get("longitude"),
-        uploaded_region_text=data.get("regionText"),
-        uploaded_district_text=data.get("districtText"),
-        uploaded_sub_county_text=data.get("subCountyText"),
-        uploaded_parish_text=data.get("parishText"),
-        shipping_address=data.get("shippingAddress"),
-        school_phone=data.get("schoolPhone"),
-        primary_contact_name=data.get("primaryContactName"),
-        primary_contact_phone=data.get("primaryContactPhone"),
-        enrollment=enrollment,
-        school_type=school_type,
-        account_owner_name_raw=data.get("accountOwnerName"),
-        # Proves the school reached Salesforce before work is recorded against
-        # it. Unique at the database, so it doubles as the duplicate check.
-        salesforce_account_id=(data.get("salesforceAccountId") or "").strip() or None,
-        created_by_ia=getattr(principal, "active_role", None) == "ImpactAssessment",
-    )
+    salesforce_account_id = (data.get("salesforceAccountId") or "").strip() or None
+    try:
+        # A savepoint of its own: two people adding the same school at the
+        # same moment both pass the checks above, and the unique constraints
+        # are what decide. The loser is told which record won rather than
+        # shown a server error, and an outer transaction stays usable.
+        with transaction.atomic():
+            school = School.objects.create(
+                school_id=school_id,
+                name=name,
+                region=region,
+                district=district,
+                sub_county=sub_county,
+                latitude=data.get("latitude"),
+                longitude=data.get("longitude"),
+                uploaded_region_text=data.get("regionText"),
+                uploaded_district_text=data.get("districtText"),
+                uploaded_sub_county_text=data.get("subCountyText"),
+                uploaded_parish_text=data.get("parishText"),
+                shipping_address=data.get("shippingAddress"),
+                school_phone=data.get("schoolPhone"),
+                primary_contact_name=data.get("primaryContactName"),
+                primary_contact_phone=data.get("primaryContactPhone"),
+                enrollment=enrollment,
+                school_type=school_type,
+                account_owner_name_raw=data.get("accountOwnerName"),
+                # Proves the school reached Salesforce before work is recorded
+                # against it. Unique at the database, so it doubles as the
+                # duplicate check.
+                salesforce_account_id=salesforce_account_id,
+                created_by_ia=getattr(principal, "active_role", None)
+                == "ImpactAssessment",
+            )
+    except IntegrityError as exc:
+        raise BadRequest(_duplicate_message(school_id, salesforce_account_id)) from exc
     # An SSA that was uploaded before this school existed is filed to it now
     # (apps.ssa.unmatched_service.refile_known).
     from apps.ssa.unmatched_service import refile_after_commit
 
     refile_after_commit([school.school_id])
     return school
+
+
+def _duplicate_message(school_id: str, salesforce_account_id: str | None) -> str:
+    """Name the record a colliding create lost to."""
+    if salesforce_account_id:
+        taken = School.all_objects.filter(
+            salesforce_account_id__iexact=salesforce_account_id
+        ).first()
+        if taken is not None:
+            return (
+                f"That Salesforce ID already belongs to {taken.name} "
+                f"({taken.school_id}). Use that school rather than adding it "
+                "twice."
+            )
+    return (
+        f"School ID {school_id} already exists. Open the existing directory "
+        "record instead."
+    )
 
 
 def bulk_upload(rows: list[dict], principal) -> dict:

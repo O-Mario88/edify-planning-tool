@@ -78,6 +78,21 @@ from apps.core.interventions import (
 )  # noqa: E402
 from apps.schools.lifecycle_service import active_schools
 
+#: Activities whose completion drawer records who attended: head counts for
+#: every one, and the school register for the cluster sessions among them.
+ATTENDANCE_ACTIVITY_TYPES = frozenset(
+    {
+        "training",
+        "in_school_training",
+        "school_improvement_training",
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "cluster_meeting",
+        "cluster_meeting_ssa_review",
+        "core_training",
+    }
+)
+
 
 def _forbid_staff_on_partner_activity(request, a, *, allow_confirmer=False):
     """Partner-owned activities are read-only for staff monitors.
@@ -955,30 +970,46 @@ def complete_drawer_view(request, activity_id):
     if a.cluster:
         from apps.activities.models import ClusterActivityAttendance
 
-        cluster_schools = (
-            active_schools().filter(cluster_id=a.cluster_id).order_by("name")
-        )
-        # The register opens on who was invited when this was scheduled, so
-        # the person who delivered confirms rather than reconstructs. Rows
-        # already marked attended stay ticked on a second visit.
+        members = active_schools().filter(cluster_id=a.cluster_id).order_by("name")
         rows = {
-            r.school_id: r for r in ClusterActivityAttendance.objects.filter(activity=a)
+            r.school_id: r
+            for r in ClusterActivityAttendance.objects.filter(
+                activity=a
+            ).select_related("school")
         }
-        cluster_schools = [
-            {
-                "id": s.id,
-                "name": s.name,
-                "school_id": s.school_id,
-                # No row at all means this drawer predates the invitation
-                # list; tick everyone, which is what it used to assume.
-                "ticked": (
-                    rows[s.id].attended or rows[s.id].invited
-                    if s.id in rows
-                    else not rows
-                ),
-            }
-            for s in cluster_schools
-        ]
+        # Checked means attended, and the register opens on what is already
+        # known, in this order: the attendance recorded at an earlier
+        # submission; else who was invited when this was scheduled, so the
+        # person who delivered confirms rather than reconstructs; else (a
+        # session older than the invitation list) every member, which is
+        # what it used to assume. A school added to the cluster after the
+        # invitations were sent is therefore NOT ticked for the person: it
+        # was not asked, and only they know whether it came (2026-10-14).
+        # Head counts are written by every submission, so they say a register
+        # was confirmed even when nobody was ticked — and completion releases
+        # the invitations of schools left unticked, so the rows alone cannot.
+        recorded = (
+            a.teachers_attended is not None
+            or bool(a.attended_school_ids)
+            or any(r.attended for r in rows.values())
+        )
+        member_ids = set()
+        for s in members:
+            member_ids.add(s.id)
+            row = rows.get(s.id)
+            if recorded:
+                ticked = bool(row and row.attended) or s.id in (
+                    a.attended_school_ids or []
+                )
+            elif rows:
+                ticked = bool(row and row.invited)
+            else:
+                ticked = True
+            cluster_schools.append(
+                {"id": s.id, "name": s.name, "school_id": s.school_id, "ticked": ticked}
+            )
+        # Schools from outside the cluster recorded against this session. A
+        # visit is attendance only: it never makes the school a member.
         guest_rows = [
             {
                 "id": r.school_id,
@@ -987,11 +1018,12 @@ def complete_drawer_view(request, activity_id):
                 "teachers": r.teachers,
                 "leaders": r.leaders,
                 "other": r.other,
+                "ticked": r.attended,
             }
-            for r in ClusterActivityAttendance.objects.filter(
-                activity=a, is_guest=True
-            ).select_related("school")
+            for r in rows.values()
+            if r.is_guest and r.school_id not in member_ids
         ]
+        guest_rows.sort(key=lambda g: g["name"].lower())
 
     needs_netsuite_id = False
     disbursed_amount = None
@@ -1007,6 +1039,11 @@ def complete_drawer_view(request, activity_id):
         "evidence_list": evidence_list,
         "cluster_schools": cluster_schools,
         "guest_rows": guest_rows,
+        # Trainings and meetings record who came (head counts) and, for a
+        # cluster session, which schools. The two SSA variants of a cluster
+        # session are the same sessions and were missing from the list the
+        # template kept, so their registers were never shown (2026-10-14).
+        "records_attendance": a.activity_type in ATTENDANCE_ACTIVITY_TYPES,
         "can_add_school": has_permission(
             request.user, Permission.SCHOOL_CREATE_SINGLE.value
         ),
@@ -1628,6 +1665,14 @@ def complete_activity_action(request, activity_id):
             "leadersAttended": int(leaders) if leaders else 0,
             "otherParticipants": int(other) if other else 0,
             "attendedSchoolIds": attended_school_ids,
+            # The register's schools from outside the cluster, present only
+            # when the drawer drew that list (an empty list still means "the
+            # drawer had none"); absent, the recorded guests stay as they are.
+            "visitingSchoolIds": (
+                request.POST.getlist("visiting_school_ids")
+                if request.POST.get("visiting_register") == "1"
+                else None
+            ),
             # Which training this visit followed up. Required by complete()
             # for a follow-up visit and ignored for everything else.
             "followUpOfActivityId": request.POST.get(
@@ -3167,6 +3212,62 @@ def evidence_packet_view(request, activity_id):
         "logs": logs,
     }
     return render(request, "pages/my_plan/evidence_packet.html", context)
+
+
+#: Shortest search the register's "+ Add School" runs. School IDs are short
+#: numbers, so two characters, not three.
+REGISTER_SEARCH_MIN = 2
+REGISTER_SEARCH_LIMIT = 8
+
+
+@require_page_permission("my_plan")
+def register_school_search_view(request, activity_id):
+    """Schools already in Edify, for a cluster session's attendance register.
+
+    "+ Add School" in the completion drawer looks here first, so a school that
+    is already in the directory is chosen rather than added a second time.
+    Any operating school can be found: a school from another cluster, or in
+    another district, attends as a visiting school.
+    """
+    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    if not a.cluster_id or not (
+        RolePermissionService.can_view_record(request.user, a)
+        and RolePermissionService.can_upload_evidence(request.user, a)
+    ):
+        return HttpResponseForbidden("Access Denied.")
+
+    query = (request.GET.get("q") or "").strip()[:80]
+    schools = []
+    if len(query) >= REGISTER_SEARCH_MIN:
+        schools = list(
+            active_schools()
+            .filter(
+                Q(name__icontains=query)
+                | Q(school_id__icontains=query)
+                | Q(salesforce_account_id__iexact=query)
+            )
+            .select_related("district")
+            .order_by("name")[:REGISTER_SEARCH_LIMIT]
+        )
+    from apps.clusters.models import Cluster
+
+    cluster_names = dict(
+        Cluster.objects.filter(
+            id__in={s.cluster_id for s in schools if s.cluster_id}
+        ).values_list("id", "name")
+    )
+    for school in schools:
+        school.cluster_name = cluster_names.get(school.cluster_id, "")
+    return render(
+        request,
+        "partials/my_plan/register_school_results.html",
+        {
+            "act_cluster_id": a.cluster_id,
+            "query": query,
+            "too_short": 0 < len(query) < REGISTER_SEARCH_MIN,
+            "schools": schools,
+        },
+    )
 
 
 @require_page_permission("my_plan")
