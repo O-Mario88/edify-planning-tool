@@ -766,6 +766,26 @@ def _target_under_oversight(scope, school: School | None, cluster_id) -> bool:
     return False
 
 
+def _verified_from_upload(activity) -> bool:
+    """Whether this activity must carry an uploaded form.
+
+    Partner work must: the form it uploads is how its work is verified (owner,
+    2026-10-14: "Only staff dont need to upload. partners HAVE to upload
+    because that is how we verify their work"). Staff work is completed with
+    its visit ID or training ID alone (owner, 2026-10-13: "remove the upload
+    and use strictly visit ID and training IDs to complete the activities ...
+    just comment the code out, we may need it later").
+
+    UPLOAD-OFF: the staff upload is switched off here rather than deleted.
+    Every rule below that asked staff for a file asks this first, so making
+    this return True for staff work brings their upload back
+    (apps.evidence.form_document.takes_upload is the one definition).
+    """
+    from apps.evidence.form_document import takes_upload
+
+    return takes_upload(activity)
+
+
 def _partner_evidence_exists(activity) -> bool:
     """Partner evidence goes DIRECTLY to IA (owner spec §10, 2026-08-20):
     submission requires evidence to exist, never a staff acceptance step."""
@@ -3843,13 +3863,12 @@ def _bind_followed_up_training(activity, data):
 
 
 def complete(activity_id: str, data: dict, principal) -> dict:
-    """Submit completion: evidence present, Salesforce ID validated, attendance
-    for trainings, CCEO routes to PL / staff routes to IA."""
+    """Submit completion: Salesforce ID validated, attendance for trainings,
+    CCEO routes to PL / staff routes to IA. A partner's work must carry its
+    uploaded form; staff work asks for none (_verified_from_upload)."""
     a = _get_for_execution(activity_id, principal)
     if a.status not in COMPLETABLE_STATUSES:
-        raise BadRequest(
-            "Click Complete first to unlock evidence upload and Activity Code entry."
-        )
+        raise BadRequest("Click Complete first to unlock completion.")
 
     # Older unit fixtures predate the school-visit feedback contract, so
     # test-only callers that omit the new keys remain usable. Keep the
@@ -3901,36 +3920,38 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 "scores, or give a reason the SSA was not collected."
             )
 
-    # Evidence presence (lazily import to avoid a circular dep with evidence app).
-    try:
-        from apps.evidence.models import EvidenceRecord  # type: ignore
-    except ImportError:
-        # Evidence app genuinely absent (e.g. minimal install). Treat as no
-        # evidence available rather than pretending it exists — the gate below
-        # then blocks completion honestly.
-        evidence_count = 0
-    else:
-        evidence_count = EvidenceRecord.objects.filter(
-            activity_id=a.id, quarantined=False
-        ).count()
-    from apps.evidence.requirements import evidence_optional
+    # A partner's work only: staff work asks for no file (_verified_from_upload).
+    if _verified_from_upload(a):
+        # Evidence presence (lazily import to avoid a circular dep with evidence app).
+        try:
+            from apps.evidence.models import EvidenceRecord  # type: ignore
+        except ImportError:
+            # Evidence app genuinely absent (e.g. minimal install). Treat as no
+            # evidence available rather than pretending it exists — the gate below
+            # then blocks completion honestly.
+            evidence_count = 0
+        else:
+            evidence_count = EvidenceRecord.objects.filter(
+                activity_id=a.id, quarantined=False
+            ).count()
+        from apps.evidence.requirements import evidence_optional
 
-    if evidence_count == 0 and not evidence_optional(a):
-        raise BadRequest("Upload evidence before submitting completion.")
+        if evidence_count == 0 and not evidence_optional(a):
+            raise BadRequest("Upload evidence before submitting completion.")
 
-    # Per-activity-type evidence requirements (EvidenceRequirementService):
-    # one arbitrary file must not satisfy every activity type. Same
-    # test-relaxation convention as create()'s structured-purpose validation.
-    if not _is_testing or data.get("strict_validation"):
-        from apps.evidence.requirements import missing_evidence_kinds
+        # Per-activity-type evidence requirements (EvidenceRequirementService):
+        # one arbitrary file must not satisfy every activity type. Same
+        # test-relaxation convention as create()'s structured-purpose validation.
+        if not _is_testing or data.get("strict_validation"):
+            from apps.evidence.requirements import missing_evidence_kinds
 
-        missing = missing_evidence_kinds(a)
-        if missing:
-            labels = ", ".join(m["label"] for m in missing)
-            raise BadRequest(
-                f"Required evidence missing for this activity type: {labels}. "
-                "Upload each required document before submitting completion."
-            )
+            missing = missing_evidence_kinds(a)
+            if missing:
+                labels = ", ".join(m["label"] for m in missing)
+                raise BadRequest(
+                    f"Required evidence missing for this activity type: {labels}. "
+                    "Upload each required document before submitting completion."
+                )
 
     # The school's field feedback (what was found, how the school improved) is
     # kept when the officer wrote some, never demanded (owner, 2026-10-12: the
@@ -4014,9 +4035,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         # unique constraint, and a cancel that landed in between was undone.
         a = Activity.objects.select_for_update().get(pk=a.pk)
         if a.status not in COMPLETABLE_STATUSES:
-            raise BadRequest(
-                "Click Complete first to unlock evidence upload and Activity Code entry."
-            )
+            raise BadRequest("Click Complete first to unlock completion.")
         if followed_up is not None:
             a.follow_up_of_activity = followed_up
         a.teachers_attended = data.get("teachersAttended")
@@ -4169,34 +4188,36 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
     if a.status not in SUBMITTABLE_STATUSES:
         raise BadRequest("Activity is not ready to be submitted for review.")
 
-    from apps.evidence.models import EvidenceRecord
+    # A partner's work only: staff work asks for no file (_verified_from_upload).
+    if _verified_from_upload(a):
+        from apps.evidence.models import EvidenceRecord
 
-    from apps.evidence.requirements import evidence_optional
+        from apps.evidence.requirements import evidence_optional
 
-    if not EvidenceRecord.objects.filter(
-        activity_id=a.id, quarantined=False
-    ).exists() and not evidence_optional(a):
-        raise BadRequest("Upload evidence before submitting completion.")
+        if not EvidenceRecord.objects.filter(
+            activity_id=a.id, quarantined=False
+        ).exists() and not evidence_optional(a):
+            raise BadRequest("Upload evidence before submitting completion.")
 
-    import sys as _sys
+        import sys as _sys
 
-    # Same test-relaxation convention as create() and complete(), but this
-    # one previously had NO opt-in flag at all, so the per-activity-type
-    # evidence gate on the submit-for-review path could never be exercised
-    # by any test — a regression in missing_evidence_kinds() would have been
-    # invisible to the whole suite. `strict_validation` now lets tests turn
-    # the real production rule on; see ProductionGateRelaxationTest.
-    is_testing = "test" in _sys.argv or "pytest" in _sys.modules
-    if not is_testing or data.get("strict_validation"):
-        from apps.evidence.requirements import missing_evidence_kinds
+        # Same test-relaxation convention as create() and complete(), but this
+        # one previously had NO opt-in flag at all, so the per-activity-type
+        # evidence gate on the submit-for-review path could never be exercised
+        # by any test — a regression in missing_evidence_kinds() would have been
+        # invisible to the whole suite. `strict_validation` now lets tests turn
+        # the real production rule on; see ProductionGateRelaxationTest.
+        is_testing = "test" in _sys.argv or "pytest" in _sys.modules
+        if not is_testing or data.get("strict_validation"):
+            from apps.evidence.requirements import missing_evidence_kinds
 
-        missing = missing_evidence_kinds(a)
-        if missing:
-            labels = ", ".join(item["label"] for item in missing)
-            raise BadRequest(
-                f"Required evidence missing for this activity type: {labels}. "
-                "Upload each required document before submitting completion."
-            )
+            missing = missing_evidence_kinds(a)
+            if missing:
+                labels = ", ".join(item["label"] for item in missing)
+                raise BadRequest(
+                    f"Required evidence missing for this activity type: {labels}. "
+                    "Upload each required document before submitting completion."
+                )
 
     kind = sf_kind_for_activity(a)
     if kind is not None and not a.salesforce_activity_id:
@@ -4577,16 +4598,18 @@ def _confirm_locked_activity(
 
     # For Core activities, perform strict validation:
     if a.activity_type in ("core_visit", "core_training"):
-        try:
-            from apps.evidence.models import EvidenceRecord
-        except ImportError:
-            evidence_count = 0
-        else:
-            evidence_count = EvidenceRecord.objects.filter(
-                activity_id=a.id, quarantined=False
-            ).count()
-        if evidence_count == 0:
-            raise BadRequest("IA Verification failed: No evidence files uploaded.")
+        # A partner's Core work only (_verified_from_upload).
+        if _verified_from_upload(a):
+            try:
+                from apps.evidence.models import EvidenceRecord
+            except ImportError:
+                evidence_count = 0
+            else:
+                evidence_count = EvidenceRecord.objects.filter(
+                    activity_id=a.id, quarantined=False
+                ).count()
+            if evidence_count == 0:
+                raise BadRequest("IA Verification failed: No evidence files uploaded.")
 
         if not a.salesforce_activity_id:
             raise BadRequest(

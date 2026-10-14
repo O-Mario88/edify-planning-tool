@@ -31,64 +31,85 @@ from apps.pl_review import services
 from apps.pl_review.test_completion_reviews import QUEUE_URL, ReviewFixture, _staff
 
 
-class VerifyOpensTheUploadedFormTest(ReviewFixture):
-    def test_the_drawer_shows_each_uploaded_form_openable(self):
+class VerifyOpensTheSalesforceIdTest(ReviewFixture):
+    """UPLOAD-OFF (owner, 2026-10-13: "remove the upload and use strictly
+    visit ID and training IDs to complete the activities"). Verify used to
+    open the uploaded form; it opens the ID the completion stands on."""
+
+    def test_the_drawer_shows_the_id_and_a_form_held_as_one_button(self):
+        """Staff no longer upload. Where a completion still holds a form from
+        before, the lead is offered it as ONE button that opens one PDF in a
+        popup, however many times it was uploaded (owner, 2026-10-14: "it
+        displays list of all the uploads even if the same document is uploaded
+        3 tines ... fix it to show only one upload")."""
         work = self._completion(self.james.id, salesforce_activity_id="SVE-4040")
-        form = EvidenceRecord.objects.create(
-            activity=work,
-            kind="visit_form",
-            uri="visit.pdf",
-            original_name="visit-form.pdf",
-            mime_type="application/pdf",
-            uploaded_by=self.james_user.id,
-        )
-        photo = EvidenceRecord.objects.create(
-            activity=work,
-            kind="photo",
-            uri="x.jpg",
-            original_name="classroom.jpg",
-            mime_type="image/jpeg",
-            uploaded_by=self.james_user.id,
-        )
-        hidden = EvidenceRecord.objects.create(
-            activity=work,
-            kind="photo",
-            uri="bad.jpg",
-            original_name="quarantined.jpg",
-            quarantined=True,
-            uploaded_by=self.james_user.id,
-        )
+        forms = [
+            EvidenceRecord.objects.create(
+                activity=work,
+                kind="visit_form",
+                uri="visit.pdf",
+                original_name="visit-form.pdf",
+                mime_type="application/pdf",
+                uploaded_by=self.james_user.id,
+            )
+            for _ in range(3)
+        ]
 
         response = self.as_user(self.pl_user).get(
             f"{QUEUE_URL}/{work.id}/drawer", headers={"HX-Request": "true"}
         )
         html = response.content.decode()
-        self.assertIn("data-uploaded-forms", html)
-        for record in (form, photo):
-            self.assertIn(f'data-evidence-file="{record.id}"', html)
-            self.assertIn(f'href="/api/evidence/{record.id}/file"', html)
-            self.assertIn(f'href="/api/evidence/{record.id}/file?download=1"', html)
-        # The photo is shown; the PDF opens in a new tab (the site's content
-        # security policy refuses embedded plugin content, so none is tried).
-        self.assertIn(f'<img src="/api/evidence/{photo.id}/file"', html)
-        self.assertIn("data-open-form", html)
+        self.assertIn("data-completion-id", html)
+        self.assertIn("Visit ID", html)
+        self.assertIn("SVE-4040", html)
+        # One button for the form, not a list of the three records behind it,
+        # and no picture of it in the drawer.
+        self.assertEqual(html.count("View Uploaded Visit Form</span>"), 1)
+        self.assertEqual(html.count("data-uploaded-form-popup"), 1)
+        self.assertIn(f"/api/evidence/activity/{work.id}/form", html)
+        self.assertNotIn("data-uploaded-forms", html)
+        for form in forms:
+            self.assertNotIn(form.id, html)
+        self.assertNotIn("visit-form.pdf", html)
+        self.assertNotIn("<img", html)
         self.assertNotIn("<embed", html)
-        self.assertNotIn(hidden.id, html)
-        self.assertIn("Visit Form — uploaded", html)
         # Then decides: Verified posts the confirm; Return opens the reason.
         self.assertIn(f'action="{QUEUE_URL}/{work.id}/confirm"', html)
         self.assertIn(">Verified</button>", html)
         self.assertIn(f'hx-get="{QUEUE_URL}/{work.id}/return-drawer"', html)
 
-    def test_without_a_form_the_drawer_offers_return_not_verified(self):
+    def test_with_the_id_and_no_form_the_drawer_offers_verified(self):
+        work = self._completion(self.james.id, salesforce_activity_id="SVE-4041")
+        response = self.as_user(self.pl_user).get(
+            f"{QUEUE_URL}/{work.id}/drawer", headers={"HX-Request": "true"}
+        )
+        self.assertNotContains(response, "data-no-evidence")
+        self.assertNotContains(response, "Visit Form — missing")
+        # Nothing was uploaded, and nothing is asked for: no button either.
+        self.assertNotContains(response, "View Uploaded")
+        self.assertContains(response, ">Verified</button>")
+        self.assertContains(response, ">Return</button>")
+
+    def test_without_the_id_the_drawer_offers_return_not_verified(self):
         work = self._completion(self.james.id)
         response = self.as_user(self.pl_user).get(
             f"{QUEUE_URL}/{work.id}/drawer", headers={"HX-Request": "true"}
         )
-        self.assertContains(response, "data-no-evidence")
-        self.assertContains(response, "Visit Form — missing")
+        self.assertContains(response, "data-no-salesforce-id")
         self.assertNotContains(response, ">Verified</button>")
         self.assertContains(response, ">Return</button>")
+
+    def test_a_training_reads_training_id(self):
+        work = self._completion(
+            self.james.id,
+            activity_type="cluster_training",
+            salesforce_activity_id="TS-4042",
+        )
+        response = self.as_user(self.pl_user).get(
+            f"{QUEUE_URL}/{work.id}/drawer", headers={"HX-Request": "true"}
+        )
+        self.assertContains(response, "Training ID")
+        self.assertContains(response, "TS-4042")
 
 
 class TheLeadClearsWorkLeftWithIaTest(ReviewFixture):

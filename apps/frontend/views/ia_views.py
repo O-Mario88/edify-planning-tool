@@ -163,16 +163,23 @@ def _ia_staff_queue(request, activities=None):
 
 
 def _ia_evidence_ready_q() -> Q:
-    """An activity with at least one uploaded file that cleared quarantine."""
-    from django.db.models import Exists, OuterRef
+    """Work that is ready for review.
 
-    from apps.evidence.models import EvidenceRecord
-
-    return Q(
-        Exists(
-            EvidenceRecord.objects.filter(activity_id=OuterRef("pk"), quarantined=False)
-        )
-    )
+    UPLOAD-OFF (owner, 2026-10-13): this was "an activity with at least one
+    uploaded file that cleared quarantine". No file is asked for any more, so
+    everything waiting is ready and the filter matches every row. Uncomment
+    to bring the file test back.
+    """
+    return Q()
+    # from django.db.models import Exists, OuterRef
+    #
+    # from apps.evidence.models import EvidenceRecord
+    #
+    # return Q(
+    #     Exists(
+    #         EvidenceRecord.objects.filter(activity_id=OuterRef("pk"), quarantined=False)
+    #     )
+    # )
 
 
 def _ia_unmatched_ssa(request):
@@ -433,18 +440,20 @@ def ia_verification_queue_view(request):
     # Batch-fetch evidence/SSA existence for the CURRENT PAGE only, instead
     # of one `.exists()` query per activity per field (was unbounded: 2
     # queries x every row in the queue, not just the page being rendered).
-    from apps.evidence.models import EvidenceRecord
     from apps.ssa.models import SsaRecord
 
-    page_activity_ids = [a.id for a in page_activities]
     page_school_ids = [a.school_id for a in page_activities if a.school_id]
-    activities_with_evidence = set(
-        EvidenceRecord.objects.filter(
-            activity_id__in=page_activity_ids, quarantined=False
-        )
-        .values_list("activity_id", flat=True)
-        .distinct()
-    )
+    # UPLOAD-OFF (owner, 2026-10-13): no row waits on a file, so none is read.
+    # from apps.evidence.models import EvidenceRecord
+    #
+    # page_activity_ids = [a.id for a in page_activities]
+    # activities_with_evidence = set(
+    #     EvidenceRecord.objects.filter(
+    #         activity_id__in=page_activity_ids, quarantined=False
+    #     )
+    #     .values_list("activity_id", flat=True)
+    #     .distinct()
+    # )
     schools_with_ssa = set(
         SsaRecord.objects.filter(school_id__in=page_school_ids, deleted_at__isnull=True)
         .values_list("school_id", flat=True)
@@ -456,7 +465,8 @@ def ia_verification_queue_view(request):
     for a in page_activities:
         data = _serialize(a)
         # Add quick checks recommendation
-        data["has_evidence"] = a.id in activities_with_evidence
+        # UPLOAD-OFF (owner, 2026-10-13): was `a.id in activities_with_evidence`.
+        data["has_evidence"] = True
         data["has_sf_id"] = bool(a.salesforce_activity_id)
         data["has_ssa"] = bool(a.school_id) and a.school_id in schools_with_ssa
         data["is_high_priority"] = a.activity_type in IA_CRITICAL_ACTIVITY_TYPES
@@ -468,11 +478,9 @@ def ia_verification_queue_view(request):
             next_action = "No Salesforce ID — the responsible officer records it"
         else:
             salesforce_status = "Confirm ID"
-            next_action = (
-                "Evidence ready — verify Salesforce ID"
-                if data["has_evidence"]
-                else "Evidence missing — return to staff"
-            )
+            # UPLOAD-OFF (owner, 2026-10-13): was "Evidence ready — verify
+            # Salesforce ID" / "Evidence missing — return to staff".
+            next_action = "Verify the Salesforce ID"
         data.update(
             {
                 "submitted_at": submitted_at,
@@ -2544,6 +2552,7 @@ def _own_ia_partner_activity(request, activity_id):
 def ia_partner_review_view(request, activity_id):
     """§10.2 the review page: plan vs actual, evidence, history — and the two
     workflow decisions, Return and Complete."""
+    from apps.evidence import form_document
     from apps.partners.models import Partner, PartnerAssignment
     from apps.evidence.models import EvidenceRecord
     from apps.evidence.requirements import checklist
@@ -2579,6 +2588,9 @@ def ia_partner_review_view(request, activity_id):
             "assignment": assignment,
             "evidence": evidence,
             "evidence_checklist": checklist(a),
+            # The form as one button that opens one PDF (owner, 2026-10-14).
+            "uploaded_form": form_document.uploaded_form(a),
+            "form_name": form_document.form_name(a),
             "history": history,
             "can_decide": can_decide,
             "is_partner_ssa_support": is_partner_ssa_support_activity(a),
@@ -2645,12 +2657,16 @@ def ia_partner_complete_drawer(request, activity_id):
     evidence_count = EvidenceRecord.objects.filter(
         activity_id=a.id, quarantined=False
     ).count()
+    from apps.evidence import form_document
+
     return render(
         request,
         "partials/ia/partner_complete_drawer.html",
         {
             "a": a,
             "evidence_count": evidence_count,
+            "uploaded_form": form_document.uploaded_form(a),
+            "form_name": form_document.form_name(a),
             "today": timezone.localdate(),
             "drawer_size": "md",
         },

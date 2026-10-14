@@ -169,9 +169,13 @@ class DashboardMetricsService:
             ),
             evidence_pending=Count(
                 "id",
+                # UPLOAD-OFF (owner, 2026-10-13): this counted completed work
+                # with no file (`evidence__isnull=True`), which is all of it
+                # now. Completion marks the evidence step met, so it counts
+                # only older work whose step was never met.
                 filter=Q(
                     status__in=COMPLETED_WORK_STATUSES,
-                    evidence__isnull=True,
+                    evidence_status="none",
                 ),
                 distinct=True,
             ),

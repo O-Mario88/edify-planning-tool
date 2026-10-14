@@ -31,6 +31,16 @@ order.
 
 A read: it owns no table and writes nothing. Two queries answer a page of
 rows, however many there are.
+
+UPLOAD-OFF (owner, 2026-10-13: "remove the upload and use strictly visit ID
+and training IDs to complete the activities"; 2026-10-14: "Only staff dont
+need to upload. partners HAVE to upload because that is how we verify their
+work"). The form is the second half of completing for a PARTNER's work only.
+Staff work is complete with its Salesforce ID: its `evidence_ok` is always
+True, its `evidence_label` blank, no file is read for it, and the staff
+tables no longer draw the Evidence column (components/completion_cells.html
+draws it only where a table asks, which the partner tables do). The switch
+is apps.evidence.form_document.takes_upload.
 """
 
 from __future__ import annotations
@@ -129,26 +139,38 @@ def evidence_label(activity_type, kinds: Iterable[str]) -> str:
     return ", ".join(names)
 
 
-def completion_records(activity_ids) -> tuple[dict[str, str], dict[str, set]]:
-    """Each activity's stored Salesforce ID, and the kinds of evidence
-    uploaded for it (not quarantined): two queries for any number of ids."""
+def _records(activity_ids) -> tuple[dict[str, str], dict[str, set], set[str]]:
+    """Each activity's stored Salesforce ID; the kinds of evidence uploaded
+    for the activities that are asked for an upload (not quarantined); and
+    which activities those are. Two queries at most, one when none is asked."""
     ids = [i for i in dict.fromkeys(activity_ids or ()) if i]
     if not ids:
-        return {}, {}
+        return {}, {}, set()
     from apps.activities.models import Activity
     from apps.evidence.models import EvidenceRecord
 
-    salesforce = {
-        activity_id: (value or "").strip()
-        for activity_id, value in Activity.objects.filter(id__in=ids).values_list(
-            "id", "salesforce_activity_id"
-        )
-    }
+    salesforce: dict[str, str] = {}
+    asked: set[str] = set()
+    for activity_id, value, delivery_type in Activity.objects.filter(
+        id__in=ids
+    ).values_list("id", "salesforce_activity_id", "delivery_type"):
+        salesforce[activity_id] = (value or "").strip()
+        # apps.evidence.form_document.takes_upload, read in bulk.
+        if (delivery_type or "") == "partner":
+            asked.add(activity_id)
     evidence: dict[str, set] = defaultdict(set)
-    for activity_id, kind in EvidenceRecord.objects.filter(
-        activity_id__in=ids, quarantined=False
-    ).values_list("activity_id", "kind"):
-        evidence[activity_id].add(kind)
+    if asked:
+        for activity_id, kind in EvidenceRecord.objects.filter(
+            activity_id__in=asked, quarantined=False
+        ).values_list("activity_id", "kind"):
+            evidence[activity_id].add(kind)
+    return salesforce, evidence, asked
+
+
+def completion_records(activity_ids) -> tuple[dict[str, str], dict[str, set]]:
+    """Each activity's stored Salesforce ID, and the kinds of evidence
+    uploaded for it where it is asked for an upload (a partner's work)."""
+    salesforce, evidence, _asked = _records(activity_ids)
     return salesforce, evidence
 
 
@@ -157,16 +179,23 @@ def completion_columns(pairs) -> dict[str, dict]:
     "evidence_ok"}} for (activity id, activity type) pairs. Ids that are None
     (a handover not yet scheduled) are skipped: they read EMPTY."""
     pairs = [(i, t) for i, t in pairs if i]
-    salesforce, evidence = completion_records([i for i, _ in pairs])
+    salesforce, evidence, asked = _records([i for i, _ in pairs])
     out = {}
     for activity_id, activity_type in pairs:
         kinds = evidence.get(activity_id, set())
         sf = salesforce.get(activity_id, "")
+        # Staff work is complete with its Salesforce ID alone; a partner's
+        # also needs the form it is verified from (UPLOAD-OFF, see above).
+        upload_asked = activity_id in asked
         out[activity_id] = {
             "salesforce_id": sf,
-            "evidence_label": evidence_label(activity_type, kinds),
+            "evidence_label": (
+                evidence_label(activity_type, kinds) if upload_asked else ""
+            ),
             "salesforce_ok": bool(sf),
-            "evidence_ok": expected_evidence(activity_type)[0] in kinds,
+            "evidence_ok": (
+                expected_evidence(activity_type)[0] in kinds if upload_asked else True
+            ),
         }
     return out
 

@@ -27,7 +27,7 @@ three buttons (owner, 2026-09-26); a row with one action keeps its button.
           <th scope="col" class="text-center min-w-[100px]">Participants</th>
           <th scope="col" class="text-right min-w-[110px]">Cost</th>
           <th scope="col" class="min-w-[130px]">Salesforce ID</th>
-          <th scope="col" class="min-w-[160px]">Evidence</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="min-w-[160px]">Evidence</th> #}
           <th scope="col" class="min-w-[120px]">Status</th>
           <th scope="col" class="text-right min-w-[90px]">Actions</th>
         </tr>
@@ -49,8 +49,8 @@ three buttons (owner, 2026-09-26); a row with one action keeps its button.
           <td class="text-right" data-record-action data-label="Actions">
             {% firstof item.cluster_name item.context_label as session_name %}
             {% row_actions session_name %}
-              {# Verify opens the completion with the uploaded form; Verified is decided inside it (owner, 2026-10-12). #}
-              <button type="button" class="row-menu__item" role="menuitem" hx-get="/pl/review-queue/{{ item.activity_id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Verify the completion from {% firstof item.executor_name member.name %}: read the uploaded form, then decide" data-session-verify>Verify</button>
+              {# Verify opens the completion with its Salesforce ID; Verified is decided inside it (owner, 2026-10-12; no uploaded form since 2026-10-13). #}
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="/pl/review-queue/{{ item.activity_id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Verify the completion from {% firstof item.executor_name member.name %}: check the Salesforce ID, then decide" data-session-verify>Verify</button>
               <button type="button" class="row-menu__item" role="menuitem" hx-get="/pl/review-queue/{{ item.activity_id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Return the completion from {% firstof item.executor_name member.name %} with a reason" data-session-return>Return</button>
             {% endrow_actions %}
           </td>
@@ -70,7 +70,7 @@ three buttons (owner, 2026-09-26); a row with one action keeps its button.
           {% include "partials/oversight/_row_actions.html" %}
           {% endif %}
         </tr>
-        {% empty %}<tr><td colspan="12">No {{ heading|lower }} in {% firstof plan_period_label "this financial year" %}.</td></tr>{% endfor %}
+        {% empty %}<tr><td colspan="11">No {{ heading|lower }} in {% firstof plan_period_label "this financial year" %}.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>

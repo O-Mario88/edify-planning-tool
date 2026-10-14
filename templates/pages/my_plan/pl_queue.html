@@ -62,7 +62,7 @@ should click verify, then the uploaded form").
             <th scope="col">Date</th>
             <th scope="col">Intervention</th>
             <th scope="col">Attendance</th>
-            <th scope="col">Evidence</th>
+            {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col">Evidence</th> #}
             <th scope="col">Salesforce ID</th>
             <th scope="col" class="is-num">Days waiting</th>
             <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
@@ -78,20 +78,20 @@ should click verify, then the uploaded form").
             <td data-label="Date">{% if row.date %}{{ row.date|date:"j M Y" }}{% else %}—{% endif %}</td>
             <td data-label="Intervention">{% if row.intervention %}<abbr title="{{ row.intervention_label }}">{{ row.intervention }}</abbr>{% else %}—{% endif %}</td>
             <td data-label="Attendance">{{ row.attendance|default:"—" }}</td>
-            <td data-label="Evidence">{% if row.evidence_tone %}<span data-tone="{{ row.evidence_tone }}">{{ row.evidence }}</span>{% else %}{{ row.evidence }}{% endif %}</td>
+            {# UPLOAD-OFF (owner, 2026-10-13): <td data-label="Evidence">{% if row.evidence_tone %}<span data-tone="{{ row.evidence_tone }}">{{ row.evidence }}</span>{% else %}{{ row.evidence }}{% endif %}</td> #}
             <td data-label="Salesforce ID">{% if row.salesforce_id %}{{ row.salesforce_id }}{% else %}<span data-tone="warning">Not entered</span>{% endif %}</td>
             <td class="is-num" data-label="Days waiting">{% if row.wait_tone %}<span data-tone="{{ row.wait_tone }}">{{ row.days_waiting }}</span>{% else %}{{ row.days_waiting }}{% endif %}</td>
             <td class="is-end" data-record-action data-label="Actions">
               {% row_actions row.cceo %}
-              {# Verify opens the completion with the uploaded forms; Verified is decided inside it (owner, 2026-10-12). #}
-              <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ queue_url }}/{{ row.id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Verify the completion from {{ row.cceo }}: read the uploaded form, then decide">Verify</button>
+              {# Verify opens the completion with its Salesforce ID; Verified is decided inside it (owner, 2026-10-12; no uploaded form since 2026-10-13). #}
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ queue_url }}/{{ row.id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Verify the completion from {{ row.cceo }}: check the Salesforce ID, then decide">Verify</button>
               <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ queue_url }}/{{ row.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Return the completion from {{ row.cceo }}">Return</button>
               {% endrow_actions %}
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td class="rpl-table__empty" colspan="11">
+            <td class="rpl-table__empty" colspan="10">
               {% include "components/empty_state.html" with message="Nothing is waiting on you" hint="When an officer you supervise submits completed work, it appears here for your confirmation." compact="true" %}
             </td>
           </tr>

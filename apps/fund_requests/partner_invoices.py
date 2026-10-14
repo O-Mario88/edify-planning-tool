@@ -245,19 +245,25 @@ def invoice_basis(principal, kind: str, anchor: date, instalment: str) -> dict:
 
 
 def _completed_with_evidence(activities) -> set[str]:
-    """The ids of the activities that are completed with their evidence: IA
-    has verified them and at least one evidence file is on record. One query
-    for the whole period."""
+    """The ids of the activities that are completed: IA has verified them and,
+    where the work is the partner's own, its uploaded form is on record. One
+    query for the whole period.
+
+    Work a partner only facilitates is staff work, completed with its
+    Salesforce ID and asked for no file (UPLOAD-OFF, owner 2026-10-13); the
+    partner's own is verified from its upload (owner, 2026-10-14)."""
     from apps.evidence.models import EvidenceRecord
 
-    cleared = [a.id for a in activities if a.status in _CLEARED_STATUSES]
+    cleared = [a for a in activities if a.status in _CLEARED_STATUSES]
     if not cleared:
         return set()
-    return set(
-        EvidenceRecord.objects.filter(activity_id__in=cleared, quarantined=False)
+    own = [a.id for a in cleared if a.delivery_type == "partner"]
+    evidenced = set(
+        EvidenceRecord.objects.filter(activity_id__in=own, quarantined=False)
         .values_list("activity_id", flat=True)
         .distinct()
     )
+    return {a.id for a in cleared if a.delivery_type != "partner" or a.id in evidenced}
 
 
 def _line_facts(activity) -> dict:

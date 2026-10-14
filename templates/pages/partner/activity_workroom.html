@@ -88,15 +88,9 @@
     </ul>
     {% endif %}
 
-    {% if evidence %}
-    <ul class="divide-y divide-slate-100 rounded-control border border-slate-100">
-      {% for e in evidence %}
-      <li class="flex items-center justify-between gap-3 px-3 py-2 text-[12px] font-semibold text-slate-600">
-        <span class="truncate">{{ e.original_name }}</span>
-        <span class="edify-text-caption text-slate-400 shrink-0">{{ e.kind }} · {{ e.created_at|date:"d M H:i" }}</span>
-      </li>
-      {% endfor %}
-    </ul>
+    {# One document per form, opened by one button (owner, 2026-10-14); the card used to list every file uploaded. #}
+    {% if uploaded_form %}
+    <div>{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>
     {% endif %}
 
     {% if state != "submitted" and state != "done" %}
@@ -106,7 +100,7 @@
     <button type="button"
             hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
             class="inline-flex h-8 items-center rounded-control border border-[var(--border-strong)] edify-surface px-4 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)] transition-colors">
-      Upload Evidence
+      {% if uploaded_form %}Add Another Page{% else %}Upload {{ form_name }}{% endif %}
     </button>
     {% endif %}
   </div>

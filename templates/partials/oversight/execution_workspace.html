@@ -78,7 +78,7 @@ the activities behind it.
             <th scope="col" class="px-3 py-2">Planned Date</th>
             <th scope="col" class="px-3 py-2">Staff</th>
             <th scope="col" class="px-3 py-2">Salesforce ID</th>
-            <th scope="col" class="px-3 py-2">Evidence</th>
+            {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2">Evidence</th> #}
             <th scope="col" class="px-3 py-2">Status</th>
           </tr>
         </thead>
@@ -91,11 +91,11 @@ the activities behind it.
             <td class="px-3 py-2 tabular-nums" data-label="Planned Date">{{ work.planned_date|date:"j M Y"|default:"—" }}</td>
             <td class="px-3 py-2" data-label="Staff">{{ work.person_name }}</td>
             <td class="px-3 py-2" data-label="Salesforce ID">{% if work.salesforce_ok %}<span class="edify-status-text" data-edify-tone="success">In</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Not in SF</span>{% endif %}</td>
-            <td class="px-3 py-2" data-label="Evidence">{% if work.evidence_ok %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">No form</span>{% endif %}</td>
+            {# UPLOAD-OFF (owner, 2026-10-13): <td class="px-3 py-2" data-label="Evidence">{% if work.evidence_ok %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">No form</span>{% endif %}</td> #}
             <td class="px-3 py-2" data-label="Status">{{ work.status|status_label }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="8" class="px-3 py-6 text-center edify-text-muted">Nothing in scope matches: {{ execution_list_label|lower }}.</td></tr>
+          <tr><td colspan="7" class="px-3 py-6 text-center edify-text-muted">Nothing in scope matches: {{ execution_list_label|lower }}.</td></tr>
           {% endfor %}
         </tbody>
   {% enddata_table %}

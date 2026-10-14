@@ -194,6 +194,15 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     ):
         if not sf_id:
             return "Activity ID Missing", "bg-amber-50 text-amber-700 border-amber-200"
+        # Work handed to the Program Lead waits on the Program Lead (owner,
+        # 2026-10-12: "PL should click verify"). It read "IA Pending" like
+        # work with Impact Assessment, beside a Verification cell that said
+        # "PL pending"; seen once the ID alone completed a visit (2026-10-13).
+        if status == "submitted_to_pl" and ia == "pending":
+            return (
+                "PL Pending",
+                "edify-primary-soft edify-primary-text edify-primary-border",
+            )
         if ia == "pending":
             return (
                 "IA Pending",
@@ -536,21 +545,39 @@ def compute_next_action(a, today) -> dict:
             "description": "In Progress",
         }
 
-    # 4. Completed but no evidence -> Upload Evidence
-    if a.evidence_status == "none" and a.status in _WORKED_STATUSES:
+    # Staff work asks for no file; a partner's is verified from its uploaded
+    # form (UPLOAD-OFF, owner 2026-10-13 and 2026-10-14).
+    uploads = a.delivery_type == "partner"
+
+    # 4. Begun, nothing uploaded -> a partner uploads the form
+    if uploads and a.evidence_status == "none" and a.status in _WORKED_STATUSES:
         return {
             "text": "Upload Evidence",
             "action": "evidence",
             "url": f"/activities/{a.id}/evidence",
             "description": "Evidence missing",
         }
+    # 4b. Staff work begun and not handed in -> complete it with its ID
+    if (
+        not uploads
+        and a.evidence_status == "none"
+        and a.status in _WORKED_STATUSES
+        and a.status != "completed"
+    ):
+        return {
+            "text": "Complete Activity",
+            "action": "complete",
+            "url": f"/activities/{a.id}/complete",
+            "description": "Enter the Salesforce ID to complete",
+        }
+    # The step before the ID: the form is in (a partner's), or none is asked
+    # for (staff work).
+    form_step_met = a.evidence_status == "uploaded" or (
+        not uploads and a.evidence_status == "none"
+    )
 
     # 5. Evidence uploaded but no Activity SF ID -> Enter Activity SF ID
-    if (
-        a.status in _WORKED_STATUSES
-        and a.evidence_status == "uploaded"
-        and not a.salesforce_activity_id
-    ):
+    if a.status in _WORKED_STATUSES and form_step_met and not a.salesforce_activity_id:
         return {
             "text": "Enter Activity SF ID",
             "action": "sf_id",
@@ -559,11 +586,7 @@ def compute_next_action(a, today) -> dict:
         }
 
     # 5.5 Ready to Submit for Review
-    if (
-        a.status in _WORKED_STATUSES
-        and a.evidence_status == "uploaded"
-        and a.salesforce_activity_id
-    ):
+    if a.status in _WORKED_STATUSES and form_step_met and a.salesforce_activity_id:
         ssa_done = True
         if a.activity_type in [
             "baseline_ssa_visit",
@@ -2152,8 +2175,12 @@ def get_frontend_context(
             )
 
         # 2. Awaiting Evidence
+        # A partner's work only: staff work asks for no file (UPLOAD-OFF,
+        # owner 2026-10-13 and 2026-10-14).
         awaiting_evidence_acts = qs.filter(
-            status__in=COMPLETED_WORK_STATUSES, evidence_status="none"
+            status__in=COMPLETED_WORK_STATUSES,
+            evidence_status="none",
+            delivery_type="partner",
         ).select_related("school", "school__district", "cluster")[:3]
         for ae in awaiting_evidence_acts:
             attention_needed.append(

@@ -81,7 +81,7 @@ week would push it down the page for nothing. With none, one line says so.
           <th scope="col" class="px-3 py-2.5">Focus Intervention</th>
           <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
           <th scope="col" class="px-3 py-2.5">Salesforce ID</th>
-          <th scope="col" class="px-3 py-2.5">Evidence</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2.5">Evidence</th> #}
           <th scope="col" class="px-3 py-2.5">Status</th>
           <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
         </tr>
@@ -109,7 +109,7 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">{% include "partials/dashboards/pl/_week_action.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No school visits {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
+        <tr><td colspan="11" class="ps-5 pe-5 py-4 text-center text-slate-400">No school visits {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -129,7 +129,7 @@ week would push it down the page for nothing. With none, one line says so.
           <th scope="col" class="px-3 py-2.5 text-center">Participants</th>
           <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
           <th scope="col" class="px-3 py-2.5">Salesforce ID</th>
-          <th scope="col" class="px-3 py-2.5">Evidence</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2.5">Evidence</th> #}
           <th scope="col" class="px-3 py-2.5">Status</th>
           <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
         </tr>
@@ -158,7 +158,7 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">{% include "partials/dashboards/pl/_week_action.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="13" class="ps-5 pe-5 py-4 text-center text-slate-400">No group trainings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
+        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No group trainings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -177,7 +177,7 @@ week would push it down the page for nothing. With none, one line says so.
           <th scope="col" class="px-3 py-2.5 text-center">Participants</th>
           <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
           <th scope="col" class="px-3 py-2.5">Salesforce ID</th>
-          <th scope="col" class="px-3 py-2.5">Evidence</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2.5">Evidence</th> #}
           <th scope="col" class="px-3 py-2.5">Status</th>
           <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
         </tr>
@@ -205,7 +205,7 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">{% include "partials/dashboards/pl/_week_action.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No cluster meetings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
+        <tr><td colspan="11" class="ps-5 pe-5 py-4 text-center text-slate-400">No cluster meetings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>

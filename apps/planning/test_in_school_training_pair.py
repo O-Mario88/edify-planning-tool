@@ -743,7 +743,7 @@ class InSchoolTrainingPairTest(StandardSupportBase):
             ).exists()
         )
 
-    def test_completion_drawer_exposes_both_ids_and_both_evidence_inputs(self):
+    def test_completion_drawer_exposes_both_ids_and_no_file_input(self):
         result = schedule_in_school_training_pair(self.payload(), self.user)
         client = Client()
         client.force_login(self.user)
@@ -755,8 +755,11 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         html = response.content.decode("utf-8")
         self.assertIn('name="salesforce_id"', html)
         self.assertIn('name="visit_salesforce_id"', html)
-        self.assertIn('name="training_evidence_file"', html)
-        self.assertIn('name="visit_evidence_file"', html)
+        # UPLOAD-OFF (owner, 2026-10-13): the two IDs complete the pair; the
+        # two form uploads are switched off.
+        self.assertNotIn('name="training_evidence_file"', html)
+        self.assertNotIn('name="visit_evidence_file"', html)
+        self.assertNotIn('type="file"', html)
         # The school feedback fields left the form (owner, 2026-10-12).
         self.assertNotIn('name="feedback_finding"', html)
         self.assertNotIn('name="school_improvements"', html)

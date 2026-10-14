@@ -7,6 +7,8 @@ than no timeline, because it looks like evidence.
 
 from __future__ import annotations
 
+import unittest
+
 import datetime as dt
 from pathlib import Path
 
@@ -118,13 +120,19 @@ class ActivityTimelineTest(TestCase):
     def test_a_scheduled_activity_has_only_its_first_step_done(self):
         steps = self._timeline(self._activity())
         self.assertTrue(steps["Activity scheduled"]["done"])
-        self.assertFalse(steps["Evidence upload"]["done"])
+        # The timeline had an "Evidence upload" step between the two until
+        # the upload was switched off (UPLOAD-OFF, owner 2026-10-13).
+        self.assertNotIn("Evidence upload", steps)
         self.assertFalse(steps["Activity completion"]["done"])
 
     def test_completion_is_read_from_the_record(self):
         steps = self._timeline(self._activity(status="closed"))
         self.assertTrue(steps["Activity completion"]["done"])
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_evidence_is_pending_until_a_file_exists(self):
         """The step counts real evidence rows, not the activity's own status."""
         steps = self._timeline(self._activity(status="closed"))

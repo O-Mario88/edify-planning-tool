@@ -35,10 +35,10 @@ PARTNER_RETURN_REASONS = (
 
 
 def _return_reasons() -> tuple[str, ...]:
-    from apps.activities.return_notes import COMMON_REASONS
+    from apps.activities.return_notes import COMMON_REASONS, FORM_REASONS
 
     return PARTNER_RETURN_REASONS + tuple(
-        r for r in COMMON_REASONS if r not in PARTNER_RETURN_REASONS
+        r for r in (*COMMON_REASONS, *FORM_REASONS) if r not in PARTNER_RETURN_REASONS
     )
 
 
@@ -89,27 +89,29 @@ def _decided(message: str) -> HttpResponse:
 
 @require_page_permission("partner_oversight")
 def partner_verify_drawer_view(request):
-    """What the Partner submitted, and the Salesforce ID that confirms it."""
-    from apps.evidence.models import EvidenceRecord
-    from apps.evidence.requirements import checklist
+    """The form the Partner uploaded, and the Salesforce ID that confirms it.
+
+    The form is offered as one button that opens one PDF (owner, 2026-10-14:
+    "no need to show the uploaded image, just use the link View Uploaded
+    {visit form} or {Training attendance}"), however many pages it has and
+    however many times it was uploaded."""
+    from apps.activities.services import sf_kind_for_activity
+    from apps.evidence import form_document
 
     template = "partials/oversight/partner_verify_drawer.html"
     activity, refusal = _reviewable(request, request.GET.get("activity_id"))
     if activity is None:
         return _refusal(request, template, refusal)
-    evidence = list(
-        EvidenceRecord.objects.filter(
-            activity_id=activity.id, quarantined=False
-        ).order_by("-created_at")
-    )
     return render(
         request,
         template,
         {
             "a": activity,
             "partner_name": _partner_name(activity),
-            "evidence": evidence,
-            "evidence_checklist": checklist(activity),
+            "uploaded_form": form_document.uploaded_form(activity),
+            "form_name": form_document.form_name(activity),
+            # The ID that confirms it: "visit", "training" or None.
+            "salesforce_kind": sf_kind_for_activity(activity),
             "drawer_size": "md",
         },
     )

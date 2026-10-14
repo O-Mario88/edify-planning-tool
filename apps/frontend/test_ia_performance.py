@@ -20,6 +20,8 @@ pagination (QUEUE_PAGE_SIZE), verified not to scale with queue size.
 
 from __future__ import annotations
 
+import unittest
+
 from datetime import date
 
 from django.contrib.auth import get_user_model
@@ -459,10 +461,16 @@ class IAVerificationQueueN1FixTest(IAPerformanceTestBase):
         by_id = {row["id"]: row for row in response.context["queue"]}
         self.assertTrue(by_id[act_both.id]["has_evidence"])
         self.assertTrue(by_id[act_both.id]["has_ssa"])
-        self.assertFalse(by_id[act_neither.id]["has_evidence"])
+        # UPLOAD-OFF (owner, 2026-10-13): no row waits on a file, so every
+        # row is ready for review; it was False without a file.
+        self.assertTrue(by_id[act_neither.id]["has_evidence"])
         self.assertFalse(by_id[act_neither.id]["has_ssa"])
 
     # ── 6. A quarantined evidence row must not count as "has evidence" ──────
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_ia_verification_queue_ignores_quarantined_evidence(self):
         school = self._school("quarantined")
         act = self._pending_activity(school)

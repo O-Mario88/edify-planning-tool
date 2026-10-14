@@ -72,6 +72,10 @@ urlpatterns = [
     # Rendered without user data: the worker precaches it and serves it to
     # any navigation the network cannot answer.
     path("offline", pwa_views.offline, name="offline"),
+    # A partner's form is back (owner, 2026-10-14: "Only staff dont need to
+    # upload. partners HAVE to upload because that is how we verify their
+    # work"). These routes were commented out on 2026-10-13 (UPLOAD-OFF);
+    # the views refuse staff work, which is completed with its Salesforce ID.
     path(
         "offline/evidence-drawer",
         pwa_views.offline_evidence_drawer,
@@ -1384,6 +1388,10 @@ urlpatterns = [
         my_plan_views.partner_ssa_completion_action,
         name="partner_ssa_completion_action",
     ),
+    # A partner's form is back (owner, 2026-10-14: "Only staff dont need to
+    # upload. partners HAVE to upload because that is how we verify their
+    # work"). These routes were commented out on 2026-10-13 (UPLOAD-OFF);
+    # the views refuse staff work, which is completed with its Salesforce ID.
     path(
         "activities/<str:activity_id>/evidence",
         my_plan_views.evidence_upload_drawer_view,

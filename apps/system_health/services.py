@@ -1510,9 +1510,17 @@ def _workflow_issues() -> dict:
         blockers.append(
             f"{core_duplicate_slot_activities} activity(ies) linked to more than one core package slot."
         )
-    if core_verified_slots_missing_evidence:
+    # Staff Core work is verified on its Salesforce ID with no file (UPLOAD-OFF,
+    # owner 2026-10-13), so only a partner's verified slot with no form is a
+    # fault. The whole count is still reported below.
+    core_partner_slots_missing_evidence = (
+        _verified_slots.filter(owner="partner")
+        .filter(Q(evidence_uri__isnull=True) | Q(evidence_uri=""))
+        .count()
+    )
+    if core_partner_slots_missing_evidence:
         blockers.append(
-            f"{core_verified_slots_missing_evidence} verified core slot(s) missing evidence."
+            f"{core_partner_slots_missing_evidence} verified partner core slot(s) missing evidence."
         )
     if core_verified_slots_missing_sf_id:
         blockers.append(

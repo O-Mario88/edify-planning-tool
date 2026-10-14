@@ -1566,7 +1566,8 @@ EXPORT_COLUMNS = (
     ("Activity status", lambda i: i.activity_status),
     ("Assignment status", lambda i: i.assignment_status),
     ("Salesforce ID", lambda i: i.salesforce_id),
-    ("Evidence", lambda i: i.evidence_label or i.evidence_status),
+    # UPLOAD-OFF (owner, 2026-10-13):
+    # ("Evidence", lambda i: i.evidence_label or i.evidence_status),
     ("IA", lambda i: i.ia_status),
     ("Finance", lambda i: i.finance_status),
     ("Risks", lambda i: "; ".join(r["key"] for r in i.risks)),

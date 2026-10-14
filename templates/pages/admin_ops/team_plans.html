@@ -69,7 +69,7 @@
           <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Next Action</th>
           <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Executor</th>
           <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Budget</th>
-          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Evidence</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Evidence</th> #}
           <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">IA</th>
           <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Finance</th>
           <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Updated</th>
@@ -89,7 +89,7 @@
           <td class="px-3 py-2.5">{{ row.nextAction }}</td>
           <td class="px-3 py-2.5">{{ row.executor }}</td>
           <td class="px-3 py-2.5">{{ row.budgetState }}</td>
-          <td class="px-3 py-2.5">{{ row.evidenceState }}</td>
+          {# UPLOAD-OFF (owner, 2026-10-13): <td class="px-3 py-2.5">{{ row.evidenceState }}</td> #}
           <td class="px-3 py-2.5">{{ row.iaState }}</td>
           <td class="px-3 py-2.5">{{ row.financeState }}</td>
           <td class="px-3 py-2.5 tabular-nums">{{ row.lastUpdated|date:"d M H:i" }}</td>

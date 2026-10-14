@@ -108,10 +108,12 @@ class FinanceOperatingSystemTest(TestCase):
 
     def test_finance_blocked_rules(self):
         # Fresh staff activity should be blocked for final clearance due to:
-        # IA Verification Missing, Evidence Missing, Activity SF ID Missing
+        # IA Verification Missing, Activity SF ID Missing. "Evidence Missing"
+        # held it too until the upload was switched off (UPLOAD-OFF, owner
+        # 2026-10-13).
         reasons = FinanceBlockedReasonService.get_blocked_reasons(self.staff_activity)
         self.assertIn("IA Verification Missing", reasons)
-        self.assertIn("Evidence Missing", reasons)
+        self.assertNotIn("Evidence Missing", reasons)
         self.assertIn("Activity SF ID Missing", reasons)
         self.assertTrue(FinanceBlockedReasonService.is_blocked(self.staff_activity))
 

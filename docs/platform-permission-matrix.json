@@ -4534,6 +4534,31 @@
   {
    "page_permission": "",
    "required_permissions": [
+    "evidence.review",
+    "payment.act",
+    "planning.view"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "Admin"
+   ],
+   "route": "/api/evidence(?:/|)activity/<str:activity_id>/form",
+   "route_name": "form-document",
+   "view": "apps.evidence.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
     "activity.complete"
    ],
    "role_exclusive": false,
@@ -19723,27 +19748,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 461,
-  "Admin": 1111,
-  "BusinessTransformationOfficer": 242,
-  "CCEO": 585,
-  "CountryDirector": 847,
+  "Accountant": 462,
+  "Admin": 1112,
+  "BusinessTransformationOfficer": 243,
+  "CCEO": 586,
+  "CountryDirector": 848,
   "HumanResources": 330,
-  "ImpactAssessment": 716,
+  "ImpactAssessment": 717,
   "MfiLoanOfficer": 138,
   "MfiPartnerAdmin": 141,
-  "PartnerAdmin": 239,
-  "PartnerFieldOfficer": 239,
-  "Program Lead": 695,
-  "ProjectCoordinator": 489,
-  "RegionalProgramLead": 356,
+  "PartnerAdmin": 240,
+  "PartnerFieldOfficer": 240,
+  "Program Lead": 696,
+  "ProjectCoordinator": 490,
+  "RegionalProgramLead": 357,
   "RegionalVicePresident": 430
  },
  "summary": {
   "page_keys_declared": 186,
   "page_keys_in_navigation": 203,
-  "routes_guarded": 1208,
-  "routes_total": 1407,
+  "routes_guarded": 1209,
+  "routes_total": 1408,
   "routes_unguarded": 199,
   "surfaces_no_role_can_reach": 0
  },

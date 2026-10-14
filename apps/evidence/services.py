@@ -575,6 +575,39 @@ def _try_office_to_pdf(record: EvidenceRecord) -> bool:
 PAGE_EXTENSIONS = (".pdf", ".jpg", ".jpeg", ".png", ".webp")
 
 
+def check_pages(files) -> None:
+    """Hold every page to what one upload is held to before pages are joined:
+    its type, its size, and the malware scan."""
+    for upload in files:
+        name = getattr(upload, "name", "upload")
+        head = upload.read(512)
+        upload.seek(0, os.SEEK_END)
+        size = upload.tell()
+        upload.seek(0)
+        ext = assert_safe_upload(
+            original_name=name,
+            mime_type=getattr(upload, "content_type", "") or "",
+            head=head,
+            size=size,
+        )
+        if ext not in PAGE_EXTENSIONS:
+            raise BadRequest(
+                f"{name}: each page must be a PDF or a photo (JPG, PNG, WebP)."
+            )
+        with tempfile.NamedTemporaryFile(suffix=ext) as tmp:
+            for chunk in upload.chunks():
+                tmp.write(chunk)
+            tmp.flush()
+            scan_status, _threat_name = _scan_upload(tmp.name)
+        upload.seek(0)
+        if scan_status == "infected":
+            raise BadRequest(
+                f"{name} was flagged as a security threat by the malware scanner "
+                "and the upload was rejected. Contact IT if you believe this is "
+                "an error."
+            )
+
+
 def record_pages_upload(*, principal, activity_id: str, kind: str, files) -> dict:
     """Upload one evidence form from one or more files (owner, 2026-09-26).
 
@@ -602,35 +635,7 @@ def record_pages_upload(*, principal, activity_id: str, kind: str, files) -> dic
         raise NotFoundError("Activity not found")
     _assert_activity_in_scope(activity, principal)
 
-    for upload in files:
-        name = getattr(upload, "name", "upload")
-        head = upload.read(512)
-        upload.seek(0, os.SEEK_END)
-        size = upload.tell()
-        upload.seek(0)
-        ext = assert_safe_upload(
-            original_name=name,
-            mime_type=getattr(upload, "content_type", "") or "",
-            head=head,
-            size=size,
-        )
-        if ext not in PAGE_EXTENSIONS:
-            raise BadRequest(
-                f"{name}: each page must be a PDF or a photo (JPG, PNG, WebP)."
-            )
-        with tempfile.NamedTemporaryFile(suffix=ext) as tmp:
-            for chunk in upload.chunks():
-                tmp.write(chunk)
-            tmp.flush()
-            scan_status, threat_name = _scan_upload(tmp.name)
-        upload.seek(0)
-        if scan_status == "infected":
-            raise BadRequest(
-                f"{name} was flagged as a security threat by the malware scanner "
-                "and the upload was rejected. Contact IT if you believe this is "
-                "an error."
-            )
-
+    check_pages(files)
     merged, count = pages.merge_pages(files)
     label = {"visit_form": "Visit Form", "attendance_form": "Attendance"}.get(
         kind, kind.replace("_", " ").title()

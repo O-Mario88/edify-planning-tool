@@ -321,7 +321,9 @@ class IaDashboardShellTest(IaShellFixture):
         # partner's, not Kenya's.
         self.assertEqual(kpis["waiting"], 2)
         self.assertEqual(kpis["overdue"], 1)
-        self.assertEqual(kpis["evidence_ready"], 1)
+        # UPLOAD-OFF (owner, 2026-10-13): nothing waits on a file, so all that
+        # is waiting is ready for review. It was 1, the row with a file.
+        self.assertEqual(kpis["evidence_ready"], 2)
         self.assertEqual(kpis["sf_queue"], 1)
         self.assertEqual(kpis["returned_open"], 1)
         self.assertEqual(kpis["unmatched_ssa"], 1)
@@ -384,7 +386,12 @@ class IaQueueDrilldownTest(IaShellFixture):
         self.assertTrue(items)
         for params, count_key, expected in (
             ({"age": "overdue"}, "overdue", {self.staff_work.id}),
-            ({"evidence": "ready"}, "evidence_ready", {self.fresh_work.id}),
+            # Every waiting row is ready (UPLOAD-OFF, owner 2026-10-13).
+            (
+                {"evidence": "ready"},
+                "evidence_ready",
+                {self.staff_work.id, self.fresh_work.id},
+            ),
             ({"sf_id": "missing"}, "sf_queue", {self.completed_no_sf.id}),
         ):
             with self.subTest(params=params):

@@ -5,13 +5,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 ## Summary
 
 - Routed product surfaces: **931**
-- All registered routes: **1407**
-- API routes: **363**
+- All registered routes: **1408**
+- API routes: **364**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **694**
+- Shared component templates: **695**
 - Full pages: **270**
 - Partials and drawers: **334**
 - Permission-gated surfaces: **914**

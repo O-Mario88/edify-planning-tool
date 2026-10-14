@@ -3038,7 +3038,7 @@ def special_projects_my_plan_view(request):
                 "Purpose",
                 "Partner",
                 "Status",
-                "Evidence",
+                # UPLOAD-OFF (owner, 2026-10-13): "Evidence",
                 "Finance",
             ]
         )
@@ -3056,7 +3056,7 @@ def special_projects_my_plan_view(request):
                     row["purpose"],
                     row["partner"],
                     row["status"],
-                    row["evidence"],
+                    # UPLOAD-OFF (owner, 2026-10-13): row["evidence"],
                     row["finance"],
                 ]
             )

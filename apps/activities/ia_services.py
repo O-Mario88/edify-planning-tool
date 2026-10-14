@@ -24,7 +24,14 @@ class EvidenceValidationService:
 
     @staticmethod
     def validate_evidence(activity: Activity) -> tuple[bool, str]:
+        from apps.evidence.form_document import takes_upload
         from apps.evidence.models import EvidenceRecord
+
+        # Staff work is completed with its Salesforce ID and asks for no
+        # file; a partner's is verified from its uploaded form (UPLOAD-OFF,
+        # owner 2026-10-13 and 2026-10-14).
+        if not takes_upload(activity):
+            return True, "No file is asked for: completed with its Salesforce ID."
 
         evidence = EvidenceRecord.objects.filter(
             activity_id=activity.id, quarantined=False
@@ -431,10 +438,13 @@ def _assert_verifiable(activity) -> None:
     # vary by type (apps/evidence/requirements.py), and a blanket rule would
     # refuse types the platform never asks evidence of.
     if activity.activity_type in ("core_visit", "core_training"):
+        from apps.evidence.form_document import takes_upload
         from apps.evidence.models import EvidenceRecord
 
+        # A partner's Core work only (UPLOAD-OFF: staff work asks for no file).
         if (
-            EvidenceRecord.objects.filter(
+            takes_upload(activity)
+            and EvidenceRecord.objects.filter(
                 activity_id=activity.id, quarantined=False
             ).count()
             == 0

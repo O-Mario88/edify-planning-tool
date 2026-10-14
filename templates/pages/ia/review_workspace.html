@@ -238,7 +238,7 @@ Click to Expand Image
 </div>
 {% else %}
 <div class="edify-surface p-12 text-center text-slate-400 font-semibold rounded-surface border border-slate-200">
-No evidence uploads available for this activity.
+No files. This activity is completed with its Salesforce ID.
 </div>
 {% endif %}
 </div>
@@ -348,6 +348,8 @@ Absent
 <form id="verify-form" method="POST" action="/ia/verification/{{ act.id }}/verify" class="space-y-3.5">
 {% csrf_token %}
 
+{# UPLOAD-OFF (owner, 2026-10-13): no file is asked for, so the reviewer is not asked to tick that one exists. Remove the comment tags to bring the item back. #}
+{% comment %}UPLOAD-OFF
 <!-- Checkbox item: Evidence -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="evidence_exists" x-model="checklist.evidence_exists" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
@@ -356,13 +358,14 @@ Absent
 <span class="edify-text-caption text-slate-400 block mt-0.5">Physical files/photos uploaded</span>
 </div>
 </label>
+{% endcomment %}
 
 <!-- Checkbox item: Attendance -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="attendance_valid" x-model="checklist.attendance_valid" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Attendance valid</span>
-<span class="edify-text-caption text-slate-400 block mt-0.5">Headcount matches evidence sheet</span>
+<span class="edify-text-caption text-slate-400 block mt-0.5">Headcount matches the Salesforce record</span>
 </div>
 </label>
 

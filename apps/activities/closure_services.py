@@ -338,7 +338,12 @@ class ClosureEligibilityService:
 
         return ClosureFacts(
             activity_executed=executed,
-            evidence_uploaded=fact("evidence"),
+            # Staff work asks for no file, so "Evidence Missing" never holds
+            # it; a partner's still waits on its uploaded form (UPLOAD-OFF,
+            # owner 2026-10-13 and 2026-10-14).
+            evidence_uploaded=(
+                fact("evidence") if activity.delivery_type == "partner" else True
+            ),
             salesforce_id_entered=salesforce_id_entered,
             ia_verified=ia_verified,
             finance_required=finance_required,

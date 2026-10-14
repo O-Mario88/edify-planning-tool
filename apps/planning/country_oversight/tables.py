@@ -196,7 +196,7 @@ DETAILS = (
     C("invited", "Schools Invited", numeric=True),
     C("cost", "Planned Cost (UGX)", numeric=True),
     C("salesforce", "Salesforce ID"),
-    C("evidence", "Evidence"),
+    # UPLOAD-OFF (owner, 2026-10-13): C("evidence", "Evidence"),
     C("ia", "IA Verification"),
     C("payment", "Payment"),
     C("rescheduled", "Times Rescheduled", numeric=True),

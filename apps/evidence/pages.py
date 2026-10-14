@@ -61,8 +61,11 @@ def _is_pdf(upload) -> bool:
     return name.endswith(".pdf") or head.startswith(b"%PDF")
 
 
-def merge_pages(uploads) -> tuple[bytes, int]:
-    """(PDF bytes, page count) for these uploads, in order."""
+def merge_pages(uploads, *, max_pages: int = MAX_PAGES) -> tuple[bytes, int]:
+    """(PDF bytes, page count) for these uploads, in order.
+
+    `max_pages` is the ceiling: one upload's by default; a document opened
+    for reading may pass a higher one (apps.evidence.form_document)."""
     from PIL import Image
     from pypdf import PdfReader, PdfWriter
     from pypdf.errors import PdfReadError
@@ -80,7 +83,7 @@ def merge_pages(uploads) -> tuple[bytes, int]:
                     )
                 for page in reader.pages:
                     pages += 1
-                    if pages > MAX_PAGES:
+                    if pages > max_pages:
                         break
                     writer.add_page(page)
             except PdfReadError as exc:
@@ -95,11 +98,11 @@ def merge_pages(uploads) -> tuple[bytes, int]:
             page.save(buffer, "PDF", resolution=_DPI)
             buffer.seek(0)
             pages += 1
-            if pages <= MAX_PAGES:
+            if pages <= max_pages:
                 writer.add_page(PdfReader(buffer).pages[0])
-        if pages > MAX_PAGES:
+        if pages > max_pages:
             raise BadRequest(
-                f"One upload holds at most {MAX_PAGES} pages; this one has more."
+                f"One form holds at most {max_pages} pages; this one has more."
             )
     if not pages:
         raise BadRequest("None of these files has a page to upload.")

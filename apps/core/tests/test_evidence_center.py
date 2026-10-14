@@ -29,11 +29,17 @@ class EvidenceCenterContractTest(TestCase):
     def test_pending_tab_renders_named_nonempty_action(self):
         response = self.client.get(reverse("frontend:evidence_center"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Upload evidence")
-        self.assertContains(
+        # UPLOAD-OFF (owner, 2026-10-13): the row offered "Upload evidence" in
+        # the upload drawer (hx-get="/activities/<id>/evidence"). There is no
+        # upload now, so it opens the activity.
+        self.assertNotContains(response, "Upload evidence")
+        self.assertNotContains(
             response, f'hx-get="/activities/{self.activity.id}/evidence"'
         )
+        self.assertContains(response, "View details")
+        self.assertContains(response, f'href="/my-plan/{self.activity.id}"')
         self.assertNotContains(response, 'hx-get=""')
+        self.assertNotContains(response, 'href=""')
 
     def test_tabs_are_url_addressable_and_htmx_returns_workspace(self):
         response = self.client.get(

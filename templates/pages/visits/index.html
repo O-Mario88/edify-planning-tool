@@ -47,7 +47,7 @@ Schedule
 <th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Type</th>
 <th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Date</th>
 <th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</th>
-<th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Evidence</th>
+{# UPLOAD-OFF (owner, 2026-10-13): <th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Evidence</th> #}
 <th class="px-4 py-3"></th>
 </tr>
 </thead>
@@ -72,6 +72,7 @@ Schedule
 {{ v.status|status_label }}
 </span>
 </td>
+{% comment %}UPLOAD-OFF (owner, 2026-10-13)
 <td class="px-4 py-3.5" data-label="Evidence">
 {% if v.evidence_status == 'uploaded' or v.evidence_status == 'accepted' %}
 <span class="text-emerald-600 edify-text-caption font-bold"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Submitted</span>
@@ -81,6 +82,7 @@ Schedule
 <span class="text-slate-300 edify-text-caption">—</span>
 {% endif %}
 </td>
+{% endcomment %}
 <td class="px-4 py-3.5 text-right" data-record-action>
 <a href="/my-plan/{{ v.id }}" class="opacity-70 group-hover:opacity-100 focus-visible:opacity-100 edify-text-caption font-bold text-[var(--edify-accent)] hover:underline transition-opacity">View →</a>
 </td>

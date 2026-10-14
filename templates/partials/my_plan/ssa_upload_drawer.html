@@ -26,6 +26,8 @@ class="space-y-4 text-[12px] font-semibold text-slate-600"
 {% endfor %}
 </div>
 
+{# UPLOAD-OFF (owner, 2026-10-13): the completed SSA form is no longer uploaded; the scores are the record. Remove the comment tags to bring the file input back. #}
+{% comment %}UPLOAD-OFF
 <div class="space-y-1">
 <label for="ssa_file" class="block edify-text-caption font-semibold text-slate-600">Completed SSA form</label>
 <input
@@ -36,10 +38,11 @@ accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv" capture="environment"
 class="w-full edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
 >
 </div>
+{% endcomment %}
 
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-<button type="submit" class="btn btn-primary h-8">Upload SSA</button>
+<button type="submit" class="btn btn-primary h-8">Save SSA scores</button>
 </div>
 </form>
 {% endblock %}

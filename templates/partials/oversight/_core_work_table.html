@@ -30,7 +30,7 @@ completed work at the bottom, with the Salesforce ID and Evidence (owner,
           <th scope="col" class="min-w-[110px]">Planned Date</th>
           <th scope="col" class="min-w-[130px]">Delivered by</th>
           <th scope="col" class="min-w-[130px]">Salesforce ID</th>
-          <th scope="col" class="min-w-[160px]">Evidence</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="min-w-[160px]">Evidence</th> #}
           <th scope="col" class="min-w-[120px]">Status</th>
         </tr>
       </thead>
@@ -47,7 +47,7 @@ completed work at the bottom, with the Salesforce ID and Evidence (owner,
           <td data-label="Status"><span class="cluster-session-status" data-status-tone="{{ item.session_tone }}">{{ item.session_status }}</span></td>
         </tr>
         {% empty %}
-        <tr><td colspan="9">No core visits or trainings on {% if owner_name %}{{ owner_name }}'s{% else %}this{% endif %} My Plan for {% firstof plan_period_label "this financial year" %}.</td></tr>
+        <tr><td colspan="8">No core visits or trainings on {% if owner_name %}{{ owner_name }}'s{% else %}this{% endif %} My Plan for {% firstof plan_period_label "this financial year" %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>

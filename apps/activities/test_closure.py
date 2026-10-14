@@ -55,18 +55,21 @@ class ActivityClosureSystemTest(TestCase):
         )
 
     def test_closure_eligibility_evaluation(self):
-        # Initially, missing: Evidence, Salesforce ID, Accounts Cleared, NetSuite ID, Analytics Published
+        # Initially, missing: Salesforce ID, Accounts Cleared, NetSuite ID,
+        # Analytics Published. Evidence was on this list until the upload was
+        # switched off (UPLOAD-OFF, owner 2026-10-13): it never holds a
+        # closure now.
         checklist, blockers = ClosureEligibilityService.evaluate(self.activity)
 
         self.assertTrue(checklist.activity_executed)
-        self.assertFalse(checklist.evidence_uploaded)
+        self.assertTrue(checklist.evidence_uploaded)
         self.assertFalse(checklist.salesforce_id_entered)
         self.assertFalse(checklist.accounts_cleared)
         self.assertFalse(checklist.netsuite_id_entered)
 
         # Blocker objects must be generated
         blocking_reasons = [b.blocking_reason for b in blockers]
-        self.assertIn("Evidence Missing", blocking_reasons)
+        self.assertNotIn("Evidence Missing", blocking_reasons)
         self.assertIn("Activity SF ID Missing", blocking_reasons)
         self.assertIn("Accounts not cleared", blocking_reasons)
         self.assertIn("NetSuite ID missing", blocking_reasons)

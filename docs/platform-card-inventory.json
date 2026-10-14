@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 663,
+  "titled_cards": 662,
   "templates": 253,
   "distinct_titles": 631,
   "with_card_key": 13,
-  "untitled_surfaces": 597,
+  "untitled_surfaces": 599,
   "untitled_chrome": 153,
-  "untitled_nested": 192,
-  "untitled_headless": 252,
+  "untitled_nested": 193,
+  "untitled_headless": 253,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 24,
+  "titles_in_several_templates": 23,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -43,10 +43,6 @@
   "danger zone": [
    "templates/pages/admin/user_detail.html",
    "templates/partials/schools/_details.html"
-  ],
-  "evidence": [
-   "templates/pages/ia/partner_review.html",
-   "templates/pages/partner/activity_workroom.html"
   ],
   "message rules": [
    "templates/pages/messages/index.html",
@@ -1771,23 +1767,14 @@
   },
   {
    "template": "templates/pages/ia/partner_review.html",
-   "line": 54,
-   "title": "Evidence",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/partner_review.html",
-   "line": 86,
+   "line": 66,
    "title": "Return history",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": [
     [
-     21,
+     16,
      0
     ]
    ]
@@ -2173,16 +2160,21 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 247,
+   "line": 249,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "ad-card",
-   "branch_path": []
+   "branch_path": [
+    [
+     18,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 290,
+   "line": 291,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -2200,7 +2192,7 @@
   },
   {
    "template": "templates/pages/my_plan/evidence_packet.html",
-   "line": 131,
+   "line": 136,
    "title": "Completeness Checklist",
    "heading_level": 3,
    "has_card_key": false,
