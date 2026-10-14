@@ -1356,18 +1356,39 @@ def _assert_schedule_entitlement(
         assert_staff_may_schedule_visit(school, fy, pool=pool)
 
 
-def _sync_cluster_attendance(activity, school_ids, actor_id="") -> None:
+def _sync_cluster_attendance(
+    activity, school_ids, actor_id="", *, visiting=None, release_absent=False
+) -> list[str]:
     """Mirror the confirmed register into the attendance table.
 
     The array column stays the record the older readers use while they are
     migrated; the rows are what school-level counts join against, because a
     cluster session has no school FK for them to filter on. Written together
     so the two can never disagree about who was in the room.
+
+    ``visiting`` is the register's schools from outside the cluster, as
+    ``{school_id: attended}`` (`_visiting_school_attendance`), or None when the
+    caller's form carries no such list. A visiting school is a guest row: its
+    attendance is recorded against the session and never makes it a member.
+    With None the guest rows are left exactly as they are — this used to
+    reset every guest to "did not attend", because a guest's id is not a
+    member's and so was never among the confirmed ids (2026-10-14).
+
+    ``release_absent`` is set by completion: a school that was invited and is
+    left unticked goes back to unplanned (owner, 2026-10-14: "unchecked ...
+    reset back to unplanned and untrained so the staff can plan for them
+    afresh"). Its invitation row is removed, as un-inviting it or closing the
+    school does, so it no longer reads as scheduled for this training, holds
+    no place under the training ceiling and, for a Core School, gives its
+    package slot back (the credit pass on the activity's save). The session
+    keeps the head count it was planned and priced with
+    (`Activity.expected_participants` is not re-derived here). Returns the
+    schools released.
     """
     from apps.activities.models import ClusterActivityAttendance
 
     if not activity.cluster_id:
-        return
+        return []
     confirmed = set(school_ids or [])
     rows = {
         r.school_id: r
@@ -1390,12 +1411,82 @@ def _sync_cluster_attendance(activity, school_ids, actor_id="") -> None:
             row.attended = True
             row.recorded_by = actor_id or row.recorded_by
             row.save(update_fields=["attended", "recorded_by", "updated_at"])
+    for school_id, attended in (visiting or {}).items():
+        row = rows.get(school_id)
+        if row is None:
+            # Only a school that came is written. One added to the list and
+            # left unticked was never part of the session; it has no row,
+            # exactly as a member nobody invited has none. A guest brings its
+            # own head counts, unknown here, so they stay blank rather than
+            # borrowing the cluster's per-school figures.
+            if attended:
+                ClusterActivityAttendance.objects.create(
+                    activity=activity,
+                    school_id=school_id,
+                    invited=False,
+                    attended=True,
+                    is_guest=True,
+                    recorded_by=actor_id or "",
+                )
+        elif row.attended != attended:
+            row.attended = attended
+            row.recorded_by = actor_id or row.recorded_by
+            row.save(update_fields=["attended", "recorded_by", "updated_at"])
     # An unticked school keeps its invitation as the record that it was asked.
-    stale = [r for sid, r in rows.items() if sid not in confirmed and r.attended]
+    stale = [
+        r
+        for sid, r in rows.items()
+        if sid not in confirmed
+        and r.attended
+        and not (r.is_guest and (visiting is None or sid in visiting))
+    ]
     if stale:
         ClusterActivityAttendance.objects.filter(id__in=[r.id for r in stale]).update(
             attended=False
         )
+    if not release_absent:
+        return []
+    absent = [
+        r
+        for sid, r in rows.items()
+        if r.invited and not r.is_guest and sid not in confirmed
+    ]
+    if absent:
+        ClusterActivityAttendance.objects.filter(id__in=[r.id for r in absent]).delete()
+    return sorted(r.school_id for r in absent)
+
+
+def _visiting_school_attendance(activity, visiting_ids, attended_ids):
+    """The register's visiting schools, as ``{school_id: attended}``.
+
+    None when the form sent no visiting list (``visiting_ids`` is None), so
+    `_sync_cluster_attendance` leaves the guest rows alone. Otherwise every id
+    must be an operating school in the directory and not a member of this
+    cluster: a member is ticked as a member, and a stray id posted by a
+    browser cannot credit a school nobody can see.
+    """
+    if visiting_ids is None or not activity.cluster_id:
+        return None
+    from apps.schools.lifecycle_service import active_schools
+
+    wanted = list(
+        dict.fromkeys(str(i).strip() for i in (visiting_ids or []) if str(i).strip())
+    )
+    if not wanted:
+        return {}
+    known = dict(active_schools().filter(id__in=wanted).values_list("id", "cluster_id"))
+    unknown = [i for i in wanted if i not in known]
+    if unknown:
+        raise BadRequest(
+            "A school on the register is not in the directory, or has closed. "
+            "Reload the drawer and add it again."
+        )
+    attended = {str(i).strip() for i in (attended_ids or [])}
+    return {
+        school_id: school_id in attended
+        for school_id in wanted
+        if str(known[school_id] or "") != str(activity.cluster_id)
+    }
 
 
 def _cluster_member_school_ids(activity, raw_ids) -> list[str]:
@@ -4044,9 +4135,30 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         a.attended_school_ids = _cluster_member_school_ids(
             a, data.get("attendedSchoolIds")
         )
-        _sync_cluster_attendance(
-            a, a.attended_school_ids, str(getattr(principal, "id", "") or "")
+        released = _sync_cluster_attendance(
+            a,
+            a.attended_school_ids,
+            str(getattr(principal, "id", "") or ""),
+            visiting=_visiting_school_attendance(
+                a, data.get("visitingSchoolIds"), data.get("attendedSchoolIds")
+            ),
+            release_absent=True,
         )
+        if released:
+            from apps.audit.services import log as audit_log
+
+            audit_log(
+                action="activity.absent_schools_released",
+                subject_kind="Activity",
+                subject_id=str(a.id),
+                actor_id=str(getattr(principal, "id", "") or ""),
+                actor_role=getattr(principal, "active_role", None),
+                reason=(
+                    "Invited, not ticked as attending at completion: back to "
+                    "unplanned for this training or meeting."
+                ),
+                payload={"schoolIds": released},
+            )
         # Actuals — entered by the person who delivered, never copied from
         # the planned fields (§9.2). Absent keys leave stored values alone so
         # staged flows that submit in stages don't erase earlier entries.
@@ -4337,7 +4449,12 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
             a, data.get("attendedSchoolIds")
         )
         _sync_cluster_attendance(
-            a, a.attended_school_ids, str(getattr(principal, "id", "") or "")
+            a,
+            a.attended_school_ids,
+            str(getattr(principal, "id", "") or ""),
+            visiting=_visiting_school_attendance(
+                a, data.get("visitingSchoolIds"), data.get("attendedSchoolIds")
+            ),
         )
         if a.status in STARTABLE_STATUSES:
             a.status = "completion_started"
