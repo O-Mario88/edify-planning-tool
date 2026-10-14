@@ -2296,16 +2296,12 @@ SIDEBAR_ITEMS = [
                 "url": "/partner/assigned-activities",
                 "page_key": "partner_assignments",
             },
-            # UPLOAD-OFF (owner, 2026-10-13): the partner's Evidence page lists
-            # uploads and there are none to make, so its link is switched off.
-            # The page and its permission stay (the permission also guards the
-            # partner's activity page).
-            # {
-            #     "label": "Evidence",
-            #     "url": "/partner/evidence",
-            #     "page_key": "partner_evidence",
-            #     "icon_key": "uploads",
-            # },
+            {
+                "label": "Evidence",
+                "url": "/partner/evidence",
+                "page_key": "partner_evidence",
+                "icon_key": "uploads",
+            },
             {
                 "label": "Completed & Payments",
                 "url": "/partner/completed",

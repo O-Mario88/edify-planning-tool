@@ -7,11 +7,9 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 max-w-[1200px] mx-auto space-y-5">
 
-  {% page_header eyebrow="Partner Portal" title="Evidence" description="Files uploaded for your activities before uploads were switched off. Work is now completed with its visit or training ID." %}
+  {% page_header eyebrow="Partner Portal" title="Evidence" description="Uploads for your completed activities — work without evidence cannot be verified or paid." %}
   {% endpage_header %}
 
-  {# UPLOAD-OFF (owner, 2026-10-13): nothing waits on an upload any more, so the list of work missing evidence and its Upload Evidence buttons are switched off. Remove the comment tags to bring them back. #}
-  {% comment %}UPLOAD-OFF
   {% if pending %}
   <div class="rounded-surface border border-amber-200 bg-amber-50/60 p-4 space-y-2">
     <p class="text-[13px] font-bold text-amber-800">{{ pending|length }} completed activit{{ pending|length|pluralize:"y,ies" }} missing evidence</p>
@@ -27,7 +25,6 @@
     </div>
   </div>
   {% endif %}
-  {% endcomment %}
 
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Recent Uploads</h2>
@@ -46,7 +43,7 @@
       {% endfor %}
     </div>
     {% else %}
-    {% include "components/empty_state.html" with title="No files" message="Uploads are switched off: work is completed with its visit or training ID." %}
+    {% include "components/empty_state.html" with title="No evidence uploaded yet" message="Evidence you upload for completed activities will appear here." %}
     {% endif %}
   </div>
 

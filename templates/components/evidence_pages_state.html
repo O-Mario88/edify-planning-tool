@@ -23,6 +23,14 @@ the data over a field connection and in the outbox. The browser draws it
 upright (EXIF orientation applies by default), on white. Any failure sends
 the original.
 
+A form that is already uploaded (`held`, set by the drawer) takes a file
+only as another page of it (owner, 2026-10-14: "ask the partner if it is a
+different page from the one they have uploaded if they say yes then allow if
+they say no then reject the second upload"). Files picked while `held` wait
+on that answer: `answer` is 'yes' once the partner says it is a different
+page, and saying it is the same page empties the list. `asking` is true
+while the question is open, so the form can hold its Submit.
+
 Inline rather than Alpine.data in static/js/alpine-components.js: the shell
 script budget (apps/system_health/test_frontend_budgets.py) has no room, and
 a <script> in the drawer would run after Alpine has initialised the form.
@@ -33,6 +41,22 @@ The text below sits inside a double-quoted attribute: no double quotes.
   busy: false,
   notice: '',
   maxPages: 20,
+  held: false,
+  answer: '',
+  formName: 'form',
+  get asking() {
+    return this.held && this.pages.length > 0 && this.answer !== 'yes';
+  },
+  differentPage() {
+    this.answer = 'yes';
+    this.notice = '';
+  },
+  samePage() {
+    this.pages = [];
+    this.answer = '';
+    this.sync();
+    this.notice = 'The ' + this.formName + ' is already uploaded, so the same page is not uploaded again.';
+  },
   async add(event) {
     const input = event.target;
     const picked = Array.from(input.files || []);
@@ -63,6 +87,7 @@ The text below sits inside a double-quoted attribute: no double quotes.
   remove(index) {
     this.pages.splice(index, 1);
     this.notice = '';
+    if (!this.pages.length) this.answer = '';
     this.sync();
   },
   page(file) {

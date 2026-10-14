@@ -245,23 +245,25 @@ def invoice_basis(principal, kind: str, anchor: date, instalment: str) -> dict:
 
 
 def _completed_with_evidence(activities) -> set[str]:
-    """The ids of the activities that are completed: IA has verified them.
+    """The ids of the activities that are completed: IA has verified them and,
+    where the work is the partner's own, its uploaded form is on record. One
+    query for the whole period.
 
-    UPLOAD-OFF (owner, 2026-10-13): it also asked for at least one evidence
-    file on record. Work is completed with its Salesforce ID alone now, so
-    verification is the whole test; the file test is commented out below.
-    """
-    cleared = [a.id for a in activities if a.status in _CLEARED_STATUSES]
-    return set(cleared)
-    # from apps.evidence.models import EvidenceRecord
-    #
-    # if not cleared:
-    #     return set()
-    # return set(
-    #     EvidenceRecord.objects.filter(activity_id__in=cleared, quarantined=False)
-    #     .values_list("activity_id", flat=True)
-    #     .distinct()
-    # )
+    Work a partner only facilitates is staff work, completed with its
+    Salesforce ID and asked for no file (UPLOAD-OFF, owner 2026-10-13); the
+    partner's own is verified from its upload (owner, 2026-10-14)."""
+    from apps.evidence.models import EvidenceRecord
+
+    cleared = [a for a in activities if a.status in _CLEARED_STATUSES]
+    if not cleared:
+        return set()
+    own = [a.id for a in cleared if a.delivery_type == "partner"]
+    evidenced = set(
+        EvidenceRecord.objects.filter(activity_id__in=own, quarantined=False)
+        .values_list("activity_id", flat=True)
+        .distinct()
+    )
+    return {a.id for a in cleared if a.delivery_type != "partner" or a.id in evidenced}
 
 
 def _line_facts(activity) -> dict:
@@ -300,7 +302,8 @@ def submit_invoice(
     if not basis["items"]:
         raise BadRequest(
             "Nothing is invoiceable for that period — the advance may already "
-            "be invoiced, or the work is not yet completed and verified by IA."
+            "be invoiced, or the work is not yet completed with its evidence "
+            "and verified by IA."
         )
     if entered_total not in (None, ""):
         try:

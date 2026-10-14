@@ -2552,6 +2552,7 @@ def _own_ia_partner_activity(request, activity_id):
 def ia_partner_review_view(request, activity_id):
     """§10.2 the review page: plan vs actual, evidence, history — and the two
     workflow decisions, Return and Complete."""
+    from apps.evidence import form_document
     from apps.partners.models import Partner, PartnerAssignment
     from apps.evidence.models import EvidenceRecord
     from apps.evidence.requirements import checklist
@@ -2587,6 +2588,9 @@ def ia_partner_review_view(request, activity_id):
             "assignment": assignment,
             "evidence": evidence,
             "evidence_checklist": checklist(a),
+            # The form as one button that opens one PDF (owner, 2026-10-14).
+            "uploaded_form": form_document.uploaded_form(a),
+            "form_name": form_document.form_name(a),
             "history": history,
             "can_decide": can_decide,
             "is_partner_ssa_support": is_partner_ssa_support_activity(a),
@@ -2653,12 +2657,16 @@ def ia_partner_complete_drawer(request, activity_id):
     evidence_count = EvidenceRecord.objects.filter(
         activity_id=a.id, quarantined=False
     ).count()
+    from apps.evidence import form_document
+
     return render(
         request,
         "partials/ia/partner_complete_drawer.html",
         {
             "a": a,
             "evidence_count": evidence_count,
+            "uploaded_form": form_document.uploaded_form(a),
+            "form_name": form_document.form_name(a),
             "today": timezone.localdate(),
             "drawer_size": "md",
         },

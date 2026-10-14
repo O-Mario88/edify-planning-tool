@@ -72,14 +72,15 @@ urlpatterns = [
     # Rendered without user data: the worker precaches it and serves it to
     # any navigation the network cannot answer.
     path("offline", pwa_views.offline, name="offline"),
-    # UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not deleted
-    # ("just comment the code out, we may need it later"). Uncomment the
-    # route to bring it back; its view and template are untouched.
-    # path(
-    #     "offline/evidence-drawer",
-    #     pwa_views.offline_evidence_drawer,
-    #     name="offline_evidence_drawer",
-    # ),
+    # A partner's form is back (owner, 2026-10-14: "Only staff dont need to
+    # upload. partners HAVE to upload because that is how we verify their
+    # work"). These routes were commented out on 2026-10-13 (UPLOAD-OFF);
+    # the views refuse staff work, which is completed with its Salesforce ID.
+    path(
+        "offline/evidence-drawer",
+        pwa_views.offline_evidence_drawer,
+        name="offline_evidence_drawer",
+    ),
     # Auth
     path("login", auth_views.login_view, name="login"),
     path(
@@ -1387,19 +1388,20 @@ urlpatterns = [
         my_plan_views.partner_ssa_completion_action,
         name="partner_ssa_completion_action",
     ),
-    # UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not deleted
-    # ("just comment the code out, we may need it later"). Uncomment the
-    # route to bring it back; its view and template are untouched.
-    # path(
-    #     "activities/<str:activity_id>/evidence",
-    #     my_plan_views.evidence_upload_drawer_view,
-    #     name="evidence_upload_drawer",
-    # ),
-    # path(
-    #     "activities/<str:activity_id>/evidence/action",
-    #     my_plan_views.evidence_upload_action,
-    #     name="evidence_upload_action",
-    # ),
+    # A partner's form is back (owner, 2026-10-14: "Only staff dont need to
+    # upload. partners HAVE to upload because that is how we verify their
+    # work"). These routes were commented out on 2026-10-13 (UPLOAD-OFF);
+    # the views refuse staff work, which is completed with its Salesforce ID.
+    path(
+        "activities/<str:activity_id>/evidence",
+        my_plan_views.evidence_upload_drawer_view,
+        name="evidence_upload_drawer",
+    ),
+    path(
+        "activities/<str:activity_id>/evidence/action",
+        my_plan_views.evidence_upload_action,
+        name="evidence_upload_action",
+    ),
     path(
         "activities/<str:activity_id>/evidence/detail",
         my_plan_views.evidence_packet_view,

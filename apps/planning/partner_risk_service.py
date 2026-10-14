@@ -164,8 +164,7 @@ def _delivery_overdue(item, today: date) -> PartnerRisk | None:
     return PartnerRisk(
         key="partner_delivery_overdue",
         severity=CRITICAL if days > 14 else HIGH,
-        # UPLOAD-OFF (owner, 2026-10-13): was "...with no evidence yet".
-        reason=f"Scheduled for {item.scheduled_date:%-d %b} and not handed in yet ({days} days).",
+        reason=f"Scheduled for {item.scheduled_date:%-d %b} with no evidence yet ({days} days).",
         responsible=item.partner_name or "Partner",
         recommended_action="Ask the partner to deliver or reschedule",
         route="/partner-oversight/",
@@ -205,11 +204,9 @@ def _evidence_overdue(item, today: date) -> PartnerRisk | None:
     return PartnerRisk(
         key="partner_evidence_overdue",
         severity=HIGH,
-        # UPLOAD-OFF (owner, 2026-10-13): was "...no evidence has been
-        # uploaded." / "Ask the partner to upload the evidence pack".
-        reason="Delivery began but the work has not been handed in.",
+        reason="Delivery began but no evidence has been uploaded.",
         responsible=item.partner_name or "Partner",
-        recommended_action="Ask the partner to hand the work in",
+        recommended_action="Ask the partner to upload the evidence pack",
         route="/partner-oversight/",
         due_date=item.scheduled_date + timedelta(days=EVIDENCE_GRACE_DAYS),
     )

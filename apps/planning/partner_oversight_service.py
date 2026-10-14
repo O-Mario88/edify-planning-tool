@@ -1309,8 +1309,7 @@ def _set_next_action(item) -> None:
     elif item.evidence_status in ("", "none"):
         item.next_action_owner, item.next_action = (
             item.partner_name or "Partner",
-            # UPLOAD-OFF (owner, 2026-10-13): was "Execute and upload evidence".
-            "Deliver and hand in the work",
+            "Execute and upload evidence",
         )
     else:
         item.next_action_owner, item.next_action = (
@@ -1503,7 +1502,7 @@ EXPORT_HEADER = (
     "Assigned On",
     "Scheduled For",
     "Activity Status",
-    # UPLOAD-OFF (owner, 2026-10-13): "Evidence",
+    "Evidence",
     "Salesforce",
     "Payment",
     "Planned Cost (UGX)",
@@ -1546,7 +1545,7 @@ def export_rows(items):
             item.assignment_date.isoformat() if item.assignment_date else "",
             item.scheduled_date.isoformat() if item.scheduled_date else "",
             item.activity_status,
-            # UPLOAD-OFF (owner, 2026-10-13): item.evidence_status,
+            item.evidence_status,
             item.salesforce_status,
             item.payment_status,
             item.planned_cost if item.has_cost else "",

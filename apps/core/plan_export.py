@@ -10,10 +10,11 @@ Budget status, Verification, Salesforce ID, Evidence, Status."
 
 Those are My Plan's own tables with a District Type beside the District, so
 an export reads like the page it was taken from. The Evidence column the
-owner named left every sheet on 2026-10-13 with the upload ("remove the upload
-and use strictly visit ID and training IDs ... removing upload evidence column
-from the tables as well"); it is commented out below, marked UPLOAD-OFF.
-Owner, 2026-10-12, later:
+owner named left the staff sheets on 2026-10-13 with the staff upload ("remove
+the upload and use strictly visit ID and training IDs ... removing upload
+evidence column from the tables as well"); it is commented out below, marked
+UPLOAD-OFF. Partner Schedules keeps it: a partner's work is verified from its
+uploaded form (owner, 2026-10-14). Owner, 2026-10-12, later:
 "put visits on its sheet, group training on its sheet, cluster meetings on
 its sheet, partner schedules on its sheet and the budget for those selected
 activities in the last sheet and the budget should be fetched direct from
@@ -102,7 +103,9 @@ PARTNER_HEADERS = (
     "Budget Status",
     "Verification",
     "Salesforce ID",
-    # UPLOAD-OFF (owner, 2026-10-13): "Evidence",
+    # A partner's work is verified from its uploaded form (owner, 2026-10-14),
+    # so this sheet alone keeps the column.
+    "Evidence",
     "Status",
 )
 OTHER_HEADERS = (
@@ -171,13 +174,16 @@ def row(kind: str, **fields) -> dict:
     return {"kind": kind, **fields}
 
 
-def _tail(r: dict) -> list:
+def _tail(r: dict, *, evidence: bool = False) -> list:
+    """The cells every sheet ends with. `evidence` adds the Evidence cell: a
+    partner's work is verified from its uploaded form, staff work asks for
+    none (UPLOAD-OFF, owner 2026-10-13 and 2026-10-14)."""
     return [
         _number(r.get("cost")),
         _text(r.get("budget_status")),
         _text(r.get("verification")),
         _text(r.get("salesforce_id")),
-        # UPLOAD-OFF (owner, 2026-10-13): _text(r.get("evidence")),
+        *([_text(r.get("evidence"))] if evidence else []),
         _text(r.get("status")),
     ]
 
@@ -225,7 +231,7 @@ def _partner(r: dict) -> list:
         _text(r.get("training")),
         _text(r.get("intervention")),
         _number(r.get("participants")),
-        *_tail(r),
+        *_tail(r, evidence=True),
     ]
 
 

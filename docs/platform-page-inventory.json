@@ -165,7 +165,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2030,
+      "bytes": 2161,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -266,7 +266,7 @@
         "/activities/<str:activity_id>",
         "/activities/<str:activity_id>/attendance",
         "/activities/<str:activity_id>/complete",
-        "/activities/<str:activity_id>/facilitator"
+        "/activities/<str:activity_id>/evidence"
       ],
       "findings": [],
       "forms": 0,
@@ -318,9 +318,12 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4447,
+      "bytes": 5405,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/activities/<str:activity_id>/evidence",
+        "/offline/evidence-drawer"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -802,6 +805,36 @@
       "tables": 0,
       "template": "components/table_pager.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4297,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>/evidence",
+        "/activities/<str:activity_id>/partner-ssa-complete",
+        "/ia/partner-evidence/<str:activity_id>/",
+        "/ia/partner-evidence/<str:activity_id>/complete-drawer",
+        "/partner/activities/<str:activity_id>/evidence"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "Uploaded Form Link",
+      "purpose": "Reusable uploaded form link interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "components/uploaded_form_link.html",
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -9761,7 +9794,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3575,
+      "bytes": 3714,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/partner-evidence/<str:activity_id>/complete-drawer"
@@ -10546,39 +10579,6 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6488,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/pl/review-queue",
-        "/planning-monitor/",
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
-      ],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 3,
-      "kind": "application-partial",
-      "name": "Completion Reviews Register",
-      "purpose": "Reusable completion reviews register interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/my_plan/completion_reviews_register.html",
-      "variants": [
-        "warning",
-        "{{ row.evidence_tone }}",
-        "{{ row.wait_tone }}"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
       "bytes": 1723,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -10705,9 +10705,11 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9174,
+      "bytes": 10565,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/activities/<str:activity_id>/evidence"
+      ],
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -10724,7 +10726,6 @@
       "tables": 0,
       "template": "partials/my_plan/evidence_drawer.html",
       "variants": [
-        "info",
         "success",
         "warning"
       ]
@@ -10949,9 +10950,11 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7659,
+      "bytes": 7897,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/offline/evidence-drawer"
+      ],
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -10967,7 +10970,6 @@
       "tables": 0,
       "template": "partials/my_plan/offline_evidence_drawer.html",
       "variants": [
-        "info",
         "warning"
       ]
     },
@@ -10977,7 +10979,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4876,
+      "bytes": 5017,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/partner-ssa-complete"
@@ -11024,7 +11026,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5893,
+      "bytes": 6336,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -11199,7 +11201,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1676,
+      "bytes": 1674,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/salesforce-id"
@@ -12280,7 +12282,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7418,
+      "bytes": 6686,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -12290,7 +12292,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Execution Workspace",
       "purpose": "Reusable execution workspace interface primitive",
@@ -12401,7 +12403,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8788,
+      "bytes": 8809,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12498,7 +12500,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7211,
+      "bytes": 7232,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12553,12 +12555,12 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5801,
+      "bytes": 4700,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 3,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": "Partner Verify Drawer",
       "purpose": "Reusable partner verify drawer interface primitive",
@@ -12578,7 +12580,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7557,
+      "bytes": 7578,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12607,7 +12609,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 7896,
+      "bytes": 7782,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -15203,7 +15205,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3228,
+      "bytes": 3152,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -22721,6 +22723,207 @@
       ],
       "route": "/activities/<str:activity_id>/complete/action",
       "route_name": "complete_activity_action",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.8,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.evidence_upload_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/my_plan/evidence_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /activities/{{ act.id }}/evidence/action"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-103AEF5887",
+      "page_title": "Evidence Upload Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Yes, a different page",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate evidence upload drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/activities/<str:activity_id>/evidence",
+      "route_name": "evidence_upload_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/activities/{{ act.id }}/evidence/action"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": true,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/evidence_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.evidence_upload_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-FCDBCAD3AE",
+      "page_title": "Evidence Upload Action",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Evidence Upload Action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate evidence upload action within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/activities/<str:activity_id>/evidence/action",
+      "route_name": "evidence_upload_action",
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
@@ -58636,10 +58839,7 @@
     },
     {
       "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [
-        "/api/evidence/{{ e.id }}/file",
-        "/api/evidence/{{ e.id }}/file?download=1"
-      ],
+      "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
@@ -71175,6 +71375,85 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.pwa_views",
+      "backend_view": "apps.frontend.views.pwa_views.offline_evidence_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/my_plan/offline_evidence_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:unmapped"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /activities/__EDIFY_ACTIVITY_ID__/evidence/action"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8FC9361881",
+      "page_title": "Offline Evidence Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "",
+      "primary_action": "0\">Submit",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The upload drawer without signal (owner, 2026-09-26: \"make the upload drawer open offline too\"): precached by the worker beside the offline page and served for /activities/<id>/evidence when the network fails, with the tapped activity's id put in.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [],
+      "route": "/offline/evidence-drawer",
+      "route_name": "offline_evidence_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/activities/__EDIFY_ACTIVITY_ID__/evidence/action"
+      ],
+      "services_and_models": [],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/offline_evidence_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.hr_views",
@@ -73525,7 +73804,6 @@
       "services_and_models": [
         "apps.activities.models",
         "apps.activities.services",
-        "apps.evidence.models",
         "apps.partners.models"
       ],
       "shared_layout": [
@@ -73607,7 +73885,6 @@
       "services_and_models": [
         "apps.activities.models",
         "apps.activities.services",
-        "apps.evidence.models",
         "apps.partners.models"
       ],
       "shared_layout": [
@@ -73757,7 +74034,7 @@
       "permission_key": "partner_oversight",
       "primary_action": "Partner Verify Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "The Partner's submission, and the Salesforce ID that confirms it.",
+      "purpose": "The form the Partner uploaded, and the Salesforce ID that confirms it.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -73777,7 +74054,6 @@
       "services_and_models": [
         "apps.activities.models",
         "apps.activities.services",
-        "apps.evidence.models",
         "apps.partners.models"
       ],
       "shared_layout": [
@@ -73859,7 +74135,6 @@
       "services_and_models": [
         "apps.activities.models",
         "apps.activities.services",
-        "apps.evidence.models",
         "apps.partners.models"
       ],
       "shared_layout": [
@@ -74487,7 +74762,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-523407557E",
-      "page_title": "Complete \u00b7 \u00b7 Edify",
+      "page_title": "Evidence \u00b7 \u00b7 Edify",
       "page_type": "record-detail",
       "per_page_css": [],
       "permission_key": "partner_evidence",
@@ -74675,7 +74950,7 @@
       "permission_key": "partner_evidence",
       "primary_action": "Partner Activity Submit",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "\u00a79.4 Submit to IA \u2014 the one authoritative gate (`complete`), with actuals and the visit or training ID when the partner has it (IA enters it at confirmation otherwise). No file: UPLOAD-OFF, owner 2026-10-13.",
+      "purpose": "\u00a79.4 Submit Evidence to IA \u2014 the one authoritative gate (`complete`), with actuals and no Salesforce ID (IA enters that at confirmation).",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -78434,7 +78709,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.pl_queue_view",
       "card_count": 0,
@@ -78445,12 +78720,14 @@
         "test:referenced-by-automated-test",
         "permission:pl_review_queue"
       ],
-      "filters": "none",
+      "filters": "canvas-level shared filter bar",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "shared-page-header-component",
       "htmx_endpoints": [
+        "GET {{ queue_url }}/{{ row.id }}/drawer",
+        "GET {{ queue_url }}/{{ row.id }}/return-drawer",
         "GET {{ autoload_drawer }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -78477,7 +78754,9 @@
       "route": "/pl/review-queue",
       "route_name": "pl_review_queue",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "{{ queue_url }}"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -78502,13 +78781,13 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-scroll",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -100749,21 +101028,6 @@
         "retryable": true
       },
       {
-        "cron": "daily 17:00 Africa/Nairobi",
-        "cron_kwargs": {
-          "hour": 17,
-          "minute": 0
-        },
-        "description": "Tells each Programme Lead, at the end of the day, how many of their officers' completed activities wait on them to verify; closes the notice from the day before.",
-        "expected_runtime_seconds": 30,
-        "idempotency_note": "Keyed per lead per day (context_id verify-<date>); a re-run on the same day sends nothing.",
-        "idempotent": true,
-        "max_interval_minutes": 1800,
-        "max_retries": 2,
-        "name": "verification_reminders",
-        "retryable": true
-      },
-      {
         "cron": "hourly at :05",
         "cron_kwargs": {
           "minute": 5
@@ -102012,6 +102276,33 @@
       "required_permissions": [],
       "route": "/activities/<str:activity_id>/complete/action",
       "route_name": "complete_activity_action",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_views.evidence_upload_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/activities/<str:activity_id>/evidence",
+      "route_name": "evidence_upload_drawer",
+      "templates": [
+        "partials/my_plan/evidence_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_views.evidence_upload_action",
+      "kind": "action",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/activities/<str:activity_id>/evidence/action",
+      "route_name": "evidence_upload_action",
       "templates": []
     },
     {
@@ -107571,6 +107862,46 @@
       ],
       "route": "/api/evidence(?:/|)activity/<str:activity_id>",
       "route_name": "activity-list",
+      "templates": []
+    },
+    {
+      "callback": "apps.evidence.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "evidence.review",
+        "payment.act",
+        "planning.view"
+      ],
+      "route": "/api/evidence(?:/|)activity/<str:activity_id>/form",
+      "route_name": "form-document",
+      "templates": []
+    },
+    {
+      "callback": "apps.evidence.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "activity.complete"
+      ],
+      "route": "/api/evidence(?:/|)upload",
+      "route_name": "upload",
       "templates": []
     },
     {
@@ -117445,6 +117776,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.pwa_views.offline_evidence_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/offline/evidence-drawer",
+      "route_name": "offline_evidence_drawer",
+      "templates": [
+        "partials/my_plan/offline_evidence_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.hr_views.onboarding_view",
       "kind": "page",
       "methods": [
@@ -122001,39 +122346,39 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 605,
+    "accessibility_contract_pass": 607,
     "activity_states": 24,
-    "all_routes": 1403,
-    "api_routes": 362,
+    "all_routes": 1408,
+    "api_routes": 364,
     "component_templates": 695,
     "full_pages": 270,
-    "mobile_contract_pass": 605,
-    "nonvisual_actions": 287,
+    "mobile_contract_pass": 607,
+    "nonvisual_actions": 288,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 619,
+      "interaction-fragment": 622,
       "operational-queue": 156,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 47
     },
-    "partials_and_drawers": 332,
-    "permission_gated": 912,
+    "partials_and_drawers": 334,
+    "permission_gated": 914,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 928,
-    "scheduled_jobs": 38,
+    "routed_surfaces": 931,
+    "scheduled_jobs": 37,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 605,
-    "test_referenced": 828,
-    "theme_contract_pass": 605
+    "tablet_contract_pass": 607,
+    "test_referenced": 831,
+    "theme_contract_pass": 607
   }
 }

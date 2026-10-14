@@ -164,16 +164,14 @@ class PartnerConfirmationAuthorityTest(TestCase):
         activity.refresh_from_db()
         self.assertEqual(activity.status, "awaiting_ia_verification")
 
-    def test_nobody_can_upload_evidence_for_the_partners_work(self):
-        """UPLOAD-OFF (owner, 2026-10-13): the monitor was refused (403) at
-        the upload; the upload route is switched off for everyone now."""
+    def test_the_monitor_still_cannot_upload_the_partners_evidence(self):
         activity = self._activity()
         self.client.force_login(self.monitor)
         response = self.client.post(
             f"/activities/{activity.id}/evidence/action",
             {"evidence_kind": "visit_form"},
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 403)
 
     def test_the_detail_page_offers_the_monitor_the_salesforce_door(self):
         activity = self._activity()

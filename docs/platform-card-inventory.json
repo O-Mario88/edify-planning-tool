@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 663,
+  "titled_cards": 662,
   "templates": 253,
   "distinct_titles": 632,
   "with_card_key": 13,
-  "untitled_surfaces": 597,
+  "untitled_surfaces": 599,
   "untitled_chrome": 153,
-  "untitled_nested": 192,
-  "untitled_headless": 252,
+  "untitled_nested": 193,
+  "untitled_headless": 253,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
   "ambiguous_titles": 1
@@ -43,10 +43,6 @@
   "danger zone": [
    "templates/pages/admin/user_detail.html",
    "templates/partials/schools/_details.html"
-  ],
-  "evidence": [
-   "templates/pages/ia/partner_review.html",
-   "templates/pages/partner/activity_workroom.html"
   ],
   "message rules": [
    "templates/pages/messages/index.html",
@@ -1767,28 +1763,14 @@
   },
   {
    "template": "templates/pages/ia/partner_review.html",
-   "line": 56,
-   "title": "Evidence",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     15,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/ia/partner_review.html",
-   "line": 89,
+   "line": 66,
    "title": "Return history",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": [
     [
-     22,
+     16,
      0
     ]
    ]
@@ -2265,7 +2247,7 @@
   },
   {
    "template": "templates/pages/partner/activity_workroom.html",
-   "line": 76,
+   "line": 74,
    "title": "Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2306,7 +2288,7 @@
   },
   {
    "template": "templates/pages/partner/evidence.html",
-   "line": 32,
+   "line": 29,
    "title": "Recent Uploads",
    "heading_level": 2,
    "has_card_key": false,

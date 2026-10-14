@@ -61,8 +61,8 @@ RETURNED_STATUSES = frozenset(("returned", "returned_by_pl", "returned_by_ia"))
 LISTS = (
     ("overdue", "Past date, not delivered"),
     ("missing_salesforce", "Delivered, missing the Salesforce ID"),
-    # UPLOAD-OFF (owner, 2026-10-13): no form is asked for, so no list of
-    # work missing one. Uncomment with the upload.
+    # UPLOAD-OFF (owner, 2026-10-13): this monitor counts staff work, which
+    # is asked for no form, so there is no list of work missing one.
     # ("missing_evidence", "Delivered, missing the form"),
     ("awaiting_ia", "Awaiting IA verification"),
     ("returned", "Returned for correction"),
@@ -426,8 +426,8 @@ def execution_monitor(
         if is_delivered:
             person.delivered += 1
             sf_ok = bool(salesforce.get(activity_id))
-            # UPLOAD-OFF (owner, 2026-10-13): delivered work is complete with
-            # its Salesforce ID alone; the form half is always met. It read:
+            # UPLOAD-OFF (owner, 2026-10-13): delivered staff work is complete
+            # with its Salesforce ID alone; the form half is always met. It read:
             # kinds = evidence.get(activity_id, set())
             # ev_ok = expected_evidence(activity_type)[0] in kinds
             ev_ok = True

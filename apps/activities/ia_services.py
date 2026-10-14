@@ -13,7 +13,7 @@ from apps.activities.models import (
 from apps.core.enums import (
     ActivityStatus,
     VerificationStatus,
-    EvidenceStatus,  # noqa: F401 - UPLOAD-OFF: read by the commented-out check
+    EvidenceStatus,
     PaymentStatus,
 )
 from apps.core.exceptions import BadRequest
@@ -24,29 +24,32 @@ class EvidenceValidationService:
 
     @staticmethod
     def validate_evidence(activity: Activity) -> tuple[bool, str]:
-        # UPLOAD-OFF (owner, 2026-10-13): an activity is completed with its visit ID or
-        # training ID alone, so no file is looked for and the check passes.
-        # Uncomment to bring the file check back.
-        # from apps.evidence.models import EvidenceRecord
-        #
-        # evidence = EvidenceRecord.objects.filter(
-        #     activity_id=activity.id, quarantined=False
-        # )
-        # if not evidence.exists():
-        #     return False, "Evidence missing: No evidence records uploaded."
-        #
-        # # Check if any evidence is in returned or rejected status
-        # rejected = evidence.filter(
-        #     status__in=[EvidenceStatus.RETURNED, EvidenceStatus.REJECTED]
-        # )
-        # if rejected.exists():
-        #     return (
-        #         False,
-        #         f"Evidence returned/rejected: {rejected.count()} file(s) require correction.",
-        #     )
-        #
-        # return True, "Evidence exists and is accepted."
-        return True, "No file is asked for: completed with its Salesforce ID."
+        from apps.evidence.form_document import takes_upload
+        from apps.evidence.models import EvidenceRecord
+
+        # Staff work is completed with its Salesforce ID and asks for no
+        # file; a partner's is verified from its uploaded form (UPLOAD-OFF,
+        # owner 2026-10-13 and 2026-10-14).
+        if not takes_upload(activity):
+            return True, "No file is asked for: completed with its Salesforce ID."
+
+        evidence = EvidenceRecord.objects.filter(
+            activity_id=activity.id, quarantined=False
+        )
+        if not evidence.exists():
+            return False, "Evidence missing: No evidence records uploaded."
+
+        # Check if any evidence is in returned or rejected status
+        rejected = evidence.filter(
+            status__in=[EvidenceStatus.RETURNED, EvidenceStatus.REJECTED]
+        )
+        if rejected.exists():
+            return (
+                False,
+                f"Evidence returned/rejected: {rejected.count()} file(s) require correction.",
+            )
+
+        return True, "Evidence exists and is accepted."
 
 
 class AttendanceValidationService:
@@ -435,16 +438,18 @@ def _assert_verifiable(activity) -> None:
     # vary by type (apps/evidence/requirements.py), and a blanket rule would
     # refuse types the platform never asks evidence of.
     if activity.activity_type in ("core_visit", "core_training"):
-        # UPLOAD-OFF (owner, 2026-10-13): Core work is verified on its Salesforce ID, without a file.
-        # from apps.evidence.models import EvidenceRecord
-        #
-        # if (
-        #     EvidenceRecord.objects.filter(
-        #         activity_id=activity.id, quarantined=False
-        #     ).count()
-        #     == 0
-        # ):
-        #     raise BadRequest("IA Verification failed: no evidence files uploaded.")
+        from apps.evidence.form_document import takes_upload
+        from apps.evidence.models import EvidenceRecord
+
+        # A partner's Core work only (UPLOAD-OFF: staff work asks for no file).
+        if (
+            takes_upload(activity)
+            and EvidenceRecord.objects.filter(
+                activity_id=activity.id, quarantined=False
+            ).count()
+            == 0
+        ):
+            raise BadRequest("IA Verification failed: no evidence files uploaded.")
         if not activity.focus_intervention:
             raise BadRequest("IA Verification failed: focus intervention not recorded.")
 

@@ -172,9 +172,10 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
 
         self._post(f"/api/activities/{activity_id}/start-completion", {}, 200)
         # UPLOAD-OFF (owner, 2026-10-13: "remove the upload and use strictly
-        # visit ID and training IDs to complete the activities"). The visit
-        # form was uploaded here and accepted by the Program Lead; the upload
-        # door is closed now and the Salesforce ID completes the visit.
+        # visit ID and training IDs to complete the activities"; 2026-10-14:
+        # "Only staff dont need to upload"). The visit form was uploaded here
+        # and accepted by the Program Lead; the door refuses staff work now
+        # and the Salesforce ID completes the visit.
         self._upload_is_switched_off(activity_id)
 
         completed = self._post(
@@ -288,9 +289,10 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
             },
             format="multipart",
         )
-        self.assertEqual(response.status_code, 404, response.content[:200])
+        self.assertEqual(response.status_code, 400, response.content[:200])
+        self.assertIn(b"No form is uploaded for it", response.content)
 
-    # Kept, unused, for the day the upload is switched back on (UPLOAD-OFF).
+    # Kept, unused, for the day staff upload again (UPLOAD-OFF).
     def _upload_evidence(self, activity_id: str) -> dict:
         response = self.client.post(
             "/api/evidence/upload",

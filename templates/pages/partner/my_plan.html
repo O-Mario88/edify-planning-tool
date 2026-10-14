@@ -73,11 +73,11 @@
                   </form>
                   {% endif %}
                   {% if "continue" in row.actions %}
-                  {# UPLOAD-OFF (owner, 2026-10-13): this opened the upload drawer (hx-get="/activities/{{ row.a.id }}/evidence", "Continue Evidence"); the work is finished on its own page now. #}
-                  <a class="row-menu__item" role="menuitem" href="/partner/activities/{{ row.a.id }}/evidence">Continue</a>
+                  <button type="button" class="row-menu__item" role="menuitem"
+                          hx-get="/activities/{{ row.a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML">Continue Evidence</button>
                   {% endif %}
                   {% if "correct" in row.actions %}
-                  <a class="row-menu__item" role="menuitem" href="/partner/activities/{{ row.a.id }}/evidence">Correct and Resubmit</a>
+                  <a class="row-menu__item" role="menuitem" href="/partner/activities/{{ row.a.id }}/evidence">Correct Returned Evidence</a>
                   {% endif %}
                   {% if "reschedule" in row.actions %}
                   {% comment %} The platform's one reschedule drawer — the

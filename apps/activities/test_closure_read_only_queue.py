@@ -49,12 +49,14 @@ def legacy_facts(activity) -> dict:
         "cancelled",
         "deferred",
     ]
-    # UPLOAD-OFF (owner, 2026-10-13): no file is asked for, so the evidence
-    # check is always met. It read:
-    # evidence = EvidenceRecord.objects.filter(
-    #     activity=activity, quarantined=False
-    # ).exists()
-    evidence = True
+    # UPLOAD-OFF (owner, 2026-10-13 and 2026-10-14): staff work asks for no
+    # file, so its evidence check is always met; a partner's is verified from
+    # its uploaded form. It read the records for every activity.
+    evidence = (
+        EvidenceRecord.objects.filter(activity=activity, quarantined=False).exists()
+        if activity.delivery_type == "partner"
+        else True
+    )
     sf = bool(activity.salesforce_activity_id) or sf_kind_for_activity(activity) is None
     ia = activity.status in ["ia_verified", "closed", "accountant_confirmed"]
     finance = (

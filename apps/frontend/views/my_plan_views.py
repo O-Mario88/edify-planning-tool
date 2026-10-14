@@ -109,10 +109,15 @@ def _forbid_staff_on_partner_activity(request, a, *, allow_confirmer=False):
 
 
 def _partner_ssa_completion_context(a: Activity) -> dict:
+    from apps.evidence import form_document
     from apps.evidence.models import EvidenceRecord
 
     return {
         "a": a,
+        # The visit form the scores are keyed from, as one button that opens
+        # one PDF (owner, 2026-10-14).
+        "uploaded_form": form_document.uploaded_form(a),
+        "form_name": form_document.form_name(a),
         "score_fields": [
             {
                 "code": code,
@@ -1940,6 +1945,7 @@ def pl_review_drawer(request, activity_id):
     """
     from apps.activities.services import sf_kind_for_activity
     from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.evidence import form_document
     from apps.pl_review.services import reviewable_activity
 
     # UPLOAD-OFF (owner, 2026-10-13):
@@ -1998,6 +2004,11 @@ def pl_review_drawer(request, activity_id):
             ],
             "salesforce_kind": salesforce_kind,
             "salesforce_id": salesforce_id,
+            # Staff work asks for no upload now; where an activity still
+            # holds a form from before, or is a partner's, it is offered as
+            # one button that opens one PDF (owner, 2026-10-14: "fix it to
+            # show only one upload").
+            "uploaded_form": form_document.uploaded_form(activity),
             # UPLOAD-OFF (owner, 2026-10-13):
             # "evidence": evidence,
             # "evidence_checklist": checklist(activity),
@@ -2713,6 +2724,17 @@ def evidence_upload_drawer_view(request, activity_id):
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
 
+    # Staff work is completed with its Salesforce ID and takes no upload; a
+    # partner's is verified from its form (owner, 2026-10-14).
+    from apps.evidence import form_document
+
+    if not form_document.takes_upload(a):
+        return refusal_drawer(
+            request,
+            form_document.STAFF_TAKES_NO_UPLOAD,
+            title="No upload for staff work",
+        )
+
     evidence_list = evidence_records_for_activity(activity_id, request.user)
     context = {
         "act": a,
@@ -2725,7 +2747,19 @@ def evidence_upload_drawer_view(request, activity_id):
     from apps.core.scoping import resolve_partner_ids
     from apps.evidence.requirements import checklist as evidence_checklist
 
-    context["evidence_checklist"] = evidence_checklist(a)
+    # Each form is ONE document (owner, 2026-10-14): where it is uploaded
+    # the slot offers it to open, and takes a file only as another page.
+    uploaded = form_document.uploaded_form(a)
+    context["evidence_checklist"] = [
+        {
+            **item,
+            "name": form_document.FORM_NAMES.get(item["kind"], item["label"]),
+            "document": uploaded
+            if item["uploaded"] and uploaded and uploaded["kind"] == item["kind"]
+            else None,
+        }
+        for item in evidence_checklist(a)
+    ]
     # Partners are never asked for a Salesforce ID — IA records it for their
     # work at Confirm Salesforce Entry (§12).
     context["is_partner_viewer"] = bool(resolve_partner_ids(request.user))
@@ -2766,6 +2800,7 @@ def _posted_evidence(request, activity) -> list[tuple[str, list]]:
     `evidence_file_<kind>`, in form order; or one form as `evidence_file`
     with `evidence_kind` (older drawers, and requests the field outbox saved
     before this change)."""
+    from apps.evidence import form_document
     from apps.evidence.services import VALID_KINDS
 
     uploads = []
@@ -2780,9 +2815,15 @@ def _posted_evidence(request, activity) -> list[tuple[str, list]]:
         # What the person selected, else what this activity still needs, else
         # the file's shape. Inference alone can only say "pdf" or "photo",
         # which no requirement asks for.
-        kind = resolve_evidence_kind(
-            legacy[0], activity=activity, asserted=request.POST.get("evidence_kind")
-        )
+        asserted = request.POST.get("evidence_kind")
+        kind = resolve_evidence_kind(legacy[0], activity=activity, asserted=asserted)
+        if asserted not in VALID_KINDS and kind not in form_document.FORM_KINDS:
+            # Nothing is outstanding because the form is already uploaded: a
+            # file sent with no kind (the offline drawer) is that form again,
+            # so the one-document rule decides it (owner, 2026-10-14), rather
+            # than it being filed beside the form as a loose photo.
+            if form_document.form_records(activity, form_document.form_kind(activity)):
+                kind = form_document.form_kind(activity)
         uploads.append((kind, legacy))
     return uploads
 
@@ -2797,13 +2838,21 @@ def evidence_upload_action(request, activity_id):
     if forbidden:
         return forbidden
 
+    # Staff work takes no upload (owner, 2026-10-14: "Only staff dont need to
+    # upload"); it is completed with its Salesforce ID in the Complete drawer.
+    from apps.core.exceptions import BadRequest
+    from apps.evidence import form_document
+
+    if request.method == "POST" and not form_document.takes_upload(a):
+        return error_fragment(
+            BadRequest(form_document.STAFF_TAKES_NO_UPLOAD), status=400
+        )
+
     if request.method == "POST":
         # One Submit saves the drawer (owner, 2026-09-26): each form's pages
         # and, on staff work, the Salesforce ID — so the Evidence and
         # Salesforce ID columns fill in together. The ID is saved first: if
         # an upload then fails, submitting again does not upload twice.
-        from apps.core.exceptions import BadRequest
-
         uploads = _posted_evidence(request, a)
         asks_sf = _asks_salesforce_id(request.user, a)
         sf_id = (request.POST.get("salesforce_id") or "").strip() if asks_sf else ""
@@ -2849,14 +2898,29 @@ def evidence_upload_action(request, activity_id):
                     )
             for kind, files in uploads:
                 # One file, or the pages of one form — photographed or chosen
-                # together — merged into one PDF (owner, 2026-09-26;
-                # apps.evidence.services.record_pages_upload).
-                record_pages_upload(
-                    principal=request.user,
-                    activity_id=activity_id,
-                    kind=kind,
-                    files=files,
-                )
+                # together — merged into one PDF (owner, 2026-09-26). A form
+                # already uploaded takes a file only as another page of it,
+                # when the partner says it is one, and stays one PDF (owner,
+                # 2026-10-14; apps.evidence.form_document.add_form_pages).
+                if kind in form_document.FORM_KINDS:
+                    form_document.add_form_pages(
+                        principal=request.user,
+                        activity_id=activity_id,
+                        kind=kind,
+                        files=files,
+                        another_page="yes"
+                        in (
+                            request.POST.get(f"another_page_{kind}", ""),
+                            request.POST.get("another_page", ""),
+                        ),
+                    )
+                else:
+                    record_pages_upload(
+                        principal=request.user,
+                        activity_id=activity_id,
+                        kind=kind,
+                        files=files,
+                    )
                 audit_log(
                     action="upload_evidence",
                     subject_kind="Activity",
@@ -3463,11 +3527,16 @@ def evidence_center_view(request):
 
     rows = []
     for activity in page_obj.object_list:
-        if active_tab == "pending":
-            # UPLOAD-OFF (owner, 2026-10-13): the row offered "Upload
-            # evidence" in the upload drawer
-            # (f"/activities/{activity.id}/evidence", drawer). There is no
-            # upload, so it opens the activity.
+        if active_tab == "pending" and activity.delivery_type == "partner":
+            # A partner's work is verified from its uploaded form.
+            action = {
+                "label": "Upload evidence",
+                "url": f"/activities/{activity.id}/evidence",
+                "drawer": True,
+            }
+        elif active_tab == "pending":
+            # UPLOAD-OFF (owner, 2026-10-13): staff work asks for no upload,
+            # so the row opens the activity instead of the upload drawer.
             action = {
                 "label": "View details",
                 "url": f"/my-plan/{activity.id}",

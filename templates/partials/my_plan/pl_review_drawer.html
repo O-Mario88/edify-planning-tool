@@ -46,6 +46,13 @@ view, to bring it back.
   {% endif %}
 </section>
 
+{# A form the activity holds, from a partner or from before staff stopped uploading: one button, one PDF (owner, 2026-10-14: "fix it to show only one upload ... no need to show the uploaded image"). #}
+{% if uploaded_form %}
+<section class="space-y-2" aria-label="{{ uploaded_form.name }}" data-uploaded-form-section>
+  <div class="grid">{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>
+</section>
+{% endif %}
+
 {% comment %}UPLOAD-OFF (owner, 2026-10-13)
 <section class="space-y-2" aria-labelledby="uploaded-forms-title" data-uploaded-forms>
   <h3 id="uploaded-forms-title" class="edify-text-caption font-semibold text-slate-600">Uploaded form{{ evidence|length|pluralize }}</h3>
