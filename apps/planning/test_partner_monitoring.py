@@ -578,16 +578,41 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
             headers={"HX-Request": "true"},
         )
 
-    def test_the_verify_drawer_asks_for_the_salesforce_id_and_shows_no_file(self):
-        """UPLOAD-OFF (owner, 2026-10-13): the work is confirmed on its visit
-        or training ID; the file the Partner once uploaded is not listed."""
+    def test_the_verify_drawer_offers_the_form_as_one_button_and_asks_for_the_id(self):
+        """Owner, 2026-10-14: "no need to show the uploaded image, just use
+        the link View Uploaded {visit form} ... in a beautiful button". One
+        button that opens one PDF; no list of the files behind it."""
         body = self.drawer("verify").content.decode()
         self.assertIn('hx-post="/partner-oversight/verify/submit"', body)
+        self.assertEqual(body.count("View Uploaded Visit Form</span>"), 1)
+        self.assertIn(f'href="/api/evidence/activity/{self.activity.id}/form"', body)
         self.assertNotIn("visit.pdf", body)
-        self.assertNotIn("/api/evidence/", body)
+        self.assertNotIn("<img", body)
+        self.assertNotIn("<embed", body)
+        self.assertNotRegex(body, r"/api/evidence/[a-z0-9]+/file")
         self.assertIn('name="salesforce_id"', body)
-        self.assertIn("Visit ID", body)
         self.assertIn("Verify &amp; Confirm", body)
+
+    def test_the_same_form_uploaded_three_times_is_still_one_button(self):
+        """Owner, 2026-10-14: "even if the same document is uploaded 3 tines
+        it will display all the 3. can you fix it to show only one upload"."""
+        from apps.evidence.models import EvidenceRecord
+
+        for _ in range(2):
+            EvidenceRecord.objects.create(
+                activity_id=self.activity.id,
+                kind="visit_form",
+                uri="visit.pdf",
+                original_name="visit.pdf",
+                uploaded_by="partner-user",
+            )
+        self.assertEqual(
+            EvidenceRecord.objects.filter(activity_id=self.activity.id).count(), 3
+        )
+        body = self.drawer("verify").content.decode()
+        self.assertEqual(body.count("View Uploaded Visit Form</span>"), 1)
+        self.assertEqual(body.count("data-uploaded-form="), 1)
+        self.assertNotIn("visit.pdf", body)
 
     def test_verify_and_confirm_confirms_the_work(self):
         response = self.client.post(
@@ -600,49 +625,30 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
         self.assertEqual(self.activity.status, "ia_verified")
         self.assertEqual(self.activity.salesforce_activity_id, "SVE-PM-0001")
 
-    def test_with_no_file_the_work_can_still_be_confirmed_or_returned(self):
-        """UPLOAD-OFF (owner, 2026-10-13): it was "with no evidence there is
-        nothing to confirm, only to return". No file is asked for now, so the
-        drawer offers Verify and Return alike."""
+    def test_with_no_evidence_there_is_nothing_to_confirm_only_to_return(self):
         from apps.evidence.models import EvidenceRecord
 
         EvidenceRecord.objects.filter(activity_id=self.activity.id).delete()
         body = self.drawer("verify").content.decode()
-        self.assertNotIn("data-no-evidence", body)
-        self.assertIn('type="submit"', body)
+        self.assertIn("data-no-evidence", body)
+        self.assertNotIn('type="submit"', body)
         self.assertIn(f"/partner-oversight/return?activity_id={self.activity.id}", body)
-        response = self.client.post(
-            "/partner-oversight/verify/submit",
-            {"activity_id": self.activity.id, "salesforce_id": "SVE-PM-0002"},
-            headers={"HX-Request": "true"},
-        )
-        self.assertEqual(response.status_code, 200, response.content[:300])
-        self.activity.refresh_from_db()
-        self.assertEqual(self.activity.status, "ia_verified")
 
-    def test_the_return_drawer_offers_the_common_reasons_and_none_about_a_file(self):
-        """UPLOAD-OFF (owner, 2026-10-13): "Evidence not uploaded" and "Wrong
-        file uploaded as evidence" led the list; nobody can act on either."""
+    def test_the_return_drawer_offers_the_owners_reasons_first(self):
         body = self.drawer("return").content.decode()
         self.assertIn('hx-post="/partner-oversight/return/submit"', body)
-        self.assertIn("Participants not entered in Salesforce", body)
-        self.assertIn("Activity ID missing or wrong in Salesforce", body)
-        for gone in (
-            "Evidence not uploaded",
-            "Wrong file uploaded as evidence",
-            "Attendance form missing or unreadable",
-            "Evidence missing or unclear",
-        ):
-            self.assertNotIn(gone, body)
+        first = body.index("Evidence not uploaded")
+        self.assertLess(first, body.index("Wrong file uploaded as evidence"))
+        self.assertLess(
+            body.index("Wrong file uploaded as evidence"),
+            body.index("Participants not entered in Salesforce"),
+        )
         self.assertRegex(body, r'<textarea[^>]*name="comment"[^>]*required')
 
     def test_return_needs_a_written_reason(self):
         response = self.client.post(
             "/partner-oversight/return/submit",
-            {
-                "activity_id": self.activity.id,
-                "reasons": ["Participants not entered in Salesforce"],
-            },
+            {"activity_id": self.activity.id, "reasons": ["Evidence not uploaded"]},
             headers={"HX-Request": "true"},
         )
         self.assertEqual(response.status_code, 400)
@@ -655,11 +661,8 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
             "/partner-oversight/return/submit",
             {
                 "activity_id": self.activity.id,
-                "reasons": [
-                    "Activity ID missing or wrong in Salesforce",
-                    "Not a listed reason",
-                ],
-                "comment": "The ID is last term's visit.",
+                "reasons": ["Wrong file uploaded as evidence", "Not a listed reason"],
+                "comment": "The file is last term's visit form.",
             },
             headers={"HX-Request": "true"},
         )
@@ -669,8 +672,8 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
         self.assertEqual(self.activity.ia_verification_status, "returned")
         note = self.activity.pl_review_note
         self.assertTrue(note.startswith("Returned by James (CCEO): "), note)
-        self.assertIn("Activity ID missing or wrong in Salesforce", note)
-        self.assertIn("last term's visit", note)
+        self.assertIn("Wrong file uploaded as evidence", note)
+        self.assertIn("last term's visit form", note)
         self.assertNotIn("Not a listed reason", note)
 
     def test_impact_assessment_returns_on_its_own_status(self):
@@ -678,10 +681,7 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
 
         return_partner_work(
             self.activity.id,
-            {
-                "reasons": ["Participants not entered in Salesforce"],
-                "comment": "Nobody is listed.",
-            },
+            {"reasons": ["Evidence not uploaded"], "comment": "Nothing attached."},
             self.ia_user,
         )
         self.activity.refresh_from_db()

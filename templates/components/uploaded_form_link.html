@@ -1,0 +1,20 @@
+{% comment %}
+The one way an uploaded form is opened (owner, 2026-10-14: "from the verifiers
+side, no need to show the uploaded image, just use the link View Uploaded
+{visit form} or {Training attendance} in a beautiful button which allow them
+to click and open the upload in PDF which can be downloaded").
+
+Context: `form`, from apps.evidence.form_document.uploaded_form: `label`
+("View Uploaded Visit Form" / "View Uploaded Training Attendance") and `url`
+(/api/evidence/activity/<id>/form), which answers the activity's form as ONE
+PDF, however many pages and however many times it was uploaded. It opens in a
+new tab, where the browser's own viewer reads and downloads it; the file is
+never embedded in the page (the site's content security policy refuses it).
+{% endcomment %}
+<a href="{{ form.url }}" target="_blank" rel="noopener"
+   class="btn btn-primary min-h-11 gap-2 justify-center"
+   data-uploaded-form="{{ form.kind }}"
+   aria-label="{{ form.label }} (opens the PDF in a new tab)">
+  <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+  <span>{{ form.label }}</span>
+</a>

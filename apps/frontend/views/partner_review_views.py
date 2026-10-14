@@ -28,20 +28,17 @@ from apps.core.permissions import RolePermissionService, require_page_permission
 #: The two reasons the owner named, then the reasons every other return offers
 #: (apps.activities.return_notes), so a Partner reads one vocabulary whoever
 #: sent the work back.
-#:
-#: UPLOAD-OFF (owner, 2026-10-13): both named an upload nobody can make now,
-#: so neither is offered; a Partner reads the common reasons alone.
 PARTNER_RETURN_REASONS = (
-    # "Evidence not uploaded",
-    # "Wrong file uploaded as evidence",
+    "Evidence not uploaded",
+    "Wrong file uploaded as evidence",
 )
 
 
 def _return_reasons() -> tuple[str, ...]:
-    from apps.activities.return_notes import COMMON_REASONS
+    from apps.activities.return_notes import COMMON_REASONS, FORM_REASONS
 
     return PARTNER_RETURN_REASONS + tuple(
-        r for r in COMMON_REASONS if r not in PARTNER_RETURN_REASONS
+        r for r in (*COMMON_REASONS, *FORM_REASONS) if r not in PARTNER_RETURN_REASONS
     )
 
 
@@ -92,31 +89,26 @@ def _decided(message: str) -> HttpResponse:
 
 @require_page_permission("partner_oversight")
 def partner_verify_drawer_view(request):
-    """The Partner's submission, and the Salesforce ID that confirms it."""
-    from apps.activities.services import sf_kind_for_activity
+    """The form the Partner uploaded, and the Salesforce ID that confirms it.
 
-    # UPLOAD-OFF (owner, 2026-10-13): no file is asked for, so none is read.
-    # from apps.evidence.models import EvidenceRecord
-    # from apps.evidence.requirements import checklist
+    The form is offered as one button that opens one PDF (owner, 2026-10-14:
+    "no need to show the uploaded image, just use the link View Uploaded
+    {visit form} or {Training attendance}"), however many pages it has and
+    however many times it was uploaded."""
+    from apps.evidence import form_document
 
     template = "partials/oversight/partner_verify_drawer.html"
     activity, refusal = _reviewable(request, request.GET.get("activity_id"))
     if activity is None:
         return _refusal(request, template, refusal)
-    # evidence = list(
-    #     EvidenceRecord.objects.filter(
-    #         activity_id=activity.id, quarantined=False
-    #     ).order_by("-created_at")
-    # )
     return render(
         request,
         template,
         {
             "a": activity,
             "partner_name": _partner_name(activity),
-            # "evidence": evidence,
-            # "evidence_checklist": checklist(activity),
-            "salesforce_kind": sf_kind_for_activity(activity),
+            "uploaded_form": form_document.uploaded_form(activity),
+            "form_name": form_document.form_name(activity),
             "drawer_size": "md",
         },
     )

@@ -21,7 +21,7 @@
             <th class="px-5 py-3">Partner</th>
             <th class="px-5 py-3">Activity</th>
             <th class="px-5 py-3">Submitted</th>
-            {# UPLOAD-OFF (owner, 2026-10-13): <th class="px-5 py-3">Evidence</th> #}
+            <th class="px-5 py-3">Evidence</th>
             <th class="px-5 py-3">Salesforce</th>
             <th class="px-5 py-3">Payment</th>
             <th class="px-5 py-3 text-right">Action</th>
@@ -37,7 +37,7 @@
             <td class="px-5 py-3.5 text-slate-600 max-xl:px-0" data-label="Partner">{% partner_link row.partner_name row.partner_id %}{% if row.partner_officer %}<p class="edify-text-caption text-slate-400 mt-0.5">{{ row.partner_officer }}</p>{% endif %}</td>
             <td class="px-5 py-3.5 text-slate-600 max-xl:px-0" data-label="Activity">{{ row.a.get_activity_type_display }}</td>
             <td class="px-5 py-3.5 text-slate-600 tabular-nums max-xl:px-0" data-label="Submitted">{% if row.submitted %}{{ row.submitted|date:"d M Y" }}{% if row.age_days %} <span class="edify-text-caption {% if row.age_days > 5 %}text-rose-600{% else %}text-slate-400{% endif %}">({{ row.age_days }}d)</span>{% endif %}{% else %}&mdash;{% endif %}</td>
-            {# UPLOAD-OFF (owner, 2026-10-13): <td class="px-5 py-3.5 max-xl:px-0" data-label="Evidence"><span class="edify-status-text" data-edify-tone="{% if row.evidence_complete %}success{% else %}warning{% endif %}">{{ row.evidence_label }}</span></td> #}
+            <td class="px-5 py-3.5 max-xl:px-0" data-label="Evidence"><span class="edify-status-text" data-edify-tone="{% if row.evidence_complete %}success{% else %}warning{% endif %}">{{ row.evidence_label }}</span></td>
             <td class="px-5 py-3.5 max-xl:px-0" data-label="Salesforce"><span class="edify-status-text" data-edify-tone="neutral">Pending</span></td>
             <td class="px-5 py-3.5 max-xl:px-0" data-label="Payment"><span class="edify-status-text" data-edify-tone="neutral">Not Yet Eligible</span></td>
             <td class="px-5 py-3.5 text-right max-xl:px-0 max-xl:border-t max-xl:border-slate-100 max-xl:py-3" data-record-action>
@@ -45,7 +45,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr class="max-xl:block"><td colspan="8" class="px-5 py-12 text-center text-[13px] font-semibold text-slate-400 max-xl:block">Nothing awaiting review — partner submissions land here the moment they are sent.</td></tr>
+          <tr class="max-xl:block"><td colspan="9" class="px-5 py-12 text-center text-[13px] font-semibold text-slate-400 max-xl:block">Nothing awaiting review — partner submissions land here the moment they are sent.</td></tr>
           {% endfor %}
         </tbody>
       </table>

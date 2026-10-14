@@ -242,6 +242,52 @@ class ColumnValuesTest(_Fixture):
         self.assertEqual(columns[hidden.id], empty)
         self.assertNotIn(None, columns)
 
+    def test_a_partners_work_still_reads_its_uploaded_form(self):
+        """Owner, 2026-10-14: "Only staff dont need to upload. partners HAVE
+        to upload because that is how we verify their work"."""
+        visit = self._act(D1, delivery_type="partner", salesforce_activity_id="SVE-77")
+        self._evidence(visit, "visit_form")
+        training = self._act(D1, atype="cluster_training", delivery_type="partner")
+        self._evidence(training, "photo")
+        bare = self._act(D1, delivery_type="partner")
+        hidden = self._act(D1, delivery_type="partner")
+        self._evidence(hidden, "visit_form", quarantined=True)
+        columns = completion_columns(
+            [(a.id, a.activity_type) for a in (visit, training, bare, hidden)]
+        )
+        self.assertEqual(
+            columns[visit.id],
+            {
+                "salesforce_id": "SVE-77",
+                "evidence_label": "Visit Form",
+                "salesforce_ok": True,
+                "evidence_ok": True,
+            },
+        )
+        # A file that is there is named, though it is not the form.
+        self.assertEqual(
+            (
+                columns[training.id]["evidence_label"],
+                columns[training.id]["evidence_ok"],
+            ),
+            ("Photo", False),
+        )
+        empty = {
+            "salesforce_id": "",
+            "evidence_label": "",
+            "salesforce_ok": False,
+            "evidence_ok": False,
+        }
+        self.assertEqual(columns[bare.id], empty)
+        self.assertEqual(columns[hidden.id], empty)
+        # Verified, but the form is not in: not complete, and says so.
+        self.assertEqual(
+            completion_gap(
+                "ia_verified", {"salesforce_ok": True, **{"evidence_ok": False}}
+            ),
+            MISSING_EVIDENCE,
+        )
+
     def test_annotate_sets_the_columns_on_items(self):
         visit = self._act(D1, salesforce_activity_id="SVE-9")
         items = [
@@ -387,7 +433,7 @@ class OversightOrderTest(_Fixture):
                 school_name=school,
             )
 
-        # Submitted to IA with the Salesforce ID: complete.
+        # Submitted to IA with the Salesforce ID and the visit form: complete.
         delivered = self._act(
             D1,
             status="awaiting_ia_verification",
@@ -395,8 +441,7 @@ class OversightOrderTest(_Fixture):
             salesforce_activity_id="SVE-8",
         )
         self._evidence(delivered, "visit_form")
-        # Handed in without a Salesforce ID: not complete, and waiting on the
-        # reviewer who enters it, so the row names nothing as missing.
+        # Submitted without either half: not complete, and says so.
         bare = self._act(D1, status="awaiting_ia_verification", delivery_type="partner")
         items = [
             item(
@@ -420,16 +465,21 @@ class OversightOrderTest(_Fixture):
             ["returned", "bare", "early", "late", "undated", "done"],
         )
         by_key = {i.partner_assignment_id: i for i in items}
-        self.assertEqual(by_key["bare"].completion_gap, "")
+        self.assertEqual(by_key["bare"].completion_gap, MISSING_BOTH)
         self.assertFalse(by_key["bare"].is_complete)
         self.assertEqual(by_key["done"].salesforce_id, "SVE-8")
 
 
 class TemplateTest(SimpleTestCase):
     """Every planned activities table draws Salesforce ID just before
-    Status, from the one shared cell partial, and pins its actions. The
-    Evidence heading that sat between them is commented out with the upload
-    (UPLOAD-OFF, owner 2026-10-13), never live."""
+    Status, from the one shared cell partial, and pins its actions. On the
+    staff tables the Evidence heading that sat between them is commented out
+    with the staff upload (UPLOAD-OFF, owner 2026-10-13), never live. The
+    partner tables keep it: a partner's work is verified from its uploaded
+    form (owner, 2026-10-14)."""
+
+    #: Tables of partner work, which keep the Evidence column.
+    WITH_EVIDENCE = {"templates/partials/oversight/partner_work_tables.html"}
 
     TABLES = {
         "templates/partials/my_plan/school_visits.html": 1,
@@ -458,21 +508,47 @@ class TemplateTest(SimpleTestCase):
             with self.subTest(path=path):
                 # Template comments are not drawn: read the page without them.
                 live = re.sub(r"\{#.*?#\}", "", source)
-                heads = re.findall(
-                    r">Salesforce ID</th>\s*<th[^>]*>Status</th>",
-                    live,
-                )
-                self.assertEqual(len(heads), count)
-                self.assertNotRegex(live, r"<th[^>]*>Evidence</th>")
-                self.assertEqual(
-                    len(re.findall(r"\{# UPLOAD-OFF[^\n]*>Evidence</th> #\}", source)),
-                    count,
-                )
+                if path in self.WITH_EVIDENCE:
+                    heads = re.findall(
+                        r">Salesforce ID</th>\s*<th[^>]*>Evidence</th>\s*<th[^>]*>Status</th>",
+                        live,
+                    )
+                    self.assertEqual(len(heads), count)
+                else:
+                    heads = re.findall(
+                        r">Salesforce ID</th>\s*<th[^>]*>Status</th>",
+                        live,
+                    )
+                    self.assertEqual(len(heads), count)
+                    self.assertNotRegex(live, r"<th[^>]*>Evidence</th>")
+                    self.assertEqual(
+                        len(
+                            re.findall(
+                                r"\{# UPLOAD-OFF[^\n]*>Evidence</th> #\}", source
+                            )
+                        ),
+                        count,
+                    )
                 if path not in self.UNPINNED:
                     self.assertEqual(
                         source.count("data-pinned-actions"),
                         self.PINNED.get(path, count),
                     )
+
+    def test_only_the_partner_rows_ask_for_the_evidence_cell(self):
+        partner_rows = (
+            "templates/partials/oversight/partner_school_row.html",
+            "templates/partials/oversight/partner_work_row.html",
+            "templates/partials/oversight/partner_core_row.html",
+        )
+        for path in partner_rows:
+            with self.subTest(path=path):
+                self.assertIn("evidence_column=True", (ROOT / path).read_text())
+        for path in self.TABLES:
+            with self.subTest(path=path):
+                self.assertNotIn("evidence_column", (ROOT / path).read_text())
+        cells = (ROOT / "templates/components/completion_cells.html").read_text()
+        self.assertIn("{% if evidence_column %}<td", cells)
 
     def test_the_cells_come_from_one_partial(self):
         rows = [

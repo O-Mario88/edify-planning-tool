@@ -32,8 +32,7 @@ CORE_COLUMNS = [
     "Planned date",
     "Cost",
     "Salesforce ID",
-    # "Evidence" sat here until the upload was switched off (UPLOAD-OFF,
-    # owner 2026-10-13).
+    "Evidence",
     "Status",
     "Actions",
 ]
@@ -151,9 +150,7 @@ class TheCoreTableTest(_CoreTableFixture):
         self.assertIn("Waiting for scheduling from partner", row)
         self.assertIn("UGX 55,000", row, "the Cost Catalogue's Core Partner Visit")
         self.assertRegex(row, r"data-core-support>V2<")
-        # UPLOAD-OFF (owner, 2026-10-13): no Evidence cell on the row.
-        self.assertNotIn("No Evidence Uploaded", row)
-        self.assertIn("Not in SF", row)
+        self.assertIn("No Evidence Uploaded", row)
 
     def test_a_training_waiting_for_the_partner_reads_the_partner_visit_rate(self):
         """An in-school training is priced as a partner school visit at a
@@ -237,17 +234,13 @@ class TheCoreActionsTest(_CoreTableFixture):
         self.assertIn("Waiting for the partner to submit it", row)
         self.assertNotIn('hx-get="/partner-oversight/verify', row)
 
-    def test_submitted_work_is_confirmed_without_a_visit_form(self):
-        """UPLOAD-OFF (owner, 2026-10-13): it was "no visit form, no
-        confirm". Work the Partner has handed in is confirmed on its
-        Salesforce ID, which the confirmer enters in the Verify drawer."""
+    def test_no_visit_form_no_confirm(self):
         handover = self.core_handover()
-        activity = self.schedule(handover, status="awaiting_ia_verification")
+        self.schedule(handover, status="awaiting_ia_verification")
 
         row = self.core_row(self.page(self.cceo_user), handover)
 
-        self.assertIn("data-core-confirm", row)
-        self.assertIn(f"/partner-oversight/verify?activity_id={activity.id}", row)
+        self.assertNotIn("data-core-confirm", row)
 
     def test_withdrawing_gives_the_package_its_visit_back(self):
         from apps.partners import withdrawal_service

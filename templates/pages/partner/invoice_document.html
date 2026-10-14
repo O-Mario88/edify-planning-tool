@@ -56,7 +56,7 @@ Lead it is addressed to and Finance open the same page, and it prints.
       <th scope="col" class="px-3 py-2">Work</th>
       <th scope="col" class="px-3 py-2">Delivered by</th>
       <th scope="col" class="px-3 py-2">Status</th>
-      {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2">Evidence</th> #}
+      <th scope="col" class="px-3 py-2">Evidence</th>
       <th scope="col" class="px-3 py-2 text-right">Cost (UGX)</th>
       <th scope="col" class="px-3 py-2 text-right">Payable (UGX)</th>
     </tr>
@@ -71,7 +71,7 @@ Lead it is addressed to and Finance open the same page, and it prints.
       <td class="px-3 py-2" data-label="Work">{{ line.work }}</td>
       <td class="px-3 py-2" data-label="Delivered by">{{ line.delivered_by|default:"—" }}</td>
       <td class="px-3 py-2" data-label="Status"><span class="edify-status-text" data-edify-tone="{{ line.tone }}">{{ line.status }}</span></td>
-      {# UPLOAD-OFF (owner, 2026-10-13): <td class="px-3 py-2 tabular-nums" data-label="Evidence">{% if line.evidence %}{{ line.evidence }} file{{ line.evidence|pluralize }}{% else %}None yet{% endif %}</td> #}
+      <td class="px-3 py-2 tabular-nums" data-label="Evidence">{% if line.evidence %}{{ line.evidence }} file{{ line.evidence|pluralize }}{% else %}None yet{% endif %}</td>
       <td class="px-3 py-2 text-right tabular-nums" data-label="Cost">{{ line.planned|ugx_amount }}</td>
       <td class="px-3 py-2 text-right tabular-nums font-semibold" data-label="Payable">{{ line.payable|ugx_amount }}</td>
     </tr>
@@ -79,7 +79,7 @@ Lead it is addressed to and Finance open the same page, and it prints.
   </tbody>
   <tfoot>
     <tr class="font-semibold">
-      <td class="px-3 py-2" colspan="7">Total</td>
+      <td class="px-3 py-2" colspan="8">Total</td>
       <td class="px-3 py-2 text-right tabular-nums">{{ doc.invoice.system_total|ugx_amount }}</td>
       <td class="px-3 py-2 text-right tabular-nums">{{ doc.invoice.payable_amount|ugx_amount }}</td>
     </tr>

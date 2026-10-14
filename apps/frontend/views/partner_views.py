@@ -2323,6 +2323,7 @@ def _own_partner_activity(request, activity_id):
 
 @require_page_permission("partner_evidence")
 def partner_activity_workroom_view(request, activity_id):
+    from apps.evidence import form_document
     from apps.evidence.requirements import checklist, evidence_optional
     from apps.activities.services import sf_kind_for_activity
 
@@ -2360,12 +2361,12 @@ def partner_activity_workroom_view(request, activity_id):
         "partner_org": Partner.objects.filter(id=a.assigned_partner_id).first(),
         "evidence": evidence,
         "evidence_checklist": checklist(a),
+        # The form as one button that opens one PDF (owner, 2026-10-14).
+        "uploaded_form": form_document.uploaded_form(a),
+        "form_name": form_document.form_name(a),
         "evidence_is_optional": evidence_optional(a),
         "state": state,
         "is_training_kind": sf_kind_for_activity(a) == "training",
-        # Which ID completes this work: "visit", "training", or None for
-        # work Salesforce does not record (owner, 2026-10-13).
-        "salesforce_kind": sf_kind_for_activity(a),
         "is_visit_kind": a.activity_type in VISIT_TYPES,
         "visit_feedback": visit_feedback,
         "member_schools": member_schools,
@@ -2406,9 +2407,8 @@ def partner_activity_start_action(request, activity_id):
 
 @require_page_permission("partner_evidence")
 def partner_activity_submit_action(request, activity_id):
-    """§9.4 Submit to IA — the one authoritative gate (`complete`), with
-    actuals and the visit or training ID when the partner has it (IA enters it
-    at confirmation otherwise). No file: UPLOAD-OFF, owner 2026-10-13."""
+    """§9.4 Submit Evidence to IA — the one authoritative gate (`complete`),
+    with actuals and no Salesforce ID (IA enters that at confirmation)."""
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
     a = _own_partner_activity(request, activity_id)
@@ -2423,7 +2423,6 @@ def partner_activity_submit_action(request, activity_id):
             a.id,
             {
                 "actualDeliveryDate": request.POST.get("actual_delivery_date") or None,
-                "salesforceId": (request.POST.get("salesforce_id") or "").strip(),
                 "teachersAttended": _num("teachers_attended"),
                 "leadersAttended": _num("leaders_attended"),
                 "otherParticipants": _num("other_participants"),

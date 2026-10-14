@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}Complete · {% firstof a.school.name a.cluster.name "Field Work" %} · Edify{% endblock %}
+{% block title %}Evidence · {% firstof a.school.name a.cluster.name "Field Work" %} · Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 max-w-[1000px] mx-auto space-y-5"
@@ -70,9 +70,7 @@
   </form>
   {% else %}
 
-  {# UPLOAD-OFF (owner, 2026-10-13): work is completed with the visit ID and the training ID alone. The Evidence card is switched off, not deleted; remove the comment tags around it to bring it back. #}
-  {% comment %}UPLOAD-OFF
-  {# Evidence checklist + uploads. #}
+  {% comment %} Evidence checklist + uploads. {% endcomment %}
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4">
     <div class="edify-section">
       <h2 class="edify-section__heading">Evidence</h2>
@@ -90,27 +88,22 @@
     </ul>
     {% endif %}
 
-    {% if evidence %}
-    <ul class="divide-y divide-slate-100 rounded-control border border-slate-100">
-      {% for e in evidence %}
-      <li class="flex items-center justify-between gap-3 px-3 py-2 text-[12px] font-semibold text-slate-600">
-        <span class="truncate">{{ e.original_name }}</span>
-        <span class="edify-text-caption text-slate-400 shrink-0">{{ e.kind }} · {{ e.created_at|date:"d M H:i" }}</span>
-      </li>
-      {% endfor %}
-    </ul>
+    {# One document per form, opened by one button (owner, 2026-10-14); the card used to list every file uploaded. #}
+    {% if uploaded_form %}
+    <div>{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>
     {% endif %}
 
     {% if state != "submitted" and state != "done" %}
-    {# Uploads happen in the ONE shared evidence drawer — the two-form law: Visit Form for school-visit work, Training Attendance for trainings and cluster meetings, both PDF. #}
+    {% comment %} Uploads happen in the ONE shared evidence drawer — the
+    two-form law: Visit Form for school-visit work, Training Attendance for
+    trainings and cluster meetings, both PDF. {% endcomment %}
     <button type="button"
             hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
             class="inline-flex h-8 items-center rounded-control border border-[var(--border-strong)] edify-surface px-4 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)] transition-colors">
-      Upload Evidence
+      {% if uploaded_form %}Add Another Page{% else %}Upload {{ form_name }}{% endif %}
     </button>
     {% endif %}
   </div>
-  {% endcomment %}
 
   {% comment %} §9.2 actuals — partner-entered only. {% endcomment %}
   <form hx-post="/partner/activities/{{ a.id }}/submit-action" hx-target="#workroom-errors" hx-disabled-elt="find button[type=submit]"
@@ -148,16 +141,6 @@
         </div>
         {% endif %}
       </div>
-
-      {% if salesforce_kind %}
-      {# The ID that completes the work (owner, 2026-10-13). Impact Assessment enters it at confirmation when the partner has none. #}
-      <div>
-        <label for="wr-salesforce-id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">{% if salesforce_kind == "training" %}Training ID{% else %}Visit ID{% endif %} <span class="normal-case tracking-normal font-semibold text-slate-400">(if you have it)</span></label>
-        <input id="wr-salesforce-id" name="salesforce_id" type="text" autocomplete="off" maxlength="40"
-               placeholder="{% if salesforce_kind == "training" %}TS-…{% else %}SV-… or SVE-…{% endif %}" value="{{ a.salesforce_activity_id|default:'' }}"
-               class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-      </div>
-      {% endif %}
 
       {% if member_schools %}
       <div>
@@ -200,7 +183,7 @@
     <div class="flex items-center justify-end gap-3">
       <button type="submit" :disabled="submitting"
               class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-4 text-[13px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50">
-        Submit to IA
+        Submit Evidence to IA
       </button>
     </div>
     {% endif %}

@@ -51,39 +51,16 @@
     </div>
 
     <div class="space-y-5">
-      {# UPLOAD-OFF (owner, 2026-10-13): no file is asked for, so the Evidence card shows only for a submission that already holds files from before. Drop this `if` (and its endif) to show it always again. #}
-      {% if evidence %}
       <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
-        <h2 class="edify-section__heading">Evidence</h2>
-        {% if evidence_checklist %}
-        <ul class="space-y-1.5">
-          {% for item in evidence_checklist %}
-          <li class="flex items-center gap-2 text-[13px] font-semibold {% if item.uploaded %}text-emerald-700{% else %}text-rose-600{% endif %}">
-            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full {% if item.uploaded %}bg-emerald-100{% else %}bg-rose-100{% endif %} edify-text-caption font-bold">{% if item.uploaded %}<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}<span class="edify-text-caption font-bold">i</span>{% endif %}</span>
-            {{ item.label }}{% if not item.uploaded %} — missing{% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if evidence %}
-        <ul class="divide-y divide-slate-100 rounded-control border border-slate-100">
-          {% for e in evidence %}
-          <li class="flex items-center justify-between gap-3 px-3 py-2 text-[12px] font-semibold text-slate-600">
-            {% comment %} Open renders the PDF in a new tab; Download saves it. {% endcomment %}
-            <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="truncate font-bold hover:edify-primary-text">{{ e.original_name }}</a>
-            <span class="flex items-center gap-2.5 shrink-0">
-              <span class="edify-text-caption text-slate-400">{{ e.kind|status_label }} · {{ e.created_at|date:"d M H:i" }}</span>
-              <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="edify-text-caption font-bold edify-primary-text hover:underline">Open</a>
-              <a href="/api/evidence/{{ e.id }}/file?download=1" class="edify-text-caption font-bold edify-primary-text hover:underline">Download</a>
-            </span>
-          </li>
-          {% endfor %}
-        </ul>
+        <h2 class="edify-section__heading">{{ form_name }}</h2>
+        {# One button that opens one PDF (owner, 2026-10-14); the card used to list every file uploaded, the same one three times if it was uploaded three times. #}
+        {% if uploaded_form %}
+        <div class="grid">{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>
+        <p class="edify-text-caption text-slate-500">Opens the uploaded form as one PDF in a new tab, where it can be read and downloaded.</p>
         {% else %}
-        <p class="text-[13px] font-semibold text-rose-600">No evidence files on this submission.</p>
+        <p class="text-[13px] font-semibold text-rose-600" data-no-evidence>No {{ form_name }} on this submission.</p>
         {% endif %}
       </div>
-      {% endif %}
 
       {% if a.pl_review_note or history %}
       <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">

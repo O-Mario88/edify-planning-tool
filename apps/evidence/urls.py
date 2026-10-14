@@ -3,10 +3,16 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # UPLOAD-OFF (owner, 2026-10-13): no new files are taken. Files already
-    # stored are still read through the routes below. Uncomment to bring the
-    # upload back.
-    # path("upload", views.EvidenceUploadView.as_view(), name="upload"),
+    # A partner's form (owner, 2026-10-14: "partners HAVE to upload because
+    # that is how we verify their work"). Staff work takes no upload: the view
+    # refuses it. This route was commented out on 2026-10-13 (UPLOAD-OFF) and
+    # is back for partner work.
+    path("upload", views.EvidenceUploadView.as_view(), name="upload"),
+    path(
+        "activity/<str:activity_id>/form",
+        views.EvidenceFormDocumentView.as_view(),
+        name="form-document",
+    ),
     path(
         "activity/<str:activity_id>",
         views.EvidenceActivityListView.as_view(),

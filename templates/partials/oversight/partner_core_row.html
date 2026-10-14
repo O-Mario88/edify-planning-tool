@@ -38,7 +38,7 @@ unscheduled) and Resolve Exception on a hand-back. `row_id` is
   <td data-label="Purpose of Assignment">{{ item.purpose_label|default:"—" }}</td>
   <td data-label="Planned date" data-planned-date>{% if item.activity_date %}{{ item.activity_date|date:"j M Y" }}{% elif item.stage == "awaiting_schedule" %}<span class="edify-text-muted" data-waiting-for-partner>Waiting for scheduling from partner</span>{% else %}—{% endif %}</td>
   <td data-label="Cost" class="text-right tabular-nums whitespace-nowrap" data-core-cost>{% if item.display_cost is not None %}<span{% if item.cost_is_rate %} title="Core Partner Visit rate from the Cost Catalogue — what the partner's scheduling prices this visit at"{% endif %}>UGX {{ item.display_cost|intcomma }}</span>{% elif item.is_returned %}—{% else %}<span class="edify-text-muted">Rate not set</span>{% endif %}</td>
-  {% include "components/completion_cells.html" with row=item %}
+  {% include "components/completion_cells.html" with row=item evidence_column=True %}
   <td data-label="Status"><span class="partner-plan-table__status">
     {% if item.completion_gap %}<span class="partner-status-chip" data-tone="warning" data-completion-gap>{{ item.completion_gap }}</span>{% else %}
     <span class="partner-status-chip" data-tone="{{ item.status_tone }}" data-status="{{ item.delivery_phase }}"

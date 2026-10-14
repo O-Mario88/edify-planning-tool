@@ -545,42 +545,39 @@ def compute_next_action(a, today) -> dict:
             "description": "In Progress",
         }
 
-    # UPLOAD-OFF (owner, 2026-10-13): there is no upload step. Work that is
-    # begun and not yet handed in is completed with its visit or training ID.
-    # # 4. Completed but no evidence -> Upload Evidence
-    # if a.evidence_status == "none" and a.status in _WORKED_STATUSES:
-    #     return {
-    #         "text": "Upload Evidence",
-    #         "action": "evidence",
-    #         # (Written joined so the link-literal check does not read a
-    #         # commented-out path as a live one.)
-    #         "url": "".join(("/activities/", a.id, "/evidence")),
-    #         "description": "Evidence missing",
-    #     }
+    # Staff work asks for no file; a partner's is verified from its uploaded
+    # form (UPLOAD-OFF, owner 2026-10-13 and 2026-10-14).
+    uploads = a.delivery_type == "partner"
+
+    # 4. Begun, nothing uploaded -> a partner uploads the form
+    if uploads and a.evidence_status == "none" and a.status in _WORKED_STATUSES:
+        return {
+            "text": "Upload Evidence",
+            "action": "evidence",
+            "url": f"/activities/{a.id}/evidence",
+            "description": "Evidence missing",
+        }
+    # 4b. Staff work begun and not handed in -> complete it with its ID
     if (
-        a.evidence_status == "none"
+        not uploads
+        and a.evidence_status == "none"
         and a.status in _WORKED_STATUSES
         and a.status != "completed"
     ):
         return {
             "text": "Complete Activity",
             "action": "complete",
-            "url": (
-                f"/partner/activities/{a.id}/evidence"
-                if a.delivery_type == "partner"
-                else f"/activities/{a.id}/complete"
-            ),
+            "url": f"/activities/{a.id}/complete",
             "description": "Enter the Salesforce ID to complete",
         }
+    # The step before the ID: the form is in (a partner's), or none is asked
+    # for (staff work).
+    form_step_met = a.evidence_status == "uploaded" or (
+        not uploads and a.evidence_status == "none"
+    )
 
-    # 5. No Activity SF ID -> Enter Activity SF ID. With the upload switched
-    # off (owner, 2026-10-13) this no longer waits for a file: it was
-    # `a.evidence_status == "uploaded"`.
-    if (
-        a.status in _WORKED_STATUSES
-        and a.evidence_status in ("none", "uploaded")
-        and not a.salesforce_activity_id
-    ):
+    # 5. Evidence uploaded but no Activity SF ID -> Enter Activity SF ID
+    if a.status in _WORKED_STATUSES and form_step_met and not a.salesforce_activity_id:
         return {
             "text": "Enter Activity SF ID",
             "action": "sf_id",
@@ -589,12 +586,7 @@ def compute_next_action(a, today) -> dict:
         }
 
     # 5.5 Ready to Submit for Review
-    if (
-        a.status in _WORKED_STATUSES
-        # UPLOAD-OFF (owner, 2026-10-13): was `== "uploaded"`.
-        and a.evidence_status in ("none", "uploaded")
-        and a.salesforce_activity_id
-    ):
+    if a.status in _WORKED_STATUSES and form_step_met and a.salesforce_activity_id:
         ssa_done = True
         if a.activity_type in [
             "baseline_ssa_visit",
@@ -2182,24 +2174,27 @@ def get_frontend_context(
                 }
             )
 
-        # UPLOAD-OFF (owner, 2026-10-13): no completion waits on a file any more.
-        # # 2. Awaiting Evidence
-        # awaiting_evidence_acts = qs.filter(
-        #     status__in=COMPLETED_WORK_STATUSES, evidence_status="none"
-        # ).select_related("school", "school__district", "cluster")[:3]
-        # for ae in awaiting_evidence_acts:
-        #     attention_needed.append(
-        #         {
-        #             "id": ae.id,
-        #             "type": "Awaiting Evidence",
-        #             "badge_class": "bg-amber-50 text-amber-700 border-amber-200",
-        #             "title": ae.school.name
-        #             if ae.school
-        #             else (ae.cluster.name if ae.cluster else "Activity"),
-        #             "issue": "Completion submitted without uploading required files.",
-        #             "detail": f"Evidence due: {ae.planned_date.strftime('%b %d, %Y') if ae.planned_date else 'N/A'}",
-        #         }
-        #     )
+        # 2. Awaiting Evidence
+        # A partner's work only: staff work asks for no file (UPLOAD-OFF,
+        # owner 2026-10-13 and 2026-10-14).
+        awaiting_evidence_acts = qs.filter(
+            status__in=COMPLETED_WORK_STATUSES,
+            evidence_status="none",
+            delivery_type="partner",
+        ).select_related("school", "school__district", "cluster")[:3]
+        for ae in awaiting_evidence_acts:
+            attention_needed.append(
+                {
+                    "id": ae.id,
+                    "type": "Awaiting Evidence",
+                    "badge_class": "bg-amber-50 text-amber-700 border-amber-200",
+                    "title": ae.school.name
+                    if ae.school
+                    else (ae.cluster.name if ae.cluster else "Activity"),
+                    "issue": "Completion submitted without uploading required files.",
+                    "detail": f"Evidence due: {ae.planned_date.strftime('%b %d, %Y') if ae.planned_date else 'N/A'}",
+                }
+            )
 
         # 3. SF ID Missing
         sf_missing_acts = qs.filter(

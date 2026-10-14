@@ -15,8 +15,9 @@
 
   <p class="font-medium text-slate-600">
     Partner SSA support assessed on <span class="font-semibold text-slate-800 tabular-nums">{{ assessment_date|date:"d M Y" }}</span>
-    · {{ evidence_count }} partner evidence file{{ evidence_count|pluralize }}
+    · {{ form_name }} {% if uploaded_form %}uploaded{% else %}not uploaded{% endif %}
   </p>
+  {% if uploaded_form %}<div class="grid">{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>{% endif %}
 
   <fieldset class="space-y-3">
     <legend class="block edify-text-caption font-semibold text-slate-600">SSA intervention scores <span class="text-rose-500">*</span></legend>
