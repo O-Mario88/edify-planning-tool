@@ -22,7 +22,7 @@ import logging
 import re
 import time
 from collections import Counter
-from datetime import date, datetime
+from datetime import datetime
 
 from django.db import transaction
 
@@ -119,7 +119,7 @@ def upload_ssa_file(file, principal) -> dict:
         total_rows=len(data_rows),
     )
 
-    counts = {"created": 0, "unmatched": 0, "skipped": 0, "failed": 0}
+    counts = {"created": 0, "unmatched": 0, "skipped": 0, "failed": 0, "duplicate": 0}
     errors = []
     rows_to_create = []
     uploaded_school_ids = {
@@ -139,16 +139,27 @@ def upload_ssa_file(file, principal) -> dict:
             deleted_at__isnull=True,
         ).values_list("school_id", "fy", "date_of_ssa", "verification_status")
     )
-    existing_dates = {
-        (school_pk, assessment_at.date())
-        for school_pk, _fy, assessment_at, _status in existing_records
+    # The years that already hold an SSA, read once for the whole file
+    # before any row is staged (owner, 2026-10-14: one SSA a school a year,
+    # checked before insertion, never inserted and then cleaned up).
+    from apps.ssa.creation import HOLDING_STATUSES
+
+    held_years = {
+        (school_pk, str(fy))
+        for school_pk, fy, _assessment_at, verification_status in existing_records
+        if verification_status in HOLDING_STATUSES
     }
     previous_states: dict[str, set[str]] = {}
     for school_pk, fy, _assessment_at, verification_status in existing_records:
         if fy == prev_fy:
             previous_states.setdefault(school_pk, set()).add(verification_status)
-    staged_dates: set[tuple[str, date]] = set()
-    staged_fys: set[tuple[str, str]] = set()
+    # Each (school, year) this file has already given a row to, and which
+    # row: a second row for the same school and year is the file's own
+    # duplicate.
+    staged_fys: dict[tuple[str, str], int] = {}
+    # The SSA Year each staged row names (a "last" baseline row counts as the
+    # previous year's for the sequence rule below, as it always has).
+    staged_named_fys: set[tuple[str, str]] = set()
 
     for row_number, cells in data_rows:
         if not any((cells[i] or "").strip() for i in range(len(cells))):
@@ -248,24 +259,36 @@ def upload_ssa_file(file, principal) -> dict:
                         row_fy = derived_fy
 
                     # ── Enforcement rules ────────────────────────────────────
-                    # Match manual entry: multiple dated assessments in one FY
-                    # are valid monitoring history. Only the same school/date is
-                    # a duplicate. A first-ever current-FY SSA is a legitimate
-                    # baseline; only an existing unconfirmed previous-FY record
-                    # blocks the new confirmed assessment.
-                    if (school.id, date_parsed) in existing_dates or (
-                        school.id,
-                        date_parsed,
-                    ) in staged_dates:
+                    # One SSA a school a year, the rule manual entry reads
+                    # (apps.ssa.creation): a year the database already holds
+                    # is skipped, and so is a second row of this file for the
+                    # same school and year. Skipped, not failed: the existing
+                    # record was protected on purpose. A first-ever
+                    # current-FY SSA is a legitimate baseline; only an
+                    # existing unconfirmed previous-FY record blocks the new
+                    # confirmed assessment.
+                    from apps.ssa.creation import EXISTING_REASON, IN_FILE_REASON
+
+                    # The year the record is stored under — its assessment
+                    # date's (import_ssa_batch) — is the year it is checked,
+                    # and reported, under.
+                    stored_fy = str(derived_fy)
+                    scores["_fy"] = stored_fy
+                    if (school.id, stored_fy) in held_years:
+                        validation_errors.append(EXISTING_REASON)
+                        status = "duplicate"
+                        counts["duplicate"] += 1
+                    elif (school.id, stored_fy) in staged_fys:
                         validation_errors.append(
-                            "An SSA for this school and assessment date already "
-                            "exists. Keep one authoritative row for that date."
+                            IN_FILE_REASON.format(
+                                row=staged_fys[(school.id, stored_fy)]
+                            )
                         )
-                        status = "blocked"
-                        counts["failed"] += 1
+                        status = "duplicate"
+                        counts["duplicate"] += 1
                     elif row_fy == current_fy:
                         prior_states = previous_states.get(school.id, set())
-                        has_prev_batch = (school.id, prev_fy) in staged_fys
+                        has_prev_batch = (school.id, prev_fy) in staged_named_fys
                         if (
                             prior_states
                             and "confirmed" not in prior_states
@@ -278,16 +301,25 @@ def upload_ssa_file(file, principal) -> dict:
                             )
                             status = "blocked"
                             counts["failed"] += 1
-                except Exception as exc:
-                    validation_errors.append(f"Date error: {exc}")
+                except Exception:
+                    # The row's reason in the uploader's words; the detail,
+                    # which can carry internals, stays in the server log.
+                    logger.warning(
+                        "SSA upload row %s: assessment date not read",
+                        row_number,
+                        exc_info=True,
+                    )
+                    validation_errors.append(
+                        "Date error: the assessment date could not be read."
+                    )
                     status = "blocked"
                     counts["failed"] += 1
 
-                if status != "blocked":
+                if status not in ("blocked", "duplicate"):
                     status = "ready"
                     counts["created"] += 1
-                    staged_dates.add((school.id, date_parsed))
-                    staged_fys.add((school.id, row_fy))
+                    staged_fys[(school.id, stored_fy)] = row_number
+                    staged_named_fys.add((school.id, str(row_fy)))
             else:
                 status = "unmatched"
                 counts["unmatched"] += 1
@@ -334,7 +366,7 @@ def upload_ssa_file(file, principal) -> dict:
         total_rows=len(data_rows),
         created_rows=counts["created"],
         updated_rows=0,
-        skipped_rows=counts["skipped"],
+        skipped_rows=counts["skipped"] + counts["duplicate"],
         failed_rows=counts["failed"] + counts["unmatched"],
     )
 
@@ -370,7 +402,7 @@ def upload_ssa_file(file, principal) -> dict:
     # But we still run import to process rows into directory / unmatched queue!
     if (counts["created"] + counts["unmatched"]) > 0:
         try:
-            import_ssa_batch(batch, principal)
+            imported = import_ssa_batch(batch, principal)
         except Exception as exc:
             legacy_batch.status = "failed"
             legacy_batch.error_summary = str(exc)
@@ -380,13 +412,46 @@ def upload_ssa_file(file, principal) -> dict:
                 "SSA import failed. The batch is marked failed and the reason "
                 "has been recorded for support."
             ) from exc
-        legacy_batch.status = "imported"
-        legacy_batch.save(update_fields=["status", "updated_at"])
+        # A year taken between staging and the write is skipped there; the
+        # summary and the row table say so rather than claim the import.
+        late = imported.get("duplicate_row_numbers") or []
+        if late:
+            from apps.ssa.creation import EXISTING_REASON
 
+            counts["created"] -= len(late)
+            counts["duplicate"] += len(late)
+            legacy_batch.created_rows = counts["created"]
+            legacy_batch.skipped_rows = counts["skipped"] + counts["duplicate"]
+            UploadBatchRowResult.objects.filter(
+                upload_batch=legacy_batch, row_number__in=late
+            ).update(status="skipped", error_message=EXISTING_REASON)
+            for row in rows_to_create:
+                if row.row_number in late:
+                    row.status = "duplicate"
+                    row.validation_errors = [EXISTING_REASON]
+        legacy_batch.status = "imported"
+        legacy_batch.save(
+            update_fields=["status", "created_rows", "skipped_rows", "updated_at"]
+        )
+        success = counts["created"] > 0
+
+    # The summary the owner asked for (2026-10-14): what came in, what was
+    # imported, what was skipped because the year already holds an SSA, and
+    # what failed — never "everything imported" when it was not.
+    summary = (
+        f"Rows received: {len(data_rows)} · Imported: {counts['created']} · "
+        f"Skipped — existing SSA: {counts['duplicate']} · "
+        f"Errors: {counts['failed']}"
+        + (
+            f" · Unmatched School IDs queued: {counts['unmatched']}"
+            if counts["unmatched"]
+            else ""
+        )
+    )
     if len(data_rows) == 0:
         message = "No data rows were found in the file."
-    elif success:
-        message = f"Upload complete — {counts['created']} SSA record(s) validated, {counts['unmatched']} unmatched rows queued."
+    elif success or counts["duplicate"]:
+        message = f"SSA Upload Summary — {summary}."
     else:
         # Report what actually stopped the bulk of the file, with counts —
         # not whichever row happened to be first in the error list.
@@ -414,10 +479,31 @@ def upload_ssa_file(file, principal) -> dict:
         message = (
             "Nothing validated — "
             + ("; ".join(reasons) if reasons else "no row could be used")
-            + ". See the errors below."
+            + f". See the errors below. ({summary}.)"
         )
 
     processing_seconds = round(time.perf_counter() - started_at, 3)
+    # The upload's own audit row (owner, 2026-10-14): who, which file and
+    # batch, and what it did with every row. The batch rows hold each row.
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="ssa_upload",
+        subject_kind="UploadBatch",
+        subject_id=legacy_batch.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={
+            "file": getattr(file, "name", ""),
+            "importBatchId": batch.id,
+            "rowsReceived": len(data_rows),
+            "imported": counts["created"],
+            "skippedExisting": counts["duplicate"],
+            "errors": counts["failed"],
+            "unmatched": counts["unmatched"],
+            "blankRows": counts["skipped"],
+        },
+    )
     logger.info(
         "SSA upload completed batch=%s rows=%s created=%s unmatched=%s "
         "failed=%s duration_seconds=%s",
@@ -435,7 +521,19 @@ def upload_ssa_file(file, principal) -> dict:
         "created_rows": counts["created"],
         "updated_rows": 0,
         "failed_rows": counts["failed"] + counts["unmatched"],
-        "duplicate_rows": 0,
+        "duplicate_rows": counts["duplicate"],
+        # Each skipped row and why, so the uploader can see the existing data
+        # was protected on purpose.
+        "skipped": [
+            {
+                "row": r.row_number,
+                "school_id": r.school_id,
+                "fy": (r.scores or {}).get("_fy", ""),
+                "reason": "; ".join(r.validation_errors or []),
+            }
+            for r in rows_to_create
+            if r.status == "duplicate"
+        ],
         "skipped_rows": counts["skipped"],
         "message": message,
         "errors": errors
@@ -484,7 +582,7 @@ def import_ssa_batch(batch, user) -> dict:
     if batch.status == "imported":
         return {"created": 0, "unmatched": 0, "already_imported": True}
 
-    rows = list(batch.rows.exclude(status="blocked"))
+    rows = list(batch.rows.exclude(status__in=("blocked", "duplicate")))
     # The same country boundary as staging: a batch finalised later, or by
     # someone else, still never writes onto a school outside the reach.
     schools_by_id, outside_country = _schools_in_reach(
@@ -514,8 +612,25 @@ def import_ssa_batch(batch, user) -> dict:
         ).values_list("school_id", "date_of_ssa")
     )
     now = timezone.now()
+    from apps.schools.models import SSAImportRow
+    from apps.ssa.creation import EXISTING_REASON, held_years_of_schools
 
     with transaction.atomic():
+        # One SSA a school a year, checked again at the write (owner,
+        # 2026-10-14). Staging read the years before; a batch finalised later,
+        # or a profile entry saved meanwhile, may have taken one since. The
+        # schools are locked as one profile entry locks its school
+        # (apps.ssa.services.upload), so neither can take a year between this
+        # read and the insert below; then every year still held is read once.
+        list(
+            School.objects.select_for_update()
+            .filter(id__in=affected_school_pks)
+            .order_by("id")
+            .values_list("id", flat=True)
+        )
+        taken = held_years_of_schools(affected_school_pks)
+        skipped_ids = []
+        skipped_rows = []
         for r in rows:
             school = schools_by_id.get(r.school_id)
             if school:
@@ -524,6 +639,14 @@ def import_ssa_batch(batch, user) -> dict:
                     datetime.combine(ssa_date, timezone.datetime.min.time()),
                     timezone.get_current_timezone(),
                 )
+                # The year staging checked the row against (an explicit SSA
+                # Year column wins over the date's), else the date's.
+                row_fy = str((r.scores or {}).get("_fy") or get_operational_fy(aware))
+                if (school.id, row_fy) in taken:
+                    skipped_ids.append(r.id)
+                    skipped_rows.append(r.row_number)
+                    continue
+                taken.add((school.id, row_fy))
                 row_scores = [
                     (intervention, score)
                     for intervention, score in r.scores.items()
@@ -532,7 +655,7 @@ def import_ssa_batch(batch, user) -> dict:
                 record = SsaRecord(
                     school=school,
                     date_of_ssa=aware,
-                    fy=get_operational_fy(aware),
+                    fy=row_fy,
                     quarter=get_quarter_for_date(aware),
                     average_score=round(
                         sum(float(score) for _intervention, score in row_scores)
@@ -592,6 +715,10 @@ def import_ssa_batch(batch, user) -> dict:
                 )
                 existing_unmatched_keys.add(unmatched_key)
 
+        if skipped_ids:
+            SSAImportRow.objects.filter(id__in=skipped_ids).update(
+                status="duplicate", validation_errors=[EXISTING_REASON]
+            )
         if records:
             SsaRecord.objects.bulk_create(records, batch_size=1000)
             SsaScore.objects.bulk_create(scores, batch_size=2000)
@@ -683,6 +810,9 @@ def import_ssa_batch(batch, user) -> dict:
     return {
         "created": len(records),
         "unmatched": len(unmatched_records),
+        # Rows staging passed whose year was taken before the write.
+        "duplicate": len(skipped_ids),
+        "duplicate_row_numbers": skipped_rows,
     }
 
 

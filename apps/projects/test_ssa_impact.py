@@ -42,9 +42,13 @@ class ImpactFixture(TestCase):
         )
 
     def _ssa(self, school, on, score, *, status="confirmed", intervention=INTERVENTION):
+        from apps.core.fy import get_operational_fy
+
         record = SsaRecord.objects.create(
             school=school,
-            fy="2026",
+            # The year its date falls in: one SSA a school a year (owner,
+            # 2026-10-14).
+            fy=get_operational_fy(on),
             quarter="Q1",
             average_score=score,
             verification_status=status,
@@ -59,7 +63,7 @@ class ImpactFixture(TestCase):
 
 class BaselineTests(ImpactFixture):
     def test_the_baseline_is_the_last_reading_before_entry_not_the_latest(self):
-        self._ssa(self.school, date(2025, 1, 10), 3.0)
+        self._ssa(self.school, date(2024, 1, 10), 3.0)
         self._ssa(self.school, date(2025, 6, 10), 4.0)
         # Taken during delivery — must not become what delivery is judged on.
         self._ssa(self.school, date(2026, 6, 10), 9.0)
@@ -112,7 +116,7 @@ class FollowUpWindowTests(ImpactFixture):
     ):
         delivered = date(2026, 1, 10)
         self._ssa(self.school, date(2026, 5, 1), 6.0)
-        self._ssa(self.school, date(2026, 9, 1), 9.0)
+        self._ssa(self.school, date(2026, 10, 15), 9.0)  # the next year's
 
         found = si.follow_up_for(
             self.school.id, INTERVENTION, after=delivered, min_days=90, max_days=365

@@ -95,7 +95,9 @@ class AnalyticsQueryPerformanceTest(TestCase):
         self._ssa(self.sch_4, PREV, 4.0, {"leadership": 4.0})
         self._ssa(self.sch_4, FY, 8.0, {"leadership": 8.0})
         # An UNCONFIRMED record with a wild score -- must never be counted.
-        self._ssa(self.sch_1, FY, 0.5, {"leadership": 0.5}, status="pending")
+        # Returned: the one unconfirmed state that may sit beside the year's
+        # confirmed SSA (one SSA a school a year, owner 2026-10-14).
+        self._ssa(self.sch_1, FY, 0.5, {"leadership": 0.5}, status="returned")
 
         self._act(self.c1_sp.id, self.sch_1, "completed", sf="SF-1")
         self._act(self.c1_sp.id, self.sch_2, "completed", sf="")  # no SF id

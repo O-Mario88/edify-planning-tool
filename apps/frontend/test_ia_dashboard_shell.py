@@ -132,7 +132,7 @@ class IaShellFixture(TestCase):
             return SsaRecord.objects.create(
                 school=school,
                 date_of_ssa=now - timedelta(days=3),
-                fy="2026",
+                fy=kw.pop("fy", "2026"),
                 quarter="Q1",
                 verification_status="pending",
                 uploaded_by=kw.pop("uploaded_by", cls.cceo.id),
@@ -140,7 +140,13 @@ class IaShellFixture(TestCase):
             )
 
         ssa(cls.ug_school, collected_by_user_id=cls.cceo.id)
-        ssa(cls.ug_school, collected_by_user_id=cls.ia.id, uploaded_by=cls.ia.id)
+        # Another year's: a school has one SSA a year (owner, 2026-10-14).
+        ssa(
+            cls.ug_school,
+            collected_by_user_id=cls.ia.id,
+            uploaded_by=cls.ia.id,
+            fy="2025",
+        )
         ssa(cls.ke_school, collected_by_user_id=cls.ke_cceo.id)
 
         ug_batch = SSAImportBatch.objects.create(

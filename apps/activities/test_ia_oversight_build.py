@@ -276,7 +276,9 @@ class AttributionTest(IaOversightFixture):
         for school in schools:
             rec(school, "2025", "confirmed", 4.0, 1)
             rec(school, "2026", "confirmed", 6.0, 1)
-        rec(self.school, "2026", "pending", 9.0, 2)  # unconfirmed: never read
+        # Unconfirmed, never read: returned, the unconfirmed state that may sit
+        # beside the year's confirmed SSA (one a school a year, 2026-10-14).
+        rec(self.school, "2026", "returned", 9.0, 2)
 
         def training(status, code):
             return Activity.objects.create(

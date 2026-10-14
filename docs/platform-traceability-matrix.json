@@ -670,6 +670,7 @@
         "apps/schools/data_quality.py",
         "apps/schools/lifecycle_service.py",
         "apps/schools/models.py",
+        "apps/ssa/creation.py",
         "apps/ssa/current_year.py",
         "apps/ssa/models.py",
         "apps/ssa/plan_alignment.py",
@@ -810,6 +811,7 @@
         "notification.weekly_fund_request_submitted",
         "pl_approve_completion",
         "pl_review_confirm",
+        "ssa_create",
         "start_activity",
         "weekly_fund_request.approve",
         "weekly_fund_request.disburse",
@@ -3803,8 +3805,7 @@
         "bt.financial_practice.verified",
         "bt.ssa_recommendations_created",
         "notification.bt.case.recommended",
-        "ssa.recommendation_generated",
-        "ssa.recommendation_superseded"
+        "ssa.recommendation_generated"
       ],
       "metricsComputed": [],
       "metricsAffected": [
@@ -4956,9 +4957,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "f2934f975cb74226a126ebf60bed8b0b3fbc5e2dba696ca210f147e62d10ef90",
-    "sources": "0767728a31865186990e6f12cc6c6028f6e5249779847c55fe3817f52bbd7db7",
-    "sourceCount": 260,
+    "payload": "eb275328792cfe30514a46d17a91c13ece84a1ddfb594e0d3b0c4e70d4d6e4cf",
+    "sources": "5d6b5484cc6b81d785cb6e6decaa2b4655f37bc744791bfa153394cd18307788",
+    "sourceCount": 261,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

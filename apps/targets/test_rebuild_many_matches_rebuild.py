@@ -28,6 +28,7 @@ from apps.accounts.models import StaffProfile
 from apps.activities.models import Activity
 from apps.geography.models import District, Region
 from apps.schools.models import School
+from apps.core.fy import get_operational_fy
 from apps.ssa.models import SsaRecord
 from apps.targets.models import (
     MonthlyPersonalTarget,
@@ -169,7 +170,9 @@ class RosterFixture:
             school=cls.school,
             collected_by_user_id=user_id,
             date_of_ssa=when,
-            fy=FY,
+            # The year its date falls in, as every SSA is filed: a school has
+            # one SSA a year (owner, 2026-10-14).
+            fy=get_operational_fy(when),
             quarter="Q2",
             verification_status=verification_status,
             uploaded_by="tester",

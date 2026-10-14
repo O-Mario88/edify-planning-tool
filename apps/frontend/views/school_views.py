@@ -16,6 +16,7 @@ from django.db import transaction
 from django.db.models import Q, Count, Sum
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
+from django.utils import timezone
 from django.utils.html import escape
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
@@ -66,7 +67,9 @@ from apps.core.scoping import (
     school_queryset,
 )
 from apps.frontend.view_models import SchoolDirectoryViewModel
-from apps.core.fy import fy_options, get_operational_fy
+from apps.core.fy import fy_options, get_fy_date_range, get_operational_fy
+from apps.core.htmx_saved import saved_in_place
+from apps.ssa import creation as ssa_creation
 
 
 def _may_upload_schools(request) -> bool:
@@ -1744,6 +1747,9 @@ def school_detail_view(request, school_id):
         "can_transfer_owner": may_transfer_school(request.user),
         "can_assign_project": has_permission(request.user, "project.assignSchool"),
         **_profile_planning_controls(request.user, school),
+        # Enter SSA Score (owner, 2026-10-14): read from the school's SSA
+        # records on every load, never from the page or a cache.
+        **ssa_creation.entry_state(request.user, school),
     }
     if pi["section"] == "ssa":
         context.update(_school_ssa_context(school))
@@ -1752,6 +1758,81 @@ def school_detail_view(request, school_id):
     elif not pi["is_engine_tab"]:
         context.update(_school_details_context(request, school))
     return render(request, "pages/schools/detail.html", context)
+
+
+@require_page_permission("school_profile")
+def school_ssa_entry_view(request, school_id):
+    """Enter SSA Score from a school's profile (owner, 2026-10-14).
+
+    A CCEO, a Programme Lead or Impact Assessment enters the school's SSA for
+    the current financial year, once: the drawer opens only while the year
+    has none, and the save asks the database again (apps.ssa.creation), so a
+    second person who opened the drawer before the first saved is refused
+    with the reason and nothing is written. The scores are the existing SSA
+    record's eight interventions, saved through the one SSA service
+    (apps.ssa.services.upload), pending until a different verifier confirms
+    them, as every SSA is.
+    """
+    from apps.ssa import services as ssa_services
+    from apps.ssa.forms import SchoolSsaEntryForm
+
+    school = get_scoped_object_or_404(
+        School, request.user, id=school_id, deleted_at__isnull=True
+    )
+    try:
+        ssa_creation.assert_may_enter(request.user, school)
+    except Forbidden as exc:
+        return HttpResponseForbidden(str(exc.detail))
+
+    fy = ssa_creation.current_fy()
+    first_day = get_fy_date_range(fy)[0].date()
+    form = SchoolSsaEntryForm(
+        request.POST or None,
+        school=school,
+        fy=fy,
+        first_day=first_day,
+        last_day=timezone.localdate(),
+        initial={"date_of_ssa": timezone.localdate()},
+    )
+
+    def drawer(**extra):
+        return render(
+            request,
+            "partials/schools/ssa_entry_drawer.html",
+            {"school": school, "form": form, "fy": fy, **extra},
+        )
+
+    held = ssa_creation.year_record(school, fy)
+    if held is not None:
+        # The year already has its SSA: the form never opens, and a save
+        # posted from a drawer opened before it was taken writes nothing.
+        return drawer(
+            held=held,
+            refusal=ssa_creation.duplicate_message(fy)
+            if request.method == "POST"
+            else "",
+        )
+    if request.method == "POST" and form.is_valid():
+        collector_type = (
+            "ia"
+            if request.user.active_role == EdifyRole.IMPACT_ASSESSMENT.value
+            else "staff"
+        )
+        payload = form.to_service_payload(collector_type=collector_type)
+        payload["entryChannel"] = "school_profile"
+        try:
+            ssa_services.upload(payload, request.user)
+        except ssa_creation.SsaAlreadyExists as exc:
+            return drawer(
+                held=ssa_creation.year_record(school, fy), refusal=str(exc.detail)
+            )
+        except BadRequest as exc:
+            form.add_error(None, str(exc.detail))
+        else:
+            # The profile reads the new record: its SSA, and the button
+            # greyed for the year.
+            return saved_in_place()
+    return drawer()
 
 
 def _school_ssa_context(school) -> dict:
@@ -1763,6 +1844,10 @@ def _school_ssa_context(school) -> dict:
     from apps.analytics.ia_workflow import school_progress
 
     ssa_progress = school_progress(school)
+    # Where each record's scores came from (owner, 2026-10-14: "show the
+    # source where useful"), in the SSA pages' own words.
+    for item in ssa_progress.get("history") or []:
+        item["source"] = ssa_creation.source_label(item["record"])
     return {"ssa_progress": ssa_progress, "latest_ssa": ssa_progress["latest"]}
 
 

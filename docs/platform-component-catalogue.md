@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **702**
+Components and application partials: **703**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -645,6 +645,7 @@ Components and application partials: **702**
 | `partials/schools/onboard_registered.html` | application-partial | Reusable onboard registered interface primitive | success; default | inherits containing page contract | announced dynamic state | /schools/create-drawer | 0 |
 | `partials/schools/owner_transfer_drawer.html` | application-partial | Reusable owner transfer drawer interface primitive | danger, warning; default, error, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools/<str:school_id>/transfer-owner | 0 |
 | `partials/schools/parish_options.html` | application-partial | Reusable parish options interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools/parishes | 0 |
+| `partials/schools/ssa_entry_drawer.html` | application-partial | Reusable ssa entry drawer interface primitive | danger, info; default, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /schools/<str:school_id>/ssa-entry | 0 |
 | `partials/schools/ssa_score_groups.html` | application-partial | Reusable ssa score groups interface primitive | canonical; default | inherits containing page contract | accessible name and label | /clusters<br>/core-schools<br>/partials/clusters/<str:cluster_id>/schools<br>/planning<br>/schools | 0 |
 | `partials/schools/sub_county_options.html` | application-partial | Reusable sub county options interface primitive | canonical; default, empty, disabled | inherits containing page contract | inherits semantic parent contract | /schools/sub-counties | 0 |
 | `partials/schools/table.html` | application-partial | Reusable table interface primitive | canonical; default, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools | 0 |

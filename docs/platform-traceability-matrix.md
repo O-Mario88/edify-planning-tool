@@ -17,7 +17,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `journey-01` | Priority to verified performance | ✓ | 2 | 126 | 31 | 2 | 2 | 6 | 19 | 80 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 51 | 10 | 1 | 11 | 0 | 0 | 29 |
-| `journey-03` | Standard staff school visit | ✓ | 12 | 131 | 33 | 3 | 8 | 10 | 26 | 80 |
+| `journey-03` | Standard staff school visit | ✓ | 12 | 132 | 33 | 3 | 8 | 10 | 27 | 80 |
 | `journey-04` | Cluster training | ✓ | 1 | 94 | 17 | 2 | 6 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 74 | 27 | 2 | 2 | 1 | 4 | 91 |
 | `journey-06` | Special Project | ✓ | 1 | 136 | 29 | 4 | 9 | 6 | 19 | 80 |
@@ -29,7 +29,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-12` | Policy lifecycle | ✓ | 1 | 48 | 12 | 0 | 0 | 1 | 10 | 5 |
 | `journey-13` | PIP | ✓ | 1 | 48 | 7 | 0 | 0 | 0 | 3 | 1 |
 | `journey-14` | Team Oversight and Send School to | ✓ | 1 | 70 | 14 | 1 | 9 | 2 | 3 | 25 |
-| `journey-15` | Financial Health | ✓ | 1 | 66 | 17 | 2 | 4 | 1 | 6 | 29 |
+| `journey-15` | Financial Health | ✓ | 1 | 66 | 17 | 2 | 4 | 1 | 5 | 29 |
 | `journey-16` | Government Requirements | ✓ | 1 | 65 | 17 | 2 | 4 | 1 | 5 | 29 |
 | `journey-17` | Loan | ✓ | 1 | 57 | 25 | 11 | 7 | 3 | 17 | 37 |
 | `journey-18` | Repeat borrower and student reach | ✓ | 1 | 60 | 21 | 9 | 6 | 1 | 9 | 33 |
@@ -93,10 +93,10 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `planning.manualActivity.create` |
 | Page gates checked | `acting_leadership`, `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_management`, `cluster_oversight` _+44 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+121 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+122 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+21 more_ |
 | Notifications raised | `accountability_pl_approved`, `activity_closed`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed` _+2 more_ |
-| Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+18 more_ |
+| Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+19 more_ |
 | Metrics computed in the run | `frontend_views_budget_views_accountability_pending`, `frontend_views_budget_views_approved`, `frontend_views_budget_views_awaiting_approval`, `frontend_views_budget_views_ready_for_disbursement`, `frontend_views_budget_views_returned_for_review`, `frontend_views_budget_views_total_requested_this_month`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget` _+3 more_ |
 | Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+72 more_ |
 
@@ -336,7 +336,7 @@ Steps: SSA weakness → BT recommendation → Training → Verification → Prac
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/analytics/platform_engine.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py` _+56 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `audit.AuditLog`, `business_transformation.CaseRecommendation`, `business_transformation.CaseTrigger`, `business_transformation.FinancialPracticeAssessment`, `business_transformation.TransformationCase`, `geography.District`, `geography.Region`, `notifications.Notification`, `outbox.OutboxEvent` _+5 more_ |
 | Notifications raised | `bt.case.recommended` |
-| Audit actions (evidence) | `bt.financial_practice.recorded`, `bt.financial_practice.verified`, `bt.ssa_recommendations_created`, `notification.bt.case.recommended`, `ssa.recommendation_generated`, `ssa.recommendation_superseded` |
+| Audit actions (evidence) | `bt.financial_practice.recorded`, `bt.financial_practice.verified`, `bt.ssa_recommendations_created`, `notification.bt.case.recommended`, `ssa.recommendation_generated` |
 | Metrics computed in the run | — |
 | Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+21 more_ |
 

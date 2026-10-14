@@ -5,20 +5,20 @@
   "by_evidence": {
    "browser-rendered": 849,
    "none": 292,
-   "page-tested": 1557,
-   "request-tested": 1413
+   "page-tested": 1561,
+   "request-tested": 1415
   },
   "by_kind": {
-   "button": 1404,
+   "button": 1410,
    "disclosure": 75,
    "field": 1371,
    "link": 1194,
    "tab": 67
   },
-  "controls": 4111,
+  "controls": 4117,
   "high_consequence": 207,
-  "state_changing": 467,
-  "templates_scanned": 703,
+  "state_changing": 468,
+  "templates_scanned": 704,
   "unresolved_destinations": 0,
   "untested": 292,
   "untested_state_changing": 23
@@ -813,6 +813,7 @@
     "/schools/<str:school_id>/assign-to-project",
     "/schools/<str:school_id>/close-drawer",
     "/schools/<str:school_id>/edit-drawer",
+    "/schools/<str:school_id>/ssa-entry",
     "/schools/<str:school_id>/transfer-owner",
     "/schools/bulk-assign-project-drawer",
     "/schools/create-drawer",
@@ -11323,6 +11324,20 @@
     "RPL"
    ]
   },
+  "partials/schools/ssa_entry_drawer.html": {
+   "pages": [
+    "/schools/<str:school_id>/ssa-entry"
+   ],
+   "roles": [
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "IA",
+    "PL",
+    "PROJECT_COORDINATOR"
+   ]
+  },
   "partials/schools/table.html": {
    "pages": [
     "/schools"
@@ -13132,16 +13147,18 @@
   {"accessible_name": "Confirm the school is operating again and how you know.", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0822D751671C", "kind": "field", "line": 49, "method": "", "selector": "input[name=reason]", "state_changing": false, "tag": "input", "template": "pages/schools/detail.html"},
   {"accessible_name": "e.g. 380", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-9009B7AFFA40", "kind": "field", "line": 55, "method": "", "selector": "input[name=enrollment]", "state_changing": false, "tag": "input", "template": "pages/schools/detail.html"},
   {"accessible_name": "Reopen school", "destination": "/schools/{{ school.school_id }}/reopen", "destination_route": "/schools/<str:school_id>/reopen", "evidence": "request-tested", "high_consequence": true, "id": "INT-BFD405DD79DE", "kind": "button", "line": 59, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Edit {{ school.name }} school details", "destination": "/schools/{{ school.id }}/edit-drawer", "destination_route": "/schools/<str:school_id>/edit-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-38F45C24D425", "kind": "button", "line": 79, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Schedule support for {{ school.name }} unavailable: {{ schedule_block }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-026EC0E5A3A7", "kind": "button", "line": 103, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Schedule an activity for {{ school.name }}", "destination": "/core-schools/schedule-activity?school_id={{ school.school_id }}", "destination_route": "/core-schools/schedule-activity", "evidence": "request-tested", "high_consequence": false, "id": "INT-5DF9D165215E", "kind": "button", "line": 105, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Schedule support for {{ school.name }}", "destination": "/planning/schedule-modal?school_id={{ school.school_id }}", "destination_route": "/planning/schedule-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-3B0C3F96BF28", "kind": "button", "line": 107, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Assign {{ school.name }} to a partner unavailable: {{ assign_block }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AE1395E94863", "kind": "button", "line": 112, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Assign core support for {{ school.name }} to a partner", "destination": "/core-schools/assign-partner?school_id={{ school.school_id }}", "destination_route": "/core-schools/assign-partner", "evidence": "request-tested", "high_consequence": false, "id": "INT-351CC003EE35", "kind": "button", "line": 114, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Assign {{ school.name }} to a partner", "destination": "/planning/assign-partner-modal?school_id={{ school.school_id }}", "destination_route": "/planning/assign-partner-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-0AE6D4A9AEB0", "kind": "button", "line": 116, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Add {{ school.name }} to a project", "destination": "/schools/{{ school.id }}/assign-to-project", "destination_route": "/schools/<str:school_id>/assign-to-project", "evidence": "request-tested", "high_consequence": false, "id": "INT-5BFEEA7EAECF", "kind": "button", "line": 121, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Reassign the owner of {{ school.name }}", "destination": "/schools/{{ school.school_id }}/transfer-owner", "destination_route": "/schools/<str:school_id>/transfer-owner", "evidence": "request-tested", "high_consequence": false, "id": "INT-945D34D511DE", "kind": "button", "line": 132, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
-  {"accessible_name": "Close {{ school.name }}", "destination": "/schools/{{ school.school_id }}/close-drawer", "destination_route": "/schools/<str:school_id>/close-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-E60C7DF960B2", "kind": "button", "line": 142, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Edit {{ school.name }} school details", "destination": "/schools/{{ school.id }}/edit-drawer", "destination_route": "/schools/<str:school_id>/edit-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-38F45C24D425", "kind": "button", "line": 84, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Schedule support for {{ school.name }} unavailable: {{ schedule_block }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-026EC0E5A3A7", "kind": "button", "line": 108, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Schedule an activity for {{ school.name }}", "destination": "/core-schools/schedule-activity?school_id={{ school.school_id }}", "destination_route": "/core-schools/schedule-activity", "evidence": "request-tested", "high_consequence": false, "id": "INT-5DF9D165215E", "kind": "button", "line": 110, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Schedule support for {{ school.name }}", "destination": "/planning/schedule-modal?school_id={{ school.school_id }}", "destination_route": "/planning/schedule-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-3B0C3F96BF28", "kind": "button", "line": 112, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Assign {{ school.name }} to a partner unavailable: {{ assign_block }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AE1395E94863", "kind": "button", "line": 117, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Assign core support for {{ school.name }} to a partner", "destination": "/core-schools/assign-partner?school_id={{ school.school_id }}", "destination_route": "/core-schools/assign-partner", "evidence": "request-tested", "high_consequence": false, "id": "INT-351CC003EE35", "kind": "button", "line": 119, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Assign {{ school.name }} to a partner", "destination": "/planning/assign-partner-modal?school_id={{ school.school_id }}", "destination_route": "/planning/assign-partner-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-0AE6D4A9AEB0", "kind": "button", "line": 121, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Enter SSA Score for {{ school.name }} unavailable: {{ ssa_entry_block }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-5F1061F592B6", "kind": "button", "line": 131, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Enter the FY{{ ssa_entry_fy }} SSA score for {{ school.name }}", "destination": "/schools/{{ school.id }}/ssa-entry", "destination_route": "/schools/<str:school_id>/ssa-entry", "evidence": "request-tested", "high_consequence": false, "id": "INT-6C859B8090A9", "kind": "button", "line": 133, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Add {{ school.name }} to a project", "destination": "/schools/{{ school.id }}/assign-to-project", "destination_route": "/schools/<str:school_id>/assign-to-project", "evidence": "request-tested", "high_consequence": false, "id": "INT-5BFEEA7EAECF", "kind": "button", "line": 138, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Reassign the owner of {{ school.name }}", "destination": "/schools/{{ school.school_id }}/transfer-owner", "destination_route": "/schools/<str:school_id>/transfer-owner", "evidence": "request-tested", "high_consequence": false, "id": "INT-945D34D511DE", "kind": "button", "line": 149, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
+  {"accessible_name": "Close {{ school.name }}", "destination": "/schools/{{ school.school_id }}/close-drawer", "destination_route": "/schools/<str:school_id>/close-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-E60C7DF960B2", "kind": "button", "line": 159, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/schools/detail.html"},
   {"accessible_name": "Go to Directory", "destination": "/schools", "destination_route": "/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-00B365A0B783", "kind": "link", "line": 13, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/schools/import_result.html"},
   {"accessible_name": "Resolve Data Quality Issues", "destination": "/admin-panel/data-quality-center", "destination_route": "/admin-panel/data-quality-center", "evidence": "request-tested", "high_consequence": false, "id": "INT-0B65F7152B28", "kind": "link", "line": 16, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/schools/import_result.html"},
   {"accessible_name": "Upload Center", "destination": "/uploads", "destination_route": "/uploads", "evidence": "request-tested", "high_consequence": false, "id": "INT-C948F559B632", "kind": "link", "line": 30, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/schools/index.html"},
@@ -13264,11 +13281,12 @@
   {"accessible_name": "Ready to Import ({{ ready_count }})", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0F7E01D5DBB5", "kind": "button", "line": 25, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/ssa/upload_preview.html"},
   {"accessible_name": "Unmatched School IDs ({{ unmatched_count }})", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-88892126A194", "kind": "button", "line": 31, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/ssa/upload_preview.html"},
   {"accessible_name": "Blocked Rows ({{ blocked_count }})", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-884121124063", "kind": "button", "line": 37, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/ssa/upload_preview.html"},
+  {"accessible_name": "Skipped — SSA Already Exists ({{ skipped_count }})", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-5B1CACB71A20", "kind": "button", "line": 43, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/ssa/upload_preview.html"},
   {"accessible_name": "Upload Another File", "destination": "/ssa/upload/", "destination_route": "/ssa/upload/", "evidence": "request-tested", "high_consequence": false, "id": "INT-416A3D313364", "kind": "link", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_result.html"},
-  {"accessible_name": "SSA Verification Queue → {{ pending_verification }} imported record{{ pending_verification|pluralize }} wait{{ pending_verification|pluralize:\"s,\" }} for a veri", "destination": "/ssa/verification/", "destination_route": "/ssa/verification/", "evidence": "request-tested", "high_consequence": false, "id": "INT-A659E42C88C9", "kind": "link", "line": 86, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_result.html"},
-  {"accessible_name": "Unmatched SSA Queue → Link SSA rows that carried unknown School IDs to the directory.", "destination": "/ssa/unmatched", "destination_route": "/ssa/unmatched", "evidence": "request-tested", "high_consequence": false, "id": "INT-22E68DEF0209", "kind": "link", "line": 96, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_result.html"},
-  {"accessible_name": "Open Collection Worklist → See which schools in your country still need a baseline or this year's follow-up.", "destination": "/ia/dashboard/?view=collection", "destination_route": "/ia/dashboard/", "evidence": "request-tested", "high_consequence": false, "id": "INT-5FAEDA364CBF", "kind": "link", "line": 106, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_result.html"},
-  {"accessible_name": "SSA Upload History → Every SSA import in your country and what each one did.", "destination": "/ssa/upload/history/", "destination_route": "/ssa/upload/history/", "evidence": "request-tested", "high_consequence": false, "id": "INT-6B37D9B27B0C", "kind": "link", "line": 116, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_result.html"},
+  {"accessible_name": "SSA Verification Queue → {{ pending_verification }} imported record{{ pending_verification|pluralize }} wait{{ pending_verification|pluralize:\"s,\" }} for a veri", "destination": "/ssa/verification/", "destination_route": "/ssa/verification/", "evidence": "request-tested", "high_consequence": false, "id": "INT-A659E42C88C9", "kind": "link", "line": 133, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_result.html"},
+  {"accessible_name": "Unmatched SSA Queue → Link SSA rows that carried unknown School IDs to the directory.", "destination": "/ssa/unmatched", "destination_route": "/ssa/unmatched", "evidence": "request-tested", "high_consequence": false, "id": "INT-22E68DEF0209", "kind": "link", "line": 143, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_result.html"},
+  {"accessible_name": "Open Collection Worklist → See which schools in your country still need a baseline or this year's follow-up.", "destination": "/ia/dashboard/?view=collection", "destination_route": "/ia/dashboard/", "evidence": "request-tested", "high_consequence": false, "id": "INT-5FAEDA364CBF", "kind": "link", "line": 153, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_result.html"},
+  {"accessible_name": "SSA Upload History → Every SSA import in your country and what each one did.", "destination": "/ssa/upload/history/", "destination_route": "/ssa/upload/history/", "evidence": "request-tested", "high_consequence": false, "id": "INT-6B37D9B27B0C", "kind": "link", "line": 163, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_result.html"},
   {"accessible_name": "Waiting for verification Returned for correction", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-8B2AEA191B2C", "kind": "field", "line": 46, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "pages/ssa/verification_queue.html"},
   {"accessible_name": "Anyone Me", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E5273438F9B3", "kind": "field", "line": 53, "method": "", "selector": "select[name=mine]", "state_changing": false, "tag": "select", "template": "pages/ssa/verification_queue.html"},
   {"accessible_name": "{{ r.school }}", "destination": "{{ r.school_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E7338D67887F", "kind": "link", "line": 82, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/verification_queue.html"},
@@ -15806,6 +15824,9 @@
   {"accessible_name": "yes", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3F3540035E6D", "kind": "field", "line": 67, "method": "", "selector": "input[name=confirm]", "state_changing": false, "tag": "input", "template": "partials/schools/owner_transfer_drawer.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-BC55C0C9478E", "kind": "button", "line": 72, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/owner_transfer_drawer.html"},
   {"accessible_name": "Reassign owner", "destination": "/schools/{{ school.school_id }}/transfer-owner", "destination_route": "/schools/<str:school_id>/transfer-owner", "evidence": "request-tested", "high_consequence": false, "id": "INT-5C0EB2F733F4", "kind": "button", "line": 73, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/owner_transfer_drawer.html"},
+  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F4C09335A9DD", "kind": "button", "line": 29, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/ssa_entry_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-17046BD7D9E3", "kind": "button", "line": 69, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/ssa_entry_drawer.html"},
+  {"accessible_name": "Save SSA", "destination": "/schools/{{ school.id }}/ssa-entry", "destination_route": "/schools/<str:school_id>/ssa-entry", "evidence": "request-tested", "high_consequence": false, "id": "INT-D924A254C0FB", "kind": "button", "line": 70, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/ssa_entry_drawer.html"},
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A4FA93BC43A7", "kind": "field", "line": 9, "method": "", "selector": "#select-all-schools", "state_changing": false, "tag": "input", "template": "partials/schools/table.html"},
   {"accessible_name": "Assign cluster", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-58BA302DCBD7", "kind": "button", "line": 20, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/table.html"},
   {"accessible_name": "Assign project", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-309E87417C28", "kind": "button", "line": 21, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/table.html"},

@@ -23,6 +23,7 @@ from apps.core.enums import SsaIntervention
 from apps.geography.models import District, Region
 from apps.schools.models import School
 from apps.ssa import recommendation_engine as engine
+from apps.core.fy import get_operational_fy
 from apps.ssa.models import SsaRecord, SsaScore
 
 ALL = [c[0] for c in SsaIntervention.choices]
@@ -99,16 +100,19 @@ class ClusterLatestScoresBatchTest(TestCase):
 
         june = datetime(2026, 6, 1, tzinfo=dt_tz.utc)
         may = datetime(2026, 5, 1, tzinfo=dt_tz.utc)
+        # The year before: a school has one SSA a year (owner, 2026-10-14).
+        last_may = datetime(2025, 5, 1, tzinfo=dt_tz.utc)
+        last_june = datetime(2025, 6, 1, tzinfo=dt_tz.utc)
         a, b, c = cls.schools[0], cls.schools[1], cls.schools[3]
-        cls._record(a, may, 3.0)
+        cls._record(a, last_may, 3.0)
         cls._record(a, june, 5.5, extra={"not_an_intervention": 2.0})
-        # Same day twice: the later upload is the latest.
-        cls._record(b, june, 4.0)
+        # Two years: the later year's is the latest.
+        cls._record(b, last_june, 4.0)
         cls._record(b, june, 7.25, missing=ALL[0])
         # A pending record and a deleted record are not scores.
-        cls._record(c, june, 2.0, status="pending")
         deleted = cls._record(c, may, 8.0)
         SsaRecord.objects.filter(pk=deleted.pk).update(deleted_at=timezone.now())
+        cls._record(c, june, 2.0, status="pending")
         cls._record(cls.schools[4], may, 6.0, missing=ALL[1])
         cls._record(cls.schools[7], june, 9.0)
         # schools[2], [5], [6], [8] have no record; clusters[3] has no school.
@@ -127,7 +131,7 @@ class ClusterLatestScoresBatchTest(TestCase):
         record = SsaRecord.objects.create(
             school=school,
             date_of_ssa=when,
-            fy="2026",
+            fy=get_operational_fy(when),
             quarter="Q3",
             average_score=value,
             uploaded_by="u1",

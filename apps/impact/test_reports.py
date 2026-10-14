@@ -107,9 +107,11 @@ FOLLOW_UP_DAYS = _follow_up_days()
 
 
 def _ssa(school, days_ago, score):
+    # Filed under the year its date falls in: a school has one SSA a year
+    # (owner, 2026-10-14), so a baseline and its follow-up are two years'.
     record = SsaRecord.objects.create(
         school=school,
-        fy=get_operational_fy(),
+        fy=get_operational_fy(timezone.now() - timedelta(days=days_ago)),
         quarter="Q1",
         average_score=score,
         verification_status="confirmed",
@@ -328,7 +330,7 @@ class ReportFixture(TestCase):
                 account_owner_id=owner_profile.id if i < 2 else None,
                 account_owner_status="matched" if i < 2 else "unmatched",
             )
-            baseline = _ssa(school, 300, 4.0)
+            baseline = _ssa(school, 400, 4.0)
             follow_up = _ssa(school, FOLLOW_UP_DAYS, 6.0)
             ProjectSchoolAssignment.objects.create(
                 project=cls.project,

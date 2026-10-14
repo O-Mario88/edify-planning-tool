@@ -69,7 +69,7 @@ not proof it caused the change. Built by apps.analytics.ia_workflow.school_progr
 <div class="flex items-center justify-between gap-2 text-[12px]">
 <div>
 <p class="font-bold">{{ h.record.date_of_ssa|date:"j M Y" }} &bull; FY{{ h.record.fy }}</p>
-<p class="edify-text-caption font-semibold mt-0.5"><span data-tone="{{ h.tone }}">{{ h.status_label }}</span>{% if not h.counted %} &bull; not counted{% endif %}</p>
+<p class="edify-text-caption font-semibold mt-0.5"><span data-tone="{{ h.tone }}">{{ h.status_label }}</span>{% if not h.counted %} &bull; not counted{% endif %}{% if h.source %} &bull; Source: {{ h.source }}{% endif %}</p>
 </div>
 <span class="tabular-nums font-semibold">{% if h.record.average_score is not None %}{{ h.record.average_score|floatformat:1 }}{% else %}—{% endif %}</span>
 </div>

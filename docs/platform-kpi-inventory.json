@@ -9330,7 +9330,7 @@
    "audit_id": "KPI-SOURCE-515",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 888,
+   "line": 891,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -9353,7 +9353,7 @@
    "audit_id": "KPI-SOURCE-516",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/school_views.py",
-   "line": 909,
+   "line": 912,
    "label": null,
    "keys": [
     "count",
@@ -9643,7 +9643,7 @@
    "audit_id": "KPI-SOURCE-533",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 768,
+   "line": 785,
    "label": "School",
    "keys": [
     "label",
@@ -9660,7 +9660,7 @@
    "audit_id": "KPI-SOURCE-534",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 772,
+   "line": 789,
    "label": "Assessment date",
    "keys": [
     "label",
@@ -9677,7 +9677,7 @@
    "audit_id": "KPI-SOURCE-535",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 773,
+   "line": 790,
    "label": "Average score",
    "keys": [
     "label",
@@ -9694,7 +9694,7 @@
    "audit_id": "KPI-SOURCE-536",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 774,
+   "line": 791,
    "label": "How it arrived",
    "keys": [
     "label",
@@ -42506,7 +42506,7 @@
   {
    "audit_id": "KPI-PAYLOAD-017",
    "module": "apps/frontend/views/school_views.py",
-   "line": 623,
+   "line": 626,
    "function": "school_directory_view",
    "target": "kpi_strip_items",
    "source_item_count": 8,

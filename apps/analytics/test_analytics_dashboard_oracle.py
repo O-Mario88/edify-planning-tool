@@ -1508,9 +1508,11 @@ class AnalyticsDashboardOracleTest(TestCase):
                 )
 
         ssa(s1, "2025", "Q2", 4.2, (2025, 2, 3))
-        # Three assessments averaged for one school: the order they are summed in must not matter.
-        ssa(s1, "2026", "Q1", 4.4, (2025, 11, 3))
-        ssa(s1, "2026", "Q2", 4.7, (2026, 2, 3))
+        # One SSA a school a year (owner, 2026-10-14): s1's earlier 2026
+        # readings were returned, so they sit beside the year's one and count
+        # nowhere.
+        ssa(s1, "2026", "Q1", 4.4, (2025, 11, 3), status="returned")
+        ssa(s1, "2026", "Q2", 4.7, (2026, 2, 3), status="returned")
         ssa(s1, "2026", "Q3", 5.1, (2026, 5, 4))
         ssa(s2, "2025", "Q3", 6.0, (2025, 5, 3))
         ssa(s2, "2026", "Q3", 5.2, (2026, 5, 5))

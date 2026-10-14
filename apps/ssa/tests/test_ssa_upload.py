@@ -144,7 +144,10 @@ class SsaUploadTest(APITestCase):
         self.assertEqual(response.json()["created_rows"], 1)
         self.assertEqual(SsaRecord.objects.get().fy, current_fy)
 
-    def test_multiple_assessment_dates_in_one_fy_are_imported(self):
+    def test_a_second_assessment_in_one_fy_is_skipped(self):
+        """One SSA a school a year (owner, 2026-10-14): a file giving a school
+        two assessments in one year imports the first and skips the second,
+        and says so; it used to import both as monitoring history."""
         from apps.core.fy import get_operational_fy
 
         current_fy = get_operational_fy()
@@ -157,8 +160,12 @@ class SsaUploadTest(APITestCase):
         response = self._post(self._csv(body))
 
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertEqual(response.json()["created_rows"], 2)
-        self.assertEqual(SsaRecord.objects.filter(school=self.school).count(), 2)
+        self.assertEqual(response.json()["created_rows"], 1)
+        self.assertEqual(response.json()["duplicate_rows"], 1)
+        self.assertEqual(SsaRecord.objects.filter(school=self.school).count(), 1)
+        self.assertEqual(
+            response.json()["skipped"][0]["reason"], "Duplicate of row 2 in this file"
+        )
 
     def test_same_school_and_date_is_not_imported_twice(self):
         from apps.core.fy import get_operational_fy
@@ -174,9 +181,23 @@ class SsaUploadTest(APITestCase):
 
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json()["created_rows"], 1)
-        self.assertEqual(response.json()["failed_rows"], 1)
+        # Skipped, not failed: the file's own first row holds the year.
+        self.assertEqual(response.json()["duplicate_rows"], 1)
+        self.assertEqual(response.json()["failed_rows"], 0)
         self.assertEqual(SsaRecord.objects.filter(school=self.school).count(), 1)
-        self.assertIn("assessment date already exists", response.content.decode())
+
+    def test_a_year_the_database_holds_is_skipped_and_reported(self):
+        from apps.core.fy import get_operational_fy
+
+        current_fy = get_operational_fy()
+        row = f"SSA-SCH-1,{current_fy}-06-15,{current_fy},7,6,8,7,5,6,4,7\n"
+        self._post(self._csv(f"{SSA_HEADERS}\n{row}", name="first.csv"))
+        response = self._post(self._csv(f"{SSA_HEADERS}\n{row}", name="again.csv"))
+
+        self.assertEqual(response.json()["created_rows"], 0)
+        self.assertEqual(response.json()["duplicate_rows"], 1)
+        self.assertIn("Skipped — existing SSA: 1", response.json()["message"])
+        self.assertEqual(SsaRecord.objects.filter(school=self.school).count(), 1)
 
     def test_reupload_does_not_duplicate_the_unmatched_queue(self):
         body = f"{SSA_HEADERS}\nGHOST-SCHOOL,2026-07-01,{SCORES}\n"

@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **933**
-- All registered routes: **1410**
+- Routed product surfaces: **934**
+- All registered routes: **1411**
 - API routes: **364**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **38**
 - Activity states: **24**
-- Shared component templates: **702**
+- Shared component templates: **703**
 - Full pages: **270**
-- Partials and drawers: **336**
-- Permission-gated surfaces: **916**
-- Referenced by automated tests: **836**
+- Partials and drawers: **337**
+- Permission-gated surfaces: **917**
+- Referenced by automated tests: **837**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -843,6 +843,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-43A9299FB0 | /schools/<str:school_id>/delete | School Delete | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9AB62DBEF9 | /schools/<str:school_id>/edit-drawer | School Edit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0E19B43194 | /schools/<str:school_id>/reopen | School Reopen | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-EE093483F3 | /schools/<str:school_id>/ssa-entry | School Ssa Entry | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-189291E896 | /schools/<str:school_id>/take | School Take | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9559BE9B58 | /schools/<str:school_id>/transfer-owner | School Owner Transfer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-755C340D69 | /schools/add-school | Add School | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

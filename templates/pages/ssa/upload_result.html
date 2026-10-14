@@ -31,7 +31,11 @@ Upload Another File
 {% endkpi_metric %}
 {% kpi_metric %}
 {{ created }}
-{% kpi_label %}SSA Created / Updated{% endkpi_label %}
+{% kpi_label %}Imported{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ duplicates }}
+{% kpi_label %}Skipped — Existing SSA{% endkpi_label %}
 {% endkpi_metric %}
 {% kpi_metric %}
 {{ unmatched }}
@@ -39,7 +43,7 @@ Upload Another File
 {% endkpi_metric %}
 {% kpi_metric %}
 {{ failed }}
-{% kpi_label %}Invalid Rows{% endkpi_label %}
+{% kpi_label %}Errors{% endkpi_label %}
 {% endkpi_metric %}
 {% endkpi_strip %}
 
@@ -75,6 +79,49 @@ Upload Another File
     </table>
   </div>
   {% include "components/table_pager.html" with pager=blocked param="blocked_page" %}
+</section>
+{% endif %}
+
+{% comment %}One SSA a school a year (owner, 2026-10-14): a row whose
+school already has the year's SSA, or that repeats an earlier row of the
+file, is skipped and listed here, so nobody reads the import as having
+written it.{% endcomment %}
+{% if skipped.total %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ssa-skipped-title" data-ssa-skipped>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="ssa-skipped-title" class="rpl-card__title">Skipped — SSA already exists</h2>
+      <span class="rpl-card__subtitle">{{ skipped.total }} row{{ skipped.total|pluralize }} skipped · a school has one SSA a financial year, and the existing record was kept</span>
+    </div>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Rows skipped; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Rows skipped because the school already has that year's SSA</caption>
+      <thead>
+        <tr>
+          <th scope="col">Row</th>
+          <th scope="col">School ID</th>
+          <th scope="col">FY</th>
+          <th scope="col">Assessment date</th>
+          <th scope="col">Status</th>
+          <th scope="col">Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in skipped.rows %}
+        <tr>
+          <th scope="row" data-record-title class="tabular-nums"><span>{{ row.row_number }}</span></th>
+          <td data-label="School ID">{{ row.school_id }}</td>
+          <td data-label="FY" class="tabular-nums">{{ row.fy }}</td>
+          <td data-label="Assessment date">{{ row.date }}</td>
+          <td data-label="Status"><span data-tone="warning">Skipped</span></td>
+          <td data-label="Reason">{{ row.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=skipped param="skipped_page" %}
 </section>
 {% endif %}
 
