@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **696**
+Components and application partials: **702**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -455,6 +455,7 @@ Components and application partials: **696**
 | `partials/my_plan/readiness.html` | application-partial | Reusable readiness interface primitive | danger; default | inherits containing page contract | announced dynamic state | /my-plan<br>/my-plan/<br>/my-plan/readiness | 0 |
 | `partials/my_plan/readiness_list.html` | application-partial | Reusable readiness list interface primitive | danger, info, success, warning; default, empty | inherits containing page contract | accessible name and label | /my-plan<br>/my-plan/<br>/my-plan/readiness | 0 |
 | `partials/my_plan/readiness_panel.html` | application-partial | Reusable readiness panel interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan/readiness | 0 |
+| `partials/my_plan/register_school_results.html` | application-partial | Reusable register school results interface primitive | canonical; default | inherits containing page contract | accessible name and label, announced dynamic state | /my-plan/<str:activity_id>/register-school-search | 0 |
 | `partials/my_plan/row_badges.html` | application-partial | Reusable row badges interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/salesforce_id_drawer.html` | application-partial | Reusable salesforce id drawer interface primitive | info; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id>/salesforce-id | 0 |
 | `partials/my_plan/school_visits.html` | application-partial | Reusable school visits interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
@@ -621,6 +622,7 @@ Components and application partials: **696**
 | `partials/pwa_launch.html` | application-partial | Reusable pwa launch interface primitive | canonical; default, loading | explicit responsive contract | inherits semantic parent contract | /<br>/accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id> | 0 |
 | `partials/refusal_drawer.html` | application-partial | Reusable refusal drawer interface primitive | {{ refusal_tone|default:; default | inherits containing page contract | announced dynamic state | dynamic / parent-owned | 0 |
 | `partials/schools/_details.html` | application-partial | Reusable  details interface primitive | info, warning, {{ visit_status.tone }}; default | explicit responsive contract | inherits semantic parent contract | /schools/<str:school_id> | 0 |
+| `partials/schools/_onboard_form.html` | application-partial | Reusable  onboard form interface primitive | canonical; default, error, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools/create-drawer | 0 |
 | `partials/schools/_participation.html` | application-partial | Reusable  participation interface primitive | canonical; default | inherits containing page contract | accessible name and label | /schools/<str:school_id> | 0 |
 | `partials/schools/_ssa_records.html` | application-partial | Reusable  ssa records interface primitive | warning, {{ d.tone }}, {{ h.tone }}, {{ pair.tone }}; default, empty | explicit responsive contract | accessible name and label | /schools/<str:school_id> | 0 |
 | `partials/schools/add_to_cluster_drawer.html` | application-partial | Reusable add to cluster drawer interface primitive | danger, info, warning; default, empty, error, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools/<str:school_id>/add-to-cluster | 0 |
@@ -636,7 +638,11 @@ Components and application partials: **696**
 | `partials/schools/edit_drawer.html` | application-partial | Reusable edit drawer interface primitive | danger; default, error, disabled | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools/<str:school_id>/edit-drawer | 0 |
 | `partials/schools/htmx_response.html` | application-partial | Reusable htmx response interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools | 0 |
 | `partials/schools/kpi_cards.html` | application-partial | Reusable kpi cards interface primitive | executive; default | inherits containing page contract | inherits semantic parent contract | /schools | 0 |
-| `partials/schools/onboard_drawer.html` | application-partial | Reusable onboard drawer interface primitive | info; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility | /schools/create-drawer | 0 |
+| `partials/schools/onboard_cluster_options.html` | application-partial | Reusable onboard cluster options interface primitive | canonical; default, empty, disabled | inherits containing page contract | inherits semantic parent contract | /schools/cluster-options<br>/schools/create-drawer | 0 |
+| `partials/schools/onboard_drawer.html` | application-partial | Reusable onboard drawer interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools/create-drawer | 0 |
+| `partials/schools/onboard_embedded.html` | application-partial | Reusable onboard embedded interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools/create-drawer | 0 |
+| `partials/schools/onboard_possible_duplicate.html` | application-partial | Reusable onboard possible duplicate interface primitive | warning; default, error | inherits containing page contract | accessible name and label, announced dynamic state | /schools/create-drawer | 0 |
+| `partials/schools/onboard_registered.html` | application-partial | Reusable onboard registered interface primitive | success; default | inherits containing page contract | announced dynamic state | /schools/create-drawer | 0 |
 | `partials/schools/owner_transfer_drawer.html` | application-partial | Reusable owner transfer drawer interface primitive | danger, warning; default, error, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools/<str:school_id>/transfer-owner | 0 |
 | `partials/schools/parish_options.html` | application-partial | Reusable parish options interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools/parishes | 0 |
 | `partials/schools/ssa_score_groups.html` | application-partial | Reusable ssa score groups interface primitive | canonical; default | inherits containing page contract | accessible name and label | /clusters<br>/core-schools<br>/partials/clusters/<str:cluster_id>/schools<br>/planning<br>/schools | 0 |

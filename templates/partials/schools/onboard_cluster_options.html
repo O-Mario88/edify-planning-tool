@@ -1,0 +1,17 @@
+{% comment %}
+The Add School form's cluster options (school_views._onboard_cluster_choices).
+The first option is always the explicit "no cluster", so leaving a school
+unassigned is a choice on the list rather than a gap in it. The cluster the
+chosen sub-county is attached to comes first and is chosen; one held by another
+officer is named and cannot be chosen for this owner.
+{% endcomment %}
+<option value="">No cluster &mdash; leave unassigned</option>
+{% if not cluster_ready %}
+<option value="" disabled>Choose the district and sub-county to bring their cluster</option>
+{% else %}
+{% for c in cluster_options %}
+<option value="{{ c.id }}"{% if c.selected %} selected{% endif %}{% if c.blocked %} disabled{% endif %}>{{ c.name }} &middot; {{ c.district|default:"No district" }}{% if c.officer %} &middot; {{ c.officer }}{% elif c.unowned %} &middot; no officer yet{% endif %}{% if c.suggested %} &middot; covers the sub-county{% endif %}{% if c.this_session %} &middot; this session's cluster{% endif %}{% if c.other_district %} &middot; another district{% endif %}{% if c.blocked %} &mdash; held by {{ c.officer|default:"another officer" }}: choose them as Staff name to join it{% endif %}</option>
+{% empty %}
+<option value="" disabled>{{ cluster_owner.user.name }} has no active cluster you can choose</option>
+{% endfor %}
+{% endif %}

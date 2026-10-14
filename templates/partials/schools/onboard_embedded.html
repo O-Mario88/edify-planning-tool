@@ -1,0 +1,13 @@
+{% comment %}
+The Add School form inside an activity's completion drawer (2026-10-14). Drawn
+in that drawer rather than in place of it, so the attendance already ticked
+and the counts already typed survive while the school is added. Same form,
+same endpoint, same checks as the directory's drawer.
+{% endcomment %}
+<div class="space-y-4" data-onboard-panel>
+<div class="space-y-1">
+<h4 class="text-[13px] font-semibold text-slate-800">Add New School</h4>
+<p class="edify-text-caption text-slate-500">Add the school in Salesforce first, then record it here with its Salesforce ID. Once saved it is attached to this activity as attending, in whichever cluster you choose, and you come back here.</p>
+</div>
+{% include "partials/schools/_onboard_form.html" %}
+</div>
