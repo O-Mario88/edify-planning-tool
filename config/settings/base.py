@@ -198,6 +198,10 @@ MIDDLEWARE = [
     # delegates are refused (apps/acting/middleware.py). No query for anyone
     # who has never been appointed.
     "apps.acting.middleware.ActingCapacityMiddleware",
+    # After authentication: a person whose save is still being priced waits
+    # for it before their next page reads the figures. Asks nothing of a
+    # request without its cookie (apps/daily_visit_batches/costs_follow.py).
+    "apps.daily_visit_batches.costs_follow.CostsFollowMiddleware",
     # After authentication: a link or hx-get button the signed-in role cannot
     # follow is not drawn (owner, 2026-09-27). apps/core/forbidden_links_middleware.py.
     "apps.core.forbidden_links_middleware.ForbiddenLinksMiddleware",
@@ -998,6 +1002,17 @@ LIVE_UPDATES_ENABLED = (
 # the save again.
 ROUTE_CHECK_AFTER_SAVE = (
     os.environ.get("ROUTE_CHECK_AFTER_SAVE", "true").strip().lower()
+    not in ("0", "false", "no", "off")
+) and not IS_TESTING
+
+# A save that changes who shares a day answers once the change is stored and
+# checked; the day's visits are priced, and the week and month filed, right
+# after the answer (apps.daily_visit_batches.costs_follow). Off under the
+# test runner, where a test's transaction never commits and its assertions
+# read the figures at once. SAVES_ANSWER_FIRST=false prices inside the save
+# again; what was already written down is still settled.
+SAVES_ANSWER_FIRST = (
+    os.environ.get("SAVES_ANSWER_FIRST", "true").strip().lower()
     not in ("0", "false", "no", "off")
 ) and not IS_TESTING
 

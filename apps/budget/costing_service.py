@@ -1166,6 +1166,223 @@ def apply_to_activity(
     )[0]
 
 
+def _money_under(activity_ids) -> dict:
+    """What the finance guards ask about, for these activities: their cost
+    lines, and the advances, weekly requests and monthly requests on those
+    lines, read once and locked for the transaction in hand.
+
+    Shared by the cost writer and by `assert_may_be_repriced`, so a save
+    that answers before its days are priced (`apps.daily_visit_batches.
+    costs_follow`) is refused by the same rows, in the same words, as one
+    that prices them at once."""
+    from apps.fund_requests.models import (
+        AdvanceRequest,
+        FundRequest,
+        FundRequestItem,
+        WeeklyFundRequest,
+        WeeklyFundRequestLine,
+    )
+
+    # The lines as they stand: whose they are, and which were paid
+    # straight to a vendor (read once for the guards and the rebuild).
+    old_lines = list(
+        ActivityScheduleCostLine.objects.filter(
+            activity_id__in=activity_ids
+        ).values_list("id", "activity_id", "cost_setting_key", "vendor_paid")
+    )
+    activity_of_line = {line_id: owner for line_id, owner, _k, _v in old_lines}
+    line_ids_of: dict[str, list] = {activity_id: [] for activity_id in activity_ids}
+    vendor_paid_of: dict[str, set] = {
+        activity_id: set() for activity_id in activity_ids
+    }
+    for line_id, owner, key, vendor_paid in old_lines:
+        line_ids_of[owner].append(line_id)
+        if vendor_paid:
+            vendor_paid_of[owner].add(key)
+    all_line_ids = list(activity_of_line)
+
+    # Lock every advance on these activities' lines. A concurrent
+    # confirm_advance()/weekly submit updating one of these rows now
+    # blocks until this transaction commits (or commits first, in which
+    # case the guards below see the confirmed status and refuse).
+    advances_of: dict[str, list] = {activity_id: [] for activity_id in activity_ids}
+    for advance in AdvanceRequest.objects.select_for_update(of=("self",)).filter(
+        budget_line_id__in=all_line_ids
+    ):
+        advances_of[activity_of_line[advance.budget_line_id]].append(advance)
+
+    # A submitted or approved weekly request is its own finance snapshot.
+    # Its child advances can still be pending at this point, so the
+    # advance checks alone would not stop a rebuild from removing an
+    # approved request line. Lock ALL carrying requests (any status) so a
+    # concurrent submission serializes with this rebuild, then refuse on
+    # the frozen ones. A RETURNED request is back in the owner's hands —
+    # re-pricing is the legitimate next step, and the generator rebuilds
+    # its lines from the corrected schedule.
+    weekly_ids_of: dict[str, set] = {activity_id: set() for activity_id in activity_ids}
+    for weekly_id, line_id in (
+        WeeklyFundRequestLine.objects.filter(activity_budget_line_id__in=all_line_ids)
+        .values_list("weekly_fund_request_id", "activity_budget_line_id")
+        .distinct()
+    ):
+        weekly_ids_of[activity_of_line[line_id]].add(weekly_id)
+    carrying_weekly_ids = set().union(*weekly_ids_of.values())
+    locked_weekly = {
+        weekly.id: weekly
+        for weekly in WeeklyFundRequest.objects.select_for_update().filter(
+            id__in=carrying_weekly_ids
+        )
+    }
+
+    # A submitted/approved MONTHLY FundRequest is equally a finance
+    # snapshot, but its items reference cost lines by a bare CharField id
+    # (no FK) — the rebuild would leave those payable item rows dangling
+    # with live amounts and no source line.
+    monthly_ids_of: dict[str, set] = {
+        activity_id: set() for activity_id in activity_ids
+    }
+    for monthly_id, line_id in (
+        FundRequestItem.objects.filter(activity_schedule_cost_line_id__in=all_line_ids)
+        .values_list("fund_request_id", "activity_schedule_cost_line_id")
+        .distinct()
+    ):
+        monthly_ids_of[activity_of_line[line_id]].add(monthly_id)
+    carrying_monthly_ids = set().union(*monthly_ids_of.values())
+    locked_monthly = {
+        monthly.id: monthly
+        for monthly in FundRequest.objects.select_for_update().filter(
+            id__in=carrying_monthly_ids
+        )
+    }
+    return {
+        "line_ids_of": line_ids_of,
+        "vendor_paid_of": vendor_paid_of,
+        "advances_of": advances_of,
+        "weekly_ids_of": weekly_ids_of,
+        "locked_weekly": locked_weekly,
+        "monthly_ids_of": monthly_ids_of,
+        "locked_monthly": locked_monthly,
+    }
+
+
+def _ask_money_guards(activities, money: dict) -> None:
+    """Refuse a re-pricing of any of these activities whose money has moved
+    or is with someone: each asked in turn, and of each the same questions
+    in the same order as when it was priced alone, so a day is refused for
+    the same member and in the same words."""
+    from apps.fund_requests.models import (
+        MONEY_MOVED_ADVANCE_STATUSES,
+        AdvanceRequestStatus,
+        FundRequestStatus,
+    )
+    from apps.fund_requests.weekly_service import REBUILDABLE_WEEKLY_STATUSES
+
+    # A planner's own change to the plan is not refused by a monthly
+    # request in its approval chain: the request follows the plan, and
+    # its items are pointed at the rebuilt lines below (owner,
+    # 2026-10-08; apps.fund_requests.plan_changes). A sweep still is, and
+    # so is anything under a request that is with the accountant or paid.
+    from apps.fund_requests.plan_changes import follows_plan_change
+
+    # Any returned/rejected monthly status is back in the owner's hands
+    # (matching services.submit's resubmittable set — the plain RETURNED
+    # trio alone made every returned_by_* monthly request an un-fixable
+    # dead end).
+    repriceable_fr_statuses = [
+        FundRequestStatus.DRAFT,
+        FundRequestStatus.RETURNED,
+        FundRequestStatus.REJECTED,
+        FundRequestStatus.RETURNED_BY_PL,
+        FundRequestStatus.RETURNED_BY_CD,
+        FundRequestStatus.RETURNED_BY_RVP,
+        FundRequestStatus.RETURNED_BY_ACCOUNTANT,
+    ]
+    advances_of = money["advances_of"]
+    weekly_ids_of = money["weekly_ids_of"]
+    locked_weekly = money["locked_weekly"]
+    monthly_ids_of = money["monthly_ids_of"]
+    locked_monthly = money["locked_monthly"]
+    # Each member is asked in turn, and of each the same questions in the
+    # same order as when it was priced alone, so the day is refused for
+    # the same member and in the same words.
+    for activity in activities:
+        locked_advances = advances_of[activity.id]
+        # A cost line's disbursed/accounted/reimbursed AdvanceRequest (or its
+        # WeeklyFundRequestLine) CASCADEs on the line's own deletion — clearing
+        # the lines below would silently erase that financial record. Once
+        # money has actually moved, this snapshot is locked history; the
+        # caller must use a formal amendment/variance workflow instead.
+        #
+        # Asked of the canonical set rather than a copy of it. The copy had
+        # drifted two states behind: ACCOUNTABILITY_PL_PENDING and
+        # REIMBURSEMENT_PL_PENDING are money-moved — the first is a disbursed
+        # advance whose accountability is with the PL, the second an employee's
+        # own spend awaiting repayment — and neither appeared here, so
+        # rescheduling in either state passed the guard and CASCADE-deleted the
+        # disbursed figures with the cost lines.
+        if any(adv.status in MONEY_MOVED_ADVANCE_STATUSES for adv in locked_advances):
+            raise BadRequest(
+                "This activity already has a disbursed or accounted advance — its "
+                "cost snapshot is locked. Use a budget amendment instead of "
+                "rescheduling to change its cost."
+            )
+
+        # Confirmed-but-not-yet-disbursed money is frozen too: the clear-and-
+        # rebuild would CASCADE-delete a CONFIRMED_FOR_ADVANCE advance (the
+        # confirmation silently vanishes and is recreated as pending) while the
+        # approved weekly request keeps its stale total with a missing line.
+        # The unstick path is the accountant returning the advance.
+        if any(
+            adv.status
+            in (
+                AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+                AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+            )
+            for adv in locked_advances
+        ):
+            raise BadRequest(
+                "This activity's advance is already confirmed and sitting in the "
+                "accountant's queue. Ask the accountant to return the advance "
+                "first, then reschedule."
+            )
+
+        if any(
+            locked_weekly[weekly_id].status not in REBUILDABLE_WEEKLY_STATUSES
+            for weekly_id in weekly_ids_of[activity.id]
+            if weekly_id in locked_weekly
+        ):
+            raise BadRequest(
+                "This activity is already included in a submitted or approved "
+                "weekly fund request. Return that request before changing its cost."
+            )
+
+        if any(
+            fr.status not in repriceable_fr_statuses and not follows_plan_change(fr)
+            for fr in (
+                locked_monthly[monthly_id]
+                for monthly_id in monthly_ids_of[activity.id]
+                if monthly_id in locked_monthly
+            )
+        ):
+            raise BadRequest(
+                "This activity is already included in a submitted or approved "
+                "monthly fund request. Return that request before changing its cost."
+            )
+
+
+def assert_may_be_repriced(activities) -> None:
+    """The refusals `apply_to_activities` would give these activities,
+    asked without pricing them. Call it inside the save's transaction: the
+    rows it inspects stay locked until the save commits, as they do when
+    the pricing itself asks."""
+    activities = list(activities)
+    if not activities:
+        return
+    _ask_money_guards(
+        activities, _money_under([activity.id for activity in activities])
+    )
+
+
 _PERIOD_FIELDS = (
     "planned_date",
     "week_start_date",
@@ -1296,17 +1513,6 @@ def apply_to_activities(
             }
         )
 
-    from apps.fund_requests.models import (
-        MONEY_MOVED_ADVANCE_STATUSES,
-        AdvanceRequest,
-        AdvanceRequestStatus,
-        FundRequest,
-        FundRequestStatus,
-        WeeklyFundRequest,
-        WeeklyFundRequestLine,
-    )
-    from apps.fund_requests.weekly_service import REBUILDABLE_WEEKLY_STATUSES
-
     activities = [plan["activity"] for plan in plans]
     activity_ids = [activity.id for activity in activities]
 
@@ -1319,175 +1525,15 @@ def apply_to_activities(
     # M-2). Locking also means a crash mid-sequence can no longer leave a
     # scheduled Activity with zero budget lines.
     with transaction.atomic(savepoint=savepoint):
-        # The lines as they stand: whose they are, and which were paid
-        # straight to a vendor (read once for the guards and the rebuild).
-        old_lines = list(
-            ActivityScheduleCostLine.objects.filter(
-                activity_id__in=activity_ids
-            ).values_list("id", "activity_id", "cost_setting_key", "vendor_paid")
-        )
-        activity_of_line = {line_id: owner for line_id, owner, _k, _v in old_lines}
-        line_ids_of: dict[str, list] = {activity_id: [] for activity_id in activity_ids}
-        vendor_paid_of: dict[str, set] = {
-            activity_id: set() for activity_id in activity_ids
-        }
-        for line_id, owner, key, vendor_paid in old_lines:
-            line_ids_of[owner].append(line_id)
-            if vendor_paid:
-                vendor_paid_of[owner].add(key)
-        all_line_ids = list(activity_of_line)
-
-        # Lock every advance on these activities' lines. A concurrent
-        # confirm_advance()/weekly submit updating one of these rows now
-        # blocks until this transaction commits (or commits first, in which
-        # case the guards below see the confirmed status and refuse).
-        advances_of: dict[str, list] = {activity_id: [] for activity_id in activity_ids}
-        for advance in AdvanceRequest.objects.select_for_update(of=("self",)).filter(
-            budget_line_id__in=all_line_ids
-        ):
-            advances_of[activity_of_line[advance.budget_line_id]].append(advance)
-
-        # A submitted or approved weekly request is its own finance snapshot.
-        # Its child advances can still be pending at this point, so the
-        # advance checks alone would not stop a rebuild from removing an
-        # approved request line. Lock ALL carrying requests (any status) so a
-        # concurrent submission serializes with this rebuild, then refuse on
-        # the frozen ones. A RETURNED request is back in the owner's hands —
-        # re-pricing is the legitimate next step, and the generator rebuilds
-        # its lines from the corrected schedule.
-        weekly_ids_of: dict[str, set] = {
-            activity_id: set() for activity_id in activity_ids
-        }
-        for weekly_id, line_id in (
-            WeeklyFundRequestLine.objects.filter(
-                activity_budget_line_id__in=all_line_ids
-            )
-            .values_list("weekly_fund_request_id", "activity_budget_line_id")
-            .distinct()
-        ):
-            weekly_ids_of[activity_of_line[line_id]].add(weekly_id)
-        carrying_weekly_ids = set().union(*weekly_ids_of.values())
-        locked_weekly = {
-            weekly.id: weekly
-            for weekly in WeeklyFundRequest.objects.select_for_update().filter(
-                id__in=carrying_weekly_ids
-            )
-        }
-
-        # A submitted/approved MONTHLY FundRequest is equally a finance
-        # snapshot, but its items reference cost lines by a bare CharField id
-        # (no FK) — the rebuild would leave those payable item rows dangling
-        # with live amounts and no source line. Any returned/rejected status
-        # is back in the owner's hands (matching services.submit's
-        # resubmittable set — the plain RETURNED trio alone made every
-        # returned_by_* monthly request an un-fixable dead end).
-        repriceable_fr_statuses = [
-            FundRequestStatus.DRAFT,
-            FundRequestStatus.RETURNED,
-            FundRequestStatus.REJECTED,
-            FundRequestStatus.RETURNED_BY_PL,
-            FundRequestStatus.RETURNED_BY_CD,
-            FundRequestStatus.RETURNED_BY_RVP,
-            FundRequestStatus.RETURNED_BY_ACCOUNTANT,
-        ]
-        from apps.fund_requests.models import FundRequestItem
-
-        monthly_ids_of: dict[str, set] = {
-            activity_id: set() for activity_id in activity_ids
-        }
-        for monthly_id, line_id in (
-            FundRequestItem.objects.filter(
-                activity_schedule_cost_line_id__in=all_line_ids
-            )
-            .values_list("fund_request_id", "activity_schedule_cost_line_id")
-            .distinct()
-        ):
-            monthly_ids_of[activity_of_line[line_id]].add(monthly_id)
-        carrying_monthly_ids = set().union(*monthly_ids_of.values())
-        locked_monthly = {
-            monthly.id: monthly
-            for monthly in FundRequest.objects.select_for_update().filter(
-                id__in=carrying_monthly_ids
-            )
-        }
-        # A planner's own change to the plan is not refused by a monthly
-        # request in its approval chain: the request follows the plan, and
-        # its items are pointed at the rebuilt lines below (owner,
-        # 2026-10-08; apps.fund_requests.plan_changes). A sweep still is, and
-        # so is anything under a request that is with the accountant or paid.
-        from apps.fund_requests.plan_changes import (
-            carry_monthly_requests,
-            follows_plan_change,
-        )
-
-        # Each member is asked in turn, and of each the same questions in the
-        # same order as when it was priced alone, so the day is refused for
-        # the same member and in the same words.
-        for activity in activities:
-            locked_advances = advances_of[activity.id]
-            # A cost line's disbursed/accounted/reimbursed AdvanceRequest (or its
-            # WeeklyFundRequestLine) CASCADEs on the line's own deletion — clearing
-            # the lines below would silently erase that financial record. Once
-            # money has actually moved, this snapshot is locked history; the
-            # caller must use a formal amendment/variance workflow instead.
-            #
-            # Asked of the canonical set rather than a copy of it. The copy had
-            # drifted two states behind: ACCOUNTABILITY_PL_PENDING and
-            # REIMBURSEMENT_PL_PENDING are money-moved — the first is a disbursed
-            # advance whose accountability is with the PL, the second an employee's
-            # own spend awaiting repayment — and neither appeared here, so
-            # rescheduling in either state passed the guard and CASCADE-deleted the
-            # disbursed figures with the cost lines.
-            if any(
-                adv.status in MONEY_MOVED_ADVANCE_STATUSES for adv in locked_advances
-            ):
-                raise BadRequest(
-                    "This activity already has a disbursed or accounted advance — its "
-                    "cost snapshot is locked. Use a budget amendment instead of "
-                    "rescheduling to change its cost."
-                )
-
-            # Confirmed-but-not-yet-disbursed money is frozen too: the clear-and-
-            # rebuild would CASCADE-delete a CONFIRMED_FOR_ADVANCE advance (the
-            # confirmation silently vanishes and is recreated as pending) while the
-            # approved weekly request keeps its stale total with a missing line.
-            # The unstick path is the accountant returning the advance.
-            if any(
-                adv.status
-                in (
-                    AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
-                    AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
-                )
-                for adv in locked_advances
-            ):
-                raise BadRequest(
-                    "This activity's advance is already confirmed and sitting in the "
-                    "accountant's queue. Ask the accountant to return the advance "
-                    "first, then reschedule."
-                )
-
-            if any(
-                locked_weekly[weekly_id].status not in REBUILDABLE_WEEKLY_STATUSES
-                for weekly_id in weekly_ids_of[activity.id]
-                if weekly_id in locked_weekly
-            ):
-                raise BadRequest(
-                    "This activity is already included in a submitted or approved "
-                    "weekly fund request. Return that request before changing its cost."
-                )
-
-            if any(
-                fr.status not in repriceable_fr_statuses and not follows_plan_change(fr)
-                for fr in (
-                    locked_monthly[monthly_id]
-                    for monthly_id in monthly_ids_of[activity.id]
-                    if monthly_id in locked_monthly
-                )
-            ):
-                raise BadRequest(
-                    "This activity is already included in a submitted or approved "
-                    "monthly fund request. Return that request before changing its cost."
-                )
+        # What the guards ask about is read and locked once for all of
+        # them (`_money_under`), and each member is then asked in turn.
+        money = _money_under(activity_ids)
+        _ask_money_guards(activities, money)
+        line_ids_of = money["line_ids_of"]
+        vendor_paid_of = money["vendor_paid_of"]
+        monthly_ids_of = money["monthly_ids_of"]
+        locked_monthly = money["locked_monthly"]
+        from apps.fund_requests.plan_changes import carry_monthly_requests
 
         # Finance's vendor-booking decision (hotel paid direct) must survive
         # a re-price: capture which accommodation keys were vendor-paid and

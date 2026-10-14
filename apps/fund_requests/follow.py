@@ -51,6 +51,30 @@ def fund_requests_follow_once():
         yield
     finally:
         _waiting.reset(token)
+    refile(waiting)
+
+
+@contextmanager
+def fund_requests_kept():
+    """Collect the owner-weeks and owner-months asked for inside this block
+    and hand them over unfiled: the block yields what is waiting, and the
+    caller files it (`refile`) or writes it down to be filed after the save
+    has answered (`apps.daily_visit_batches.costs_follow`). Inside a block
+    that is already collecting it yields None and that block keeps them."""
+    if _waiting.get() is not None:
+        yield None
+        return
+    waiting: dict = {"weeks": {}, "months": {}}
+    token = _waiting.set(waiting)
+    try:
+        yield waiting
+    finally:
+        _waiting.reset(token)
+
+
+def refile(waiting: dict) -> None:
+    """Rebuild each owner-week and owner-month in `waiting` once, from the
+    lines as they stand. Inside the caller's transaction."""
     from .monthly_service import sync_monthly_periods
     from .weekly_service import generate_weekly_fund_request
 
@@ -79,4 +103,10 @@ def months_wait(periods) -> bool:
     return True
 
 
-__all__ = ["fund_requests_follow_once", "weeks_wait", "months_wait"]
+__all__ = [
+    "fund_requests_follow_once",
+    "fund_requests_kept",
+    "refile",
+    "weeks_wait",
+    "months_wait",
+]
