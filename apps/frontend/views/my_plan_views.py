@@ -22,7 +22,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from datetime import date, datetime
+from datetime import date
 from apps.audit.models import AuditLog
 from apps.audit.services import log as audit_log
 
@@ -326,33 +326,22 @@ def my_plan_view(request):
         ]
 
         from datetime import date
-        from apps.core.fy import get_operational_fy, month_range_to_dates
+
+        from apps.frontend.views.oversight_views import (
+            _period_filters,
+            export_period_bounds,
+        )
         from apps.planning.oversight_service import COMPLETED_WORK_STATUSES
 
-        period_type = (request.GET.get("period_type") or "").strip().lower()
-        raw_from_m = (request.GET.get("from_month") or "").strip()
-        raw_to_m = (request.GET.get("to_month") or "").strip()
-        raw_s_date = (request.GET.get("start_date") or "").strip()
-        raw_e_date = (request.GET.get("end_date") or "").strip()
-        fy_val = str(context.get("fy") or query.get("fy") or get_operational_fy())
-
-        filter_start_date = None
-        filter_end_date = None
-        if period_type == "month_range" or (
-            raw_from_m.isdigit() and raw_to_m.isdigit()
-        ):
-            f_m = int(raw_from_m) if raw_from_m.isdigit() else 10
-            t_m = int(raw_to_m) if raw_to_m.isdigit() else 9
-            filter_start_date, filter_end_date = month_range_to_dates(fy_val, f_m, t_m)
-        elif period_type == "custom_dates" or (raw_s_date and raw_e_date):
-            try:
-                s_d = datetime.strptime(raw_s_date, "%Y-%m-%d").date()
-                e_d = datetime.strptime(raw_e_date, "%Y-%m-%d").date()
-                if s_d > e_d:
-                    s_d, e_d = e_d, s_d
-                filter_start_date, filter_end_date = s_d, e_d
-            except (ValueError, TypeError):
-                pass
+        # The period the Export options drawer chose, read by the one rule
+        # every export reads it by (oversight_views._period_filters; owner,
+        # 2026-10-15: "make sure it only picks the plan for the selected
+        # period not everything"). This page kept its own copy, which read the
+        # hidden month pair before the custom dates.
+        period = _period_filters(request)
+        filter_start_date = filter_end_date = None
+        if period.get("period") == "custom" and period.get("date_start"):
+            filter_start_date, filter_end_date = export_period_bounds(period)
 
         if filter_start_date is not None and filter_end_date is not None:
 
@@ -3817,20 +3806,11 @@ def my_plan_export_drawer_view(request):
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    from apps.frontend.views.oversight_views import drawer_period
+
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
 
     fy_start, fy_end = get_fy_date_range(fy)
     default_start_date = fy_start.strftime("%Y-%m-%d")
@@ -3849,8 +3829,9 @@ def my_plan_export_drawer_view(request):
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": default_start_date,
-        "default_end_date": default_end_date,
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"] or default_start_date,
+        "default_end_date": page_period["default_end_date"] or default_end_date,
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
