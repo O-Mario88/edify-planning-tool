@@ -99,6 +99,14 @@ def _calendar_staff_audience(user) -> tuple[list[str] | None, list[str] | None]:
     return sorted(activity_owner_ids), sorted(leave_staff_ids)
 
 
+def off_calendar_done(activities):
+    """Completed work is never drawn (owner, 2026-10-14: "All completed
+    activities should be off the calendar completely"); My Plan and Planning
+    Oversight list it, in green. Both calendars — this page's and Leave's —
+    ask here, so neither can draw it again alone."""
+    return activities.exclude(status__in=OFFICER_COMPLETED_STATUSES)
+
+
 def _calendar_event_family(activity_type: str) -> str:
     """Colour family for one activity type. Order matters: core before the
     visit/training groups (core_visit is canonically a visit), cluster before
@@ -324,10 +332,7 @@ def calendar_view(request):
         activities = activities.exclude(
             status__in=["cancelled", "rejected", "awaiting_owner_approval"]
         )
-        # Completed work is off the calendar entirely (owner, 2026-10-14:
-        # "All completed activities should be off the calendar completely");
-        # My Plan and Planning Oversight list it, in green.
-        activities = activities.exclude(status__in=OFFICER_COMPLETED_STATUSES)
+        activities = off_calendar_done(activities)
         if selected_status:
             activities = activities.filter(
                 status__in=_CALENDAR_STATUS_FAMILIES[selected_status]

@@ -45,6 +45,7 @@ from typing import NamedTuple
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.activities.completion_columns import delivered_day as done_on
 from apps.planning.country_execution import stages as st
 from apps.planning.country_oversight import policy, rules
 from apps.planning.country_oversight.coverage import Window, _day
@@ -353,13 +354,9 @@ def activity_scope_q(scope) -> Q | None:
 
 
 def _local_day(moment) -> date | None:
-    if moment is None:
-        return None
-    if isinstance(moment, datetime):
-        if timezone.is_aware(moment):
-            return timezone.localtime(moment).date()
-        return moment.date()
-    return moment
+    from apps.core.clock import local_day
+
+    return local_day(moment)
 
 
 _STAFF_ORDER = (
@@ -504,7 +501,8 @@ def build(
         # officer has recorded it (owner, 2026-10-02): a visit delivered on
         # its day and keyed the next day is not late. Until then the day
         # execution was started in the app is the only date there is.
-        start = row["actual_delivery_date"] or _local_day(row["execution_started_at"])
+        # The day My Plan's "Completed Early" reads as done, from one rule.
+        start = done_on(row["actual_delivery_date"], row["execution_started_at"])
         verified_at = row["ia_confirmed_at"] or (
             row["pl_reviewed_at"] if status in st.VERIFIED else None
         )

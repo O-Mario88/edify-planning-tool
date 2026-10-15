@@ -6,6 +6,7 @@ from apps.activities.completion_columns import (
     EMPTY as EMPTY_COLUMNS,
     FINISHED_EARLY,
     completed_last_key,
+    plan_day,
     row_state,
     completion_columns,
     completion_fields,
@@ -1626,6 +1627,9 @@ def get_frontend_context(
             ),
             "status": a.status,
             "planned_date": a.planned_date,
+            # The day the row is on, a scheduled-only row's included: what
+            # makes it overdue (completion_columns.row_state).
+            "plan_day": plan_day(a.planned_date, a.scheduled_date),
             "quarter": a.quarter,
             # School details. A non-school programme activity (conference,
             # camp, exhibition) legitimately has NO school and NO cluster, so
@@ -2304,7 +2308,7 @@ def get_frontend_context(
         for row in rows:
             # The whole row's ink: completed green, past its day red (owner,
             # 2026-10-14; components/row-state.css).
-            row["row_state"] = row_state(row["status"], row["planned_date"], _today)
+            row["row_state"] = row_state(row["status"], row["plan_day"], _today)
             row["district_type"] = label_of(_district_types, row["id"])
             row["district"] = plan_row_district(row)
             row.update(

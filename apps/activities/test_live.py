@@ -235,6 +235,26 @@ class OffUnderTheTestRunner(LiveFixture):
 
         self.assertEqual(self._told(publish), set())
 
+    def test_off_by_default_now_nothing_listens(self):
+        """Owner, 2026-10-14: pages update on Refresh, and no page opens the
+        stream (static/js/live-regions.js). Working out who to tell after
+        every save, for nobody, was the save-path cost Refresh was meant to
+        remove: the announcements are off unless LIVE_UPDATES_ENABLED says
+        otherwise."""
+        import inspect
+
+        from apps.activities import live
+        from config.settings import base
+
+        self.assertIn(
+            'os.environ.get("LIVE_UPDATES_ENABLED", "false")', inspect.getsource(base)
+        )
+        with self.settings():
+            from django.conf import settings as current
+
+            del current.LIVE_UPDATES_ENABLED
+            self.assertFalse(live.enabled())
+
 
 class LiveRegionsContract(SimpleTestCase):
     """The pages that show the plan are marked to read themselves again."""

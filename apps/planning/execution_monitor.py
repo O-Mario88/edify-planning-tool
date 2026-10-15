@@ -245,8 +245,17 @@ class TeamExecution:
 
     target_progress = PersonExecution.target_progress
     due_progress = PersonExecution.due_progress
-    remaining_to_visit = PersonExecution.remaining_to_visit
-    remaining_to_train = PersonExecution.remaining_to_train
+
+    # What remains is each person's own remainder, summed: one officer past
+    # their 560 does not cover for another short of it.
+    @property
+    def remaining_to_visit(self) -> int:
+        return sum(p.remaining_to_visit for p in self.people)
+
+    @property
+    def remaining_to_train(self) -> int:
+        return sum(p.remaining_to_train for p in self.people)
+
     training_progress = PersonExecution.training_progress
     training_tone = PersonExecution.training_tone
     complete_share = PersonExecution.complete_share

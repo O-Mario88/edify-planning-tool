@@ -21,7 +21,11 @@ test('compact record actions across platform pages',async({page},info)=>{
     await page.evaluate(t=>{document.documentElement.classList.remove('theme-light','theme-dark','theme-blue');document.documentElement.classList.add(t);document.documentElement.classList.toggle('dark',t!=='theme-light')},theme);
     const errors=await page.evaluate(()=>{
      const errors=[];
-     for(const e of document.querySelectorAll(':is(.school-record-row,.school-list-card,.cluster-card) .school-record-action, table .edify-table-action')){
+     // The Staff Activity Log's name is a link-like button, not a 28px row
+     // action: its rows are compact on purpose (owner, 2026-09-29: "reduce the
+     // space between the rows"; staff-activity.css), and micro-ux marks every
+     // button in a table. It only has rows once accounts have signed in.
+     for(const e of document.querySelectorAll(':is(.school-record-row,.school-list-card,.cluster-card) .school-record-action, table .edify-table-action:not(.sal-name)')){
       if(e.closest('[role="menu"], .row-menu, [popover]')||e.matches('[role="menuitem"]'))continue;
       const r=e.getBoundingClientRect();if(!r.width||!r.height)continue;
       if(Math.abs(r.height-28)>1)errors.push(e.tagName+' '+e.className+' height='+r.height);

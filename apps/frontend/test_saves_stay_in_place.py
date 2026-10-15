@@ -65,6 +65,22 @@ class SavedInPlaceTest(TestCase):
         self.assertNotIn("EdifyLive", body)
         self.assertNotIn("location.reload", body)
 
+    def test_a_money_save_reads_the_page_again(self):
+        # Finance is left reloading on purpose (PR #265): a desk still showing
+        # a row as undisbursed after its money moved invites a second action
+        # on it. The five finance drawers answer with a whole-page refresh.
+        import inspect
+
+        from apps.core.htmx_saved import saved_and_reloaded
+        from apps.frontend.views import finance_views
+
+        response = saved_and_reloaded()
+        self.assertEqual(response["HX-Refresh"], "true")
+        self.assertEqual(response["HX-Trigger"], "close-drawer")
+        source = inspect.getsource(finance_views)
+        self.assertNotIn("saved_in_place", source)
+        self.assertEqual(source.count("return saved_and_reloaded()"), 5)
+
     def test_a_reschedule_from_a_drawer_answers_in_place(self):
         self.client.force_login(self.user)
         response = self.client.post(

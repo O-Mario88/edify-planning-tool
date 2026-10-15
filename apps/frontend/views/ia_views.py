@@ -1198,13 +1198,21 @@ IA_ROLLUP_METRICS = ("planned", "achieved", "verified", "waiting", "returned")
 def _ia_rollup_counts(values_queryset):
     from django.db.models import Count
 
+    from apps.pl_review.services import lead_verified_q
     from apps.targets.performance import ACHIEVED_STATUSES
 
     return values_queryset.annotate(
         planned=Count("id"),
         achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
         verified=Count("id", filter=Q(ia_verification_status="confirmed")),
-        waiting=Count("id", filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)),
+        # Awaiting IA: a CCEO's and a lead's staff work waits on a Programme
+        # Lead whichever status filed it (owner, 2026-10-14), as the queue
+        # reads it (_ia_staff_queue).
+        waiting=Count(
+            "id",
+            filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
+            & ~lead_verified_q(),
+        ),
         returned=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
     )
 
@@ -2420,12 +2428,17 @@ def ia_compare_view(request):
     evidence_list = []
     ssa_record = None
 
+    from apps.pl_review.services import lead_verified_q
+
     waiting_list = (
         Activity.objects.filter(
             _ia_reach_q(request),
             deleted_at__isnull=True,
             status="awaiting_ia_verification",
         )
+        # A CCEO's and a lead's staff work is a Programme Lead's to verify
+        # (owner, 2026-10-14), so IA's picker does not offer it.
+        .exclude(lead_verified_q())
         .select_related("school", "cluster")
         .order_by("created_at", "id")
     )

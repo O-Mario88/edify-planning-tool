@@ -14,10 +14,11 @@ name: Deploy
 # itself and exits green, so nothing changes by accident.
 
 on:
-  # zizmor: ignore[dangerous-triggers] — this workflow checks out nothing and
-  # runs no code from the triggering run; it only reads its conclusion and
-  # head commit (through env, never template expansion) to deploy main.
-  workflow_run:
+  # dangerous-triggers is ignored on the line below: this workflow checks out
+  # nothing and runs no code from the triggering run; it only reads its
+  # conclusion and head commit (through env, never template expansion) to
+  # deploy main. zizmor 1.31 reads an ignore only on the flagged line itself.
+  workflow_run: # zizmor: ignore[dangerous-triggers]
     workflows: [CI]
     types: [completed]
     branches: [main]
