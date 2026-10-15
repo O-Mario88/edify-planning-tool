@@ -656,12 +656,37 @@ def planning_preview_owner(principal, staff_id: str | None = None) -> str:
     return owner
 
 
+def _preview_destination(input: dict):
+    """The district a previewed plan travels to: its school's, else its
+    cluster's."""
+    from django.db.models import Q
+
+    if input.get("schoolId"):
+        from apps.schools.models import School
+
+        school = (
+            School.objects.select_related("district")
+            .filter(Q(id=input["schoolId"]) | Q(school_id=input["schoolId"]))
+            .first()
+        )
+        return school.district if school else None
+    if input.get("clusterId"):
+        from apps.clusters.models import Cluster
+
+        cluster = (
+            Cluster.objects.select_related("district")
+            .filter(pk=input["clusterId"])
+            .first()
+        )
+        return cluster.district if cluster else None
+    return None
+
+
 def _planning_day_context(
     input: dict, responsible_user_id: str | None
 ) -> tuple[dict, int]:
     """Resolve the proposed day's actual members; never trust a client count/owner."""
     from datetime import date
-    from django.db.models import Q
     from apps.core.fy import get_operational_fy
     from apps.daily_visit_batches.models import DailyVisitBatch
     from apps.daily_visit_batches.pricing import (
@@ -670,6 +695,21 @@ def _planning_day_context(
     )
 
     input = dict(_profiled_input(input))
+    if input.get("deliveryType", "staff") != "staff":
+        # Partner work is priced for nobody's night and at the destination's
+        # own district type, as the save prices it (services._costing_input,
+        # responsible_staff_id None). The planner's own rate and home district
+        # previewed a different cost (owner, 2026-10-15: "no misleading costs").
+        from apps.daily_visit_batches.districts import (
+            accommodation_key_for_staff,
+            district_type_for_staff,
+        )
+
+        input["accommodationKey"] = accommodation_key_for_staff(None)
+        destination = _preview_destination(input)
+        if destination:
+            input["districtType"] = district_type_for_staff(None, destination)
+        return input, 1
     if responsible_user_id:
         # The night away is paid at the traveller's accommodation rate
         # (owner, 2026-10-05), whether or not the day is chosen yet.
@@ -693,25 +733,7 @@ def _planning_day_context(
     input.update(plannedDate=day, fy=get_operational_fy(day))
     from apps.daily_visit_batches.districts import district_type_for_staff
 
-    destination = None
-    if input.get("schoolId"):
-        from apps.schools.models import School
-
-        school = (
-            School.objects.select_related("district")
-            .filter(Q(id=input["schoolId"]) | Q(school_id=input["schoolId"]))
-            .first()
-        )
-        destination = school.district if school else None
-    elif input.get("clusterId"):
-        from apps.clusters.models import Cluster
-
-        cluster = (
-            Cluster.objects.select_related("district")
-            .filter(pk=input["clusterId"])
-            .first()
-        )
-        destination = cluster.district if cluster else None
+    destination = _preview_destination(input)
     if destination:
         input["districtType"] = (
             district_type_for_staff(responsible_user_id, destination) or "primary"

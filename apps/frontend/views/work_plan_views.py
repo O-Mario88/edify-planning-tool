@@ -192,27 +192,17 @@ def non_school_activity_drawer(request):
 
 
 def _travel_district_type(dest_district_id: str, responsible_id: str) -> str:
-    """Preview-side twin of activities.services._field_event_district_type."""
+    """Preview-side twin of activities.services._field_event_district_type:
+    the same rule, so the preview prices what the save will."""
     if not dest_district_id:
         return "primary"
-    from django.db.models import Q
-
-    from apps.accounts.models import StaffProfile
+    from apps.daily_visit_batches.districts import district_type_for_staff
     from apps.geography.models import District
 
-    home = (
-        StaffProfile.objects.filter(Q(id=responsible_id) | Q(user_id=responsible_id))
-        .values_list("primary_district_id", flat=True)
-        .first()
-    )
-    if home:
-        return "primary" if home == dest_district_id else "secondary"
-    dtype = (
-        District.objects.filter(id=dest_district_id)
-        .values_list("district_type", flat=True)
-        .first()
-    )
-    return dtype or "secondary"
+    district = District.objects.filter(id=dest_district_id).first()
+    if district is None:
+        return "secondary"
+    return district_type_for_staff(responsible_id, district) or "secondary"
 
 
 @_manual_activity_permission
@@ -256,6 +246,10 @@ def non_school_activity_preview(request):
             or request.user.staff_profile_id
             or request.user.user_id
         )
+        # Partner work is priced for nobody's night, as its save prices it
+        # (owner, 2026-10-15: a preview shows the cost the save will price).
+        if payload["deliveryType"] == "partner":
+            responsible = None
         # The night away is the responsible person's (owner, 2026-10-05).
         from apps.daily_visit_batches.districts import accommodation_key_for_staff
 

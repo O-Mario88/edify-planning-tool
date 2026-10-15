@@ -98,11 +98,6 @@ def _staff_profile(responsible_id):
     )
 
 
-def _role_of(user):
-    roles = list(getattr(user, "roles", None) or [])
-    return getattr(user, "active_role", None) or (roles[0] if roles else None)
-
-
 # Whose night away is paid at the second accommodation rate. Owner,
 # 2026-10-05: "the accommodation for program leads, cd, IA and accountant
 # should be separate from the accommodation of CCEO", and, asked the same day
@@ -137,6 +132,25 @@ def accommodation_key_for_role(role) -> str:
     return ACCOMMODATION_KEY
 
 
+def accommodation_key_for_user(user) -> str:
+    """The accommodation rate for this account's post: the second rate when
+    any role it HOLDS is on it, else the CCEO's. Read from the role in use, a
+    Programme Lead's three nights on production (24–26 November 2026) were
+    filed under the CCEO rate because another role was in use when the day was
+    priced (owner, 2026-10-15 cost audit). An officer acting as a lead holds
+    CCEO alone and keeps the CCEO rate (owner, 2026-10-07: acting is following
+    up, not a change of post). An account listing no roles reads its active
+    role, as before."""
+    held = [str(getattr(r, "value", r)) for r in (getattr(user, "roles", None) or [])]
+    if not held:
+        return accommodation_key_for_role(getattr(user, "active_role", None))
+    from .pricing import ACCOMMODATION_KEY, MANAGEMENT_ACCOMMODATION_KEY
+
+    if any(role in MANAGEMENT_ACCOMMODATION_ROLES for role in held):
+        return MANAGEMENT_ACCOMMODATION_KEY
+    return ACCOMMODATION_KEY
+
+
 def accommodation_key_for_staff(responsible_id) -> str:
     """The accommodation rate a night away fetches for the staff member
     ``responsible_id`` (a User id or a StaffProfile id), by their role.
@@ -156,7 +170,9 @@ def accommodation_key_for_staff(responsible_id) -> str:
             ("accommodation_role_user", responsible_id),
             lambda: User.objects.filter(id=responsible_id).first(),
         )
-    return accommodation_key_for_role(_role_of(user) if user is not None else None)
+    if user is None:
+        return accommodation_key_for_role(None)
+    return accommodation_key_for_user(user)
 
 
 def district_type_for_staff(responsible_id, district):
@@ -173,16 +189,42 @@ def district_type_for_staff(responsible_id, district):
     if district is None:
         return PRIMARY
     profile = _staff_profile(responsible_id)
-    if profile is None:
+    user = profile.user if profile is not None else _account(responsible_id)
+    if user is None:
         return district.district_type
-    user = profile.user
-    role = _role_of(user)
-    if is_field_role(role):
+    # Field or head office by the roles HELD, not the one in use when the day
+    # is priced: the same visit read primary under one hat and secondary
+    # under another (owner, 2026-10-15 cost audit). An account with no staff
+    # profile (an Admin, a head-office user) is head office.
+    if profile is not None and holds_field_role(user):
         home = profile.primary_district_id
         if home:
             return PRIMARY if str(home) == str(district.pk) else SECONDARY
         return district.district_type
     return hq_district_type(district.name)
+
+
+def holds_field_role(user) -> bool:
+    """Whether this account holds a field role (CCEO or Programme Lead); an
+    account listing no roles reads its active role."""
+    held = [str(getattr(r, "value", r)) for r in (getattr(user, "roles", None) or [])]
+    if not held:
+        return is_field_role(getattr(user, "active_role", None))
+    return any(is_field_role(role) for role in held)
+
+
+def _account(responsible_id):
+    """The account itself, for one with no staff profile, read once per
+    request."""
+    if not responsible_id:
+        return None
+    from apps.accounts.models import User
+    from apps.core.request_cache import memoize
+
+    return memoize(
+        ("accommodation_role_user", responsible_id),
+        lambda: User.objects.filter(id=responsible_id).first(),
+    )
 
 
 __all__ = [

@@ -157,7 +157,7 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ row.activity_type_label }}</td>
           <td class="px-3 py-2.5 whitespace-nowrap">{% include "partials/dashboards/pl/_week_planned_date.html" %}</td>
           <td class="px-3 py-2.5">{% include "partials/dashboards/pl/_week_intervention.html" %}</td>
-          <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants }}</td>
+          <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants|default:"—" }}</td>
           <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">UGX {{ row.budget_total|default:0|intcomma }}</td>
           {% include "components/completion_cells.html" with completion_cell_class="px-3 py-2.5 whitespace-nowrap" %}
           <td class="px-3 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-bold {{ row.status_class }}">{{ row.status_label }}</span></td>
@@ -204,7 +204,7 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{% include "partials/dashboards/pl/_week_executor.html" %}</td>
           <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title="{{ row.purpose }}">{{ row.purpose|default:"Cluster Meeting" }}</td>
           <td class="px-3 py-2.5">{% include "partials/dashboards/pl/_week_intervention.html" %}</td>
-          <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants }}</td>
+          <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants|default:"—" }}</td>
           <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">UGX {{ row.budget_total|default:0|intcomma }}</td>
           {% include "components/completion_cells.html" with completion_cell_class="px-3 py-2.5 whitespace-nowrap" %}
           <td class="px-3 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-bold {{ row.status_class }}">{{ row.status_label }}</span></td>

@@ -913,26 +913,20 @@ def _field_event_district_type(activity: Activity) -> str:
     dest = activity.event_district_id
     if not dest:
         return "primary"
-    from django.db.models import Q as _Q
-
-    from apps.accounts.models import StaffProfile
-
-    home = (
-        StaffProfile.objects.filter(
-            _Q(id=activity.responsible_staff_id)
-            | _Q(user_id=activity.responsible_staff_id)
-        )
-        .values_list("primary_district_id", flat=True)
-        .first()
-    )
-    if home:
-        return "primary" if home == dest else "secondary"
+    # The one rule a school-visit day is read by (district_type_for_staff):
+    # field staff against their primary district, head office against the
+    # Kampala, Wakiso and Mukono zone. This re-implemented the home-district
+    # comparison and priced a head-office event inside the zone as secondary
+    # (owner, 2026-10-15 cost audit).
+    from apps.daily_visit_batches.districts import district_type_for_staff
     from apps.geography.models import District
 
-    dtype = (
-        District.objects.filter(id=dest).values_list("district_type", flat=True).first()
+    district = District.objects.filter(id=dest).first()
+    if district is None:
+        return "secondary"
+    return (
+        district_type_for_staff(activity.responsible_staff_id, district) or "secondary"
     )
-    return dtype or "secondary"
 
 
 def _costing_input(activity: Activity, data: dict) -> dict:
@@ -1048,6 +1042,51 @@ def reprice_activity(activity: Activity, principal=None) -> None:
 def _apply_schedule_cost_snapshot(
     activity: Activity, data: dict, principal=None
 ) -> None:
+    """Price the activity (`_price_activity`), then keep the in-school
+    Training of a School Visit priced as the visit's state says
+    (`_settle_pair_training`)."""
+    _price_activity(activity, data, principal=principal)
+    if activity.activity_type == "school_visit":
+        _settle_pair_training(activity, principal=principal)
+
+
+def _settle_pair_training(visit: Activity, principal=None) -> None:
+    """The in-school Training of this School Visit, priced as its visit's
+    state says: UGX 0 (its partner fee aside) and outside every day pool while
+    the visit makes the journey; the visit day once the visit is called off or
+    removed (apps.activities.pair_costing; owner, 2026-09-28 and 2026-10-15).
+
+    Called whenever the visit is priced or called off, so the halves cannot
+    disagree whichever is moved first: a Training moved while its visit was
+    called off joins the day, and is taken back out the moment the visit is
+    brought back to it. Only a Training that disagrees is re-priced, through
+    the one cost writer and its finance locks."""
+    from apps.activities.facilitation import FEE_LINE_TYPE
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.activities.pair_costing import (
+        REPRICEABLE_PAIR_STATUSES,
+        is_uncosted_pair_training,
+    )
+
+    training = Activity.objects.filter(
+        paired_school_visit_id=visit.id,
+        activity_type="in_school_training",
+        deleted_at__isnull=True,
+        status__in=REPRICEABLE_PAIR_STATUSES,
+    ).first()
+    if training is None:
+        return
+    carries_day = bool(training.daily_visit_batch_id) or (
+        ActivityScheduleCostLine.objects.filter(activity=training)
+        .exclude(line_item_type=FEE_LINE_TYPE)
+        .exists()
+    )
+    if is_uncosted_pair_training(training) != carries_day:
+        return
+    _price_activity(training, {}, principal=principal)
+
+
+def _price_activity(activity: Activity, data: dict, principal=None) -> None:
     """Delegate to the central CostingService — the SINGLE cost writer.
 
     All scheduling paths (create, reschedule, partner self-schedule) funnel here.
@@ -6543,6 +6582,11 @@ def _cancel_or_defer(
         ).delete()
         sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
         sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
+        # A School Visit called off on its own leaves its in-school Training
+        # as the only record of the day: the Training now carries it (owner,
+        # 2026-10-15 cost audit; it sat at UGX 0 and the day was in no budget).
+        if a.activity_type == "school_visit":
+            _settle_pair_training(a, principal=principal)
     for frozen in frozen_wfrs:
         _notify_frozen_weekly_request(frozen, a, new_status)
     # §26 — the record is preserved (never deleted) and the cancelled status

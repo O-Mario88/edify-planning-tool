@@ -1835,9 +1835,20 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                     if total_p and target_schools:
                         pps = max(1, total_p // len(target_schools))
                     else:
-                        pps = 2
+                        # No number was planned: say so. It read 2, a figure
+                        # nobody planned, priced into each school's row
+                        # (owner, 2026-10-15: "no misleading costs").
+                        pps = None
                 meal_unit_rate = meal_rates.get(act_id) or 0
-                per_school_meal_cost = pps * meal_unit_rate
+                # An online Group Training is free: no school is fed (owner,
+                # 2026-10-09; My Plan already reads it so). It read
+                # participants x the catalogue meal rate here.
+                if act_obj is not None:
+                    from apps.activities.online_training import is_online_training
+
+                    if is_online_training(act_obj):
+                        meal_unit_rate = 0
+                per_school_meal_cost = pps * meal_unit_rate if pps is not None else None
 
                 if target_schools:
                     for s in target_schools:
@@ -1860,14 +1871,20 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                         s_item.participants = invited_composition.get(
                             (act_id, s.id), pps
                         )
-                        s_item.planned_cost = s_item.participants * meal_unit_rate
+                        s_item.planned_cost = (
+                            s_item.participants * meal_unit_rate
+                            if s_item.participants is not None
+                            else 0
+                        )
                         s_item.budget = s_item.planned_cost
                         new_planned_trainings.append(s_item)
                 else:
                     fb_item = copy.copy(item)
                     fb_item.school_name = item.cluster_name or "Cluster Training"
                     fb_item.participants = pps
-                    fb_item.planned_cost = item.planned_cost or per_school_meal_cost
+                    fb_item.planned_cost = (
+                        item.planned_cost or per_school_meal_cost or 0
+                    )
                     fb_item.budget = item.budget or fb_item.planned_cost
                     new_planned_trainings.append(fb_item)
 
@@ -1904,7 +1921,9 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
             dict(
                 data,
                 count=len(data["items"]),
-                participants_total=sum(item.participants for item in data["items"]),
+                participants_total=sum(
+                    item.participants or 0 for item in data["items"]
+                ),
             )
             for data in grouped_dict.values()
         ]

@@ -413,7 +413,12 @@ def build_items(
         from apps.activity_catalogue.training_intervention import fixed_interventions
 
         fixed_interventions(fresh=True)
-    items = [_activity_item(a, directory, costs, partner_names) for a in activities]
+    from apps.activities.pair_costing import live_companions
+
+    live = live_companions(activities)
+    items = [
+        _activity_item(a, directory, costs, partner_names, live) for a in activities
+    ]
     items += [_assignment_item(pa, directory) for pa in assignments]
 
     if staff_id:
@@ -1147,7 +1152,7 @@ def course_intervention(activity) -> str:
 
 
 def _activity_item(
-    activity, directory: _StaffDirectory, costs, partner_names
+    activity, directory: _StaffDirectory, costs, partner_names, live=None
 ) -> PlanningOversightItem:
     # Partner work by the rule My Plan applies (`staff_my_plan_q`): the
     # delivery channel and the two states only a Partner's work carries, as
@@ -1183,7 +1188,12 @@ def _activity_item(
         or getattr(activity, "delivery_type", "") == "in-school"
     )
     raw_cost = int(costs.get(activity.id) or activity.est_cost_cents or 0)
-    planned_cost = 0 if is_in_school else raw_cost
+    # The activity's own cost, whatever it is (owner, 2026-10-15: "the costs
+    # should reflect the activity cost exactly"). Every in-school Training was
+    # written as 0, which hid the visit day a Training with no companion visit
+    # carries (UGX 73,000 at Adonai, Gulu) from the page's planned budget and
+    # its export; the free half of a live pair has no lines and reads 0 anyway.
+    planned_cost = raw_cost
     budget = raw_cost
     cluster_planned_from = (
         "School Visit"
@@ -1270,7 +1280,7 @@ def _activity_item(
         cluster_planned_from=cluster_planned_from,
         budget=budget,
         is_in_school_training=is_in_school,
-        cost_on_school_visit=is_uncosted_pair_training(activity),
+        cost_on_school_visit=is_uncosted_pair_training(activity, live),
         planned_by_id=activity.responsible_staff_id or activity.monitored_by_staff_id,
         planned_by_name=directory.name(
             activity.responsible_staff_id or activity.monitored_by_staff_id
@@ -1651,7 +1661,10 @@ def plan_export_rows(items) -> list[dict]:
         if key in seen:
             continue
         seen.add(key)
-        if i.cost_on_school_visit:
+        # "In School Visit" only for a Training that carries nothing of its
+        # own; a partner facilitator's fee is its own money (owner,
+        # 2026-10-15: wording must not misstate where money stands).
+        if i.cost_on_school_visit and not i.planned_cost:
             budget_status = "In School Visit"
         else:
             budget_status = budget_statuses.get(i.activity_id, "No Budget")

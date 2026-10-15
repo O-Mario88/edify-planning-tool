@@ -500,7 +500,15 @@ def _units(activities) -> list[list]:
         training_id = a.id if a.id in visit_of else training_of.get(a.id)
         visit_id = visit_of.get(a.id) or (a.id if a.id in training_of else None)
         training, visit = by_id.get(training_id), by_id.get(visit_id)
-        unit = [training, visit] if training and visit else [a]
+        # The other half joins only while it is still live, as the single
+        # doors take it (pairs.joins): a called-off visit moved with its
+        # Training was brought back to life as a side effect.
+        other = visit if a is training else training
+        unit = (
+            [training, visit]
+            if training and visit and (other is a or may_tick(other.status))
+            else [a]
+        )
         units.append(unit)
         placed.update(member.id for member in unit)
     return units

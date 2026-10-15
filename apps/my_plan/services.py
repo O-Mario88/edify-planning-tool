@@ -1408,7 +1408,14 @@ def get_frontend_context(
         budget_status = "No Budget"
         budget_status_color = "slate"
 
-        if first_line:
+        if first_line and a.cost_missing:
+            # Priced in part and not requestable until it is set up (owner,
+            # 2026-10-15 cost audit: it read "Budget Created" for a training
+            # with no participant count, none of whose money can be requested).
+            badges.append(("Cost Setup Required", "amber"))
+            budget_status = "Cost Setup Required"
+            budget_status_color = "amber"
+        elif first_line:
             wfr_line = next(iter(first_line.weekly_request_lines.all()), None)
             if wfr_line and getattr(wfr_line, "weekly_fund_request", None):
                 wfr = wfr_line.weekly_fund_request
@@ -2047,9 +2054,13 @@ def get_frontend_context(
                 if total_p and _target_schools:
                     pps = max(1, total_p // len(_target_schools))
                 else:
-                    pps = 2
+                    # No number was planned: say so rather than price 2
+                    # nobody planned (owner, 2026-10-15 cost audit).
+                    pps = None
             _meal_rate = _meal_rates.get(_act_id)
-            per_school_meal_cost = pps * _meal_rate if _meal_rate is not None else None
+            per_school_meal_cost = (
+                pps * _meal_rate if _meal_rate is not None and pps is not None else None
+            )
             # An online training is free: no meal is served at any school
             # (owner, 2026-10-09; apps.activities.online_training).
             if act_obj and is_online_training(act_obj):

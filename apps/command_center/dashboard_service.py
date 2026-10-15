@@ -541,9 +541,16 @@ class DashboardMetricsService:
         # 10. Budget snapshot — real scheduled-budget sums from cost lines.
         from apps.activities.models import ActivityScheduleCostLine
 
+        from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
+
+        # Called-off work keeps its lines as history; the Budget page leaves
+        # all of it out (budget.services.scoped_budget_lines), and so does this.
+        # Leaving out only "cancelled" counted deferred and rejected work, and
+        # a deferred visit's day twice once its in-school Training carries it
+        # (owner, 2026-10-15: "no doubling the cost").
         _lines = ActivityScheduleCostLine.objects.filter(
             fiscal_year=fy, activity__deleted_at__isnull=True
-        ).exclude(activity__status="cancelled")
+        ).exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         line_summary = _lines.aggregate(
             week=Sum(
                 "amount",

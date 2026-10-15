@@ -442,7 +442,7 @@ and `forloop` from the including context.{% endcomment %}
                   {% endif %}
                 </td>
                 <td class="px-4 py-2.5 text-center font-semibold tabular-nums text-slate-800 dark:text-slate-200">
-                  {{ item.participants }}
+                  {{ item.participants|default:"—" }}
                 </td>
                 <td class="px-4 py-2.5">
                   <span class="pill {% if item.delivery_type == 'in-school' %}pill-neutral{% else %}pill-info{% endif %} text-xs font-semibold">
