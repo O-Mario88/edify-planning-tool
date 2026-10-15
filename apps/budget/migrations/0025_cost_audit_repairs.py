@@ -119,7 +119,7 @@ class Migration(migrations.Migration):
     # daily_visit_batches 0003).
     dependencies = [
         ("accounts", "0038_user_acting_until"),
-        ("activities", "0066_cancelled_work_stops_counting"),
+        ("activities", "0067_hand_in_entered_work"),
         ("activity_catalogue", "0016_item_universal_training"),
         ("audit", "0008_domain_event_aggregate_id_width"),
         ("budget", "0024_management_accommodation_rate"),

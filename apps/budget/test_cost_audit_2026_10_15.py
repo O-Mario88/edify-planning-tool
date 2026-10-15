@@ -19,7 +19,7 @@ line):
 
 from __future__ import annotations
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.activities.pair_costing import (
@@ -199,3 +199,41 @@ class TheNightFollowsTheRoleHeld(SimpleTestCase):
             MANAGEMENT_ACCOMMODATION_KEY,
         )
         self.assertEqual(self._key([], None), ACCOMMODATION_KEY)
+
+
+class AnOnlineCatalogueTrainingPreviewsFree(TestCase):
+    """The Work Plan drawer previews what the save writes (owner, 2026-10-15:
+    "no misleading costs"). An online catalogue training is saved free
+    (apps.activities.online_training); its preview priced meals, a room, a
+    facilitator and the officer's day."""
+
+    def test_the_work_plan_preview_of_an_online_training_is_nothing(self):
+        from apps.accounts.models import StaffProfile, User
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+
+        cceo = User.objects.create_user(
+            email="online-preview@edify.org",
+            name="Online Preview",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="x",
+        )
+        StaffProfile.objects.create(user=cceo, title="CCEO")
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="EARLY_CHILDHOOD_EDUCATION_PROJECT"
+        )
+        self.client.force_login(cceo)
+
+        response = self.client.post(
+            "/work-plan/add/preview",
+            {
+                "catalogue_item_id": item.id,
+                "scheduled_date": "2026-11-10",
+                "expected_participants": "25",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        self.assertTrue(response.context["online_free"])
+        self.assertContains(response, "UGX 0")
+        self.assertNotContains(response, "Venue")

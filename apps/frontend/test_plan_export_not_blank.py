@@ -339,6 +339,15 @@ class GroupTrainingMealRateTest(TestCase):
         )
 
     def test_my_plan_shows_the_schools_share_at_the_catalogue_rate(self):
+        for code in ("MR-1", "MR-2"):
+            School.objects.create(
+                school_id=code,
+                name=f"Member {code}",
+                region=self.region,
+                district=self.district,
+                cluster_id=self.cluster.id,
+                cluster_status="clustered",
+            )
         self._training()
         self._set_rate(7000)
         client = Client()
@@ -346,6 +355,8 @@ class GroupTrainingMealRateTest(TestCase):
         html = client.get(
             "/my-plan/", {"fy": get_operational_fy(self.day)}
         ).content.decode()
-        # Two heads a school when the session names no split: 2 × 7,000.
-        self.assertIn("UGX 14,000", html)
-        self.assertNotIn("UGX 10,000", html)
+        # The session's ten heads over its two member schools: 5 × 7,000. It
+        # read two heads a school when the session named no split, a figure
+        # nobody planned (owner, 2026-10-15: "no misleading costs").
+        self.assertIn("UGX 35,000", html)
+        self.assertNotIn("UGX 25,000", html)

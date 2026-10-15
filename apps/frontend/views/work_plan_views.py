@@ -230,6 +230,20 @@ def non_school_activity_preview(request):
         if not item_id:
             raise ValueError("Choose an Activity title to preview its cost.")
         item = get_selectable_item(item_id)
+        from apps.activities.online_training import ONLINE, ONLINE_TRAINING_TYPES
+
+        if (
+            item.workflow_kind in ONLINE_TRAINING_TYPES
+            and _programme_item_metadata(item)["programme_delivery_mode"] == ONLINE
+        ):
+            # Saved free, so previewed free (owner, 2026-10-09: "online
+            # training fetches no cost it is free"; apps.activities.
+            # online_training).
+            return render(
+                request,
+                "partials/work_plan/non_school_cost_preview.html",
+                {"online_free": True, "days": days},
+            )
         payload = {
             "activityType": item.workflow_kind,
             "costingProfile": item.costing_profile,

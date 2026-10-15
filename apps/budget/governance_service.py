@@ -563,7 +563,6 @@ def decide_cost_review(principal, review_id: str, data: dict) -> dict:
     if decision == "reject" and not note:
         raise BadRequest("A rejection note is required.")
 
-
     with transaction.atomic():
         review = (
             ActivityCostReview.objects.select_for_update()
