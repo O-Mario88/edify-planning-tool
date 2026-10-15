@@ -62,6 +62,13 @@ OFFICER_COMPLETED_STATUSES = frozenset(
     ("submitted_to_pl", "awaiting_ia_verification", *COMPLETED_WORK_STATUSES)
 )
 
+#: Approved, and so counted (owner, 2026-10-15: "Any activity not approved by
+#: PL should not be counted"). A CCEO's work is approved by their Programme
+#: Lead and a lead's own on hand-in (apps.pl_review.services); partner work and
+#: other staff's by Impact Assessment. Handed-in work that waits for the
+#: approval is completed — green, off the calendar — but not yet counted.
+APPROVED_STATUSES = frozenset(("ia_verified", "accountant_confirmed", "closed"))
+
 #: Done before its planned day (owner, 2026-10-14: "the activities finished
 #: early should be taken off the calendar and on My Plan tables, planning
 #: oversight marked complete so we can be able to track"). The calendar leaves

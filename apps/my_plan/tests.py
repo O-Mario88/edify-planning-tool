@@ -84,9 +84,10 @@ class SubmitForReviewActionTest(TestCase):
         self.assertNotEqual(activity.status, "submitted")
         self.assertIsNone(activity.submitted_to_ia_at)
 
-    def test_a_programme_lead_s_own_submission_waits_on_the_lead_not_ia(self):
+    def test_a_programme_lead_s_own_submission_is_approved_not_sent_to_ia(self):
         """Owner, 2026-10-14: "IA does not verify CCEO and PL work. it is the
-        PL to verify everything"; a lead's own: "The PL verifies it"."""
+        PL to verify everything"; 2026-10-15: "it is the PL who approves for
+        CCEO and theirs are approved automatically"."""
         pl = User.objects.create_user(
             email="pl-submit@test.org",
             name="Submitting Program Lead",
@@ -102,7 +103,8 @@ class SubmitForReviewActionTest(TestCase):
         self.assertIn(resp.status_code, (200, 302))
 
         activity.refresh_from_db()
-        self.assertEqual(activity.status, ActivityStatus.SUBMITTED_TO_PL)
+        self.assertEqual(activity.status, ActivityStatus.IA_VERIFIED)
+        self.assertEqual(activity.pl_reviewed_by, pl.id)
         self.assertIsNone(activity.submitted_to_ia_at)
 
         # Impact Assessment's queue does not pick it up.

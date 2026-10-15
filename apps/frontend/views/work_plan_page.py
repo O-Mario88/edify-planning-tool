@@ -582,6 +582,9 @@ def build_work_plan_context(user, params) -> dict:
     # 2026-10-05; apps.activities.day_off).
     day_off_by_activity = day_off_marks(activities)
 
+    from apps.pl_review.services import lead_verified_owner_ids
+
+    lead_ids = lead_verified_owner_ids()
     for a in activities:
         anchor = a.planned_date or (
             local_day(a.scheduled_date) if a.scheduled_date else None
@@ -683,7 +686,9 @@ def build_work_plan_context(user, params) -> dict:
         summary_row["cost"] += activity_period_cost
         summary_row["cost_missing_count"] += int(missing_cost)
 
-        status_label, status_class = get_activity_status_label_and_class(a, today)
+        status_label, status_class = get_activity_status_label_and_class(
+            a, today, lead_ids
+        )
         owned = a.responsible_staff_id in viewer_ids or (
             a.delivery_type == "partner" and a.monitored_by_staff_id in viewer_ids
         )

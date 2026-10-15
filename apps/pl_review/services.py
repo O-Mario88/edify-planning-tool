@@ -16,6 +16,7 @@ verify everything"; lead_clears_own_work).
 
 from __future__ import annotations
 
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -558,6 +559,81 @@ def _close_ia_notice(activity) -> None:
         pass
 
 
+def programme_lead_owner(activity) -> str | None:
+    """The user id of the Programme Lead whose own staff work this is, or
+    None.
+
+    Read from the role the owner HOLDS: an officer acting as a lead for a
+    month holds CCEO, and their own work still goes to their lead (owner,
+    2026-10-07: acting is following up, never deciding). Partner work is
+    never a lead's own (§10).
+    """
+    owner = activity.responsible_staff_id
+    if not owner or activity.delivery_type == "partner":
+        return None
+    from apps.accounts.models import StaffProfile
+
+    return (
+        StaffProfile.objects.filter(
+            Q(id=owner) | Q(user_id=owner),
+            deleted_at__isnull=True,
+            user__roles__contains=[EdifyRole.COUNTRY_PROGRAM_LEAD.value],
+        )
+        .values_list("user_id", flat=True)
+        .first()
+    )
+
+
+def _approve(a: Activity, reviewer_id: str) -> None:
+    """Write the approval on a locked, reviewable completion: the work is
+    approved and counted from now (owner, 2026-10-15). Inside the caller's
+    transaction."""
+    from apps.activities.ia_models import IAVerification
+    from apps.core.enums import ActivityStatus, EvidenceStatus, VerificationStatus
+    from apps.evidence.models import EvidenceRecord
+    from apps.hr.milestone_progress import record_activity_progress
+    from apps.integrations.services import enqueue_activity_salesforce_sync
+
+    reviewed_at = timezone.now()
+    was_with_ia = a.status == "awaiting_ia_verification"
+    a.status = ActivityStatus.IA_VERIFIED
+    a.ia_verification_status = VerificationStatus.CONFIRMED
+    a.pl_reviewed_at = reviewed_at
+    a.pl_reviewed_by = reviewer_id
+    a.ia_confirmed_at = reviewed_at
+    a.ia_confirmed_by = reviewer_id
+    a.evidence_status = "accepted"
+    a.save(
+        update_fields=[
+            "status",
+            "ia_verification_status",
+            "pl_reviewed_at",
+            "pl_reviewed_by",
+            "ia_confirmed_at",
+            "ia_confirmed_by",
+            "evidence_status",
+            "updated_at",
+        ]
+    )
+    EvidenceRecord.objects.filter(activity=a, quarantined=False).update(
+        status=EvidenceStatus.ACCEPTED,
+        reviewed_by=reviewer_id,
+        reviewed_at=reviewed_at,
+    )
+    # The IA workspace's own record, where the work had one: it must not go on
+    # reading "pending" for work the lead has approved.
+    IAVerification.objects.filter(activity=a).update(
+        status=VerificationStatus.CONFIRMED,
+        verified_by=reviewer_id,
+        verified_at=reviewed_at,
+    )
+    _close_review_notice(a)
+    if was_with_ia:
+        _close_ia_notice(a)
+    transaction.on_commit(lambda: record_activity_progress(a))
+    enqueue_activity_salesforce_sync(a.id)
+
+
 def confirm(activity_id: str, principal) -> dict:
     """PL approves and verifies a CCEO completion and evidence directly.
 
@@ -566,60 +642,14 @@ def confirm(activity_id: str, principal) -> dict:
     credit and syncing to Salesforce), rather than routing staff work to IA.
     IA verifies evidence for partner completed activities to process partner payments.
     """
-    from django.db import transaction
-    from apps.activities.ia_models import IAVerification
     from apps.activities.services import _serialize
-    from apps.core.enums import ActivityStatus, EvidenceStatus, VerificationStatus
-    from apps.evidence.models import EvidenceRecord
-    from apps.hr.milestone_progress import record_activity_progress
-    from apps.integrations.services import enqueue_activity_salesforce_sync
 
     _get_reviewable(activity_id, principal)
-    reviewed_at = timezone.now()
 
     with transaction.atomic():
         a = _lock_reviewable(activity_id, principal)
-        was_with_ia = a.status == "awaiting_ia_verification"
-        a.status = ActivityStatus.IA_VERIFIED
-        a.ia_verification_status = VerificationStatus.CONFIRMED
-        a.pl_reviewed_at = reviewed_at
-        a.pl_reviewed_by = principal.user_id
-        a.ia_confirmed_at = reviewed_at
-        a.ia_confirmed_by = principal.user_id
-        a.evidence_status = "accepted"
-        a.save(
-            update_fields=[
-                "status",
-                "ia_verification_status",
-                "pl_reviewed_at",
-                "pl_reviewed_by",
-                "ia_confirmed_at",
-                "ia_confirmed_by",
-                "evidence_status",
-                "updated_at",
-            ]
-        )
-        EvidenceRecord.objects.filter(activity=a, quarantined=False).update(
-            status=EvidenceStatus.ACCEPTED,
-            reviewed_by=principal.user_id,
-            reviewed_at=reviewed_at,
-        )
-        # The IA workspace's own record, where the work had one: it must not
-        # go on reading "pending" for work the lead has cleared.
-        IAVerification.objects.filter(activity=a).update(
-            status=VerificationStatus.CONFIRMED,
-            verified_by=principal.user_id,
-            verified_at=reviewed_at,
-        )
-
+        _approve(a, principal.user_id)
         _audit("pl_review_confirm", a, principal)
-        _close_review_notice(a)
-        if was_with_ia:
-            _close_ia_notice(a)
-
-        confirmed = a
-        transaction.on_commit(lambda: record_activity_progress(confirmed))
-        enqueue_activity_salesforce_sync(confirmed.id)
 
     # Notify CCEO
     owner = _owning_staff_id(a)
@@ -635,10 +665,40 @@ def confirm(activity_id: str, principal) -> dict:
     return _serialize(a)
 
 
+def approve_on_hand_in(activity) -> bool:
+    """A Programme Lead's own work is approved the moment it is handed in
+    (owner, 2026-10-15: "it is the PL who approves for CCEO and theirs are
+    approved automatically"). Nobody is asked, so nobody is told. True when
+    it was approved."""
+    if activity.status not in LEAD_REVIEWABLE_STATUSES:
+        return False
+    lead_user_id = programme_lead_owner(activity)
+    if not lead_user_id:
+        return False
+    with transaction.atomic():
+        a = Activity.objects.select_for_update().get(pk=activity.pk)
+        if a.status not in LEAD_REVIEWABLE_STATUSES:
+            return False
+        _approve(a, lead_user_id)
+        audit_log(
+            action="pl_review_auto_approve",
+            subject_kind="Activity",
+            subject_id=a.id,
+            actor_id=lead_user_id,
+            actor_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            reason="A Programme Lead's own work is approved when it is handed in.",
+            payload={
+                "schoolId": a.school_id,
+                "activityType": a.activity_type,
+                "responsibleStaffId": a.responsible_staff_id,
+                "status": a.status,
+            },
+        )
+    return True
+
+
 def return_activity(activity_id: str, data: dict, principal) -> dict:
     """PL returns a completion to the CCEO for correction."""
-    from django.db import transaction
-
     from apps.activities.services import _serialize
 
     from apps.activities.return_notes import compose
