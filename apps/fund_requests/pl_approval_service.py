@@ -318,16 +318,17 @@ def _build_cceo_plan(cceo, lines, wfr, awaiting="submitted_to_pl"):
     into a queue/detail record. The request (and the money the PL approves) is
     the staff advance on the WeeklyFundRequest; partner-delivered lines are
     plan context, paid through the partner-payment channel, never here."""
+    from .fundable import is_vendor_transport
 
     # Partner-delivered lines never enter the staff funds: partners are paid
     # directly through the MOU partner-payment channel. They stay visible
     # only as context — the partner chip and the "paid via partner payments"
     # note — never as rows, totals or validation blockers of this request.
     def _is_vendor(li):
-        # Mirrors fund_requests.fundable.vendor_direct_filter: school-visit
-        # transport is paid to the transport company; accommodation joins the
-        # vendor channel when Finance booked the hotel.
-        return (li.line_item_type == "transport" and li.activity.school_id) or (
+        # Mirrors fund_requests.fundable.vendor_direct_filter: a mission
+        # day's school transport is paid to the transport company;
+        # accommodation joins the vendor channel when Finance booked the hotel.
+        return is_vendor_transport(li) or (
             li.line_item_type == "accommodation" and li.vendor_paid
         )
 
@@ -337,11 +338,7 @@ def _build_cceo_plan(cceo, lines, wfr, awaiting="submitted_to_pl"):
     staff_lines = [li for li in lines if not _is_partner(li) and not _is_vendor(li)]
     partner_total = sum(li.amount for li in lines if _is_partner(li))
     vendor_transport_total = sum(
-        li.amount
-        for li in lines
-        if not _is_partner(li)
-        and li.line_item_type == "transport"
-        and li.activity.school_id
+        li.amount for li in lines if not _is_partner(li) and is_vendor_transport(li)
     )
     vendor_accommodation_total = sum(
         li.amount

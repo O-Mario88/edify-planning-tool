@@ -14,6 +14,9 @@ left them. This puts them right, each exactly as an edit of the day would:
 2. Planned nights away at the rate of a role the traveller was using rather
    than the post they hold (a Programme Lead's 24–26 November 2026 nights at
    the CCEO rate) — ``daily_visit_batches.repricing``.
+3. Costs the CD added for an activity whose name holds "transport", typed as
+   transport-company money and so requested from nobody — re-typed as the
+   activity's own line.
 
 Work whose week has left draft, whose money has moved or that is done is kept
 as priced and printed. As in daily_visit_batches 0003, the historical models
@@ -33,9 +36,26 @@ from django.db.models import Q
 BUDGET_SECONDS = 12 * 60
 
 
+def retype_added_costs(apps, schema_editor):
+    """A cost the CD added for an activity was typed by the words in its name,
+    so "Participant transport refund" read as transport-company money and was
+    requested from nobody. It is one line of its activity, typed "other"
+    (costing_service._line_item_type). No transport payment is ever made from
+    such a line, so nothing paid is touched."""
+    Line = apps.get_model("activities", "ActivityScheduleCostLine")
+    count = (
+        Line.objects.filter(cost_setting_key__startswith="activity:")
+        .exclude(line_item_type="other")
+        .update(line_item_type="other")
+    )
+    if count:
+        print(f"\n  added activity costs re-typed: {count}")
+
+
 def repair(apps, schema_editor):
     from apps.daily_visit_batches.repricing import find_days_to_reprice
 
+    retype_added_costs(apps, schema_editor)
     Activity = apps.get_model("activities", "Activity")
     stranded = (
         Activity.objects.filter(

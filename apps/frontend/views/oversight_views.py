@@ -1865,7 +1865,6 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
 
                     if is_online_training(act_obj):
                         meal_unit_rate = 0
-                per_school_meal_cost = pps * meal_unit_rate if pps is not None else None
 
                 if target_schools:
                     for s in target_schools:
@@ -1898,11 +1897,9 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                 else:
                     fb_item = copy.copy(item)
                     fb_item.school_name = item.cluster_name or "Cluster Training"
-                    fb_item.participants = pps
-                    fb_item.planned_cost = (
-                        item.planned_cost or per_school_meal_cost or 0
-                    )
-                    fb_item.budget = item.budget or fb_item.planned_cost
+                    # No school to split it over: the row is the session
+                    # itself, with its own head count and cost (owner,
+                    # 2026-10-15).
                     new_planned_trainings.append(fb_item)
 
             group["planned_trainings"] = new_planned_trainings

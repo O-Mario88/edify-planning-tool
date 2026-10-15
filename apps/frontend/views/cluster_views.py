@@ -110,6 +110,8 @@ def _get_cost_preview_data(
     planned_date=None,
     responsible_user_id=None,
     materials=None,
+    principal=None,
+    facilitator_answer=None,
 ):
     """Cost preview via the central CostingService — no fallback/fabricated rates.
 
@@ -125,6 +127,9 @@ def _get_cost_preview_data(
             "expectedParticipants": participants,
             "clusterId": cluster_id,
             "plannedDate": planned_date,
+            "facilitated": _previews_a_facilitator(
+                cluster_id, act_type, principal, facilitator_answer
+            ),
             **materials,
         },
         minimum=True,
@@ -167,6 +172,25 @@ def _get_cost_preview_data(
         "blockers": result["blockers"],
         "allocationNote": result["allocationNote"],
     }
+
+
+def _previews_a_facilitator(cluster_id, act_type, principal, answer) -> bool:
+    """Whether the save will pay a partner the facilitation fee, decided as
+    the scheduler decides it (activities.services, "Facilitated by"): the
+    drawer's answer when it shows the field, blank being Staff; otherwise the
+    partner the cluster is assigned to. The figure before scheduling is the
+    figure written (owner, 2026-10-15: "no misleading costs")."""
+    if answer is not None:
+        return bool(str(answer).strip())
+    if principal is None:
+        return False
+    from apps.clusters.facilitation import default_facilitator_id
+
+    return bool(
+        default_facilitator_id(
+            cluster_id, activity_type=act_type, data={}, principal=principal
+        )
+    )
 
 
 def _per_school_from_categories(source) -> int:
@@ -502,6 +526,8 @@ def cluster_cost_preview_partial(request):
                 request.user, request.GET.get("responsible_staff_id")
             ),
             materials=_materials_from(request.GET),
+            principal=request.user,
+            facilitator_answer=request.GET.get("facilitating_partner_id"),
         )
         context = {
             "success": True,
@@ -719,6 +745,7 @@ def cluster_schedule_activity_view(request):
                             participants,
                             selected_cluster.id,
                             materials=_materials_from(request.POST),
+                            principal=request.user,
                         )
                     except Exception:
                         pass
@@ -1793,6 +1820,7 @@ def planner_drawer_view(request):
             participants,
             selected_cluster.id,
             materials=_materials_from(request.GET),
+            principal=request.user,
         )
 
     from apps.activity_catalogue.availability import (

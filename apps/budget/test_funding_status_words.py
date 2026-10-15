@@ -100,6 +100,20 @@ class FundingStatusWords(TestCase):
         line = ActivityScheduleCostLine.objects.get(pk=line.pk)
         self.assertEqual(line.finance_status, "Paid to Transport Company")
 
+    def test_transport_outside_a_mission_day_is_the_officers_to_request(self):
+        # Only a mission day raises a transport-company payment
+        # (vendor_channel.ensure_transport_obligation). A two-day training at
+        # a school is priced on its own, never in a mission day, so its
+        # transport goes in the officer's request: otherwise nobody pays it.
+        from apps.fund_requests.fundable import fundable_lines
+
+        training = self._work(
+            activity_type="training", end_date=self.day + timedelta(days=1)
+        )
+        line = self._line(training, "transport", amount=560_000)
+        self.assertEqual(line.finance_status, "Draft Costed")
+        self.assertIn(line, fundable_lines(ActivityScheduleCostLine.objects.all()))
+
     def test_a_hotel_finance_booked(self):
         visit = self._work()
         line = self._line(visit, "accommodation", vendor_paid=True)

@@ -563,7 +563,6 @@ def decide_cost_review(principal, review_id: str, data: dict) -> dict:
     if decision == "reject" and not note:
         raise BadRequest("A rejection note is required.")
 
-    from apps.budget.costing_service import apply_to_activity
 
     with transaction.atomic():
         review = (
@@ -604,15 +603,16 @@ def decide_cost_review(principal, review_id: str, data: dict) -> dict:
             raise BadRequest("The proposed cost is below a governed approved minimum.")
 
         try:
-            apply_to_activity(
-                review.activity,
-                {
-                    **review.proposed_inputs,
-                    "recalculationReason": (
-                        f"Approved cost review {review.id}: {review.explanation}"
-                    ),
-                },
-                responsible_user_id=_user_id(principal),
+            # Through the activity's one cost writer, as any other change to
+            # its inputs is priced: the day it shares with the officer's other
+            # visits, the in-school pair rule, online trainings, and the
+            # officer as the funding owner. A bare re-pricing charged a shared
+            # visit the whole day again and filed its lines under the approver
+            # (owner, 2026-10-15: "no doubling the cost").
+            from apps.activities.services import _apply_schedule_cost_snapshot
+
+            _apply_schedule_cost_snapshot(
+                review.activity, dict(review.proposed_inputs or {}), principal=principal
             )
         except BadRequest as exc:
             # Frozen funding is immutable. Hold the current payable lines and

@@ -868,7 +868,9 @@ class ActivityScheduleCostLine(TimeStampedModel):
             if "advance" in kinds:
                 return "Partner Invoice: 50% Paid"
             return "Partner Invoice: Not Yet Paid"
-        if self.line_item_type == "transport" and activity.school_id:
+        from apps.fund_requests.fundable import is_vendor_transport
+
+        if is_vendor_transport(self):
             from apps.fund_requests.finance_models import TransportPayment
 
             payment = (

@@ -200,9 +200,10 @@ def _travel_district_type(dest_district_id: str, responsible_id: str) -> str:
     from apps.geography.models import District
 
     district = District.objects.filter(id=dest_district_id).first()
+    # An unclassified district plans and prices as primary (owner, 2026-10-02).
     if district is None:
-        return "secondary"
-    return district_type_for_staff(responsible_id, district) or "secondary"
+        return "primary"
+    return district_type_for_staff(responsible_id, district) or "primary"
 
 
 @_manual_activity_permission

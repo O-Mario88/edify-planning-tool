@@ -922,11 +922,11 @@ def _field_event_district_type(activity: Activity) -> str:
     from apps.geography.models import District
 
     district = District.objects.filter(id=dest).first()
+    # An unclassified district plans and prices as primary (owner,
+    # 2026-10-02), as the day pool reads it.
     if district is None:
-        return "secondary"
-    return (
-        district_type_for_staff(activity.responsible_staff_id, district) or "secondary"
-    )
+        return "primary"
+    return district_type_for_staff(activity.responsible_staff_id, district) or "primary"
 
 
 def _costing_input(activity: Activity, data: dict) -> dict:
@@ -967,7 +967,14 @@ def _costing_input(activity: Activity, data: dict) -> dict:
     # Field events derive the travel profile from the owner's PRIMARY (home)
     # district vs the event's destination district — the MOU per-diem rule.
     # An explicit districtType in the form is a recorded override and wins.
-    if not district_type and activity.activity_type == "field_event":
+    # Work at no school and in no cluster — a field event, a camp, a TOT, a
+    # programme event — is priced where it happens, its event district, as the
+    # day pool reads a one-day event (member_district). Only field events were,
+    # so a multi-day camp in a secondary district priced at primary rates
+    # (owner, 2026-10-12: secondary district work fetches secondary costs).
+    if not district_type and (
+        activity.activity_type == "field_event" or activity.event_district_id
+    ):
         district_type = _field_event_district_type(activity)
 
     return {
@@ -987,6 +994,11 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "photocopyPages": value("photocopyPages", activity.photocopy_pages),
         "photocopyCopies": value("photocopyCopies", activity.photocopy_copies),
         "districtType": district_type,
+        # The rate card for the activity's own day, as its day pool reads it
+        # (daily_visit_batches._catalogue_for_batch_date): without it work
+        # priced on its own took the newest card whatever its date (owner,
+        # 2026-10-15 cost audit: "no inflating or deflating the costs").
+        "plannedDate": activity.planned_date,
         # The night away is paid at the traveller's accommodation rate
         # (owner, 2026-10-05): the CCEO's, or the one set for every other
         # member of staff.

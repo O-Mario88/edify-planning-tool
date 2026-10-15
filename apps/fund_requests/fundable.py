@@ -34,16 +34,37 @@ def vendor_direct_filter():
     """Q() selecting lines paid DIRECTLY to a vendor, never to staff.
 
     School-visit mission transport is paid to the transport company, so a
-    transport line on any school-anchored activity is vendor money — the
-    CCEO sees its arrangement status, never its rate. Accommodation joins
-    the vendor channel only when Finance books the hotel directly
-    (line.vendor_paid). Field events (no school) keep transport in the
-    owner's own advance — the staff member arranges their own travel.
+    transport line on a school-anchored activity of one day — a mission day
+    — is vendor money: the CCEO sees its arrangement status, never its rate.
+    Accommodation joins the vendor channel only when Finance books the hotel
+    directly (line.vendor_paid). Field events (no school) keep transport in
+    the owner's own advance — the staff member arranges their own travel —
+    and so does school work of several days (a two-day training at a school):
+    it is priced on its own, never in a mission day
+    (daily_visit_batches.services.batch_poolable), and the transport company
+    is paid per mission day (vendor_channel.ensure_transport_obligation), so
+    its transport would otherwise be paid by nobody.
     """
-    from django.db.models import Q
+    from django.db.models import F, Q
 
-    return Q(line_item_type="transport", activity__school_id__isnull=False) | Q(
-        line_item_type="accommodation", vendor_paid=True
+    one_day = (
+        Q(activity__end_date__isnull=True)
+        | Q(activity__planned_date__isnull=True)
+        | Q(activity__end_date__lte=F("activity__planned_date"))
+    )
+    vendor_transport = (
+        Q(line_item_type="transport", activity__school_id__isnull=False) & one_day
+    )
+    return vendor_transport | Q(line_item_type="accommodation", vendor_paid=True)
+
+
+def is_vendor_transport(line) -> bool:
+    """The transport half of vendor_direct_filter, for one line in hand."""
+    activity = line.activity
+    end, start = activity.end_date, activity.planned_date
+    several_days = bool(end and start and end > start)
+    return bool(
+        line.line_item_type == "transport" and activity.school_id and not several_days
     )
 
 
@@ -87,6 +108,7 @@ def fundable_lines(qs):
 __all__ = [
     "NON_FUNDABLE_ACTIVITY_STATUSES",
     "vendor_direct_filter",
+    "is_vendor_transport",
     "NON_REQUESTABLE_ADVANCE_STATUSES",
     "fundable_lines",
 ]
