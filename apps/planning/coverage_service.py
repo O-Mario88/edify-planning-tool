@@ -160,6 +160,9 @@ IA_STATUS_LABELS = {
 BUDGET_NO_COST = "No cost yet"
 BUDGET_CREATED = "Budget created"
 BUDGET_IN_WEEKLY_REQUEST = "In weekly fund request"
+#: The free half of a live in-school pair: its day is costed on the visit
+#: (owner, 2026-10-05), never "No cost yet".
+BUDGET_IN_SCHOOL_VISIT = "In school visit"
 
 
 def _weekly_fund_request_activities(activity_ids) -> set:
@@ -189,6 +192,8 @@ def _budget_status(item, *, requested_ids) -> str:
         return BUDGET_IN_WEEKLY_REQUEST
     if item.planned_cost:
         return BUDGET_CREATED
+    if getattr(item, "cost_on_school_visit", False):
+        return BUDGET_IN_SCHOOL_VISIT
     return BUDGET_NO_COST
 
 

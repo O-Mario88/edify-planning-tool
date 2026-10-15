@@ -31,10 +31,20 @@ from __future__ import annotations
 
 from django.db.models import Q
 
-#: The Training of an in-school Training / School Visit pair.
+#: A companion School Visit in one of these no longer makes the journey, so
+#: its Training is no longer the free half of a pair: it is the only record of
+#: the day and carries the visit cost (owner, 2026-09-28; read on production
+#: 2026-10-15, a Training whose visit was called off sat at UGX 0 and its day
+#: was in no budget).
+COMPANION_GONE_STATUSES = ("cancelled", "rejected", "deferred")
+
+#: The Training of an in-school Training / School Visit pair whose visit still
+#: makes the journey.
 UNCOSTED_PAIR_TRAINING = Q(
-    activity_type="in_school_training", paired_school_visit__isnull=False
-)
+    activity_type="in_school_training",
+    paired_school_visit__isnull=False,
+    paired_school_visit__deleted_at__isnull=True,
+) & ~Q(paired_school_visit__status__in=COMPANION_GONE_STATUSES)
 
 #: Pair work not yet delivered. Its cost is a plan the owner may still move;
 #: delivered and settled work is history and keeps the lines it was paid on.
@@ -46,11 +56,52 @@ MOVABLE_STATUSES = (
     "partner_scheduled",
 )
 
+#: A Training still priced as a plan when its visit's state changes: work not
+#: yet handed in, begun work included (owner, 2026-10-07: begun work is still
+#: a plan).
+REPRICEABLE_PAIR_STATUSES = (*MOVABLE_STATUSES, "in_progress", "completion_started")
 
-def is_uncosted_pair_training(activity) -> bool:
-    return activity.activity_type == "in_school_training" and bool(
+#: A pair's Training already handed in or done: history, kept at the lines it
+#: was delivered on whatever became of its visit. Readers that skip the free
+#: half of a live pair skip this too, so a delivered Training whose visit was
+#: called off does not block a period request it can no longer join.
+DELIVERED_PAIR_TRAINING = Q(
+    activity_type="in_school_training", paired_school_visit__isnull=False
+) & ~Q(status__in=REPRICEABLE_PAIR_STATUSES)
+
+
+def live_companions(activities) -> set:
+    """The companion School Visits among ``activities``' pairs that still make
+    the journey: one query for a page of rows, for `is_uncosted_pair_training`."""
+    from apps.activities.models import Activity
+
+    visit_ids = {
         activity.paired_school_visit_id
+        for activity in activities
+        if activity.activity_type == "in_school_training"
+        and activity.paired_school_visit_id
+    }
+    if not visit_ids:
+        return set()
+    return set(
+        Activity.objects.filter(id__in=visit_ids, deleted_at__isnull=True)
+        .exclude(status__in=COMPANION_GONE_STATUSES)
+        .values_list("id", flat=True)
     )
+
+
+def is_uncosted_pair_training(activity, live: set | None = None) -> bool:
+    """The free half of a pair: an in-school Training whose School Visit still
+    makes the journey. ``live`` (`live_companions`) answers a page of rows
+    without a query each."""
+    if not (
+        activity.activity_type == "in_school_training"
+        and activity.paired_school_visit_id
+    ):
+        return False
+    if live is None:
+        live = live_companions([activity])
+    return activity.paired_school_visit_id in live
 
 
 #: What a page writes beside the UGX 0 of a pair's Training (owner,
@@ -89,10 +140,11 @@ def pair_cost_notes(activities) -> dict[str, str]:
         return bool(list(activity.schedule_cost_lines.all()))
 
     # (training id, visit id) for every pair with a half in the list.
+    live = live_companions(activities)
     pairs = {
         (activity.id, activity.paired_school_visit_id)
         for activity in activities
-        if is_uncosted_pair_training(activity)
+        if is_uncosted_pair_training(activity, live)
     }
     paired_visits = {visit_id for _training_id, visit_id in pairs}
     bare_visits = [
@@ -109,7 +161,10 @@ def pair_cost_notes(activities) -> dict[str, str]:
                 paired_school_visit_id__in=bare_visits,
                 activity_type="in_school_training",
                 deleted_at__isnull=True,
-            ).values_list("paired_school_visit_id", "id")
+            )
+            # A called-off Training carries no money for its visit to point at.
+            .exclude(status__in=COMPANION_GONE_STATUSES)
+            .values_list("paired_school_visit_id", "id")
         )
     # A Group Training delivered online is free by rule, not unpriced
     # (apps.activities.online_training).
@@ -137,7 +192,9 @@ def pair_cost_notes(activities) -> dict[str, str]:
                 ),
                 id__in=outside,
                 cost_missing=False,
-            ).values_list("id", flat=True)
+            )
+            .exclude(status__in=COMPANION_GONE_STATUSES)
+            .values_list("id", flat=True)
         )
 
     notes: dict[str, str] = {}
@@ -223,3 +280,74 @@ def move_pair_costs_to_visits(ids=None, *, write=print, deadline=None) -> dict:
         moved.append(training.id)
         write(f"  moved {training.id} -> visit {training.paired_school_visit_id}")
     return {"moved": moved, "skipped": skipped, "left": left}
+
+
+def find_stranded_pair_trainings() -> list[str]:
+    """In-school Trainings still planned whose companion School Visit no longer
+    makes the journey (called off or removed) and that carry no cost: the day
+    is in no budget (owner, 2026-10-15 cost audit; Nissi College Akia, 10
+    December 2026). Earliest first."""
+    from django.db.models import Exists, OuterRef
+
+    from apps.activities.facilitation import FEE_LINE_TYPE
+    from apps.activities.models import Activity, ActivityScheduleCostLine
+
+    # A partner facilitator's fee is not the day: a Training holding the fee
+    # alone carries no visit cost either.
+    day_lines = ActivityScheduleCostLine.objects.filter(
+        activity_id=OuterRef("pk")
+    ).exclude(line_item_type=FEE_LINE_TYPE)
+    return list(
+        Activity.objects.filter(
+            activity_type="in_school_training",
+            paired_school_visit__isnull=False,
+            deleted_at__isnull=True,
+            status__in=REPRICEABLE_PAIR_STATUSES,
+            planned_date__isnull=False,
+        )
+        .filter(
+            Q(paired_school_visit__deleted_at__isnull=False)
+            | Q(paired_school_visit__status__in=COMPANION_GONE_STATUSES)
+        )
+        .filter(~Exists(day_lines))
+        .order_by("planned_date", "id")
+        .values_list("id", flat=True)
+        .distinct()
+    )
+
+
+def price_stranded_pair_trainings(ids=None, *, write=print, deadline=None) -> dict:
+    """Price each stranded Training as the visit it now is, through the one
+    cost writer, each in its own transaction. A Training whose week's request
+    has left draft or whose money has moved is refused by that writer and
+    kept; ``deadline`` (a ``time.monotonic()`` value) stops new work."""
+    import time
+
+    from django.db import transaction
+
+    from apps.activities.models import Activity
+    from apps.activities.services import reprice_activity
+    from apps.core.exceptions import BadRequest
+
+    ids = find_stranded_pair_trainings() if ids is None else list(ids)
+    result = {"priced": [], "kept": [], "left": []}
+    for activity in Activity.objects.filter(id__in=ids).order_by("planned_date", "id"):
+        if deadline is not None and time.monotonic() >= deadline:
+            result["left"].append(activity.id)
+            continue
+        try:
+            with transaction.atomic():
+                reprice_activity(activity)
+        # A finance lock refuses and keeps the Training as priced; any other
+        # error is a fault and fails the run rather than reading as "kept".
+        except BadRequest as exc:
+            result["kept"].append(activity.id)
+            write(f"  kept {activity.id} ({activity.planned_date}): {exc}")
+            continue
+        activity.refresh_from_db(fields=["est_cost_cents"])
+        result["priced"].append(activity.id)
+        write(
+            f"  priced {activity.id} ({activity.planned_date}) at "
+            f"UGX {activity.est_cost_cents or 0:,}"
+        )
+    return result

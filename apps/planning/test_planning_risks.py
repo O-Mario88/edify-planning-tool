@@ -89,8 +89,11 @@ class InSchoolTrainingIsNotUncostedTest(SimpleTestCase):
 
     def test_a_training_carrying_the_visit_day_itself_is_judged_on_its_lines(self):
         """One scheduled without a companion visit (the Core Schools training
-        drawer) holds the visit day's lines; its planned cost still reads 0."""
-        costed = staff_item(planned_cost=0, budget=62_000, is_in_school_training=True)
+        drawer) holds the visit day's lines, and its planned cost is that day
+        (owner, 2026-10-15: the oversight cost is the activity's own)."""
+        costed = staff_item(
+            planned_cost=62_000, budget=62_000, is_in_school_training=True
+        )
         self.assertNotIn("scheduled_without_cost", keys(costed))
         unpriced = staff_item(planned_cost=0, budget=0, is_in_school_training=True)
         self.assertIn("scheduled_without_cost", keys(unpriced))

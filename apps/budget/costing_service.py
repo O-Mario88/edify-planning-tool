@@ -656,12 +656,37 @@ def planning_preview_owner(principal, staff_id: str | None = None) -> str:
     return owner
 
 
+def _preview_destination(input: dict):
+    """The district a previewed plan travels to: its school's, else its
+    cluster's."""
+    from django.db.models import Q
+
+    if input.get("schoolId"):
+        from apps.schools.models import School
+
+        school = (
+            School.objects.select_related("district")
+            .filter(Q(id=input["schoolId"]) | Q(school_id=input["schoolId"]))
+            .first()
+        )
+        return school.district if school else None
+    if input.get("clusterId"):
+        from apps.clusters.models import Cluster
+
+        cluster = (
+            Cluster.objects.select_related("district")
+            .filter(pk=input["clusterId"])
+            .first()
+        )
+        return cluster.district if cluster else None
+    return None
+
+
 def _planning_day_context(
     input: dict, responsible_user_id: str | None
 ) -> tuple[dict, int]:
     """Resolve the proposed day's actual members; never trust a client count/owner."""
     from datetime import date
-    from django.db.models import Q
     from apps.core.fy import get_operational_fy
     from apps.daily_visit_batches.models import DailyVisitBatch
     from apps.daily_visit_batches.pricing import (
@@ -670,6 +695,21 @@ def _planning_day_context(
     )
 
     input = dict(_profiled_input(input))
+    if input.get("deliveryType", "staff") != "staff":
+        # Partner work is priced for nobody's night and at the destination's
+        # own district type, as the save prices it (services._costing_input,
+        # responsible_staff_id None). The planner's own rate and home district
+        # previewed a different cost (owner, 2026-10-15: "no misleading costs").
+        from apps.daily_visit_batches.districts import (
+            accommodation_key_for_staff,
+            district_type_for_staff,
+        )
+
+        input["accommodationKey"] = accommodation_key_for_staff(None)
+        destination = _preview_destination(input)
+        if destination:
+            input["districtType"] = district_type_for_staff(None, destination)
+        return input, 1
     if responsible_user_id:
         # The night away is paid at the traveller's accommodation rate
         # (owner, 2026-10-05), whether or not the day is chosen yet.
@@ -693,25 +733,7 @@ def _planning_day_context(
     input.update(plannedDate=day, fy=get_operational_fy(day))
     from apps.daily_visit_batches.districts import district_type_for_staff
 
-    destination = None
-    if input.get("schoolId"):
-        from apps.schools.models import School
-
-        school = (
-            School.objects.select_related("district")
-            .filter(Q(id=input["schoolId"]) | Q(school_id=input["schoolId"]))
-            .first()
-        )
-        destination = school.district if school else None
-    elif input.get("clusterId"):
-        from apps.clusters.models import Cluster
-
-        cluster = (
-            Cluster.objects.select_related("district")
-            .filter(pk=input["clusterId"])
-            .first()
-        )
-        destination = cluster.district if cluster else None
+    destination = _preview_destination(input)
     if destination:
         input["districtType"] = (
             district_type_for_staff(responsible_user_id, destination) or "primary"
@@ -931,6 +953,12 @@ def _serialize_line(line: CostLine) -> dict:
 def _line_item_type(key: str) -> str:
     """A stable line-item category (transport / lunch / venue / facilitation /
     participant_meals / lump_sum …) for itemized budget reporting."""
+    # A cost the CD added for one activity ("activity:<code>:<name>") is one
+    # line of that activity whatever its name: never typed by the words in it,
+    # so "Participant transport refund" is not transport-company money
+    # (fundable.vendor_direct_filter).
+    if key.startswith("activity:"):
+        return "other"
     if "school_visit_cost_per_school" in key:
         return "school_visit"
     if key in (
@@ -1072,6 +1100,10 @@ def _programme_period_specs(cost, activity, planned_date):
         "lunch_per_day",
         "tot_trainings_meals",
         "cluster_meetings_trainings_meals",
+        # The group training meals rate (2026-09-26) is per participant per
+        # day like the two above; left out, a camp crossing a month booked
+        # every day's meals to its first month (owner, 2026-10-15 cost audit).
+        "group_training_meals",
         # Printing and photocopying are priced by the page (owner,
         # 2026-09-15), not per service day, so they book to the first day.
         "secondary_transport_per_day",
@@ -1101,8 +1133,12 @@ def _programme_period_specs(cost, activity, planned_date):
         if line.key not in PER_DAY_KEYS or not line.amount:
             specs.append((line, planned_date, line.qty, line.amount, ""))
             continue
-        # Accommodation is slept every night except the last day.
-        if line.key.endswith("accommodation_per_night"):
+        # Accommodation is slept, and dinner eaten away, every night except
+        # the last day (owner, 2026-10-05): both split by nights. Dinner split
+        # by days put a second month's share on a day with no dinner.
+        if line.key.endswith("accommodation_per_night") or (
+            line.key == "secondary_overnight_dinner_per_day"
+        ):
             nights = days[:-1]
             weights = [
                 sum(1 for d in nights if (d.year, d.month) == ym) for ym in months
@@ -1198,7 +1234,11 @@ def _money_under(activity_ids) -> dict:
     for line_id, owner, key, vendor_paid in old_lines:
         line_ids_of[owner].append(line_id)
         if vendor_paid:
-            vendor_paid_of[owner].add(key)
+            # A line split by month is stored as "<key>#mYYYYMM": the booking
+            # belongs to the base key, or a re-price dropped it and put a
+            # hotel Finance had paid back into the officer's advance (owner,
+            # 2026-10-15: "no doubling the cost").
+            vendor_paid_of[owner].add((key or "").split("#", 1)[0])
     all_line_ids = list(activity_of_line)
 
     # Lock every advance on these activities' lines. A concurrent
@@ -1394,6 +1434,59 @@ _PERIOD_FIELDS = (
 )
 
 
+def _reference_as_written(cost, reference, reference_card):
+    """The Regional Standard benchmark of a cost written for the activity
+    rather than read off its recipe: each line it carries at the regional
+    rate, a day's shared line split as the day split it, and nothing for a
+    line it does not carry (owner, 2026-10-15: "no doubling the cost"). The
+    recipe's own benchmark priced the whole day on every activity sharing it,
+    and a whole recipe on work free by rule (a Training on its School Visit,
+    an online training)."""
+    from apps.budget.costing import ActivityCost, CostLine
+    from apps.budget.reference import with_rate_aliases
+    from apps.daily_visit_batches.pricing import allocate_component
+
+    regional_rates = with_rate_aliases(_rate_card(reference_card)[0])
+    recipe: dict[str, list] = {}
+    for line in reference.lines:
+        recipe.setdefault(line.key, []).append(line)
+    lines, missing = [], []
+    for line in cost.lines:
+        if line.allocation_count:
+            rate = regional_rates.get(line.key)
+            if rate is None:
+                missing.append(line.key)
+                continue
+            share = allocate_component(int(rate), line.allocation_count)[
+                line.allocation_index or 0
+            ]
+            lines.append(
+                CostLine(
+                    label=line.label,
+                    key=line.key,
+                    unit=share,
+                    qty=1,
+                    amount=share,
+                    missing=False,
+                    allocation_count=line.allocation_count,
+                    allocation_index=line.allocation_index,
+                )
+            )
+            continue
+        same_key = recipe.get(line.key) or []
+        regional = same_key.pop(0) if same_key else None
+        if regional is None or regional.missing:
+            missing.append(line.key)
+            continue
+        lines.append(regional)
+    return ActivityCost(
+        amount=sum(line.amount for line in lines),
+        lines=lines,
+        cost_missing=bool(missing),
+        missing_items=missing,
+    )
+
+
 def apply_to_activities(
     items: list[tuple[Activity, dict, ActivityCost | None]],
     responsible_user_id: str | None = None,
@@ -1501,7 +1594,13 @@ def apply_to_activities(
                 "settings_by_key": settings_by_key,
                 "cost": cost,
                 "reference_card": dual["referenceCard"],
-                "reference_cost": dual["reference"],
+                "reference_cost": (
+                    _reference_as_written(
+                        cost, dual["reference"], dual["referenceCard"]
+                    )
+                    if precomputed_cost is not None and dual["reference"] is not None
+                    else dual["reference"]
+                ),
                 "periods": (
                     planned_date,
                     week_start,
@@ -1617,7 +1716,8 @@ def apply_to_activities(
                         activity_catalogue_version=activity.catalogue_version,
                         costing_profile=activity.costing_profile_snapshot,
                         line_item_type=_line_item_type(line.key),
-                        vendor_paid=line.key in vendor_paid_keys,
+                        vendor_paid=(line.key or "").split("#", 1)[0]
+                        in vendor_paid_keys,
                         currency="UGX",
                         description=f"[{tag}] {line.label}" if tag else line.label,
                         total_cost=int(amount),

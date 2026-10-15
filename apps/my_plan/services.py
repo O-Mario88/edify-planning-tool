@@ -1458,7 +1458,14 @@ def get_frontend_context(
         budget_status = "No Budget"
         budget_status_color = "slate"
 
-        if first_line:
+        if first_line and a.cost_missing:
+            # Priced in part and not requestable until it is set up (owner,
+            # 2026-10-15 cost audit: it read "Budget Created" for a training
+            # with no participant count, none of whose money can be requested).
+            badges.append(("Cost Setup Required", "amber"))
+            budget_status = "Cost Setup Required"
+            budget_status_color = "amber"
+        elif first_line:
             wfr_line = next(iter(first_line.weekly_request_lines.all()), None)
             if wfr_line and getattr(wfr_line, "weekly_fund_request", None):
                 wfr = wfr_line.weekly_fund_request
@@ -1934,14 +1941,24 @@ def get_frontend_context(
         _att_records = list(
             ClusterActivityAttendance.objects.filter(activity_id__in=_cluster_act_ids)
             .filter(Q(invited=True) | Q(attended=True))
-            .values_list("activity_id", "school_id")
+            .values_list(
+                "activity_id", "school_id", "invited", "teachers", "leaders", "other"
+            )
         )
         _att_by_act = defaultdict(list)
         _att_school_ids = set()
-        for _act_id, _sid in _att_records:
+        # The people an invited school brings when its invitation says so: the
+        # number Team Plan shows for the same school (owner, 2026-10-15: one
+        # session, one figure a school, on every page).
+        _invited_composition = {}
+        for _act_id, _sid, _invited, _t, _l, _o in _att_records:
             if _sid not in _att_by_act[_act_id]:
                 _att_by_act[_act_id].append(_sid)
             _att_school_ids.add(_sid)
+            if _invited and any(v is not None for v in (_t, _l, _o)):
+                _invited_composition[(_act_id, _sid)] = (
+                    (_t or 0) + (_l or 0) + (_o or 0)
+                )
 
         # 2. Fetch member schools for the clusters involved
         _member_schools = list(
@@ -2065,13 +2082,10 @@ def get_frontend_context(
                 if total_p and _target_schools:
                     pps = max(1, total_p // len(_target_schools))
                 else:
-                    pps = 2
+                    # No number was planned: say so rather than price 2
+                    # nobody planned (owner, 2026-10-15 cost audit).
+                    pps = None
             _meal_rate = _meal_rates.get(_act_id)
-            per_school_meal_cost = pps * _meal_rate if _meal_rate is not None else None
-            # An online training is free: no meal is served at any school
-            # (owner, 2026-10-09; apps.activities.online_training).
-            if act_obj and is_online_training(act_obj):
-                per_school_meal_cost = 0
 
             if _target_schools:
                 for _school in _target_schools:
@@ -2089,8 +2103,17 @@ def get_frontend_context(
                         f"/schools/{_school.school_id or _school.id}"
                     )
                     _school_row["is_cluster_invited"] = True
-                    _school_row["expected_participants"] = pps
-                    _school_row["budget_total"] = per_school_meal_cost
+                    _people = _invited_composition.get((_act_id, _school.id), pps)
+                    _school_row["expected_participants"] = _people
+                    _school_row["budget_total"] = (
+                        0
+                        if act_obj and is_online_training(act_obj)
+                        else (
+                            _people * _meal_rate
+                            if _people is not None and _meal_rate is not None
+                            else None
+                        )
+                    )
                     _slot_seq = _cluster_core_slot.get((_act_id, _school.school_id))
                     if _school.school_type in PROGRAMME_SCHOOL_TYPES:
                         _school_row["core_progress"] = ""
@@ -2119,8 +2142,9 @@ def get_frontend_context(
                     if row.get("cluster_id")
                     else ""
                 )
-                _fallback_row["expected_participants"] = pps
-                _fallback_row["budget_total"] = per_school_meal_cost
+                # No school to split it over: the row is the session itself,
+                # with its own head count and its own cost (owner, 2026-10-15:
+                # it showed a per-school figure, or nothing at all).
                 _new_cluster_trainings_list.append(_fallback_row)
 
         cluster_trainings_list = _new_cluster_trainings_list

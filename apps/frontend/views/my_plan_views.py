@@ -725,14 +725,32 @@ def activity_detail_view(request, activity_id):
         from apps.budget.costing_service import planned_minimum_amounts
 
         minimum_amount = planned_minimum_amounts([a]).get(a.id)
+        missing = set(
+            (cost_snapshot.missing_configuration if cost_snapshot else None) or []
+        )
+        if minimum_amount is not None:
+            note = "Staff planning estimate. Funding is calculated at country operational rates."
+        elif missing == {"expectedParticipants"}:
+            # A session with no head count, not a rate the Country Director
+            # left out: it said "Ask the Country Director to set the missing
+            # rates" (owner, 2026-10-15 cost audit).
+            note = (
+                "No participant count is planned, so the participants' meals "
+                "are not priced and this activity cannot be requested. Edit it "
+                "and enter the number of participants."
+            )
+        elif "expectedParticipants" in missing:
+            note = (
+                "No participant count is planned and a rate is missing: enter "
+                "the number of participants, and ask the Country Director to "
+                "set the missing rates."
+            )
+        else:
+            note = "Minimum viable cost not configured. Ask the Country Director to set the missing rates."
         activity_cost = {
             "label": "Minimum Viable Cost",
             "amount": minimum_amount,
-            "note": (
-                "Staff planning estimate. Funding is calculated at country operational rates."
-                if minimum_amount is not None
-                else "Minimum viable cost not configured. Ask the Country Director to set the missing rates."
-            ),
+            "note": note,
             "amount_disbursed": 0,
         }
 

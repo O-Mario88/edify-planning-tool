@@ -141,7 +141,10 @@ class Command(BaseCommand):
     # ── 3. scheduled activities with no cost set ─────────────────────────
     def _repair_costless_scheduled(self, apply: bool) -> dict:
         from apps.activities.online_training import ONLINE_TRAINING
-        from apps.activities.pair_costing import UNCOSTED_PAIR_TRAINING
+        from apps.activities.pair_costing import (
+            DELIVERED_PAIR_TRAINING,
+            UNCOSTED_PAIR_TRAINING,
+        )
         from apps.activities.services import _apply_schedule_cost_snapshot
         from apps.core.exceptions import BadRequest
 
@@ -150,7 +153,7 @@ class Command(BaseCommand):
                 deleted_at__isnull=True,
                 scheduled_date__isnull=False,
             )
-            .exclude(UNCOSTED_PAIR_TRAINING | ONLINE_TRAINING)
+            .exclude(UNCOSTED_PAIR_TRAINING | DELIVERED_PAIR_TRAINING | ONLINE_TRAINING)
             .exclude(
                 status__in=[
                     "cancelled",

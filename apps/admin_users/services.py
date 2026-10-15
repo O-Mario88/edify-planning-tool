@@ -509,7 +509,32 @@ def update_user(user_id: str, data: dict, principal) -> dict:
         actor_role=getattr(principal, "active_role", None),
         payload={"email": user.email, "roles": user.roles},
     )
+    if roles_are_changing:
+        # The post decides a night's rate and whether a district is home
+        # (owner, 2026-10-05 and 2026-10-15): the person's planned days still
+        # open are re-priced at the post they now hold.
+        from django.db import transaction
+
+        transaction.on_commit(lambda: _reprice_planned_days(user.id))
     return {"ok": True, "id": user.id}
+
+
+def _reprice_planned_days(user_id: str) -> None:
+    """Re-price this person's open, planned days from today on, under both id
+    spaces their days may be filed under. A locked week keeps its price."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.accounts.models import StaffProfile
+    from apps.daily_visit_batches.services import resync_stale_batches
+
+    today = timezone.localdate()
+    for traveller in {
+        user_id,
+        *StaffProfile.objects.filter(user_id=user_id).values_list("id", flat=True),
+    }:
+        resync_stale_batches(traveller, today, today + timedelta(days=730))
 
 
 def delete_user(user_id: str, principal) -> dict:

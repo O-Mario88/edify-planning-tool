@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.metrics import format_ugx_compact
 from apps.core.redirects import local_redirect
+from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from apps.core.permissions import RolePermissionService
 from apps.core.permissions import require_page_permission
 from django.contrib import messages
@@ -1323,7 +1324,7 @@ def _build_fund_requests_context(request):
                 planned_date__gte=selected_week_start,
                 planned_date__lte=selected_week_end,
             )
-            .exclude(activity__status="cancelled")
+            .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
             .exists()
         )
         if has_scheduled_this_week:

@@ -109,21 +109,37 @@ def stale_plan_ids(*, limit: int | None = None) -> list[str]:
     behind: set[str] = set()
     # Stale where a rate a line was priced at has changed since, or the cost
     # is no longer in the catalogue.
-    for activity_id, key, catalogue_id in (
+    # Each plan is held to the card for its own day, as the cost writer and
+    # the day pool price it (owner, 2026-10-15 cost audit). With one undated
+    # card that is the active card for every day, as before.
+    card_on: dict = {}
+
+    def card_for(day):
+        if day not in card_on:
+            card_on[day] = active_catalogue(on_date=day) if day else active
+        return card_on[day]
+
+    for activity_id, key, catalogue_id, day in (
         ActivityScheduleCostLine.objects.filter(activity__in=open_plans)
-        .exclude(catalogue_id=active.id)
         .exclude(catalogue_id__isnull=True)
-        .values_list("activity_id", "cost_setting_key", "catalogue_id")
+        .values_list(
+            "activity_id", "cost_setting_key", "catalogue_id", "activity__planned_date"
+        )
         .distinct()
     ):
+        card = card_for(day)
+        if card is None or catalogue_id == card.id:
+            continue
         behind.add(activity_id)
         if activity_id in stale:
             continue
         key = _base_key(key)
         if catalogue_id not in before:
             before[catalogue_id] = _rates(catalogue_id)
-        then = before[catalogue_id].get(key)
-        if key not in now or (then is not None and then != now[key]):
+        if card.id not in before:
+            before[card.id] = now if card.id == active.id else _rates(card.id)
+        then, rates_now = before[catalogue_id].get(key), before[card.id]
+        if key not in rates_now or (then is not None and then != rates_now[key]):
             stale.add(activity_id)
 
     # A cost added for one activity is priced on every schedule of it: a plan
