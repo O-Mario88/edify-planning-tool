@@ -10,7 +10,7 @@
   action="{{ export_url }}"
   class="space-y-4 text-[13px] text-slate-700"
   x-data="{
-    periodMode: 'month_range',
+    periodMode: '{{ period_mode|default:"month_range" }}',
     fromMonth: '{{ selected_from_month|default:10 }}',
     toMonth: '{{ selected_to_month|default:9 }}'
   }"
