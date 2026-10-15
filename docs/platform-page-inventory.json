@@ -12371,7 +12371,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9548,
+      "bytes": 9576,
       "deprecated_alternatives": [],
       "example_pages": [
         "/budget/export-drawer",
@@ -33499,7 +33499,7 @@
       "permission_key": "cluster_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export cluster plans to Excel (or CSV).",
+      "purpose": "Cluster Oversight's own tables (owner, 2026-10-15: \"if it is any other page, it should fetch data for that specific page\"; asked, the owner chose the page's own table). It exported Planning Oversight's six activity sheets.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
