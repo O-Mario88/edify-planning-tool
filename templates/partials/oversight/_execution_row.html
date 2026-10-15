@@ -16,7 +16,7 @@ activities behind them.
   {% for column, count in row.list_cells %}
   <td class="px-3 py-2 text-right tabular-nums" data-label="{{ column.label }}">{% if count and is_person %}<a href="{{ execution_url }}&list={{ column.key }}&person={{ row.key }}{% if selected_program_lead %}&program_lead={{ selected_program_lead }}{% endif %}" hx-get="{{ execution_url }}&list={{ column.key }}&person={{ row.key }}{% if selected_program_lead %}&program_lead={{ selected_program_lead }}{% endif %}" hx-target="#oversight-workspace" hx-push-url="true" class="edify-status-text hover:underline" data-edify-tone="{{ column.tone }}">{{ count|intcomma }}</a>{% elif count %}<span class="edify-status-text" data-edify-tone="{{ column.tone }}">{{ count|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
   {% endfor %}
-  <td class="px-3 py-2 text-right tabular-nums" data-label="Verified">{{ row.verified|intcomma }}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="PL Approved">{{ row.verified|intcomma }}</td>
   <td class="px-3 py-2 text-right tabular-nums" data-label="Trainings">{{ row.trainings_delivered|intcomma }}<span class="edify-text-muted"> / {{ row.trainings_planned|intcomma }}</span></td>
   <td class="px-3 py-2 text-right tabular-nums" data-label="Meetings">{{ row.meetings_delivered|intcomma }}<span class="edify-text-muted"> / {{ row.meetings_planned|intcomma }}</span></td>
   <td class="px-3 py-2 text-right tabular-nums" data-label="Partner activities">{{ row.partner_delivered|intcomma }}<span class="edify-text-muted"> / {{ row.partner_scheduled|intcomma }}</span></td>

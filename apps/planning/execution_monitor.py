@@ -34,20 +34,26 @@ the Planning tab beside this one counts the plan (owner audit, 2026-10-02):
   verified (completion_columns.OFFICER_COMPLETED_STATUSES; owner,
   2026-10-14: "count exact number of completed visits or trainings"). Work
   started and not yet submitted is not.
+* **Counted** — the visits, trainings and meetings completed, Delivered of
+  due, Remaining to Visit and Remaining to Train count approved work only
+  (completion_columns.APPROVED_STATUSES; owner, 2026-10-15: "Any activity not
+  approved by PL should not be counted"). Completed work waiting for the
+  approval shows under Awaiting PL Approval, whatever day it was planned for.
 * **Remaining to Visit** — the 280 or 560 less the counted visits completed;
   **Remaining to Train** — the schools held that take a training less those
   trained: training is read against the whole portfolio, never the 280 /
   560 (owner, 2026-10-14).
-* **Awaiting PL** — completed work waiting on its Programme Lead, who
-  verifies every CCEO's and lead's staff work (owner, 2026-10-14: "IA does
-  not verify CCEO and PL work").
+* **Awaiting PL Approval** — completed work waiting on its Programme Lead,
+  who approves every CCEO's work; a lead's own is approved on hand-in (owner,
+  2026-10-15: "IA does not approve any activity. it is the PL who approves
+  for CCEO and theirs are approved automatically").
 * **Past date, not delivered** — past its planned day, not delivered, not
   returned. The day itself is not late. Named for what it counts (owner,
   2026-10-02): the Director's Execution tab's "Overdue" is wider, and also
   counts delivered work still waiting on a review.
 * **Complete** — delivered with the Salesforce ID and the form both in.
-* **Verified** — confirmed by the Programme Lead (or, for partner work,
-  Impact Assessment).
+* **PL Approved** — approved by the Programme Lead, or a lead's own work
+  approved on hand-in (owner, 2026-10-15).
 
 A fixed handful of queries whatever the size of the country, and every
 figure folded from the activity rows under it, so a Lead's total is the sum
@@ -81,7 +87,7 @@ LISTS = (
     # A CCEO's work and a lead's own are verified by a Programme Lead, never
     # Impact Assessment (owner, 2026-10-14: "IA does not verify CCEO and PL
     # work. it is the PL to verify everything").
-    ("awaiting_pl", "Completed, awaiting PL verification"),
+    ("awaiting_pl", "Completed, awaiting PL approval"),
     ("returned", "Returned for correction"),
 )
 LIST_LABELS = dict(LISTS)
@@ -92,7 +98,7 @@ LIST_COLUMNS = (
     ("missing_salesforce", "No SF ID", "warning"),
     # UPLOAD-OFF (owner, 2026-10-13): the "No form" column left the table.
     # ("missing_evidence", "No form", "warning"),
-    ("awaiting_pl", "Awaiting PL", "info"),
+    ("awaiting_pl", "Awaiting PL Approval", "info"),
     ("returned", "Returned", "danger"),
 )
 
@@ -303,9 +309,11 @@ def execution_monitor(
     from apps.planning.country_oversight import rules
     from apps.planning.monitor_roster import monitor_roster
     from apps.planning.oversight_service import LIVE_ACTIVITY_STATUSES
-    from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
+    from apps.activities.completion_columns import (
+        APPROVED_STATUSES,
+        OFFICER_COMPLETED_STATUSES,
+    )
     from apps.planning.planning_monitor import training_reach
-    from apps.planning.school_planning_badges import VERIFIED_STATUSES
 
     fy = str(fy)
     today = today or timezone.localdate()
@@ -455,6 +463,9 @@ def execution_monitor(
         if person is None:
             continue
         is_delivered = status in delivered_statuses
+        # Counted once approved (owner, 2026-10-15), whatever day it was
+        # planned for.
+        is_counted = status in APPROVED_STATUSES
         is_due = planned_date is not None and planned_date <= today
         person.planned += 1
         at_school = bool(school_pk) and not cluster_pk
@@ -465,23 +476,26 @@ def execution_monitor(
             # planning is not one of the visits planned.
             if status in _planned_states():
                 person.visits_planned += 1
-            person.visits_delivered += is_delivered
+            person.visits_delivered += is_counted
         elif at_school and rules.is_uncounted_visit(
             activity_type, purpose_type, delivery_type="staff"
         ):
             person.outreach_planned += 1
+            # Named beside the target, never counted toward it: delivered
+            # once handed in, as the Director's Execution tab names it.
             person.outreach_delivered += is_delivered
         if activity_type in TRAINING_KINDS:
             person.trainings_planned += 1
-            person.trainings_delivered += is_delivered
+            person.trainings_delivered += is_counted
         elif activity_type in MEETING_KINDS:
             person.meetings_planned += 1
-            person.meetings_delivered += is_delivered
-        # Delivered work is counted whatever day it was planned for: a visit
-        # done ahead of its day is delivered, not "not yet due".
+            person.meetings_delivered += is_counted
+        # Delivered work is due whatever day it was planned for: a visit done
+        # ahead of its day is delivered, not "not yet due"; it counts once
+        # approved.
         if is_due or is_delivered:
             person.due += 1
-            person.delivered_due += is_delivered
+            person.delivered_due += is_counted
         gaps = []
         if status in RETURNED_STATUSES:
             person.returned += 1
@@ -506,7 +520,7 @@ def execution_monitor(
             if not ev_ok:
                 person.missing_evidence += 1
                 gaps.append("missing_evidence")
-            if status in VERIFIED_STATUSES:
+            if is_counted:
                 person.verified += 1
             if status in AWAITING_PL_STATUSES:
                 person.awaiting_pl += 1

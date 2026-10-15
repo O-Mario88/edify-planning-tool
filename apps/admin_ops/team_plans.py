@@ -171,6 +171,9 @@ class AdminTeamPlansService:
 
         people = _people_index()
         partners = _partner_index()
+        from apps.pl_review.services import lead_verified_owner_ids
+
+        lead_ids = lead_verified_owner_ids()
 
         role_filter = (query.get("role") or "").strip()
 
@@ -190,7 +193,9 @@ class AdminTeamPlansService:
                 : PAGE_SIZE * 5
             ]
         ):
-            label, status_class = get_activity_status_label_and_class(a, today)
+            label, status_class = get_activity_status_label_and_class(
+                a, today, lead_ids
+            )
             next_action = compute_next_action(a, today)
 
             owner = people.get(a.responsible_staff_id or "", {})

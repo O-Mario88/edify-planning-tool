@@ -1072,8 +1072,8 @@ def training_reach(principal, fy: str) -> dict[str, tuple[int, int]]:
     ... Training should be the entire portfolio"): the schools the Planning
     tab reads training against (OfficerMonitor.training_schools), read the
     same way. A school is trained once an in-school training at it, or a
-    group training it attended, is completed — submitted with its training
-    ID or verified (_delivered_statuses, the set the Planning tab counts by).
+    group training it attended, is completed and approved (_delivered_statuses,
+    the set the Planning tab counts by; owner, 2026-10-15).
     """
     from apps.planning.country_oversight import rules
     from apps.schools.lifecycle_service import active_schools
@@ -1345,14 +1345,14 @@ def _counted_visits(qs):
 
 
 def _delivered_statuses():
-    """Completed work: submitted with its visit or training ID, or verified
-    (owner, 2026-10-14: "count exact number of completed visits or
-    trainings"). The Execution tab beside this one counts the same set, so the
-    two tabs agree on what is done; work started and not yet submitted is
-    not."""
-    from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
+    """Counted work: completed and approved (owner, 2026-10-14: "count exact
+    number of completed visits or trainings"; 2026-10-15: "Any activity not
+    approved by PL should not be counted"). The Execution tab beside this one
+    counts the same set, so the two tabs agree on what is done; work handed in
+    and waiting for the Programme Lead's approval is not counted yet."""
+    from apps.activities.completion_columns import APPROVED_STATUSES
 
-    return OFFICER_COMPLETED_STATUSES
+    return APPROVED_STATUSES
 
 
 def _count_activities(schools: dict, school_ids, fy: str) -> None:
@@ -1459,7 +1459,12 @@ def _count_partner_work(officers, fy: str) -> None:
     if not by_id:
         return
     ids = list(by_id)
-    delivered = _delivered_statuses()
+    # Partner work is IA's to verify and counts as the Execution tab counts
+    # it, once handed in (owner, 2026-10-15: the Programme Lead's approval
+    # is for a CCEO's and a lead's own work).
+    from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
+
+    delivered = OFFICER_COMPLETED_STATUSES
     schools: dict[int, set] = {}
 
     def owner_of(*candidates):

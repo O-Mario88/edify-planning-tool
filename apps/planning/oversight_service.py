@@ -1621,8 +1621,11 @@ def plan_export_rows(items) -> list[dict]:
         label_of,
     )
 
+    from apps.pl_review.services import lead_verified_owner_ids
+
     items = list(items)
     ids = [i.activity_id for i in items if i.activity_id]
+    lead_ids = lead_verified_owner_ids()
     district_types = district_type_labels(ids)
     budget_statuses = plan_export.budget_status_labels(ids)
     session_types = set(CLUSTER_MEETING_TYPES) | set(TRAINING_TYPES)
@@ -1679,7 +1682,10 @@ def plan_export_rows(items) -> list[dict]:
                 cost=i.planned_cost,
                 budget_status=budget_status,
                 verification=plan_export.verification_label(
-                    i.activity_status, i.ia_status
+                    i.activity_status,
+                    i.ia_status,
+                    lead_approves=not i.is_partner_work
+                    and str(i.executor_id or "") in lead_ids,
                 ),
                 salesforce_id=i.salesforce_id,
                 evidence=i.evidence_label or _label(i.evidence_status),

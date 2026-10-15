@@ -8541,7 +8541,7 @@
    "audit_id": "KPI-SOURCE-471",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 251,
+   "line": 252,
    "label": "Search my plan by school, School ID, cluster, district or purpose",
    "keys": [
     "hx_get",
@@ -8564,7 +8564,7 @@
    "audit_id": "KPI-SOURCE-472",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 710,
+   "line": 711,
    "label": "Actual Accounted Spend",
    "keys": [
     "amount",
@@ -8583,7 +8583,7 @@
    "audit_id": "KPI-SOURCE-473",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1896,
+   "line": 1897,
    "label": "SSA basis",
    "keys": [
     "label",
@@ -8600,7 +8600,7 @@
    "audit_id": "KPI-SOURCE-474",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1937,
+   "line": 1938,
    "label": "Officer",
    "keys": [
     "label",
@@ -8617,7 +8617,7 @@
    "audit_id": "KPI-SOURCE-475",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1938,
+   "line": 1939,
    "label": "Activity",
    "keys": [
     "label",
@@ -8634,7 +8634,7 @@
    "audit_id": "KPI-SOURCE-476",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1943,
+   "line": 1944,
    "label": "School or cluster",
    "keys": [
     "label",
@@ -8651,7 +8651,7 @@
    "audit_id": "KPI-SOURCE-477",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1944,
+   "line": 1945,
    "label": "Delivered",
    "keys": [
     "label",
@@ -8668,7 +8668,7 @@
    "audit_id": "KPI-SOURCE-478",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1945,
+   "line": 1946,
    "label": "Intervention",
    "keys": [
     "label",
@@ -8685,7 +8685,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1950,
+   "line": 1951,
    "label": "Attendance",
    "keys": [
     "label",
@@ -8702,7 +8702,7 @@
    "audit_id": "KPI-SOURCE-480",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1960,
+   "line": 1961,
    "label": "Salesforce ID",
    "keys": [
     "label",
@@ -8719,7 +8719,7 @@
    "audit_id": "KPI-SOURCE-481",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1961,
+   "line": 1962,
    "label": "Purpose",
    "keys": [
     "label",
@@ -8736,7 +8736,7 @@
    "audit_id": "KPI-SOURCE-482",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1962,
+   "line": 1963,
    "label": "Outcome",
    "keys": [
     "label",
@@ -8753,7 +8753,7 @@
    "audit_id": "KPI-SOURCE-483",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1963,
+   "line": 1964,
    "label": "Observations",
    "keys": [
     "label",
@@ -8770,7 +8770,7 @@
    "audit_id": "KPI-SOURCE-484",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1964,
+   "line": 1965,
    "label": "Follow-up",
    "keys": [
     "label",
@@ -8787,7 +8787,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3572,
+   "line": 3586,
    "label": null,
    "keys": [
     "count",
@@ -8805,7 +8805,7 @@
    "audit_id": "KPI-SOURCE-486",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3696,
+   "line": 3710,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -8828,7 +8828,7 @@
    "audit_id": "KPI-SOURCE-487",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 717,
+   "line": 718,
    "label": "Approved Operating Limit",
    "keys": [
     "amount",
@@ -8847,7 +8847,7 @@
    "audit_id": "KPI-SOURCE-488",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 727,
+   "line": 728,
    "label": "Minimum Viable Cost",
    "keys": [
     "amount",
@@ -8866,7 +8866,7 @@
    "audit_id": "KPI-SOURCE-489",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1810,
+   "line": 1811,
    "label": "Officer",
    "keys": [
     "blank",
@@ -8886,7 +8886,7 @@
    "audit_id": "KPI-SOURCE-490",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1900,
+   "line": 1901,
    "label": "Why it departs from the SSA",
    "keys": [
     "label",
@@ -10037,7 +10037,7 @@
    "audit_id": "KPI-SOURCE-555",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 674,
+   "line": 677,
    "label": null,
    "keys": [
     "cost",
@@ -10057,7 +10057,7 @@
    "audit_id": "KPI-SOURCE-556",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 824,
+   "line": 829,
    "label": null,
    "keys": [
     "amount",
@@ -11344,7 +11344,7 @@
    "audit_id": "KPI-SOURCE-624",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1799,
+   "line": 1805,
    "label": "All Activities",
    "keys": [
     "count",
@@ -11363,7 +11363,7 @@
    "audit_id": "KPI-SOURCE-625",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1808,
+   "line": 1814,
    "label": null,
    "keys": [
     "count",
@@ -11884,7 +11884,7 @@
    "audit_id": "KPI-SOURCE-653",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 643,
+   "line": 646,
    "label": null,
    "keys": [
     "label",
@@ -11901,7 +11901,7 @@
    "audit_id": "KPI-SOURCE-654",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 652,
+   "line": 655,
    "label": "Scheduled",
    "keys": [
     "label",
@@ -11918,7 +11918,7 @@
    "audit_id": "KPI-SOURCE-655",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 653,
+   "line": 656,
    "label": "In progress",
    "keys": [
     "label",
@@ -11935,7 +11935,7 @@
    "audit_id": "KPI-SOURCE-656",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 654,
+   "line": 657,
    "label": "Returned",
    "keys": [
     "label",
@@ -11952,7 +11952,7 @@
    "audit_id": "KPI-SOURCE-657",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 655,
+   "line": 658,
    "label": "In review",
    "keys": [
     "label",
@@ -11969,7 +11969,7 @@
    "audit_id": "KPI-SOURCE-658",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 656,
+   "line": 659,
    "label": "Completed",
    "keys": [
     "label",
@@ -11986,7 +11986,7 @@
    "audit_id": "KPI-SOURCE-659",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 657,
+   "line": 660,
    "label": "Rescheduled",
    "keys": [
     "label",
@@ -20724,12 +20724,12 @@
     "Admin"
    ],
    "metric_name": "Visits Completed Against Target",
-   "definition": "The visits that count toward a person's target \u2014 Follow up and In-school Training, by the planning rulebook \u2014 each person completed in the fiscal year (submitted with the visit ID, or verified), against 280 for a Programme Lead and 560 for a CCEO, summed. Donor, story, invitation and social visits are named beside the figure and not counted.",
+   "definition": "The visits that count toward a person's target \u2014 Follow up and In-school Training, by the planning rulebook \u2014 each person completed in the fiscal year and the Programme Lead approved (owner, 2026-10-15), against 280 for a Programme Lead and 560 for a CCEO, summed. Donor, story, invitation and social visits are named beside the figure and not counted.",
    "value_type": "percent",
    "period": "financial_year",
    "scope": "The reader's oversight scope \u2014 team for a PL, country for a CD or IA",
    "data_state": "measured-or-explicit-absence",
-   "numerator": "Counted staff visits delivered in the fiscal year",
+   "numerator": "Counted staff visits completed and approved in the fiscal year",
    "denominator": "Each Programme Lead's 280 and each CCEO's 560, summed",
    "date_basis": "activity_planned_date",
    "finance_stage": null,
@@ -20764,12 +20764,12 @@
     "Admin"
    ],
    "metric_name": "Due Work Delivered",
-   "definition": "Staff work delivered, whatever day it was planned for, against all staff work due to date or already delivered. Future work is not late; work delivered ahead of its day is counted.",
+   "definition": "Staff work delivered and approved, whatever day it was planned for, against all staff work due to date or already delivered. Future work is not late; work delivered ahead of its day is counted once the Programme Lead approves it (owner, 2026-10-15).",
    "value_type": "percent",
    "period": "financial_year",
    "scope": "The reader's oversight scope \u2014 team for a PL, country for a CD or IA",
    "data_state": "measured-or-explicit-absence",
-   "numerator": "Staff work delivered",
+   "numerator": "Staff work delivered and approved",
    "denominator": "Staff work with a planned date on or before today, or already delivered",
    "date_basis": "activity_planned_date",
    "finance_stage": null,
@@ -20884,13 +20884,13 @@
     "ImpactAssessment",
     "Admin"
    ],
-   "metric_name": "Completed Work Awaiting PL",
-   "definition": "Completed staff work waiting on the Programme Lead's verification, with the work already verified beside it. The lead verifies every CCEO's and lead's staff work, never Impact Assessment (owner, 2026-10-14).",
+   "metric_name": "Completed Work Awaiting PL Approval",
+   "definition": "Completed staff work waiting on the Programme Lead's approval, and not counted until it has it, with the work already approved beside it. The lead approves every CCEO's work and a lead's own is approved on hand-in, never by Impact Assessment (owner, 2026-10-15).",
    "value_type": "count",
    "period": "financial_year",
    "scope": "The reader's oversight scope \u2014 team for a PL, country for a CD or IA",
    "data_state": "measured-or-explicit-absence",
-   "numerator": "Staff work awaiting PL verification",
+   "numerator": "Staff work awaiting PL approval",
    "denominator": null,
    "date_basis": "activity_planned_date",
    "finance_stage": null,
@@ -42850,7 +42850,7 @@
   {
    "audit_id": "KPI-PAYLOAD-028",
    "module": "apps/projects/my_plan_service.py",
-   "line": 387,
+   "line": 390,
    "function": "get_my_plan",
    "target": "kpis",
    "source_item_count": 8,
@@ -42882,7 +42882,7 @@
   {
    "audit_id": "KPI-PAYLOAD-029",
    "module": "apps/projects/my_plan_service.py",
-   "line": 464,
+   "line": 467,
    "function": "get_my_plan",
    "target": "workflow",
    "source_item_count": 4,

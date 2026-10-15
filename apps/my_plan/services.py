@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from apps.activities.completion_columns import (
+    APPROVED_STATUSES,
     EMPTY as EMPTY_COLUMNS,
     FINISHED_EARLY,
     completed_last_key,
@@ -172,7 +173,44 @@ def plan_row_tone(activity, status_label: str, status_class: str, *, is_core: bo
     return status_tone(status_class)
 
 
-def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
+def lead_approves(activity, lead_ids: frozenset | None = None) -> bool:
+    """A CCEO's or a Programme Lead's staff work: the Programme Lead approves
+    it, never Impact Assessment (owner, 2026-10-15: "IA does not approve any
+    activity. it is the PL who approves for CCEO and theirs are approved
+    automatically"). ``lead_ids`` (pl_review.services.lead_verified_owner_ids)
+    answers a page of rows without a query each."""
+    if activity.delivery_type == "partner":
+        return False
+    if lead_ids is None:
+        from apps.pl_review.services import lead_verifies
+
+        return lead_verifies(activity)
+    return str(activity.responsible_staff_id or "") in lead_ids
+
+
+def verification_label(activity, lead_ids: frozenset | None = None) -> tuple[str, str]:
+    """My Plan's Verification cell, the same words whoever reads it: "PL
+    Approved" and "PL Pending" on a CCEO's or a lead's work (owner,
+    2026-10-15: "make sure the column is PL approved not IA approved"); a lead
+    used to read "IA pending" on it. Partner work and other staff's keep IA's
+    words."""
+    by_lead = lead_approves(activity, lead_ids)
+    if (
+        activity.status in APPROVED_STATUSES
+        or activity.ia_verification_status == "confirmed"
+    ):
+        return ("PL Approved" if by_lead else "Verified"), "green"
+    if (
+        activity.status in ("returned_by_pl", "returned_by_ia")
+        or activity.ia_verification_status == "returned"
+    ):
+        return "Returned", "red"
+    return ("PL Pending" if by_lead else "IA Pending"), "purple"
+
+
+def get_activity_status_label_and_class(
+    activity, today, lead_ids: frozenset | None = None
+) -> tuple[str, str]:
     """Resolves operational status pill color and text for row tables."""
     status = activity.status
     planned_date = activity.planned_date
@@ -207,13 +245,20 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
                 "PL Pending",
                 "edify-primary-soft edify-primary-text edify-primary-border",
             )
+        # Approved by the Programme Lead, or on hand-in for a lead's own: the
+        # column reads "PL approved not IA approved" (owner, 2026-10-15).
+        if status in APPROVED_STATUSES and lead_approves(activity, lead_ids):
+            return "PL Approved", "bg-emerald-50 text-emerald-700 border-emerald-200"
         if ia == "pending":
             return (
-                "IA Pending",
+                "PL Pending" if lead_approves(activity, lead_ids) else "IA Pending",
                 "edify-primary-soft edify-primary-text edify-primary-border",
             )
         if ia == "confirmed":
-            return "IA complete", "bg-emerald-50 text-emerald-700 border-emerald-200"
+            return (
+                "PL Approved" if lead_approves(activity, lead_ids) else "IA complete",
+                "bg-emerald-50 text-emerald-700 border-emerald-200",
+            )
         return (
             "Accounts Pending",
             "edify-primary-soft edify-primary-text edify-primary-border",
@@ -1395,8 +1440,13 @@ def get_frontend_context(
         else {}
     )
 
+    from apps.pl_review.services import lead_verified_owner_ids
+
+    lead_ids = lead_verified_owner_ids()
     for a in activities:
-        status_label, status_class = get_activity_status_label_and_class(a, today)
+        status_label, status_class = get_activity_status_label_and_class(
+            a, today, lead_ids
+        )
         next_act = compute_next_action(a, today)
         # Budget status and badges
         badges = []
@@ -1463,38 +1513,9 @@ def get_frontend_context(
             budget_status = "No Budget"
             budget_status_color = "slate"
 
-        # Verification status: "IA pending for PL and PL pending for CCEO"
-        is_pl_viewer = getattr(scope, "active_role", "") in (
-            "Program Lead",
-            "Country Director",
-            "Impact Assessment",
-            "Regional Programme Lead",
-            "Admin",
-        ) or getattr(principal, "active_role", "") in (
-            "Program Lead",
-            "Country Director",
-            "Impact Assessment",
-            "Regional Programme Lead",
-            "Admin",
-        )
-        if (
-            a.status in ("ia_verified", "accountant_confirmed", "closed")
-            or a.ia_verification_status == "confirmed"
-        ):
-            verification_status = "Verified"
-            verification_color = "green"
-        elif (
-            a.status in ("returned_by_pl", "returned_by_ia")
-            or a.ia_verification_status == "returned"
-        ):
-            verification_status = "Returned"
-            verification_color = "red"
-        elif is_pl_viewer:
-            verification_status = "IA pending"
-            verification_color = "purple"
-        else:
-            verification_status = "PL pending"
-            verification_color = "purple"
+        # One set of words whoever reads it (owner, 2026-10-15): it read "IA
+        # pending" to a lead on work the lead approves.
+        verification_status, verification_color = verification_label(a, lead_ids)
 
         is_completed_act = (
             a.status in ("completed", "ia_verified", "accountant_confirmed", "closed")
@@ -1527,13 +1548,10 @@ def get_frontend_context(
             else:
                 badges.append(("SF ID missing", "red"))
 
-        # IA status
-        if a.ia_verification_status == "pending":
-            badges.append(("IA pending", "purple"))
-        elif a.ia_verification_status == "confirmed":
-            badges.append(("IA complete", "green"))
-        elif a.ia_verification_status == "returned":
-            badges.append(("Returned", "red"))
+        # Approval status: the Programme Lead's on a CCEO's or a lead's work
+        # (owner, 2026-10-15), Impact Assessment's on partner and other work.
+        if a.ia_verification_status in ("pending", "confirmed", "returned"):
+            badges.append((verification_status, verification_color))
 
         # Accounts status
         if a.payment_status in ("pending", "pending_ia"):
