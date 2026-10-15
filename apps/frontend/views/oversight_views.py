@@ -13,6 +13,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
@@ -225,9 +226,20 @@ def _period_filters(request) -> dict:
         else None
     )
 
-    if period_type == "month_range" or (
-        from_month is not None and to_month is not None
-    ):
+    # The type chosen in the Export options drawer decides which of its
+    # fields is read: the drawer sends the month pair AND the dates whichever
+    # is shown, and reading the months first exported the whole year for
+    # "Custom Dates" (owner, 2026-10-15: "it is still exporting the entire
+    # plan"). A link with no type keeps the older inference.
+    if period_type not in ("month_range", "custom_dates", "fy"):
+        period_type = ""
+    wants_months = period_type == "month_range" or (
+        not period_type and from_month is not None and to_month is not None
+    )
+    wants_dates = period_type == "custom_dates" or (
+        not period_type and not wants_months and raw_start_date and raw_end_date
+    )
+    if wants_months:
         if from_month is not None and to_month is not None:
             d_start, d_end = month_range_to_dates(fy, from_month, to_month)
         elif from_month is not None:
@@ -238,7 +250,7 @@ def _period_filters(request) -> dict:
         date_end = d_end + timedelta(days=1)
         period = "custom"
         period_label = f"{d_start.strftime('%b %Y')} – {d_end.strftime('%b %Y')}"
-    elif period_type == "custom_dates" or (raw_start_date and raw_end_date):
+    elif wants_dates:
         try:
             s_d = datetime.strptime(raw_start_date, "%Y-%m-%d").date()
             e_d = datetime.strptime(raw_end_date, "%Y-%m-%d").date()
@@ -252,7 +264,12 @@ def _period_filters(request) -> dict:
             period = "fy"
             period_label = f"FY {fy}"
     elif period_type == "fy":
-        period = "fy"
+        # The drawer's Full FY is that year's days alone. Read as the page's
+        # "fy" it took in the years planned ahead as well (planning_horizon),
+        # so FY 2027 exported FY 2028's work too.
+        date_start = fy_start.date()
+        date_end = fy_end.date()
+        period = "custom"
         period_label = f"FY {fy}"
     else:
         # Existing month/quarter URLs keep their meaning. New links state the
@@ -3024,12 +3041,15 @@ def special_project_export_view(request, project_id: str = "all"):
                 if s.activity_date and d_start <= s.activity_date <= inclusive_end
             ]
     if req_status == "completed":
+        # By the row's state, never by the letters of its label: "Not
+        # Complete" holds "complet" and was exported as completed (the same
+        # trap the plan exports fixed on 2026-10-12).
         for proj in projects:
             proj.school_rows = [
                 s
                 for s in proj.school_rows
                 if getattr(s, "activity_state_label", "").lower() == "completed"
-                or "complet" in getattr(s, "status_label", "").lower()
+                or getattr(s, "status_key", "") == monitoring.STATUS_COMPLETED
             ]
     # A project school's row names its training, or none for a visit; cluster
     # meetings and online trainings are not project work, so those kinds
@@ -4620,6 +4640,65 @@ def partner_return_resolve_submit_view(request):
     )
 
 
+#: The months of each quarter of the fiscal year, as the drawer selects them.
+_QUARTER_MONTHS = {"Q1": (10, 12), "Q2": (1, 3), "Q3": (4, 6), "Q4": (7, 9)}
+
+
+def drawer_period(request) -> dict:
+    """The period the Export options drawer opens on: the one the page is
+    showing (owner, 2026-10-15: "make sure it only picks the plan for the
+    selected period not everything").
+
+    A month opens as that month to that month, a quarter as its three months
+    and a week as its seven days. A page showing the whole year, or naming no
+    period, opens on the current month (owner, 2026-10-15: "the planning
+    drawer should default to the current month"); Full FY is one click away.
+    It used to open From the page's month To September, so a month on the page
+    became the rest of the year in the file. A month pair the request already
+    names wins.
+    """
+    raw_period = (request.GET.get("period") or "").strip().lower()
+    raw_from = (request.GET.get("from_month") or "").strip()
+    raw_to = (request.GET.get("to_month") or "").strip()
+    raw_month = (request.GET.get("month") or "").strip()
+    raw_quarter = (request.GET.get("quarter") or "").strip().upper()
+
+    def _month(raw):
+        return int(raw) if raw.isdigit() and 1 <= int(raw) <= 12 else None
+
+    this_month = timezone.localdate().month
+    found = {
+        "selected_from_month": this_month,
+        "selected_to_month": this_month,
+        "period_mode": "month_range",
+        "default_start_date": "",
+        "default_end_date": "",
+    }
+    if _month(raw_from) and _month(raw_to):
+        found.update(
+            selected_from_month=_month(raw_from), selected_to_month=_month(raw_to)
+        )
+    elif raw_period == "quarter" and raw_quarter in _QUARTER_MONTHS:
+        first, last = _QUARTER_MONTHS[raw_quarter]
+        found.update(selected_from_month=first, selected_to_month=last)
+    elif raw_period == "week":
+        period = _period_filters(request)
+        if period.get("date_start") and period.get("date_end"):
+            found.update(
+                period_mode="custom_dates",
+                default_start_date=period["date_start"].strftime("%Y-%m-%d"),
+                default_end_date=(period["date_end"] - timedelta(days=1)).strftime(
+                    "%Y-%m-%d"
+                ),
+            )
+    elif raw_period in ("", "month") and _month(raw_month):
+        found.update(
+            selected_from_month=_month(raw_month),
+            selected_to_month=_month(raw_month),
+        )
+    return found
+
+
 def export_drawer_context(
     request, *, export_url: str, title: str, subtitle: str, hidden_keys=(), fixed=None
 ) -> dict:
@@ -4635,20 +4714,9 @@ def export_drawer_context(
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
     fy_start, fy_end = get_fy_date_range(fy)
     hidden_params = {k: request.GET.get(k) for k in hidden_keys if request.GET.get(k)}
     hidden_params.update(fixed or {})
@@ -4661,8 +4729,11 @@ def export_drawer_context(
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": fy_start.strftime("%Y-%m-%d"),
-        "default_end_date": (fy_end - timedelta(days=1)).strftime("%Y-%m-%d"),
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"]
+        or fy_start.strftime("%Y-%m-%d"),
+        "default_end_date": page_period["default_end_date"]
+        or (fy_end - timedelta(days=1)).strftime("%Y-%m-%d"),
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
@@ -4694,7 +4765,12 @@ def planning_export_drawer_view(request):
     )
 
     scope = oversight.resolve_oversight_scope(request.user)
-    is_country = scope.is_country or "country-planning" in request.path
+    # The page the drawer was opened from, never the reader's role (owner,
+    # 2026-10-15: "if it is planning oversight page, it should fetch data from
+    # planning oversight ... not fetch data from other random page"): a
+    # Country Director pressing Export on Team Planning Oversight got the
+    # country export.
+    is_country = "country-planning" in request.path
     export_url = (
         "/country-planning-oversight/export"
         if is_country
@@ -4706,24 +4782,14 @@ def planning_export_drawer_view(request):
         else "Export Team Planning Oversight"
     )
     subtitle = (
-        "Customize from (Month) to (Month) and extract completed visits & trainings"
+        "Choose the period, then download the planned visits, trainings and "
+        "cluster meetings in it"
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
 
     fy_start, fy_end = get_fy_date_range(fy)
     default_start_date = fy_start.strftime("%Y-%m-%d")
@@ -4749,8 +4815,9 @@ def planning_export_drawer_view(request):
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": default_start_date,
-        "default_end_date": default_end_date,
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"] or default_start_date,
+        "default_end_date": page_period["default_end_date"] or default_end_date,
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
@@ -4775,20 +4842,9 @@ def partner_oversight_export_drawer_view(request):
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
 
     fy_start, fy_end = get_fy_date_range(fy)
     default_start_date = fy_start.strftime("%Y-%m-%d")
@@ -4808,8 +4864,9 @@ def partner_oversight_export_drawer_view(request):
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": default_start_date,
-        "default_end_date": default_end_date,
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"] or default_start_date,
+        "default_end_date": page_period["default_end_date"] or default_end_date,
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
@@ -4839,20 +4896,9 @@ def project_export_drawer_view(request):
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
 
     fy_start, fy_end = get_fy_date_range(fy)
     default_start_date = fy_start.strftime("%Y-%m-%d")
@@ -4879,8 +4925,9 @@ def project_export_drawer_view(request):
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": default_start_date,
-        "default_end_date": default_end_date,
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"] or default_start_date,
+        "default_end_date": page_period["default_end_date"] or default_end_date,
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
@@ -4905,20 +4952,9 @@ def cluster_oversight_export_drawer_view(request):
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
 
     fy_start, fy_end = get_fy_date_range(fy)
     default_start_date = fy_start.strftime("%Y-%m-%d")
@@ -4938,8 +4974,9 @@ def cluster_oversight_export_drawer_view(request):
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": default_start_date,
-        "default_end_date": default_end_date,
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"] or default_start_date,
+        "default_end_date": page_period["default_end_date"] or default_end_date,
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
@@ -4952,21 +4989,105 @@ def cluster_oversight_export_drawer_view(request):
     )
 
 
+#: Cluster Oversight's cluster table, as the page heads it, with the CCEO and
+#: Programme Lead its tabs stand for.
+CLUSTER_EXPORT_HEADERS = (
+    "Cluster Name",
+    "District",
+    "# Schools",
+    "Cluster Leader's Name",
+    "Cluster Leader's Phone",
+    "# School SSA Scores Avg",
+    "Least Performing Intervention",
+    "Date of Last Activity",
+    "Attendance (%)",
+    "Absent 3+ Sessions",
+    "SSA Change",
+    "Responsible CCEO",
+    "Programme Lead",
+)
+
+
+def _cluster_export_row(row: dict) -> list:
+    def blank(value):
+        return "" if value in (None, "—", "Never") else value
+
+    try:
+        ssa = float(row.get("ssa_score_avg"))
+    except (TypeError, ValueError):
+        ssa = ""
+    engaged = row.get("has_engagement")
+    return [
+        row.get("name") or "",
+        blank(row.get("district")),
+        row.get("schools_count") or 0,
+        blank(row.get("cluster_leader_name")),
+        blank(row.get("cluster_leader_phone")),
+        ssa,
+        blank(row.get("least_performing_intervention")),
+        blank(row.get("last_activity_date")),
+        row.get("attendance_rate") if engaged else "",
+        (row.get("absent_schools") or 0) if engaged else "",
+        row.get("ssa_change") if engaged and row.get("ssa_change") is not None else "",
+        blank(row.get("owner_name")),
+        blank(row.get("lead_name")),
+    ]
+
+
+def _page_cluster_rows(data: dict) -> list[dict]:
+    """Every cluster row the page's tabs draw, once each, in page order: a
+    Programme Lead's or a CCEO's officer tabs, or each Lead's officer tabs on
+    the country lens (a cluster can sit under "My clusters" and its owner's
+    tab both)."""
+    tabs = [
+        *data.get("cceo_tabs", []),
+        *(tab for lead in data.get("leads", []) for tab in lead.get("cceo_tabs", [])),
+    ]
+    seen, rows = set(), []
+    for tab in tabs:
+        for row in tab.get("clusters", []):
+            key = row.get("cluster_id") or row.get("name")
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append(row)
+    return rows
+
+
 @require_page_permission("cluster_oversight")
 @require_export_permission
 def cluster_oversight_export_view(request):
-    """Export cluster plans to Excel (or CSV)."""
+    """Cluster Oversight's own tables (owner, 2026-10-15: "if it is any other
+    page, it should fetch data for that specific page"; asked, the owner chose
+    the page's own table). It exported Planning Oversight's six activity
+    sheets.
+
+    The Clusters sheet is the page's cluster table for its year: the rows its
+    tabs draw (``cluster_oversight_table_data``), each once, with the CCEO and
+    Programme Lead the tabs stand for. Then the group trainings and cluster meetings
+    each officer's tab lists, for the period the drawer chose, in the plan
+    layout every export shares (``apps.core.plan_export``).
+    """
+    from apps.clusters.oversight_service import cluster_oversight_table_data
+    from apps.core import plan_export
     from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+    from apps.core.excel import table_download
     from apps.core.fy import get_operational_fy
     from apps.planning.fy_policy import planning_horizon
 
     period = _period_filters(request)
     fy = period.get("fy") or get_operational_fy()
-    plan_fys = planning_horizon(fy)
+
+    data = cluster_oversight_table_data(request.user, fy=fy)
+    clusters = {
+        "title": "Clusters",
+        "headers": list(CLUSTER_EXPORT_HEADERS),
+        "rows": [_cluster_export_row(row) for row in _page_cluster_rows(data)],
+    }
 
     items = oversight.build_items(
         request.user,
-        fys=plan_fys,
+        fys=planning_horizon(fy),
         activity_types=tuple(CLUSTER_MEETING_TYPES + TRAINING_TYPES),
         cluster_work_only=True,
         **_service_period(period),
@@ -4979,10 +5100,9 @@ def cluster_oversight_export_view(request):
         and item.activity_type in CLUSTER_MEETING_TYPES + TRAINING_TYPES
     ]
     items = _filter_export_items(items, request, period)
-
-    return _export_response(
-        items,
-        f"cluster-oversight-{fy}.csv",
-        request_user=request.user,
-        excel=_wants_excel(request),
-    )
+    sessions = [
+        sheet
+        for sheet in plan_export.sheets(oversight.plan_export_rows(items), budget=False)
+        if sheet["title"] in (plan_export.TRAINING_SHEET, plan_export.MEETING_SHEET)
+    ]
+    return table_download(request, f"cluster-oversight-{fy}", [clusters, *sessions])

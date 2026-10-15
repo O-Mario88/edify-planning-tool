@@ -25,9 +25,11 @@ event, a conference) and, last, Budget — the Budget page's Activity cost
 plan laid out from the cost lines of exactly the activities on the sheets
 before it (`budget_sheet`).
 
-Each exporter hands over plain rows (`row(...)`); nothing here queries the
-plan, so My Plan, Team and Country Planning Oversight and Cluster Oversight
-cannot lay the same work out three ways.
+Each exporter hands over plain rows (`row(...)`), so My Plan, Team and
+Country Planning Oversight and Cluster Oversight cannot lay the same work out
+three ways. What is read here is read the same for all of them: a session's
+planned people and a group training's cost (`session_figures`), the budget
+statuses and the Budget sheet's cost lines.
 """
 
 from __future__ import annotations
@@ -313,11 +315,71 @@ def budget_sheet(rows: Iterable[dict]) -> dict:
     return sheet
 
 
+#: What a group training's Cost on its sheet is made of (owner, 2026-10-15:
+#: "it should reflect the actual (cost of participant * 12000)+venue Fee+
+#: Facilitation Fee"): the participants' meals at the catalogue's rate, the
+#: venue fee and the facilitation fee, read from the training's own cost
+#: lines. The officer's transport and lunch that day stay on the Budget sheet
+#: as their own lines (asked, the owner chose this).
+GROUP_TRAINING_COST_TYPES = frozenset(("participant_meals", "venue", "facilitation"))
+
+
+def session_figures(rows: Iterable[dict]) -> list[dict]:
+    """Group trainings and cluster meetings as planned: the people their
+    invited schools bring — schools x participants a school, the figure the
+    pages show (apps.activities.cluster_attendance.invited_head_counts) — where
+    some exports wrote the per-school figure; and a group training's Cost made
+    of GROUP_TRAINING_COST_TYPES. A training with none of those lines keeps the
+    cost it was given."""
+    from collections import defaultdict
+
+    from apps.activities.cluster_attendance import invited_head_counts
+    from apps.activities.models import Activity, ActivityScheduleCostLine
+    from apps.budget.costing_service import _line_item_type
+
+    rows = list(rows)
+    ids = {
+        r["activity_id"]
+        for r in rows
+        if r.get("kind") in (TRAINING, MEETING) and r.get("activity_id")
+    }
+    if not ids:
+        return rows
+    clusters = dict(
+        Activity.objects.filter(id__in=ids, cluster_id__isnull=False).values_list(
+            "id", "cluster_id"
+        )
+    )
+    heads = invited_head_counts(clusters.items())
+    training_ids = {
+        r["activity_id"]
+        for r in rows
+        if r.get("kind") == TRAINING and r.get("activity_id")
+    }
+    costs: dict[str, int] = defaultdict(int)
+    for activity_id, kind, key, amount in ActivityScheduleCostLine.objects.filter(
+        activity_id__in=training_ids
+    ).values_list("activity_id", "line_item_type", "cost_setting_key", "amount"):
+        if (kind or _line_item_type(key)) in GROUP_TRAINING_COST_TYPES:
+            costs[activity_id] += amount or 0
+    out = []
+    for r in rows:
+        activity_id = r.get("activity_id")
+        if activity_id in ids:
+            r = dict(r)
+            if activity_id in heads:
+                r["participants"] = heads[activity_id]
+            if r.get("kind") == TRAINING and activity_id in costs:
+                r["cost"] = costs[activity_id]
+        out.append(r)
+    return out
+
+
 def sheets(rows: Iterable[dict], *, budget: bool = True) -> list[dict]:
     """The workbook: a sheet a kind, each with its own columns, every sheet
     present so a reader sees an empty kind as empty rather than missing, and
     the Budget of those activities last."""
-    rows = list(rows)
+    rows = session_figures(rows)
     out = []
     for kind, title, headers, cells in _LAYOUTS:
         body = [cells(r) for r in rows if r.get("kind") == kind]
