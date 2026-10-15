@@ -3095,16 +3095,11 @@ def salesforce_id_action(request, activity_id):
         try:
             hand_in_with_id(a.id, request.user)
         except Exception as e:
-            from apps.core.exceptions import BadRequest
-            from apps.core.htmx_errors import is_user_facing
-
-            if not is_user_facing(e):
-                return error_fragment(e, action="Completing the activity")
+            # error_fragment shows a user-facing refusal as written and logs
+            # anything else behind its generic message.
             return error_fragment(
-                BadRequest(
-                    "The Salesforce ID is saved. To complete the activity: "
-                    + error_message(e)
-                ),
+                e,
+                action="The Salesforce ID is saved. To complete the activity",
                 status=400,
             )
 
