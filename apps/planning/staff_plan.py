@@ -114,12 +114,11 @@ def counted_visits(queryset):
 
 
 def delivered_statuses() -> frozenset:
-    from apps.planning.school_planning_badges import (
-        AWAITING_VERIFICATION_STATUSES,
-        VERIFIED_STATUSES,
-    )
+    """The visits counted as done: approved (owner, 2026-10-15: "Any activity
+    not approved by PL should not be counted"), as both monitor tabs count."""
+    from apps.activities.completion_columns import APPROVED_STATUSES
 
-    return frozenset(AWAITING_VERIFICATION_STATUSES) | frozenset(VERIFIED_STATUSES)
+    return APPROVED_STATUSES
 
 
 def visit_tallies(ids_by_person: dict, fy: str, *, within: Q | None = None) -> dict:

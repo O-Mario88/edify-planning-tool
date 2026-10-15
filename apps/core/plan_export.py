@@ -472,19 +472,23 @@ def budget_status_labels(activity_ids: Iterable) -> dict[str, str]:
     return labels
 
 
-def verification_label(activity_status: str, ia_status: str) -> str:
-    """My Plan's "Verification" as a supervisor reads it."""
+def verification_label(
+    activity_status: str, ia_status: str, *, lead_approves: bool = False
+) -> str:
+    """My Plan's "Verification", in its words (apps.my_plan.services
+    .verification_label): "PL Approved" / "PL Pending" on a CCEO's or a lead's
+    work (owner, 2026-10-15)."""
     if (
         activity_status in ("ia_verified", "accountant_confirmed", "closed")
         or ia_status == "confirmed"
     ):
-        return "Verified"
+        return "PL Approved" if lead_approves else "Verified"
     if (
         activity_status in ("returned_by_pl", "returned_by_ia")
         or ia_status == "returned"
     ):
         return "Returned"
-    return "IA pending"
+    return "PL Pending" if lead_approves else "IA Pending"
 
 
 def activity_label(activity_type: str) -> str:

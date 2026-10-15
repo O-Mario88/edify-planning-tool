@@ -31,6 +31,7 @@ from django.core.cache import cache
 from django.test import override_settings
 from django.utils import timezone
 
+from apps.activities.models import Activity
 from apps.partners.models import PartnerAssignment
 from apps.planning.country_execution import service as esvc
 from apps.planning.country_execution import tables as etables
@@ -121,7 +122,14 @@ class CountedVisitsTest(RulebookWorld):
 
     def test_the_monitor_counts_the_same_visits(self):
         officer = self.monitored(self.cceo)
+        # The follow-up is handed in and waits on the Programme Lead: not
+        # counted until approved (owner, 2026-10-15).
+        self.assertEqual((officer.visits_planned, officer.visits_delivered), (2, 0))
+        self.assertEqual(officer.awaiting_pl, 2)
+        Activity.objects.filter(pk=self.follow_up.pk).update(status="ia_verified")
+        officer = self.monitored(self.cceo)
         self.assertEqual((officer.visits_planned, officer.visits_delivered), (2, 1))
+        # Donor and story visits are named, never counted: delivered once in.
         self.assertEqual((officer.outreach_planned, officer.outreach_delivered), (2, 2))
         # Every activity is still delivered work: due, delivered, overdue.
         self.assertEqual((officer.planned, officer.delivered), (4, 3))
@@ -389,14 +397,16 @@ class OneReadingTest(RulebookWorld):
                         ),
                         (
                             owner.tally.v_planned,
-                            owner.tally.v_delivered,
+                            # Counted once approved (owner, 2026-10-15): the
+                            # Director's tab names that stage "verified".
+                            owner.tally.v_verified,
                             owner.tally.v_outreach,
                             partner_due,
                         ),
                     )
         self.assertGreaterEqual(checked, 3)
         totals, c = self.monitor()["totals"], snapshot.tree.country
-        self.assertEqual(totals.visits_delivered, c.v_delivered)
+        self.assertEqual(totals.visits_delivered, c.v_verified)
         self.assertEqual(totals.visits_planned, c.v_planned)
         self.assertEqual(totals.partner_scheduled, snapshot.tree.partner_channel.due)
 

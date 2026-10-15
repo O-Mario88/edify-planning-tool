@@ -131,8 +131,8 @@ def _advance_status(activity) -> tuple[str, str]:
     return "Fund request synced", "info"
 
 
-def _row(activity, partner_names, project_names, principal, today):
-    status_label, _ = get_activity_status_label_and_class(activity, today)
+def _row(activity, partner_names, project_names, principal, today, lead_ids):
+    status_label, _ = get_activity_status_label_and_class(activity, today, lead_ids)
     action = compute_next_action(activity, today)
     own_ids = {str(principal.id), str(principal.staff_profile_id or "")}
     can_act = (
@@ -342,8 +342,11 @@ def get_my_plan(principal, filters=None) -> dict:
         p.id: p.name
         for p in Partner.objects.filter(id__in=all_partner_ids).order_by("name")
     }
+    from apps.pl_review.services import lead_verified_owner_ids
+
+    lead_ids = lead_verified_owner_ids()
     rows = [
-        _row(activity, partner_names, project_names, principal, today)
+        _row(activity, partner_names, project_names, principal, today, lead_ids)
         for activity in activities
     ]
 

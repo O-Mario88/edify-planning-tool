@@ -266,13 +266,16 @@ class RoutingReadsTheOwnerTest(ReviewFixture):
         work.refresh_from_db()
         self.assertEqual(work.status, "submitted_to_pl")
 
-    def test_a_leads_own_submission_goes_to_the_lead(self):
+    def test_a_leads_own_submission_is_approved_when_handed_in(self):
+        # Owner, 2026-10-15: "it is the PL who approves for CCEO and theirs
+        # are approved automatically" — never routed to IA, never waiting.
         from apps.activities.services import submit_for_review
 
         work = self._submittable(self.pl.id, salesforce_activity_id="SVE-7008")
         submit_for_review(work.id, self.pl_user)
         work.refresh_from_db()
-        self.assertEqual(work.status, "submitted_to_pl")
+        self.assertEqual(work.status, "ia_verified")
+        self.assertEqual(work.pl_reviewed_by, self.pl_user.id)
 
     def test_the_rule_as_a_predicate(self):
         cceo_work = self._completion(self.james.id)

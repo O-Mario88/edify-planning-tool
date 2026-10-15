@@ -327,6 +327,20 @@ def _notify_completion_routed(a, next_status, principal) -> None:
     # deployment-wide notice to every IA holder as well (IA review, 2026-09-13).
 
 
+def _handed_in(a, next_status, principal):
+    """The hand-in's last step. A Programme Lead's own work is approved at
+    once (owner, 2026-10-15: "theirs are approved automatically"), so nobody
+    is asked; anyone else's tells its reviewer — a CCEO's, their Programme
+    Lead, who approves it before it is counted."""
+    from apps.pl_review.services import approve_on_hand_in
+
+    if next_status == "submitted_to_pl" and approve_on_hand_in(a):
+        a.refresh_from_db()
+        return a
+    _notify_completion_routed(a, next_status, principal)
+    return a
+
+
 # Salesforce's own two-way split, not the platform's grouping. Salesforce
 # classifies every activity as either "training" or "visit", and it puts
 # cluster meetings and SSA activities on the training side. That is a mapping
@@ -4277,7 +4291,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 },
             )
         _move_partner_work_to_delivery_date(a, principal)
-    _notify_completion_routed(a, next_status, principal)
+    a = _handed_in(a, next_status, principal)
     _resolve_overdue_reminder(a)
     return _serialize(a)
 
@@ -4457,9 +4471,41 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
                 "status": "pending",
             },
         )
-    _notify_completion_routed(a, next_status, principal)
+    a = _handed_in(a, next_status, principal)
     _resolve_overdue_reminder(a)
     return _serialize(a)
+
+
+def hand_in_with_id(activity_id: str, principal) -> dict | None:
+    """Hand staff work in once its Salesforce ID is entered.
+
+    Staff work is completed with its visit or training ID (owner,
+    2026-10-13), and once completed it is counted when the Programme Lead
+    approves it, whatever day it was planned for (2026-10-15: "as long as the
+    activity is completed and entered in salesforce, completed using
+    salesforce ID it is counted"). The Salesforce ID drawer saved the ID and
+    left the work as it was — "scheduled" for a visit done ahead of its day —
+    so it was in no count and on no lead's list. The same gates as Submit;
+    None when there is nothing to hand in (partner work, which IA completes
+    with its ID, or work already handed in).
+    """
+    # Nothing to hand in is answered before the executor check: correcting
+    # the ID on work already handed in is not acting on it.
+    a = Activity.objects.filter(pk=activity_id, deleted_at__isnull=True).first()
+    if (
+        a is None
+        or a.delivery_type == "partner"
+        or not a.salesforce_activity_id
+        or a.status not in (*STARTABLE_STATUSES, *SUBMITTABLE_STATUSES)
+    ):
+        return None
+    a = _get_for_execution(activity_id, principal)
+    if a.status in STARTABLE_STATUSES:
+        start_completion(a.id, principal=principal)
+        a.refresh_from_db(fields=["status"])
+    if a.status not in SUBMITTABLE_STATUSES:
+        return None
+    return submit_for_review(a.id, principal)
 
 
 def record_attendance(activity_id: str, data: dict, principal) -> dict:

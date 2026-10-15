@@ -41,6 +41,7 @@ from apps.activities.services import (
     in_school_training_pair,
     complete_partner_ssa_support,
     submit_for_review,
+    hand_in_with_id,
     record_attendance,
     ia_confirm,
     sf_kind,
@@ -3095,6 +3096,19 @@ def salesforce_id_action(request, activity_id):
             return error_fragment(e, status=409)
         except Exception as e:
             return error_fragment(e, status=400)
+        # The ID completes staff work: it is handed in to the Programme Lead,
+        # whatever day it was planned for (owner, 2026-10-15). What it still
+        # needs, attendance for a training, is said; the ID stays saved.
+        try:
+            hand_in_with_id(a.id, request.user)
+        except Exception as e:
+            # error_fragment shows a user-facing refusal as written and logs
+            # anything else behind its generic message.
+            return error_fragment(
+                e,
+                action="The Salesforce ID is saved. To complete the activity",
+                status=400,
+            )
 
         if request.headers.get("HX-Request") == "true":
             return saved_in_place()
