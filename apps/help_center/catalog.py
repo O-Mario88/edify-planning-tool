@@ -322,7 +322,7 @@ WORKFLOWS = [
     ),
     (
         "core-school-package",
-        "Core School Nine-Slot Package",
+        "Core School Package",
         "SSA and School Improvement",
         ["CCEO", "Program Lead", "CountryDirector", "Admin"],
         "Create and monitor the Core package from the Core Planning service. Slot progress mirrors the real activity status; missing slots must be planned or assigned through the supported delivery path.",

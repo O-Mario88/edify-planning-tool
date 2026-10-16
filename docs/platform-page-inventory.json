@@ -4718,7 +4718,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12263,
+      "bytes": 12264,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -14734,7 +14734,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 60004,
+      "bytes": 60010,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile",
@@ -15597,8 +15597,10 @@
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 11893,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 12050,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>"
@@ -16861,7 +16863,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 20841,
+      "bytes": 20828,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"

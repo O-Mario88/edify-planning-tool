@@ -210,7 +210,9 @@ class SsaVerificationAuthorityTests(TestCase):
         """The Country Director is the fallback verifier for SSA scores an
         Impact Assessment officer collected, and for nothing else (IA review,
         owner, 2026-09-13): a partner-submitted record stays Impact
-        Assessment's to confirm. A PL or CCEO is refused before any lookup."""
+        Assessment's to confirm, and a Programme Lead, who confirms their
+        officers' staff scores (2026-10-16), cannot confirm it either. A CCEO is
+        refused before any lookup."""
         from datetime import date
 
         from apps.geography.models import District, Region
@@ -243,8 +245,18 @@ class SsaVerificationAuthorityTests(TestCase):
         record.refresh_from_db()
         self.assertEqual(record.verification_status, "pending")
 
+        # A Programme Lead confirms their own officers' staff scores (owner,
+        # 2026-10-16), never a partner's.
         pl = _user("pl-ssa@t.org", "PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
         self.client.force_login(pl)
+        self.client.post(
+            "/ssa/verification/", {"record_id": record.id, "action": "verify"}
+        )
+        record.refresh_from_db()
+        self.assertEqual(record.verification_status, "pending")
+
+        cceo = _user("cceo-ssa@t.org", "CCEO", EdifyRole.CCEO.value)
+        self.client.force_login(cceo)
         resp = self.client.post(
             "/ssa/verification/", {"record_id": "nonexistent", "action": "verify"}
         )

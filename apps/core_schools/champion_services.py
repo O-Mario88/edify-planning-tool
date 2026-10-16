@@ -10,7 +10,8 @@ from apps.core.scoping import assert_may_write_school
 from apps.core_schools.services import (
     CORE_PLAN_CLOSED_STATUSES,
     CORE_SLOT_DONE_STATUSES,
-    EXPECTED_CORE_SLOTS,
+    PACKAGE_WORK_KINDS,
+    PACKAGE_WORK_SLOTS,
     get_live_core_plan,
 )
 
@@ -42,7 +43,11 @@ class ChampionEligibilityService:
             .prefetch_related("scores")
             .order_by("date_of_ssa", "created_at")
         )
-        slot_statuses = list(plan.slots.values_list("status", flat=True))
+        slot_statuses = list(
+            plan.slots.filter(activity_type__in=PACKAGE_WORK_KINDS).values_list(
+                "status", flat=True
+            )
+        )
         activity_counts = school.activities.filter(deleted_at__isnull=True).aggregate(
             closed=Count("id", filter=Q(status="closed")),
             clean=Count("id", filter=Q(status="closed", evidence_status="accepted")),
@@ -119,8 +124,10 @@ class ChampionEligibilityService:
         balance_score = (min(lowest_score, 7.0) / 7.0) * 15.0
 
         # 4. Core Package Completion (10%)
-        # Total required slots come from CORE_PACKAGE_SPEC (9: 1 assessment +
-        # 4 visits + 4 trainings). Uses the same canonical "done" status
+        # The package's work: its 4 visits and 4 trainings (owner,
+        # 2026-10-16, "Score 8 slots only"; PACKAGE_WORK_SLOTS). The
+        # assessment slot nothing can complete is not counted: the SSA
+        # weighs in through the parts above. Uses the same canonical "done" status
         # set the real completion path writes (CORE_SLOT_DONE_STATUSES —
         # see apps.core_schools.services.resync_plan_completion) rather than
         # a hand-duplicated list of status spellings that can drift out of
@@ -151,7 +158,7 @@ class ChampionEligibilityService:
         eligible = (
             latest_avg >= 8.0
             and lowest_score >= 7.0
-            and completed_slots >= EXPECTED_CORE_SLOTS
+            and completed_slots >= PACKAGE_WORK_SLOTS
         )
 
         return {
@@ -190,9 +197,15 @@ class ChampionEligibilityService:
             CorePlan.objects.filter(school_id__in=school_ids)
             .exclude(status__in=CORE_PLAN_CLOSED_STATUSES)
             .annotate(
-                champion_total_slots=Count("slots"),
+                champion_total_slots=Count(
+                    "slots", filter=Q(slots__activity_type__in=PACKAGE_WORK_KINDS)
+                ),
                 champion_completed_slots=Count(
-                    "slots", filter=Q(slots__status__in=CORE_SLOT_DONE_STATUSES)
+                    "slots",
+                    filter=Q(
+                        slots__activity_type__in=PACKAGE_WORK_KINDS,
+                        slots__status__in=CORE_SLOT_DONE_STATUSES,
+                    ),
                 ),
             )
             .values(

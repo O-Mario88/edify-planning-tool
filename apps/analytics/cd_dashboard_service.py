@@ -1170,7 +1170,7 @@ class CDDashboardService:
                 "Core Schools Behind",
                 core["behind"],
                 "violet",
-                "assessment + 4 visits + 4 trainings",
+                "4 visits + 4 trainings",
                 "/core-school-health",
             ),
             c(
@@ -1413,7 +1413,7 @@ class CDDashboardService:
                 "label": "See Core School Delays",
                 "icon": "shield",
                 "url": "/core-school-health",
-                "helper": "assessment + 4 visits + 4 trainings",
+                "helper": "4 visits + 4 trainings",
             },
             {
                 "label": "Review Team Targets",

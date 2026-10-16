@@ -58,7 +58,7 @@ def _scores(value: float) -> list[dict]:
 
 
 class ChampionPipelineFixture(TestCase):
-    """Onboarded core school, nine-slot package, a confirmed baseline SSA."""
+    """Onboarded core school, its package, a confirmed baseline SSA."""
 
     def setUp(self):
         self.fy = get_operational_fy()
@@ -105,8 +105,13 @@ class ChampionPipelineFixture(TestCase):
         )
 
     def _complete_slots(self, plan: CorePlan, how_many: int | None = None) -> None:
-        """Mark slots done with the status Activity.save() really mirrors."""
-        qs = CoreActivitySlot.objects.filter(core_plan=plan).order_by("id")
+        """Mark package work done with the status Activity.save() really
+        mirrors: its visits and trainings. The assessment slot is left open,
+        as nothing can complete it (owner, 2026-10-16: the package tracks
+        visits and trainings; the assessment is the year's confirmed SSA)."""
+        qs = CoreActivitySlot.objects.filter(
+            core_plan=plan, activity_type__in=("visit", "training")
+        ).order_by("id")
         ids = list(qs.values_list("id", flat=True))
         if how_many is not None:
             ids = ids[:how_many]
@@ -180,8 +185,8 @@ class ImpactMeasurementKeepsTheSchoolInTheEngineTest(ChampionPipelineFixture):
             "the follow-up SSA that qualifies a school must not hide its plan",
         )
         self.assertTrue(metrics["eligible"], metrics)
-        self.assertEqual(metrics["completed_slots"], 9)
-        self.assertEqual(metrics["total_slots"], 9)
+        self.assertEqual(metrics["completed_slots"], 8)
+        self.assertEqual(metrics["total_slots"], 8)
         self.assertGreater(metrics["score"], 0.0)
 
     def test_the_candidate_reaches_the_champion_candidates_sweep(self):
@@ -251,7 +256,7 @@ class ImpactMeasurementKeepsTheSchoolInTheEngineTest(ChampionPipelineFixture):
 
         self.assertNotIn("reason", metrics, metrics)
         self.assertEqual(metrics["completed_slots"], 6)
-        self.assertEqual(metrics["total_slots"], 9)
+        self.assertEqual(metrics["total_slots"], 8)
         self.assertGreater(metrics["score"], 0.0)
         self.assertFalse(
             metrics["eligible"],
@@ -377,4 +382,53 @@ class ChampionScoreReadsTheOperationalFyPlanTest(ChampionPipelineFixture):
             metrics = ChampionEligibilityService.calculate_score(school)
 
         self.assertNotIn("reason", metrics, metrics)
-        self.assertEqual(metrics["completed_slots"], 9)
+        self.assertEqual(metrics["completed_slots"], 8)
+
+
+class ThePackageIsItsVisitsAndTrainingsTest(ChampionPipelineFixture):
+    """Owner, 2026-10-16, asked how champion eligibility should count the
+    assessment slot nothing can complete: "Score 8 slots only". The package
+    part is the 4 visits and 4 trainings; the SSA weighs in through the
+    score's other parts."""
+
+    def _assessment_slot(self, plan):
+        return CoreActivitySlot.objects.get(core_plan=plan, activity_type="assessment")
+
+    def test_eight_done_with_the_assessment_slot_open_is_a_champion(self):
+        school = self._school("CH-EIGHT")
+        plan = self._plan(school.school_id)
+        profile = self._profile(school.school_id, plan)
+        self._complete_slots(plan)
+        self._baseline_ssa(school, 7.0)
+        self.assertNotEqual(self._assessment_slot(plan).status, "closed")
+
+        result = self._follow_up(plan, 8.5)
+        self.assertTrue(result["championCandidate"], result)
+
+        metrics = ChampionEligibilityService.calculate_score(school)
+        self.assertTrue(metrics["eligible"], metrics)
+        self.assertEqual((metrics["completed_slots"], metrics["total_slots"]), (8, 8))
+
+        candidates = ChampionEligibilityService.evaluate_all()
+        self.assertEqual([c["school"].school_id for c in candidates], ["CH-EIGHT"])
+        self.assertEqual(candidates[0]["metrics"]["total_slots"], 8)
+        profile.refresh_from_db()
+        self.assertEqual(profile.champion_status, "Potential Champion")
+
+    def test_the_assessment_slot_does_not_stand_in_for_a_visit(self):
+        school = self._school("CH-SEVEN")
+        plan = self._plan(school.school_id)
+        self._profile(school.school_id, plan)
+        self._complete_slots(plan, how_many=7)
+        CoreActivitySlot.objects.filter(pk=self._assessment_slot(plan).pk).update(
+            status="closed"
+        )
+        self._baseline_ssa(school, 7.0)
+
+        result = self._follow_up(plan, 8.5)
+        self.assertFalse(result["championCandidate"], result)
+
+        metrics = ChampionEligibilityService.calculate_score(school)
+        self.assertFalse(metrics["eligible"], metrics)
+        self.assertEqual(metrics["completed_slots"], 7)
+        self.assertEqual(ChampionEligibilityService.evaluate_all(), [])

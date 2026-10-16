@@ -627,6 +627,11 @@ def _approve(a: Activity, reviewer_id: str) -> None:
         verified_by=reviewer_id,
         verified_at=reviewed_at,
     )
+    # The SSA scores keyed on the visit count from its approval (owner,
+    # 2026-10-16: "when PL approves they will reflect").
+    from apps.ssa.pl_confirmation import confirm_visit_ssa
+
+    confirm_visit_ssa(a, reviewer_id)
     _close_review_notice(a)
     if was_with_ia:
         _close_ia_notice(a)
