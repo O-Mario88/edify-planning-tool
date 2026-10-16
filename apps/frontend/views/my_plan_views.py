@@ -1645,9 +1645,11 @@ def complete_activity_action(request, activity_id):
                 from apps.ssa.services import upload as upload_ssa
 
                 # IA review (2026-09-13): dated by the visit, linked to it, and
-                # pending until a different verifier confirms the scores. A
-                # refusal (a duplicate date, an unverified prior-year record)
-                # is shown in the drawer, not returned as an error envelope.
+                # pending until a different verifier confirms the scores: for
+                # a CCEO's visit, the lead's approval of it; a lead's own are
+                # confirmed now (owner, 2026-10-16). A refusal (a duplicate
+                # date, an unverified prior-year record) is shown in the
+                # drawer, not returned as an error envelope.
                 try:
                     upload_ssa(
                         {

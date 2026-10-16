@@ -620,6 +620,16 @@ def takes_training(school_type: str | None) -> bool:
     return str(school_type or "") in TRAINED_TYPES
 
 
+#: Owner, 2026-10-16: "champion schools are not assessed and do not take the
+#: packages. they only receive donor visits content gathering and story
+#: gathering." A Champion with no SSA is not a school missing one.
+NOT_ASSESSED_TYPES: tuple[str, ...] = (SchoolType.CHAMPION.value,)
+
+
+def takes_ssa(school_type: str | None) -> bool:
+    return str(school_type or "") not in NOT_ASSESSED_TYPES
+
+
 def portfolio_reach(schools_by_type: dict) -> int:
     """The visits staff could plan across a portfolio: 2 per Core school and
     1 per Client, Core Trained and Core Graduate school. Below the person's

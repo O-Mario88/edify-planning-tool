@@ -20,10 +20,13 @@ from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope, scoped_school_queryset
 
 from .models import CoreActivitySlot, CorePlan
+from .services import PACKAGE_WORK_KINDS, PACKAGE_WORK_SLOTS
 
 
-# The nine slots in a package: 1 assessment + 4 visits + 4 trainings.
-PACKAGE_SLOTS = 9
+# A package's work: its 4 visits and 4 trainings (owner, 2026-10-16). The
+# assessment slot nothing can complete is left out; the assessment is the
+# school's confirmed SSA (assessmentDone).
+PACKAGE_SLOTS = PACKAGE_WORK_SLOTS
 
 
 def core_school_health(principal, query: dict | None = None) -> dict:
@@ -53,7 +56,11 @@ def core_school_health(principal, query: dict | None = None) -> dict:
         return _empty(fy, scope)
 
     plan_ids = [p.id for p in plans]
-    slots = list(CoreActivitySlot.objects.filter(core_plan_id__in=plan_ids))
+    slots = list(
+        CoreActivitySlot.objects.filter(
+            core_plan_id__in=plan_ids, activity_type__in=PACKAGE_WORK_KINDS
+        )
+    )
     slots_by_plan: dict[str, list] = {}
     for s in slots:
         slots_by_plan.setdefault(s.core_plan_id, []).append(s)

@@ -788,6 +788,8 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
 
     cluster_ids = sorted({s["cluster_id"] for s in schools if s["cluster_id"]})
     school_work, cluster_work = _work_by_place(scope, cluster_ids, fy, window)
+    from apps.planning.country_oversight.rules import takes_ssa as _rules_takes_ssa
+
     school_scores = []
     for school in schools:
         score = scores.get(school["id"], {})
@@ -805,6 +807,7 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
                 ),
                 "previous": score.get("previous"),
                 "current": score.get("current"),
+                "takes_ssa": _rules_takes_ssa(school["school_type"]),
                 **_change(score.get("previous"), score.get("current"), book=book),
             }
         )
@@ -896,7 +899,10 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
     flags = {
         "no_training": _due_without(lambda r: r.trainings, "trainings"),
         "no_visit": _due_without(lambda r: r.visits, "visits"),
-        "no_ssa": {s["id"] for s in school_scores if s["current"] is None},
+        # A Champion is not assessed (owner, 2026-10-16), so has none missing.
+        "no_ssa": {
+            s["id"] for s in school_scores if s["current"] is None and s["takes_ssa"]
+        },
         "unplanned": set(by_id) - planned_ids,
         "improved": {s["id"] for s in school_scores if s["status"] == "improved"},
         "declined": {s["id"] for s in school_scores if s["status"] == "declined"},
@@ -917,7 +923,11 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
         "enrollment": sum(s["enrollment"] or 0 for s in schools),
         "districts": len({s["district_id"] for s in schools if s["district_id"]}),
         "handovers": pipeline,
-        "assessed": len(schools) - len(flags["no_ssa"]),
+        "assessed": sum(
+            1 for s in school_scores if s["current"] is not None and s["takes_ssa"]
+        ),
+        # The schools an SSA is asked of: every one but a Champion.
+        "assessable": sum(1 for s in school_scores if s["takes_ssa"]),
         **{key: len(ids) for key, ids in flags.items()},
     }
     portfolio["cluster_coverage"] = (

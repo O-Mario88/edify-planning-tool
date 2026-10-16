@@ -3,7 +3,7 @@
 {% load school_identity %}
 {% load frontend_filters table_pagination row_actions %}
 {% block title %}{{ partner.name }} — Edify{% endblock %}
-{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261010rail1">{% endblock %}
+{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261016rail3">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
@@ -55,13 +55,13 @@ brief, 2026-10-09): the page's own content is the first tab.
 {% include "partials/profiles/_sections.html" %}
 {% else %}
 
-<div class="edify-record-workspace grid lg:grid-cols-3 gap-6">
+<div class="edify-record-workspace grid lg:grid-cols-3 gap-x-4 gap-y-4">
 <!-- Left Column: Organisation & Activity history -->
 <div class="lg:col-span-2 space-y-6">
 <!-- Organisation Card -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
 <h3 class="edify-profile-section-title border-b border-slate-100 pb-3">Organisation &amp; Contact</h3>
-<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div class="edify-field-grid grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div><p class="edify-profile-field__label">Contact person</p><p class="edify-profile-field__value mt-0.5">{{ partner.contact_person|default:"Not specified" }}</p></div>
 <div><p class="edify-profile-field__label">Phone</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ partner.phone|default:"Not specified" }}</p></div>
 <div><p class="edify-profile-field__label">Email</p><p class="edify-profile-field__value mt-0.5">{% if partner.email %}<a href="mailto:{{ partner.email }}" class="hover:underline">{{ partner.email }}</a>{% else %}Not specified{% endif %}</p></div>
@@ -69,7 +69,7 @@ brief, 2026-10-09): the page's own content is the first tab.
 {% comment %}All of them, not the first (owner, 2026-09-22): an organisation
 running three kinds of work was described here by one.{% endcomment %}
 <div><p class="edify-profile-field__label">SSA interventions</p><p class="edify-profile-field__value mt-0.5">{% for item in partner.capabilities.interventions %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% empty %}{{ partner.ssa_intervention_label }}{% endfor %}</p></div>
-<div class="col-span-2"><p class="edify-profile-field__label">Activities delivered</p><p class="edify-profile-field__value mt-0.5">{% for item in partner.capabilities.activities %}{{ item.name }}{% if not forloop.last %} · {% endif %}{% empty %}None recorded{% endfor %}</p></div>
+<div><p class="edify-profile-field__label">Activities delivered</p><p class="edify-profile-field__value mt-0.5">{% for item in partner.capabilities.activities %}{{ item.name }}{% if not forloop.last %} · {% endif %}{% empty %}None recorded{% endfor %}</p></div>
 <div><p class="edify-profile-field__label">Expertise</p><p class="edify-profile-field__value mt-0.5">{% if partner.expertise_areas %}{{ partner.expertise_areas|join:", " }}{% elif partner.trains_on %}{{ partner.trains_on|join:", " }}{% else %}Not specified{% endif %}</p></div>
 <div><p class="edify-profile-field__label">Contract</p><p class="edify-profile-field__value mt-0.5">{{ partner.contract_status|default:"Not specified"|title }}</p></div>
 <div><p class="edify-profile-field__label">Schools assigned</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ school_count }}</p></div>
@@ -77,7 +77,7 @@ running three kinds of work was described here by one.{% endcomment %}
 2026-10-08: "profile and basic info or Bio data"): where it works, whether it
 is certified, when it joined and who signs in for it. The record held these
 and the profile showed none of them.{% endcomment %}
-<div class="col-span-2"><p class="edify-profile-field__label">Districts covered</p><p class="edify-profile-field__value mt-0.5">{{ partner.coverage_districts|join:", "|default:"Not specified" }}</p></div>
+<div><p class="edify-profile-field__label">Districts covered</p><p class="edify-profile-field__value mt-0.5">{{ partner.coverage_districts|join:", "|default:"Not specified" }}</p></div>
 <div><p class="edify-profile-field__label">Certification</p><p class="edify-profile-field__value mt-0.5">{% if partner.is_certified %}Certified{% elif partner.certification_status %}{{ partner.certification_status|title }}{% else %}Not certified{% endif %}</p></div>
 <div><p class="edify-profile-field__label">Onboarded</p><p class="edify-profile-field__value mt-0.5">{% if partner.onboarded_at %}<span class="tabular-nums">{{ partner.onboarded_at|date:"j M Y" }}</span>{% if onboarded_by_name %} by {{ onboarded_by_name }}{% endif %}{% else %}<span class="tabular-nums">{{ partner.created_at|date:"j M Y" }}</span>{% endif %}</p></div>
 <div><p class="edify-profile-field__label">Team</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ members|length }} staff and volunteer{{ members|length|pluralize }}</p></div>
@@ -152,7 +152,7 @@ read — a partner login reads the ones shared with it.{% endcomment %}
 <!-- Activities Card -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
 <h3 class="edify-profile-section-title border-b border-slate-100 pb-3">Activities</h3>
-<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div class="edify-field-grid grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div><p class="edify-profile-field__label">Total</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ total }}</p></div>
 <div><p class="edify-profile-field__label">Completed</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ counts.completed }}</p></div>
 <div><p class="edify-profile-field__label">Assigned</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ counts.assigned }}</p></div>
@@ -163,7 +163,7 @@ read — a partner login reads the ones shared with it.{% endcomment %}
 </div>
 {% if partner_progress %}
 <h4 class="edify-profile-section-title pt-2">Annual SSA progress (assigned schools)</h4>
-<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div class="edify-field-grid grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 {% for item in partner_progress %}
 <div><p class="edify-profile-field__label">FY{{ item.fy }} · {{ item.school_count }} school{{ item.school_count|pluralize }}</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{% if item.average is not None %}{{ item.average }}/10{% else %}—{% endif %}</p></div>
 {% endfor %}

@@ -589,6 +589,7 @@ def ssa_verification_queue_view(request):
     from apps.core.exceptions import Forbidden
     from apps.core.scoping import owner_ids
     from apps.ssa.services import (
+        may_confirm_any,
         readable_records,
         return_record,
         verifiable_records,
@@ -598,11 +599,9 @@ def ssa_verification_queue_view(request):
     if request.method == "POST":
         # Confirming an SSA is the QA control the scoring, targets and impact
         # stack rests on. Everyone else with the page reads the queue; a role
-        # that verifies nothing is refused before any record is looked up.
-        if not (
-            has_permission(request.user, Permission.IA_VERIFY.value)
-            or request.user.active_role == "CountryDirector"
-        ):
+        # that verifies nothing is refused before any record is looked up. A
+        # Programme Lead confirms their officers' staff scores (2026-10-16).
+        if not may_confirm_any(request.user):
             return render_access_denied(
                 request,
                 "Only Impact Assessment may confirm or return an SSA record.",
@@ -746,8 +745,7 @@ def ssa_verification_queue_view(request):
         },
         # Kept for templates and tests that ask whether the reader may verify
         # anything at all.
-        "can_verify": has_permission(request.user, Permission.IA_VERIFY.value)
-        or request.user.active_role == "CountryDirector",
+        "can_verify": may_confirm_any(request.user),
         "total_pending": page["total"] if status == "pending" else None,
     }
     return render(request, "pages/ssa/verification_queue.html", context)

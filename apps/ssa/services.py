@@ -12,7 +12,10 @@ records on the dev database — so nobody but the collector had ever looked at
 the numbers every outcome, target and planning gate reads. A record now waits
 for a DIFFERENT verifier: an Impact Assessment officer in the school's
 country, or the Country Director for scores an IA officer collected
-(`verify_record`). Only confirmed records count, so the confirmed-only
+(`verify_record`). Staff scores have a Programme Lead too (owner, 2026-10-16,
+`apps.ssa.pl_confirmation`): a lead's own are confirmed as they are keyed, a
+CCEO's when the lead approves the visit they were keyed on or confirms them
+in the queue. Only confirmed records count, so the confirmed-only
 consumers (planning readiness, recommendations, project baselines, outcomes,
 targets) see a keyed assessment after its verification, not at keying: that
 lag is the point of the rule, and the SSA Verification queue and the IA To-Dos
@@ -34,6 +37,7 @@ from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
 from .models import SsaRecord, SsaScore
+from .pl_confirmation import sync_core_assessment
 from apps.schools.lifecycle_service import active_schools
 
 
@@ -51,6 +55,8 @@ SOURCE_PARTNER = "partner_submitted"
 #: The two ways a verifier may confirm or return a record.
 BASIS_IA = "ia"
 BASIS_CD_FALLBACK = "cd_fallback"
+#: A Programme Lead confirming a supervised CCEO's staff scores (2026-10-16).
+BASIS_PL = "pl"
 
 EVENT_SSA_RETURNED = "ssa_returned"
 
@@ -137,9 +143,9 @@ def upload(data: dict, principal) -> dict:
     """Record 8 intervention scores for a school, pending verification.
 
     `collectorType` records who keyed them (staff, ia or partner) and
-    `sourceActivityId`, when given, the visit they were collected on. Every
-    record lands pending until a different verifier confirms it (see the
-    module docstring)."""
+    `sourceActivityId`, when given, the visit they were collected on. A record
+    lands pending until a different verifier confirms it, unless a Programme
+    Lead keyed it or already approved its visit (see the module docstring)."""
     school_id = str(data.get("schoolId") or "").strip()
     school = School.objects.filter(school_id=school_id).first()
     if not school:
@@ -319,6 +325,20 @@ def upload(data: dict, principal) -> dict:
         # confirmation"; it becomes done when a verifier confirms it
         # (`verify_record`), and only for a record of the current FY.
         _recompute_readiness(school)
+
+        # A Programme Lead's own scores, and scores keyed on a visit the lead
+        # has already approved, count from now (owner, 2026-10-16).
+        from apps.ssa.pl_confirmation import LEAD_ROLE, confirmer
+
+        confirmed_by = confirmer(
+            principal,
+            partner=partner_collected,
+            activity=record.source_activity if source_activity_id else None,
+        )
+        if confirmed_by is not None:
+            record = confirm_record(
+                record, confirmed_by[0], basis=confirmed_by[1], actor_role=LEAD_ROLE
+            )
 
         from apps.audit.services import log as audit_log
 
@@ -712,7 +732,8 @@ def verifiable_records(principal):
 
     Impact Assessment: every pending record in their country except the ones
     they collected or uploaded. Country Director: the pending records an IA
-    officer collected, except their own. Anyone else: none. One queryset, so
+    officer collected, except their own. A Programme Lead: the staff scores
+    of the officers they supervise. Anyone else: none. One queryset, so
     the queue's buttons, the To-Dos and the service all agree.
     """
     from apps.core.permissions import has_permission
@@ -726,6 +747,8 @@ def verifiable_records(principal):
         pass
     elif getattr(principal, "active_role", "") == EdifyRole.COUNTRY_DIRECTOR.value:
         records = records.filter(ia_collected_q())
+    elif _is_lead(principal):
+        records = records.filter(_lead_decides_q(principal))
     else:
         return records.none()
     own = [str(i) for i in owner_ids(principal) if i]
@@ -734,6 +757,37 @@ def verifiable_records(principal):
             uploaded_by__in=own
         )
     return records
+
+
+def _is_lead(principal) -> bool:
+    """A Programme Lead acting as one: the role held, not borrowed for a
+    month (owner, 2026-10-07: acting is following up, never deciding)."""
+    from apps.pl_review.services import lead_clears_own_work
+
+    return lead_clears_own_work(principal)
+
+
+def _lead_decides_q(principal):
+    """Staff scores collected by an officer ``principal`` supervises."""
+    from django.db.models import Q
+
+    from apps.pl_review.services import _reviewer_staff_ids
+
+    return Q(collected_by_user_id__in=list(_reviewer_staff_ids(principal))) & ~Q(
+        collector_type="partner"
+    )
+
+
+def may_confirm_any(principal) -> bool:
+    """Whether ``principal`` confirms SSA at all (the queue's buttons)."""
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import EdifyRole, Permission
+
+    return (
+        has_permission(principal, Permission.IA_VERIFY.value)
+        or getattr(principal, "active_role", "") == EdifyRole.COUNTRY_DIRECTOR.value
+        or _is_lead(principal)
+    )
 
 
 def verifier_basis(principal, record) -> str | None:
@@ -758,6 +812,8 @@ def _assert_may_decide(principal, record) -> str:
     - Impact Assessment (ia.verify) decides; the Country Director decides only
       records an Impact Assessment officer collected — the fallback verifier
       for IA's own work, as for activities (`is_ia_fallback_verifier`).
+    - A Programme Lead decides the staff scores of the officers they
+      supervise (owner, 2026-10-16), as they approve those officers' work.
     """
     from apps.core.permissions import has_permission, verifies_own_ssa
     from apps.core.rbac import EdifyRole, Permission
@@ -765,7 +821,8 @@ def _assert_may_decide(principal, record) -> str:
 
     is_ia = has_permission(principal, Permission.IA_VERIFY.value)
     is_cd = getattr(principal, "active_role", "") == EdifyRole.COUNTRY_DIRECTOR.value
-    if not (is_ia or is_cd):
+    is_lead = not (is_ia or is_cd) and _is_lead(principal)
+    if not (is_ia or is_cd or is_lead):
         raise Forbidden("Only Impact Assessment may confirm or return an SSA record.")
     if verifies_own_ssa(principal, record):
         raise Forbidden(
@@ -783,6 +840,17 @@ def _assert_may_decide(principal, record) -> str:
         raise Forbidden("This SSA belongs to a school outside your country.")
     if is_ia:
         return BASIS_IA
+    if is_lead:
+        if (
+            SsaRecord.objects.filter(pk=record.pk)
+            .filter(_lead_decides_q(principal))
+            .exists()
+        ):
+            return BASIS_PL
+        raise Forbidden(
+            "A Programme Lead confirms the SSA scores of the officers they "
+            "supervise; Impact Assessment verifies the rest."
+        )
     if SsaRecord.objects.filter(pk=record.pk).filter(ia_collected_q()).exists():
         return BASIS_CD_FALLBACK
     raise Forbidden(
@@ -806,9 +874,22 @@ def verify_record(record, principal):
     are what make a confirmation mean anything, so they belong to the
     transition rather than to one of its callers.
     """
+    basis = _assert_may_decide(principal, record)
+    return confirm_record(
+        record,
+        _actor_id(principal),
+        basis=basis,
+        actor_role=getattr(principal, "active_role", None),
+    )
+
+
+@transaction.atomic
+def confirm_record(record, verifier_id, *, basis: str, actor_role=None):
+    """The confirmation itself, once whoever decides it may: a verifier in
+    the queue (`verify_record`), a Programme Lead keying or approving
+    (`apps.ssa.pl_confirmation`)."""
     from apps.audit.services import log as audit_log
 
-    basis = _assert_may_decide(principal, record)
     if record.verification_status == VerificationStatus.CONFIRMED.value:
         # Idempotent: a double-submitted form re-confirms nothing and writes no
         # second audit row.
@@ -828,7 +909,7 @@ def verify_record(record, principal):
 
     assert_year_free(record.school_id, record.fy, exclude_pk=record.pk)
     record.verification_status = VerificationStatus.CONFIRMED.value
-    record.verified_by_user_id = _actor_id(principal)
+    record.verified_by_user_id = verifier_id
     record.verified_at = timezone.now()
     # A save with update_fields still fires post_save, which is what carries a
     # confirmation to Business Transformation, recommendations and project
@@ -843,6 +924,7 @@ def verify_record(record, principal):
             ]
         )
     _recompute_readiness(record.school)
+    sync_core_assessment(record.school, record.fy)
 
     from apps.projects.baselines import enqueue_baseline_capture
 
@@ -852,8 +934,8 @@ def verify_record(record, principal):
         action="ssa_verify",
         subject_kind="SsaRecord",
         subject_id=record.id,
-        actor_id=getattr(principal, "user_id", None),
-        actor_role=getattr(principal, "active_role", None),
+        actor_id=verifier_id,
+        actor_role=actor_role,
         payload={
             "schoolId": record.school_id,
             "schoolName": record.school.name,
@@ -904,6 +986,7 @@ def return_record(record, principal, reason: str = ""):
         ]
     )
     _recompute_readiness(record.school)
+    sync_core_assessment(record.school, record.fy)
 
     audit_log(
         action="ssa_return",

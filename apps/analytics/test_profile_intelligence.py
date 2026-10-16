@@ -122,6 +122,31 @@ class ProfileFixture(TestCase):
         return engine.build(engine.district_scope(self.district), fy or self.fy)
 
 
+class ChampionsAreNotAssessedTest(ProfileFixture):
+    """Owner, 2026-10-16: "champion schools are not assessed and do not take
+    the packages. they only receive donor visits content gathering and story
+    gathering." A Champion without an SSA is not one missing an SSA."""
+
+    def test_a_champion_is_not_counted_as_missing_an_ssa(self):
+        School.objects.create(
+            school_id="PROFILE-CH",
+            name="Golf Primary",
+            region=self.region,
+            district=self.district,
+            school_type="champion",
+        )
+        profile = self.profile()
+        portfolio = profile["portfolio"]
+
+        self.assertEqual(portfolio["schools"], 7)
+        self.assertEqual(portfolio["no_ssa"], 2)
+        self.assertEqual((portfolio["assessed"], portfolio["assessable"]), (4, 6))
+        self.assertNotIn(
+            "Golf Primary",
+            {r["name"] for r in engine.school_rows(profile, "no_ssa")},
+        )
+
+
 class PortfolioTest(ProfileFixture):
     def test_the_scope_is_the_district_s_operating_schools(self):
         portfolio = self.profile()["portfolio"]

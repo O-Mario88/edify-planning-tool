@@ -22,7 +22,7 @@ from apps.core_schools.models import (
     cplan_id,
     cprof_id,
 )
-from apps.core_schools.services import EXPECTED_CORE_SLOTS
+from apps.core_schools.services import PACKAGE_WORK_SLOTS
 from apps.schools.lifecycle_service import active_schools
 
 logger = logging.getLogger(__name__)
@@ -966,6 +966,11 @@ class CorePackageProgressService:
         )
         for record in confirmed_ssa_records:
             latest_ssa_by_school.setdefault(record.school_id, record)
+        # The Assessment cell is the year's SSA record, whatever entered it
+        # (owner, 2026-10-16: "Core package only track visits and trainings").
+        from apps.ssa.pl_confirmation import core_assessment_cells
+
+        assessment_cells = core_assessment_cells(db_ids, fy)
 
         # Load cluster names
         from apps.clusters.models import Cluster
@@ -1100,7 +1105,7 @@ class CorePackageProgressService:
             trainings = []
             v_slots = []
             t_slots = []
-            assessment_cell = CorePackageProgressService._serialize_slot_ui(None)
+            assessment_cell = assessment_cells[s.id]
 
             if plan:
                 # Sorted in Python: `.order_by` on a prefetched relation issues a
@@ -1108,10 +1113,6 @@ class CorePackageProgressService:
                 slots = sorted(plan.slots.all(), key=lambda sl: sl.sequence_number or 0)
                 v_slots = [sl for sl in slots if sl.activity_type == "visit"]
                 t_slots = [sl for sl in slots if sl.activity_type == "training"]
-                a_slot = next(
-                    (sl for sl in slots if sl.activity_type == "assessment"), None
-                )
-                assessment_cell = CorePackageProgressService._serialize_slot_ui(a_slot)
 
                 for seq in range(1, 5):
                     slot = next(
@@ -1242,13 +1243,9 @@ class CorePackageProgressService:
                     "ssa_average_tone": ssa_summary["average_tone"],
                     "ssa_groups": ssa_summary["groups"],
                     "assessment": assessment_cell,
-                    # The plan's own flag, not the slot pill. The slot can
-                    # read "Complete" from a scheduling state while the plan
-                    # still records no assessment on file, and the oversight
-                    # table and the "Send to…" it offers were reading one
-                    # each — so a row said Complete and the ask it produced
-                    # said Outstanding. One field now answers both.
-                    "assessment_completed": bool(plan and plan.assessment_completed),
+                    # The same record as the cell, so a row that says
+                    # Complete never asks for an assessment on file.
+                    "assessment_completed": assessment_cell["status"] == "Complete",
                     "visits": visits,
                     "trainings": trainings,
                     "visit_marks": visit_marks,
@@ -1491,12 +1488,11 @@ class CorePlanningService:
                     for sl in slot_list
                     if sl.activity_type == "training" and sl.status in done_statuses
                 )
-                assessment_done = sum(
-                    1
-                    for sl in slot_list
-                    if sl.activity_type == "assessment" and sl.status in done_statuses
-                )
-                total_done = visits_done + trainings_done + assessment_done
+                # The year's confirmed SSA, not a slot (owner, 2026-10-16).
+                assessment_done = 1 if latest_ssa else 0
+                # The package's work, its visits and trainings (owner,
+                # 2026-10-16); the assessment is read from the SSA above.
+                total_done = visits_done + trainings_done
                 # Each slot in its colour — done green, planned blue, open
                 # grey (owner, 2026-09-27) — and the package counted however
                 # its work was booked.
@@ -1569,7 +1565,7 @@ class CorePlanningService:
                     "assessment_done": assessment_done,
                     "visit_marks": visit_marks,
                     "training_marks": training_marks,
-                    "progress_pct": int((total_done / EXPECTED_CORE_SLOTS) * 100),
+                    "progress_pct": int((total_done / PACKAGE_WORK_SLOTS) * 100),
                 }
             )
 

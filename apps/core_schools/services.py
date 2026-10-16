@@ -84,6 +84,13 @@ CORE_PLAN_CLOSED_STATUSES = {
 CORE_PACKAGE_SPEC = (("a", 1), ("v", 4), ("t", 4))
 CORE_SLOT_KIND_TO_TYPE = {"a": "assessment", "v": "visit", "t": "training"}
 EXPECTED_CORE_SLOTS = sum(count for _kind, count in CORE_PACKAGE_SPEC)
+#: What the package tracks (owner, 2026-10-16: "Core package only track
+#: visits and trainings"; asked about champion scoring, "Score 8 slots
+#: only"). The assessment slot above still gives every plan its slot ids,
+#: but nothing can complete it: the assessment is the school's confirmed SSA
+#: for the year (apps.ssa.pl_confirmation). Completion counts these.
+PACKAGE_WORK_KINDS = ("visit", "training")
+PACKAGE_WORK_SLOTS = sum(count for kind, count in CORE_PACKAGE_SPEC if kind != "a")
 
 
 def create_package_slots(
@@ -463,6 +470,9 @@ def resync_plan_completion(plan: CorePlan) -> None:
 
     Recomputes from scratch (rather than incrementing) so this is idempotent
     no matter how many times, or in what order, it gets called.
+
+    The assessment is not a slot's: it is the school's confirmed SSA for the
+    year (owner, 2026-10-16), kept by `apps.ssa.pl_confirmation`.
     """
     visits_completed = plan.slots.filter(
         activity_type="visit", status__in=CORE_SLOT_DONE_STATUSES
@@ -470,22 +480,16 @@ def resync_plan_completion(plan: CorePlan) -> None:
     trainings_completed = plan.slots.filter(
         activity_type="training", status__in=CORE_SLOT_DONE_STATUSES
     ).count()
-    assessment_completed = plan.slots.filter(
-        activity_type="assessment", status__in=CORE_SLOT_DONE_STATUSES
-    ).count()
     if (
         plan.visits_completed != visits_completed
         or plan.trainings_completed != trainings_completed
-        or plan.assessment_completed != assessment_completed
     ):
         plan.visits_completed = visits_completed
         plan.trainings_completed = trainings_completed
-        plan.assessment_completed = assessment_completed
         plan.save(
             update_fields=[
                 "visits_completed",
                 "trainings_completed",
-                "assessment_completed",
                 "updated_at",
             ]
         )
@@ -532,9 +536,9 @@ def upload_follow_up_ssa(plan_id: str, data: dict, principal) -> dict:
     average_change = followup - baseline
 
     completed_slots_count = plan.slots.filter(
-        status__in=CORE_SLOT_DONE_WITH_LEGACY
+        activity_type__in=PACKAGE_WORK_KINDS, status__in=CORE_SLOT_DONE_WITH_LEGACY
     ).count()
-    slots_complete = completed_slots_count >= EXPECTED_CORE_SLOTS
+    slots_complete = completed_slots_count >= PACKAGE_WORK_SLOTS
 
     is_champion_candidate = followup >= 7.5 and average_change > 0.0 and slots_complete
 
