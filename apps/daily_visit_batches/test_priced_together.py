@@ -230,41 +230,24 @@ class TheDayIsRefusedAsItWasTest(_BothWays):
         self.assertIn("accountant", messages[0])
 
 
-class AFullDayRefusesBeforeAnythingIsPricedTest(_ADayOfVisits):
-    def test_no_visit_is_re_priced_for_a_move_that_is_refused(self):
-        """Moving onto a full day used to re-price every visit left on the
-        day it would have left, and then undo it."""
+class ADayHasNoCeilingTest(_ADayOfVisits):
+    def test_a_day_with_its_target_still_takes_a_moved_visit(self):
+        """No day is full (owner, 2026-10-16: "dont restrict the number of
+        visit per day ... lift that restriction"): a visit moved onto a day
+        that already holds its target joins it, its money with it."""
         first = self.plan(MON, self.near[:5])["created"]
         self.plan(TUE, self.near[5:10])
-        with CaptureQueriesContext(connection) as queries:
-            with self.assertRaises(BadRequest) as refused:
-                reschedule(
-                    first[0],
-                    {
-                        "scheduledDate": _at_nine(TUE).isoformat(),
-                        "reason": "Asked to move",
-                    },
-                    self.user,
-                )
-        self.assertIn("You can only schedule", str(refused.exception.detail))
-        written = [
-            q["sql"]
-            for q in queries.captured_queries
-            if q["sql"].startswith(("INSERT", "DELETE"))
-            and any(
-                table in q["sql"]
-                for table in (
-                    '"activity_cost_snapshot"',
-                    '"activity_schedule_cost_line"',
-                    '"advance_request"',
-                )
-            )
-        ]
-        self.assertEqual(written, [])
-        self.assertEqual(
-            Activity.objects.get(id=first[0]).planned_date,
-            MON,
+        reschedule(
+            first[0],
+            {
+                "scheduledDate": _at_nine(TUE).isoformat(),
+                "reason": "Asked to move",
+            },
+            self.user,
         )
+        moved = Activity.objects.get(id=first[0])
+        self.assertEqual(moved.planned_date, TUE)
+        self.assertEqual(moved.daily_visit_batch.visit_date, TUE)
 
     def test_a_visit_moved_within_its_own_day_is_not_counted_twice(self):
         """The day is found again once the visit has left it: a full day

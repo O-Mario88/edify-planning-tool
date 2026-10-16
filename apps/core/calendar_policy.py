@@ -286,13 +286,23 @@ class SchedulingPolicyService:
             scheduled_start, scheduled_end = scheduled_datetime_window(
                 start_of_week, end_of_week
             )
+            from apps.activities.completion_columns import (
+                OFFICER_COMPLETED_STATUSES,
+            )
+
+            # Work already done takes nothing from the week (owner,
+            # 2026-10-16: completed work frees its day), whichever stage of
+            # review it has reached; only the literal "completed" was left
+            # out, so handed-in and approved work still filled the week.
             week_count = (
                 Activity.objects.filter(
                     responsible_staff_id__in=activity_owner_ids(user),
                     scheduled_date__gte=scheduled_start,
                     scheduled_date__lt=scheduled_end,
                 )
-                .exclude(status__in=["cancelled", "completed"])
+                .exclude(
+                    status__in=["cancelled", "completed", *OFFICER_COMPLETED_STATUSES]
+                )
                 .count()
             )
             if week_count >= 5:

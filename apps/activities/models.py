@@ -309,6 +309,12 @@ class Activity(SoftDeleteModel):
     # Actuals, captured at delivery — planned fields above are never copied
     # into these; planned, actual and verified information stay separate.
     actual_delivery_date = models.DateField(null=True, blank=True)
+    # The day the work was planned for, kept when it is completed on another
+    # day and moves there with its money (owner, 2026-10-16: "if an activity
+    # is completed earlier the system should record the actual completion
+    # date then free the planned date ... move the money to the completed
+    # date as well"; apps.activities.completed_day).
+    planned_date_before_completion = models.DateField(null=True, blank=True)
     actual_outcome = models.TextField(null=True, blank=True)
     actual_observations = models.TextField(null=True, blank=True)
     follow_up_note = models.TextField(null=True, blank=True)

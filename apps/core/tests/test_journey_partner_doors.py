@@ -207,7 +207,9 @@ class PartnerJourneyThroughTheDoorsTest(TestCase):
         submit = self.client.post(
             f"/partner/activities/{activity.id}/submit-action",
             {
-                "actual_delivery_date": self.day.isoformat(),
+                # The day it was done: today or before, never a future day
+                # (owner, 2026-10-16); the visit is planned for a later day.
+                "actual_delivery_date": timezone.localdate().isoformat(),
                 "teachers_attended": "4",
                 "leaders_attended": "1",
                 "other_participants": "0",

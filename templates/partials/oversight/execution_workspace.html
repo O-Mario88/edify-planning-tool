@@ -88,6 +88,7 @@ the activities behind it.
             <th scope="col" class="px-3 py-2">School / Cluster</th>
             <th scope="col" class="px-3 py-2">Activity</th>
             <th scope="col" class="px-3 py-2">Planned Date</th>
+            <th scope="col" class="px-3 py-2">Completed Date</th>
             <th scope="col" class="px-3 py-2">Staff</th>
             <th scope="col" class="px-3 py-2">Salesforce ID</th>
             {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2">Evidence</th> #}
@@ -101,13 +102,14 @@ the activities behind it.
             <td class="px-3 py-2" data-record-title>{% if work.school_id %}<a href="/schools/{{ work.school_id }}" class="font-semibold hover:underline">{{ work.place }}</a>{% else %}{{ work.place }}{% endif %}</td>
             <td class="px-3 py-2" data-label="Activity"><a href="/activities/{{ work.id }}" class="hover:underline">{{ work.activity_type|status_label }}</a></td>
             <td class="px-3 py-2 tabular-nums" data-label="Planned Date">{{ work.planned_date|date:"j M Y"|default:"—" }}</td>
+            <td class="px-3 py-2 tabular-nums" data-label="Completed Date" data-completed-on>{{ work.completed_on|date:"j M Y"|default:"—" }}</td>
             <td class="px-3 py-2" data-label="Staff">{{ work.person_name }}</td>
             <td class="px-3 py-2" data-label="Salesforce ID">{% if work.salesforce_ok %}<span class="edify-status-text" data-edify-tone="success">In</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Not in SF</span>{% endif %}</td>
             {# UPLOAD-OFF (owner, 2026-10-13): <td class="px-3 py-2" data-label="Evidence">{% if work.evidence_ok %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">No form</span>{% endif %}</td> #}
             <td class="px-3 py-2" data-label="Status">{{ work.status|status_label }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="7" class="px-3 py-6 text-center edify-text-muted">Nothing in scope matches: {{ execution_list_label|lower }}.</td></tr>
+          <tr><td colspan="8" class="px-3 py-6 text-center edify-text-muted">Nothing in scope matches: {{ execution_list_label|lower }}.</td></tr>
           {% endfor %}
         </tbody>
   {% enddata_table %}

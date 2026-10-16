@@ -37,6 +37,7 @@ to tick.{% endcomment %}
 <th class="min-w-[120px]">District</th>
 <th class="min-w-[130px]">District Type</th>
 <th class="min-w-[110px]">Planned Date</th>
+<th class="min-w-[110px]">Completed Date</th>
 <th class="min-w-[120px]">Executor</th>
 <th class="min-w-[180px]">Purpose (Meeting Topic)</th>
 <th class="min-w-[140px]">SSA Intervention</th>
@@ -57,7 +58,8 @@ to tick.{% endcomment %}
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% if row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline">{{ row.cluster_name }}</a>{% else %}{% cluster_link row.cluster_name row.cluster_id %}{% endif %}</td>
 <td class="text-slate-600 font-medium" data-label="District">{{ row.cluster_district|default:"—" }}</td>
 <td class="text-slate-600 font-medium whitespace-nowrap" data-label="District Type" data-district-type>{{ row.district_type|default:"—" }}</td>
-<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned Date">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}{% include "partials/my_plan/day_off_flag.html" %}</td>
+<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned Date">{% if row.planned_before %}{{ row.planned_before|date:"j M Y" }}{% else %}{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}{% endif %}{% include "partials/my_plan/day_off_flag.html" %}</td>
+<td class="tabular-nums whitespace-nowrap" data-label="Completed Date" data-completed-on>{{ row.completed_on|date:"j M Y"|default:"—" }}</td>
 <td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>
 <td class="text-slate-600 text-xs" data-label="Purpose">{% if row.meeting_kind %}{{ row.meeting_kind }}{% if row.meeting_training %}: {{ row.meeting_training }}{% endif %}{% if row.purpose and row.purpose != row.activity_type_label %} · {{ row.purpose }}{% endif %}{% else %}{{ row.purpose|default:"Cluster Meeting" }}{% endif %}</td>
 <td data-label="Intervention">

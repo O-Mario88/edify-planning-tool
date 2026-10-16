@@ -57,6 +57,17 @@ class="space-y-4 text-[12px] font-semibold text-slate-600"
 </div>
 {% endif %}
 
+{% comment %}The day the work was done (owner, 2026-10-16): today or any day
+before it, never a future one. Done on another day than planned, the work and
+its money move to that day and its planned day is free
+(apps.activities.completed_day).{% endcomment %}
+{% now "Y-m-d" as today_iso %}
+<div class="space-y-1" data-completed-on>
+<label for="actual_delivery_date" class="block edify-text-caption font-semibold text-slate-600">{% if act.activityType == "school_visit" %}Date the school was visited{% elif act.activityType == "cluster_meeting" %}Date the meeting was held{% elif "training" in act.activityType %}Date the training was held{% else %}Date completed{% endif %} <span class="text-rose-500">*</span></label>
+<input type="date" name="actual_delivery_date" id="actual_delivery_date" required max="{{ today_iso }}" value="{{ act.actualDeliveryDate|default:today_iso }}" aria-describedby="actual-delivery-date-help" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus">
+<p id="actual-delivery-date-help" class="edify-text-caption text-slate-500">Today or an earlier day. Done before its planned day, it moves to this day with its cost, and the planned day is free for other work.</p>
+</div>
+
 {# UPLOAD-OFF (owner, 2026-10-13): an activity is completed with its visit ID or training ID alone. The Evidence section (the file inputs, the checklist and the list of uploaded files) is switched off, not deleted; remove the comment tags around it to bring it back. #}
 {% comment %}UPLOAD-OFF
 <!-- Evidence -->

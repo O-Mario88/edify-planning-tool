@@ -332,8 +332,12 @@ def _handed_in(a, next_status, principal):
     once (owner, 2026-10-15: "theirs are approved automatically"), so nobody
     is asked; anyone else's tells its reviewer — a CCEO's, their Programme
     Lead, who approves it before it is counted."""
+    from apps.activities.completed_day import move_to_completed_day
     from apps.pl_review.services import approve_on_hand_in
 
+    # Done on another day than planned: the work and its money move to the
+    # day it was done, and the planned day is free (owner, 2026-10-16).
+    move_to_completed_day(a, principal)
     if next_status == "submitted_to_pl" and approve_on_hand_in(a):
         a.refresh_from_db()
         return a
@@ -851,6 +855,16 @@ def _serialize(a: Activity, *, owner_name: str | None = None) -> dict:
             else None
         ),
         "ownerName": owner_name,
+        # The day the work was done and, when it moved there, the day it was
+        # planned for (owner, 2026-10-16; apps.activities.completed_day).
+        "actualDeliveryDate": (
+            a.actual_delivery_date.isoformat() if a.actual_delivery_date else None
+        ),
+        "plannedDateBeforeCompletion": (
+            a.planned_date_before_completion.isoformat()
+            if a.planned_date_before_completion
+            else None
+        ),
         "catalogueItemId": a.catalogue_item_id,
         "trainingCourseId": a.training_course_id,
         "pairedSchoolVisitId": a.paired_school_visit_id,
@@ -4025,6 +4039,11 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     a = _get_for_execution(activity_id, principal)
     if a.status not in COMPLETABLE_STATUSES:
         raise BadRequest("Click Complete first to unlock completion.")
+    # The day the work was done (owner, 2026-10-16): today or any day
+    # before, never a future one. Asked before anything is changed.
+    from apps.activities.completed_day import completion_day
+
+    completed_on = completion_day(data.get("actualDeliveryDate"))
 
     # Older unit fixtures predate the school-visit feedback contract, so
     # test-only callers that omit the new keys remain usable. Keep the
@@ -4227,8 +4246,8 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         # Actuals — entered by the person who delivered, never copied from
         # the planned fields (§9.2). Absent keys leave stored values alone so
         # staged flows that submit in stages don't erase earlier entries.
-        if data.get("actualDeliveryDate"):
-            a.actual_delivery_date = _parse_date(data["actualDeliveryDate"]).date()
+        if completed_on:
+            a.actual_delivery_date = completed_on
         if data.get("actualOutcome") is not None:
             a.actual_outcome = str(data.get("actualOutcome") or "").strip()
         if data.get("actualObservations") is not None:
@@ -4476,7 +4495,7 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
     return _serialize(a)
 
 
-def hand_in_with_id(activity_id: str, principal) -> dict | None:
+def hand_in_with_id(activity_id: str, principal, completed_on=None) -> dict | None:
     """Hand staff work in once its Salesforce ID is entered.
 
     Staff work is completed with its visit or training ID (owner,
@@ -4488,6 +4507,9 @@ def hand_in_with_id(activity_id: str, principal) -> dict | None:
     so it was in no count and on no lead's list. The same gates as Submit;
     None when there is nothing to hand in (partner work, which IA completes
     with its ID, or work already handed in).
+
+    ``completed_on`` is the day the work was done, as the drawer asked it
+    (owner, 2026-10-16; checked by ``completed_day.completion_day``).
     """
     # Nothing to hand in is answered before the executor check: correcting
     # the ID on work already handed in is not acting on it.
@@ -4500,6 +4522,8 @@ def hand_in_with_id(activity_id: str, principal) -> dict | None:
     ):
         return None
     a = _get_for_execution(activity_id, principal)
+    if completed_on:
+        Activity.objects.filter(pk=a.pk).update(actual_delivery_date=completed_on)
     if a.status in STARTABLE_STATUSES:
         start_completion(a.id, principal=principal)
         a.refresh_from_db(fields=["status"])
@@ -5359,91 +5383,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 "updated_at",
             ]
         )
-        from apps.daily_visit_batches.pricing import DAILY_BATCH_ELIGIBLE_TYPES
-
-        # Where the money currently sits, captured before anything reprices.
-        # Both branches below move cost lines to the new week; only one of them
-        # used to tell finance about the week being vacated.
-        from apps.activities.models import ActivityScheduleCostLine
-
-        prior_buckets = list(
-            ActivityScheduleCostLine.objects.filter(activity=a).values_list(
-                "responsible_user", "fiscal_year", "month", "week_start_date"
-            )
-        )
-
-        if (
-            a.activity_type in DAILY_BATCH_ELIGIBLE_TYPES
-            and a.delivery_type == "staff"
-            and a.school_id
-        ):
-            # Leave the OLD day's batch (recomputed for its remaining schools,
-            # unless already locked — same rationale as everywhere else: reschedule
-            # is the sanctioned post-approval escape hatch, so it isn't itself
-            # blocked, but a locked batch's other members stay frozen).
-            from apps.budget.costing_service import rate_cards_held
-            from apps.daily_visit_batches.services import (
-                day_to_join,
-                reschedule_within_batch,
-            )
-            from apps.fund_requests.follow import fund_requests_follow_once
-            from apps.fund_requests.monthly_service import (
-                sync_monthly_drafts_for_activity,
-            )
-            from apps.fund_requests.weekly_service import (
-                sync_weekly_requests_for_activity,
-            )
-
-            # The day left, the day joined and the visit itself each ask for
-            # the owner's week and month to be re-filed. They are re-filed
-            # once, from the lines the move ends with
-            # (apps.fund_requests.follow). Both days price against the same
-            # published cards, read once for the move.
-            with rate_cards_held(), fund_requests_follow_once():
-                # A day that cannot take the visit says so before the day it
-                # would leave is re-priced: a refusal used to re-price every
-                # visit left on that day first, some 150 to 250 statements,
-                # and then undo it. The day is locked here and joined below
-                # as it was found. The calendar was asked of this date and
-                # this person at the top.
-                day = day_to_join(
-                    activity=a,
-                    new_date=a.planned_date,
-                    reason=data.get("reason"),
-                    principal=principal,
-                )
-                if (
-                    day["batch"] is not None
-                    and day["batch"].id == a.daily_visit_batch_id
-                ):
-                    # Moved within its own day: the day is found again once
-                    # the visit has left it, as it always was.
-                    day = None
-                _detach_from_daily_visit_batch(a)
-                reschedule_within_batch(
-                    activity=a,
-                    new_date=a.planned_date,
-                    reason=data.get("reason"),
-                    principal=principal,
-                    day=day,
-                )
-                # The batch reprices and then calls trigger_generate_for_activity,
-                # which raises the NEW week's request and says nothing about the
-                # old one. The old week therefore kept its full amount while the
-                # new week gained the same amount again -- the same money
-                # requested twice, for work happening once. Staff school visits are
-                # the most common activity there is, and they all take this branch.
-                #
-                # sync_* regenerates every affected bucket, old and new, so the
-                # vacated week empties instead of being left holding a total.
-                sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
-                sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
-        else:
-            # Re-price against the current catalogue so the budget line follows the
-            # new schedule (rates may have changed; participant/period inputs may
-            # have too).
-            _apply_schedule_cost_snapshot(a, data, principal=principal)
-            a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+        _reprice_moved_activity(a, data, principal)
 
         # (A plan given its first date has no move to note.)
         if old_date and new_date and old_date != new_date:
@@ -5507,6 +5447,98 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     _resolve_overdue_reminder(a)
     _settle_day_off_notices(a)
     return _serialize(a)
+
+
+def _reprice_moved_activity(a, data: dict, principal) -> None:
+    """Move an activity's money to the day it now stands on: a staff school
+    visit leaves its old day's batch and joins the new day's, anything else
+    is re-priced against the current catalogue, and the weeks and months it
+    left and joined are re-filed. Shared by ``reschedule`` and by work
+    completed on another day than planned (``apps.activities.completed_day``,
+    owner, 2026-10-16). Inside the caller's transaction, after the
+    activity's new dates are saved."""
+    from apps.daily_visit_batches.pricing import DAILY_BATCH_ELIGIBLE_TYPES
+
+    # Where the money currently sits, captured before anything reprices.
+    # Both branches below move cost lines to the new week; only one of them
+    # used to tell finance about the week being vacated.
+    from apps.activities.models import ActivityScheduleCostLine
+
+    prior_buckets = list(
+        ActivityScheduleCostLine.objects.filter(activity=a).values_list(
+            "responsible_user", "fiscal_year", "month", "week_start_date"
+        )
+    )
+
+    if (
+        a.activity_type in DAILY_BATCH_ELIGIBLE_TYPES
+        and a.delivery_type == "staff"
+        and a.school_id
+    ):
+        # Leave the OLD day's batch (recomputed for its remaining schools,
+        # unless already locked — same rationale as everywhere else: reschedule
+        # is the sanctioned post-approval escape hatch, so it isn't itself
+        # blocked, but a locked batch's other members stay frozen).
+        from apps.budget.costing_service import rate_cards_held
+        from apps.daily_visit_batches.services import (
+            day_to_join,
+            reschedule_within_batch,
+        )
+        from apps.fund_requests.follow import fund_requests_follow_once
+        from apps.fund_requests.monthly_service import (
+            sync_monthly_drafts_for_activity,
+        )
+        from apps.fund_requests.weekly_service import (
+            sync_weekly_requests_for_activity,
+        )
+
+        # The day left, the day joined and the visit itself each ask for
+        # the owner's week and month to be re-filed. They are re-filed
+        # once, from the lines the move ends with
+        # (apps.fund_requests.follow). Both days price against the same
+        # published cards, read once for the move.
+        with rate_cards_held(), fund_requests_follow_once():
+            # A day that cannot take the visit says so before the day it
+            # would leave is re-priced: a refusal used to re-price every
+            # visit left on that day first, some 150 to 250 statements,
+            # and then undo it. The day is locked here and joined below
+            # as it was found. The calendar was asked of this date and
+            # this person at the top.
+            day = day_to_join(
+                activity=a,
+                new_date=a.planned_date,
+                reason=data.get("reason"),
+                principal=principal,
+            )
+            if day["batch"] is not None and day["batch"].id == a.daily_visit_batch_id:
+                # Moved within its own day: the day is found again once
+                # the visit has left it, as it always was.
+                day = None
+            _detach_from_daily_visit_batch(a)
+            reschedule_within_batch(
+                activity=a,
+                new_date=a.planned_date,
+                reason=data.get("reason"),
+                principal=principal,
+                day=day,
+            )
+            # The batch reprices and then calls trigger_generate_for_activity,
+            # which raises the NEW week's request and says nothing about the
+            # old one. The old week therefore kept its full amount while the
+            # new week gained the same amount again -- the same money
+            # requested twice, for work happening once. Staff school visits are
+            # the most common activity there is, and they all take this branch.
+            #
+            # sync_* regenerates every affected bucket, old and new, so the
+            # vacated week empties instead of being left holding a total.
+            sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
+            sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
+    else:
+        # Re-price against the current catalogue so the budget line follows the
+        # new schedule (rates may have changed; participant/period inputs may
+        # have too).
+        _apply_schedule_cost_snapshot(a, data, principal=principal)
+        a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
 
 
 def _notify_partner_schedule_change(activity, event_type, title, body) -> None:

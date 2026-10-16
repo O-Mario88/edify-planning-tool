@@ -1493,6 +1493,21 @@ def complete_activity_action(request, activity_id):
     act = get_activity(a.id, request.user)
 
     if request.method == "POST":
+        # The day the work was done (owner, 2026-10-16): asked of every
+        # completion, today or any day before, never a future one. Checked
+        # before anything is started or saved. The drawer always sends one
+        # (today unless changed); a post without it records today.
+        from apps.activities.completed_day import completion_day
+        from apps.core.exceptions import BadRequest as _BadRequest
+
+        try:
+            completed_on = (
+                completion_day(request.POST.get("actual_delivery_date", "").strip())
+                or timezone.localdate()
+            )
+        except _BadRequest as exc:
+            return notice_fragment(str(getattr(exc, "detail", exc)))
+
         # Handle start completion if still in scheduled status
         pair_needs_start = paired_school_visit is not None and (
             paired_school_visit.status in STARTABLE_STATUSES
@@ -1628,18 +1643,19 @@ def complete_activity_action(request, activity_id):
 
                 from apps.core.exceptions import BadRequest
                 from apps.ssa.services import upload as upload_ssa
-                from apps.ssa.services import visit_assessment_date
 
                 # IA review (2026-09-13): dated by the visit, linked to it, and
                 # pending until a different verifier confirms the scores: for
                 # a CCEO's visit, the lead's approval of it; a lead's own are
-                # confirmed now (owner, 2026-10-16). A refusal (a duplicate date, an unverified prior-year record)
-                # is shown in the drawer, not returned as an error envelope.
+                # confirmed now (owner, 2026-10-16). A refusal (a duplicate
+                # date, an unverified prior-year record) is shown in the
+                # drawer, not returned as an error envelope.
                 try:
                     upload_ssa(
                         {
                             "schoolId": a.school.school_id,
-                            "dateOfSsa": visit_assessment_date(a).isoformat(),
+                            # The day the visit was done, as just entered.
+                            "dateOfSsa": completed_on.isoformat(),
                             "scores": scores_list,
                             "collectorType": "partner"
                             if a.delivery_type == "partner"
@@ -1667,6 +1683,7 @@ def complete_activity_action(request, activity_id):
             # answered; pass the answer on so `complete()` can hold the same
             # rule for every other door (SSA-01).
             "ssaCollected": request.POST.get("ssa_collected") == "yes",
+            "actualDeliveryDate": completed_on.isoformat(),
             "salesforceId": salesforce_id,
             "trainingSalesforceId": salesforce_id,
             "visitSalesforceId": visit_salesforce_id,
@@ -3019,8 +3036,22 @@ def salesforce_id_drawer_view(request, activity_id):
             and not is_partner_ssa_support_activity(a)
             and RolePermissionService.can_confirm_partner_activity(request.user, a)
         ),
+        # Saving the ID hands staff work in, so the drawer asks the day it
+        # was done (owner, 2026-10-16), as the Complete drawer does.
+        "asks_completion_day": _hands_in_with_id(a),
     }
     return render(request, "partials/my_plan/salesforce_id_drawer.html", context)
+
+
+def _hands_in_with_id(a) -> bool:
+    """Whether entering the Salesforce ID hands this work in
+    (``activities.services.hand_in_with_id``): staff work not yet handed in."""
+    from apps.activities.services import SUBMITTABLE_STATUSES
+
+    return a.delivery_type != "partner" and a.status in (
+        *STARTABLE_STATUSES,
+        *SUBMITTABLE_STATUSES,
+    )
 
 
 @require_page_permission("my_plan")
@@ -3046,6 +3077,22 @@ def salesforce_id_action(request, activity_id):
                 '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Salesforce ID is locked after IA confirmation. Ask IA to return the activity to make a correction.</div>',
                 status=400,
             )
+
+        # The day the work was done, when the ID hands it in (owner,
+        # 2026-10-16): today or earlier, never a future day; today when the
+        # post carries none.
+        from apps.activities.completed_day import completion_day
+        from apps.core.exceptions import BadRequest as _BadRequest
+
+        completed_on = None
+        if _hands_in_with_id(a):
+            try:
+                completed_on = (
+                    completion_day(request.POST.get("actual_delivery_date", "").strip())
+                    or timezone.localdate()
+                )
+            except _BadRequest as exc:
+                return notice_fragment(str(getattr(exc, "detail", exc)))
 
         # For partner work the Salesforce entry IS the completion: the partner
         # uploaded its form, and whoever records the entry — Impact Assessment
@@ -3101,7 +3148,7 @@ def salesforce_id_action(request, activity_id):
         # whatever day it was planned for (owner, 2026-10-15). What it still
         # needs, attendance for a training, is said; the ID stays saved.
         try:
-            hand_in_with_id(a.id, request.user)
+            hand_in_with_id(a.id, request.user, completed_on=completed_on)
         except Exception as e:
             # error_fragment shows a user-facing refusal as written and logs
             # anything else behind its generic message.

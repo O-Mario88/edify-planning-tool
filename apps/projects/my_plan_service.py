@@ -8,6 +8,8 @@ partner-delivered work remains read-only to staff monitors.
 
 from __future__ import annotations
 
+from apps.activities.completion_columns import is_officer_completed
+
 from apps.core.metrics import render_precomputed_metric_item
 
 import calendar
@@ -190,7 +192,13 @@ def _row(activity, partner_names, project_names, principal, today, lead_ids):
             else "—"
         ),
         "project": project_names.get(activity.project_id, "—"),
-        "planned_date": activity.planned_date,
+        # The day it was planned for, before it moved to the day it was done,
+        # and that day (owner, 2026-10-16: the Completed column).
+        "planned_date": activity.planned_date_before_completion
+        or activity.planned_date,
+        "completed_on": activity.actual_delivery_date
+        if is_officer_completed(activity.status)
+        else None,
         "purpose": activity.activity_purpose_text
         or activity.get_activity_type_display(),
         "focus": INTERVENTION_LABELS.get(

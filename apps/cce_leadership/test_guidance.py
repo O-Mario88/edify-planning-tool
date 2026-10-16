@@ -27,7 +27,14 @@ from . import guidance as service
 from .guidance_todos import guidance_todos
 from .models import TeamGuidance, TeamGuidanceReceipt
 
-TODAY = timezone.localdate()
+
+def _today():
+    """The Kampala day when the test runs, not when the module was imported:
+    a module-level constant read the day before once a run crossed local
+    midnight (21:00 UTC in CI), and "a future date" became today."""
+    return timezone.localdate()
+
+
 FY = "2027"
 SHELL = "priority-workspace-view-shell"
 LOCMEM = {
@@ -164,7 +171,7 @@ class GuidanceRulesTest(GuidanceFixture):
         with self.assertRaisesMessage(BadRequest, "instruction"):
             self._draft(instruction="")
         with self.assertRaisesMessage(BadRequest, "review date"):
-            self._draft(review_on=(TODAY - timedelta(days=1)).isoformat())
+            self._draft(review_on=(_today() - timedelta(days=1)).isoformat())
 
     def test_a_milestone_names_its_own_priority(self):
         guidance = self._draft(milestone_id=self.milestone.id)
@@ -206,7 +213,7 @@ class GuidanceRulesTest(GuidanceFixture):
 
     def test_the_state_filter_agrees_with_the_state_column(self):
         due = self._issued(title="Due now")
-        TeamGuidance.objects.filter(id=due.id).update(review_on=TODAY)
+        TeamGuidance.objects.filter(id=due.id).update(review_on=_today())
         waiting = self._issued(title="Still waiting")
         answered = self._draft(
             title="Answered", all_officers="", issue="1", recipients=[self.cceo_sp.id]
@@ -215,10 +222,10 @@ class GuidanceRulesTest(GuidanceFixture):
         visible = service.with_receipt_counts(service.guidance_visible_to(self.pl))
 
         def titles(state):
-            rows = service.with_state(visible, state, today=TODAY)
+            rows = service.with_state(visible, state, today=_today())
             for row in rows:
                 self.assertEqual(
-                    service.state_of(row, today=TODAY)[0],
+                    service.state_of(row, today=_today())[0],
                     dict(service.STATE_CHOICES)[state],
                 )
             return {row.title for row in rows}
@@ -255,7 +262,7 @@ class GuidanceRulesTest(GuidanceFixture):
 
 class GuidanceHandoffTest(GuidanceFixture):
     def test_issuing_notifies_each_officer_on_their_priorities_page(self):
-        guidance = self._issued(review_on=(TODAY + timedelta(days=14)).isoformat())
+        guidance = self._issued(review_on=(_today() + timedelta(days=14)).isoformat())
         self.assertIsNotNone(guidance.issued_at)
         notices = Notification.objects.filter(
             source_event_type=service.EVENT_ISSUED, context_id=guidance.id
@@ -339,20 +346,20 @@ class GuidanceHandoffTest(GuidanceFixture):
             service.withdraw_guidance(self.pl, guidance.id)
 
     def test_the_review_sets_the_next_date_or_closes(self):
-        guidance = self._issued(review_on=(TODAY + timedelta(days=3)).isoformat())
+        guidance = self._issued(review_on=(_today() + timedelta(days=3)).isoformat())
         with self.assertRaisesMessage(BadRequest, "not due for review"):
             service.review_guidance(self.pl, guidance.id, "")
-        TeamGuidance.objects.filter(id=guidance.id).update(review_on=TODAY)
+        TeamGuidance.objects.filter(id=guidance.id).update(review_on=_today())
         with self.assertRaisesMessage(BadRequest, "after today"):
-            service.review_guidance(self.pl, guidance.id, TODAY.isoformat())
+            service.review_guidance(self.pl, guidance.id, _today().isoformat())
         with self.assertRaises(NotFoundError):
             service.review_guidance(self.other_pl, guidance.id, "")
-        nxt = TODAY + timedelta(days=30)
+        nxt = _today() + timedelta(days=30)
         self.assertEqual(
             service.review_guidance(self.pl, guidance.id, nxt.isoformat()).review_on,
             nxt,
         )
-        TeamGuidance.objects.filter(id=guidance.id).update(review_on=TODAY)
+        TeamGuidance.objects.filter(id=guidance.id).update(review_on=_today())
         self.assertIsNone(service.review_guidance(self.pl, guidance.id, "").review_on)
 
 
@@ -391,7 +398,7 @@ class GuidanceSummaryTest(GuidanceFixture):
 # ── Pages and drawers ────────────────────────────────────────────────────────
 class TeamGuidancePageTest(GuidanceFixture):
     def test_the_lead_works_the_register_from_the_priorities_tab(self):
-        issued = self._issued(review_on=(TODAY + timedelta(days=7)).isoformat())
+        issued = self._issued(review_on=(_today() + timedelta(days=7)).isoformat())
         draft = self._draft(title="Draft for later")
         service.acknowledge_guidance(self.cceo, issued.id, "On it.")
         self.client.force_login(self.pl)
@@ -533,7 +540,7 @@ class TeamGuidancePageTest(GuidanceFixture):
 
     def test_review_and_withdraw_through_the_drawers(self):
         guidance = self._issued()
-        TeamGuidance.objects.filter(id=guidance.id).update(review_on=TODAY)
+        TeamGuidance.objects.filter(id=guidance.id).update(review_on=_today())
         self.client.force_login(self.pl)
         drawer = self.client.get(
             f"/priorities/guidance/{guidance.id}/review", HTTP_HX_REQUEST="true"
@@ -687,22 +694,22 @@ class GuidanceNotificationRoutesTest(SimpleTestCase):
 class GuidanceTodoTest(GuidanceFixture):
     def test_the_officer_is_asked_to_acknowledge_until_they_do(self):
         guidance = self._issued()
-        rows = guidance_todos(self.cceo, "CCEO", TODAY)
+        rows = guidance_todos(self.cceo, "CCEO", _today())
         self.assertEqual(
             [row["title"] for row in rows], ["Acknowledge guidance from Guide Lead"]
         )
         self.assertEqual(rows[0]["action_url"], f"/priorities?guidance={guidance.id}")
         service.acknowledge_guidance(self.cceo, guidance.id, "Will do.")
-        self.assertEqual(guidance_todos(self.cceo, "CCEO", TODAY), [])
-        self.assertEqual(len(guidance_todos(self.cceo2, "CCEO", TODAY)), 1)
+        self.assertEqual(guidance_todos(self.cceo, "CCEO", _today()), [])
+        self.assertEqual(len(guidance_todos(self.cceo2, "CCEO", _today())), 1)
         service.withdraw_guidance(self.pl, guidance.id)
-        self.assertEqual(guidance_todos(self.cceo2, "CCEO", TODAY), [])
+        self.assertEqual(guidance_todos(self.cceo2, "CCEO", _today()), [])
 
     def test_the_lead_reviews_responses_once_the_date_arrives(self):
-        guidance = self._issued(review_on=(TODAY + timedelta(days=2)).isoformat())
-        self.assertEqual(guidance_todos(self.pl, "Program Lead", TODAY), [])
-        TeamGuidance.objects.filter(id=guidance.id).update(review_on=TODAY)
-        rows = guidance_todos(self.pl, "Program Lead", TODAY)
+        guidance = self._issued(review_on=(_today() + timedelta(days=2)).isoformat())
+        self.assertEqual(guidance_todos(self.pl, "Program Lead", _today()), [])
+        TeamGuidance.objects.filter(id=guidance.id).update(review_on=_today())
+        rows = guidance_todos(self.pl, "Program Lead", _today())
         self.assertEqual(
             [row["title"] for row in rows],
             ["Review guidance responses — Prioritise SSA collection"],
@@ -715,13 +722,15 @@ class GuidanceTodoTest(GuidanceFixture):
         )
         self.assertEqual(row["status_key"], "due_today")
         self.assertIn("0 of 2", row["description"])
-        overdue = guidance_todos(self.pl, "Program Lead", TODAY + timedelta(days=1))[0]
+        overdue = guidance_todos(self.pl, "Program Lead", _today() + timedelta(days=1))[
+            0
+        ]
         self.assertEqual(overdue["status_key"], "overdue")
         service.review_guidance(self.pl, guidance.id, "")
-        self.assertEqual(guidance_todos(self.pl, "Program Lead", TODAY), [])
+        self.assertEqual(guidance_todos(self.pl, "Program Lead", _today()), [])
         # Other leads and roles see nothing of it.
-        self.assertEqual(guidance_todos(self.other_pl, "Program Lead", TODAY), [])
-        self.assertEqual(guidance_todos(self.cd, "CountryDirector", TODAY), [])
+        self.assertEqual(guidance_todos(self.other_pl, "Program Lead", _today()), [])
+        self.assertEqual(guidance_todos(self.cd, "CountryDirector", _today()), [])
 
     def test_registered_and_never_raises(self):
         from apps.command_center.todo_service import MODULE_TODO_BUILDERS
@@ -733,7 +742,7 @@ class GuidanceTodoTest(GuidanceFixture):
             "apps.cce_leadership.guidance_todos._officer_todos",
             side_effect=RuntimeError("boom"),
         ):
-            self.assertEqual(guidance_todos(self.cceo, "CCEO", TODAY), [])
+            self.assertEqual(guidance_todos(self.cceo, "CCEO", _today()), [])
 
 
 # ── Query budgets ────────────────────────────────────────────────────────────
@@ -753,9 +762,9 @@ class GuidanceQueryBudgetTest(GuidanceFixture):
             )
             guidance = self._issued(
                 title=f"Guidance {index}",
-                review_on=TODAY.isoformat(),
+                review_on=_today().isoformat(),
             )
-            TeamGuidance.objects.filter(id=guidance.id).update(review_on=TODAY)
+            TeamGuidance.objects.filter(id=guidance.id).update(review_on=_today())
             service.acknowledge_guidance(self.cceo, guidance.id, "Yes.")
 
     def _queries(self, fn):
@@ -784,18 +793,20 @@ class GuidanceQueryBudgetTest(GuidanceFixture):
         self._grow(0, 1)
         small_inbox = self._queries(inbox)
         small_lead = self._queries(
-            lambda: guidance_todos(self.pl, "Program Lead", TODAY)
+            lambda: guidance_todos(self.pl, "Program Lead", _today())
         )
-        small_officer = self._queries(lambda: guidance_todos(self.cceo2, "CCEO", TODAY))
+        small_officer = self._queries(
+            lambda: guidance_todos(self.cceo2, "CCEO", _today())
+        )
         self._grow(1, 5)
         self.assertEqual(self._queries(inbox), small_inbox)
         self.assertEqual(
-            self._queries(lambda: guidance_todos(self.pl, "Program Lead", TODAY)),
+            self._queries(lambda: guidance_todos(self.pl, "Program Lead", _today())),
             small_lead,
         )
         self.assertLessEqual(small_lead, 1)
         self.assertEqual(
-            self._queries(lambda: guidance_todos(self.cceo2, "CCEO", TODAY)),
+            self._queries(lambda: guidance_todos(self.cceo2, "CCEO", _today())),
             small_officer,
         )
         self.assertLessEqual(small_officer, 2)

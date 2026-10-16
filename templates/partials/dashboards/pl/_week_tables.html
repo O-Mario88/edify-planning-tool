@@ -82,6 +82,7 @@ week would push it down the page for nothing. With none, one line says so.
           <th scope="col" class="px-3 py-2.5">School Name</th>
           <th scope="col" class="px-3 py-2.5">Activity</th>
           <th scope="col" class="px-3 py-2.5">Planned Date</th>
+          <th scope="col" class="px-3 py-2.5">Completed Date</th>
           <th scope="col" class="px-3 py-2.5">Executor</th>
           <th scope="col" class="px-3 py-2.5">Purpose of Visit</th>
           <th scope="col" class="px-3 py-2.5">Focus Intervention</th>
@@ -106,6 +107,7 @@ week would push it down the page for nothing. With none, one line says so.
           </td>
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ row.activity_type_label }}</td>
           <td class="px-3 py-2.5 whitespace-nowrap">{% include "partials/dashboards/pl/_week_planned_date.html" %}</td>
+          <td class="px-3 py-2.5 whitespace-nowrap tabular-nums" data-completed-on>{{ row.completed_on|date:"j M Y"|default:"—" }}</td>
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{% include "partials/dashboards/pl/_week_executor.html" %}</td>
           <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title="{{ row.purpose }}">{{ row.purpose|default:"—" }}</td>
           <td class="px-3 py-2.5">{% include "partials/dashboards/pl/_week_intervention.html" %}</td>
@@ -115,7 +117,7 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">{% include "partials/dashboards/pl/_week_action.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="11" class="ps-5 pe-5 py-4 text-center text-slate-400">No school visits {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
+        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No school visits {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -131,6 +133,7 @@ week would push it down the page for nothing. With none, one line says so.
           <th scope="col" class="px-3 py-2.5">Executor</th>
           <th scope="col" class="px-3 py-2.5">Training Name</th>
           <th scope="col" class="px-3 py-2.5">Planned Date</th>
+          <th scope="col" class="px-3 py-2.5">Completed Date</th>
           <th scope="col" class="px-3 py-2.5">SSA Intervention</th>
           <th scope="col" class="px-3 py-2.5 text-center">Participants</th>
           <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
@@ -156,6 +159,7 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{% include "partials/dashboards/pl/_week_executor.html" %}</td>
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ row.activity_type_label }}</td>
           <td class="px-3 py-2.5 whitespace-nowrap">{% include "partials/dashboards/pl/_week_planned_date.html" %}</td>
+          <td class="px-3 py-2.5 whitespace-nowrap tabular-nums" data-completed-on>{{ row.completed_on|date:"j M Y"|default:"—" }}</td>
           <td class="px-3 py-2.5">{% include "partials/dashboards/pl/_week_intervention.html" %}</td>
           <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants|default:"—" }}</td>
           <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">UGX {{ row.budget_total|default:0|intcomma }}</td>
@@ -164,7 +168,7 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">{% include "partials/dashboards/pl/_week_action.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No group trainings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
+        <tr><td colspan="13" class="ps-5 pe-5 py-4 text-center text-slate-400">No group trainings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -177,6 +181,7 @@ week would push it down the page for nothing. With none, one line says so.
           <th scope="col" class="ps-5 pe-3 py-2.5">Cluster Name</th>
           <th scope="col" class="px-3 py-2.5">District</th>
           <th scope="col" class="px-3 py-2.5">Planned Date</th>
+          <th scope="col" class="px-3 py-2.5">Completed Date</th>
           <th scope="col" class="px-3 py-2.5">Executor</th>
           <th scope="col" class="px-3 py-2.5">Purpose (Meeting Topic)</th>
           <th scope="col" class="px-3 py-2.5">SSA Intervention</th>
@@ -201,6 +206,7 @@ week would push it down the page for nothing. With none, one line says so.
           </td>
           <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{{ row.cluster_district|default:"—" }}</td>
           <td class="px-3 py-2.5 whitespace-nowrap">{% include "partials/dashboards/pl/_week_planned_date.html" %}</td>
+          <td class="px-3 py-2.5 whitespace-nowrap tabular-nums" data-completed-on>{{ row.completed_on|date:"j M Y"|default:"—" }}</td>
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{% include "partials/dashboards/pl/_week_executor.html" %}</td>
           <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title="{{ row.purpose }}">{{ row.purpose|default:"Cluster Meeting" }}</td>
           <td class="px-3 py-2.5">{% include "partials/dashboards/pl/_week_intervention.html" %}</td>
@@ -211,7 +217,7 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">{% include "partials/dashboards/pl/_week_action.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="11" class="ps-5 pe-5 py-4 text-center text-slate-400">No cluster meetings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
+        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No cluster meetings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>

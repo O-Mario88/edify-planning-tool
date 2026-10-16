@@ -21,6 +21,7 @@ three buttons (owner, 2026-09-26); a row with one action keeps its button.
           <th scope="col" class="min-w-[180px]">Cluster Name</th>
           <th scope="col" class="min-w-[120px]">District</th>
           <th scope="col" class="min-w-[110px]">Planned Date</th>
+          <th scope="col" class="min-w-[110px]">Completed Date</th>
           <th scope="col" class="min-w-[130px]">Executor</th>
           <th scope="col" class="min-w-[180px]">Purpose (Meeting Topic)</th>
           <th scope="col" class="min-w-[140px]">SSA Intervention</th>
@@ -37,7 +38,8 @@ three buttons (owner, 2026-09-26); a row with one action keeps its button.
         <tr data-session-row="{% firstof item.activity_id item.partner_assignment_id %}">
           <td class="font-semibold" data-record-title>{% if can_open_cluster == False or not item.cluster_id %}{% firstof item.cluster_name item.context_label %}{% else %}<a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{% firstof item.cluster_name item.context_label %}</a>{% endif %}</td>
           <td data-label="District">{% district_link item.district_name item.district_id empty="—" %}</td>
-          <td class="tabular-nums" data-label="Planned Date">{{ item.planned_date|date:"j M Y"|default:"Awaiting schedule" }}</td>
+          <td class="tabular-nums" data-label="Planned Date">{% if item.planned_before %}{{ item.planned_before|date:"j M Y" }}{% else %}{{ item.planned_date|date:"j M Y"|default:"Awaiting schedule" }}{% endif %}</td>
+          <td class="tabular-nums" data-label="Completed Date" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
           <td data-label="Executor">{% firstof item.executor_name member.name %}</td>
           <td class="whitespace-normal text-xs" data-label="Purpose (Meeting Topic)">{{ item.topic|default:"—" }}</td>
           <td data-label="SSA Intervention">{% if item.intervention_label %}<span class="pill pill-neutral text-xs font-medium">{{ item.intervention_label }}</span>{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
@@ -70,7 +72,7 @@ three buttons (owner, 2026-09-26); a row with one action keeps its button.
           {% include "partials/oversight/_row_actions.html" %}
           {% endif %}
         </tr>
-        {% empty %}<tr><td colspan="11">No {{ heading|lower }} in {% firstof plan_period_label "this financial year" %}.</td></tr>{% endfor %}
+        {% empty %}<tr><td colspan="12">No {{ heading|lower }} in {% firstof plan_period_label "this financial year" %}.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>

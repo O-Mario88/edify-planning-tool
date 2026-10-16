@@ -6964,7 +6964,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 18555,
+      "bytes": 19167,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -10398,7 +10398,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 13306,
+      "bytes": 13561,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10474,7 +10474,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6597,
+      "bytes": 6872,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10523,7 +10523,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9465,
+      "bytes": 9740,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10549,7 +10549,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 28600,
+      "bytes": 29894,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -10632,7 +10632,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8027,
+      "bytes": 8304,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10654,7 +10654,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7458,
+      "bytes": 7733,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10931,7 +10931,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6579,
+      "bytes": 6854,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11107,7 +11107,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1670,
+      "bytes": 1921,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11257,7 +11257,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1674,
+      "bytes": 2690,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/salesforce-id"
@@ -11280,7 +11280,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6459,
+      "bytes": 6734,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11567,7 +11567,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4031,
+      "bytes": 4323,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -11888,7 +11888,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 34649,
+      "bytes": 36195,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -12191,7 +12191,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6685,
+      "bytes": 6977,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -12339,7 +12339,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7826,
+      "bytes": 8041,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -12460,7 +12460,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8809,
+      "bytes": 8917,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12557,7 +12557,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7232,
+      "bytes": 7340,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12637,7 +12637,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7578,
+      "bytes": 7686,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12666,7 +12666,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 7782,
+      "bytes": 7914,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -15262,7 +15262,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3152,
+      "bytes": 3326,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"

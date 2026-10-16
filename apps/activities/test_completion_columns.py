@@ -221,6 +221,8 @@ class ColumnValuesTest(_Fixture):
                 "salesforce_ok": True,
                 "evidence_ok": True,
                 "early_on": None,
+                "delivered_on": None,
+                "planned_before": None,
             },
         )
         self.assertEqual(
@@ -231,6 +233,8 @@ class ColumnValuesTest(_Fixture):
                 "salesforce_ok": True,
                 "evidence_ok": True,
                 "early_on": None,
+                "delivered_on": None,
+                "planned_before": None,
             },
         )
         # Blank reads NOT_IN_SF on the page; no file is looked for.
@@ -240,6 +244,8 @@ class ColumnValuesTest(_Fixture):
             "salesforce_ok": False,
             "evidence_ok": True,
             "early_on": None,
+            "delivered_on": None,
+            "planned_before": None,
         }
         self.assertEqual(columns[bare.id], empty)
         self.assertEqual(columns[hidden.id], empty)
@@ -266,6 +272,8 @@ class ColumnValuesTest(_Fixture):
                 "salesforce_ok": True,
                 "evidence_ok": True,
                 "early_on": None,
+                "delivered_on": None,
+                "planned_before": None,
             },
         )
         # A file that is there is named, though it is not the form.
@@ -282,6 +290,8 @@ class ColumnValuesTest(_Fixture):
             "salesforce_ok": False,
             "evidence_ok": False,
             "early_on": None,
+            "delivered_on": None,
+            "planned_before": None,
         }
         self.assertEqual(columns[bare.id], empty)
         self.assertEqual(columns[hidden.id], empty)

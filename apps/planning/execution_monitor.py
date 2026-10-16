@@ -108,6 +108,27 @@ LIST_COLUMNS = (
 AWAITING_PL_STATUSES = frozenset(("submitted_to_pl", "awaiting_ia_verification"))
 
 
+def _set_completed_on(rows) -> None:
+    """The Completed column for the drill-down's rows, one read for all."""
+    from apps.activities.completion_columns import (
+        delivered_day,
+        is_officer_completed,
+    )
+    from apps.activities.models import Activity
+
+    done = [row for row in rows if is_officer_completed(row.status)]
+    if not done:
+        return
+    days = {
+        activity_id: delivered_day(actual, started)
+        for activity_id, actual, started in Activity.objects.filter(
+            id__in=[row.id for row in done]
+        ).values_list("id", "actual_delivery_date", "execution_started_at")
+    }
+    for row in done:
+        row.completed_on = days.get(row.id)
+
+
 @dataclass
 class WorkRow:
     """One activity, for the drill-down list."""
@@ -124,6 +145,9 @@ class WorkRow:
     person_name: str
     salesforce_ok: bool = False
     evidence_ok: bool = False
+    #: The day completed work was done (owner, 2026-10-16: the Completed
+    #: column); None while it is not.
+    completed_on: date | None = None
 
     @property
     def place(self) -> str:
@@ -555,6 +579,7 @@ def execution_monitor(
             person.training_portfolio += held
             person.schools_trained += trained
 
+    _set_completed_on(listed)
     listed.sort(
         key=lambda r: (
             r.planned_date or date.max,
