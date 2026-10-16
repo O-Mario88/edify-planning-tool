@@ -2609,11 +2609,11 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 288,
+   "line": 292,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "card p-6",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4",
    "branch_path": []
   },
   {

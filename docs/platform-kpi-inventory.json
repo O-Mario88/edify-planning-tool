@@ -1853,7 +1853,7 @@
    "audit_id": "KPI-SOURCE-095",
    "kind": "breakdown-row",
    "module": "apps/analytics/profile_intelligence.py",
-   "line": 908,
+   "line": 914,
    "label": null,
    "keys": [
     "count",
@@ -1871,7 +1871,7 @@
    "audit_id": "KPI-SOURCE-096",
    "kind": "breakdown-row",
    "module": "apps/analytics/profile_intelligence.py",
-   "line": 1446,
+   "line": 1456,
    "label": null,
    "keys": [
     "best",

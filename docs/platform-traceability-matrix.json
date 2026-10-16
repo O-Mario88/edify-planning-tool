@@ -149,6 +149,7 @@
         "apps/schools/models.py",
         "apps/ssa/current_year.py",
         "apps/ssa/models.py",
+        "apps/ssa/pl_confirmation.py",
         "apps/ssa/plan_alignment.py",
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
@@ -660,6 +661,7 @@
         "apps/planning/visit_gate.py",
         "apps/planning/visit_requests.py",
         "apps/professional_development/services.py",
+        "apps/projects/baselines.py",
         "apps/projects/models.py",
         "apps/projects/signals.py",
         "apps/realtime/bus.py",
@@ -673,6 +675,7 @@
         "apps/ssa/creation.py",
         "apps/ssa/current_year.py",
         "apps/ssa/models.py",
+        "apps/ssa/pl_confirmation.py",
         "apps/ssa/plan_alignment.py",
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
@@ -812,6 +815,7 @@
         "pl_approve_completion",
         "pl_review_confirm",
         "ssa_create",
+        "ssa_verify",
         "start_activity",
         "weekly_fund_request.approve",
         "weekly_fund_request.disburse",
@@ -1587,6 +1591,7 @@
         "apps/ssa/current_year.py",
         "apps/ssa/handlers.py",
         "apps/ssa/models.py",
+        "apps/ssa/pl_confirmation.py",
         "apps/ssa/plan_alignment.py",
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/recommendation_models.py",
@@ -1948,6 +1953,7 @@
         "apps/schools/models.py",
         "apps/ssa/current_year.py",
         "apps/ssa/models.py",
+        "apps/ssa/pl_confirmation.py",
         "apps/ssa/plan_alignment.py",
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
@@ -2734,6 +2740,7 @@
         "apps/schools/models.py",
         "apps/ssa/current_year.py",
         "apps/ssa/models.py",
+        "apps/ssa/pl_confirmation.py",
         "apps/ssa/plan_alignment.py",
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
@@ -4958,9 +4965,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "bab3bb9e029a68b8130a204a80a25e5e39a4b999c5fa75594b9686eaa3e78224",
-    "sources": "13211f91ffb686fdfdec4edf8ac4ff8bc9be758c0c4dd2abffc874d102f568de",
-    "sourceCount": 261,
+    "payload": "9bb63fe0c3f60a9ab69dff8200020d63028fe291b707a61a43a806de2740b9fa",
+    "sources": "b74b7b23f6a8cef8dadc86982f7c69a212474c07543f00452e1fbe9c68e47c51",
+    "sourceCount": 263,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }
