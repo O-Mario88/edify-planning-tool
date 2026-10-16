@@ -96,7 +96,7 @@ and `forloop` from the including context.{% endcomment %}
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
-                {% if item.planned_before or item.planned_date %}{{ item.planned_before|default:item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+                {% if item.planned_before or item.planned_date %}{% if item.planned_before %}{{ item.planned_before|date:"j M Y" }}{% else %}{{ item.planned_date|date:"j M Y" }}{% endif %}{% else %}<span class="text-slate-400">—</span>{% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
               <td class="px-4 py-2.5">
@@ -210,7 +210,7 @@ and `forloop` from the including context.{% endcomment %}
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
-                {% if item.planned_before or item.planned_date %}{{ item.planned_before|default:item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+                {% if item.planned_before or item.planned_date %}{% if item.planned_before %}{{ item.planned_before|date:"j M Y" }}{% else %}{{ item.planned_date|date:"j M Y" }}{% endif %}{% else %}<span class="text-slate-400">—</span>{% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
               <td class="px-4 py-2.5">
@@ -313,7 +313,7 @@ and `forloop` from the including context.{% endcomment %}
                 {% district_link item.district_name item.district_id empty="—" %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
-                {% if item.planned_before or item.planned_date %}{{ item.planned_before|default:item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+                {% if item.planned_before or item.planned_date %}{% if item.planned_before %}{{ item.planned_before|date:"j M Y" }}{% else %}{{ item.planned_date|date:"j M Y" }}{% endif %}{% else %}<span class="text-slate-400">—</span>{% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
               <td class="px-4 py-2.5 text-slate-800 dark:text-slate-200">
@@ -439,7 +439,7 @@ and `forloop` from the including context.{% endcomment %}
                   {% firstof item.training_name|status_label item.activity_type|status_label %}
                 </td>
                 <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
-                  {% if item.planned_before or item.planned_date %}{{ item.planned_before|default:item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+                  {% if item.planned_before or item.planned_date %}{% if item.planned_before %}{{ item.planned_before|date:"j M Y" }}{% else %}{{ item.planned_date|date:"j M Y" }}{% endif %}{% else %}<span class="text-slate-400">—</span>{% endif %}
                 </td>
                 <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
                 <td class="px-4 py-2.5">

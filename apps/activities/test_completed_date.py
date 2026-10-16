@@ -47,7 +47,10 @@ class CompletedDayFixture(TestCase):
     _schedule = batch_tests.DailyVisitBatchTestCase._schedule
 
     def setUp(self):
-        batch_tests.DailyVisitBatchTestCase.setUp(self)
+        # The plain fixture, not the class's frozen setUp: borrowing that
+        # starts a freeze nothing here stops, and every later test in the
+        # worker then runs on 27 July 2026.
+        batch_tests.DailyVisitBatchTestCase._build_fixture(self)
         self.today = timezone.localdate()
         # A planned day well ahead of today, in today's financial year.
         self.plan_day = _schedulable_date(room=30) + timedelta(days=7)
@@ -69,6 +72,13 @@ class CompletedDayFixture(TestCase):
             {"salesforceId": sf, "actualDeliveryDate": day.isoformat()},
             self.principal,
         )
+
+
+class TheClockIsNotFrozenTest(CompletedDayFixture):
+    def test_the_borrowed_fixture_leaves_no_freeze_running(self):
+        from freezegun import api
+
+        self.assertEqual(api.freeze_factories, [])
 
 
 class EarlyWorkMovesToItsDayTest(CompletedDayFixture):

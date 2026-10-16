@@ -190,7 +190,7 @@ Waiting on Approval
 {% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.cluster_name }}</a>{% else %}{% cluster_link row.cluster_name row.cluster_id %}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
-<td class="font-bold text-slate-700" data-label="Planned Date">{{ row.planned_before|default:row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td class="font-bold text-slate-700" data-label="Planned Date">{% if row.planned_before %}{{ row.planned_before|date:"M j, D" }}{% else %}{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}{% endif %}</td>
 <td class="tabular-nums whitespace-nowrap" data-label="Completed Date" data-completed-on>{{ row.completed_on|date:"M j, D"|default:"—" }}</td>
 <td data-label="Status">{% include "partials/my_plan/row_badges.html" %}</td>
 </tr>

@@ -184,7 +184,12 @@ class BatchRescheduleSyncsFinanceTest(TestCase):
 
         from apps.activities import services
 
-        source = inspect.getsource(services.reschedule)
+        # The re-pricing after a move is one helper, shared with work
+        # completed on another day (owner, 2026-10-16), and reschedule uses it.
+        self.assertIn(
+            "_reprice_moved_activity(", inspect.getsource(services.reschedule)
+        )
+        source = inspect.getsource(services._reprice_moved_activity)
         self.assertIn("sync_weekly_requests_for_activity", source)
         self.assertIn("sync_monthly_drafts_for_activity", source)
         self.assertIn("prior_buckets", source)

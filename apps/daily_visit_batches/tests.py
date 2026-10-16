@@ -46,6 +46,14 @@ SECONDARY_RATES = [
 @freeze_time("2026-07-27")
 class DailyVisitBatchTestCase(TestCase):
     def setUp(self):
+        self._build_fixture()
+
+    def _build_fixture(self):
+        """The fixture, apart from the class's frozen clock: a class that
+        borrows it (apps.activities.test_completed_date) calls this, never
+        the frozen ``setUp``, whose freeze only this class's own tearDown
+        stops (memory: a borrowed frozen setUp freezes the rest of the
+        worker)."""
         self.region = Region.objects.create(name="Batch Region")
         self.primary_district = District.objects.create(
             name="Batch Primary District",
