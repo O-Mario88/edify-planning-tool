@@ -90,6 +90,8 @@ EMPTY = {
     "salesforce_ok": False,
     "evidence_ok": False,
     "early_on": None,
+    "delivered_on": None,
+    "planned_before": None,
 }
 
 
@@ -242,13 +244,15 @@ def evidence_label(activity_type, kinds: Iterable[str]) -> str:
 
 
 def _records(
-    activity_ids, early: dict | None = None
+    activity_ids, early: dict | None = None, days: dict | None = None
 ) -> tuple[dict[str, str], dict[str, set], set[str]]:
     """Each activity's stored Salesforce ID; the kinds of evidence uploaded
     for the activities that are asked for an upload (not quarantined); and
     which activities those are. Two queries at most, one when none is asked.
     ``early``, when given, is filled with the day each activity was done
-    where that is before its planned day (early_day)."""
+    where that is before its planned day (early_day); ``days`` with the day
+    it was done and the day it was planned for before it moved there
+    (owner, 2026-10-16; apps.activities.completed_day)."""
     ids = [i for i in dict.fromkeys(activity_ids or ()) if i]
     if not ids:
         return {}, {}, set()
@@ -272,6 +276,7 @@ def _records(
         execution_started_at,
         submitted_to_ia_at,
         pl_reviewed_at,
+        planned_before,
     ) in Activity.objects.filter(id__in=ids).values_list(
         "id",
         "salesforce_activity_id",
@@ -282,8 +287,18 @@ def _records(
         "execution_started_at",
         "submitted_to_ia_at",
         "pl_reviewed_at",
+        "planned_date_before_completion",
     ):
         salesforce[activity_id] = (value or "").strip()
+        if days is not None:
+            days[activity_id] = (
+                delivered_day(actual_delivery_date, execution_started_at),
+                planned_before,
+            )
+        # Work that moved to the day it was done was planned for the day it
+        # left: early is read against that one.
+        if planned_before:
+            planned_date, scheduled_date = planned_before, None
         if early is not None:
             # Done no later than it reached IA, or its lead reviewed it, or
             # today, whichever came first.
@@ -328,7 +343,8 @@ def completion_columns(pairs) -> dict[str, dict]:
     (a handover not yet scheduled) are skipped: they read EMPTY."""
     pairs = [(i, t) for i, t in pairs if i]
     early: dict[str, date | None] = {}
-    salesforce, evidence, asked = _records([i for i, _ in pairs], early)
+    days: dict[str, tuple] = {}
+    salesforce, evidence, asked = _records([i for i, _ in pairs], early, days)
     out = {}
     for activity_id, activity_type in pairs:
         kinds = evidence.get(activity_id, set())
@@ -346,6 +362,8 @@ def completion_columns(pairs) -> dict[str, dict]:
                 expected_evidence(activity_type)[0] in kinds if upload_asked else True
             ),
             "early_on": early.get(activity_id),
+            "delivered_on": days.get(activity_id, (None, None))[0],
+            "planned_before": days.get(activity_id, (None, None))[1],
         }
     return out
 
@@ -359,6 +377,11 @@ def completion_fields(status, columns: dict) -> dict:
     complete = is_complete(status, columns)
     return {
         **columns,
+        # The Completed column (owner, 2026-10-16): the day completed work
+        # was done; blank while it is not.
+        "completed_on": columns.get("delivered_on")
+        if is_officer_completed(status)
+        else None,
         "is_complete": complete,
         "completion_gap": completion_gap(status, columns),
         "shows_complete": complete and (status or "") in COMPLETED_WORK_STATUSES,

@@ -277,10 +277,10 @@ class AGroupOfMovesTest(_Groups):
         self.assertEqual(self.ids_done(old), self.ids_done(new))
         self.assertTheMoneyEndsWhereItDid(compared)
 
-    def test_one_that_cannot_join_the_day_is_left_and_the_rest_move(self):
-        """The day takes five. The fourth and fifth to arrive are told so,
-        each on its own, and the three that fitted are priced with the day
-        once."""
+    def test_a_day_past_its_target_takes_them_all(self):
+        """No day is full (owner, 2026-10-16: "dont restrict the number of
+        visit per day ... lift that restriction"): all five join the day
+        that already held two, priced with it once."""
 
         def setup():
             first = self.plan(MON, self.near[:5])["created"]
@@ -293,9 +293,8 @@ class AGroupOfMovesTest(_Groups):
         compared, _statements, (old, new) = self.both_ways(setup, act)
         self.assertEqual(self.ids_done(old), self.ids_done(new))
         self.assertEqual(self.said(old), self.said(new))
-        self.assertEqual(len(new.done), 3)
-        self.assertEqual(len(new.refused), 2)
-        self.assertIn("You can only schedule", new.refused[0].refusal)
+        self.assertEqual(len(new.done), 5)
+        self.assertFalse(new.refused)
         self.assertTheMoneyEndsWhereItDid(compared)
 
 

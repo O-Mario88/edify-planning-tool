@@ -52,6 +52,7 @@ from apps.activities.completion_columns import (
     completion_columns,
     completion_gap,
     is_complete,
+    is_officer_completed,
 )
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
@@ -299,6 +300,10 @@ def _row(activity, today: date, columns: dict) -> dict:
     return {
         "id": activity.id,
         "day": day,
+        # The day completed work was done (owner, 2026-10-16).
+        "completed_on": columns.get("delivered_on")
+        if is_officer_completed(activity.status)
+        else None,
         "kind": kind_of(activity.activity_type),
         "table": table_of(activity.activity_type),
         "type_label": title,

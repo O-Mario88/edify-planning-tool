@@ -64,6 +64,7 @@ and `forloop` from the including context.{% endcomment %}
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[240px]">School Name</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">Activity</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Completed Date</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Purpose of Visit</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
@@ -95,8 +96,9 @@ and `forloop` from the including context.{% endcomment %}
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
-                {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+                {% if item.planned_before or item.planned_date %}{{ item.planned_before|default:item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
               </td>
+              <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
               <td class="px-4 py-2.5">
                 {% if item.is_partner_work %}
                 <span class="pill pill-neutral text-xs">{% partner_link item.partner_name item.partner_id empty="Partner" %}</span>
@@ -173,6 +175,7 @@ and `forloop` from the including context.{% endcomment %}
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">District</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">Activity</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Completed Date</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Purpose of Visit</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
@@ -207,8 +210,9 @@ and `forloop` from the including context.{% endcomment %}
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
-                {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+                {% if item.planned_before or item.planned_date %}{{ item.planned_before|default:item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
               </td>
+              <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
               <td class="px-4 py-2.5">
                 {% if item.is_partner_work %}
                 <span class="pill pill-neutral text-xs">{% partner_link item.partner_name item.partner_id empty="Partner" %}</span>
@@ -283,6 +287,7 @@ and `forloop` from the including context.{% endcomment %}
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[200px]">Cluster Name</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">District</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Completed Date</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Purpose (Meeting Topic)</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
@@ -308,8 +313,9 @@ and `forloop` from the including context.{% endcomment %}
                 {% district_link item.district_name item.district_id empty="—" %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
-                {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+                {% if item.planned_before or item.planned_date %}{{ item.planned_before|default:item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
               </td>
+              <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
               <td class="px-4 py-2.5 text-slate-800 dark:text-slate-200">
                 {% firstof item.executor_name group.name %}
               </td>
@@ -386,6 +392,7 @@ and `forloop` from the including context.{% endcomment %}
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[170px]">Training Name</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Completed Date</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[90px]">Participants</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Delivery Type</th>
@@ -432,8 +439,9 @@ and `forloop` from the including context.{% endcomment %}
                   {% firstof item.training_name|status_label item.activity_type|status_label %}
                 </td>
                 <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
-                  {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+                  {% if item.planned_before or item.planned_date %}{{ item.planned_before|default:item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
                 </td>
+                <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
                 <td class="px-4 py-2.5">
                   {% if item.target_intervention %}
                   <span class="pill pill-neutral text-xs font-medium">{{ item.target_intervention|status_label }}</span>

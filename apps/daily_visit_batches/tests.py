@@ -390,14 +390,16 @@ class DailyVisitBatchTestCase(TestCase):
         batch = DailyVisitBatch.objects.get(pk=result["batchId"])
         self.assertEqual(batch.secondary_district_group, group)
 
-    # ── 5. Over-cap hard reject ──────────────────────────────────────────────
-    def test_over_target_cap_rejected(self):
-        # required_school_visits_per_day = 3 on the test catalogue.
-        with self.assertRaises(BadRequest) as ctx:
-            self._schedule(
-                ["BATCH-P-1", "BATCH-P-2", "BATCH-P-3", "BATCH-P-4"], date(2026, 8, 8)
-            )
-        self.assertIn("You can only schedule 3", str(ctx.exception))
+    # ── 5. No ceiling on a day ───────────────────────────────────────────────
+    def test_a_day_takes_more_than_the_target(self):
+        # required_school_visits_per_day = 3 on the test catalogue; a day is
+        # not capped at it (owner, 2026-10-16: "dont restrict the number of
+        # visit per day ... lift that restriction").
+        result = self._schedule(
+            ["BATCH-P-1", "BATCH-P-2", "BATCH-P-3", "BATCH-P-4"], date(2026, 8, 8)
+        )
+        batch = DailyVisitBatch.objects.get(pk=result["batchId"])
+        self.assertEqual(batch.school_count, 4)
 
     # ── 6. Under-target soft block, then success with reason ───────────────
     def test_under_target_requires_reason(self):

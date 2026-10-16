@@ -57,6 +57,7 @@ identity on phones.{% endcomment %}
         <th scope="col">Core support</th>
         <th scope="col">Purpose of Assignment</th>
         <th scope="col">Planned date</th>
+        <th scope="col">Completed date</th>
         <th scope="col" class="text-right">Cost</th>
         <th scope="col">Salesforce ID</th>
         <th scope="col">Evidence</th>
@@ -65,7 +66,7 @@ identity on phones.{% endcomment %}
       </tr></thead>
       <tbody>{% for item in page.rows %}
         {% with row_id="a-"|add:item.partner_assignment_id %}{% include "partials/oversight/partner_core_row.html" %}{% endwith %}
-      {% empty %}<tr><td colspan="11" class="partner-plan-table__empty">No Core Schools assigned to this Partner for the selected team and filters.</td></tr>{% endfor %}</tbody>
+      {% empty %}<tr><td colspan="12" class="partner-plan-table__empty">No Core Schools assigned to this Partner for the selected team and filters.</td></tr>{% endfor %}</tbody>
       {% elif table.columns == 'school' %}
       <thead><tr>
 {% if selectable %}        <th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" aria-label="Select every school on this page that can be withdrawn" @change="selected = $event.target.checked ? Array.from($el.closest('table').querySelectorAll('tbody input[data-withdraw-pick]')).map(i => i.value) : []"></label></th>{% endif %}
@@ -79,11 +80,12 @@ identity on phones.{% endcomment %}
         <th scope="col">Evidence</th>
         <th scope="col">Status</th>
         <th scope="col">Activity date</th>
+        <th scope="col">Completed date</th>
         <th scope="col" class="school-plan-table__actions">Actions</th>
       </tr></thead>
       <tbody>{% for item in page.rows %}
         {% with row_id="a-"|add:item.partner_assignment_id %}{% include "partials/oversight/partner_school_row.html" %}{% endwith %}
-      {% empty %}<tr><td colspan="11" class="partner-plan-table__empty">No schools assigned to this Partner for the selected team and filters.</td></tr>{% endfor %}</tbody>
+      {% empty %}<tr><td colspan="12" class="partner-plan-table__empty">No schools assigned to this Partner for the selected team and filters.</td></tr>{% endfor %}</tbody>
       {% else %}
       <thead><tr>
         <th scope="col">{% if table.kind == 'activity' %}School / cluster{% else %}{% if table.page_param == 'partner_clusters_page' %}Cluster{% else %}School{% endif %}{% endif %}</th>
@@ -93,11 +95,12 @@ identity on phones.{% endcomment %}
         <th scope="col">Evidence</th>
         <th scope="col">Status</th>
         <th scope="col">{% if table.kind == 'activity' %}Scheduled{% else %}Activity date{% endif %}</th>
+        <th scope="col">Completed date</th>
         <th scope="col" class="school-plan-table__actions">Actions</th>
       </tr></thead>
       <tbody>{% for item in page.rows %}
         {% if table.kind == 'activity' %}{% with row_id="p-"|add:item.partner_activity_id %}{% include "partials/oversight/partner_work_row.html" %}{% endwith %}{% else %}{% with row_id="a-"|add:item.partner_assignment_id %}{% include "partials/oversight/partner_work_row.html" %}{% endwith %}{% endif %}
-      {% empty %}<tr><td colspan="8" class="partner-plan-table__empty">No work for the selected team and filters.</td></tr>{% endfor %}</tbody>
+      {% empty %}<tr><td colspan="9" class="partner-plan-table__empty">No work for the selected team and filters.</td></tr>{% endfor %}</tbody>
       {% endif %}
     </table>
   </div>

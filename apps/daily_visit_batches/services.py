@@ -500,11 +500,9 @@ def schedule_visits(
         target = catalogue.required_school_visits_per_day if catalogue else 5
         existing_count = len(existing_activities)
         total_after = existing_count + len(schools)
-
-        if total_after > target:
-            raise BadRequest(
-                f"You can only schedule {target} for this date, please choose another date."
-            )
+        # No ceiling on a day's visits (owner, 2026-10-16: "dont restrict the
+        # number of visit per day. initially it was 5 schools but lift that
+        # restriction"). The card's target still asks a reason of a short day.
 
         effective_reason = (reason or "").strip() or (batch.reason if batch else None)
         if total_after < target and not effective_reason:
@@ -792,10 +790,8 @@ def _day_to_join(
     catalogue = _catalogue_for_batch_date(new_date)
     target = catalogue.required_school_visits_per_day if catalogue else 5
     total_after = len(existing_activities) + 1
-    if total_after > target:
-        raise BadRequest(
-            f"You can only schedule {target} for this date, please choose another date."
-        )
+    # No ceiling on a day's visits (owner, 2026-10-16); the target still asks
+    # a reason of a short day.
 
     effective_reason = (reason or "").strip() or (batch.reason if batch else None)
     if total_after < target and not effective_reason:

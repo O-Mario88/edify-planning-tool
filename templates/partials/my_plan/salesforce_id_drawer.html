@@ -33,6 +33,17 @@ class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] 
 <p id="salesforce-id-help" class="edify-text-caption text-slate-500">SV- or SVE- for a visit, TS- for a training, or the record's own Salesforce ID — any one of them.</p>
 </div>
 
+{% if asks_completion_day %}
+{% comment %}Saving the ID completes the work, so the drawer asks the day it
+was done (owner, 2026-10-16), as the Complete drawer does.{% endcomment %}
+{% now "Y-m-d" as today_iso %}
+<div class="space-y-1" data-completed-on>
+<label for="actual_delivery_date" class="block edify-text-caption font-semibold text-slate-600">Date completed <span class="text-rose-500">*</span></label>
+<input type="date" name="actual_delivery_date" id="actual_delivery_date" required max="{{ today_iso }}" value="{{ act.actual_delivery_date|date:"Y-m-d"|default:today_iso }}" aria-describedby="sf-completed-on-help" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold focus:outline-none focus:ring-2 edify-primary-focus">
+<p id="sf-completed-on-help" class="edify-text-caption text-slate-500">Today or an earlier day. Done before its planned day, it moves to this day with its cost, and the planned day is free for other work.</p>
+</div>
+{% endif %}
+
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
 <button type="submit" class="btn btn-primary h-8">Save Salesforce ID</button>
