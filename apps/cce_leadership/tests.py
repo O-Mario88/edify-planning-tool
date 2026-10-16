@@ -31,7 +31,12 @@ from . import services
 from .cadence import CADENCE_RULES, Held, evaluate
 from .models import EngagementKind, RegionalCceReport, RegionalEngagement, ReportStatus
 
-TODAY = timezone.localdate()
+
+def _today():
+    """The Kampala day when the test runs, not when the module was imported:
+    a module-level constant read the day before once a run crossed local
+    midnight (21:00 UTC in CI), and "a future date" became today."""
+    return timezone.localdate()
 
 
 def _person(uid, name, role, country="Uganda"):
@@ -110,7 +115,11 @@ class CceFixture(TestCase):
         )
 
         # In this month, so the monthly report's figures include it on any day.
-        day = TODAY.replace(day=1) if TODAY.day <= 3 else TODAY - timedelta(days=3)
+        day = (
+            _today().replace(day=1)
+            if _today().day <= 3
+            else _today() - timedelta(days=3)
+        )
         cls.training = Activity.objects.create(
             activity_type="training",
             school=cls.school,
@@ -120,7 +129,7 @@ class CceFixture(TestCase):
             responsible_staff_id=cls.cceo_sp.id,
             status="completed",
             planned_date=day,
-            scheduled_date=timezone.now() - timedelta(days=(TODAY - day).days),
+            scheduled_date=timezone.now() - timedelta(days=(_today() - day).days),
             focus_intervention="leadership",
         )
         cls.kenya_training = Activity.objects.create(
@@ -131,7 +140,7 @@ class CceFixture(TestCase):
             delivery_type="staff",
             status="completed",
             planned_date=day,
-            scheduled_date=timezone.now() - timedelta(days=(TODAY - day).days),
+            scheduled_date=timezone.now() - timedelta(days=(_today() - day).days),
         )
 
     def _observe(self, **extra):
@@ -139,7 +148,7 @@ class CceFixture(TestCase):
             self.lead,
             {
                 "kind": EngagementKind.TRAINING_OBSERVATION,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "activity_id": self.training.id,
                 "recommendation": "strengthen",
                 "feedback": "Model the lesson before asking teachers to practise it.",
@@ -155,7 +164,7 @@ class EngagementRulesTest(CceFixture):
             self.lead,
             {
                 "kind": EngagementKind.PL_COACHING,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "program_lead_ids": [self.pl_sp.id],
                 "notes": "Reviewed the CCE KPI report.",
             },
@@ -172,7 +181,7 @@ class EngagementRulesTest(CceFixture):
                 self.lead,
                 {
                     "kind": EngagementKind.PL_COACHING,
-                    "held_on": TODAY.isoformat(),
+                    "held_on": _today().isoformat(),
                     "program_lead_ids": [self.kenya_pl_sp.id],
                 },
             )
@@ -181,7 +190,7 @@ class EngagementRulesTest(CceFixture):
                 self.lead,
                 {
                     "kind": EngagementKind.RVP_MEETING,
-                    "held_on": (TODAY + timedelta(days=1)).isoformat(),
+                    "held_on": (_today() + timedelta(days=1)).isoformat(),
                 },
             )
         with self.assertRaisesMessage(BadRequest, "Country Director"):
@@ -189,7 +198,7 @@ class EngagementRulesTest(CceFixture):
                 self.lead,
                 {
                     "kind": EngagementKind.CD_QUARTERLY_REVIEW,
-                    "held_on": TODAY.isoformat(),
+                    "held_on": _today().isoformat(),
                 },
             )
 
@@ -197,7 +206,7 @@ class EngagementRulesTest(CceFixture):
         with self.assertRaises(Forbidden):
             services.record_engagement(
                 self.pl,
-                {"kind": EngagementKind.RVP_MEETING, "held_on": TODAY.isoformat()},
+                {"kind": EngagementKind.RVP_MEETING, "held_on": _today().isoformat()},
             )
 
     def test_an_observation_goes_to_the_lead_of_the_team_that_ran_the_training(self):
@@ -267,19 +276,19 @@ class FeedbackHandoffTest(CceFixture):
 
 class MonthlyReportTest(CceFixture):
     def test_one_report_a_month_and_never_a_future_month(self):
-        first = services.start_report(self.lead, TODAY.isoformat()[:7])
-        again = services.start_report(self.lead, TODAY.isoformat()[:7])
+        first = services.start_report(self.lead, _today().isoformat()[:7])
+        again = services.start_report(self.lead, _today().isoformat()[:7])
         self.assertEqual(first.id, again.id)
         self.assertEqual(first.countries, ["Uganda"])
         with self.assertRaisesMessage(BadRequest, "current month or an earlier one"):
             services.start_report(
-                self.lead, (TODAY + timedelta(days=40)).isoformat()[:7]
+                self.lead, (_today() + timedelta(days=40)).isoformat()[:7]
             )
 
     def test_submit_freezes_the_figures_and_goes_to_the_rvp_of_its_countries(self):
         from apps.notifications.models import Notification
 
-        report = services.start_report(self.lead, TODAY.isoformat()[:7])
+        report = services.start_report(self.lead, _today().isoformat()[:7])
         self.assertFalse(
             services.reports_visible_to(self.rvp).exists(), "drafts are the lead's"
         )
@@ -307,7 +316,7 @@ class MonthlyReportTest(CceFixture):
             services.update_report(self.lead, report.id, {"executive_summary": "Edit"})
 
     def test_the_rvp_returns_with_a_note_and_the_lead_resubmits(self):
-        report = services.start_report(self.lead, TODAY.isoformat()[:7])
+        report = services.start_report(self.lead, _today().isoformat()[:7])
         services.update_report(
             self.lead, report.id, {"executive_summary": "Draft"}, submit=True
         )
@@ -438,7 +447,7 @@ class PagesTest(CceFixture):
             "/cce-leadership/engagements/record",
             {
                 "kind": EngagementKind.PL_COACHING,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "program_lead_ids": [self.pl_sp.id],
             },
         )
@@ -491,7 +500,7 @@ class PagesTest(CceFixture):
         self.assertIsNotNone(observation.acknowledged_at)
 
     def test_the_rvp_reviews_from_the_report_drawer(self):
-        report = services.start_report(self.lead, TODAY.isoformat()[:7])
+        report = services.start_report(self.lead, _today().isoformat()[:7])
         services.update_report(
             self.lead, report.id, {"executive_summary": "Good"}, submit=True
         )
@@ -510,7 +519,7 @@ class PagesTest(CceFixture):
             self.lead,
             {
                 "kind": EngagementKind.PL_COACHING,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "program_lead_ids": [self.pl_sp.id],
             },
         )
@@ -539,26 +548,26 @@ class TodoHandoffTest(CceFixture):
 
         observation = self._observe()
         services.share_feedback(self.lead, observation.id)
-        report = services.start_report(self.lead, TODAY.isoformat()[:7])
+        report = services.start_report(self.lead, _today().isoformat()[:7])
         services.update_report(
             self.lead, report.id, {"executive_summary": "Good"}, submit=True
         )
 
         pl_titles = [
-            t["title"] for t in _cce_leadership_todos(self.pl, "Program Lead", TODAY)
+            t["title"] for t in _cce_leadership_todos(self.pl, "Program Lead", _today())
         ]
         self.assertIn("Acknowledge training feedback", pl_titles)
         rvp_titles = [
             t["title"]
-            for t in _cce_leadership_todos(self.rvp, "RegionalVicePresident", TODAY)
+            for t in _cce_leadership_todos(self.rvp, "RegionalVicePresident", _today())
         ]
         self.assertTrue(any(t.startswith("Review the ") for t in rvp_titles))
-        kenya = _cce_leadership_todos(self.kenya_rvp, "RegionalVicePresident", TODAY)
+        kenya = _cce_leadership_todos(self.kenya_rvp, "RegionalVicePresident", _today())
         self.assertEqual(kenya, [])
         # Two months on, the month after the one just reported is overdue.
         # Relative to today: a fixed 20 November 2026 only held while today's
         # month was September, and stopped on 1 October 2026.
-        later = (TODAY.replace(day=1) + timedelta(days=62)).replace(day=20)
+        later = (_today().replace(day=1) + timedelta(days=62)).replace(day=20)
         lead_titles = [
             t["title"]
             for t in _cce_leadership_todos(self.lead, "RegionalProgramLead", later)

@@ -31,7 +31,14 @@ from .models import CceoCoaching, CoachingKind, EngagementKind
 from .tests import CceFixture, _person, _ratings
 from .todos import coaching_todos
 
-TODAY = timezone.localdate()
+
+def _today():
+    """The Kampala day when the test runs, not when the module was imported:
+    a module-level constant read the day before once a run crossed local
+    midnight (21:00 UTC in CI), and "a future date" became today."""
+    return timezone.localdate()
+
+
 LOCMEM = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -75,7 +82,7 @@ class CoachingFixture(CceFixture):
         cls.admin, _admin_sp = _person("cce-admin", "Platform Admin", "Admin")
 
         cls.partner = Partner.objects.create(name="Grace Trainers")
-        day = TODAY - timedelta(days=2)
+        day = _today() - timedelta(days=2)
         cls.partner_training = Activity.objects.create(
             activity_type="training",
             school=cls.school,
@@ -130,7 +137,7 @@ class CoachingFixture(CceFixture):
             {
                 "cceo_staff_id": (officer or self.cceo_sp).id,
                 "kind": CoachingKind.ONE_TO_ONE,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "strengths": "Clear lesson modelling.",
                 "agreed_actions": "Plan two follow-up visits.",
                 **extra,
@@ -159,13 +166,13 @@ class CoachingRulesTest(CoachingFixture):
         with self.assertRaisesMessage(BadRequest, "on your team"):
             self._coach(cceo_staff_id=self.other_cceo_sp.id)
         with self.assertRaisesMessage(BadRequest, "once it has happened"):
-            self._coach(held_on=(TODAY + timedelta(days=1)).isoformat())
+            self._coach(held_on=(_today() + timedelta(days=1)).isoformat())
         with self.assertRaisesMessage(BadRequest, "what the coaching covered"):
             self._coach(strengths="", agreed_actions="")
         with self.assertRaisesMessage(BadRequest, "cannot be before"):
-            self._coach(follow_up_due=(TODAY - timedelta(days=3)).isoformat())
+            self._coach(follow_up_due=(_today() - timedelta(days=3)).isoformat())
         with self.assertRaisesMessage(BadRequest, "actions agreed before"):
-            self._coach(agreed_actions="", follow_up_due=TODAY.isoformat())
+            self._coach(agreed_actions="", follow_up_due=_today().isoformat())
         with self.assertRaisesMessage(BadRequest, "what kind"):
             self._coach(kind=CoachingKind.REGIONAL_FEEDBACK)
 
@@ -247,7 +254,7 @@ class CoachingVisibilityTest(CoachingFixture):
             {
                 "cceo_staff_id": self.kenya_cceo_sp.id,
                 "kind": CoachingKind.RECOGNITION,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "strengths": "Brilliant cluster meeting.",
             },
         )
@@ -292,7 +299,7 @@ class CoachingHandoffTest(CoachingFixture):
             coaching.update_coaching(
                 self.pl,
                 record.id,
-                {"held_on": TODAY.isoformat(), "strengths": "Rewritten"},
+                {"held_on": _today().isoformat(), "strengths": "Rewritten"},
             )
 
     def test_a_shared_record_can_be_corrected_until_acknowledged_and_says_so(self):
@@ -303,7 +310,7 @@ class CoachingHandoffTest(CoachingFixture):
             self.pl,
             record.id,
             {
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "strengths": "Clear modelling and pacing.",
                 "agreed_actions": "Plan two follow-up visits.",
             },
@@ -316,7 +323,7 @@ class CoachingHandoffTest(CoachingFixture):
         self.assertEqual(notice.status, "unread", "the officer is told it changed")
 
     def test_only_the_author_changes_shares_or_follows_up(self):
-        record = self._coach(follow_up_due=TODAY.isoformat())
+        record = self._coach(follow_up_due=_today().isoformat())
         # A second lead who also supervises the officer still cannot touch it.
         StaffSupervisorAssignment.objects.create(
             supervisor=self.other_pl_sp, supervisee=self.cceo_sp
@@ -325,7 +332,7 @@ class CoachingHandoffTest(CoachingFixture):
             lambda: coaching.share_coaching(self.other_pl, record.id),
             lambda: coaching.complete_follow_up(self.other_pl, record.id, "Done"),
             lambda: coaching.update_coaching(
-                self.other_pl, record.id, {"held_on": TODAY.isoformat()}
+                self.other_pl, record.id, {"held_on": _today().isoformat()}
             ),
         ):
             with self.assertRaises(NotFoundError):
@@ -337,7 +344,7 @@ class CoachingHandoffTest(CoachingFixture):
         no_date = self._coach()
         with self.assertRaisesMessage(BadRequest, "no follow-up date"):
             coaching.complete_follow_up(self.pl, no_date.id, "Checked")
-        record = self._coach(follow_up_due=TODAY.isoformat())
+        record = self._coach(follow_up_due=_today().isoformat())
         with self.assertRaisesMessage(BadRequest, "what you found"):
             coaching.complete_follow_up(self.pl, record.id, "")
         coaching.complete_follow_up(self.pl, record.id, "Both visits planned.")
@@ -387,13 +394,13 @@ class CadenceAndSummaryTest(CoachingFixture):
         old = self._raw(
             self.cceo_sp,
             self.cceo,
-            held_on=TODAY - timedelta(days=20),
-            follow_up_due=TODAY - timedelta(days=1),
+            held_on=_today() - timedelta(days=20),
+            follow_up_due=_today() - timedelta(days=1),
         )
         self._raw(
             self.cceo_sp,
             self.cceo,
-            held_on=TODAY - timedelta(days=2),
+            held_on=_today() - timedelta(days=2),
             kind=CoachingKind.FIELD_OBSERVATION,
             shared_at=timezone.now(),
         )
@@ -429,7 +436,7 @@ class CadenceAndSummaryTest(CoachingFixture):
             coaching.last_coaching_by_cceo(self.other_pl, [self.cceo_sp.id]), {}
         )
 
-        summary = coaching.coaching_summary(self.pl, today=TODAY)
+        summary = coaching.coaching_summary(self.pl, today=_today())
         self.assertEqual(summary["team_size"], 2)
         self.assertEqual(summary["drafts"], 1)
         self.assertEqual(summary["awaiting_acknowledgement"], 1)
@@ -559,7 +566,7 @@ class RegionalLeadCoachingTest(CoachingFixture):
             self.lead,
             {
                 "kind": EngagementKind.PL_COACHING,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "program_lead_ids": [self.pl_sp.id],
                 "notes": "Reviewed the team's coaching rhythm.",
                 "agreed_actions": "Hold every one-to-one by the tenth.",
@@ -611,13 +618,13 @@ class RegionalLeadCoachingTest(CoachingFixture):
             services.acknowledge_regional_coaching(self.pl, conversation.id, "Again")
         with self.assertRaisesMessage(Forbidden, "can no longer be changed"):
             services.update_engagement(
-                self.lead, conversation.id, {"held_on": TODAY.isoformat()}
+                self.lead, conversation.id, {"held_on": _today().isoformat()}
             )
 
     def test_only_coaching_and_observations_are_shared(self):
         meeting = services.record_engagement(
             self.lead,
-            {"kind": EngagementKind.RVP_MEETING, "held_on": TODAY.isoformat()},
+            {"kind": EngagementKind.RVP_MEETING, "held_on": _today().isoformat()},
         )
         with self.assertRaisesMessage(BadRequest, "Only a training observation"):
             services.share_feedback(self.lead, meeting.id)
@@ -664,7 +671,7 @@ class RegionalLeadCoachingTest(CoachingFixture):
             "/cce-leadership/engagements/record",
             {
                 "kind": EngagementKind.RVP_MEETING,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "share_now": "1",
             },
             follow=True,
@@ -679,7 +686,7 @@ class RegionalLeadCoachingTest(CoachingFixture):
             "/cce-leadership/engagements/record",
             {
                 "kind": EngagementKind.PL_COACHING,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "program_lead_ids": [self.pl_sp.id],
                 "agreed_actions": "Coach the two newest officers.",
                 "share_now": "1",
@@ -764,10 +771,10 @@ class CoachingPagesTest(CoachingFixture):
             {
                 "cceo_staff_id": self.cceo_sp.id,
                 "kind": CoachingKind.ONE_TO_ONE,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "strengths": "Strong cluster facilitation.",
                 "agreed_actions": "Visit two schools with low SSA scores.",
-                "follow_up_due": TODAY.isoformat(),
+                "follow_up_due": _today().isoformat(),
                 "share_now": "1",
                 "next": f"/team/coaching?open=new&cceo={self.cceo_sp.id}&kind=one_to_one",
             },
@@ -814,7 +821,7 @@ class CoachingPagesTest(CoachingFixture):
             {
                 "cceo_staff_id": self.other_cceo_sp.id,
                 "kind": CoachingKind.ONE_TO_ONE,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "strengths": "Good.",
             },
             follow=True,
@@ -844,7 +851,7 @@ class CoachingPagesTest(CoachingFixture):
             self.lead,
             {
                 "kind": EngagementKind.PL_COACHING,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "program_lead_ids": [self.pl_sp.id],
                 "agreed_actions": "Coach the newest officers.",
             },
@@ -888,7 +895,7 @@ class CoachingPagesTest(CoachingFixture):
             {
                 "cceo_staff_id": self.cceo_sp.id,
                 "kind": CoachingKind.ONE_TO_ONE,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "strengths": "Written by the director.",
             },
         )
@@ -946,7 +953,7 @@ class CoachingPagesTest(CoachingFixture):
             {
                 "cceo_staff_id": self.other_cceo_sp.id,
                 "kind": CoachingKind.RECOGNITION,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "strengths": "Great work.",
             },
         )
@@ -1062,7 +1069,7 @@ class CoachingTodoTest(CoachingFixture):
             self.lead,
             {
                 "kind": EngagementKind.PL_COACHING,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "program_lead_ids": [self.pl_sp.id],
                 "agreed_actions": "Coach the newest officers.",
             },
@@ -1108,16 +1115,16 @@ class CoachingTodoTest(CoachingFixture):
     def test_the_officer_is_asked_to_acknowledge_and_the_row_closes_itself(self):
         record = self._coach()
         self.assertEqual(
-            coaching_todos(self.cceo, "CCEO", TODAY), [], "drafts are private"
+            coaching_todos(self.cceo, "CCEO", _today()), [], "drafts are private"
         )
         coaching.share_coaching(self.pl, record.id)
-        rows = coaching_todos(self.cceo, "CCEO", TODAY)
+        rows = coaching_todos(self.cceo, "CCEO", _today())
         self.assertEqual(
             [r["title"] for r in rows], ["Acknowledge coaching from Uganda Lead"]
         )
         self.assertEqual(rows[0]["action_url"], f"/my-coaching?open={record.id}")
         coaching.acknowledge_coaching(self.cceo, record.id, "Will do.")
-        self.assertEqual(coaching_todos(self.cceo, "CCEO", TODAY), [])
+        self.assertEqual(coaching_todos(self.cceo, "CCEO", _today()), [])
 
     def test_a_failing_source_never_breaks_the_queue(self):
         with patch.object(coaching, "monthly_one_to_ones", side_effect=RuntimeError):
@@ -1228,7 +1235,7 @@ class CoachingQueryBudgetTest(TestCase):
                 cceo_staff_id=officer_sp.id,
                 cceo_user_id=officer.id,
                 kind=CoachingKind.RECOGNITION,
-                held_on=TODAY,
+                held_on=_today(),
                 fy="2026",
                 subject=f"Recognition {index}",
                 strengths="Great.",
@@ -1260,7 +1267,7 @@ class CoachingQueryBudgetTest(TestCase):
                 RegionalEngagement.objects.create(
                     author_id=self.lead.id,
                     kind=EngagementKind.PL_COACHING,
-                    held_on=TODAY,
+                    held_on=_today(),
                     fy="2026",
                     country="Uganda",
                     program_lead_ids=[self.pl_sp.id],
@@ -1283,14 +1290,14 @@ class OtherRolesUnaffectedTest(CoachingFixture):
             self.lead,
             {
                 "kind": EngagementKind.PL_COACHING,
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "program_lead_ids": [self.pl_sp.id],
                 "agreed_actions": "Coach the newest officers.",
             },
         )
         services.share_feedback(self.lead, conversation.id)
         titles = [
-            t["title"] for t in _cce_leadership_todos(self.pl, "Program Lead", TODAY)
+            t["title"] for t in _cce_leadership_todos(self.pl, "Program Lead", _today())
         ]
         self.assertNotIn(
             "Acknowledge training feedback",
