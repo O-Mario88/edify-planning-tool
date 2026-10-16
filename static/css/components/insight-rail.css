@@ -35,25 +35,38 @@ main .edify-rail .edify-rail__part > h3:not(#edify-none) { margin: 0 0 0.5rem; f
 main .edify-rail :is(.edify-rail__head p, .edify-rail__note, .edify-rail__figure small):not(#edify-none, #edify-nil) { font-size: var(--edify-text-micro-size) !important; color: var(--edify-text-subtle); }
 main .edify-rail :is(.edify-rail__value, .edify-rail__value a, .edify-rail__links a, dd):not(#edify-none, #edify-nil) { font-weight: 600 !important; }
 main .edify-rail .edify-rail__figure > :is(a, span):not(#edify-none, #edify-nil) { font-size: var(--edify-text-display-size) !important; font-weight: 700 !important; line-height: 1.1 !important; }
-/* Stacked: the parts side by side, as many as fit. */
+/* Stacked: each part a framed tile, side by side as many as fit (owner,
+   2026-10-16: "reorganize that card too to look more professional"). The
+   long parts (the eight interventions, the attention list) take two tracks
+   where two fit, so no column runs three times the length of its
+   neighbours and leaves the card half empty. */
 @media (max-width: 79.99rem) {
-  main .edify-rail:not(#edify-none) { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.85rem 1.5rem; }
+  main .edify-rail:not(#edify-none) { grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); grid-auto-flow: row dense; gap: 0.75rem; }
   .edify-rail__head { grid-column: 1 / -1; }
+  .edify-rail .edify-rail__part { padding: 0.75rem 0.9rem 0.6rem; border: 1px solid var(--edify-border); border-radius: var(--edify-radius-control, 0.5rem); background: color-mix(in srgb, var(--edify-text-subtle) 5%, transparent); }
+}
+@media (min-width: 40rem) and (max-width: 79.99rem) {
+  .edify-rail__part:is([data-rail-part="ssa"], [data-rail-part="attention"]) { grid-column: span 2; }
+  .edify-rail__part[data-rail-part="ssa"] .edify-rail__meters { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.5rem; }
+  .edify-rail__part[data-rail-part="ssa"] .edify-rail__meters > li { grid-template-columns: minmax(0, 1fr) 3.25rem 2rem; }
+  .edify-rail__part[data-rail-part="ssa"] .edify-rail__meters > li:nth-last-child(2):nth-child(odd) { border-block-end: 0; }
 }
 .edify-rail__head p { margin: 0.1rem 0 0; }
 .edify-rail__part { min-inline-size: 0; }
 .edify-rail__part + .edify-rail__part { border-block-start: 1px solid var(--edify-border); padding-block-start: 0.85rem; }
-@media (max-width: 79.99rem) {
-  .edify-rail__part + .edify-rail__part { border-block-start: 0; padding-block-start: 0; }
-}
 .edify-rail__figure { margin: 0 0 0.6rem; display: grid; gap: 0.1rem; }
 .edify-rail__figure > :is(a, span) { font-size: var(--edify-text-display-size); font-weight: 700; line-height: 1.1; color: var(--edify-text); font-variant-numeric: tabular-nums; text-decoration: none; }
 .edify-rail__figure > a:hover { text-decoration: underline; }
 .edify-rail__figure small { font-size: var(--edify-text-micro-size); font-weight: 500; color: var(--edify-text-subtle); }
-.edify-rail :is(.edify-rail__meters, .edify-rail__rows, .edify-rail__links) { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; font-size: var(--edify-text-label-size); }
-.edify-rail__meters li { display: grid; grid-template-columns: minmax(5rem, 1fr) minmax(2.5rem, 4.5rem) auto; align-items: center; gap: 0.5rem; }
-.edify-rail__rows li { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
-.edify-rail__name { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--edify-text); font-weight: 500; text-decoration: none; }
+/* A ruled list: every line a row of the table-row height with a hairline
+   under it, so a column of figures reads as one aligned list. */
+.edify-rail :is(.edify-rail__meters, .edify-rail__rows, .edify-rail__links) { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; font-size: var(--edify-text-label-size); }
+.edify-rail :is(.edify-rail__meters, .edify-rail__rows, .edify-rail__links) > li { min-block-size: 2rem; padding-block: 0.15rem; border-block-end: 1px solid color-mix(in srgb, var(--edify-border) 65%, transparent); }
+.edify-rail :is(.edify-rail__meters, .edify-rail__rows, .edify-rail__links) > li:last-child { border-block-end: 0; }
+.edify-rail__meters li { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem 2.25rem; align-items: center; gap: 0.6rem; }
+.edify-rail__rows li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+/* A name wraps rather than losing its end ("Exposure to the Word of …"). */
+.edify-rail__name { min-inline-size: 0; overflow-wrap: anywhere; color: var(--edify-text); font-weight: 500; text-decoration: none; }
 a.edify-rail__name:hover, .edify-rail__links a:hover { text-decoration: underline; }
 .edify-rail__value { text-align: end; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--edify-text); white-space: nowrap; }
 .edify-rail__value a { color: inherit; }
@@ -61,9 +74,29 @@ a.edify-rail__name:hover, .edify-rail__links a:hover { text-decoration: underlin
 .edify-rail__value[data-edify-tone="danger"] { color: var(--edify-danger, #b91c1c); }
 .edify-rail__meter { display: block; block-size: 0.4rem; border-radius: var(--edify-radius-pill); background: color-mix(in srgb, var(--edify-text-subtle) 18%, transparent); overflow: hidden; }
 .edify-rail__meter > span { display: block; block-size: 100%; border-radius: inherit; background: var(--edify-accent, #285b96); }
-.edify-rail__links a { color: var(--brand-primary-text, var(--edify-accent)); font-weight: 600; text-decoration: none; }
+/* What needs attention: a warning mark, the sentence, and an arrow to the
+   records it counted. */
+.edify-rail__links li { display: flex; align-items: center; }
+.edify-rail__links a { display: flex; align-items: center; gap: 0.6rem; inline-size: 100%; color: var(--edify-text); font-weight: 600; text-decoration: none; }
+[data-rail-part="attention"] .edify-rail__links a::before { content: ""; flex: none; inline-size: 0.45rem; block-size: 0.45rem; border-radius: 50%; background: var(--edify-warning, #b45309); }
+.edify-rail__links a::after { content: "\203A"; flex: none; margin-inline-start: auto; padding-inline-start: 0.5rem; color: var(--edify-text-subtle); }
 .edify-rail__note { margin: 0.5rem 0 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
 .edify-rail__fields { margin: 0; display: grid; gap: 0.4rem; font-size: var(--edify-text-label-size); }
 .edify-rail__fields > div { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
 .edify-rail__fields dt { color: var(--edify-text-subtle); font-weight: 500; }
 .edify-rail__fields dd { margin: 0; text-align: end; font-weight: 600; color: var(--edify-text); min-inline-size: 0; overflow-wrap: anywhere; }
+
+/* Profile field cards (owner, 2026-10-16: "do it for all the profiles with
+   similar inconsistent cards and layout"). The record cards beside the rail
+   (a school's Details, a partner's Organisation & Contact, a cluster's
+   Logistics & Contacts) were two fixed columns with a full-width field
+   breaking the flow, so a column ran with holes in it. Now: as many even
+   columns as the card holds, every field in a ruled row like the rail's,
+   a wide field across the card, and no holes (dense flow). The first row's
+   rule sits under the card's own edge and is clipped. */
+main .edify-field-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); grid-auto-flow: row dense; column-gap: 2rem; row-gap: 0; overflow: hidden; }
+main .edify-field-grid > * { min-inline-size: 0; margin-block-start: -1px; padding-block: 0.6rem; border-block-start: 1px solid color-mix(in srgb, var(--edify-border) 65%, transparent); }
+main .edify-field-grid > :is(.col-span-2, .sm\:col-span-2) { grid-column: 1 / -1; }
+main .edify-field-grid .edify-profile-field__value { overflow-wrap: anywhere; }
+/* A value that links keeps the value's colour, so one card never mixes two. */
+main .edify-field-grid .edify-profile-field__value a:not(.edify-badge) { color: inherit; font-weight: inherit; }

@@ -1031,17 +1031,30 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertIn("score", result2)
         self.assertLess(result2["score"], 80)  # weak interventions block champion
 
-    def test_assessment_slot_counts_toward_completion(self):
-        # The assessment slot is the 9th mandatory slot; completing it moves
-        # the plan's assessment counter and package-completion math.
+    def test_the_assessment_is_the_year_s_confirmed_ssa(self):
+        # Owner, 2026-10-16: "Core package only track visits and trainings.
+        # Once assessment is done and entered, it should be recorded and
+        # reflect everywhere." The plan's assessment is the school's confirmed
+        # SSA for the plan's year; a completed assessment slot no longer moves
+        # it (no drawer could ever schedule one).
         from apps.core_schools.services import resync_plan_completion
+        from apps.ssa.pl_confirmation import sync_core_assessment
 
+        self.ssa.verification_status = "returned"
+        self.ssa.save(update_fields=["verification_status"])
+        sync_core_assessment(self.school, self.plan.fy)
         a_slot = CoreActivitySlot.objects.get(
             core_plan=self.plan, activity_type="assessment"
         )
         a_slot.status = "ia_verified"
         a_slot.save(update_fields=["status"])
         resync_plan_completion(self.plan)
+        self.plan.refresh_from_db()
+        self.assertEqual(self.plan.assessment_completed, 0)
+
+        self.ssa.verification_status = "confirmed"
+        self.ssa.save(update_fields=["verification_status"])
+        sync_core_assessment(self.school, self.plan.fy)
         self.plan.refresh_from_db()
         self.assertEqual(self.plan.assessment_completed, 1)
 

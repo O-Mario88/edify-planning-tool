@@ -75,7 +75,7 @@ def build(
     schools = [
         {
             "name": "Assessed this year",
-            "figure_text": f"{portfolio['assessed']:,} of {portfolio['schools']:,}",
+            "figure_text": f"{portfolio['assessed']:,} of {portfolio['assessable']:,}",
             "href": records_url("ssa"),
         },
         {

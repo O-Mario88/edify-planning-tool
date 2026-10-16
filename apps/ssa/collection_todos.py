@@ -98,6 +98,8 @@ def collection_todos(principal, role, today) -> list[dict]:
             out.extend(_blocked_rows(principal, today))
         if role == "CountryDirector":
             out.extend(_fallback_rows(principal, today))
+        if role == "Program Lead":
+            out.extend(_lead_rows(principal, today))
         if role in KEYING_ROLES:
             out.extend(_returned_rows(principal, today))
         return out
@@ -258,6 +260,38 @@ def _returned_rows(principal, today) -> list[dict]:
             today=today,
             due=(timezone.localdate(returned["oldest"]) + timedelta(days=7))
             if returned["oldest"]
+            else None,
+            priority="high",
+        )
+    ]
+
+
+def _lead_rows(principal, today) -> list[dict]:
+    """A Programme Lead confirms the staff SSA their officers entered without
+    a visit; approving a visit confirms the scores keyed on it (owner,
+    2026-10-16)."""
+    from apps.ssa.services import verifiable_records
+
+    pending = verifiable_records(principal).aggregate(
+        n=Count("id"), oldest=Min("created_at")
+    )
+    if not pending["n"]:
+        return []
+    n = pending["n"]
+    return [
+        _row(
+            "ssa-lead-confirm",
+            title=f"Confirm {n} SSA record{'s' if n != 1 else ''} your officers entered",
+            description=(
+                "Your officers' SSA scores count once you confirm them. Scores "
+                "keyed on a visit are confirmed when you approve the visit."
+            ),
+            url="/ssa/verification/",
+            action="Open SSA Verification",
+            linked=f"{n} record{'s' if n != 1 else ''}",
+            today=today,
+            due=(timezone.localdate(pending["oldest"]) + timedelta(days=7))
+            if pending["oldest"]
             else None,
             priority="high",
         )

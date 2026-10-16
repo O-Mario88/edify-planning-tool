@@ -4,22 +4,22 @@ holds it, contacts, Business Transformation, the quality of its data, and —
 for an Admin — deletion. What the school achieves is on the other tabs, from
 the shared profile engine.
 {% endcomment %}
-<div class="edify-record-workspace grid lg:grid-cols-3 gap-6">
+<div class="edify-record-workspace grid lg:grid-cols-3 gap-x-4 gap-y-4">
 <div class="lg:col-span-2 space-y-6">
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
 <h3 class="edify-profile-section-title border-b border-slate-100 pb-3">School Demographics &amp; Assignment</h3>
-<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div class="edify-field-grid grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
 <p class="edify-profile-field__label">Region</p>
 <p class="edify-profile-field__value mt-0.5">{{ school.region.name|default:"Not specified" }}</p>
 </div>
 <div>
 <p class="edify-profile-field__label">District</p>
-<p class="edify-profile-field__value mt-0.5">{% if school.district %}<a href="/districts/{{ school.district.id }}" class="hover:underline font-medium text-slate-800">{{ school.district.name }}</a>{% else %}Not specified{% endif %}</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.district %}<a href="/districts/{{ school.district.id }}" class="hover:underline">{{ school.district.name }}</a>{% else %}Not specified{% endif %}</p>
 </div>
 <div>
 <p class="edify-profile-field__label">Sub-county</p>
-<p class="edify-profile-field__value mt-0.5">{% if school.sub_county %}<a href="/schools?sub_county={{ school.sub_county.id }}" class="hover:underline font-medium text-slate-800">{{ school.sub_county.name }}</a>{% else %}Not specified{% endif %}</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.sub_county %}<a href="/schools?sub_county={{ school.sub_county.id }}" class="hover:underline">{{ school.sub_county.name }}</a>{% else %}Not specified{% endif %}</p>
 </div>
 <div>
 <p class="edify-profile-field__label">Parish</p>
@@ -45,7 +45,7 @@ Not specified
 </div>
 <div>
 <p class="edify-profile-field__label">Assigned Staff</p>
-<p class="edify-profile-field__value mt-0.5">{% if school.account_owner_id %}<a href="/staff/{{ school.account_owner_id }}" class="hover:underline font-medium text-slate-800">{{ school.assigned_staff }}</a>{% elif school.account_owner %}<a href="/staff/{{ school.account_owner.id }}" class="hover:underline font-medium text-slate-800">{{ school.assigned_staff }}</a>{% else %}{{ school.assigned_staff }}{% endif %}</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.account_owner_id %}<a href="/staff/{{ school.account_owner_id }}" class="hover:underline">{{ school.assigned_staff }}</a>{% elif school.account_owner %}<a href="/staff/{{ school.account_owner.id }}" class="hover:underline">{{ school.assigned_staff }}</a>{% else %}{{ school.assigned_staff }}{% endif %}</p>
 </div>
 <div data-school-visit-status>
 <p class="edify-profile-field__label">Visit status (FY{{ status_fy }})</p>
@@ -91,7 +91,7 @@ Not specified
 <h4 class="edify-profile-section-title">Contact &amp; operational details</h4>
 <p class="edify-text-caption font-medium text-slate-400">Optional fields can be completed through Edit Details.</p>
 </div>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div class="edify-field-grid grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
 <p class="edify-profile-field__label">School Phone</p>
 <p class="edify-profile-field__value mt-0.5">{{ school.school_phone|default:"Not specified" }}</p>
@@ -139,14 +139,14 @@ Not specified
 {{ school.data_quality_status }}
 </span>
 </div>
-<div class="flex items-center gap-4">
-<!-- Circular Progress Indicator -->
-<div class="shrink-0" style="--edify-donut-gauge-size: 4rem; --edify-donut-gauge-headline: 0.9375rem">
-{% include "partials/components/donut_rings.html" with donut=quality_gauge donut_class="edify-donut--gauge" donut_label="Data quality score" headline=school.data_quality_score headline_unit="%" %}
-</div>
-<div class="space-y-1">
-<p class="text-[12px] text-slate-500 font-semibold leading-snug">Score is updated automatically. Keep fields complete and verified to improve it.</p>
-</div>
+{% comment %}The score, a meter across the card and what moves it, in the
+insight rail's figure and meter (owner, 2026-10-16: profiles' cards made
+consistent). It was a 4rem gauge box holding the bar that replaced the donut,
+so the bar was a sliver beside a stray "70%".{% endcomment %}
+<div class="grid gap-2" data-quality-score>
+<p class="edify-rail__figure"><span>{{ school.data_quality_score }}%</span> <small>of the school's fields complete and verified</small></p>
+<span class="edify-rail__meter" role="img" aria-label="Data quality score {{ school.data_quality_score }}%"><span style="inline-size: {{ school.data_quality_score }}%"></span></span>
+<p class="edify-text-caption text-slate-500">Score is updated automatically. Keep fields complete and verified to improve it.</p>
 </div>
 
 <!-- Cleanup list -->

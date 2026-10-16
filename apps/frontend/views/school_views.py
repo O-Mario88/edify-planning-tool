@@ -4,7 +4,6 @@ import json
 
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.redirects import local_redirect
-from apps.core.donut import build_gauge
 from apps.core.permissions import (
     RolePermissionService,
     get_scoped_object_or_404,
@@ -1771,7 +1770,8 @@ def school_ssa_entry_view(request, school_id):
     with the reason and nothing is written. The scores are the existing SSA
     record's eight interventions, saved through the one SSA service
     (apps.ssa.services.upload), pending until a different verifier confirms
-    them, as every SSA is.
+    them, as every SSA is, except a Programme Lead's own, which count as they
+    are entered (owner, 2026-10-16).
     """
     from apps.ssa import services as ssa_services
     from apps.ssa.forms import SchoolSsaEntryForm
@@ -1902,13 +1902,6 @@ def _school_details_context(request, school) -> dict:
     from apps.core.navigation import get_user_role_slug
     from apps.schools.school_status import cluster_training_coverage, visit_statuses
 
-    # The ring carries the same four states the status pill does, so the two
-    # cannot disagree about what "Needs Cleanup" looks like.
-    quality_colour = {
-        "Clean": "var(--edify-chart-green)",
-        "Needs Review": "var(--edify-chart-blue)",
-        "Needs Cleanup": "var(--edify-chart-amber)",
-    }.get(school.data_quality_status, "var(--edify-chart-red)")
     # Current cluster and every membership before it (owner, 2026-09-15):
     # joins, changes and removals with who, why and when, and whether the
     # cluster serves the school across a district border.
@@ -1936,9 +1929,6 @@ def _school_details_context(request, school) -> dict:
         and current_match is None,
         "cluster_history": membership_history(school.id),
         "business_transformation": school_profile_context(request.user, school),
-        "quality_gauge": build_gauge(
-            school.data_quality_score, label="Data quality", color=quality_colour
-        ),
         # Deletion is Admin-only (enforced server-side by delete_school; this
         # flag only controls whether the Danger Zone renders).
         "can_delete_school": get_user_role_slug(request.user) == "ADMIN",

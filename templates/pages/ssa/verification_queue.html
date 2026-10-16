@@ -7,7 +7,8 @@
 {% comment %}
 SSA Verification (apps/frontend/views/ssa_views.py ssa_verification_queue_view).
 Every SSA lands pending until a verifier other than its collector confirms it
-(IA review, owner, 2026-09-13). Readers see the records in their reach; the
+(IA review, owner, 2026-09-13); a Programme Lead's own are confirmed as they are
+keyed, and a lead confirms their officers' staff scores (owner, 2026-10-16). Readers see the records in their reach; the
 Confirm and Return actions appear only on rows the reader may decide. Return
 opens a one-column drawer for the reason, which the collector is sent. On
 those rows Open visit, Confirm and Return are one Actions menu rather than
@@ -20,7 +21,7 @@ three buttons (owner, 2026-09-26); a row with only its visit keeps the link.
 <div class="lg:max-w-[620px] edify-page-header__lead">
 <p class="edify-page-eyebrow">Quality & Insights</p>
 <h1 class="edify-page-title edify-page-header__title">SSA Verification</h1>
-<p class="edify-page-header__description">Every SSA waits here until a verifier other than the person who collected or uploaded it confirms it: an Impact Assessment officer in the school's country, or the Country Director for scores Impact Assessment collected. Only confirmed scores count in outcomes, targets and planning.</p>
+<p class="edify-page-header__description">Every SSA waits here until a verifier other than the person who collected or uploaded it confirms it: the Programme Lead for their officers' scores (approving the visit confirms the scores keyed on it), an Impact Assessment officer in the school's country, or the Country Director for scores Impact Assessment collected. A Programme Lead's own scores count as they are entered. Only confirmed scores count in outcomes, targets and planning.</p>
 </div>
 {% include "partials/_back_link.html" with back_href="/admin-panel/data-quality-center" back_label="Quality Center" %}
 </div>
