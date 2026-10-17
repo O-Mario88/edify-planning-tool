@@ -10,6 +10,7 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.accounts.models import StaffProfile
 from apps.activities.models import Activity, ActivitySalesforceReference
@@ -188,6 +189,105 @@ class DuplicatePreventionTest(ReservationBaseTest):
         self.assertEqual(ref.entry_source, ENTRY_SOURCE_STAFF_SELF)
         self.assertEqual(ref.entered_by, self.cceo.user_id)
         self.assertIsNotNone(ref.entered_at)
+
+    def test_duplicate_names_the_activity_that_holds_the_id(self):
+        # Field staff blocked on "already used" could not tell a mistyped ID
+        # from a copy of another school's: the refusal now says where the ID
+        # already sits.
+        other_school = School.objects.create(
+            school_id="SF-OTHER",
+            name="Other Primary",
+            region=self.school.region,
+            district=self.school.district,
+        )
+        holder = self._make_activity()
+        holder.school = other_school
+        holder.save(update_fields=["school"])
+        reserve_salesforce_id(
+            activity=holder,
+            raw_value="SVE-HELD-1",
+            kind="visit",
+            principal=self.cceo,
+            entry_source=ENTRY_SOURCE_STAFF_SELF,
+        )
+        with self.assertRaises(DuplicateSalesforceId) as raised:
+            reserve_salesforce_id(
+                activity=self._make_activity(),
+                raw_value="sve-held-1",
+                kind="visit",
+                principal=self.cceo,
+                entry_source=ENTRY_SOURCE_STAFF_SELF,
+            )
+        message = str(raised.exception.detail)
+        self.assertIn("Other Primary (SF-OTHER)", message)
+        self.assertIn("15 Jul 2026", message)
+
+    def _hold(self, raw_value):
+        holder = self._make_activity()
+        reserve_salesforce_id(
+            activity=holder,
+            raw_value=raw_value,
+            kind="visit",
+            principal=self.cceo,
+            entry_source=ENTRY_SOURCE_STAFF_SELF,
+        )
+        return holder
+
+    def _assert_id_moves_to_live_activity(self, holder, value):
+        live = self._make_activity()
+        reserve_salesforce_id(
+            activity=live,
+            raw_value=value,
+            kind="visit",
+            principal=self.cceo,
+            entry_source=ENTRY_SOURCE_STAFF_SELF,
+        )
+        ref = ActivitySalesforceReference.objects.get(normalized_value=value)
+        self.assertEqual(ref.activity_id, live.id)
+        live.refresh_from_db()
+        self.assertEqual(live.salesforce_activity_id, value)
+        # The called-off activity no longer carries it, so IA's duplicate
+        # check does not flag the live one against it.
+        holder = Activity.all_objects.get(pk=holder.pk)
+        self.assertIsNone(holder.salesforce_activity_id)
+        self.assertFalse(
+            ActivitySalesforceReference.objects.filter(activity=holder).exists()
+        )
+
+    def test_cancelled_activity_gives_its_id_back(self):
+        # Owner, 2026-10-17: work that was called off is not proof of
+        # delivery, so it must not keep a live activity from its Salesforce
+        # ID — the error that stopped some schools completing.
+        holder = self._hold("SVE-HELD-2")
+        holder.status = "cancelled"
+        holder.save(update_fields=["status"])
+        self._assert_id_moves_to_live_activity(holder, "SVE-HELD-2")
+
+    def test_deferred_activity_gives_its_id_back(self):
+        holder = self._hold("SVE-HELD-4")
+        holder.status = "deferred"
+        holder.save(update_fields=["status"])
+        self._assert_id_moves_to_live_activity(holder, "SVE-HELD-4")
+
+    def test_removed_activity_gives_its_id_back(self):
+        holder = self._hold("SVE-HELD-3")
+        holder.deleted_at = timezone.now()
+        holder.save(update_fields=["deleted_at"])
+        self._assert_id_moves_to_live_activity(holder, "SVE-HELD-3")
+
+    def test_returned_activity_keeps_its_id(self):
+        # Returned work is still the officer's to correct and resubmit.
+        holder = self._hold("SVE-HELD-5")
+        holder.status = "returned_by_ia"
+        holder.save(update_fields=["status"])
+        with self.assertRaises(DuplicateSalesforceId):
+            reserve_salesforce_id(
+                activity=self._make_activity(),
+                raw_value="SVE-HELD-5",
+                kind="visit",
+                principal=self.cceo,
+                entry_source=ENTRY_SOURCE_STAFF_SELF,
+            )
 
 
 class CompleteFlowSalesforceIdTest(ReservationBaseTest):
