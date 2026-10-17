@@ -1784,6 +1784,12 @@ def school_ssa_entry_view(request, school_id):
     except Forbidden as exc:
         return HttpResponseForbidden(str(exc.detail))
 
+    # Opened from a visit awaiting its scores on My Plan (owner, 2026-10-17:
+    # "Action is Enter SSA Scores"): the scores are keyed on that visit, so a
+    # CCEO's are confirmed when the lead approves it (apps.ssa.pl_confirmation)
+    # and the visit reads Complete (apps.ssa.visit_scores).
+    visit = _ssa_visit(request, school)
+
     fy = ssa_creation.current_fy()
     first_day = get_fy_date_range(fy)[0].date()
     form = SchoolSsaEntryForm(
@@ -1799,7 +1805,7 @@ def school_ssa_entry_view(request, school_id):
         return render(
             request,
             "partials/schools/ssa_entry_drawer.html",
-            {"school": school, "form": form, "fy": fy, **extra},
+            {"school": school, "form": form, "fy": fy, "visit": visit, **extra},
         )
 
     held = ssa_creation.year_record(school, fy)
@@ -1819,7 +1825,9 @@ def school_ssa_entry_view(request, school_id):
             else "staff"
         )
         payload = form.to_service_payload(collector_type=collector_type)
-        payload["entryChannel"] = "school_profile"
+        payload["entryChannel"] = "my_plan" if visit else "school_profile"
+        if visit:
+            payload["sourceActivityId"] = visit.id
         try:
             ssa_services.upload(payload, request.user)
         except ssa_creation.SsaAlreadyExists as exc:
@@ -1833,6 +1841,24 @@ def school_ssa_entry_view(request, school_id):
             # greyed for the year.
             return saved_in_place()
     return drawer()
+
+
+def _ssa_visit(request, school):
+    """The visit at ``school`` the SSA drawer was opened for, when it was
+    opened from one that collects the SSA; else None (the profile's own
+    entry)."""
+    from apps.activities.models import Activity
+    from apps.ssa.visit_scores import collects_ssa
+
+    visit_id = (
+        request.POST.get("activity") or request.GET.get("activity") or ""
+    ).strip()
+    if not visit_id:
+        return None
+    visit = Activity.objects.filter(
+        id=visit_id, school=school, deleted_at__isnull=True
+    ).first()
+    return visit if visit is not None and collects_ssa(visit) else None
 
 
 def _school_ssa_context(school) -> dict:

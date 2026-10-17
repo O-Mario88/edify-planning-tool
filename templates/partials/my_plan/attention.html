@@ -173,10 +173,14 @@ Waiting on Approval
 <th>Type</th>
 <th>Planned Date</th>
 <th>Completed Date</th>
+<th>Salesforce ID</th>
 <th>Status</th>
 </tr>
 </thead>
 <tbody>
+{% comment %}The Salesforce ID beside the day the work was done, and the status
+strip on one line (owner, 2026-10-17: "NO wrapping. Include the Salesforce ID
+and the completion date").{% endcomment %}
 {% for row in waiting_on_approval_pager.rows %}
 <tr>
 <td class="text-slate-600 font-semibold tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}—{% endif %}</td>
@@ -192,6 +196,7 @@ Waiting on Approval
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
 <td class="font-bold text-slate-700" data-label="Planned Date">{% if row.planned_before %}{{ row.planned_before|date:"M j, D" }}{% else %}{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}{% endif %}</td>
 <td class="tabular-nums whitespace-nowrap" data-label="Completed Date" data-completed-on>{{ row.completed_on|date:"M j, D"|default:"—" }}</td>
+{% include "components/completion_cells.html" %}
 <td data-label="Status">{% include "partials/my_plan/row_badges.html" %}</td>
 </tr>
 {% endfor %}

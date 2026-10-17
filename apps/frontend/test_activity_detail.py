@@ -170,17 +170,17 @@ class ClosedActivityLabelTest(TestCase):
         label, css = get_activity_status_label_and_class(
             self._activity("closed"), dt.date(2026, 7, 25)
         )
-        self.assertEqual(label, "Activity complete")
+        self.assertEqual(label, "Complete")
         self.assertIn("emerald", css)
 
     def test_a_completed_activity_still_reads_as_complete(self):
         label, _ = get_activity_status_label_and_class(
             self._activity("completed"), dt.date(2026, 7, 25)
         )
-        self.assertEqual(label, "Activity complete")
+        self.assertEqual(label, "Complete")
 
     def test_a_scheduled_activity_is_untouched(self):
         label, _ = get_activity_status_label_and_class(
             self._activity("scheduled"), dt.date(2026, 1, 1)
         )
-        self.assertNotEqual(label, "Activity complete")
+        self.assertNotEqual(label, "Complete")

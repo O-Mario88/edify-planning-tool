@@ -24,6 +24,17 @@ rather than four separate opinions about it.
     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
     Complete
   </button>
+  {% elif row.awaiting_ssa %}
+  {% comment %}Delivered, waiting for its school's SSA (owner, 2026-10-17):
+  the one thing left to do, apps.ssa.visit_scores.{% endcomment %}
+  <button type="button"
+          hx-get="{{ row.next_action.url }}"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML"
+          class="btn btn-warn h-8 edify-text-caption font-semibold shadow-xs"
+          data-enter-ssa>
+    {{ row.next_action.text }}
+  </button>
   {% else %}
   <div class="row-menu" x-data="rowMenu"
      @keydown.escape.window="close()" @click.outside="close()">
