@@ -21,8 +21,9 @@ Pinned here:
      was planned for — it used to save the ID and leave the work "started".
   4. Work already holding its ID that was never handed in is handed in now
      (the deploy's data migration runs the same function).
-  5. My Plan reads "PL Approved", never "IA complete", on a CCEO's or a
-     lead's work; partner work keeps IA's words.
+  5. My Plan's Verification column reads "PL Approved", never "IA complete",
+     on a CCEO's or a lead's work; partner work keeps IA's words. Its status
+     reads "Complete" either way (owner, 2026-10-17).
 """
 
 from __future__ import annotations
@@ -194,11 +195,14 @@ class MyPlanReadsPlApproved(_Fixture):
             salesforce_activity_id="SV-7502",
             ia_verification_status="confirmed",
         )
+        # Completed work reads complete whoever approved it (owner,
+        # 2026-10-17); "PL Approved" is the Verification column's below.
         self.assertEqual(
-            get_activity_status_label_and_class(cceo, today)[0], "PL Approved"
+            get_activity_status_label_and_class(cceo, today)[0], "Complete"
         )
         self.assertEqual(
-            get_activity_status_label_and_class(partner, today)[0], "IA complete"
+            get_activity_status_label_and_class(partner, today)[0],
+            "Complete",
         )
 
     def test_the_verification_column(self):

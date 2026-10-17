@@ -6,6 +6,7 @@ from apps.activities.completion_columns import (
     APPROVED_STATUSES,
     EMPTY as EMPTY_COLUMNS,
     FINISHED_EARLY,
+    OFFICER_COMPLETED_STATUSES,
     completed_last_key,
     plan_day,
     row_state,
@@ -143,6 +144,11 @@ def status_tone(status_class: str) -> str:
     return "slate"
 
 
+#: Completed work's status, in the word the other pages use (owner,
+#: 2026-10-17: "color changed to green with status Complete").
+COMPLETE_LABEL = "Complete"
+COMPLETE_CLASS = "bg-emerald-50 text-emerald-700 border-emerald-200"
+
 #: Status labels that mean "planned, still to be delivered" (owner,
 #: 2026-09-27: "mark planned activities with a different color and completed
 #: plans with a different colors ... scheduled/planned is blue").
@@ -211,19 +217,22 @@ def verification_label(activity, lead_ids: frozenset | None = None) -> tuple[str
 def get_activity_status_label_and_class(
     activity, today, lead_ids: frozenset | None = None
 ) -> tuple[str, str]:
-    """Resolves operational status pill color and text for row tables."""
+    """Resolves operational status pill color and text for row tables.
+
+    ``lead_ids`` is no longer read: the pill says whether the work is done,
+    not who approved it (owner, 2026-10-17). It stays for the callers that
+    pass it."""
     status = activity.status
     planned_date = activity.planned_date
     rescheduled = activity.reschedule_count > 0
     sf_id = activity.salesforce_activity_id
-    ia = activity.ia_verification_status
 
     # "closed" was missing here and fell through every branch to the default
     # "Scheduled" — so a finished, financially closed activity was labelled as
     # still upcoming, in the My Plan tables and on its own detail page, where
     # it sat next to a timeline that correctly called it complete.
     if status in ("completed", "closed"):
-        return "Activity complete", "bg-emerald-50 text-emerald-700 border-emerald-200"
+        return COMPLETE_LABEL, COMPLETE_CLASS
 
     if status == "awaiting_owner_approval":
         return "Awaiting owner approval", "bg-amber-50 text-amber-700 border-amber-200"
@@ -236,33 +245,13 @@ def get_activity_status_label_and_class(
     ):
         if not sf_id:
             return "Activity ID Missing", "bg-amber-50 text-amber-700 border-amber-200"
-        # Work handed to the Program Lead waits on the Program Lead (owner,
-        # 2026-10-12: "PL should click verify"). It read "IA Pending" like
-        # work with Impact Assessment, beside a Verification cell that said
-        # "PL pending"; seen once the ID alone completed a visit (2026-10-13).
-        if status == "submitted_to_pl" and ia == "pending":
-            return (
-                "PL Pending",
-                "edify-primary-soft edify-primary-text edify-primary-border",
-            )
-        # Approved by the Programme Lead, or on hand-in for a lead's own: the
-        # column reads "PL approved not IA approved" (owner, 2026-10-15).
-        if status in APPROVED_STATUSES and lead_approves(activity, lead_ids):
-            return "PL Approved", "bg-emerald-50 text-emerald-700 border-emerald-200"
-        if ia == "pending":
-            return (
-                "PL Pending" if lead_approves(activity, lead_ids) else "IA Pending",
-                "edify-primary-soft edify-primary-text edify-primary-border",
-            )
-        if ia == "confirmed":
-            return (
-                "PL Approved" if lead_approves(activity, lead_ids) else "IA complete",
-                "bg-emerald-50 text-emerald-700 border-emerald-200",
-            )
-        return (
-            "Accounts Pending",
-            "edify-primary-soft edify-primary-text edify-primary-border",
-        )
+        # Handed in with its Salesforce ID, the work is done, approved or not
+        # (owner, 2026-10-17: "All completed activity should show status
+        # complete"). It read "PL Approved" or "PL Pending" here, so approved
+        # work never said it was complete. Who approves, and whether they
+        # have, is the Verification column's ("PL Approved" / "PL Pending",
+        # owner 2026-10-15; verification_label).
+        return COMPLETE_LABEL, COMPLETE_CLASS
 
     if status in (
         "returned",
@@ -784,6 +773,46 @@ def compute_next_action(a, today) -> dict:
     }
 
 
+#: Handed in with its Salesforce ID, waiting for the Programme Lead or Impact
+#: Assessment to approve it.
+HANDED_IN_STATUSES = frozenset(("submitted_to_pl", "awaiting_ia_verification"))
+
+#: An advance or claim with the Programme Lead or the Accountant (branch 9 of
+#: compute_next_action).
+_MONEY_AWAITING_STATUSES = frozenset(
+    (
+        "accountability_pending",
+        "accountability_pl_pending",
+        "reimbursement_pl_pending",
+        "reimbursement_submitted",
+    )
+)
+
+
+def awaits_approval(a, next_act) -> bool:
+    """Whether a My Plan row belongs on "Waiting on Approval".
+
+    Handed-in work waits for its approval, and so does work whose money waits
+    on somebody. Approved work with none of its money in hand is complete
+    (owner, 2026-10-17: "The completed activities are still not showing
+    complete"). It sat on the card beside its own "PL Approved", because
+    branch 8 above offers "View Accounts Status" on approved work that has no
+    money at all.
+    """
+    if a.status in HANDED_IN_STATUSES:
+        return True
+    if next_act["action"] != "view_status":
+        return False
+    if a.status not in APPROVED_STATUSES:
+        return True
+    # .all() reads the prefetch compute_next_action reads.
+    return a.payment_status != "none" or any(
+        adv.status in _MONEY_AWAITING_STATUSES
+        for line in a.schedule_cost_lines.all()
+        for adv in line.advance_requests.all()
+    )
+
+
 def _own_readiness(principal, fy):
     """``readiness.own`` beside the plan: never the reason My Plan fails,
     except in development, where a figure that cannot be true is raised."""
@@ -1021,9 +1050,13 @@ def get_frontend_context(
         # fixing the issue").
         from apps.activities.services import RETURNED_STATUSES
 
+        # Completed work stays too, handed in or approved (owner, 2026-10-17:
+        # "All completed activity should show status complete"). The list
+        # kept approved work only, so a visit handed in and waiting for its
+        # lead left My Plan the day after its date, until the lead approved it.
         qs_period = qs_period.filter(
             upcoming_filter
-            | Q(status__in=COMPLETED_WORK_STATUSES)
+            | Q(status__in=OFFICER_COMPLETED_STATUSES)
             | Q(status__in=RETURNED_STATUSES)
         )
 
@@ -1443,11 +1476,20 @@ def get_frontend_context(
     from apps.pl_review.services import lead_verified_owner_ids
 
     lead_ids = lead_verified_owner_ids()
+    # A visit made to collect the SSA is complete once its school's SSA is in
+    # (owner, 2026-10-17); until then it waits for its scores.
+    from apps.ssa import visit_scores
+
+    awaiting_ssa = visit_scores.awaiting_scores(activities)
     for a in activities:
         status_label, status_class = get_activity_status_label_and_class(
             a, today, lead_ids
         )
         next_act = compute_next_action(a, today)
+        if a.id in awaiting_ssa:
+            status_label = visit_scores.AWAITING_SSA_LABEL
+            status_class = visit_scores.AWAITING_SSA_CLASS
+            next_act = visit_scores.enter_scores_action(a)
         # Budget status and badges
         badges = []
         # .first() issues a fresh LIMIT 1 query even when the relation is
@@ -1532,8 +1574,8 @@ def get_frontend_context(
         # A finished stage says so in the same words every time — "<stage>
         # complete" — so a row can be read down its badges without translating
         # "Verified", "Entered", "Uploaded" and "Cleared" into the same idea.
-        if a.status in COMPLETED_WORK_STATUSES:
-            badges.append(("Activity complete", "green"))
+        # The activity's own "Complete" is its status pill, which
+        # leads the strip (owner, 2026-10-17); a badge repeated it.
 
         # Evidence status
         if a.status == "completed":
@@ -1542,18 +1584,8 @@ def get_frontend_context(
             else:
                 badges.append(("Evidence pending", "amber"))
 
-        # SF ID status
-        if a.status in [
-            "completed",
-            "submitted_to_pl",
-            "awaiting_ia_verification",
-            "ia_verified",
-            "accountant_confirmed",
-        ]:
-            if a.salesforce_activity_id:
-                badges.append(("SF ID complete", "green"))
-            else:
-                badges.append(("SF ID missing", "red"))
+        # The Salesforce ID has its own column on the card the strip sits in
+        # (owner, 2026-10-17), so the strip no longer repeats it.
 
         # Approval status: the Programme Lead's on a CCEO's or a lead's work
         # (owner, 2026-10-15), Impact Assessment's on partner and other work.
@@ -1793,9 +1825,10 @@ def get_frontend_context(
             "badges": badges,
             "status_label": status_label,
             "status_class": status_class,
-            "status_tone": plan_row_tone(
-                a, status_label, status_class, is_core=bool(is_core)
-            ),
+            "status_tone": "amber"
+            if a.id in awaiting_ssa
+            else plan_row_tone(a, status_label, status_class, is_core=bool(is_core)),
+            "awaiting_ssa": a.id in awaiting_ssa,
             "day_off": day_off_by_activity.get(a.id),
         }
         if activity_data["day_off"]:
@@ -1880,16 +1913,7 @@ def get_frontend_context(
             and a.status in _DATED_AND_OPEN
         ):
             this_week_list.append(activity_data)
-        elif (
-            a.status
-            in (
-                "submitted_to_pl",
-                "awaiting_ia_verification",
-                "ia_verified",
-                "accountant_confirmed",
-            )
-            or next_act["action"] == "view_status"
-        ):
+        elif awaits_approval(a, next_act):
             waiting_on_approval_list.append(activity_data)
         else:
             upcoming_list.append(activity_data)
@@ -2356,6 +2380,16 @@ def get_frontend_context(
             row.update(
                 completion_fields(row["status"], _columns.get(row["id"], EMPTY_COLUMNS))
             )
+            if row.get("awaiting_ssa"):
+                # Delivered, but not complete until its SSA is in (owner,
+                # 2026-10-17): not green, with the open work, its action
+                # "Enter SSA Scores".
+                row.update(
+                    row_state="",
+                    is_complete=False,
+                    shows_complete=False,
+                    finished_early=False,
+                )
             if row["completion_gap"]:
                 # Complete only with both columns green: a status that says
                 # done over a missing half says what is missing instead.
