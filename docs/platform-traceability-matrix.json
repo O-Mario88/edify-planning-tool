@@ -206,7 +206,6 @@
         "calendar",
         "cce_training_feedback",
         "closed_schools",
-        "cluster_management",
         "cluster_oversight",
         "clusters",
         "core_schools",
@@ -735,7 +734,6 @@
         "calendar",
         "cce_training_feedback",
         "closed_schools",
-        "cluster_management",
         "cluster_oversight",
         "clusters",
         "core_schools",
@@ -939,12 +937,16 @@
       ],
       "untracedBecause": "",
       "roles": [
+        "Accountant",
         "Admin",
+        "BusinessTransformationOfficer",
         "CCEO",
         "CountryDirector",
         "ImpactAssessment",
         "Program Lead",
-        "ProjectCoordinator"
+        "ProjectCoordinator",
+        "RegionalProgramLead",
+        "RegionalVicePresident"
       ],
       "routes": [
         "GET /clusters/{id}"
@@ -1067,6 +1069,7 @@
       ],
       "permissions": [
         "cluster.catchmentManage",
+        "data.export",
         "project.assignSchool"
       ],
       "pages": [
@@ -1074,7 +1077,7 @@
         "calendar",
         "closed_schools",
         "cluster_detail",
-        "cluster_management",
+        "cluster_oversight",
         "clusters",
         "core_schools",
         "dashboard",
@@ -1653,7 +1656,6 @@
         "cce_training_feedback",
         "cd_analytics",
         "closed_schools",
-        "cluster_management",
         "cluster_oversight",
         "clusters",
         "core_schools_oversight",
@@ -2523,7 +2525,6 @@
         "calendar",
         "cce_training_feedback",
         "closed_schools",
-        "cluster_management",
         "cluster_oversight",
         "clusters",
         "core_schools",
@@ -2806,7 +2807,7 @@
         "analytics",
         "calendar",
         "closed_schools",
-        "cluster_management",
+        "cluster_oversight",
         "clusters",
         "core_schools",
         "dashboard",
@@ -3062,7 +3063,7 @@
         "analytics",
         "calendar",
         "closed_schools",
-        "cluster_management",
+        "cluster_oversight",
         "clusters",
         "core_schools",
         "dashboard",
@@ -3584,7 +3585,6 @@
         "calendar",
         "cce_training_feedback",
         "closed_schools",
-        "cluster_management",
         "cluster_oversight",
         "clusters",
         "core_schools",
@@ -4821,7 +4821,7 @@
         "analytics",
         "calendar",
         "closed_schools",
-        "cluster_management",
+        "cluster_oversight",
         "clusters",
         "core_schools",
         "dashboard",
@@ -4973,8 +4973,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "4613b87aae1840dea4ff03c3131deb7d7f4b622fefd851f41faf4321ba788481",
-    "sources": "5904476272d29fa0c1aba3b51efa64e4cb40842bc6c460dd850980f956099ad7",
+    "payload": "1ad8e07a4fab32d641e874876d9fbaf764aceaf86b82700be97eff2d0c007858",
+    "sources": "6da913687290af1706a50ecc444f8ecc335279d5e8acc71c446de00ce801da35",
     "sourceCount": 264,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

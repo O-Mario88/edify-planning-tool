@@ -282,27 +282,3 @@ class EachPageExportsItself(SessionFixture):
             "/country-planning-oversight/export-drawer", {"fy": self.fy}
         ).content.decode()
         self.assertIn('action="/country-planning-oversight/export"', html)
-
-    def test_cluster_oversight_exports_its_own_tables(self):
-        from openpyxl import load_workbook
-
-        response = self.as_pl().get(
-            "/cluster-oversight/export", {"fy": self.fy, "format": "xlsx"}
-        )
-        self.assertEqual(response.status_code, 200)
-        book = load_workbook(io.BytesIO(response.content), read_only=True)
-        self.assertEqual(
-            book.sheetnames, ["Clusters", "Group Trainings", "Cluster Meetings"]
-        )
-        clusters = [list(r) for r in book["Clusters"].iter_rows(values_only=True)]
-        self.assertEqual(
-            clusters[0][:4],
-            ["Cluster Name", "District", "# Schools", "Cluster Leader's Name"],
-        )
-        self.assertIn("Kasangati Cluster", [row[0] for row in clusters[1:]])
-        trainings = [
-            list(r) for r in book["Group Trainings"].iter_rows(values_only=True)
-        ]
-        heading, row = trainings[0], trainings[1]
-        self.assertEqual(row[heading.index("Participants")], 12)
-        self.assertEqual(row[heading.index("Cost (UGX)")], MEALS + VENUE + FACILITATION)

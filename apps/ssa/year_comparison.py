@@ -113,6 +113,47 @@ def school_year_scores(schools, fy) -> dict[str, dict]:
     return scores
 
 
+def school_current_scores(schools, fy) -> dict[str, dict]:
+    """``{school id: {"overall", "areas": {intervention: score}}}``: each
+    school's latest confirmed record of ``fy``, its average and every
+    intervention it scored, as `school_year_scores` and
+    `school_intervention_scores` read them. A school with no record in
+    ``fy`` is not in it. Two queries."""
+    from apps.ssa.current_year import CURRENT_SSA_STATUSES
+    from apps.ssa.models import SsaRecord, SsaScore
+
+    latest: dict[str, dict] = {}
+    for row in (
+        SsaRecord.objects.filter(
+            school_id__in=schools,
+            fy=str(fy),
+            deleted_at__isnull=True,
+            verification_status__in=CURRENT_SSA_STATUSES,
+        )
+        .values("id", "school_id", "average_score")
+        .order_by("school_id", "-date_of_ssa", "-created_at", "-id")
+    ):
+        latest.setdefault(row["school_id"], row)
+    school_of = {row["id"]: school_id for school_id, row in latest.items()}
+    areas: dict[str, dict[str, float]] = defaultdict(dict)
+    if school_of:
+        for record_id, intervention, score in SsaScore.objects.filter(
+            ssa_record_id__in=list(school_of), score__isnull=False
+        ).values_list("ssa_record_id", "intervention", "score"):
+            areas[school_of[record_id]][intervention] = round(float(score), 2)
+    return {
+        school_id: {
+            "overall": (
+                round(float(row["average_score"]), 2)
+                if row["average_score"] is not None
+                else _mean(areas[school_id].values())
+            ),
+            "areas": dict(areas[school_id]),
+        }
+        for school_id, row in latest.items()
+    }
+
+
 def school_intervention_scores(schools, fy, intervention: str) -> dict[str, dict]:
     """``{school id: {"current", "previous"}}`` for one intervention: each
     school's score for it on its latest confirmed record of ``fy`` and of

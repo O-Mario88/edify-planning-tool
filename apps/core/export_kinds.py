@@ -5,8 +5,9 @@ Owner, 2026-10-12: "modify the export drawer for users to decide what they
 want to export (Only group training, Only visit, only cluster meeting, only
 online meeting or All)". One vocabulary, read by every Export options drawer
 and applied by every export route, so "group trainings only" means the same
-rows on Planning Oversight, My Plan, Partner Oversight, Cluster Oversight,
-the Budget and the Weekly Advance Request.
+rows on Planning Oversight, My Plan, Partner Oversight, the Budget and the
+Weekly Advance Request. (Cluster Oversight's plans export moved to Planning
+Oversight on 2026-10-17, when that page became analysis only.)
 
 The kinds are the platform's own groupings (``apps.core.activity_types``). A
 group training is a cluster training, in person or online

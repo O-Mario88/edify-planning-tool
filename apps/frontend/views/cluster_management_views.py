@@ -1,4 +1,8 @@
-"""Cluster Management: one page, its sections as tabs, and the scoring page.
+"""Cluster Oversight: one page, its sections as tabs, and the scoring page.
+
+Cluster Management became Cluster Oversight on 2026-10-17 (owner: "merge
+Cluster Management with Cluster Oversight"); the page is analysis only, and
+planning lives on My Plan and Planning Oversight.
 
 Owner brief, 2026-10-08. The page is a reader over the clusters in the
 person's own scope (apps.clusters.workspace); every section is one table from
@@ -35,7 +39,7 @@ def _fy(request) -> tuple[str, list[str]]:
 def _csv(table, section_key: str, fy: str) -> HttpResponse:
     response = HttpResponse(content_type="text/csv; charset=utf-8")
     response["Content-Disposition"] = (
-        f'attachment; filename="cluster-management-{section_key}-fy{fy}.csv"'
+        f'attachment; filename="cluster-oversight-{section_key}-fy{fy}.csv"'
     )
     writer = csv.writer(response)
     for line in table.as_csv_rows():
@@ -62,13 +66,13 @@ def _is_number(value: str) -> bool:
     return True
 
 
-@require_page_permission("cluster_management")
+@require_page_permission("cluster_oversight")
 @require_export_permission
-def cluster_management_view(request, section: str = ""):
+def cluster_oversight_view(request, section: str = ""):
     key = section or workspace.DEFAULT_SECTION
     chosen = workspace.SECTION_BY_KEY.get(key)
     if chosen is None:
-        return redirect("/cluster-management/")
+        return redirect("/cluster-oversight/")
     if chosen.url:
         return redirect(chosen.url)
 
@@ -104,7 +108,7 @@ def cluster_management_view(request, section: str = ""):
     ]
     return render(
         request,
-        "pages/cluster_management/index.html",
+        "pages/oversight/cluster_oversight.html",
         {
             "section": chosen,
             "sections": sections,
@@ -152,7 +156,7 @@ def cluster_scoring_view(request):
                 request,
                 "Weights saved. Every cluster's scores now use them.",
             )
-        return redirect("/cluster-management/scoring")
+        return redirect("/cluster-oversight/scoring")
 
     settings = scores.current_settings()
     groups = []

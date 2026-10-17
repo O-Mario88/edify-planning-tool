@@ -190,7 +190,7 @@ opens. The SSA columns are the cluster's schools in this portfolio.
 <div id="profile-clusters-table"></div>
 {% data_table name="profile-clusters" %}
   {% slot title %}Clusters{% endslot %}
-  {% slot summary %}{{ pi.profile.portfolio.clusters|intcomma }} cluster{{ pi.profile.portfolio.clusters|pluralize }} · {{ pi.profile.fy_label }}{% if pi.may_open_cluster_management %} · <a href="/cluster-management/">Cluster Management</a>{% endif %}{% endslot %}
+  {% slot summary %}{{ pi.profile.portfolio.clusters|intcomma }} cluster{{ pi.profile.portfolio.clusters|pluralize }} · {{ pi.profile.fy_label }}{% if pi.may_open_cluster_oversight %} · <a href="/cluster-oversight/">Cluster Oversight</a>{% endif %}{% endslot %}
   {% slot caption %}Each cluster with schools in this portfolio: its schools here, how many have a confirmed SSA in {{ pi.profile.fy_label }}, the average score in {{ pi.profile.previous_label }} and in {{ pi.profile.fy_label }} and the change; then the whole cluster's attendance at its sessions, the schools absent {{ pi.cluster_totals.alert_after }} sessions in a row, Cluster Health, Cluster Impact and maturity.{% endslot %}
   {% slot empty %}{% include "components/empty_state.html" with message="No school of this portfolio is in a cluster." compact="true" %}{% endslot %}
   {% slot footer %}{% include "components/table_pager.html" with pager=clusters_pager param="clusters_page" %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted">Schools, Assessed and the SSA columns count the cluster's schools in this portfolio. Attendance, Absent, Health, Impact and Maturity are the whole cluster's, as on its own profile. A score is left blank when too few of its parts can be measured.</p>{% endslot %}

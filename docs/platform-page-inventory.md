@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **934**
-- All registered routes: **1411**
+- Routed product surfaces: **932**
+- All registered routes: **1413**
 - API routes: **364**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **38**
 - Activity states: **24**
-- Shared component templates: **703**
+- Shared component templates: **700**
 - Full pages: **270**
-- Partials and drawers: **337**
-- Permission-gated surfaces: **917**
-- Referenced by automated tests: **837**
+- Partials and drawers: **335**
+- Permission-gated surfaces: **915**
+- Referenced by automated tests: **835**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -196,12 +196,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-01E1012D38 | /cce-leadership/reports/new | Cce Report New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-86BCA6686D | /cce-leadership/reports/start | Cce Report Start | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-D3BB0CD510 | /change-password | Set a new password | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-85CDA82483 | /cluster-management/ | · Cluster Management · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-58D1EBBE03 | /cluster-management/<str:section> | · Cluster Management · Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-EFB5DF0B83 | /cluster-management/scoring | Scoring · Cluster Management · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-273FCBD571 | /cluster-oversight/ | Cluster Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-440F458C20 | /cluster-oversight/export | Cluster Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-DAF96AEC09 | /cluster-oversight/export-drawer | Cluster Oversight Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-A227C51792 | /cluster-oversight/ | · Cluster Oversight · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-9CE2CCCB96 | /cluster-oversight/<str:section> | · Cluster Oversight · Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-0B3C03B0D2 | /cluster-oversight/scoring | Scoring · Cluster Oversight · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6297FE3532 | /clusters | Clusters | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-ED202C2D52 | /clusters/<str:cluster_id> | Cluster | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FA80612906 | /clusters/<str:cluster_id>/bulk-assign-drawer | Cluster Bulk Assign Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -215,6 +212,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-87A93CBB5B | /clusters/<str:cluster_id>/facilitator-drawer | Cluster Facilitator Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0A2340E834 | /clusters/<str:cluster_id>/profile | Cluster Profile | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3429DE9B4C | /clusters/<str:cluster_id>/schools/<str:school_id>/remove | Remove School From Cluster | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-7A1AF7EB00 | /clusters/<str:cluster_id>/schools/export | Cluster Schools Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-DFAF9F746E | /clusters/cost-preview | Cluster Cost Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D1234D25E2 | /clusters/create | Create Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-5250FB3393 | /clusters/create-drawer | Create Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

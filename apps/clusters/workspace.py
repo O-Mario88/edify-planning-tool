@@ -1,4 +1,4 @@
-"""Cluster Management: the sections of the one workspace.
+"""Cluster Oversight (formerly Cluster Management): the sections of the one workspace.
 
 Owner brief, 2026-10-08 ("Suggested final navigation ... Cluster Management:
 Command Center, My Clusters, Clusters, Meetings, Training, Attendance,
@@ -237,8 +237,49 @@ def _lead(ws: Workspace, cluster, query: str = "") -> list[dict]:
 LEAD_COLUMNS = [col("Cluster"), col("District"), col("CCEO")]
 
 
+def _ssa_now(ws: Workspace, clusters, fy: str) -> dict[str, dict]:
+    """Each cluster's average SSA and weakest intervention in ``fy``: the
+    mean over its member schools of their latest confirmed record, as the
+    profile's SSA tab reads it. A cluster with no such school has neither."""
+    from apps.core.enums import SsaIntervention
+    from apps.ssa.year_comparison import school_current_scores
+
+    members = {
+        c.id: [m["id"] for m in ws.facts["members"].get(c.id, [])] for c in clusters
+    }
+    scored = school_current_scores(
+        [school for ids in members.values() for school in ids], fy
+    )
+    labels = dict(SsaIntervention.choices)
+    out = {}
+    for cluster_id, ids in members.items():
+        rows = [scored[i] for i in ids if i in scored]
+        overall = [r["overall"] for r in rows if r["overall"] is not None]
+        by_area: dict[str, list[float]] = {}
+        for r in rows:
+            for key, score in r["areas"].items():
+                by_area.setdefault(key, []).append(score)
+        means = {key: sum(v) / len(v) for key, v in by_area.items()}
+        weakest = min(means, key=lambda key: (means[key], key)) if means else None
+        out[cluster_id] = {
+            "average": round(sum(overall) / len(overall), 1) if overall else None,
+            "weakest": weakest,
+            "weakest_text": (
+                f"{labels.get(weakest, weakest.replace('_', ' ').title())} "
+                f"({means[weakest]:.1f})"
+                if weakest
+                else None
+            ),
+        }
+    return out
+
+
 def _command(ws: Workspace, clusters, *, name: str, title: str) -> Table:
+    from .oversight_service import _last_delivered_dates
+
     before, after = ws.ssa_years
+    ssa_now = _ssa_now(ws, clusters, after)
+    last_delivered = _last_delivered_dates([c.id for c in clusters])
     rows = []
     invited = attended = absent = schools = 0
     for c in clusters:
@@ -254,11 +295,15 @@ def _command(ws: Workspace, clusters, *, name: str, title: str) -> Table:
         attended += att["attended_total"]
         absent += len(att["drifting"])
         schools += school_count
+        now = ssa_now[c.id]
+        last = last_delivered.get(c.id)
         rows.append(
             {
                 "key": c.id,
                 "cells": _lead(ws, c)
                 + [
+                    cell(c.cluster_leader_name),
+                    cell(c.cluster_leader_phone),
                     cell(school_count),
                     cluster_cell(pct(att["rate"]), c.id, f"?tab=attendance&fy={ws.fy}"),
                     cluster_cell(
@@ -269,6 +314,17 @@ def _command(ws: Workspace, clusters, *, name: str, title: str) -> Table:
                     )
                     if att["drifting"]
                     else cell(0),
+                    cluster_cell(
+                        last.isoformat() if last else None,
+                        c.id,
+                        f"?tab=attendance&fy={ws.fy}",
+                    ),
+                    cluster_cell(now["average"], c.id, f"?tab=ssa&fy={after}"),
+                    cluster_cell(
+                        now["weakest_text"],
+                        c.id,
+                        f"?tab=ssa&fy={after}&area={now['weakest']}",
+                    ),
                     cluster_cell(
                         signed(moved.change),
                         c.id,
@@ -314,8 +370,10 @@ def _command(ws: Workspace, clusters, *, name: str, title: str) -> Table:
             f"{insights.MISSED_IN_A_ROW_ALERT}+ sessions"
         ),
         caption=(
-            "Each cluster with its district and officer, its schools, this "
-            "year's attendance, schools absent three or more sessions in a row, "
+            "Each cluster with its district, officer and cluster leader, its "
+            "schools, this year's attendance, schools absent three or more "
+            "sessions in a row, the last meeting or training delivered, its "
+            f"schools' average SSA and weakest intervention in FY {after}, "
             f"SSA change FY {before} to FY {after}, enrolment growth, learning "
             "change, schools holding a loan, approved change stories, Cluster "
             "Health, Cluster Impact and maturity level. Each figure opens the "
@@ -323,9 +381,16 @@ def _command(ws: Workspace, clusters, *, name: str, title: str) -> Table:
         ),
         columns=LEAD_COLUMNS
         + [
+            # The 2026-09-19 Cluster Oversight columns, kept when Cluster
+            # Management became that page (owner, 2026-10-17).
+            col("Cluster Leader's Name"),
+            col("Cluster Leader's Phone"),
             col("Schools", numeric=True),
             col("Attendance", numeric=True),
             col(f"Absent {insights.MISSED_IN_A_ROW_ALERT}+ Sessions", numeric=True),
+            col("Date of Last Activity"),
+            col("Avg SSA", numeric=True),
+            col("Least Performing Intervention"),
             col("SSA Change", numeric=True),
             col("Enrolment Growth", numeric=True),
             col("Learning Change", numeric=True),
@@ -1205,7 +1270,7 @@ def reports(ws: Workspace, **_) -> Table:
         title=f"Reports, FY {ws.fy}",
         summary=f"{len(rows)} downloads",
         caption=(
-            "Each Cluster Management section as a file: its name, what it "
+            "Each Cluster Oversight section as a file: its name, what it "
             "holds, and the download for the fiscal year shown."
         ),
         columns=[col("Report"), col("What It Holds"), col("Download")],

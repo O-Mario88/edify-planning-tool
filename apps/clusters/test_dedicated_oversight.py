@@ -1,7 +1,6 @@
 from datetime import date
 
-from django.template.loader import render_to_string
-from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.test import TestCase
 
 from apps.accounts.models import StaffSupervisorAssignment
 from apps.activities.models import Activity
@@ -9,7 +8,6 @@ from apps.clusters.models import Cluster
 from apps.clusters.oversight_service import cluster_oversight_table_data
 from apps.clusters.test_cluster_oversight_views import _create_user
 from apps.core.fy import get_operational_fy
-from apps.core.pagination import TABLE_PAGE_SIZE
 from apps.core.rbac import EdifyRole
 from apps.geography.models import Region, District
 
@@ -75,37 +73,6 @@ class DedicatedClusterOversightTest(TestCase):
             [self.meeting.id],
         )
         self.assertEqual(tabs[self.idle.staff_profile.id]["count"], 0)
-
-    def test_ia_sees_pl_and_entire_roster_in_one_hierarchy(self):
-        data = cluster_oversight_table_data(self.ia, fy=self.fy)
-        lead = next(
-            lead for lead in data["leads"] if lead["id"] == self.pl.staff_profile.id
-        )
-        self.assertEqual(
-            {t["id"] for t in lead["cceo_tabs"]},
-            {u.staff_profile.id for u in (self.pl, self.cceo, self.idle)},
-        )
-        self.client.force_login(self.ia)
-        response = self.client.get("/cluster-oversight/", {"fy": self.fy})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'aria-label="Group trainings"')
-        self.assertContains(response, 'aria-label="Cluster meetings"')
-        self.assertNotContains(response, 'aria-label="Cluster filters"')
-
-    def test_the_accountant_reads_clusters_as_names_not_links(self):
-        """Owner, 2026-09-23: the Accountant keeps the cluster reading they had
-        on Team Oversight. They cannot open a cluster record, so each cluster
-        is named without a link they would be refused."""
-        accountant = _create_user(
-            "accountant@dedicated.test", EdifyRole.PROGRAM_ACCOUNTANT
-        )
-        self.client.force_login(accountant)
-        response = self.client.get("/cluster-oversight/", {"fy": self.fy})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Lead cluster")
-        self.assertContains(response, 'aria-label="Cluster meetings"')
-        self.assertNotContains(response, f'href="/clusters/{self.cluster.id}"')
-        self.assertContains(response, 'href="/cluster-oversight/"')
 
     def test_readers_who_can_open_a_cluster_keep_its_link(self):
         self.client.force_login(self.ia)
@@ -220,62 +187,8 @@ class DedicatedClusterOversightTest(TestCase):
             ],
         )
 
-    def test_the_page_reads_the_team_as_people_on_a_chart(self):
-        """Cluster Oversight carries the per-person chart
-        (docs/chart-inventory-and-standard-2026-09-20.md, 21 September), and
-        e2e/chart-standard.spec.js draws it: one series per officer for a
-        Programme Lead, one per Lead for a country reader."""
-        for user, title in (
-            (self.pl, "Cluster activity by person"),
-            (self.ia, "Cluster activity by Programme Lead"),
-        ):
-            with self.subTest(role=user.active_role):
-                self.client.force_login(user)
-                response = self.client.get("/cluster-oversight/", {"fy": self.fy})
-                self.assertContains(response, title)
-                self.assertContains(response, 'class="card edify-data-chart"')
-
 
 #: One page of the platform's tables, and two rows over.
-ROWS = TABLE_PAGE_SIZE + 2
-
-
-class ClusterActivityTablePagesPerOfficerTest(SimpleTestCase):
-    """Each officer's two activity tables turn their own pages.
-
-    Cluster Oversight lists every officer's group trainings and cluster
-    meetings in tabs on one page, so a shared page parameter would move every
-    table at once. Each table is keyed by the officer and the kind of work.
-    """
-
-    def _render(self, query=""):
-        rows = [
-            {
-                "cluster_id": f"c{i}",
-                "cluster_name": f"Cluster {i}",
-                "activity_type": "cluster_training",
-                "planned_date": date(2026, 9, 1),
-            }
-            for i in range(ROWS)
-        ]
-        member = {"id": "O1", "name": "Officer", "trainings": rows, "meetings": []}
-        request = RequestFactory().get("/cluster-oversight/" + query)
-        return render_to_string(
-            "partials/oversight/cluster_member_work.html",
-            {"member": member, "request": request},
-        )
-
-    def test_the_trainings_table_pages_under_its_own_parameter(self):
-        html = self._render()
-        self.assertIn("ct_page-O1=2", html)
-        self.assertNotIn("cm_page-O1=2", html)
-        self.assertIn("Cluster 0<", html)
-        self.assertNotIn(f"Cluster {ROWS - 1}<", html)
-
-    def test_the_second_page_shows_the_remaining_rows(self):
-        html = self._render("?ct_page-O1=2")
-        self.assertIn(f"Cluster {ROWS - 1}<", html)
-        self.assertNotIn("Cluster 0<", html)
 
 
 class ClusterSessionsReadTheWorkPlannedTest(TestCase):
@@ -352,20 +265,6 @@ class ClusterSessionsReadTheWorkPlannedTest(TestCase):
         earlier = cluster_oversight_table_data(self.ia, fy=str(int(self.fy) - 1))
         self.assertEqual(
             (earlier["meetings_planned"], earlier["trainings_planned"]), (0, 0)
-        )
-
-    def test_the_page_opens_on_the_planned_sessions(self):
-        self._session("cluster_meeting")
-        self._session("cluster_training")
-        self.client.force_login(self.ia)
-        response = self.client.get("/cluster-oversight/")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, f"Open plans in FY {self.fy}–{self.next_fy}")
-        self.assertContains(
-            response, 'Group trainings <span class="edify-text-caption">(1)</span>'
-        )
-        self.assertContains(
-            response, 'Cluster meetings <span class="edify-text-caption">(1)</span>'
         )
 
     def test_the_last_activity_date_is_the_last_session_delivered(self):
