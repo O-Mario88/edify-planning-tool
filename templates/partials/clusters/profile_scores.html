@@ -39,7 +39,7 @@ Assessment (apps.clusters.scores).
 {% slot summary %}{% if scorecard.maturity.next %}Next: {{ scorecard.maturity.next.label }}{% else %}Every level reached{% endif %}{% endslot %}
 {% slot caption %}The five maturity levels for {{ cluster.name }} in FY {{ profile_fy }}: what each level asks, what the cluster has, and whether the level is reached. A level is reached only when every level below it is.{% endslot %}
 {% slot empty %}{% include "components/empty_state.html" with message="No maturity levels to show." compact="true" %}{% endslot %}
-{% slot footer %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-score-method>A level is reached only when every level below it is.{% if can_set_weights %} <a href="/cluster-management/scoring" class="edify-primary-text font-semibold hover:underline">Change what each level asks</a>{% endif %}</p>{% endslot %}
+{% slot footer %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-score-method>A level is reached only when every level below it is.{% if can_set_weights %} <a href="/cluster-oversight/scoring" class="edify-primary-text font-semibold hover:underline">Change what each level asks</a>{% endif %}</p>{% endslot %}
 <thead>
 <tr>
 <th scope="col" class="px-3 py-2">Level</th>
@@ -70,7 +70,7 @@ Assessment (apps.clusters.scores).
 {% slot empty %}{% include "components/empty_state.html" with message="No parts to show." compact="true" %}{% endslot %}
 {% slot footer %}
 <div class="px-4 py-3 space-y-2 edify-text-caption text-slate-500" data-score-method>
-<p>The score is the weighted mean of the parts that could be measured; a part with no figure is left out, not counted as zero. It needs at least {{ score_settings.maturity.min_dimensions|floatformat:0 }} parts. {% if score_settings.is_default %}The weights are the starting weights.{% else %}The weights were last set on {{ score_settings.set_at|date:"j M Y" }}.{% endif %}{% if can_set_weights %} <a href="/cluster-management/scoring" class="edify-primary-text font-semibold hover:underline">Change the weights</a>{% endif %}</p>
+<p>The score is the weighted mean of the parts that could be measured; a part with no figure is left out, not counted as zero. It needs at least {{ score_settings.maturity.min_dimensions|floatformat:0 }} parts. {% if score_settings.is_default %}The weights are the starting weights.{% else %}The weights were last set on {{ score_settings.set_at|date:"j M Y" }}.{% endif %}{% if can_set_weights %} <a href="/cluster-oversight/scoring" class="edify-primary-text font-semibold hover:underline">Change the weights</a>{% endif %}</p>
 {% if score_not_collected %}<p data-score-not-collected><strong>Not collected on the platform yet, so not in this index:</strong> {% for item in score_not_collected %}{{ item }}{% if not forloop.last %}; {% endif %}{% endfor %}.</p>{% endif %}
 </div>
 {% endslot %}

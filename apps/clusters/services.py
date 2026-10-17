@@ -19,6 +19,7 @@ from apps.core.activity_types import (
     TRAINING_TYPES,
     VISIT_TYPES,
 )
+import re
 from collections import defaultdict
 
 from django.db import transaction
@@ -1018,6 +1019,57 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         )
     _attach_planning_support(out, schools, principal)
     return out
+
+
+#: The Cluster Profile's schools export (owner, 2026-10-17): "the school ID,
+#: school name, Phone, Primary Contact, and Shipping Address".
+SCHOOL_CONTACT_HEADERS = (
+    "School ID",
+    "School Name",
+    "Phone",
+    "Primary Contact",
+    "Shipping Address",
+)
+
+
+#: A number as staff type a phone: "+256 772 000 111", "(0414) 123-456".
+_PHONE_LIKE = re.compile(r"[+-]?[\d\s()\-]+")
+
+
+def _spreadsheet_text(value):
+    """A typed value a spreadsheet will not run as a formula. A leading
+    ``=``, ``@``, ``+`` or ``-`` is quoted, except on a phone number, which
+    often begins with ``+``. A blank stays blank."""
+    if not isinstance(value, str):
+        return value
+    head = value.lstrip()[:1]
+    if head in ("=", "@", "\t", "\r") or (
+        head in ("+", "-") and not _PHONE_LIKE.fullmatch(value.strip())
+    ):
+        return f"'{value}"
+    return value
+
+
+def cluster_school_contacts(cluster_id: str, principal) -> tuple[Cluster, list]:
+    """The cluster and one row per school the Cluster Page lists, in
+    ``SCHOOL_CONTACT_HEADERS`` order. Raises what `_scoped_cluster` raises
+    for a cluster the reader may not see."""
+    cluster = _scoped_cluster(cluster_id, principal)
+    rows = [
+        [_spreadsheet_text(value) for value in row]
+        for row in operating_schools()
+        .filter(cluster_id=cluster.id)
+        .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
+        .order_by("name")
+        .values_list(
+            "school_id",
+            "name",
+            "school_phone",
+            "primary_contact_name",
+            "shipping_address",
+        )
+    ]
+    return cluster, rows
 
 
 def _attach_planning_support(rows: list[dict], schools, principal) -> None:
