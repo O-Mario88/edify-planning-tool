@@ -176,6 +176,8 @@ class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-capt
 {% include "partials/profiles/_sections.html" %}
 {% if pi.section == "ssa" %}{% include "partials/schools/_ssa_records.html" %}{% endif %}
 {% if pi.section == "activities" %}{% include "partials/schools/_participation.html" %}{% endif %}
+{% elif pi.tab == "core" and core %}
+{% include "partials/schools/_core_school.html" %}
 {% else %}
 {% include "partials/schools/_details.html" %}
 {% endif %}
