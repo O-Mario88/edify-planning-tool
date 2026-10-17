@@ -21,7 +21,7 @@ Owner decisions, 2026-10-17:
 
 | | |
 |---|---|
-| **Core school** | An operating school (`schools.lifecycle_service.active_schools`) with `school_type = "core"`. Champion and Core Graduate schools are other lifecycle types and are not in the Core population. |
+| **Core school** | An operating school (`schools.lifecycle_service.active_schools`) of a Core lifecycle type (`core_schools.lifecycle.CORE_LIFECYCLE_TYPES`): Core, Core Trained, Core Graduate and Champion — the schools Core School Oversight has always listed. The package figures apply where the school has a Core plan (Core); the others read "No package". A Champion-type school reads Champion. |
 | **Who sees which schools** | CCEO: the schools they hold (`scoped_school_queryset`). Programme Lead: their own and their team's (account owner, or a cluster the team holds), as Core School Oversight already scoped them. IA, CD, RVP, RPL, Admin: `scoped_school_queryset` (country or region). Acting leadership: the effective scope of the appointment. Every drilldown re-reads the same scope; nothing is hidden only in the page. |
 | **Financial year** | `apps.core.fy`: 1 October to 30 September. The page's year (`fy`) is the year compared *into*; the previous year is `fy − 1`. Nothing is hard-coded. |
 | **Groups** | CCEO = the school's account owner. District = the school's own district (never inferred from its cluster). Sub-region = the school's own sub-region. Cluster = the school's own cluster. |

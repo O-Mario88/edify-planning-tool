@@ -14,6 +14,7 @@ from datetime import date, datetime, timezone
 
 from django.test import TestCase
 
+from apps.accounts.models import StaffSchoolAssignment
 from apps.activities.models import Activity, ClusterActivityAttendance
 from apps.clusters.models import Cluster
 from apps.clusters.test_cluster_oversight_views import _create_user
@@ -61,7 +62,7 @@ class _CoreCase(TestCase):
         self._plan(self.single, visits=1, trainings=0)
 
     def _school(self, code, owner, district) -> School:
-        return School.objects.create(
+        school = School.objects.create(
             school_id=code,
             name=f"Core school {code}",
             school_type="core",
@@ -70,6 +71,11 @@ class _CoreCase(TestCase):
             cluster_id=str(self.cluster.id),
             account_owner_id=owner.staff_profile.id,
         )
+        # A CCEO's portfolio is their assignments, as on the live platform.
+        StaffSchoolAssignment.objects.get_or_create(
+            staff=owner.staff_profile, school_id=school.id
+        )
+        return school
 
     def _ssa(self, school, fy, scores):
         record = SsaRecord.objects.create(

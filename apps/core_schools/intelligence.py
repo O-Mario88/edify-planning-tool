@@ -84,6 +84,8 @@ class CoreSchoolPerformance:
     id: str
     code: str
     name: str
+    school_type: str = "core"
+    type_label: str = "Core"
     district: str = ""
     sub_region: str = ""
     cluster_id: str = ""
@@ -193,12 +195,13 @@ class CoreSchoolPerformance:
 
 def scoped_core_schools(principal):
     """The operating Core schools ``principal`` may analyse, as a queryset:
-    the scope Core School Oversight has always read, for every role that
-    opens it."""
+    Core, Core Trained, Core Graduate and Champion (the lifecycle Core School
+    Oversight has always listed), in the scope it has always read."""
+    from apps.core_schools.lifecycle import CORE_LIFECYCLE_TYPES
     from apps.core_schools.oversight_service import scoped_core_queryset
     from apps.schools.lifecycle_service import active_schools
 
-    base = active_schools().filter(school_type="core")
+    base = active_schools().filter(school_type__in=CORE_LIFECYCLE_TYPES)
     return scoped_core_queryset(principal, base).select_related("district")
 
 
@@ -226,6 +229,8 @@ def _identity(school) -> CoreSchoolPerformance:
         id=school.id,
         code=school.school_id or "",
         name=school.name,
+        school_type=school.school_type or "",
+        type_label=school.get_school_type_display() if school.school_type else "",
         district=getattr(school.district, "name", "") or "",
         cluster_id=school.cluster_id or "",
         owner_id=school.account_owner_id or "",
@@ -450,11 +455,17 @@ def _read_champion(rows, schools) -> None:
         profile.school_id: metrics
         for profile, _school, metrics in ChampionEligibilityService.scan(list(id_of))
     }
+    for row in rows.values():
+        if row.school_type == "champion":
+            row.champion = CHAMPION
     for code, school_id in id_of.items():
         row = rows[school_id]
         metrics = judged.get(code)
         row.champion_score = metrics["score"] if metrics else None
-        if stored.get(code) in ("Champion", "Approved Champion"):
+        if row.school_type == "champion" or stored.get(code) in (
+            "Champion",
+            "Approved Champion",
+        ):
             row.champion = CHAMPION
         elif not row.has_plan or not row.has_current_ssa:
             row.champion = INSUFFICIENT
