@@ -723,6 +723,11 @@ urlpatterns = [
         name="cluster_profile",
     ),
     path(
+        "clusters/<str:cluster_id>/schools/export",
+        cluster_views.cluster_schools_export_view,
+        name="cluster_schools_export",
+    ),
+    path(
         "partials/clusters/<str:cluster_id>/schools",
         cluster_views.cluster_schools_partial,
         name="cluster_schools_partial",

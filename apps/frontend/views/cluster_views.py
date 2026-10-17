@@ -1230,6 +1230,10 @@ def _cluster_page_base(request, cluster_id):
         # Ticked schools go to a project too (owner, 2026-10-06), through
         # the directory's bulk Add to project and its gate.
         "can_assign_project": has_permission(request.user, "project.assignSchool"),
+        # The profile's Export schools: the gate its endpoint enforces.
+        "can_export_schools": RolePermissionService.can_export(
+            request.user, f"/clusters/{cluster_id}/schools/export"
+        ),
         # Responsible (Staff or Partner), Visit and Training / Cluster columns
         # (owner, 2026-09-23), from the rows cluster_schools() already carries.
         "support_rule": support_visibility_enabled(request.user),
@@ -1393,6 +1397,43 @@ def cluster_profile_view(request, cluster_id):
     shell["at"]["ssa"] = "ssa"
     context["rail"] = rail_for(shell, profile_intelligence.build(scope, shell["fy"]))
     return render(request, "pages/clusters/profile.html", context)
+
+
+@require_page_permission("cluster_detail")
+@require_export_permission
+def cluster_schools_export_view(request, cluster_id):
+    """The Cluster Profile's Export schools (owner, 2026-10-17): each school
+    the Cluster Page lists, with its ID, name, phone, primary contact and
+    shipping address, as one Excel file named after the cluster."""
+    import re
+
+    from django.http import Http404
+
+    from apps.clusters.services import (
+        SCHOOL_CONTACT_HEADERS,
+        cluster_school_contacts,
+    )
+    from apps.core.excel import table_download
+    from apps.core.exceptions import NotFoundError
+
+    try:
+        cluster, rows = cluster_school_contacts(cluster_id, request.user)
+    except NotFoundError as exc:
+        raise Http404(str(exc)) from exc
+    # A cluster name is typed by staff; only what is safe in a header stays.
+    stem = re.sub(r"[^\w\- ]", "", cluster.name, flags=re.ASCII).strip() or "Cluster"
+    return table_download(
+        request,
+        f"{stem} schools",
+        [
+            {
+                "title": "Schools",
+                "headers": list(SCHOOL_CONTACT_HEADERS),
+                "rows": rows,
+                "widths": [14, 40, 18, 28, 48],
+            }
+        ],
+    )
 
 
 def _catchment_context(user, cluster) -> dict:
