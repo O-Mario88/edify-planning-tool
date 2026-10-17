@@ -28,8 +28,14 @@
   --edify-row-overdue-ink: #ff6b6b;
 }
 
+/* Completed rows are tinted green too (owner, 2026-10-17: "it is not
+   changing the color of the completed activities ... to green"). The dark
+   green ink alone read as the page's own near-black; the theme's success
+   tint behind it makes the row green at a glance. --edify-table-row-tint is
+   the one hook the plain table surface reads (consistency.css). */
 tr[data-done] {
   --edify-row-ink: var(--edify-row-done-ink);
+  --edify-table-row-tint: var(--edify-success-light);
 }
 tr[data-overdue] {
   --edify-row-ink: var(--edify-row-overdue-ink);

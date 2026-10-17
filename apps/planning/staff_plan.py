@@ -69,11 +69,16 @@ def own_plan_q(staff_ids) -> Q:
 
 
 def not_yet_delivered_q() -> Q:
-    """Work on a plan that has not been carried out or sent back."""
-    from apps.activities.services import RETURNED_STATUSES
-    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+    """Work on a plan that has not been carried out or sent back.
 
-    return ~Q(status__in=COMPLETED_WORK_STATUSES) & ~Q(status__in=RETURNED_STATUSES)
+    Work handed in and waiting for its approval has been carried out (owner,
+    2026-10-17: "All completed activity should show status complete"): My
+    Plan called it "past their date and not yet completed", while the
+    Dashboard list that line points to (past_due_service) left it out."""
+    from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
+    from apps.activities.services import RETURNED_STATUSES
+
+    return ~Q(status__in=OFFICER_COMPLETED_STATUSES) & ~Q(status__in=RETURNED_STATUSES)
 
 
 def past_due_q(today) -> Q:

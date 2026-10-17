@@ -10344,7 +10344,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6718,
+      "bytes": 7177,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10352,7 +10352,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 10,
+      "htmx_controls": 11,
       "kind": "application-partial",
       "name": "Activity Row",
       "purpose": "Reusable activity row interface primitive",
@@ -10392,7 +10392,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 13561,
+      "bytes": 13834,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -16078,7 +16078,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3539,
+      "bytes": 3762,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/ssa-entry"

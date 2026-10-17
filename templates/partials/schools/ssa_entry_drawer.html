@@ -40,6 +40,9 @@ class="space-y-4 text-[12px] text-slate-600"
 data-ssa-entry-form
 >
 {% csrf_token %}
+{% comment %}Opened from a visit awaiting its scores on My Plan (owner,
+2026-10-17): the scores are keyed on that visit.{% endcomment %}
+{% if visit %}<input type="hidden" name="activity" value="{{ visit.id }}">{% endif %}
 
 {% if form.non_field_errors %}
 <div role="alert" class="edify-note" data-tone="danger">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
