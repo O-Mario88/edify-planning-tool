@@ -15440,6 +15440,29 @@
       ]
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 9132,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/<str:school_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Core School",
+      "purpose": "Reusable  core school interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/schools/_core_school.html",
+      "variants": [
+        "{{ a.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -122637,7 +122660,7 @@
     "activity_states": 24,
     "all_routes": 1413,
     "api_routes": 364,
-    "component_templates": 697,
+    "component_templates": 698,
     "full_pages": 271,
     "mobile_contract_pass": 608,
     "nonvisual_actions": 288,

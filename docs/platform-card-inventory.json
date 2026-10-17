@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 659,
-  "templates": 251,
-  "distinct_titles": 629,
+  "titled_cards": 663,
+  "templates": 252,
+  "distinct_titles": 633,
   "with_card_key": 13,
   "untitled_surfaces": 596,
   "untitled_chrome": 154,
@@ -6874,6 +6874,42 @@
      1
     ]
    ]
+  },
+  {
+   "template": "templates/partials/schools/_core_school.html",
+   "line": 60,
+   "title": "Package and Support",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "card p-4 space-y-1",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/_core_school.html",
+   "line": 68,
+   "title": "Participation",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "card p-4 space-y-1",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/_core_school.html",
+   "line": 73,
+   "title": "Outcomes",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "card p-4 space-y-1",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/_core_school.html",
+   "line": 80,
+   "title": "Champion Readiness:",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "card p-4 space-y-2",
+   "branch_path": []
   },
   {
    "template": "templates/partials/schools/_details.html",
