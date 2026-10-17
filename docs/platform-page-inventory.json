@@ -36841,7 +36841,7 @@
       ],
       "route": "/core-schools-oversight/",
       "route_name": "core_schools_oversight",
-      "search": "page search",
+      "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [],
       "shared_layout": [

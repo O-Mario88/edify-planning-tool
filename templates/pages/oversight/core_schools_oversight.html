@@ -40,8 +40,6 @@ rests on, and a dash is a figure the records cannot give, never a zero.
       <select name="readiness" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700"><option value="">Any</option>{% for status in readiness_filters %}<option value="{{ status }}"{% if status == selected.readiness %} selected{% endif %}>{{ status }}</option>{% endfor %}</select></label>
     <label class="block"><span class="edify-filter-label">Sort</span>
       <select name="sort" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for key, label in sorts.items %}<option value="{{ key }}"{% if key == selected.sort %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-    <label class="block"><span class="edify-filter-label">School</span>
-      <input type="search" name="q" value="{{ selected.q }}" placeholder="Name or School ID" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption"></label>
     <button type="submit" class="edify-action-button primary h-9">Apply</button>
   {% endfilter_bar %}
 
@@ -86,6 +84,7 @@ rests on, and a dash is a figure the records cannot give, never a zero.
     {% if rows %}
     <thead><tr>
       <th scope="col" class="px-3 py-2">School</th>
+      <th scope="col" class="px-3 py-2">School ID</th>
       <th scope="col" class="px-3 py-2">Type</th>
       <th scope="col" class="px-3 py-2">District</th>
       <th scope="col" class="px-3 py-2">Cluster</th>
@@ -110,6 +109,7 @@ rests on, and a dash is a figure the records cannot give, never a zero.
       {% for r in pager.rows %}
       <tr data-core-school-row="{{ r.code }}">
         <th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link r.name r.id %}</th>
+        <td class="px-3 py-2 tabular-nums" data-label="School ID">{{ r.code|default:"—" }}</td>
         <td class="px-3 py-2" data-label="Type">{{ r.type_label }}</td>
         <td class="px-3 py-2" data-label="District">{{ r.district|default:"—" }}</td>
         <td class="px-3 py-2" data-label="Cluster">{% if r.cluster_id and r.cluster %}<a href="/clusters/{{ r.cluster_id }}/profile" class="hover:underline">{{ r.cluster }}</a>{% else %}—{% endif %}</td>

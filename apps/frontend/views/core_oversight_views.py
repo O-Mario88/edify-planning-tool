@@ -224,5 +224,13 @@ def core_schools_oversight_view(request):
             },
             "query": query.urlencode(),
             "can_export": can_export,
+            # The one search box is the top bar's, bound to the filters.
+            "topbar_search": {
+                "placeholder": "Search Core schools…",
+                "label": "Search Core schools by name or School ID",
+                "name": "q",
+                "value": request.GET.get("q", ""),
+                "attach_to": "core-oversight-filters",
+            },
         },
     )
