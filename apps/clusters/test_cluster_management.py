@@ -1,4 +1,9 @@
-"""Cluster Management: scores, the interventions ledger, the workspace.
+"""Cluster Oversight: scores, the interventions ledger, the workspace.
+
+Cluster Management became Cluster Oversight's analysis on 2026-10-17 (owner:
+"merge Cluster Management with Cluster Oversight"; "Anything to do with
+planning goes on MY Plan or Planning oversight Core and Cluster oversight get
+analysis"). The sections below are its tabs.
 
 Owner brief, 2026-10-08, third round ("build these"): Cluster Health and
 Cluster Impact with weights the Country Director and Impact Assessment set, a
@@ -242,7 +247,7 @@ class ScoresTest(_Scored):
         self.assertIn("Cluster Health:", body)
         self.assertEqual(body.count("data-score-part="), 6)
         self.assertIn("kept, FY", body)
-        self.assertIn('href="/cluster-management/scoring"', body)
+        self.assertIn('href="/cluster-oversight/scoring"', body)
 
         teacher = self._page(tab="scores", part="teacher").content.decode()
         self.assertIn("Teacher Impact: Not Enough Data", teacher)
@@ -347,7 +352,7 @@ class WorkspaceTest(_Scored):
         self.client.force_login(self.cd)
 
     def _section(self, key="", **query):
-        response = self.client.get(f"/cluster-management/{key}", query)
+        response = self.client.get(f"/cluster-oversight/{key}", query)
         self.assertEqual(response.status_code, 200, key)
         return response
 
@@ -376,36 +381,34 @@ class WorkspaceTest(_Scored):
             ],
         )
         body = self._section().content.decode()
-        self.assertIn('data-cluster-management="command"', body)
+        self.assertIn('data-cluster-oversight="command"', body)
         for section in workspace.SECTIONS:
             if section.key in ("my", "directory"):
                 continue
-            self.assertIn(
-                f'href="/cluster-management/{section.key}?fy={self.fy}"', body
-            )
+            self.assertIn(f'href="/cluster-oversight/{section.key}?fy={self.fy}"', body)
         # The directory already has its page: the tab is a door to it.
         self.assertIn('<a class="oversight-entity-tabs__link" href="/clusters"', body)
         # My Clusters is for someone who holds one.
-        self.assertNotIn("/cluster-management/my?", body)
+        self.assertNotIn("/cluster-oversight/my?", body)
 
     def test_every_section_opens_and_downloads(self):
         for section in workspace.SECTIONS:
             if section.url:
-                response = self.client.get(f"/cluster-management/{section.key}")
+                response = self.client.get(f"/cluster-oversight/{section.key}")
                 self.assertRedirects(
                     response, section.url, fetch_redirect_response=False
                 )
                 continue
             with self.subTest(section=section.key):
                 body = self._section(section.key).content.decode()
-                self.assertIn(f'data-cluster-management="{section.key}"', body)
+                self.assertIn(f'data-cluster-oversight="{section.key}"', body)
                 download = self.client.get(
-                    f"/cluster-management/{section.key}", {"format": "csv"}
+                    f"/cluster-oversight/{section.key}", {"format": "csv"}
                 )
                 self.assertEqual(download.status_code, 200)
                 self.assertEqual(download["Content-Type"], "text/csv; charset=utf-8")
                 self.assertIn(
-                    f"cluster-management-{section.key}-fy{self.fy}.csv",
+                    f"cluster-oversight-{section.key}-fy{self.fy}.csv",
                     download["Content-Disposition"],
                 )
 
@@ -440,8 +443,8 @@ class WorkspaceTest(_Scored):
     def test_the_attendance_section_names_the_absent_schools(self):
         body = self._section("attendance").content.decode()
 
-        self.assertIn(f'data-cluster-management-row="{self.falls.id}"', body)
-        self.assertNotIn(f'data-cluster-management-row="{self.rises.id}"', body)
+        self.assertIn(f'data-cluster-oversight-row="{self.falls.id}"', body)
+        self.assertNotIn(f'data-cluster-oversight-row="{self.rises.id}"', body)
         self.assertIn(f'href="/schools/{self.falls.id}"', body)
         for heading in ("School ID", "School Name", "Consecutive Misses"):
             self.assertIn(f">{heading}</th>", body)
@@ -477,10 +480,14 @@ class WorkspaceTest(_Scored):
         self.assertIn("300 to 350 learners (+16.7%) across 2 schools compared", body)
 
     def test_the_download_holds_the_rows_the_section_shows(self):
-        response = self.client.get("/cluster-management/command", {"format": "csv"})
+        response = self.client.get("/cluster-oversight/command", {"format": "csv"})
 
         lines = response.content.decode().splitlines()
-        self.assertTrue(lines[0].startswith("Cluster,District,CCEO,Schools,Attendance"))
+        self.assertTrue(
+            lines[0].startswith(
+                "Cluster,District,CCEO,Cluster Leader's Name,Cluster Leader's Phone,Schools,Attendance"
+            )
+        )
         self.assertIn("Tabs cluster", lines[1])
         self.assertIn("75 · High", lines[1])
 
@@ -498,10 +505,10 @@ class WorkspaceTest(_Scored):
 
         self.client.force_login(mine)
         body = self._section("my").content.decode()
-        self.assertIn(f'data-cluster-management-row="{self.cluster.id}"', body)
-        self.assertIn(f'href="/cluster-management/my?fy={self.fy}"', body)
+        self.assertIn(f'data-cluster-oversight-row="{self.cluster.id}"', body)
+        self.assertIn(f'href="/cluster-oversight/my?fy={self.fy}"', body)
 
-    def test_one_sidebar_entry_and_only_for_the_roles_that_read_clusters(self):
+    def test_one_sidebar_entry_for_every_role_that_reads_clusters(self):
         from apps.core.navigation import build_sidebar_for_user
 
         def entries(user):
@@ -509,16 +516,150 @@ class WorkspaceTest(_Scored):
                 item["label"]
                 for section in build_sidebar_for_user(user, "/dashboard")
                 for item in section["items"]
-                if "Cluster Management" in item["label"]
+                if "Cluster Oversight" in item["label"]
+                or "Cluster Management" in item["label"]
             ]
 
-        self.assertEqual(entries(self.cd), ["Cluster Management"])
+        self.assertEqual(entries(self.cd), ["Cluster Oversight"])
         cceo = _create_user("nav@workspace.test", EdifyRole.CCEO)
-        self.assertEqual(entries(cceo), ["Cluster Management"])
+        self.assertEqual(entries(cceo), ["Cluster Oversight"])
+        # The Accountant reads the whole page (owner, 2026-10-17).
         accountant = _create_user("books@workspace.test", EdifyRole.PROGRAM_ACCOUNTANT)
-        self.assertEqual(entries(accountant), [])
+        self.assertEqual(entries(accountant), ["Cluster Oversight"])
         self.client.force_login(accountant)
-        self.assertEqual(self.client.get("/cluster-management/").status_code, 302)
+        self.assertEqual(self.client.get("/cluster-oversight/").status_code, 200)
+        hr = _create_user("hr@workspace.test", EdifyRole.HUMAN_RESOURCES)
+        self.assertEqual(entries(hr), [])
+        self.client.force_login(hr)
+        self.assertEqual(self.client.get("/cluster-oversight/").status_code, 302)
+
+
+class MergedOversightTest(_Scored):
+    """Cluster Management folded into Cluster Oversight (owner, 2026-10-17)."""
+
+    def test_old_cluster_management_links_open_the_same_section_here(self):
+        self.client.force_login(self.cd)
+
+        for old, new in (
+            ("/cluster-management/", "/cluster-oversight/"),
+            ("/cluster-management/ssa?fy=2026&area=leadership", None),
+            ("/cluster-management/scoring", "/cluster-oversight/scoring"),
+        ):
+            with self.subTest(old=old):
+                response = self.client.get(old)
+                expected = new or old.replace("cluster-management", "cluster-oversight")
+                self.assertRedirects(response, expected, fetch_redirect_response=False)
+
+    def test_a_cceo_reads_only_their_own_clusters(self):
+        mine = _create_user("own@merged.test", EdifyRole.CCEO)
+        other = _create_user("another@merged.test", EdifyRole.CCEO)
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=mine.staff_profile.id
+        )
+        theirs = Cluster.objects.create(
+            name="Not yours cluster",
+            region=self.region,
+            district=self.district,
+            responsible_staff_id=other.staff_profile.id,
+        )
+
+        self.client.force_login(mine)
+        page = self.client.get("/cluster-oversight/command").content.decode()
+        download = self.client.get("/cluster-oversight/command", {"format": "csv"})
+
+        self.assertIn(f'data-cluster-oversight-row="{self.cluster.id}"', page)
+        self.assertNotIn(f'data-cluster-oversight-row="{theirs.id}"', page)
+        # A CCEO's role holds no data export, as on Cluster Management before.
+        self.assertNotIn("data-cluster-oversight-download", page)
+        self.assertNotEqual(download.get("Content-Type"), "text/csv; charset=utf-8")
+
+    def test_the_page_holds_analysis_not_planning(self):
+        self.client.force_login(self.cd)
+
+        body = self.client.get("/cluster-oversight/").content.decode()
+
+        self.assertIn('data-cluster-oversight="command"', body)
+        self.assertNotIn("Cluster Meetings Planned", body)
+        self.assertNotIn("Group Trainings Planned", body)
+        self.assertNotIn("/cluster-oversight/export", body)
+
+    def test_the_old_plans_export_sends_planners_to_planning_oversight(self):
+        self.client.force_login(self.cd)
+
+        for path in ("/cluster-oversight/export", "/cluster-oversight/export-drawer"):
+            with self.subTest(path=path):
+                self.assertRedirects(
+                    self.client.get(path),
+                    "/team-planning-oversight/",
+                    fetch_redirect_response=False,
+                )
+
+    def test_the_command_center_carries_the_old_oversight_columns(self):
+        """Owner, 2026-10-17: keep the 2026-09-19 Cluster Oversight columns on
+        the merged page. The SSA figures read the latest confirmed record of
+        each member school in the year the page compares to, as the profile's
+        SSA tab does."""
+        Cluster.objects.filter(id=self.cluster.id).update(
+            cluster_leader_name="Grace Akello", cluster_leader_phone="0772 111 222"
+        )
+        record = SsaRecord.objects.get(school=self.falls, fy=self.fy)
+        SsaScore.objects.filter(ssa_record=record, intervention="leadership").update(
+            score=2.0
+        )
+
+        ws = workspace.load(self.cd, fy=self.fy, today=self.today)
+        table = workspace.build(ws, "command")
+        cells = dict(zip([c["label"] for c in table.columns], table.rows[0]["cells"]))
+
+        self.assertEqual(cells["Cluster Leader's Name"]["text"], "Grace Akello")
+        self.assertEqual(cells["Cluster Leader's Phone"]["text"], "0772 111 222")
+        self.assertEqual(cells["Avg SSA"]["text"], "5.5")
+        self.assertEqual(cells["Avg SSA"]["query"], f"?tab=ssa&fy={self.fy}")
+        self.assertEqual(
+            cells["Least Performing Intervention"]["text"], "Leadership (4.5)"
+        )
+        self.assertEqual(
+            cells["Date of Last Activity"]["text"],
+            date(int(self.fy) - 1, 11, 2).isoformat(),
+        )
+
+    def test_a_cluster_with_no_record_shows_dashes_not_zeros(self):
+        empty = Cluster.objects.create(
+            name="Empty cluster", region=self.region, district=self.district
+        )
+
+        ws = workspace.load(self.cd, fy=self.fy, today=self.today)
+        table = workspace.build(ws, "command")
+        row = next(r for r in table.rows if r["key"] == empty.id)
+        cells = dict(zip([c["label"] for c in table.columns], row["cells"]))
+
+        for label in (
+            "Cluster Leader's Name",
+            "Cluster Leader's Phone",
+            "Avg SSA",
+            "Least Performing Intervention",
+            "Date of Last Activity",
+        ):
+            with self.subTest(label=label):
+                self.assertEqual(cells[label]["text"], "—")
+
+    def test_the_directory_tab_is_offered_only_to_who_can_open_it(self):
+        accountant = _create_user("door@merged.test", EdifyRole.PROGRAM_ACCOUNTANT)
+        directory = '<a class="oversight-entity-tabs__link" href="/clusters"'
+
+        self.client.force_login(self.cd)
+        self.assertIn(
+            directory, self.client.get("/cluster-oversight/").content.decode()
+        )
+        self.client.force_login(accountant)
+        self.assertNotIn(
+            directory, self.client.get("/cluster-oversight/").content.decode()
+        )
+
+    def test_the_profile_links_to_the_scoring_page_here(self):
+        response = self._page(tab="scores")
+
+        self.assertNotIn("/cluster-management/", response.content.decode())
 
 
 class ScoringPageTest(_Scored):
@@ -535,11 +676,11 @@ class ScoringPageTest(_Scored):
             }
         )
         data.update(changes)
-        return self.client.post("/cluster-management/scoring", data)
+        return self.client.post("/cluster-oversight/scoring", data)
 
     def test_the_country_director_sets_the_weights(self):
         self.client.force_login(self.cd)
-        page = self.client.get("/cluster-management/scoring")
+        page = self.client.get("/cluster-oversight/scoring")
         self.assertEqual(page.status_code, 200)
         body = page.content.decode()
         self.assertIn("These are the starting weights", body)
@@ -548,12 +689,12 @@ class ScoringPageTest(_Scored):
 
         response = self._post(impact__ssa="60", note="SSA first")
 
-        self.assertRedirects(response, "/cluster-management/scoring")
+        self.assertRedirects(response, "/cluster-oversight/scoring")
         saved = ClusterScoreSetting.objects.get()
         self.assertEqual(saved.impact_weights["ssa"], 60.0)
         self.assertEqual(saved.set_by, self.cd.id)
         self.assertEqual(saved.note, "SSA first")
-        after = self.client.get("/cluster-management/scoring").content.decode()
+        after = self.client.get("/cluster-oversight/scoring").content.decode()
         self.assertIn('name="impact__ssa" value="60"', after)
         self.assertIn("Last set on", after)
 
@@ -561,8 +702,6 @@ class ScoringPageTest(_Scored):
         cceo = _create_user("officer@scoring.test", EdifyRole.CCEO)
         self.client.force_login(cceo)
 
-        self.assertEqual(
-            self.client.get("/cluster-management/scoring").status_code, 302
-        )
+        self.assertEqual(self.client.get("/cluster-oversight/scoring").status_code, 302)
         self.assertEqual(self._post(impact__ssa="90").status_code, 403)
         self.assertEqual(ClusterScoreSetting.objects.count(), 0)

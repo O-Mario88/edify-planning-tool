@@ -334,10 +334,10 @@ def profile_context(
         context["group_url"] = _PART_URL.get(tab, "")
         context["may_open_group"] = tab != "staff" or may_open_staff
     elif section == "clusters":
-        # Cluster Management's reads, for the clusters of this scope.
+        # Cluster Oversight's reads, for the clusters of this scope.
         context["cluster_totals"] = engine.cluster_management(profile)
-        context["may_open_cluster_management"] = RolePermissionService.can_view_page(
-            request.user, "cluster_management"
+        context["may_open_cluster_oversight"] = RolePermissionService.can_view_page(
+            request.user, "cluster_oversight"
         )
     elif section == "ssa":
         from apps.ssa.services import get_ssa_progress_by_fy

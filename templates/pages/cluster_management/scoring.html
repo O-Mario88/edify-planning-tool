@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load components %}
 
-{% block title %}Scoring · Cluster Management · Edify{% endblock %}
+{% block title %}Scoring · Cluster Oversight · Edify{% endblock %}
 
 {% comment %}
 What the cluster scores weigh (owner brief, 2026-10-08: "CD/IA should be able
@@ -18,13 +18,13 @@ cluster's scores use it from then on.
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1100px] mx-auto" data-cluster-scoring>
-  {% include "partials/_back_link.html" with back_href="/cluster-management/" back_label="Cluster Management" %}
+  {% include "partials/_back_link.html" with back_href="/cluster-oversight/" back_label="Cluster Oversight" %}
 
-  {% page_header eyebrow="Cluster Management" title="Scoring" %}
+  {% page_header eyebrow="Cluster Oversight" title="Scoring" %}
     {% slot description %}What each cluster score weighs and what each maturity level asks. {% if settings.is_default %}These are the starting weights; nobody has changed them.{% else %}Last set on {{ settings.set_at|date:"j M Y" }}{% if set_by_name %} by {{ set_by_name }}{% endif %}.{% endif %}{% endslot %}
   {% endpage_header %}
 
-  <form method="post" action="/cluster-management/scoring" class="space-y-4" data-scoring-form>
+  <form method="post" action="/cluster-oversight/scoring" class="space-y-4" data-scoring-form>
     {% csrf_token %}
     {% for group in groups %}
     <section class="card p-0 overflow-hidden" aria-labelledby="scoring-{{ group.key }}-title">
@@ -95,7 +95,7 @@ cluster's scores use it from then on.
       </label>
       <div class="flex flex-wrap items-center gap-2">
         <button type="submit" class="edify-action-button primary h-9" data-save-weights>Save Weights</button>
-        <a href="/cluster-management/" class="edify-action-button secondary h-9">Cancel</a>
+        <a href="/cluster-oversight/" class="edify-action-button secondary h-9">Cancel</a>
       </div>
     </div>
   </form>

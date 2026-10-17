@@ -38,7 +38,8 @@ PL_PAGES = (
     # & Completion tab and the page sends them there (owner, 2026-10-14), so
     # the gate is read at the drawer the register opens.
     "/pl/review-queue/x/drawer",
-    "/cluster-oversight/",
+    # Cluster Oversight is not here: a CCEO reads it for their own clusters
+    # (owner, 2026-10-17).
     "/core-schools-oversight/",
     "/staff-activity/follow-ups",
     "/analytics/program-lead",

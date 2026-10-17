@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 663,
-  "templates": 253,
-  "distinct_titles": 633,
+  "titled_cards": 661,
+  "templates": 252,
+  "distinct_titles": 631,
   "with_card_key": 13,
-  "untitled_surfaces": 600,
-  "untitled_chrome": 153,
-  "untitled_nested": 194,
+  "untitled_surfaces": 597,
+  "untitled_chrome": 152,
+  "untitled_nested": 192,
   "untitled_headless": 253,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 22,
@@ -6266,38 +6266,6 @@
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
    "branch_path": []
-  },
-  {
-   "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 47,
-   "title": "'s Clusters",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden",
-   "branch_path": [
-    [
-     1,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 120,
-   "title": "'s Clusters clusters ( member schools)",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     6,
-     0
-    ]
-   ]
   },
   {
    "template": "templates/partials/oversight/core_schools_oversight_workspace.html",

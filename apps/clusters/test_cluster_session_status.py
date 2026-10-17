@@ -24,23 +24,6 @@ from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
-COLUMNS = (
-    "Cluster Name",
-    "District",
-    "Planned Date",
-    "Executor",
-    "Purpose (Meeting Topic)",
-    "SSA Intervention",
-    "Participants",
-    "Cost",
-    # Every planned activities table's completion column (owner, 2026-09-26).
-    # "Evidence" sat beside it until the upload was switched off (UPLOAD-OFF,
-    # owner 2026-10-13).
-    "Salesforce ID",
-    "Status",
-    "Actions",
-)
-
 
 def _sessions(data) -> dict:
     """Every session row on the page, by activity id, whichever tab holds it."""
@@ -99,12 +82,6 @@ class ClusterSessionStatusTest(TestCase):
             )
         return session
 
-    def _page(self, user):
-        self.client.force_login(user)
-        response = self.client.get("/cluster-oversight/", {"fy": self.fy})
-        self.assertEqual(response.status_code, 200)
-        return response
-
     def test_status_reads_where_the_work_stands(self):
         awaiting_pl = self._session("cluster_meeting", "submitted_to_pl", self.cceo)
         verified = self._session(
@@ -136,69 +113,10 @@ class ClusterSessionStatusTest(TestCase):
                 row = rows[activity_id]
                 self.assertEqual((row.session_status, row.session_tone), (label, tone))
 
-    def test_both_tables_carry_the_ten_columns(self):
-        self._session("cluster_meeting", "scheduled", self.cceo)
-        self._session("cluster_training", "scheduled", self.cceo)
-        html = self._page(self.pl).content.decode()
-        table = html[html.index("data-cluster-sessions") :]
-        for column in COLUMNS:
-            with self.subTest(column=column):
-                self.assertIn(f">{column}</th>", table)
-        self.assertEqual(html.count("data-cluster-sessions"), 4)
-
-    def test_the_lead_verifies_a_cceo_completion_and_it_reads_complete(self):
-        session = self._session(
-            "cluster_training", "submitted_to_pl", self.cceo, complete=True
-        )
-        # Verify opens the completion with its training ID; the decision is
-        # posted from that drawer, never from the row (owner, 2026-10-12). The
-        # uploaded form it showed is switched off (UPLOAD-OFF, 2026-10-13).
-        verify = f'hx-get="/pl/review-queue/{session.id}/drawer"'
-        confirm = f'action="/pl/review-queue/{session.id}/confirm"'
-
-        response = self._page(self.pl)
-        self.assertContains(
-            response,
-            '<span class="cluster-session-status" data-status-tone="pending">'
-            "PL Pending</span>",
-        )
-        self.assertContains(response, verify)
-        self.assertNotContains(response, confirm)
-        drawer = self.client.get(
-            f"/pl/review-queue/{session.id}/drawer", headers={"HX-Request": "true"}
-        )
-        self.assertContains(drawer, confirm)
-        self.assertNotContains(drawer, "attendance.pdf")
-        self.assertContains(drawer, "Training ID")
-        self.assertContains(drawer, session.salesforce_activity_id)
-
-        back = f"/cluster-oversight/?fy={self.fy}"
-        response = self.client.post(
-            f"/pl/review-queue/{session.id}/confirm", {"next": back}
-        )
-        self.assertRedirects(response, back, fetch_redirect_response=False)
-        session.refresh_from_db()
-        self.assertEqual(session.status, "ia_verified")
-
-        response = self._page(self.pl)
-        self.assertContains(
-            response,
-            '<span class="cluster-session-status" data-status-tone="complete">'
-            "Complete</span>",
-        )
-        self.assertNotContains(response, confirm)
-
     def test_the_lead_verifies_their_own_session_not_ia(self):
         """Owner, 2026-10-14: "IA does not verify CCEO and PL work. it is the
         PL to verify everything"; a lead's own: "The PL verifies it"."""
         own = self._session("cluster_meeting", "awaiting_ia_verification", self.pl)
-        cceo_work = self._session("cluster_meeting", "submitted_to_pl", self.cceo)
-
-        response = self._page(self.ia)
-        self.assertNotContains(response, f"/ia/verification/{own.id}/")
-        self.assertNotContains(response, f"/ia/verification/{cceo_work.id}/")
-        self.assertContains(response, "PL Pending")
-        self.assertNotContains(response, "IA Pending")
 
         rows = _sessions(cluster_oversight_table_data(self.pl, fy=self.fy))
         self.assertEqual(rows[own.id].session_status, "PL Pending")
