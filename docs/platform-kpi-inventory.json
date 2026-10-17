@@ -9,12 +9,12 @@
   "labels_in_several_modules": 0,
   "breakdown_rows": 562,
   "registered_metrics": 577,
-  "rendered_summaries": 162,
-  "context_summaries": 162,
+  "rendered_summaries": 163,
+  "context_summaries": 163,
   "headline_summaries": 0,
   "unclassified_summaries": 0,
   "legacy_summary_surfaces": 0,
-  "shared_component_surfaces": 162,
+  "shared_component_surfaces": 163,
   "registered_payload_groups": 34,
   "source_items_in_registered_payloads": 192,
   "payload_groups_over_six": 12,
@@ -17071,6 +17071,36 @@
   },
   {
    "audit_id": "KPI-SURFACE-156",
+   "template": "templates/partials/schools/_core_school.html",
+   "line": 11,
+   "source_pattern": "shared-component",
+   "items_expression": "template-authored-metrics",
+   "presentation": "context",
+   "page_type": "operational",
+   "route": "/schools/<str:school_id>",
+   "page_title": "School 360",
+   "roles": [
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "IA",
+    "PL",
+    "PROJECT_COORDINATOR"
+   ],
+   "page_purpose": "School ID:",
+   "primary_action": "Edit Details",
+   "previous_presentation": "independent KPI tile grid",
+   "new_prominent_kpi_limit": 0,
+   "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
+   "accessibility_result": "Semantic list, labelled drilldowns, keyboard scrolling, and range navigation",
+   "recommendation": "convert",
+   "reason": "All metric summaries use the shared responsive performance strip.",
+   "replacement_pattern": "compact performance strip",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SURFACE-157",
    "template": "templates/partials/schools/kpi_cards.html",
    "line": 2,
    "source_pattern": "shared-component",
@@ -17100,7 +17130,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-157",
+   "audit_id": "KPI-SURFACE-158",
    "template": "templates/partials/ssa/performance_workspace.html",
    "line": 57,
    "source_pattern": "shared-component",
@@ -17137,7 +17167,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-158",
+   "audit_id": "KPI-SURFACE-159",
    "template": "templates/partials/staff_activity/_workspace.html",
    "line": 11,
    "source_pattern": "shared-component",
@@ -17163,7 +17193,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-159",
+   "audit_id": "KPI-SURFACE-160",
    "template": "templates/partials/targets/my_body.html",
    "line": 8,
    "source_pattern": "shared-component",
@@ -17192,7 +17222,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-160",
+   "audit_id": "KPI-SURFACE-161",
    "template": "templates/partials/targets/project_priorities.html",
    "line": 28,
    "source_pattern": "shared-component",
@@ -17221,7 +17251,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-161",
+   "audit_id": "KPI-SURFACE-162",
    "template": "templates/partials/targets/strategic_priority_overview.html",
    "line": 32,
    "source_pattern": "shared-component",
@@ -17250,7 +17280,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-162",
+   "audit_id": "KPI-SURFACE-163",
    "template": "templates/partials/targets/team/body.html",
    "line": 4,
    "source_pattern": "shared-component",
