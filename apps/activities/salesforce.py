@@ -117,6 +117,54 @@ class DuplicateSalesforceId(ConflictError):
     code = "duplicate_salesforce_activity_id"
 
 
+def _duplicate_message(holder) -> str:
+    """The refusal, naming the activity that already holds the ID — without
+    it field staff could not tell a mistyped ID from one copied from another
+    school's visit."""
+    if holder.school_id and holder.school:
+        where = f"{holder.school.name} ({holder.school.school_id})"
+    elif holder.cluster_id and holder.cluster:
+        where = holder.cluster.name
+    else:
+        where = "another activity"
+    what = holder.activity_name_snapshot or holder.get_activity_type_display()
+    when = f" on {holder.planned_date:%-d %b %Y}" if holder.planned_date else ""
+    return (
+        f"This Salesforce Activity ID is already used by the {what} at "
+        f"{where}{when}. Check the ID in Salesforce and enter the correct record."
+    )
+
+
+#: Work that was called off. It is not proof of delivery, so it gives its
+#: Salesforce ID back to the live activity that needs it (owner, 2026-10-17).
+#: Returned and rejected work keeps its ID: it is still under review.
+CALLED_OFF_STATUSES = frozenset({"cancelled", "deferred"})
+
+
+def _is_called_off(activity) -> bool:
+    return activity.deleted_at is not None or activity.status in CALLED_OFF_STATUSES
+
+
+def _release(reference) -> str:
+    """Take the ID off a called-off activity: its reservation goes, and so
+    does its own copy, which IA's duplicate check would otherwise flag the
+    live activity against. Returns the released activity's id."""
+    from .models import Activity
+
+    holder = Activity.all_objects.select_for_update().get(pk=reference.activity_id)
+    reference.delete()
+    holder.salesforce_activity_id = None
+    holder.salesforce_activity_type = None
+    holder.save(
+        update_fields=[
+            "salesforce_activity_id",
+            "salesforce_activity_type",
+            "updated_at",
+        ]
+    )
+    return holder.id
+
+
 def reserve_salesforce_id(
     *,
     activity,
@@ -137,8 +185,9 @@ def reserve_salesforce_id(
     Activity's own denormalized copy -> return the reservation.
 
     Raises DuplicateSalesforceId if the normalized value is already reserved
-    by a DIFFERENT activity (re-submitting the same activity's own current
-    value is idempotent, not a duplicate).
+    by a DIFFERENT live activity (re-submitting the same activity's own
+    current value is idempotent, not a duplicate). A cancelled, deferred or
+    removed holder gives the value up instead.
 
     entry_source is recorded for audit/duplicate-investigation purposes.
     This function does NOT itself enforce ENTRY_AUTHORIZED_ROLES — who may
@@ -164,13 +213,15 @@ def reserve_salesforce_id(
         conflict = (
             ActivitySalesforceReference.objects.filter(normalized_value=normalized)
             .exclude(activity=locked)
-            .exists()
+            .select_related("activity__school", "activity__cluster")
+            .first()
         )
+        released_from = None
+        if conflict and _is_called_off(conflict.activity):
+            released_from = _release(conflict)
+            conflict = None
         if conflict:
-            raise DuplicateSalesforceId(
-                "This Salesforce Activity ID has already been used. Check the "
-                "ID in Salesforce and enter the correct record."
-            )
+            raise DuplicateSalesforceId(_duplicate_message(conflict.activity))
 
         try:
             if existing_ref:
@@ -209,10 +260,7 @@ def reserve_salesforce_id(
             # Final concurrency guard: two near-simultaneous requests both
             # passed the pre-check above and raced to INSERT — the database
             # constraint lets exactly one through; the loser lands here.
-            raise DuplicateSalesforceId(
-                "This Salesforce Activity ID has already been used. Check the "
-                "ID in Salesforce and enter the correct record."
-            ) from exc
+            raise DuplicateSalesforceId() from exc
 
         locked.salesforce_activity_id = normalized
         locked.salesforce_activity_type = kind
@@ -234,7 +282,11 @@ def reserve_salesforce_id(
             actor_id=str(principal.user_id),
             actor_role=getattr(principal, "active_role", ""),
             success=True,
-            payload={"normalized_value": normalized, "entry_source": entry_source},
+            payload={
+                "normalized_value": normalized,
+                "entry_source": entry_source,
+                "released_from_activity_id": released_from,
+            },
         )
     except Exception:  # noqa: BLE001 — audit must never block the reservation
         pass
