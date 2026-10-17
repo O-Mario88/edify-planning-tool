@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 661,
-  "templates": 252,
-  "distinct_titles": 631,
+  "titled_cards": 659,
+  "templates": 251,
+  "distinct_titles": 629,
   "with_card_key": 13,
-  "untitled_surfaces": 597,
-  "untitled_chrome": 152,
-  "untitled_nested": 192,
+  "untitled_surfaces": 596,
+  "untitled_chrome": 154,
+  "untitled_nested": 189,
   "untitled_headless": 253,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 22,
@@ -6266,46 +6266,6 @@
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
    "branch_path": []
-  },
-  {
-   "template": "templates/partials/oversight/core_schools_oversight_workspace.html",
-   "line": 49,
-   "title": "schools completed packages",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
-   "branch_path": [
-    [
-     0,
-     0
-    ],
-    [
-     1,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/oversight/core_schools_oversight_workspace.html",
-   "line": 136,
-   "title": "'s Core Schools schools completed packages",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
-   "branch_path": [
-    [
-     0,
-     1
-    ],
-    [
-     5,
-     0
-    ],
-    [
-     7,
-     0
-    ]
-   ]
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",

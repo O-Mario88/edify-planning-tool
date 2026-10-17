@@ -11,9 +11,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **127**
 - Scheduled jobs: **38**
 - Activity states: **24**
-- Shared component templates: **700**
-- Full pages: **270**
-- Partials and drawers: **335**
+- Shared component templates: **697**
+- Full pages: **271**
+- Partials and drawers: **334**
 - Permission-gated surfaces: **915**
 - Referenced by automated tests: **835**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
@@ -239,7 +239,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-CAE42FDDA4 | /compliance-register/save | Compliance Evidence Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-674EDB9BA4 | /core-school-health | Core School Health | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-635D9F0FEB | /core-schools | Core Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-8BB204A012 | /core-schools-oversight/ | Core School Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-53D2780867 | /core-schools-oversight/ | Core School Oversight · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C4495A9FB9 | /core-schools/<str:plan_id> | Core School Plan | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-360423493D | /core-schools/<str:school_id>/champion-approve | Champion Approve Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-4C0FCAE306 | /core-schools/<str:school_id>/champion-reject | Champion Reject Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

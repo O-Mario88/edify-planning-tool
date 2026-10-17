@@ -13,7 +13,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 
 | Role | Guarded surfaces reachable |
 | --- | --- |
-| CCEO | 590 |
+| CCEO | 591 |
 | Program Lead | 697 |
 | CountryDirector | 849 |
 | RegionalVicePresident | 427 |
@@ -543,7 +543,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/compliance-register/save` | compliance_register |  |  |  |  |  |  |  | Y |  |  |  |  |  |  | Y |
 | `/core-school-health` | core_school_health |  | Y | Y | Y |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/core-schools` | core_schools | Y | Y | Y |  |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/core-schools-oversight/` | core_schools_oversight |  | Y | Y | Y | Y | Y |  |  |  |  |  |  |  |  | Y |
+| `/core-schools-oversight/` | core_schools_oversight | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  |  | Y |
 | `/core-schools/<str:plan_id>` | planning | Y | Y | Y |  |  | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/core-schools/<str:school_id>/champion-approve` | core_schools | Y | Y | Y |  |  | Y | Y |  |  |  |  |  |  |  | Y |
 | `/core-schools/<str:school_id>/champion-reject` | core_schools | Y | Y | Y |  |  | Y | Y |  |  |  |  |  |  |  | Y |
