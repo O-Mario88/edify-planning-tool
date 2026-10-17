@@ -176,18 +176,25 @@ class ChampionEligibilityService:
         }
 
     @staticmethod
-    def evaluate_all() -> list[dict]:
-        """Scan the estate without issuing queries per school.
+    def scan(school_codes=None) -> list[tuple]:
+        """``(profile, school, metrics)`` for every Core school the rule can
+        judge — a profile, a live plan and a confirmed SSA — among
+        ``school_codes`` (School IDs), or the whole estate. Reads only.
 
         This endpoint previously executed more than 9,000 queries against the
         development dataset and blocked the page for over 23 seconds.  Load
-        every input in bounded batches, score in memory, and persist status
-        transitions with one bulk update.
+        every input in bounded batches and score in memory. Core School
+        Intelligence reads the same scores (owner, 2026-10-17: the rule here
+        is Edify's official Champion criteria), so a school is judged one way
+        on every page.
         """
-        candidates = []
-        profiles = list(CoreSchoolProfile.objects.all())
+        judged: list[tuple] = []
+        profiles = CoreSchoolProfile.objects.all()
+        if school_codes is not None:
+            profiles = profiles.filter(school_id__in=list(school_codes))
+        profiles = list(profiles)
         if not profiles:
-            return candidates
+            return judged
 
         school_ids = [profile.school_id for profile in profiles]
         operational_fy = get_operational_fy()
@@ -269,8 +276,6 @@ class ChampionEligibilityService:
             )
         )
         schools_by_id = {school.school_id: school for school in schools}
-        profiles_to_update = []
-
         for profile in profiles:
             school = schools_by_id.get(profile.school_id)
             plan = plans_by_school.get(profile.school_id)
@@ -289,6 +294,16 @@ class ChampionEligibilityService:
                 clean_evidence=school.champion_clean_evidence_count,
                 all_ssas=len(confirmed),
             )
+            judged.append((profile, school, metrics))
+        return judged
+
+    @staticmethod
+    def evaluate_all() -> list[dict]:
+        """Every eligible school as a candidate, and a newly eligible one's
+        status moved to Potential Champion, in one bulk update."""
+        candidates = []
+        profiles_to_update = []
+        for profile, school, metrics in ChampionEligibilityService.scan():
             if metrics["eligible"]:
                 if profile.champion_status not in ["Champion", "Approved Champion"]:
                     profile.champion_status = "Potential Champion"

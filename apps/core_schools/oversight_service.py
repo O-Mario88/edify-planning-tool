@@ -16,7 +16,6 @@ from apps.core_schools.models import CorePlan
 from apps.core_schools.lifecycle import CORE_LIFECYCLE_TYPES, programme_rows
 from apps.schools.programme_schools import type_options
 from apps.planning.oversight_service import system_program_leads
-from apps.schools.models import School
 from django.db.models import Avg, Q
 from apps.schools.lifecycle_service import active_schools
 
@@ -210,6 +209,36 @@ def planned_core_work(principal, *, fy: str) -> list:
     return work
 
 
+def scoped_core_queryset(principal, base):
+    """The rows of ``base`` (a School queryset) ``principal`` may oversee.
+
+    A Programme Lead reads their own schools and their team's — held by them
+    or in a cluster they hold. Every other role reads `scoped_school_queryset`
+    (a CCEO their portfolio, the country roles their country or region). One
+    rule for Core School Oversight and Core School Intelligence (owner,
+    2026-10-17), so a figure and its drill-down read the same schools.
+    """
+    scope = resolve_user_scope(principal)
+    if scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        people = set(owner_ids(principal)) | set(scope.supervised_staff_ids or [])
+        if not people:
+            return base.none()
+        from apps.clusters.models import Cluster
+
+        cluster_ids = set(
+            Cluster.objects.filter(responsible_staff_id__in=people).values_list(
+                "id", flat=True
+            )
+        )
+        return base.filter(
+            Q(account_owner_id__in=people) | Q(cluster_id__in=cluster_ids)
+        )
+    from apps.core.scoping import scoped_school_queryset
+
+    scoped = scoped_school_queryset(scope, base=base)
+    return scoped if scoped is not None else base.none()
+
+
 def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
     """Returns database-driven core schools oversight dataset."""
     fy = str(fy or get_operational_fy())
@@ -223,32 +252,8 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
         .select_related("district", "region")
     )
 
-    own_ids: set[str] = set()
-    if is_programme_lead:
-        # The lead's own core schools and their supervisees': a lead reads
-        # themselves first, then the team, on this page as on every other.
-        own_ids = set(owner_ids(principal))
-        sup_ids = set(scope.supervised_staff_ids or [])
-        people = own_ids | sup_ids
-        if not people:
-            core_qs = School.objects.none()
-        else:
-            from apps.clusters.models import Cluster
-
-            cluster_ids = set(
-                Cluster.objects.filter(responsible_staff_id__in=people).values_list(
-                    "id", flat=True
-                )
-            )
-            core_qs = base.filter(
-                Q(account_owner_id__in=people) | Q(cluster_id__in=cluster_ids)
-            )
-    else:
-        from apps.core.scoping import scoped_school_queryset
-
-        core_qs = scoped_school_queryset(scope, base=base)
-        if core_qs is None:
-            core_qs = base.none()
+    own_ids: set[str] = set(owner_ids(principal)) if is_programme_lead else set()
+    core_qs = scoped_core_queryset(principal, base)
 
     # By name, then id: schools sharing a name came back in whatever order the
     # plan produced, so two loads of the page could list an officer's schools
