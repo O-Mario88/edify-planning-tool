@@ -88,7 +88,12 @@ class OversightSidebarTests(TestCase):
         oversight = next(g for g in groups if g["label"] == "OVERSIGHT")
         self.assertEqual(
             [i["page_key"] for i in oversight["items"]],
-            ["cluster_oversight", "partner_oversight", "project_monitoring"],
+            [
+                "cluster_oversight",
+                "core_schools_oversight",
+                "partner_oversight",
+                "project_monitoring",
+            ],
         )
         self.assertEqual(
             {
@@ -96,5 +101,5 @@ class OversightSidebarTests(TestCase):
                 for key, roles in PAGE_PERMISSIONS.items()
                 if key.endswith("_oversight") and CCEO in roles
             },
-            {"cluster_oversight", "partner_oversight"},
+            {"cluster_oversight", "core_schools_oversight", "partner_oversight"},
         )

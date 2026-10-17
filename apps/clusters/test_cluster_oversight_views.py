@@ -112,28 +112,14 @@ class OversightViewsAccessTest(TestCase):
                 f"{user.active_role} should have access to /core-schools-oversight/",
             )
 
-    def test_core_schools_oversight_denied_for_cceo(self):
+    def test_core_schools_oversight_opens_for_a_cceo(self):
+        """Owner, 2026-10-17, the Core School Intelligence brief (10.1): a
+        CCEO reads their own Core schools (the scope is held in
+        apps.core_schools.test_core_oversight_page)."""
         url = reverse("frontend:core_schools_oversight")
         self.client.force_login(self.cceo)
         resp = self.client.get(url)
-        self.assertIn(resp.status_code, [302, 403])
-
-    def test_core_schools_oversight_table_columns(self):
-        url = reverse("frontend:core_schools_oversight")
-        self.client.force_login(self.cd)
-        resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-
-        self.assertContains(resp, "School ID")
-        self.assertContains(resp, "School Name")
-        self.assertContains(resp, "District")
-        self.assertContains(resp, "Cluster")
-        self.assertContains(resp, "Visits (4)")
-        self.assertContains(resp, "Trainings (4)")
-        self.assertContains(resp, "Package Progress")
-        self.assertContains(resp, "SSA Score")
-        self.assertContains(resp, "Status")
-        self.assertContains(resp, "Actions")
 
     def test_country_planning_team_detail_renders_all_4_tables_and_role_aware_actions(
         self,

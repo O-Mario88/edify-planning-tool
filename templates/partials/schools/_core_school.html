@@ -1,0 +1,94 @@
+{% load components kpi_metrics frontend_filters %}
+{% comment %}
+The Core School tab (owner, 2026-10-17, the Core School Intelligence brief):
+this school's row of apps.core_schools.intelligence — the figures Core School
+Oversight shows for it — and its eight interventions. Defined in
+docs/core-school-intelligence-metrics.md. A dash is a figure the records
+cannot give, never a zero; teacher and leader figures are headcounts.
+{% endcomment %}
+<div class="space-y-4" data-core-school-tab="{{ core.code }}">
+
+  {% kpi_strip %}
+    {% kpi_metric %}{% kpi_label %}Latest SSA{% endkpi_label %}{{ core.ssa_now|default_if_none:"—" }}{% kpi_helper %}Confirmed, FY {{ core_fy }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Previous SSA{% endkpi_label %}{{ core.ssa_before|default_if_none:"—" }}{% kpi_helper %}Confirmed, FY {{ core_areas.previous_fy }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}SSA Change{% endkpi_label %}{% if core.ssa_change is None %}—{% else %}{% if core.ssa_change > 0 %}+{% endif %}{{ core.ssa_change }}{% endif %}{% kpi_helper %}{{ core.trajectory_label }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Package{% endkpi_label %}{{ core.package_label }}{% kpi_helper %}{% if core.has_plan %}Visits {{ core.visits_done }}/{{ core.visits_target }} · Trainings {{ core.trainings_done }}/{{ core.trainings_target }}{% else %}No Core plan this year{% endif %}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Session Attendance{% endkpi_label %}{% if core.attendance_rate is None %}—{% else %}{{ core.attendance_rate }}%{% endif %}{% kpi_helper %}{{ core.attended }} of {{ core.invited }} invitations{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Teacher Attendances{% endkpi_label %}{{ core.teacher_attendances|default_if_none:"—" }}{% kpi_helper %}Headcounts · {{ core.leader_attendances|default_if_none:"—" }} leader attendances{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Champion Readiness{% endkpi_label %}{{ core.champion }}{% kpi_helper %}Edify's Champion rule{% endkpi_helper %}{% endkpi_metric %}
+  {% endkpi_strip %}
+
+  <p class="edify-text-caption text-slate-600" data-core-why>
+    {% if core.trajectory_label == "Not Compared" %}No SSA change is reported: the school needs a confirmed SSA in both FY {{ core_areas.previous_fy }} and FY {{ core_fy }}, at least 120 days apart.{% else %}SSA {{ core.trajectory_label|lower }} from FY {{ core_areas.previous_fy }} to FY {{ core_fy }} ({{ core.rule_label }}).{% endif %}
+    {% if core.attention %} Needs: {{ core.attention|join:"; " }}.{% endif %}
+  </p>
+
+  {% data_table name="core-interventions" %}
+    {% slot title %}SSA by Intervention, FY {{ core_areas.previous_fy }} to FY {{ core_fy }}{% endslot %}
+    {% slot summary %}{{ core_areas.improved }} improved · {{ core_areas.declined }} declined · {{ core_areas.steady }} steady · {{ core_areas.not_compared }} not compared{% endslot %}
+    {% slot caption %}Each intervention's score on the latest confirmed SSA of each year, the change where both readings are comparable, and the platform's band. The lowest area is not necessarily the one that fell most.{% endslot %}
+    <thead><tr>
+      <th scope="col" class="px-3 py-2">Intervention</th>
+      <th scope="col" class="px-3 py-2 text-right">FY {{ core_areas.previous_fy }}</th>
+      <th scope="col" class="px-3 py-2 text-right">FY {{ core_fy }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Change</th>
+      <th scope="col" class="px-3 py-2">Verdict</th>
+      <th scope="col" class="px-3 py-2">Band</th>
+    </tr></thead>
+    <tbody>
+      {% for a in core_areas.rows %}
+      <tr data-core-intervention="{{ a.key }}">
+        <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ a.label }}</th>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ core_areas.previous_fy }}">{{ a.previous|default_if_none:"—" }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ core_fy }}">{{ a.latest|default_if_none:"—" }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% if a.change is None %}—{% else %}{% if a.change > 0 %}+{% endif %}{{ a.change }}{% endif %}</td>
+        <td class="px-3 py-2" data-label="Verdict">{% if a.tone %}<span class="edify-status-text" data-edify-tone="{{ a.tone }}" title="{{ a.rule_label }}">{{ a.verdict_label }}</span>{% else %}{{ a.verdict_label }}{% endif %}</td>
+        <td class="px-3 py-2" data-label="Band">{{ a.band|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  {% enddata_table %}
+
+  <p class="edify-text-caption text-slate-600" data-core-highlights>
+    Strongest: {% if core_areas.strongest %}{{ core_areas.strongest.label }} ({{ core_areas.strongest.latest }}){% else %}—{% endif %} ·
+    Weakest: {% if core_areas.weakest %}{{ core_areas.weakest.label }} ({{ core_areas.weakest.latest }}){% else %}—{% endif %} ·
+    Largest gain: {% if core_areas.largest_gain %}{{ core_areas.largest_gain.label }} (+{{ core_areas.largest_gain.change }}){% else %}—{% endif %} ·
+    Largest drop: {% if core_areas.largest_drop %}{{ core_areas.largest_drop.label }} ({{ core_areas.largest_drop.change }}){% else %}—{% endif %}
+  </p>
+
+  <div class="grid gap-4 md:grid-cols-3">
+    <section class="card p-4 space-y-1" data-core-package>
+      <h3 class="edify-text-label font-semibold">Package and Support</h3>
+      {% if core.has_plan %}
+      <p class="edify-text-caption">Visits {{ core.visits_done }} of {{ core.visits_target }} · Trainings {{ core.trainings_done }} of {{ core.trainings_target }}</p>
+      {% if core.staff_visits is not None %}<p class="edify-text-caption">Staff: {{ core.staff_visits }} visits, {{ core.staff_trainings }} trainings · Partner: {{ core.partner_visits }} visits, {{ core.partner_trainings }} trainings</p>{% endif %}
+      {% else %}<p class="edify-text-caption">No Core plan for FY {{ core_fy }}.</p>{% endif %}
+      <p class="edify-text-caption">Partner hand-overs: {{ core.handovers_assigned }} not yet scheduled · {{ core.handovers_scheduled }} scheduled · {{ core.handovers_completed }} completed</p>
+    </section>
+    <section class="card p-4 space-y-1" data-core-participation>
+      <h3 class="edify-text-label font-semibold">Participation</h3>
+      <p class="edify-text-caption">Cluster sessions: {{ core.attended }} attended of {{ core.invited }} invited{% if core.attendance_rate is not None %} ({{ core.attendance_rate }}%){% endif %}</p>
+      <p class="edify-text-caption">Teacher attendances {{ core.teacher_attendances|default_if_none:"—" }} · Leader attendances {{ core.leader_attendances|default_if_none:"—" }} (headcounts, not unique people)</p>
+    </section>
+    <section class="card p-4 space-y-1" data-core-outcomes>
+      <h3 class="edify-text-label font-semibold">Outcomes</h3>
+      <p class="edify-text-caption">Enrolment: {{ core.enrol_before|default_if_none:"—" }} → {{ core.enrol_after|default_if_none:"—" }}{% if core.enrol_change is not None %} ({% if core.enrol_change > 0 %}+{% endif %}{{ core.enrol_change }}{% if core.enrol_growth_pct is not None %}, {{ core.enrol_growth_pct }}%{% endif %}){% endif %}</p>
+      <p class="edify-text-caption">Learning results (share of marks): {{ core.learn_before|default_if_none:"—" }} → {{ core.learn_after|default_if_none:"—" }}{% if core.learn_change is not None %} ({% if core.learn_change > 0 %}+{% endif %}{{ core.learn_change }} pts){% endif %}</p>
+    </section>
+  </div>
+
+  <section class="card p-4 space-y-2" data-core-champion>
+    <h3 class="edify-text-label font-semibold">Champion Readiness: {{ core.champion }}</h3>
+    {% with m=core.champion_metrics %}
+    <ul class="edify-text-caption space-y-1">
+      <li>{% if m and m.latest_avg >= 8.0 %}Met{% elif m %}Not met{% else %}Not judged{% endif %}: Latest SSA average 8.0 or more{% if m %} (now {{ m.latest_avg|floatformat:1 }}){% endif %}</li>
+      <li>{% if m and m.lowest_score >= 7.0 %}Met{% elif m %}Not met{% else %}Not judged{% endif %}: No intervention below 7.0{% if m %} (lowest {{ m.lowest_score|floatformat:1 }}, {{ m.lowest_intervention }}){% endif %}</li>
+      <li>{% if m and m.total_slots and m.completed_slots >= m.total_slots %}Met{% elif m %}Not met{% else %}Not judged{% endif %}: All package visits and trainings done{% if m %} ({{ m.completed_slots }} of {{ m.total_slots }}){% endif %}</li>
+    </ul>
+    {% if not m %}<p class="edify-text-caption text-slate-500">The rule needs a confirmed SSA and a Core plan to judge this school.</p>{% endif %}
+    {% endwith %}
+    <p class="edify-text-caption text-slate-500">Readiness is a recommendation. A school becomes a Champion only through the Champion review.</p>
+  </section>
+
+  <p class="edify-text-caption text-slate-500">The same figures are on <a href="/core-schools-oversight/?fy={{ core_fy }}&amp;q={{ core.code|urlencode }}" class="edify-primary-text font-semibold hover:underline">Core School Oversight</a>.</p>
+</div>
