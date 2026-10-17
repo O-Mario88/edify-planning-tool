@@ -4510,34 +4510,6 @@ def partner_allowance_grant_action(request):
 # Cluster Oversight is apps.frontend.views.cluster_management_views since
 # 2026-10-17: the clusters analysed; their planned sessions and their
 # export are on Planning Oversight.
-@require_page_permission("core_schools_oversight")
-def core_schools_oversight_view(request):
-    """Core schools oversight page — packages progress, visits/trainings status."""
-    period = _period_filters(request)
-    fy = period.get("fy") or get_operational_fy()
-    from apps.core_schools.oversight_service import core_schools_oversight_data
-
-    data = core_schools_oversight_data(request.user, fy=fy)
-    context = {
-        **period,
-        **data,
-        "fy_options": fy_options(),
-        "standalone_portfolio": True,
-        "active_lens": "core_schools_oversight",
-    }
-    if request.headers.get("HX-Request") == "true":
-        return render(
-            request,
-            "partials/oversight/core_schools_oversight_workspace.html",
-            context,
-        )
-    return render(
-        request,
-        "pages/oversight/core_schools_oversight.html",
-        context,
-    )
-
-
 # ── Resolving work a Partner handed back ─────────────────────────────────────
 @require_page_permission("partner_oversight")
 def partner_return_resolve_drawer_view(request):

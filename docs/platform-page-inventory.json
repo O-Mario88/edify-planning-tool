@@ -168,14 +168,14 @@
       "bytes": 2161,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/core-schools-oversight/",
         "/country-planning-oversight/team/<str:staff_id>",
         "/dashboard",
         "/my-plan",
         "/my-plan/",
         "/partner-oversight/",
         "/team-planning-oversight/",
-        "/team-targets"
+        "/team-targets",
+        "/team-targets/"
       ],
       "findings": [],
       "forms": 0,
@@ -678,7 +678,6 @@
       "example_pages": [
         "/clusters/<str:cluster_id>",
         "/core-schools",
-        "/core-schools-oversight/",
         "/partials/clusters/<str:cluster_id>/schools",
         "/planning"
       ],
@@ -758,9 +757,7 @@
       "accessibility_requirements": [],
       "bytes": 311,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools-oversight/"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4562,8 +4559,7 @@
       "bytes": 114,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/core-schools",
-        "/core-schools-oversight/"
+        "/core-schools"
       ],
       "findings": [],
       "forms": 0,
@@ -4586,8 +4582,7 @@
       "bytes": 4388,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/core-schools",
-        "/core-schools-oversight/"
+        "/core-schools"
       ],
       "findings": [],
       "forms": 0,
@@ -11540,54 +11535,6 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5512,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools-oversight/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": " Core Schools Table",
-      "purpose": "Reusable  core schools table interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/oversight/_core_schools_table.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4323,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools-oversight/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": " Core Work Table",
-      "purpose": "Reusable  core work table interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/oversight/_core_work_table.html",
-      "variants": [
-        "{{ item.session_tone }}"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
       "bytes": 2313,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -12187,31 +12134,6 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11969,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools-oversight/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Core Schools Oversight Workspace",
-      "purpose": "Reusable core schools oversight workspace interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "selected",
-        "open"
-      ],
-      "tables": 0,
-      "template": "partials/oversight/core_schools_oversight_workspace.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
       "bytes": 11644,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -12645,7 +12567,6 @@
       "bytes": 5098,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/core-schools-oversight/",
         "/country-planning-oversight/",
         "/partner-oversight/",
         "/team-planning-oversight/",
@@ -15729,8 +15650,7 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
-        "/core-schools",
-        "/core-schools-oversight/"
+        "/core-schools"
       ],
       "findings": [],
       "forms": 3,
@@ -36875,15 +36795,14 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.oversight_views",
-      "backend_view": "apps.frontend.views.oversight_views.core_schools_oversight_view",
+      "backend_module": "apps.frontend.views.core_oversight_views",
+      "backend_view": "apps.frontend.views.core_oversight_views.core_schools_oversight_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
-        "template:partials/oversight/core_schools_oversight_workspace.html",
         "template:pages/oversight/core_schools_oversight.html",
         "test:referenced-by-automated-test",
         "permission:core_schools_oversight"
@@ -36892,7 +36811,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "fragment-owned-by-parent",
+      "header_variant": "shared-page-header-component",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -36901,20 +36820,19 @@
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-8BB204A012",
-      "page_title": "Core School Oversight",
-      "page_type": "interaction-fragment",
-      "per_page_css": [
-        "css/pages/oversight-workspace.css"
-      ],
+      "page_id": "UI-PAGE-53D2780867",
+      "page_title": "Core School Oversight \u00b7 Edify",
+      "page_type": "operational-queue",
+      "per_page_css": [],
       "permission_key": "core_schools_oversight",
-      "primary_action": "Core Schools Oversight",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Core schools oversight page \u2014 packages progress, visits/trainings status.",
+      "primary_action": "Review operational workspace",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "Are the Core schools improving, is the package delivered, are schools taking part, and which need action: FY against the year before.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
+        "CCEO",
         "CD",
         "IA",
         "PL",
@@ -36925,18 +36843,7 @@
       "route_name": "core_schools_oversight",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.audit.services",
-        "apps.core.scoping",
-        "apps.fund_requests.models",
-        "apps.partners.models",
-        "apps.partners.services",
-        "apps.pl_review.services",
-        "apps.schools.models"
-      ],
+      "services_and_models": [],
       "shared_layout": [
         "layouts/shell.html"
       ],
@@ -36946,16 +36853,15 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "partial",
+      "surface_kind": "page",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 3,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
-        "partials/oversight/core_schools_oversight_workspace.html",
         "pages/oversight/core_schools_oversight.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -112708,8 +112614,8 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.oversight_views.core_schools_oversight_view",
-      "kind": "partial",
+      "callback": "apps.frontend.views.core_oversight_views.core_schools_oversight_view",
+      "kind": "page",
       "methods": [
         "GET"
       ],
@@ -112718,7 +112624,6 @@
       "route": "/core-schools-oversight/",
       "route_name": "core_schools_oversight",
       "templates": [
-        "partials/oversight/core_schools_oversight_workspace.html",
         "pages/oversight/core_schools_oversight.html"
       ]
     },
@@ -122732,8 +122637,8 @@
     "activity_states": 24,
     "all_routes": 1413,
     "api_routes": 364,
-    "component_templates": 700,
-    "full_pages": 270,
+    "component_templates": 697,
+    "full_pages": 271,
     "mobile_contract_pass": 608,
     "nonvisual_actions": 288,
     "page_types": {
@@ -122741,13 +122646,13 @@
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 623,
-      "operational-queue": 156,
+      "interaction-fragment": 622,
+      "operational-queue": 157,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 47
     },
-    "partials_and_drawers": 335,
+    "partials_and_drawers": 334,
     "permission_gated": 915,
     "permission_keys": 127,
     "roles": 15,

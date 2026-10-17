@@ -8292,6 +8292,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "CCEO",
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
@@ -8301,7 +8302,7 @@
    ],
    "route": "/core-schools-oversight/",
    "route_name": "core_schools_oversight",
-   "view": "apps.frontend.views.oversight_views.core_schools_oversight_view"
+   "view": "apps.frontend.views.core_oversight_views.core_schools_oversight_view"
   },
   {
    "page_permission": "planning",
@@ -19770,7 +19771,7 @@
   "Accountant": 462,
   "Admin": 1113,
   "BusinessTransformationOfficer": 244,
-  "CCEO": 590,
+  "CCEO": 591,
   "CountryDirector": 849,
   "HumanResources": 330,
   "ImpactAssessment": 718,

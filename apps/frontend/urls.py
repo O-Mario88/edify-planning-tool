@@ -18,6 +18,7 @@ from .views import (
     school_views,
     cluster_views,
     cluster_management_views,
+    core_oversight_views,
     planning_views,
     fy_planning_views,
     ownership_views,
@@ -986,7 +987,7 @@ urlpatterns = [
     ),
     path(
         "core-schools-oversight/",
-        oversight_views.core_schools_oversight_view,
+        core_oversight_views.core_schools_oversight_view,
         name="core_schools_oversight",
     ),
     # Partner oversight — the same read-only posture, organised by partner

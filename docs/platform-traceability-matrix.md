@@ -111,7 +111,7 @@ Steps: Eligible schools → Scheduling → Cost → Attendance → Evidence → 
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CCEO`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /clusters/{id}` |
 | Permissions checked | `cluster.catchmentManage`, `data.export`, `project.assignSchool` |
-| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_detail`, `cluster_oversight`, `clusters`, `core_schools`, `dashboard` _+28 more_ |
+| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_detail`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+29 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/completed_day.py`, `apps/activities/editing.py`, `apps/activities/live.py`, `apps/activities/models.py` _+85 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ClusterActivityAttendance`, `audit.AuditLog`, `clusters.Cluster`, `clusters.ClusterServiceDistrict`, `clusters.SchoolClusterAssignment`, `clusters.SchoolClusterMembership` _+5 more_ |
@@ -231,7 +231,7 @@ Steps: HR unlocks → Employee evaluates → Manager evaluates → Automatic val
 | Roles that hold the checked permissions | `Accountant`, `CountryDirector` |
 | Routes / API | `GET /performance-conversation` |
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act` |
-| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `dashboard`, `debriefs_list` _+26 more_ |
+| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight`, `dashboard` _+27 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/completed_day.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+115 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostCatalogue`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch` _+23 more_ |
@@ -251,7 +251,7 @@ Steps: Request → Manager review → HR review → Financial approval → Compl
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /my-professional-development` |
 | Permissions checked | `data.export` |
-| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `dashboard`, `debriefs_list` _+25 more_ |
+| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight`, `dashboard` _+26 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/acting.py`, `apps/core/audit_hash.py` _+43 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `notifications.Notification`, `professional_development.ProfessionalDevelopmentAllocation`, `professional_development.ProfessionalDevelopmentRequest`, `sessions.Session` |
@@ -443,7 +443,7 @@ Steps: Close September → Lock history → Open October → Preserve multi-year
 | Roles that hold the checked permissions | — |
 | Routes / API | `GET /my-performance` |
 | Permissions checked | — |
-| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `dashboard`, `debriefs_list` _+26 more_ |
+| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight`, `dashboard` _+27 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/schedule_trail.py`, `apps/admin_ops/detection.py` _+58 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `fund_requests.AdvanceRequest`, `hr.FiscalYearRollover`, `hr.PerformanceCycle`, `hr.PerformancePriority`, `hr.PerformanceReview`, `hr.PerformanceSnapshot`, `hr.StrategicPriorityCycle` _+5 more_ |
