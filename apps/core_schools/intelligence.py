@@ -583,6 +583,32 @@ def interventions(school, *, fy: str) -> dict:
     }
 
 
+def recommendations(schools) -> dict[str, list]:
+    """Each school's recorded SSA recommendations still open or in hand, by
+    rank (`ssa.recommendation_service`: one live record per need, its
+    recommended catalogue training or why none is mapped, and its state).
+    The Core pages show these records; they make none of their own, and
+    reading them changes nothing. One query."""
+    from apps.ssa.recommendation_models import (
+        LIVE_STATES,
+        RecommendationState,
+        SsaRecommendation,
+    )
+
+    schools = list(schools)
+    out: dict[str, list] = {s.id: [] for s in schools}
+    for rec in (
+        SsaRecommendation.objects.filter(
+            school_id__in=list(out),
+            state__in=[*LIVE_STATES, RecommendationState.PLANNED],
+        )
+        .select_related("recommended_item")
+        .order_by("school_id", "rank", "intervention")
+    ):
+        out[rec.school_id].append(rec)
+    return out
+
+
 # ── Aggregating ──────────────────────────────────────────────────────────────
 
 

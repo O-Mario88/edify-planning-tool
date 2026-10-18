@@ -15441,7 +15441,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9132,
+      "bytes": 10276,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>"
@@ -36819,7 +36819,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.core_oversight_views",
       "backend_view": "apps.frontend.views.core_oversight_views.core_schools_oversight_view",
       "card_count": 0,
@@ -36872,7 +36872,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },

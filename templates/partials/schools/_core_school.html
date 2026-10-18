@@ -77,6 +77,18 @@ cannot give, never a zero; teacher and leader figures are headcounts.
     </section>
   </div>
 
+  <section class="card p-4 space-y-2" data-core-recommendations>
+    <h3 class="edify-text-label font-semibold">Recommended Support</h3>
+    {% if core_recommendations %}
+    <ul class="divide-y edify-border">
+      {% for rec in core_recommendations %}<li class="py-2 flex flex-wrap items-start justify-between gap-2" data-core-recommendation="{{ rec.id }}">
+        <span class="edify-text-caption"><span class="font-semibold">{{ rec.get_intervention_display }}{% if rec.score is not None %} ({{ rec.score|floatformat:1 }}{% if rec.score_band %}, {{ rec.score_band }}{% endif %}){% endif %}</span> · {% if rec.recommended_item %}{{ rec.recommended_item.display_name }}{% else %}No mapped training{% if rec.unmapped_reason %}: {{ rec.unmapped_reason }}{% endif %}{% endif %}{% if rec.reason %}<span class="block text-slate-500">{{ rec.reason }}</span>{% endif %}</span>
+        <span class="pill pill-neutral">{{ rec.get_state_display }}</span>
+      </li>{% endfor %}
+    </ul>
+    {% else %}<p class="edify-text-caption text-slate-500">No open recommendation. They are recorded from the school's confirmed SSA.</p>{% endif %}
+  </section>
+
   <section class="card p-4 space-y-2" data-core-champion>
     <h3 class="edify-text-label font-semibold">Champion Readiness: {{ core.champion }}</h3>
     {% with m=core.champion_metrics %}
