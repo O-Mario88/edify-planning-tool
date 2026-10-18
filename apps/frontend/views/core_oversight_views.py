@@ -294,7 +294,13 @@ def core_recommendation_action(request, rec_id, action):
         messages.success(
             request, f"{rec.get_intervention_display()}: {rec.get_state_display()}."
         )
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    # Back to the page the action was taken on, if it is this site's own;
+    # anything else (another host, a scheme) returns to the school's tab.
     back = request.POST.get("next") or ""
-    if not back.startswith("/") or back.startswith("//"):
+    if not url_has_allowed_host_and_scheme(
+        back, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
         back = f"/schools/{rec.school_id}?tab=core"
     return redirect(back)

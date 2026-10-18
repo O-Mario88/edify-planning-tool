@@ -49,6 +49,14 @@ class RecommendationActionsTest(_CoreCase):
         self.assertEqual(self.rec.state, RecommendationState.ACCEPTED)
         self.assertEqual(self.rec.owner_id, self.james.id)
 
+    def test_an_off_site_next_returns_to_the_school_not_away(self):
+        for next_url in ("https://evil.example/x", "//evil.example/x"):
+            with self.subTest(next_url=next_url):
+                response = self._act(self.james, "accept", next=next_url)
+                self.assertEqual(
+                    response["Location"], f"/schools/{self.single.id}?tab=core"
+                )
+
     def test_deferring_needs_a_reason(self):
         self._act(self.james, "defer", reason="")
         self.rec.refresh_from_db()
