@@ -10,7 +10,6 @@ Programme Lead's own session is verified by Impact Assessment.
 
 from __future__ import annotations
 
-import re
 from datetime import date
 
 from django.test import TestCase
@@ -24,22 +23,6 @@ from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
-
-COLUMNS = (
-    "Cluster Name",
-    "District",
-    "Planned Date",
-    "Executor",
-    "Purpose (Meeting Topic)",
-    "SSA Intervention",
-    "Participants",
-    "Cost",
-    # Every planned activities table's completion columns (owner, 2026-09-26).
-    "Salesforce ID",
-    "Evidence",
-    "Status",
-    "Actions",
-)
 
 
 def _sessions(data) -> dict:
@@ -99,12 +82,6 @@ class ClusterSessionStatusTest(TestCase):
             )
         return session
 
-    def _page(self, user):
-        self.client.force_login(user)
-        response = self.client.get("/cluster-oversight/", {"fy": self.fy})
-        self.assertEqual(response.status_code, 200)
-        return response
-
     def test_status_reads_where_the_work_stands(self):
         awaiting_pl = self._session("cluster_meeting", "submitted_to_pl", self.cceo)
         verified = self._session(
@@ -131,71 +108,6 @@ class ClusterSessionStatusTest(TestCase):
             with self.subTest(label=label):
                 row = rows[activity_id]
                 self.assertEqual((row.session_status, row.session_tone), (label, tone))
-
-    def test_both_tables_carry_the_ten_columns(self):
-        self._session("cluster_meeting", "scheduled", self.cceo)
-        self._session("cluster_training", "scheduled", self.cceo)
-        html = self._page(self.pl).content.decode()
-        table = html[html.index("data-cluster-sessions") :]
-        for column in COLUMNS:
-            with self.subTest(column=column):
-                self.assertIn(f">{column}</th>", table)
-        self.assertEqual(html.count("data-cluster-sessions"), 4)
-
-    def test_the_lead_verifies_a_cceo_completion_and_it_reads_complete(self):
-        session = self._session(
-            "cluster_training", "submitted_to_pl", self.cceo, complete=True
-        )
-        confirm = f'action="/pl/review-queue/{session.id}/confirm"'
-
-        response = self._page(self.pl)
-        self.assertContains(
-            response,
-            '<span class="cluster-session-status" data-status-tone="pending">'
-            "PL Pending</span>",
-        )
-        self.assertContains(response, confirm)
-
-        back = f"/cluster-oversight/?fy={self.fy}"
-        response = self.client.post(
-            f"/pl/review-queue/{session.id}/confirm", {"next": back}
-        )
-        self.assertRedirects(response, back, fetch_redirect_response=False)
-        session.refresh_from_db()
-        self.assertEqual(session.status, "ia_verified")
-
-        response = self._page(self.pl)
-        self.assertContains(
-            response,
-            '<span class="cluster-session-status" data-status-tone="complete">'
-            "Complete</span>",
-        )
-        self.assertNotContains(response, confirm)
-
-    def test_impact_assessment_verifies_the_leads_own_session(self):
-        own = self._session("cluster_meeting", "awaiting_ia_verification", self.pl)
-        cceo_work = self._session("cluster_meeting", "submitted_to_pl", self.cceo)
-
-        response = self._page(self.ia)
-        self.assertContains(response, f'href="/ia/verification/{own.id}/"')
-        self.assertContains(response, "IA Pending")
-        # Verified and Return are the row's one Actions menu (owner, 2026-09-26).
-        html = response.content.decode()
-        row = html[html.index(f'data-session-row="{own.id}"') :]
-        row = row[: row.index("</tr>")]
-        self.assertIn("data-row-actions", row)
-        self.assertEqual(
-            re.findall(r'role="menuitem"[^>]*>([^<]+)</', row), ["Verified", "Return"]
-        )
-        # A CCEO's completion is the Lead's to verify, never IA's.
-        self.assertContains(response, "PL Pending")
-        self.assertNotContains(response, f"/pl/review-queue/{cceo_work.id}/confirm")
-
-        # The Lead reads their own session as waiting on IA, with nothing to do.
-        response = self._page(self.pl)
-        self.assertContains(response, "IA Pending")
-        self.assertNotContains(response, f"/ia/verification/{own.id}/")
-        self.assertNotContains(response, f"/pl/review-queue/{own.id}/confirm")
 
     def test_only_the_supervising_lead_is_offered_verify(self):
         cd = _create_user("cd@status.test", EdifyRole.COUNTRY_DIRECTOR)

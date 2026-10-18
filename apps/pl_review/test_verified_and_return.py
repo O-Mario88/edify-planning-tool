@@ -182,26 +182,25 @@ class BothDecisionsOnEverySurfaceTest(ReviewFixture):
         self.assertContains(response, "not entered in Salesforce")
         self.assertContains(response, "required")
 
-    def test_cluster_oversight_offers_the_lead_verified_and_return(self):
+    def test_a_cluster_session_reaches_the_register_with_both_decisions(self):
+        """Cluster Oversight is analysis since 2026-10-17 (owner: "Anything to
+        do with planning goes on MY Plan or Planning oversight"); a Lead
+        decides a submitted cluster session on the review register."""
         from apps.core.fy import get_operational_fy
 
-        fy = get_operational_fy()
         session = Activity.objects.create(
             activity_type="cluster_meeting",
             cluster=self.cluster,
             responsible_staff_id=self.james.id,
-            fy=fy,
+            fy=get_operational_fy(),
             planned_date=date.today() - timedelta(days=2),
             status="submitted_to_pl",
         )
-        response = self.as_user(self.pl_user).get("/cluster-oversight/", {"fy": fy})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, f"/pl/review-queue/{session.id}/confirm")
-        self.assertContains(response, f"/pl/review-queue/{session.id}/return-drawer")
-        self.assertContains(response, "data-session-return")
+        response = self.as_user(self.pl_user).get(QUEUE_URL)
+        self.assertContains(response, f"{QUEUE_URL}/{session.id}/return-drawer")
         self.assertEqual(
-            _row_menu(response.content.decode(), f'data-session-row="{session.id}"'),
-            ["View", "Verified", "Return"],
+            _row_menu(response.content.decode(), f'data-review-row="{session.id}"'),
+            ["Open", "Verified", "Return"],
         )
 
     def test_the_ia_workspace_offers_verified_and_return_with_the_example(self):

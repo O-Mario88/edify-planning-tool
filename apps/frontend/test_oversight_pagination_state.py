@@ -32,7 +32,6 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKSPACES = (
     "templates/partials/oversight/cd_team_detail.html",
     "templates/partials/oversight/cd_workspace.html",
-    "templates/partials/oversight/cluster_oversight_workspace.html",
     "templates/partials/oversight/core_schools_oversight_workspace.html",
 )
 
@@ -60,21 +59,6 @@ def _summary():
         "partner_awaiting_schedule": 0,
         "execution_progress": None,
     }
-
-
-def _leads():
-    return [
-        {
-            "id": "L1",
-            "name": "Ann",
-            "count": 3,
-            "cceo_tabs": [
-                {"id": "O1", "name": "Bob", "count": 2, "clusters": [], "schools": []},
-                {"id": "O2", "name": "Cara", "count": 1, "clusters": [], "schools": []},
-            ],
-        },
-        {"id": "L2", "name": "Dan", "count": 0, "cceo_tabs": []},
-    ]
 
 
 def _owner_groups():
@@ -158,59 +142,6 @@ class StripsAreAddressableTests(SimpleTestCase):
             with self.subTest(path=path):
                 self.assertNotIn("history.replaceState", source)
                 self.assertIn("tabState(", source)
-
-    def test_programme_lead_cluster_strip_offers_its_own_ids(self):
-        body = render_to_string(
-            "partials/oversight/cluster_oversight_workspace.html",
-            {
-                "request": _request("/team-planning-oversight/?view=clusters"),
-                "is_programme_lead": True,
-                # The member strip is keyed on `uses_member_tabs` since it
-                # also serves a cluster-holding CCEO (2026-09-23); the service
-                # sets it for every Programme Lead.
-                "uses_member_tabs": True,
-                "cceo_tabs": [
-                    {
-                        "id": "my-clusters",
-                        "name": "My clusters",
-                        "count": 2,
-                        "clusters": [],
-                        "schools": 1,
-                    },
-                    {
-                        "id": "O1",
-                        "name": "Bob",
-                        "count": 1,
-                        "clusters": [],
-                        "schools": 1,
-                    },
-                ],
-                "leads": [],
-                "fy": "2026",
-            },
-        )
-        self.assertIn(
-            "tabState('activeOfficer', 'officer', "
-            "[&quot;my-clusters&quot;, &quot;O1&quot;], 'my-clusters')",
-            body,
-        )
-
-    def test_country_cluster_strips_are_nested_and_each_validates_its_own(self):
-        body = render_to_string(
-            "partials/oversight/cluster_oversight_workspace.html",
-            {
-                "request": _request("/country-planning-oversight/?view=clusters"),
-                "is_programme_lead": False,
-                "leads": _leads(),
-                "cceo_tabs": [],
-                "fy": "2026",
-                "selected_program_lead": "",
-            },
-        )
-        self.assertIn("[&quot;L1&quot;, &quot;L2&quot;]", body)
-        # The officer strip under Ann offers Ann's officers and nobody else's,
-        # so Dan's panel cannot be opened onto one of them.
-        self.assertIn("[&quot;O1&quot;, &quot;O2&quot;]", body)
 
     def test_core_school_strips_offer_their_own_ids(self):
         lead_body = render_to_string(

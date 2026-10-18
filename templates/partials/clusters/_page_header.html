@@ -21,6 +21,12 @@ District: {% if cluster.district.id %}<a href="/districts/{{ cluster.district.id
 <a href="/clusters/{{ cluster.id }}" class="edify-action-button secondary h-9" data-cluster-page-link>
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10"/></svg> Cluster Page
 </a>
+{% comment %}The cluster's schools with their ID, name, phone, primary contact and shipping address, as one Excel file (owner, 2026-10-17: "the export buttons should be inside the cluster profile"). Gated as its endpoint is.{% endcomment %}
+{% if can_export_schools %}
+<a href="/clusters/{{ cluster.id }}/schools/export" class="edify-action-button secondary h-9" data-cluster-schools-export aria-label="Export the schools in {{ cluster.name }} to Excel" title="School ID, name, phone, primary contact and shipping address, in Excel">
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Export schools
+</a>
+{% endif %}
 {% else %}
 <a href="/clusters/{{ cluster.id }}/profile" class="edify-action-button secondary h-9" data-cluster-profile-link>
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5m0 14h16M8 16v-5m4 5V8m4 8v-3"/></svg> Cluster Profile

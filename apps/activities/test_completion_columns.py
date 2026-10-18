@@ -435,7 +435,6 @@ class TemplateTest(SimpleTestCase):
         "templates/partials/my_plan/programme_activities.html": 1,
         "templates/partials/my_plan/programme_school_work.html": 1,
         "templates/partials/oversight/_officer_panel_body.html": 4,
-        "templates/partials/oversight/cluster_activity_table.html": 1,
         "templates/partials/oversight/_core_work_table.html": 1,
         # The Schools assigned table, the cluster/activity tables, and the Core
         # Schools assigned table (owner, 2026-09-27).

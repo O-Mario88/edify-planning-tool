@@ -1,4 +1,5 @@
 from django.urls import include, path
+from django.views.generic import RedirectView
 from apps.help_center import views as help_views
 from .views import (
     action_views,
@@ -708,6 +709,11 @@ urlpatterns = [
         name="cluster_profile",
     ),
     path(
+        "clusters/<str:cluster_id>/schools/export",
+        cluster_views.cluster_schools_export_view,
+        name="cluster_schools_export",
+    ),
+    path(
         "partials/clusters/<str:cluster_id>/schools",
         cluster_views.cluster_schools_partial,
         name="cluster_schools_partial",
@@ -925,38 +931,43 @@ urlpatterns = [
         country_oversight_views.followup_lead_action_view,
         name="planning_followup_action",
     ),
+    # Cluster Oversight: the clusters analysed, one page whose sections are
+    # tabs, and the page where the scores' weights are set. Cluster
+    # Management became it on 2026-10-17 (owner: "merge Cluster Management
+    # with Cluster Oversight"); planning lives on My Plan and Planning
+    # Oversight. `scoring` and the retired plans export are declared before
+    # the section so they are not read as one.
     path(
         "cluster-oversight/",
-        oversight_views.cluster_oversight_view,
+        cluster_management_views.cluster_oversight_view,
         name="cluster_oversight",
     ),
     path(
-        "cluster-oversight/export",
-        oversight_views.cluster_oversight_export_view,
-        name="cluster_oversight_export",
-    ),
-    path(
-        "cluster-oversight/export-drawer",
-        oversight_views.cluster_oversight_export_drawer_view,
-        name="cluster_oversight_export_drawer",
-    ),
-    # Cluster Management (owner brief, 2026-10-08): one page whose sections
-    # are tabs, and the page where the scores' weights are set. `scoring`
-    # is declared before the section so it is not read as one.
-    path(
-        "cluster-management/",
-        cluster_management_views.cluster_management_view,
-        name="cluster_management",
-    ),
-    path(
-        "cluster-management/scoring",
+        "cluster-oversight/scoring",
         cluster_management_views.cluster_scoring_view,
         name="cluster_scoring",
     ),
     path(
+        "cluster-oversight/export",
+        RedirectView.as_view(url="/team-planning-oversight/"),
+    ),
+    path(
+        "cluster-oversight/export-drawer",
+        RedirectView.as_view(url="/team-planning-oversight/"),
+    ),
+    path(
+        "cluster-oversight/<str:section>",
+        cluster_management_views.cluster_oversight_view,
+        name="cluster_oversight_section",
+    ),
+    # Cluster Management's addresses, sent and bookmarked before the merge.
+    path(
+        "cluster-management/",
+        RedirectView.as_view(url="/cluster-oversight/", query_string=True),
+    ),
+    path(
         "cluster-management/<str:section>",
-        cluster_management_views.cluster_management_view,
-        name="cluster_management_section",
+        RedirectView.as_view(url="/cluster-oversight/%(section)s", query_string=True),
     ),
     path(
         "core-schools-oversight/",
