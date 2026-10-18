@@ -1,11 +1,11 @@
 {
  "summary": {
-  "titled_cards": 663,
+  "titled_cards": 664,
   "templates": 252,
-  "distinct_titles": 633,
+  "distinct_titles": 634,
   "with_card_key": 13,
-  "untitled_surfaces": 596,
-  "untitled_chrome": 154,
+  "untitled_surfaces": 597,
+  "untitled_chrome": 155,
   "untitled_nested": 189,
   "untitled_headless": 253,
   "templates_with_same_title_twice": 0,
@@ -6905,6 +6905,15 @@
   {
    "template": "templates/partials/schools/_core_school.html",
    "line": 80,
+   "title": "Recommended Support",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "card p-4 space-y-2",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/_core_school.html",
+   "line": 92,
    "title": "Champion Readiness:",
    "heading_level": 3,
    "has_card_key": false,
