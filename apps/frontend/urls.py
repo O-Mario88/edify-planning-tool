@@ -2753,6 +2753,11 @@ urlpatterns = [
     # Literal champion routes MUST precede the catch-all <plan_id> route,
     # otherwise /core-schools/champions resolves as a plan detail.
     path(
+        "core-schools/recommendations/<str:rec_id>/<str:action>",
+        core_oversight_views.core_recommendation_action,
+        name="core_recommendation_action",
+    ),
+    path(
         "core-schools/champion-candidates",
         core_schools_views.champion_candidates_view,
         name="champion_candidates",

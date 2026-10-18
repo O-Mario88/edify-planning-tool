@@ -84,6 +84,14 @@ cannot give, never a zero; teacher and leader figures are headcounts.
       {% for rec in core_recommendations %}<li class="py-2 flex flex-wrap items-start justify-between gap-2" data-core-recommendation="{{ rec.id }}">
         <span class="edify-text-caption"><span class="font-semibold">{{ rec.get_intervention_display }}{% if rec.score is not None %} ({{ rec.score|floatformat:1 }}{% if rec.score_band %}, {{ rec.score_band }}{% endif %}){% endif %}</span> · {% if rec.recommended_item %}{{ rec.recommended_item.display_name }}{% else %}No mapped training{% if rec.unmapped_reason %}: {{ rec.unmapped_reason }}{% endif %}{% endif %}{% if rec.reason %}<span class="block text-slate-500">{{ rec.reason }}</span>{% endif %}</span>
         <span class="pill pill-neutral">{{ rec.get_state_display }}</span>
+        {% if core_may_act and rec.is_live %}
+        <div class="basis-full flex flex-wrap items-center gap-2" data-core-recommendation-actions>
+          <button type="button" hx-get="/planning/schedule-modal?school_id={{ core.id }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button primary h-8">Plan support</button>
+          {% if rec.state != "accepted" %}<form method="post" action="/core-schools/recommendations/{{ rec.id }}/accept">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="edify-action-button secondary h-8">Accept</button></form>{% endif %}
+          <form method="post" action="/core-schools/recommendations/{{ rec.id }}/defer" class="flex items-center gap-1">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><label class="sr-only" for="defer-{{ rec.id }}">Reason to defer</label><input id="defer-{{ rec.id }}" name="reason" required placeholder="Reason to defer" class="h-8 px-2 rounded-control border border-slate-200 edify-text-caption"><button type="submit" class="edify-action-button secondary h-8">Defer</button></form>
+          <form method="post" action="/core-schools/recommendations/{{ rec.id }}/reject" class="flex items-center gap-1">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><label class="sr-only" for="reject-{{ rec.id }}">Reason to reject</label><input id="reject-{{ rec.id }}" name="reason" required placeholder="Reason to reject" class="h-8 px-2 rounded-control border border-slate-200 edify-text-caption"><button type="submit" class="edify-action-button edify-destructive-outline h-8">Reject</button></form>
+        </div>
+        {% endif %}
       </li>{% endfor %}
     </ul>
     {% else %}<p class="edify-text-caption text-slate-500">No open recommendation. They are recorded from the school's confirmed SSA.</p>{% endif %}
@@ -100,6 +108,9 @@ cannot give, never a zero; teacher and leader figures are headcounts.
     {% if not m %}<p class="edify-text-caption text-slate-500">The rule needs a confirmed SSA and a Core plan to judge this school.</p>{% endif %}
     {% endwith %}
     <p class="edify-text-caption text-slate-500">Readiness is a recommendation. A school becomes a Champion only through the Champion review.</p>
+    {% if core.champion == "Potential Champion" and core_may_review %}
+    <button type="button" hx-get="/core-schools/{{ core.code }}/champion-review" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button primary h-9" data-core-champion-review>Open Champion review</button>
+    {% endif %}
   </section>
 
   <p class="edify-text-caption text-slate-500">The same figures are on <a href="/core-schools-oversight/?fy={{ core_fy }}&amp;q={{ core.code|urlencode }}" class="edify-primary-text font-semibold hover:underline">Core School Oversight</a>.</p>
