@@ -53,6 +53,7 @@ NOT_STARTED_STATUSES = (
     PDStatus.SUBMITTED_TO_SUPERVISOR,
     PDStatus.SUBMITTED_TO_HR,
     PDStatus.PENDING_EXCEPTION,
+    PDStatus.SUBMITTED_TO_CD,
     PDStatus.APPROVED_PENDING_FUNDING,
     PDStatus.APPROVED_UNFUNDED,
     PDStatus.DISBURSED,
@@ -90,6 +91,128 @@ STATUS_BUCKET_OPTIONS = [
     ("inactive", "Inactive / Returned"),
 ]
 REMINDER_OPTIONS = [("due", "Due Soon"), ("overdue", "Overdue")]
+
+
+# ── Table 2b: the Staff Development Fund, person by person ──────────────────
+FUND_NOT_APPLIED = "not_applied"
+FUND_APPLIED = "applied"
+FUND_PROCESSING = "processing"
+FUND_IN_PROGRESS = "in_progress"
+FUND_COMPLETED = "completed"
+FUND_STATUS_LABELS = {
+    FUND_NOT_APPLIED: "Not Applied",
+    FUND_APPLIED: "Applied",
+    FUND_PROCESSING: "Being Processed",
+    FUND_IN_PROGRESS: "In Progress",
+    FUND_COMPLETED: "Completed",
+}
+#: Not Applied first: they are who the table is for.
+FUND_STATUS_ORDER = {key: index for index, key in enumerate(FUND_STATUS_LABELS)}
+#: A request in one of these leaves its owner free to apply again.
+NOT_APPLIED_REQUEST_STATUSES = (
+    PDStatus.DRAFT,
+    PDStatus.REJECTED,
+    PDStatus.CANCELLED,
+    PDStatus.WITHDRAWN,
+)
+#: With the manager, HR or the Country Director, or back with the employee.
+FUND_APPLIED_STATUSES = (
+    PDStatus.SUBMITTED_TO_SUPERVISOR,
+    PDStatus.RETURNED_BY_SUPERVISOR,
+    PDStatus.SUBMITTED_TO_HR,
+    PDStatus.RETURNED_BY_HR,
+    PDStatus.PENDING_EXCEPTION,
+    PDStatus.SUBMITTED_TO_CD,
+)
+#: Authorized: with Accounting, or waiting for the employee to enroll.
+FUND_PROCESSING_STATUSES = (
+    PDStatus.APPROVED_PENDING_FUNDING,
+    PDStatus.APPROVED_UNFUNDED,
+    PDStatus.DISBURSED,
+    PDStatus.ENROLLMENT_PENDING,
+)
+FUND_IN_PROGRESS_STATUSES = (
+    PDStatus.ENROLLMENT_CONFIRMED,
+    PDStatus.IN_PROGRESS,
+    PDStatus.ENDED,
+    PDStatus.DEFERRED,
+)
+#: The course is done; what is left is its paperwork.
+FUND_COMPLETED_STATUSES = (
+    PDStatus.MARKED_COMPLETE,
+    PDStatus.CERTIFICATE_UPLOADED,
+    PDStatus.BAMBOOHR_CONFIRMED,
+    PDStatus.ACCOUNTABILITY_SUBMITTED,
+    PDStatus.ACCOUNTABILITY_CLEARED,
+    PDStatus.AWAITING_HR_SIGNOFF,
+    PDStatus.COMPLETED_CLOSED,
+)
+
+CERT_ON_BAMBOOHR = "bamboohr"
+CERT_UPLOADED = "uploaded"
+CERT_AWAITING = "awaiting"
+CERT_NONE = "none"
+CERTIFICATE_STATUS_LABELS = {
+    CERT_ON_BAMBOOHR: "Uploaded on BambooHR",
+    CERT_UPLOADED: "Uploaded, not on BambooHR",
+    CERT_AWAITING: "Awaiting Certificate",
+    CERT_NONE: "No Certificate",
+}
+#: HR has confirmed the certificate is on BambooHR from this status on.
+_ON_BAMBOOHR_STATUSES = (
+    PDStatus.BAMBOOHR_CONFIRMED,
+    PDStatus.ACCOUNTABILITY_SUBMITTED,
+    PDStatus.ACCOUNTABILITY_CLEARED,
+    PDStatus.AWAITING_HR_SIGNOFF,
+    PDStatus.COMPLETED_CLOSED,
+)
+
+
+def fund_status(req) -> str:
+    """Where a person's Staff Development Fund request is (table 2b)."""
+    if req is None:
+        return FUND_NOT_APPLIED
+    if req.status in FUND_COMPLETED_STATUSES:
+        return FUND_COMPLETED
+    if req.status in FUND_IN_PROGRESS_STATUSES:
+        return FUND_IN_PROGRESS
+    if req.status in FUND_PROCESSING_STATUSES:
+        return FUND_PROCESSING
+    if req.status in FUND_APPLIED_STATUSES:
+        return FUND_APPLIED
+    return FUND_NOT_APPLIED
+
+
+def certificate_status(req, certificate) -> str:
+    """Where the course's certificate is: on BambooHR, uploaded to the
+    platform and not yet confirmed on BambooHR, awaited (the course is under
+    way or done and none is in), or none (no course yet, or none expected)."""
+    if req is None:
+        return CERT_NONE
+    if req.bamboohr_uploaded or req.status in _ON_BAMBOOHR_STATUSES:
+        return CERT_ON_BAMBOOHR
+    if certificate is not None:
+        return CERT_UPLOADED
+    if req.certification_expected and req.status in (
+        *FUND_IN_PROGRESS_STATUSES,
+        *FUND_COMPLETED_STATUSES,
+    ):
+        return CERT_AWAITING
+    return CERT_NONE
+
+
+def _fund_reminder(status: str, certificate: str) -> dict | None:
+    """The reminder the row's Action offers, or None: to apply, to upload
+    the certificate, or to confirm it on BambooHR."""
+    if status == FUND_NOT_APPLIED:
+        return {"action": "send_apply_reminder", "label": "Remind to Apply"}
+    if certificate == CERT_AWAITING:
+        return {"action": "send_reminder", "label": "Remind: Certificate"}
+    if certificate == CERT_UPLOADED:
+        return {"action": "send_reminder", "label": "Remind: BambooHR"}
+    if status in (FUND_PROCESSING, FUND_IN_PROGRESS):
+        return {"action": "send_reminder", "label": "Send Reminder"}
+    return None
 
 
 def _bucket(status: str) -> str:
@@ -499,9 +622,13 @@ class HRPDDashboardService:
         # ── Everyone HR is meant to track, not only those who applied ───────
         # The tracker is built from requests, so a staff member who never
         # applied was simply invisible — the exact person HR needs to chase.
-        not_applied = HRPDDashboardService.staff_without_requests(
+        fund_rows = HRPDDashboardService.staff_fund_rows(
             principal, fy, country=country, role_filter=role_filter
         )
+        not_applied = [r for r in fund_rows if r["status"] == FUND_NOT_APPLIED]
+        fund_filter = (params.get("fund_status") or "").strip()
+        if fund_filter not in FUND_STATUS_LABELS:
+            fund_filter = ""
         can_adjust_allocation = getattr(principal, "active_role", "") in (
             "HumanResources",
             "Admin",
@@ -616,6 +743,20 @@ class HRPDDashboardService:
             "role_settings": role_settings,
             "not_applied": not_applied[:15],
             "not_applied_count": len(not_applied),
+            # Table 2b, every eligible person (owner, 2026-10-18).
+            "fund_rows": [
+                r for r in fund_rows if not fund_filter or r["status"] == fund_filter
+            ],
+            "fund_total": len(fund_rows),
+            "fund_filter": fund_filter,
+            "fund_status_options": [
+                {
+                    "key": key,
+                    "label": label,
+                    "count": sum(1 for r in fund_rows if r["status"] == key),
+                }
+                for key, label in FUND_STATUS_LABELS.items()
+            ],
             "can_adjust_allocation": can_adjust_allocation,
             # Closing a course releases money: HR's decision alone.
             "can_sign_off": role in ("HumanResources", "Admin"),
@@ -726,25 +867,40 @@ class HRPDDashboardService:
     def staff_without_requests(
         principal, fy: str, *, country: str = "", role_filter: str = ""
     ) -> list[dict]:
-        """Every scoped, PD-eligible staff member with no live request this FY.
+        """Every scoped, PD-eligible staff member who has not applied this FY
+        — the Not Applied rows of ``staff_fund_rows``.
 
-        One definition serves both the dashboard panel and the bulk "remind
-        everyone to apply" action, so the list HR reads is exactly the list
-        the reminder reaches — a posted set of ids is never trusted.
-        Draft-only staff count as not-applied on purpose: a draft nobody
-        submitted is invisible to every approval queue, so for tracking
-        purposes that person has not applied.
+        One definition serves the table, its count and the "remind everyone to
+        apply" action, so the list HR reads is exactly the list the reminder
+        reaches — a posted set of ids is never trusted.
+        """
+        return [
+            row
+            for row in HRPDDashboardService.staff_fund_rows(
+                principal, fy, country=country, role_filter=role_filter
+            )
+            if row["status"] == FUND_NOT_APPLIED
+        ]
+
+    @staticmethod
+    def staff_fund_rows(
+        principal, fy: str, *, country: str = "", role_filter: str = ""
+    ) -> list[dict]:
+        """Every scoped, PD-eligible staff member's Staff Development Fund
+        position this FY (owner, 2026-10-18: table 2b): country, name, role,
+        allocation in USD, where their request is, where its certificate is,
+        and what can be done about it.
+
+        A person's request is their latest live one. A draft nobody submitted
+        is invisible to every approval queue, and a rejected, cancelled or
+        withdrawn request leaves them free to apply again, so either way that
+        person has not applied.
         """
         from apps.accounts.models import StaffProfile
 
         scoped_ids, locked_country = _scoped_staff_ids(principal)
         country = locked_country or country
 
-        applied_ids = set(
-            ProfessionalDevelopmentRequest.objects.filter(fy=fy)
-            .exclude(status=PDStatus.DRAFT)
-            .values_list("staff_id", flat=True)
-        )
         eligible_qs = StaffProfile.objects.filter(
             user__active_role__in=[role for role, _ in PD_ELIGIBLE_ROLES]
         ).select_related("user")
@@ -754,18 +910,37 @@ class HRPDDashboardService:
             eligible_qs = eligible_qs.filter(country=country)
         if role_filter:
             eligible_qs = eligible_qs.filter(user__active_role=role_filter)
+        people = list(eligible_qs.order_by("user__name"))
+        staff_ids = [sp.id for sp in people]
+
+        latest: dict[str, ProfessionalDevelopmentRequest] = {}
+        for req in (
+            ProfessionalDevelopmentRequest.objects.filter(fy=fy, staff_id__in=staff_ids)
+            .exclude(status__in=NOT_APPLIED_REQUEST_STATUSES)
+            .order_by("created_at")
+        ):
+            latest[req.staff_id] = req
+        certificates: dict[str, ProfessionalDevelopmentCertificate] = {}
+        for cert in (
+            ProfessionalDevelopmentCertificate.objects.filter(
+                request_id__in=[r.id for r in latest.values()]
+            )
+            .exclude(status="returned")
+            .order_by("created_at")
+        ):
+            certificates[cert.request_id] = cert
 
         alloc_by_staff = {
             a.staff_id: a
-            for a in ProfessionalDevelopmentAllocation.objects.filter(fy=fy)
+            for a in ProfessionalDevelopmentAllocation.objects.filter(
+                fy=fy, staff_id__in=staff_ids
+            )
         }
         role_defaults = {
             (p.role, p.country): p for p in PDRoleAllocation.objects.filter(fy=fy)
         }
         rows = []
-        for sp in eligible_qs.order_by("user__name"):
-            if sp.id in applied_ids:
-                continue
+        for sp in people:
             role = sp.user.active_role if sp.user else ""
             alloc = alloc_by_staff.get(sp.id) or role_defaults.get((role, sp.country))
             if alloc is None:
@@ -774,6 +949,10 @@ class HRPDDashboardService:
                 cents, cur = alloc.annual_allocation_cents, alloc.currency
             else:
                 cents, cur = alloc.annual_allocation, alloc.currency
+            req = latest.get(sp.id)
+            cert = certificates.get(req.id) if req else None
+            status = fund_status(req)
+            certificate = certificate_status(req, cert)
             rows.append(
                 {
                     "staff_id": sp.id,
@@ -782,8 +961,19 @@ class HRPDDashboardService:
                     "role": ROLE_LABELS.get(role, role or "—"),
                     "country": sp.country or "—",
                     "allocation": f"{cur} {cents / 100:,.0f}",
+                    "allocation_cents": cents,
+                    "currency": cur,
+                    "status": status,
+                    "status_label": FUND_STATUS_LABELS[status],
+                    "certificate": certificate,
+                    "certificate_label": CERTIFICATE_STATUS_LABELS[certificate],
+                    "request_id": req.id if req else "",
+                    "course": req.course_name if req else "",
+                    "certificate_id": cert.id if cert else "",
+                    "reminder": _fund_reminder(status, certificate),
                 }
             )
+        rows.sort(key=lambda row: (FUND_STATUS_ORDER[row["status"]], row["name"]))
         return rows
 
     @staticmethod

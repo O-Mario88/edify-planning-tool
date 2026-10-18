@@ -1,0 +1,98 @@
+{% load table_pagination %}{% comment %}
+2b. The Staff Development Fund, person by person (owner, 2026-10-18): every
+eligible staff member in the viewer's scope — Country, Staff Name, Staff Role,
+Allocation in USD, Status (Not Applied, Applied, Being Processed, In Progress,
+Completed), Certificate (Uploaded on BambooHR, Uploaded but not on BambooHR,
+Awaiting Certificate, No Certificate) and an Action. Not Applied rows come
+first; the chips narrow the table to one status and keep the page's filters.
+Rows are HRPDDashboardService.staff_fund_rows, the same list "Remind All to
+Apply" reaches.
+{% endcomment %}
+<div id="pd-fund-table" class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
+  <div class="flex items-center justify-between pb-3 border-b flex-wrap gap-2 edify-border">
+    <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">2b. Staff Development Fund <span class="text-slate-400">· Not Yet Applied ({{ not_applied_count }})</span></h2>
+    {% if can_adjust_allocation and not_applied_count %}
+    <form method="post" action="/cpd-learning/action">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="bulk_apply_reminders">
+      <input type="hidden" name="fy" value="{{ fy }}">
+      <input type="hidden" name="country" value="{{ country }}">
+      <input type="hidden" name="role" value="{{ role_filter }}">
+      <button type="submit" class="px-3 py-1.5 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text">Remind All to Apply ({{ not_applied_count }})</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="flex flex-wrap gap-2" role="group" aria-label="Show staff by status">
+    <button type="button" hx-get="/cpd-learning" hx-include="#pd-filters" hx-vals='{"fund_status": ""}' hx-target="#pd-dashboard-body" hx-swap="innerHTML"
+            class="edify-badge" data-tone="{% if not fund_filter %}info{% else %}neutral{% endif %}" aria-pressed="{% if not fund_filter %}true{% else %}false{% endif %}">All ({{ fund_total }})</button>
+    {% for option in fund_status_options %}
+    <button type="button" hx-get="/cpd-learning" hx-include="#pd-filters" hx-vals='{"fund_status": "{{ option.key }}"}' hx-target="#pd-dashboard-body" hx-swap="innerHTML"
+            class="edify-badge" data-tone="{% if fund_filter == option.key %}info{% else %}neutral{% endif %}" aria-pressed="{% if fund_filter == option.key %}true{% else %}false{% endif %}">{{ option.label }} ({{ option.count }})</button>
+    {% endfor %}
+  </div>
+
+  <div class="overflow-x-auto">
+    {% paginate fund_rows "fund_rows_page" as fund_pager %}
+    <table class="w-full text-left edify-text-caption font-semibold">
+      <thead>
+        <tr class="border-b edify-border">
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Country</th>
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Staff Name</th>
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Staff Role</th>
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase text-right">Allocation (USD)</th>
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Status</th>
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Certificate</th>
+          <th scope="col" class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-right">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y edify-border">
+        {% for p in fund_pager.rows %}
+        <tr class="hover:bg-slate-50/5" data-fund-status="{{ p.status }}">
+          <td class="py-2.5 pr-3 text-slate-400">{{ p.country }}</td>
+          <th scope="row" class="py-2.5 pr-3 edify-text font-semibold text-left">{% staff_link p.name p.staff_id %}{% if p.course %}<span class="block text-slate-400 font-medium truncate">{{ p.course }}</span>{% endif %}</th>
+          <td class="py-2.5 pr-3 text-slate-400">{{ p.role }}</td>
+          <td class="py-2.5 pr-3 text-right tabular-nums edify-text">{{ p.allocation }}</td>
+          <td class="py-2.5 pr-3"><span class="edify-badge" data-tone="{% if p.status == 'not_applied' %}danger{% elif p.status == 'processing' %}warning{% elif p.status == 'completed' %}success{% else %}info{% endif %}">{{ p.status_label }}</span></td>
+          <td class="py-2.5 pr-3"><span class="edify-badge" data-tone="{% if p.certificate == 'bamboohr' %}success{% elif p.certificate == 'uploaded' %}info{% elif p.certificate == 'awaiting' %}warning{% else %}neutral{% endif %}">{{ p.certificate_label }}</span></td>
+          <td class="py-2.5 text-right">
+            <div class="inline-flex flex-wrap justify-end gap-1.5">
+              {% if p.reminder %}
+                {% if p.reminder.action == 'send_apply_reminder' %}
+                  {% if can_adjust_allocation %}
+                  <form method="post" action="/cpd-learning/action">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="send_apply_reminder">
+                    <input type="hidden" name="staff_user_id" value="{{ p.user_id }}">
+                    <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="country" value="{{ country }}"><input type="hidden" name="role" value="{{ role_filter }}">
+                    <button type="submit" class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text whitespace-nowrap">{{ p.reminder.label }}</button>
+                  </form>
+                  {% endif %}
+                {% else %}
+                <form method="post" action="/cpd-learning/action">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="send_reminder">
+                  <input type="hidden" name="request_id" value="{{ p.request_id }}">
+                  <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="country" value="{{ country }}">
+                  <button type="submit" class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text whitespace-nowrap">{{ p.reminder.label }}</button>
+                </form>
+                {% endif %}
+              {% endif %}
+              {% if p.request_id %}
+              <a href="/my-professional-development/request/{{ p.request_id }}/form.pdf" target="_blank" rel="noopener" class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text whitespace-nowrap" aria-label="View {{ p.name }}'s request form (PDF)">View Form</a>
+              {% endif %}
+              {% if p.certificate_id %}
+              <a href="/my-professional-development/certificate/{{ p.certificate_id }}/pdf" target="_blank" rel="noopener" class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text whitespace-nowrap" aria-label="View {{ p.name }}'s certificate (PDF)">Certificate</a>
+              <a href="/my-professional-development/certificate/{{ p.certificate_id }}/pdf?download=1" class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text whitespace-nowrap" aria-label="Download {{ p.name }}'s certificate (PDF)">Download</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="py-6 text-center text-slate-400 font-semibold">{% if fund_filter %}No staff member in this scope is at this status.{% else %}No Professional-Development-eligible staff found.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% include "components/table_pager.html" with pager=fund_pager param="fund_rows_page" %}
+  </div>
+</div>

@@ -1,0 +1,54 @@
+{% comment %}
+A Staff Development Fund request as its form, read-only (owner, 2026-10-18):
+the employee's own submitted request, and what each reviewer reads before
+signing. The same boxes as the paper form and its PDF, which this links to.
+{% endcomment %}
+<div class="sdf" data-sdf-sheet>
+  <header class="sdf-head">
+    <h3 class="sdf-title">STAFF DEVELOPMENT FUND REQUEST FORM</h3>
+    <span class="sdf-logo" role="img" aria-label="Edify"></span>
+  </header>
+  <p class="sdf-policy">Please refer to the Staff Development Fund Policy before completing this form.</p>
+
+  <div class="sdf-who">
+    <div class="space-y-2">
+      <div class="sdf-row"><span class="sdf-label">Full Name</span><div class="sdf-box">{{ sheet.full_name }}</div></div>
+      <div class="sdf-row"><span class="sdf-label">Position</span><div class="sdf-box">{{ sheet.position }}</div></div>
+      <div class="sdf-row"><span class="sdf-label">Manager</span><div class="sdf-box">{{ sheet.manager }}</div></div>
+    </div>
+    <div class="sdf-attach">
+      <p>Please attach a copy of:</p>
+      <p>a) the conference and/or training course programme and registration forms (including dates, location, registration fees etc.)</p>
+      <p>b) your abstract (optional)</p>
+      {% for e in evidence %}
+      <a href="/my-professional-development/evidence/{{ e.id }}" target="_blank" rel="noopener" class="font-semibold edify-primary-text-hover">{{ e.original_name }} <span class="font-normal">· {{ e.get_kind_display }}</span></a>
+      {% empty %}
+      <p class="sdf-hint">No attachment.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <section class="sdf-section" aria-labelledby="sdf-details">
+    <h4 id="sdf-details">Details</h4>
+    <div class="sdf-row"><span class="sdf-label">Purpose for Which Funding is Sought</span><div class="sdf-box">{{ sheet.purpose }}</div></div>
+    <div class="sdf-row"><span class="sdf-label">Start Date of Proposed Activity</span><div class="sdf-box">{{ sheet.start_date }}</div></div>
+    <div class="sdf-row"><span class="sdf-label">End Date of Proposed Activity</span><div class="sdf-box">{{ sheet.end_date }}</div></div>
+    <div class="sdf-row"><span class="sdf-label">Duration of Activity</span><div class="sdf-box">{{ sheet.duration }}</div></div>
+    <div class="sdf-row"><span class="sdf-label">Title of Course, Conference, Paper</span><div class="sdf-box">{{ sheet.title }}</div></div>
+    <div class="sdf-row sdf-row--wide"><span class="sdf-label">How will this course impact your work in Edify?</span><div class="sdf-box sdf-box--area">{{ sheet.impact }}</div></div>
+  </section>
+
+  <section class="sdf-section" aria-labelledby="sdf-budget">
+    <h4 id="sdf-budget">Budget</h4>
+    <div class="sdf-row"><span class="sdf-label">Approximate cost of Activity</span><div class="sdf-box">{{ sheet.approximate_cost }}</div></div>
+    <div class="sdf-row"><span class="sdf-label">Amount Requested</span><div class="sdf-box">{{ sheet.amount_requested }}</div></div>
+    <div class="sdf-row"><span class="sdf-label">What Fiscal Year are the Funds budgeted for?</span><div class="sdf-box">{{ sheet.fiscal_year }}</div></div>
+  </section>
+
+  {% include "partials/professional_development/_sdf_signoffs.html" %}
+
+  <p class="flex flex-wrap gap-2">
+    <a href="/my-professional-development/request/{{ instance.id }}/form.pdf" target="_blank" rel="noopener" class="btn btn-secondary h-8">View form (PDF)</a>
+    <a href="/my-professional-development/request/{{ instance.id }}/form.pdf?download=1" class="btn btn-secondary h-8">Download form</a>
+  </p>
+</div>

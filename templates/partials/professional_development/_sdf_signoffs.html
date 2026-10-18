@@ -1,0 +1,46 @@
+{% comment %}
+The Staff Development Fund form's sign-off half (owner, 2026-10-18):
+Authorization (the manager's decision, comment, name, signature and date),
+Office Use Only (entitlement, balance, Regional HRD and Country Director) and
+Accounting Authorization. Filled from `sheet` (apps.professional_development
+.sdf_form.sheet) as each person signs in the platform; empty boxes until then.
+A signature box shows the signer's name once they have signed.
+{% endcomment %}
+<section class="sdf-section" aria-labelledby="sdf-authorization">
+  <h4 id="sdf-authorization">Authorization</h4>
+  <p class="sdf-choice"><input type="radio" disabled {% if sheet.decision == 'approved' %}checked{% endif %} aria-label="Approved"> Approved, the source of funding is available and I fully support this request form.</p>
+  <p class="sdf-choice"><input type="radio" disabled {% if sheet.decision == 'denied' %}checked{% endif %} aria-label="Denied"> Denied, the source of funding is not available. If No, further reasons provided below</p>
+  <div class="sdf-box sdf-box--area">{{ sheet.authorization_note|default:"" }}</div>
+  <div class="sdf-signoff">
+    <div><span class="sdf-label">Manager Name:</span><div class="sdf-box">{{ sheet.manager_signature.name }}</div></div>
+    <div><span class="sdf-label">Manager Signature:</span><div class="sdf-box sdf-box--sign">{% if sheet.manager_signature.signed %}{{ sheet.manager_signature.name }}{% endif %}</div></div>
+    <div><span class="sdf-label">Date:</span><div class="sdf-box">{{ sheet.manager_signature.date }}</div></div>
+  </div>
+</section>
+
+<section class="sdf-section" aria-labelledby="sdf-office">
+  <h4 id="sdf-office">Office Use Only</h4>
+  <div class="sdf-signoff">
+    <div><span class="sdf-label">Staff SDF Entitlement:</span><div class="sdf-box">{{ sheet.entitlement }}</div></div>
+    <div><span class="sdf-label">Balance Due:</span><div class="sdf-box">{{ sheet.balance_due }}</div></div>
+    <div></div>
+  </div>
+  <div class="sdf-signoff">
+    <div><span class="sdf-label">Regional HRD Name:</span><div class="sdf-box">{{ sheet.hr_signature.name }}</div></div>
+    <div><span class="sdf-label">Regional HRD Signature:</span><div class="sdf-box sdf-box--sign">{% if sheet.hr_signature.signed %}{{ sheet.hr_signature.name }}{% endif %}</div></div>
+    <div><span class="sdf-label">Date:</span><div class="sdf-box">{{ sheet.hr_signature.date }}</div></div>
+  </div>
+  <div class="sdf-signoff">
+    <div><span class="sdf-label">Country Director Name:</span><div class="sdf-box">{{ sheet.cd_signature.name }}</div></div>
+    <div><span class="sdf-label">Country Director Signature:</span><div class="sdf-box sdf-box--sign">{% if sheet.cd_signature.signed %}{{ sheet.cd_signature.name }}{% endif %}</div></div>
+    <div><span class="sdf-label">Date:</span><div class="sdf-box">{{ sheet.cd_signature.date }}</div></div>
+  </div>
+</section>
+
+<section class="sdf-section" aria-label="Accounting authorization">
+  <div class="sdf-signoff">
+    <div><span class="sdf-label">Accounting Autorization:</span><div class="sdf-box sdf-box--sign">{% if sheet.accounting_signature.signed %}{{ sheet.accounting_signature.name }}{% endif %}</div></div>
+    <div></div>
+    <div><span class="sdf-label">Date:</span><div class="sdf-box">{{ sheet.accounting_signature.date }}</div></div>
+  </div>
+</section>

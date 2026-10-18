@@ -11,15 +11,17 @@ class of failure on a different path — `reimburse()` accepted any amount
 because nothing bounded it before the payout.
 
 The envelope rule (§9) is: Remaining = Annual Allocation − Active Committed −
-Accounted Used. It is enforced at **submit**, and going over is permitted only
-with a declared exception reason, which stamps `is_exception` on the request.
-That flag is the entire audit trail for over-budget development spending, so a
-request that goes over without being marked is worse than one that is refused.
+Accounted Used. It is read at **submit**: a request that goes over is stamped
+`is_exception`, and HR cannot approve it without acknowledging the exception.
+Since the Staff Development Fund form (owner, 2026-10-18), which has no box for
+a reason, going over is flagged rather than refused — the flag and HR's
+acknowledgement are the control, so a request that goes over without being
+marked is the failure this walks for.
 
 So this walks a funded request from draft to accounted, and then asks the two
-questions the envelope exists for: does a second request that would exceed
-what is left get refused, and when an exception is declared, is it actually
-recorded as one.
+questions the envelope exists for: is a second request that would exceed what
+is left marked as an exception that HR must acknowledge, and is one within it
+left unmarked.
 """
 
 from __future__ import annotations
@@ -37,6 +39,7 @@ from apps.professional_development.models import (
     PDFundingType,
     PDStatus,
     ProfessionalDevelopmentAllocation,
+    ProfessionalDevelopmentEvidence,
     ProfessionalDevelopmentRequest,
 )
 from apps.professional_development.services import StaffPDService
@@ -83,7 +86,7 @@ class ProfessionalDevelopmentJourneyTest(TestCase):
         )
 
     def _draft(self, *, amount: int, name: str, exception_reason: str = ""):
-        return ProfessionalDevelopmentRequest.objects.create(
+        req = ProfessionalDevelopmentRequest.objects.create(
             staff_id=self.learner_sp.id,
             staff_name=self.learner.name,
             course_name=name,
@@ -99,7 +102,19 @@ class ProfessionalDevelopmentJourneyTest(TestCase):
             start_date=dt.date(2026, 1, 5),
             end_date=dt.date(2026, 3, 5),
             exception_reason=exception_reason,
+            # The Staff Development Fund form's own boxes.
+            purpose="Professional Development",
+            duration="2 months",
+            relevance_to_role="Stronger coaching of school leaders.",
         )
+        ProfessionalDevelopmentEvidence.objects.create(
+            request=req,
+            kind="programme",
+            uri=f"{req.id}.pdf",
+            original_name="programme.pdf",
+            uploaded_by=self.learner.id,
+        )
+        return req
 
     def _remaining(self):
         return StaffPDService.balances(self.learner, self.fy)["remaining"]
@@ -142,24 +157,27 @@ class ProfessionalDevelopmentJourneyTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, first.course_name)
 
-    def test_a_second_request_beyond_what_is_left_is_refused(self):
+    def test_a_second_request_beyond_what_is_left_needs_hr_to_acknowledge_it(self):
         first = self._draft(amount=FIRST, name="Instructional Leadership")
         PDApprovalRoutingService.submit(first, self.learner)
 
         over = self._draft(amount=SECOND_OVER, name="Advanced Coaching")
-        with self.assertRaises(BadRequest) as caught:
-            PDApprovalRoutingService.submit(over, self.learner)
-        self.assertIn(
-            "exceeds your remaining PD fund",
-            str(caught.exception),
-            "the refusal does not say what is wrong, so the person cannot act on it",
-        )
+        PDApprovalRoutingService.submit(over, self.learner)
         over.refresh_from_db()
-        self.assertEqual(
-            over.status,
-            PDStatus.DRAFT,
-            "the over-budget request was left in a submitted state despite the refusal",
+        self.assertTrue(
+            over.is_exception,
+            "a request beyond what is left went through unmarked",
         )
+        hr, _hr_sp = _person(
+            "pd-hr", "pd-hr@edify.org", "PD HR", EdifyRole.HUMAN_RESOURCES.value
+        )
+        over.status = PDStatus.SUBMITTED_TO_HR
+        over.save(update_fields=["status"])
+        with self.assertRaises(BadRequest) as caught:
+            PDApprovalRoutingService.hr_approve(over.id, hr)
+        self.assertIn("exception", str(caught.exception))
+        over.refresh_from_db()
+        self.assertEqual(over.status, PDStatus.SUBMITTED_TO_HR)
 
     def test_a_second_request_within_what_is_left_still_goes_through(self):
         """The envelope must refuse the right things and only those.

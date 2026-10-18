@@ -35,6 +35,7 @@ from apps.professional_development.models import (
     PDStatus,
     ProfessionalDevelopmentAllocation,
     ProfessionalDevelopmentCertificate,
+    ProfessionalDevelopmentEvidence,
     ProfessionalDevelopmentFundRequest,
     ProfessionalDevelopmentRequest,
 )
@@ -92,7 +93,10 @@ class PDTestBase(TestCase):
         )
         return u, StaffProfile.objects.create(user=u, title=role, country="Uganda")
 
-    def _draft(self, user, **overrides):
+    def _draft(self, user, *, attach=True, **overrides):
+        """A draft as the Staff Development Fund form writes it, with its
+        attachment (a), the programme and registration forms, unless
+        ``attach`` is False."""
         info = staff_display_info(user)
         fields = dict(
             fy=FY,
@@ -103,6 +107,9 @@ class PDTestBase(TestCase):
             department=info["department"],
             supervisor_staff_id=info["supervisor_staff_id"],
             supervisor_name=info["supervisor_name"],
+            purpose="Professional Development",
+            duration="2 months",
+            relevance_to_role="Better facilitation of school leaders.",
             course_name="Leadership for Impact",
             course_category="Leadership Development",
             course_type="online",
@@ -114,7 +121,21 @@ class PDTestBase(TestCase):
             created_by=user.id,
         )
         fields.update(overrides)
-        return ProfessionalDevelopmentRequest.objects.create(**fields)
+        req = ProfessionalDevelopmentRequest.objects.create(**fields)
+        if attach:
+            ProfessionalDevelopmentEvidence.objects.create(
+                request=req,
+                kind="programme",
+                uri=f"{req.id}.pdf",
+                original_name="programme.pdf",
+                uploaded_by=user.id,
+            )
+        return req
+
+    def _authorize(self, req, hr=None):
+        """HR's approval and then the Country Director's (the form's order)."""
+        PDApprovalRoutingService.hr_approve(req.id, hr or self.hr)
+        PDApprovalRoutingService.cd_approve(req.id, self.cd)
 
     def _allocate(self, user, amount_cents):
         sp = StaffProfile.objects.get(user=user)
@@ -144,9 +165,10 @@ class BalancesTests(PDTestBase):
         self.assertEqual(bal["committed"], 40_000_00)
         self.assertEqual(bal["remaining"], 60_000_00)
 
-    def test_over_allocation_requires_exception_reason_to_submit(self):
-        """§9 — a request exceeding the remaining fund cannot submit without
-        an exception reason, and gets flagged is_exception once approved."""
+    def test_over_allocation_is_flagged_as_an_exception_for_hr(self):
+        """§9 — a request exceeding the remaining fund is an exception HR
+        must acknowledge. The Staff Development Fund form has no box for a
+        reason (2026-10-18), so it is flagged on submission, not refused."""
         self._allocate(self.cceo, 10_000_00)
         req = self._draft(
             self.cceo,
@@ -154,11 +176,6 @@ class BalancesTests(PDTestBase):
             requested_amount_cents=50_000_00,
             course_fee_cents=50_000_00,
         )
-        with self.assertRaises(BadRequest):
-            PDApprovalRoutingService.submit(req, self.cceo)
-
-        req.exception_reason = "Critical certification, no other budget line available."
-        req.save()
         PDApprovalRoutingService.submit(req, self.cceo)
         req.refresh_from_db()
         self.assertTrue(req.is_exception)
@@ -222,7 +239,7 @@ class RoutingTests(PDTestBase):
         PDApprovalRoutingService.supervisor_approve(req.id, self.pl)
         req.refresh_from_db()
         self.assertEqual(req.status, PDStatus.SUBMITTED_TO_HR)
-        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+        self._authorize(req)
         req.refresh_from_db()
         self.assertTrue(req.calendar_block_id)
         self.assertTrue(CalendarBlock.objects.filter(id=req.calendar_block_id).exists())
@@ -230,40 +247,36 @@ class RoutingTests(PDTestBase):
 
 
 class EvidenceGateTests(PDTestBase):
-    def test_in_person_requires_evidence_to_submit(self):
-        req = self._draft(self.cceo, course_type="in_person", course_link="")
-        with self.assertRaises(BadRequest):
+    """The Staff Development Fund form (2026-10-18): its boxes, and its
+    attachment (a), the programme and registration forms."""
+
+    def test_the_programme_and_registration_forms_are_required(self):
+        req = self._draft(self.cceo, attach=False)
+        with self.assertRaises(BadRequest) as refused:
             PDApprovalRoutingService.submit(req, self.cceo)
+        self.assertIn("programme", str(refused.exception))
         PDCourseTrackingService.upload_evidence(
-            req.id, self.cceo, _pdf(), kind="admission_letter"
+            req.id, self.cceo, _pdf("programme.pdf"), kind="programme"
         )
         PDApprovalRoutingService.submit(req, self.cceo)
         req.refresh_from_db()
         self.assertEqual(req.status, PDStatus.SUBMITTED_TO_SUPERVISOR)
 
-    def test_online_requires_course_link_to_submit(self):
-        req = self._draft(self.cceo, course_type="online", course_link="")
-        with self.assertRaises(BadRequest):
+    def test_every_box_of_the_form_is_required(self):
+        req = self._draft(self.cceo, purpose="", duration="", relevance_to_role="")
+        with self.assertRaises(BadRequest) as refused:
             PDApprovalRoutingService.submit(req, self.cceo)
-
-    def test_hybrid_requires_both_link_and_evidence(self):
-        req = self._draft(self.cceo, course_type="hybrid", course_link="https://x.org")
-        with self.assertRaises(BadRequest):
-            PDApprovalRoutingService.submit(req, self.cceo)
-        PDCourseTrackingService.upload_evidence(
-            req.id, self.cceo, _pdf(), kind="admission_letter"
-        )
-        PDApprovalRoutingService.submit(req, self.cceo)
-        req.refresh_from_db()
-        self.assertEqual(req.status, PDStatus.SUBMITTED_TO_SUPERVISOR)
+        for box in ("Purpose", "Duration", "impact your work"):
+            with self.subTest(box=box):
+                self.assertIn(box, str(refused.exception))
 
     def test_evidence_upload_blocked_once_submitted(self):
-        req = self._draft(self.cceo, course_type="in_person", course_link="")
+        req = self._draft(self.cceo)
         req.status = PDStatus.SUBMITTED_TO_SUPERVISOR
         req.save()
         with self.assertRaises(BadRequest):
             PDCourseTrackingService.upload_evidence(
-                req.id, self.cceo, _pdf(), kind="admission_letter"
+                req.id, self.cceo, _pdf(), kind="programme"
             )
 
 
@@ -276,7 +289,7 @@ class ClosureChainTests(PDTestBase):
         req.status = PDStatus.SUBMITTED_TO_SUPERVISOR
         req.save()
         PDApprovalRoutingService.supervisor_approve(req.id, self.pl)
-        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+        self._authorize(req)
         req.refresh_from_db()
         return req
 
@@ -429,7 +442,7 @@ class SelfConflictTests(PDTestBase):
         # test_reporting_line.py rather than replayed here.
         req.status = PDStatus.SUBMITTED_TO_HR
         req.save()
-        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+        self._authorize(req)
         req.refresh_from_db()
         self.assertTrue(hasattr(req, "fund_request"))
         with self.assertRaises(Forbidden):
@@ -1065,8 +1078,9 @@ class OneDecisionPerApprovalStageTest(PDTestBase):
                 PDApprovalRoutingService.hr_reject(req.id, self.hr2, "Budget freeze")
 
         req.refresh_from_db()
-        self.assertEqual(req.status, PDStatus.APPROVED_PENDING_FUNDING)
-        self.assertTrue(req.calendar_block_id)
+        # HR's approval hands it to the Country Director (2026-10-18).
+        self.assertEqual(req.status, PDStatus.SUBMITTED_TO_CD)
+        self.assertEqual(req.hr_reviewed_by, self.hr.id)
         self.assertEqual(_decisions("pd_hr_reject", req.id), 0)
 
     def test_a_return_that_lost_to_the_approval_leaves_it_approved(self):
@@ -1079,8 +1093,9 @@ class OneDecisionPerApprovalStageTest(PDTestBase):
                 PDApprovalRoutingService.hr_return(req.id, self.hr2, "Add a brochure")
 
         req.refresh_from_db()
-        self.assertEqual(req.status, PDStatus.APPROVED_PENDING_FUNDING)
-        self.assertTrue(req.calendar_block_id)
+        # HR's approval hands it to the Country Director (2026-10-18).
+        self.assertEqual(req.status, PDStatus.SUBMITTED_TO_CD)
+        self.assertEqual(req.hr_reviewed_by, self.hr.id)
         self.assertEqual(_decisions("pd_hr_return", req.id), 0)
 
     def test_a_supervisor_return_that_lost_to_the_approval_leaves_it_with_hr(self):
@@ -1124,7 +1139,7 @@ class OneDecisionAtSignOffTest(PDTestBase):
         req.status = PDStatus.SUBMITTED_TO_SUPERVISOR
         req.save()
         PDApprovalRoutingService.supervisor_approve(req.id, self.pl)
-        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+        self._authorize(req)
         PDCourseTrackingService.confirm_enrollment(
             req.id, self.cceo, enrollment_date=date.today()
         )
@@ -1190,7 +1205,7 @@ class FinanceActsOnlyWhereTheMoneyIsTest(PDTestBase):
         )
         req.status = PDStatus.SUBMITTED_TO_HR
         req.save()
-        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+        self._authorize(req)
         req.refresh_from_db()
         return req
 

@@ -1673,6 +1673,11 @@ urlpatterns = [
         name="pd_certificate_upload",
     ),
     path(
+        "my-professional-development/request/<str:request_id>/form.pdf",
+        pd_views.pd_request_form_pdf_view,
+        name="pd_request_form_pdf",
+    ),
+    path(
         "my-professional-development/request/<str:request_id>/action",
         pd_views.pd_action_view,
         name="pd_action",
@@ -1689,6 +1694,11 @@ urlpatterns = [
         "my-professional-development/allocation-history",
         pd_views.pd_allocation_history_view,
         name="pd_allocation_history",
+    ),
+    path(
+        "my-professional-development/certificate/<str:file_id>/pdf",
+        pd_views.pd_certificate_pdf_view,
+        name="pd_certificate_pdf",
     ),
     path(
         "my-professional-development/certificate/<str:file_id>",

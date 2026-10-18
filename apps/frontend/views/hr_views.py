@@ -1031,6 +1031,7 @@ def pd_dashboard_action_view(request):
                     "submitted_to_supervisor",
                     "submitted_to_hr",
                     "pending_exception",
+                    "submitted_to_cd",
                     "approved_pending_funding",
                     "approved_unfunded",
                     "disbursed",

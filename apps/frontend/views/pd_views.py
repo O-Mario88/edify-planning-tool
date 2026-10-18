@@ -31,6 +31,24 @@ from apps.professional_development.models import (
 from apps.professional_development.services import StaffPDService, staff_display_info
 
 
+#: Currencies the form's "Amount Requested" may be given in. The allocation,
+#: and the approximate cost, are in USD.
+SDF_CURRENCIES = ("USD", "UGX", "KES", "RWF", "TZS", "ZMW", "GHS", "NGN")
+
+
+def _fy_choices() -> list[str]:
+    from apps.core.fy import get_operational_fy
+
+    current = int(get_operational_fy())
+    return [str(year) for year in (current - 1, current, current + 1)]
+
+
+def sdf_sheet(instance):
+    from apps.professional_development.sdf_form import sheet
+
+    return sheet(instance)
+
+
 def _own_request_or_404(request_id: str, user) -> ProfessionalDevelopmentRequest | None:
     sp_id = getattr(user, "staff_profile_id", None)
     return ProfessionalDevelopmentRequest.objects.filter(
@@ -103,6 +121,48 @@ def pd_certificate_file_view(request, file_id):
 
 
 @require_page_permission("my_professional_development")
+def pd_certificate_pdf_view(request, file_id):
+    """A certificate as a PDF (owner, 2026-10-18: "HR, CD and PL can be able
+    to view and download the certificates in PDF Mode"). A PDF is served as it
+    was uploaded; a photo or scan is placed on an A4 page; anything else (a
+    Word document) is offered as the file it is. Readable by the employee,
+    their manager, HR and in-country leadership (_authorized_for_pd_file)."""
+    from django.http import HttpResponse
+    from django.utils.http import content_disposition_header
+
+    from apps.core.private_storage import file_exists, open_file
+    from apps.professional_development.models import ProfessionalDevelopmentCertificate
+    from apps.professional_development.sdf_form import certificate_pdf
+    from apps.professional_development.uploads import PD_NAMESPACE
+
+    rec = (
+        ProfessionalDevelopmentCertificate.objects.select_related("request")
+        .filter(id=file_id)
+        .first()
+    )
+    if not rec or not _authorized_for_pd_file(rec.request, request.user):
+        return HttpResponseNotFound("File not found.")
+    mime = rec.mime_type or ""
+    if mime != "application/pdf" and not mime.startswith("image/"):
+        return _serve_pd_file(
+            ProfessionalDevelopmentCertificate, file_id, request.user, download=True
+        )
+    if not file_exists(PD_NAMESPACE, rec.uri):
+        return HttpResponseNotFound("File not found in private storage.")
+    with open_file(PD_NAMESPACE, rec.uri) as handle:
+        data = handle.read()
+    if mime.startswith("image/"):
+        data = certificate_pdf(data)
+    stem = (rec.original_name or "certificate").rsplit(".", 1)[0]
+    response = HttpResponse(data, content_type="application/pdf")
+    response["Content-Disposition"] = content_disposition_header(
+        request.GET.get("download") == "1", f"{stem}.pdf"
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@require_page_permission("my_professional_development")
 def pd_evidence_file_view(request, file_id):
     from apps.professional_development.models import ProfessionalDevelopmentEvidence
 
@@ -112,6 +172,35 @@ def pd_evidence_file_view(request, file_id):
         request.user,
         request.GET.get("download") == "1",
     )
+
+
+@require_page_permission("my_professional_development")
+def pd_request_form_pdf_view(request, request_id):
+    """The completed Staff Development Fund request form, as the PDF the
+    attachment's first page is (owner, 2026-10-18). Readable by whoever may
+    read the request's files: the employee, their manager, HR and in-country
+    leadership — and by whoever is asked to act on it now."""
+    from django.http import HttpResponse
+    from django.utils.http import content_disposition_header
+
+    from apps.professional_development.approval_service import PDApprovalRoutingService
+    from apps.professional_development.fund_service import PDFundRequestService
+    from apps.professional_development.sdf_form import render_pdf
+
+    req = ProfessionalDevelopmentRequest.objects.filter(id=request_id).first()
+    if req is None or not (
+        _authorized_for_pd_file(req, request.user)
+        or PDApprovalRoutingService.can_review(req, request.user)
+        or PDFundRequestService.can_review(req, request.user)
+    ):
+        return HttpResponseNotFound("Request not found.")
+    response = HttpResponse(render_pdf(req), content_type="application/pdf")
+    name = f"Staff Development Fund - {req.staff_name}.pdf"
+    response["Content-Disposition"] = content_disposition_header(
+        request.GET.get("download") == "1", name
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @require_page_permission("my_professional_development")
@@ -226,6 +315,9 @@ def pd_request_view(request):
                 "fy": get_operational_fy(),
                 "balances": balances,
                 "evidence": instance.evidence_files.all() if instance else [],
+                "sheet": sdf_sheet(instance) if instance else None,
+                "currencies": SDF_CURRENCIES,
+                "fy_choices": _fy_choices(),
                 "certificates": instance.certificates.all() if instance else [],
                 "signoff_gates": signoff_gates,
                 "return_reason_categories": list(RETURN_REASON_TARGETS.keys())
@@ -245,17 +337,44 @@ def pd_request_view(request):
     if instance is not None and instance.status not in editable_statuses:
         return HttpResponseBadRequest("This request can no longer be edited.")
 
-    def _int(name, default=0):
-        raw = (request.POST.get(name) or "").strip()
-        try:
-            return (
-                int(float(raw) * 100) if raw else default
-            )  # currency major units -> cents
-        except ValueError:
-            return default
+    def _cents(name):
+        """A money box in whole cents; anything that is not a finite,
+        non-negative amount reads as nothing."""
+        from decimal import Decimal, InvalidOperation
 
+        raw = (request.POST.get(name) or "").replace(",", "").strip()
+        try:
+            amount = Decimal(raw) if raw else Decimal(0)
+        except InvalidOperation:
+            return 0
+        if not amount.is_finite() or amount < 0:
+            return 0
+        return int((amount * 100).quantize(Decimal(1)))
+
+    def _text(name):
+        return (request.POST.get(name) or "").strip()
+
+    # The Staff Development Fund request form (owner, 2026-10-18). The
+    # approximate cost is in the allocation's currency (USD) and is what
+    # counts against the fund; the amount requested may be in the currency it
+    # is paid in, kept beside it for Accounting.
+    cost = _cents("approximate_cost")
+    requested = _cents("requested_amount")
+    requested_currency = _text("requested_currency")
+    if requested_currency not in SDF_CURRENCIES:
+        requested_currency = "USD"
+    if requested_currency == "USD":
+        requested_usd, local_currency, local_amount = requested, None, None
+    else:
+        requested_usd, local_currency, local_amount = (
+            cost,
+            requested_currency,
+            requested,
+        )
+    purpose = _text("purpose")
+    chosen_fy = _text("fy")
     fields = dict(
-        fy=fy,
+        fy=chosen_fy if chosen_fy in _fy_choices() else fy,
         staff_id=info["staff_id"],
         staff_name=info["staff_name"],
         position=info["position"],
@@ -263,41 +382,58 @@ def pd_request_view(request):
         department=info["department"],
         supervisor_staff_id=info["supervisor_staff_id"],
         supervisor_name=info["supervisor_name"],
-        course_name=(request.POST.get("course_name") or "").strip(),
-        course_category=(request.POST.get("course_category") or "").strip(),
-        course_type=(request.POST.get("course_type") or "").strip(),
-        institution=(request.POST.get("institution") or "").strip(),
-        course_link=(request.POST.get("course_link") or "").strip(),
-        certification_expected=request.POST.get("certification_expected") == "on",
-        course_objectives=request.POST.get("course_objectives") or "",
-        skills_to_develop=request.POST.get("skills_to_develop") or "",
-        relevance_to_role=request.POST.get("relevance_to_role") or "",
-        expected_benefit=request.POST.get("expected_benefit") or "",
-        work_time_impact=request.POST.get("work_time_impact") or "",
-        notes=request.POST.get("notes") or "",
-        course_fee_cents=_int("course_fee"),
-        other_costs_cents=_int("other_costs"),
-        employee_contribution_cents=_int("employee_contribution"),
-        requested_amount_cents=_int("requested_amount"),
-        funding_type=(request.POST.get("funding_type") or "self_funded").strip(),
-        payment_recipient=(request.POST.get("payment_recipient") or "").strip(),
-        payment_details=request.POST.get("payment_details") or "",
-        exception_reason=(request.POST.get("exception_reason") or "").strip(),
+        purpose=purpose,
+        duration=_text("duration"),
+        course_name=_text("course_name"),
+        course_category=purpose[:64],
+        relevance_to_role=_text("relevance_to_role"),
+        course_fee_cents=cost,
+        other_costs_cents=0,
+        total_cost_cents=cost,
+        requested_amount_cents=requested_usd,
+        requested_local_currency=local_currency,
+        requested_local_amount_cents=local_amount,
+        funding_type=PDFundingType.FULLY_FUNDED
+        if requested_usd
+        else PDFundingType.SELF_FUNDED,
         created_by=request.user.user_id,
     )
-    start_raw, end_raw = request.POST.get("start_date"), request.POST.get("end_date")
-    if start_raw:
-        fields["start_date"] = start_raw
-    if end_raw:
-        fields["end_date"] = end_raw
-
+    for name in ("start_date", "end_date"):
+        if _text(name):
+            fields[name] = _text(name)
+    if instance is None and not (fields.get("start_date") and fields.get("end_date")):
+        # A request is filed under its dates; without them nothing is saved.
+        messages.error(
+            request, "Give the start and end dates of the activity to save the form."
+        )
+        return redirect("/my-professional-development")
     if instance is None:
+        # Fields the form does not ask for, set once (the course type and
+        # institution belonged to the earlier PD form).
+        fields.update(course_type=PDCourseType.ONLINE, institution="")
         instance = ProfessionalDevelopmentRequest(**fields)
     else:
         for k, v in fields.items():
             if k not in ("staff_id", "created_by"):
                 setattr(instance, k, v)
     instance.save()
+
+    # The form's two attachments: (a) the programme and registration forms,
+    # (b) the abstract, optional.
+    from apps.professional_development.completion_service import (
+        PDCourseTrackingService,
+    )
+
+    for field, kind in (("programme_file", "programme"), ("abstract_file", "abstract")):
+        upload = request.FILES.get(field)
+        if not upload:
+            continue
+        try:
+            PDCourseTrackingService.upload_evidence(
+                instance.id, request.user, upload, kind
+            )
+        except (BadRequest, Forbidden) as exc:
+            messages.error(request, str(exc))
 
     if request.POST.get("intent") == "submit":
         try:
@@ -368,7 +504,7 @@ def pd_action_view(request, request_id):
     P, note = request.user, request.POST.get("note") or request.POST.get("reason") or ""
     try:
         if action == "supervisor_approve":
-            PDApprovalRoutingService.supervisor_approve(request_id, P)
+            PDApprovalRoutingService.supervisor_approve(request_id, P, note=note)
             messages.success(request, "Request approved and sent to HR.")
         elif action == "supervisor_return":
             PDApprovalRoutingService.supervisor_return(request_id, P, note)
@@ -377,7 +513,15 @@ def pd_action_view(request, request_id):
             PDApprovalRoutingService.hr_approve(
                 request_id, P, exception=request.POST.get("exception") == "true"
             )
-            messages.success(request, "Request approved.")
+            messages.success(
+                request, "Request approved and sent to the Country Director."
+            )
+        elif action == "cd_approve":
+            PDApprovalRoutingService.cd_approve(request_id, P, note=note)
+            messages.success(request, "Request authorized.")
+        elif action == "cd_reject":
+            PDApprovalRoutingService.cd_reject(request_id, P, note)
+            messages.info(request, "Request denied.")
         elif action == "hr_return":
             PDApprovalRoutingService.hr_return(request_id, P, note)
             messages.info(request, "Request returned to the employee.")

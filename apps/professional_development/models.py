@@ -117,6 +117,10 @@ class PDStatus(models.TextChoices):
     SUBMITTED_TO_HR = "submitted_to_hr", "Submitted to HR"
     RETURNED_BY_HR = "returned_by_hr", "Returned by HR"
     PENDING_EXCEPTION = "pending_exception", "Pending Exception Approval"
+    # The Country Director's authorization, after HR's and before Accounting
+    # (owner, 2026-10-18: the Staff Development Fund request form is signed by
+    # the manager, the Regional HRD, the Country Director and Accounting).
+    SUBMITTED_TO_CD = "submitted_to_cd", "Awaiting Country Director"
     REJECTED = "rejected", "Rejected"
     CANCELLED = "cancelled", "Cancelled"
     APPROVED_PENDING_FUNDING = "approved_pending_funding", "Approved — Pending Finance"
@@ -152,6 +156,7 @@ COMMITTED_STATUSES = (
     PDStatus.SUBMITTED_TO_SUPERVISOR,
     PDStatus.SUBMITTED_TO_HR,
     PDStatus.PENDING_EXCEPTION,
+    PDStatus.SUBMITTED_TO_CD,
     PDStatus.APPROVED_PENDING_FUNDING,
     PDStatus.DISBURSED,
     PDStatus.ENROLLMENT_PENDING,
@@ -187,6 +192,12 @@ class ProfessionalDevelopmentRequest(TimeStampedModel):
     supervisor_name = models.CharField(max_length=255, null=True, blank=True)
 
     # ── Course information ───────────────────────────────────────────────────
+    # The Staff Development Fund request form (owner, 2026-10-18): purpose,
+    # dates, duration, title and impact. ``course_name`` is the form's "Title
+    # of Course, Conference, Paper" and ``relevance_to_role`` its "How will
+    # this course impact your work in Edify?".
+    purpose = models.CharField(max_length=255, null=True, blank=True)
+    duration = models.CharField(max_length=128, null=True, blank=True)
     course_name = models.CharField(max_length=255)
     course_category = models.CharField(max_length=64)
     course_type = models.CharField(max_length=16, choices=PDCourseType.choices)
@@ -212,6 +223,12 @@ class ProfessionalDevelopmentRequest(TimeStampedModel):
         max_length=20, choices=PDFundingType.choices, default=PDFundingType.SELF_FUNDED
     )
     currency = models.CharField(max_length=8, default="USD")
+    # "Amount Requested" in the currency it will be paid in, when that is not
+    # the allocation's (the form's "UGX 943,688.50" beside a "$219.12" cost).
+    # The allocation is held in ``currency``: what counts against it is
+    # ``requested_amount_cents``, which is then the approximate cost.
+    requested_local_currency = models.CharField(max_length=8, null=True, blank=True)
+    requested_local_amount_cents = models.BigIntegerField(null=True, blank=True)
     payment_recipient = models.CharField(max_length=255, null=True, blank=True)
     payment_details = models.TextField(null=True, blank=True)
     is_exception = models.BooleanField(default=False)
@@ -235,6 +252,11 @@ class ProfessionalDevelopmentRequest(TimeStampedModel):
     # True when the requester is HR and the reviewer had to be reassigned to
     # an independent HR/leadership approver (§13, §31 conflict-of-interest).
     hr_is_independent_reviewer = models.BooleanField(default=False)
+
+    # Country Director stage (the form's "Country Director Signature")
+    cd_reviewed_by = models.CharField(max_length=30, null=True, blank=True)
+    cd_reviewed_at = models.DateTimeField(null=True, blank=True)
+    cd_note = models.CharField(max_length=512, null=True, blank=True)
 
     # Workload/calendar conflict check (§14)
     conflict_status = models.CharField(max_length=20, null=True, blank=True)
@@ -308,6 +330,12 @@ class PDEvidenceKind(models.TextChoices):
     FEE_STRUCTURE = "fee_structure", "Fee Structure"
     ACCEPTANCE_EMAIL = "acceptance_email", "Acceptance Email (PDF)"
     ENROLLMENT_CONFIRMATION = "enrollment_confirmation", "Enrollment Confirmation"
+    # The two attachments the Staff Development Fund form asks for.
+    PROGRAMME = (
+        "programme",
+        "Course Programme & Registration Forms",
+    )
+    ABSTRACT = "abstract", "Abstract"
     OTHER = "other", "Other"
 
 
