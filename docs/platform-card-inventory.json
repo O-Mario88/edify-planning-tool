@@ -6913,7 +6913,7 @@
   },
   {
    "template": "templates/partials/schools/_core_school.html",
-   "line": 92,
+   "line": 100,
    "title": "Champion Readiness:",
    "heading_level": 3,
    "has_card_key": false,

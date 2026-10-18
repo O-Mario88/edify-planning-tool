@@ -15440,15 +15440,17 @@
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 10276,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 12343,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>"
       ],
       "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
+      "forms": 3,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": " Core School",
       "purpose": "Reusable  core school interface primitive",
@@ -36824,7 +36826,7 @@
       "backend_view": "apps.frontend.views.core_oversight_views.core_schools_oversight_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/oversight/core_schools_oversight.html",
         "test:referenced-by-automated-test",
@@ -36835,7 +36837,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "shared-page-header-component",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /core-schools/{{ r.code }}/champion-review"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -36866,7 +36870,9 @@
       "route_name": "core_schools_oversight",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
       "shared_layout": [
         "layouts/shell.html"
       ],
@@ -37838,6 +37844,83 @@
         "apps.planning.services",
         "apps.ssa.models",
         "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.core_oversight_views",
+      "backend_view": "apps.frontend.views.core_oversight_views.core_recommendation_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:core_schools"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-619DC20A24",
+      "page_title": "Core Recommendation Action",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "core_schools",
+      "primary_action": "Core Recommendation Action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Accept, defer or reject one recorded SSA recommendation (owner, 2026-10-18: \"accept, defer or plan support straight from a recommendation\"). The school's owner decides \u2014 `may_write_school`, the rule the Champion review applies; planning the support is the school's Schedule, which settles the recommendation when the activity is saved (`ssa.plan_alignment`).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/core-schools/recommendations/<str:rec_id>/<str:action>",
+      "route_name": "core_recommendation_action",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -112783,6 +112866,18 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.core_oversight_views.core_recommendation_action",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "core_schools",
+      "required_permissions": [],
+      "route": "/core-schools/recommendations/<str:rec_id>/<str:action>",
+      "route_name": "core_recommendation_action",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.core_schools_views.core_schedule_activity_drawer",
       "kind": "drawer",
       "methods": [
@@ -122658,28 +122753,28 @@
   "summary": {
     "accessibility_contract_pass": 608,
     "activity_states": 24,
-    "all_routes": 1413,
+    "all_routes": 1414,
     "api_routes": 364,
     "component_templates": 698,
     "full_pages": 271,
     "mobile_contract_pass": 608,
-    "nonvisual_actions": 288,
+    "nonvisual_actions": 289,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 622,
+      "interaction-fragment": 623,
       "operational-queue": 157,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 47
     },
     "partials_and_drawers": 334,
-    "permission_gated": 915,
+    "permission_gated": 916,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 932,
+    "routed_surfaces": 933,
     "scheduled_jobs": 38,
     "severity_counts": {
       "critical": 0,
@@ -122688,7 +122783,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 608,
-    "test_referenced": 835,
+    "test_referenced": 836,
     "theme_contract_pass": 608
   }
 }

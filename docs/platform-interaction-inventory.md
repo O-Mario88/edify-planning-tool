@@ -7,27 +7,27 @@ Static scan of every template control (button, link, input, select, textarea, su
 | Measure | Count |
 |---|---:|
 | Templates with controls | 700 |
-| Control declarations | 4122 |
-| State-changing | 468 |
-| High-consequence (state-changing) | 207 |
-| No automated evidence | 292 |
-| State-changing with no automated evidence | 23 |
+| Control declarations | 4131 |
+| State-changing | 471 |
+| High-consequence (state-changing) | 208 |
+| No automated evidence | 290 |
+| State-changing with no automated evidence | 21 |
 | Destination path that resolves to no route | 0 |
 
 | Kind | Count |
 |---|---:|
-| button | 1409 |
+| button | 1415 |
 | disclosure | 75 |
-| field | 1380 |
-| link | 1197 |
+| field | 1382 |
+| link | 1198 |
 | tab | 61 |
 
 | Evidence | Count |
 |---|---:|
 | browser-rendered | 865 |
-| none | 292 |
-| page-tested | 1555 |
-| request-tested | 1410 |
+| none | 290 |
+| page-tested | 1559 |
+| request-tested | 1417 |
 
 ## State-changing controls with no automated evidence
 
@@ -39,8 +39,6 @@ Static scan of every template control (button, link, input, select, textarea, su
 | INT-50C5EA35C587 | partials/business_transformation/loan_drawer.html | 35 | Confirm & complete | `POST /loans/{{ loan.id }}/salesforce-confirmation` |
 | INT-18330D9DA127 | partials/business_transformation/loan_drawer.html | 54 | Submit IA decision | `POST /loans/{{ loan.id }}/ia-validation` |
 | INT-ED7F98B5F13D | partials/catalogue/new_activity_drawer.html | 87 | Add activity | `POST /settings/activity-catalogue/new` |
-| INT-5ECC5BA5D5F4 | partials/core_schools/champion_review_drawer.html | 127 | Reject candidacy | `POST                                                             ` |
-| INT-574FE8F3BDA9 | partials/core_schools/champion_review_drawer.html | 131 | Graduate school | `POST                                                              ` |
 | INT-3791C26399DE | partials/cost_settings/add_drawer.html | 52 | Add cost | `POST /cost-settings/add` |
 | INT-BD22E68BDF3A | partials/decisions/insight_row.html | 51 | Record | `POST ` |
 | INT-2E7AAFB3DC05 | partials/disbursements/_actions.html | 54 | Release Hold | `POST /disbursements/action` |
