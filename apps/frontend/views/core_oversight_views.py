@@ -23,6 +23,7 @@ TABS = (
     ("schools", "Schools"),
     ("groups", "Groups"),
     ("attention", "Attention"),
+    ("recommendations", "Recommendations"),
     ("champion", "Champion Readiness"),
 )
 TRAJECTORY_FILTERS = {
@@ -153,6 +154,14 @@ def _csv(rows, fy: str) -> HttpResponse:
     return response
 
 
+def _recommended(schools, rows) -> list:
+    """(school row, its open recommendations) for the schools on the page,
+    in the page's order: the records `ssa.recommendation_service` keeps."""
+    shown = {r.id for r in rows}
+    by_school = intelligence.recommendations(s for s in schools if s.id in shown)
+    return [(r, by_school[r.id]) for r in rows if by_school.get(r.id)]
+
+
 @require_page_permission("core_schools_oversight")
 def core_schools_oversight_view(request):
     options = sorted(fy_options(), reverse=True)
@@ -200,6 +209,9 @@ def core_schools_oversight_view(request):
                 for reason in intelligence.ATTENTION_ORDER
             ]
             if tab == "attention"
+            else [],
+            "recommended": _recommended(schools, rows)
+            if tab == "recommendations"
             else [],
             "readiness": [
                 {"status": status, "rows": [r for r in rows if r.champion == status]}

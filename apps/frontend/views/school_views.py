@@ -1782,6 +1782,7 @@ def _core_school_context(school, fy) -> dict:
     return {
         "core": intelligence.performance([school], fy=fy)[school.id],
         "core_areas": intelligence.interventions(school, fy=fy),
+        "core_recommendations": intelligence.recommendations([school])[school.id],
         "core_fy": fy,
     }
 

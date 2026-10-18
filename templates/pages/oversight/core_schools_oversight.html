@@ -200,6 +200,21 @@ rests on, and a dash is a figure the records cannot give, never a zero.
     {% endfor %}
   </div>
 
+  {% elif tab == "recommendations" %}
+  <p class="edify-text-caption text-slate-600">The SSA recommendations recorded for each school from its confirmed SSA, with the recommended catalogue training (or why none is mapped) and where each stands. A recommendation is not an activity: support is planned from My Plan and Planning.</p>
+  <div class="space-y-4">
+    {% for r, recs in recommended %}
+    <section class="card p-0 overflow-hidden" data-core-recommendation-row="{{ r.code }}">
+      <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-2 px-4 py-3"><h3>{% school_link r.name r.id %} <span class="edify-text-caption text-slate-500">{{ r.code }} · {{ r.owner }}</span></h3><span class="pill pill-neutral">{{ recs|length }}</span></header>
+      <ul class="divide-y edify-border">
+        {% for rec in recs %}<li class="px-4 py-2 flex flex-wrap items-start justify-between gap-2"><span class="edify-text-caption"><span class="font-semibold">{{ rec.get_intervention_display }}{% if rec.score is not None %} ({{ rec.score|floatformat:1 }}{% if rec.score_band %}, {{ rec.score_band }}{% endif %}){% endif %}</span> · {% if rec.recommended_item %}{{ rec.recommended_item.display_name }}{% else %}No mapped training{% if rec.unmapped_reason %}: {{ rec.unmapped_reason }}{% endif %}{% endif %}{% if rec.reason %}<span class="block text-slate-500">{{ rec.reason }}</span>{% endif %}</span><span class="pill pill-neutral">{{ rec.get_state_display }}</span></li>{% endfor %}
+      </ul>
+    </section>
+    {% empty %}
+    <p class="edify-text-caption text-slate-500">No open recommendation for the schools shown.</p>
+    {% endfor %}
+  </div>
+
   {% elif tab == "champion" %}
   <p class="edify-text-caption text-slate-600">Edify's Champion rule: latest confirmed SSA average 8.0 or more, no intervention below 7.0, and all 8 package visits and trainings done. Readiness is a recommendation; a school becomes a Champion only through the Champion review.</p>
   <div class="space-y-4">
