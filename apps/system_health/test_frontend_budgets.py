@@ -188,7 +188,13 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: the end of consistency.css for what a token cannot reach (form values,
     #: bold, a table's footer, capitals on a few buttons). Half a kilobyte:
     #: this is a ratchet.
-    CSS_GZIP_KB = 247.5
+    #:
+    #: Raised to 248.0 on 2026-10-18 for the cut-out made the form of every
+    #: bar chart ("I want all the horizontal graphs to look exactly like
+    #: that. Apply the same design to the vertical bar graphs ... apply
+    #: platform wide"): the upright columns, the parts of a stacked bar and
+    #: the line a click opens, in components.css. Measured 247.74 KB.
+    CSS_GZIP_KB = 248.0
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
@@ -340,7 +346,14 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #:   (+0.7 KB).
     #: Measured 150.72 KB. Under a kilobyte of room, as this budget has
     #: always been given, not an invitation.
-    JS_GZIP_KB = 151.5
+    #:
+    #: Raised to 152.75 on 2026-10-18, when the owner made the same form
+    #: every bar chart, upright or across, of any number of series ("Apply
+    #: the same design to the vertical bar graphs ... apply platform wide"):
+    #: the columns, the shades past two series, a stacked bar's parts and a
+    #: line that opens a row, all in chart-standard.js (+1.4 KB). Measured
+    #: 152.15 KB.
+    JS_GZIP_KB = 152.75
     INLINE_SCRIPT_KB = 40
 
     @classmethod

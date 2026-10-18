@@ -109,7 +109,7 @@ do (owner, 2026-10-02); they can still be folded away.
       <h2 class="cpo-chart-name" id="{{ chart.id }}-name" data-no-titlebar>{{ chart.title }}
         <span class="cxo-hint">{{ chart.hint }}</span></h2>
       {{ chart|json_script:chart.data_id }}
-      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="{{ chart.title }}: {% for s in chart.series %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}, by Programme Lead. The figures are in the table under the chart."></div>
+      <div class="cpo-plot cxo-plot" x-ref="plot" role="group" aria-label="{{ chart.title }}: {% for s in chart.series %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}, by Programme Lead. The figures are in the table under the chart."></div>
       <details class="cpo-chart-data" open>
         <summary>Chart data</summary>
         <div class="cpo-tscroll">
