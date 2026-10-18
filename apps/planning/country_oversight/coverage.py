@@ -372,11 +372,19 @@ def _counts(
         "total": Count("id"),
     }
     if verified:
-        aggregates["verified"] = Count(
-            "id",
-            filter=inside & Q(**{f"{status_field}__in": policy.VERIFIED_STATES}),
-        )
+        prefix = status_field[: -len("status")]
+        aggregates["verified"] = Count("id", filter=inside & verified_q(prefix))
     return aggregates
+
+
+def verified_q(prefix: str = "") -> Q:
+    """Verified against the requirement: a verified state (by the Programme
+    Lead for a CCEO's staff work, by IA otherwise) with the Salesforce ID and
+    the form both in — My Plan's green (owner, 2026-10-18). A verified status
+    over a missing half is not yet verified here."""
+    from apps.activities.completion_columns import forms_in_q
+
+    return Q(**{f"{prefix}status__in": policy.VERIFIED_STATES}) & forms_in_q(prefix)
 
 
 def visit_claim_q() -> Q:
@@ -624,7 +632,7 @@ def _load_partner_activities(
             inside=Count("id", filter=inside),
             undated=Count("id", filter=Q(day__isnull=True)),
             total=Count("id"),
-            verified=Count("id", filter=inside & Q(status__in=policy.VERIFIED_STATES)),
+            verified=Count("id", filter=inside & verified_q()),
             ssa=_ssa_count(),
         )
         .order_by()

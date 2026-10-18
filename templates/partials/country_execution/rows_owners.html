@@ -24,8 +24,8 @@ the Lead's <tbody>).{% endcomment %}
 {% if row.has_children %}
 <tr x-ref="x{{ forloop.counter }}" data-level="placeholder" hidden
     hx-get="/country-planning-oversight/execution/rows?level=owner&amp;key={{ row.key }}&amp;{{ query }}"
-    hx-trigger="cxo-load" hx-swap="outerHTML"><td colspan="14"></td></tr>
+    hx-trigger="cxo-load" hx-swap="outerHTML"><td colspan="12"></td></tr>
 {% endif %}
 {% empty %}
-<tr data-level="2" x-show="open"><td colspan="14" class="cpo-empty">Nobody under this Programme Lead has work due in the period.</td></tr>
+<tr data-level="2" x-show="open"><td colspan="12" class="cpo-empty">Nobody under this Programme Lead has work due in the period.</td></tr>
 {% endfor %}

@@ -215,16 +215,19 @@ class ExecutionWorld(World):
         self.client_a = self.school("client", self.cceo)
         self.client_b = self.school("client", self.cceo3)
         self.personal = self.school("client", self.pl)
-        # Verified by the Lead, closure open.
-        self.plan(
-            self.core,
-            "core_visit",
-            "ia_verified",
-            -20,
-            owner=self.cceo,
-            execution_started_at=at(-21),
-            pl_reviewed_at=at(-15),
-            ia_confirmed_at=at(-15),
+        # Verified by the Lead, closure open; green on My Plan, as the closed
+        # one below is (the Salesforce ID and the visit form both in).
+        self.green(
+            self.plan(
+                self.core,
+                "core_visit",
+                "ia_verified",
+                -20,
+                owner=self.cceo,
+                execution_started_at=at(-21),
+                pl_reviewed_at=at(-15),
+                ia_confirmed_at=at(-15),
+            )
         )
         self.plan(self.core, "core_visit", "submitted_to_pl", -10, owner=self.cceo)
         self.plan(
@@ -244,7 +247,21 @@ class ExecutionWorld(World):
         self.plan(
             self.personal, "school_visit", "awaiting_ia_verification", -6, owner=self.pl
         )
-        self.plan(self.personal, "school_visit", "closed", -30, owner=self.pl)
+        self.green(
+            self.plan(self.personal, "school_visit", "closed", -30, owner=self.pl)
+        )
+
+    @staticmethod
+    def green(activity):
+        """Verified against the requirement needs My Plan's green."""
+        from apps.evidence.models import EvidenceRecord
+
+        activity.salesforce_activity_id = f"SVE-{activity.id}"
+        activity.save(update_fields=["salesforce_activity_id"])
+        EvidenceRecord.objects.create(
+            activity=activity, kind="visit_form", uri=activity.id, uploaded_by="t"
+        )
+        return activity
 
     def plan(self, school, kind, status, offset, *, owner=None, partner=None, **extra):
         day = on(offset)

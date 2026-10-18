@@ -10,7 +10,9 @@ A fixed handful of grouped reads whatever the size of the country:
    checklist and the Partner payment);
 4. the people behind every owner id (the planning owner directory);
 5. the schedule trail for the window: what was due in it when it began, and
-   what has been moved out of it since.
+   what has been moved out of it since;
+6. which of them have their form uploaded (the visit form, or the attendance
+   register for a training or a meeting), for My Plan's green.
 
 Each activity becomes one compact record (for the lists) and adds one vector
 to its cell — owner, Partner, channel, region, district and activity type —
@@ -45,6 +47,7 @@ from typing import NamedTuple
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.activities.completion_columns import expected_evidence
 from apps.planning.country_execution import stages as st
 from apps.planning.country_oversight import policy, rules
 from apps.planning.country_oversight.coverage import Window, _day
@@ -103,6 +106,11 @@ BASE_FIELDS: tuple[str, ...] = (
     # Donor, story, invitation and social visits staff delivered: shown, not
     # counted.
     "v_outreach",
+    # Execution timeliness (owner, 2026-10-18): started and not yet complete
+    # and verified — a verified status over a missing Salesforce ID or form
+    # among it — and complete and verified, My Plan's green.
+    "in_progress",
+    "complete",
 )
 BASE_WIDTH = len(BASE_FIELDS)
 IDX = {name: index for index, name in enumerate(BASE_FIELDS)}
@@ -233,6 +241,8 @@ class ActivityRecord(NamedTuple):
     # A donor, story, invitation or social visit at a school.
     outreach: bool
     delivered_day: date | None
+    # Verified with the Salesforce ID and the form both in: My Plan's green.
+    complete: bool = False
 
     @property
     def counted(self) -> bool:
@@ -320,6 +330,7 @@ _COLUMNS = (
     "cluster__district_id",
     "closure_details__closed_at",
     "created_at",
+    "salesforce_activity_id",
 )
 
 
@@ -456,6 +467,7 @@ def build(
 
     ids_subquery = queryset.values("id") if queryset is not None else []
     funds = _funds_pending(ids_subquery) if rows else set()
+    forms = _forms_in(ids_subquery) if rows else {}
     closure = _closure_owners(queryset) if rows else {}
 
     moved = (
@@ -528,6 +540,11 @@ def build(
             (row["actual_delivery_date"] or start or due) if stage.executed else None
         )
         verified_day = _local_day(verified_at) if stage.verified else None
+        complete = bool(
+            stage.verified
+            and (row["salesforce_activity_id"] or "").strip()
+            and expected_evidence(row["activity_type"])[0] in forms.get(row["id"], ())
+        )
         closed_day = (
             _local_day(row["closure_details__closed_at"]) if stage.closed else None
         )
@@ -577,6 +594,7 @@ def build(
             kind or "",
             _is_outreach(row),
             row["actual_delivery_date"],
+            complete,
         )
         records.append(record)
         key = (
@@ -684,6 +702,10 @@ def _add_record(
         vector[i[f"own_{stage.owner}"]] += 1
     if record.funds_pending and not stage.started:
         vector[i["funds_pending"]] += 1
+    if record.complete:
+        vector[i["complete"]] += 1
+    elif stage.started:
+        vector[i["in_progress"]] += 1
     if record.counted:
         # On the plan as the planning tab reads "planned" (a scheduled-or-later
         # state; a visit sent back to planning is not on it).
@@ -716,6 +738,25 @@ def _add_record(
         index = max(0, _bucket_of(day, buckets))
         if index < count:
             vector[BASE_WIDTH + series * count + index] += 1
+
+
+def _forms_in(activity_ids) -> dict:
+    """Each activity's uploaded completion forms (not quarantined): id → the
+    kinds of ``completion_columns.expected_evidence`` it has. One read."""
+    from apps.evidence.models import EvidenceRecord
+
+    forms: dict = {}
+    for activity_id, kind in (
+        EvidenceRecord.objects.filter(
+            activity_id__in=activity_ids,
+            quarantined=False,
+            kind__in=("visit_form", "attendance_form"),
+        )
+        .values_list("activity_id", "kind")
+        .distinct()
+    ):
+        forms.setdefault(activity_id, set()).add(kind)
+    return forms
 
 
 # ── Money and closure ────────────────────────────────────────────────────────

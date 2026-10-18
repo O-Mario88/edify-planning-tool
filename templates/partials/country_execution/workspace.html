@@ -1,8 +1,9 @@
 {% load table_pagination %}{% comment %}
 The Execution & Completion body: six figures, the funnel and the trend, the
 delivery by Programme Lead, the on-time, backlog, age and forecast readings
-with the Director's shortcuts, the requirement by school type, the hierarchy
-table, and the issues, recent movements and follow-ups under it.
+with the Director's shortcuts, the requirement by school type and by
+Programme Lead and CCEO, the execution timeliness table, and the issues,
+recent movements and follow-ups under it.
 Every figure comes from one fold (apps.planning.country_execution.service), so
 a card is the table's total and a chart's bar is a table's row. The funnel's
 and the trend's figures sit open under their charts, as the planning charts'
@@ -183,6 +184,8 @@ do (owner, 2026-10-02); they can still be folded away.
   </section>
 
   {% include "partials/country_execution/_types.html" %}
+
+  {% include "partials/country_execution/_people.html" %}
 
   {% include "partials/country_execution/_table.html" %}
 

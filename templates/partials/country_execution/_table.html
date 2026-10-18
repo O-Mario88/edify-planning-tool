@@ -1,11 +1,14 @@
 {% comment %}
-The execution table (owner design, 2026-09-28): Program Leads, CCEOs,
-Partners, Schools or Activities, one view at a time, each a real table on every
-screen. A Lead's people and an officer's delivery channels arrive when their
-row is opened; the schools and activities are paged, worst first.
+The execution timeliness table (owner design, 2026-09-28; columns 2026-10-18):
+Program Leads, CCEOs, Partners, Schools or Activities, one view at a time,
+each a real table on every screen. A Lead's people and an officer's delivery
+channels arrive when their row is opened; the schools and activities are
+paged, worst first.
 {% endcomment %}
 <section id="cxo-table" class="cpo-drill cxo-drill" aria-labelledby="cxo-table-name">
-  <h2 class="sr-only" id="cxo-table-name" data-no-titlebar>Execution by {{ table_label }}</h2>
+  <header class="cpo-drill-head" data-no-titlebar data-card-header>
+    <h2 class="cpo-drill-name" id="cxo-table-name">Execution Timeliness<span class="sr-only"> by {{ table_label }}</span></h2>
+  </header>
   <div class="cxo-drill-bar">
     <div data-edify-tablist role="group" aria-label="View execution by">
       {% for key, label in options.view_tabs %}

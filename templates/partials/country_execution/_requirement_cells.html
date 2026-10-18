@@ -1,0 +1,25 @@
+{% comment %}One requirement row's figures (service.requirement_row), in
+_requirement_heads.html's order: a figure and its share, "(—)" where there is
+nothing to share it of. A type the requirement asks nothing of shows a dash.{% endcomment %}
+<td>{{ row.schools }}</td>
+{% if row.needs_visits %}
+<td data-col="visits" x-show="view === 'visits'">{{ row.visit_slots }}</td>
+<td data-col="visits" x-show="view === 'visits'" class="cpo-cover"><span>{{ row.visits_planned }}</span> <span class="cpo-pct" data-tone="none">{% if row.visits_planned_share is None %}(—){% else %}({{ row.visits_planned_share }}%){% endif %}</span></td>
+<td data-col="visits" x-show="view === 'visits'" class="cpo-cover"><span>{{ row.staff_target }}</span> <span class="cpo-pct" data-tone="none">{% if row.staff_target_share is None %}(—){% else %}({{ row.staff_target_share }}%){% endif %}</span></td>
+<td data-col="visits" x-show="view === 'visits'" class="cpo-cover"><span>{{ row.staff_verified }}</span> <span class="cpo-pct" data-tone="none">{% if row.staff_share is None %}(—){% else %}({{ row.staff_share }}%){% endif %}</span></td>
+<td data-col="visits" x-show="view === 'visits'" class="cpo-cover"><span>{{ row.partner_target }}</span> <span class="cpo-pct" data-tone="none">{% if row.partner_target_share is None %}(—){% else %}({{ row.partner_target_share }}%){% endif %}</span></td>
+<td data-col="visits" x-show="view === 'visits'" class="cpo-cover"><span>{{ row.partner_verified }}</span> <span class="cpo-pct" data-tone="none">{% if row.partner_share is None %}(—){% else %}({{ row.partner_share }}%){% endif %}</span></td>
+<td data-col="visits" x-show="view === 'visits'" class="cpo-cover"><span>{{ row.visits_verified }}</span> <span class="cpo-pct" data-tone="none">{% if row.visit_share is None %}(—){% else %}({{ row.visit_share }}%){% endif %}</span></td>
+<td data-col="visits" x-show="view === 'visits'" class="cpo-cover">{% if row.visits_left %}<span class="cpo-alert">{{ row.visits_left }}</span>{% else %}<span class="cpo-zero">0</span>{% endif %} <span class="cpo-pct" data-tone="none">{% if row.visits_left_share is None %}(—){% else %}({{ row.visits_left_share }}%){% endif %}</span></td>
+{% else %}
+<td data-col="visits" x-show="view === 'visits'"><span class="cpo-none">—</span></td><td data-col="visits" x-show="view === 'visits'"><span class="cpo-none">—</span></td><td data-col="visits" x-show="view === 'visits'"><span class="cpo-none">—</span></td><td data-col="visits" x-show="view === 'visits'"><span class="cpo-none">—</span></td><td data-col="visits" x-show="view === 'visits'"><span class="cpo-none">—</span></td><td data-col="visits" x-show="view === 'visits'"><span class="cpo-none">—</span></td><td data-col="visits" x-show="view === 'visits'"><span class="cpo-none">—</span></td><td data-col="visits" x-show="view === 'visits'"><span class="cpo-none">—</span></td>
+{% endif %}
+{% if row.needs_trainings %}
+<td data-col="trainings" x-show="view === 'trainings'" x-cloak>{{ row.training_slots }}</td>
+<td data-col="trainings" x-show="view === 'trainings'" x-cloak class="cpo-cover"><span>{{ row.trainings_planned }}</span> <span class="cpo-pct" data-tone="none">{% if row.trainings_planned_share is None %}(—){% else %}({{ row.trainings_planned_share }}%){% endif %}</span></td>
+<td data-col="trainings" x-show="view === 'trainings'" x-cloak class="cpo-cover"><span>{{ row.trainings_partner }}</span> <span class="cpo-pct" data-tone="none">{% if row.trainings_partner_share is None %}(—){% else %}({{ row.trainings_partner_share }}%){% endif %}</span></td>
+<td data-col="trainings" x-show="view === 'trainings'" x-cloak class="cpo-cover"><span>{{ row.trainings_verified }}</span> <span class="cpo-pct" data-tone="none">{% if row.training_share is None %}(—){% else %}({{ row.training_share }}%){% endif %}</span></td>
+<td data-col="trainings" x-show="view === 'trainings'" x-cloak class="cpo-cover">{% if row.trainings_left %}<span class="cpo-alert">{{ row.trainings_left }}</span>{% else %}<span class="cpo-zero">0</span>{% endif %} <span class="cpo-pct" data-tone="none">{% if row.trainings_left_share is None %}(—){% else %}({{ row.trainings_left_share }}%){% endif %}</span></td>
+{% else %}
+<td data-col="trainings" x-show="view === 'trainings'" x-cloak><span class="cpo-none">—</span></td><td data-col="trainings" x-show="view === 'trainings'" x-cloak><span class="cpo-none">—</span></td><td data-col="trainings" x-show="view === 'trainings'" x-cloak><span class="cpo-none">—</span></td><td data-col="trainings" x-show="view === 'trainings'" x-cloak><span class="cpo-none">—</span></td><td data-col="trainings" x-show="view === 'trainings'" x-cloak><span class="cpo-none">—</span></td>
+{% endif %}

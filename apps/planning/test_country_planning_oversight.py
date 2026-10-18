@@ -33,6 +33,7 @@ from apps.activities.models import Activity, ClusterActivityAttendance
 from apps.clusters.models import Cluster, SchoolClusterAssignment
 from apps.core.fy import get_fy_date_range, get_operational_fy
 from apps.core.rbac import EdifyRole
+from apps.evidence.models import EvidenceRecord
 from apps.geography.models import District, Region, SubCounty
 from apps.partners.models import Partner, PartnerAssignment
 from apps.planning.country_oversight import followups as fu
@@ -552,7 +553,15 @@ class PartnerAndPlannedTest(World):
             for _ in range(len(planned) + len(not_planned) + 2)
         ]
         for school, status in zip(schools, planned + not_planned):
-            self.activity(school, status=status, owner=self.cceo)
+            activity = self.activity(school, status=status, owner=self.cceo)
+            if status in policy.VERIFIED_STATES:
+                # Verified against the requirement is My Plan's green: the
+                # Salesforce ID and the visit form both in (2026-10-18).
+                activity.salesforce_activity_id = f"SVE-{activity.id}"
+                activity.save(update_fields=["salesforce_activity_id"])
+                EvidenceRecord.objects.create(
+                    activity=activity, kind="visit_form", uri="f", uploaded_by="t"
+                )
         # A plan with no date is not planned; the same plan dated is.
         self.activity(schools[-2], status="planned", on=None, owner=self.cceo)
         self.activity(schools[-1], status="planned", owner=self.cceo)
