@@ -403,6 +403,17 @@ table[data-mobile-table="fit"] {
     transform: translate(-50%, -50%);
   }
 
+  /* A tab in a strip is its own target. The strip scrolls sideways
+     (overflow: auto), so a 44px square reaching past its 32px tabs made the
+     strip scroll up and down too, and every tab strip on a phone showed a
+     scrollbar at its end (2026-10-18). Tabs are a fixed 32px (the tab
+     standard) and share the strip's width, so the tab itself is the target
+     and nothing reaches past it. */
+  :is([data-edify-tablist], [role="tablist"]) > [data-edify-touch]::after {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
   /* Pager buttons sit 4px apart so a whole page window fits a 320px phone:
      their square is 44px tall and reaches half-way across each gap, so no
      two targets overlap and a tap between numbers is never ambiguous. */

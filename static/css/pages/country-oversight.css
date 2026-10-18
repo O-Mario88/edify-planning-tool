@@ -632,16 +632,27 @@
    drawn unless it is hidden that way, so rows fetched later (a Lead's
    people, a person's Partners) follow the tab too. The tabs start on the
    card's content line, as its title and its first column do. */
-.cpo-views { margin: 0 1.1rem 0.7rem; }
+.cpo-views { margin: 0 var(--cpo-inset) 0.75rem; }
+/* On a phone a row of tabs is stretched to fill its line, and the platform's
+   fill rule sets its side margins from --edify-fill-inset (interactions.css,
+   ROWS THAT REACH THE EDGE). An oversight card pays its inset itself, so the
+   rows on its content line name it there too; without it the Visits and
+   Trainings tabs ran from card edge to card edge (2026-10-18). */
+.cpo-views,
+.cxo-pad,
+.cpo-capacity {
+  --edify-fill-inset: var(--cpo-inset);
+}
 
 .cpo-table {
   inline-size: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
-  /* The platform pads every table cell from this token (design-system.css);
-     fourteen columns fit a 1440 px screen at it, with the first column
-     starting under the card's title. */
-  --edify-table-cell-padding-inline: 0.2rem;
+  /* The platform pads every table cell from this token (design-system.css):
+     a dense table takes the compact cell, 8px (.edify-table--compact), with
+     the first column starting under the card's title. At 3px the columns
+     ran together; a wide table scrolls in its region (cpo-tscroll). */
+  --edify-table-cell-padding-inline: 0.5rem;
 }
 .cpo-table :is(th, td) { text-align: center; white-space: nowrap; }
 .cpo-table thead th {

@@ -1508,6 +1508,26 @@ main .edify-filter-row > label.edify-filter-row__field {
     min-inline-size: 0 !important;
   }
 
+  /* A card's title band is marked a title too, and it runs to the card's
+     edges through the card's padding (consistency.css, ONE CONTENT LINE):
+     held to 100% of the padded width, its band stopped 32px short of the
+     card's right edge on a phone (2026-10-18). Weighted past the stacked
+     action row's rule, which holds its title the same way. */
+  main .edify-head-row.edify-head-row > .edify-table-titlebar.edify-table-titlebar.edify-head-row__title.edify-head-row__title:nth-child(n) {
+    max-inline-size: none !important;
+  }
+
+  /* The same for the table under the band: a table card is marked a heading
+     row as a whole when its band holds an action, and the rule that holds a
+     heading row's items to its width held the table region 32px short of the
+     card's right edge too. A card's band and table bleed; nothing else
+     changes. */
+  main .edify-head-row.edify-head-row.edify-structured-surface > :is(
+    [data-table-scroll-region], .edify-table-scroll-region, .edify-record-table-wrap
+  ):not(.edify-head-row__title) {
+    max-inline-size: none !important;
+  }
+
   main .edify-head-row--action > .edify-head-row__title.edify-head-row__title {
     flex-grow: 1 !important;
   }

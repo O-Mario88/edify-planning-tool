@@ -52,19 +52,18 @@
       </select>
     </label>
     {% comment %}Filters with nothing to choose are hidden: a Programme Lead's
-    team is one role in the lead's own country.{% endcomment %}
-    {% if not team_view or country_options|length > 1 %}
+    team is one role in the lead's own country, and a country the viewer is
+    held to is named in the page's description instead of standing in the
+    filter row as a box that is not a filter (on a phone it took a line of
+    its own at the row's end, 2026-10-18).{% endcomment %}
+    {% if not locked_country and not team_view or not locked_country and country_options|length > 1 %}
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Country</span>
-      {% if locked_country %}
-      <div class="mt-1 w-full h-9 px-2 rounded-surface border text-[12px] font-semibold flex items-center edify-surface-muted edify-border edify-text">{{ locked_country }}</div>
-      {% else %}
       <span class="edify-filter-label">Country</span>
       <select aria-label="Country" name="country" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">All Countries</option>
         {% for c in country_options %}<option value="{{ c }}" {% if c == country %}selected{% endif %}>{{ c }}</option>{% endfor %}
       </select>
-      {% endif %}
     </label>
     {% endif %}
     {% if not team_view %}
@@ -90,10 +89,7 @@
         {% for key, label in reminder_options %}<option value="{{ key }}" {% if key == reminder_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </label>
-    <label class="block">
-      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Search</span>
-      {% comment %}Search moved to the top bar (attach_to pd-filters).{% endcomment %}
-    </label>
+    {% comment %}Search is in the top bar (attach_to pd-filters).{% endcomment %}
   </form>
 
   {% include "partials/_section_nav.html" %}
