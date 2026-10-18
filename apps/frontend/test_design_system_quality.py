@@ -510,7 +510,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-card-shadow:",
             "--edify-card-shadow-hover:",
             "--edify-card-backdrop-filter: none",
-            "--edify-table-canvas: var(--edify-surface)",
+            # A table sits on its card's plane in every theme (2026-10-18).
+            "--edify-table-canvas: var(--edify-card-surface)",
             "--edify-shadow-sm: none",
             "--edify-shadow-md: none",
             "--edify-shadow-lg: none",

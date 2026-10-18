@@ -5194,7 +5194,9 @@ main .edify-empty-state--line.edify-empty-state--line {
 /* THE NOTE. Neutral by default; `data-tone` says what kind of news it is. */
 .edify-note {
   --edify-note-tone: var(--edify-text-muted);
-  padding: 0.6rem 0.75rem;
+  /* A note's inset: 12px by the card's 16px, as every note, info bar and
+     filter bar on the platform (2026-10-18). */
+  padding: 0.75rem var(--edify-card-inset);
   border: 1px solid color-mix(in srgb, var(--edify-note-tone) 28%, transparent);
   border-inline-start: 3px solid color-mix(in srgb, var(--edify-note-tone) 62%, transparent);
   border-radius: var(--edify-radius-sm);
@@ -5438,7 +5440,9 @@ table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }
    is sized by its content — no fixed height holds it open, so a chart with a
    legend and one without sit at their own natural heights. */
 main :has(> .edify-standard-charts) { height: auto !important; min-width: 0; max-width: 100%; }
-.edify-data-chart { padding: .875rem 1rem 0.5rem; min-width: 0; }
+/* The card inset on every side (design-system.css): an 8px bottom left the
+   chart's axis labels against the card's edge. */
+.edify-data-chart { padding: var(--edify-surface-padding-block) var(--edify-card-inset); min-width: 0; }
 .edify-data-chart--bare { padding: 0; }
 .edify-data-chart__header { display: flex; flex-direction: column; gap: .125rem; margin-bottom: .25rem; }
 main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-title-size); font-weight: 600; line-height: 1.35; color: var(--edify-text); background: none; padding: 0; border: 0; text-transform: none; letter-spacing: normal; }

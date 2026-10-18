@@ -272,7 +272,11 @@
   --edify-text-subtle: #263d4b;
   --edify-text-disabled: #6b7b84;
   --edify-text-secondary: var(--edify-text-muted);
-  --edify-table-canvas: var(--edify-surface);
+  /* A table sits on its card: its plane is the card surface in every theme,
+     and only the header band and the row states step away from it (owner,
+     2026-10-18: one design across the platform). A grey plane inside a white
+     card read as a second card. */
+  --edify-table-canvas: var(--edify-card-surface);
   --edify-table-header: #dce6ec;
   /* A table's title band and a ledger's group row (consistency.css): the
      table-header tone with ink text, a light chip for a count, and outline
@@ -504,7 +508,11 @@
        It stays compact on a phone, reaches the full 20px rhythm on a wide
        canvas, and is consumed by cards, tiles, panels and KPI components. */
   --edify-surface-padding-inline: 1rem;
-  --edify-surface-padding-block: 0.75rem;
+  /* 16px on all four sides (owner, 2026-10-18: "fix content padding inside
+     cards ... professional and enterprise grade design consistency"): a
+     card's content sits as far from its top and bottom edges as from its
+     sides, as the oversight and chart cards now do too. */
+  --edify-surface-padding-block: 1rem;
   --edify-surface-padding:
     var(--edify-surface-padding-block) var(--edify-surface-padding-inline);
   --edify-surface-padding-compact: 0.75rem;
@@ -824,7 +832,7 @@
 
   /* Blue-theme tables need their own surface ladder. Reusing the transparent
      card tokens made header, body and hover states merge into one glass pane. */
-  --edify-table-canvas: var(--edify-surface);
+  --edify-table-canvas: var(--edify-card-surface);
   --edify-table-header: rgba(0, 29, 57, 0.72);
   --edify-table-row-alt: rgba(123, 189, 232, 0.08);
   --edify-table-row-hover: rgba(24, 114, 189, 0.28);
@@ -1003,9 +1011,10 @@ html.theme-blue body {
   --edify-card-shadow-hover: none;
   --edify-card-backdrop-filter: none;
 
-  /* Dense tables retain explicit row states while adopting the reference's
-     blue-slate table plane and header band. */
-  --edify-table-canvas: #121c25;
+  /* Dense tables retain explicit row states and the reference's header band,
+     on the card's own plane (a darker slab inside the card read as a second
+     card, 2026-10-18). */
+  --edify-table-canvas: var(--edify-card-surface);
   --edify-table-header: #1a2833;
   --edify-table-row-alt: #14212b;
   --edify-table-row-hover: #1b3446;
