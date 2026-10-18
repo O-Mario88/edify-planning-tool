@@ -127,6 +127,9 @@ class CoreSchoolPerformance:
     # Champion
     champion: str = INSUFFICIENT
     champion_score: float | None = None
+    #: The official rule's inputs (`ChampionEligibilityService`), for the
+    #: profile's checklist; None where the rule cannot judge the school.
+    champion_metrics: dict | None = None
     attention: list[str] = field(default_factory=list)
 
     @property
@@ -462,6 +465,7 @@ def _read_champion(rows, schools) -> None:
         row = rows[school_id]
         metrics = judged.get(code)
         row.champion_score = metrics["score"] if metrics else None
+        row.champion_metrics = metrics
         if row.school_type == "champion" or stored.get(code) in (
             "Champion",
             "Approved Champion",
@@ -499,6 +503,84 @@ def _attention(row: CoreSchoolPerformance) -> list[str]:
     if row.champion == POTENTIAL:
         reasons.append(CANDIDATE_REASON)
     return reasons
+
+
+def interventions(school, *, fy: str) -> dict:
+    """One school's eight SSA interventions in ``fy`` against the year
+    before: each previous and latest score (the latest confirmed record of
+    each year), the change and its `change_rules` verdict where the two
+    readings are comparable, and the platform's band. The strongest and
+    weakest now, and the largest gain and drop, are kept apart: the lowest
+    area is not necessarily the one that fell most."""
+    from apps.analytics.impact_engine import improvement_rows
+    from apps.core.enums import SsaIntervention, ssa_score_band
+    from apps.ssa.year_comparison import school_current_scores
+
+    fy = str(fy)
+    previous_fy = str(int(fy) - 1)
+    now = school_current_scores([school.id], fy).get(school.id, {}).get("areas", {})
+    before = (
+        school_current_scores([school.id], previous_fy)
+        .get(school.id, {})
+        .get("areas", {})
+    )
+    country = getattr(getattr(school, "region", None), "country", "") or ""
+    pairs = {
+        pair["intervention"]: pair
+        for pair in change_rules.classify_pairs(
+            improvement_rows([school.id], fy) or [],
+            book=change_rules.RuleBook(),
+            country_for=lambda _school_id: country,
+        )
+    }
+    rows = []
+    for key, label in SsaIntervention.choices:
+        pair = pairs.get(key)
+        verdict = pair["classification"] if pair else change_rules.NOT_COMPARABLE
+        latest = now.get(key)
+        rows.append(
+            {
+                "key": key,
+                "label": label,
+                "previous": before.get(key),
+                "latest": latest,
+                "change": round(pair["delta"], 1) if pair else None,
+                "verdict": verdict,
+                "verdict_label": TRAJECTORY_LABELS[verdict],
+                "tone": TRAJECTORY_TONES[verdict],
+                "band": ssa_score_band(latest)[0] if latest is not None else "",
+                "rule_label": pair["rule_label"] if pair else "",
+            }
+        )
+    scored = [r for r in rows if r["latest"] is not None]
+    moved = [r for r in rows if r["change"] is not None]
+    gains = [r for r in moved if r["change"] > 0]
+    drops = [r for r in moved if r["change"] < 0]
+    return {
+        "fy": fy,
+        "previous_fy": previous_fy,
+        "rows": rows,
+        "strongest": max(scored, key=lambda r: (r["latest"], r["key"]))
+        if scored
+        else None,
+        "weakest": min(scored, key=lambda r: (r["latest"], r["key"]))
+        if scored
+        else None,
+        "largest_gain": max(gains, key=lambda r: (r["change"], r["key"]))
+        if gains
+        else None,
+        "largest_drop": min(drops, key=lambda r: (r["change"], r["key"]))
+        if drops
+        else None,
+        "improved": sum(1 for r in moved if r["verdict"] == change_rules.IMPROVED),
+        "declined": sum(1 for r in moved if r["verdict"] == change_rules.DECLINED),
+        "steady": sum(
+            1
+            for r in moved
+            if r["verdict"] in (change_rules.NO_CHANGE, change_rules.MAINTAINED_STRONG)
+        ),
+        "not_compared": len(rows) - len(moved),
+    }
 
 
 # ── Aggregating ──────────────────────────────────────────────────────────────

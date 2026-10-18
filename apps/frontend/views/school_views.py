@@ -1729,7 +1729,12 @@ def school_detail_view(request, school_id):
         request,
         profile_intelligence.school_scope(school),
         f"/schools/{school.id}",
-        trail=(("details", "Details"),),
+        # A Core lifecycle school reads its Core School Intelligence (owner,
+        # 2026-10-17) on a tab of its own, before its Details.
+        trail=(
+            *((("core", "Core School"),) if _is_core(school) else ()),
+            ("details", "Details"),
+        ),
         labels={"activities": "Participation"},
         activities=profile_acts.for_school(school),
         activities_param="school_acts",
@@ -1754,9 +1759,31 @@ def school_detail_view(request, school_id):
         context.update(_school_ssa_context(school))
     elif pi["section"] == "activities":
         context.update(_school_participation_context(school))
+    elif pi["tab"] == "core" and _is_core(school):
+        context.update(_core_school_context(school, pi["fy"]))
     elif not pi["is_engine_tab"]:
         context.update(_school_details_context(request, school))
     return render(request, "pages/schools/detail.html", context)
+
+
+def _is_core(school) -> bool:
+    from apps.core_schools.lifecycle import CORE_LIFECYCLE_TYPES
+
+    return school.school_type in CORE_LIFECYCLE_TYPES
+
+
+def _core_school_context(school, fy) -> dict:
+    """The Core School tab: the school's row of Core School Intelligence —
+    the figures Core School Oversight shows for it — and its eight
+    interventions (owner, 2026-10-17, the Core School Intelligence brief)."""
+    from apps.core_schools import intelligence
+
+    fy = str(fy)
+    return {
+        "core": intelligence.performance([school], fy=fy)[school.id],
+        "core_areas": intelligence.interventions(school, fy=fy),
+        "core_fy": fy,
+    }
 
 
 @require_page_permission("school_profile")
