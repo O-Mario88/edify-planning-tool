@@ -7601,57 +7601,11 @@
    "view": "apps.frontend.views.cce_leadership_views.report_start"
   },
   {
-   "page_permission": "cluster_management",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "RegionalVicePresident",
-    "RegionalProgramLead",
-    "ImpactAssessment",
-    "Admin"
-   ],
-   "route": "/cluster-management/",
-   "route_name": "cluster_management",
-   "view": "apps.frontend.views.cluster_management_views.cluster_management_view"
-  },
-  {
-   "page_permission": "cluster_management",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "RegionalVicePresident",
-    "RegionalProgramLead",
-    "ImpactAssessment",
-    "Admin"
-   ],
-   "route": "/cluster-management/<str:section>",
-   "route_name": "cluster_management_section",
-   "view": "apps.frontend.views.cluster_management_views.cluster_management_view"
-  },
-  {
-   "page_permission": "cluster_scoring",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CountryDirector",
-    "ImpactAssessment",
-    "Admin"
-   ],
-   "route": "/cluster-management/scoring",
-   "route_name": "cluster_scoring",
-   "view": "apps.frontend.views.cluster_management_views.cluster_scoring_view"
-  },
-  {
    "page_permission": "cluster_oversight",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "CCEO",
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
@@ -7662,13 +7616,14 @@
    ],
    "route": "/cluster-oversight/",
    "route_name": "cluster_oversight",
-   "view": "apps.frontend.views.oversight_views.cluster_oversight_view"
+   "view": "apps.frontend.views.cluster_management_views.cluster_oversight_view"
   },
   {
    "page_permission": "cluster_oversight",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "CCEO",
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
@@ -7677,26 +7632,22 @@
     "Accountant",
     "Admin"
    ],
-   "route": "/cluster-oversight/export",
-   "route_name": "cluster_oversight_export",
-   "view": "apps.frontend.views.oversight_views.cluster_oversight_export_view"
+   "route": "/cluster-oversight/<str:section>",
+   "route_name": "cluster_oversight_section",
+   "view": "apps.frontend.views.cluster_management_views.cluster_oversight_view"
   },
   {
-   "page_permission": "cluster_oversight",
+   "page_permission": "cluster_scoring",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
-    "RegionalVicePresident",
-    "RegionalProgramLead",
     "ImpactAssessment",
-    "Accountant",
     "Admin"
    ],
-   "route": "/cluster-oversight/export-drawer",
-   "route_name": "cluster_oversight_export_drawer",
-   "view": "apps.frontend.views.oversight_views.cluster_oversight_export_drawer_view"
+   "route": "/cluster-oversight/scoring",
+   "route_name": "cluster_scoring",
+   "view": "apps.frontend.views.cluster_management_views.cluster_scoring_view"
   },
   {
    "page_permission": "clusters",
@@ -7906,6 +7857,21 @@
    "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
    "route_name": "remove_school_from_cluster",
    "view": "apps.frontend.views.cluster_views.remove_school_from_cluster_view"
+  },
+  {
+   "page_permission": "cluster_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/clusters/<str:cluster_id>/schools/export",
+   "route_name": "cluster_schools_export",
+   "view": "apps.frontend.views.cluster_views.cluster_schools_export_view"
   },
   {
    "page_permission": "planning",
@@ -14206,6 +14172,25 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/my-professional-development/certificate/<str:file_id>/pdf",
+   "route_name": "pd_certificate_pdf",
+   "view": "apps.frontend.views.pd_views.pd_certificate_pdf_view"
+  },
+  {
+   "page_permission": "my_professional_development",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/my-professional-development/evidence/<str:file_id>",
    "route_name": "pd_evidence_file",
    "view": "apps.frontend.views.pd_views.pd_evidence_file_view"
@@ -14323,6 +14308,25 @@
    "route": "/my-professional-development/request/<str:request_id>/evidence",
    "route_name": "pd_evidence_upload",
    "view": "apps.frontend.views.pd_views.pd_evidence_upload_view"
+  },
+  {
+   "page_permission": "my_professional_development",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/my-professional-development/request/<str:request_id>/form.pdf",
+   "route_name": "pd_request_form_pdf",
+   "view": "apps.frontend.views.pd_views.pd_request_form_pdf_view"
   },
   {
    "page_permission": "my_target",
@@ -19704,28 +19708,28 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 460,
+  "Accountant": 461,
   "Admin": 1110,
   "BusinessTransformationOfficer": 242,
-  "CCEO": 584,
+  "CCEO": 587,
   "CountryDirector": 846,
-  "HumanResources": 330,
+  "HumanResources": 332,
   "ImpactAssessment": 715,
   "MfiLoanOfficer": 138,
   "MfiPartnerAdmin": 141,
   "PartnerAdmin": 238,
   "PartnerFieldOfficer": 238,
   "Program Lead": 694,
-  "ProjectCoordinator": 488,
-  "RegionalProgramLead": 356,
-  "RegionalVicePresident": 430
+  "ProjectCoordinator": 490,
+  "RegionalProgramLead": 353,
+  "RegionalVicePresident": 429
  },
  "summary": {
-  "page_keys_declared": 186,
-  "page_keys_in_navigation": 203,
+  "page_keys_declared": 185,
+  "page_keys_in_navigation": 202,
   "routes_guarded": 1207,
-  "routes_total": 1406,
-  "routes_unguarded": 199,
+  "routes_total": 1410,
+  "routes_unguarded": 203,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -20848,6 +20852,34 @@
    "route": "/change-password",
    "route_name": "change_password",
    "view": "apps.frontend.views.auth_views.force_change_password_view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/cluster-management/",
+   "route_name": "",
+   "view": "django.views.generic.base.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/cluster-management/<str:section>",
+   "route_name": "",
+   "view": "django.views.generic.base.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/cluster-oversight/export",
+   "route_name": "",
+   "view": "django.views.generic.base.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/cluster-oversight/export-drawer",
+   "route_name": "",
+   "view": "django.views.generic.base.view"
   },
   {
    "page_permission": "",

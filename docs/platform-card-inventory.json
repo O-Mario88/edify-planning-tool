@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 664,
+  "titled_cards": 661,
   "templates": 253,
-  "distinct_titles": 631,
+  "distinct_titles": 628,
   "with_card_key": 13,
-  "untitled_surfaces": 596,
-  "untitled_chrome": 153,
-  "untitled_nested": 191,
+  "untitled_surfaces": 592,
+  "untitled_chrome": 151,
+  "untitled_nested": 189,
   "untitled_headless": 252,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 25,
@@ -5550,16 +5550,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 86,
-   "title": "2b. Not Yet Applied ()",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border p-5 space-y-3 edify-surface edify-border",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 130,
+   "line": 89,
    "title": "3. Role-Based PD Allocation Settings",
    "heading_level": 2,
    "has_card_key": false,
@@ -5568,7 +5559,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 229,
+   "line": 188,
    "title": "5. Automated Notification Workflow",
    "heading_level": 2,
    "has_card_key": false,
@@ -5577,7 +5568,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 272,
+   "line": 231,
    "title": "6. Completed Courses &amp; HR Sign-Off Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -5586,7 +5577,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 283,
+   "line": 242,
    "title": "7. Upcoming &amp; Overdue Courses",
    "heading_level": 2,
    "has_card_key": false,
@@ -5595,11 +5586,20 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 329,
+   "line": 288,
    "title": "8. Quick Actions",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border p-5 space-y-4 edify-surface edify-border",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/hr/pd_dashboard/fund_table.html",
+   "line": 11,
+   "title": "2b. Staff Development Fund \u00b7 Not Yet Applied ()",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border p-5 space-y-3 edify-surface edify-border",
    "branch_path": []
   },
   {
@@ -5636,16 +5636,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/team_body.html",
-   "line": 70,
-   "title": "Not yet applied",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border p-5 space-y-3 edify-surface edify-border",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/hr/pd_dashboard/team_body.html",
-   "line": 92,
+   "line": 75,
    "title": "Upcoming &amp; overdue courses",
    "heading_level": 2,
    "has_card_key": false,
@@ -6286,38 +6277,6 @@
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
    "branch_path": []
-  },
-  {
-   "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 47,
-   "title": "'s Clusters",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden",
-   "branch_path": [
-    [
-     1,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 120,
-   "title": "'s Clusters clusters ( member schools)",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     6,
-     0
-    ]
-   ]
   },
   {
    "template": "templates/partials/oversight/core_schools_oversight_workspace.html",

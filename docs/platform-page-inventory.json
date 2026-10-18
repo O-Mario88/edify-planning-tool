@@ -168,14 +168,14 @@
       "bytes": 1721,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/cluster-oversight/",
         "/core-schools-oversight/",
         "/country-planning-oversight/team/<str:staff_id>",
         "/dashboard",
         "/my-plan",
         "/my-plan/",
         "/partner-oversight/",
-        "/team-planning-oversight/"
+        "/team-planning-oversight/",
+        "/team-targets"
       ],
       "findings": [],
       "forms": 0,
@@ -759,7 +759,6 @@
       "bytes": 311,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/cluster-oversight/",
         "/core-schools-oversight/"
       ],
       "findings": [],
@@ -3273,7 +3272,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6879,
+      "bytes": 7684,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -3918,7 +3917,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6817,
+      "bytes": 6815,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile"
@@ -4857,7 +4856,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1915,
+      "bytes": 1931,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4881,7 +4880,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1246,
+      "bytes": 1203,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4927,7 +4926,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1805,
+      "bytes": 1777,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4978,7 +4977,77 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1474,
+      "bytes": 3374,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " People",
+      "purpose": "Reusable  people interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/country_execution/_people.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 4768,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Requirement Cells",
+      "purpose": "Reusable  requirement cells interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/_requirement_cells.html",
+      "variants": [
+        "none"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2699,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Requirement Heads",
+      "purpose": "Reusable  requirement heads interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/_requirement_heads.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1617,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -5002,7 +5071,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8150,
+      "bytes": 2854,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5020,9 +5089,7 @@
       ],
       "tables": 1,
       "template": "partials/country_execution/_types.html",
-      "variants": [
-        "none"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [],
@@ -5076,7 +5143,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 8627,
+      "bytes": 8659,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots/<str:snapshot_id>"
@@ -5100,7 +5167,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3030,
+      "bytes": 3046,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots"
@@ -5244,7 +5311,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4152,
+      "bytes": 4446,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -5270,7 +5337,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2206,
+      "bytes": 2222,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -5295,7 +5362,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2645,
+      "bytes": 2804,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -5314,11 +5381,13 @@
       ],
       "tables": 1,
       "template": "partials/country_execution/table_partners.html",
-      "variants": []
+      "variants": [
+        "none"
+      ]
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2471,
+      "bytes": 2487,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -5343,7 +5412,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17491,
+      "bytes": 17594,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5429,7 +5498,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2304,
+      "bytes": 2306,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5680,7 +5749,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 19110,
+      "bytes": 19126,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -9306,11 +9375,11 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 24879,
+      "bytes": 22363,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
-      "forms": 7,
+      "forms": 5,
       "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Body",
@@ -9325,6 +9394,33 @@
       "variants": [
         "executive",
         "{% if g.count %}warning{% else %}success{% endif %}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 8146,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 3,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Fund Table",
+      "purpose": "Reusable fund table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/hr/pd_dashboard/fund_table.html",
+      "variants": [
+        "{% if fund_filter == option.key %}info{% else %}neutral{% endif %}",
+        "{% if not fund_filter %}info{% else %}neutral{% endif %}",
+        "{% if p.certificate == ",
+        "{% if p.status == "
       ]
     },
     {
@@ -9353,7 +9449,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7805,
+      "bytes": 6919,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -11379,9 +11475,7 @@
       ],
       "bytes": 9014,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/cluster-oversight/"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -11892,7 +11986,6 @@
       "bytes": 5034,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/cluster-oversight/",
         "/country-planning-oversight/team/<str:staff_id>",
         "/team-planning-oversight/",
         "/team-targets",
@@ -12049,78 +12142,6 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6852,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/cluster-oversight/"
-      ],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 3,
-      "kind": "application-partial",
-      "name": "Cluster Activity Table",
-      "purpose": "Reusable cluster activity table interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/oversight/cluster_activity_table.html",
-      "variants": [
-        "{{ item.session_tone }}"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 587,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/cluster-oversight/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Cluster Member Work",
-      "purpose": "Reusable cluster member work interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/oversight/cluster_member_work.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 10756,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/cluster-oversight/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Cluster Oversight Workspace",
-      "purpose": "Reusable cluster oversight workspace interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "selected",
-        "open"
-      ],
-      "tables": 0,
-      "template": "partials/oversight/cluster_oversight_workspace.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
       "bytes": 11969,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -12233,7 +12254,6 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/budget/export-drawer",
-        "/cluster-oversight/export-drawer",
         "/country-planning-oversight/export-drawer",
         "/fund-requests/weekly/export-drawer",
         "/my-plan/export-drawer",
@@ -12580,7 +12600,6 @@
       "bytes": 5098,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/cluster-oversight/",
         "/core-schools-oversight/",
         "/country-planning-oversight/",
         "/partner-oversight/",
@@ -14123,9 +14142,7 @@
       "accessibility_requirements": [],
       "bytes": 6969,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/my-professional-development/request"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -14141,6 +14158,80 @@
       "variants": [
         "warning"
       ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 7795,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-professional-development/request"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Sdf Form",
+      "purpose": "Reusable  sdf form interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/professional_development/_sdf_form.html",
+      "variants": [
+        "danger",
+        "{% if conflict.status == "
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3563,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-professional-development/request"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Sdf Sheet",
+      "purpose": "Reusable  sdf sheet interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/professional_development/_sdf_sheet.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3337,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-professional-development/request"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Sdf Signoffs",
+      "purpose": "Reusable  sdf signoffs interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/professional_development/_sdf_signoffs.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -14221,7 +14312,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 38883,
+      "bytes": 26742,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-professional-development/request"
@@ -14236,15 +14327,12 @@
       "states": [
         "default",
         "empty",
-        "disabled",
-        "open"
+        "disabled"
       ],
       "tables": 0,
       "template": "partials/professional_development/request_form.html",
       "variants": [
-        "danger",
-        "warning",
-        "{% if conflict.status == "
+        "warning"
       ]
     },
     {
@@ -14590,7 +14678,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 60004,
+      "bytes": 60001,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile",
@@ -32795,14 +32883,14 @@
       "audit_events": false,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.cluster_management_views",
-      "backend_view": "apps.frontend.views.cluster_management_views.cluster_management_view",
+      "backend_view": "apps.frontend.views.cluster_management_views.cluster_oversight_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
-        "template:pages/cluster_management/index.html",
+        "template:pages/oversight/cluster_oversight.html",
         "test:referenced-by-automated-test",
-        "permission:cluster_management"
+        "permission:cluster_oversight"
       ],
       "filters": "filter controls detected; parent/context review",
       "findings": [],
@@ -32817,17 +32905,18 @@
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-85CDA82483",
-      "page_title": "\u00b7 Cluster Management \u00b7 Edify",
+      "page_id": "UI-PAGE-A227C51792",
+      "page_title": "\u00b7 Cluster Oversight \u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [],
-      "permission_key": "cluster_management",
+      "permission_key": "cluster_oversight",
       "primary_action": "Review operational workspace",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Operate cluster management within the frontend workflow.",
+      "purpose": "Operate cluster oversight within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
@@ -32836,8 +32925,8 @@
         "RPL",
         "RVP"
       ],
-      "route": "/cluster-management/",
-      "route_name": "cluster_management",
+      "route": "/cluster-oversight/",
+      "route_name": "cluster_oversight",
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
@@ -32861,7 +32950,7 @@
         "type": "none"
       },
       "templates": [
-        "pages/cluster_management/index.html"
+        "pages/oversight/cluster_oversight.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -32876,14 +32965,14 @@
       "audit_events": false,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.cluster_management_views",
-      "backend_view": "apps.frontend.views.cluster_management_views.cluster_management_view",
+      "backend_view": "apps.frontend.views.cluster_management_views.cluster_oversight_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
-        "template:pages/cluster_management/index.html",
+        "template:pages/oversight/cluster_oversight.html",
         "test:referenced-by-automated-test",
-        "permission:cluster_management"
+        "permission:cluster_oversight"
       ],
       "filters": "filter controls detected; parent/context review",
       "findings": [],
@@ -32898,17 +32987,18 @@
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-58D1EBBE03",
-      "page_title": "\u00b7 Cluster Management \u00b7 Edify",
+      "page_id": "UI-PAGE-9CE2CCCB96",
+      "page_title": "\u00b7 Cluster Oversight \u00b7 Edify",
       "page_type": "record-detail",
       "per_page_css": [],
-      "permission_key": "cluster_management",
+      "permission_key": "cluster_oversight",
       "primary_action": "Review record",
       "primary_user_decision": "What is the correct next action for this record?",
-      "purpose": "Operate cluster management section within the frontend workflow.",
+      "purpose": "Operate cluster oversight section within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
@@ -32917,8 +33007,8 @@
         "RPL",
         "RVP"
       ],
-      "route": "/cluster-management/<str:section>",
-      "route_name": "cluster_management_section",
+      "route": "/cluster-oversight/<str:section>",
+      "route_name": "cluster_oversight_section",
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
@@ -32942,7 +33032,7 @@
         "type": "none"
       },
       "templates": [
-        "pages/cluster_management/index.html"
+        "pages/oversight/cluster_oversight.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -32979,8 +33069,8 @@
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-EFB5DF0B83",
-      "page_title": "Scoring \u00b7 Cluster Management \u00b7 Edify",
+      "page_id": "UI-PAGE-0B3C03B0D2",
+      "page_title": "Scoring \u00b7 Cluster Oversight \u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "cluster_scoring",
@@ -32994,11 +33084,11 @@
         "CD",
         "IA"
       ],
-      "route": "/cluster-management/scoring",
+      "route": "/cluster-oversight/scoring",
       "route_name": "cluster_scoring",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/cluster-management/scoring"
+        "/cluster-oversight/scoring"
       ],
       "services_and_models": [
         "apps.accounts.models"
@@ -33022,287 +33112,6 @@
       },
       "templates": [
         "pages/cluster_management/scoring.html"
-      ],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
-      "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]"
-      ]
-    },
-    {
-      "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.oversight_views",
-      "backend_view": "apps.frontend.views.oversight_views.cluster_oversight_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": true,
-      "evidence": [
-        "template:partials/oversight/cluster_oversight_workspace.html",
-        "template:pages/oversight/cluster_oversight.html",
-        "test:referenced-by-automated-test",
-        "permission:cluster_oversight"
-      ],
-      "filters": "filter controls detected; parent/context review",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": false,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET /cluster-oversight/export-drawer?fy={{ fy }}"
-      ],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-273FCBD571",
-      "page_title": "Cluster Oversight",
-      "page_type": "interaction-fragment",
-      "per_page_css": [
-        "css/pages/oversight-workspace.css"
-      ],
-      "permission_key": "cluster_oversight",
-      "primary_action": "Cluster Oversight",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Cluster oversight page \u2014 executive performance metrics, SSA scores and activity recency.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
-      "role_access": [
-        "ACCOUNTANT",
-        "ADMIN",
-        "CD",
-        "IA",
-        "PL",
-        "RPL",
-        "RVP"
-      ],
-      "route": "/cluster-oversight/",
-      "route_name": "cluster_oversight",
-      "search": "shared topbar search or none",
-      "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.audit.services",
-        "apps.budget.models",
-        "apps.core.scoping",
-        "apps.fund_requests.models",
-        "apps.partners.models",
-        "apps.partners.services",
-        "apps.pl_review.services",
-        "apps.schools.models"
-      ],
-      "shared_layout": [
-        "layouts/shell.html"
-      ],
-      "state_coverage": {
-        "disabled": false,
-        "empty": false,
-        "error": false,
-        "loading": false
-      },
-      "surface_kind": "partial",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "pass-automated-contract",
-      "tabs": {
-        "count": 3,
-        "type": "in-page-tabs"
-      },
-      "templates": [
-        "partials/oversight/cluster_oversight_workspace.html",
-        "pages/oversight/cluster_oversight.html"
-      ],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
-      "todos": false,
-      "typography_exceptions": []
-    },
-    {
-      "accessibility_status": "not-applicable-nonvisual",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.oversight_views",
-      "backend_view": "apps.frontend.views.oversight_views.cluster_oversight_export_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": false,
-      "evidence": [
-        "test:referenced-by-automated-test",
-        "permission:cluster_oversight"
-      ],
-      "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": false,
-      "header_variant": "inherited-or-manual-review",
-      "htmx_endpoints": [],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "not-applicable-nonvisual",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-440F458C20",
-      "page_title": "Cluster Oversight Export",
-      "page_type": "report",
-      "per_page_css": [],
-      "permission_key": "cluster_oversight",
-      "primary_action": "Review or export report",
-      "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export cluster plans to Excel (or CSV).",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "manual-review-required",
-      "role_access": [
-        "ACCOUNTANT",
-        "ADMIN",
-        "CD",
-        "IA",
-        "PL",
-        "RPL",
-        "RVP"
-      ],
-      "route": "/cluster-oversight/export",
-      "route_name": "cluster_oversight_export",
-      "search": "shared topbar search or none",
-      "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.audit.services",
-        "apps.budget.models",
-        "apps.core.scoping",
-        "apps.fund_requests.models",
-        "apps.partners.models",
-        "apps.partners.services",
-        "apps.pl_review.services",
-        "apps.schools.models"
-      ],
-      "shared_layout": [
-        "standalone-document-or-fragment"
-      ],
-      "state_coverage": {
-        "disabled": false,
-        "empty": false,
-        "error": false,
-        "loading": false
-      },
-      "surface_kind": "export",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "not-applicable-nonvisual",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "not-applicable-nonvisual",
-      "theme_status": "not-applicable-nonvisual",
-      "todos": false,
-      "typography_exceptions": []
-    },
-    {
-      "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.oversight_views",
-      "backend_view": "apps.frontend.views.oversight_views.cluster_oversight_export_drawer_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": true,
-      "evidence": [
-        "template:partials/oversight/export_customization_drawer.html",
-        "test:referenced-by-automated-test",
-        "permission:cluster_oversight"
-      ],
-      "filters": "filter controls detected; parent/context review",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-DAF96AEC09",
-      "page_title": "Cluster Oversight Export Drawer",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "cluster_oversight",
-      "primary_action": "Cluster Oversight Export Drawer",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Drawer to customize period and export cluster oversight to Excel.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
-      "role_access": [
-        "ACCOUNTANT",
-        "ADMIN",
-        "CD",
-        "IA",
-        "PL",
-        "RPL",
-        "RVP"
-      ],
-      "route": "/cluster-oversight/export-drawer",
-      "route_name": "cluster_oversight_export_drawer",
-      "search": "shared topbar search or none",
-      "secondary_actions": [
-        "{{ export_url }}"
-      ],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.audit.services",
-        "apps.budget.models",
-        "apps.core.scoping",
-        "apps.fund_requests.models",
-        "apps.partners.models",
-        "apps.partners.services",
-        "apps.pl_review.services",
-        "apps.schools.models"
-      ],
-      "shared_layout": [
-        "components/drawers/base_drawer.html"
-      ],
-      "state_coverage": {
-        "disabled": false,
-        "empty": false,
-        "error": false,
-        "loading": false
-      },
-      "surface_kind": "drawer",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "pass-automated-contract",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [
-        "partials/oversight/export_customization_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -34518,6 +34327,90 @@
       "typography_exceptions": [
         "text-[12px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.cluster_views",
+      "backend_view": "apps.frontend.views.cluster_views.cluster_schools_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:cluster_detail"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-7A1AF7EB00",
+      "page_title": "Cluster Schools Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "cluster_detail",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "The Cluster Profile's Export schools (owner, 2026-10-17): each school the Cluster Page lists, with its ID, name, phone, primary contact and shipping address, as one Excel file named after the cluster.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/clusters/<str:cluster_id>/schools/export",
+      "route_name": "cluster_schools_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -69061,6 +68954,88 @@
       "audit_events": false,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.pd_views",
+      "backend_view": "apps.frontend.views.pd_views.pd_certificate_pdf_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:coverage-review-required",
+        "permission:my_professional_development"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-936CE9DA2F",
+      "page_title": "Pd Certificate Pdf",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "my_professional_development",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "A certificate as a PDF (owner, 2026-10-18: \"HR, CD and PL can be able to view and download the certificates in PDF Mode\"). A PDF is served as it was uploaded; a photo or scan is placed on an A4 page; anything else (a Word document) is offered as the file it is. Readable by the employee, their manager, HR and in-country leadership (_authorized_for_pd_file).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/my-professional-development/certificate/<str:file_id>/pdf",
+      "route_name": "pd_certificate_pdf",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.professional_development.models",
+        "apps.professional_development.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.pd_views",
       "backend_view": "apps.frontend.views.pd_views.pd_evidence_file_view",
       "card_count": 0,
       "charts": false,
@@ -69356,8 +69331,6 @@
       "secondary_actions": [
         "/my-professional-development/request/{{ instance.id }}/action",
         "/my-professional-development/fund/{{ instance.fund_request.id }}/action",
-        "/my-professional-development/request/{{ instance.id }}/evidence",
-        "/my-professional-development/request",
         "/my-professional-development/request/{{ instance.id }}/certificate"
       ],
       "services_and_models": [
@@ -69626,6 +69599,88 @@
         "loading": false
       },
       "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.pd_views",
+      "backend_view": "apps.frontend.views.pd_views.pd_request_form_pdf_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:coverage-review-required",
+        "permission:my_professional_development"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-FDB2CAC549",
+      "page_title": "Pd Request Form Pdf",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "my_professional_development",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "The completed Staff Development Fund request form, as the PDF the attachment's first page is (owner, 2026-10-18). Readable by whoever may read the request's files: the employee, their manager, HR and in-country leadership \u2014 and by whoever is asked to act on it now.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/my-professional-development/request/<str:request_id>/form.pdf",
+      "route_name": "pd_request_form_pdf",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.professional_development.models",
+        "apps.professional_development.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "not-applicable-nonvisual",
@@ -111557,32 +111612,100 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.cluster_management_views.cluster_management_view",
+      "callback": "django.views.generic.base.view",
+      "kind": "platform-route",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/cluster-management/",
+      "route_name": "",
+      "templates": []
+    },
+    {
+      "callback": "django.views.generic.base.view",
+      "kind": "platform-route",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/cluster-management/<str:section>",
+      "route_name": "",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.cluster_management_views.cluster_oversight_view",
       "kind": "page",
       "methods": [
         "GET"
       ],
-      "page_permission": "cluster_management",
+      "page_permission": "cluster_oversight",
       "required_permissions": [],
-      "route": "/cluster-management/",
-      "route_name": "cluster_management",
+      "route": "/cluster-oversight/",
+      "route_name": "cluster_oversight",
       "templates": [
-        "pages/cluster_management/index.html"
+        "pages/oversight/cluster_oversight.html"
       ]
     },
     {
-      "callback": "apps.frontend.views.cluster_management_views.cluster_management_view",
+      "callback": "apps.frontend.views.cluster_management_views.cluster_oversight_view",
       "kind": "page",
       "methods": [
         "GET"
       ],
-      "page_permission": "cluster_management",
+      "page_permission": "cluster_oversight",
       "required_permissions": [],
-      "route": "/cluster-management/<str:section>",
-      "route_name": "cluster_management_section",
+      "route": "/cluster-oversight/<str:section>",
+      "route_name": "cluster_oversight_section",
       "templates": [
-        "pages/cluster_management/index.html"
+        "pages/oversight/cluster_oversight.html"
       ]
+    },
+    {
+      "callback": "django.views.generic.base.view",
+      "kind": "platform-route",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/cluster-oversight/export",
+      "route_name": "",
+      "templates": []
+    },
+    {
+      "callback": "django.views.generic.base.view",
+      "kind": "platform-route",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/cluster-oversight/export-drawer",
+      "route_name": "",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.cluster_management_views.cluster_scoring_view",
@@ -111593,51 +111716,10 @@
       ],
       "page_permission": "cluster_scoring",
       "required_permissions": [],
-      "route": "/cluster-management/scoring",
+      "route": "/cluster-oversight/scoring",
       "route_name": "cluster_scoring",
       "templates": [
         "pages/cluster_management/scoring.html"
-      ]
-    },
-    {
-      "callback": "apps.frontend.views.oversight_views.cluster_oversight_view",
-      "kind": "partial",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "cluster_oversight",
-      "required_permissions": [],
-      "route": "/cluster-oversight/",
-      "route_name": "cluster_oversight",
-      "templates": [
-        "partials/oversight/cluster_oversight_workspace.html",
-        "pages/oversight/cluster_oversight.html"
-      ]
-    },
-    {
-      "callback": "apps.frontend.views.oversight_views.cluster_oversight_export_view",
-      "kind": "export",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "cluster_oversight",
-      "required_permissions": [],
-      "route": "/cluster-oversight/export",
-      "route_name": "cluster_oversight_export",
-      "templates": []
-    },
-    {
-      "callback": "apps.frontend.views.oversight_views.cluster_oversight_export_drawer_view",
-      "kind": "drawer",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "cluster_oversight",
-      "required_permissions": [],
-      "route": "/cluster-oversight/export-drawer",
-      "route_name": "cluster_oversight_export_drawer",
-      "templates": [
-        "partials/oversight/export_customization_drawer.html"
       ]
     },
     {
@@ -111821,6 +111903,18 @@
       "templates": [
         "partials/schools/toast_success.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.cluster_views.cluster_schools_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cluster_detail",
+      "required_permissions": [],
+      "route": "/clusters/<str:cluster_id>/schools/export",
+      "route_name": "cluster_schools_export",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.cluster_views.cluster_cost_preview_partial",
@@ -117255,6 +117349,18 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.pd_views.pd_certificate_pdf_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_professional_development",
+      "required_permissions": [],
+      "route": "/my-professional-development/certificate/<str:file_id>/pdf",
+      "route_name": "pd_certificate_pdf",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.pd_views.pd_evidence_file_view",
       "kind": "action",
       "methods": [
@@ -117338,6 +117444,18 @@
       "required_permissions": [],
       "route": "/my-professional-development/request/<str:request_id>/evidence",
       "route_name": "pd_evidence_upload",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.pd_views.pd_request_form_pdf_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_professional_development",
+      "required_permissions": [],
+      "route": "/my-professional-development/request/<str:request_id>/form.pdf",
+      "route_name": "pd_request_form_pdf",
       "templates": []
     },
     {
@@ -122146,26 +122264,26 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 607,
+    "accessibility_contract_pass": 605,
     "activity_states": 24,
-    "all_routes": 1406,
+    "all_routes": 1410,
     "api_routes": 363,
-    "component_templates": 691,
+    "component_templates": 695,
     "full_pages": 270,
-    "mobile_contract_pass": 607,
+    "mobile_contract_pass": 605,
     "nonvisual_actions": 287,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 621,
+      "interaction-fragment": 619,
       "operational-queue": 156,
       "planning-or-creation": 14,
       "record-detail": 30,
-      "report": 47
+      "report": 49
     },
-    "partials_and_drawers": 334,
+    "partials_and_drawers": 332,
     "permission_gated": 913,
     "permission_keys": 127,
     "roles": 15,
@@ -122177,8 +122295,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 607,
-    "test_referenced": 830,
-    "theme_contract_pass": 607
+    "tablet_contract_pass": 605,
+    "test_referenced": 828,
+    "theme_contract_pass": 605
   }
 }
