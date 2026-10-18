@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **932**
-- All registered routes: **1413**
+- Routed product surfaces: **933**
+- All registered routes: **1414**
 - API routes: **364**
 - Roles: **15**
 - Permission keys: **127**
@@ -14,8 +14,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Shared component templates: **698**
 - Full pages: **271**
 - Partials and drawers: **334**
-- Permission-gated surfaces: **915**
-- Referenced by automated tests: **835**
+- Permission-gated surfaces: **916**
+- Referenced by automated tests: **836**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -250,6 +250,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-40B24E4260 | /core-schools/champion-candidates | Champion School Candidates | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4D5A56548B | /core-schools/champions | Graduated Champion Schools | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E0D4C86D58 | /core-schools/oversight/send | Core Oversight Send Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-619DC20A24 | /core-schools/recommendations/<str:rec_id>/<str:action> | Core Recommendation Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-EAEE2E2561 | /core-schools/schedule-activity | Core Schedule Activity Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-21C12E11BA | /core-schools/schedule-training | Core Schedule Training Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B028D7C544 | /core-schools/schedule-training/action | Core Schedule Training Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

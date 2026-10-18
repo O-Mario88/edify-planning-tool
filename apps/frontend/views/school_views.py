@@ -1760,7 +1760,7 @@ def school_detail_view(request, school_id):
     elif pi["section"] == "activities":
         context.update(_school_participation_context(school))
     elif pi["tab"] == "core" and _is_core(school):
-        context.update(_core_school_context(school, pi["fy"]))
+        context.update(_core_school_context(school, pi["fy"], request.user))
     elif not pi["is_engine_tab"]:
         context.update(_school_details_context(request, school))
     return render(request, "pages/schools/detail.html", context)
@@ -1772,10 +1772,12 @@ def _is_core(school) -> bool:
     return school.school_type in CORE_LIFECYCLE_TYPES
 
 
-def _core_school_context(school, fy) -> dict:
+def _core_school_context(school, fy, user) -> dict:
     """The Core School tab: the school's row of Core School Intelligence —
     the figures Core School Oversight shows for it — and its eight
     interventions (owner, 2026-10-17, the Core School Intelligence brief)."""
+    from apps.core.permissions import RolePermissionService
+    from apps.core.scoping import may_write_school, resolve_user_scope
     from apps.core_schools import intelligence
 
     fy = str(fy)
@@ -1783,6 +1785,10 @@ def _core_school_context(school, fy) -> dict:
         "core": intelligence.performance([school], fy=fy)[school.id],
         "core_areas": intelligence.interventions(school, fy=fy),
         "core_recommendations": intelligence.recommendations([school])[school.id],
+        # The school's owner decides its recommendations and graduates it
+        # (`may_write_school`, the Champion review's own rule).
+        "core_may_act": may_write_school(resolve_user_scope(user), school),
+        "core_may_review": RolePermissionService.can_view_page(user, "core_schools"),
         "core_fy": fy,
     }
 

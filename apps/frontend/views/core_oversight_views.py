@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import csv
 
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.contrib import messages
+from django.http import HttpResponse, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.permissions import RolePermissionService, require_page_permission
@@ -236,6 +238,10 @@ def core_schools_oversight_view(request):
             },
             "query": query.urlencode(),
             "can_export": can_export,
+            # The Champion review drawer is the Core Schools page's.
+            "may_review_champions": RolePermissionService.can_view_page(
+                request.user, "core_schools"
+            ),
             # The one search box is the top bar's, bound to the filters.
             "topbar_search": {
                 "placeholder": "Search Core schools…",
@@ -246,3 +252,55 @@ def core_schools_oversight_view(request):
             },
         },
     )
+
+
+#: What the school's owner may do with a recommendation: the service's own
+#: transitions (`ssa.recommendation_service`), a reason required for two.
+RECOMMENDATION_ACTIONS = ("accept", "defer", "reject")
+
+
+@require_POST
+@require_page_permission("core_schools")
+def core_recommendation_action(request, rec_id, action):
+    """Accept, defer or reject one recorded SSA recommendation (owner,
+    2026-10-18: "accept, defer or plan support straight from a
+    recommendation"). The school's owner decides — `may_write_school`, the
+    rule the Champion review applies; planning the support is the school's
+    Schedule, which settles the recommendation when the activity is saved
+    (`ssa.plan_alignment`)."""
+    from apps.core.exceptions import BadRequest
+    from apps.core.scoping import may_write_school, resolve_user_scope
+    from apps.ssa import recommendation_service
+    from apps.ssa.recommendation_models import SsaRecommendation
+
+    rec = get_object_or_404(
+        SsaRecommendation.objects.select_related("school"), id=rec_id
+    )
+    if action not in RECOMMENDATION_ACTIONS or not may_write_school(
+        resolve_user_scope(request.user), rec.school
+    ):
+        return HttpResponseForbidden("This recommendation is not yours to decide.")
+    reason = (request.POST.get("reason") or "").strip()
+    try:
+        if action == "accept":
+            recommendation_service.accept(rec, request.user)
+        elif action == "defer":
+            recommendation_service.defer(rec, request.user, reason=reason)
+        else:
+            recommendation_service.reject(rec, request.user, reason=reason)
+    except BadRequest as exc:
+        messages.error(request, str(exc))
+    else:
+        messages.success(
+            request, f"{rec.get_intervention_display()}: {rec.get_state_display()}."
+        )
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    # Back to the page the action was taken on, if it is this site's own;
+    # anything else (another host, a scheme) returns to the school's tab.
+    back = request.POST.get("next") or ""
+    if not url_has_allowed_host_and_scheme(
+        back, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        back = f"/schools/{rec.school_id}?tab=core"
+    return redirect(back)
