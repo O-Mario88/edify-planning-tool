@@ -356,6 +356,51 @@ class TeamTargetsPageTest(TestCase):
         monthly_kpi = next(k for k in page["kpis"] if k["key"] == "monthly")
         self.assertEqual(monthly_kpi["value"], "25%")
 
+    # ── Ranked: the CCEO Leaderboard's home (owner, 2026-10-18) ──────────────
+    def test_ranked_puts_the_strongest_full_year_achievement_first(self):
+        """The Analytics page's CCEO Leaderboard, on the page whose figures
+        it ranked: every member by their weighted validated achievement for
+        the full year, the strongest first, each with their place."""
+        self._monthly(self.cceo1, "school_visits", JULY, 4)
+        self._monthly(self.cceo2, "school_visits", JULY, 2)
+        self._act(self.cceo1_sp, date(2026, 7, 2))
+        self._act(self.cceo2_sp, date(2026, 7, 3), sf_id="SF-R2")
+        self._act(self.cceo2_sp, date(2026, 7, 6), sf_id="SF-R3")
+
+        page = PLTeamTargetsService.get_page(self.pl, order="ranked")
+
+        self.assertEqual(
+            [(m["rank"], m["name"]) for m in page["members"]],
+            [(1, "James Two"), (2, "Grace One")],
+        )
+        self.assertTrue(page["ranked"])
+        self.assertFalse(page["group_by_lead"])
+
+    def test_a_member_with_no_target_set_is_last_and_unranked(self):
+        """A CCEO with no target is a setup gap, not a poor performer (the
+        Leaderboard's rule): last, without a place."""
+        self._monthly(self.cceo2, "school_visits", JULY, 2)
+        self._act(self.cceo2_sp, date(2026, 7, 3), sf_id="SF-R4")
+
+        members = PLTeamTargetsService.get_page(self.pl, order="ranked")["members"]
+
+        self.assertEqual(
+            [(m["rank"], m["name"]) for m in members],
+            [(1, "James Two"), (None, "Grace One")],
+        )
+
+    def test_the_order_is_a_choice_on_the_page(self):
+        self._monthly(self.cceo1, "school_visits", JULY, 4)
+        client = Client()
+        client.force_login(self.pl)
+
+        body = client.get(
+            "/team-planning-oversight/?view=targets&order=ranked"
+        ).content.decode()
+
+        self.assertIn('name="order"', body)
+        self.assertIn('data-rank="1"', body)
+
     def test_team_targets_filter_bar_exposes_the_five_reporting_filters(self):
         client = Client()
         client.force_login(self.pl)

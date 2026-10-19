@@ -58,6 +58,17 @@
         </select>
       </label>
 
+      {% comment %}By team, or ranked by full-year achievement (owner,
+      2026-10-18: the Analytics page's CCEO Leaderboard, given its home on the
+      page whose figures it ranked).{% endcomment %}
+      <label class="tt-filter-field">
+        <span>Order</span>
+        <select name="order" aria-label="Order">
+          <option value="">By team</option>
+          <option value="ranked" {% if ranked %}selected{% endif %}>Ranked by full-year achievement</option>
+        </select>
+      </label>
+
       <div class="tt-filter-actions">
         <span id="team-targets-loading" class="tt-loading htmx-indicator" role="status" aria-live="polite">
           <span class="tt-loading__dot" aria-hidden="true"></span>
