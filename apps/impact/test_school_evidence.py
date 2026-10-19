@@ -757,9 +757,15 @@ class OutcomesAndProgressTests(EvidenceFixture):
         response = self.client.get(f"/schools/{self.school.school_id}?tab=ssa")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="ssa-timeline"')
-        self.assertContains(response, "Current confirmed SSA")
         self.assertContains(response, "not confirmed yet and is not counted")
         self.assertContains(response, "SSA change between confirmed assessments")
+        # One place for each SSA figure (owner, 2026-10-19: "ssa [scores] are
+        # duplicated more than 2 times"): each intervention's before and after
+        # is the Intervention Matrix's, and the newest confirmed record heads
+        # the history, so neither is drawn a second time here.
+        self.assertNotContains(response, "Current confirmed SSA")
+        self.assertNotContains(response, "SSA domain change")
+        self.assertContains(response, "SSA history")
 
     def test_declining_schools_survives_a_bad_fy_and_names_interventions(self):
         cb = "christlike_behaviour"

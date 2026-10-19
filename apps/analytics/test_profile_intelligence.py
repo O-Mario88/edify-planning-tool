@@ -387,6 +387,35 @@ class DistrictPageTest(ProfileFixture):
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(f'data-profile-tab="{tab}"', response.content.decode())
 
+    # Owner, 2026-10-19: "there is a lot of duplications on the profile pages
+    # and oversights ... ssa [scores] are duplicated more than 2 times". One
+    # place for each SSA figure: the Overview keeps the score and the best and
+    # struggling intervention; the SSA tab the matrix and its chart; the
+    # rail's SSA part sits beside the Overview only.
+    CHART = 'aria-label="SSA score by intervention"'
+    PICKS = 'data-profile-intervention-pick="best"'
+    RAIL_SSA = 'data-rail-part="ssa"'
+
+    def test_the_overview_keeps_the_score_and_the_picks_and_not_the_chart(self):
+        body = self.page().content.decode()
+
+        self.assertEqual(body.count(self.PICKS), 1)
+        self.assertNotIn(self.CHART, body)
+        self.assertEqual(body.count(self.RAIL_SSA), 1)
+
+    def test_the_ssa_tab_draws_the_matrix_and_its_chart_once(self):
+        body = self.page(tab="ssa").content.decode()
+
+        self.assertEqual(body.count("Intervention Matrix"), 1)
+        self.assertEqual(body.count(self.CHART), 1)
+        self.assertNotIn(self.PICKS, body)
+        self.assertNotIn(self.RAIL_SSA, body)
+
+    def test_no_other_tab_repeats_the_ssa_rail(self):
+        for tab in ("clusters", "schools", "activities"):
+            with self.subTest(tab=tab):
+                self.assertNotIn(self.RAIL_SSA, self.page(tab=tab).content.decode())
+
     def test_it_opens_on_the_running_year_and_says_what_the_numbers_cover(self):
         body = self.page().content.decode()
 

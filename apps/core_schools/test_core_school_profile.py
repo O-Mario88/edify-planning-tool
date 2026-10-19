@@ -61,10 +61,21 @@ class CoreSchoolTabTest(_CoreCase):
         row = intelligence.performance([self.rising], fy=self.fy)[self.rising.id]
 
         self.assertIn('data-core-school-tab="CI-1"', body)
-        self.assertIn(f">{row.ssa_now}</strong>", body)
-        self.assertIn('data-core-intervention="leadership"', body)
         self.assertIn("Improved", body)
         self.assertIn(row.champion, body)
+
+    def test_the_tab_leaves_the_school_s_ssa_to_its_ssa_tab(self):
+        """One place for each SSA figure (owner, 2026-10-19: "ssa [scores]
+        are duplicated more than 2 times"): the tab says the Core trajectory
+        and opens the SSA tab for the scores, rather than drawing each
+        intervention a fifth time."""
+        body = self._tab(self.rising)
+
+        self.assertIn("data-core-ssa-link", body)
+        self.assertIn("tab=ssa", body)
+        self.assertNotIn("data-core-intervention=", body)
+        self.assertNotIn("data-core-highlights", body)
+        self.assertNotIn("Previous SSA", body)
 
     def test_the_champion_checklist_names_each_criterion(self):
         body = self._tab(self.rising)
