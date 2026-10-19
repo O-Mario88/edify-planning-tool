@@ -101,6 +101,10 @@ SECTIONS_OF = {
         "activities",
         "projects",
     ),
+    # A project's own schools and work (owner, 2026-10-18). Its "projects"
+    # would be itself, and its activities have the project's own Activities
+    # page (partials/projects/workspace_nav.html), so it has neither.
+    "project": ("overview", "ssa", "districts", "clusters", "schools"),
     "cluster": ("overview", "schools", "activities", "projects"),
     # School 360 (the brief, 2026-10-10): the same sections over one school.
     "school": ("overview", "ssa", "activities", "academic", "stories", "projects"),

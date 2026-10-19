@@ -305,6 +305,24 @@ def partner_scope(partner) -> Scope:
     )
 
 
+def project_scope(project) -> Scope:
+    """The project's schools today (its current enrolments at operating
+    schools) and the work filed against the project (owner, 2026-10-18: "make
+    sure the existing analytics are integrated into the profiles ... This
+    should include project profiles")."""
+    from apps.projects.models import current_enrolments
+
+    enrolled = current_enrolments().filter(project=project).values("school_id")
+    return Scope(
+        kind="project",
+        key=project.id,
+        name=project.name,
+        covers="Project schools",
+        schools=_operating().filter(id__in=enrolled),
+        work=Q(project_id=project.id),
+    )
+
+
 # ── Reading the scope ───────────────────────────────────────────────────────
 def _schools(scope: Scope) -> list[dict]:
     rows = list(
@@ -1414,6 +1432,7 @@ LEVELS_OF = {
     "program_lead": ("staff", "districts", "clusters", "schools"),
     "staff": ("districts", "clusters", "schools"),
     "partner": ("districts", "clusters", "schools"),
+    "project": ("districts", "clusters", "schools"),
     "cluster": ("schools",),
     "school": (),
 }

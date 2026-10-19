@@ -1515,6 +1515,9 @@ def identity(
     elif kind == "partner":
         fact("Type", "Partner")
         fact("Districts", profile["portfolio"]["districts"])
+    elif kind == "project":
+        fact("Type", "Project")
+        fact("Districts", profile["portfolio"]["districts"])
     fact("Fiscal Year", profile["fy_label"])
     return facts
 

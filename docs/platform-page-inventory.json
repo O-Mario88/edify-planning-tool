@@ -14409,6 +14409,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14438,6 +14439,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14469,6 +14471,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14499,9 +14502,9 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
-        "/staff/<str:user_id>",
-        "/sub-regions/<str:sub_region_id>"
+        "/staff/<str:user_id>"
       ],
       "findings": [],
       "forms": 0,
@@ -14526,6 +14529,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14555,6 +14559,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14582,6 +14587,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14613,9 +14619,9 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
-        "/staff/<str:user_id>",
-        "/sub-regions/<str:sub_region_id>"
+        "/staff/<str:user_id>"
       ],
       "findings": [],
       "forms": 0,
@@ -14642,6 +14648,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14669,6 +14676,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14697,6 +14705,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
       ],
@@ -14723,6 +14732,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14750,6 +14760,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
@@ -14781,6 +14792,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
         "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"

@@ -1494,6 +1494,7 @@
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/analytics/platform_engine.py",
+        "apps/analytics/profile_intelligence.py",
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
@@ -1554,6 +1555,7 @@
         "apps/frontend/templatetags/row_actions.py",
         "apps/frontend/templatetags/school_links.py",
         "apps/frontend/views/extended_views.py",
+        "apps/frontend/views/profile_views.py",
         "apps/frontend/views/project_capacity_views.py",
         "apps/fund_requests/advance_service.py",
         "apps/fund_requests/follow.py",
@@ -1608,6 +1610,7 @@
         "apps/ssa/recommendation_service.py",
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
+        "apps/ssa/year_comparison.py",
         "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/ledger_sync.py",
@@ -4978,9 +4981,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "d7ddab49840243fb3fbbf7a67754d2ed3be516719c25decafa5d2fca089db523",
-    "sources": "8ee725f965dbc0d9d6d5fa06bb3ac5b816266e80078dd8943d93a7aeb100a0c9",
-    "sourceCount": 264,
+    "payload": "ecd20c6b31faacdc85f99d0e3394aba6bca9777bac3960e795979f547d65458d",
+    "sources": "af3ee8293af586269b22c2a8da466595956ef769954ee25464baa99bd4ca82dd",
+    "sourceCount": 265,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

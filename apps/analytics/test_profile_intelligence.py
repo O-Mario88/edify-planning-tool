@@ -22,6 +22,7 @@ from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
 from apps.geography.models import District, Region
 from apps.partners.models import Partner, PartnerAssignment
+from apps.projects.models import Project, ProjectCategory, ProjectSchoolAssignment
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.ssa.year_comparison import fy_label
@@ -596,6 +597,34 @@ class EveryScopeTest(ProfileFixture):
         self.assertEqual(profile["execution"]["visits"]["planned"], 1)
         self.assertEqual(profile["execution"]["visits"]["by_partner"], 1)
 
+    def test_a_project_s_profile_is_its_enrolled_schools_and_its_own_work(self):
+        """Owner, 2026-10-18: "make sure the existing analytics are integrated
+        into the profiles ... This should include project profiles"."""
+        project = Project.objects.create(
+            name="SP-PROFILE",
+            category=ProjectCategory.PILOT.value,
+            target_interventions=["leadership"],
+        )
+        for name in ("Alpha", "Bravo"):
+            ProjectSchoolAssignment.objects.create(
+                project=project, school=self.schools[name]
+            )
+        # The project's visit, and an ordinary visit at the same school.
+        visit = self.activity("school_visit", school=self.schools["Bravo"])
+        Activity.objects.filter(id=visit.id).update(project_id=project.id)
+        self.activity("school_visit", school=self.schools["Bravo"])
+
+        scope = engine.project_scope(project)
+        profile = engine.build(scope, self.fy)
+
+        self.assertEqual(scope.covers, "Project schools")
+        self.assertEqual(
+            {row["name"] for row in engine.school_rows(profile)},
+            {"Alpha Primary", "Bravo Primary"},
+        )
+        # The work counted is the project's own.
+        self.assertEqual(profile["execution"]["visits"]["planned"], 1)
+
 
 class ClusterManagementTest(ProfileFixture):
     """Owner, 2026-10-09: "Integrate cluster management into all the profiles
@@ -717,6 +746,28 @@ class EveryProfilePageTest(EveryScopeTest):
         self.assertIn("Awaiting The Partner&#x27;s Date", body)
         # The tile opens the hand-overs it counts.
         self.assertIn("what=handovers_awaiting", body)
+
+    def test_a_project_profile_gains_the_sections_beside_its_own_page(self):
+        project = Project.objects.create(
+            name="SP-SECTIONS",
+            category=ProjectCategory.PILOT.value,
+            target_interventions=["leadership"],
+        )
+        ProjectSchoolAssignment.objects.create(
+            project=project, school=self.schools["Alpha"]
+        )
+
+        # The project's own page is the first tab, as before.
+        page = self.open(f"/projects/{project.id}")
+        self.assertIn("Delivery overview", page)
+        self.assertIn("tab=overview", page)
+
+        body = self.open(f"/projects/{project.id}", tab="overview")
+        self.assertIn("Project schools", body)
+        self.assertNotIn("Delivery overview", body)
+        self.assertIn(
+            "Alpha Primary", self.open(f"/projects/{project.id}", tab="schools")
+        )
 
     def test_a_cluster_profile_gains_the_sections_beside_its_own_tabs(self):
         url = f"/clusters/{self.north.id}/profile"

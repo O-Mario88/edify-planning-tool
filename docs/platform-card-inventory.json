@@ -2582,39 +2582,59 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 92,
+   "line": 105,
    "title": "Delivery overview",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card project-delivery-overview overflow-hidden",
-   "branch_path": []
+   "branch_path": [
+    [
+     4,
+     1
+    ]
+   ]
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 183,
+   "line": 196,
    "title": "Participating Schools",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden scroll-mt-24",
-   "branch_path": []
+   "branch_path": [
+    [
+     4,
+     1
+    ]
+   ]
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 269,
+   "line": 282,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
-   "branch_path": []
+   "branch_path": [
+    [
+     4,
+     1
+    ]
+   ]
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 292,
+   "line": 305,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4",
-   "branch_path": []
+   "branch_path": [
+    [
+     4,
+     1
+    ]
+   ]
   },
   {
    "template": "templates/pages/projects/index.html",
