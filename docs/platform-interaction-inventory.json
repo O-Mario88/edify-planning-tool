@@ -6,16 +6,16 @@
    "browser-rendered": 873,
    "none": 292,
    "page-tested": 1554,
-   "request-tested": 1425
+   "request-tested": 1426
   },
   "by_kind": {
    "button": 1422,
    "disclosure": 75,
    "field": 1379,
-   "link": 1207,
+   "link": 1208,
    "tab": 61
   },
-  "controls": 4144,
+  "controls": 4145,
   "high_consequence": 208,
   "state_changing": 473,
   "templates_scanned": 707,
@@ -9449,14 +9449,19 @@
   },
   "partials/oversight/analysis_body.html": {
    "pages": [
+    "/country-planning-oversight/",
     "/partner-oversight/analysis",
-    "/projects/monitoring/analysis"
+    "/projects/monitoring/analysis",
+    "/team-planning-oversight/",
+    "/team-targets",
+    "/team-targets/"
    ],
    "roles": [
     "ACCOUNTANT",
     "ADMIN",
     "CCEO",
     "CD",
+    "HR",
     "IA",
     "PL",
     "PROJECT_COORDINATOR",
@@ -12997,7 +13002,8 @@
   {"accessible_name": "+ Set Country Ceiling", "destination": "/training-ceilings/country/set?fy={{ fy }}", "destination_route": "/training-ceilings/country/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-519B4212C7AD", "kind": "button", "line": 34, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/team_planning.html"},
   {"accessible_name": "Export every project and its schools to one Excel file", "destination": "/team-planning-oversight/projects/export-drawer?fy={{ fy }}                       &stage={{ selected_stage }}                                           &project_status={{ selected_project_status }}           ", "destination_route": "/team-planning-oversight/projects/export-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-CD39F1630594", "kind": "link", "line": 41, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
   {"accessible_name": "Export the open project and its schools to Excel", "destination": "/team-planning-oversight/projects/export-drawer?project={{ selected_project }}&fy={{ fy }}                       &stage={{ selected_stage }}                                           &project_status={{ selected_project_status }}           ", "destination_route": "/team-planning-oversight/projects/export-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-D5AA8D22FADD", "kind": "link", "line": 51, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
-  {"accessible_name": "Evidence gaps", "destination": "/evidence/?tab=pending", "destination_route": "/evidence/", "evidence": "request-tested", "high_consequence": false, "id": "INT-610EB240B8FB", "kind": "link", "line": 140, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
+  {"accessible_name": "{{ lead.label }}", "destination": "/team-planning-oversight/?view=analysis&program_lead={{ lead.key }}&fy={{ fy }}&period={{ period }}", "destination_route": "/team-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-292DCEBE420F", "kind": "link", "line": 125, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
+  {"accessible_name": "Evidence gaps", "destination": "/evidence/?tab=pending", "destination_route": "/evidence/", "evidence": "request-tested", "high_consequence": false, "id": "INT-610EB240B8FB", "kind": "link", "line": 154, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
   {"accessible_name": "Status", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-13A6673C139F", "kind": "field", "line": 19, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "pages/partner/activities.html"},
   {"accessible_name": "Return", "destination": "/partner/assignments/{{ assignment.id }}/return-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/return-drawer", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-426E7F2A74E4", "kind": "button", "line": 48, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/activities.html"},
   {"accessible_name": "Schedule", "destination": "/partner/assignments/{{ assignment.id }}/schedule-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/schedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-F9C65452187C", "kind": "button", "line": 49, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/activities.html"},

@@ -62,13 +62,18 @@ def row(subject_id: str, name: str, href: str, profile: dict) -> dict:
     }
 
 
-def read(subjects, *, fy, period: str = engine.PERIOD_YEAR) -> list[dict]:
-    """``subjects`` are ``(id, name, href, scope)``: a row for each whose
-    scope holds a school, in the order given."""
+def read(
+    subjects, *, fy, period: str = engine.PERIOD_YEAR, keep_empty: bool = False
+) -> list[dict]:
+    """``subjects`` are ``(id, name, href, scope)``: a row for each, in the
+    order given. A subject whose scope holds no school is left out unless
+    ``keep_empty``: a Partner or a project is listed because it holds schools
+    in the reader's view, while a person holding none is what an oversight
+    reader looks for, and reads 0."""
     rows = []
     for subject_id, name, href, scope in subjects:
         profile = engine.build(scope, fy, period)
-        if profile["portfolio"]["schools"]:
+        if keep_empty or profile["portfolio"]["schools"]:
             rows.append(row(subject_id, name, href, profile))
     return rows
 

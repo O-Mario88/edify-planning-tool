@@ -8923,7 +8923,7 @@
    "audit_id": "KPI-SOURCE-492",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1470,
+   "line": 1524,
    "label": "Whole team",
    "keys": [
     "count",
@@ -8942,7 +8942,7 @@
    "audit_id": "KPI-SOURCE-493",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1480,
+   "line": 1534,
    "label": "My Work",
    "keys": [
     "count",
@@ -8961,7 +8961,7 @@
    "audit_id": "KPI-SOURCE-494",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3470,
+   "line": 3552,
    "label": null,
    "keys": [
     "count",
@@ -8979,7 +8979,7 @@
    "audit_id": "KPI-SOURCE-495",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1045,
+   "line": 1099,
    "label": "All Projects",
    "keys": [
     "count",
@@ -8998,7 +8998,7 @@
    "audit_id": "KPI-SOURCE-496",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1052,
+   "line": 1106,
    "label": null,
    "keys": [
     "count",
@@ -9017,7 +9017,7 @@
    "audit_id": "KPI-SOURCE-497",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1489,
+   "line": 1543,
    "label": null,
    "keys": [
     "count",
@@ -9036,7 +9036,7 @@
    "audit_id": "KPI-SOURCE-498",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1540,
+   "line": 1594,
    "label": null,
    "keys": [
     "count",
@@ -9055,7 +9055,7 @@
    "audit_id": "KPI-SOURCE-499",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1580,
+   "line": 1634,
    "label": null,
    "keys": [
     "count",
@@ -9074,7 +9074,7 @@
    "audit_id": "KPI-SOURCE-500",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3501,
+   "line": 3583,
    "label": "All team members",
    "keys": [
     "count",
@@ -9092,7 +9092,7 @@
    "audit_id": "KPI-SOURCE-501",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3507,
+   "line": 3589,
    "label": null,
    "keys": [
     "count",
@@ -9110,7 +9110,7 @@
    "audit_id": "KPI-SOURCE-502",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1565,
+   "line": 1619,
    "label": "Unassigned",
    "keys": [
     "count",
