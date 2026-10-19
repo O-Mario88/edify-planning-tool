@@ -31,10 +31,6 @@ def _signed(value, places: int = 2) -> str:
     return f"{value:+.{places}f}" if value else f"{0:.{places}f}"
 
 
-def _share(done: int, of: int) -> int:
-    return round(done * 100 / of) if of else 0
-
-
 def build(
     profile: dict,
     *,
@@ -47,8 +43,6 @@ def build(
     ``records_url(what, key="")`` that of a figure's records. ``lead`` are
     parts a page puts first (a cluster's own contacts, say)."""
     ssa = profile["ssa"]
-    portfolio = profile["portfolio"]
-    execution = profile["execution"]
     current = ssa["current"] or 0
     change = ssa["overall"]["change"]
 
@@ -71,53 +65,6 @@ def build(
             "key": item["show"] or item["what"] or item["tab"],
         }
         for item in profile["attention"]
-    ]
-    schools = [
-        {
-            "name": "Assessed this year",
-            "figure_text": f"{portfolio['assessed']:,} of {portfolio['assessable']:,}",
-            "href": records_url("ssa"),
-        },
-        {
-            "name": "SSA improved",
-            "figure_text": f"{portfolio['improved']:,}",
-            "href": tab_url("schools", "improved"),
-            "tone": "success" if portfolio["improved"] else "",
-        },
-        {
-            "name": "SSA declined",
-            "figure_text": f"{portfolio['declined']:,}",
-            "href": tab_url("schools", "declined"),
-            "tone": "danger" if portfolio["declined"] else "",
-        },
-        {
-            "name": "No SSA this year",
-            "figure_text": f"{portfolio['no_ssa']:,}",
-            "href": tab_url("schools", "no_ssa"),
-        },
-        {
-            "name": "Nothing planned",
-            "figure_text": f"{portfolio['unplanned']:,}",
-            "href": tab_url("schools", "unplanned"),
-        },
-        {
-            "name": "Awaiting a partner's date",
-            "figure_text": f"{portfolio['awaiting_partner']:,}",
-            "href": tab_url("schools", "awaiting_partner"),
-        },
-    ]
-    work = [
-        {
-            "name": label,
-            "figure_text": f"{execution[key]['completed']:,} / {execution[key]['planned']:,}",
-            "share": _share(execution[key]["completed"], execution[key]["planned"]),
-            "href": records_url(key),
-        }
-        for key, label in (
-            ("visits", "School visits"),
-            ("trainings", "Trainings"),
-            ("meetings", "Cluster meetings"),
-        )
     ]
     return {
         "title": "Profile Insights",
@@ -143,11 +90,8 @@ def build(
                 "links": attention,
                 "empty": f"Nothing needs attention in {profile['fy_label']}.",
             },
-            {"key": "schools", "title": "Schools", "rows": schools},
-            {
-                "key": "work",
-                "title": "Work Completed Of The Plan",
-                "meters": work,
-            },
+            # No "Schools" or "Work Completed" part: they were the rail's own
+            # Needs Attention and the Overview's Operations strip again
+            # (owner, 2026-10-19: "look at all other duplications").
         ],
     }

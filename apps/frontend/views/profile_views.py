@@ -381,7 +381,7 @@ def profile_context(
     return context
 
 
-def rail_for(context: dict, profile: dict, *, lead: tuple = ()) -> dict:
+def rail_for(context: dict, profile: dict, *, lead: tuple = ()) -> dict | None:
     """The insight rail of ``profile`` (`apps.analytics.profile_rail`), its
     lines opening the tabs and records of the page ``context`` describes
     (owner, 2026-10-10: the short reads sit in a column beside the tables)."""
@@ -397,15 +397,15 @@ def rail_for(context: dict, profile: dict, *, lead: tuple = ()) -> dict:
         url = f"{context['records']}{what}"
         return f"{url}&key={quote(str(key))}" if key else url
 
-    rail = profile_rail.build(
+    # The rail sits beside the Overview alone: beside any other tab it was
+    # the Overview's summary a second time (owner, 2026-10-19: "ssa [scores]
+    # are duplicated more than 2 times ... look at all other duplications
+    # apart frm ssa and fix it").
+    if context.get("section") != "overview":
+        return None
+    return profile_rail.build(
         profile, tab_url=tab_url, records_url=records_url, lead=lead
     )
-    # The SSA part repeats the Overview's score: it sits beside the Overview
-    # alone (owner, 2026-10-19: "ssa [scores] are duplicated more than 2
-    # times").
-    if context.get("section") != "overview":
-        rail = {**rail, "parts": [p for p in rail["parts"] if p["key"] != "ssa"]}
-    return rail
 
 
 # ── Pages that are a profile and nothing else ───────────────────────────────

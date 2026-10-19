@@ -416,6 +416,21 @@ class DistrictPageTest(ProfileFixture):
             with self.subTest(tab=tab):
                 self.assertNotIn(self.RAIL_SSA, self.page(tab=tab).content.decode())
 
+    def test_the_rail_beside_the_overview_says_only_what_the_overview_does_not(self):
+        """Owner, 2026-10-19: "look at all other duplications apart frm ssa
+        and fix it". The rail's work and schools parts were the Operations
+        strip and its own Needs Attention again; beside any other tab the
+        whole rail was the Overview a second time."""
+        overview = self.page().content.decode()
+
+        self.assertEqual(overview.count('data-rail-part="'), 2)
+        self.assertIn('data-rail-part="attention"', overview)
+        for tab in ("ssa", "clusters", "schools", "activities", "projects"):
+            with self.subTest(tab=tab):
+                self.assertNotIn(
+                    "data-insight-rail", self.page(tab=tab).content.decode()
+                )
+
     def test_it_opens_on_the_running_year_and_says_what_the_numbers_cover(self):
         body = self.page().content.decode()
 

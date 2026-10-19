@@ -1380,22 +1380,9 @@ def cluster_profile_view(request, cluster_id):
         context["profile_tab"] = pi["tab"]
         return render(request, "pages/clusters/profile.html", context)
     context.update(_profile_tab_context(request, _cluster_row, tab))
-    # The insight rail beside the tab (owner, 2026-10-10), read for the year
-    # the tab shows where that is a year the profile engine offers.
-    from apps.analytics import profile_intelligence
-    from apps.frontend.views.profile_views import profile_context, rail_for
-
-    scope = profile_intelligence.cluster_scope(_cluster_row)
-    shell = profile_context(
-        request,
-        scope,
-        base_url,
-        lead=tuple(pair for pair in profile_tabs if pair[0] not in PROFILE_ENGINE_TABS),
-        keys={section: key for key, (section, _l) in PROFILE_ENGINE_TABS.items()},
-        subject=_cluster_row,
-    )
-    shell["at"]["ssa"] = "ssa"
-    context["rail"] = rail_for(shell, profile_intelligence.build(scope, shell["fy"]))
+    # No insight rail beside the cluster's own tabs: the rail is the
+    # Overview's (Summary's) alone (owner, 2026-10-19: "look at all other
+    # duplications apart frm ssa and fix it").
     return render(request, "pages/clusters/profile.html", context)
 
 
