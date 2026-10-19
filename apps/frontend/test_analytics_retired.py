@@ -74,6 +74,21 @@ class OldLinksTest(RetiredFixture):
             with self.subTest(url=url, role=user.active_role):
                 self.assertEqual(self.lands(user, url), destination)
 
+    def test_a_reader_with_no_profile_lands_on_their_home(self):
+        """A reader the profiles do not hold opens their own home page."""
+        hr = _person("ret-hr@t.test", EdifyRole.HUMAN_RESOURCES)
+        accountant = _person("ret-acc@t.test", EdifyRole.PROGRAM_ACCOUNTANT)
+        partner = _person("ret-partner@t.test", EdifyRole.PARTNER_FIELD_OFFICER)
+        cases = (
+            (hr, "/analytics", "/dashboard"),
+            (hr, "/ssa", "/dashboard"),
+            (accountant, "/analytics", "/budget"),
+            (partner, "/ssa", "/dashboard"),
+        )
+        for user, url, destination in cases:
+            with self.subTest(url=url, role=user.active_role):
+                self.assertEqual(self.lands(user, url), destination)
+
     def test_the_three_tools_stay_where_they_are(self):
         self.client.force_login(self.ia)
         for url in ("/decision-log", "/reports", "/analytics/closure-quality"):

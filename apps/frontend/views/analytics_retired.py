@@ -44,7 +44,7 @@ def _fallback(user) -> str:
         return "/cluster-oversight/"
     if role == EdifyRole.PROJECT_COORDINATOR.value:
         return "/projects/analytics"
-    if role == EdifyRole.ACCOUNTANT.value:
+    if role == EdifyRole.PROGRAM_ACCOUNTANT.value:
         return "/budget"
     return "/dashboard"
 

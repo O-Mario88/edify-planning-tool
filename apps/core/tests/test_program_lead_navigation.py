@@ -81,7 +81,9 @@ EXPECTED_PL_SIDEBAR = [
         [
             ("Budget", "/budget"),
             ("Work Plan", "/work-plan"),
-            ("Analytics", "/analytics/program-lead"),
+            # The Analytics entry is retired (owner, 2026-10-19); the Decision
+            # Log keeps an entry of its own.
+            ("Decision Log", "/decision-log"),
             ("My Targets", "/my-targets"),
             ("Acting Leadership", "/acting-leadership"),
         ],

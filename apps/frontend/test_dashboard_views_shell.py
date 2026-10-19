@@ -426,12 +426,3 @@ class DashboardViewRenderTest(TestCase):
         self.assertIn('name="view" value="team"', html)
         html = self._get(self.rvp, "/dashboard?view=operations").content.decode()
         self.assertIn('name="view" value="operations"', html)
-
-    def test_the_analytics_overview_no_longer_draws_the_map(self):
-        html = self._get(self.cd, "/analytics").content.decode()
-        self.assertNotIn("subregionMap()", html)
-        self.assertIn("Geographic priorities", html)
-        html = self._get(self.ia, "/analytics/verification-quality").content.decode()
-        self.assertNotIn("subregionMap()", html)
-        self.assertNotIn("data-dashboard-views", html)
-        self.assertIn("District monitoring</h3>", html)
