@@ -424,6 +424,7 @@
         "apps/core/fy.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
@@ -434,6 +435,7 @@
         "apps/daily_visit_batches/costs_follow.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
+        "apps/frontend/views/analytics_retired.py",
         "apps/hr/accountability_cache.py",
         "apps/hr/team_roster.py",
         "apps/outbox/services.py",
@@ -465,7 +467,9 @@
       "permissions": [
         "analytics.view"
       ],
-      "pages": [],
+      "pages": [
+        "country_planning_oversight"
+      ],
       "objectGuards": [],
       "notifications": [],
       "auditActions": [],
@@ -4980,9 +4984,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "2de9e51ad9dc361f36553d5a4ab72f221f81dc6ca436062c8da8e516acc3002c",
-    "sources": "01ed48efdbe20ce0300ebb4035e095675fcbf30c61c7aa5ce070e4c0f61772b0",
-    "sourceCount": 265,
+    "payload": "cc8cb5db12af0d66a01164b7d16b57203ddbf4a01f9732660164e16b209d70ea",
+    "sources": "60b84a8b38146c79bcb9f2867e345e3fdb1bbe87430651731e1d5d4405d0bdc8",
+    "sourceCount": 266,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

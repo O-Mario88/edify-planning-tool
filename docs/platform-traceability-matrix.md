@@ -16,7 +16,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `journey-01` | Priority to verified performance | ✓ | 2 | 128 | 31 | 2 | 2 | 6 | 19 | 80 |
-| `journey-02` | SSA to school improvement | ✓ | 1 | 51 | 10 | 1 | 11 | 0 | 0 | 29 |
+| `journey-02` | SSA to school improvement | ✓ | 1 | 53 | 10 | 1 | 11 | 0 | 0 | 29 |
 | `journey-03` | Standard staff school visit | ✓ | 12 | 135 | 34 | 3 | 8 | 10 | 29 | 80 |
 | `journey-04` | Cluster training | ✓ | 1 | 95 | 17 | 3 | 10 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 74 | 27 | 2 | 2 | 1 | 4 | 91 |
@@ -71,9 +71,9 @@ Steps: IA confirms SSA → Recommendation generated → School prioritized → A
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CCEO`, `CountryDirector`, `HumanResources`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /api/analytics/role-overview` |
 | Permissions checked | `analytics.view` |
-| Page gates checked | — |
+| Page gates checked | `country_planning_oversight` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py` _+41 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py` _+43 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `geography.District`, `geography.Region`, `outbox.OutboxEvent`, `schools.School`, `sessions.Session`, `ssa.SsaRecord`, `ssa.SsaScore` |
 | Notifications raised | — |
 | Audit actions (evidence) | — |

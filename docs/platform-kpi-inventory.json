@@ -13261,7 +13261,7 @@
   {
    "audit_id": "KPI-SURFACE-018",
    "template": "templates/pages/coverage/index.html",
-   "line": 30,
+   "line": 32,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -13314,7 +13314,7 @@
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
-   "primary_action": "Open CD Analytics",
+   "primary_action": "Open Country Profile",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -13327,7 +13327,7 @@
   {
    "audit_id": "KPI-SURFACE-020",
    "template": "templates/pages/dashboards/main.html",
-   "line": 35,
+   "line": 37,
    "source_pattern": "shared-component",
    "items_expression": "dashboard_kpi_items",
    "presentation": "context",
@@ -13351,7 +13351,7 @@
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
-   "primary_action": "Open CD Analytics",
+   "primary_action": "Open Country Profile",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -13410,7 +13410,7 @@
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
-   "primary_action": "Open CD Analytics",
+   "primary_action": "Open Country Profile",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -13447,7 +13447,7 @@
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
-   "primary_action": "Open CD Analytics",
+   "primary_action": "Open Country Profile",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -15393,7 +15393,7 @@
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
-   "primary_action": "Open CD Analytics",
+   "primary_action": "Open Country Profile",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -15430,7 +15430,7 @@
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
-   "primary_action": "Open CD Analytics",
+   "primary_action": "Open Country Profile",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -15467,7 +15467,7 @@
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
-   "primary_action": "Open CD Analytics",
+   "primary_action": "Open Country Profile",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -15504,7 +15504,7 @@
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
-   "primary_action": "Open CD Analytics",
+   "primary_action": "Open Country Profile",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -15541,7 +15541,7 @@
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
-   "primary_action": "Open CD Analytics",
+   "primary_action": "Open Country Profile",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -42043,7 +42043,7 @@
   {
    "audit_id": "KPI-PAYLOAD-003",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 679,
+   "line": 682,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -42069,7 +42069,7 @@
   {
    "audit_id": "KPI-PAYLOAD-004",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 727,
+   "line": 730,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -42093,7 +42093,7 @@
   {
    "audit_id": "KPI-PAYLOAD-005",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 780,
+   "line": 783,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -42119,7 +42119,7 @@
   {
    "audit_id": "KPI-PAYLOAD-006",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 851,
+   "line": 854,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -42145,7 +42145,7 @@
   {
    "audit_id": "KPI-PAYLOAD-007",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 886,
+   "line": 889,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
