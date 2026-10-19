@@ -11616,7 +11616,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1903,
+      "bytes": 2233,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -12217,7 +12217,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9576,
+      "bytes": 9715,
       "deprecated_alternatives": [],
       "example_pages": [
         "/budget/export-drawer",
