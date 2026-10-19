@@ -715,6 +715,28 @@ class EveryProfilePageTest(EveryScopeTest):
         self.assertEqual(response.status_code, 200, url)
         return response.content.decode()
 
+    def test_the_country_names_its_districts_with_a_low_leadership_score(self):
+        """The Analytics page's Recommended Actions "Districts with low
+        Leadership scores (<5.0/10)", given its home in the Country Profile's
+        Needs Attention (owner, 2026-10-19)."""
+        line = "district&#x27;s Leadership score is below 5.0"
+        self.assertNotIn(line, self.open("/country-profile"))
+
+        weak = District.objects.create(name="Weak", region=self.region)
+        school = School.objects.create(
+            school_id="PROFILE-WEAK",
+            name="Weak Primary",
+            region=self.region,
+            district=weak,
+        )
+        self._ssa(school, self.fy, 3.0)
+
+        body = self.open("/country-profile")
+        self.assertIn(f"1 {line}", body)
+        self.assertIn("tab=districts", body.split(line, 1)[0].rsplit("<a ", 1)[1])
+        # A district's own profile is one district: it names none.
+        self.assertNotIn(line, self.open(f"/districts/{weak.id}"))
+
     def test_the_country_profile_reads_the_country_by_its_parts(self):
         body = self.open("/country-profile")
         self.assertIn('data-profile="country"', body)
