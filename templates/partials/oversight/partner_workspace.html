@@ -70,6 +70,7 @@ resolving a hand-back opens its own governed drawer.
          {% if entry.is_active %}aria-current="page"{% endif %}>
         <span>{{ entry.label }}</span>
         <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
+        {% if entry.follow_up %}<span class="edify-status-text" data-edify-tone="warning" data-partner-follow-up title="Needs follow-up: {{ entry.follow_up }}">{{ entry.follow_up }}</span>{% endif %}
       </a>
       {% endfor %}
     </nav>
@@ -162,6 +163,11 @@ resolving a hand-back opens its own governed drawer.
     <header class="partner-plan__head" data-card-header>
       <div class="partner-plan__identity">
         <h2 id="partner-plan-name" class="partner-plan__name">{% if active_partner.profile_url %}<a href="{{ active_partner.profile_url }}">{{ active_partner.name }}</a>{% else %}{{ active_partner.name }}{% endif %}</h2>
+        {% if active_partner.follow_up %}
+        {% comment %}The Country Director Analytics' recommendation for this
+        Partner (owner, 2026-10-19: Partners needing follow-up).{% endcomment %}
+        <p class="edify-text-caption" data-partner-follow-up><span class="edify-status-text" data-edify-tone="warning">Needs follow-up: {{ active_partner.follow_up }}</span>{% if active_partner.follow_up == "Quality Review" %} · on target, but its schools' SSA rose less than half a point{% elif active_partner.follow_up == "Capacity Review" %} · its schools' SSA rose, but its work is below target{% endif %}</p>
+        {% endif %}
         {% if active_partner.contact_person or active_partner.phone %}
         <p class="partner-plan__contact">{% if active_partner.contact_person %}{{ active_partner.contact_person }}{% endif %}{% if active_partner.phone %} · {{ active_partner.phone }}{% endif %}{% if active_partner.region_name %} · {{ active_partner.region_name }}{% endif %}</p>
         {% endif %}

@@ -3382,8 +3382,15 @@ def partner_oversight_view(request):
         (entry for entry in partner_tabs if entry["key"] == requested_partner),
         partner_tabs[0] if partner_tabs else None,
     )
+    # Partners needing follow-up (owner, 2026-10-19: the Analytics page's
+    # Recommended Actions, given its home here): the Country Director
+    # Analytics' recommendation, on the Partner's tab and under its name.
+    from apps.planning.partner_follow_up import partners_needing_follow_up
+
+    follow_up = partners_needing_follow_up(request.user, period["fy"])
     for entry in partner_tabs:
         entry["is_active"] = entry is active_partner
+        entry["follow_up"] = follow_up.get(entry["key"], "")
     partner_id = active_partner["key"] if active_partner else ""
     partner_items = [i for i in team_items if partner_id and i.partner_id == partner_id]
     partner_trainings = [
@@ -3468,7 +3475,11 @@ def partner_oversight_view(request):
     )
     partner_group = None
     if active_partner:
-        partner_group = {"id": partner_id, "name": active_partner["label"]}
+        partner_group = {
+            "id": partner_id,
+            "name": active_partner["label"],
+            "follow_up": follow_up.get(partner_id, ""),
+        }
         partner_oversight._attach_partner_identity([partner_group])
 
     context = {
