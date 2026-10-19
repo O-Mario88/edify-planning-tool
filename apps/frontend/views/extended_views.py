@@ -16,7 +16,6 @@ from apps.core.activity_types import (
 )
 from apps.core.enums import ActivityType, SsaIntervention
 import calendar
-import csv
 import re
 from collections import defaultdict
 from urllib.parse import urlencode
@@ -2789,7 +2788,6 @@ def projects_filters_drawer_view(request):
 def special_projects_analytics_view(request):
     """Special Project Impact Intelligence — verified SSA movement, partner
     performance, classification and recommendations, all computed live."""
-    import csv
 
     from django.http import HttpResponse
 
@@ -2828,7 +2826,9 @@ def special_projects_analytics_view(request):
             else "special-project-impact-matrix.csv"
         )
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         if export_kind == "snapshot":
             writer.writerow(
                 ["Special Project Impact Snapshot", f"FY {context['selected']['fy']}"]
@@ -2902,7 +2902,6 @@ def special_projects_analytics_view(request):
 def special_projects_planning_view(request):
     """Special Projects Planning — coordinator-scoped project schools with
     readiness + schedule / assign-to-partner (project-stamped) actions."""
-    import csv
 
     from django.http import HttpResponse
 
@@ -2939,7 +2938,9 @@ def special_projects_planning_view(request):
         response["Content-Disposition"] = (
             'attachment; filename="special-project-planning.csv"'
         )
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         writer.writerow(
             [
                 "School ID",
@@ -3000,7 +3001,6 @@ def special_projects_planning_view(request):
 def special_projects_my_plan_view(request):
     """Special-project My Plan — the coordinator's scheduled project activities
     (staff-owned actionable; partner-planned read-only monitoring)."""
-    import csv
 
     from django.http import HttpResponse
 
@@ -3034,7 +3034,9 @@ def special_projects_my_plan_view(request):
         response["Content-Disposition"] = (
             'attachment; filename="special_project_my_plan.csv"'
         )
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         writer.writerow(
             [
                 "Activity ID",
@@ -3128,7 +3130,9 @@ def pl_fund_approvals_view(request):
         response["Content-Disposition"] = (
             f'attachment; filename="fund-approvals-{ctx["fy"]}-week-{ctx["week"]}.csv"'
         )
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         writer.writerow(
             [
                 "CCEO",

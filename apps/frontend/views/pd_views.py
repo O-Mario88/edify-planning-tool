@@ -656,7 +656,6 @@ def pd_fund_action_view(request, fund_request_id):
 def pd_export_view(request):
     from django.http import HttpResponse
     from django.utils import timezone
-    import csv
 
     from apps.core.fy import get_operational_fy
 
@@ -665,7 +664,9 @@ def pd_export_view(request):
     rows = StaffPDService.get_page(request.user, fy=fy)["courses"]
     resp = HttpResponse(content_type="text/csv")
     resp["Content-Disposition"] = f'attachment; filename="pd-report-fy{fy}.csv"'
-    writer = csv.writer(resp)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(resp)
     writer.writerow(
         [
             f"My Professional Development — FY {fy}",

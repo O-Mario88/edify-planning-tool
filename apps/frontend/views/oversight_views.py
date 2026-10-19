@@ -2762,12 +2762,13 @@ def _filter_export_items(items, request, period: dict) -> list:
         ]
 
     # 3. What work (apps.core.export_kinds): visits, group trainings, cluster
-    # meetings, online trainings, visits and trainings, or everything.
+    # meetings, online trainings, visits and trainings, or everything. The
+    # drawer's choice, else the page's activity tab the Export link carries.
     from apps.core import export_kinds
 
     filtered = export_kinds.filter_items(
         filtered,
-        export_kinds.read_kind(request),
+        export_kinds.read_kind_or_tab(request),
         type_of=lambda it: getattr(it, "activity_type", ""),
         id_of=lambda it: getattr(it, "activity_id", None),
     )
@@ -2822,15 +2823,15 @@ def _export_response(items, filename: str, *, request_user, excel: bool = False)
             filename.replace(".csv", ".xlsx"), plan_export.sheets(rows)
         )
 
-    import csv
-
     from django.http import StreamingHttpResponse
 
     class _Echo:
         def write(self, value):
             return value
 
-    writer = csv.writer(_Echo())
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(_Echo())
     response = StreamingHttpResponse(
         (writer.writerow(row) for row in plan_export.csv_rows(rows)),
         content_type="text/csv",
@@ -3957,7 +3958,6 @@ def partner_oversight_send_action_view(request):
 def partner_oversight_export_view(request):
     """The current partner view, as CSV or (``format=xlsx``) as a workbook.
     Same scope, same period, same rows."""
-    import csv
 
     from django.http import StreamingHttpResponse
 
@@ -4048,7 +4048,9 @@ def partner_oversight_export_view(request):
         def write(self, value):
             return value
 
-    writer = csv.writer(_Echo())
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(_Echo())
     response = StreamingHttpResponse(
         (writer.writerow(row) for row in partner_oversight.export_rows(items)),
         content_type="text/csv",
@@ -4700,6 +4702,14 @@ def planning_export_drawer_view(request):
 
     hidden_keys = ("owner", "program_lead", "team_member", "view", "tab")
     hidden_params = {k: request.GET.get(k) for k in hidden_keys if request.GET.get(k)}
+    # The page's own filters (district, executor, partner, risk, context)
+    # ride along, as on the plain Export link; the kind of work and the plan
+    # status are the drawer's own questions (owner, 2026-10-19: "everything
+    # exported should be limited to what i have selected").
+    page_filters = oversight.read_filters(request)
+    for key in ("activity_type", "status"):
+        page_filters.pop(key, None)
+    hidden_params.update(page_filters)
     # A country reader chooses whose plans in the drawer, Everyone by
     # default, so the tab the page happens to be on does not narrow it.
     whose_choices = []
@@ -4707,6 +4717,9 @@ def planning_export_drawer_view(request):
         hidden_params.pop("program_lead", None)
         hidden_params.pop("owner", None)
         whose_choices = _whose_choices()
+    # The page's activity tab opens selected: "School Visits" on the page is
+    # "Visits only" here, not every kind of work.
+    selected_kind = export_kinds.tab_kind(request) or export_kinds.PLANNED
 
     context = {
         "whose_choices": whose_choices,
@@ -4724,7 +4737,8 @@ def planning_export_drawer_view(request):
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
-        "kind_choices": export_kinds.KIND_CHOICES,
+        "kind_choices": export_kinds.choices_for(selected_kind),
+        "selected_kind": selected_kind,
     }
     return render(
         request,

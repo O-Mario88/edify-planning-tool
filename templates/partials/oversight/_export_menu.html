@@ -6,15 +6,17 @@ more"; the CSV/Excel menu of 2026-09-25 is gone). The route still answers CSV
 without ``format=xlsx`` for existing links, scripts and bookmarks.
 
 `export_path` is the lens's export route. The query follows whichever period,
-tab and deep-link filters the page is showing.
+tab, activity tab and deep-link filters the page is showing: on School Visits
+the drawer opens on Visits only (owner, 2026-10-19: "When i select Visit only
+it was exporting everything").
 
 Rendered in the page header on a full load. When htmx swaps the workspace
 (a period change), the workspace sends this again out of band into the same
 slot, so the export never describes a period the page has left.
 {% endcomment %}
 <a class="edify-action-button secondary h-9 inline-flex items-center gap-1.5" data-oversight-export
-   href="{{ export_path }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if owner %}&owner={{ owner }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}&amp;format=xlsx"
-   hx-get="{{ export_path }}-drawer?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if owner %}&owner={{ owner }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
+   href="{{ export_path }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if owner %}&owner={{ owner }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if activity_family and activity_family != 'all' %}&activity={{ activity_family }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}&amp;format=xlsx"
+   hx-get="{{ export_path }}-drawer?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if owner %}&owner={{ owner }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if activity_family and activity_family != 'all' %}&activity={{ activity_family }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
    hx-target="#drawer-container"
    hx-swap="innerHTML"
    aria-label="Export to Excel" title="Customize Period and Export to Excel">

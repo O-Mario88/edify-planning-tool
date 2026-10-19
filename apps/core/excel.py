@@ -33,6 +33,63 @@ XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml
 #: `_streamed_workbook`): same look, a fraction of the memory.
 STREAM_ROWS = 5_000
 
+#: What a spreadsheet reads as the start of a formula (OWASP CSV injection).
+#: A school name, a purpose or a note typed as "=HYPERLINK(...)" would run
+#: when the export is opened (owner, 2026-10-19: "Protect against spreadsheet
+#: formula injection when exporting untrusted text").
+_FORMULA_LEADS = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _is_plain_number(text: str) -> bool:
+    import re
+
+    return bool(re.fullmatch(r"[+-]?\d[\d,]*(?:\.\d+)?", text))
+
+
+def spreadsheet_text(value):
+    """A CSV cell that cannot run as a formula: text that starts like one is
+    written with a leading apostrophe, the form spreadsheets read as text. A
+    plain signed number ("-5", "-1,200") and a lone "-" placeholder stay as
+    they are; anything else is untouched."""
+    if (
+        isinstance(value, str)
+        and value[:1] in _FORMULA_LEADS
+        and value not in ("-", "+")
+        and not _is_plain_number(value)
+    ):
+        return "'" + value
+    return value
+
+
+class _SafeCsvWriter:
+    """``csv.writer`` whose rows pass through `spreadsheet_text`."""
+
+    def __init__(self, writer):
+        self._writer = writer
+
+    def writerow(self, row):
+        return self._writer.writerow([spreadsheet_text(value) for value in row])
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
+
+
+def safe_csv_writer(stream, *args, **kwargs) -> _SafeCsvWriter:
+    """The CSV writer every export uses: ``csv.writer`` with formula-shaped
+    text neutralised."""
+    import csv
+
+    return _SafeCsvWriter(csv.writer(stream, *args, **kwargs))
+
+
+def _keep_as_text(cell):
+    """An .xlsx cell given text that starts with "=" is stored as a formula by
+    openpyxl. It is stored as the text it is, as typed, with nothing added."""
+    if getattr(cell, "data_type", None) == "f":
+        cell.data_type = "s"
+    return cell
+
 
 def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
     """A styled workbook as a download.
@@ -91,6 +148,8 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
             sheet.append(headers)
         for row in spec.get("rows") or []:
             sheet.append(list(row))
+            for cell in sheet[sheet.max_row]:
+                _keep_as_text(cell)
 
         if headers:
             style_header(sheet)
@@ -125,12 +184,10 @@ def table_download(request, stem: str, sheets: list[dict]) -> HttpResponse:
     anything that already links to the CSV.
     """
     if (request.GET.get("format") or "").strip().lower() == "csv":
-        import csv
-
         sheet = (sheets or [{}])[0]
         response = HttpResponse(content_type="text/csv; charset=utf-8")
         response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
-        writer = csv.writer(response)
+        writer = safe_csv_writer(response)
         if sheet.get("headers"):
             writer.writerow(sheet["headers"])
         for row in sheet.get("rows") or []:
@@ -343,7 +400,7 @@ def _streamed_workbook(sheets: list[dict]):
                 sheet.row_dimensions[row_index].height = 22
 
         def styled(value, **styles):
-            cell = WriteOnlyCell(sheet, value)
+            cell = _keep_as_text(WriteOnlyCell(sheet, value))
             for name, style in styles.items():
                 setattr(cell, name, style)
             return cell
@@ -416,12 +473,14 @@ def _streamed_workbook(sheets: list[dict]):
                 sheet.append(cells)
                 continue
             if row_index < 2:
-                sheet.append(values)
+                sheet.append(
+                    [_keep_as_text(WriteOnlyCell(sheet, value)) for value in values]
+                )
                 continue
             fill_id, border_id, alignment_id = band[row_index % 2 == 0]
             cells = []
             for column, value in enumerate(values, start=1):
-                cell = WriteOnlyCell(sheet, value)
+                cell = _keep_as_text(WriteOnlyCell(sheet, value))
                 style = cell._style
                 if style is None:  # unstyled until now, as in style_body
                     style = cell._style = StyleArray()
