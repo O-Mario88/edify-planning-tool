@@ -530,7 +530,6 @@ def school_directory_view(request):
     # Export the currently filtered list in the format promised by the UI.
     export_format = request.GET.get("export", "").strip()
     if export_format in ("csv", "xlsx"):
-        import csv
         from io import BytesIO
         from django.http import HttpResponse
 
@@ -597,7 +596,9 @@ def school_directory_view(request):
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="schools_export.csv"'
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         writer.writerow(headers)
         writer.writerows(export_rows)
         return response
@@ -1631,13 +1632,14 @@ def assign_to_project_drawer_view(request, school_id):
 def school_template_download_view(request):
     """Download a CSV template with the correct school-upload column headers."""
     from django.http import HttpResponse
-    import csv
 
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = (
         'attachment; filename="school_upload_template.csv"'
     )
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     # Required columns first, followed by optional profile fields.
     writer.writerow(
         [
