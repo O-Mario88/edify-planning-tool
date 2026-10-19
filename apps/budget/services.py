@@ -1090,6 +1090,7 @@ _LEDGER_ACTIVITY_FIELDS = (
     "leaders_attended",
     "other_participants",
     "expected_participants",
+    "daily_visit_batch_id",
 )
 
 
@@ -1208,6 +1209,47 @@ def budget_groups(
                 scheduled_participants.get(activity.id, 0), int(line.quantity or 0)
             )
 
+    # A day's transport, lunch and night are one rate shared among the day's
+    # activities, so a line holds a share and the shares of two days differ
+    # with the number of schools on each. "Rate / Unit" is the rate the day
+    # fetched (the batch's own snapshot), not the share: a row then reads
+    # the Primary or the Secondary district's rate, and never "Mixed" for a
+    # reason that has nothing to do with districts (owner, 2026-10-12: "Only
+    # those that are crossing from primary to secondary on the same day can
+    # be mixed"). An item bought at two rates is two rows.
+    from apps.daily_visit_batches.models import DailyVisitBatch
+    from apps.daily_visit_batches.pricing import KEY_LABELS as day_rate_keys
+
+    batch_ids = {
+        batch_id
+        for line in selected_lines
+        if line.cost_setting_key in day_rate_keys
+        and (batch_id := getattr(line.activity, "daily_visit_batch_id", None))
+    }
+    day_rates = (
+        dict(
+            DailyVisitBatch.objects.filter(id__in=batch_ids).values_list(
+                "id", "rate_snapshot"
+            )
+        )
+        if batch_ids
+        else {}
+    )
+
+    def rate_of(line) -> int:
+        """The rate the line was priced at (owner, 2026-10-12: "Pick the
+        actual rate from the cost catalogue and as calculated"): the rate
+        its day fetched from the Cost Catalogue when it was priced, which
+        the day keeps; a line that shares no day carries its rate itself."""
+        key = line.cost_setting_key
+        if key in day_rate_keys:
+            snapshot = day_rates.get(
+                getattr(line.activity, "daily_visit_batch_id", None)
+            )
+            if snapshot and snapshot.get(key):
+                return int(snapshot[key])
+        return int(line.unit_cost or 0)
+
     # One label lookup per activity type rather than per line: each lookup
     # rebuilds the field's whole choices dict.
     labels: dict[tuple, str] = {}
@@ -1244,8 +1286,11 @@ def budget_groups(
         # the display row merges.
         if line.cost_setting_key == "partner_training_lump_sum":
             item_label = "Facilitation fee"
+        # One row per item AND rate: every row then states the one rate it
+        # was priced at, and no row needs a word in place of a figure.
+        line_rate = rate_of(line)
         row = group["rows"].setdefault(
-            item_label,
+            (item_label, line_rate),
             {
                 "item": item_label,
                 "dates": set(),
@@ -1262,7 +1307,7 @@ def budget_groups(
         participant_count = scheduled_participants.get(activity.id, 1)
         row["activity_people"].setdefault(activity.id, participant_count)
         row["activity_ids"].add(activity.id)
-        row["rates"].add(int(line.unit_cost or 0))
+        row["rates"].add(line_rate)
         if line.responsible_user:
             row["owners"].add(user_names.get(line.responsible_user, "Staff"))
         is_vendor = activity.delivery_type == "partner" or line.partner_id is not None
@@ -1299,7 +1344,7 @@ def budget_groups(
                 line.description or line.cost_category.replace("_", " ").title()
             )
             row = admin_group["rows"].setdefault(
-                item_label,
+                (item_label, int(line.unit_cost or 0)),
                 {
                     "item": item_label,
                     "dates": set(),
@@ -1345,7 +1390,10 @@ def budget_groups(
             {
                 "label": group["label"],
                 "table_kind": group["table_kind"],
-                "rows": sorted(rows, key=lambda item: (-item["total"], item["item"])),
+                "rows": sorted(
+                    rows,
+                    key=lambda item: (-item["total"], item["item"], item["rate"] or 0),
+                ),
                 "total": group["total"],
                 "staff_total": group["staff_total"],
                 "vendor_total": group["vendor_total"],
@@ -2227,6 +2275,14 @@ _EXPORT_ACTIVITY_FIELDS = (
     "cluster__district__name",
     "event_district__name",
     "assigned_partner_id",
+    # What budget_groups reads, so the export's first sheet is the page's
+    # own ledger rather than a second grouping of the same lines.
+    "programme_activity_type",
+    "teachers_attended",
+    "leaders_attended",
+    "other_participants",
+    "expected_participants",
+    "daily_visit_batch_id",
 )
 
 ACTIVITY_SHEET_HEADERS = (
@@ -2261,14 +2317,110 @@ LINE_SHEET_HEADERS = (
 )
 SUMMARY_SHEET_HEADERS = ("Activity Type", "Activities", "Budget (UGX)")
 MONEY = "#,##0"
+#: The Budget page prints every amount as "UGX 6,061,000"; the sheet shows
+#: the same and keeps the cell a number.
+UGX_MONEY = '"UGX" #,##0'
+COST_PLAN_SHEET_TITLE = "Activity cost plan"
+COST_PLAN_CAPTION = (
+    "Costs come directly from scheduled planned activities and are grouped by "
+    "activity and item. Training and meeting tables show sessions and "
+    "participants."
+)
+#: The ledger's last three columns on every table of the page.
+COST_PLAN_MONEY_HEADERS = ("Rate / Unit", "Staff cost", "Activity")
+
+
+def cost_plan_column_headers(table_kind: str) -> list[str]:
+    """The six column headings of one activity type's table, word for word
+    as partials/budgets/budget_group_tables.html prints them."""
+    if table_kind == "meeting":
+        counts = ("Meetings", "Participants")
+    elif table_kind == "training":
+        counts = ("Training sessions", "Participants")
+    elif table_kind == "admin":
+        counts = ("Quantity", "—")
+    else:
+        counts = ("No. of Days", "No. of Persons")
+    return ["Item", *counts, *COST_PLAN_MONEY_HEADERS]
+
+
+def cost_plan_sheet(groups: list[dict], *, period_label: str = "") -> dict:
+    """The Budget page's "Activity cost plan" as one sheet, laid out as the
+    page lays it out (owner, 2026-10-12: "make sure the budget is exported
+    exactly in the budget format"): the title and Grand total, then for each
+    activity type a band with its name and number of activities, that table's
+    column headings, an item a row, and its subtotal; a Grand total closes
+    the sheet. ``groups`` is `budget_groups`' own return, so a cell here is
+    the cell the page prints.
+    """
+    total = sum(group["total"] for group in groups)
+    staff_total = sum(group["staff_total"] for group in groups)
+    rows: list[list] = [
+        [COST_PLAN_SHEET_TITLE, None, None, None, "Grand total", total],
+        [COST_PLAN_CAPTION],
+        [period_label],
+        [],
+    ]
+    row_styles = {1: "title", 2: "caption", 3: "caption"}
+    for group in groups:
+        count = group["activity_count"]
+        rows.append(
+            [f"{group['label']} · {count} activit{'y' if count == 1 else 'ies'}"]
+        )
+        row_styles[len(rows)] = "band"
+        rows.append(cost_plan_column_headers(group["table_kind"]))
+        row_styles[len(rows)] = "columns"
+        sessions = group["table_kind"] in ("meeting", "training")
+        for row in group["rows"]:
+            rows.append(
+                [
+                    row["item"],
+                    row["activity_count"] if sessions else row["days"],
+                    row["people"],
+                    row["rate"],
+                    "—"
+                    if row["vendor_total"] and not row["staff_total"]
+                    else row["staff_total"],
+                    row["total"],
+                ]
+            )
+        rows.append(
+            [
+                f"{group['label']} subtotal",
+                None,
+                None,
+                None,
+                group["staff_total"],
+                group["total"],
+            ]
+        )
+        row_styles[len(rows)] = "subtotal"
+    if not groups:
+        rows.append(["No costed activities in this period."])
+        row_styles[len(rows)] = "caption"
+    rows.append(["Grand total", None, None, None, staff_total, total])
+    row_styles[len(rows)] = "total"
+    return {
+        "title": COST_PLAN_SHEET_TITLE,
+        "headers": [],
+        "rows": rows,
+        "row_styles": row_styles,
+        "widths": [44, 18, 18, 18, 20, 20],
+        "number_formats": {4: UGX_MONEY, 5: UGX_MONEY, 6: UGX_MONEY},
+        "align": {2: "center", 3: "center", 4: "right", 5: "right", 6: "right"},
+        "filter": False,
+        "freeze": None,
+    }
 
 
 def budget_export_sheets(
     principal, query: dict, *, start: date, end: date, kind: str = "all", status=""
 ) -> list[dict]:
     """The planned activities of [start, end] and their budget, as the sheets
-    of one workbook: an activity a row with its budget, every cost line
-    behind it, and the total by activity type.
+    of one workbook: the Budget page's Activity cost plan first, in the
+    page's own layout (`cost_plan_sheet`), then the detail behind it — an
+    activity a row with its budget, every cost line, and the total by
+    activity type.
 
     Every figure is the sum of the activity's own cost lines — the lines the
     Budget page sums and the fund request snapshots — read through
@@ -2398,7 +2550,13 @@ def budget_export_sheets(
         ["Total", len(activities), sum(r["budget"] for r in activities.values())]
     )
 
+    period_label = f"Period: {start:%-d %b %Y} – {end:%-d %b %Y}"
+    if kind != export_kinds.ALL:
+        period_label += f" · {dict(export_kinds.KIND_CHOICES).get(kind, kind)}"
+    if status and status != "all":
+        period_label += f" · {status.replace('_', ' ').title()}"
     return [
+        cost_plan_sheet(budget_groups(lines, names), period_label=period_label),
         {
             "title": "Planned Activities",
             "headers": list(ACTIVITY_SHEET_HEADERS),

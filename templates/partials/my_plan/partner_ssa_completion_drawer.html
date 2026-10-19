@@ -15,8 +15,9 @@
 
   <p class="font-medium text-slate-600">
     Partner SSA support assessed on <span class="font-semibold text-slate-800 tabular-nums">{{ assessment_date|date:"d M Y" }}</span>
-    · {{ evidence_count }} partner evidence file{{ evidence_count|pluralize }}
+    · {{ form_name }} {% if uploaded_form %}uploaded{% else %}not uploaded{% endif %}
   </p>
+  {% if uploaded_form %}<div class="grid">{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>{% endif %}
 
   <fieldset class="space-y-3">
     <legend class="block edify-text-caption font-semibold text-slate-600">SSA intervention scores <span class="text-rose-500">*</span></legend>
@@ -69,11 +70,11 @@
            autocomplete="off"
            enterkeyhint="done"
            aria-describedby="partner-ssa-salesforce-hint"
-           placeholder="SVE-…"
+           placeholder="SV-… or SVE-…"
            value="{{ a.salesforce_activity_id|default_if_none:'' }}"
            required
            class="min-h-11 w-full rounded-control border border-[var(--border-card)] edify-surface px-3 text-[16px] sm:text-[13px] font-semibold tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-    <p id="partner-ssa-salesforce-hint" class="edify-text-caption text-slate-500">The school visit ID, starting SVE-.</p>
+    <p id="partner-ssa-salesforce-hint" class="edify-text-caption text-slate-500">The school visit ID — SV- or SVE-, or the record's own Salesforce ID.</p>
   </div>
 
   <div class="space-y-1">

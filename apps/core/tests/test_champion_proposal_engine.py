@@ -49,7 +49,8 @@ class ChampionProposalEngineTest(TestCase):
         baseline = SsaRecord.objects.create(
             school=self.school,
             date_of_ssa="2025-07-10",
-            fy="2026",
+            # The year its date falls in: one SSA a school a year (2026-10-14).
+            fy="2025",
             quarter="Q1",
             verification_status="confirmed",
             average_score=6.0,

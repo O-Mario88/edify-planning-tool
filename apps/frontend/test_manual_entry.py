@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import timedelta
 
 from django.test import TestCase
 from django.utils import timezone
@@ -241,7 +240,10 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         self.assertContains(duplicate_response, "already exists")
         self.assertEqual(SsaRecord.objects.filter(school=school).count(), 1)
 
-    def test_manual_ssa_allows_follow_up_on_another_date_in_same_fy(self):
+    def test_manual_ssa_refuses_a_second_assessment_in_the_same_fy(self):
+        """One SSA a school a year (owner, 2026-10-14): a second one keyed
+        for the same year is refused with the reason, and nothing is added.
+        It used to be saved as a follow-up on another date."""
         school = School.objects.create(
             school_id="SSA-FOLLOW-UP",
             name="Follow-up SSA Academy",
@@ -253,14 +255,13 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         first_response = self.client.post("/ssa/manual/", first_payload)
         self.assertEqual(first_response.status_code, 302)
 
-        follow_up_payload = self._ssa_payload(
-            school.school_id,
-            date_of_ssa=(timezone.localdate() - timedelta(days=1)).isoformat(),
+        follow_up_response = self.client.post(
+            "/ssa/manual/", self._ssa_payload(school.school_id)
         )
-        follow_up_response = self.client.post("/ssa/manual/", follow_up_payload)
 
-        self.assertEqual(follow_up_response.status_code, 302)
-        self.assertEqual(SsaRecord.objects.filter(school=school).count(), 2)
+        self.assertEqual(follow_up_response.status_code, 200)
+        self.assertContains(follow_up_response, "SSA already exists for this school")
+        self.assertEqual(SsaRecord.objects.filter(school=school).count(), 1)
 
     def test_manual_ssa_rejects_out_of_range_score(self):
         school = School.objects.create(

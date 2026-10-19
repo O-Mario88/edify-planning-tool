@@ -410,6 +410,36 @@ class PLWeekTest(TestCase):
                 # leaves the overdue list behind.
                 self.assertNotIn("list=", " ".join(t["query"] for t in week["tabs"]))
 
+    def test_completed_work_leaves_overdue_for_completion_reviews(self):
+        # Owner, 2026-10-14: "overdue should only have schools that dont
+        # have Salesforce ID any school completed should disappear from the
+        # overdue page and move to completion and review table".
+        late = self._act(self.a1_sp, self.s1, LAST_MONDAY)
+        completed = self._act(
+            self.a1_sp,
+            self.s1,
+            LAST_MONDAY + timedelta(days=1),
+            status="submitted_to_pl",
+            salesforce_activity_id="SVE-OVERDUE1",
+        )
+        # Sent in without its ID: still the officer's to finish.
+        no_id = self._act(
+            self.a1_sp,
+            self.s1,
+            LAST_MONDAY + timedelta(days=2),
+            status="submitted_to_pl",
+        )
+        for who in (self.a1_sp.id, ""):
+            with self.subTest(who=who or EVERYONE):
+                person = self._week(who=who)["person"]
+                rows = self._table(person, "visits", OVERDUE)
+                self.assertEqual([r["id"] for r in rows], [late.id, no_id.id])
+        # It waits where the lead verifies it.
+        from apps.pl_review.services import review_register
+
+        waiting = [row["id"] for row in review_register(self.pl)["rows"]]
+        self.assertIn(completed.id, waiting)
+
     def test_the_lead_s_own_rows_keep_their_own_menu(self):
         self._act(self.pl_sp, self.s2, LAST_MONDAY)
         person = self._week(who=ME)["person"]
@@ -658,14 +688,15 @@ class PLWeekTest(TestCase):
             "Focus Intervention",
             "Cost",
             "Salesforce ID",
-            "Evidence",
             "Status",
             "Actions",
         ):
             self.assertIn(f">{column}</th>", html)
-        # Nothing entered or uploaded yet, and it says so.
+        # Nothing entered yet, and it says so. The Evidence column left the
+        # table with the upload (UPLOAD-OFF, owner 2026-10-13).
         self.assertIn("Not in SF", html)
-        self.assertIn("No Evidence Uploaded", html)
+        self.assertNotIn(">Evidence</th>", html)
+        self.assertNotIn("No Evidence Uploaded", html)
         self.assertIn('hx-post="/dashboard/pl-week-send/', html)
         self.assertIn("Send to Amos", html)
 
@@ -736,6 +767,126 @@ class PLWeekTest(TestCase):
         drawer = self.client.get(f"/pl/review-queue/{activity.id}/drawer")
         self.assertEqual(drawer.status_code, 200)
         self.assertContains(drawer, "Verified")
+
+    # ── The figures open their records (owner, 2026-10-14) ──────────────────
+    def _figures_week(self):
+        """Amos's week: one verified, one awaiting the lead, one past its day,
+        one ahead; and one left over from last week."""
+        rows = {
+            "verified": self._act(self.a1_sp, self.s1, MONDAY, status="completed"),
+            "awaiting": self._act(
+                self.a1_sp,
+                self.s1,
+                MONDAY + timedelta(days=1),
+                status="submitted_to_pl",
+                salesforce_activity_id="SV-9",
+            ),
+            "behind": self._act(self.a1_sp, self.s1, MONDAY + timedelta(days=2)),
+            "ahead": self._act(self.a1_sp, self.s1, THURSDAY + timedelta(days=1)),
+            "last_week": self._act(self.a1_sp, self.s1, LAST_MONDAY),
+        }
+        return rows
+
+    def test_each_figure_lists_exactly_the_records_it_counts(self):
+        rows = self._figures_week()
+        person = self._week(who=self.a1_sp.id)["person"]
+        facts = {f["key"]: f for f in person["facts"]}
+        self.assertEqual(list(facts), ["planned", "verified", "awaiting", "behind"])
+        self.assertEqual(
+            {k: f["count"] for k, f in facts.items()},
+            {"planned": 4, "verified": 1, "awaiting": 1, "behind": 1},
+        )
+        expected = {
+            "planned": {"verified", "awaiting", "behind", "ahead"},
+            "verified": {"verified"},
+            "awaiting": {"awaiting"},
+            "behind": {"behind"},
+        }
+        names = {a.id: k for k, a in rows.items()}
+        for key, want in expected.items():
+            self.assertIn(f"show={key}", facts[key]["query"])
+            self.assertFalse(facts[key]["active"])
+            shown = build_week(
+                self.pl, fy="2026", who=self.a1_sp.id, today=THURSDAY, show=key
+            )["person"]
+            # One list, named for the figure, in place of the two.
+            self.assertEqual([s["key"] for s in shown["sections"]], [key])
+            section = shown["sections"][0]
+            listed = {names[r["id"]] for t in section["tables"] for r in t["rows"]}
+            self.assertEqual(listed, want, key)
+            self.assertEqual(section["count"], facts[key]["count"], key)
+            # Pressed, the figure is the way back to both lists.
+            pressed = next(f for f in shown["facts"] if f["key"] == key)
+            self.assertTrue(pressed["active"])
+            self.assertNotIn("show=", pressed["query"])
+            self.assertNotIn("show=", shown["clear_query"])
+
+    def test_tabs_and_week_arrows_drop_the_figure_and_nonsense_is_ignored(self):
+        week = build_week(
+            self.pl, fy="2026", who=self.a1_sp.id, today=THURSDAY, show="verified"
+        )
+        self.assertEqual(week["show"], "verified")
+        for tab in week["tabs"]:
+            self.assertNotIn("show=", tab["query"])
+        self.assertNotIn("show=", week["previous_query"])
+        nonsense = build_week(
+            self.pl, fy="2026", who=self.a1_sp.id, today=THURSDAY, show="drop"
+        )
+        self.assertEqual(nonsense["show"], "")
+        self.assertEqual(
+            [s["key"] for s in nonsense["person"]["sections"]],
+            [OVERDUE, DUE_THIS_WEEK],
+        )
+
+    def test_the_lead_s_own_week_has_no_awaiting_figure(self):
+        me = self._week(who=ME)["person"]
+        self.assertEqual(
+            [f["key"] for f in me["facts"]], ["planned", "verified", "behind"]
+        )
+
+    def test_the_figures_are_links_and_every_listed_record_opens(self):
+        today = timezone.localdate()
+        monday = monday_of(today)
+        verified = self._act(self.a1_sp, self.s1, monday, status="completed")
+        self.client.force_login(self.pl)
+        html = self.client.get(
+            "/dashboard",
+            {"view": "week", "who": self.a1_sp.id},
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="pl-week-panel",
+        ).content.decode()
+        for key in ("planned", "verified", "awaiting", "behind"):
+            self.assertRegex(
+                html,
+                rf'<a class="plwk-fact"[^>]*href="/dashboard\?[^"]*show={key}"'
+                rf'[^>]*hx-target="#pl-week-panel"[^>]*data-pl-week-fact="{key}"',
+            )
+        # Verified work is off the lists until its figure is pressed.
+        self.assertNotIn(f'data-activity="{verified.id}"', html)
+        html = self.client.get(
+            "/dashboard",
+            {"view": "week", "who": self.a1_sp.id, "show": "verified"},
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="pl-week-panel",
+        ).content.decode()
+        self.assertRegex(html, r'data-pl-week-fact="verified"[^>]*aria-current="true"')
+        self.assertIn("data-pl-week-fact-clear", html)
+        self.assertIn('data-pl-week-list="verified"', html)
+        self.assertNotIn('data-pl-week-list="overdue"', html)
+        # The verified row asks nothing of the lead, and still opens.
+        self.assertIn(f'data-activity="{verified.id}"', html)
+        self.assertIn(f'hx-get="/my-plan/{verified.id}"', html)
+        drawer = self.client.get(f"/my-plan/{verified.id}")
+        self.assertEqual(drawer.status_code, 200)
+        # A figure with nothing in it says so in one line.
+        html = self.client.get(
+            "/dashboard",
+            {"view": "week", "who": self.a1_sp.id, "show": "awaiting"},
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="pl-week-panel",
+        ).content.decode()
+        self.assertIn("Nothing awaiting your verification.", html)
+        self.assertNotIn('data-pl-week-table="visits"', html)
 
     def test_send_to_reminds_the_officer_about_work_due_this_week(self):
         today = timezone.localdate()

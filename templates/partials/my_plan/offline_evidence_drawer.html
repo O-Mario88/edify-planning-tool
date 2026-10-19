@@ -25,6 +25,12 @@ or whether it is partner work, and asks only for what it can:
 
 Submit goes to the field outbox (field-outbox.js), which sends it, pages and
 all, once the phone is back online; a refusal is kept there with its reason.
+
+It cannot know either whether the form is already uploaded, so it asks the
+partner to say when this is a different page of one (owner, 2026-10-14: a
+second upload is taken only as another page): the tick posts
+`another_page=yes`, and the server joins the page to the one PDF or, without
+the tick, refuses a second copy.
 {% endcomment %}
 <div class="space-y-4 text-[12px] font-semibold text-slate-600">
   <div id="evidence-errors" aria-live="polite"></div>
@@ -56,6 +62,11 @@ all, once the phone is back online; a refusal is kept there with its reason.
       <input type="file" name="evidence_file" x-ref="mainInput" multiple
              accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp"
              class="hidden" @change="add($event)">
+
+      <label class="flex items-start gap-2 edify-text-caption font-medium text-slate-600">
+        <input type="checkbox" name="another_page" value="yes" class="mt-0.5 h-4 w-4 shrink-0 rounded edify-primary-text edify-primary-focus">
+        <span>This is a different page of a form I have already uploaded. Leave it unticked for a first upload: the same page is not taken twice.</span>
+      </label>
 
       <div class="grid grid-cols-2 gap-2" data-keep-columns>
         <button type="button" @click="$refs.cameraInput.click()" :disabled="busy"

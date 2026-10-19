@@ -4778,7 +4778,11 @@ main .spp-readiness[open] > summary { margin-bottom: .5rem; }
 /* Profile queues need the same reading width as their directory, especially
    while the navigation rail occupies part of a laptop display. */
 @media (min-width: 64rem) and (max-width: 99.999rem) {
-  main .edify-record-workspace { grid-template-columns: minmax(0, 1fr); }
+  /* components.css holds lg:col-span-2 at !important, so the wide column
+     still spans two tracks of this one-track grid: an implicit 0px track
+     plus the column gap made it 1.5rem wider than the cards under it
+     (2026-10-16). With no column gap the extra track takes no width. */
+  main .edify-record-workspace { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
   main .edify-record-workspace > div { grid-column: auto; min-width: 0; }
 }
 main .project-delivery-overview > header,

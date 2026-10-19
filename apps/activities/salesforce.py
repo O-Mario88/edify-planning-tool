@@ -6,11 +6,13 @@ entered into Salesforce; never to be confused with the platform School ID
 used for SSA CSV matching, a School's own Salesforce ID, or the NetSuite
 Expense ID used for financial accountability).
 
-Canonical prefixes (2026-07-15 clarification, supersedes the earlier
-SV-/SVE- dual-acceptance design): Training activities require TS-; School
-Visit activities require SVE-. Historical data entered under the older bare
-SV- prefix remains valid for READS (never silently rewritten) but is no
-longer accepted for a NEW entry — see is_valid_new_entry().
+What is accepted (owner, 2026-10-12: "accept SV-123... as well as the
+salesforce ID. one of the two should be able to work"): a School Visit is
+entered as SV-… or SVE-…, a Training as TS-…, and either may be entered as the
+Salesforce record's own ID — the 15- or 18-character value in the record's
+address — since that is what an officer reading Salesforce has in front of
+them. The 2026-07-15 clarification had narrowed visits to SVE- alone, keeping
+the older bare SV- for reads only; both prefixes are a visit again.
 
 Uniqueness scope: the platform integrates with a single Salesforce
 organization (no multi-org/country partition exists anywhere in the
@@ -35,9 +37,11 @@ if TYPE_CHECKING:
 
 _TS_RE = re.compile(r"^TS-[A-Z0-9-]{3,}$")
 _SVE_RE = re.compile(r"^SVE-[A-Z0-9-]{3,}$")
-# Legacy visits stored before the SVE- clarification may carry the older
-# bare SV- prefix — accepted for reads of historical data only.
-_LEGACY_SV_RE = re.compile(r"^SV-[A-Z0-9-]{3,}$")
+# The visit code as Salesforce names it (SV-00123) — accepted again for new
+# entries (owner, 2026-10-12), not only for reads of older data.
+_SV_RE = re.compile(r"^SV-[A-Z0-9-]{3,}$")
+# A Salesforce record's own ID: 15 characters, or 18 with the case-safe tail.
+_RECORD_ID_RE = re.compile(r"^[A-Z0-9]{15}(?:[A-Z0-9]{3})?$")
 
 # Roles allowed to enter an Activity Salesforce ID as themselves (staff
 # self-entry) or on behalf of a partner they manage (managing-staff entry).
@@ -74,25 +78,31 @@ def normalize_salesforce_id(raw: str) -> str:
 
 
 def is_valid_salesforce_id(id_value: str, kind: str) -> bool:
-    """kind: 'visit' | 'training'. Accepts the legacy bare SV- prefix for
-    visits (backward-compatible reads of historical data) — use
-    is_valid_new_entry to enforce the canonical prefix on new submissions."""
+    """kind: 'visit' | 'training'. A visit is SV-… or SVE-…, a training TS-…,
+    and either may be the Salesforce record's own 15- or 18-character ID."""
     v = normalize_salesforce_id(id_value)
+    if _RECORD_ID_RE.match(v):
+        return True
     if kind == "training":
         return bool(_TS_RE.match(v))
-    return bool(_SVE_RE.match(v)) or bool(_LEGACY_SV_RE.match(v))
+    return bool(_SVE_RE.match(v)) or bool(_SV_RE.match(v))
 
 
 def is_valid_new_entry(id_value: str, kind: str) -> bool:
-    """The canonical prefix required for any NEW submission — TS- for
-    training, SVE- for visits. The legacy bare SV- prefix is grandfathered
-    for historical data only (is_valid_salesforce_id), never accepted here."""
-    v = normalize_salesforce_id(id_value)
-    return bool(_TS_RE.match(v)) if kind == "training" else bool(_SVE_RE.match(v))
+    """What a NEW submission may carry — the same forms a read accepts
+    (owner, 2026-10-12: one of the two should work)."""
+    return is_valid_salesforce_id(id_value, kind)
 
 
 def salesforce_prefix_for(kind: str) -> str:
     return "TS-" if kind == "training" else "SVE-"
+
+
+def accepted_forms(kind: str) -> str:
+    """The forms an ID may take, in the words the refusal and the help use."""
+    if kind == "training":
+        return "TS-…, or the record's own Salesforce ID"
+    return "SV-… or SVE-…, or the record's own Salesforce ID"
 
 
 class DuplicateSalesforceId(ConflictError):
@@ -190,8 +200,7 @@ def reserve_salesforce_id(
 
     normalized = normalize_salesforce_id(raw_value)
     if not is_valid_new_entry(normalized, kind):
-        prefix = salesforce_prefix_for(kind)
-        raise BadRequest(f"A valid {prefix} Salesforce Activity ID is required.")
+        raise BadRequest(f"Enter the Salesforce ID as {accepted_forms(kind)}.")
 
     with transaction.atomic():
         locked = Activity.objects.select_for_update().filter(id=activity.id).first()

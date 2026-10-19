@@ -14,7 +14,8 @@ This module adds the three things a group needs and a single activity does
 not:
 
 * An answer per activity. One refusal does not undo the rest: each activity is
-  its own transaction, and the reader is told which ones were left and why.
+  undone to where it began on its own, and the reader is told which ones were
+  left and why.
 * What can be said before anything is changed. `selection` reads the ticked
   activities and marks the ones the action cannot take (already carried out,
   not the reader's to run, already cancelled), so the drawer shows them before
@@ -213,7 +214,16 @@ def reschedule(raw_ids, raw_day, reason, principal) -> Outcome:
         # half joins it.
         if not pick.refusal and all(by_id[i].day == day for i in pick.unit):
             pick.refusal = "Already on this date."
-    return _apply(picks, act=move, skip=lambda pick: pick.day == day)
+
+    def one_change(count: int):
+        # A group of moves is one change to the plan: a monthly request in
+        # its approval chain follows it, and its preparer hears once, with
+        # the total it began with and the total it ends with.
+        from apps.fund_requests.plan_changes import planner_change
+
+        return planner_change(principal, what=f"{count} activities")
+
+    return _apply(picks, act=move, skip=lambda pick: pick.day == day, within=one_change)
 
 
 def cancel(raw_ids, reason, principal) -> Outcome:
@@ -248,7 +258,79 @@ def money_moved_ids(picks) -> set[str]:
 # ── Internals ────────────────────────────────────────────────────────────────
 
 
-def _apply(picks, *, act, skip=None) -> Outcome:
+def _apply(picks, *, act, skip=None, within=None) -> Outcome:
+    """Change every unit that can be changed, and say what happened to each.
+
+    The days the group touches are priced once, when the last of it has been
+    changed (`_together`). If that pricing refuses, nothing of the attempt is
+    kept and the group is changed the way it always was, one unit at a time,
+    each priced as it goes: the refusal then lands on the units it belongs to
+    and the rest go through.
+    """
+    from django.conf import settings
+
+    changing = len(
+        {p.unit for p in picks if not any(m.refusal for m in _unit(p, picks))}
+    )
+    if changing > 1 and getattr(settings, "PRICE_A_DAY_ONCE_PER_SAVE", True):
+        said = {p.id: p.refusal for p in picks}
+        try:
+            return _together(picks, act=act, skip=skip, within=within, count=changing)
+        except Exception as exc:  # noqa: BLE001 — the old way answers for it
+            from apps.core.htmx_errors import is_user_facing
+
+            logger.log(
+                logging.INFO if is_user_facing(exc) else logging.ERROR,
+                "A group of %s could not be priced together; changing it one "
+                "at a time",
+                changing,
+                exc_info=None if is_user_facing(exc) else exc,
+            )
+            for pick in picks:
+                pick.refusal = said[pick.id]
+    return _one_at_a_time(picks, act=act, skip=skip)
+
+
+def _unit(pick, picks):
+    by_id = {p.id: p for p in picks}
+    return [by_id[i] for i in pick.unit]
+
+
+def _together(picks, *, act, skip, within, count: int) -> Outcome:
+    """The group in one transaction, each unit undone to its own savepoint if
+    it is refused, and each day the group touched priced once at the end.
+
+    A group used to price the day a visit left and the day it joined once
+    for every visit: three visits moved off a day of ten ran 1,699 statements
+    on main and 523 after a day's members were written together, and the same
+    three moved here re-price each day once. What a day ends with is what it
+    ended with before, since it is priced from the same members; what is not
+    written is the pricings in between, each superseded by the next (owner,
+    2026-10-12: "yes do the group action change").
+
+    The week and the month are re-filed once, after the days are priced, and
+    whatever the pricing refuses (a member whose advance is with the
+    accountant, a week already sent) is raised from here with nothing kept.
+    """
+    from contextlib import nullcontext
+
+    from apps.daily_visit_batches.costs_follow import costs_follow
+    from apps.daily_visit_batches.services import each_day_priced_once
+    from apps.fund_requests.follow import fund_requests_follow_once
+
+    with transaction.atomic():
+        with within(count) if within else nullcontext():
+            # The group answers once every unit is stored and checked; its
+            # days are priced after the answer, each once, as here.
+            with (
+                costs_follow(),
+                fund_requests_follow_once(),
+                each_day_priced_once(leaving_too=True),
+            ):
+                return _one_at_a_time(picks, act=act, skip=skip)
+
+
+def _one_at_a_time(picks, *, act, skip=None) -> Outcome:
     by_id = {p.id: p for p in picks}
     outcome = Outcome()
     handled: set[str] = set()
@@ -271,7 +353,13 @@ def _apply(picks, *, act, skip=None) -> Outcome:
 
 def _change(unit, *, act, skip) -> Pick | None:
     """Apply `act` to a unit; the member that refused it, or None."""
+    from apps.daily_visit_batches.services import (
+        priced_once_back_to,
+        priced_once_mark,
+    )
+
     member = unit[0]
+    held = priced_once_mark()
     try:
         # One transaction for the unit: a pair moves or stays as one, and a
         # refusal part-way leaves nothing half-written.
@@ -280,6 +368,8 @@ def _change(unit, *, act, skip) -> Pick | None:
                 if skip is None or not skip(member):
                     act(member.activity)
     except Exception as exc:  # noqa: BLE001 — reported per activity
+        # The days it asked to have priced stand as they were.
+        priced_once_back_to(held)
         member.refusal = _message(exc, member)
         return member
     return None
@@ -410,7 +500,15 @@ def _units(activities) -> list[list]:
         training_id = a.id if a.id in visit_of else training_of.get(a.id)
         visit_id = visit_of.get(a.id) or (a.id if a.id in training_of else None)
         training, visit = by_id.get(training_id), by_id.get(visit_id)
-        unit = [training, visit] if training and visit else [a]
+        # The other half joins only while it is still live, as the single
+        # doors take it (pairs.joins): a called-off visit moved with its
+        # Training was brought back to life as a side effect.
+        other = visit if a is training else training
+        unit = (
+            [training, visit]
+            if training and visit and (other is a or may_tick(other.status))
+            else [a]
+        )
         units.append(unit)
         placed.update(member.id for member in unit)
     return units

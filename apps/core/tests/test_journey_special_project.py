@@ -164,7 +164,9 @@ class SpecialProjectJourneyTest(TestCase):
     def _ssa(self, school, on, score, *, status="confirmed"):
         record = SsaRecord.objects.create(
             school=school,
-            fy=self.fy,
+            # The year its date falls in: a school has one SSA a year (owner,
+            # 2026-10-14), so a baseline and its follow-up are two years'.
+            fy=get_operational_fy(on),
             quarter="Q1",
             average_score=score,
             verification_status=status,

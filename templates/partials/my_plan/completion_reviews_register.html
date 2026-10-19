@@ -1,0 +1,90 @@
+{% load table_pagination row_actions %}
+{% comment %}
+The Completion Reviews register: the team's completed work waiting on the
+lead, one row a completion, read in bulk by
+apps.pl_review.services.review_register. Drawn on the Completion Reviews page
+and, for a Programme Lead, on the Execution & Completion tab their dashboard
+carries (owner, 2026-10-14: "move the page under execution and completion tab
+page so the PL can access it from their dashboard direct"). `reviews_embedded`
+says which: there the section names itself and says what it is for, and its
+officer filter stays inside the tab.
+{% endcomment %}
+{% paginate rows "review_page" as pager %}
+{# On its own page it reads itself again when an officer sends in a completion or one is decided (static/js/live-regions.js): the number in the heading and the rows. #}
+<section id="completion-reviews"{% if not reviews_embedded %} data-live-region{% endif %} class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="completion-reviews-title" data-review-register>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="completion-reviews-title" class="rpl-card__title">{% if reviews_embedded %}Completion Reviews{% else %}Waiting on you{% endif %}</h2>
+      <span class="rpl-card__subtitle">{{ pager.total }} completion{{ pager.total|pluralize }}{% if reviews_embedded %} waiting on you{% endif %}</span>
+    </div>
+  </header>
+  {# What the register is for, under its slim title band; the card pays the inset, so it starts where the title does. #}
+  {% if reviews_embedded %}<p class="rpl-card__subtitle py-2" data-completion-reviews-about>Your officers' completed work waiting on your decision: Verified, or Return with the reason — for example, participants not entered in Salesforce. The longest waiting comes first.</p>{% endif %}
+
+  {% if filters %}
+  <form method="get" action="{% if reviews_embedded %}/planning-monitor/{% else %}{{ queue_url }}{% endif %}"{% if reviews_embedded %} hx-get="/planning-monitor/" hx-target="#oversight-workspace" hx-swap="innerHTML"{% endif %} class="edify-filter-bar" aria-label="Completion review filters" x-data>
+    {% if reviews_embedded %}<input type="hidden" name="view" value="execution"><input type="hidden" name="fy" value="{{ fy }}">{% endif %}
+    {% for field in filters %}
+    <label class="cce-filter">
+      <span class="cce-filter__label">{{ field.label }}</span>
+      <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
+        <option value="">{{ field.blank }}</option>
+        {% for option in field.options %}<option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endfor %}
+  </form>
+  {% endif %}
+
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Completions waiting on you; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Completions waiting for your review, longest waiting first</caption>
+      <thead>
+        <tr>
+          <th scope="col">Officer</th>
+          <th scope="col">Activity</th>
+          <th scope="col">School ID</th>
+          <th scope="col">School or cluster</th>
+          <th scope="col">Date</th>
+          <th scope="col">Intervention</th>
+          <th scope="col">Attendance</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col">Evidence</th> #}
+          <th scope="col">Salesforce ID</th>
+          <th scope="col" class="is-num">Days waiting</th>
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in pager.rows %}
+        <tr data-review-row="{{ row.id }}">
+          <th scope="row" data-record-title><span>{{ row.cceo }}</span></th>
+          <td data-label="Activity">{{ row.activity }}</td>
+          <td data-label="School ID">{{ row.school_code|default:"—" }}</td>
+          <td data-label="School or cluster">{{ row.where|default:"—" }}{% if row.where_kind == "Cluster" %} <span class="rpl-muted">(cluster)</span>{% endif %}</td>
+          <td data-label="Date">{% if row.date %}{{ row.date|date:"j M Y" }}{% else %}—{% endif %}</td>
+          <td data-label="Intervention">{% if row.intervention %}<abbr title="{{ row.intervention_label }}">{{ row.intervention }}</abbr>{% else %}—{% endif %}</td>
+          <td data-label="Attendance">{{ row.attendance|default:"—" }}</td>
+          {# UPLOAD-OFF (owner, 2026-10-13): <td data-label="Evidence">{% if row.evidence_tone %}<span data-tone="{{ row.evidence_tone }}">{{ row.evidence }}</span>{% else %}{{ row.evidence }}{% endif %}</td> #}
+          <td data-label="Salesforce ID">{% if row.salesforce_id %}{{ row.salesforce_id }}{% else %}<span data-tone="warning">Not entered</span>{% endif %}</td>
+          <td class="is-num" data-label="Days waiting">{% if row.wait_tone %}<span data-tone="{{ row.wait_tone }}">{{ row.days_waiting }}</span>{% else %}{{ row.days_waiting }}{% endif %}</td>
+          <td class="is-end" data-record-action data-label="Actions">
+            {% row_actions row.cceo %}
+            {# Verify opens the completion with its Salesforce ID; Verified is decided inside it (owner, 2026-10-12; no uploaded form since 2026-10-13). #}
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ queue_url }}/{{ row.id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Verify the completion from {{ row.cceo }}: check the Salesforce ID, then decide">Verify</button>
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ queue_url }}/{{ row.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Return the completion from {{ row.cceo }}">Return</button>
+            {% endrow_actions %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="10">
+            {% include "components/empty_state.html" with message="Nothing is waiting on you" hint="When an officer you supervise submits completed work, it appears here for your confirmation." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "components/table_pager.html" with pager=pager param="review_page" %}
+</section>

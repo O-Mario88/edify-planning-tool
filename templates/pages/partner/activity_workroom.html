@@ -88,15 +88,9 @@
     </ul>
     {% endif %}
 
-    {% if evidence %}
-    <ul class="divide-y divide-slate-100 rounded-control border border-slate-100">
-      {% for e in evidence %}
-      <li class="flex items-center justify-between gap-3 px-3 py-2 text-[12px] font-semibold text-slate-600">
-        <span class="truncate">{{ e.original_name }}</span>
-        <span class="edify-text-caption text-slate-400 shrink-0">{{ e.kind }} · {{ e.created_at|date:"d M H:i" }}</span>
-      </li>
-      {% endfor %}
-    </ul>
+    {# One document per form, opened by one button (owner, 2026-10-14); the card used to list every file uploaded. #}
+    {% if uploaded_form %}
+    <div>{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>
     {% endif %}
 
     {% if state != "submitted" and state != "done" %}
@@ -106,7 +100,7 @@
     <button type="button"
             hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
             class="inline-flex h-8 items-center rounded-control border border-[var(--border-strong)] edify-surface px-4 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)] transition-colors">
-      Upload Evidence
+      {% if uploaded_form %}Add Another Page{% else %}Upload {{ form_name }}{% endif %}
     </button>
     {% endif %}
   </div>
@@ -178,25 +172,7 @@
         <textarea id="wr-follow-up" name="follow_up_note" rows="2" x-model="draft.follow_up_note" @input.debounce.600ms="save()"
                   class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ a.follow_up_note|default:"" }}</textarea>
       </div>
-      {% if is_visit_kind %}
-      <div class="rounded-surface border border-slate-200 bg-slate-50 p-4 space-y-4">
-        <div>
-          <h3 class="text-[14px] font-semibold text-slate-800">School visit feedback</h3>
-          <p class="edify-text-caption text-slate-500 font-semibold mt-0.5">Saved to the school profile and linked to this visit for leadership review.</p>
-        </div>
-        <div>
-          <label for="wr-feedback-finding" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Finding <span class="normal-case tracking-normal font-medium">(what you found on the ground)</span> <span class="text-rose-500">*</span></label>
-          <textarea id="wr-feedback-finding" name="feedback_finding" rows="4" maxlength="3000" required x-model="draft.feedback_finding" @input.debounce.600ms="save()"
-                    class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ visit_feedback.finding|default:"" }}</textarea>
-        </div>
-        <div>
-          <label for="wr-school-improvements" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">How has the school improved from the last visit? <span class="text-rose-500">*</span></label>
-          <textarea id="wr-school-improvements" name="school_improvements" rows="4" maxlength="10000" required x-model="draft.school_improvements" @input.debounce.600ms="save()"
-                    class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{% for improvement in visit_feedback.improvements %}{{ improvement }}{% if not forloop.last %}&#10;{% endif %}{% endfor %}</textarea>
-          <p class="mt-1 edify-text-caption font-medium text-slate-400">Enter one improvement per line.</p>
-        </div>
-      </div>
-      {% endif %}
+      {# The school visit feedback fields left this form on 2026-10-12 (owner: completion should not feel like another data entry). #}
     </fieldset>
 
     {% if state == "submitted" %}
@@ -237,7 +213,7 @@ document.addEventListener('alpine:init', () => {
       } catch (e) { /* corrupt draft — start clean */ }
     },
     save() {
-      const fields = ['actual_delivery_date','teachers_attended','leaders_attended','other_participants','actual_outcome','actual_observations','follow_up_note','feedback_finding','school_improvements'];
+      const fields = ['actual_delivery_date','teachers_attended','leaders_attended','other_participants','actual_outcome','actual_observations','follow_up_note'];
       const data = {};
       fields.forEach(f => { const el = document.querySelector(`[name="${f}"]`); if (el && el.value) data[f] = el.value; });
       try { localStorage.setItem(this.key(), JSON.stringify(data)); } catch (e) {}

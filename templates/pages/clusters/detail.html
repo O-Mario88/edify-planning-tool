@@ -5,7 +5,7 @@
 
 {% block title %}{{ cluster.name }} - Cluster{% endblock %}
 
-{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261010rail1">{% endblock %}
+{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261016rail3">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
@@ -29,7 +29,7 @@ counted (apps.clusters.page_summary; the profile engine's own numbers).{% endcom
 {% kpi_metric %}{% kpi_label %}Upcoming{% endkpi_label %}{{ ops.upcoming|intcomma }}{% kpi_link %}?cluster_acts_tab=planned#cluster_acts-activities{% endkpi_link %}{% kpi_helper %}{{ ops.upcoming_parts }}{% endkpi_helper %}{% endkpi_metric %}
 {% kpi_metric %}{% kpi_label %}Past Their Date{% endkpi_label %}{{ ops.overdue|intcomma }}{% kpi_link %}#cluster-attention{% endkpi_link %}{% kpi_helper %}{{ ops.overdue_parts }}{% endkpi_helper %}{% endkpi_metric %}
 {% kpi_metric %}{% kpi_label %}Outstanding Actions{% endkpi_label %}{{ ops.outstanding|intcomma }}{% kpi_link %}#cluster-attention{% endkpi_link %}{% kpi_helper %}lines under Needs Attention Now{% endkpi_helper %}{% endkpi_metric %}
-{% kpi_metric %}{% kpi_label %}SSA Score{% endkpi_label %}{{ ops.ssa_current|default_if_none:0|floatformat:2 }}{% kpi_link %}{{ ops.profile_url }}?tab=ssa&fy={{ ops.fy }}{% endkpi_link %}{% kpi_helper %}{{ ops.assessed|intcomma }} of {{ ops.schools|intcomma }} assessed · baseline {{ ops.ssa_previous|default_if_none:0|floatformat:2 }}{% if ops.ssa_change is not None %} · {% if ops.ssa_change > 0 %}+{% endif %}{{ ops.ssa_change|floatformat:2 }}{% endif %}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}SSA Score{% endkpi_label %}{{ ops.ssa_current|default_if_none:0|floatformat:2 }}{% kpi_link %}{{ ops.profile_url }}?tab=ssa&fy={{ ops.fy }}{% endkpi_link %}{% kpi_helper %}{{ ops.assessed|intcomma }} of {{ ops.assessable|intcomma }} assessed · baseline {{ ops.ssa_previous|default_if_none:0|floatformat:2 }}{% if ops.ssa_change is not None %} · {% if ops.ssa_change > 0 %}+{% endif %}{{ ops.ssa_change|floatformat:2 }}{% endif %}{% endkpi_helper %}{% endkpi_metric %}
 {% endkpi_strip %}
 {% endif %}
 
@@ -41,7 +41,7 @@ column"), each line opening the Cluster Profile.{% endcomment %}
 <!-- Cluster record and contacts -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6" data-cluster-logistics>
 <h3 class="edify-profile-section-title border-b border-slate-100 pb-3">Cluster Logistics &amp; Contacts</h3>
-<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div class="edify-field-grid grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
 <p class="edify-profile-field__label">Cluster Type</p>
 <p class="edify-profile-field__value mt-0.5">{{ cluster.clusterType|default:"Mixed" }}</p>

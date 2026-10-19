@@ -228,6 +228,45 @@ class ClusterFacilitationTest(APITestCase):
             FEE_LINE_TYPE, [line.line_item_type for line in self._lines(meeting)]
         )
 
+    def test_the_cost_preview_carries_the_fee_the_save_writes(self):
+        """The drawer's figure is the figure written (owner, 2026-10-15: "no
+        misleading costs"): a session of a cluster assigned to a partner is
+        previewed with the partner's fee, as the save adds it, unless the
+        planner chose Staff in "Facilitated by"."""
+        self._assign()
+        self.client.force_login(self.cceo)
+
+        def previewed(**extra) -> int:
+            response = self.client.get(
+                "/clusters/cost-preview",
+                {
+                    "activity_type": "cluster_meeting",
+                    "cluster_id": self.cluster.id,
+                    "scheduled_date": "2026-07-21",
+                    "expected_participants": "10",
+                    **extra,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(
+                response.context["success"], response.context.get("error_msg")
+            )
+            return response.context["preview"]["amount"]
+
+        # The Clusters page drawer asks nobody: the cluster's partner.
+        unasked = previewed()
+        named = previewed(facilitating_partner_id=self.partner.id)
+        staff = previewed(facilitating_partner_id="")
+        fee = next(
+            line.amount
+            for line in self._lines(self._meeting())
+            if line.line_item_type == FEE_LINE_TYPE
+        )
+
+        self.assertGreater(fee, 0)
+        self.assertEqual(unasked, named)
+        self.assertEqual(unasked - staff, fee)
+
     def test_a_meeting_staff_run_themselves_has_no_facilitation_fee(self):
         meeting = self._meeting()
 

@@ -5,7 +5,44 @@
 {% block drawer_subtitle %}{% if is_paired_in_school_training %}{{ act.activityName }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
+{% comment %}
+The register's "+ Add School" (2026-10-14). The completion form and the Add
+New School form are both drawn here; while a school is being added the
+completion form is only hidden, never re-fetched, so every tick and figure
+already entered is still there when the person comes back. A school added
+here is attached to this session ticked as attended, whichever cluster the
+person put it in (owner, 2026-10-14: "it should be attached to the training
+they attended"); it can still be unticked before submitting.
+{% endcomment %}
+<div
+x-data="{
+registering: false,
+adding: false,
+added: [],
+notice: '',
+sessionCluster: '{{ act.clusterId|default:''|escapejs }}',
+onRegister(id) {
+const list = document.getElementById('school-attendance-checklist-{{ act.id|escapejs }}');
+return !!list?.querySelector(`input[name=attended_school_ids][value='${CSS.escape(id)}']`);
+},
+addSchool(school) {
+this.registering = false;
+this.adding = false;
+if (!school || !school.id) return;
+if (this.onRegister(school.id)) {
+this.notice = `${school.name} is already on the register.`;
+return;
+}
+this.added.push({ ...school, visiting: String(school.clusterId || '') !== this.sessionCluster });
+this.notice = `${school.name} is on the register, ticked as attended${this.added.at(-1).visiting ? ' (visiting: it stays in its own cluster)' : ''}. Untick it in Select schools if it did not attend.`;
+}
+}"
+@edify-school-registered="addSchool($event.detail)"
+@edify-school-chosen="addSchool($event.detail)"
+@edify-school-register-cancel="registering = false"
+>
 <form
+x-show="!registering"
 hx-post="/my-plan/{{ act.id }}/complete"
 hx-encoding="multipart/form-data"
 hx-request='{"timeout":120000}'
@@ -20,6 +57,19 @@ class="space-y-4 text-[12px] font-semibold text-slate-600"
 </div>
 {% endif %}
 
+{% comment %}The day the work was done (owner, 2026-10-16): today or any day
+before it, never a future one. Done on another day than planned, the work and
+its money move to that day and its planned day is free
+(apps.activities.completed_day).{% endcomment %}
+{% now "Y-m-d" as today_iso %}
+<div class="space-y-1" data-completed-on>
+<label for="actual_delivery_date" class="block edify-text-caption font-semibold text-slate-600">{% if act.activityType == "school_visit" %}Date the school was visited{% elif act.activityType == "cluster_meeting" %}Date the meeting was held{% elif "training" in act.activityType %}Date the training was held{% else %}Date completed{% endif %} <span class="text-rose-500">*</span></label>
+<input type="date" name="actual_delivery_date" id="actual_delivery_date" required max="{{ today_iso }}" value="{{ act.actualDeliveryDate|default:today_iso }}" aria-describedby="actual-delivery-date-help" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus">
+<p id="actual-delivery-date-help" class="edify-text-caption text-slate-500">Today or an earlier day. Done before its planned day, it moves to this day with its cost, and the planned day is free for other work.</p>
+</div>
+
+{# UPLOAD-OFF (owner, 2026-10-13): an activity is completed with its visit ID or training ID alone. The Evidence section (the file inputs, the checklist and the list of uploaded files) is switched off, not deleted; remove the comment tags around it to bring it back. #}
+{% comment %}UPLOAD-OFF
 <!-- Evidence -->
 <div class="space-y-2">
 <h4 class="text-[13px] font-semibold text-slate-800">Evidence</h4>
@@ -32,7 +82,7 @@ class="space-y-4 text-[12px] font-semibold text-slate-600"
 class="w-full edify-text-caption text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer">
 </div>
 <div class="space-y-1">
-<label for="visit_evidence_file" class="block edify-text-caption font-semibold text-slate-600">School visit form <span class="font-normal text-slate-500">(SVE- record)</span></label>
+<label for="visit_evidence_file" class="block edify-text-caption font-semibold text-slate-600">School visit form <span class="font-normal text-slate-500">(SV- or SVE- record)</span></label>
 <input id="visit_evidence_file" type="file" name="visit_evidence_file" accept="application/pdf" multiple
 class="w-full edify-text-caption text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer">
 </div>
@@ -88,9 +138,9 @@ class="w-full edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 
 </div>
 {% endif %}
 </div>
+{% endcomment %}
 
 {% if act.ssaCollectionExpected %}
-<hr class="border-slate-100">
 {% comment %}The model holds the radio's own string value. Alpine will not
 overwrite a radio's value when a static value= attribute is present, so the
 old `:value="true"`/`:value="false"` bindings were inert and the model never
@@ -139,9 +189,8 @@ field the user could not see (2026-08 UI/UX audit, UX-006).{% endcomment %}
 </select>
 </div>
 </div>
-{% endif %}
-
 <hr class="border-slate-100">
+{% endif %}
 
 <!-- Completion details -->
 <div class="space-y-4">
@@ -162,23 +211,27 @@ class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] 
 <div class="space-y-1">
 <label for="visit_salesforce_id" class="block edify-text-caption font-semibold text-slate-600">School visit ID <span class="text-rose-500">*</span></label>
 <input type="text" name="visit_salesforce_id" id="visit_salesforce_id" required autocomplete="off"
-placeholder="SVE-…" value="{{ paired_school_visit.salesforceActivityId|default:'' }}"
+placeholder="SV-… or SVE-…" value="{{ paired_school_visit.salesforceActivityId|default:'' }}"
 class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus">
 </div>
 </div>
-{% else %}
+{% elif salesforce_kind %}
 <div class="space-y-1">
-<label for="salesforce_id" class="block edify-text-caption font-semibold text-slate-600">Salesforce activity ID <span class="text-rose-500">*</span></label>
+<label for="salesforce_id" class="block edify-text-caption font-semibold text-slate-600">{% if salesforce_kind == "training" %}Training ID{% elif salesforce_kind == "visit" %}Visit ID{% else %}Salesforce activity ID{% endif %} <span class="text-rose-500">*</span></label>
 <input
 type="text"
 name="salesforce_id"
 id="salesforce_id"
 required
-placeholder="e.g. SVE-11223344 or TS-998877"
+placeholder="{% if salesforce_kind == "training" %}e.g. TS-998877{% elif salesforce_kind == "visit" %}e.g. SV-11223344 or SVE-11223344{% else %}e.g. SV-11223344, SVE-11223344 or TS-998877{% endif %}"
 value="{{ act.salesforceActivityId|default:'' }}"
 class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus"
 >
+<p class="edify-text-caption text-slate-500">{% if salesforce_kind == "training" %}The training ID from Salesforce completes this activity.{% else %}The visit ID from Salesforce completes this activity.{% endif %}</p>
 </div>
+{% else %}
+{# Work Salesforce does not record (its record type is None) has no ID to enter. #}
+<p class="edify-text-caption text-slate-500">This activity has no Salesforce record, so it needs no ID. Submit to complete it.</p>
 {% endif %}
 
 <!-- Accountability (If accountability pending) — submits for Accountant review,
@@ -236,7 +289,7 @@ class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:t
 {% endif %}
 
 <!-- Attendance (for trainings/meetings) -->
-{% if act.activityType == 'training' or act.activityType == 'in_school_training' or act.activityType == 'school_improvement_training' or act.activityType == 'cluster_training' or act.activityType == 'cluster_meeting' or act.activityType == 'core_training' %}
+{% if records_attendance %}
 <div class="grid gap-3">
 <div class="space-y-1">
 <label for="teachers_attended" class="block edify-text-caption font-semibold text-slate-600">Teachers attended</label>
@@ -263,7 +316,7 @@ class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] 
 </div>
 
 <!-- School Attendance Checklist (Collapsible Dropdown) -->
-{% if cluster_schools %}
+{% if act.clusterId %}
 <div
 class="space-y-1"
 x-data="{
@@ -322,12 +375,44 @@ window.removeEventListener('resize', this.repositionDropdown);
 <p id="school-attendance-checklist-label-{{ act.id }}" class="edify-text-caption font-semibold text-slate-600">Schools that attended</p>
 <button
 type="button"
-hx-get="/schools/create-drawer?cluster_id={{ act.clusterId }}"
-hx-target="#drawer-container"
+@click="adding = !adding; if (adding) $nextTick(() => $refs.registerSearch?.focus())"
+:aria-expanded="adding"
+aria-controls="register-add-school-{{ act.id }}"
 class="edify-text-caption font-semibold edify-primary-text edify-primary-text-hover hover:underline"
 >
-+ Onboard new school
+<span x-text="adding ? 'Cancel' : '+ Add School'">+ Add School</span>
 </button>
+</div>
+<p x-show="notice" x-cloak x-text="notice" role="status" class="edify-text-caption font-semibold text-slate-600"></p>
+
+<div x-show="adding" x-cloak id="register-add-school-{{ act.id }}" class="space-y-2">
+<label for="register-search-{{ act.id }}" class="block edify-text-caption font-semibold text-slate-600">Find a school already in Edify</label>
+<input
+type="search"
+id="register-search-{{ act.id }}"
+x-ref="registerSearch"
+name="q"
+form="register-search-form-{{ act.id }}"
+autocomplete="off"
+placeholder="School name or ID"
+hx-get="/my-plan/{{ act.id }}/register-school-search"
+hx-trigger="input changed delay:300ms, search"
+hx-target="#register-search-results-{{ act.id }}"
+hx-sync="this:replace"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+>
+<div id="register-search-results-{{ act.id }}" aria-live="polite"></div>
+{% if can_add_school %}
+<p class="edify-text-caption text-slate-500">Not in Edify? Add it in Salesforce first, then
+<button
+type="button"
+hx-get="/schools/create-drawer?embed=1&amp;activity_id={{ act.id }}"
+hx-target="#register-school-panel-{{ act.id }}"
+hx-swap="innerHTML"
+@click="registering = true"
+class="font-semibold edify-primary-text edify-primary-text-hover hover:underline"
+>add a new school</button>.</p>
+{% endif %}
 </div>
 
 <!-- Dropdown Trigger Button -->
@@ -359,14 +444,15 @@ if (openDropdown) $nextTick(() => positionDropdown());
 "
 class="attendance-checklist-popover divide-y divide-slate-100"
 >
-{% if cluster_schools %}<div class="px-4 py-2.5">{% include "partials/components/select_all.html" with boxes="input[name=attended_school_ids]" %}</div>{% endif %}
+<input type="hidden" name="visiting_register" value="1">
+{% if cluster_schools or guest_rows %}<div class="px-4 py-2.5">{% include "partials/components/select_all.html" with boxes="input[name=attended_school_ids]" %}</div>{% endif %}
 {% for school in cluster_schools %}
 <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-semibold text-slate-700">
 <input
 type="checkbox"
 name="attended_school_ids"
 value="{{ school.id }}"
-{% if not act.attendedSchoolIds or school.id in act.attendedSchoolIds %}checked{% endif %}
+{% if school.ticked %}checked{% endif %}
 class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary-focus"
 >
 <div class="flex-1">
@@ -375,6 +461,41 @@ class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary
 </div>
 </label>
 {% endfor %}
+{% comment %}Schools from outside the cluster: attendance against this session
+only, never membership. Their ids ride in visiting_school_ids so the service
+knows them from a stray id.{% endcomment %}
+{% for g in guest_rows %}
+<label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-semibold text-slate-700">
+<input type="hidden" name="visiting_school_ids" value="{{ g.id }}">
+<input
+type="checkbox"
+name="attended_school_ids"
+value="{{ g.id }}"
+{% if g.ticked %}checked{% endif %}
+class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary-focus"
+>
+<div class="flex-1">
+<span class="font-semibold text-slate-800 block leading-tight">{{ g.name }}</span>
+<span class="edify-text-caption text-slate-500 font-semibold block mt-0.5">{{ g.school_id }} &middot; visiting</span>
+</div>
+</label>
+{% endfor %}
+<template x-for="school in added" :key="school.id">
+<label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-semibold text-slate-700" data-added-school>
+<template x-if="school.visiting"><input type="hidden" name="visiting_school_ids" :value="school.id"></template>
+<input
+type="checkbox"
+name="attended_school_ids"
+:value="school.id"
+x-init="$el.checked = true"
+class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary-focus"
+>
+<div class="flex-1">
+<span class="font-semibold text-slate-800 block leading-tight" x-text="school.name"></span>
+<span class="edify-text-caption text-slate-500 font-semibold block mt-0.5" x-text="school.schoolId + (school.visiting ? ' \u00b7 visiting' : '')"></span>
+</div>
+</label>
+</template>
 </div>
 </div>
 </div>
@@ -386,8 +507,9 @@ class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary
 <hr class="border-slate-100">
 {% comment %}The training this visit followed up, named at completion and
 never optional (owner, 2026-09-21). The list is the school's completed
-sessions — in-school, Core, or a cluster session it is recorded as attending
-— and the service re-checks the choice against the same rule, so a stale
+sessions — in-school, Core, or a cluster session it is recorded as attending,
+as a member or a visitor, verified or awaiting verification (2026-10-14) — and
+the service re-checks the choice against the same rule, so a stale
 option cannot attach the visit to a session the school never took.{% endcomment %}
 <div class="space-y-2">
 <h4 class="text-[13px] font-semibold text-slate-800">Training followed up</h4>
@@ -410,36 +532,21 @@ class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] 
 </div>
 {% else %}
 <div class="edify-note" data-tone="danger" role="alert">
-<p class="edify-note__body">This school has no completed training in FY{{ act.fy }} to follow up. Record the training's completion first — a follow-up visit is completed against the session it answers.</p>
+<p class="edify-note__body">This school is not recorded as attending any training or cluster session in FY{{ act.fy }}. Submit that session's completion with the school ticked as attended first — a follow-up visit is completed against the session it answers.</p>
 </div>
 {% endif %}
 </div>
 {% endif %}
 
 <hr class="border-slate-100">
-{% if requires_school_feedback %}
+{% comment %}The school visit feedback fields (Finding, how the school improved)
+left this form on 2026-10-12 (owner: completion "should not feel like another
+data entry"). The Salesforce ID completes a visit (the uploaded form left on
+2026-10-13); the notes below stay optional for every activity.{% endcomment %}
 <div class="space-y-3">
 <div class="space-y-1">
-<h4 class="text-[13px] font-semibold text-slate-800">School visit feedback</h4>
-<p class="edify-text-caption text-slate-500">Saved to the school profile and linked to this visit{% if is_paired_in_school_training %} and its paired training{% endif %}.</p>
-</div>
-<div class="space-y-1">
-<label for="feedback_finding" class="block edify-text-caption font-semibold text-slate-600">Finding <span class="font-normal text-slate-500">(what you found on the ground)</span> <span class="text-rose-500">*</span></label>
-<textarea id="feedback_finding" name="feedback_finding" rows="4" maxlength="3000" required placeholder="What you observed at the school" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.feedbackFinding|default:"" }}</textarea>
-</div>
-<div class="space-y-1">
-<label for="school_improvements" class="block edify-text-caption font-semibold text-slate-600">How has the school improved since the last visit? <span class="text-rose-500">*</span></label>
-<textarea id="school_improvements" name="school_improvements" rows="4" maxlength="10000" required aria-describedby="school-improvements-help" placeholder="Attendance records are now updated weekly&#10;Two classrooms received new desks" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.schoolImprovementsText|default:"" }}</textarea>
-<p id="school-improvements-help" class="edify-text-caption text-slate-500">Enter one improvement per line; each is listed on the school profile.</p>
-</div>
-</div>
-{% else %}
-{% comment %}Non-visit activities retain their generic actuals fields. Visit
-feedback has a dedicated record above so it can be listed on School 360.{% endcomment %}
-<div class="space-y-3">
-<div class="space-y-1">
-<h4 class="text-[13px] font-semibold text-slate-800">What you observed</h4>
-<p class="edify-text-caption text-slate-500">A short record for IA verification and the activity file.</p>
+<h4 class="text-[13px] font-semibold text-slate-800">What you observed <span class="font-normal text-slate-500">(optional)</span></h4>
+<p class="edify-text-caption text-slate-500">A short note for the activity file, if there is something to say.</p>
 </div>
 <div class="space-y-1">
 <label for="actual_outcome" class="block edify-text-caption font-semibold text-slate-600">Outcome</label>
@@ -454,11 +561,14 @@ feedback has a dedicated record above so it can be listed on School 360.{% endco
 <input id="follow_up_note" type="text" name="follow_up_note" maxlength="500" value="{{ act.followUpNote|default:"" }}" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">
 </div>
 </div>
-{% endif %}
 
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
 <button type="submit" class="btn btn-primary h-8">{% if is_paired_in_school_training %}Submit training + visit{% else %}Submit completion{% endif %}</button>
 </div>
 </form>
+{% if can_add_school and act.clusterId %}
+<div x-show="registering" x-cloak id="register-school-panel-{{ act.id }}" aria-live="polite"></div>
+{% endif %}
+</div>
 {% endblock %}

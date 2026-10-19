@@ -145,11 +145,17 @@ def _ia_staff_queue(request, activities=None):
     one here too offered a second door that skipped that step. The reader's own
     field work is not here either: they may not verify it (a colleague does,
     or the Country Director as fallback verifier)."""
+    from apps.pl_review.services import lead_verified_q
+
     base = activities if activities is not None else _ia_activities(request)
     queue = (
         base.filter(status=ActivityStatus.AWAITING_IA_VERIFICATION)
         .exclude(delivery_type="partner")
         .exclude(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
+        # A CCEO's and a lead's field work is verified by a Programme Lead
+        # (owner, 2026-10-12 and 2026-10-14), whichever path filed it:
+        # Completion Reviews lists it.
+        .exclude(lead_verified_q())
     )
     own = _ia_own_ids(request)
     if own:
@@ -158,16 +164,23 @@ def _ia_staff_queue(request, activities=None):
 
 
 def _ia_evidence_ready_q() -> Q:
-    """An activity with at least one uploaded file that cleared quarantine."""
-    from django.db.models import Exists, OuterRef
+    """Work that is ready for review.
 
-    from apps.evidence.models import EvidenceRecord
-
-    return Q(
-        Exists(
-            EvidenceRecord.objects.filter(activity_id=OuterRef("pk"), quarantined=False)
-        )
-    )
+    UPLOAD-OFF (owner, 2026-10-13): this was "an activity with at least one
+    uploaded file that cleared quarantine". No file is asked for any more, so
+    everything waiting is ready and the filter matches every row. Uncomment
+    to bring the file test back.
+    """
+    return Q()
+    # from django.db.models import Exists, OuterRef
+    #
+    # from apps.evidence.models import EvidenceRecord
+    #
+    # return Q(
+    #     Exists(
+    #         EvidenceRecord.objects.filter(activity_id=OuterRef("pk"), quarantined=False)
+    #     )
+    # )
 
 
 def _ia_unmatched_ssa(request):
@@ -428,18 +441,20 @@ def ia_verification_queue_view(request):
     # Batch-fetch evidence/SSA existence for the CURRENT PAGE only, instead
     # of one `.exists()` query per activity per field (was unbounded: 2
     # queries x every row in the queue, not just the page being rendered).
-    from apps.evidence.models import EvidenceRecord
     from apps.ssa.models import SsaRecord
 
-    page_activity_ids = [a.id for a in page_activities]
     page_school_ids = [a.school_id for a in page_activities if a.school_id]
-    activities_with_evidence = set(
-        EvidenceRecord.objects.filter(
-            activity_id__in=page_activity_ids, quarantined=False
-        )
-        .values_list("activity_id", flat=True)
-        .distinct()
-    )
+    # UPLOAD-OFF (owner, 2026-10-13): no row waits on a file, so none is read.
+    # from apps.evidence.models import EvidenceRecord
+    #
+    # page_activity_ids = [a.id for a in page_activities]
+    # activities_with_evidence = set(
+    #     EvidenceRecord.objects.filter(
+    #         activity_id__in=page_activity_ids, quarantined=False
+    #     )
+    #     .values_list("activity_id", flat=True)
+    #     .distinct()
+    # )
     schools_with_ssa = set(
         SsaRecord.objects.filter(school_id__in=page_school_ids, deleted_at__isnull=True)
         .values_list("school_id", flat=True)
@@ -451,7 +466,8 @@ def ia_verification_queue_view(request):
     for a in page_activities:
         data = _serialize(a)
         # Add quick checks recommendation
-        data["has_evidence"] = a.id in activities_with_evidence
+        # UPLOAD-OFF (owner, 2026-10-13): was `a.id in activities_with_evidence`.
+        data["has_evidence"] = True
         data["has_sf_id"] = bool(a.salesforce_activity_id)
         data["has_ssa"] = bool(a.school_id) and a.school_id in schools_with_ssa
         data["is_high_priority"] = a.activity_type in IA_CRITICAL_ACTIVITY_TYPES
@@ -463,11 +479,9 @@ def ia_verification_queue_view(request):
             next_action = "No Salesforce ID — the responsible officer records it"
         else:
             salesforce_status = "Confirm ID"
-            next_action = (
-                "Evidence ready — verify Salesforce ID"
-                if data["has_evidence"]
-                else "Evidence missing — return to staff"
-            )
+            # UPLOAD-OFF (owner, 2026-10-13): was "Evidence ready — verify
+            # Salesforce ID" / "Evidence missing — return to staff".
+            next_action = "Verify the Salesforce ID"
         data.update(
             {
                 "submitted_at": submitted_at,
@@ -652,6 +666,7 @@ def ia_review_workspace_view(request, activity_id):
 
     # Fetch cluster schools for school-level attendance list verification
     cluster_schools = []
+    visiting_schools = []
     if a.cluster:
         from apps.schools.models import School
 
@@ -660,13 +675,30 @@ def ia_review_workspace_view(request, activity_id):
                 cluster_id=a.cluster_id, deleted_at__isnull=True
             ).order_by("name")
         )
+        # Schools from outside the cluster recorded as attending. They were
+        # never invited, so the reviewer sees them apart from the members
+        # rather than not at all (2026-10-14).
+        from apps.activities.models import ClusterActivityAttendance
+
+        member_ids = {s.id for s in cluster_schools}
+        visiting_schools = [
+            row.school
+            for row in ClusterActivityAttendance.objects.filter(
+                activity=a, is_guest=True, attended=True
+            ).select_related("school")
+            if row.school_id not in member_ids
+        ]
 
     from apps.activities.verification_analytics import _partner_names, _staff_names
+    from apps.pl_review.services import lead_verifies
 
     _ws_names = _staff_names({a.responsible_staff_id})
     _ws_partners = _partner_names({a.assigned_partner_id})
     context = {
         "act": a,
+        # A CCEO's completion is their Programme Lead's to verify (owner,
+        # 2026-10-12): the workspace reads it, and says whose decision it is.
+        "lead_verifies": lead_verifies(a),
         "owner_name": _ws_names.get(
             a.responsible_staff_id, a.responsible_staff_id or "Unassigned"
         ),
@@ -677,6 +709,7 @@ def ia_review_workspace_view(request, activity_id):
         "timeline": timeline,
         "comments": comments,
         "cluster_schools": cluster_schools,
+        "visiting_schools": visiting_schools,
         "ssa_scores": ssa_scores,
         # The most common reasons first, the owner's own example at the top
         # (2026-09-24: "the participants are not entered" in Salesforce).
@@ -723,6 +756,13 @@ def ia_verify_action(request, activity_id):
 
     if not RolePermissionService.can_verify_ia(request.user, a):
         return HttpResponseForbidden("Access Denied: Unauthorized role.")
+    from apps.pl_review.services import lead_verifies
+
+    if lead_verifies(a):
+        return HttpResponseForbidden(
+            "A CCEO's completion is verified by their Program Lead, on "
+            "Completion Reviews."
+        )
 
     if request.method == "POST":
         checklist_data = {
@@ -1158,13 +1198,21 @@ IA_ROLLUP_METRICS = ("planned", "achieved", "verified", "waiting", "returned")
 def _ia_rollup_counts(values_queryset):
     from django.db.models import Count
 
+    from apps.pl_review.services import lead_verified_q
     from apps.targets.performance import ACHIEVED_STATUSES
 
     return values_queryset.annotate(
         planned=Count("id"),
         achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
         verified=Count("id", filter=Q(ia_verification_status="confirmed")),
-        waiting=Count("id", filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)),
+        # Awaiting IA: a CCEO's and a lead's staff work waits on a Programme
+        # Lead whichever status filed it (owner, 2026-10-14), as the queue
+        # reads it (_ia_staff_queue).
+        waiting=Count(
+            "id",
+            filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
+            & ~lead_verified_q(),
+        ),
         returned=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
     )
 
@@ -2380,12 +2428,17 @@ def ia_compare_view(request):
     evidence_list = []
     ssa_record = None
 
+    from apps.pl_review.services import lead_verified_q
+
     waiting_list = (
         Activity.objects.filter(
             _ia_reach_q(request),
             deleted_at__isnull=True,
             status="awaiting_ia_verification",
         )
+        # A CCEO's and a lead's staff work is a Programme Lead's to verify
+        # (owner, 2026-10-14), so IA's picker does not offer it.
+        .exclude(lead_verified_q())
         .select_related("school", "cluster")
         .order_by("created_at", "id")
     )
@@ -2528,6 +2581,7 @@ def _own_ia_partner_activity(request, activity_id):
 def ia_partner_review_view(request, activity_id):
     """§10.2 the review page: plan vs actual, evidence, history — and the two
     workflow decisions, Return and Complete."""
+    from apps.evidence import form_document
     from apps.partners.models import Partner, PartnerAssignment
     from apps.evidence.models import EvidenceRecord
     from apps.evidence.requirements import checklist
@@ -2563,6 +2617,9 @@ def ia_partner_review_view(request, activity_id):
             "assignment": assignment,
             "evidence": evidence,
             "evidence_checklist": checklist(a),
+            # The form as one button that opens one PDF (owner, 2026-10-14).
+            "uploaded_form": form_document.uploaded_form(a),
+            "form_name": form_document.form_name(a),
             "history": history,
             "can_decide": can_decide,
             "is_partner_ssa_support": is_partner_ssa_support_activity(a),
@@ -2629,12 +2686,16 @@ def ia_partner_complete_drawer(request, activity_id):
     evidence_count = EvidenceRecord.objects.filter(
         activity_id=a.id, quarantined=False
     ).count()
+    from apps.evidence import form_document
+
     return render(
         request,
         "partials/ia/partner_complete_drawer.html",
         {
             "a": a,
             "evidence_count": evidence_count,
+            "uploaded_form": form_document.uploaded_form(a),
+            "form_name": form_document.form_name(a),
             "today": timezone.localdate(),
             "drawer_size": "md",
         },

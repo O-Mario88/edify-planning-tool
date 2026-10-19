@@ -442,7 +442,10 @@ def missing_cost_lines_count() -> int:
     """
     from apps.activities.models import Activity
     from apps.activities.online_training import ONLINE_TRAINING
-    from apps.activities.pair_costing import UNCOSTED_PAIR_TRAINING
+    from apps.activities.pair_costing import (
+        DELIVERED_PAIR_TRAINING,
+        UNCOSTED_PAIR_TRAINING,
+    )
 
     active = Activity.objects.filter(deleted_at__isnull=True)
     # A visit request awaiting its school owner is priced when the owner
@@ -455,7 +458,7 @@ def missing_cost_lines_count() -> int:
             "rejected",
             "awaiting_owner_approval",
         ]
-    ).exclude(UNCOSTED_PAIR_TRAINING | ONLINE_TRAINING)
+    ).exclude(UNCOSTED_PAIR_TRAINING | DELIVERED_PAIR_TRAINING | ONLINE_TRAINING)
     return (
         scheduled.annotate(cost_line_count=Count("schedule_cost_lines"))
         .filter(cost_line_count=0)
@@ -1510,9 +1513,17 @@ def _workflow_issues() -> dict:
         blockers.append(
             f"{core_duplicate_slot_activities} activity(ies) linked to more than one core package slot."
         )
-    if core_verified_slots_missing_evidence:
+    # Staff Core work is verified on its Salesforce ID with no file (UPLOAD-OFF,
+    # owner 2026-10-13), so only a partner's verified slot with no form is a
+    # fault. The whole count is still reported below.
+    core_partner_slots_missing_evidence = (
+        _verified_slots.filter(owner="partner")
+        .filter(Q(evidence_uri__isnull=True) | Q(evidence_uri=""))
+        .count()
+    )
+    if core_partner_slots_missing_evidence:
         blockers.append(
-            f"{core_verified_slots_missing_evidence} verified core slot(s) missing evidence."
+            f"{core_partner_slots_missing_evidence} verified partner core slot(s) missing evidence."
         )
     if core_verified_slots_missing_sf_id:
         blockers.append(

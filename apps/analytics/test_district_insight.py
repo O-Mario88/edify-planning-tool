@@ -122,8 +122,9 @@ class DistrictInsightTest(TestCase):
 
     # ── SSA ──────────────────────────────────────────────────────────────────
     def test_ssa_completion_counts_distinct_schools_not_records(self):
-        """Two assessments for one school is one school assessed."""
-        self._ssa(self.schools[0], 6.0)
+        """Two assessments for one school is one school assessed (two years'
+        now: a school has one SSA a year, owner 2026-10-14)."""
+        self._ssa(self.schools[0], 6.0, fy="FY2025")
         self._ssa(self.schools[0], 7.0)
         d = self._gulu()
         self.assertEqual(d["ssa_done"], 1)

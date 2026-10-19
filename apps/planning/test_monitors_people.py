@@ -192,6 +192,60 @@ class ThePlanningMonitorFollowsPeople(PeopleFixture):
         self.assertEqual(monitor["totals"].partner_scheduled, 1)
 
 
+class TheTwoTabsAgreeOnTrained(PeopleFixture):
+    """The Planning tab and the Execution tab beside it count the same
+    schools trained: work the Programme Lead has approved (owner, 2026-10-15),
+    and never a cluster meeting (owner, 2026-10-03)."""
+
+    def test_started_training_and_meetings_train_no_school(self):
+        self._work(self.cara, "in_school_training", status="evidence_uploaded")
+        meeting = Activity.objects.create(
+            cluster=self.cluster,
+            activity_type="cluster_meeting",
+            status="ia_verified",
+            fy=FY,
+            planned_date=DAY,
+            responsible_staff_id=self.cara.id,
+        )
+        ClusterActivityAttendance.objects.create(
+            activity=meeting, school=self.core, invited=True, attended=True
+        )
+        planning = planning_monitor(self.cd_user, fy=FY)
+        officer = self._row(
+            [o for lead in planning["leads"] for o in lead.officers], self.cara
+        )
+        execution = execution_monitor(self.cd_user, fy=FY, today=TODAY)
+        person = self._row(
+            [p for team in execution["teams"] for p in team.people], self.cara
+        )
+        self.assertEqual(officer.schools_trained, 0)
+        self.assertEqual(person.schools_trained, 0)
+
+    def _trained(self):
+        planning = planning_monitor(self.cd_user, fy=FY)
+        officer = self._row(
+            [o for lead in planning["leads"] for o in lead.officers], self.cara
+        )
+        execution = execution_monitor(self.cd_user, fy=FY, today=TODAY)
+        person = self._row(
+            [p for team in execution["teams"] for p in team.people], self.cara
+        )
+        return officer.schools_trained, person.schools_trained
+
+    def test_a_training_trains_on_both_tabs_once_the_lead_approves_it(self):
+        # Owner, 2026-10-15: "Any activity not approved by PL should not be
+        # counted".
+        training = self._work(
+            self.cara,
+            "in_school_training",
+            status="submitted_to_pl",
+            salesforce_activity_id="TS-9",
+        )
+        self.assertEqual(self._trained(), (0, 0))
+        Activity.objects.filter(pk=training.pk).update(status="ia_verified")
+        self.assertEqual(self._trained(), (1, 1))
+
+
 class TheExecutionMonitor(PeopleFixture):
     def _people(self, **kwargs):
         monitor = execution_monitor(self.cd_user, fy=FY, today=TODAY, **kwargs)
@@ -216,13 +270,145 @@ class TheExecutionMonitor(PeopleFixture):
         self._work(self.cara, "school_visit", status="returned_by_ia")
         cara = self._row(self._people()[0], self.cara)
         self.assertEqual((cara.planned, cara.due, cara.delivered), (8, 7, 4))
-        self.assertEqual(cara.visits_delivered, 4)
+        # Counted once the Programme Lead approves (owner, 2026-10-15): of the
+        # four handed in, one is approved.
+        self.assertEqual((cara.visits_delivered, cara.delivered_due), (1, 1))
         self.assertEqual(cara.complete, 1)
-        self.assertEqual((cara.missing_salesforce, cara.missing_evidence), (3, 3))
+        # No form is asked for (UPLOAD-OFF, owner 2026-10-13): it was (3, 3).
+        self.assertEqual((cara.missing_salesforce, cara.missing_evidence), (3, 0))
         # The day itself is not late, and returned work is its own list.
         self.assertEqual((cara.overdue, cara.returned), (1, 1))
-        self.assertEqual((cara.verified, cara.awaiting_ia), (1, 1))
-        self.assertEqual(cara.target_progress, 1)
+        self.assertEqual((cara.verified, cara.awaiting_pl), (1, 1))
+
+    def test_only_completed_work_counts_and_what_remains(self):
+        # Owner, 2026-10-14: "count exact number of completed visits or
+        # trainings and add a column of Remaining to Visit and Remaining to
+        # Train"; training is read against the whole portfolio, never the
+        # 560 ("Training should be the entire portfolio").
+        self._work(
+            self.cara,
+            "school_visit",
+            status="ia_verified",
+            salesforce_activity_id="SV-1",
+        )
+        self._work(
+            self.cara,
+            "school_visit",
+            status="submitted_to_pl",
+            salesforce_activity_id="SV-2",
+        )
+        # Started, an old upload in, not submitted: not completed.
+        self._work(self.cara, "school_visit", status="evidence_uploaded")
+        # Trains PPL-1, and is one of her counted visits too.
+        self._work(
+            self.cara,
+            "in_school_training",
+            status="ia_verified",
+            salesforce_activity_id="TS-1",
+        )
+        self._work(self.cara, "in_school_training", school=self.core)
+        people, monitor = self._people()
+        cara = self._row(people, self.cara)
+        # Three handed in; the two the Programme Lead approved are counted
+        # (owner, 2026-10-15).
+        self.assertEqual((cara.visits_delivered, cara.delivered), (2, 3))
+        self.assertEqual(cara.remaining_to_visit, 560 - 2)
+        # She holds two schools that take a training; one is trained.
+        self.assertEqual(
+            (cara.training_portfolio, cara.schools_trained, cara.remaining_to_train),
+            (2, 1, 1),
+        )
+        self.assertEqual(cara.training_progress, 50)
+        # Completed and not yet approved: with her Programme Lead.
+        self.assertEqual(cara.awaiting_pl, 1)
+        dan = self._row(people, self.dan)
+        self.assertEqual((dan.training_portfolio, dan.remaining_to_train), (0, 0))
+        self.assertEqual(dan.remaining_to_visit, 560)
+        team = next(t for t in monitor["teams"] if t.key == self.lead.id)
+        self.assertEqual(team.remaining_to_train, 1)
+        self.assertEqual(team.remaining_to_visit, 280 + 560 + 560 - 2)
+
+    def test_work_delivered_ahead_of_its_day_is_counted(self):
+        # Owner, 2026-10-14: "As long as the activity is completed, it should
+        # be counted irrespective of when they were planned." A core visit
+        # planned for 20 Oct and verified on the 14th read 2 of 18 delivered.
+        ahead = TODAY + timedelta(days=6)
+        self._work(
+            self.cara,
+            "school_visit",
+            status="ia_verified",
+            planned_date=ahead,
+            salesforce_activity_id="SVE-267594",
+        )
+        self._work(
+            self.cara,
+            "school_visit",
+            status="submitted_to_pl",
+            planned_date=ahead,
+            salesforce_activity_id="SV-51548",
+        )
+        self._work(
+            self.cara,
+            "school_visit",
+            status="ia_verified",
+            salesforce_activity_id="SV-51719",
+        )
+        self._work(self.cara, "school_visit", planned_date=ahead)  # not due yet
+        self._work(self.cara, "school_visit")  # past its day, not delivered
+        cara = self._row(self._people()[0], self.cara)
+        self.assertEqual((cara.delivered, cara.complete, cara.verified), (3, 3, 2))
+        # Approved work is counted whatever day it was planned for; the one
+        # still with the Programme Lead waits for the approval (owner,
+        # 2026-10-15).
+        self.assertEqual((cara.delivered_due, cara.due), (2, 4))
+        self.assertEqual((cara.due_progress, cara.overdue), (50, 1))
+        self.assertEqual((cara.visits_delivered, cara.awaiting_pl), (2, 1))
+
+    def _session(self, activity_type, school, *, status="ia_verified"):
+        session = Activity.objects.create(
+            cluster=self.cluster,
+            activity_type=activity_type,
+            status=status,
+            fy=FY,
+            planned_date=DAY,
+            responsible_staff_id=self.cara.id,
+            salesforce_activity_id=f"CS-{activity_type}-{school.school_id}",
+        )
+        ClusterActivityAttendance.objects.create(
+            activity=session, school=school, invited=True, attended=True
+        )
+        return session
+
+    def test_a_cluster_meeting_trains_no_school(self):
+        # Owner, 2026-10-03: "A cluster meeting is not a training". Attending
+        # a completed one leaves the school untrained; attending a completed
+        # group training trains it.
+        self._session("cluster_meeting", self.client_school)
+        self._session("cluster_training", self.core)
+        cara = self._row(self._people()[0], self.cara)
+        self.assertEqual((cara.training_portfolio, cara.schools_trained), (2, 1))
+        self.assertEqual(cara.remaining_to_train, 1)
+
+    def test_a_team_remaining_is_the_sum_of_its_people(self):
+        # One officer past their 560 does not cover for another short of it.
+        from apps.planning.execution_monitor import PersonExecution, TeamExecution
+
+        ahead = PersonExecution(
+            key="a", name="A", lead_id="", lead_name="", visits_target=560
+        )
+        ahead.visits_delivered = 600
+        ahead.training_portfolio, ahead.schools_trained = 10, 10
+        behind = PersonExecution(
+            key="b", name="B", lead_id="", lead_name="", visits_target=560
+        )
+        behind.visits_delivered = 100
+        behind.training_portfolio, behind.schools_trained = 10, 4
+        team = TeamExecution(key="t", name="T", people=[ahead, behind])
+        self.assertEqual(
+            (ahead.remaining_to_visit, behind.remaining_to_visit), (0, 460)
+        )
+        self.assertEqual(team.remaining_to_visit, 460)
+        self.assertEqual(team.remaining_to_train, 6)
 
     def test_the_list_behind_a_count(self):
         late = self._work(self.cara, "school_visit")
@@ -518,7 +704,7 @@ class TrainingsCarryTheirIntervention(PeopleFixture):
         training.refresh_from_db()
         self.assertEqual(training.focus_intervention, "leadership")
 
-    def test_the_export_carries_the_training_name_intervention_and_school_ids(self):
+    def test_the_export_carries_the_training_name_and_intervention(self):
         session = Activity.objects.create(
             cluster=self.cluster,
             activity_type="cluster_training",
@@ -535,11 +721,20 @@ class TrainingsCarryTheirIntervention(PeopleFixture):
             )
         self.client.force_login(self.cd_user)
         response = self.client.get(f"/country-planning-oversight/export?fy={FY}")
-        rows = list(
-            csv.DictReader(b"".join(response.streaming_content).decode().splitlines())
+        from apps.core import plan_export
+
+        tables = plan_export.tables_from_csv(
+            csv.reader(b"".join(response.streaming_content).decode().splitlines())
         )
-        trainings = [row for row in rows if row["Table"] == "Training"]
-        self.assertEqual({row["School ID"] for row in trainings}, {"PPL-1", "PPL-C"})
-        for row in trainings:
-            self.assertEqual(row["Training name"], "Discipleship Dynamics")
-            self.assertEqual(row["SSA intervention"], "Exposure to the Word of God")
+        # One row a session (owner, 2026-10-12: the training columns open on
+        # the Cluster Name and carry no School ID), with its training and its
+        # SSA intervention by name. The page still lists it once per invited
+        # school.
+        trainings = tables[plan_export.TRAINING_SHEET]
+        self.assertEqual(len(trainings), 1)
+        self.assertEqual(trainings[0]["Cluster Name"], self.cluster.name)
+        self.assertEqual(trainings[0]["Training"], "Discipleship Dynamics")
+        self.assertEqual(
+            trainings[0]["SSA Intervention"], "Exposure to the Word of God"
+        )
+        self.assertNotIn("School ID", trainings[0])

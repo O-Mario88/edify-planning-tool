@@ -19,6 +19,7 @@ from django.contrib import messages
 from django.utils import timezone
 import csv
 
+from apps.core.htmx_saved import saved_and_reloaded
 from django.http import HttpResponse, HttpResponseNotFound
 
 from apps.fund_requests.models import (
@@ -363,9 +364,7 @@ def disburse_advance_action(request):
             if amount:
                 payload["amount"] = int(amount)
             disburse_weekly(request_id, payload, request.user)
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_and_reloaded()
         except Exception as e:
             return error_fragment(e, status=400)
 
@@ -429,9 +428,7 @@ def clear_partner_payment_action(request):
                 netsuite_id=netsuite_id,
             )
 
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_and_reloaded()
         except Exception as e:
             return error_fragment(e, status=400)
 
@@ -464,9 +461,7 @@ def process_reimbursement_action(request):
 
             process_reimburse(advance_id, payload, request.user)
 
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_and_reloaded()
         except Exception as e:
             return error_fragment(e, status=400)
 
@@ -540,9 +535,7 @@ def confirm_accountability_action(request):
 
                 roll_up_accountability(wfr, advances)
 
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_and_reloaded()
         except Exception as e:
             return error_fragment(e, status=400)
 
@@ -588,9 +581,7 @@ def finance_return_action(request):
     except Exception as exc:  # noqa: BLE001 — surfaced to the drawer
         return error_fragment(exc, status=400)
 
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_and_reloaded()
 
 
 @require_page_permission("consolidated_fund_allocation")

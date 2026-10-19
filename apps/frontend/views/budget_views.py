@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.metrics import format_ugx_compact
 from apps.core.redirects import local_redirect
+from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from apps.core.permissions import RolePermissionService
 from apps.core.permissions import require_page_permission
 from django.contrib import messages
@@ -1323,7 +1324,7 @@ def _build_fund_requests_context(request):
                 planned_date__gte=selected_week_start,
                 planned_date__lte=selected_week_end,
             )
-            .exclude(activity__status="cancelled")
+            .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
             .exists()
         )
         if has_scheduled_this_week:
@@ -2137,8 +2138,9 @@ def budget_export_drawer_view(request):
         export_url="/budget/export",
         title="Export Budget",
         subtitle=(
-            "The planned activities of the period, each with the budget of "
-            "its own cost lines, as one Excel workbook"
+            "The Activity cost plan of the period as the Budget page lays it "
+            "out, with the planned activities and cost lines behind it, as "
+            "one Excel workbook"
         ),
         hidden_keys=("budget_scope", "district", "staff", "date"),
     )

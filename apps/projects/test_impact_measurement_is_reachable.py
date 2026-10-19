@@ -98,9 +98,13 @@ class ProjectImpactBecomesAnAnswerTest(TestCase):
         return record
 
     def _make_ssa(self, on, score, *, status="confirmed"):
+        from apps.core.fy import get_operational_fy
+
         record = SsaRecord.objects.create(
             school=self.school,
-            fy="2026",
+            # The year its date falls in: a school has one SSA a year (owner,
+            # 2026-10-14), so a baseline and its follow-up are two years'.
+            fy=get_operational_fy(on),
             quarter="Q1",
             average_score=score,
             verification_status=status,
@@ -115,7 +119,15 @@ class ProjectImpactBecomesAnAnswerTest(TestCase):
     def _assignment_with_baseline(self, baseline_score=3.0):
         from apps.projects.services import _capture_baseline
 
-        self._make_ssa(timezone.now() - datetime.timedelta(days=400), baseline_score)
+        # Two years back, so no follow-up below (all inside the last year)
+        # shares its year, whatever day the suite runs.
+        from apps.core.fy import get_fy_date_range, get_operational_fy
+
+        two_back = str(int(get_operational_fy(timezone.localdate())) - 2)
+        self._make_ssa(
+            get_fy_date_range(two_back)[0] + datetime.timedelta(days=10),
+            baseline_score,
+        )
         assignment = ProjectSchoolAssignment.objects.create(
             project=self.project,
             school=self.school,

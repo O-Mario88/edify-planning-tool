@@ -327,6 +327,24 @@ def _notify_completion_routed(a, next_status, principal) -> None:
     # deployment-wide notice to every IA holder as well (IA review, 2026-09-13).
 
 
+def _handed_in(a, next_status, principal):
+    """The hand-in's last step. A Programme Lead's own work is approved at
+    once (owner, 2026-10-15: "theirs are approved automatically"), so nobody
+    is asked; anyone else's tells its reviewer — a CCEO's, their Programme
+    Lead, who approves it before it is counted."""
+    from apps.activities.completed_day import move_to_completed_day
+    from apps.pl_review.services import approve_on_hand_in
+
+    # Done on another day than planned: the work and its money move to the
+    # day it was done, and the planned day is free (owner, 2026-10-16).
+    move_to_completed_day(a, principal)
+    if next_status == "submitted_to_pl" and approve_on_hand_in(a):
+        a.refresh_from_db()
+        return a
+    _notify_completion_routed(a, next_status, principal)
+    return a
+
+
 # Salesforce's own two-way split, not the platform's grouping. Salesforce
 # classifies every activity as either "training" or "visit", and it puts
 # cluster meetings and SSA activities on the training side. That is a mapping
@@ -766,6 +784,26 @@ def _target_under_oversight(scope, school: School | None, cluster_id) -> bool:
     return False
 
 
+def _verified_from_upload(activity) -> bool:
+    """Whether this activity must carry an uploaded form.
+
+    Partner work must: the form it uploads is how its work is verified (owner,
+    2026-10-14: "Only staff dont need to upload. partners HAVE to upload
+    because that is how we verify their work"). Staff work is completed with
+    its visit ID or training ID alone (owner, 2026-10-13: "remove the upload
+    and use strictly visit ID and training IDs to complete the activities ...
+    just comment the code out, we may need it later").
+
+    UPLOAD-OFF: the staff upload is switched off here rather than deleted.
+    Every rule below that asked staff for a file asks this first, so making
+    this return True for staff work brings their upload back
+    (apps.evidence.form_document.takes_upload is the one definition).
+    """
+    from apps.evidence.form_document import takes_upload
+
+    return takes_upload(activity)
+
+
 def _partner_evidence_exists(activity) -> bool:
     """Partner evidence goes DIRECTLY to IA (owner spec §10, 2026-08-20):
     submission requires evidence to exist, never a staff acceptance step."""
@@ -817,6 +855,16 @@ def _serialize(a: Activity, *, owner_name: str | None = None) -> dict:
             else None
         ),
         "ownerName": owner_name,
+        # The day the work was done and, when it moved there, the day it was
+        # planned for (owner, 2026-10-16; apps.activities.completed_day).
+        "actualDeliveryDate": (
+            a.actual_delivery_date.isoformat() if a.actual_delivery_date else None
+        ),
+        "plannedDateBeforeCompletion": (
+            a.planned_date_before_completion.isoformat()
+            if a.planned_date_before_completion
+            else None
+        ),
         "catalogueItemId": a.catalogue_item_id,
         "trainingCourseId": a.training_course_id,
         "pairedSchoolVisitId": a.paired_school_visit_id,
@@ -893,26 +941,20 @@ def _field_event_district_type(activity: Activity) -> str:
     dest = activity.event_district_id
     if not dest:
         return "primary"
-    from django.db.models import Q as _Q
-
-    from apps.accounts.models import StaffProfile
-
-    home = (
-        StaffProfile.objects.filter(
-            _Q(id=activity.responsible_staff_id)
-            | _Q(user_id=activity.responsible_staff_id)
-        )
-        .values_list("primary_district_id", flat=True)
-        .first()
-    )
-    if home:
-        return "primary" if home == dest else "secondary"
+    # The one rule a school-visit day is read by (district_type_for_staff):
+    # field staff against their primary district, head office against the
+    # Kampala, Wakiso and Mukono zone. This re-implemented the home-district
+    # comparison and priced a head-office event inside the zone as secondary
+    # (owner, 2026-10-15 cost audit).
+    from apps.daily_visit_batches.districts import district_type_for_staff
     from apps.geography.models import District
 
-    dtype = (
-        District.objects.filter(id=dest).values_list("district_type", flat=True).first()
-    )
-    return dtype or "secondary"
+    district = District.objects.filter(id=dest).first()
+    # An unclassified district plans and prices as primary (owner,
+    # 2026-10-02), as the day pool reads it.
+    if district is None:
+        return "primary"
+    return district_type_for_staff(activity.responsible_staff_id, district) or "primary"
 
 
 def _costing_input(activity: Activity, data: dict) -> dict:
@@ -953,7 +995,14 @@ def _costing_input(activity: Activity, data: dict) -> dict:
     # Field events derive the travel profile from the owner's PRIMARY (home)
     # district vs the event's destination district — the MOU per-diem rule.
     # An explicit districtType in the form is a recorded override and wins.
-    if not district_type and activity.activity_type == "field_event":
+    # Work at no school and in no cluster — a field event, a camp, a TOT, a
+    # programme event — is priced where it happens, its event district, as the
+    # day pool reads a one-day event (member_district). Only field events were,
+    # so a multi-day camp in a secondary district priced at primary rates
+    # (owner, 2026-10-12: secondary district work fetches secondary costs).
+    if not district_type and (
+        activity.activity_type == "field_event" or activity.event_district_id
+    ):
         district_type = _field_event_district_type(activity)
 
     return {
@@ -973,6 +1022,11 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "photocopyPages": value("photocopyPages", activity.photocopy_pages),
         "photocopyCopies": value("photocopyCopies", activity.photocopy_copies),
         "districtType": district_type,
+        # The rate card for the activity's own day, as its day pool reads it
+        # (daily_visit_batches._catalogue_for_batch_date): without it work
+        # priced on its own took the newest card whatever its date (owner,
+        # 2026-10-15 cost audit: "no inflating or deflating the costs").
+        "plannedDate": activity.planned_date,
         # The night away is paid at the traveller's accommodation rate
         # (owner, 2026-10-05): the CCEO's, or the one set for every other
         # member of staff.
@@ -1028,6 +1082,51 @@ def reprice_activity(activity: Activity, principal=None) -> None:
 def _apply_schedule_cost_snapshot(
     activity: Activity, data: dict, principal=None
 ) -> None:
+    """Price the activity (`_price_activity`), then keep the in-school
+    Training of a School Visit priced as the visit's state says
+    (`_settle_pair_training`)."""
+    _price_activity(activity, data, principal=principal)
+    if activity.activity_type == "school_visit":
+        _settle_pair_training(activity, principal=principal)
+
+
+def _settle_pair_training(visit: Activity, principal=None) -> None:
+    """The in-school Training of this School Visit, priced as its visit's
+    state says: UGX 0 (its partner fee aside) and outside every day pool while
+    the visit makes the journey; the visit day once the visit is called off or
+    removed (apps.activities.pair_costing; owner, 2026-09-28 and 2026-10-15).
+
+    Called whenever the visit is priced or called off, so the halves cannot
+    disagree whichever is moved first: a Training moved while its visit was
+    called off joins the day, and is taken back out the moment the visit is
+    brought back to it. Only a Training that disagrees is re-priced, through
+    the one cost writer and its finance locks."""
+    from apps.activities.facilitation import FEE_LINE_TYPE
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.activities.pair_costing import (
+        REPRICEABLE_PAIR_STATUSES,
+        is_uncosted_pair_training,
+    )
+
+    training = Activity.objects.filter(
+        paired_school_visit_id=visit.id,
+        activity_type="in_school_training",
+        deleted_at__isnull=True,
+        status__in=REPRICEABLE_PAIR_STATUSES,
+    ).first()
+    if training is None:
+        return
+    carries_day = bool(training.daily_visit_batch_id) or (
+        ActivityScheduleCostLine.objects.filter(activity=training)
+        .exclude(line_item_type=FEE_LINE_TYPE)
+        .exists()
+    )
+    if is_uncosted_pair_training(training) != carries_day:
+        return
+    _price_activity(training, {}, principal=principal)
+
+
+def _price_activity(activity: Activity, data: dict, principal=None) -> None:
     """Delegate to the central CostingService — the SINGLE cost writer.
 
     All scheduling paths (create, reschedule, partner self-schedule) funnel here.
@@ -1173,7 +1272,12 @@ def _price_pair_training_at_zero(
         .first()
     )
     if visit is not None:
-        _apply_schedule_cost_snapshot(visit, {}, principal=principal)
+        from apps.daily_visit_batches.costs_follow import price_on_its_way
+
+        # A visit just scheduled by a save that answers first has no lines
+        # for a moment: its day is written down to be priced.
+        if not price_on_its_way(visit):
+            _apply_schedule_cost_snapshot(visit, {}, principal=principal)
 
 
 # A client school's package is one visit and one training per fiscal year.
@@ -1331,18 +1435,39 @@ def _assert_schedule_entitlement(
         assert_staff_may_schedule_visit(school, fy, pool=pool)
 
 
-def _sync_cluster_attendance(activity, school_ids, actor_id="") -> None:
+def _sync_cluster_attendance(
+    activity, school_ids, actor_id="", *, visiting=None, release_absent=False
+) -> list[str]:
     """Mirror the confirmed register into the attendance table.
 
     The array column stays the record the older readers use while they are
     migrated; the rows are what school-level counts join against, because a
     cluster session has no school FK for them to filter on. Written together
     so the two can never disagree about who was in the room.
+
+    ``visiting`` is the register's schools from outside the cluster, as
+    ``{school_id: attended}`` (`_visiting_school_attendance`), or None when the
+    caller's form carries no such list. A visiting school is a guest row: its
+    attendance is recorded against the session and never makes it a member.
+    With None the guest rows are left exactly as they are — this used to
+    reset every guest to "did not attend", because a guest's id is not a
+    member's and so was never among the confirmed ids (2026-10-14).
+
+    ``release_absent`` is set by completion: a school that was invited and is
+    left unticked goes back to unplanned (owner, 2026-10-14: "unchecked ...
+    reset back to unplanned and untrained so the staff can plan for them
+    afresh"). Its invitation row is removed, as un-inviting it or closing the
+    school does, so it no longer reads as scheduled for this training, holds
+    no place under the training ceiling and, for a Core School, gives its
+    package slot back (the credit pass on the activity's save). The session
+    keeps the head count it was planned and priced with
+    (`Activity.expected_participants` is not re-derived here). Returns the
+    schools released.
     """
     from apps.activities.models import ClusterActivityAttendance
 
     if not activity.cluster_id:
-        return
+        return []
     confirmed = set(school_ids or [])
     rows = {
         r.school_id: r
@@ -1365,12 +1490,82 @@ def _sync_cluster_attendance(activity, school_ids, actor_id="") -> None:
             row.attended = True
             row.recorded_by = actor_id or row.recorded_by
             row.save(update_fields=["attended", "recorded_by", "updated_at"])
+    for school_id, attended in (visiting or {}).items():
+        row = rows.get(school_id)
+        if row is None:
+            # Only a school that came is written. One added to the list and
+            # left unticked was never part of the session; it has no row,
+            # exactly as a member nobody invited has none. A guest brings its
+            # own head counts, unknown here, so they stay blank rather than
+            # borrowing the cluster's per-school figures.
+            if attended:
+                ClusterActivityAttendance.objects.create(
+                    activity=activity,
+                    school_id=school_id,
+                    invited=False,
+                    attended=True,
+                    is_guest=True,
+                    recorded_by=actor_id or "",
+                )
+        elif row.attended != attended:
+            row.attended = attended
+            row.recorded_by = actor_id or row.recorded_by
+            row.save(update_fields=["attended", "recorded_by", "updated_at"])
     # An unticked school keeps its invitation as the record that it was asked.
-    stale = [r for sid, r in rows.items() if sid not in confirmed and r.attended]
+    stale = [
+        r
+        for sid, r in rows.items()
+        if sid not in confirmed
+        and r.attended
+        and not (r.is_guest and (visiting is None or sid in visiting))
+    ]
     if stale:
         ClusterActivityAttendance.objects.filter(id__in=[r.id for r in stale]).update(
             attended=False
         )
+    if not release_absent:
+        return []
+    absent = [
+        r
+        for sid, r in rows.items()
+        if r.invited and not r.is_guest and sid not in confirmed
+    ]
+    if absent:
+        ClusterActivityAttendance.objects.filter(id__in=[r.id for r in absent]).delete()
+    return sorted(r.school_id for r in absent)
+
+
+def _visiting_school_attendance(activity, visiting_ids, attended_ids):
+    """The register's visiting schools, as ``{school_id: attended}``.
+
+    None when the form sent no visiting list (``visiting_ids`` is None), so
+    `_sync_cluster_attendance` leaves the guest rows alone. Otherwise every id
+    must be an operating school in the directory and not a member of this
+    cluster: a member is ticked as a member, and a stray id posted by a
+    browser cannot credit a school nobody can see.
+    """
+    if visiting_ids is None or not activity.cluster_id:
+        return None
+    from apps.schools.lifecycle_service import active_schools
+
+    wanted = list(
+        dict.fromkeys(str(i).strip() for i in (visiting_ids or []) if str(i).strip())
+    )
+    if not wanted:
+        return {}
+    known = dict(active_schools().filter(id__in=wanted).values_list("id", "cluster_id"))
+    unknown = [i for i in wanted if i not in known]
+    if unknown:
+        raise BadRequest(
+            "A school on the register is not in the directory, or has closed. "
+            "Reload the drawer and add it again."
+        )
+    attended = {str(i).strip() for i in (attended_ids or [])}
+    return {
+        school_id: school_id in attended
+        for school_id in wanted
+        if str(known[school_id] or "") != str(activity.cluster_id)
+    }
 
 
 def _cluster_member_school_ids(activity, raw_ids) -> list[str]:
@@ -2529,19 +2724,17 @@ def _create(
     # the leave check entirely.
     if scheduled_date:
         check_staff_id = responsible_staff_id or monitored_by_staff_id
-        resp_user = _user_for_staff_identity(check_staff_id) if check_staff_id else None
-        avail = _SchedulingPolicyService.check(resp_user, scheduled_date)
-        if avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+        refused = _SchedulingPolicyService.refusal(check_staff_id, scheduled_date)
+        if refused:
+            raise BadRequest("Scheduling blocked: " + " · ".join(refused))
         # `check` coerces a plain date itself, so pass end_date straight in:
         # wrapping it in an aware datetime first only adds a timezone in which
         # a midnight boundary could shift the day being checked.
         if end_date and end_date != local_day(scheduled_date):
-            end_check = _SchedulingPolicyService.check(resp_user, end_date)
-            if end_check["status"] == "blocked":
+            refused = _SchedulingPolicyService.refusal(check_staff_id, end_date)
+            if refused:
                 raise BadRequest(
-                    "Scheduling blocked on the end date: "
-                    + " · ".join(end_check["blockers"])
+                    "Scheduling blocked on the end date: " + " · ".join(refused)
                 )
 
     # A paused or closed Special Project must stop absorbing new commitments —
@@ -3343,7 +3536,12 @@ def _create(
         # so it is not priced yet either — the same rule as undated work.
         # Approval prices it (apps.planning.visit_requests.approve).
         if not skip_cost_snapshot and activity.scheduled_date and not approval_owner_id:
-            _apply_schedule_cost_snapshot(activity, data, principal=principal)
+            from apps.daily_visit_batches.costs_follow import costs_follow
+
+            # The new activity is stored and checked in the answer; the day
+            # it joins is priced after it.
+            with costs_follow(principal):
+                _apply_schedule_cost_snapshot(activity, data, principal=principal)
     # Planning and scheduling must both be on the tamper-evident audit chain.
     # An undated draft is a real planning authorization but it is not yet
     # money-bearing work, so do not mislabel it as scheduled.
@@ -3681,17 +3879,24 @@ def _normalize_school_improvements(raw) -> list[str]:
 
 
 def _validate_school_visit_feedback(data: dict) -> tuple[str, list[str]]:
+    """The school feedback as posted, trimmed and bounded.
+
+    Neither half is demanded any more (owner, 2026-10-12: completing a visit
+    "should not feel like another data entry"); what an officer does write is
+    kept on the school's profile as before.
+    """
     finding = str(data.get("feedbackFinding") or "").strip()
     improvements = _normalize_school_improvements(data.get("schoolImprovements"))
-    if not finding:
-        raise BadRequest("Record what you found on the ground during the school visit.")
     if len(finding) > 3000:
         raise BadRequest("The school visit finding must be 3,000 characters or fewer.")
-    if not improvements:
-        raise BadRequest(
-            "List at least one way the school has improved since the last visit."
-        )
     return finding, improvements
+
+
+def _school_feedback_posted(data: dict) -> bool:
+    return bool(
+        str(data.get("feedbackFinding") or "").strip()
+        or _normalize_school_improvements(data.get("schoolImprovements"))
+    )
 
 
 @transaction.atomic
@@ -3828,13 +4033,17 @@ def _bind_followed_up_training(activity, data):
 
 
 def complete(activity_id: str, data: dict, principal) -> dict:
-    """Submit completion: evidence present, Salesforce ID validated, attendance
-    for trainings, CCEO routes to PL / staff routes to IA."""
+    """Submit completion: Salesforce ID validated, attendance for trainings,
+    CCEO routes to PL / staff routes to IA. A partner's work must carry its
+    uploaded form; staff work asks for none (_verified_from_upload)."""
     a = _get_for_execution(activity_id, principal)
     if a.status not in COMPLETABLE_STATUSES:
-        raise BadRequest(
-            "Click Complete first to unlock evidence upload and Activity Code entry."
-        )
+        raise BadRequest("Click Complete first to unlock completion.")
+    # The day the work was done (owner, 2026-10-16): today or any day
+    # before, never a future one. Asked before anything is changed.
+    from apps.activities.completed_day import completion_day
+
+    completed_on = completion_day(data.get("actualDeliveryDate"))
 
     # Older unit fixtures predate the school-visit feedback contract, so
     # test-only callers that omit the new keys remain usable. Keep the
@@ -3886,46 +4095,44 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 "scores, or give a reason the SSA was not collected."
             )
 
-    # Evidence presence (lazily import to avoid a circular dep with evidence app).
-    try:
-        from apps.evidence.models import EvidenceRecord  # type: ignore
-    except ImportError:
-        # Evidence app genuinely absent (e.g. minimal install). Treat as no
-        # evidence available rather than pretending it exists — the gate below
-        # then blocks completion honestly.
-        evidence_count = 0
-    else:
-        evidence_count = EvidenceRecord.objects.filter(
-            activity_id=a.id, quarantined=False
-        ).count()
-    from apps.evidence.requirements import evidence_optional
+    # A partner's work only: staff work asks for no file (_verified_from_upload).
+    if _verified_from_upload(a):
+        # Evidence presence (lazily import to avoid a circular dep with evidence app).
+        try:
+            from apps.evidence.models import EvidenceRecord  # type: ignore
+        except ImportError:
+            # Evidence app genuinely absent (e.g. minimal install). Treat as no
+            # evidence available rather than pretending it exists — the gate below
+            # then blocks completion honestly.
+            evidence_count = 0
+        else:
+            evidence_count = EvidenceRecord.objects.filter(
+                activity_id=a.id, quarantined=False
+            ).count()
+        from apps.evidence.requirements import evidence_optional
 
-    if evidence_count == 0 and not evidence_optional(a):
-        raise BadRequest("Upload evidence before submitting completion.")
+        if evidence_count == 0 and not evidence_optional(a):
+            raise BadRequest("Upload evidence before submitting completion.")
 
-    # Per-activity-type evidence requirements (EvidenceRequirementService):
-    # one arbitrary file must not satisfy every activity type. Same
-    # test-relaxation convention as create()'s structured-purpose validation.
-    if not _is_testing or data.get("strict_validation"):
-        from apps.evidence.requirements import missing_evidence_kinds
+        # Per-activity-type evidence requirements (EvidenceRequirementService):
+        # one arbitrary file must not satisfy every activity type. Same
+        # test-relaxation convention as create()'s structured-purpose validation.
+        if not _is_testing or data.get("strict_validation"):
+            from apps.evidence.requirements import missing_evidence_kinds
 
-        missing = missing_evidence_kinds(a)
-        if missing:
-            labels = ", ".join(m["label"] for m in missing)
-            raise BadRequest(
-                f"Required evidence missing for this activity type: {labels}. "
-                "Upload each required document before submitting completion."
-            )
+            missing = missing_evidence_kinds(a)
+            if missing:
+                labels = ", ".join(m["label"] for m in missing)
+                raise BadRequest(
+                    f"Required evidence missing for this activity type: {labels}. "
+                    "Upload each required document before submitting completion."
+                )
 
-    # A visit is not complete without the school's field feedback. Evidence is
-    # validated first so callers receive the platform's established completion
-    # gate before the newer, activity-specific form requirements.
-    if a.activity_type in VISIT_TYPES and (
-        not _is_testing
-        or data.get("strict_validation")
-        or data.get("feedbackFinding") is not None
-        or data.get("schoolImprovements") is not None
-    ):
+    # The school's field feedback (what was found, how the school improved) is
+    # kept when the officer wrote some, never demanded (owner, 2026-10-12: the
+    # completion form "should not feel like another data entry"). The form and
+    # the Salesforce ID are what complete a visit.
+    if a.activity_type in VISIT_TYPES and _school_feedback_posted(data):
         visit_feedback = _validate_school_visit_feedback(data)
 
     # A follow-up visit names the training it followed up, at completion,
@@ -3985,11 +4192,14 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     # Partner-delivered work goes DIRECTLY to IA (§10) whoever presses the
     # button — a monitoring CCEO submitting on the partner's behalf must not
     # detour it through PL review (2026-08-19 audit: the role-only ternary
-    # was a hidden approval gate reachable through the API).
-    is_cceo = principal.active_role == "CCEO"
+    # was a hidden approval gate reachable through the API). A CCEO's own
+    # staff work goes to their Programme Lead whoever presses the button
+    # (owner, 2026-10-12; apps.pl_review.services.routes_to_lead).
+    from apps.pl_review.services import routes_to_lead
+
     next_status = (
         "submitted_to_pl"
-        if is_cceo and a.delivery_type != "partner"
+        if routes_to_lead(a, principal)
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
@@ -4000,9 +4210,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         # unique constraint, and a cancel that landed in between was undone.
         a = Activity.objects.select_for_update().get(pk=a.pk)
         if a.status not in COMPLETABLE_STATUSES:
-            raise BadRequest(
-                "Click Complete first to unlock evidence upload and Activity Code entry."
-            )
+            raise BadRequest("Click Complete first to unlock completion.")
         if followed_up is not None:
             a.follow_up_of_activity = followed_up
         a.teachers_attended = data.get("teachersAttended")
@@ -4011,14 +4219,35 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         a.attended_school_ids = _cluster_member_school_ids(
             a, data.get("attendedSchoolIds")
         )
-        _sync_cluster_attendance(
-            a, a.attended_school_ids, str(getattr(principal, "id", "") or "")
+        released = _sync_cluster_attendance(
+            a,
+            a.attended_school_ids,
+            str(getattr(principal, "id", "") or ""),
+            visiting=_visiting_school_attendance(
+                a, data.get("visitingSchoolIds"), data.get("attendedSchoolIds")
+            ),
+            release_absent=True,
         )
+        if released:
+            from apps.audit.services import log as audit_log
+
+            audit_log(
+                action="activity.absent_schools_released",
+                subject_kind="Activity",
+                subject_id=str(a.id),
+                actor_id=str(getattr(principal, "id", "") or ""),
+                actor_role=getattr(principal, "active_role", None),
+                reason=(
+                    "Invited, not ticked as attending at completion: back to "
+                    "unplanned for this training or meeting."
+                ),
+                payload={"schoolIds": released},
+            )
         # Actuals — entered by the person who delivered, never copied from
         # the planned fields (§9.2). Absent keys leave stored values alone so
         # staged flows that submit in stages don't erase earlier entries.
-        if data.get("actualDeliveryDate"):
-            a.actual_delivery_date = _parse_date(data["actualDeliveryDate"]).date()
+        if completed_on:
+            a.actual_delivery_date = completed_on
         if data.get("actualOutcome") is not None:
             a.actual_outcome = str(data.get("actualOutcome") or "").strip()
         if data.get("actualObservations") is not None:
@@ -4081,7 +4310,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 },
             )
         _move_partner_work_to_delivery_date(a, principal)
-    _notify_completion_routed(a, next_status, principal)
+    a = _handed_in(a, next_status, principal)
     _resolve_overdue_reminder(a)
     return _serialize(a)
 
@@ -4155,34 +4384,36 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
     if a.status not in SUBMITTABLE_STATUSES:
         raise BadRequest("Activity is not ready to be submitted for review.")
 
-    from apps.evidence.models import EvidenceRecord
+    # A partner's work only: staff work asks for no file (_verified_from_upload).
+    if _verified_from_upload(a):
+        from apps.evidence.models import EvidenceRecord
 
-    from apps.evidence.requirements import evidence_optional
+        from apps.evidence.requirements import evidence_optional
 
-    if not EvidenceRecord.objects.filter(
-        activity_id=a.id, quarantined=False
-    ).exists() and not evidence_optional(a):
-        raise BadRequest("Upload evidence before submitting completion.")
+        if not EvidenceRecord.objects.filter(
+            activity_id=a.id, quarantined=False
+        ).exists() and not evidence_optional(a):
+            raise BadRequest("Upload evidence before submitting completion.")
 
-    import sys as _sys
+        import sys as _sys
 
-    # Same test-relaxation convention as create() and complete(), but this
-    # one previously had NO opt-in flag at all, so the per-activity-type
-    # evidence gate on the submit-for-review path could never be exercised
-    # by any test — a regression in missing_evidence_kinds() would have been
-    # invisible to the whole suite. `strict_validation` now lets tests turn
-    # the real production rule on; see ProductionGateRelaxationTest.
-    is_testing = "test" in _sys.argv or "pytest" in _sys.modules
-    if not is_testing or data.get("strict_validation"):
-        from apps.evidence.requirements import missing_evidence_kinds
+        # Same test-relaxation convention as create() and complete(), but this
+        # one previously had NO opt-in flag at all, so the per-activity-type
+        # evidence gate on the submit-for-review path could never be exercised
+        # by any test — a regression in missing_evidence_kinds() would have been
+        # invisible to the whole suite. `strict_validation` now lets tests turn
+        # the real production rule on; see ProductionGateRelaxationTest.
+        is_testing = "test" in _sys.argv or "pytest" in _sys.modules
+        if not is_testing or data.get("strict_validation"):
+            from apps.evidence.requirements import missing_evidence_kinds
 
-        missing = missing_evidence_kinds(a)
-        if missing:
-            labels = ", ".join(item["label"] for item in missing)
-            raise BadRequest(
-                f"Required evidence missing for this activity type: {labels}. "
-                "Upload each required document before submitting completion."
-            )
+            missing = missing_evidence_kinds(a)
+            if missing:
+                labels = ", ".join(item["label"] for item in missing)
+                raise BadRequest(
+                    f"Required evidence missing for this activity type: {labels}. "
+                    "Upload each required document before submitting completion."
+                )
 
     kind = sf_kind_for_activity(a)
     if kind is not None and not a.salesforce_activity_id:
@@ -4216,13 +4447,16 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
     # nothing of its own.
     _bind_followed_up_training(a, data)
 
-    # Same §10 partner-aware routing as complete(): partner-delivered work
-    # goes directly to IA even when the monitoring CCEO presses submit —
-    # the role-only ternary here was the second half of the hidden PL gate
-    # the 2026-08-19 audit flagged.
+    # Same routing as complete(): partner-delivered work goes directly to IA
+    # even when the monitoring CCEO presses submit — the role-only ternary
+    # here was the second half of the hidden PL gate the 2026-08-19 audit
+    # flagged — and a CCEO's staff work goes to their Programme Lead whoever
+    # presses submit (owner, 2026-10-12).
+    from apps.pl_review.services import routes_to_lead
+
     next_status = (
         "submitted_to_pl"
-        if principal.active_role == "CCEO" and a.delivery_type != "partner"
+        if routes_to_lead(a, principal)
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
@@ -4256,9 +4490,46 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
                 "status": "pending",
             },
         )
-    _notify_completion_routed(a, next_status, principal)
+    a = _handed_in(a, next_status, principal)
     _resolve_overdue_reminder(a)
     return _serialize(a)
+
+
+def hand_in_with_id(activity_id: str, principal, completed_on=None) -> dict | None:
+    """Hand staff work in once its Salesforce ID is entered.
+
+    Staff work is completed with its visit or training ID (owner,
+    2026-10-13), and once completed it is counted when the Programme Lead
+    approves it, whatever day it was planned for (2026-10-15: "as long as the
+    activity is completed and entered in salesforce, completed using
+    salesforce ID it is counted"). The Salesforce ID drawer saved the ID and
+    left the work as it was — "scheduled" for a visit done ahead of its day —
+    so it was in no count and on no lead's list. The same gates as Submit;
+    None when there is nothing to hand in (partner work, which IA completes
+    with its ID, or work already handed in).
+
+    ``completed_on`` is the day the work was done, as the drawer asked it
+    (owner, 2026-10-16; checked by ``completed_day.completion_day``).
+    """
+    # Nothing to hand in is answered before the executor check: correcting
+    # the ID on work already handed in is not acting on it.
+    a = Activity.objects.filter(pk=activity_id, deleted_at__isnull=True).first()
+    if (
+        a is None
+        or a.delivery_type == "partner"
+        or not a.salesforce_activity_id
+        or a.status not in (*STARTABLE_STATUSES, *SUBMITTABLE_STATUSES)
+    ):
+        return None
+    a = _get_for_execution(activity_id, principal)
+    if completed_on:
+        Activity.objects.filter(pk=a.pk).update(actual_delivery_date=completed_on)
+    if a.status in STARTABLE_STATUSES:
+        start_completion(a.id, principal=principal)
+        a.refresh_from_db(fields=["status"])
+    if a.status not in SUBMITTABLE_STATUSES:
+        return None
+    return submit_for_review(a.id, principal)
 
 
 def record_attendance(activity_id: str, data: dict, principal) -> dict:
@@ -4299,7 +4570,12 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
             a, data.get("attendedSchoolIds")
         )
         _sync_cluster_attendance(
-            a, a.attended_school_ids, str(getattr(principal, "id", "") or "")
+            a,
+            a.attended_school_ids,
+            str(getattr(principal, "id", "") or ""),
+            visiting=_visiting_school_attendance(
+                a, data.get("visitingSchoolIds"), data.get("attendedSchoolIds")
+            ),
         )
         if a.status in STARTABLE_STATUSES:
             a.status = "completion_started"
@@ -4560,16 +4836,18 @@ def _confirm_locked_activity(
 
     # For Core activities, perform strict validation:
     if a.activity_type in ("core_visit", "core_training"):
-        try:
-            from apps.evidence.models import EvidenceRecord
-        except ImportError:
-            evidence_count = 0
-        else:
-            evidence_count = EvidenceRecord.objects.filter(
-                activity_id=a.id, quarantined=False
-            ).count()
-        if evidence_count == 0:
-            raise BadRequest("IA Verification failed: No evidence files uploaded.")
+        # A partner's Core work only (_verified_from_upload).
+        if _verified_from_upload(a):
+            try:
+                from apps.evidence.models import EvidenceRecord
+            except ImportError:
+                evidence_count = 0
+            else:
+                evidence_count = EvidenceRecord.objects.filter(
+                    activity_id=a.id, quarantined=False
+                ).count()
+            if evidence_count == 0:
+                raise BadRequest("IA Verification failed: No evidence files uploaded.")
 
         if not a.salesforce_activity_id:
             raise BadRequest(
@@ -4963,12 +5241,11 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     # REG-02 gate. Without it a blocked date is reachable by rescheduling even
     # when create() refused it — the asymmetry calendar_policy.py exists to
     # prevent.
-    _staff = a.responsible_staff_id or a.monitored_by_staff_id
-    _avail = _SchedulingPolicyService.check(
-        _user_for_staff_identity(_staff) if _staff else None, new_date
+    _refused = _SchedulingPolicyService.refusal(
+        a.responsible_staff_id or a.monitored_by_staff_id, new_date
     )
-    if _avail["status"] == "blocked":
-        raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
+    if _refused:
+        raise BadRequest("Scheduling blocked: " + " · ".join(_refused))
 
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
@@ -4979,9 +5256,19 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     # activity's saved schedule out of sync with its budget lines.
     # A new date is the planner's own change to the plan: a monthly request
     # in its approval chain follows it (apps.fund_requests.plan_changes).
-    from apps.fund_requests.plan_changes import planner_change
+    from apps.daily_visit_batches.costs_follow import costs_follow
+    from apps.fund_requests.plan_changes import change_in_hand, planner_change
 
-    with planner_change(principal, a), transaction.atomic():
+    # The move answers once it is stored and checked; the days it touches
+    # are priced after the answer (apps.daily_visit_batches.costs_follow).
+    # Not inside a larger change (Edit), which reports once for all of it
+    # from figures it reads before it ends.
+    on_its_own = change_in_hand() is None
+    with (
+        planner_change(principal, a),
+        transaction.atomic(),
+        costs_follow(principal, when=on_its_own),
+    ):
         # Serialise concurrent reschedules of the same activity: without the
         # row lock two simultaneous submissions interleave their cost-line
         # rebuilds and fund-request syncs, and one reschedule_count increment
@@ -5096,67 +5383,23 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 "updated_at",
             ]
         )
-        from apps.daily_visit_batches.pricing import DAILY_BATCH_ELIGIBLE_TYPES
+        _reprice_moved_activity(a, data, principal)
 
-        # Where the money currently sits, captured before anything reprices.
-        # Both branches below move cost lines to the new week; only one of them
-        # used to tell finance about the week being vacated.
-        from apps.activities.models import ActivityScheduleCostLine
-
-        prior_buckets = list(
-            ActivityScheduleCostLine.objects.filter(activity=a).values_list(
-                "responsible_user", "fiscal_year", "month", "week_start_date"
-            )
-        )
-
-        if (
-            a.activity_type in DAILY_BATCH_ELIGIBLE_TYPES
-            and a.delivery_type == "staff"
-            and a.school_id
-        ):
-            # Leave the OLD day's batch (recomputed for its remaining schools,
-            # unless already locked — same rationale as everywhere else: reschedule
-            # is the sanctioned post-approval escape hatch, so it isn't itself
-            # blocked, but a locked batch's other members stay frozen).
-            _detach_from_daily_visit_batch(a)
-            from apps.daily_visit_batches.services import reschedule_within_batch
-
-            reschedule_within_batch(
-                activity=a,
-                new_date=a.planned_date,
-                reason=data.get("reason"),
-                principal=principal,
-            )
-            # The batch reprices and then calls trigger_generate_for_activity,
-            # which raises the NEW week's request and says nothing about the
-            # old one. The old week therefore kept its full amount while the
-            # new week gained the same amount again -- the same money
-            # requested twice, for work happening once. Staff school visits are
-            # the most common activity there is, and they all take this branch.
-            #
-            # sync_* regenerates every affected bucket, old and new, so the
-            # vacated week empties instead of being left holding a total.
-            from apps.fund_requests.monthly_service import (
-                sync_monthly_drafts_for_activity,
-            )
-            from apps.fund_requests.weekly_service import (
-                sync_weekly_requests_for_activity,
-            )
-
-            sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
-            sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
-        else:
-            # Re-price against the current catalogue so the budget line follows the
-            # new schedule (rates may have changed; participant/period inputs may
-            # have too).
-            _apply_schedule_cost_snapshot(a, data, principal=principal)
-            a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
-
-        if old_date != new_date:
+        # (A plan given its first date has no move to note.)
+        if old_date and new_date and old_date != new_date:
+            from apps.daily_visit_batches.costs_follow import reschedule_note
+            from apps.daily_visit_batches.services import once_days_are_priced
             from apps.hr.leave_services import LeaveBudgetImpactService
 
-            LeaveBudgetImpactService.handle_reschedule(
-                a, old_date, new_date, data.get("reason", "Rescheduling")
+            # Written on the lines the move leaves the visit with: at once,
+            # or, where the days are priced later (a group of moves, a save
+            # that answers first), once they have been.
+            note_reason = data.get("reason", "Rescheduling")
+            once_days_are_priced(
+                lambda: LeaveBudgetImpactService.handle_reschedule(
+                    a, old_date, new_date, note_reason
+                ),
+                note=reschedule_note(a, old_date, new_date, note_reason),
             )
 
     # §25 — the partner delivering this did not move it and must not find out
@@ -5204,6 +5447,98 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     _resolve_overdue_reminder(a)
     _settle_day_off_notices(a)
     return _serialize(a)
+
+
+def _reprice_moved_activity(a, data: dict, principal) -> None:
+    """Move an activity's money to the day it now stands on: a staff school
+    visit leaves its old day's batch and joins the new day's, anything else
+    is re-priced against the current catalogue, and the weeks and months it
+    left and joined are re-filed. Shared by ``reschedule`` and by work
+    completed on another day than planned (``apps.activities.completed_day``,
+    owner, 2026-10-16). Inside the caller's transaction, after the
+    activity's new dates are saved."""
+    from apps.daily_visit_batches.pricing import DAILY_BATCH_ELIGIBLE_TYPES
+
+    # Where the money currently sits, captured before anything reprices.
+    # Both branches below move cost lines to the new week; only one of them
+    # used to tell finance about the week being vacated.
+    from apps.activities.models import ActivityScheduleCostLine
+
+    prior_buckets = list(
+        ActivityScheduleCostLine.objects.filter(activity=a).values_list(
+            "responsible_user", "fiscal_year", "month", "week_start_date"
+        )
+    )
+
+    if (
+        a.activity_type in DAILY_BATCH_ELIGIBLE_TYPES
+        and a.delivery_type == "staff"
+        and a.school_id
+    ):
+        # Leave the OLD day's batch (recomputed for its remaining schools,
+        # unless already locked — same rationale as everywhere else: reschedule
+        # is the sanctioned post-approval escape hatch, so it isn't itself
+        # blocked, but a locked batch's other members stay frozen).
+        from apps.budget.costing_service import rate_cards_held
+        from apps.daily_visit_batches.services import (
+            day_to_join,
+            reschedule_within_batch,
+        )
+        from apps.fund_requests.follow import fund_requests_follow_once
+        from apps.fund_requests.monthly_service import (
+            sync_monthly_drafts_for_activity,
+        )
+        from apps.fund_requests.weekly_service import (
+            sync_weekly_requests_for_activity,
+        )
+
+        # The day left, the day joined and the visit itself each ask for
+        # the owner's week and month to be re-filed. They are re-filed
+        # once, from the lines the move ends with
+        # (apps.fund_requests.follow). Both days price against the same
+        # published cards, read once for the move.
+        with rate_cards_held(), fund_requests_follow_once():
+            # A day that cannot take the visit says so before the day it
+            # would leave is re-priced: a refusal used to re-price every
+            # visit left on that day first, some 150 to 250 statements,
+            # and then undo it. The day is locked here and joined below
+            # as it was found. The calendar was asked of this date and
+            # this person at the top.
+            day = day_to_join(
+                activity=a,
+                new_date=a.planned_date,
+                reason=data.get("reason"),
+                principal=principal,
+            )
+            if day["batch"] is not None and day["batch"].id == a.daily_visit_batch_id:
+                # Moved within its own day: the day is found again once
+                # the visit has left it, as it always was.
+                day = None
+            _detach_from_daily_visit_batch(a)
+            reschedule_within_batch(
+                activity=a,
+                new_date=a.planned_date,
+                reason=data.get("reason"),
+                principal=principal,
+                day=day,
+            )
+            # The batch reprices and then calls trigger_generate_for_activity,
+            # which raises the NEW week's request and says nothing about the
+            # old one. The old week therefore kept its full amount while the
+            # new week gained the same amount again -- the same money
+            # requested twice, for work happening once. Staff school visits are
+            # the most common activity there is, and they all take this branch.
+            #
+            # sync_* regenerates every affected bucket, old and new, so the
+            # vacated week empties instead of being left holding a total.
+            sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
+            sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
+    else:
+        # Re-price against the current catalogue so the budget line follows the
+        # new schedule (rates may have changed; participant/period inputs may
+        # have too).
+        _apply_schedule_cost_snapshot(a, data, principal=principal)
+        a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
 
 
 def _notify_partner_schedule_change(activity, event_type, title, body) -> None:
@@ -5541,14 +5876,11 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
 
         # REG-02 gate on the partner intake, keyed to the assigning staff
         # member — the partner has no leave record here, the assigner does.
-        avail = _SchedulingPolicyService.check(
-            _user_for_staff_identity(pa.assigning_staff_id)
-            if pa.assigning_staff_id
-            else None,
-            scheduled_date,
+        refused = _SchedulingPolicyService.refusal(
+            pa.assigning_staff_id, scheduled_date
         )
-        if avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+        if refused:
+            raise BadRequest("Scheduling blocked: " + " · ".join(refused))
 
         catalogue_item = pa.catalogue_item
         selected_catalogue_id = data.get("catalogueItemId")
@@ -6026,12 +6358,11 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
 
         # REG-02 gate, same reason as reschedule(): the partner reschedule must
         # not reach a date the partner intake refused.
-        _staff = a.responsible_staff_id or a.monitored_by_staff_id
-        _avail = _SchedulingPolicyService.check(
-            _user_for_staff_identity(_staff) if _staff else None, new_date
+        _refused = _SchedulingPolicyService.refusal(
+            a.responsible_staff_id or a.monitored_by_staff_id, new_date
         )
-        if _avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
+        if _refused:
+            raise BadRequest("Scheduling blocked: " + " · ".join(_refused))
 
         a.partner_date_set_by = _date_author(
             principal,
@@ -6278,7 +6609,9 @@ def _cancel_or_defer(
         if not str(data.get("reason") or "").strip():
             raise BadRequest("Give a reason this activity is being cancelled.")
     handover_outcome = ""
-    with transaction.atomic():
+    from apps.daily_visit_batches.costs_follow import costs_follow
+
+    with transaction.atomic(), costs_follow(principal):
         a = Activity.objects.select_for_update().get(pk=a.pk)
         # Read before the status changes: whether the day on a Partner's work
         # was the Partner's own decides what cancelling it undoes.
@@ -6339,6 +6672,11 @@ def _cancel_or_defer(
         ).delete()
         sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
         sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
+        # A School Visit called off on its own leaves its in-school Training
+        # as the only record of the day: the Training now carries it (owner,
+        # 2026-10-15 cost audit; it sat at UGX 0 and the day was in no budget).
+        if a.activity_type == "school_visit":
+            _settle_pair_training(a, principal=principal)
     for frozen in frozen_wfrs:
         _notify_frozen_weekly_request(frozen, a, new_status)
     # §26 — the record is preserved (never deleted) and the cancelled status

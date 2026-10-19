@@ -46,6 +46,9 @@ COLUMNS = [
     "Evidence",
     "Status",
     "Activity date",
+    # The day the work was done (owner, 2026-10-16: "Add completed date
+    # column on the tables").
+    "Completed date",
     "Actions",
 ]
 

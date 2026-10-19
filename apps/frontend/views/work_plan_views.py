@@ -192,27 +192,18 @@ def non_school_activity_drawer(request):
 
 
 def _travel_district_type(dest_district_id: str, responsible_id: str) -> str:
-    """Preview-side twin of activities.services._field_event_district_type."""
+    """Preview-side twin of activities.services._field_event_district_type:
+    the same rule, so the preview prices what the save will."""
     if not dest_district_id:
         return "primary"
-    from django.db.models import Q
-
-    from apps.accounts.models import StaffProfile
+    from apps.daily_visit_batches.districts import district_type_for_staff
     from apps.geography.models import District
 
-    home = (
-        StaffProfile.objects.filter(Q(id=responsible_id) | Q(user_id=responsible_id))
-        .values_list("primary_district_id", flat=True)
-        .first()
-    )
-    if home:
-        return "primary" if home == dest_district_id else "secondary"
-    dtype = (
-        District.objects.filter(id=dest_district_id)
-        .values_list("district_type", flat=True)
-        .first()
-    )
-    return dtype or "secondary"
+    district = District.objects.filter(id=dest_district_id).first()
+    # An unclassified district plans and prices as primary (owner, 2026-10-02).
+    if district is None:
+        return "primary"
+    return district_type_for_staff(responsible_id, district) or "primary"
 
 
 @_manual_activity_permission
@@ -239,6 +230,20 @@ def non_school_activity_preview(request):
         if not item_id:
             raise ValueError("Choose an Activity title to preview its cost.")
         item = get_selectable_item(item_id)
+        from apps.activities.online_training import ONLINE, ONLINE_TRAINING_TYPES
+
+        if (
+            item.workflow_kind in ONLINE_TRAINING_TYPES
+            and _programme_item_metadata(item)["programme_delivery_mode"] == ONLINE
+        ):
+            # Saved free, so previewed free (owner, 2026-10-09: "online
+            # training fetches no cost it is free"; apps.activities.
+            # online_training).
+            return render(
+                request,
+                "partials/work_plan/non_school_cost_preview.html",
+                {"online_free": True, "days": days},
+            )
         payload = {
             "activityType": item.workflow_kind,
             "costingProfile": item.costing_profile,
@@ -256,6 +261,10 @@ def non_school_activity_preview(request):
             or request.user.staff_profile_id
             or request.user.user_id
         )
+        # Partner work is priced for nobody's night, as its save prices it
+        # (owner, 2026-10-15: a preview shows the cost the save will price).
+        if payload["deliveryType"] == "partner":
+            responsible = None
         # The night away is the responsible person's (owner, 2026-10-05).
         from apps.daily_visit_batches.districts import accommodation_key_for_staff
 
@@ -466,6 +475,8 @@ def work_plan_export(request):
         "School ID",
         "School Name",
         "District",
+        # Primary District, Secondary District or Mixed (owner, 2026-10-12).
+        "District Type",
         "Cluster Name",
         "Activity Purpose",
         "SSA Intervention",
@@ -481,6 +492,11 @@ def work_plan_export(request):
         "Venue",
     ]
     sheet.append(headers)
+    from apps.daily_visit_batches.district_marks import district_type_labels
+
+    district_types = district_type_labels(
+        row["id"] for row in context["detail_rows"] if row.get("id")
+    )
     for row in context["detail_rows"]:
         sheet.append(
             [
@@ -489,6 +505,7 @@ def work_plan_export(request):
                 row["school_code"],
                 row["school_name"],
                 row["district_name"],
+                district_types.get(row.get("id"), ""),
                 row["cluster_name"],
                 row["activity_purpose"],
                 row["focus_intervention"],
@@ -506,8 +523,28 @@ def work_plan_export(request):
         )
 
     style_header(sheet)
-    style_body(sheet, {12: "#,##0"})
-    widths = [20, 16, 12, 34, 18, 26, 26, 26, 14, 20, 28, 18, 18, 14, 38, 18, 21, 28]
+    style_body(sheet, {headers.index("Cost (UGX)") + 1: "#,##0"})
+    widths = [
+        20,
+        16,
+        12,
+        34,
+        18,
+        20,
+        26,
+        26,
+        26,
+        14,
+        20,
+        28,
+        18,
+        18,
+        14,
+        38,
+        18,
+        21,
+        28,
+    ]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = width
     sheet.freeze_panes = "A2"

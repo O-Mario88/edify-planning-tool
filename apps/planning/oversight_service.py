@@ -166,6 +166,12 @@ class PlanningOversightItem:
     is_complete: bool = False
     completion_gap: str = ""
     shows_complete: bool = False
+    # Complete before its planned day: the status reads "Completed Early"
+    # (owner, 2026-10-14), and early_on is the day it was done.
+    finished_early: bool = False
+    early_on: date | None = None
+    # done / overdue / "" — the whole row's ink (completion_columns.row_state).
+    row_state: str = ""
     ia_status: str = ""
     finance_status: str = ""
     # The moment the completion entered the Impact Assessment queue. Carried
@@ -407,7 +413,12 @@ def build_items(
         from apps.activity_catalogue.training_intervention import fixed_interventions
 
         fixed_interventions(fresh=True)
-    items = [_activity_item(a, directory, costs, partner_names) for a in activities]
+    from apps.activities.pair_costing import live_companions
+
+    live = live_companions(activities)
+    items = [
+        _activity_item(a, directory, costs, partner_names, live) for a in activities
+    ]
     items += [_assignment_item(pa, directory) for pa in assignments]
 
     if staff_id:
@@ -1141,7 +1152,7 @@ def course_intervention(activity) -> str:
 
 
 def _activity_item(
-    activity, directory: _StaffDirectory, costs, partner_names
+    activity, directory: _StaffDirectory, costs, partner_names, live=None
 ) -> PlanningOversightItem:
     # Partner work by the rule My Plan applies (`staff_my_plan_q`): the
     # delivery channel and the two states only a Partner's work carries, as
@@ -1177,7 +1188,12 @@ def _activity_item(
         or getattr(activity, "delivery_type", "") == "in-school"
     )
     raw_cost = int(costs.get(activity.id) or activity.est_cost_cents or 0)
-    planned_cost = 0 if is_in_school else raw_cost
+    # The activity's own cost, whatever it is (owner, 2026-10-15: "the costs
+    # should reflect the activity cost exactly"). Every in-school Training was
+    # written as 0, which hid the visit day a Training with no companion visit
+    # carries (UGX 73,000 at Adonai, Gulu) from the page's planned budget and
+    # its export; the free half of a live pair has no lines and reads 0 anyway.
+    planned_cost = raw_cost
     budget = raw_cost
     cluster_planned_from = (
         "School Visit"
@@ -1264,7 +1280,7 @@ def _activity_item(
         cluster_planned_from=cluster_planned_from,
         budget=budget,
         is_in_school_training=is_in_school,
-        cost_on_school_visit=is_uncosted_pair_training(activity),
+        cost_on_school_visit=is_uncosted_pair_training(activity, live),
         planned_by_id=activity.responsible_staff_id or activity.monitored_by_staff_id,
         planned_by_name=directory.name(
             activity.responsible_staff_id or activity.monitored_by_staff_id
@@ -1462,21 +1478,31 @@ def apply_filters(items, filters: dict | None):
 
 def read_filters(request) -> dict:
     """The advanced filters present on this request, ignoring blanks."""
+    from apps.core import export_kinds
+
     filters = {}
     for key in FILTER_KEYS:
         val = (request.GET.get(key) or "").strip()
         if not val:
             continue
-        if key == "activity_type" and val in (
-            "visits_trainings",
-            "visits",
-            "trainings",
-            "all",
-        ):
+        # An Export options drawer's kind of work is not an activity type:
+        # the export applies it itself (``export_kinds``). Read as one, it
+        # matched no activity and emptied every export (2026-10-12).
+        if key == "activity_type" and val in export_kinds.KINDS:
             continue
         if key == "status" and val == "all":
             continue
         filters[key] = val
+    return filters
+
+
+def export_filters(request) -> dict:
+    """The advanced filters an export honours. The drawer's plan status
+    (completed, scheduled, in progress) is the export's own, read with its
+    wider meaning by ``_filter_export_items``, never an exact status here:
+    "completed" as one status is a fraction of completed work."""
+    filters = read_filters(request)
+    filters.pop("status", None)
     return filters
 
 
@@ -1556,7 +1582,8 @@ EXPORT_COLUMNS = (
     ("Activity status", lambda i: i.activity_status),
     ("Assignment status", lambda i: i.assignment_status),
     ("Salesforce ID", lambda i: i.salesforce_id),
-    ("Evidence", lambda i: i.evidence_label or i.evidence_status),
+    # UPLOAD-OFF (owner, 2026-10-13):
+    # ("Evidence", lambda i: i.evidence_label or i.evidence_status),
     ("IA", lambda i: i.ia_status),
     ("Finance", lambda i: i.finance_status),
     ("Risks", lambda i: "; ".join(r["key"] for r in i.risks)),
@@ -1585,6 +1612,101 @@ def stream_rows(owner_groups):
             for item in group.get(key, ()):
                 item.export_table = table
                 yield item
+
+
+def plan_export_rows(items) -> list[dict]:
+    """The items as `apps.core.plan_export` rows: the school visits, the group
+    trainings, the cluster meetings, the partner schedules and the other
+    activities, each with its District and District Type (owner, 2026-10-12).
+
+    A cluster session is one row however many schools it invites — the
+    owner's columns for a training open on the Cluster Name and carry no
+    School ID — so an item listed once per invited school is exported once.
+    An in-school training is school work and sits with the visits.
+    """
+    from apps.core import plan_export
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+    from apps.daily_visit_batches.district_marks import (
+        district_type_labels,
+        label_of,
+    )
+
+    from apps.pl_review.services import lead_verified_owner_ids
+
+    items = list(items)
+    ids = [i.activity_id for i in items if i.activity_id]
+    lead_ids = lead_verified_owner_ids()
+    district_types = district_type_labels(ids)
+    budget_statuses = plan_export.budget_status_labels(ids)
+    session_types = set(CLUSTER_MEETING_TYPES) | set(TRAINING_TYPES)
+
+    rows, seen = [], set()
+    for i in items:
+        is_session = i.activity_type in session_types and not i.is_in_school_training
+        # Work handed to a partner is a partner schedule whatever its kind
+        # (owner, 2026-10-12: "partner schedules on its sheet").
+        if i.is_partner_work:
+            kind = plan_export.PARTNER
+        elif is_session:
+            kind = (
+                plan_export.MEETING
+                if i.activity_type in CLUSTER_MEETING_TYPES
+                else plan_export.TRAINING
+            )
+        elif i.school_id:
+            kind = plan_export.VISIT
+        else:
+            kind = plan_export.OTHER
+        key = (
+            i.activity_id or i.partner_assignment_id or id(i),
+            "" if kind != plan_export.VISIT else i.school_id,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        # "In School Visit" only for a Training that carries nothing of its
+        # own; a partner facilitator's fee is its own money (owner,
+        # 2026-10-15: wording must not misstate where money stands).
+        if i.cost_on_school_visit and not i.planned_cost:
+            budget_status = "In School Visit"
+        else:
+            budget_status = budget_statuses.get(i.activity_id, "No Budget")
+        intervention = _intervention_label(i.target_intervention)
+        purpose = "" if i.purpose_of_visit == "—" else i.purpose_of_visit
+        rows.append(
+            plan_export.row(
+                kind,
+                activity_id=i.activity_id,
+                partner=i.partner_name,
+                school_id=_export_school_id(i),
+                school_name=i.school_name,
+                cluster_name=i.cluster_name or i.school_name or i.non_school_context,
+                venue=i.non_school_context or i.cluster_name,
+                district=i.district_name,
+                district_type=label_of(district_types, i.activity_id),
+                activity=plan_export.activity_label(i.activity_type),
+                planned_date=i.planned_date,
+                executor=i.executor_name,
+                purpose=purpose,
+                intervention=intervention,
+                training=_training_name(i)
+                or (plan_export.activity_label(i.activity_type) if is_session else ""),
+                participants=i.participants,
+                cost=i.planned_cost,
+                budget_status=budget_status,
+                verification=plan_export.verification_label(
+                    i.activity_status,
+                    i.ia_status,
+                    lead_approves=not i.is_partner_work
+                    and str(i.executor_id or "") in lead_ids,
+                ),
+                salesforce_id=i.salesforce_id,
+                evidence=i.evidence_label or _label(i.evidence_status),
+                status=i.completion_gap
+                or _label(i.activity_status or i.assignment_status),
+            )
+        )
+    return rows
 
 
 # ── Folds ────────────────────────────────────────────────────────────────────

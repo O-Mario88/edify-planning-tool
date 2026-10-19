@@ -24,6 +24,9 @@ A read: it owns no table and writes nothing. Three rules keep it honest.
   Group Trainings and Cluster Meetings, with the same columns. Completed work
   leaves both lists (owner, 2026-09-26): once verified, or with Impact
   Assessment, it is gone, so each list is only what still needs someone.
+  Overdue is the officer's unfinished work alone (owner, 2026-10-14): work
+  completed with its Salesforce ID waits in the lead's Completion Reviews,
+  on the Execution & Completion tab, and is not listed as overdue.
   Every row past its day is overdue and drawn in red. Older past-due work
   stays in the backlog, All overdue plans. Everyone's tab is the same two
   lists and three tables over the lead's and every officer's work together
@@ -49,6 +52,7 @@ from apps.activities.completion_columns import (
     completion_columns,
     completion_gap,
     is_complete,
+    is_officer_completed,
 )
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
@@ -98,6 +102,20 @@ TABLES = (
 )
 OVERDUE = "overdue"
 DUE_THIS_WEEK = "week"
+
+#: The week's figures, each a link to its own records (owner, 2026-10-14:
+#: "make sure these buttons/badge ... are all links to those records and when
+#: clicked it can open the record"). A figure narrows the person's tables to
+#: the rows it counts, in one list in place of the two; the figure pressed
+#: again, or Show all, gives the two lists back. Each predicate reads the
+#: same row field its figure counts, so a list can never disagree with its
+#: number.
+SHOW_FILTERS = {
+    "planned": ("Planned this week", lambda r: True),
+    "verified": ("Verified this week", lambda r: not r["open"]),
+    "awaiting": ("Awaiting your verification", lambda r: r["awaiting_you"]),
+    "behind": ("Past their day, not completed", lambda r: r["behind"]),
+}
 
 #: How far either side of today the week arrows reach. Far enough to review a
 #: quarter; near enough that a stray link cannot ask for a decade.
@@ -282,6 +300,10 @@ def _row(activity, today: date, columns: dict) -> dict:
     return {
         "id": activity.id,
         "day": day,
+        # The day completed work was done (owner, 2026-10-16).
+        "completed_on": columns.get("delivered_on")
+        if is_officer_completed(activity.status)
+        else None,
         "kind": kind_of(activity.activity_type),
         "table": table_of(activity.activity_type),
         "type_label": title,
@@ -410,8 +432,11 @@ class PLWeek:
         today=None,
         solo: bool = False,
         past_due_total: int | None = None,
+        show: str = "",
     ):
         self.user = user
+        show = (show or "").strip()
+        self.show = show if show in SHOW_FILTERS else ""
         # The officer's past-due count, when the page has read it already.
         self._past_due_total = past_due_total
         self.fy = fy
@@ -580,9 +605,21 @@ class PLWeek:
             if day and day >= self.start:
                 this_week[key].append(row)
                 everyone_week.append(row)
-            elif row["open"] and day and day < self.today:
-                # Last week's work that is not verified or with IA: still the
-                # officer's to complete, or the lead's to verify.
+            elif (
+                row["open"]
+                and day
+                and day < self.today
+                and not (
+                    row["state"] == "awaiting_you"
+                    and columns.get(activity.id, EMPTY_COLUMNS)["salesforce_ok"]
+                )
+            ):
+                # Last week's work the officer has still to complete. Work
+                # completed with its Salesforce ID is not overdue: it has
+                # left for the lead's Completion Reviews (owner, 2026-10-14:
+                # "overdue should only have schools that dont have Salesforce
+                # ID any school completed should disappear from the overdue
+                # page and move to completion and review table").
                 overdue[key].append(row)
                 everyone_overdue.append(row)
 
@@ -681,6 +718,7 @@ class PLWeek:
                 else f"Overdue from the week of {self.previous_start:%-d %b}"
             ),
             "rows_per_page": ROWS_PER_PAGE,
+            "show": self.show,
         }
         if self.who == PARTNERS:
             data["partners"] = self.partners()
@@ -720,9 +758,18 @@ class PLWeek:
         of the week below it"). The two used to sit behind a second tab strip,
         so a lead reading the overdue list did not see the week, and the other
         way round. Whose work it is stays the one strip above both."""
-        # Completed work leaves the lists: verified, or with Impact
-        # Assessment, there is nothing left to follow up.
-        week_rows = [r for r in week_rows if r["open"]]
+        facts = self.facts(person)
+        if self.show:
+            # One figure's records: this week's rows it counts, verified work
+            # included when that is what was asked for. Overdue from last week
+            # is not one of the week's figures, so it waits for Show all.
+            label, keep = SHOW_FILTERS[self.show]
+            week_rows = [r for r in week_rows if keep(r)]
+            overdue_rows = []
+        else:
+            # Completed work leaves the lists: verified, or with Impact
+            # Assessment, there is nothing left to follow up.
+            week_rows = [r for r in week_rows if r["open"]]
         if self.solo:
             # Overdue is the dashboard's past-due table; the week is this
             # week's work alone.
@@ -768,7 +815,18 @@ class PLWeek:
 
         week_tables = tables_of(week_rows, prefix="wk")
         sections = []
-        if not self.solo:
+        if self.show:
+            sections.append(
+                {
+                    "key": self.show,
+                    "label": label,
+                    "count": len(week_rows),
+                    "is_overdue": False,
+                    "is_figure": True,
+                    "tables": week_tables,
+                }
+            )
+        elif not self.solo:
             sections.append(
                 {
                     "key": OVERDUE,
@@ -780,17 +838,22 @@ class PLWeek:
                     ),
                 }
             )
-        sections.append(
-            {
-                "key": DUE_THIS_WEEK,
-                "label": "Due this week",
-                "count": len(week_rows),
-                "is_overdue": False,
-                "tables": week_tables,
-            }
-        )
+        if not self.show:
+            sections.append(
+                {
+                    "key": DUE_THIS_WEEK,
+                    "label": "Due this week",
+                    "count": len(week_rows),
+                    "is_overdue": False,
+                    "tables": week_tables,
+                }
+            )
         return {
             **person,
+            "facts": facts,
+            "show": self.show,
+            "show_label": SHOW_FILTERS[self.show][0] if self.show else "",
+            "clear_query": self.query(who=person["key"]),
             "sections": sections,
             # The week's own tables, for the readers that want the week alone.
             "tables": week_tables,
@@ -849,10 +912,50 @@ class PLWeek:
         ordered.sort(key=lambda g: (-g["exceptions"], g["partner_name"].lower()))
         return {"groups": ordered, "failed": False, **_partner_totals(rows)}
 
+    def facts(self, person: dict) -> list[dict]:
+        """The week's figures over a person's tables, each the link to its
+        records: pressed, it lists them; pressed again, it gives the lists
+        back. Awaiting your verification is a lead's figure, not on their
+        own week, as before."""
+        keys = ["planned", "verified"]
+        if not person["is_me"]:
+            keys.append("awaiting")
+        keys.append("behind")
+        counts = {
+            "planned": person["planned"],
+            "verified": person["closed"],
+            "awaiting": person["awaiting_you"],
+            "behind": person["behind"],
+        }
+        # The tone a figure takes when it holds something.
+        tones = {"verified": "success", "awaiting": "info", "behind": "danger"}
+        words = {
+            "planned": "planned this week",
+            "verified": "verified",
+            "awaiting": "awaiting your verification",
+            "behind": "past their day, not completed",
+        }
+        facts = []
+        for key in keys:
+            active = key == self.show
+            count = counts[key]
+            facts.append(
+                {
+                    "key": key,
+                    "count": count,
+                    "words": words[key],
+                    "tone": tones.get(key, "") if count or key == "verified" else "",
+                    "active": active,
+                    "query": self.query(who=person["key"], show="" if active else key),
+                }
+            )
+        return facts
+
     # ── Links ────────────────────────────────────────────────────────────────
-    def query(self, *, who: str, week: date | None = None) -> str:
+    def query(self, *, who: str, week: date | None = None, show: str = "") -> str:
         """The dashboard query string for a tab or a week. Templates write
-        "/dashboard?{{ …query }}", so every link names its route."""
+        "/dashboard?{{ …query }}", so every link names its route. A tab or a
+        week arrow drops the figure being listed; a figure names it."""
         query = {"fy": self.fy, "view": "week"}
         week = week or self.start
         if week != monday_of(self.today):
@@ -860,6 +963,8 @@ class PLWeek:
         default = ME if self.solo else EVERYONE
         if who and who != default:
             query["who"] = who
+        if show:
+            query["show"] = show
         return urlencode(query)
 
     def url(self, *, who: str, week: date | None = None) -> str:
@@ -1045,6 +1150,7 @@ def build_week(
     today=None,
     solo: bool = False,
     past_due_total: int | None = None,
+    show: str = "",
 ) -> dict:
     return PLWeek(
         user,
@@ -1054,4 +1160,5 @@ def build_week(
         today=today,
         solo=solo,
         past_due_total=past_due_total,
+        show=show,
     ).build()

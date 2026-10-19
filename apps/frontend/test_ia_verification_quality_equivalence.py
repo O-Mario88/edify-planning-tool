@@ -74,6 +74,7 @@ FROZEN = "2026-09-24 06:30:00"
 def _reference_ia_activity_rollup(queryset, geography_field):
     from django.db.models import Count
 
+    from apps.pl_review.services import lead_verified_q
     from apps.targets.performance import ACHIEVED_STATUSES
 
     return {
@@ -84,8 +85,12 @@ def _reference_ia_activity_rollup(queryset, geography_field):
             planned=Count("id"),
             achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
             verified=Count("id", filter=Q(ia_verification_status="confirmed")),
+            # Awaiting IA leaves out a CCEO's and a lead's staff work, which a
+            # Programme Lead verifies (owner, 2026-10-14).
             waiting=Count(
-                "id", filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
+                "id",
+                filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
+                & ~lead_verified_q(),
             ),
             returned=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
         )
@@ -1269,7 +1274,9 @@ class VerificationQualityOracleTests(TestCase):
             for status in ("confirmed", "pending", "returned"):
                 record = SsaRecord.objects.create(
                     school=row,
-                    fy="2026",
+                    # The pending one is the year before's: a school has one
+                    # live SSA a year (owner, 2026-10-14).
+                    fy="2025" if status == "pending" else "2026",
                     quarter="Q3",
                     date_of_ssa=now - timedelta(days=30 + m),
                     verification_status=status,

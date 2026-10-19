@@ -6,6 +6,7 @@ apps.evidence.services.record_upload always raised BadRequest and both
 upload flows failed in production.
 """
 
+import unittest
 from datetime import date
 
 from django.contrib.auth import get_user_model
@@ -72,6 +73,10 @@ class AttendanceAndSsaUploadKindTest(TestCase):
             name, b"%PDF-1.4 " + b"0" * 32, content_type="application/pdf"
         )
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_attendance_upload_succeeds_and_records_attendance_form_kind(self):
         """The governed Training Attendance form is PDF-only (owner,
         2026-08-19). A PDF records as the form; a photographed sheet is kept
@@ -92,6 +97,10 @@ class AttendanceAndSsaUploadKindTest(TestCase):
         )
         self.assertEqual(record.kind, "attendance_form")
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_photographed_attendance_sheet_is_kept_as_a_photo(self):
         response = self.client.post(
             f"/activities/{self.activity.id}/attendance/action",
@@ -107,6 +116,10 @@ class AttendanceAndSsaUploadKindTest(TestCase):
         )
         self.assertEqual(record.kind, "photo")
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_ssa_upload_succeeds_and_records_assessment_form_kind(self):
         response = self.client.post(
             f"/activities/{self.activity.id}/ssa-upload/action",

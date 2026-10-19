@@ -1,8 +1,9 @@
 {% comment %}
 The Actions cell of the week's tables (owner, 2026-09-26): Verify when the
-officer has completed the work — evidence uploaded, Salesforce ID entered —
+officer has completed the work — Salesforce ID entered —
 or Send to <officer> when they have not. `row.action` is set by
-apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none;
+apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none
+(View Details);
 `row.send_name` is the row's own officer, so Everyone's lists, which hold
 several, address each one.
 {% endcomment %}
@@ -12,7 +13,7 @@ several, address each one.
         hx-target="#drawer-container"
         hx-swap="innerHTML"
         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-2xs transition-colors cursor-pointer"
-        title="{{ row.send_name }} completed this — review the evidence and Salesforce ID, then verify or return it">
+        title="{{ row.send_name }} completed this — check the Salesforce ID, then verify or return it">
   <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
   Verify
 </button>
@@ -21,7 +22,7 @@ several, address each one.
         hx-post="/dashboard/pl-week-send/{{ row.id }}/"
         hx-swap="outerHTML"
         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shadow-2xs transition-colors cursor-pointer"
-        title="Remind {{ row.owner }} to complete this: upload the evidence and enter the Salesforce ID">
+        title="Remind {{ row.owner }} to complete this by entering the Salesforce ID">
   <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
   Send to {{ row.send_name }}
 </button>
@@ -52,5 +53,15 @@ several, address each one.
   </div>
 </div>
 {% else %}
-<span class="text-slate-400" aria-label="Nothing to do">—</span>
+{% comment %}Nothing asked of the lead — verified, with Impact Assessment, or
+not yet theirs to chase — and the record still opens (owner, 2026-10-14:
+"when clicked it can open the record").{% endcomment %}
+<button type="button"
+        hx-get="/my-plan/{{ row.id }}"
+        hx-target="#drawer-container"
+        hx-swap="innerHTML"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold edify-surface hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition-colors cursor-pointer"
+        aria-label="View details of {% firstof row.school_name row.cluster_name row.activity_type_label %}">
+  View Details
+</button>
 {% endif %}

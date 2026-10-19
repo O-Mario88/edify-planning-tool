@@ -196,6 +196,16 @@
   color: var(--plw-ink, var(--edify-text));
   font-variant-numeric: tabular-nums;
 }
+/* Each figure opens its records (owner, 2026-10-14); the one being listed
+   is drawn pressed. */
+.plwk-fact[href]:hover,
+.plwk-fact[href]:focus-visible {
+  border-color: var(--plw-ink, var(--edify-text-muted));
+}
+.plwk-fact[aria-current="true"] {
+  border-color: var(--plw-ink, var(--edify-text));
+  box-shadow: inset 0 0 0 1px var(--plw-ink, var(--edify-text));
+}
 
 /* ── Everyone's week: a board of people by days ─────────────────────── */
 .plwk-board-scroll {

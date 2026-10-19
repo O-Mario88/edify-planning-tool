@@ -9,17 +9,126 @@ could confirm their own.
 
 The rule this module enforces: a completion is reviewable only by the person who
 supervises the staff member who submitted it (or an Admin), and never by the
-submitter.
+submitter, except a Programme Lead's own field work, which the lead verifies
+(owner, 2026-10-14: "IA does not verify CCEO and PL work. it is the PL to
+verify everything"; lead_clears_own_work).
 """
 
 from __future__ import annotations
 
+from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.audit.services import log as audit_log
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.rbac import EdifyRole
+
+#: The statuses a completion waits on its Programme Lead in. Program Leads
+#: verify their CCEOs' field work — visits, trainings and cluster meetings
+#: (owner, 2026-10-12) — and their own (2026-10-14), so such a staff-delivered
+#: completion is the lead's whichever path filed it: the review path writes ``submitted_to_pl``; an
+#: older path, or a submission somebody else pressed for the officer, left it
+#: ``awaiting_ia_verification`` with Impact Assessment, where the lead could
+#: not clear it. Partner work is never here: it is verified where its
+#: Salesforce entry and payment are decided.
+LEAD_REVIEWABLE_STATUSES = ("submitted_to_pl", "awaiting_ia_verification")
+
+
+#: The roles whose staff-delivered work a Programme Lead verifies, never
+#: Impact Assessment (owner, 2026-10-14: "IA does not verify CCEO and PL work.
+#: it is the PL to verify everything"): a CCEO's by their lead, and a lead's
+#: own by the lead (owner, same day: "The PL verifies it").
+LEAD_VERIFIED_ROLES = (EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+
+
+def _lead_verified_profiles():
+    from apps.accounts.models import StaffProfile
+
+    holds = Q()
+    for role in LEAD_VERIFIED_ROLES:
+        holds |= Q(user__roles__contains=[role])
+    return StaffProfile.objects.filter(holds, deleted_at__isnull=True)
+
+
+def lead_verified_owner_q(field: str = "responsible_staff_id") -> Q:
+    """Work owned by a CCEO or a Programme Lead, in either id space.
+
+    ``Activity.responsible_staff_id`` holds a StaffProfile id or a User id
+    depending on the path that wrote it (``scoping.owner_ids``), so both are
+    asked. Two subqueries, no literal id list, however many officers there
+    are.
+    """
+    profiles = _lead_verified_profiles()
+    return Q(**{f"{field}__in": profiles.values("id")}) | Q(
+        **{f"{field}__in": profiles.values("user_id")}
+    )
+
+
+def lead_verified_q() -> Q:
+    """Staff-delivered work whose completion a Programme Lead verifies — the
+    work Impact Assessment's staff queue must not offer."""
+    return lead_verified_owner_q() & ~Q(delivery_type="partner")
+
+
+def lead_verified_owner_ids() -> frozenset[str]:
+    """Every id a CCEO's or a lead's work may be filed under, for callers
+    deciding row by row (Cluster Oversight) without a query per row."""
+    ids: set[str] = set()
+    for profile_id, user_id in _lead_verified_profiles().values_list("id", "user_id"):
+        ids.add(str(profile_id))
+        if user_id:
+            ids.add(str(user_id))
+    return frozenset(ids)
+
+
+def owner_is_lead_verified(activity) -> bool:
+    owner = _owning_staff_id(activity)
+    return (
+        bool(owner)
+        and _lead_verified_profiles().filter(Q(id=owner) | Q(user_id=owner)).exists()
+    )
+
+
+def lead_verifies(activity) -> bool:
+    """Whether this completion is a Programme Lead's to verify, not IA's."""
+    return activity.delivery_type != "partner" and owner_is_lead_verified(activity)
+
+
+def routes_to_lead(activity, principal) -> bool:
+    """Where a completion goes when it is submitted: a Programme Lead for a
+    CCEO's or a lead's staff-delivered work, Impact Assessment otherwise.
+
+    Read from the work's OWNER as well as the submitter's role: a completion a
+    lead or an Admin presses Submit on for an officer is still the officer's
+    field work, and used to detour to Impact Assessment, where the lead could
+    not clear it (owner, 2026-10-12). A lead's own work is the lead's too
+    (owner, 2026-10-14), found by its owner like a CCEO's: a lead pressing
+    Submit on work of staff no lead verifies (a coordinator's, at a school the
+    lead holds) sends it to IA, never to a lead's queue nobody could clear.
+    Partner work goes to IA whoever presses the button (§10, 2026-08-19
+    audit).
+    """
+    if activity.delivery_type == "partner":
+        return False
+    if getattr(principal, "active_role", "") == EdifyRole.CCEO.value:
+        return True
+    return owner_is_lead_verified(activity)
+
+
+def lead_clears_own_work(principal) -> bool:
+    """A Programme Lead verifies their own staff field work (owner,
+    2026-10-14: "The PL verifies it"). Read from the role HELD as well as the
+    one in use: an officer acting as a lead for a month does not clear their
+    own work. Partner work the lead monitors is never theirs to clear (§10).
+
+    Not `apps.core.permissions.verifies_own_work`, which answers the opposite
+    question (is this person responsible for the work, so must be refused)."""
+    lead = EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    return getattr(principal, "active_role", "") == lead and lead in (
+        getattr(principal, "roles", None) or []
+    )
 
 
 def _reviewer_staff_ids(principal) -> set[str]:
@@ -94,48 +203,68 @@ def may_review(principal, activity) -> bool:
     """
     if activity is None:
         return False
-    return review_rule(principal)(_owning_staff_id(activity))
+    return review_rule(principal)(
+        _owning_staff_id(activity), partner=activity.delivery_type == "partner"
+    )
 
 
 def review_rule(principal):
     """`may_review` for many rows: whose completions this reviewer may decide.
 
-    Returns a predicate over the owning staff id (either id space). The
-    reviewer's reach is resolved once, so a table can ask it of every row
-    without a query per row — Cluster Oversight offers Verify only where the
-    decision itself would accept it.
+    Returns a predicate over the owning staff id (either id space), told
+    whether the row is partner work. The reviewer's reach is resolved once, so
+    a table can ask it of every row without a query per row — Cluster
+    Oversight offers Verify only where the decision itself would accept it.
     """
     if _is_admin(principal):
-        return lambda owner: True
+        return lambda owner, partner=False: True
     mine = _own_ids(principal)
     reviewable = _reviewer_staff_ids(principal)
-    return lambda owner: bool(owner) and owner not in mine and owner in reviewable
+    clears_own = lead_clears_own_work(principal)
+
+    def rule(owner, partner=False) -> bool:
+        if not owner:
+            return False
+        if owner in mine:
+            return clears_own and not partner
+        return owner in reviewable
+
+    return rule
 
 
 def _queue_queryset(principal):
-    """The completions waiting on THIS reviewer, as an unevaluated queryset."""
-    from django.db.models import Q
+    """The completions waiting on THIS reviewer, as an unevaluated queryset.
 
-    qs = Activity.objects.filter(deleted_at__isnull=True, status="submitted_to_pl")
+    Work the review path filed under the lead, and a CCEO's or a lead's
+    staff-delivered work an older path left with Impact Assessment: both are
+    the lead's to clear (LEAD_REVIEWABLE_STATUSES). A lead's own staff
+    completions are listed for them too (lead_clears_own_work); partner work
+    they monitor never is (§10).
+    """
+    qs = Activity.objects.filter(deleted_at__isnull=True).filter(
+        Q(status="submitted_to_pl")
+        | (Q(status="awaiting_ia_verification") & lead_verified_q())
+    )
     if _is_admin(principal):
         return qs
     reviewable = _reviewer_staff_ids(principal)
-    if not reviewable:
-        return qs.none()
     mine = _own_ids(principal)
-    # Staff-delivered work is attributed by responsible_staff_id; partner
-    # work by the monitoring staff member. Never surface the reviewer's
-    # own submission, whichever id space it was written in.
-    return qs.filter(
-        Q(responsible_staff_id__in=reviewable)
-        | Q(
-            responsible_staff_id__isnull=True,
-            monitored_by_staff_id__in=reviewable,
+    clears_own = lead_clears_own_work(principal)
+    if not reviewable and not clears_own:
+        return qs.none()
+
+    def filed_under(ids) -> Q:
+        # Staff-delivered work is attributed by responsible_staff_id; partner
+        # work by the monitoring staff member — in either id space.
+        return Q(responsible_staff_id__in=ids) | Q(
+            responsible_staff_id__isnull=True, monitored_by_staff_id__in=ids
         )
-    ).exclude(
-        Q(responsible_staff_id__in=mine)
-        | Q(responsible_staff_id__isnull=True, monitored_by_staff_id__in=mine)
-    )
+
+    # Nobody else's own submission is surfaced to them.
+    waiting = filed_under(reviewable) & ~filed_under(mine)
+    if clears_own:
+        waiting |= Q(responsible_staff_id__in=mine) & ~Q(delivery_type="partner")
+    return qs.filter(waiting)
 
 
 def _people(owner_ids) -> tuple[dict[str, str], dict[str, str]]:
@@ -273,9 +402,10 @@ def review_register(principal, *, cceo: str = "", today=None) -> dict:
     for a in activities:
         owner = _owning_staff_id(a) or ""
         # The completion row is written at the moment of submission and not
-        # again until review, so it dates the wait; updated_at is the fallback
-        # for rows submitted before completions carried one.
-        since = submitted.get(a.id) or a.updated_at
+        # again until review, so it dates the wait; work an older path sent to
+        # Impact Assessment is dated by that submission; updated_at is the
+        # fallback for rows submitted before completions carried either.
+        since = submitted.get(a.id) or a.submitted_to_ia_at or a.updated_at
         waited = max((today - timezone.localtime(since).date()).days, 0) if since else 0
         when = a.actual_delivery_date or a.planned_date
         if when is None and a.scheduled_date:
@@ -366,12 +496,18 @@ def _lock_reviewable(activity_id: str, principal) -> Activity:
 def _check_reviewable(a: Activity | None, principal) -> Activity:
     if not a:
         raise NotFoundError("Activity not found.")
-    if a.status != "submitted_to_pl":
+    if a.status not in LEAD_REVIEWABLE_STATUSES:
         raise BadRequest("Activity is not awaiting PL review.")
+    if a.status == "awaiting_ia_verification" and not lead_verifies(a):
+        # Partner work, or a coordinator's own field work: Impact
+        # Assessment's, as it always was.
+        raise BadRequest("This work is verified by Impact Assessment.")
     if _is_admin(principal):
         return a
     owner = _owning_staff_id(a)
     if owner and owner in _own_ids(principal):
+        if lead_clears_own_work(principal) and a.delivery_type != "partner":
+            return a
         raise Forbidden("You cannot review your own completion.")
     if owner not in _reviewer_staff_ids(principal):
         raise Forbidden("This completion belongs to another Program Lead's team.")
@@ -411,6 +547,98 @@ def _close_review_notice(activity) -> None:
         pass
 
 
+def _close_ia_notice(activity) -> None:
+    """Impact Assessment was told this work was waiting for them; it is not."""
+    try:
+        from apps.notifications.services import resolve_condition
+
+        resolve_condition(
+            "activity_submitted_for_verification", "activity", str(activity.id)
+        )
+    except Exception:  # noqa: BLE001 - never fail a review over bookkeeping
+        pass
+
+
+def programme_lead_owner(activity) -> str | None:
+    """The user id of the Programme Lead whose own staff work this is, or
+    None.
+
+    Read from the role the owner HOLDS: an officer acting as a lead for a
+    month holds CCEO, and their own work still goes to their lead (owner,
+    2026-10-07: acting is following up, never deciding). Partner work is
+    never a lead's own (§10).
+    """
+    owner = activity.responsible_staff_id
+    if not owner or activity.delivery_type == "partner":
+        return None
+    from apps.accounts.models import StaffProfile
+
+    return (
+        StaffProfile.objects.filter(
+            Q(id=owner) | Q(user_id=owner),
+            deleted_at__isnull=True,
+            user__roles__contains=[EdifyRole.COUNTRY_PROGRAM_LEAD.value],
+        )
+        .values_list("user_id", flat=True)
+        .first()
+    )
+
+
+def _approve(a: Activity, reviewer_id: str) -> None:
+    """Write the approval on a locked, reviewable completion: the work is
+    approved and counted from now (owner, 2026-10-15). Inside the caller's
+    transaction."""
+    from apps.activities.ia_models import IAVerification
+    from apps.core.enums import ActivityStatus, EvidenceStatus, VerificationStatus
+    from apps.evidence.models import EvidenceRecord
+    from apps.hr.milestone_progress import record_activity_progress
+    from apps.integrations.services import enqueue_activity_salesforce_sync
+
+    reviewed_at = timezone.now()
+    was_with_ia = a.status == "awaiting_ia_verification"
+    a.status = ActivityStatus.IA_VERIFIED
+    a.ia_verification_status = VerificationStatus.CONFIRMED
+    a.pl_reviewed_at = reviewed_at
+    a.pl_reviewed_by = reviewer_id
+    a.ia_confirmed_at = reviewed_at
+    a.ia_confirmed_by = reviewer_id
+    a.evidence_status = "accepted"
+    a.save(
+        update_fields=[
+            "status",
+            "ia_verification_status",
+            "pl_reviewed_at",
+            "pl_reviewed_by",
+            "ia_confirmed_at",
+            "ia_confirmed_by",
+            "evidence_status",
+            "updated_at",
+        ]
+    )
+    EvidenceRecord.objects.filter(activity=a, quarantined=False).update(
+        status=EvidenceStatus.ACCEPTED,
+        reviewed_by=reviewer_id,
+        reviewed_at=reviewed_at,
+    )
+    # The IA workspace's own record, where the work had one: it must not go on
+    # reading "pending" for work the lead has approved.
+    IAVerification.objects.filter(activity=a).update(
+        status=VerificationStatus.CONFIRMED,
+        verified_by=reviewer_id,
+        verified_at=reviewed_at,
+    )
+    # The SSA scores keyed on the visit count from its approval (owner,
+    # 2026-10-16: "when PL approves they will reflect").
+    from apps.ssa.pl_confirmation import confirm_visit_ssa
+
+    confirm_visit_ssa(a, reviewer_id)
+    _close_review_notice(a)
+    if was_with_ia:
+        _close_ia_notice(a)
+    transaction.on_commit(lambda: record_activity_progress(a))
+    enqueue_activity_salesforce_sync(a.id)
+
+
 def confirm(activity_id: str, principal) -> dict:
     """PL approves and verifies a CCEO completion and evidence directly.
 
@@ -419,49 +647,14 @@ def confirm(activity_id: str, principal) -> dict:
     credit and syncing to Salesforce), rather than routing staff work to IA.
     IA verifies evidence for partner completed activities to process partner payments.
     """
-    from django.db import transaction
     from apps.activities.services import _serialize
-    from apps.core.enums import ActivityStatus, EvidenceStatus, VerificationStatus
-    from apps.evidence.models import EvidenceRecord
-    from apps.hr.milestone_progress import record_activity_progress
-    from apps.integrations.services import enqueue_activity_salesforce_sync
 
     _get_reviewable(activity_id, principal)
-    reviewed_at = timezone.now()
 
     with transaction.atomic():
         a = _lock_reviewable(activity_id, principal)
-        a.status = ActivityStatus.IA_VERIFIED
-        a.ia_verification_status = VerificationStatus.CONFIRMED
-        a.pl_reviewed_at = reviewed_at
-        a.pl_reviewed_by = principal.user_id
-        a.ia_confirmed_at = reviewed_at
-        a.ia_confirmed_by = principal.user_id
-        a.evidence_status = "accepted"
-        a.save(
-            update_fields=[
-                "status",
-                "ia_verification_status",
-                "pl_reviewed_at",
-                "pl_reviewed_by",
-                "ia_confirmed_at",
-                "ia_confirmed_by",
-                "evidence_status",
-                "updated_at",
-            ]
-        )
-        EvidenceRecord.objects.filter(activity=a, quarantined=False).update(
-            status=EvidenceStatus.ACCEPTED,
-            reviewed_by=principal.user_id,
-            reviewed_at=reviewed_at,
-        )
-
+        _approve(a, principal.user_id)
         _audit("pl_review_confirm", a, principal)
-        _close_review_notice(a)
-
-        confirmed = a
-        transaction.on_commit(lambda: record_activity_progress(confirmed))
-        enqueue_activity_salesforce_sync(confirmed.id)
 
     # Notify CCEO
     owner = _owning_staff_id(a)
@@ -477,10 +670,40 @@ def confirm(activity_id: str, principal) -> dict:
     return _serialize(a)
 
 
+def approve_on_hand_in(activity) -> bool:
+    """A Programme Lead's own work is approved the moment it is handed in
+    (owner, 2026-10-15: "it is the PL who approves for CCEO and theirs are
+    approved automatically"). Nobody is asked, so nobody is told. True when
+    it was approved."""
+    if activity.status not in LEAD_REVIEWABLE_STATUSES:
+        return False
+    lead_user_id = programme_lead_owner(activity)
+    if not lead_user_id:
+        return False
+    with transaction.atomic():
+        a = Activity.objects.select_for_update().get(pk=activity.pk)
+        if a.status not in LEAD_REVIEWABLE_STATUSES:
+            return False
+        _approve(a, lead_user_id)
+        audit_log(
+            action="pl_review_auto_approve",
+            subject_kind="Activity",
+            subject_id=a.id,
+            actor_id=lead_user_id,
+            actor_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            reason="A Programme Lead's own work is approved when it is handed in.",
+            payload={
+                "schoolId": a.school_id,
+                "activityType": a.activity_type,
+                "responsibleStaffId": a.responsible_staff_id,
+                "status": a.status,
+            },
+        )
+    return True
+
+
 def return_activity(activity_id: str, data: dict, principal) -> dict:
     """PL returns a completion to the CCEO for correction."""
-    from django.db import transaction
-
     from apps.activities.services import _serialize
 
     from apps.activities.return_notes import compose

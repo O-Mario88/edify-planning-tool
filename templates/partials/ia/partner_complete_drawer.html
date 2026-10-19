@@ -23,9 +23,11 @@ gates partner payment.
 
   <div class="edify-data-list">
     <div class="edify-data-row"><span class="edify-data-row__label">Delivered</span><span class="edify-data-row__value">{{ a.actual_delivery_date|date:"d M Y"|default:"Not recorded" }}</span></div>
-    <div class="edify-data-row"><span class="edify-data-row__label">Evidence</span><span class="edify-data-row__value">{{ evidence_count }} file(s)</span></div>
+    <div class="edify-data-row"><span class="edify-data-row__label">{{ form_name }}</span><span class="edify-data-row__value">{% if uploaded_form %}Uploaded{% else %}Not uploaded{% endif %}</span></div>
     <div class="edify-data-row"><span class="edify-data-row__label">Attendance</span><span class="edify-data-row__value">{% if a.teachers_attended or a.leaders_attended %}{{ a.teachers_attended|default:0 }} teachers · {{ a.leaders_attended|default:0 }} leaders{% else %}—{% endif %}</span></div>
   </div>
+
+  {% if uploaded_form %}<div class="grid">{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>{% endif %}
 
   <p class="edify-text-caption text-slate-500">Completing verifies the evidence and stores the reference you enter. The system does not contact Salesforce, and the partner becomes eligible for payment but is not marked paid.</p>
 

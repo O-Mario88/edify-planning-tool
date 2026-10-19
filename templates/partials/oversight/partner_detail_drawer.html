@@ -161,8 +161,10 @@ accountability record, because the CCEO is not the one who is late.
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
       <div><dt class="edify-text-caption edify-text-subtle">Activity</dt>
         <dd>{{ item.activity_status|replace_underscore|title|default:"Not scheduled" }}</dd></div>
+      {% comment %}UPLOAD-OFF (owner, 2026-10-13)
       <div><dt class="edify-text-caption edify-text-subtle">Evidence</dt>
         <dd>{{ item.evidence_status|replace_underscore|title|default:"—" }}</dd></div>
+      {% endcomment %}
       <div><dt class="edify-text-caption edify-text-subtle">Salesforce</dt>
         <dd>{{ item.salesforce_status|status_label|default:"—" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle">Impact Assessment</dt>

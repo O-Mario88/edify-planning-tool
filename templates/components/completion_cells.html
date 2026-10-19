@@ -14,7 +14,13 @@ marks the table.
 
 Context: `row` with `salesforce_id`, `salesforce_ok`, `evidence_label` and
 `evidence_ok`; optional `completion_cell_class`, the host table's cell
-classes.
+classes; optional `evidence_column`.
+
+UPLOAD-OFF (owner, 2026-10-13 and 2026-10-14): staff work is completed with
+its visit ID or training ID alone, so the staff tables draw the Salesforce
+ID cell only. A partner's work is verified from its uploaded form, so a table
+of partner work passes `evidence_column=True` and keeps both cells and its
+Evidence heading. Pass it from a staff table to bring that column back.
 {% endcomment %}
 <td class="{{ completion_cell_class|default:'whitespace-nowrap' }}" data-label="Salesforce ID" data-salesforce-id>{% if row.salesforce_id %}<span class="font-mono font-semibold text-emerald-700 dark:text-emerald-400" data-tone="success">{{ row.salesforce_id }}</span>{% else %}<span class="text-slate-400">Not in SF</span>{% endif %}</td>
-<td class="{{ completion_cell_class|default:'whitespace-nowrap' }}" data-label="Evidence" data-evidence>{% if row.evidence_ok %}<span class="font-semibold text-emerald-700 dark:text-emerald-400" data-tone="success">{{ row.evidence_label }}</span>{% elif row.evidence_label %}<span class="text-amber-700" data-tone="warning" title="Uploaded, but not the form this activity is completed with">{{ row.evidence_label }}</span>{% else %}<span class="text-slate-400">No Evidence Uploaded</span>{% endif %}</td>
+{% if evidence_column %}<td class="{{ completion_cell_class|default:'whitespace-nowrap' }}" data-label="Evidence" data-evidence>{% if row.evidence_ok %}<span class="font-semibold text-emerald-700 dark:text-emerald-400" data-tone="success">{{ row.evidence_label }}</span>{% elif row.evidence_label %}<span class="text-amber-700" data-tone="warning" title="Uploaded, but not the form this activity is completed with">{{ row.evidence_label }}</span>{% else %}<span class="text-slate-400">No Evidence Uploaded</span>{% endif %}</td>{% endif %}

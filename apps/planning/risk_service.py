@@ -246,16 +246,10 @@ def _scheduled_without_cost(item, today: date) -> PlanningRisk | None:
     """
     if item.is_awaiting_partner_schedule or not item.activity_id:
         return None
-    # An in-school training's planned cost reads 0 on these pages by design.
-    # The Training of a pair has none to carry -- its School Visit is the
-    # journey and is checked on its own row -- and one with no visit is
-    # judged on the lines it holds (its budget).
-    carried = (
-        item.budget
-        if getattr(item, "is_in_school_training", False)
-        else item.planned_cost
-    )
-    priced = getattr(item, "cost_on_school_visit", False) or carried > 0
+    # The planned cost is the activity's own (owner, 2026-10-15). The
+    # Training of a live pair has none to carry -- its School Visit is the
+    # journey and is checked on its own row.
+    priced = getattr(item, "cost_on_school_visit", False) or item.planned_cost > 0
     if not item.cost_missing and priced:
         return None
     return PlanningRisk(
@@ -319,8 +313,10 @@ def _evidence_outstanding(item, today: date) -> PlanningRisk | None:
     return PlanningRisk(
         key="evidence_outstanding",
         severity=HIGH,
-        reason="The activity has been delivered but no evidence has been uploaded.",
-        recommended_action="Upload the evidence pack",
+        # UPLOAD-OFF (owner, 2026-10-13): was "...no evidence has been
+        # uploaded." / "Upload the evidence pack".
+        reason="The activity was started but has not been completed with its Salesforce ID.",
+        recommended_action="Complete it with the Salesforce ID",
         route=f"/activities/{item.activity_id}",
         owner_id=item.operational_owner_id,
         owner_name=item.operational_owner_name,

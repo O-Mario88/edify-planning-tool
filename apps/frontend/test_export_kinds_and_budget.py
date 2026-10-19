@@ -79,7 +79,7 @@ class KindsTest(SimpleTestCase):
         self.assertEqual(export_kinds.read_kind({"activity_type": "visits"}), "visits")
 
     def test_every_plan_export_names_its_budget_column(self):
-        from apps.planning.oversight_service import EXPORT_COLUMNS
+        from apps.core import plan_export
         from apps.planning.partner_oversight_service import EXPORT_HEADER
         from apps.projects.school_table import COLUMNS
         from apps.budget.services import (
@@ -93,7 +93,7 @@ class KindsTest(SimpleTestCase):
         )
 
         for headers in (
-            [label for label, _ in EXPORT_COLUMNS],
+            *plan_export.ALL_HEADERS,
             EXPORT_HEADER,
             COLUMNS,
             ACTIVITY_SHEET_HEADERS,
@@ -243,6 +243,113 @@ class BudgetExportTest(TestCase):
         header = lines[0]
         at_amount = header.index("Amount (UGX)")
         self.assertEqual(sorted(row[at_amount] for row in lines[1:]), [10_000, 40_000])
+
+    def test_the_first_sheet_is_the_pages_activity_cost_plan(self):
+        """Owner, 2026-10-12: "make sure the budget is exported exactly in the
+        budget format" — the page's ledger: title and Grand total, a band per
+        activity type, that table's own headings, items, subtotal, Grand
+        total."""
+        sheets = self.export()
+        self.assertEqual(next(iter(sheets)), "Activity cost plan")
+        rows = [
+            [cell for cell in row] + [None] * (6 - len(row))
+            for row in sheets["Activity cost plan"]
+        ]
+        self.assertEqual(rows[0][0], "Activity cost plan")
+        self.assertEqual(rows[0][4:6], ["Grand total", 50_000])
+        self.assertIn("grouped by activity and item", rows[1][0])
+        first = [row[0] for row in rows]
+        visit = first.index("School Visit · 1 activity")
+        self.assertEqual(
+            rows[visit + 1],
+            [
+                "Item",
+                "No. of Days",
+                "No. of Persons",
+                "Rate / Unit",
+                "Staff cost",
+                "Activity",
+            ],
+        )
+        self.assertEqual(rows[visit + 2], ["Transport", 1, 1, 40_000, 40_000, 40_000])
+        self.assertEqual(
+            rows[visit + 3], ["School Visit subtotal", None, None, None, 40_000, 40_000]
+        )
+        meeting = first.index("Cluster Meeting · 1 activity")
+        self.assertEqual(rows[meeting + 1][1:3], ["Meetings", "Participants"])
+        self.assertEqual(rows[-1], ["Grand total", None, None, None, 50_000, 50_000])
+        # The larger table first, as on the page.
+        self.assertLess(visit, meeting)
+
+    def test_the_cost_plan_is_the_pages_own_ledger(self):
+        """Every row of the sheet is a row `budget_groups` gave the page."""
+        from apps.budget.services import budget_workspace, cost_plan_sheet
+
+        page = budget_workspace(
+            self.pl_user,
+            {
+                "budget_scope": "team",
+                "period": "fy",
+                "fy": self.fy,
+                "date": self.today.isoformat(),
+                "plan_only": True,
+            },
+        )
+        sheet = cost_plan_sheet(page["groups"])
+        self.assertEqual(sheet["rows"][0][5], page["total"])
+        self.assertEqual(sheet["rows"][-1][4:6], [page["staff_total"], page["total"]])
+        bands = [i for i, name in sheet["row_styles"].items() if name == "band"]
+        self.assertEqual(len(bands), len(page["groups"]))
+        for at, group in zip(bands, page["groups"]):
+            body = sheet["rows"][at + 1 : at + 1 + len(group["rows"])]
+            self.assertEqual([r[0] for r in body], [r["item"] for r in group["rows"]])
+            self.assertEqual([r[5] for r in body], [r["total"] for r in group["rows"]])
+
+    def test_the_cost_plan_shows_ugx_and_each_actual_rate(self):
+        from openpyxl import load_workbook
+
+        # A second visit at another rate: two Transport rows, each its rate.
+        self._activity("school_visit", self.today + timedelta(days=7), cost=5_000)
+        client = Client()
+        client.force_login(self.pl_user)
+        response = client.get(
+            "/budget/export",
+            {
+                "period_type": "custom_dates",
+                "start_date": self.start.isoformat(),
+                "end_date": self.end.isoformat(),
+                "budget_scope": "team",
+                "activity_type": "all",
+                "status": "all",
+            },
+        )
+        sheet = load_workbook(io.BytesIO(response.content))["Activity cost plan"]
+        rows = [r for r in sheet.iter_rows() if r[0].value == "Transport"]
+        # "Pick the actual rate from the cost catalogue and as calculated".
+        self.assertEqual(
+            # The School Visit table's two, then the Cluster Meeting's one.
+            [(r[3].value, r[5].value) for r in rows],
+            [(40_000, 40_000), (5_000, 5_000), (10_000, 10_000)],
+        )
+        row = rows[0]
+        self.assertEqual(row[5].number_format, '"UGX" #,##0')
+        # The Grand total beside the title is money too.
+        top = next(sheet.iter_rows())
+        self.assertEqual(top[4].value, "Grand total")
+        self.assertEqual(top[5].number_format, '"UGX" #,##0')
+        self.assertEqual(row[5].alignment.horizontal, "right")
+        self.assertEqual(row[1].alignment.horizontal, "center")
+        band = next(
+            r
+            for r in sheet.iter_rows()
+            if str(r[0].value) == "School Visit · 2 activities"
+        )
+        # The page's light band, dark ink: not the navy of a flat export.
+        self.assertEqual(band[0].fill.fgColor.rgb[-6:], "DCE6EC")
+        self.assertTrue(band[0].font.i)
+        # A ledger, not a filterable flat table.
+        self.assertIsNone(sheet.auto_filter.ref)
+        self.assertIsNone(sheet.freeze_panes)
 
     def test_the_drawers_open_for_the_budget_and_the_advance_requests(self):
         client = Client()

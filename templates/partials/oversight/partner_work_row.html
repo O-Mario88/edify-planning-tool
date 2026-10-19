@@ -17,7 +17,7 @@ journeys and the Resolve drawer address it by.
   </span></td>
   <td data-label="Staff member">{{ item.responsible_cceo_name|default:"Unassigned" }}</td>
   <td data-label="Activity / purpose">{{ item.activity_type|replace_underscore|title }}</td>
-  {% include "components/completion_cells.html" with row=item %}
+  {% include "components/completion_cells.html" with row=item evidence_column=True %}
   <td data-label="Status"><span class="partner-plan-table__status">
     {% if item.completion_gap %}<span class="partner-status-chip" data-tone="warning" data-completion-gap>{{ item.completion_gap }}</span>{% else %}
     <span class="partner-status-chip" data-tone="{{ item.status_tone }}" data-status="{{ item.delivery_phase }}"
@@ -25,6 +25,7 @@ journeys and the Resolve drawer address it by.
     {% if item.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
   </span></td>
   <td data-label="{% if table.kind == 'activity' %}Scheduled{% else %}Activity date{% endif %}">{% if table.kind == 'activity' %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting date" }}{% else %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting scheduling" }}{% endif %}</td>
+  <td data-label="Completed date" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
   <td data-label="Actions" class="school-plan-table__actions">
     {% comment %}
     Work waiting for verification offers its reviewer View, Verify & Confirm

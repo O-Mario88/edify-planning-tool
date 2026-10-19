@@ -16,6 +16,7 @@ from apps.clusters.models import Cluster
 from apps.core.enums import SsaIntervention
 from apps.geography.models import District, Region
 from apps.schools.models import School
+from apps.core.fy import get_operational_fy
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.ssa.recommendation_engine import (
     prioritized_interventions,
@@ -43,7 +44,9 @@ class RecommendationEngineTest(TestCase):
         rec = SsaRecord.objects.create(
             school=school,
             date_of_ssa=when,
-            fy="2026",
+            # The year its date falls in: a school has one SSA a year (owner,
+            # 2026-10-14), so a trend is several years' readings.
+            fy=get_operational_fy(when),
             quarter="Q3",
             average_score=avg,
             uploaded_by="u1",
@@ -110,11 +113,11 @@ class RecommendationEngineTest(TestCase):
         # leadership: 6 -> 4 -> 2 (declining). financial_health: flat 2.0.
         # Both end at 2.0, but leadership is on a downward trajectory.
         self._record(
-            datetime(2026, 1, 1, tzinfo=dt_tz.utc),
+            datetime(2024, 1, 1, tzinfo=dt_tz.utc),
             self._all(leadership=6.0, financial_health=2.0),
         )
         self._record(
-            datetime(2026, 3, 1, tzinfo=dt_tz.utc),
+            datetime(2025, 3, 1, tzinfo=dt_tz.utc),
             self._all(leadership=4.0, financial_health=2.0),
         )
         self._record(
@@ -131,11 +134,11 @@ class RecommendationEngineTest(TestCase):
     def test_improving_intervention_deprioritized_vs_stagnant_same_score(self):
         # leadership improving 2->4->6, financial_health stuck at 6.
         self._record(
-            datetime(2026, 1, 1, tzinfo=dt_tz.utc),
+            datetime(2024, 1, 1, tzinfo=dt_tz.utc),
             self._all(leadership=2.0, financial_health=6.0),
         )
         self._record(
-            datetime(2026, 3, 1, tzinfo=dt_tz.utc),
+            datetime(2025, 3, 1, tzinfo=dt_tz.utc),
             self._all(leadership=4.0, financial_health=6.0),
         )
         self._record(
@@ -151,7 +154,7 @@ class RecommendationEngineTest(TestCase):
     def test_persistence_signal_reflects_chronic_weakness(self):
         for m in (1, 3, 6):
             self._record(
-                datetime(2026, m, 1, tzinfo=dt_tz.utc), self._all(leadership=3.0)
+                datetime(2020 + m, m, 1, tzinfo=dt_tz.utc), self._all(leadership=3.0)
             )
         ranked = prioritized_interventions(self.school)
         lead = next(r for r in ranked if r["intervention"] == "leadership")
@@ -238,11 +241,11 @@ class RecommendationEngineTest(TestCase):
         # financial_health: flat 3.0 (weak but stable, better current score)
         # enrolment: 2 -> 4 -> 6 (improving, ends 6.0)
         self._record(
-            datetime(2025, 6, 1, tzinfo=dt_tz.utc),
+            datetime(2024, 6, 1, tzinfo=dt_tz.utc),
             self._all(leadership=6.0, financial_health=3.0, enrolment=2.0),
         )
         self._record(
-            datetime(2025, 12, 1, tzinfo=dt_tz.utc),
+            datetime(2025, 3, 1, tzinfo=dt_tz.utc),
             self._all(leadership=4.0, financial_health=3.0, enrolment=4.0),
         )
         self._record(

@@ -45,6 +45,19 @@ class SsaListUploadView(APIView):
         return paginator.get_paginated_response([_serialize_record(r) for r in page])
 
     def post(self, request: Request) -> Response:
+        # The permission says who may key an SSA; the school must also be
+        # one of theirs (owner, 2026-10-14: "Other roles must not gain the
+        # ability simply by calling the API directly"). The one-a-year rule
+        # is the service's, whichever way the record arrives.
+        from apps.core.exceptions import Forbidden
+        from apps.schools.models import School
+
+        from .creation import school_in_scope
+
+        school_id = str(request.data.get("schoolId") or "").strip()
+        school = School.objects.filter(school_id=school_id).first()
+        if school is not None and not school_in_scope(request.user, school):
+            raise Forbidden("This school is not in your scope.")
         return Response(services.upload(request.data, request.user), status=201)
 
 
@@ -94,4 +107,7 @@ class SsaFileUploadView(APIView):
         if file is None:
             raise BadRequest("A file is required (multipart field 'file').")
         result = upload_ssa_file(file, request.user)
-        return Response(result, status=200 if result["success"] else 422)
+        # A file whose rows were all skipped because their years already hold
+        # an SSA did what it should: protected the data. It is not refused.
+        ok = result["success"] or result.get("duplicate_rows")
+        return Response(result, status=200 if ok else 422)

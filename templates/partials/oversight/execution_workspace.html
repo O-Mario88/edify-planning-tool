@@ -17,23 +17,35 @@ the activities behind it.
 
   {% if not monitor_embedded %}{% include "partials/oversight/_execution_filters.html" %}{% endif %}
 
+  {% comment %}Completion Reviews, for a Programme Lead (owner, 2026-10-14:
+  "move the page under execution and completion tab page so the PL can access
+  it from their dashboard direct"): the officers' completed work waiting on
+  the lead, above the team's delivery it is part of.{% endcomment %}
+  {% if completion_reviews %}
+  {% include "partials/my_plan/completion_reviews_register.html" with rows=completion_reviews.rows filters=completion_reviews.filters queue_url="/pl/review-queue" reviews_embedded=True %}
+  {% if completion_reviews.autoload %}<div hidden hx-get="{{ completion_reviews.autoload }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-review-autoload></div>{% endif %}
+  {% endif %}
+
   {% data_table name="execution" %}
     {% slot title %}Execution &amp; completion · FY {{ fy }}{% endslot %}
-    {% slot summary %}{{ execution_totals.person_count }} staff · {{ execution_totals.delivered|intcomma }} of {{ execution_totals.planned|intcomma }} delivered · {{ execution_totals.complete|intcomma }} complete{% endslot %}
-    {% slot caption %}Each Programme Lead's and CCEO's visits delivered against their target, work delivered against what is due, completion, follow-ups, trainings, meetings and partner work, grouped by Programme Lead.{% endslot %}
+    {% slot summary %}{{ execution_totals.person_count }} staff · {{ execution_totals.delivered|intcomma }} of {{ execution_totals.planned|intcomma }} completed · {{ execution_totals.complete|intcomma }} with their ID{% endslot %}
+    {% slot caption %}Each Programme Lead's and CCEO's visits completed against their target and what remains, schools trained against their portfolio and what remains, work completed against what is due, follow-ups, trainings, meetings and partner work, grouped by Programme Lead.{% endslot %}
     {% slot empty %}{% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}{% endslot %}
     {% slot footer %}{% include "partials/oversight/_execution_about.html" %}{% endslot %}
     {% if execution.teams %}
         <thead>
           <tr>
             <th scope="col" class="px-3 py-2">Staff</th>
-            <th scope="col" class="px-3 py-2 text-right">Visits delivered</th>
+            <th scope="col" class="px-3 py-2 text-right">Visits Completed</th>
+            <th scope="col" class="px-3 py-2 text-right">Remaining to Visit</th>
+            <th scope="col" class="px-3 py-2 text-right">Schools Trained</th>
+            <th scope="col" class="px-3 py-2 text-right">Remaining to Train</th>
             <th scope="col" class="px-3 py-2 text-right">Delivered of due</th>
             <th scope="col" class="px-3 py-2 text-right">Complete</th>
             {% for key, label, tone in execution_columns %}
             <th scope="col" class="px-3 py-2 text-right">{{ label }}</th>
             {% endfor %}
-            <th scope="col" class="px-3 py-2 text-right">Verified</th>
+            <th scope="col" class="px-3 py-2 text-right">PL Approved</th>
             <th scope="col" class="px-3 py-2 text-right">Trainings</th>
             <th scope="col" class="px-3 py-2 text-right">Meetings</th>
             <th scope="col" class="px-3 py-2 text-right">Partner activities</th>
@@ -42,9 +54,9 @@ the activities behind it.
         <tbody>
           {% for team in execution.teams %}
           <tr class="edify-group-head">
-            <th colspan="13" scope="colgroup">
+            <th colspan="15" scope="colgroup">
               <span class="edify-group-head__label">{{ team.name }}</span>
-              <span class="edify-group-head__count">{{ team.person_count }} staff · {{ team.visits_delivered|intcomma }} of {{ team.visits_target|intcomma }} visits delivered · {{ team.overdue|intcomma }} past date, not delivered</span>
+              <span class="edify-group-head__count">{{ team.person_count }} staff · {{ team.visits_delivered|intcomma }} of {{ team.visits_target|intcomma }} visits completed · {{ team.schools_trained|intcomma }} of {{ team.training_portfolio|intcomma }} schools trained · {{ team.overdue|intcomma }} past date, not completed</span>
             </th>
           </tr>
           {% for person in team.people %}
@@ -76,9 +88,10 @@ the activities behind it.
             <th scope="col" class="px-3 py-2">School / Cluster</th>
             <th scope="col" class="px-3 py-2">Activity</th>
             <th scope="col" class="px-3 py-2">Planned Date</th>
+            <th scope="col" class="px-3 py-2">Completed Date</th>
             <th scope="col" class="px-3 py-2">Staff</th>
             <th scope="col" class="px-3 py-2">Salesforce ID</th>
-            <th scope="col" class="px-3 py-2">Evidence</th>
+            {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2">Evidence</th> #}
             <th scope="col" class="px-3 py-2">Status</th>
           </tr>
         </thead>
@@ -89,9 +102,10 @@ the activities behind it.
             <td class="px-3 py-2" data-record-title>{% if work.school_id %}<a href="/schools/{{ work.school_id }}" class="font-semibold hover:underline">{{ work.place }}</a>{% else %}{{ work.place }}{% endif %}</td>
             <td class="px-3 py-2" data-label="Activity"><a href="/activities/{{ work.id }}" class="hover:underline">{{ work.activity_type|status_label }}</a></td>
             <td class="px-3 py-2 tabular-nums" data-label="Planned Date">{{ work.planned_date|date:"j M Y"|default:"—" }}</td>
+            <td class="px-3 py-2 tabular-nums" data-label="Completed Date" data-completed-on>{{ work.completed_on|date:"j M Y"|default:"—" }}</td>
             <td class="px-3 py-2" data-label="Staff">{{ work.person_name }}</td>
             <td class="px-3 py-2" data-label="Salesforce ID">{% if work.salesforce_ok %}<span class="edify-status-text" data-edify-tone="success">In</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Not in SF</span>{% endif %}</td>
-            <td class="px-3 py-2" data-label="Evidence">{% if work.evidence_ok %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">No form</span>{% endif %}</td>
+            {# UPLOAD-OFF (owner, 2026-10-13): <td class="px-3 py-2" data-label="Evidence">{% if work.evidence_ok %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">No form</span>{% endif %}</td> #}
             <td class="px-3 py-2" data-label="Status">{{ work.status|status_label }}</td>
           </tr>
           {% empty %}

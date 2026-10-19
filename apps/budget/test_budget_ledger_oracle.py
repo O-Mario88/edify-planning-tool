@@ -9,6 +9,12 @@ that change (commit 4425605), renamed and calling each other; every test
 asserts the live code returns exactly what they return, on fixtures covering
 an empty scope, two fiscal years, legacy month-only rows, missing owners,
 excluded and deleted work, mixed rates and equal-total ties.
+
+One rule of the frozen copy was changed on purpose (owner, 2026-10-12: "Pick
+the actual rate from the cost catalogue and as calculated"): an item bought at
+two rates is two rows, each with its rate, where it used to be one row that
+read "Mixed". The fixture's lines belong to no priced day, so the rate of each
+is its own.
 """
 
 from __future__ import annotations
@@ -170,7 +176,7 @@ def _frozen_budget_groups(
         if line.cost_setting_key == "partner_training_lump_sum":
             item_label = "Facilitation fee"
         row = group["rows"].setdefault(
-            item_label,
+            (item_label, int(line.unit_cost or 0)),
             {
                 "item": item_label,
                 "dates": set(),
@@ -224,7 +230,7 @@ def _frozen_budget_groups(
                 line.description or line.cost_category.replace("_", " ").title()
             )
             row = admin_group["rows"].setdefault(
-                item_label,
+                (item_label, int(line.unit_cost or 0)),
                 {
                     "item": item_label,
                     "dates": set(),
@@ -270,7 +276,10 @@ def _frozen_budget_groups(
             {
                 "label": group["label"],
                 "table_kind": group["table_kind"],
-                "rows": sorted(rows, key=lambda item: (-item["total"], item["item"])),
+                "rows": sorted(
+                    rows,
+                    key=lambda item: (-item["total"], item["item"], item["rate"] or 0),
+                ),
                 "total": group["total"],
                 "staff_total": group["staff_total"],
                 "vendor_total": group["vendor_total"],
@@ -1008,7 +1017,15 @@ class BudgetLedgerOracleTest(TestCase):
             },
         )
         rows = [row for group in page["groups"] for row in group["rows"]]
-        self.assertTrue(any(row["mixed_rate"] for row in rows))
+        # An item bought at two rates is two rows; no row hides its rate.
+        self.assertFalse(any(row["mixed_rate"] for row in rows))
+        self.assertTrue(all(row["rate"] is not None for row in rows))
+        by_group_item = [
+            (group["label"], row["item"])
+            for group in page["groups"]
+            for row in group["rows"]
+        ]
+        self.assertNotEqual(len(by_group_item), len(set(by_group_item)))
         totals = [group["total"] for group in page["groups"]]
         self.assertNotEqual(len(totals), len(set(totals)), "no equal-total groups")
         self.assertTrue(any(group["table_kind"] == "admin" for group in page["groups"]))

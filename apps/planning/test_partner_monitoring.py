@@ -578,12 +578,52 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
             headers={"HX-Request": "true"},
         )
 
-    def test_the_verify_drawer_shows_the_evidence_and_asks_for_the_salesforce_id(self):
+    def test_the_verify_drawer_offers_the_form_as_one_button_and_asks_for_the_id(self):
+        """Owner, 2026-10-14: "no need to show the uploaded image, just use
+        the link View Uploaded {visit form} ... in a beautiful button". One
+        button that opens one PDF; no list of the files behind it."""
         body = self.drawer("verify").content.decode()
         self.assertIn('hx-post="/partner-oversight/verify/submit"', body)
-        self.assertIn("visit.pdf", body)
+        self.assertEqual(body.count("View Uploaded Visit Form</span>"), 1)
+        # It opens a popup with the PDF and a Download button (owner,
+        # 2026-10-14: "make the pdf upload view a popup with download button").
+        address = f"/api/evidence/activity/{self.activity.id}/form"
+        self.assertEqual(body.count("data-uploaded-form-popup"), 1)
+        self.assertIn(f"$refs.frame.src = '{address}'", body)
+        self.assertIn(f'href="{address}?download=1"', body)
+        self.assertIn(">Download</span>", body)
+        self.assertIn("data-uploaded-form-close", body)
+        # The drawer is a form: nothing in the popup may submit it.
+        popup = body.split("data-uploaded-form-viewer", 1)[1].split("</dialog>", 1)[0]
+        self.assertNotIn('type="submit"', popup)
+        self.assertNotIn("<form", popup)
+        self.assertNotIn("visit.pdf", body)
+        self.assertNotIn("<img", body)
+        self.assertNotIn("<embed", body)
+        self.assertNotRegex(body, r"/api/evidence/[a-z0-9]+/file")
         self.assertIn('name="salesforce_id"', body)
         self.assertIn("Verify &amp; Confirm", body)
+
+    def test_the_same_form_uploaded_three_times_is_still_one_button(self):
+        """Owner, 2026-10-14: "even if the same document is uploaded 3 tines
+        it will display all the 3. can you fix it to show only one upload"."""
+        from apps.evidence.models import EvidenceRecord
+
+        for _ in range(2):
+            EvidenceRecord.objects.create(
+                activity_id=self.activity.id,
+                kind="visit_form",
+                uri="visit.pdf",
+                original_name="visit.pdf",
+                uploaded_by="partner-user",
+            )
+        self.assertEqual(
+            EvidenceRecord.objects.filter(activity_id=self.activity.id).count(), 3
+        )
+        body = self.drawer("verify").content.decode()
+        self.assertEqual(body.count("View Uploaded Visit Form</span>"), 1)
+        self.assertEqual(body.count("data-uploaded-form="), 1)
+        self.assertNotIn("visit.pdf", body)
 
     def test_verify_and_confirm_confirms_the_work(self):
         response = self.client.post(

@@ -115,9 +115,11 @@ ISSUE_PLAYBOOK: dict[str, dict[str, str]] = {
         "why": "The activity's planned date has passed and it is not complete.",
     },
     "evidence_outstanding": {
-        "action": "Upload the evidence pack",
+        # UPLOAD-OFF (owner, 2026-10-13): was "Upload the evidence pack".
+        "action": "Complete it with the Salesforce ID",
         "route": "/my-plan",
-        "why": "The activity was delivered but no evidence has been uploaded.",
+        "why": "The activity was started but has not been completed with its "
+        "Salesforce ID.",
     },
     "salesforce_missing": {
         "action": "Enter the Salesforce Activity ID",

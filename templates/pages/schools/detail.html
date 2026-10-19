@@ -5,7 +5,7 @@
 {% load frontend_filters %}
 
 {% block title %}{{ school.name }} - School 360{% endblock %}
-{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/core-progress.css' %}?v=20261002tokens2"><link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261010rail1">{% endblock %}
+{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/core-progress.css' %}?v=20261002tokens2"><link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261016rail3">{% endblock %}
 
 {% block shell_content %}
 <div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
@@ -75,6 +75,11 @@ Readiness: {{ school.get_planning_readiness_display }}
 {% comment %}One visit commitment a school a year (owner, 2026-10-08): where
 a staff support visit is closed here, the profile says so and why. Schedule
 stays open for the visits that are not the school's support visit.{% endcomment %}
+{% comment %}The year's SSA, from the record that holds it, and where its
+scores came from (owner, 2026-10-14).{% endcomment %}
+{% if ssa_year_record %}<span class="inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 edify-text-caption font-bold tracking-wider {% if ssa_year_record.verification_status == 'confirmed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-slate-100 text-slate-500{% endif %}" title="Source: {{ ssa_year_source }} · {{ ssa_year_record.get_verification_status_display }}" data-ssa-year="{{ ssa_entry_fy }}">SSA FY{{ ssa_entry_fy }}: {{ ssa_year_record.average_score|default:"—" }}{% if ssa_year_record.verification_status != 'confirmed' %} · {{ ssa_year_record.get_verification_status_display }}{% endif %}<span class="sr-only"> · Source: {{ ssa_year_source }}</span></span>
+{% elif ssa_entry_shown %}<span class="inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 edify-text-caption font-bold tracking-wider bg-slate-100 text-slate-500" data-ssa-year="{{ ssa_entry_fy }}">No FY{{ ssa_entry_fy }} SSA</span>
+{% endif %}
 {% if visit_lock %}<span class="inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 edify-text-caption font-bold tracking-wider bg-slate-100 text-slate-500" title="{{ visit_lock_reason }}" data-visit-closed><svg aria-hidden="true" viewBox="0 0 16 16" width="10" height="10" fill="currentColor"><path d="M4.5 7V5a3.5 3.5 0 1 1 7 0v2h.5A1.5 1.5 0 0 1 13.5 8.5v5A1.5 1.5 0 0 1 12 15H4a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 4 7h.5Zm1.5 0h4V5a2 2 0 1 0-4 0v2Z"/></svg>{{ visit_lock }}<span class="sr-only">: {{ visit_lock_reason }}</span></span>{% endif %}
 <button
 type="button"
@@ -114,6 +119,18 @@ the school's visit gate would refuse stays, greyed, with the reason.
 <button type="button" hx-get="/core-schools/assign-partner?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign core support for {{ school.name }} to a partner" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none" data-profile-assign>Assign to Partner</button>
 {% else %}
 <button type="button" hx-get="/planning/assign-partner-modal?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ school.name }} to a partner" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none" data-profile-assign>Assign to Partner</button>
+{% endif %}
+{% endif %}
+{% comment %}Enter SSA Score (owner, 2026-10-14): for a CCEO, a Programme
+Lead or Impact Assessment on a school in their scope; one SSA a school a
+financial year, so once the year has one it stays visible, greyed, with the
+reason. The state is read from the school's SSA records on every load
+(apps.ssa.creation.entry_state), and the save asks the database again.{% endcomment %}
+{% if ssa_entry_shown %}
+{% if ssa_entry_block %}
+<button type="button" disabled aria-disabled="true" data-ssa-entry-locked="true" title="{{ ssa_entry_block }}" aria-label="Enter SSA Score for {{ school.name }} unavailable: {{ ssa_entry_block }}" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm opacity-60">Enter SSA Score</button>
+{% else %}
+<button type="button" hx-get="/schools/{{ school.id }}/ssa-entry" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Enter the FY{{ ssa_entry_fy }} SSA score for {{ school.name }}" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none" data-ssa-entry>Enter SSA Score</button>
 {% endif %}
 {% endif %}
 {% if can_assign_project %}
@@ -159,6 +176,8 @@ class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-capt
 {% include "partials/profiles/_sections.html" %}
 {% if pi.section == "ssa" %}{% include "partials/schools/_ssa_records.html" %}{% endif %}
 {% if pi.section == "activities" %}{% include "partials/schools/_participation.html" %}{% endif %}
+{% elif pi.tab == "core" and core %}
+{% include "partials/schools/_core_school.html" %}
 {% else %}
 {% include "partials/schools/_details.html" %}
 {% endif %}

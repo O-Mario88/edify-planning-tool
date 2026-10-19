@@ -193,7 +193,7 @@ def _decorate_sessions(principal, items) -> None:
     from apps.core.permissions import RolePermissionService, has_permission
     from apps.core.rbac import Permission
     from apps.core.scoping import owner_ids
-    from apps.pl_review.services import review_rule
+    from apps.pl_review.services import lead_verified_owner_ids, review_rule
 
     if not items:
         return
@@ -208,9 +208,20 @@ def _decorate_sessions(principal, items) -> None:
     ia_verifies = has_permission(principal, Permission.IA_VERIFY.value)
     ia_staff_page = ia_verifies and can_view(principal, "ia_review_workspace")
     ia_partner_page = ia_verifies and can_view(principal, "ia_partner_evidence")
+    # A CCEO's or a lead's staff-delivered completion is the lead's to verify
+    # whichever status filed it (owner, 2026-10-12 and 2026-10-14;
+    # pl_review.LEAD_REVIEWABLE_STATUSES).
+    lead_verified = lead_verified_owner_ids()
 
     for item in items:
         item.session_status, item.session_tone = session_status(item)
+        lead_held = item.activity_status == "submitted_to_pl" or (
+            item.activity_status == "awaiting_ia_verification"
+            and not item.is_partner_work
+            and str(item.planned_by_id or "") in lead_verified
+        )
+        if lead_held and item.activity_status == "awaiting_ia_verification":
+            item.session_status = "PL Pending"
         if item.activity_id in head_counts:
             item.participants = head_counts[item.activity_id]
         item.intervention_label = _words(item.target_intervention, SsaIntervention)
@@ -231,16 +242,18 @@ def _decorate_sessions(principal, items) -> None:
         item.pl_verify = bool(
             may_review
             and item.activity_id
-            and item.activity_status == "submitted_to_pl"
-            and may_review(owner)
+            and lead_held
+            and may_review(owner, partner=item.is_partner_work)
         )
         # Partner work is verified on Partner Evidence, which carries the
-        # Salesforce entry step; staff work in the IA review workspace.
+        # Salesforce entry step; a lead's own staff work in the IA review
+        # workspace. A CCEO's is never IA's.
         item.ia_verify_url = ""
         item.ia_return_url = ""
         if (
             item.activity_id
             and item.activity_status in _IA_PENDING_STATUSES
+            and not lead_held
             and str(owner or "") not in own
         ):
             if item.is_partner_work and ia_partner_page:

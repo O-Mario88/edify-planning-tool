@@ -30,6 +30,9 @@ CORE_COLUMNS = [
     "Core support",
     "Purpose of Assignment",
     "Planned date",
+    # The day the work was done (owner, 2026-10-16: "Add completed date
+    # column on the tables").
+    "Completed date",
     "Cost",
     "Salesforce ID",
     "Evidence",

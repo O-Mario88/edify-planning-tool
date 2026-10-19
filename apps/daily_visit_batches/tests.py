@@ -46,6 +46,14 @@ SECONDARY_RATES = [
 @freeze_time("2026-07-27")
 class DailyVisitBatchTestCase(TestCase):
     def setUp(self):
+        self._build_fixture()
+
+    def _build_fixture(self):
+        """The fixture, apart from the class's frozen clock: a class that
+        borrows it (apps.activities.test_completed_date) calls this, never
+        the frozen ``setUp``, whose freeze only this class's own tearDown
+        stops (memory: a borrowed frozen setUp freezes the rest of the
+        worker)."""
         self.region = Region.objects.create(name="Batch Region")
         self.primary_district = District.objects.create(
             name="Batch Primary District",
@@ -276,6 +284,55 @@ class DailyVisitBatchTestCase(TestCase):
             batch.daily_pool_amount,
         )
 
+    def test_the_regional_benchmark_of_a_shared_day_is_one_day(self):
+        """Each visit's Regional Standard (reference) cost is its share of the
+        day at the regional rates, as its cost is its share at the country's
+        (owner, 2026-10-15: "no doubling the cost"). It was the whole day at
+        the regional rates on every visit, so three visits benchmarked three
+        days."""
+        from apps.budget.models import (
+            ActivityCostSnapshot,
+            CostCatalogue,
+            RateCardKind,
+            RateCardStatus,
+        )
+
+        CostCatalogue.objects.filter(kind=RateCardKind.REFERENCE).update(
+            is_active=False, status=RateCardStatus.RETIRED
+        )
+        regional = CostCatalogue.objects.create(
+            country=self.catalogue.country,
+            fy=self.catalogue.fy,
+            kind=RateCardKind.REFERENCE,
+            version=99,
+            status=RateCardStatus.PUBLISHED,
+            is_active=True,
+            currency="UGX",
+            label="Regional test card",
+        )
+        CostSetting.objects.bulk_create(
+            CostSetting(
+                catalogue=regional,
+                key=setting.key,
+                label=setting.label,
+                unit_cost=setting.unit_cost * 2,
+                fy=regional.fy,
+                version=1,
+            )
+            for setting in CostSetting.objects.filter(catalogue=self.catalogue)
+        )
+
+        result = self._schedule(
+            ["BATCH-P-1", "BATCH-P-2", "BATCH-P-3"], date(2026, 8, 4)
+        )
+
+        snapshots = ActivityCostSnapshot.objects.filter(
+            activity_id__in=[a["id"] for a in result["activities"]], is_current=True
+        )
+        day = sum(c for _, c in PRIMARY_RATES)
+        self.assertEqual(sum(s.operational_cost for s in snapshots), day)
+        self.assertEqual(sum(s.reference_cost for s in snapshots), 2 * day)
+
     # ── 4. Any districts may share a day (owner, 2026-09-27) ────────────────
     # "Some districts are very close": a day may cross secondary districts
     # with or without an approved group, and is priced as one secondary day.
@@ -341,14 +398,16 @@ class DailyVisitBatchTestCase(TestCase):
         batch = DailyVisitBatch.objects.get(pk=result["batchId"])
         self.assertEqual(batch.secondary_district_group, group)
 
-    # ── 5. Over-cap hard reject ──────────────────────────────────────────────
-    def test_over_target_cap_rejected(self):
-        # required_school_visits_per_day = 3 on the test catalogue.
-        with self.assertRaises(BadRequest) as ctx:
-            self._schedule(
-                ["BATCH-P-1", "BATCH-P-2", "BATCH-P-3", "BATCH-P-4"], date(2026, 8, 8)
-            )
-        self.assertIn("You can only schedule 3", str(ctx.exception))
+    # ── 5. No ceiling on a day ───────────────────────────────────────────────
+    def test_a_day_takes_more_than_the_target(self):
+        # required_school_visits_per_day = 3 on the test catalogue; a day is
+        # not capped at it (owner, 2026-10-16: "dont restrict the number of
+        # visit per day ... lift that restriction").
+        result = self._schedule(
+            ["BATCH-P-1", "BATCH-P-2", "BATCH-P-3", "BATCH-P-4"], date(2026, 8, 8)
+        )
+        batch = DailyVisitBatch.objects.get(pk=result["batchId"])
+        self.assertEqual(batch.school_count, 4)
 
     # ── 6. Under-target soft block, then success with reason ───────────────
     def test_under_target_requires_reason(self):

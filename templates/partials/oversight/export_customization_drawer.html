@@ -10,7 +10,7 @@
   action="{{ export_url }}"
   class="space-y-4 text-[13px] text-slate-700"
   x-data="{
-    periodMode: 'month_range',
+    periodMode: '{{ period_mode|default:"month_range" }}',
     fromMonth: '{{ selected_from_month|default:10 }}',
     toMonth: '{{ selected_to_month|default:9 }}'
   }"
@@ -114,6 +114,21 @@
     </div>
   </div>
 
+  {% if whose_choices %}
+  {% comment %}The Country Director and Impact Assessment export everyone at
+  once (owner, 2026-10-12); one Program Lead's team is the narrower choice.{% endcomment %}
+  <div class="space-y-1">
+    <label for="export_whose" class="block edify-text-caption font-semibold text-slate-700">Whose Plans</label>
+    <select
+      name="program_lead"
+      id="export_whose"
+      class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+    >
+      {% for value, text, chosen in whose_choices %}<option value="{{ value }}"{% if chosen %} selected{% endif %}>{{ text }}</option>{% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
   <!-- Plan Status Filter -->
   {% if show_status_filter|default:True %}
   <div class="space-y-1">
@@ -123,11 +138,15 @@
       id="export_status"
       class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
     >
+      {% comment %}The plan opens selected: what is planned, whatever its
+      status (owner, 2026-10-12: "only planned activities ... with dates of
+      activity and their budget"). Completed-only is a choice, not the
+      default that emptied every plan export before its first completion.{% endcomment %}
       {% if status_choices %}{% for value, text in status_choices %}<option value="{{ value }}"{% if forloop.first %} selected{% endif %}>{{ text }}</option>{% endfor %}{% else %}
-      <option value="completed" selected>Completed Plans (Visits &amp; Trainings)</option>
-      <option value="all">All Plan Statuses</option>
-      <option value="scheduled">Scheduled / Live Only</option>
-      <option value="in_progress">In Progress</option>
+      <option value="all" selected>All planned activities</option>
+      <option value="completed">Completed only</option>
+      <option value="scheduled">Scheduled / live only</option>
+      <option value="in_progress">In progress only</option>
       {% endif %}
     </select>
   </div>

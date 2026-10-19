@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 from apps.activities.completion_columns import (
+    APPROVED_STATUSES,
     EMPTY as EMPTY_COLUMNS,
+    FINISHED_EARLY,
+    OFFICER_COMPLETED_STATUSES,
     completed_last_key,
+    plan_day,
+    row_state,
     completion_columns,
     completion_fields,
 )
@@ -17,6 +22,7 @@ from apps.core.activity_types import (
 import calendar
 from datetime import date, timedelta
 from django.db.models import Count, Q
+from django.utils import timezone
 from apps.activities.group_actions import may_tick
 from apps.activities.models import Activity
 from apps.activities.facilitation import (
@@ -138,6 +144,11 @@ def status_tone(status_class: str) -> str:
     return "slate"
 
 
+#: Completed work's status, in the word the other pages use (owner,
+#: 2026-10-17: "color changed to green with status Complete").
+COMPLETE_LABEL = "Complete"
+COMPLETE_CLASS = "bg-emerald-50 text-emerald-700 border-emerald-200"
+
 #: Status labels that mean "planned, still to be delivered" (owner,
 #: 2026-09-27: "mark planned activities with a different color and completed
 #: plans with a different colors ... scheduled/planned is blue").
@@ -168,20 +179,60 @@ def plan_row_tone(activity, status_label: str, status_class: str, *, is_core: bo
     return status_tone(status_class)
 
 
-def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
-    """Resolves operational status pill color and text for row tables."""
+def lead_approves(activity, lead_ids: frozenset | None = None) -> bool:
+    """A CCEO's or a Programme Lead's staff work: the Programme Lead approves
+    it, never Impact Assessment (owner, 2026-10-15: "IA does not approve any
+    activity. it is the PL who approves for CCEO and theirs are approved
+    automatically"). ``lead_ids`` (pl_review.services.lead_verified_owner_ids)
+    answers a page of rows without a query each."""
+    if activity.delivery_type == "partner":
+        return False
+    if lead_ids is None:
+        from apps.pl_review.services import lead_verifies
+
+        return lead_verifies(activity)
+    return str(activity.responsible_staff_id or "") in lead_ids
+
+
+def verification_label(activity, lead_ids: frozenset | None = None) -> tuple[str, str]:
+    """My Plan's Verification cell, the same words whoever reads it: "PL
+    Approved" and "PL Pending" on a CCEO's or a lead's work (owner,
+    2026-10-15: "make sure the column is PL approved not IA approved"); a lead
+    used to read "IA pending" on it. Partner work and other staff's keep IA's
+    words."""
+    by_lead = lead_approves(activity, lead_ids)
+    if (
+        activity.status in APPROVED_STATUSES
+        or activity.ia_verification_status == "confirmed"
+    ):
+        return ("PL Approved" if by_lead else "Verified"), "green"
+    if (
+        activity.status in ("returned_by_pl", "returned_by_ia")
+        or activity.ia_verification_status == "returned"
+    ):
+        return "Returned", "red"
+    return ("PL Pending" if by_lead else "IA Pending"), "purple"
+
+
+def get_activity_status_label_and_class(
+    activity, today, lead_ids: frozenset | None = None
+) -> tuple[str, str]:
+    """Resolves operational status pill color and text for row tables.
+
+    ``lead_ids`` is no longer read: the pill says whether the work is done,
+    not who approved it (owner, 2026-10-17). It stays for the callers that
+    pass it."""
     status = activity.status
     planned_date = activity.planned_date
     rescheduled = activity.reschedule_count > 0
     sf_id = activity.salesforce_activity_id
-    ia = activity.ia_verification_status
 
     # "closed" was missing here and fell through every branch to the default
     # "Scheduled" — so a finished, financially closed activity was labelled as
     # still upcoming, in the My Plan tables and on its own detail page, where
     # it sat next to a timeline that correctly called it complete.
     if status in ("completed", "closed"):
-        return "Activity complete", "bg-emerald-50 text-emerald-700 border-emerald-200"
+        return COMPLETE_LABEL, COMPLETE_CLASS
 
     if status == "awaiting_owner_approval":
         return "Awaiting owner approval", "bg-amber-50 text-amber-700 border-amber-200"
@@ -194,17 +245,13 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     ):
         if not sf_id:
             return "Activity ID Missing", "bg-amber-50 text-amber-700 border-amber-200"
-        if ia == "pending":
-            return (
-                "IA Pending",
-                "edify-primary-soft edify-primary-text edify-primary-border",
-            )
-        if ia == "confirmed":
-            return "IA complete", "bg-emerald-50 text-emerald-700 border-emerald-200"
-        return (
-            "Accounts Pending",
-            "edify-primary-soft edify-primary-text edify-primary-border",
-        )
+        # Handed in with its Salesforce ID, the work is done, approved or not
+        # (owner, 2026-10-17: "All completed activity should show status
+        # complete"). It read "PL Approved" or "PL Pending" here, so approved
+        # work never said it was complete. Who approves, and whether they
+        # have, is the Verification column's ("PL Approved" / "PL Pending",
+        # owner 2026-10-15; verification_label).
+        return COMPLETE_LABEL, COMPLETE_CLASS
 
     if status in (
         "returned",
@@ -223,6 +270,22 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
         return "This Week", "bg-emerald-50 text-emerald-700 border-emerald-200"
 
     return "Scheduled", "edify-primary-soft edify-primary-text edify-primary-border"
+
+
+def plan_row_district(row: dict) -> str:
+    """The district a plan row happens in: the school's for school work,
+    the cluster's for a cluster session, "—" when none is on record."""
+    blank = ("", "—", "Unknown", None)
+    school_row = bool(row.get("school_id")) or row.get("is_cluster_invited")
+    first, second = (
+        (row.get("school_district"), row.get("cluster_district"))
+        if school_row
+        else (row.get("cluster_district"), row.get("school_district"))
+    )
+    for value in (first, second, row.get("district")):
+        if value not in blank:
+            return value
+    return "—"
 
 
 def staff_my_plan_q(staff_ids, principal=None) -> Q:
@@ -520,21 +583,39 @@ def compute_next_action(a, today) -> dict:
             "description": "In Progress",
         }
 
-    # 4. Completed but no evidence -> Upload Evidence
-    if a.evidence_status == "none" and a.status in _WORKED_STATUSES:
+    # Staff work asks for no file; a partner's is verified from its uploaded
+    # form (UPLOAD-OFF, owner 2026-10-13 and 2026-10-14).
+    uploads = a.delivery_type == "partner"
+
+    # 4. Begun, nothing uploaded -> a partner uploads the form
+    if uploads and a.evidence_status == "none" and a.status in _WORKED_STATUSES:
         return {
             "text": "Upload Evidence",
             "action": "evidence",
             "url": f"/activities/{a.id}/evidence",
             "description": "Evidence missing",
         }
+    # 4b. Staff work begun and not handed in -> complete it with its ID
+    if (
+        not uploads
+        and a.evidence_status == "none"
+        and a.status in _WORKED_STATUSES
+        and a.status != "completed"
+    ):
+        return {
+            "text": "Complete Activity",
+            "action": "complete",
+            "url": f"/activities/{a.id}/complete",
+            "description": "Enter the Salesforce ID to complete",
+        }
+    # The step before the ID: the form is in (a partner's), or none is asked
+    # for (staff work).
+    form_step_met = a.evidence_status == "uploaded" or (
+        not uploads and a.evidence_status == "none"
+    )
 
     # 5. Evidence uploaded but no Activity SF ID -> Enter Activity SF ID
-    if (
-        a.status in _WORKED_STATUSES
-        and a.evidence_status == "uploaded"
-        and not a.salesforce_activity_id
-    ):
+    if a.status in _WORKED_STATUSES and form_step_met and not a.salesforce_activity_id:
         return {
             "text": "Enter Activity SF ID",
             "action": "sf_id",
@@ -543,11 +624,7 @@ def compute_next_action(a, today) -> dict:
         }
 
     # 5.5 Ready to Submit for Review
-    if (
-        a.status in _WORKED_STATUSES
-        and a.evidence_status == "uploaded"
-        and a.salesforce_activity_id
-    ):
+    if a.status in _WORKED_STATUSES and form_step_met and a.salesforce_activity_id:
         ssa_done = True
         if a.activity_type in [
             "baseline_ssa_visit",
@@ -597,7 +674,7 @@ def compute_next_action(a, today) -> dict:
             "text": "View Status",
             "action": "view_status",
             "url": f"/my-plan/{a.id}",
-            "description": "Waiting for IA Verification",
+            "description": "Waiting for verification",
         }
 
     # 8. IA verified but finance pending -> View Accounts Status.
@@ -696,6 +773,46 @@ def compute_next_action(a, today) -> dict:
     }
 
 
+#: Handed in with its Salesforce ID, waiting for the Programme Lead or Impact
+#: Assessment to approve it.
+HANDED_IN_STATUSES = frozenset(("submitted_to_pl", "awaiting_ia_verification"))
+
+#: An advance or claim with the Programme Lead or the Accountant (branch 9 of
+#: compute_next_action).
+_MONEY_AWAITING_STATUSES = frozenset(
+    (
+        "accountability_pending",
+        "accountability_pl_pending",
+        "reimbursement_pl_pending",
+        "reimbursement_submitted",
+    )
+)
+
+
+def awaits_approval(a, next_act) -> bool:
+    """Whether a My Plan row belongs on "Waiting on Approval".
+
+    Handed-in work waits for its approval, and so does work whose money waits
+    on somebody. Approved work with none of its money in hand is complete
+    (owner, 2026-10-17: "The completed activities are still not showing
+    complete"). It sat on the card beside its own "PL Approved", because
+    branch 8 above offers "View Accounts Status" on approved work that has no
+    money at all.
+    """
+    if a.status in HANDED_IN_STATUSES:
+        return True
+    if next_act["action"] != "view_status":
+        return False
+    if a.status not in APPROVED_STATUSES:
+        return True
+    # .all() reads the prefetch compute_next_action reads.
+    return a.payment_status != "none" or any(
+        adv.status in _MONEY_AWAITING_STATUSES
+        for line in a.schedule_cost_lines.all()
+        for adv in line.advance_requests.all()
+    )
+
+
 def _own_readiness(principal, fy):
     """``readiness.own`` beside the plan: never the reason My Plan fails,
     except in development, where a figure that cannot be true is raised."""
@@ -712,8 +829,14 @@ def _own_readiness(principal, fy):
         return None
 
 
-def get_frontend_context(principal, query: dict) -> dict:
-    """Consolidated planning dashboard feed resolver for the HTML frontend."""
+def get_frontend_context(
+    principal, query: dict, *, with_readiness: bool = True
+) -> dict:
+    """Consolidated planning dashboard feed resolver for the HTML frontend.
+
+    `with_readiness=False` leaves the person's Planned and remaining out:
+    the page asks for it once it has been drawn (the My Plan readiness
+    panel), and an export never shows it."""
     today = date.today()
 
     # 1. Resolve User Scope
@@ -927,9 +1050,13 @@ def get_frontend_context(principal, query: dict) -> dict:
         # fixing the issue").
         from apps.activities.services import RETURNED_STATUSES
 
+        # Completed work stays too, handed in or approved (owner, 2026-10-17:
+        # "All completed activity should show status complete"). The list
+        # kept approved work only, so a visit handed in and waiting for its
+        # lead left My Plan the day after its date, until the lead approved it.
         qs_period = qs_period.filter(
             upcoming_filter
-            | Q(status__in=COMPLETED_WORK_STATUSES)
+            | Q(status__in=OFFICER_COMPLETED_STATUSES)
             | Q(status__in=RETURNED_STATUSES)
         )
 
@@ -1346,9 +1473,23 @@ def get_frontend_context(principal, query: dict) -> dict:
         else {}
     )
 
+    from apps.pl_review.services import lead_verified_owner_ids
+
+    lead_ids = lead_verified_owner_ids()
+    # A visit made to collect the SSA is complete once its school's SSA is in
+    # (owner, 2026-10-17); until then it waits for its scores.
+    from apps.ssa import visit_scores
+
+    awaiting_ssa = visit_scores.awaiting_scores(activities)
     for a in activities:
-        status_label, status_class = get_activity_status_label_and_class(a, today)
+        status_label, status_class = get_activity_status_label_and_class(
+            a, today, lead_ids
+        )
         next_act = compute_next_action(a, today)
+        if a.id in awaiting_ssa:
+            status_label = visit_scores.AWAITING_SSA_LABEL
+            status_class = visit_scores.AWAITING_SSA_CLASS
+            next_act = visit_scores.enter_scores_action(a)
         # Budget status and badges
         badges = []
         # .first() issues a fresh LIMIT 1 query even when the relation is
@@ -1359,7 +1500,14 @@ def get_frontend_context(principal, query: dict) -> dict:
         budget_status = "No Budget"
         budget_status_color = "slate"
 
-        if first_line:
+        if first_line and a.cost_missing:
+            # Priced in part and not requestable until it is set up (owner,
+            # 2026-10-15 cost audit: it read "Budget Created" for a training
+            # with no participant count, none of whose money can be requested).
+            badges.append(("Cost Setup Required", "amber"))
+            budget_status = "Cost Setup Required"
+            budget_status_color = "amber"
+        elif first_line:
             wfr_line = next(iter(first_line.weekly_request_lines.all()), None)
             if wfr_line and getattr(wfr_line, "weekly_fund_request", None):
                 wfr = wfr_line.weekly_fund_request
@@ -1414,38 +1562,9 @@ def get_frontend_context(principal, query: dict) -> dict:
             budget_status = "No Budget"
             budget_status_color = "slate"
 
-        # Verification status: "IA pending for PL and PL pending for CCEO"
-        is_pl_viewer = getattr(scope, "active_role", "") in (
-            "Program Lead",
-            "Country Director",
-            "Impact Assessment",
-            "Regional Programme Lead",
-            "Admin",
-        ) or getattr(principal, "active_role", "") in (
-            "Program Lead",
-            "Country Director",
-            "Impact Assessment",
-            "Regional Programme Lead",
-            "Admin",
-        )
-        if (
-            a.status in ("ia_verified", "accountant_confirmed", "closed")
-            or a.ia_verification_status == "confirmed"
-        ):
-            verification_status = "Verified"
-            verification_color = "green"
-        elif (
-            a.status in ("returned_by_pl", "returned_by_ia")
-            or a.ia_verification_status == "returned"
-        ):
-            verification_status = "Returned"
-            verification_color = "red"
-        elif is_pl_viewer:
-            verification_status = "IA pending"
-            verification_color = "purple"
-        else:
-            verification_status = "PL pending"
-            verification_color = "purple"
+        # One set of words whoever reads it (owner, 2026-10-15): it read "IA
+        # pending" to a lead on work the lead approves.
+        verification_status, verification_color = verification_label(a, lead_ids)
 
         is_completed_act = (
             a.status in ("completed", "ia_verified", "accountant_confirmed", "closed")
@@ -1455,8 +1574,8 @@ def get_frontend_context(principal, query: dict) -> dict:
         # A finished stage says so in the same words every time — "<stage>
         # complete" — so a row can be read down its badges without translating
         # "Verified", "Entered", "Uploaded" and "Cleared" into the same idea.
-        if a.status in COMPLETED_WORK_STATUSES:
-            badges.append(("Activity complete", "green"))
+        # The activity's own "Complete" is its status pill, which
+        # leads the strip (owner, 2026-10-17); a badge repeated it.
 
         # Evidence status
         if a.status == "completed":
@@ -1465,26 +1584,13 @@ def get_frontend_context(principal, query: dict) -> dict:
             else:
                 badges.append(("Evidence pending", "amber"))
 
-        # SF ID status
-        if a.status in [
-            "completed",
-            "submitted_to_pl",
-            "awaiting_ia_verification",
-            "ia_verified",
-            "accountant_confirmed",
-        ]:
-            if a.salesforce_activity_id:
-                badges.append(("SF ID complete", "green"))
-            else:
-                badges.append(("SF ID missing", "red"))
+        # The Salesforce ID has its own column on the card the strip sits in
+        # (owner, 2026-10-17), so the strip no longer repeats it.
 
-        # IA status
-        if a.ia_verification_status == "pending":
-            badges.append(("IA pending", "purple"))
-        elif a.ia_verification_status == "confirmed":
-            badges.append(("IA complete", "green"))
-        elif a.ia_verification_status == "returned":
-            badges.append(("Returned", "red"))
+        # Approval status: the Programme Lead's on a CCEO's or a lead's work
+        # (owner, 2026-10-15), Impact Assessment's on partner and other work.
+        if a.ia_verification_status in ("pending", "confirmed", "returned"):
+            badges.append((verification_status, verification_color))
 
         # Accounts status
         if a.payment_status in ("pending", "pending_ia"):
@@ -1578,6 +1684,9 @@ def get_frontend_context(principal, query: dict) -> dict:
             ),
             "status": a.status,
             "planned_date": a.planned_date,
+            # The day the row is on, a scheduled-only row's included: what
+            # makes it overdue (completion_columns.row_state).
+            "plan_day": plan_day(a.planned_date, a.scheduled_date),
             "quarter": a.quarter,
             # School details. A non-school programme activity (conference,
             # camp, exhibition) legitimately has NO school and NO cluster, so
@@ -1716,9 +1825,10 @@ def get_frontend_context(principal, query: dict) -> dict:
             "badges": badges,
             "status_label": status_label,
             "status_class": status_class,
-            "status_tone": plan_row_tone(
-                a, status_label, status_class, is_core=bool(is_core)
-            ),
+            "status_tone": "amber"
+            if a.id in awaiting_ssa
+            else plan_row_tone(a, status_label, status_class, is_core=bool(is_core)),
+            "awaiting_ssa": a.id in awaiting_ssa,
             "day_off": day_off_by_activity.get(a.id),
         }
         if activity_data["day_off"]:
@@ -1803,16 +1913,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             and a.status in _DATED_AND_OPEN
         ):
             this_week_list.append(activity_data)
-        elif (
-            a.status
-            in (
-                "submitted_to_pl",
-                "awaiting_ia_verification",
-                "ia_verified",
-                "accountant_confirmed",
-            )
-            or next_act["action"] == "view_status"
-        ):
+        elif awaits_approval(a, next_act):
             waiting_on_approval_list.append(activity_data)
         else:
             upcoming_list.append(activity_data)
@@ -1864,14 +1965,24 @@ def get_frontend_context(principal, query: dict) -> dict:
         _att_records = list(
             ClusterActivityAttendance.objects.filter(activity_id__in=_cluster_act_ids)
             .filter(Q(invited=True) | Q(attended=True))
-            .values_list("activity_id", "school_id")
+            .values_list(
+                "activity_id", "school_id", "invited", "teachers", "leaders", "other"
+            )
         )
         _att_by_act = defaultdict(list)
         _att_school_ids = set()
-        for _act_id, _sid in _att_records:
+        # The people an invited school brings when its invitation says so: the
+        # number Team Plan shows for the same school (owner, 2026-10-15: one
+        # session, one figure a school, on every page).
+        _invited_composition = {}
+        for _act_id, _sid, _invited, _t, _l, _o in _att_records:
             if _sid not in _att_by_act[_act_id]:
                 _att_by_act[_act_id].append(_sid)
             _att_school_ids.add(_sid)
+            if _invited and any(v is not None for v in (_t, _l, _o)):
+                _invited_composition[(_act_id, _sid)] = (
+                    (_t or 0) + (_l or 0) + (_o or 0)
+                )
 
         # 2. Fetch member schools for the clusters involved
         _member_schools = list(
@@ -1941,6 +2052,21 @@ def get_frontend_context(principal, query: dict) -> dict:
             ):
                 _school_lookup[_s.id] = _s
 
+        # One participant's meal at each session, from the session's own cost
+        # lines (else the catalogue): the per-school share is heads × that.
+        from apps.budget.costing import GROUP_TRAINING_MEALS_RATE_KEY
+        from apps.budget.costing_service import planned_meal_rates
+
+        _acts_by_id = {a.id: a for a in activities}
+        _meal_rates = planned_meal_rates(
+            [
+                _acts_by_id[row["id"]]
+                for row in cluster_trainings_list
+                if row.get("id") in _acts_by_id
+            ],
+            GROUP_TRAINING_MEALS_RATE_KEY,
+        )
+
         # Reconstruct cluster_trainings_list
         _new_cluster_trainings_list = []
         for row in cluster_trainings_list:
@@ -1969,7 +2095,7 @@ def get_frontend_context(principal, query: dict) -> dict:
                     or []
                 )
 
-            act_obj = next((a for a in activities if a.id == _act_id), None)
+            act_obj = _acts_by_id.get(_act_id)
             pps = None
             if act_obj:
                 pps = getattr(act_obj, "participants_per_school", None) or getattr(
@@ -1980,12 +2106,10 @@ def get_frontend_context(principal, query: dict) -> dict:
                 if total_p and _target_schools:
                     pps = max(1, total_p // len(_target_schools))
                 else:
-                    pps = 2
-            per_school_meal_cost = pps * 5000
-            # An online training is free: no meal is served at any school
-            # (owner, 2026-10-09; apps.activities.online_training).
-            if act_obj and is_online_training(act_obj):
-                per_school_meal_cost = 0
+                    # No number was planned: say so rather than price 2
+                    # nobody planned (owner, 2026-10-15 cost audit).
+                    pps = None
+            _meal_rate = _meal_rates.get(_act_id)
 
             if _target_schools:
                 for _school in _target_schools:
@@ -2003,8 +2127,17 @@ def get_frontend_context(principal, query: dict) -> dict:
                         f"/schools/{_school.school_id or _school.id}"
                     )
                     _school_row["is_cluster_invited"] = True
-                    _school_row["expected_participants"] = pps
-                    _school_row["budget_total"] = per_school_meal_cost
+                    _people = _invited_composition.get((_act_id, _school.id), pps)
+                    _school_row["expected_participants"] = _people
+                    _school_row["budget_total"] = (
+                        0
+                        if act_obj and is_online_training(act_obj)
+                        else (
+                            _people * _meal_rate
+                            if _people is not None and _meal_rate is not None
+                            else None
+                        )
+                    )
                     _slot_seq = _cluster_core_slot.get((_act_id, _school.school_id))
                     if _school.school_type in PROGRAMME_SCHOOL_TYPES:
                         _school_row["core_progress"] = ""
@@ -2033,141 +2166,161 @@ def get_frontend_context(principal, query: dict) -> dict:
                     if row.get("cluster_id")
                     else ""
                 )
-                _fallback_row["expected_participants"] = pps
-                _fallback_row["budget_total"] = per_school_meal_cost
+                # No school to split it over: the row is the session itself,
+                # with its own head count and its own cost (owner, 2026-10-15:
+                # it showed a per-school figure, or nothing at all).
                 _new_cluster_trainings_list.append(_fallback_row)
 
         cluster_trainings_list = _new_cluster_trainings_list
 
-    # 9. Right Rail: Planning Insights
+    # 9. Planning Insights: what is on today, what needs attention and the
+    # next step. My Plan stopped drawing this rail (the Dashboard carries it;
+    # templates/partials/my_plan/workspace.html), and its four reads of the
+    # plan were still made on every load of the page. They are made when
+    # something reads one of the three, which the page does not.
+    def _planning_insights():
+        today_activities = (
+            qs.filter(planned_date=today)
+            .select_related("school", "school__district", "cluster")
+            .order_by("created_at")
+        )
+        upcoming_today = []
+        for a in today_activities:
+            assigned_partner = "None"
+            if a.delivery_type == "partner" and a.assigned_partner_id:
+                assigned_partner = partners_map.get(a.assigned_partner_id, "Partner")
+            elif a.responsible_staff_id:
+                assigned_partner = users_map.get(a.responsible_staff_id, "Staff")
 
-    today_activities = (
-        qs.filter(planned_date=today)
-        .select_related("school", "school__district", "cluster")
-        .order_by("created_at")
-    )
-    upcoming_today = []
-    for a in today_activities:
-        assigned_partner = "None"
-        if a.delivery_type == "partner" and a.assigned_partner_id:
-            assigned_partner = partners_map.get(a.assigned_partner_id, "Partner")
-        elif a.responsible_staff_id:
-            assigned_partner = users_map.get(a.responsible_staff_id, "Staff")
-
-        upcoming_today.append(
-            {
-                "id": a.id,
-                "time": "08:30 AM",
-                "title": a.school.name
-                if a.school
-                else (
-                    a.cluster.name
-                    if a.cluster
-                    else (a.activity_name_snapshot or a.venue or "Activity")
-                ),
-                "purpose": (
-                    a.activity_purpose_text
-                    or (
-                        visit_purpose_label(a.purpose_type, fallback="")
-                        if a.purpose_type
-                        else ""
+            upcoming_today.append(
+                {
+                    "id": a.id,
+                    "time": "08:30 AM",
+                    "title": a.school.name
+                    if a.school
+                    else (
+                        a.cluster.name
+                        if a.cluster
+                        else (a.activity_name_snapshot or a.venue or "Activity")
+                    ),
+                    "purpose": (
+                        a.activity_purpose_text
+                        or (
+                            visit_purpose_label(a.purpose_type, fallback="")
+                            if a.purpose_type
+                            else ""
+                        )
+                        or a.get_activity_type_display()
+                    ),
+                    "district": (
+                        a.school.district.name if a.school.district_id else "Unknown"
                     )
-                    or a.get_activity_type_display()
-                ),
-                "district": (
-                    a.school.district.name if a.school.district_id else "Unknown"
-                )
-                if a.school
-                else (
-                    a.cluster.district.name
-                    if a.cluster
-                    else (a.event_district.name if a.event_district_id else "Unknown")
-                ),
-                "assigned_partner": assigned_partner,
-            }
-        )
+                    if a.school
+                    else (
+                        a.cluster.district.name
+                        if a.cluster
+                        else (
+                            a.event_district.name if a.event_district_id else "Unknown"
+                        )
+                    ),
+                    "assigned_partner": assigned_partner,
+                }
+            )
 
-    attention_needed = []
+        attention_needed = []
 
-    # 1. Rescheduled Activities
-    rescheduled_acts = qs.filter(reschedule_count__gt=0).select_related(
-        "school", "cluster"
-    )[:3]
-    for r in rescheduled_acts:
-        attention_needed.append(
-            {
-                "id": r.id,
-                "type": "Rescheduled",
-                "badge_class": "bg-orange-50 text-orange-700 border-orange-200",
-                "title": r.school.name
-                if r.school
-                else (r.cluster.name if r.cluster else "Activity"),
-                "issue": f"Rescheduled {r.reschedule_count} times.",
-                "detail": f"New date: {r.planned_date.strftime('%b %d, %Y') if r.planned_date else 'N/A'}",
-            }
-        )
+        # 1. Rescheduled Activities
+        rescheduled_acts = qs.filter(reschedule_count__gt=0).select_related(
+            "school", "cluster"
+        )[:3]
+        for r in rescheduled_acts:
+            attention_needed.append(
+                {
+                    "id": r.id,
+                    "type": "Rescheduled",
+                    "badge_class": "bg-orange-50 text-orange-700 border-orange-200",
+                    "title": r.school.name
+                    if r.school
+                    else (r.cluster.name if r.cluster else "Activity"),
+                    "issue": f"Rescheduled {r.reschedule_count} times.",
+                    "detail": f"New date: {r.planned_date.strftime('%b %d, %Y') if r.planned_date else 'N/A'}",
+                }
+            )
 
-    # 2. Awaiting Evidence
-    awaiting_evidence_acts = qs.filter(
-        status__in=COMPLETED_WORK_STATUSES, evidence_status="none"
-    ).select_related("school", "school__district", "cluster")[:3]
-    for ae in awaiting_evidence_acts:
-        attention_needed.append(
-            {
-                "id": ae.id,
-                "type": "Awaiting Evidence",
-                "badge_class": "bg-amber-50 text-amber-700 border-amber-200",
-                "title": ae.school.name
-                if ae.school
-                else (ae.cluster.name if ae.cluster else "Activity"),
-                "issue": "Completion submitted without uploading required files.",
-                "detail": f"Evidence due: {ae.planned_date.strftime('%b %d, %Y') if ae.planned_date else 'N/A'}",
-            }
-        )
+        # 2. Awaiting Evidence
+        # A partner's work only: staff work asks for no file (UPLOAD-OFF,
+        # owner 2026-10-13 and 2026-10-14).
+        awaiting_evidence_acts = qs.filter(
+            status__in=COMPLETED_WORK_STATUSES,
+            evidence_status="none",
+            delivery_type="partner",
+        ).select_related("school", "school__district", "cluster")[:3]
+        for ae in awaiting_evidence_acts:
+            attention_needed.append(
+                {
+                    "id": ae.id,
+                    "type": "Awaiting Evidence",
+                    "badge_class": "bg-amber-50 text-amber-700 border-amber-200",
+                    "title": ae.school.name
+                    if ae.school
+                    else (ae.cluster.name if ae.cluster else "Activity"),
+                    "issue": "Completion submitted without uploading required files.",
+                    "detail": f"Evidence due: {ae.planned_date.strftime('%b %d, %Y') if ae.planned_date else 'N/A'}",
+                }
+            )
 
-    # 3. SF ID Missing
-    sf_missing_acts = qs.filter(
-        status__in=COMPLETED_WORK_STATUSES, salesforce_activity_id__isnull=True
-    ).select_related("school", "school__district", "cluster")[:3]
-    for sf in sf_missing_acts:
-        attention_needed.append(
-            {
-                "id": sf.id,
-                "type": "Activity SF ID Missing",
-                "badge_class": "bg-red-50 text-red-700 border-red-200",
-                "title": sf.school.name
-                if sf.school
-                else (sf.cluster.name if sf.cluster else "Activity"),
-                "issue": "Activity lacks a Salesforce confirmation ID.",
-                "detail": "Action: Add Salesforce Activity ID.",
-            }
-        )
+        # 3. SF ID Missing
+        sf_missing_acts = qs.filter(
+            status__in=COMPLETED_WORK_STATUSES, salesforce_activity_id__isnull=True
+        ).select_related("school", "school__district", "cluster")[:3]
+        for sf in sf_missing_acts:
+            attention_needed.append(
+                {
+                    "id": sf.id,
+                    "type": "Activity SF ID Missing",
+                    "badge_class": "bg-red-50 text-red-700 border-red-200",
+                    "title": sf.school.name
+                    if sf.school
+                    else (sf.cluster.name if sf.cluster else "Activity"),
+                    "issue": "Activity lacks a Salesforce confirmation ID.",
+                    "detail": "Action: Add Salesforce Activity ID.",
+                }
+            )
 
-    next_recommended_action = {
-        "title": "You're on track!",
-        "message": "Your plans are well aligned with district priorities.",
-        "badge_class": "bg-emerald-50 border-emerald-100 text-emerald-800",
-        "action_text": "View Weekly Recommendations",
-        "action_url": "#",
-    }
-    if attention_needed:
-        first_alert = attention_needed[0]
-        if first_alert["type"] == "Awaiting Evidence":
-            next_recommended_action = {
-                "title": "Upload evidence",
-                "message": f"Upload files/documents for {first_alert['title']}.",
-                "badge_class": "bg-amber-50 border-amber-100 text-amber-800",
-                "action_text": "Upload Evidence",
-                "action_url": f"/my-plan/{first_alert['id']}",
-            }
-        elif first_alert["type"] == "Activity SF ID Missing":
-            next_recommended_action = {
-                "title": "Enter Activity SF ID",
-                "message": f"Add Salesforce Activity ID for {first_alert['title']}.",
-                "badge_class": "bg-red-50 border-red-100 text-red-800",
-                "action_text": "Enter SF ID",
-                "action_url": f"/my-plan/{first_alert['id']}",
-            }
+        next_recommended_action = {
+            "title": "You're on track!",
+            "message": "Your plans are well aligned with district priorities.",
+            "badge_class": "bg-emerald-50 border-emerald-100 text-emerald-800",
+            "action_text": "View Weekly Recommendations",
+            "action_url": "#",
+        }
+        if attention_needed:
+            first_alert = attention_needed[0]
+            if first_alert["type"] == "Awaiting Evidence":
+                next_recommended_action = {
+                    "title": "Upload evidence",
+                    "message": f"Upload files/documents for {first_alert['title']}.",
+                    "badge_class": "bg-amber-50 border-amber-100 text-amber-800",
+                    "action_text": "Upload Evidence",
+                    "action_url": f"/my-plan/{first_alert['id']}",
+                }
+            elif first_alert["type"] == "Activity SF ID Missing":
+                next_recommended_action = {
+                    "title": "Enter Activity SF ID",
+                    "message": f"Add Salesforce Activity ID for {first_alert['title']}.",
+                    "badge_class": "bg-red-50 border-red-100 text-red-800",
+                    "action_text": "Enter SF ID",
+                    "action_url": f"/my-plan/{first_alert['id']}",
+                }
+        return {
+            "upcoming_today": upcoming_today,
+            "attention_needed": attention_needed,
+            "next_recommended_action": next_recommended_action,
+        }
+
+    from django.utils.functional import SimpleLazyObject
+
+    _insights = SimpleLazyObject(_planning_insights)
 
     breakdown = {
         "week": planned_this_week,
@@ -2206,17 +2359,51 @@ def get_frontend_context(principal, query: dict) -> dict:
     _columns = completion_columns(
         (row["id"], row["activity_type"]) for rows in _plan_tables for row in rows
     )
+    # Every table names the District and the District Type of its rows
+    # (owner, 2026-10-12: "Add District and district type column ... to My
+    # Plan ... literally on all the tables"): Primary District, Secondary
+    # District, or Mixed for a day that crosses from the one into the other
+    # (apps.daily_visit_batches.district_marks). One read for all the tables.
+    from apps.daily_visit_batches.district_marks import district_type_labels, label_of
+
+    _district_types = district_type_labels(
+        row["id"] for rows in _plan_tables for row in rows
+    )
+    _today = timezone.localdate()
     for rows in _plan_tables:
         for row in rows:
+            # The whole row's ink: completed green, past its day red (owner,
+            # 2026-10-14; components/row-state.css).
+            row["row_state"] = row_state(row["status"], row["plan_day"], _today)
+            row["district_type"] = label_of(_district_types, row["id"])
+            row["district"] = plan_row_district(row)
             row.update(
                 completion_fields(row["status"], _columns.get(row["id"], EMPTY_COLUMNS))
             )
+            if row.get("awaiting_ssa"):
+                # Delivered, but not complete until its SSA is in (owner,
+                # 2026-10-17): not green, with the open work, its action
+                # "Enter SSA Scores".
+                row.update(
+                    row_state="",
+                    is_complete=False,
+                    shows_complete=False,
+                    finished_early=False,
+                )
             if row["completion_gap"]:
                 # Complete only with both columns green: a status that says
                 # done over a missing half says what is missing instead.
                 row["status_label"] = row["completion_gap"]
                 row["status_class"] = "bg-amber-50 text-amber-700 border-amber-200"
                 row["status_tone"] = "amber"
+            elif row["finished_early"]:
+                # Done before its planned day: marked complete, so it can be
+                # tracked (owner, 2026-10-14). Verification has its own column.
+                row["status_label"] = FINISHED_EARLY
+                row["status_class"] = (
+                    "bg-emerald-50 text-emerald-700 border-emerald-200"
+                )
+                row["status_tone"] = "green"
             # A row still live carries a tick box for the group Reschedule
             # and Cancel (owner, 2026-10-05); finished work has neither.
             row["can_pick"] = may_tick(row["status"]) and not row["shows_complete"]
@@ -2289,7 +2476,7 @@ def get_frontend_context(principal, query: dict) -> dict:
         "past_due_count": past_due_count,
         # The person's own year in four parts: planned, target and remaining
         # (apps.planning.readiness). None for a role that plans no visits.
-        "readiness": _own_readiness(principal, fy),
+        "readiness": _own_readiness(principal, fy) if with_readiness else None,
         # Each card carries every row of the selected period. `*_all` stays
         # because counts, KPIs and the CSV export read it; it is now the same
         # list as the card's own.
@@ -2334,8 +2521,10 @@ def get_frontend_context(principal, query: dict) -> dict:
         "upcoming": upcoming_list,
         "finance_pending": finance_pending_list,
         "viewer_is_partner": bool(scope.partner_ids),
-        "upcoming_today": upcoming_today,
-        "attention_needed": attention_needed,
-        "next_recommended_action": next_recommended_action,
+        "upcoming_today": SimpleLazyObject(lambda: _insights["upcoming_today"]),
+        "attention_needed": SimpleLazyObject(lambda: _insights["attention_needed"]),
+        "next_recommended_action": SimpleLazyObject(
+            lambda: _insights["next_recommended_action"]
+        ),
         "breakdown": breakdown,
     }

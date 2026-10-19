@@ -2224,11 +2224,16 @@ class ClusterCostPreviewService:
         fy: str = "2026",
         *,
         materials: dict | None = None,
+        principal=None,
     ) -> dict:
         from apps.frontend.views.cluster_views import _get_cost_preview_data
 
         return _get_cost_preview_data(
-            activity_type, participants, cluster_id, materials=materials
+            activity_type,
+            participants,
+            cluster_id,
+            materials=materials,
+            principal=principal,
         )
 
 

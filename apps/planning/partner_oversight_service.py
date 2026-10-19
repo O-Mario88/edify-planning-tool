@@ -441,19 +441,12 @@ def _course_name(course) -> str:
 def activity_day(activity) -> date | None:
     """The day an activity is dated, read the way My Plan reads it: the
     planned date, falling back to the scheduled timestamp an older row carries
-    on its own."""
+    on its own (completion_columns.plan_day)."""
     if activity is None:
         return None
-    if activity.planned_date:
-        return activity.planned_date
-    moment = activity.scheduled_date
-    if not moment:
-        return None
-    from django.utils import timezone
+    from apps.activities.completion_columns import plan_day
 
-    if timezone.is_naive(moment):
-        return moment.date()
-    return timezone.localtime(moment).date()
+    return plan_day(activity.planned_date, activity.scheduled_date)
 
 
 def describe_work(
@@ -1489,6 +1482,8 @@ EXPORT_HEADER = (
     "School ID",
     "School",
     "District",
+    # Primary District, Secondary District or Mixed (owner, 2026-10-12).
+    "District Type",
     "Cluster",
     "Managing CCEO",
     "Program Lead",
@@ -1518,6 +1513,12 @@ def export_rows(items):
     budget built that way would be understated by exactly the work nobody has
     priced yet.
     """
+    from apps.daily_visit_batches.district_marks import district_type_labels
+
+    items = list(items)
+    district_types = district_type_labels(
+        item.partner_activity_id for item in items if item.partner_activity_id
+    )
     yield EXPORT_HEADER
     for item in items:
         yield (
@@ -1525,6 +1526,7 @@ def export_rows(items):
             item.school_code if item.school_id else "",
             item.school_name,
             item.district,
+            district_types.get(item.partner_activity_id, ""),
             item.cluster_name,
             item.responsible_cceo_name,
             item.supervising_pl_name,

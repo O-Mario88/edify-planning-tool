@@ -315,16 +315,17 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
         self.assertNotContains(response, "Plan support for")
 
     def test_performance_uses_confirmed_baseline_and_latest_ssa(self):
-        # The portfolio reads the running year's confirmed SSAs, so both are
-        # filed under it and dated inside it, the baseline first — on
-        # 1 October "tomorrow" or "last week" is not always that year.
+        # A school has one SSA a year (owner, 2026-10-14): the movement is
+        # last year's confirmed reading to this year's, each filed under its
+        # year and dated inside it.
         fy = get_operational_fy()
-        first_day = max(timezone.now() - timedelta(days=10), get_fy_date_range(fy)[0])
+        first_day = get_fy_date_range(fy)[0]
         for index, score in enumerate((3.0, 6.0), start=1):
+            year = str(int(fy) - 2 + index)
             record = SsaRecord.objects.create(
                 school=self.school,
-                date_of_ssa=first_day + timedelta(hours=index),
-                fy=fy,
+                date_of_ssa=get_fy_date_range(year)[0] + timedelta(days=1),
+                fy=year,
                 quarter=f"Q{index}",
                 verification_status="confirmed",
                 verified_by_user_id=self.bt_user.id,

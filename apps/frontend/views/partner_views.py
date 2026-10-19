@@ -2323,6 +2323,7 @@ def _own_partner_activity(request, activity_id):
 
 @require_page_permission("partner_evidence")
 def partner_activity_workroom_view(request, activity_id):
+    from apps.evidence import form_document
     from apps.evidence.requirements import checklist, evidence_optional
     from apps.activities.services import sf_kind_for_activity
 
@@ -2360,6 +2361,9 @@ def partner_activity_workroom_view(request, activity_id):
         "partner_org": Partner.objects.filter(id=a.assigned_partner_id).first(),
         "evidence": evidence,
         "evidence_checklist": checklist(a),
+        # The form as one button that opens one PDF (owner, 2026-10-14).
+        "uploaded_form": form_document.uploaded_form(a),
+        "form_name": form_document.form_name(a),
         "evidence_is_optional": evidence_optional(a),
         "state": state,
         "is_training_kind": sf_kind_for_activity(a) == "training",

@@ -72,11 +72,12 @@ class OversightSidebarTests(TestCase):
             )
 
     def test_cceo_oversees_partners_and_their_project_schools(self):
-        """Their own clusters (owner, 2026-10-17: "CCEOs should have access to
-        cluster oversight but for only their clusters"), Partner Oversight,
-        and Project Monitoring for the schools they added to projects (owner,
-        2026-09-24: "Users want to see the schools they have assigned to the
-        project"). No team or country lens."""
+        """Cluster Oversight for their own clusters (owner, 2026-10-17: "CCEOs
+        should have access to cluster oversight but for only their
+        clusters"), Partner Oversight, and Project Monitoring for the schools
+        they added to projects (owner, 2026-09-24: "Users want to see the
+        schools they have assigned to the project"). No team or country
+        lens."""
         from types import SimpleNamespace
         from apps.core.navigation import build_sidebar_for_user, PAGE_PERMISSIONS, CCEO
 
@@ -87,7 +88,12 @@ class OversightSidebarTests(TestCase):
         oversight = next(g for g in groups if g["label"] == "OVERSIGHT")
         self.assertEqual(
             [i["page_key"] for i in oversight["items"]],
-            ["cluster_oversight", "partner_oversight", "project_monitoring"],
+            [
+                "cluster_oversight",
+                "core_schools_oversight",
+                "partner_oversight",
+                "project_monitoring",
+            ],
         )
         self.assertEqual(
             {
@@ -95,5 +101,5 @@ class OversightSidebarTests(TestCase):
                 for key, roles in PAGE_PERMISSIONS.items()
                 if key.endswith("_oversight") and CCEO in roles
             },
-            {"cluster_oversight", "partner_oversight"},
+            {"cluster_oversight", "core_schools_oversight", "partner_oversight"},
         )

@@ -15,28 +15,28 @@ Each requirement's covering test is executed with the platform instrumented; eve
 
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `journey-01` | Priority to verified performance | ✓ | 2 | 121 | 31 | 2 | 2 | 6 | 19 | 80 |
-| `journey-02` | SSA to school improvement | ✓ | 1 | 50 | 10 | 1 | 11 | 0 | 0 | 29 |
-| `journey-03` | Standard staff school visit | ✓ | 12 | 125 | 33 | 3 | 8 | 10 | 26 | 80 |
-| `journey-04` | Cluster training | ✓ | 1 | 91 | 17 | 3 | 10 | 0 | 1 | 76 |
-| `journey-05` | Partner assignment and payment | ✓ | 1 | 73 | 27 | 2 | 2 | 1 | 4 | 91 |
-| `journey-06` | Special Project | ✓ | 1 | 131 | 29 | 4 | 9 | 6 | 19 | 80 |
-| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 99 | 27 | 4 | 10 | 9 | 23 | 80 |
-| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 97 | 25 | 3 | 6 | 7 | 18 | 79 |
-| `journey-09` | Leave and temporary coverage | ✓ | 1 | 67 | 15 | 0 | 0 | 1 | 4 | 25 |
-| `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 118 | 35 | 2 | 2 | 7 | 25 | 80 |
-| `journey-11` | Professional Development | ✓ | 1 | 52 | 9 | 1 | 9 | 1 | 1 | 1 |
-| `journey-12` | Policy lifecycle | ✓ | 1 | 47 | 12 | 0 | 0 | 1 | 10 | 5 |
-| `journey-13` | PIP | ✓ | 1 | 47 | 7 | 0 | 0 | 0 | 3 | 1 |
-| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 69 | 14 | 1 | 9 | 2 | 3 | 25 |
-| `journey-15` | Financial Health | ✓ | 1 | 65 | 17 | 2 | 4 | 1 | 6 | 29 |
-| `journey-16` | Government Requirements | ✓ | 1 | 64 | 17 | 2 | 4 | 1 | 5 | 29 |
-| `journey-17` | Loan | ✓ | 1 | 56 | 25 | 11 | 7 | 3 | 17 | 37 |
-| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 59 | 21 | 9 | 6 | 1 | 9 | 33 |
-| `journey-19` | Cross-role security | ✓ | 4 | 56 | 11 | 2 | 2 | 0 | 1 | 86 |
+| `journey-01` | Priority to verified performance | ✓ | 2 | 128 | 31 | 2 | 2 | 6 | 19 | 80 |
+| `journey-02` | SSA to school improvement | ✓ | 1 | 51 | 10 | 1 | 11 | 0 | 0 | 29 |
+| `journey-03` | Standard staff school visit | ✓ | 12 | 135 | 34 | 3 | 8 | 10 | 29 | 80 |
+| `journey-04` | Cluster training | ✓ | 1 | 95 | 17 | 3 | 10 | 0 | 1 | 76 |
+| `journey-05` | Partner assignment and payment | ✓ | 1 | 74 | 27 | 2 | 2 | 1 | 4 | 91 |
+| `journey-06` | Special Project | ✓ | 1 | 138 | 29 | 4 | 9 | 6 | 19 | 80 |
+| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 107 | 27 | 4 | 10 | 9 | 23 | 80 |
+| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 102 | 25 | 3 | 6 | 7 | 18 | 79 |
+| `journey-09` | Leave and temporary coverage | ✓ | 1 | 68 | 15 | 0 | 0 | 1 | 4 | 25 |
+| `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 125 | 35 | 2 | 2 | 7 | 25 | 80 |
+| `journey-11` | Professional Development | ✓ | 1 | 53 | 9 | 1 | 9 | 1 | 1 | 1 |
+| `journey-12` | Policy lifecycle | ✓ | 1 | 48 | 12 | 0 | 0 | 1 | 10 | 5 |
+| `journey-13` | PIP | ✓ | 1 | 48 | 7 | 0 | 0 | 0 | 3 | 1 |
+| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 71 | 14 | 1 | 9 | 2 | 3 | 25 |
+| `journey-15` | Financial Health | ✓ | 1 | 66 | 17 | 2 | 4 | 1 | 5 | 29 |
+| `journey-16` | Government Requirements | ✓ | 1 | 65 | 17 | 2 | 4 | 1 | 5 | 29 |
+| `journey-17` | Loan | ✓ | 1 | 57 | 25 | 11 | 7 | 3 | 17 | 37 |
+| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 60 | 21 | 9 | 6 | 1 | 9 | 33 |
+| `journey-19` | Cross-role security | ✓ | 4 | 57 | 11 | 2 | 2 | 0 | 1 | 86 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
-| `journey-22` | Financial-year rollover | ✓ | 1 | 67 | 17 | 0 | 0 | 1 | 3 | 86 |
+| `journey-22` | Financial-year rollover | ✓ | 1 | 68 | 17 | 0 | 0 | 1 | 3 | 86 |
 
 ## Each requirement in full
 
@@ -51,9 +51,9 @@ Steps: Publish priority → IA distributes to PL → PL distributes to self and 
 | Roles that hold the checked permissions | `Accountant`, `CountryDirector` |
 | Routes / API | `GET /my-targets`, `GET /performance-conversation` |
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act` |
-| Page gates checked | `acting_leadership`, `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters` _+40 more_ |
+| Page gates checked | `acting_leadership`, `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters` _+39 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py` _+111 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/completed_day.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+118 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+19 more_ |
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_cycle_opened`, `hr.strategic_priority_published`, `hr.targets_synced_from_agreement` _+11 more_ |
@@ -73,7 +73,7 @@ Steps: IA confirms SSA → Recommendation generated → School prioritized → A
 | Permissions checked | `analytics.view` |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py` _+40 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py` _+41 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `geography.District`, `geography.Region`, `outbox.OutboxEvent`, `schools.School`, `sessions.Session`, `ssa.SsaRecord`, `ssa.SsaScore` |
 | Notifications raised | — |
 | Audit actions (evidence) | — |
@@ -93,10 +93,10 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `planning.manualActivity.create` |
 | Page gates checked | `acting_leadership`, `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters` _+43 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+115 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+21 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/closure_services.py`, `apps/activities/completed_day.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py` _+125 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityScheduleChange`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker` _+22 more_ |
 | Notifications raised | `accountability_pl_approved`, `activity_closed`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed` _+2 more_ |
-| Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+18 more_ |
+| Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `activity_completed_on_another_day`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability` _+21 more_ |
 | Metrics computed in the run | `frontend_views_budget_views_accountability_pending`, `frontend_views_budget_views_approved`, `frontend_views_budget_views_awaiting_approval`, `frontend_views_budget_views_ready_for_disbursement`, `frontend_views_budget_views_returned_for_review`, `frontend_views_budget_views_total_requested_this_month`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget` _+3 more_ |
 | Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+72 more_ |
 
@@ -111,9 +111,9 @@ Steps: Eligible schools → Scheduling → Cost → Attendance → Evidence → 
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CCEO`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /clusters/{id}` |
 | Permissions checked | `cluster.catchmentManage`, `data.export`, `project.assignSchool` |
-| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_detail`, `cluster_oversight`, `clusters`, `core_schools`, `dashboard` _+28 more_ |
+| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_detail`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+29 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/editing.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/profile_activities.py` _+81 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/completed_day.py`, `apps/activities/editing.py`, `apps/activities/live.py`, `apps/activities/models.py` _+85 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ClusterActivityAttendance`, `audit.AuditLog`, `clusters.Cluster`, `clusters.ClusterServiceDistrict`, `clusters.SchoolClusterAssignment`, `clusters.SchoolClusterMembership` _+5 more_ |
 | Notifications raised | — |
 | Audit actions (evidence) | `activity.salesforce_id_entered` |
@@ -133,7 +133,7 @@ Steps: Assign → Schedule or Return → My Plan → Start → Evidence → IA r
 | Permissions checked | `ia.verify`, `payment.act` |
 | Page gates checked | `disbursements` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/closure_services.py`, `apps/activities/facilitation.py`, `apps/activities/ia_services.py`, `apps/activities/live.py` _+63 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/closure_services.py`, `apps/activities/facilitation.py`, `apps/activities/ia_services.py`, `apps/activities/live.py` _+64 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityScheduleCostLine`, `activities.ActivityTimelineEvent`, `activities.ClosureBlocker`, `activities.ClosureChecklist`, `activities.CompletedActivitySnapshot`, `activities.IAVerification`, `activities.VerificationChecklist` _+15 more_ |
 | Notifications raised | `partner_scheduled_activity` |
 | Audit actions (evidence) | `activity.closed`, `finance.partner_paid`, `notification.partner_scheduled_activity`, `partner.assigned` |
@@ -153,7 +153,7 @@ Steps: IA maps SSA intervention → Assigns Project Coordinator → Staff adds e
 | Permissions checked | `data.export`, `fundRequest.approveEscalated`, `payment.act`, `project.configurePriorities` |
 | Page gates checked | `acting_leadership`, `actions_sent`, `calendar`, `cce_training_feedback`, `cd_analytics`, `closed_schools`, `cluster_oversight`, `clusters` _+50 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py` _+121 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/completed_day.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+128 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+17 more_ |
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `notification.activity_submitted_for_review`, `notification.activity_verified_by_pl`, `notification.weekly_fund_request_approved`, `notification.weekly_fund_request_disbursed`, `notification.weekly_fund_request_ready` _+11 more_ |
@@ -173,7 +173,7 @@ Steps: Advance → Actual spend exceeds advance → Accountability → Reimburse
 | Permissions checked | `budget.approve`, `fundRequest.approveEscalated`, `payment.act`, `planning.view` |
 | Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+89 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/completed_day.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py` _+97 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `audit.DomainEventLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch` _+15 more_ |
 | Notifications raised | `accountability_pl_approved`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready` _+1 more_ |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.confirm_reimbursement_receipt`, `advance_request.pl_approve_accountability`, `advance_request.reimburse`, `advance_request.route_to_reimbursement`, `advance_request.submit_accountability` _+15 more_ |
@@ -193,7 +193,7 @@ Steps: Cancellation → Planned output reversal → Unused balance → Accountab
 | Permissions checked | `activity.assign`, `fundRequest.approveEscalated`, `payment.act` |
 | Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/day_off.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py` _+87 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/day_off.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py` _+92 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleChange`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `fund_requests.AdvanceRequest`, `fund_requests.FundRequest` _+13 more_ |
 | Notifications raised | `accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `accountability_submitted`, `activity.cost.calculated`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.accountability_pl_approved` _+10 more_ |
@@ -211,9 +211,9 @@ Steps: Leave request → Approval → Calendar block → Access transfer → To-
 | Roles that hold the checked permissions | — |
 | Routes / API | `GET /leave/approvals` |
 | Permissions checked | — |
-| Page gates checked | `acting_leadership`, `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+38 more_ |
+| Page gates checked | `acting_leadership`, `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+37 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/day_off.py`, `apps/activities/live.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py` _+57 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/day_off.py`, `apps/activities/live.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py` _+58 more_ |
 | Models written | `accounts.Leave`, `accounts.LeaveBalance`, `accounts.LeaveTypePolicy`, `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.TemporaryCoverageAssignment`, `accounts.User`, `audit.AuditLog`, `audit.DomainEventLog`, `geography.District`, `geography.Region` _+3 more_ |
 | Notifications raised | `leave_approved` |
 | Audit actions (evidence) | `hr.coverage_granted`, `hr.coverage_revoked`, `leave.approved`, `notification.leave_approved` |
@@ -231,9 +231,9 @@ Steps: HR unlocks → Employee evaluates → Manager evaluates → Automatic val
 | Roles that hold the checked permissions | `Accountant`, `CountryDirector` |
 | Routes / API | `GET /performance-conversation` |
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act` |
-| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `dashboard`, `debriefs_list` _+26 more_ |
+| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight`, `dashboard` _+27 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py` _+108 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/completed_day.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+115 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostCatalogue`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch` _+23 more_ |
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `performance_window_opened`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.performance_window_activated`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_acknowledged`, `hr.review_assessed` _+17 more_ |
@@ -251,9 +251,9 @@ Steps: Request → Manager review → HR review → Financial approval → Compl
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /my-professional-development` |
 | Permissions checked | `data.export` |
-| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `dashboard`, `debriefs_list` _+25 more_ |
+| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight`, `dashboard` _+26 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/acting.py`, `apps/core/audit_hash.py` _+42 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/acting.py`, `apps/core/audit_hash.py` _+43 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `notifications.Notification`, `professional_development.ProfessionalDevelopmentAllocation`, `professional_development.ProfessionalDevelopmentEvidence`, `professional_development.ProfessionalDevelopmentRequest`, `sessions.Session` |
 | Notifications raised | `pd_action_required` |
 | Audit actions (evidence) | `notification.pd_action_required` |
@@ -273,7 +273,7 @@ Steps: Upload → Review → Return → Approval → Publication → Employee ac
 | Permissions checked | — |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/acting.py`, `apps/core/audit_hash.py` _+37 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/acting.py`, `apps/core/audit_hash.py` _+38 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.User`, `audit.AuditLog`, `documents.DocumentAcknowledgement`, `documents.DocumentAsset`, `documents.DocumentAudienceRule`, `documents.DocumentVersion`, `help_center.HelpArticle`, `help_center.HelpArticleRoleAccess`, `help_center.HelpCategory`, `notifications.Notification`, `sessions.Session` |
 | Notifications raised | `documents.policy_published` |
 | Audit actions (evidence) | `documents.audience_changed`, `documents.created`, `documents.help_mapping_created`, `documents.help_mapping_updated`, `documents.policy_agreed`, `documents.published`, `documents.review_completed`, `documents.review_requested` _+2 more_ |
@@ -293,7 +293,7 @@ Steps: Concern → Verified context → Manager proposal → HR fairness review 
 | Permissions checked | — |
 | Page gates checked | `acting_leadership`, `analytics`, `calendar`, `candidate_pipeline`, `compensation_benefits`, `compliance_register`, `cpd_learning`, `dashboard` _+32 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/acting.py`, `apps/core/audit_hash.py` _+37 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/acting.py`, `apps/core/audit_hash.py` _+38 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `hr.PerformanceImprovementPlan`, `hr.RecoveryMilestone`, `sessions.Session` |
 | Notifications raised | — |
 | Audit actions (evidence) | `hr.pip_activated`, `hr.pip_outcome`, `hr.pip_recommended` |
@@ -311,9 +311,9 @@ Steps: CCEO school appears under team → Not in PL personal portfolio → Urgen
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /team-planning-oversight/` |
 | Permissions checked | `data.export` |
-| Page gates checked | `acting_leadership`, `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+36 more_ |
+| Page gates checked | `acting_leadership`, `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+35 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/cluster_attendance.py`, `apps/activities/completion_columns.py`, `apps/activity_catalogue/scheduling_health.py`, `apps/activity_catalogue/services.py` _+59 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/cluster_attendance.py`, `apps/activities/completion_columns.py`, `apps/activities/pair_costing.py`, `apps/activity_catalogue/scheduling_health.py` _+61 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `geography.District`, `geography.Region`, `messaging.Message`, `messaging.MessageParticipant`, `messaging.MessageThread`, `notifications.Notification`, `planning.TeamAction` _+2 more_ |
 | Notifications raised | `message`, `school_action_assigned` |
 | Audit actions (evidence) | `notification.message`, `school_action.acknowledged`, `school_action.sent` |
@@ -333,10 +333,10 @@ Steps: SSA weakness → BT recommendation → Training → Verification → Prac
 | Permissions checked | `businessTransformation.ia.validate`, `businessTransformation.schoolSupport.manage` |
 | Page gates checked | `business_transformation`, `business_transformation_finance`, `business_transformation_government`, `business_transformation_reports`, `calendar`, `dashboard`, `help`, `loans` _+8 more_ |
 | Object-level guards | `apps/core/scoping.py::assert_may_plan_school` |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/analytics/platform_engine.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py` _+55 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/analytics/platform_engine.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py` _+56 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `audit.AuditLog`, `business_transformation.CaseRecommendation`, `business_transformation.CaseTrigger`, `business_transformation.FinancialPracticeAssessment`, `business_transformation.TransformationCase`, `geography.District`, `geography.Region`, `notifications.Notification`, `outbox.OutboxEvent` _+5 more_ |
 | Notifications raised | `bt.case.recommended` |
-| Audit actions (evidence) | `bt.financial_practice.recorded`, `bt.financial_practice.verified`, `bt.ssa_recommendations_created`, `notification.bt.case.recommended`, `ssa.recommendation_generated`, `ssa.recommendation_superseded` |
+| Audit actions (evidence) | `bt.financial_practice.recorded`, `bt.financial_practice.verified`, `bt.ssa_recommendations_created`, `notification.bt.case.recommended`, `ssa.recommendation_generated` |
 | Metrics computed in the run | — |
 | Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+21 more_ |
 
@@ -353,7 +353,7 @@ Steps: SSA weakness → Requirement assessment → Registration, tax, or NSSF su
 | Permissions checked | `businessTransformation.ia.validate`, `businessTransformation.schoolSupport.manage` |
 | Page gates checked | `business_transformation`, `business_transformation_finance`, `business_transformation_government`, `business_transformation_reports`, `calendar`, `dashboard`, `help`, `loans` _+8 more_ |
 | Object-level guards | `apps/core/scoping.py::assert_may_plan_school` |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/handlers.py` _+54 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/handlers.py` _+55 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `audit.AuditLog`, `business_transformation.CaseRecommendation`, `business_transformation.CaseTrigger`, `business_transformation.SchoolComplianceAssessment`, `business_transformation.TransformationCase`, `geography.District`, `geography.Region`, `notifications.Notification`, `outbox.OutboxEvent` _+5 more_ |
 | Notifications raised | `bt.case.recommended` |
 | Audit actions (evidence) | `bt.compliance.assessment_recorded`, `bt.compliance.assessment_verified`, `bt.ssa_recommendations_created`, `notification.bt.case.recommended`, `ssa.recommendation_generated` |
@@ -373,7 +373,7 @@ Steps: Funding Facility → MFI loan entry → Enrolment → Purpose → Disburs
 | Permissions checked | `businessTransformation.allocation.manage`, `businessTransformation.disbursement.write`, `businessTransformation.facility.approve`, `businessTransformation.facility.manage`, `businessTransformation.facility.transfer`, `businessTransformation.ia.validate`, `businessTransformation.loan.write`, `businessTransformation.referral.manage`, `businessTransformation.repayment.write`, `businessTransformation.salesforce.confirm`, `businessTransformation.sensitive.view` |
 | Page gates checked | `business_transformation`, `business_transformation_finance`, `business_transformation_government`, `business_transformation_reports`, `calendar`, `dashboard`, `help`, `loans` _+8 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py` _+46 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py` _+47 more_ |
 | Models written | `accounts.User`, `audit.AuditLog`, `business_transformation.EnrolmentSnapshot`, `business_transformation.FinanceReferral`, `business_transformation.FundingFacility`, `business_transformation.FundingFacilityAllocation`, `business_transformation.FundingFacilityTranche`, `business_transformation.LoanDisbursement`, `business_transformation.LoanImpactAssessment`, `business_transformation.LoanPurposeAllocation`, `business_transformation.LoanRepaymentInstallment`, `business_transformation.LoanStatusHistory` _+13 more_ |
 | Notifications raised | `bt.loan.disbursed`, `bt.loan.salesforce_confirmed`, `bt.loan.submitted` |
 | Audit actions (evidence) | `bt.facility.allocated`, `bt.facility.approved`, `bt.facility.created`, `bt.facility.tranche_confirmed`, `bt.loan.disbursement_posted`, `bt.loan.enrolment_reported`, `bt.loan.enrolment_verified`, `bt.loan.purpose_plan_created` _+9 more_ |
@@ -393,7 +393,7 @@ Steps: Second loan → Loan count increases → Unique school does not duplicate
 | Permissions checked | `businessTransformation.allocation.manage`, `businessTransformation.case.manage`, `businessTransformation.disbursement.write`, `businessTransformation.facility.approve`, `businessTransformation.facility.manage`, `businessTransformation.facility.transfer`, `businessTransformation.ia.validate`, `businessTransformation.loan.write`, `businessTransformation.mfi.manage` |
 | Page gates checked | `business_transformation`, `business_transformation_finance`, `business_transformation_government`, `business_transformation_reports`, `calendar`, `dashboard`, `help`, `loans` _+9 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py` _+49 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py` _+50 more_ |
 | Models written | `accounts.User`, `audit.AuditLog`, `business_transformation.EnrolmentSnapshot`, `business_transformation.FundingFacility`, `business_transformation.FundingFacilityAllocation`, `business_transformation.FundingFacilityTranche`, `business_transformation.LoanDisbursement`, `business_transformation.LoanImpactAssessment`, `business_transformation.LoanPurpose`, `business_transformation.LoanPurposeAllocation`, `business_transformation.LoanStatusHistory`, `business_transformation.LoanVerificationRequirement` _+9 more_ |
 | Notifications raised | `bt.loan.disbursed` |
 | Audit actions (evidence) | `bt.facility.allocated`, `bt.facility.approved`, `bt.facility.created`, `bt.facility.tranche_confirmed`, `bt.loan.disbursement_posted`, `bt.loan.enrolment_reported`, `bt.loan.enrolment_verified`, `bt.loan.purpose_plan_created` _+1 more_ |
@@ -413,7 +413,7 @@ Steps: Attempt unauthorized access for every sensitive workflow → All attempts
 | Permissions checked | `ia.verify`, `payment.act` |
 | Page gates checked | `disbursements`, `school_directory`, `weekly_fund_request_disburse` |
 | Object-level guards | `apps/core/scoping.py::assert_may_write_school` |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/accounts/staff_matching.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/ia_services.py`, `apps/activities/live.py`, `apps/activities/models.py` _+46 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/accounts/staff_matching.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/ia_services.py`, `apps/activities/live.py`, `apps/activities/models.py` _+47 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `geography.District`, `geography.Region`, `schools.School`, `sessions.Session` |
 | Notifications raised | — |
 | Audit actions (evidence) | `unauthorized_page_access` |
@@ -443,9 +443,9 @@ Steps: Close September → Lock history → Open October → Preserve multi-year
 | Roles that hold the checked permissions | — |
 | Routes / API | `GET /my-performance` |
 | Permissions checked | — |
-| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `dashboard`, `debriefs_list` _+26 more_ |
+| Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight`, `dashboard` _+27 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/schedule_trail.py`, `apps/admin_ops/detection.py` _+57 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/schedule_trail.py`, `apps/admin_ops/detection.py` _+58 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `fund_requests.AdvanceRequest`, `hr.FiscalYearRollover`, `hr.PerformanceCycle`, `hr.PerformancePriority`, `hr.PerformanceReview`, `hr.PerformanceSnapshot`, `hr.StrategicPriorityCycle` _+5 more_ |
 | Notifications raised | `fiscal_year_priority_setting` |
 | Audit actions (evidence) | `hr.fiscal_year_rolled_over`, `hr.performance_agreement_drafted`, `notification.fiscal_year_priority_setting` |

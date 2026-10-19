@@ -19,6 +19,14 @@ evidence_file_<kind>, and the server joins them into one PDF in that order.
 
 Partner work never shows the Salesforce ID here (asks_salesforce_id): the
 partner uploads, and staff complete the work in the Salesforce ID drawer.
+
+Partner work only (owner, 2026-10-14: "Only staff dont need to upload.
+partners HAVE to upload because that is how we verify their work"): the view
+refuses staff work. And each form is ONE document: once it is uploaded the
+slot offers it to open ("View Uploaded Visit Form") and takes a file only as
+another page of it. The partner is asked "Is this a different page from the
+one you have uploaded?"; Yes joins it to the PDF, No drops the file. The
+server holds the same rule (apps.evidence.form_document.add_form_pages).
 {% endcomment %}
 <div class="space-y-4 text-[12px] font-semibold text-slate-600">
   <div id="evidence-errors" aria-live="polite"></div>
@@ -33,22 +41,35 @@ partner uploads, and staff complete the work in the Salesforce ID drawer.
   <form id="evidence-form" hx-post="/activities/{{ act.id }}/evidence/action" hx-encoding="multipart/form-data"
         hx-request='{"timeout":120000}'
         hx-target="#evidence-errors" hx-disabled-elt="find button[type=submit]"
-        x-data="{ preparing: 0 }"
+        x-data="{ preparing: 0, asking: {} }"
         @evidence-pages-busy="preparing = Math.max(0, preparing + ($event.detail ? 1 : -1))"
+        @evidence-pages-asking="asking[$event.detail.kind] = $event.detail.asking"
         class="space-y-4">
     {% csrf_token %}
 
     {% for item in evidence_checklist %}
     <section x-data="{% include 'components/evidence_pages_state.html' %}"
+             x-init="held = {{ item.uploaded|yesno:'true,false' }}; formName = '{{ item.name|escapejs }}'"
+             x-effect="$dispatch('evidence-pages-asking', { kind: '{{ item.kind }}', asking: asking })"
+             data-form-slot="{{ item.kind }}"
              aria-labelledby="ev-label-{{ item.kind }}"
              class="space-y-3 rounded-control border {% if item.uploaded %}border-emerald-200{% else %}border-slate-200{% endif %} p-3">
       <div class="flex items-center justify-between gap-3">
         <div class="space-y-1">
-          <p id="ev-label-{{ item.kind }}" class="text-[13px] font-semibold text-slate-800">{{ item.label }} <span class="text-rose-500">*</span></p>
+          <p id="ev-label-{{ item.kind }}" class="text-[13px] font-semibold text-slate-800">{{ item.name }} <span class="text-rose-500">*</span></p>
+          {% if item.uploaded %}
+          <p class="edify-text-caption text-slate-500">This form is uploaded. Add a file only if it is a different page of it: every page is kept in the one PDF.</p>
+          {% else %}
           <p class="edify-text-caption text-slate-500">Take a photo of each page, or choose PDFs or photos. The pages are joined into one PDF, in the order you add them.</p>
+          {% endif %}
         </div>
         {% if item.uploaded %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Still needed</span>{% endif %}
       </div>
+
+      {% if item.document %}
+      {% include "components/uploaded_form_link.html" with form=item.document %}
+      {% endif %}
+      <input type="hidden" name="another_page_{{ item.kind }}" :value="answer">
 
       <!-- The camera, the file picker, and the input the form posts -->
       <input type="file" x-ref="cameraInput" accept="image/*" capture="environment" class="hidden"
@@ -66,14 +87,14 @@ partner uploads, and staff complete the work in the Salesforce ID drawer.
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
             <circle cx="12" cy="13" r="3"/>
           </svg>
-          <span x-text="pages.length ? 'Photo next page' : 'Take photo'">Take photo</span>
+          <span x-text="pages.length ? 'Photo next page' : (held ? 'Photo another page' : 'Take photo')">{% if item.uploaded %}Photo another page{% else %}Take photo{% endif %}</span>
         </button>
         <button type="button" @click="$refs.storageInput.click()" :disabled="busy"
                 class="btn btn-secondary min-h-11 w-full gap-2">
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
           </svg>
-          <span x-text="pages.length ? 'Add files' : 'Choose files'">Choose files</span>
+          <span x-text="pages.length ? 'Add files' : (held ? 'Add another page' : 'Choose files')">{% if item.uploaded %}Add another page{% else %}Choose files{% endif %}</span>
         </button>
       </div>
 
@@ -87,18 +108,28 @@ partner uploads, and staff complete the work in the Salesforce ID drawer.
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                 </svg>
                 <div class="min-w-0">
-                  <p class="font-semibold" x-text="'Page ' + (i + 1)"></p>
+                  <p class="font-semibold" x-text="(held ? 'New page ' : 'Page ') + (i + 1)"></p>
                   <p class="edify-text-caption font-medium text-slate-500 truncate" x-text="p.name + ' · ' + p.size"></p>
                 </div>
               </div>
-              <button type="button" @click="remove(i)" :aria-label="'Remove page ' + (i + 1)"
+              <button type="button" @click="remove(i)" :aria-label="'Remove ' + (held ? 'new page ' : 'page ') + (i + 1)"
                       class="edify-text-caption font-semibold edify-primary-text hover:underline px-2 py-1 shrink-0">
                 Remove
               </button>
             </li>
           </template>
         </ol>
-        <p class="edify-text-caption text-slate-500" x-text="pages.length > 1 ? pages.length + ' pages will be saved as one PDF.' : '1 page will be saved.'"></p>
+        <p class="edify-text-caption text-slate-500" x-show="!held" x-text="pages.length > 1 ? pages.length + ' pages will be saved as one PDF.' : '1 page will be saved.'"></p>
+        <p class="edify-text-caption text-slate-500" x-show="held && answer === 'yes'" x-cloak x-text="(pages.length > 1 ? pages.length + ' more pages' : '1 more page') + ' will be added to the uploaded PDF.'"></p>
+      </div>
+
+      {# The question a second upload answers (owner, 2026-10-14). #}
+      <div x-show="asking" x-cloak class="edify-note space-y-2" data-tone="warning" role="group" aria-labelledby="ev-ask-{{ item.kind }}" data-page-question>
+        <p id="ev-ask-{{ item.kind }}" class="edify-note__body font-semibold">Is this a different page from the one you have uploaded?</p>
+        <div class="grid grid-cols-2 gap-2" data-keep-columns>
+          <button type="button" class="btn btn-primary min-h-11" @click="differentPage()" data-page-answer="yes">Yes, a different page</button>
+          <button type="button" class="btn btn-secondary min-h-11" @click="samePage()" data-page-answer="no">No, the same page</button>
+        </div>
       </div>
       <p x-show="busy" x-cloak class="edify-text-caption text-slate-500" role="status">Preparing the photo…</p>
       <p x-show="notice" x-cloak x-text="notice" class="edify-text-caption font-semibold text-rose-600" role="status"></p>
@@ -122,26 +153,11 @@ partner uploads, and staff complete the work in the Salesforce ID drawer.
 
     <div class="drawer-footer">
       <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-      <button type="submit" class="btn btn-primary h-8" :disabled="preparing > 0">Submit</button>
+      <button type="submit" class="btn btn-primary h-8" :disabled="preparing > 0 || Object.values(asking).some(Boolean)">Submit</button>
     </div>
   </form>
 
-  {% if evidence_list %}
-  <div class="space-y-1">
-    <p class="edify-text-caption font-semibold text-slate-600">Already uploaded</p>
-    <div class="divide-y divide-slate-100 rounded-control border border-slate-200">
-      {% for ev in evidence_list %}
-      <div class="flex items-center justify-between gap-3 px-3 py-2">
-        <a href="/api/evidence/{{ ev.id }}/file" target="_blank" rel="noopener" class="font-semibold text-slate-700 truncate hover:edify-primary-text">{{ ev.original_name }}</a>
-        <span class="flex items-center gap-2 shrink-0">
-          <span class="edify-text-caption text-slate-500 font-semibold">{{ ev.kind }}</span>
-          <a href="/api/evidence/{{ ev.id }}/file?download=1" class="edify-text-caption font-semibold edify-primary-text hover:underline">Download</a>
-        </span>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+  {# The list of every file uploaded sat here. A form is one document now, offered in its own slot above (owner, 2026-10-14: "fix it to show only one upload"). #}
 
 </div>
 {% endblock %}

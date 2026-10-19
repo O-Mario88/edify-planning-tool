@@ -15,6 +15,8 @@ class="space-y-4 text-[12px] font-semibold text-slate-600"
 <div class="space-y-1">
 <p class="edify-text-caption font-semibold text-slate-600">Readiness</p>
 <ul class="divide-y divide-slate-100">
+{# UPLOAD-OFF (owner, 2026-10-13): readiness no longer waits on an uploaded file. Remove the comment tags to bring the line back. #}
+{% comment %}UPLOAD-OFF
 <li class="flex items-center justify-between gap-3 py-2">
 <span class="text-slate-700">Verification evidence uploaded</span>
 {% if has_evidence %}
@@ -23,6 +25,7 @@ class="space-y-4 text-[12px] font-semibold text-slate-600"
 <span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-150">Missing</span>
 {% endif %}
 </li>
+{% endcomment %}
 
 <li class="flex items-center justify-between gap-3 py-2">
 <span class="text-slate-700">Salesforce activity ID linked</span>

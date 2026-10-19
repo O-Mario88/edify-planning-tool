@@ -178,6 +178,12 @@ class TheYearAgainstItsTarget(MonitorFixture):
         # that count are SSA Support, In-school Training and Follow up), not
         # the cancelled one, not the partner's.
         self.assertEqual(anna.client_visits, 1)
+        # The handed-in core visit waits on the Programme Lead: done once
+        # approved (owner, 2026-10-15: "Any activity not approved by PL should
+        # not be counted").
+        self.assertEqual(anna.visits_done, 0)
+        Activity.objects.filter(status="submitted_to_pl").update(status="ia_verified")
+        anna = self._officer(planning_monitor(self.cd_user, fy=FY), self.anna)
         self.assertEqual(anna.visits_done, 1)
 
     def test_the_role_sets_the_target_not_a_saved_profile(self):

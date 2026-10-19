@@ -75,12 +75,13 @@ class RecommendationConvergenceTest(TestCase):
     def test_planning_recommendation_ignores_unverified_ssa(self):
         # Only an UNVERIFIED SSA exists → planning must treat the school as
         # having no usable baseline, not recommend off unverified data.
-        self._record(self._all(leadership=2.0), status="pending")
+        pending = self._record(self._all(leadership=2.0), status="pending")
         rec = PlanningRecommendationService.get_recommendation(self.school)
         self.assertEqual(rec["planningReadiness"], "SSA Required")
 
-        # Confirm it once and the recommendation becomes available.
-        self._record(self._all(leadership=2.0), status="confirmed")
+        # Confirm it once and the recommendation becomes available (the same
+        # record: a school has one SSA a year, owner 2026-10-14).
+        SsaRecord.objects.filter(pk=pending.pk).update(verification_status="confirmed")
         rec2 = PlanningRecommendationService.get_recommendation(self.school)
         self.assertEqual(rec2["planningReadiness"], "Ready for Support")
 

@@ -36,13 +36,23 @@ class FormatValidationTest(TestCase):
         self.assertFalse(is_valid_new_entry("SVE-123456", "training"))
         self.assertFalse(is_valid_new_entry("SV-123456", "training"))
 
-    def test_visit_id_requires_sve_prefix(self):
+    def test_visit_id_is_sve_or_sv(self):
+        """Owner, 2026-10-12: "accept SV-123... as well as the salesforce ID.
+        one of the two should be able to work"."""
         self.assertTrue(is_valid_new_entry("SVE-123456", "visit"))
+        self.assertTrue(is_valid_new_entry("SV-123456", "visit"))
+        self.assertTrue(is_valid_salesforce_id("SV-123456", "visit"))
         self.assertFalse(is_valid_new_entry("TS-123456", "visit"))
 
-    def test_legacy_bare_sv_prefix_rejected_for_new_entry_but_valid_for_reads(self):
-        self.assertFalse(is_valid_new_entry("SV-123456", "visit"))
-        self.assertTrue(is_valid_salesforce_id("SV-123456", "visit"))
+    def test_the_records_own_salesforce_id_works_for_either(self):
+        for record_id in ("00U5e00000AbCdE", "00U5e00000AbCdEEAQ", "a0b1c2d3e4f5g6h"):
+            for kind in ("visit", "training"):
+                with self.subTest(record_id=record_id, kind=kind):
+                    self.assertTrue(is_valid_new_entry(record_id, kind))
+        # Not a record ID: too short, too long, or punctuated.
+        for wrong in ("00U5e00000AbCd", "00U5e00000AbCdEEAQX", "00U5e-0000AbCdE"):
+            with self.subTest(wrong=wrong):
+                self.assertFalse(is_valid_new_entry(wrong, "visit"))
 
     def test_id_is_normalized(self):
         self.assertEqual(normalize_salesforce_id("  sve - abc123 "), "SVE-ABC123")

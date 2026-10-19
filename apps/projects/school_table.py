@@ -31,6 +31,8 @@ __all__ = [
     "CHANGE_FORMAT",
     "COLUMNS",
     "DATE_FORMAT",
+    "DISTRICT_TYPE",
+    "EXPORT_COLUMNS",
     "FIELDS",
     "MONEY_FORMAT",
     "SCORE_FORMAT",
@@ -66,6 +68,14 @@ FIELDS = (
     ("cost", "Activity Cost (UGX)"),
 )
 COLUMNS = tuple(label for _key, label in FIELDS)
+#: The workbook's headings: the table's, with the District Type after the
+#: District.
+DISTRICT_TYPE = "District Type"
+EXPORT_COLUMNS = (
+    *COLUMNS[: COLUMNS.index("District") + 1],
+    DISTRICT_TYPE,
+    *COLUMNS[COLUMNS.index("District") + 1 :],
+)
 
 #: What the Activity Date says while a Partner holds the work undated.
 AWAITING_SCHEDULING = "Awaiting scheduling"
@@ -181,13 +191,35 @@ def sheets(projects) -> list[dict]:
     ``projects`` are ``monitoring.ProjectMonitoringRow``s; their
     ``school_rows`` are the rows the reader's page shows, filters applied.
     """
+    # The workbook says each school's District Type beside its District
+    # (owner, 2026-10-12: "district type ... in all exports"): Primary
+    # District, Secondary District or Mixed, from the row's own activity.
+    # The page's table keeps the owner's eighteen columns.
+    from apps.daily_visit_batches.district_marks import district_type_labels
+
+    rows = [row for project in projects for row in project.school_rows]
+    labels = district_type_labels(
+        row.cost_activity_ids[0] for row in rows if row.cost_activity_ids
+    )
+    at = EXPORT_COLUMNS.index(DISTRICT_TYPE)
+
+    def with_type(row) -> list:
+        out = cells(row)
+        first = row.cost_activity_ids[0] if row.cost_activity_ids else None
+        out.insert(at, labels.get(first, ""))
+        return out
+
+    def shifted(index: int) -> int:
+        # 1-based column of a FIELDS index once District Type is inserted.
+        return index + 1 if index > at else index
+
     return [
         {
             "title": "Project Schools",
-            "headers": list(COLUMNS),
-            "rows": [cells(row) for project in projects for row in project.school_rows],
+            "headers": list(EXPORT_COLUMNS),
+            "rows": [with_type(row) for row in rows],
             "number_formats": {
-                index: _FORMATS[key]
+                shifted(index): _FORMATS[key]
                 for index, (key, _label) in enumerate(FIELDS, start=1)
                 if key in _FORMATS
             },

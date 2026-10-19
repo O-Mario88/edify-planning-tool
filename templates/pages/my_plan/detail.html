@@ -4,7 +4,8 @@
 {% block title %}Activity Details — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1400px] mx-auto">
+{# Read again in place after a save in one of its drawers, and when the plan this reader sees changes (static/js/live-regions.js). #}
+<div id="activity-detail" class="px-4 sm:px-6 py-5 space-y-4 max-w-[1400px] mx-auto" data-live-region>
 
   <div class="edify-page-header">
     <div class="min-w-0 edify-page-header__lead">
@@ -54,6 +55,16 @@
             <p class="ad-field__label">Scheduled date</p>
             <p class="ad-field__value">{{ act.planned_date|date:"F j, Y"|default:"Not scheduled" }}</p>
             {% if act.planned_date %}<p class="ad-field__note">{{ act.planned_date|date:"l" }}</p>{% endif %}
+          </div>
+        </div>
+
+        {% comment %}Who facilitates it (owner, 2026-10-12): Staff, or the
+        partner by name.{% endcomment %}
+        <div class="ad-field" data-facilitated-by>
+          <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87M16 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></span>
+          <div>
+            <p class="ad-field__label">Facilitated by</p>
+            <p class="ad-field__value">{{ facilitated_by_display|default:"Staff" }}</p>
           </div>
         </div>
 
@@ -112,7 +123,7 @@
           <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2"/><path stroke-linecap="round" d="M2 11h20"/></svg></span>
           <div>
             <p class="ad-field__label">{{ activity_cost.label }}</p>
-            <p class="ad-field__value ad-field__value--accent">{{ activity_cost.amount|ugx }}</p>
+            <p class="ad-field__value ad-field__value--accent">{% if activity_cost.amount is None %}Not priced{% else %}{{ activity_cost.amount|ugx }}{% endif %}</p>
             <p class="ad-field__note">{{ activity_cost.note }}</p>
             {% if activity_cost.amount_disbursed %}<p class="ad-field__note">Amount disbursed: {{ activity_cost.amount_disbursed|ugx }}</p>{% endif %}
           </div>
@@ -200,7 +211,7 @@
 {% if can_complete %}
       <p class="ad-note">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 3v5c0 4.97-3.4 8.94-8 10-4.6-1.06-8-5.03-8-10V6l8-3z"/></svg>
-        Ensure all evidence and notes are updated before completing.
+        Have the Salesforce visit ID or training ID ready before completing.
       </p>
       {% else %}
       <p class="ad-note" data-team-read-only>
@@ -233,6 +244,8 @@
     </div>
 
     {# ── Verification evidence ─────────────────────────────────────────── #}
+    {# UPLOAD-OFF (owner, 2026-10-13): activities are completed with the visit ID and the training ID alone. The card stays for activities that already hold files; its empty state and drop zone are switched off, not deleted. #}
+    {% if evidence_list %}
     <section class="ad-card">
       <header class="ad-card__head">
         <span class="ad-card__icon" aria-hidden="true">
@@ -254,14 +267,11 @@
         </li>
         {% endfor %}
       </ul>
+      {% comment %}UPLOAD-OFF
       {% else %}
-      {% comment %}Uploading is part of completing, which is the officer's:
-      a reader who may not run the activity is told there is none yet (owner,
-      2026-10-08).{% endcomment %}
+      {# Uploading is part of completing, which is the officer's: a reader who may not run the activity is told there is none yet (owner, 2026-10-08). #}
       {% if can_complete %}
-      {% comment %}The drop zone opens the same completion drawer that owns the
-      upload rather than posting from here — one upload path, not two.
-      {% endcomment %}
+      {# The drop zone opens the same completion drawer that owns the upload rather than posting from here — one upload path, not two. #}
       <button type="button" class="ad-drop"
               hx-get="/my-plan/{{ act.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.9A5 5 0 1115.9 6 4.5 4.5 0 1117 16h-1m-4-4v9m0-9l-3 3m3-3l3 3"/></svg>
@@ -272,8 +282,10 @@
       {% else %}
       <p class="ad-note">No evidence uploaded yet for this activity.</p>
       {% endif %}
+      {% endcomment %}
       {% endif %}
     </section>
+    {% endif %}
 
     {# ── Activity timeline ─────────────────────────────────────────────── #}
     <section class="ad-card">
@@ -309,7 +321,7 @@
 
   <aside class="ad-tip">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
-    <p><strong>Quick tip</strong> Complete the activity and upload evidence to provide proof of execution and impact.</p>
+    <p><strong>Quick tip</strong> Complete the activity with its Salesforce visit ID or training ID.</p>
     <a href="/help" class="ad-tip__link">View activity guidelines</a>
   </aside>
 </div>

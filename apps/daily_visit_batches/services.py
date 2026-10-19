@@ -26,8 +26,24 @@ from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from .districts import accommodation_key_for_staff, district_type_for_staff
 from .exceptions import ReasonRequiredError
 from .models import DailyVisitBatch
-from .pricing import ACCOMMODATION_KEYS, KEY_LABELS, allocate_pool, compute_daily_pool
-from .return_day import ONE_DAY, away_on, is_return_day, priced_as_return_day
+from .pricing import (
+    ACCOMMODATION_KEYS,
+    KEY_LABELS,
+    MIXED_DAY,
+    MIXED_TRANSPORT_LABEL,
+    allocate_pool,
+    compute_daily_pool,
+    day_district_mark,
+    day_line_label,
+    pricing_district_type,
+)
+from .return_day import (
+    ONE_DAY,
+    away_on,
+    days_standing,
+    is_return_day,
+    priced_as_return_day,
+)
 
 
 #: The days waiting for their price while a save that adds several visits is
@@ -35,10 +51,23 @@ from .return_day import ONE_DAY, away_on, is_return_day, priced_as_return_day
 _days_to_price: contextvars.ContextVar[dict | None] = contextvars.ContextVar(
     "daily_visit_batches_days_to_price", default=None
 )
+#: What waits for those days to be priced, in the order it was asked for
+#: (`once_days_are_priced`). None unless the block in hand also makes a day
+#: wait that a visit leaves (`each_day_priced_once(leaving_too=True)`).
+_after_pricing: contextvars.ContextVar[list | None] = contextvars.ContextVar(
+    "daily_visit_batches_after_pricing", default=None
+)
+
+
+#: The save in hand that keeps its days, weeks and notes for after its
+#: answer (`apps.daily_visit_batches.costs_follow`), or None.
+_kept_for_later: contextvars.ContextVar = contextvars.ContextVar(
+    "daily_visit_batches_kept_for_later", default=None
+)
 
 
 @contextmanager
-def each_day_priced_once():
+def each_day_priced_once(*, leaving_too: bool = False):
     """Price a day once for all the visits this block adds to it.
 
     A visit joining a day re-prices every visit already on it, because the
@@ -66,6 +95,18 @@ def each_day_priced_once():
     because what follows it (the week it left is re-filed from its lines)
     reads the result.
 
+    `leaving_too`: a day a visit leaves waits as well. For a group of moves
+    or cancellations (`apps.activities.group_actions`), which re-priced the
+    day left and the day joined once for every visit of the group: three
+    visits moved off a day of ten priced nine, eight and seven of it, then
+    one, two and three of the day they joined, thirty pricings where ten are
+    the end of it. Two things make that safe there and nowhere else: the
+    week and month are re-filed when the group ends
+    (`apps.fund_requests.follow`), not after each visit, and what has to
+    read a visit's new lines says so (`once_days_are_priced`). The caller
+    must be ready for the pricing to refuse when the block ends, which undoes
+    everything inside it.
+
     ``PRICE_A_DAY_ONCE_PER_SAVE=false`` prices after every visit again.
     """
     from django.conf import settings
@@ -74,6 +115,12 @@ def each_day_priced_once():
     if _days_to_price.get() is not None or not getattr(
         settings, "PRICE_A_DAY_ONCE_PER_SAVE", True
     ):
+        kept = _kept_for_later.get()
+        if leaving_too and kept is not None:
+            # A group inside a save that answers first: its days are priced
+            # after the answer the way this block would have priced them,
+            # each read from its members while the others are priced.
+            kept.together = True
         yield
         return
     if not connection.in_atomic_block:
@@ -83,14 +130,127 @@ def each_day_priced_once():
             "scheduled visits with no cost."
         )
     days: dict[str, tuple] = {}
+    afterwards: list | None = [] if leaving_too else None
     token = _days_to_price.set(days)
+    after_token = _after_pricing.set(afterwards)
     try:
         yield
     finally:
         _days_to_price.reset(token)
-    for batch_id, (catalogue, responsible_user_id) in days.items():
-        batch = DailyVisitBatch.objects.select_for_update().get(id=batch_id)
-        _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+        _after_pricing.reset(after_token)
+    price_kept_days(days, together=leaving_too)
+    for then, _note in afterwards or ():
+        then()
+
+
+def price_kept_days(days: dict, *, together: bool, beside: dict | None = None) -> None:
+    """Price the days a block kept back, in the order they were asked for.
+
+    `together`: days a visit left are among them, so each is read from its
+    members as they stand while the others are priced (`_where_days_stand`).
+    `beside`: the days to read that way where they are more than the days
+    priced here (some are left to be priced after these). Every day prices
+    against the same published cards."""
+    from apps.budget.costing_service import rate_cards_held
+
+    with (
+        rate_cards_held(),
+        days_standing(_where_days_stand(beside or days) if together else {}),
+    ):
+        for batch_id, (catalogue, responsible_user_id) in days.items():
+            batch = DailyVisitBatch.objects.select_for_update().get(id=batch_id)
+            _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+
+
+def _where_days_stand(days: dict) -> dict:
+    """``{(responsible_user, day): away}`` for the days waiting to be priced,
+    read from who is on each now: away when it has a live member and prices
+    as a secondary-district day, as `_write_day_lines` will find it."""
+    from apps.activities.models import Activity
+
+    if len(days) < 2:
+        return {}
+    batches = {
+        batch.id: batch for batch in DailyVisitBatch.objects.filter(id__in=list(days))
+    }
+    members: dict[str, list] = {batch_id: [] for batch_id in batches}
+    for member in (
+        Activity.objects.filter(
+            daily_visit_batch_id__in=list(batches), deleted_at__isnull=True
+        )
+        .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        .select_related(*_MEMBER_DISTRICT_RELATIONS)
+    ):
+        members[member.daily_visit_batch_id].append(member)
+    standing = {}
+    for batch_id, batch in batches.items():
+        _catalogue, responsible_user_id = days[batch_id]
+        district_types = {
+            district_type_for_staff(responsible_user_id, member_district(member))
+            or "primary"
+            for member in members[batch_id]
+        }
+        district_type = (
+            pricing_district_type(day_district_mark(district_types))
+            if district_types
+            else batch.district_type
+        )
+        standing[(batch.responsible_user, batch.visit_date)] = bool(
+            members[batch_id] and district_type == "secondary"
+        )
+    return standing
+
+
+def _leaving_waits() -> bool:
+    """Whether the block in hand also makes a day wait that a visit leaves."""
+    return _after_pricing.get() is not None
+
+
+def once_days_are_priced(then, *, note: dict | None = None) -> None:
+    """Do `then()` once the days the block in hand is holding back have been
+    priced; at once where no day is being held back for a visit that moved.
+
+    For whatever reads the lines a move leaves a visit with: the note a
+    reschedule writes on them would otherwise be written on the lines the
+    pricing is about to replace.
+
+    `note`: what `then` does, as plain data (`costs_follow.NOTES` names the
+    kinds). A save that answers before its days are priced writes the note
+    down and does it after the answer; a `then` with no note keeps such a
+    save from answering first."""
+    afterwards = _after_pricing.get()
+    if afterwards is None or (
+        _kept_for_later.get() is not None and not _days_to_price.get()
+    ):
+        # Nothing is waiting to be priced: the lines are the ones to write on.
+        then()
+    else:
+        afterwards.append((then, note))
+
+
+def priced_once_mark():
+    """Where the block in hand stands, for `priced_once_back_to`. None
+    outside one."""
+    days = _days_to_price.get()
+    if days is None:
+        return None
+    afterwards = _after_pricing.get()
+    return (dict(days), len(afterwards) if afterwards is not None else 0)
+
+
+def priced_once_back_to(mark) -> None:
+    """Forget what has been asked of the block in hand since `mark`: for a
+    step inside it that was undone to a savepoint, whose days stand as they
+    were and whose notes have nothing to be written on."""
+    days = _days_to_price.get()
+    if mark is None or days is None:
+        return
+    kept, notes = mark
+    days.clear()
+    days.update(kept)
+    afterwards = _after_pricing.get()
+    if afterwards is not None:
+        del afterwards[notes:]
 
 
 def _price_when_the_save_ends(batch, catalogue, responsible_user_id: str) -> bool:
@@ -147,19 +307,28 @@ def batch_needs_repricing(batch) -> bool:
     )
     if members.count() != batch.school_count:
         return True
-    expected_type = (
-        "secondary"
-        if any(
-            district_type_for_staff(batch.responsible_user, member_district(member))
-            == "secondary"
-            for member in members.select_related(
-                "school__district", "cluster__district", "event_district"
-            )
+    mark = day_district_mark(
+        district_type_for_staff(batch.responsible_user, member_district(member))
+        for member in members.select_related(
+            "school__district", "cluster__district", "event_district"
         )
-        else "primary"
     )
+    expected_type = pricing_district_type(mark)
     if expected_type != batch.district_type:
         return True
+    # A day that crosses from the primary district into a secondary one is
+    # marked Mixed on its transport line (owner, 2026-10-12); a day priced
+    # before that mark, or one that no longer crosses, still says otherwise.
+    if expected_type == "secondary":
+        from apps.activities.models import ActivityScheduleCostLine
+
+        marked = ActivityScheduleCostLine.objects.filter(
+            activity__in=members,
+            cost_setting_key="secondary_transport_per_day",
+            label=MIXED_TRANSPORT_LABEL,
+        ).exists()
+        if marked != (mark == MIXED_DAY):
+            return True
     # The day the traveller comes home has no night and no dinner (owner,
     # 2026-10-05); a day priced before that rule, or whose neighbours have
     # since changed, still carries them, or lacks them.
@@ -208,7 +377,9 @@ def resync_stale_batches(responsible_user: str, week_start, week_end) -> int:
             continue
         if batch_needs_repricing(batch):
             with transaction.atomic():
-                _recalculate_and_write_lines(batch, None, batch.responsible_user)
+                _recalculate_and_write_lines(
+                    batch, None, batch.responsible_user, in_own_block=True
+                )
             repaired += 1
     return repaired
 
@@ -329,11 +500,9 @@ def schedule_visits(
         target = catalogue.required_school_visits_per_day if catalogue else 5
         existing_count = len(existing_activities)
         total_after = existing_count + len(schools)
-
-        if total_after > target:
-            raise BadRequest(
-                f"You can only schedule {target} for this date, please choose another date."
-            )
+        # No ceiling on a day's visits (owner, 2026-10-16: "dont restrict the
+        # number of visit per day. initially it was 5 schools but lift that
+        # restriction"). The card's target still asks a reason of a short day.
 
         effective_reason = (reason or "").strip() or (batch.reason if batch else None)
         if total_after < target and not effective_reason:
@@ -541,17 +710,30 @@ def remove_school(*, activity_id: str) -> dict:
         activity.daily_visit_batch = None
         activity.save(update_fields=["daily_visit_batch", "updated_at"])
         catalogue = _catalogue_for_batch_date(batch.visit_date)
-        _recalculate_and_write_lines(batch, catalogue, batch.responsible_user)
+        if not (
+            _leaving_waits()
+            and _price_when_the_save_ends(batch, catalogue, batch.responsible_user)
+        ):
+            _recalculate_and_write_lines(
+                batch, catalogue, batch.responsible_user, in_own_block=True
+            )
         return {"batchId": batch.id}
 
 
-def reschedule_within_batch(
-    *, activity, new_date: date, reason: str | None, principal
-) -> None:
-    """Move an already-persisted Activity (its scheduled_date/fy/quarter must
-    already be saved by the caller — see activities.services.reschedule) into
-    the new date's batch, subject to the same validation as fresh scheduling.
-    Call this AFTER detaching the activity from its old batch."""
+def _day_to_join(
+    *,
+    activity,
+    new_date: date,
+    reason,
+    principal,
+    lock: bool,
+    ask_calendar: bool = True,
+) -> dict:
+    """Whether `activity` may join `new_date`'s batch, and what joining needs:
+    the batch (locked for the join when `lock`), its catalogue, the day's
+    district type and the reason that stands. Raises the refusal otherwise.
+    The activity itself is never counted among the day's members: a visit
+    moved within its own day leaves it first."""
     school = activity.school
     if not school or not school.district_id:
         raise BadRequest(
@@ -562,15 +744,13 @@ def reschedule_within_batch(
     # validated the date; no future call site may silently skip this gate.
     from apps.core.calendar_policy import (
         SchedulingPolicyService,
-        resolve_scheduling_user,
     )
 
     staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
-    avail = SchedulingPolicyService.check(
-        resolve_scheduling_user(staff_id) if staff_id else None, new_date
-    )
-    if avail["status"] == "blocked":
-        raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+    if ask_calendar:
+        refused = SchedulingPolicyService.refusal(staff_id, new_date)
+        if refused:
+            raise BadRequest("Scheduling blocked: " + " · ".join(refused))
 
     from apps.activities.services import _funding_owner_id
 
@@ -580,51 +760,108 @@ def reschedule_within_batch(
     # there as a primary-district day (`attach_activity_to_batch`), and it
     # moves as one: the day's type is worked out below from the districts
     # that are classified secondary.
+    batches = DailyVisitBatch.objects.filter(
+        responsible_user=responsible_user_id, visit_date=new_date
+    )
+    batch = (batches.select_for_update() if lock else batches).first()
+    if batch and _is_locked(responsible_user_id, new_date):
+        raise BadRequest(
+            "This date's visits have already left draft status. Choose another date."
+        )
 
+    existing_activities = (
+        list(
+            batch.activities.filter(deleted_at__isnull=True)
+            .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+            .exclude(id=activity.id)
+            .select_related(*_MEMBER_DISTRICT_RELATIONS)
+        )
+        if batch
+        else []
+    )
+    districts = [member_district(a) for a in existing_activities] + [school.district]
+    all_district_ids = {
+        d.id
+        for d in districts
+        if d and district_type_for_staff(responsible_user_id, d) == "secondary"
+    }
+    incoming_type = "secondary" if all_district_ids else "primary"
+
+    catalogue = _catalogue_for_batch_date(new_date)
+    target = catalogue.required_school_visits_per_day if catalogue else 5
+    total_after = len(existing_activities) + 1
+    # No ceiling on a day's visits (owner, 2026-10-16); the target still asks
+    # a reason of a short day.
+
+    effective_reason = (reason or "").strip() or (batch.reason if batch else None)
+    if total_after < target and not effective_reason:
+        raise ReasonRequiredError(
+            f"You scheduled {total_after} school(s). The CD target is {target} schools "
+            f"per day. This will increase cost per school. Reason required."
+        )
+    return {
+        "batch": batch,
+        "catalogue": catalogue,
+        "responsible_user_id": responsible_user_id,
+        "incoming_type": incoming_type,
+        "all_district_ids": all_district_ids,
+        "effective_reason": effective_reason,
+    }
+
+
+def day_to_join(*, activity, new_date: date, reason: str | None, principal) -> dict:
+    """Lock `new_date`'s batch for `activity` to join and refuse now what
+    `reschedule_within_batch` would refuse only after the day the visit
+    leaves had been re-priced: a day that has left draft, a full day, a short
+    day with no reason. Returns the day as found, for
+    `reschedule_within_batch(day=...)` to join without asking again.
+
+    For a caller that is inside the move's transaction and has itself just
+    asked the calendar of this date and this person
+    (`activities.services.reschedule`): the REG-02 gate is not asked a second
+    time here. Its refusals turn on the date and on the person's leave, and
+    neither moves between the two askings."""
+    return _day_to_join(
+        activity=activity,
+        new_date=new_date,
+        reason=reason,
+        principal=principal,
+        lock=True,
+        ask_calendar=False,
+    )
+
+
+def reschedule_within_batch(
+    *, activity, new_date: date, reason: str | None, principal, day: dict | None = None
+) -> None:
+    """Move an already-persisted Activity (its scheduled_date/fy/quarter must
+    already be saved by the caller — see activities.services.reschedule) into
+    the new date's batch, subject to the same validation as fresh scheduling.
+    Call this AFTER detaching the activity from its old batch.
+
+    `day`: what `day_to_join` found, when the caller asked it before the
+    detach. Without it the day is locked and validated here, calendar gate
+    included, so no call site joins a day unasked."""
     with transaction.atomic():
-        batch = (
-            DailyVisitBatch.objects.select_for_update()
-            .filter(responsible_user=responsible_user_id, visit_date=new_date)
-            .first()
-        )
-        if batch and _is_locked(responsible_user_id, new_date):
-            raise BadRequest(
-                "This date's visits have already left draft status. Choose another date."
+        if day is None:
+            day = _day_to_join(
+                activity=activity,
+                new_date=new_date,
+                reason=reason,
+                principal=principal,
+                lock=True,
             )
-
-        existing_activities = (
-            list(
-                batch.activities.filter(deleted_at__isnull=True)
-                .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-                .select_related(*_MEMBER_DISTRICT_RELATIONS)
-            )
-            if batch
-            else []
-        )
-        districts = [member_district(a) for a in existing_activities] + [
-            school.district
-        ]
-        all_district_ids = {
-            d.id
-            for d in districts
-            if d and district_type_for_staff(responsible_user_id, d) == "secondary"
-        }
-        incoming_type = "secondary" if all_district_ids else "primary"
-
-        catalogue = _catalogue_for_batch_date(new_date)
-        target = catalogue.required_school_visits_per_day if catalogue else 5
-        total_after = len(existing_activities) + 1
-        if total_after > target:
-            raise BadRequest(
-                f"You can only schedule {target} for this date, please choose another date."
-            )
-
-        effective_reason = (reason or "").strip() or (batch.reason if batch else None)
-        if total_after < target and not effective_reason:
-            raise ReasonRequiredError(
-                f"You scheduled {total_after} school(s). The CD target is {target} schools "
-                f"per day. This will increase cost per school. Reason required."
-            )
+        elif day["batch"] is not None:
+            # Found before the detach, which may have re-priced this very day
+            # as a neighbour of the one left (`_settle_neighbouring_days`):
+            # joined as it stands now, under the lock taken then.
+            day["batch"].refresh_from_db()
+        batch = day["batch"]
+        catalogue = day["catalogue"]
+        responsible_user_id = day["responsible_user_id"]
+        incoming_type = day["incoming_type"]
+        all_district_ids = day["all_district_ids"]
+        effective_reason = day["effective_reason"]
 
         if not batch:
             batch = DailyVisitBatch.objects.create(
@@ -643,11 +880,21 @@ def reschedule_within_batch(
 
         activity.daily_visit_batch = batch
         activity.save(update_fields=["daily_visit_batch", "updated_at"])
-        _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+        if not (
+            _leaving_waits()
+            and _price_when_the_save_ends(batch, catalogue, responsible_user_id)
+        ):
+            _recalculate_and_write_lines(
+                batch, catalogue, responsible_user_id, in_own_block=True
+            )
 
 
 def _recalculate_and_write_lines(
-    batch: DailyVisitBatch, catalogue, responsible_user_id: str
+    batch: DailyVisitBatch,
+    catalogue,
+    responsible_user_id: str,
+    *,
+    in_own_block: bool = False,
 ) -> None:
     """Recompute the batch's shared pool, split it across every active member
     activity, and re-price each one via the existing apply_to_activity writer
@@ -655,7 +902,11 @@ def _recalculate_and_write_lines(
     unchanged), then resync the day's weekly fund request and monthly draft.
 
     The day before and the day after are re-priced with it when this day
-    changed which of them is the day the traveller comes home."""
+    changed which of them is the day the traveller comes home.
+
+    `in_own_block`: the caller has opened a transaction block for this day
+    and nothing else, so a refusal undoes the day by undoing that block and
+    the cost writer needs no savepoint of its own."""
     from apps.budget.costing_service import rate_cards_held
 
     # Priced now, with whoever is on it: nothing is left for a save in hand
@@ -666,7 +917,9 @@ def _recalculate_and_write_lines(
 
     # Every member prices against the same published cards: read them once.
     with rate_cards_held():
-        _write_day_lines(batch, catalogue, responsible_user_id)
+        _write_day_lines(
+            batch, catalogue, responsible_user_id, in_own_block=in_own_block
+        )
 
 
 #: A neighbouring day is re-priced only while it is still a plan: a day
@@ -702,27 +955,41 @@ def _settle_neighbouring_days(batch: DailyVisitBatch, away) -> None:
         try:
             with transaction.atomic():
                 _write_day_lines(
-                    neighbour, None, neighbour.responsible_user, settle_neighbours=False
+                    neighbour,
+                    None,
+                    neighbour.responsible_user,
+                    settle_neighbours=False,
+                    in_own_block=True,
                 )
         except BadRequest:
             # Its money has moved (the cost writer's finance locks).
             continue
 
 
-def _write_day_lines(
+def _plan_day(
     batch: DailyVisitBatch,
     catalogue,
     responsible_user_id: str,
     *,
-    settle_neighbours: bool = True,
-) -> None:
-    from apps.budget.costing import ActivityCost, CostLine
+    with_recipes: bool = True,
+) -> dict:
+    """Work a day out without writing it: who is on it, whether it is a day
+    away and the day the traveller comes home, the pool it shares and each
+    member's own recipe. Sets the district type the day prices as on `batch`,
+    unsaved. Refuses, as the pricing always has, a day whose rates are
+    missing.
+
+    `_write_day_lines` writes what this returns. A save that answers before
+    its days are priced (`apps.daily_visit_batches.costs_follow`) asks it
+    alone, and without the recipes (`with_recipes=False`), so that such a
+    day is still refused by the save."""
+    from apps.activities.services import _costing_input
+    from apps.budget.costing import cost_for_activity
     from apps.budget.costing_service import (
+        _profiled_input,
         _rate_card,
-        apply_to_activity,
+        _with_linked_rates,
     )
-    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
-    from apps.fund_requests.weekly_service import trigger_generate_for_activities
 
     catalogue = catalogue or _catalogue_for_batch_date(batch.visit_date)
     rates, _settings_by_key = _rate_card(catalogue)
@@ -743,10 +1010,12 @@ def _write_day_lines(
         or "primary"
         for member in activities
     }
+    # Primary, Secondary or Mixed (owner, 2026-10-12): the primary district
+    # with a secondary one on the same day is Mixed and pays the secondary
+    # district's rates; two secondary districts are Secondary.
+    day_mark = day_district_mark(district_types)
     if district_types:
-        batch.district_type = (
-            "secondary" if "secondary" in district_types else "primary"
-        )
+        batch.district_type = pricing_district_type(day_mark)
     # The day the traveller comes home has no night and no dinner (owner,
     # 2026-10-05; apps.daily_visit_batches.return_day). Only a day in a
     # secondary district, now or as last priced, has neighbours to ask.
@@ -774,12 +1043,8 @@ def _write_day_lines(
 
     # Each member's own recipe, computed ONCE here because the day's pool
     # depends on it and the loop below needs it again.
-    from apps.activities.services import _costing_input
-    from apps.budget.costing import cost_for_activity
-    from apps.budget.costing_service import _profiled_input, _with_linked_rates
-
-    recipes: dict[str, tuple[dict, ActivityCost]] = {}
-    for member in activities:
+    recipes: dict = {}
+    for member in activities if with_recipes else ():
         member_input = {
             **_costing_input(member, {}),
             "plannedDate": batch.visit_date,
@@ -793,6 +1058,38 @@ def _write_day_lines(
                 rates,
             ),
         )
+    return {
+        "catalogue": catalogue,
+        "activities": activities,
+        "day_mark": day_mark,
+        "is_away": is_away,
+        "away": away,
+        "pool": pool,
+        "recipes": recipes,
+    }
+
+
+def _write_day_lines(
+    batch: DailyVisitBatch,
+    catalogue,
+    responsible_user_id: str,
+    *,
+    settle_neighbours: bool = True,
+    in_own_block: bool = False,
+) -> None:
+    from apps.budget.costing import ActivityCost, CostLine
+    from apps.budget.costing_service import apply_to_activities
+    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
+    from apps.fund_requests.weekly_service import trigger_generate_for_activities
+
+    day = _plan_day(batch, catalogue, responsible_user_id)
+    catalogue = day["catalogue"]
+    activities = day["activities"]
+    day_mark = day["day_mark"]
+    away = day["away"]
+    pool = day["pool"]
+    recipes = day["recipes"]
+    n = len(activities)
 
     # The day always carries its lunch (session costing spec, 2026-09-26):
     # the participants' meals are each session's own line, the staff
@@ -825,9 +1122,10 @@ def _write_day_lines(
         "visit_count": allocation["visit_count"],
         "weights_used": allocation["weights_used"],
     }
-    batch.save()
+    # Read from the day's members, not from the row being saved: worked out
+    # first, it goes in with the one save.
     batch.actual_field_cost_per_school = actual_field_cost_per_school(batch)
-    batch.save(update_fields=["actual_field_cost_per_school", "updated_at"])
+    batch.save()
 
     # §9.1 — keep the transport company's obligation in step with the day.
     from apps.fund_requests.vendor_channel import ensure_transport_obligation
@@ -841,11 +1139,12 @@ def _write_day_lines(
         return
 
     allocations = allocate_pool(pool, n)
+    priced = []
     for index, (activity, alloc) in enumerate(zip(activities, allocations)):
         costing_input, own = recipes[activity.id]
         lines = [
             CostLine(
-                label=KEY_LABELS.get(key, key.replace("_", " ").title()),
+                label=day_line_label(key, day_mark),
                 key=key,
                 unit=amount,
                 qty=1,
@@ -871,12 +1170,16 @@ def _write_day_lines(
             cost_missing=bool(recipe_missing),
             missing_items=recipe_missing,
         )
-        apply_to_activity(
-            activity,
-            costing_input,
-            responsible_user_id=responsible_user_id,
-            precomputed_cost=cost,
-        )
+        priced.append((activity, costing_input, cost))
+    # The members are written together: what each needs read and locked is
+    # read and locked once for the day, not once a member
+    # (`apply_to_activities`).
+    apply_to_activities(
+        priced,
+        responsible_user_id=responsible_user_id,
+        as_stored=True,
+        savepoint=not in_own_block,
+    )
 
     # The weekly request and the monthly draft follow the re-priced lines,
     # exactly as _apply_schedule_cost_snapshot does on the solo-pricing path.
@@ -898,11 +1201,9 @@ def _sync_route_batch(batch: DailyVisitBatch) -> None:
     """Keep the route-feasibility twin (DailyVisitRouteBatch) in step with this
     costing batch. Advisory only — a route problem must never break pricing."""
     try:
-        from apps.routes.engine import DailyVisitRouteBatchService
+        from apps.routes.after_save import rebuild_after_save
 
-        DailyVisitRouteBatchService.rebuild_for(
-            batch.responsible_user, batch.visit_date
-        )
+        rebuild_after_save(batch.responsible_user, batch.visit_date)
     except Exception:  # noqa: BLE001 — route intelligence is advisory
         pass
 
@@ -911,6 +1212,10 @@ __all__ = [
     "schedule_visits",
     "attach_activity_to_batch",
     "each_day_priced_once",
+    "once_days_are_priced",
+    "priced_once_mark",
+    "priced_once_back_to",
     "remove_school",
+    "day_to_join",
     "reschedule_within_batch",
 ]

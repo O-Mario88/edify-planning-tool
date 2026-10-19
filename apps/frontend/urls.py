@@ -18,6 +18,7 @@ from .views import (
     school_views,
     cluster_views,
     cluster_management_views,
+    core_oversight_views,
     planning_views,
     fy_planning_views,
     ownership_views,
@@ -27,6 +28,7 @@ from .views import (
     country_oversight_views,
     partner_review_views,
     budget_views,
+    my_plan_panel_views,
     my_plan_views,
     analytics_views,
     staff_views,
@@ -72,6 +74,10 @@ urlpatterns = [
     # Rendered without user data: the worker precaches it and serves it to
     # any navigation the network cannot answer.
     path("offline", pwa_views.offline, name="offline"),
+    # A partner's form is back (owner, 2026-10-14: "Only staff dont need to
+    # upload. partners HAVE to upload because that is how we verify their
+    # work"). These routes were commented out on 2026-10-13 (UPLOAD-OFF);
+    # the views refuse staff work, which is completed with its Salesforce ID.
     path(
         "offline/evidence-drawer",
         pwa_views.offline_evidence_drawer,
@@ -544,6 +550,11 @@ urlpatterns = [
         name="school_onboard_drawer",
     ),
     path(
+        "schools/cluster-options",
+        school_views.school_onboard_cluster_options_view,
+        name="school_onboard_cluster_options",
+    ),
+    path(
         "schools/partial-intelligence/<str:school_id>",
         school_views.school_intelligence_partial,
         name="school_intelligence_partial",
@@ -592,6 +603,11 @@ urlpatterns = [
         "schools/<str:school_id>/add-to-cluster",
         school_views.add_to_cluster_drawer_view,
         name="add_to_cluster_drawer",
+    ),
+    path(
+        "schools/<str:school_id>/ssa-entry",
+        school_views.school_ssa_entry_view,
+        name="school_ssa_entry",
     ),
     path(
         "schools/<str:school_id>/edit-drawer",
@@ -971,7 +987,7 @@ urlpatterns = [
     ),
     path(
         "core-schools-oversight/",
-        oversight_views.core_schools_oversight_view,
+        core_oversight_views.core_schools_oversight_view,
         name="core_schools_oversight",
     ),
     # Partner oversight — the same read-only posture, organised by partner
@@ -1280,6 +1296,12 @@ urlpatterns = [
         my_plan_views.my_plan_export_drawer_view,
         name="my_plan_export_drawer",
     ),
+    # Planned and remaining, asked for once My Plan has been drawn.
+    path(
+        "my-plan/readiness",
+        my_plan_panel_views.my_plan_readiness_view,
+        name="my_plan_readiness",
+    ),
     path(
         "my-plan/<str:activity_id>",
         my_plan_views.activity_detail_view,
@@ -1289,6 +1311,11 @@ urlpatterns = [
         "my-plan/<str:activity_id>/complete-drawer",
         my_plan_views.complete_drawer_view,
         name="complete_drawer",
+    ),
+    path(
+        "my-plan/<str:activity_id>/register-school-search",
+        my_plan_views.register_school_search_view,
+        name="register_school_search",
     ),
     path(
         "my-plan/<str:activity_id>/reschedule-drawer",
@@ -1388,6 +1415,10 @@ urlpatterns = [
         my_plan_views.partner_ssa_completion_action,
         name="partner_ssa_completion_action",
     ),
+    # A partner's form is back (owner, 2026-10-14: "Only staff dont need to
+    # upload. partners HAVE to upload because that is how we verify their
+    # work"). These routes were commented out on 2026-10-13 (UPLOAD-OFF);
+    # the views refuse staff work, which is completed with its Salesforce ID.
     path(
         "activities/<str:activity_id>/evidence",
         my_plan_views.evidence_upload_drawer_view,
@@ -2731,6 +2762,11 @@ urlpatterns = [
     ),
     # Literal champion routes MUST precede the catch-all <plan_id> route,
     # otherwise /core-schools/champions resolves as a plan detail.
+    path(
+        "core-schools/recommendations/<str:rec_id>/<str:action>",
+        core_oversight_views.core_recommendation_action,
+        name="core_recommendation_action",
+    ),
     path(
         "core-schools/champion-candidates",
         core_schools_views.champion_candidates_view,

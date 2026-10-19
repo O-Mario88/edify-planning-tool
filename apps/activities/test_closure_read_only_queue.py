@@ -49,9 +49,14 @@ def legacy_facts(activity) -> dict:
         "cancelled",
         "deferred",
     ]
-    evidence = EvidenceRecord.objects.filter(
-        activity=activity, quarantined=False
-    ).exists()
+    # UPLOAD-OFF (owner, 2026-10-13 and 2026-10-14): staff work asks for no
+    # file, so its evidence check is always met; a partner's is verified from
+    # its uploaded form. It read the records for every activity.
+    evidence = (
+        EvidenceRecord.objects.filter(activity=activity, quarantined=False).exists()
+        if activity.delivery_type == "partner"
+        else True
+    )
     sf = bool(activity.salesforce_activity_id) or sf_kind_for_activity(activity) is None
     ia = activity.status in ["ia_verified", "closed", "accountant_confirmed"]
     finance = (
@@ -302,20 +307,22 @@ class ClosureQueueReadOnlyTest(TestCase):
     def test_a_blocker_that_still_applies_keeps_its_age(self):
         activity = self._activity()
         _checklist, blockers = ClosureEligibilityService.evaluate(activity)
-        evidence_blocker = next(
-            b for b in blockers if b.blocking_reason == "Evidence Missing"
-        )
-        ClosureBlocker.objects.filter(pk=evidence_blocker.pk).update(
+        # "Evidence Missing" was the blocker followed here until the upload
+        # was switched off (UPLOAD-OFF, owner 2026-10-13); it never applies
+        # now, so the test follows the IA blocker instead.
+        self.assertNotIn("Evidence Missing", [b.blocking_reason for b in blockers])
+        ia_blocker = next(b for b in blockers if b.blocking_reason == "IA not verified")
+        ClosureBlocker.objects.filter(pk=ia_blocker.pk).update(
             created_at=timezone.now() - timezone.timedelta(days=9)
         )
-        # The SF ID arrives; the evidence blocker is still there, unaged.
+        # The SF ID arrives; the IA blocker is still there, unaged.
         activity.salesforce_activity_id = "SF-AGE"
         activity.save()
         _checklist, blockers = ClosureEligibilityService.evaluate(activity)
         reasons = [b.blocking_reason for b in blockers]
         self.assertNotIn("Activity SF ID Missing", reasons)
-        kept = next(b for b in blockers if b.blocking_reason == "Evidence Missing")
-        self.assertEqual(kept.pk, evidence_blocker.pk)
+        kept = next(b for b in blockers if b.blocking_reason == "IA not verified")
+        self.assertEqual(kept.pk, ia_blocker.pk)
         self.assertGreaterEqual((timezone.now() - kept.created_at).days, 9)
         self.assertEqual(
             ClosureBlocker.objects.filter(activity=activity).count(), len(blockers)
@@ -358,13 +365,16 @@ class ClosureQueueReadOnlyTest(TestCase):
         self.assertEqual(second["blockersRemoved"], 0)
 
         # A fact that changes is picked up on the next run, and only there.
+        # (The fact was a late evidence file until the upload was switched
+        # off, UPLOAD-OFF 2026-10-13; a late Salesforce ID is the fact now.)
         target = activities[0]
-        EvidenceRecord.objects.create(
-            activity=target, kind="visit_form", uri="late.pdf", uploaded_by="x"
-        )
+        Activity.objects.filter(pk=target.pk).update(salesforce_activity_id="SF-LATE")
         third = ClosureEligibilityService.refresh_open(batch_size=4)
         self.assertEqual(third["checklistsWritten"], 1)
         self.assertEqual(third["blockersRemoved"], 1)
+        self.assertTrue(
+            ClosureChecklist.objects.get(activity=target).salesforce_id_entered
+        )
         self.assertTrue(ClosureChecklist.objects.get(activity=target).evidence_uploaded)
 
     def test_the_refresh_is_a_registered_scheduled_job(self):

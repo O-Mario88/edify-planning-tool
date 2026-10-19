@@ -165,17 +165,17 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1721,
+      "bytes": 2161,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/core-schools-oversight/",
         "/country-planning-oversight/team/<str:staff_id>",
         "/dashboard",
         "/my-plan",
         "/my-plan/",
         "/partner-oversight/",
         "/team-planning-oversight/",
-        "/team-targets"
+        "/team-targets",
+        "/team-targets/"
       ],
       "findings": [],
       "forms": 0,
@@ -318,7 +318,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4447,
+      "bytes": 5405,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence",
@@ -678,7 +678,6 @@
       "example_pages": [
         "/clusters/<str:cluster_id>",
         "/core-schools",
-        "/core-schools-oversight/",
         "/partials/clusters/<str:cluster_id>/schools",
         "/planning"
       ],
@@ -758,9 +757,7 @@
       "accessibility_requirements": [],
       "bytes": 311,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools-oversight/"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -804,6 +801,36 @@
       "tables": 0,
       "template": "components/table_pager.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4297,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>/evidence",
+        "/activities/<str:activity_id>/partner-ssa-complete",
+        "/ia/partner-evidence/<str:activity_id>/",
+        "/ia/partner-evidence/<str:activity_id>/complete-drawer",
+        "/partner/activities/<str:activity_id>/evidence"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "Uploaded Form Link",
+      "purpose": "Reusable uploaded form link interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "components/uploaded_form_link.html",
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -2955,7 +2982,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2498,
+      "bytes": 2449,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -3843,7 +3870,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11839,
+      "bytes": 11915,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile"
@@ -4532,8 +4559,7 @@
       "bytes": 114,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/core-schools",
-        "/core-schools-oversight/"
+        "/core-schools"
       ],
       "findings": [],
       "forms": 0,
@@ -4556,8 +4582,7 @@
       "bytes": 4388,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/core-schools",
-        "/core-schools-oversight/"
+        "/core-schools"
       ],
       "findings": [],
       "forms": 0,
@@ -4687,7 +4712,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12263,
+      "bytes": 12264,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -6829,14 +6854,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4442,
+      "bytes": 5091,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 6,
+      "htmx_controls": 7,
       "kind": "application-partial",
       "name": " Week Action",
       "purpose": "Reusable  week action interface primitive",
@@ -6957,14 +6982,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3868,
+      "bytes": 4455,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": " Week Person",
       "purpose": "Reusable  week person interface primitive",
@@ -6976,9 +7001,8 @@
       "template": "partials/dashboards/pl/_week_person.html",
       "variants": [
         "danger",
-        "info",
-        "success",
-        "warning"
+        "warning",
+        "{{ fact.tone }}"
       ]
     },
     {
@@ -7004,7 +7028,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 17725,
+      "bytes": 19167,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -7925,7 +7949,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 41008,
+      "bytes": 41189,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -9860,7 +9884,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3537,
+      "bytes": 3714,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/partner-evidence/<str:activity_id>/complete-drawer"
@@ -10312,7 +10336,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
@@ -10336,7 +10361,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
@@ -10385,7 +10411,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10690,
+      "bytes": 10988,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -10415,7 +10441,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6519,
+      "bytes": 7177,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10423,7 +10449,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 10,
+      "htmx_controls": 11,
       "kind": "application-partial",
       "name": "Activity Row",
       "purpose": "Reusable activity row interface primitive",
@@ -10441,7 +10467,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8116,
+      "bytes": 8318,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -10463,7 +10489,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 13306,
+      "bytes": 13834,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10539,7 +10565,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6265,
+      "bytes": 6872,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10588,7 +10614,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8994,
+      "bytes": 9740,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10614,7 +10640,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 24374,
+      "bytes": 29894,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -10622,7 +10648,7 @@
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Complete Drawer",
       "purpose": "Reusable complete drawer interface primitive",
@@ -10636,6 +10662,39 @@
       "template": "partials/my_plan/complete_drawer.html",
       "variants": [
         "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 6488,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/pl/review-queue",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Completion Reviews Register",
+      "purpose": "Reusable completion reviews register interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/my_plan/completion_reviews_register.html",
+      "variants": [
+        "warning",
+        "{{ row.evidence_tone }}",
+        "{{ row.wait_tone }}"
       ]
     },
     {
@@ -10664,7 +10723,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7695,
+      "bytes": 8304,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10686,7 +10745,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7126,
+      "bytes": 7733,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10769,7 +10828,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8721,
+      "bytes": 10565,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
@@ -10963,7 +11022,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6247,
+      "bytes": 6854,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11014,7 +11073,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7173,
+      "bytes": 7897,
       "deprecated_alternatives": [],
       "example_pages": [
         "/offline/evidence-drawer"
@@ -11043,7 +11102,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4830,
+      "bytes": 5017,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/partner-ssa-complete"
@@ -11086,8 +11145,36 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 6336,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Pl Review Drawer",
+      "purpose": "Reusable pl review drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "loading",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/pl_review_drawer.html",
+      "variants": [
+        "info",
+        "success",
+        "warning"
+      ]
+    },
+    {
       "accessibility_requirements": [],
-      "bytes": 5189,
+      "bytes": 5660,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11111,7 +11198,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1335,
+      "bytes": 1921,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11132,16 +11219,19 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 6595,
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 7402,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Readiness",
       "purpose": "Reusable readiness interface primitive",
@@ -11163,7 +11253,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
@@ -11184,6 +11275,51 @@
         "success",
         "warning"
       ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 378,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan/readiness"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Readiness Panel",
+      "purpose": "Reusable readiness panel interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/readiness_panel.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 1668,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan/<str:activity_id>/register-school-search"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Register School Results",
+      "purpose": "Reusable register school results interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/register_school_results.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [],
@@ -11212,7 +11348,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1613,
+      "bytes": 2690,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/salesforce-id"
@@ -11235,7 +11371,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5988,
+      "bytes": 6734,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11286,7 +11422,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1856,
+      "bytes": 2067,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/ssa-upload"
@@ -11331,7 +11467,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3139,
+      "bytes": 3313,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/submit"
@@ -11496,55 +11632,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5512,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools-oversight/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": " Core Schools Table",
-      "purpose": "Reusable  core schools table interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/oversight/_core_schools_table.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 3993,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools-oversight/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": " Core Work Table",
-      "purpose": "Reusable  core work table interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/oversight/_core_work_table.html",
-      "variants": [
-        "{{ item.session_tone }}"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1259,
+      "bytes": 2313,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -11594,7 +11682,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3012,
+      "bytes": 3622,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -11617,7 +11705,8 @@
       "variants": [
         "{{ column.tone }}",
         "{{ row.due_tone }}",
-        "{{ row.target_tone }}"
+        "{{ row.target_tone }}",
+        "{{ row.training_tone }}"
       ]
     },
     {
@@ -11840,7 +11929,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 33207,
+      "bytes": 36195,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -11983,7 +12072,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5034,
+      "bytes": 5054,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -12142,31 +12231,6 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11969,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools-oversight/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Core Schools Oversight Workspace",
-      "purpose": "Reusable core schools oversight workspace interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "selected",
-        "open"
-      ],
-      "tables": 0,
-      "template": "partials/oversight/core_schools_oversight_workspace.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
       "bytes": 11644,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -12197,7 +12261,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9900,
+      "bytes": 9973,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/detail"
@@ -12218,7 +12282,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6610,
+      "bytes": 8041,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -12228,7 +12292,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Execution Workspace",
       "purpose": "Reusable execution workspace interface primitive",
@@ -12250,7 +12314,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8485,
+      "bytes": 9576,
       "deprecated_alternatives": [],
       "example_pages": [
         "/budget/export-drawer",
@@ -12338,7 +12402,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8788,
+      "bytes": 8917,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12367,7 +12431,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11214,
+      "bytes": 11287,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/detail"
@@ -12435,7 +12499,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7211,
+      "bytes": 7340,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12463,7 +12527,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5346,
+      "bytes": 5383,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12490,7 +12554,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4804,
+      "bytes": 4700,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -12515,7 +12579,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7557,
+      "bytes": 7686,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12544,7 +12608,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 7782,
+      "bytes": 7914,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12600,7 +12664,6 @@
       "bytes": 5098,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/core-schools-oversight/",
         "/country-planning-oversight/",
         "/partner-oversight/",
         "/team-planning-oversight/",
@@ -13307,6 +13370,7 @@
         "/country-planning-oversight/",
         "/my-plan",
         "/my-plan/",
+        "/my-plan/readiness",
         "/planning-monitor/",
         "/team-planning-oversight/",
         "/team-targets",
@@ -13336,6 +13400,7 @@
         "/country-planning-oversight/",
         "/my-plan",
         "/my-plan/",
+        "/my-plan/readiness",
         "/planning-monitor/",
         "/team-planning-oversight/",
         "/team-targets",
@@ -14678,7 +14743,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 60001,
+      "bytes": 60007,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile",
@@ -15206,7 +15271,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3152,
+      "bytes": 3326,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -15518,8 +15583,58 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 11893,
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 848,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Refusal Drawer",
+      "purpose": "Reusable refusal drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/refusal_drawer.html",
+      "variants": [
+        "{{ refusal_tone|default:"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 12343,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/<str:school_id>"
+      ],
+      "findings": [],
+      "forms": 3,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": " Core School",
+      "purpose": "Reusable  core school interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/schools/_core_school.html",
+      "variants": [
+        "{{ a.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 12050,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>"
@@ -15541,6 +15656,33 @@
         "warning",
         "{{ visit_status.tone }}"
       ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 8767,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/create-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": " Onboard Form",
+      "purpose": "Reusable  onboard form interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/schools/_onboard_form.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -15569,7 +15711,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6183,
+      "bytes": 6241,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>"
@@ -15699,8 +15841,7 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
-        "/core-schools",
-        "/core-schools-oversight/"
+        "/core-schools"
       ],
       "findings": [],
       "forms": 3,
@@ -15955,30 +16096,121 @@
       ]
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
+      "accessibility_requirements": [],
+      "bytes": 1344,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/cluster-options",
+        "/schools/create-drawer"
       ],
-      "bytes": 6871,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Onboard Cluster Options",
+      "purpose": "Reusable onboard cluster options interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/schools/onboard_cluster_options.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 244,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/create-drawer"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 2,
+      "forms": 0,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Onboard Drawer",
       "purpose": "Reusable onboard drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "disabled"
+        "default"
       ],
       "tables": 0,
       "template": "partials/schools/onboard_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 764,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/create-drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Onboard Embedded",
+      "purpose": "Reusable onboard embedded interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/schools/onboard_embedded.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 1780,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/create-drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Onboard Possible Duplicate",
+      "purpose": "Reusable onboard possible duplicate interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/schools/onboard_possible_duplicate.html",
       "variants": [
-        "info"
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 393,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/create-drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Onboard Registered",
+      "purpose": "Reusable onboard registered interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/schools/onboard_registered.html",
+      "variants": [
+        "success"
       ]
     },
     {
@@ -16031,6 +16263,35 @@
       "tables": 0,
       "template": "partials/schools/parish_options.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 3762,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/<str:school_id>/ssa-entry"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Ssa Entry Drawer",
+      "purpose": "Reusable ssa entry drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/schools/ssa_entry_drawer.html",
+      "variants": [
+        "danger",
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -16635,7 +16896,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 20841,
+      "bytes": 20828,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -17372,7 +17633,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
@@ -17600,7 +17862,7 @@
       "accessibility_requirements": [
         "announced dynamic state"
       ],
-      "bytes": 1555,
+      "bytes": 1943,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan/add",
@@ -18475,6 +18737,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22036,6 +22299,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22144,6 +22408,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22245,6 +22510,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22566,7 +22832,8 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /my-plan/{{ act.id }}/complete",
-        "GET /schools/create-drawer?cluster_id={{ act.clusterId }}"
+        "GET /my-plan/{{ act.id }}/register-school-search",
+        "GET /schools/create-drawer?embed=1&amp;activity_id={{ act.id }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -22597,7 +22864,7 @@
       ],
       "route": "/activities/<str:activity_id>/complete",
       "route_name": "complete_activity_drawer",
-      "search": "shared topbar search or none",
+      "search": "server-backed contextual selection search",
       "secondary_actions": [
         "/my-plan/{{ act.id }}/complete"
       ],
@@ -22608,6 +22875,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22709,6 +22977,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22747,10 +23016,7 @@
     },
     {
       "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [
-        "/api/evidence/{{ ev.id }}/file",
-        "/api/evidence/{{ ev.id }}/file?download=1"
-      ],
+      "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.8,
@@ -22784,7 +23050,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "0\">Submit",
+      "primary_action": "Yes, a different page",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate evidence upload drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -22812,6 +23078,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -22913,6 +23180,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23016,6 +23284,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23122,6 +23391,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23226,6 +23496,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23326,6 +23597,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23506,6 +23778,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23607,6 +23880,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23679,7 +23953,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Upload SSA",
+      "primary_action": "Save SSA scores",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate ssa evidence upload drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -23707,6 +23981,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23808,6 +24083,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -23908,6 +24184,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -24009,6 +24286,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -24109,6 +24387,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -24208,6 +24487,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -24304,6 +24584,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -24487,6 +24768,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -29097,6 +29379,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -36703,15 +36986,14 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.oversight_views",
-      "backend_view": "apps.frontend.views.oversight_views.core_schools_oversight_view",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.core_oversight_views",
+      "backend_view": "apps.frontend.views.core_oversight_views.core_schools_oversight_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
-        "template:partials/oversight/core_schools_oversight_workspace.html",
         "template:pages/oversight/core_schools_oversight.html",
         "test:referenced-by-automated-test",
         "permission:core_schools_oversight"
@@ -36720,8 +37002,10 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "header_variant": "shared-page-header-component",
+      "htmx_endpoints": [
+        "GET /core-schools/{{ r.code }}/champion-review"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -36729,20 +37013,19 @@
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-8BB204A012",
-      "page_title": "Core School Oversight",
-      "page_type": "interaction-fragment",
-      "per_page_css": [
-        "css/pages/oversight-workspace.css"
-      ],
+      "page_id": "UI-PAGE-53D2780867",
+      "page_title": "Core School Oversight \u00b7 Edify",
+      "page_type": "operational-queue",
+      "per_page_css": [],
       "permission_key": "core_schools_oversight",
-      "primary_action": "Core Schools Oversight",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Core schools oversight page \u2014 packages progress, visits/trainings status.",
+      "primary_action": "Review operational workspace",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "Are the Core schools improving, is the package delivered, are schools taking part, and which need action: FY against the year before.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
+        "CCEO",
         "CD",
         "IA",
         "PL",
@@ -36754,37 +37037,26 @@
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.audit.services",
-        "apps.budget.models",
-        "apps.core.scoping",
-        "apps.fund_requests.models",
-        "apps.partners.models",
-        "apps.partners.services",
-        "apps.pl_review.services",
-        "apps.schools.models"
+        "apps.core.scoping"
       ],
       "shared_layout": [
         "layouts/shell.html"
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
-      "surface_kind": "partial",
+      "surface_kind": "page",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 3,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
-        "partials/oversight/core_schools_oversight_workspace.html",
         "pages/oversight/core_schools_oversight.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -37738,6 +38010,83 @@
         "apps.planning.services",
         "apps.ssa.models",
         "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.core_oversight_views",
+      "backend_view": "apps.frontend.views.core_oversight_views.core_recommendation_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:core_schools"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-619DC20A24",
+      "page_title": "Core Recommendation Action",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "core_schools",
+      "primary_action": "Core Recommendation Action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Accept, defer or reject one recorded SSA recommendation (owner, 2026-10-18: \"accept, defer or plan support straight from a recommendation\"). The school's owner decides \u2014 `may_write_school`, the rule the Champion review applies; planning the support is the school's Schedule, which settles the recommendation when the activity is saved (`ssa.plan_alignment`).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/core-schools/recommendations/<str:rec_id>/<str:action>",
+      "route_name": "core_recommendation_action",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -39549,7 +39898,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -39648,7 +39996,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -40727,7 +41074,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -40818,7 +41164,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -41317,7 +41662,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -41640,7 +41984,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -42357,6 +42700,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/components/pl-week.css",
+        "css/components/row-state.css",
         "css/admin-dashboard.css"
       ],
       "permission_key": "dashboard",
@@ -43330,7 +43674,7 @@
       "permission_key": "dashboard",
       "primary_action": "Dashboard Pl Week Send",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "This Week's \"Send to <officer>\" (owner, 2026-09-26): remind an officer to complete work they have not completed \u2014 upload the evidence and enter the Salesforce ID \u2014 whether it is past its day or due later this week.",
+      "purpose": "This Week's \"Send to <officer>\" (owner, 2026-09-26): remind an officer to complete work they have not completed \u2014 enter the Salesforce ID \u2014 whether it is past its day or due later this week.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -46368,6 +46712,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -46462,6 +46807,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -52881,6 +53227,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -52970,6 +53317,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53054,6 +53402,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53218,6 +53567,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53314,6 +53664,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53404,6 +53755,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53491,6 +53843,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -54864,6 +55217,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58499,6 +58853,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58588,6 +58943,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58622,10 +58978,7 @@
     },
     {
       "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [
-        "/api/evidence/{{ e.id }}/file",
-        "/api/evidence/{{ e.id }}/file?download=1"
-      ],
+      "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
@@ -58683,6 +59036,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58771,6 +59125,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58859,6 +59214,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58948,6 +59304,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59036,6 +59393,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59126,6 +59484,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59222,6 +59581,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59308,6 +59668,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59392,6 +59753,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59476,6 +59838,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59560,6 +59923,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -60679,6 +61043,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -60728,7 +61093,7 @@
       "drawers": true,
       "evidence": [
         "template:pages/ia/review_workspace.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_review_workspace"
       ],
       "filters": "none",
@@ -60776,6 +61141,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -60799,7 +61165,7 @@
       "templates": [
         "pages/ia/review_workspace.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -60821,7 +61187,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_review_workspace"
       ],
       "filters": "none",
@@ -60866,6 +61232,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -60887,7 +61254,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -60905,7 +61272,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_review_workspace"
       ],
       "filters": "none",
@@ -60950,6 +61317,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -60971,7 +61339,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -66794,7 +67162,8 @@
       "page_title": "My Plan",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/components/core-progress.css"
+        "css/components/core-progress.css",
+        "css/components/row-state.css"
       ],
       "permission_key": "my_plan",
       "primary_action": "Send Invoice",
@@ -66825,6 +67194,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -66910,7 +67280,8 @@
       "page_title": "My Plan",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/components/core-progress.css"
+        "css/components/core-progress.css",
+        "css/components/row-state.css"
       ],
       "permission_key": "my_plan",
       "primary_action": "Send Invoice",
@@ -66941,6 +67312,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67056,6 +67428,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67163,6 +67536,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67264,6 +67638,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67364,6 +67739,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67465,6 +67841,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67524,7 +67901,8 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /my-plan/{{ act.id }}/complete",
-        "GET /schools/create-drawer?cluster_id={{ act.clusterId }}"
+        "GET /my-plan/{{ act.id }}/register-school-search",
+        "GET /schools/create-drawer?embed=1&amp;activity_id={{ act.id }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -67555,7 +67933,7 @@
       ],
       "route": "/my-plan/<str:activity_id>/complete-drawer",
       "route_name": "complete_drawer",
-      "search": "shared topbar search or none",
+      "search": "server-backed contextual selection search",
       "secondary_actions": [
         "/my-plan/{{ act.id }}/complete"
       ],
@@ -67566,6 +67944,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67672,6 +68051,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67773,6 +68153,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -67873,6 +68254,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68084,6 +68466,107 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.register_school_search_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/my_plan/register_school_results.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-355261508C",
+      "page_title": "Register School Search",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Register School Search",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Schools already in Edify, for a cluster session's attendance register.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/<str:activity_id>/register-school-search",
+      "route_name": "register_school_search",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/register_school_results.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
       "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
@@ -68142,6 +68625,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68237,6 +68721,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68337,6 +68822,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68436,6 +68922,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68534,6 +69021,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -68574,6 +69062,88 @@
         "text-[12px]",
         "text-[13px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_panel_views",
+      "backend_view": "apps.frontend.views.my_plan_panel_views.my_plan_readiness_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/my_plan/readiness_panel.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-BA9943EE09",
+      "page_title": "My Plan Readiness",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "My Plan Readiness",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The person's own Planned and remaining and their training summary, for the place My Plan left.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/readiness",
+      "route_name": "my_plan_readiness",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.my_plan.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/readiness_panel.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -72915,7 +73485,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -73012,7 +73581,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -73107,7 +73675,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -73201,7 +73768,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -73292,7 +73858,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -73384,7 +73949,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -73483,7 +74047,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -73576,7 +74139,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -73663,7 +74225,6 @@
       "services_and_models": [
         "apps.activities.models",
         "apps.activities.services",
-        "apps.evidence.models",
         "apps.partners.models"
       ],
       "shared_layout": [
@@ -73745,7 +74306,6 @@
       "services_and_models": [
         "apps.activities.models",
         "apps.activities.services",
-        "apps.evidence.models",
         "apps.partners.models"
       ],
       "shared_layout": [
@@ -73829,7 +74389,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -73896,7 +74455,7 @@
       "permission_key": "partner_oversight",
       "primary_action": "Partner Verify Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "What the Partner submitted, and the Salesforce ID that confirms it.",
+      "purpose": "The form the Partner uploaded, and the Salesforce ID that confirms it.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -73916,7 +74475,6 @@
       "services_and_models": [
         "apps.activities.models",
         "apps.activities.services",
-        "apps.evidence.models",
         "apps.partners.models"
       ],
       "shared_layout": [
@@ -73998,7 +74556,6 @@
       "services_and_models": [
         "apps.activities.models",
         "apps.activities.services",
-        "apps.evidence.models",
         "apps.partners.models"
       ],
       "shared_layout": [
@@ -74087,7 +74644,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -74187,7 +74743,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -74282,7 +74837,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -74371,7 +74925,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -78577,7 +79130,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.pl_queue_view",
       "card_count": 0,
@@ -78588,14 +79141,12 @@
         "test:referenced-by-automated-test",
         "permission:pl_review_queue"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "shared-page-header-component",
       "htmx_endpoints": [
-        "GET {{ queue_url }}/{{ row.id }}/drawer",
-        "GET {{ queue_url }}/{{ row.id }}/return-drawer",
         "GET {{ autoload_drawer }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -78622,10 +79173,7 @@
       "route": "/pl/review-queue",
       "route_name": "pl_review_queue",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "{{ queue_url }}",
-        "{{ queue_url }}/{{ row.id }}/confirm"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -78633,6 +79181,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -78650,13 +79199,13 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "shared-table-scroll",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -78724,6 +79273,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -78761,7 +79311,7 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
@@ -78772,22 +79322,19 @@
       "charts": false,
       "drawers": true,
       "evidence": [
-        "template:partials/hr/form_drawer.html",
         "test:referenced-by-automated-test",
         "permission:pl_review_queue"
       ],
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ form_secondary.hx_get }}"
-      ],
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
@@ -78800,7 +79347,7 @@
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Open: the whole completion, read-only, with Approve at the foot.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "PL"
@@ -78808,9 +79355,7 @@
       "route": "/pl/review-queue/<str:activity_id>/drawer",
       "route_name": "pl_review_drawer",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "{{ form_action }}"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -78818,6 +79363,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -78831,7 +79377,7 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
-        "components/drawers/base_drawer.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -78839,20 +79385,18 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "drawer",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "partials/hr/form_drawer.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -78909,6 +79453,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -79003,6 +79548,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.budget.models",
+        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.evidence.models",
@@ -79397,7 +79943,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -79487,7 +80032,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -84284,7 +84828,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -85458,7 +86001,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -89443,6 +89985,7 @@
         "GET /planning/schedule-modal?school_id={{ school.school_id }}",
         "GET /core-schools/assign-partner?school_id={{ school.school_id }}",
         "GET /planning/assign-partner-modal?school_id={{ school.school_id }}",
+        "GET /schools/{{ school.id }}/ssa-entry",
         "GET /schools/{{ school.id }}/assign-to-project",
         "GET /schools/{{ school.school_id }}/transfer-owner",
         "GET /schools/{{ school.school_id }}/close-drawer"
@@ -90313,6 +90856,108 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.school_ssa_entry_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/schools/ssa_entry_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:school_profile"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /schools/{{ school.id }}/ssa-entry"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-EE093483F3",
+      "page_title": "School Ssa Entry",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "school_profile",
+      "primary_action": "Save SSA",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Enter SSA Score from a school's profile (owner, 2026-10-14).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/schools/<str:school_id>/ssa-entry",
+      "route_name": "school_ssa_entry",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/schools/{{ school.id }}/ssa-entry"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.business_transformation.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.core_schools.services",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/schools/ssa_entry_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
+    },
+    {
       "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
@@ -91143,6 +91788,101 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.school_onboard_cluster_options_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/schools/onboard_cluster_options.html",
+        "test:referenced-by-automated-test",
+        "permission:school_directory"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-0463A67C9B",
+      "page_title": "School Onboard Cluster Options",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "school_directory",
+      "primary_action": "School Onboard Cluster Options",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Add School form's cluster options, for the owner and place chosen.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL"
+      ],
+      "route": "/schools/cluster-options",
+      "route_name": "school_onboard_cluster_options",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.business_transformation.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.core_schools.services",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/schools/onboard_cluster_options.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.school_onboard_drawer_view",
@@ -91150,6 +91890,9 @@
       "charts": false,
       "drawers": true,
       "evidence": [
+        "template:partials/schools/onboard_possible_duplicate.html",
+        "template:partials/schools/onboard_registered.html",
+        "template:partials/schools/onboard_embedded.html",
         "template:partials/schools/onboard_drawer.html",
         "test:referenced-by-automated-test",
         "permission:school_directory"
@@ -91157,12 +91900,9 @@
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /schools/create-drawer",
-        "GET /schools/sub-counties?with_clusters=1"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -91175,7 +91915,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Create school",
+      "primary_action": "School Onboard Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate school onboard drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -91192,9 +91932,7 @@
       "route": "/schools/create-drawer",
       "route_name": "school_onboard_drawer",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/schools/create-drawer"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -91216,9 +91954,9 @@
         "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": true,
+        "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "drawer",
@@ -91230,6 +91968,9 @@
         "type": "none"
       },
       "templates": [
+        "partials/schools/onboard_possible_duplicate.html",
+        "partials/schools/onboard_registered.html",
+        "partials/schools/onboard_embedded.html",
         "partials/schools/onboard_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -91237,9 +91978,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[16px]"
+        "text-[13px]"
       ]
     },
     {
@@ -93109,7 +93848,7 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 4,
+        "count": 5,
         "type": "segmented-control"
       },
       "templates": [
@@ -95783,6 +96522,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css",
+        "css/components/row-state.css",
         "css/pages/country-oversight.css"
       ],
       "permission_key": "team_planning_oversight",
@@ -95812,7 +96552,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -95912,7 +96651,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -96002,7 +96740,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -96093,7 +96830,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -96186,7 +96922,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -96274,7 +97009,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -96365,7 +97099,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -96458,7 +97191,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -96532,6 +97264,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css",
+        "css/components/row-state.css",
         "css/pages/country-oversight.css"
       ],
       "permission_key": "team_targets",
@@ -96636,6 +97369,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css",
+        "css/components/row-state.css",
         "css/pages/country-oversight.css"
       ],
       "permission_key": "team_targets",
@@ -100913,6 +101647,21 @@
         "max_interval_minutes": 1800,
         "max_retries": 2,
         "name": "day_off_alerts",
+        "retryable": true
+      },
+      {
+        "cron": "daily 17:00 Africa/Nairobi",
+        "cron_kwargs": {
+          "hour": 17,
+          "minute": 0
+        },
+        "description": "Tells each Programme Lead, at the end of the day, how many of their officers' completed activities wait on them to verify; closes the notice from the day before.",
+        "expected_runtime_seconds": 30,
+        "idempotency_note": "Keyed per lead per day (context_id verify-<date>); a re-run on the same day sends nothing.",
+        "idempotent": true,
+        "max_interval_minutes": 1800,
+        "max_retries": 2,
+        "name": "verification_reminders",
         "retryable": true
       },
       {
@@ -107765,6 +108514,27 @@
       ],
       "page_permission": "",
       "required_permissions": [
+        "evidence.review",
+        "payment.act",
+        "planning.view"
+      ],
+      "route": "/api/evidence(?:/|)activity/<str:activity_id>/form",
+      "route_name": "form-document",
+      "templates": []
+    },
+    {
+      "callback": "apps.evidence.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
         "activity.complete"
       ],
       "route": "/api/evidence(?:/|)upload",
@@ -112278,8 +113048,8 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.oversight_views.core_schools_oversight_view",
-      "kind": "partial",
+      "callback": "apps.frontend.views.core_oversight_views.core_schools_oversight_view",
+      "kind": "page",
       "methods": [
         "GET"
       ],
@@ -112288,7 +113058,6 @@
       "route": "/core-schools-oversight/",
       "route_name": "core_schools_oversight",
       "templates": [
-        "partials/oversight/core_schools_oversight_workspace.html",
         "pages/oversight/core_schools_oversight.html"
       ]
     },
@@ -112422,6 +113191,18 @@
       "required_permissions": [],
       "route": "/core-schools/oversight/send",
       "route_name": "core_oversight_send_action",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.core_oversight_views.core_recommendation_action",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "core_schools",
+      "required_permissions": [],
+      "route": "/core-schools/recommendations/<str:rec_id>/<str:action>",
+      "route_name": "core_recommendation_action",
       "templates": []
     },
     {
@@ -117227,6 +118008,20 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.my_plan_views.register_school_search_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/<str:activity_id>/register-school-search",
+      "route_name": "register_school_search",
+      "templates": [
+        "partials/my_plan/register_school_results.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.my_plan_views.request_budget_amendment_action",
       "kind": "action",
       "methods": [
@@ -117290,6 +118085,20 @@
       "route_name": "my_plan_export_drawer",
       "templates": [
         "partials/oversight/export_customization_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_panel_views.my_plan_readiness_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/readiness",
+      "route_name": "my_plan_readiness",
+      "templates": [
+        "partials/my_plan/readiness_panel.html"
       ]
     },
     {
@@ -118780,7 +119589,7 @@
     },
     {
       "callback": "apps.frontend.views.my_plan_views.pl_review_drawer",
-      "kind": "drawer",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -118788,9 +119597,7 @@
       "required_permissions": [],
       "route": "/pl/review-queue/<str:activity_id>/drawer",
       "route_name": "pl_review_drawer",
-      "templates": [
-        "partials/hr/form_drawer.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.my_plan_views.pl_return_action",
@@ -120508,6 +121315,21 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.school_views.school_ssa_entry_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "school_profile",
+      "required_permissions": [],
+      "route": "/schools/<str:school_id>/ssa-entry",
+      "route_name": "school_ssa_entry",
+      "templates": [
+        "partials/schools/ssa_entry_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.school_views.school_take_view",
       "kind": "action",
       "methods": [
@@ -120627,6 +121449,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.school_views.school_onboard_cluster_options_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_directory",
+      "required_permissions": [],
+      "route": "/schools/cluster-options",
+      "route_name": "school_onboard_cluster_options",
+      "templates": [
+        "partials/schools/onboard_cluster_options.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.school_views.school_onboard_drawer_view",
       "kind": "drawer",
       "methods": [
@@ -120638,6 +121474,9 @@
       "route": "/schools/create-drawer",
       "route_name": "school_onboard_drawer",
       "templates": [
+        "partials/schools/onboard_possible_duplicate.html",
+        "partials/schools/onboard_registered.html",
+        "partials/schools/onboard_embedded.html",
         "partials/schools/onboard_drawer.html"
       ]
     },
@@ -122264,39 +123103,39 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 605,
+    "accessibility_contract_pass": 608,
     "activity_states": 24,
-    "all_routes": 1410,
-    "api_routes": 363,
-    "component_templates": 695,
-    "full_pages": 270,
-    "mobile_contract_pass": 605,
-    "nonvisual_actions": 287,
+    "all_routes": 1416,
+    "api_routes": 364,
+    "component_templates": 705,
+    "full_pages": 271,
+    "mobile_contract_pass": 608,
+    "nonvisual_actions": 289,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 619,
-      "operational-queue": 156,
+      "interaction-fragment": 623,
+      "operational-queue": 157,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 49
     },
-    "partials_and_drawers": 332,
-    "permission_gated": 913,
+    "partials_and_drawers": 334,
+    "permission_gated": 918,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 930,
-    "scheduled_jobs": 37,
+    "routed_surfaces": 935,
+    "scheduled_jobs": 38,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 605,
-    "test_referenced": 828,
-    "theme_contract_pass": 605
+    "tablet_contract_pass": 608,
+    "test_referenced": 836,
+    "theme_contract_pass": 608
   }
 }

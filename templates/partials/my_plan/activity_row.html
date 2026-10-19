@@ -12,8 +12,8 @@ shared partial, so every My Plan table gets the same thumb-height control
 rather than four separate opinions about it.
 {% endcomment %}
 <td class="px-3 py-2.5 text-right whitespace-nowrap" data-record-action>
-  {% comment %}Complete only with the Salesforce ID and the form both in
-  (owner, 2026-09-26): apps.activities.completion_columns.{% endcomment %}
+  {% comment %}Complete only with the Salesforce ID in (owner, 2026-09-26;
+  the uploaded form left on 2026-10-13): apps.activities.completion_columns.{% endcomment %}
   {% if row.shows_complete %}
   <button type="button"
           hx-get="/my-plan/{{ row.id }}"
@@ -23,6 +23,17 @@ rather than four separate opinions about it.
           title="View Completed Activity">
     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
     Complete
+  </button>
+  {% elif row.awaiting_ssa %}
+  {% comment %}Delivered, waiting for its school's SSA (owner, 2026-10-17):
+  the one thing left to do, apps.ssa.visit_scores.{% endcomment %}
+  <button type="button"
+          hx-get="{{ row.next_action.url }}"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML"
+          class="btn btn-warn h-8 edify-text-caption font-semibold shadow-xs"
+          data-enter-ssa>
+    {{ row.next_action.text }}
   </button>
   {% else %}
   <div class="row-menu" x-data="rowMenu"
@@ -116,6 +127,8 @@ Work that is already complete has no Complete to open, and its forms can still
 need attaching or correcting before IA verifies it. So the evidence drawer —
 the one the partner workroom and the evidence packet open — is offered exactly
 where Complete is not. The two are never both on the menu.{% endcomment %}
+{# UPLOAD-OFF (owner, 2026-10-13): the Upload Evidence item is switched off with the upload; remove the comment tags to bring it back. #}
+{% comment %}UPLOAD-OFF
 {% if row.status == 'completed' %}
 <!-- Upload Evidence -->
 <button
@@ -128,6 +141,7 @@ class="row-menu__item" role="menuitem"
 Upload Evidence
 </button>
 {% endif %}
+{% endcomment %}
 
 <!-- Submit for Review -->
 {% if row.next_action.action == 'submit' %}

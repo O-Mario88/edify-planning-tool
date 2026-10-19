@@ -272,16 +272,13 @@ class PartnerAndClusterFlowTest(APITestCase):
         my_plan = self._get("/api/my-plan?fy=2026&period=month&month=7", 200)
         self.assertTrue(any(item["id"] == activity_id for item in my_plan["items"]))
 
-        # Completion unlocks; upload the attendance form (PDF-only law).
+        # Completion unlocks. The attendance form was uploaded and previewed
+        # here until 2026-10-13: staff work is completed with its training ID
+        # and takes no upload (owner: "use strictly visit ID and training IDs
+        # to complete the activities"; 2026-10-14: "Only staff dont need to
+        # upload"). The door refuses it and nothing is stored.
         self._post(f"/api/activities/{activity_id}/start-completion", {}, 200)
-        docx = self._upload_docx(activity_id)
-        record = EvidenceRecord.objects.get(id=docx["id"])
-        self.assertEqual(record.file_extension, ".pdf")
-
-        # PDF renders natively — the inline-view contract answers ready with
-        # the file itself, or an honest pending/failed; never a 500.
-        preview = self._post(f"/api/evidence/{docx['id']}/prepare-view", {}, 200)
-        self.assertIn(preview["previewStatus"], ("ready", "pending", "failed"))
+        self._staff_upload_is_refused(activity_id)
 
         # Completion requires attendance + a TS- code (training prefix).
         no_attendance = self.client.post(
@@ -377,6 +374,27 @@ class PartnerAndClusterFlowTest(APITestCase):
         self.assertEqual(response.status_code, 201, response.content)
         return response.json()
 
+    def _staff_upload_is_refused(self, activity_id: str) -> None:
+        response = self.client.post(
+            "/api/evidence/upload",
+            {
+                "activityId": activity_id,
+                "kind": "attendance_form",
+                "file": SimpleUploadedFile(
+                    "training-attendance.pdf",
+                    b"%PDF-1.4 a form nobody takes " + b"a" * 128,
+                    content_type="application/pdf",
+                ),
+            },
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 400, response.content[:200])
+        self.assertIn(b"No form is uploaded for it", response.content)
+        self.assertFalse(
+            EvidenceRecord.objects.filter(activity_id=activity_id).exists()
+        )
+
+    # Kept, unused, for the day staff upload again (UPLOAD-OFF).
     def _upload_docx(self, activity_id: str) -> dict:
         # A minimal valid .docx is a ZIP (PK signature); the upload validator
         # sniffs the magic bytes. We hand-craft a tiny ZIP container.

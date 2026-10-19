@@ -16,7 +16,7 @@ from __future__ import annotations
 import datetime
 import json
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from django.core.management import call_command
 from django.test import Client, SimpleTestCase, TestCase
@@ -714,6 +714,8 @@ class ClusterDrawerDeliveryTest(TestCase):
             planned_date=None,
             responsible_user_id=self.user.id,
             materials=NO_MATERIALS,
+            principal=ANY,
+            facilitator_answer=None,
         )
 
     def test_cost_preview_adds_the_per_school_categories_up_itself(self):
@@ -754,6 +756,8 @@ class ClusterDrawerDeliveryTest(TestCase):
             planned_date=None,
             responsible_user_id=self.user.id,
             materials=NO_MATERIALS,
+            principal=ANY,
+            facilitator_answer=None,
         )
 
     def test_cost_preview_prices_the_materials_the_planner_typed(self):
@@ -798,6 +802,8 @@ class ClusterDrawerDeliveryTest(TestCase):
                 "photocopyPages": "4",
                 "photocopyCopies": "",
             },
+            principal=ANY,
+            facilitator_answer=None,
         )
 
     def test_the_planner_drawer_asks_for_materials_and_reads_blank_as_zero(self):

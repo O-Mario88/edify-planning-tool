@@ -24,6 +24,11 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
     at schedule time, so the request total is provably the sum of its line items.
     Blocked if any in-period activity is cost-missing or has no budget lines.
     The cost lines are prefetched (one query) instead of queried per activity."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     fy = data.get("fy") or get_operational_fy()
     period = data.get("period", "monthly")
     period_key = data.get("periodKey") or _period_key(fy, period, data)
@@ -45,9 +50,12 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
     # the visit cost (apps.activities.pair_costing). The Training is not
     # independently fundable and must not be treated as costless.
     from apps.activities.online_training import ONLINE_TRAINING
-    from apps.activities.pair_costing import UNCOSTED_PAIR_TRAINING
+    from apps.activities.pair_costing import (
+        DELIVERED_PAIR_TRAINING,
+        UNCOSTED_PAIR_TRAINING,
+    )
 
-    qs = qs.exclude(UNCOSTED_PAIR_TRAINING | ONLINE_TRAINING)
+    qs = qs.exclude(UNCOSTED_PAIR_TRAINING | DELIVERED_PAIR_TRAINING | ONLINE_TRAINING)
     qs = _filter_period(qs, period, period_key, data).prefetch_related(
         "schedule_cost_lines"
     )
@@ -596,6 +604,11 @@ def _review_accountability_locked(
 
 def regenerate(period: str, principal, strict: bool = True) -> dict:
     """Idempotent manual regeneration (weekly/monthly)."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     data = {"period": period, "fy": get_operational_fy()}
     return submit(data, principal, strict=strict)
 

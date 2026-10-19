@@ -4534,6 +4534,31 @@
   {
    "page_permission": "",
    "required_permissions": [
+    "evidence.review",
+    "payment.act",
+    "planning.view"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "Admin"
+   ],
+   "route": "/api/evidence(?:/|)activity/<str:activity_id>/form",
+   "route_name": "form-document",
+   "view": "apps.evidence.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
     "activity.complete"
    ],
    "role_exclusive": false,
@@ -8267,6 +8292,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "CCEO",
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
@@ -8276,7 +8302,7 @@
    ],
    "route": "/core-schools-oversight/",
    "route_name": "core_schools_oversight",
-   "view": "apps.frontend.views.oversight_views.core_schools_oversight_view"
+   "view": "apps.frontend.views.core_oversight_views.core_schools_oversight_view"
   },
   {
    "page_permission": "planning",
@@ -8438,6 +8464,22 @@
    "route": "/core-schools/oversight/send",
    "route_name": "core_oversight_send_action",
    "view": "apps.frontend.views.core_schools_views.core_oversight_send_action"
+  },
+  {
+   "page_permission": "core_schools",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/core-schools/recommendations/<str:rec_id>/<str:action>",
+   "route_name": "core_recommendation_action",
+   "view": "apps.frontend.views.core_oversight_views.core_recommendation_action"
   },
   {
    "page_permission": "core_schools",
@@ -14001,6 +14043,25 @@
     "PartnerFieldOfficer",
     "Admin"
    ],
+   "route": "/my-plan/<str:activity_id>/register-school-search",
+   "route_name": "register_school_search",
+   "view": "apps.frontend.views.my_plan_views.register_school_search_view"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
    "route": "/my-plan/<str:activity_id>/request-amendment",
    "route_name": "request_budget_amendment",
    "view": "apps.frontend.views.my_plan_views.request_budget_amendment_action"
@@ -14080,6 +14141,25 @@
    "route": "/my-plan/export-drawer",
    "route_name": "my_plan_export_drawer",
    "view": "apps.frontend.views.my_plan_views.my_plan_export_drawer_view"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/my-plan/readiness",
+   "route_name": "my_plan_readiness",
+   "view": "apps.frontend.views.my_plan_panel_views.my_plan_readiness_view"
   },
   {
    "page_permission": "my_professional_development",
@@ -17956,6 +18036,23 @@
    "view": "apps.frontend.views.school_views.school_reopen_action"
   },
   {
+   "page_permission": "school_profile",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "BusinessTransformationOfficer",
+    "Admin"
+   ],
+   "route": "/schools/<str:school_id>/ssa-entry",
+   "route_name": "school_ssa_entry",
+   "view": "apps.frontend.views.school_views.school_ssa_entry_view"
+  },
+  {
    "page_permission": "school_directory",
    "required_permissions": [],
    "role_exclusive": false,
@@ -18105,6 +18202,23 @@
    "route": "/schools/closed",
    "route_name": "closed_schools",
    "view": "apps.frontend.views.school_views.closed_schools_view"
+  },
+  {
+   "page_permission": "school_directory",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/schools/cluster-options",
+   "route_name": "school_onboard_cluster_options",
+   "view": "apps.frontend.views.school_views.school_onboard_cluster_options_view"
   },
   {
    "page_permission": "school_directory",
@@ -19708,27 +19822,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 461,
-  "Admin": 1110,
-  "BusinessTransformationOfficer": 242,
-  "CCEO": 587,
-  "CountryDirector": 846,
+  "Accountant": 465,
+  "Admin": 1116,
+  "BusinessTransformationOfficer": 244,
+  "CCEO": 594,
+  "CountryDirector": 852,
   "HumanResources": 332,
-  "ImpactAssessment": 715,
+  "ImpactAssessment": 721,
   "MfiLoanOfficer": 138,
   "MfiPartnerAdmin": 141,
-  "PartnerAdmin": 238,
-  "PartnerFieldOfficer": 238,
-  "Program Lead": 694,
-  "ProjectCoordinator": 490,
-  "RegionalProgramLead": 353,
+  "PartnerAdmin": 241,
+  "PartnerFieldOfficer": 241,
+  "Program Lead": 700,
+  "ProjectCoordinator": 495,
+  "RegionalProgramLead": 355,
   "RegionalVicePresident": 429
  },
  "summary": {
   "page_keys_declared": 185,
   "page_keys_in_navigation": 202,
-  "routes_guarded": 1207,
-  "routes_total": 1410,
+  "routes_guarded": 1213,
+  "routes_total": 1416,
   "routes_unguarded": 203,
   "surfaces_no_role_can_reach": 0
  },

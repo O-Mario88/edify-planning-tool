@@ -158,21 +158,25 @@ class PerformanceInsightsServiceTests(TestCase):
         self.assertEqual(perf["top_region"]["name"], "Central")
 
     def test_trend_uses_real_labelled_verified_periods(self):
+        # Another core school's: the setUp school already holds 2026's SSA,
+        # and a school has one a year (owner, 2026-10-14).
         SsaRecord.objects.create(
-            school=self.school,
+            school=self.unscored,
             fy="2026",
             average_score=5.0,
             date_of_ssa=timezone.make_aware(dt.datetime(2026, 7, 1)),
             verification_status="confirmed",
             collector_type="staff",
         )
-        # An unverified record must not shape the trend.
+        # An unverified record must not shape the trend. Returned: the one
+        # unconfirmed state that may sit beside the year's confirmed SSA
+        # (one live SSA a school a year, owner 2026-10-14).
         SsaRecord.objects.create(
             school=self.school,
             fy="2026",
             average_score=1.0,
             date_of_ssa=timezone.make_aware(dt.datetime(2026, 7, 2)),
-            verification_status="pending",
+            verification_status="returned",
             collector_type="staff",
         )
         trend = CoreAssessmentService.get_monthly_trend(

@@ -13,6 +13,8 @@ takes the single-file path unchanged.
 
 from __future__ import annotations
 
+import unittest
+
 import io
 from unittest.mock import patch
 
@@ -184,6 +186,10 @@ class RecordPagesUploadTest(TestCase):
         with self.assertRaisesMessage(BadRequest, f"at most {pages.MAX_PAGES} pages"):
             self._upload([photo(f"p{i}.jpg") for i in range(pages.MAX_PAGES + 1)])
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_the_evidence_drawer_posts_every_page_as_one_form(self):
         self.client.force_login(self.user)
         response = self.client.post(
@@ -196,6 +202,10 @@ class RecordPagesUploadTest(TestCase):
         self.assertEqual(record.kind, "visit_form")
         self.assertEqual(record.original_name, "Visit Form (2 pages).pdf")
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_the_evidence_drawer_offers_camera_and_several_files(self):
         self.client.force_login(self.user)
         html = self.client.get(

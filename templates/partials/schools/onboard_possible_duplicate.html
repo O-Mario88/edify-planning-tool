@@ -1,0 +1,27 @@
+{% comment %}
+A name close to one already in the district (school_views._create_manual_school,
+the nightly duplicate rule asked before saving). Nothing has been written. From
+an activity the existing school can be used instead; otherwise the person says
+it is a different school and sends the form again.
+{% endcomment %}
+<div class="edify-note space-y-2" data-tone="warning" role="alert" data-possible-duplicate>
+<p class="edify-note__body"><strong>Is this school already in Edify?</strong> {% if matches|length == 1 %}A school{% else %}Schools{% endif %} with a similar name {% if matches|length == 1 %}is{% else %}are{% endif %} already in this district. Nothing has been saved.</p>
+<ul class="space-y-1.5">
+{% for m in matches %}
+<li class="flex items-center justify-between gap-3">
+<span class="min-w-0">
+<span class="block text-[13px] font-semibold text-slate-800 truncate">{{ m.name }}</span>
+<span class="block edify-text-caption text-slate-500">{{ m.school_id }}{% if m.district %} &middot; {{ m.district.name }}{% endif %}{% if m.salesforce_account_id %} &middot; Salesforce {{ m.salesforce_account_id }}{% endif %}</span>
+</span>
+{% if embedded %}
+<button type="button" class="btn btn-secondary h-8 shrink-0"
+@click="$dispatch('edify-school-chosen', { id: '{{ m.id|escapejs }}', name: '{{ m.name|escapejs }}', schoolId: '{{ m.school_id|escapejs }}', clusterId: '{{ m.cluster_id|default:''|escapejs }}', district: '{{ m.district.name|default:''|escapejs }}' })">Use this school</button>
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+<label class="flex items-center gap-2 cursor-pointer edify-text-caption font-semibold text-slate-700">
+<input type="checkbox" name="confirm_distinct" value="1" class="h-4 w-4">
+<span>It is a different school &mdash; add it</span>
+</label>
+</div>

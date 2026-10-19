@@ -41,6 +41,8 @@ audience of a school is worked out once a minute, not once a save.
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import logging
 import threading
 import time
@@ -69,6 +71,11 @@ _AUDIENCE_KEPT = 2000
 #: page takes before it reads itself again, so nothing committed is missed.
 _QUIET_SECONDS = 0.3
 
+#: The written-down costs the notices being pushed follow (`after_costs`).
+_after: contextvars.ContextVar[list | None] = contextvars.ContextVar(
+    "live_after_costs", default=None
+)
+
 _audiences: dict[tuple, tuple[float, frozenset[str]]] = {}
 _audiences_lock = threading.Lock()
 _told = threading.local()
@@ -77,7 +84,7 @@ _told = threading.local()
 def enabled() -> bool:
     """Off under the test runner, where it would add its queries to every
     query count in the suite; its own tests turn it on."""
-    return bool(getattr(settings, "LIVE_UPDATES_ENABLED", True))
+    return bool(getattr(settings, "LIVE_UPDATES_ENABLED", False))
 
 
 def _stamp_key(user_id: str) -> str:
@@ -93,6 +100,19 @@ def last_change(user_id: str) -> str | None:
         return None
 
 
+def _school_holder_in_hand(record):
+    """Who holds the record's school, as a 1-tuple, when the school's row is
+    already loaded on the record; None when it would have to be read.
+
+    The members of a day are loaded with their schools, and each of them
+    announces when the day is re-priced: nine visits read nine schools' one
+    column after the commit."""
+    school = record._state.fields_cache.get("school") if record.school_id else None
+    if school is None or "account_owner_id" not in school.__dict__:
+        return None
+    return (str(school.account_owner_id or ""),)
+
+
 def announce_activity(activity) -> None:
     """An activity was saved or deleted."""
     announce(
@@ -101,6 +121,7 @@ def announce_activity(activity) -> None:
             getattr(activity, "monitored_by_staff_id", None),
         ),
         school_id=activity.school_id,
+        school_holder=_school_holder_in_hand(activity),
         cluster_id=activity.cluster_id,
         project_id=activity.project_id,
         partner_ids=(
@@ -117,9 +138,11 @@ def announce(
     cluster_id=None,
     project_id=None,
     partner_ids=(),
+    school_holder=None,
 ) -> None:
     """Push ``plan.changed`` to everyone these belong to, once the change
-    has committed."""
+    has committed. `school_holder`: who holds the school, as a 1-tuple, when
+    the caller has it in hand; read otherwise."""
     if not enabled():
         return
     key = (
@@ -128,45 +151,98 @@ def announce(
         str(cluster_id or ""),
         str(project_id or ""),
         tuple(sorted({str(i) for i in partner_ids if i})),
+        school_holder,
     )
-    transaction.on_commit(lambda: _publish(key))
+    connection = transaction.get_connection()
+    if not connection.in_atomic_block:
+        _publish(key)
+        return
+    # A save whose costs follow its answer is announced once they are in
+    # (apps.daily_visit_batches.costs_follow): a page told at the save's own
+    # commit read itself before the day was priced, and again after.
+    from apps.daily_visit_batches.costs_follow import following, save_in_hand
+
+    costs = following(connection)
+    if costs is not None:
+        costs.tell.append(key)
+        return
+    transaction.on_commit(_Tell(key, save_in_hand(connection), _after.get()))
 
 
-def audience(
-    *, staff_ids=(), school_id=None, cluster_id=None, project_id=None, partner_ids=()
-) -> frozenset[str]:
-    """The user ids of everyone whose pages show a record with these."""
+class _Tell:
+    """One announcement, made when its transaction commits."""
+
+    def __init__(self, key: tuple, save, named=None) -> None:
+        self.key = key
+        #: The save it was asked in (`costs_follow.save_in_hand`).
+        self.save = save
+        #: The written-down costs it follows, where it was asked while they
+        #: were being priced (`after_costs`): kept from the asking, because
+        #: the commit's hooks may run after that block has ended.
+        self.named = named
+        #: The costs that follow that save (`wait_for_costs`), or None.
+        self.after = None
+
+    def __call__(self) -> None:
+        costs = self.after
+        if costs is not None and costs.committed:
+            # Told by whoever prices the days, when they are priced.
+            costs.tell.append(self.key)
+            return
+        _publish(self.key, self.named)
+
+
+def wait_for_costs(connection, costs, save) -> None:
+    """What `save` has asked to announce so far is left to `costs`, which
+    tells those people once the save's days are priced.
+
+    `costs.herald` is put in front of those announcements among the commit's
+    hooks: it says the costs' own part of the transaction was kept. Where
+    that part is undone (a savepoint), the herald goes with it and the
+    announcements are made at the commit, as they always were."""
+    hooks = connection.run_on_commit
+    first = None
+    for at, (_sids, callback, _robust) in enumerate(hooks):
+        if isinstance(callback, _Tell) and callback.save is save:
+            callback.after = costs
+            if first is None:
+                first = at
+    if first is not None:
+        hooks.insert(first, (set(connection.savepoint_ids), costs.herald, True))
+
+
+@contextlib.contextmanager
+def after_costs():
+    """The notices pushed inside this block name the written-down costs they
+    follow: the block yields the list to put their ids in
+    (apps.daily_visit_batches.costs_follow).
+
+    A page compares a notice's time with the time its last read began, to
+    tell a change it already shows from one it does not. The page that saved
+    reads itself once the costs are in, and the notice of those costs is
+    stamped a moment after: by the clock it looks newer than the read that
+    already shows it, and the page read itself twice (seen with the save on
+    one server process and the read on another, 2026-10-14). Named, the
+    notice is known whatever the clocks say."""
+    named: list = []
+    token = _after.set(named)
+    try:
+        yield named
+    finally:
+        _after.reset(token)
+
+
+def publish(keys) -> None:
+    """Push ``plan.changed`` to each of these audiences, now."""
+    for key in keys:
+        _publish(key)
+
+
+def _line_users(staff: frozenset[str]) -> frozenset[str]:
+    """The users these staff are, and the users above them, `_LEVELS_UP` up."""
     from django.db.models import Q
 
-    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
-
-    staff = {str(i) for i in staff_ids if i}
-    if school_id:
-        from apps.schools.models import School
-
-        staff.add(
-            School.objects.filter(id=school_id)
-            .values_list("account_owner_id", flat=True)
-            .first()
-        )
-    if cluster_id:
-        from apps.clusters.models import Cluster
-
-        staff.add(
-            Cluster.objects.filter(id=cluster_id)
-            .values_list("responsible_staff_id", flat=True)
-            .first()
-        )
-    if project_id:
-        from apps.projects.models import Project
-
-        staff.add(
-            Project.objects.filter(id=project_id)
-            .values_list("manager_staff_id", flat=True)
-            .first()
-        )
-    staff.discard(None)
-    staff.discard("")
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
 
     users: set[str] = set()
     # An owner is written as a StaffProfile id or as a User id
@@ -193,6 +269,87 @@ def audience(
                     users.add(user_id)
         known |= above
         line = above
+    return frozenset(users)
+
+
+def _country_users() -> frozenset[str]:
+    """The readers with the whole country in view."""
+    from apps.accounts.models import User
+    from apps.core.scoping import COUNTRY_SCHEDULING_ROLES
+
+    return frozenset(
+        User.objects.filter(
+            active_role__in=COUNTRY_SCHEDULING_ROLES, is_active=True
+        ).values_list("id", flat=True)
+    )
+
+
+def _same(key, read):
+    """A fresh read: `audience` asks the database every time."""
+    return read()
+
+
+def _kept(key, read):
+    """`read()`, remembered for as long as an audience is. The officer's line
+    and the country's readers are the same for every school of a day: a save
+    that re-priced nine visits at nine schools read each of them nine times,
+    forty statements after every such commit."""
+    now = time.monotonic()
+    with _audiences_lock:
+        kept = _audiences.get(key)
+        if kept and now - kept[0] < _AUDIENCE_SECONDS:
+            return kept[1]
+    found = read()
+    with _audiences_lock:
+        if len(_audiences) >= _AUDIENCE_KEPT:
+            _audiences.clear()
+        _audiences[key] = (now, found)
+    return found
+
+
+def audience(
+    *,
+    staff_ids=(),
+    school_id=None,
+    cluster_id=None,
+    project_id=None,
+    partner_ids=(),
+    school_holder=None,
+    _read=_same,
+) -> frozenset[str]:
+    """The user ids of everyone whose pages show a record with these."""
+    staff = {str(i) for i in staff_ids if i}
+    if school_id and school_holder is not None:
+        staff.add(school_holder[0])
+    elif school_id:
+        from apps.schools.models import School
+
+        staff.add(
+            School.objects.filter(id=school_id)
+            .values_list("account_owner_id", flat=True)
+            .first()
+        )
+    if cluster_id:
+        from apps.clusters.models import Cluster
+
+        staff.add(
+            Cluster.objects.filter(id=cluster_id)
+            .values_list("responsible_staff_id", flat=True)
+            .first()
+        )
+    if project_id:
+        from apps.projects.models import Project
+
+        staff.add(
+            Project.objects.filter(id=project_id)
+            .values_list("manager_staff_id", flat=True)
+            .first()
+        )
+    staff.discard(None)
+    staff.discard("")
+
+    line_of = frozenset(str(i) for i in staff)
+    users: set[str] = set(_read(("line", line_of), lambda: _line_users(line_of)))
 
     partners = [i for i in partner_ids if i]
     if partners:
@@ -204,13 +361,7 @@ def audience(
             )
         )
 
-    from apps.core.scoping import COUNTRY_SCHEDULING_ROLES
-
-    users.update(
-        User.objects.filter(
-            active_role__in=COUNTRY_SCHEDULING_ROLES, is_active=True
-        ).values_list("id", flat=True)
-    )
+    users.update(_read(("country",), _country_users))
     return frozenset(str(user) for user in users if user)
 
 
@@ -220,13 +371,15 @@ def _audience_for(key: tuple) -> frozenset[str]:
         kept = _audiences.get(key)
         if kept and now - kept[0] < _AUDIENCE_SECONDS:
             return kept[1]
-    staff_ids, school_id, cluster_id, project_id, partner_ids = key
+    staff_ids, school_id, cluster_id, project_id, partner_ids, school_holder = key
     found = audience(
         staff_ids=staff_ids,
         school_id=school_id,
         cluster_id=cluster_id,
         project_id=project_id,
         partner_ids=partner_ids,
+        school_holder=school_holder,
+        _read=_kept,
     )
     with _audiences_lock:
         if len(_audiences) >= _AUDIENCE_KEPT:
@@ -235,7 +388,7 @@ def _audience_for(key: tuple) -> frozenset[str]:
     return found
 
 
-def _publish(key: tuple) -> None:
+def _publish(key: tuple, named=None) -> None:
     try:
         user_ids = _audience_for(key)
     except Exception:  # noqa: BLE001 - announcing never breaks the change
@@ -258,8 +411,15 @@ def _publish(key: tuple) -> None:
         cache.set_many({_stamp_key(user): at for user in due}, timeout=_STAMP_SECONDS)
     except Exception:  # noqa: BLE001
         logger.debug("live stamp not kept", exc_info=True)
+    event = {"type": EVENT, "at": at}
+    named = named if named is not None else _after.get()
+    if named:
+        # The page that saved has read itself since these costs were priced
+        # and is told so by its own read (`X-Edify-Live-After`); it knows
+        # this notice by them and does not read itself again.
+        event["after"] = ".".join(str(row_id) for row_id in named)
     try:
-        bus.publish_many(due, {"type": EVENT, "at": at})
+        bus.publish_many(due, event)
     except Exception:  # noqa: BLE001 - committed work stays committed
         logger.warning("live push failed", exc_info=True)
 

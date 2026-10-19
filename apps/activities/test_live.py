@@ -235,6 +235,26 @@ class OffUnderTheTestRunner(LiveFixture):
 
         self.assertEqual(self._told(publish), set())
 
+    def test_off_by_default_now_nothing_listens(self):
+        """Owner, 2026-10-14: pages update on Refresh, and no page opens the
+        stream (static/js/live-regions.js). Working out who to tell after
+        every save, for nobody, was the save-path cost Refresh was meant to
+        remove: the announcements are off unless LIVE_UPDATES_ENABLED says
+        otherwise."""
+        import inspect
+
+        from apps.activities import live
+        from config.settings import base
+
+        self.assertIn(
+            'os.environ.get("LIVE_UPDATES_ENABLED", "false")', inspect.getsource(base)
+        )
+        with self.settings():
+            from django.conf import settings as current
+
+            del current.LIVE_UPDATES_ENABLED
+            self.assertFalse(live.enabled())
+
 
 class LiveRegionsContract(SimpleTestCase):
     """The pages that show the plan are marked to read themselves again."""
@@ -277,7 +297,12 @@ class LiveRegionsContract(SimpleTestCase):
         # The same tables as a filter sends them back (hx-swap-oob).
         ("partials/core_schools/matrix_response.html", 'id="core-lifecycle-tables"'),
         ("pages/oversight/team_planning.html", 'id="school-oversight"'),
-        ("pages/my_plan/pl_queue.html", 'id="completion-reviews"'),
+        # The register the Completion Reviews page includes (owner,
+        # 2026-10-14: it is also drawn on the lead's dashboard).
+        (
+            "partials/my_plan/completion_reviews_register.html",
+            'id="completion-reviews"',
+        ),
     )
 
     #: A summary strip that sits outside its page's live part is a region of
@@ -329,26 +354,31 @@ class LiveRegionsContract(SimpleTestCase):
         ).render(Context({}))
         self.assertIn('id="programme-schools-context" data-live-region', strip)
 
-    def test_the_listener_waits_for_ticked_rows_and_rests_between_reads(self):
-        """A page is not read again under a row somebody has ticked, in any
-        region's table. And an open page rests after a read: a second, as it
-        always did, so a person's own save is on their page at once; twice as
-        long each time a change arrives while it is still resting, to sixteen
-        seconds, so a busy day does not become every open page reading itself
-        without pause (tests/js/live-regions.test.js runs the clock)."""
+    def test_the_reader_waits_for_ticked_rows(self):
+        """A page finishing itself is not read again under a row somebody
+        has ticked, in any region's table (tests/js/live-regions.test.cjs
+        runs the clock)."""
         script = (settings.BASE_DIR / "static/js/live-regions.js").read_text()
         self.assertIn(
             "REGION + ' td input[type=\"checkbox\"]:checked:not(:disabled), '",
             script,
         )
-        self.assertIn("Math.max(1000 << spell, Date.now() - began)", script)
-        self.assertIn("spell = held ? Math.min(spell + 1, 4) : 0;", script)
 
-    def test_the_listener_is_loaded_by_the_shell_and_names_the_event(self):
+    def test_the_page_follows_nothing_until_refresh(self):
+        """Owner, 2026-10-14: "behave like salesforce where a user has to
+        refresh for the data to be updated ... everything is updated upon
+        refresh icon clicked". The shell still loads the script, for a page
+        finishing itself; it opens no stream and a save reads nothing."""
         self.assertIn("js/live-regions.js", (TEMPLATES / "base.html").read_text())
         script = (settings.BASE_DIR / "static/js/live-regions.js").read_text()
-        self.assertIn(f"'{live.EVENT}'", script)
-        self.assertIn("/api/realtime/stream", script)
+        code = "\n".join(
+            line
+            for line in script.splitlines()
+            if not line.lstrip().startswith(("*", "/*", "//"))
+        )
+        self.assertNotIn("EventSource", code)
+        self.assertNotIn("/api/realtime/stream", code)
+        self.assertIn("function saved() {}", code)
 
     def test_the_stream_says_on_connecting_when_the_plan_last_changed(self):
         view = (settings.BASE_DIR / "apps/realtime/views.py").read_text()

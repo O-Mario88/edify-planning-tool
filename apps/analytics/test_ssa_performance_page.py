@@ -86,9 +86,11 @@ class SsaPerformancePageTest(TestCase):
         return record
 
     def test_cceo_page_uses_latest_confirmed_record_inside_own_scope(self):
-        self._ssa(self.own_school, 4.0, days_ago=30)
+        # One live SSA a school a year (owner, 2026-10-14): the others beside
+        # it were returned and count nowhere.
+        self._ssa(self.own_school, 4.0, status="returned", days_ago=30)
         self._ssa(self.own_school, 8.0, days_ago=5, weak_score=3.0)
-        self._ssa(self.own_school, 1.0, status="pending", days_ago=0)
+        self._ssa(self.own_school, 1.0, status="returned", days_ago=0)
         self._ssa(self.other_school, 2.0, days_ago=1)
 
         client = Client()

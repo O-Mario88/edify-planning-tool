@@ -47,8 +47,10 @@ to tick.{% endcomment %}
 <th class="min-w-[90px]">School ID</th>
 <th class="min-w-[240px]">School Name</th>
 <th class="min-w-[130px]">District</th>
+<th class="min-w-[130px]">District Type</th>
 <th class="min-w-[130px]">Activity</th>
 <th class="min-w-[110px]">Planned Date</th>
+<th class="min-w-[110px]">Completed Date</th>
 <th class="min-w-[120px]">Executor</th>
 <th class="min-w-[180px]">Purpose of Visit</th>
 <th class="min-w-[140px]">SSA Intervention</th>
@@ -56,14 +58,14 @@ to tick.{% endcomment %}
 <th class="min-w-[120px]">Budget status</th>
 <th class="min-w-[120px]">Verification</th>
 <th class="min-w-[130px]">Salesforce ID</th>
-<th class="min-w-[160px]">Evidence</th>
+{# UPLOAD-OFF (owner, 2026-10-13): <th class="min-w-[160px]">Evidence</th> #}
 <th class="min-w-[110px]">Status</th>
 <th class="text-right min-w-[90px]">Actions</th>
 </tr>
 </thead>
 <tbody>
 {% for row in core_school_visits_pager.rows %}
-<tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}>
+<tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}{% if row.row_state == "done" %} data-done{% elif row.row_state == "overdue" %} data-overdue{% endif %}>
 {% if selectable %}{% if row.can_pick %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.school_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
@@ -74,11 +76,13 @@ to tick.{% endcomment %}
   {% endif %}
 </td>
 <td class="text-slate-700 font-medium" data-label="District">{{ row.school_district|default:"—" }}</td>
+<td class="text-slate-600 font-medium whitespace-nowrap" data-label="District Type" data-district-type>{{ row.district_type|default:"—" }}</td>
 <td class="font-semibold text-slate-700">
   {{ row.activity_type_label|default:"Core Visit" }}
   {% if row.visit_number %}<span class="block edify-text-caption font-semibold text-slate-400"><span class="core-seq__mark" data-state="{% if row.status_tone == 'green' %}done{% else %}planned{% endif %}" title="{{ row.visit_number }} {% if row.status_tone == 'green' %}completed{% else %}planned{% endif %}" data-core-number>{{ row.visit_number }}</span> {{ row.core_progress }}</span>{% endif %}
 </td>
-<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}{% include "partials/my_plan/day_off_flag.html" %}</td>
+<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned">{% if row.planned_before %}{{ row.planned_before|date:"j M Y" }}{% else %}{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}{% endif %}{% include "partials/my_plan/day_off_flag.html" %}</td>
+<td class="tabular-nums whitespace-nowrap" data-label="Completed Date" data-completed-on>{{ row.completed_on|date:"j M Y"|default:"—" }}</td>
 <td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>
 <td class="text-slate-600 text-xs" data-label="Purpose">{{ row.purpose|default:"—" }}</td>
 <td data-label="Intervention">

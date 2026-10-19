@@ -238,15 +238,19 @@ class FinanceBlockedReasonService:
         if activity.status not in ["ia_verified", "closed", "accountant_confirmed"]:
             reasons.append("IA Verification Missing")
 
-        # Rule 2: No evidence -> no clearance
-        if has_evidence is None:
-            from apps.evidence.models import EvidenceRecord
+        # Rule 2: No evidence -> no clearance, for a partner's work, which
+        # is verified from its uploaded form. Staff work is completed with its
+        # Salesforce ID and asks for no file (UPLOAD-OFF, owner 2026-10-13 and
+        # 2026-10-14).
+        if activity.delivery_type == "partner":
+            if has_evidence is None:
+                from apps.evidence.models import EvidenceRecord
 
-            has_evidence = EvidenceRecord.objects.filter(
-                activity_id=activity.id, quarantined=False
-            ).exists()
-        if not has_evidence:
-            reasons.append("Evidence Missing")
+                has_evidence = EvidenceRecord.objects.filter(
+                    activity_id=activity.id, quarantined=False
+                ).exists()
+            if not has_evidence:
+                reasons.append("Evidence Missing")
 
         # Rule 3: No Activity SF ID -> no clearance — for work that has a
         # Salesforce record. SSA data gathering deliberately has none
@@ -319,7 +323,8 @@ class FinanceBlockedReasonService:
             ),
         ).filter(
             ~Q(status__in=FinanceBlockedReasonService.IA_VERIFIED_STATUSES)
-            | Q(fin_has_evidence=False)
+            # Rule 2, a partner's work only (see get_blocked_reasons).
+            | (Q(delivery_type="partner") & Q(fin_has_evidence=False))
             | Q(fin_has_budget_lines=False)
             # Rule 3: work with a Salesforce record and no SF ID. Only
             # the NONE and SSA_DATA_GATHERING snapshots have no record

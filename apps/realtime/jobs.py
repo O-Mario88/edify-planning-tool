@@ -532,6 +532,21 @@ def day_off_alerts_job():
     run_tracked_job("day_off_alerts", _do_day_off_alerts)
 
 
+def _do_verification_reminders() -> int:
+    """Tell each Programme Lead, at the end of the day, how many of their
+    officers' completions wait on them (owner, 2026-10-14;
+    apps.pl_review.reminders.send_verification_reminders)."""
+    from apps.pl_review.reminders import send_verification_reminders
+
+    return send_verification_reminders()
+
+
+def verification_reminders_job():
+    if not _enabled():
+        return
+    run_tracked_job("verification_reminders", _do_verification_reminders)
+
+
 def _do_acting_lifecycle() -> int:
     """Record the reminder, start and end of acting leadership appointments
     (apps.acting.lifecycle). Access follows the appointment's dates; this
@@ -998,9 +1013,27 @@ def _do_cost_reprice_sweep() -> int:
     return report["repriced"]
 
 
+def _settle_costs_left_to_follow() -> None:
+    """What a save left to be priced after its answer and a lost process
+    never did (apps.daily_visit_batches.costs_follow). The person who saved
+    settles it on their next click; this is for when there is none."""
+    try:
+        from apps.daily_visit_batches.costs_follow import sweep
+
+        followed = sweep()
+    except Exception:  # noqa: BLE001 — the re-price sweep still runs
+        logger.exception("Costs to follow sweep failed")
+        return
+    if followed["held"]:
+        logger.warning("Costs to follow sweep: %s", followed)
+    elif any(followed.values()):
+        logger.info("Costs to follow sweep: %s", followed)
+
+
 def cost_reprice_sweep_job():
     if not _enabled():
         return
+    _settle_costs_left_to_follow()
     run_tracked_job("cost_reprice_sweep", _do_cost_reprice_sweep)
 
 

@@ -1,0 +1,77 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Enter SSA Score from a school's profile (owner, 2026-10-14). One SSA a school
+a financial year: while the year has none, the eight intervention scores of
+the existing SSA record, 0 to 10; once it has one, the record that holds the
+year and no form. A save posted from a drawer opened before somebody else
+took the year is refused with `refusal` and writes nothing
+(apps.frontend.views.school_views.school_ssa_entry_view).
+{% endcomment %}
+
+{% block drawer_title %}Enter SSA Score{% endblock %}
+{% block drawer_subtitle %}{{ school.name }} · FY{{ fy }}{% endblock %}
+
+{% block drawer_body %}
+{% if held %}
+<div class="space-y-3 text-[13px]" data-ssa-entry-held>
+  {% if refusal %}<p role="alert" class="edify-note" data-tone="danger">{{ refusal }}</p>{% endif %}
+  <p class="edify-note" data-tone="info">SSA already entered for FY{{ fy }}. A school has one SSA a financial year.</p>
+  <dl class="grid grid-cols-2 gap-x-4 gap-y-2">
+    <dt class="edify-text-caption text-slate-500">Average score</dt>
+    <dd class="font-semibold tabular-nums">{{ held.average_score|default:"—" }}</dd>
+    <dt class="edify-text-caption text-slate-500">Assessment date</dt>
+    <dd class="font-semibold">{{ held.date_of_ssa|date:"j M Y" }}</dd>
+    <dt class="edify-text-caption text-slate-500">Status</dt>
+    <dd class="font-semibold">{{ held.get_verification_status_display }}</dd>
+  </dl>
+  <p class="edify-text-caption text-slate-500">To correct it, a verifier returns the record to its collector; it is corrected in place, never added again.</p>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+  </div>
+</div>
+{% else %}
+<form
+method="post"
+action="/schools/{{ school.id }}/ssa-entry"
+hx-post="/schools/{{ school.id }}/ssa-entry"
+hx-target="#drawer-container"
+hx-disabled-elt="find button[type='submit']"
+class="space-y-4 text-[12px] text-slate-600"
+data-ssa-entry-form
+>
+{% csrf_token %}
+{% comment %}Opened from a visit awaiting its scores on My Plan (owner,
+2026-10-17): the scores are keyed on that visit.{% endcomment %}
+{% if visit %}<input type="hidden" name="activity" value="{{ visit.id }}">{% endif %}
+
+{% if form.non_field_errors %}
+<div role="alert" class="edify-note" data-tone="danger">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+{% endif %}
+
+<p class="edify-text-caption text-slate-500">All eight intervention scores, 0 to 10. They count once a verifier other than you confirms them.</p>
+
+<div class="space-y-1">
+<label for="{{ form.date_of_ssa.id_for_label }}" class="block edify-text-caption font-semibold text-slate-600">{{ form.date_of_ssa.label }} <span class="text-rose-500">*</span></label>
+{{ form.date_of_ssa }}
+<p id="profile-ssa-date-help" class="edify-text-caption text-slate-500">A day in FY{{ fy }}, up to today.</p>
+{% for error in form.date_of_ssa.errors %}<p class="edify-text-caption font-semibold text-rose-700">{{ error }}</p>{% endfor %}
+</div>
+
+<fieldset class="grid gap-3 sm:grid-cols-2">
+<legend class="sr-only">Intervention scores</legend>
+{% for field in form.score_fields %}
+<div class="space-y-1">
+<label for="{{ field.id_for_label }}" class="block edify-text-caption font-semibold text-slate-600">{{ field.label }} <span class="text-rose-500">*</span></label>
+{{ field }}
+{% for error in field.errors %}<p class="edify-text-caption font-semibold text-rose-700">{{ error }}</p>{% endfor %}
+</div>
+{% endfor %}
+</fieldset>
+
+<div class="drawer-footer">
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">Save SSA</button>
+</div>
+</form>
+{% endif %}
+{% endblock %}

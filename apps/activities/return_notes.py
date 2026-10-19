@@ -38,10 +38,19 @@ COMMON_REASONS = (
     "Salesforce ID entered, but no participants in Salesforce",
     "Participants not entered in Salesforce",
     "Activity ID missing or wrong in Salesforce",
+    # UPLOAD-OFF (owner, 2026-10-13): the three reasons that named an
+    # uploaded form are FORM_REASONS below, offered for a partner's work only.
+    "Participant numbers do not match Salesforce",
+    "Wrong school, cluster or activity date",
+)
+
+#: The reasons about the uploaded form. A partner's work is verified from its
+#: upload (owner, 2026-10-14), so its returns offer these beside the common
+#: ones; staff work asks for no file, so its returns do not.
+FORM_REASONS = (
     "Attendance form missing or unreadable",
     "Participant numbers do not match the attendance form",
     "Evidence missing or unclear",
-    "Wrong school, cluster or activity date",
 )
 
 #: Who sent the work back, by the status the return wrote.

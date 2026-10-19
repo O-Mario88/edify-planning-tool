@@ -69,9 +69,19 @@ class IaReachAndSelfVerificationTest(TestCase):
         cls.cd = _user("cd-ug@t.org", "Dan CD", EdifyRole.COUNTRY_DIRECTOR.value)
         cls.cceo = _user("cceo-ug@t.org", "Cara CCEO", EdifyRole.CCEO.value)
         cls.ke_cceo = _user("cceo-ke@t.org", "Kip CCEO", EdifyRole.CCEO.value, "Kenya")
-        cls.cceo_work = _awaiting(cls.ug_school, cls.cceo, "SF-CCEO")
+        # Whose staff work Impact Assessment verifies: a coordinator's own
+        # field work. A CCEO's and a Programme Lead's are verified by a lead
+        # (owner, 2026-10-12 and 2026-10-14). The name `cceo_work` is
+        # historical: "ordinary staff work".
+        cls.lead = _user(
+            "lead-ug@t.org", "Lena Lead", EdifyRole.PROJECT_COORDINATOR.value
+        )
+        cls.ke_lead = _user(
+            "lead-ke@t.org", "Kofi Lead", EdifyRole.PROJECT_COORDINATOR.value, "Kenya"
+        )
+        cls.cceo_work = _awaiting(cls.ug_school, cls.lead, "SF-CCEO")
         cls.ia_own = _awaiting(cls.ug_school, cls.ia, "SF-IA-OWN")
-        cls.ke_work = _awaiting(cls.ke_school, cls.ke_cceo, "SF-KE")
+        cls.ke_work = _awaiting(cls.ke_school, cls.ke_lead, "SF-KE")
 
     def test_the_queue_and_its_pages_stop_at_the_border(self):
         self.client.force_login(self.ia)

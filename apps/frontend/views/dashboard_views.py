@@ -284,6 +284,7 @@ def _cceo_week(request, user, *, past_due_total: int | None = None) -> dict:
         week=request.GET.get("week"),
         solo=True,
         past_due_total=past_due_total,
+        show=request.GET.get("show", ""),
     )
 
 
@@ -341,6 +342,7 @@ def _program_lead_dashboard(request, avatar_initials: str):
             fy=fy,
             who=who,
             week=request.GET.get("week"),
+            show=request.GET.get("show", ""),
         )
         if hx_target == "pl-week-panel":
             # One of the week's own tabs or arrows: the panel alone.
@@ -2134,8 +2136,7 @@ def _send_lead_reminder(activity, *, due: bool):
         title = f"Action Required: {act_type} due {date_str}"
         body = (
             f"Your activity for {school_or_cluster} is due on {date_str}. "
-            "Please complete it — upload the evidence and enter its Salesforce "
-            "ID — or reschedule it."
+            "Please complete it — enter its Salesforce ID — or reschedule it."
         )
     else:
         title = f"Action Required: Overdue {act_type}"
@@ -2169,8 +2170,8 @@ def _send_lead_reminder(activity, *, due: bool):
 @require_POST
 def pl_week_send_reminder(request, activity_id: str):
     """This Week's "Send to <officer>" (owner, 2026-09-26): remind an officer
-    to complete work they have not completed — upload the evidence and enter
-    the Salesforce ID — whether it is past its day or due later this week.
+    to complete work they have not completed — enter the Salesforce ID —
+    whether it is past its day or due later this week.
 
     Only the officer's Programme Lead, only for work the officer delivers
     themselves, not yet completed, and due by the end of this week

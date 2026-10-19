@@ -94,8 +94,10 @@ Compare Side-by-Side
      target the canonical forms below, so this is one action implementation,
      not a second workflow. -->
 <div class="lg:hidden fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-[var(--edify-border)] bg-[var(--edify-surface)] p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] shadow-lg">
+  {% if lead_verifies %}<p class="edify-note col-span-2" data-tone="info" role="note">Verified by the officer's Program Lead on Completion Reviews.</p>{% else %}
   <button form="verify-form" type="submit" class="btn btn-primary min-h-11">Verified</button>
   <button type="button" class="btn min-h-11 border border-[var(--edify-danger)] text-[var(--edify-danger)]" @click="openReturn($event)">Return</button>
+  {% endif %}
 </div>
 
 <!-- Main Three-Panel Split Grid -->
@@ -236,7 +238,7 @@ Click to Expand Image
 </div>
 {% else %}
 <div class="edify-surface p-12 text-center text-slate-400 font-semibold rounded-surface border border-slate-200">
-No evidence uploads available for this activity.
+No files. This activity is completed with its Salesforce ID.
 </div>
 {% endif %}
 </div>
@@ -328,6 +330,18 @@ Absent
 {% endif %}
 </div>
 {% endfor %}
+{% for school in visiting_schools %}
+<div class="p-3 rounded-surface border border-slate-100 bg-slate-50/50 flex items-center justify-between" data-visiting-school>
+<div>
+<span class="font-bold text-slate-800 block text-[12px] leading-tight">{% school_link school.name school.school_id %}</span>
+<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ school.school_id }} &middot; visiting, not invited</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-150">
+<span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
+Attended
+</span>
+</div>
+{% endfor %}
 </div>
 </div>
 {% endif %}
@@ -346,6 +360,8 @@ Absent
 <form id="verify-form" method="POST" action="/ia/verification/{{ act.id }}/verify" class="space-y-3.5">
 {% csrf_token %}
 
+{# UPLOAD-OFF (owner, 2026-10-13): no file is asked for, so the reviewer is not asked to tick that one exists. Remove the comment tags to bring the item back. #}
+{% comment %}UPLOAD-OFF
 <!-- Checkbox item: Evidence -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="evidence_exists" x-model="checklist.evidence_exists" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
@@ -354,13 +370,14 @@ Absent
 <span class="edify-text-caption text-slate-400 block mt-0.5">Physical files/photos uploaded</span>
 </div>
 </label>
+{% endcomment %}
 
 <!-- Checkbox item: Attendance -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="attendance_valid" x-model="checklist.attendance_valid" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Attendance valid</span>
-<span class="edify-text-caption text-slate-400 block mt-0.5">Headcount matches evidence sheet</span>
+<span class="edify-text-caption text-slate-400 block mt-0.5">Headcount matches the Salesforce record</span>
 </div>
 </label>
 
@@ -432,6 +449,9 @@ Absent
 
 <!-- Action buttons at the bottom of the right panel -->
 <div class="hidden lg:block sticky bottom-0 z-20 space-y-2 border-t border-slate-100 pt-4 pb-[max(0rem,env(safe-area-inset-bottom))] edify-surface shrink-0">
+{% if lead_verifies %}
+<p class="edify-note" data-tone="info" role="note" data-lead-verifies>A CCEO's completion is verified by their Program Lead, on Completion Reviews. It is read-only here.</p>
+{% else %}
 <button
 form="verify-form"
 type="submit"
@@ -439,6 +459,7 @@ class="btn btn-primary w-full min-h-11"
 >
 Verified
 </button>
+{% endif %}
 <button
 @click="openReturn($event)"
 type="button"

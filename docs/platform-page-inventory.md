@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **930**
-- All registered routes: **1410**
-- API routes: **363**
+- Routed product surfaces: **935**
+- All registered routes: **1416**
+- API routes: **364**
 - Roles: **15**
 - Permission keys: **127**
-- Scheduled jobs: **37**
+- Scheduled jobs: **38**
 - Activity states: **24**
-- Shared component templates: **695**
-- Full pages: **270**
-- Partials and drawers: **332**
-- Permission-gated surfaces: **913**
-- Referenced by automated tests: **828**
+- Shared component templates: **705**
+- Full pages: **271**
+- Partials and drawers: **334**
+- Permission-gated surfaces: **918**
+- Referenced by automated tests: **836**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -239,7 +239,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-CAE42FDDA4 | /compliance-register/save | Compliance Evidence Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-674EDB9BA4 | /core-school-health | Core School Health | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-635D9F0FEB | /core-schools | Core Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-8BB204A012 | /core-schools-oversight/ | Core School Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-53D2780867 | /core-schools-oversight/ | Core School Oversight · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C4495A9FB9 | /core-schools/<str:plan_id> | Core School Plan | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-360423493D | /core-schools/<str:school_id>/champion-approve | Champion Approve Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-4C0FCAE306 | /core-schools/<str:school_id>/champion-reject | Champion Reject Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -250,6 +250,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-40B24E4260 | /core-schools/champion-candidates | Champion School Candidates | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4D5A56548B | /core-schools/champions | Graduated Champion Schools | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E0D4C86D58 | /core-schools/oversight/send | Core Oversight Send Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-619DC20A24 | /core-schools/recommendations/<str:rec_id>/<str:action> | Core Recommendation Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-EAEE2E2561 | /core-schools/schedule-activity | Core Schedule Activity Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-21C12E11BA | /core-schools/schedule-training | Core Schedule Training Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B028D7C544 | /core-schools/schedule-training/action | Core Schedule Training Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -515,9 +516,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-99FC599EB9 | /ia/stories/<str:story_id>/ | Ia Story Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-4336351244 | /ia/stories/<str:story_id>/decide | Ia Story Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-A05C99B6EA | /ia/verification/ | Verification Queue | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-107DE82212 | /ia/verification/<str:activity_id>/ | IA Review Workspace - Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
-| UI-PAGE-374CDD4882 | /ia/verification/<str:activity_id>/return | Ia Return Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-ECFA021F35 | /ia/verification/<str:activity_id>/verify | Ia Verify Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-107DE82212 | /ia/verification/<str:activity_id>/ | IA Review Workspace - Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-374CDD4882 | /ia/verification/<str:activity_id>/return | Ia Return Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-ECFA021F35 | /ia/verification/<str:activity_id>/verify | Ia Verify Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-BD451D2966 | /impact | Impact Analytics | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3BE8D7DEFA | /impact-briefs/<str:release_id>/ | Impact brief · · Edify | report | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-92D9B3910D | /impact-briefs/<str:release_id>/shared | Impact Brief Shared | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -598,11 +599,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-8C2F91AF4E | /my-plan/<str:activity_id>/edit-drawer | Edit Activity Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C0BD71EBE9 | /my-plan/<str:activity_id>/learning-results | Onetest Results Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DEC93D9806 | /my-plan/<str:activity_id>/learning-results/save | Onetest Results Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-355261508C | /my-plan/<str:activity_id>/register-school-search | Register School Search | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-82480F4141 | /my-plan/<str:activity_id>/request-amendment | Request Budget Amendment | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-95DB260DE8 | /my-plan/<str:activity_id>/reschedule | Reschedule Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-34CF71A1B7 | /my-plan/<str:activity_id>/reschedule-drawer | Reschedule Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6937A8BBE4 | /my-plan/day-package | My Plan Day Package | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-637D222AB1 | /my-plan/export-drawer | My Plan Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-BA9943EE09 | /my-plan/readiness | My Plan Readiness | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A9CC7B99B9 | /my-professional-development | My Professional Development | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-66957B5B06 | /my-professional-development/ | My Professional Development | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3674FD9513 | /my-professional-development/allocation-history | Pd Allocation History | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
@@ -714,7 +717,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-9508BC10E6 | /personal-time-off/request/ | Request Leave Drawer View | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6505F2DCFE | /pl/review-queue | Completion Reviews · Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C057B93829 | /pl/review-queue/<str:activity_id>/confirm | Pl Confirm | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-4A1A757947 | /pl/review-queue/<str:activity_id>/drawer | Pl Review Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-4A1A757947 | /pl/review-queue/<str:activity_id>/drawer | Pl Review Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-5B9704236A | /pl/review-queue/<str:activity_id>/return | Pl Return | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-80D35194CE | /pl/review-queue/<str:activity_id>/return-drawer | Pl Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-5F1957110F | /planning | Planning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -841,6 +844,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-43A9299FB0 | /schools/<str:school_id>/delete | School Delete | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9AB62DBEF9 | /schools/<str:school_id>/edit-drawer | School Edit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0E19B43194 | /schools/<str:school_id>/reopen | School Reopen | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-EE093483F3 | /schools/<str:school_id>/ssa-entry | School Ssa Entry | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-189291E896 | /schools/<str:school_id>/take | School Take | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9559BE9B58 | /schools/<str:school_id>/transfer-owner | School Owner Transfer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-755C340D69 | /schools/add-school | Add School | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -850,6 +854,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-B0CF01F2F7 | /schools/bulk-match-staff | Bulk Match Staff | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9BA2BF3781 | /schools/bulk-transfer-owner | Bulk School Owner Transfer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-ADDF2AFAA1 | /schools/closed | Closed Schools · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-0463A67C9B | /schools/cluster-options | School Onboard Cluster Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-43A1B1DC79 | /schools/create-drawer | School Onboard Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-415C2B49E8 | /schools/parishes | School Parish Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D73CAF9D76 | /schools/partial-intelligence/<str:school_id> | School Intelligence Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

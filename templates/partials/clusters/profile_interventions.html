@@ -118,7 +118,7 @@ member schools nothing reached this year, each with a Schedule door.
 <th scope="col" class="px-3 py-2">School ID</th>
 <th scope="col" class="px-3 py-2">School / Cluster</th>
 <th scope="col" class="px-3 py-2">Delivered By</th>
-<th scope="col" class="px-3 py-2 text-right">Evidence</th>
+{# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2 text-right">Evidence</th> #}
 <th scope="col" class="px-3 py-2">SSA Outcome</th>
 </tr>
 </thead>
@@ -132,7 +132,7 @@ member schools nothing reached this year, each with a Schedule door.
 <td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.school_code|default:"—" }}</td>
 <td class="px-3 py-2" data-label="School / Cluster">{% if row.school_pk %}{% school_link row.school_name row.school_pk %}{% else %}{{ row.reach }}{% endif %}</td>
 <td class="px-3 py-2" data-label="Delivered By">{{ row.owner|default:"—" }}</td>
-<td class="px-3 py-2 text-right tabular-nums" data-label="Evidence">{% if row.evidence is None %}—{% else %}{{ row.evidence }} file{{ row.evidence|pluralize }}{% endif %}</td>
+{# UPLOAD-OFF (owner, 2026-10-13): <td class="px-3 py-2 text-right tabular-nums" data-label="Evidence">{% if row.evidence is None %}—{% else %}{{ row.evidence }} file{{ row.evidence|pluralize }}{% endif %}</td> #}
 <td class="px-3 py-2" data-label="SSA Outcome"><span class="edify-status-text" data-edify-tone="{{ row.outcome_tone }}">{{ row.outcome }}</span></td>
 </tr>
 {% endfor %}

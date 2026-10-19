@@ -236,7 +236,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Assessment's ("CD/IA should be able to configure weights").
     "cluster_oversight": {CCEO, PL, IA, CD, RVP, RPL, ACCOUNTANT, ADMIN},
     "cluster_scoring": {IA, CD, ADMIN},
-    "core_schools_oversight": {PL, IA, CD, RVP, RPL, ADMIN},
+    # Core School Oversight is the Core schools analysed; a CCEO reads their
+    # own (owner, 2026-10-17, the Core School Intelligence brief, 10.1).
+    "core_schools_oversight": {CCEO, PL, IA, CD, RVP, RPL, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
     # the same records through the school they manage, so they do not need a
@@ -2055,7 +2057,7 @@ SIDEBAR_ITEMS = [
                 "label": "Core School Oversight",
                 "url": "/core-schools-oversight/",
                 "page_key": "core_schools_oversight",
-                "visible_to": {PL, IA, CD, RPL, RVP, ADMIN},
+                "visible_to": {CCEO, PL, IA, CD, RPL, RVP, ADMIN},
             },
             {
                 # Beside Core Schools, because that is the programme these
@@ -3124,10 +3126,14 @@ SIDEBAR_ITEMS = [
         "visible_to": {PL},
         "items": [
             {
+                # Off the Programme Lead's sidebar (owner, 2026-10-14): their
+                # register is on the Execution & Completion tab their
+                # dashboard carries, and /pl/review-queue lands there. The
+                # Admin, who has no such dashboard, keeps the page.
                 "label": "Completion Reviews",
                 "url": "/pl/review-queue",
                 "page_key": "pl_review_queue",
-                "visible_to": {PL},
+                "visible_to": {ADMIN},
             },
             {
                 "label": "Programme Rollout",

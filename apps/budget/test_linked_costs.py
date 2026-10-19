@@ -90,6 +90,23 @@ class LinkedCostTest(TestCase):
         self.assertEqual(len(linked), 1)
         self.assertEqual(linked[0]["catalogueItemName"], self.visit.display_name)
 
+    def test_a_cost_named_transport_is_not_the_transport_companys(self):
+        # Only the visit day's own transport is paid to the transport
+        # company (fundable.vendor_direct_filter). A cost the CD adds is one
+        # line of the activity whatever its name, requested like the rest.
+        key = self._add(label="Participant transport refund", cost=150_000)["key"]
+        result = preview(
+            {
+                "activityType": "school_visit",
+                "deliveryType": "staff",
+                "districtType": "primary",
+                "catalogueItemId": self.visit.id,
+            }
+        )
+        added = next(line for line in result["lines"] if line["key"] == key)
+        self.assertEqual(added["amount"], 150_000)
+        self.assertEqual(added["lineItemType"], "other")
+
     def test_a_cost_needs_an_activity_and_a_name(self):
         with self.assertRaises(BadRequest):
             budget_services.add_linked_cost(

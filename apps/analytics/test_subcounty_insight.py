@@ -122,7 +122,9 @@ class SubCountyInsightTest(TestCase):
             school=self.school,
             fy="FY2026",
             average_score=1.0,
-            verification_status="pending",
+            # Returned: the unconfirmed state that may sit beside the year's
+            # confirmed SSA (one live SSA a school a year, owner 2026-10-14).
+            verification_status="returned",
             date_of_ssa=datetime.date(2026, 3, 2),
         )
 

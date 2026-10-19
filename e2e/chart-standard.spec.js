@@ -40,10 +40,12 @@ test('bar charts preserve units, palette, data and layout through range changes 
   await page.evaluate(()=>window.chartFixture.destroy());
   await expect(card.locator('[data-standard-charts]')).toHaveCount(0);
   // Cluster Oversight dropped its chart on 2026-09-23 for the member-by-member
-  // clusters, trainings and meetings; the chart-bearing oversight pages remain.
+  // clusters, trainings and meetings, and Core School Oversight its package
+  // chart on 2026-10-17 when it became the Core schools analysed (tables and
+  // figures with their denominators); the chart-bearing oversight page remains.
   // The year the demo seed's work is dated in: in a year with nothing
   // planned every bar is zero high, and a series of them has no box.
-  for (const route of ['/team-planning-oversight/?fy=2026', '/core-schools-oversight/?fy=2026']) {
+  for (const route of ['/team-planning-oversight/?fy=2026']) {
     const response = await page.goto(route);
     expect(response.status()).toBe(200);
     const plot = page.locator('[data-standard-charts]:visible').first();

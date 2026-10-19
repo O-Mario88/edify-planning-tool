@@ -160,6 +160,13 @@ def activity_budget_breakdown(
         label = ((setting.label or "").strip() if setting else "") or members[
             0
         ].label.split(" [Rate basis:", 1)[0]
+        # A day that crosses from the primary district into a secondary one
+        # is marked Mixed on its transport (owner, 2026-10-12); the catalogue
+        # names the rate, the line names the day.
+        from apps.daily_visit_batches.pricing import MIXED_TRANSPORT_LABEL
+
+        if any(member.label == MIXED_TRANSPORT_LABEL for member in members):
+            label = MIXED_TRANSPORT_LABEL
 
         allocation = (priced_line or {}).get("dailyAllocation")
         missing = bool(priced_line and priced_line.get("missing"))
@@ -292,14 +299,22 @@ def activity_budget_breakdown(
         pair_note = pair_cost_notes([activity]).get(activity.id, "")
         training_id = None
         if activity.activity_type == "school_visit":
+            from apps.activities.pair_costing import COMPANION_GONE_STATUSES
+
+            # Only while the pair stands: a called-off visit leaves its
+            # Training carrying the day, and a called-off Training carries
+            # nothing (owner, 2026-10-15: "no misleading costs").
             training_id = (
                 Activity.objects.filter(
                     paired_school_visit_id=activity.id,
                     activity_type="in_school_training",
                     deleted_at__isnull=True,
                 )
+                .exclude(status__in=COMPANION_GONE_STATUSES)
                 .values_list("id", flat=True)
                 .first()
+                if activity.status not in COMPANION_GONE_STATUSES
+                else None
             )
         if pair_note and not rows:
             empty_note = f"UGX 0 {pair_note}"

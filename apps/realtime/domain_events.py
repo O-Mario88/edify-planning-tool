@@ -156,6 +156,66 @@ def publish_audit_event(
         logger.exception("Audit event projection failed for %s: %s", event_type, exc)
 
 
+def publish_audit_events(events: list[dict]) -> None:
+    """`publish_audit_event` for the audit rows of one committed transaction:
+    their events are written in one statement, then each actor is told.
+
+    `events` holds the keyword arguments of `publish_audit_event`, in the
+    order the rows were written. If the one statement fails, each event is
+    published on its own, so one row that cannot be written costs only
+    itself."""
+    if not events:
+        return
+    if len(events) == 1:
+        publish_audit_event(**events[0])
+        return
+    try:
+        from apps.audit.models import DomainEventLog
+        from apps.core.bulk import saved_together
+
+        rows = [
+            DomainEventLog(
+                event_type=event["event_type"],
+                aggregate_type=event["subject_kind"],
+                aggregate_id=event["subject_id"],
+                actor_id=event["actor_id"],
+                payload={
+                    "auditSeq": event["audit_seq"],
+                    "success": event["success"],
+                    "reason": event["reason"],
+                    "data": event["payload"] or {},
+                },
+            )
+            for event in events
+        ]
+        DomainEventLog.objects.bulk_create(rows)
+        saved_together(DomainEventLog, rows)
+    except Exception:  # noqa: BLE001 — committed work must stay committed
+        logger.exception("Audit events could not be written together")
+        for event in events:
+            publish_audit_event(**event)
+        return
+    for event in events:
+        if not event["actor_id"]:
+            continue
+        try:
+            bus.publish(
+                event["actor_id"],
+                {
+                    "type": event["event_type"],
+                    "subjectKind": event["subject_kind"],
+                    "subjectId": event["subject_id"],
+                    "actorId": event["actor_id"],
+                    "at": timezone.now().isoformat(),
+                    "meta": event["payload"] or {},
+                },
+            )
+        except Exception as exc:  # noqa: BLE001 — committed work must stay committed
+            logger.exception(
+                "Audit event projection failed for %s: %s", event["event_type"], exc
+            )
+
+
 def _append_domain_event_log(event_type, subject_kind, subject_id, actor_id, payload):
     from apps.audit.models import DomainEventLog
 
@@ -204,6 +264,7 @@ __all__ = [
     "emit",
     "notify_only",
     "publish_audit_event",
+    "publish_audit_events",
     "users_with_role",
     "user_for_staff",
 ]

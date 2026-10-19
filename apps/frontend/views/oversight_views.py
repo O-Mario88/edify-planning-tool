@@ -13,10 +13,12 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
 from apps.core.fy import fy_options, get_operational_fy
+from apps.core.htmx_saved import saved_in_place
 from apps.core.rbac import Permission
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
 from apps.core import export_kinds
@@ -224,9 +226,20 @@ def _period_filters(request) -> dict:
         else None
     )
 
-    if period_type == "month_range" or (
-        from_month is not None and to_month is not None
-    ):
+    # The type chosen in the Export options drawer decides which of its
+    # fields is read: the drawer sends the month pair AND the dates whichever
+    # is shown, and reading the months first exported the whole year for
+    # "Custom Dates" (owner, 2026-10-15: "it is still exporting the entire
+    # plan"). A link with no type keeps the older inference.
+    if period_type not in ("month_range", "custom_dates", "fy"):
+        period_type = ""
+    wants_months = period_type == "month_range" or (
+        not period_type and from_month is not None and to_month is not None
+    )
+    wants_dates = period_type == "custom_dates" or (
+        not period_type and not wants_months and raw_start_date and raw_end_date
+    )
+    if wants_months:
         if from_month is not None and to_month is not None:
             d_start, d_end = month_range_to_dates(fy, from_month, to_month)
         elif from_month is not None:
@@ -237,7 +250,7 @@ def _period_filters(request) -> dict:
         date_end = d_end + timedelta(days=1)
         period = "custom"
         period_label = f"{d_start.strftime('%b %Y')} – {d_end.strftime('%b %Y')}"
-    elif period_type == "custom_dates" or (raw_start_date and raw_end_date):
+    elif wants_dates:
         try:
             s_d = datetime.strptime(raw_start_date, "%Y-%m-%d").date()
             e_d = datetime.strptime(raw_end_date, "%Y-%m-%d").date()
@@ -251,7 +264,12 @@ def _period_filters(request) -> dict:
             period = "fy"
             period_label = f"FY {fy}"
     elif period_type == "fy":
-        period = "fy"
+        # The drawer's Full FY is that year's days alone. Read as the page's
+        # "fy" it took in the years planned ahead as well (planning_horizon),
+        # so FY 2027 exported FY 2028's work too.
+        date_start = fy_start.date()
+        date_end = fy_end.date()
+        period = "custom"
         period_label = f"FY {fy}"
     else:
         # Existing month/quarter URLs keep their meaning. New links state the
@@ -1091,7 +1109,14 @@ def _execution_context(request, period: dict, *, base_url: str) -> dict:
         person_id=person or None,
     )
     execution_url = f"{base_url}?view=execution&fy={fy}"
+    # Completion Reviews ride on a Programme Lead's tab (owner, 2026-10-14).
+    reviews = None
+    if (request.user.active_role or "") == "Program Lead":
+        from apps.frontend.views.my_plan_views import completion_reviews_context
+
+        reviews = completion_reviews_context(request)
     return {
+        "completion_reviews": reviews,
         "fy": fy,
         "execution": monitor,
         "execution_totals": monitor["totals"],
@@ -1143,7 +1168,9 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
             "execution_due_delivered",
             totals.delivered_due,
             totals.due,
-            helper=f"{totals.delivered_due:,} of {totals.due:,} due to date",
+            # Delivered work counts whatever day it was planned for (owner,
+            # 2026-10-14), so the whole is what is due or already done.
+            helper=f"{totals.delivered_due:,} of {totals.due:,} due or delivered",
             icon="check",
             empty="Nothing due yet",
         ),
@@ -1159,18 +1186,19 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
             "execution_complete_share",
             totals.complete,
             totals.delivered,
-            helper=f"{totals.missing_salesforce:,} no SF ID · "
-            f"{totals.missing_evidence:,} no form",
+            # UPLOAD-OFF (owner, 2026-10-13): it went on
+            # f" · {totals.missing_evidence:,} no form".
+            helper=f"{totals.missing_salesforce:,} no SF ID",
             icon="clipboard",
             drill=f"{execution_url}&list=missing_salesforce",
             empty="Nothing delivered yet",
         ),
         render_kpi_item(
-            "execution_awaiting_ia",
-            MetricValue.measured(totals.awaiting_ia),
+            "execution_awaiting_pl",
+            MetricValue.measured(totals.awaiting_pl),
             helper=f"{totals.verified:,} verified",
             icon="check",
-            drilldown_url=f"{execution_url}&list=awaiting_ia",
+            drilldown_url=f"{execution_url}&list=awaiting_pl",
         ),
         share(
             "execution_partner_delivered",
@@ -1754,24 +1782,35 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                 school_lookup[s.id] = s
 
         from apps.activities.models import Activity
-        from apps.budget.models import CostSetting
+        from apps.budget.costing import (
+            CLUSTER_MEALS_RATE_KEY,
+            GROUP_TRAINING_MEALS_RATE_KEY,
+        )
+        from apps.budget.costing_service import planned_meal_rates
 
         act_obj_lookup = {a.id: a for a in Activity.objects.filter(id__in=act_ids)}
-        # A cluster meeting feeds its participants at the cluster meals rate
-        # and a cluster training at the group training meals rate (session
-        # costing spec, 2026-09-26); each defaults to the seeded 5,000.
-        active_meal_rates = {
-            rate.key: int(rate.unit_cost)
-            for rate in CostSetting.objects.filter(
-                key__in=["cluster_meetings_trainings_meals", "group_training_meals"],
-                catalogue__is_active=True,
-            )
-            if rate.unit_cost
+        # One participant's meal at each session, read from the session's
+        # own cost lines, else the catalogue: a cluster meeting feeds at the
+        # cluster meals rate and a cluster training at the group training
+        # meals rate (session costing spec, 2026-09-26). Never a literal.
+        meal_rates = {
+            **planned_meal_rates(
+                [
+                    a
+                    for a in act_obj_lookup.values()
+                    if a.activity_type in CLUSTER_MEETING_TYPES
+                ],
+                CLUSTER_MEALS_RATE_KEY,
+            ),
+            **planned_meal_rates(
+                [
+                    a
+                    for a in act_obj_lookup.values()
+                    if a.activity_type not in CLUSTER_MEETING_TYPES
+                ],
+                GROUP_TRAINING_MEALS_RATE_KEY,
+            ),
         }
-        meeting_meal_rate = active_meal_rates.get(
-            "cluster_meetings_trainings_meals", 5000
-        )
-        training_meal_rate = active_meal_rates.get("group_training_meals", 5000)
 
         for group in owner_groups:
             new_planned_trainings = []
@@ -1813,13 +1852,19 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                     if total_p and target_schools:
                         pps = max(1, total_p // len(target_schools))
                     else:
-                        pps = 2
-                meal_unit_rate = (
-                    meeting_meal_rate
-                    if act_obj and act_obj.activity_type in CLUSTER_MEETING_TYPES
-                    else training_meal_rate
-                )
-                per_school_meal_cost = pps * meal_unit_rate
+                        # No number was planned: say so. It read 2, a figure
+                        # nobody planned, priced into each school's row
+                        # (owner, 2026-10-15: "no misleading costs").
+                        pps = None
+                meal_unit_rate = meal_rates.get(act_id) or 0
+                # An online Group Training is free: no school is fed (owner,
+                # 2026-10-09; My Plan already reads it so). It read
+                # participants x the catalogue meal rate here.
+                if act_obj is not None:
+                    from apps.activities.online_training import is_online_training
+
+                    if is_online_training(act_obj):
+                        meal_unit_rate = 0
 
                 if target_schools:
                     for s in target_schools:
@@ -1842,15 +1887,19 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                         s_item.participants = invited_composition.get(
                             (act_id, s.id), pps
                         )
-                        s_item.planned_cost = s_item.participants * meal_unit_rate
+                        s_item.planned_cost = (
+                            s_item.participants * meal_unit_rate
+                            if s_item.participants is not None
+                            else 0
+                        )
                         s_item.budget = s_item.planned_cost
                         new_planned_trainings.append(s_item)
                 else:
                     fb_item = copy.copy(item)
                     fb_item.school_name = item.cluster_name or "Cluster Training"
-                    fb_item.participants = pps
-                    fb_item.planned_cost = item.planned_cost or per_school_meal_cost
-                    fb_item.budget = item.budget or fb_item.planned_cost
+                    # No school to split it over: the row is the session
+                    # itself, with its own head count and cost (owner,
+                    # 2026-10-15).
                     new_planned_trainings.append(fb_item)
 
             group["planned_trainings"] = new_planned_trainings
@@ -1886,7 +1935,9 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
             dict(
                 data,
                 count=len(data["items"]),
-                participants_total=sum(item.participants for item in data["items"]),
+                participants_total=sum(
+                    item.participants or 0 for item in data["items"]
+                ),
             )
             for data in grouped_dict.values()
         ]
@@ -2743,12 +2794,13 @@ def _filter_export_items(items, request, period: dict) -> list:
     # 2. Plan Status filter
     status = (request.GET.get("status") or "").strip().lower()
     if status == "completed":
+        # By the work's status, never by its letters: "completion_started"
+        # is work still being completed.
         filtered = [
             it
             for it in filtered
             if getattr(it, "is_completed", False)
             or getattr(it, "activity_status", "") in COMPLETED_WORK_STATUSES
-            or "complet" in getattr(it, "activity_status", "").lower()
             or getattr(it, "delivery_phase", "") == "completed"
         ]
     elif status == "scheduled":
@@ -2794,26 +2846,51 @@ def _filter_export_items(items, request, period: dict) -> list:
     return filtered
 
 
-def _export_response(items, filename: str, *, request_user, excel: bool = False):
-    """Exactly the rows the page is showing, as CSV or as a workbook.
+#: The drawer's "Whose plans" choice that is nobody in particular.
+EVERYONE = "all"
 
-    The items go through the same partition the page draws its four tables
-    with (`_partition_owner_groups_by_stream`), so every row the page lists
-    is a row of the export — a cluster training once per invited school, with
-    that school's ID — and the Training Name and SSA intervention columns the
-    page shows travel with it (owner, 2026-09-29). Both formats come from the
-    same `export_rows`, so they can never disagree with each other.
+
+def _export_program_lead(request) -> str | None:
+    """The one Program Lead an export was narrowed to, or None for everyone."""
+    selected = (request.GET.get("program_lead") or "").strip()
+    return None if selected in ("", EVERYONE) else selected
+
+
+def _whose_choices(selected: str = "") -> list[tuple[str, str, bool]]:
+    """Everyone first and chosen by default, then each Program Lead's team."""
+    leads = [
+        (pl["id"], f"{pl['name']}'s team") for pl in oversight.system_program_leads()
+    ]
+    keys = {key for key, _ in leads}
+    chosen = selected if selected in keys else EVERYONE
+    return [
+        (key, label, key == chosen) for key, label in [(EVERYONE, "Everyone"), *leads]
+    ]
+
+
+def _export_response(items, filename: str, *, request_user, excel: bool = False):
+    """The rows the page is showing, as a workbook or as CSV, in the one
+    layout every plan export uses (`apps.core.plan_export`; owner,
+    2026-10-12): a sheet of school visits, a sheet of trainings and cluster
+    meetings and a sheet of other activities, each with the owner's columns
+    and a District and District Type.
+
+    The items are the ones the page's tables are drawn from, one per
+    activity: a cluster session is one row with its own participants and
+    cost (its columns carry no School ID), where the page's "Schools with
+    Planned Training" table lists it once per invited school. Both formats
+    come from the same rows.
     """
-    groups = _partition_owner_groups_by_stream(list(items), request_user)
-    rows = list(oversight.export_rows(oversight.stream_rows(groups)))
-    headers, body = (rows[0], rows[1:]) if rows else ([], [])
+    from apps.core import plan_export
+
+    del request_user  # kept in the signature for the callers
+    rows = oversight.plan_export_rows(items)
 
     if excel:
         from apps.core.excel import workbook_response
 
         return workbook_response(
-            filename.replace(".csv", ".xlsx"),
-            [{"title": "Plan", "headers": headers, "rows": body}],
+            filename.replace(".csv", ".xlsx"), plan_export.sheets(rows)
         )
 
     import csv
@@ -2826,7 +2903,7 @@ def _export_response(items, filename: str, *, request_user, excel: bool = False)
 
     writer = csv.writer(_Echo())
     response = StreamingHttpResponse(
-        (writer.writerow(row) for row in rows),
+        (writer.writerow(row) for row in plan_export.csv_rows(rows)),
         content_type="text/csv",
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -2845,17 +2922,26 @@ def team_planning_export_view(request):
     items = oversight.build_items(
         request.user,
         staff_id=(request.GET.get("team_member") or "").strip() or None,
-        filters=oversight.read_filters(request),
+        filters=oversight.export_filters(request),
         **_plan_period(period),
     )
     scope = oversight.resolve_oversight_scope(request.user)
     if scope.is_country:
-        sys_pls = oversight.system_program_leads()
-        _, _, visible = _program_lead_tabs(
-            items,
-            (request.GET.get("program_lead") or "").strip(),
-            program_leads=sys_pls,
-        )
+        # The Country Director and Impact Assessment export everyone at once
+        # (owner, 2026-10-12: "make sure the cd and ia can export for
+        # everyone at once not by program lead as currently it is"). The
+        # page's tabs show one Program Lead at a time; the export followed
+        # them, and with no tab named it took the first Lead's alone. One
+        # Lead's team is now a choice in the drawer.
+        selected_lead = (request.GET.get("program_lead") or "").strip()
+        if selected_lead in ("", EVERYONE):
+            visible = items
+        else:
+            _, _, visible = _program_lead_tabs(
+                items,
+                selected_lead,
+                program_leads=oversight.system_program_leads(),
+            )
     else:
         # The export follows the tab the page shows, Whole team by default.
         _, _, visible = _team_owner_tabs(
@@ -2877,8 +2963,8 @@ def country_planning_export_view(request):
     period = _period_filters(request)
     items = oversight.build_items(
         request.user,
-        program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
-        filters=oversight.read_filters(request),
+        program_lead_id=_export_program_lead(request),
+        filters=oversight.export_filters(request),
         **_plan_period(period),
     )
     items = _filter_export_items(items, request, period)
@@ -2971,12 +3057,15 @@ def special_project_export_view(request, project_id: str = "all"):
                 if s.activity_date and d_start <= s.activity_date <= inclusive_end
             ]
     if req_status == "completed":
+        # By the row's state, never by the letters of its label: "Not
+        # Complete" holds "complet" and was exported as completed (the same
+        # trap the plan exports fixed on 2026-10-12).
         for proj in projects:
             proj.school_rows = [
                 s
                 for s in proj.school_rows
                 if getattr(s, "activity_state_label", "").lower() == "completed"
-                or "complet" in getattr(s, "status_label", "").lower()
+                or getattr(s, "status_key", "") == monitoring.STATUS_COMPLETED
             ]
     # A project school's row names its training, or none for a visit; cluster
     # meetings and online trainings are not project work, so those kinds
@@ -2987,7 +3076,7 @@ def special_project_export_view(request, project_id: str = "all"):
     if kind != export_kinds.ALL:
         wants_training = kind in (export_kinds.GROUP_TRAININGS, export_kinds.TRAININGS)
         for proj in projects:
-            if kind == export_kinds.VISITS_TRAININGS:
+            if kind in (export_kinds.VISITS_TRAININGS, export_kinds.PLANNED):
                 continue
             if kind in (export_kinds.MEETINGS, export_kinds.ONLINE):
                 proj.school_rows = []
@@ -3953,11 +4042,13 @@ def partner_oversight_export_view(request):
         **_service_period(period),
     )
 
+    # The drawer's kind of work and plan status are the export's own, applied
+    # below; the workspace filter reads only the page's own values.
     ws_act = (request.GET.get("activity_type") or "").strip()
-    if ws_act in ("visits_trainings", "visits", "trainings", "all"):
+    if ws_act in export_kinds.KINDS:
         ws_act = ""
     ws_status = (request.GET.get("status") or "").strip()
-    if ws_status in ("all", "completed"):
+    if ws_status in export_kinds.STATUS_LABELS:
         ws_status = ""
 
     items = partner_oversight.filter_workspace(
@@ -3991,8 +4082,9 @@ def partner_oversight_export_view(request):
             if it.delivery_phase == "completed"
             or it.activity_status in _COMPLETE_STATUSES
         ]
-
-    from apps.core import export_kinds
+    elif req_status in export_kinds.LIVE_STATUSES:
+        # The page's own phase: a moved activity is still scheduled there.
+        items = [it for it in items if it.delivery_phase == req_status]
 
     items = export_kinds.filter_items(
         items,
@@ -4378,7 +4470,7 @@ def partner_allowance_drawer(request):
 
 @require_page_permission("partner_oversight")
 def partner_allowance_grant_action(request):
-    from django.http import HttpResponse, HttpResponseForbidden
+    from django.http import HttpResponseForbidden
 
     if request.method != "POST":
         return HttpResponseForbidden("POST required")
@@ -4411,43 +4503,13 @@ def partner_allowance_grant_action(request):
         success=True,
         reason=f"School {request.POST.get('school_id')}: {request.POST.get('reason', '')[:150]}",
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 # ── Core Schools Oversight ─────────────────────────────────────────────────
 # Cluster Oversight is apps.frontend.views.cluster_management_views since
-# 2026-10-17: the clusters analysed; their planned sessions are on Planning
-# Oversight.
-@require_page_permission("core_schools_oversight")
-def core_schools_oversight_view(request):
-    """Core schools oversight page — packages progress, visits/trainings status."""
-    period = _period_filters(request)
-    fy = period.get("fy") or get_operational_fy()
-    from apps.core_schools.oversight_service import core_schools_oversight_data
-
-    data = core_schools_oversight_data(request.user, fy=fy)
-    context = {
-        **period,
-        **data,
-        "fy_options": fy_options(),
-        "standalone_portfolio": True,
-        "active_lens": "core_schools_oversight",
-    }
-    if request.headers.get("HX-Request") == "true":
-        return render(
-            request,
-            "partials/oversight/core_schools_oversight_workspace.html",
-            context,
-        )
-    return render(
-        request,
-        "pages/oversight/core_schools_oversight.html",
-        context,
-    )
-
-
+# 2026-10-17: the clusters analysed; their planned sessions and their
+# export are on Planning Oversight.
 # ── Resolving work a Partner handed back ─────────────────────────────────────
 @require_page_permission("partner_oversight")
 def partner_return_resolve_drawer_view(request):
@@ -4541,6 +4603,65 @@ def partner_return_resolve_submit_view(request):
     )
 
 
+#: The months of each quarter of the fiscal year, as the drawer selects them.
+_QUARTER_MONTHS = {"Q1": (10, 12), "Q2": (1, 3), "Q3": (4, 6), "Q4": (7, 9)}
+
+
+def drawer_period(request) -> dict:
+    """The period the Export options drawer opens on: the one the page is
+    showing (owner, 2026-10-15: "make sure it only picks the plan for the
+    selected period not everything").
+
+    A month opens as that month to that month, a quarter as its three months
+    and a week as its seven days. A page showing the whole year, or naming no
+    period, opens on the current month (owner, 2026-10-15: "the planning
+    drawer should default to the current month"); Full FY is one click away.
+    It used to open From the page's month To September, so a month on the page
+    became the rest of the year in the file. A month pair the request already
+    names wins.
+    """
+    raw_period = (request.GET.get("period") or "").strip().lower()
+    raw_from = (request.GET.get("from_month") or "").strip()
+    raw_to = (request.GET.get("to_month") or "").strip()
+    raw_month = (request.GET.get("month") or "").strip()
+    raw_quarter = (request.GET.get("quarter") or "").strip().upper()
+
+    def _month(raw):
+        return int(raw) if raw.isdigit() and 1 <= int(raw) <= 12 else None
+
+    this_month = timezone.localdate().month
+    found = {
+        "selected_from_month": this_month,
+        "selected_to_month": this_month,
+        "period_mode": "month_range",
+        "default_start_date": "",
+        "default_end_date": "",
+    }
+    if _month(raw_from) and _month(raw_to):
+        found.update(
+            selected_from_month=_month(raw_from), selected_to_month=_month(raw_to)
+        )
+    elif raw_period == "quarter" and raw_quarter in _QUARTER_MONTHS:
+        first, last = _QUARTER_MONTHS[raw_quarter]
+        found.update(selected_from_month=first, selected_to_month=last)
+    elif raw_period == "week":
+        period = _period_filters(request)
+        if period.get("date_start") and period.get("date_end"):
+            found.update(
+                period_mode="custom_dates",
+                default_start_date=period["date_start"].strftime("%Y-%m-%d"),
+                default_end_date=(period["date_end"] - timedelta(days=1)).strftime(
+                    "%Y-%m-%d"
+                ),
+            )
+    elif raw_period in ("", "month") and _month(raw_month):
+        found.update(
+            selected_from_month=_month(raw_month),
+            selected_to_month=_month(raw_month),
+        )
+    return found
+
+
 def export_drawer_context(
     request, *, export_url: str, title: str, subtitle: str, hidden_keys=(), fixed=None
 ) -> dict:
@@ -4556,20 +4677,9 @@ def export_drawer_context(
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
     fy_start, fy_end = get_fy_date_range(fy)
     hidden_params = {k: request.GET.get(k) for k in hidden_keys if request.GET.get(k)}
     hidden_params.update(fixed or {})
@@ -4582,8 +4692,11 @@ def export_drawer_context(
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": fy_start.strftime("%Y-%m-%d"),
-        "default_end_date": (fy_end - timedelta(days=1)).strftime("%Y-%m-%d"),
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"]
+        or fy_start.strftime("%Y-%m-%d"),
+        "default_end_date": page_period["default_end_date"]
+        or (fy_end - timedelta(days=1)).strftime("%Y-%m-%d"),
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
@@ -4615,7 +4728,12 @@ def planning_export_drawer_view(request):
     )
 
     scope = oversight.resolve_oversight_scope(request.user)
-    is_country = scope.is_country or "country-planning" in request.path
+    # The page the drawer was opened from, never the reader's role (owner,
+    # 2026-10-15: "if it is planning oversight page, it should fetch data from
+    # planning oversight ... not fetch data from other random page"): a
+    # Country Director pressing Export on Team Planning Oversight got the
+    # country export.
+    is_country = "country-planning" in request.path
     export_url = (
         "/country-planning-oversight/export"
         if is_country
@@ -4627,24 +4745,14 @@ def planning_export_drawer_view(request):
         else "Export Team Planning Oversight"
     )
     subtitle = (
-        "Customize from (Month) to (Month) and extract completed visits & trainings"
+        "Choose the period, then download the planned visits, trainings and "
+        "cluster meetings in it"
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
 
     fy_start, fy_end = get_fy_date_range(fy)
     default_start_date = fy_start.strftime("%Y-%m-%d")
@@ -4652,8 +4760,16 @@ def planning_export_drawer_view(request):
 
     hidden_keys = ("owner", "program_lead", "team_member", "view", "tab")
     hidden_params = {k: request.GET.get(k) for k in hidden_keys if request.GET.get(k)}
+    # A country reader chooses whose plans in the drawer, Everyone by
+    # default, so the tab the page happens to be on does not narrow it.
+    whose_choices = []
+    if scope.is_country or is_country:
+        hidden_params.pop("program_lead", None)
+        hidden_params.pop("owner", None)
+        whose_choices = _whose_choices()
 
     context = {
+        "whose_choices": whose_choices,
         "title": title,
         "subtitle": subtitle,
         "export_url": export_url,
@@ -4662,8 +4778,9 @@ def planning_export_drawer_view(request):
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": default_start_date,
-        "default_end_date": default_end_date,
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"] or default_start_date,
+        "default_end_date": page_period["default_end_date"] or default_end_date,
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
@@ -4688,20 +4805,9 @@ def partner_oversight_export_drawer_view(request):
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
 
     fy_start, fy_end = get_fy_date_range(fy)
     default_start_date = fy_start.strftime("%Y-%m-%d")
@@ -4721,8 +4827,9 @@ def partner_oversight_export_drawer_view(request):
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": default_start_date,
-        "default_end_date": default_end_date,
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"] or default_start_date,
+        "default_end_date": page_period["default_end_date"] or default_end_date,
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
@@ -4752,20 +4859,9 @@ def project_export_drawer_view(request):
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
 
     fy_start, fy_end = get_fy_date_range(fy)
     default_start_date = fy_start.strftime("%Y-%m-%d")
@@ -4792,8 +4888,9 @@ def project_export_drawer_view(request):
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": default_start_date,
-        "default_end_date": default_end_date,
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"] or default_start_date,
+        "default_end_date": page_period["default_end_date"] or default_end_date,
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,

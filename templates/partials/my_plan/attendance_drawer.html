@@ -37,6 +37,8 @@ class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] 
 >
 </div>
 
+{# UPLOAD-OFF (owner, 2026-10-13): the signed sheet is no longer uploaded; the headcount is the record. Remove the comment tags to bring the file input back. #}
+{% comment %}UPLOAD-OFF
 <div class="space-y-1">
 <label for="attendance_file" class="block edify-text-caption font-semibold text-slate-600">Signed attendance sheet</label>
 <input
@@ -50,6 +52,7 @@ class="w-full edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 
 >
 <p id="attendance-file-help" class="edify-text-caption text-slate-500">A sheet with several pages: choose all the pages together (PDFs or photos) and they are joined into one PDF.</p>
 </div>
+{% endcomment %}
 
 <!-- School Attendance Checklist -->
 {% if cluster_schools %}

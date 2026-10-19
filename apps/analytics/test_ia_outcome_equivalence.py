@@ -390,21 +390,25 @@ class OracleWorld(TestCase):
             if i % 5 == 0:
                 ssa(row, "2027", _at(2026, 10, 1 + i % 10), _scores(i + 3, 0.2))
 
-        # Several records per FY: the newest confirmed one counts; newer
-        # pending, returned and soft-deleted readings count nowhere.
+        # Several records per FY: the year's live one counts; returned and
+        # soft-deleted readings beside it count nowhere. (One live SSA a
+        # school a year since 2026-10-14, so the others are returned.)
         cls.dup = school("ORC-DUP", central, d1)
-        ssa(cls.dup, "2025", _at(2024, 10, 5), _scores(40, 0.0))
+        ssa(cls.dup, "2025", _at(2024, 10, 5), _scores(40, 0.0), status="returned")
         ssa(cls.dup, "2025", _at(2025, 2, 1), _scores(41, 0.0))
         ssa(cls.dup, "2026", _at(2025, 10, 20), _scores(41, 0.5))
-        ssa(cls.dup, "2026", _at(2026, 3, 1), _scores(42, 1.0), status="pending")
+        ssa(cls.dup, "2026", _at(2026, 3, 1), _scores(42, 1.0), status="returned")
         ssa(cls.dup, "2026", _at(2026, 4, 1), _scores(43, 1.0), deleted=True)
         ssa(cls.dup, "2026", _at(2026, 5, 1), _scores(44, 1.0), status="returned")
 
-        # Same-date ties, broken by created_at — against insertion order.
+        # Same-date ties, broken by created_at — against insertion order. The
+        # second is returned: one live SSA a school a year (2026-10-14).
         cls.tie = school("ORC-TIE", central, d1, in_cluster=True)
         ssa(cls.tie, "2025", _at(2024, 11, 3), _scores(50, 0.0))
         first = ssa(cls.tie, "2026", _at(2026, 1, 15, 10), _scores(50, 0.4))
-        second = ssa(cls.tie, "2026", _at(2026, 1, 15, 10), _scores(50, -0.4))
+        second = ssa(
+            cls.tie, "2026", _at(2026, 1, 15, 10), _scores(50, -0.4), status="returned"
+        )
         stamp = _at(2026, 1, 16)
         SsaRecord.objects.filter(pk=first.pk).update(
             created_at=stamp + timedelta(hours=2)

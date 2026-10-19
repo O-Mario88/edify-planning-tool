@@ -31,6 +31,16 @@ order.
 
 A read: it owns no table and writes nothing. Two queries answer a page of
 rows, however many there are.
+
+UPLOAD-OFF (owner, 2026-10-13: "remove the upload and use strictly visit ID
+and training IDs to complete the activities"; 2026-10-14: "Only staff dont
+need to upload. partners HAVE to upload because that is how we verify their
+work"). The form is the second half of completing for a PARTNER's work only.
+Staff work is complete with its Salesforce ID: its `evidence_ok` is always
+True, its `evidence_label` blank, no file is read for it, and the staff
+tables no longer draw the Evidence column (components/completion_cells.html
+draws it only where a table asks, which the partner tables do). The switch
+is apps.evidence.form_document.takes_upload.
 """
 
 from __future__ import annotations
@@ -52,6 +62,19 @@ OFFICER_COMPLETED_STATUSES = frozenset(
     ("submitted_to_pl", "awaiting_ia_verification", *COMPLETED_WORK_STATUSES)
 )
 
+#: Approved, and so counted (owner, 2026-10-15: "Any activity not approved by
+#: PL should not be counted"). A CCEO's work is approved by their Programme
+#: Lead and a lead's own on hand-in (apps.pl_review.services); partner work and
+#: other staff's by Impact Assessment. Handed-in work that waits for the
+#: approval is completed — green, off the calendar — but not yet counted.
+APPROVED_STATUSES = frozenset(("ia_verified", "accountant_confirmed", "closed"))
+
+#: Done before its planned day (owner, 2026-10-14: "the activities finished
+#: early should be taken off the calendar and on My Plan tables, planning
+#: oversight marked complete so we can be able to track"). The calendar leaves
+#: every completed activity off (OFFICER_COMPLETED_STATUSES).
+FINISHED_EARLY = "Completed Early"
+
 NOT_IN_SF = "Not in SF"
 NO_EVIDENCE = "No Evidence Uploaded"
 MISSING_SF = "Missing Salesforce ID"
@@ -66,11 +89,102 @@ EMPTY = {
     "evidence_label": "",
     "salesforce_ok": False,
     "evidence_ok": False,
+    "early_on": None,
+    "delivered_on": None,
+    "planned_before": None,
 }
 
 
 def is_officer_completed(status) -> bool:
     return (status or "") in OFFICER_COMPLETED_STATUSES
+
+
+def plan_day(planned_date, scheduled_date) -> date | None:
+    """The day work is planned for: its planned date, or else the local day of
+    the scheduled time an older or Partner-dated row carries on its own — the
+    way My Plan and Partner oversight read it."""
+    from apps.core.clock import local_day
+
+    return planned_date or local_day(scheduled_date)
+
+
+def delivered_day(actual_delivery_date, execution_started_at) -> date | None:
+    """The day the work was done: the delivery date the officer recorded, or
+    else the day they pressed Complete — the day Country Execution reads too
+    (apps.planning.country_execution.dataset)."""
+    from apps.core.clock import local_day
+
+    return actual_delivery_date or local_day(execution_started_at)
+
+
+def early_day(
+    planned_date,
+    scheduled_date,
+    actual_delivery_date,
+    execution_started_at,
+    finished_by: date | None = None,
+) -> date | None:
+    """The day the work was done when that is provably before its planned
+    day, else None. Whether it is finished is the status's question
+    (finished_early).
+
+    A recorded delivery date says the day. Without one, the press of Complete
+    is only the earliest the work can have been done — it opens the drawer,
+    often before the visit — so the work is early only when it was also
+    finished before the planned day: by ``finished_by``, the day it reached IA
+    or its lead reviewed it, or else today, which any completed row is done
+    by."""
+    planned = plan_day(planned_date, scheduled_date)
+    if planned is None:
+        return None
+    if actual_delivery_date:
+        return actual_delivery_date if actual_delivery_date < planned else None
+    started = delivered_day(None, execution_started_at)
+    if started is None:
+        return None
+    if finished_by is None:
+        from django.utils import timezone
+
+        finished_by = timezone.localdate()
+    return started if finished_by < planned else None
+
+
+#: A row's state, drawn as the whole row's ink (owner, 2026-10-14: "All
+#: completed activities, visit, trainings, cluster meetings should be in green
+#: the entire row. and overdue in red, not yet due in normal black color on
+#: light mode and white on blue and dark mode"). The template writes
+#: data-done / data-overdue on the <tr>; components/row-state.css colours it.
+ROW_DONE = "done"
+ROW_OVERDUE = "overdue"
+
+#: Work that is off the plan or sent back is neither late nor done.
+_NEVER_OVERDUE = frozenset(
+    (
+        "returned",
+        "returned_by_pl",
+        "returned_by_ia",
+        "cancelled",
+        "rejected",
+        "deferred",
+        "not_planned",
+        "awaiting_owner_approval",
+    )
+)
+
+
+def row_state(status, planned_day, today: date | None = None) -> str:
+    """ROW_DONE for completed work (the calendar leaves it off), ROW_OVERDUE
+    for work whose planned day has passed and that is not done, "" for the
+    rest — work still ahead, today's included."""
+    if is_officer_completed(status):
+        return ROW_DONE
+    if (status or "") in _NEVER_OVERDUE or planned_day is None:
+        return ""
+    if today is None:
+        from django.utils import timezone
+
+        today = timezone.localdate()
+    return ROW_OVERDUE if planned_day < today else ""
 
 
 def is_complete(status, columns: dict) -> bool:
@@ -129,26 +243,97 @@ def evidence_label(activity_type, kinds: Iterable[str]) -> str:
     return ", ".join(names)
 
 
-def completion_records(activity_ids) -> tuple[dict[str, str], dict[str, set]]:
-    """Each activity's stored Salesforce ID, and the kinds of evidence
-    uploaded for it (not quarantined): two queries for any number of ids."""
+def _records(
+    activity_ids, early: dict | None = None, days: dict | None = None
+) -> tuple[dict[str, str], dict[str, set], set[str]]:
+    """Each activity's stored Salesforce ID; the kinds of evidence uploaded
+    for the activities that are asked for an upload (not quarantined); and
+    which activities those are. Two queries at most, one when none is asked.
+    ``early``, when given, is filled with the day each activity was done
+    where that is before its planned day (early_day); ``days`` with the day
+    it was done and the day it was planned for before it moved there
+    (owner, 2026-10-16; apps.activities.completed_day)."""
     ids = [i for i in dict.fromkeys(activity_ids or ()) if i]
     if not ids:
-        return {}, {}
+        return {}, {}, set()
     from apps.activities.models import Activity
     from apps.evidence.models import EvidenceRecord
 
-    salesforce = {
-        activity_id: (value or "").strip()
-        for activity_id, value in Activity.objects.filter(id__in=ids).values_list(
-            "id", "salesforce_activity_id"
-        )
-    }
+    from django.utils import timezone
+
+    from apps.core.clock import local_day
+
+    today = timezone.localdate()
+    salesforce: dict[str, str] = {}
+    asked: set[str] = set()
+    for (
+        activity_id,
+        value,
+        delivery_type,
+        planned_date,
+        scheduled_date,
+        actual_delivery_date,
+        execution_started_at,
+        submitted_to_ia_at,
+        pl_reviewed_at,
+        planned_before,
+    ) in Activity.objects.filter(id__in=ids).values_list(
+        "id",
+        "salesforce_activity_id",
+        "delivery_type",
+        "planned_date",
+        "scheduled_date",
+        "actual_delivery_date",
+        "execution_started_at",
+        "submitted_to_ia_at",
+        "pl_reviewed_at",
+        "planned_date_before_completion",
+    ):
+        salesforce[activity_id] = (value or "").strip()
+        if days is not None:
+            days[activity_id] = (
+                delivered_day(actual_delivery_date, execution_started_at),
+                planned_before,
+            )
+        # Work that moved to the day it was done was planned for the day it
+        # left: early is read against that one.
+        if planned_before:
+            planned_date, scheduled_date = planned_before, None
+        if early is not None:
+            # Done no later than it reached IA, or its lead reviewed it, or
+            # today, whichever came first.
+            finished_by = min(
+                d
+                for d in (
+                    today,
+                    local_day(submitted_to_ia_at),
+                    local_day(pl_reviewed_at),
+                )
+                if d is not None
+            )
+            early[activity_id] = early_day(
+                planned_date,
+                scheduled_date,
+                actual_delivery_date,
+                execution_started_at,
+                finished_by,
+            )
+        # apps.evidence.form_document.takes_upload, read in bulk.
+        if (delivery_type or "") == "partner":
+            asked.add(activity_id)
     evidence: dict[str, set] = defaultdict(set)
-    for activity_id, kind in EvidenceRecord.objects.filter(
-        activity_id__in=ids, quarantined=False
-    ).values_list("activity_id", "kind"):
-        evidence[activity_id].add(kind)
+    if asked:
+        for activity_id, kind in EvidenceRecord.objects.filter(
+            activity_id__in=asked, quarantined=False
+        ).values_list("activity_id", "kind"):
+            evidence[activity_id].add(kind)
+    return salesforce, evidence, asked
+
+
+def completion_records(activity_ids) -> tuple[dict[str, str], dict[str, set]]:
+    """Each activity's stored Salesforce ID, and the kinds of evidence
+    uploaded for it where it is asked for an upload (a partner's work)."""
+    salesforce, evidence, _asked = _records(activity_ids)
     return salesforce, evidence
 
 
@@ -157,16 +342,28 @@ def completion_columns(pairs) -> dict[str, dict]:
     "evidence_ok"}} for (activity id, activity type) pairs. Ids that are None
     (a handover not yet scheduled) are skipped: they read EMPTY."""
     pairs = [(i, t) for i, t in pairs if i]
-    salesforce, evidence = completion_records([i for i, _ in pairs])
+    early: dict[str, date | None] = {}
+    days: dict[str, tuple] = {}
+    salesforce, evidence, asked = _records([i for i, _ in pairs], early, days)
     out = {}
     for activity_id, activity_type in pairs:
         kinds = evidence.get(activity_id, set())
         sf = salesforce.get(activity_id, "")
+        # Staff work is complete with its Salesforce ID alone; a partner's
+        # also needs the form it is verified from (UPLOAD-OFF, see above).
+        upload_asked = activity_id in asked
         out[activity_id] = {
             "salesforce_id": sf,
-            "evidence_label": evidence_label(activity_type, kinds),
+            "evidence_label": (
+                evidence_label(activity_type, kinds) if upload_asked else ""
+            ),
             "salesforce_ok": bool(sf),
-            "evidence_ok": expected_evidence(activity_type)[0] in kinds,
+            "evidence_ok": (
+                expected_evidence(activity_type)[0] in kinds if upload_asked else True
+            ),
+            "early_on": early.get(activity_id),
+            "delivered_on": days.get(activity_id, (None, None))[0],
+            "planned_before": days.get(activity_id, (None, None))[1],
         }
     return out
 
@@ -204,14 +401,22 @@ def forms_in_q(prefix: str = ""):
 
 def completion_fields(status, columns: dict) -> dict:
     """The columns plus the verdict for one row: `is_complete`,
-    `completion_gap`, and `shows_complete` — whether the Actions column may
-    offer its complete state: a verified status, both columns green."""
+    `completion_gap`, `shows_complete` — whether the Actions column may
+    offer its complete state: a verified status, both columns green — and
+    `finished_early`: complete, on a day before the one planned (the tables
+    then read FINISHED_EARLY)."""
     complete = is_complete(status, columns)
     return {
         **columns,
+        # The Completed column (owner, 2026-10-16): the day completed work
+        # was done; blank while it is not.
+        "completed_on": columns.get("delivered_on")
+        if is_officer_completed(status)
+        else None,
         "is_complete": complete,
         "completion_gap": completion_gap(status, columns),
         "shows_complete": complete and (status or "") in COMPLETED_WORK_STATUSES,
+        "finished_early": complete and columns.get("early_on") is not None,
     }
 
 
@@ -222,19 +427,28 @@ def annotate(
     type_attr: str = "activity_type",
     status_attr: str = "activity_status",
 ):
-    """Set the columns, `is_complete` and `completion_gap` on service-layer
-    items (the oversight dataclasses), two queries for the lot."""
+    """Set the columns, `is_complete`, `completion_gap` and `row_state` on
+    service-layer items (the oversight dataclasses), two queries for the lot."""
     items = list(items)
     columns = completion_columns(
         (getattr(item, id_attr, None), getattr(item, type_attr, "")) for item in items
     )
+    from django.utils import timezone
+
+    today = timezone.localdate()
     for item in items:
+        status = getattr(item, status_attr, "")
         values = completion_fields(
-            getattr(item, status_attr, ""),
-            columns.get(getattr(item, id_attr, None) or "", EMPTY),
+            status, columns.get(getattr(item, id_attr, None) or "", EMPTY)
         )
         for name, value in values.items():
             setattr(item, name, value)
+        # Partner oversight rows carry their day as scheduled_date (the
+        # Partner's date, already a day): read it where no plan date is set.
+        day = plan_day(
+            getattr(item, "planned_date", None), getattr(item, "scheduled_date", None)
+        )
+        item.row_state = row_state(status, day, today)
     return items
 
 

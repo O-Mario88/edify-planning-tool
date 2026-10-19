@@ -198,6 +198,10 @@ MIDDLEWARE = [
     # delegates are refused (apps/acting/middleware.py). No query for anyone
     # who has never been appointed.
     "apps.acting.middleware.ActingCapacityMiddleware",
+    # After authentication: a person whose save is still being priced waits
+    # for it before their next page reads the figures. Asks nothing of a
+    # request without its cookie (apps/daily_visit_batches/costs_follow.py).
+    "apps.daily_visit_batches.costs_follow.CostsFollowMiddleware",
     # After authentication: a link or hx-get button the signed-in role cannot
     # follow is not drawn (owner, 2026-09-27). apps/core/forbidden_links_middleware.py.
     "apps.core.forbidden_links_middleware.ForbiddenLinksMiddleware",
@@ -978,14 +982,50 @@ REALTIME_STREAM_OPENS_PER_MINUTE = _as_int(
     os.environ.get("REALTIME_STREAM_OPENS_PER_MINUTE"), 30
 )
 
-# Open pages hear when the plan changes and read themselves again
-# (apps.activities.live; owner, 2026-10-05). Off under the test runner: the
-# announcement works out who to tell after each commit, and those queries
-# would be counted against every query budget in the suite. Its own tests
-# turn it on. LIVE_UPDATES_ENABLED=false switches it off in production
-# without a deploy.
+# Announcing plan changes to open pages (apps.activities.live; owner,
+# 2026-10-05). Off by default since 2026-10-14: pages update on Refresh and
+# none opens the stream (static/js/live-regions.js), so working out who to tell
+# after every save served nobody and cost each save its queries.
+# LIVE_UPDATES_ENABLED=true switches it back on without a deploy. Off under the
+# test runner whatever the variable says; its own tests turn it on.
 LIVE_UPDATES_ENABLED = (
-    os.environ.get("LIVE_UPDATES_ENABLED", "true").strip().lower()
+    os.environ.get("LIVE_UPDATES_ENABLED", "false").strip().lower()
+    not in ("0", "false", "no", "off")
+) and not IS_TESTING
+
+# The route check of a day (order, distance, whether it fits, what to
+# suggest) is advice beside the plan and was worked out inside every save
+# that priced the day: about thirty statements a day of school visits. It is
+# worked out once the save has committed, off the request
+# (apps.routes.after_save). Off under the test runner, where a test's
+# transaction never commits. ROUTE_CHECK_AFTER_SAVE=false works it out inside
+# the save again.
+ROUTE_CHECK_AFTER_SAVE = (
+    os.environ.get("ROUTE_CHECK_AFTER_SAVE", "true").strip().lower()
+    not in ("0", "false", "no", "off")
+) and not IS_TESTING
+
+# A save that changes who shares a day answers once the change is stored and
+# checked; the day's visits are priced, and the week and month filed, right
+# after the answer (apps.daily_visit_batches.costs_follow). Off under the
+# test runner, where a test's transaction never commits and its assertions
+# read the figures at once. SAVES_ANSWER_FIRST=false prices inside the save
+# again; what was already written down is still settled.
+SAVES_ANSWER_FIRST = (
+    os.environ.get("SAVES_ANSWER_FIRST", "true").strip().lower()
+    not in ("0", "false", "no", "off")
+) and not IS_TESTING
+
+# A save marks its officer's ledger for rebuilding (apps.targets.ledger_sync).
+# Written with the first row of the save, the mark's row stayed locked until
+# the save committed, and a second save for the same officer waited behind it
+# for all of that: in production the one-row write averaged 25.6 ms and waited
+# up to 22.9 s (2026-10-12). It is written the moment the save commits instead.
+# Off under the test runner, where a test's transaction never commits and the
+# mark would never be written; its own tests turn it on.
+# LEDGER_MARKS_AFTER_COMMIT=false writes it inside the save again.
+LEDGER_MARKS_AFTER_COMMIT = (
+    os.environ.get("LEDGER_MARKS_AFTER_COMMIT", "true").strip().lower()
     not in ("0", "false", "no", "off")
 ) and not IS_TESTING
 

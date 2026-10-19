@@ -186,5 +186,14 @@ class MyPlanPackageNumberIsAFilledMarkTest(SimpleTestCase):
         )
 
     def test_a_table_does_not_flatten_the_mark(self):
+        import re
+
         script = self._source("static/js/micro-ux.js")
-        self.assertIn(".sal-dot, .core-seq__mark')", script)
+        # The chips micro-ux leaves their own paint: the list beside the
+        # Staff Activity Log's dot. Read as a list, so a chip added after the
+        # mark does not read as the mark leaving it.
+        kept = re.search(r"!element\.matches\('([^']*\.sal-dot[^']*)'\)", script)
+        self.assertIsNotNone(kept)
+        self.assertIn(
+            ".core-seq__mark", [item.strip() for item in kept.group(1).split(",")]
+        )

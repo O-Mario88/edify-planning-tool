@@ -3,21 +3,20 @@
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
+from apps.core.htmx_saved import saved_in_place
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.core.htmx_errors import error_fragment
+from apps.core.htmx_errors import error_fragment, refusal_drawer
 from apps.core.permissions import require_page_permission
 from apps.hr import extra_work
 from apps.hr.models import ExtraAssignment
 
 
 def _reload():
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("extra_work")
@@ -120,8 +119,10 @@ def _milestone_options(principal, fy: str):
 def extra_work_assign_drawer(request):
     role = getattr(request.user, "active_role", "")
     if role not in extra_work.ASSIGNER_ROLES:
-        return error_fragment(
-            Forbidden("Only the CD or a Program Lead assigns extra work."),
+        return refusal_drawer(
+            request,
+            "Only the CD or a Program Lead assigns extra work.",
+            title="Extra work",
             status=403,
         )
     User = get_user_model()
@@ -187,7 +188,9 @@ def extra_work_submit_drawer(request, assignment_id):
         id=assignment_id, assignee_id=str(request.user.id)
     ).first()
     if a is None:
-        return error_fragment(BadRequest("Assignment not found."), status=404)
+        return refusal_drawer(
+            request, "Assignment not found.", title="Extra work", status=404
+        )
     return render(
         request,
         "partials/hr/extra_work_submit_drawer.html",

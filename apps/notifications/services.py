@@ -247,6 +247,11 @@ class NotificationLinkResolver:
             and context_id
         ):
             return f"/pl/review-queue?open={context_id}", "Review Completion"
+        # The end-of-day reminder to verify (apps.pl_review.reminders) opens
+        # the register; a Programme Lead's is on their dashboard, and the
+        # page sends them there.
+        if event_type == "completions_awaiting_verification":
+            return "/pl/review-queue", "Verify Completions"
         # ── end P2 ──
         # ── PL alignment · S1 ──
         # Team Guidance: the Programme Lead issues guidance on the priorities

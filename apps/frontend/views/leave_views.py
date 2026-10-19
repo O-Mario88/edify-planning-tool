@@ -1424,7 +1424,10 @@ def _calendar_activities(request, month_start):
     the two pages never disagree about who may see whose work.
     """
     from apps.activities.models import Activity
-    from apps.frontend.views.extended_views import _calendar_staff_audience
+    from apps.frontend.views.extended_views import (
+        _calendar_staff_audience,
+        off_calendar_done,
+    )
 
     month_end = date(
         month_start.year + (1 if month_start.month == 12 else 0),
@@ -1433,7 +1436,7 @@ def _calendar_activities(request, month_start):
     ) - timedelta(days=1)
 
     activity_owner_ids, _ = _calendar_staff_audience(request.user)
-    activities = (
+    activities = off_calendar_done(
         Activity.objects.filter(deleted_at__isnull=True)
         .filter(
             Q(scheduled_date__date__range=(month_start, month_end))

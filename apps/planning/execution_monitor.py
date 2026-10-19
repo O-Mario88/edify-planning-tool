@@ -26,15 +26,34 @@ the Planning tab beside this one counts the plan (owner audit, 2026-10-02):
   its Execution tab credit it in, so one Partner visit sits under one person
   on every page.
 
-* **Due** — work whose planned date has arrived. Future work is not late.
-* **Delivered** — the status says the work happened: submitted, awaiting
-  verification, or verified.
+* **Due** — work whose planned date has arrived, and work already delivered
+  whatever day it was planned for. Future work is not late; completed work is
+  counted irrespective of when it was planned (owner, 2026-10-14: a visit
+  delivered ahead of its day was left out of "Delivered of due").
+* **Delivered** — completed: submitted with its visit or training ID, or
+  verified (completion_columns.OFFICER_COMPLETED_STATUSES; owner,
+  2026-10-14: "count exact number of completed visits or trainings"). Work
+  started and not yet submitted is not.
+* **Counted** — the visits, trainings and meetings completed, Delivered of
+  due, Remaining to Visit and Remaining to Train count approved work only
+  (completion_columns.APPROVED_STATUSES; owner, 2026-10-15: "Any activity not
+  approved by PL should not be counted"). Completed work waiting for the
+  approval shows under Awaiting PL Approval, whatever day it was planned for.
+* **Remaining to Visit** — the 280 or 560 less the counted visits completed;
+  **Remaining to Train** — the schools held that take a training less those
+  trained: training is read against the whole portfolio, never the 280 /
+  560 (owner, 2026-10-14).
+* **Awaiting PL Approval** — completed work waiting on its Programme Lead,
+  who approves every CCEO's work; a lead's own is approved on hand-in (owner,
+  2026-10-15: "IA does not approve any activity. it is the PL who approves
+  for CCEO and theirs are approved automatically").
 * **Past date, not delivered** — past its planned day, not delivered, not
   returned. The day itself is not late. Named for what it counts (owner,
   2026-10-02): the Director's Execution tab's "Overdue" is wider, and also
   counts delivered work still waiting on a review.
 * **Complete** — delivered with the Salesforce ID and the form both in.
-* **Verified** — confirmed by Impact Assessment.
+* **PL Approved** — approved by the Programme Lead, or a lead's own work
+  approved on hand-in (owner, 2026-10-15).
 
 A fixed handful of queries whatever the size of the country, and every
 figure folded from the activity rows under it, so a Lead's total is the sum
@@ -47,6 +66,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from django.db.models import Q
+from django.utils import timezone
 
 from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
 from apps.core.metrics import percentage
@@ -61,8 +81,13 @@ RETURNED_STATUSES = frozenset(("returned", "returned_by_pl", "returned_by_ia"))
 LISTS = (
     ("overdue", "Past date, not delivered"),
     ("missing_salesforce", "Delivered, missing the Salesforce ID"),
-    ("missing_evidence", "Delivered, missing the form"),
-    ("awaiting_ia", "Awaiting IA verification"),
+    # UPLOAD-OFF (owner, 2026-10-13): this monitor counts staff work, which
+    # is asked for no form, so there is no list of work missing one.
+    # ("missing_evidence", "Delivered, missing the form"),
+    # A CCEO's work and a lead's own are verified by a Programme Lead, never
+    # Impact Assessment (owner, 2026-10-14: "IA does not verify CCEO and PL
+    # work. it is the PL to verify everything").
+    ("awaiting_pl", "Completed, awaiting PL approval"),
     ("returned", "Returned for correction"),
 )
 LIST_LABELS = dict(LISTS)
@@ -71,10 +96,37 @@ LIST_LABELS = dict(LISTS)
 LIST_COLUMNS = (
     ("overdue", "Past date", "danger"),
     ("missing_salesforce", "No SF ID", "warning"),
-    ("missing_evidence", "No form", "warning"),
-    ("awaiting_ia", "Awaiting IA", "info"),
+    # UPLOAD-OFF (owner, 2026-10-13): the "No form" column left the table.
+    # ("missing_evidence", "No form", "warning"),
+    ("awaiting_pl", "Awaiting PL Approval", "info"),
     ("returned", "Returned", "danger"),
 )
+
+#: Completed work waiting on its verifier: the Programme Lead for every
+#: CCEO's and lead's staff work, whichever of the two statuses filed it
+#: (apps.pl_review.services.LEAD_REVIEWABLE_STATUSES).
+AWAITING_PL_STATUSES = frozenset(("submitted_to_pl", "awaiting_ia_verification"))
+
+
+def _set_completed_on(rows) -> None:
+    """The Completed column for the drill-down's rows, one read for all."""
+    from apps.activities.completion_columns import (
+        delivered_day,
+        is_officer_completed,
+    )
+    from apps.activities.models import Activity
+
+    done = [row for row in rows if is_officer_completed(row.status)]
+    if not done:
+        return
+    days = {
+        activity_id: delivered_day(actual, started)
+        for activity_id, actual, started in Activity.objects.filter(
+            id__in=[row.id for row in done]
+        ).values_list("id", "actual_delivery_date", "execution_started_at")
+    }
+    for row in done:
+        row.completed_on = days.get(row.id)
 
 
 @dataclass
@@ -93,6 +145,9 @@ class WorkRow:
     person_name: str
     salesforce_ok: bool = False
     evidence_ok: bool = False
+    #: The day completed work was done (owner, 2026-10-16: the Completed
+    #: column); None while it is not.
+    completed_on: date | None = None
 
     @property
     def place(self) -> str:
@@ -131,10 +186,16 @@ class PersonExecution:
     overdue: int = 0
     missing_salesforce: int = 0
     missing_evidence: int = 0
-    awaiting_ia: int = 0
+    awaiting_pl: int = 0
     returned: int = 0
     partner_scheduled: int = 0
     partner_delivered: int = 0
+    # The schools the person holds that take a training, and of those the
+    # schools trained this year (planning_monitor.training_reach): training
+    # is read against the whole portfolio, never the 280 / 560 (owner,
+    # 2026-10-14).
+    training_portfolio: int = 0
+    schools_trained: int = 0
 
     @property
     def is_lead(self) -> bool:
@@ -151,6 +212,26 @@ class PersonExecution:
     @property
     def due_progress(self) -> int | None:
         return percentage(self.delivered_due, self.due)
+
+    @property
+    def remaining_to_visit(self) -> int:
+        """Counted visits still to complete to reach the 280 or 560 (owner,
+        2026-10-14: "add a column of Remaining to Visit and Remaining to
+        Train so that the staff can watch their progress")."""
+        return max(0, self.visits_target - self.visits_delivered)
+
+    @property
+    def remaining_to_train(self) -> int:
+        """Schools held that take a training and are not yet trained."""
+        return max(0, self.training_portfolio - self.schools_trained)
+
+    @property
+    def training_progress(self) -> int | None:
+        return percentage(self.schools_trained, self.training_portfolio)
+
+    @property
+    def training_tone(self) -> str:
+        return _tone(self.training_progress)
 
     @property
     def complete_share(self) -> int | None:
@@ -194,6 +275,19 @@ class TeamExecution:
 
     target_progress = PersonExecution.target_progress
     due_progress = PersonExecution.due_progress
+
+    # What remains is each person's own remainder, summed: one officer past
+    # their 560 does not cover for another short of it.
+    @property
+    def remaining_to_visit(self) -> int:
+        return sum(p.remaining_to_visit for p in self.people)
+
+    @property
+    def remaining_to_train(self) -> int:
+        return sum(p.remaining_to_train for p in self.people)
+
+    training_progress = PersonExecution.training_progress
+    training_tone = PersonExecution.training_tone
     complete_share = PersonExecution.complete_share
     target_tone = PersonExecution.target_tone
     due_tone = PersonExecution.due_tone
@@ -232,18 +326,21 @@ def execution_monitor(
     """
     from apps.activities.completion_columns import (
         completion_records,
-        expected_evidence,
+        # UPLOAD-OFF (owner, 2026-10-13): expected_evidence,
     )
     from apps.activities.models import Activity
     from apps.partners.models import PartnerAssignment
     from apps.planning.country_oversight import rules
     from apps.planning.monitor_roster import monitor_roster
     from apps.planning.oversight_service import LIVE_ACTIVITY_STATUSES
-    from apps.planning.planning_monitor import _delivered_statuses
-    from apps.planning.school_planning_badges import VERIFIED_STATUSES
+    from apps.activities.completion_columns import (
+        APPROVED_STATUSES,
+        OFFICER_COMPLETED_STATUSES,
+    )
+    from apps.planning.planning_monitor import training_reach
 
     fy = str(fy)
-    today = today or date.today()
+    today = today or timezone.localdate()
     teams: list[TeamExecution] = []
     people: dict[str, PersonExecution] = {}
     for team in monitor_roster(principal):
@@ -276,8 +373,11 @@ def execution_monitor(
         return empty
     by_id = {i: person for person in people.values() for i in person.ids}
     ids = list(by_id)
-    delivered_statuses = _delivered_statuses()
-    awaiting_ia = {"awaiting_ia_verification"}
+    # Completed: submitted with its visit or training ID, or verified — the
+    # work the calendar leaves off and the tables draw green (owner,
+    # 2026-10-14: "count exact number of completed visits or trainings").
+    # Started and not yet submitted is not completed.
+    delivered_statuses = frozenset(OFFICER_COMPLETED_STATUSES)
 
     # The hand-overs these people made or monitor, by the activity each
     # became or carries: its Partner work is theirs first.
@@ -335,7 +435,7 @@ def execution_monitor(
     delivered_ids = [
         r[0] for r in records if r[4] != "partner" and r[2] in delivered_statuses
     ]
-    salesforce, evidence = completion_records(delivered_ids)
+    salesforce, _evidence = completion_records(delivered_ids)
 
     wanted_lead = (
         program_lead_id if program_lead_id not in (None, "", "all", "All") else None
@@ -387,6 +487,9 @@ def execution_monitor(
         if person is None:
             continue
         is_delivered = status in delivered_statuses
+        # Counted once approved (owner, 2026-10-15), whatever day it was
+        # planned for.
+        is_counted = status in APPROVED_STATUSES
         is_due = planned_date is not None and planned_date <= today
         person.planned += 1
         at_school = bool(school_pk) and not cluster_pk
@@ -397,21 +500,26 @@ def execution_monitor(
             # planning is not one of the visits planned.
             if status in _planned_states():
                 person.visits_planned += 1
-            person.visits_delivered += is_delivered
+            person.visits_delivered += is_counted
         elif at_school and rules.is_uncounted_visit(
             activity_type, purpose_type, delivery_type="staff"
         ):
             person.outreach_planned += 1
+            # Named beside the target, never counted toward it: delivered
+            # once handed in, as the Director's Execution tab names it.
             person.outreach_delivered += is_delivered
         if activity_type in TRAINING_KINDS:
             person.trainings_planned += 1
-            person.trainings_delivered += is_delivered
+            person.trainings_delivered += is_counted
         elif activity_type in MEETING_KINDS:
             person.meetings_planned += 1
-            person.meetings_delivered += is_delivered
-        if is_due:
+            person.meetings_delivered += is_counted
+        # Delivered work is due whatever day it was planned for: a visit done
+        # ahead of its day is delivered, not "not yet due"; it counts once
+        # approved.
+        if is_due or is_delivered:
             person.due += 1
-            person.delivered_due += is_delivered
+            person.delivered_due += is_counted
         gaps = []
         if status in RETURNED_STATUSES:
             person.returned += 1
@@ -422,9 +530,12 @@ def execution_monitor(
         sf_ok = ev_ok = False
         if is_delivered:
             person.delivered += 1
-            kinds = evidence.get(activity_id, set())
             sf_ok = bool(salesforce.get(activity_id))
-            ev_ok = expected_evidence(activity_type)[0] in kinds
+            # UPLOAD-OFF (owner, 2026-10-13): delivered staff work is complete
+            # with its Salesforce ID alone; the form half is always met. It read:
+            # kinds = evidence.get(activity_id, set())
+            # ev_ok = expected_evidence(activity_type)[0] in kinds
+            ev_ok = True
             if sf_ok and ev_ok:
                 person.complete += 1
             if not sf_ok:
@@ -433,11 +544,11 @@ def execution_monitor(
             if not ev_ok:
                 person.missing_evidence += 1
                 gaps.append("missing_evidence")
-            if status in VERIFIED_STATUSES:
+            if is_counted:
                 person.verified += 1
-            if status in awaiting_ia:
-                person.awaiting_ia += 1
-                gaps.append("awaiting_ia")
+            if status in AWAITING_PL_STATUSES:
+                person.awaiting_pl += 1
+                gaps.append("awaiting_pl")
         if (
             list_key in gaps
             and (not wanted_lead or person.lead_id == wanted_lead)
@@ -460,6 +571,15 @@ def execution_monitor(
                 )
             )
 
+    # Training is read against every school the person holds that takes one,
+    # as the Planning tab reads it (owner, 2026-10-14).
+    for owner_id, (held, trained) in training_reach(principal, fy).items():
+        person = by_id.get(owner_id)
+        if person is not None:
+            person.training_portfolio += held
+            person.schools_trained += trained
+
+    _set_completed_on(listed)
     listed.sort(
         key=lambda r: (
             r.planned_date or date.max,

@@ -162,16 +162,26 @@ class TheOfficerSeesWhyAndResubmitsTest(ReviewFixture):
 
 
 class BothDecisionsOnEverySurfaceTest(ReviewFixture):
-    def test_the_register_offers_verified_and_return(self):
+    def test_the_register_offers_verify_and_return(self):
+        """Verify opens the completion with the officer's uploaded form, and
+        Verified is decided there (owner, 2026-10-12: "PL should click verify,
+        then the uploaded form"); Return asks for the reason. The row itself
+        posts nothing."""
         work = self._completion(self.james.id)
-        response = self.as_user(self.pl_user).get(QUEUE_URL)
-        self.assertContains(response, ">Verified</button>")
+        client = self.as_user(self.pl_user)
+        response = self.register(client)
+        self.assertContains(response, f'hx-get="{QUEUE_URL}/{work.id}/drawer"')
         self.assertContains(response, f"{QUEUE_URL}/{work.id}/return-drawer")
-        # Open and the two decisions are the row's one Actions menu.
+        self.assertNotContains(response, f'action="{QUEUE_URL}/{work.id}/confirm"')
         self.assertEqual(
             _row_menu(response.content.decode(), f'data-review-row="{work.id}"'),
-            ["Open", "Verified", "Return"],
+            ["Verify", "Return"],
         )
+        drawer = client.get(
+            f"{QUEUE_URL}/{work.id}/drawer", headers={"HX-Request": "true"}
+        )
+        self.assertContains(drawer, f'action="{QUEUE_URL}/{work.id}/confirm"')
+        self.assertContains(drawer, ">Return</button>")
 
     def test_the_return_drawer_asks_why_with_an_example(self):
         work = self._completion(self.james.id)
@@ -196,17 +206,24 @@ class BothDecisionsOnEverySurfaceTest(ReviewFixture):
             planned_date=date.today() - timedelta(days=2),
             status="submitted_to_pl",
         )
-        response = self.as_user(self.pl_user).get(QUEUE_URL)
+        response = self.register(self.as_user(self.pl_user))
+        self.assertContains(response, f'hx-get="{QUEUE_URL}/{session.id}/drawer"')
         self.assertContains(response, f"{QUEUE_URL}/{session.id}/return-drawer")
         self.assertEqual(
             _row_menu(response.content.decode(), f'data-review-row="{session.id}"'),
-            ["Open", "Verified", "Return"],
+            ["Verify", "Return"],
         )
 
     def test_the_ia_workspace_offers_verified_and_return_with_the_example(self):
         ia_user, _ = _staff("vr-ia3@t.test", "Ian IA", EdifyRole.IMPACT_ASSESSMENT)
+        _, coordinator = _staff(
+            "vr-pc@t.test", "Pat Coordinator", EdifyRole.PROJECT_COORDINATOR
+        )
+        # A coordinator's own field work: Impact Assessment's to verify. A
+        # CCEO's and a lead's are a lead's, and the workspace offers IA no
+        # decision on them (test_lead_verifies_cceo_work).
         work = self._completion(
-            self.james.id,
+            coordinator.id,
             status="awaiting_ia_verification",
             salesforce_activity_id="SV-6161",
         )

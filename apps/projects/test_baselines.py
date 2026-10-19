@@ -15,6 +15,7 @@ from apps.geography.models import District, Region
 from apps.projects import baselines
 from apps.projects.models import Project, ProjectSchoolAssignment
 from apps.schools.models import School
+from apps.core.fy import get_operational_fy
 from apps.ssa.models import SsaRecord, SsaScore
 
 INTERVENTION = "leadership"
@@ -48,7 +49,9 @@ class BaselineCaptureTest(TestCase):
         record = SsaRecord.objects.create(
             school=school,
             date_of_ssa=_on(day),
-            fy="2026",
+            # The year its date falls in: one SSA a school a year (owner,
+            # 2026-10-14).
+            fy=get_operational_fy(_on(day)),
             quarter="Q2",
             verification_status=status,
             uploaded_by="u",
@@ -63,14 +66,15 @@ class BaselineCaptureTest(TestCase):
     ):
         school = self._school("PB-1")
         enrolment = self._enrol(school)
-        self._ssa(school, date(2025, 11, 1), 4.0)
-        chosen = self._ssa(school, date(2026, 2, 1), 5.0)
-        self._ssa(school, date(2026, 2, 15), 9.0, status="pending")
-        self._ssa(
-            school, date(2026, 4, 1), 8.0
-        )  # after the start: judges, never a baseline
+        self._ssa(school, date(2024, 9, 1), 4.0)
+        # Deleted first, so the year's live record can follow it.
         deleted = self._ssa(school, date(2026, 2, 20), 3.0)
         deleted.soft_delete()
+        chosen = self._ssa(school, date(2026, 2, 1), 5.0)
+        self._ssa(school, date(2026, 2, 15), 9.0, status="returned")
+        self._ssa(
+            school, date(2026, 10, 15), 8.0
+        )  # after the start: judges, never a baseline
 
         self.assertEqual(
             baselines.baseline_states([enrolment])[enrolment.id], baselines.NOT_CAPTURED
@@ -84,7 +88,7 @@ class BaselineCaptureTest(TestCase):
         )
 
         # Captured once: a later, earlier-dated confirmation never moves it.
-        self._ssa(school, date(2026, 2, 25), 6.0)
+        self._ssa(school, date(2025, 2, 25), 6.0)
         self.assertEqual(baselines.capture_missing_baselines(), 0)
         enrolment.refresh_from_db()
         self.assertEqual(enrolment.baseline_score, 5.0)

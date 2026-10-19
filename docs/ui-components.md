@@ -349,6 +349,18 @@ buttons, since there is one school to act on.
 
 ## Live regions
 
+**Superseded 2026-10-14.** Owner: "behave like salesforce where a user has to
+refresh for the data to be updated", and of one's own saves: "everything is
+updated upon refresh icon clicked. so that the save, reschedule, schedule,
+complete, cancel... functionalities can be fast". `static/js/live-regions.js`
+no longer opens the stream and a drawer save reads nothing
+(`apps.core.htmx_saved.saved_in_place` closes the drawer and says it is
+saved); the page is brought up to date by Refresh — the browser's, or the
+installed app's beside Back and Forward. `EdifyLive.refresh()` remains for a
+page finishing itself (Country Planning Oversight's settle). The server side
+below still sends its events; nothing listens. What follows is how it worked
+from 2026-10-05.
+
 Owner, 2026-10-05: "Every event should update (schedules, school withdrawal
 from the partner or project, training schedules, activity completion etc)
 should update in real time and fast."
@@ -433,7 +445,8 @@ once, the table scripts moved rows before Alpine had seen them and every menu
 inside the region was left dead.
 
 Production needs the ASGI workers and Redis the stream was built for
-(`Procfile`). `LIVE_UPDATES_ENABLED=false` switches the announcements off
-without a deploy; under the test runner they are off unless a test turns
+(`Procfile`). The announcements are off by default since 2026-10-14 (pages
+update on Refresh and none opens the stream); `LIVE_UPDATES_ENABLED=true`
+switches them back on without a deploy; under the test runner they are off unless a test turns
 them on, so they add nothing to the suite's query counts. Locally the stream
 needs `manage.py runserver` without `--noasgi`.

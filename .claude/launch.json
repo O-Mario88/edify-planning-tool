@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "edify-web",
-      "runtimeExecutable": "/Users/edwinomario/Developer/edify-planning-tool/.venv/bin/python",
+      "runtimeExecutable": ".venv/bin/python",
       "runtimeArgs": [
         "manage.py",
         "runserver",

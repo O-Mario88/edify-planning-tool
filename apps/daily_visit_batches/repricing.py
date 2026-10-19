@@ -77,8 +77,16 @@ def find_days_to_reprice(apps=None, *, today=None) -> list[str]:
     if not days:
         return []
     away = {(user, day) for _id, user, day, _rates in days}
-    roles = {
-        user_id: active_role or (list(roles or [])[:1] or [None])[0]
+    from types import SimpleNamespace
+
+    from .districts import accommodation_key_for_user
+
+    # The rate of the post each traveller holds, not of the role in use when
+    # this runs (owner, 2026-10-15 cost audit; districts.accommodation_key_for_user).
+    night_keys = {
+        user_id: accommodation_key_for_user(
+            SimpleNamespace(roles=list(roles or []), active_role=active_role)
+        )
         for user_id, active_role, roles in User.objects.filter(
             id__in={user for _id, user, _day, _rates in days}
         ).values_list("id", "active_role", "roles")
@@ -89,9 +97,15 @@ def find_days_to_reprice(apps=None, *, today=None) -> list[str]:
             continue
         priced_keys = set(rates or {}) & ACCOMMODATION_KEYS
         return_day = (user, day - ONE_DAY) in away and (user, day + ONE_DAY) not in away
-        wrong_rate = bool(priced_keys) and (
-            accommodation_key_for_role(roles.get(user)) not in priced_keys
-        )
+        if user not in night_keys:
+            # A day filed under a StaffProfile id: the live lookup reads both
+            # id spaces (the historical models answer for accounts alone).
+            night_keys[user] = (
+                accommodation_key_for_staff(user)
+                if apps is None
+                else accommodation_key_for_role(None)
+            )
+        wrong_rate = bool(priced_keys) and night_keys[user] not in priced_keys
         if (not priced_keys) != return_day or wrong_rate:
             stale.append(batch_id)
     return stale
@@ -205,6 +219,25 @@ def find_trips_to_reprice(apps=None, *, today=None) -> list[str]:
         for activity_id, days in trips.items()
         if nights.get(activity_id) and nights[activity_id] != days - 1
     ]
+    if apps is None:
+        # A trip whose nights are at a rate other than the post its traveller
+        # holds (owner, 2026-10-15 cost audit: a Programme Lead's nights filed
+        # under the CCEO rate because another role was in use).
+        travellers = dict(
+            Activity.objects.filter(id__in=set(trips) - set(stale)).values_list(
+                "id", "responsible_staff_id"
+            )
+        )
+        keys_held: dict[str, set] = {}
+        for activity_id, key in CostLine.objects.filter(
+            night_lines, activity_id__in=travellers
+        ).values_list("activity_id", "cost_setting_key"):
+            keys_held.setdefault(activity_id, set()).add(key.split("#")[0])
+        stale += [
+            activity_id
+            for activity_id, keys in keys_held.items()
+            if accommodation_key_for_staff(travellers[activity_id]) not in keys
+        ]
     order = dict(
         Activity.objects.filter(id__in=stale).values_list("id", "planned_date")
     )

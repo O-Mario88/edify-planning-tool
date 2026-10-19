@@ -147,6 +147,27 @@ class SchedulingPolicyService:
     known yet — the always-on Sunday/holiday/blackout gate still applies."""
 
     @staticmethod
+    def refusal(staff_or_user_id, check_date) -> list[str]:
+        """Why this date is refused for this person: empty when it is not.
+
+        For the doors that only ask in order to refuse (create, reschedule,
+        a partner's date, a visit joining a day). While the calendar warns
+        and never refuses (`CALENDAR_BLOCKS_REFUSE` off, the owner's decision
+        of 2026-09-30) there is nothing they could be told, and the person,
+        the holidays, the blocks, the leave and the week's workload are not
+        read to find that out: seven statements a time, asked two to four
+        times by one save of an in-school training (profiled 2026-10-13).
+        With the switch on, this is `check`, as before.
+        """
+        if not CALENDAR_BLOCKS_REFUSE:
+            return []
+        verdict = SchedulingPolicyService.check(
+            resolve_scheduling_user(staff_or_user_id) if staff_or_user_id else None,
+            check_date,
+        )
+        return list(verdict["blockers"]) if verdict["status"] == "blocked" else []
+
+    @staticmethod
     def check(user, check_date) -> dict:
         d = _coerce_date(check_date)
         if d is None:
@@ -265,13 +286,23 @@ class SchedulingPolicyService:
             scheduled_start, scheduled_end = scheduled_datetime_window(
                 start_of_week, end_of_week
             )
+            from apps.activities.completion_columns import (
+                OFFICER_COMPLETED_STATUSES,
+            )
+
+            # Work already done takes nothing from the week (owner,
+            # 2026-10-16: completed work frees its day), whichever stage of
+            # review it has reached; only the literal "completed" was left
+            # out, so handed-in and approved work still filled the week.
             week_count = (
                 Activity.objects.filter(
                     responsible_staff_id__in=activity_owner_ids(user),
                     scheduled_date__gte=scheduled_start,
                     scheduled_date__lt=scheduled_end,
                 )
-                .exclude(status__in=["cancelled", "completed"])
+                .exclude(
+                    status__in=["cancelled", "completed", *OFFICER_COMPLETED_STATUSES]
+                )
                 .count()
             )
             if week_count >= 5:

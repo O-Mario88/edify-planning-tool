@@ -130,5 +130,7 @@ def operational_summary(cluster) -> dict:
         "ssa_change": ssa["overall"]["change"],
         "ssa_tone": ssa["overall"]["tone"],
         "assessed": profile["portfolio"]["assessed"],
+        # Of the schools an SSA is asked of: a Champion is not assessed.
+        "assessable": profile["portfolio"]["assessable"],
         "attention": attention,
     }

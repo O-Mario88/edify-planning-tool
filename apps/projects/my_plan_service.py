@@ -8,6 +8,8 @@ partner-delivered work remains read-only to staff monitors.
 
 from __future__ import annotations
 
+from apps.activities.completion_columns import is_officer_completed
+
 from apps.core.metrics import render_precomputed_metric_item
 
 import calendar
@@ -131,8 +133,8 @@ def _advance_status(activity) -> tuple[str, str]:
     return "Fund request synced", "info"
 
 
-def _row(activity, partner_names, project_names, principal, today):
-    status_label, _ = get_activity_status_label_and_class(activity, today)
+def _row(activity, partner_names, project_names, principal, today, lead_ids):
+    status_label, _ = get_activity_status_label_and_class(activity, today, lead_ids)
     action = compute_next_action(activity, today)
     own_ids = {str(principal.id), str(principal.staff_profile_id or "")}
     can_act = (
@@ -190,7 +192,13 @@ def _row(activity, partner_names, project_names, principal, today):
             else "—"
         ),
         "project": project_names.get(activity.project_id, "—"),
-        "planned_date": activity.planned_date,
+        # The day it was planned for, before it moved to the day it was done,
+        # and that day (owner, 2026-10-16: the Completed column).
+        "planned_date": activity.planned_date_before_completion
+        or activity.planned_date,
+        "completed_on": activity.actual_delivery_date
+        if is_officer_completed(activity.status)
+        else None,
         "purpose": activity.activity_purpose_text
         or activity.get_activity_type_display(),
         "focus": INTERVENTION_LABELS.get(
@@ -342,8 +350,11 @@ def get_my_plan(principal, filters=None) -> dict:
         p.id: p.name
         for p in Partner.objects.filter(id__in=all_partner_ids).order_by("name")
     }
+    from apps.pl_review.services import lead_verified_owner_ids
+
+    lead_ids = lead_verified_owner_ids()
     rows = [
-        _row(activity, partner_names, project_names, principal, today)
+        _row(activity, partner_names, project_names, principal, today, lead_ids)
         for activity in activities
     ]
 

@@ -4,7 +4,6 @@ import json
 
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.redirects import local_redirect
-from apps.core.donut import build_gauge
 from apps.core.permissions import (
     RolePermissionService,
     get_scoped_object_or_404,
@@ -16,6 +15,7 @@ from django.db import transaction
 from django.db.models import Q, Count, Sum
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
+from django.utils import timezone
 from django.utils.html import escape
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
@@ -66,7 +66,9 @@ from apps.core.scoping import (
     school_queryset,
 )
 from apps.frontend.view_models import SchoolDirectoryViewModel
-from apps.core.fy import fy_options, get_operational_fy
+from apps.core.fy import fy_options, get_fy_date_range, get_operational_fy
+from apps.core.htmx_saved import saved_in_place
+from apps.ssa import creation as ssa_creation
 
 
 def _may_upload_schools(request) -> bool:
@@ -144,13 +146,44 @@ def _create_manual_school(request) -> School:
             "first, then record it here with that ID."
         )
     existing = School.objects.filter(
-        salesforce_account_id=salesforce_account_id, deleted_at__isnull=True
+        salesforce_account_id__iexact=salesforce_account_id, deleted_at__isnull=True
     ).first()
     if existing is not None:
         raise BadRequest(
             f"That Salesforce ID already belongs to {existing.name} "
             f"({existing.school_id}). Use that school rather than adding it twice."
         )
+
+    # A different Salesforce ID does not prove a different school: the same
+    # school keyed in twice from the field gets two ids when one of them is
+    # mistyped. A close name in the same district is shown before anything is
+    # written, and the person confirms it is another school.
+    if request.POST.get("confirm_distinct") != "1":
+        from apps.schools.data_quality import similar_schools
+
+        matches = list(similar_schools(request.POST.get("name", ""), district.id))
+        if matches:
+            raise PossibleDuplicateSchool(matches)
+
+    cluster = None
+    cluster_id = request.POST.get("cluster_id", "").strip()
+    if cluster_id:
+        # District no longer narrows this (owner, 2026-09-21): a school
+        # joins any active cluster belonging to the staff member
+        # responsible for it, wherever that cluster sits.
+        # `set_school_cluster_membership` is the one authority on the
+        # portfolio rule and applies it to whatever is chosen here, so
+        # this only has to establish that the cluster is real and active.
+        cluster = Cluster.objects.filter(
+            id=cluster_id,
+            deleted_at__isnull=True,
+            status="active",
+        ).first()
+        if cluster is None:
+            raise BadRequest(
+                "Select an active cluster belonging to the staff member "
+                "responsible for this school."
+            )
 
     with transaction.atomic():
         school = create_school(
@@ -183,33 +216,56 @@ def _create_manual_school(request) -> School:
             school_id=school.id,
         )
 
-        cluster_id = request.POST.get("cluster_id", "").strip()
-        if cluster_id:
-            # District no longer narrows this (owner, 2026-09-21): a school
-            # joins any active cluster belonging to the staff member
-            # responsible for it, wherever that cluster sits.
-            # `set_school_cluster_membership` is the one authority on the
-            # portfolio rule and applies it to whatever is chosen here, so
-            # this only has to establish that the cluster is real and active.
-            cluster = Cluster.objects.filter(
-                id=cluster_id,
-                deleted_at__isnull=True,
-                status="active",
-            ).first()
-            if cluster is None:
-                raise BadRequest(
-                    "Select an active cluster belonging to the staff member "
-                    "responsible for this school."
-                )
-            set_school_cluster_membership(
+        # The cluster is the one chosen on the form, or none (2026-10-14).
+        # `School.save` derives a cluster from the sub-county on create, and
+        # that silently joined a new school to whichever cluster covered the
+        # ground — another officer's included — while the picker read
+        # "Unassigned". The picker now shows that cluster as its suggestion
+        # (`_onboard_cluster_choices`), so a school joins it only when the
+        # person saving leaves it chosen.
+        if cluster is not None or school.cluster_id:
+            school = set_school_cluster_membership(
                 school,
                 cluster,
                 request.user.user_id,
-                reason="Chosen when the school was added.",
+                reason=(
+                    "Chosen when the school was added."
+                    if cluster is not None
+                    else "Left unassigned when the school was added."
+                ),
                 actor_role=getattr(request.user, "active_role", "") or "",
             )
 
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="school.registered",
+            subject_kind="school",
+            subject_id=school.id,
+            actor_id=request.user.user_id,
+            actor_role=getattr(request.user, "active_role", "") or "",
+            payload={
+                "school_id": school.school_id,
+                "salesforce_account_id": school.salesforce_account_id,
+                "district_id": school.district_id,
+                "cluster_id": school.cluster_id,
+                "account_owner_id": school.account_owner_id,
+                # The activity the school was added from, when it was.
+                "activity_id": request.POST.get("activity_id", "").strip() or None,
+                "confirmed_distinct_from_similar": request.POST.get("confirm_distinct")
+                == "1",
+            },
+        )
+
     return school
+
+
+class PossibleDuplicateSchool(BadRequest):
+    """Schools whose names are close to the one being added, same district."""
+
+    def __init__(self, matches):
+        self.matches = matches
+        super().__init__("A school with a similar name is already in this district.")
 
 
 def _get_school_intelligence_data(school):
@@ -897,6 +953,13 @@ def school_directory_view(request):
         "can_plan_from_directory": user.active_role
         == EdifyRole.IMPACT_ASSESSMENT.value,
         "can_upload_schools": _may_upload_schools(request),
+        # Adding ONE school by hand follows the drawer's own gate, not the
+        # bulk-upload one: a CCEO or Programme Lead who meets an unlisted
+        # school registers it here after adding it in Salesforce (2026-10-14).
+        # The button used to ask for SCHOOL_UPLOAD, so only Impact Assessment
+        # and the Admin saw it while the drawer behind it let the field chain
+        # in.
+        "can_add_school": _may_create_single_school(request) and not scope.region_scope,
         # The upload doors lead to the Upload Center, which a Programme Lead
         # cannot open (Programme Lead walk, 2026-09-14).
         "can_open_upload_center": RolePermissionService.can_view_page(
@@ -1666,7 +1729,12 @@ def school_detail_view(request, school_id):
         request,
         profile_intelligence.school_scope(school),
         f"/schools/{school.id}",
-        trail=(("details", "Details"),),
+        # A Core lifecycle school reads its Core School Intelligence (owner,
+        # 2026-10-17) on a tab of its own, before its Details.
+        trail=(
+            *((("core", "Core School"),) if _is_core(school) else ()),
+            ("details", "Details"),
+        ),
         labels={"activities": "Participation"},
         activities=profile_acts.for_school(school),
         activities_param="school_acts",
@@ -1683,14 +1751,148 @@ def school_detail_view(request, school_id):
         "can_transfer_owner": may_transfer_school(request.user),
         "can_assign_project": has_permission(request.user, "project.assignSchool"),
         **_profile_planning_controls(request.user, school),
+        # Enter SSA Score (owner, 2026-10-14): read from the school's SSA
+        # records on every load, never from the page or a cache.
+        **ssa_creation.entry_state(request.user, school),
     }
     if pi["section"] == "ssa":
         context.update(_school_ssa_context(school))
     elif pi["section"] == "activities":
         context.update(_school_participation_context(school))
+    elif pi["tab"] == "core" and _is_core(school):
+        context.update(_core_school_context(school, pi["fy"], request.user))
     elif not pi["is_engine_tab"]:
         context.update(_school_details_context(request, school))
     return render(request, "pages/schools/detail.html", context)
+
+
+def _is_core(school) -> bool:
+    from apps.core_schools.lifecycle import CORE_LIFECYCLE_TYPES
+
+    return school.school_type in CORE_LIFECYCLE_TYPES
+
+
+def _core_school_context(school, fy, user) -> dict:
+    """The Core School tab: the school's row of Core School Intelligence —
+    the figures Core School Oversight shows for it — and its eight
+    interventions (owner, 2026-10-17, the Core School Intelligence brief)."""
+    from apps.core.permissions import RolePermissionService
+    from apps.core.scoping import may_write_school, resolve_user_scope
+    from apps.core_schools import intelligence
+
+    fy = str(fy)
+    return {
+        "core": intelligence.performance([school], fy=fy)[school.id],
+        "core_areas": intelligence.interventions(school, fy=fy),
+        "core_recommendations": intelligence.recommendations([school])[school.id],
+        # The school's owner decides its recommendations and graduates it
+        # (`may_write_school`, the Champion review's own rule).
+        "core_may_act": may_write_school(resolve_user_scope(user), school),
+        "core_may_review": RolePermissionService.can_view_page(user, "core_schools"),
+        "core_fy": fy,
+    }
+
+
+@require_page_permission("school_profile")
+def school_ssa_entry_view(request, school_id):
+    """Enter SSA Score from a school's profile (owner, 2026-10-14).
+
+    A CCEO, a Programme Lead or Impact Assessment enters the school's SSA for
+    the current financial year, once: the drawer opens only while the year
+    has none, and the save asks the database again (apps.ssa.creation), so a
+    second person who opened the drawer before the first saved is refused
+    with the reason and nothing is written. The scores are the existing SSA
+    record's eight interventions, saved through the one SSA service
+    (apps.ssa.services.upload), pending until a different verifier confirms
+    them, as every SSA is, except a Programme Lead's own, which count as they
+    are entered (owner, 2026-10-16).
+    """
+    from apps.ssa import services as ssa_services
+    from apps.ssa.forms import SchoolSsaEntryForm
+
+    school = get_scoped_object_or_404(
+        School, request.user, id=school_id, deleted_at__isnull=True
+    )
+    try:
+        ssa_creation.assert_may_enter(request.user, school)
+    except Forbidden as exc:
+        return HttpResponseForbidden(str(exc.detail))
+
+    # Opened from a visit awaiting its scores on My Plan (owner, 2026-10-17:
+    # "Action is Enter SSA Scores"): the scores are keyed on that visit, so a
+    # CCEO's are confirmed when the lead approves it (apps.ssa.pl_confirmation)
+    # and the visit reads Complete (apps.ssa.visit_scores).
+    visit = _ssa_visit(request, school)
+
+    fy = ssa_creation.current_fy()
+    first_day = get_fy_date_range(fy)[0].date()
+    form = SchoolSsaEntryForm(
+        request.POST or None,
+        school=school,
+        fy=fy,
+        first_day=first_day,
+        last_day=timezone.localdate(),
+        initial={"date_of_ssa": timezone.localdate()},
+    )
+
+    def drawer(**extra):
+        return render(
+            request,
+            "partials/schools/ssa_entry_drawer.html",
+            {"school": school, "form": form, "fy": fy, "visit": visit, **extra},
+        )
+
+    held = ssa_creation.year_record(school, fy)
+    if held is not None:
+        # The year already has its SSA: the form never opens, and a save
+        # posted from a drawer opened before it was taken writes nothing.
+        return drawer(
+            held=held,
+            refusal=ssa_creation.duplicate_message(fy)
+            if request.method == "POST"
+            else "",
+        )
+    if request.method == "POST" and form.is_valid():
+        collector_type = (
+            "ia"
+            if request.user.active_role == EdifyRole.IMPACT_ASSESSMENT.value
+            else "staff"
+        )
+        payload = form.to_service_payload(collector_type=collector_type)
+        payload["entryChannel"] = "my_plan" if visit else "school_profile"
+        if visit:
+            payload["sourceActivityId"] = visit.id
+        try:
+            ssa_services.upload(payload, request.user)
+        except ssa_creation.SsaAlreadyExists as exc:
+            return drawer(
+                held=ssa_creation.year_record(school, fy), refusal=str(exc.detail)
+            )
+        except BadRequest as exc:
+            form.add_error(None, str(exc.detail))
+        else:
+            # The profile reads the new record: its SSA, and the button
+            # greyed for the year.
+            return saved_in_place()
+    return drawer()
+
+
+def _ssa_visit(request, school):
+    """The visit at ``school`` the SSA drawer was opened for, when it was
+    opened from one that collects the SSA; else None (the profile's own
+    entry)."""
+    from apps.activities.models import Activity
+    from apps.ssa.visit_scores import collects_ssa
+
+    visit_id = (
+        request.POST.get("activity") or request.GET.get("activity") or ""
+    ).strip()
+    if not visit_id:
+        return None
+    visit = Activity.objects.filter(
+        id=visit_id, school=school, deleted_at__isnull=True
+    ).first()
+    return visit if visit is not None and collects_ssa(visit) else None
 
 
 def _school_ssa_context(school) -> dict:
@@ -1702,6 +1904,10 @@ def _school_ssa_context(school) -> dict:
     from apps.analytics.ia_workflow import school_progress
 
     ssa_progress = school_progress(school)
+    # Where each record's scores came from (owner, 2026-10-14: "show the
+    # source where useful"), in the SSA pages' own words.
+    for item in ssa_progress.get("history") or []:
+        item["source"] = ssa_creation.source_label(item["record"])
     return {"ssa_progress": ssa_progress, "latest_ssa": ssa_progress["latest"]}
 
 
@@ -1756,13 +1962,6 @@ def _school_details_context(request, school) -> dict:
     from apps.core.navigation import get_user_role_slug
     from apps.schools.school_status import cluster_training_coverage, visit_statuses
 
-    # The ring carries the same four states the status pill does, so the two
-    # cannot disagree about what "Needs Cleanup" looks like.
-    quality_colour = {
-        "Clean": "var(--edify-chart-green)",
-        "Needs Review": "var(--edify-chart-blue)",
-        "Needs Cleanup": "var(--edify-chart-amber)",
-    }.get(school.data_quality_status, "var(--edify-chart-red)")
     # Current cluster and every membership before it (owner, 2026-09-15):
     # joins, changes and removals with who, why and when, and whether the
     # cluster serves the school across a district border.
@@ -1790,9 +1989,6 @@ def _school_details_context(request, school) -> dict:
         and current_match is None,
         "cluster_history": membership_history(school.id),
         "business_transformation": school_profile_context(request.user, school),
-        "quality_gauge": build_gauge(
-            school.data_quality_score, label="Data quality", color=quality_colour
-        ),
         # Deletion is Admin-only (enforced server-side by delete_school; this
         # flag only controls whether the Danger Zone renders).
         "can_delete_school": get_user_role_slug(request.user) == "ADMIN",
@@ -2706,6 +2902,168 @@ def school_edit_drawer_view(request, school_id):
     )
 
 
+def _onboard_cluster_choices(
+    request,
+    *,
+    owner_id="",
+    district_id="",
+    sub_county_id="",
+    selected_id="",
+    first_id="",
+    keep_none=False,
+) -> dict:
+    """The clusters the Add School form offers, and which one it has chosen.
+
+    The district and sub-county bring the cluster the sub-county is attached
+    to (owner, 2026-10-14): `active_cluster_for_geography`, the lookup
+    `School.save` derives membership from, shown and chosen before the save
+    rather than applied silently after it.
+
+    Beside it, the canonical rule (`eligible_clusters_for_school`): the
+    clusters of the staff member who will own the school, in any district,
+    within what the person adding it may write. A school near a border may
+    join a cluster across it; its own district never changes (owner,
+    2026-09-21). A cluster held by another officer is still brought up and
+    named, but cannot be chosen for this owner — the membership service
+    refuses it — so the person sees whose it is instead of a refusal after
+    saving.
+
+    ``first_id`` is the cluster of the training or meeting the school is
+    being added from. It is chosen by default (owner, 2026-10-14: "it should
+    by default select the cluster where the training was scheduled"), before
+    any district is picked, and stays chosen when the geography changes; the
+    person picks "No cluster" for a school that only visited the session.
+    """
+    from apps.clusters.eligibility import eligible_clusters_for_school
+
+    owner = _school_owner_queryset().filter(id=owner_id).first() if owner_id else None
+    district = District.objects.filter(id=district_id).first() if district_id else None
+    context = {"cluster_owner": owner, "cluster_options": [], "cluster_ready": False}
+
+    active = Cluster.objects.filter(
+        deleted_at__isnull=True, status=ClusterRecordStatus.ACTIVE
+    ).select_related("district")
+    session = active.filter(id=first_id).first() if first_id else None
+    covering = (
+        active_cluster_for_geography(
+            district_id=district.id, sub_county_id=sub_county_id or None
+        )
+        if district is not None
+        else None
+    )
+    clusters = []
+    if owner is not None and district is not None:
+        probe = School(account_owner_id=owner.id, district_id=district.id)
+        clusters = list(
+            eligible_clusters_for_school(probe, scope=resolve_user_scope(request.user))
+        )
+    ids = {c.id for c in clusters}
+    owner_ids = owner_id_variants(owner.id) if owner is not None else set()
+    blocked = set()
+    for brought in (session, covering):
+        if brought is None or brought.id in ids:
+            continue
+        clusters.append(brought)
+        ids.add(brought.id)
+        holder = (brought.responsible_staff_id or "").strip()
+        if owner is not None and holder and holder not in owner_ids:
+            # Another officer's: listed, named, not choosable for this owner.
+            blocked.add(brought.id)
+    if not clusters:
+        context["cluster_ready"] = owner is not None and district is not None
+        return context
+    if keep_none and not selected_id:
+        # The person chose "No cluster" themselves; a new sub-county does not
+        # overrule that.
+        pass
+    elif selected_id not in ids or selected_id in blocked:
+        selected_id = next(
+            (
+                c.id
+                for c in (session, covering)
+                if c is not None and c.id not in blocked
+            ),
+            "",
+        )
+    covering_id = covering.id if covering is not None else ""
+
+    officer_ids = {
+        (c.responsible_staff_id or "").strip()
+        for c in clusters
+        if (c.responsible_staff_id or "").strip()
+    }
+    officers = {}
+    for profile in StaffProfile.objects.filter(
+        Q(id__in=officer_ids) | Q(user_id__in=officer_ids)
+    ).select_related("user"):
+        officers[profile.id] = officers[profile.user_id] = profile.user.name
+
+    home_district_id = district.id if district is not None else None
+    clusters.sort(
+        key=lambda c: (
+            c.id != first_id,
+            c.id != covering_id,
+            c.district_id != home_district_id,
+            c.name.lower(),
+        )
+    )
+    context.update(
+        cluster_ready=True,
+        cluster_options=[
+            {
+                "id": c.id,
+                "name": c.name,
+                "district": c.district.name if c.district_id else "",
+                "officer": officers.get((c.responsible_staff_id or "").strip(), ""),
+                "other_district": home_district_id is not None
+                and c.district_id != home_district_id,
+                "suggested": c.id == covering_id,
+                "this_session": c.id == first_id,
+                "unowned": not (c.responsible_staff_id or "").strip(),
+                "blocked": c.id in blocked,
+                "selected": c.id == selected_id,
+            }
+            for c in clusters
+        ],
+    )
+    return context
+
+
+def _onboard_activity(request):
+    """The activity a school is being added from, when the actor may record
+    its attendance; otherwise None (the school is still added, unattached)."""
+    from apps.activities.models import Activity
+
+    activity_id = (
+        request.POST.get("activity_id") or request.GET.get("activity_id") or ""
+    ).strip()
+    if not activity_id:
+        return None
+    activity = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
+    if activity is None or not RolePermissionService.can_upload_evidence(
+        request.user, activity
+    ):
+        return None
+    return activity
+
+
+@require_page_permission("school_directory")
+def school_onboard_cluster_options_view(request):
+    """The Add School form's cluster options, for the owner and place chosen."""
+    if not _may_create_single_school(request):
+        return HttpResponseForbidden("You do not have permission to add a school.")
+    context = _onboard_cluster_choices(
+        request,
+        owner_id=request.GET.get("account_owner_id", "").strip(),
+        district_id=request.GET.get("district_id", "").strip(),
+        sub_county_id=request.GET.get("sub_county_id", "").strip(),
+        selected_id=request.GET.get("cluster_id", "").strip(),
+        first_id=request.GET.get("first_cluster_id", "").strip(),
+        keep_none=request.GET.get("cluster_touched") == "1",
+    )
+    return render(request, "partials/schools/onboard_cluster_options.html", context)
+
+
 @require_page_permission("school_directory")
 def school_onboard_drawer_view(request):
     if not _may_create_single_school(request):
@@ -2714,35 +3072,23 @@ def school_onboard_drawer_view(request):
             "You do not have permission to add a school.",
         )
 
-    districts = District.objects.select_related("region").order_by("name")
-    from apps.core.scoping import cluster_owner_ids
-
-    onboard_scope = resolve_user_scope(request.user)
-    if onboard_scope.country_scope or onboard_scope.can_view_summary_only:
-        clusters = Cluster.objects.filter(
-            deleted_at__isnull=True, status=ClusterRecordStatus.ACTIVE
-        ).order_by("name")
-    else:
-        owner_ids = cluster_owner_ids(onboard_scope, direct_only=True)
-        clusters = (
-            Cluster.objects.filter(
-                deleted_at__isnull=True,
-                status=ClusterRecordStatus.ACTIVE,
-            )
-            .filter(
-                Q(responsible_staff_id__in=owner_ids)
-                | Q(id__in=onboard_scope.own_cluster_ids)
-            )
-            .order_by("name")
-        )
-    staff = _school_owner_queryset()
-
-    # Pre-populated cluster if any
-    cluster_id = request.GET.get("cluster_id", "").strip()
+    # Opened from an activity's completion drawer (2026-10-14): the same form,
+    # drawn inside that drawer so what was already ticked and typed there is
+    # still there when the school is saved, and the saved school handed back
+    # to it rather than the page reloading.
+    embedded = (request.POST.get("embed") or request.GET.get("embed")) == "1"
+    activity = _onboard_activity(request) if embedded else None
 
     if request.method == "POST":
         try:
             school = _create_manual_school(request)
+        except PossibleDuplicateSchool as exc:
+            return render(
+                request,
+                "partials/schools/onboard_possible_duplicate.html",
+                {"matches": exc.matches, "embedded": embedded},
+                status=400,
+            )
         except BadRequest as exc:
             return HttpResponse(
                 (
@@ -2752,6 +3098,17 @@ def school_onboard_drawer_view(request):
                 ),
                 status=400,
             )
+
+        if embedded:
+            response = render(
+                request,
+                "partials/schools/onboard_registered.html",
+                {"school": school},
+            )
+            response["HX-Trigger"] = json.dumps(
+                {"edify-school-registered": _registered_school_row(school)}
+            )
+            return response
 
         messages.success(
             request,
@@ -2765,15 +3122,48 @@ def school_onboard_drawer_view(request):
 
         return HttpResponse("<script>window.location.reload();</script>")
 
+    staff = _school_owner_queryset()
+    # The person adding the school owns it unless they say otherwise, where
+    # they may own schools at all (a CCEO or Programme Lead).
+    default_owner_id = (
+        staff.filter(user_id=request.user.id).values_list("id", flat=True).first() or ""
+    )
+    first_cluster_id = (
+        activity.cluster_id if activity is not None and activity.cluster_id else ""
+    ) or request.GET.get("cluster_id", "").strip()
     context = {
-        "districts": districts,
-        "clusters": clusters,
+        "districts": District.objects.select_related("region").order_by("name"),
         "staff": staff,
+        "default_owner_id": default_owner_id,
         "school_types": SchoolType.choices,
-        "pre_cluster_id": cluster_id,
-        "can_add_ssa": _may_upload_ssa(request),
+        "can_add_ssa": _may_upload_ssa(request) and not embedded,
+        "embedded": embedded,
+        "activity": activity,
+        "first_cluster_id": first_cluster_id,
+        **_onboard_cluster_choices(
+            request, owner_id=default_owner_id, first_id=first_cluster_id
+        ),
     }
+    if embedded:
+        return render(request, "partials/schools/onboard_embedded.html", context)
     return render(request, "partials/schools/onboard_drawer.html", context)
+
+
+def _registered_school_row(school) -> dict:
+    """What a completion drawer needs to list a school it just added."""
+    cluster = (
+        Cluster.objects.filter(id=school.cluster_id).only("name").first()
+        if school.cluster_id
+        else None
+    )
+    return {
+        "id": school.id,
+        "name": school.name,
+        "schoolId": school.school_id,
+        "clusterId": school.cluster_id or "",
+        "clusterName": cluster.name if cluster else "",
+        "district": school.district.name if school.district_id else "",
+    }
 
 
 # ── School lifecycle: closing, and the archive ───────────────────────────────

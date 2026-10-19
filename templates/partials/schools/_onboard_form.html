@@ -1,0 +1,191 @@
+{% comment %}
+The one Add School form (owner, 2026-09-07: one way to onboard a school). The
+directory's drawer and an activity's completion drawer both draw it; `embedded`
+is the second. Refusals land in the form's own notice, above the fields, so
+nothing typed is lost to an error and the person can correct and resend
+(2026-10-14; they used to replace the whole drawer).
+{% endcomment %}
+<form
+method="post"
+action="/schools/create-drawer"
+hx-post="/schools/create-drawer"
+hx-target="#onboard-school-errors"
+hx-swap="innerHTML"
+{% if embedded %}data-onboard-embedded data-drawer-stay-open{% endif %}
+@focusout.capture="if ($event.target.matches('[required]')) $event.target.toggleAttribute('aria-invalid', !$event.target.checkValidity())"
+@input.capture="if ($event.target.matches('[required]') && $event.target.checkValidity()) $event.target.removeAttribute('aria-invalid')"
+@submit="Array.from($el.querySelectorAll('[required]')).forEach((field) => field.toggleAttribute('aria-invalid', !field.checkValidity()))"
+class="space-y-4 text-[12px] text-slate-600"
+>
+{% csrf_token %}
+{% if embedded %}
+<input type="hidden" name="embed" value="1">
+{% if activity %}<input type="hidden" name="activity_id" value="{{ activity.id }}">{% endif %}
+{% endif %}
+<div id="onboard-school-errors" aria-live="polite"></div>
+
+<div class="space-y-1">
+<label for="school_id" class="block edify-text-caption font-semibold text-slate-600">Official school ID <span class="text-rose-500">*</span></label>
+<input
+type="text"
+name="school_id"
+id="school_id"
+maxlength="64"
+autocomplete="off"
+required
+placeholder="e.g. 9999"
+aria-describedby="school-id-help"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus"
+>
+<p id="school-id-help" class="edify-text-caption text-slate-500">Exactly as assigned. No S- prefix is added.</p>
+</div>
+
+{% comment %}
+Required, and the reason anyone may add a school here rather than only Impact
+Assessment. The id proves the school already exists in Salesforce, and because
+the column is unique it is also the duplicate check: two people adding the
+same school from the field collide instead of minting two records.
+{% endcomment %}
+<div class="space-y-1">
+<label for="salesforce_account_id" class="block edify-text-caption font-semibold text-slate-600">Salesforce school ID <span class="text-rose-500">*</span></label>
+<input
+type="text"
+name="salesforce_account_id"
+id="salesforce_account_id"
+maxlength="128"
+autocomplete="off"
+required
+placeholder="e.g. 0011a00000ABCDEfgh"
+aria-describedby="salesforce-account-help"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus"
+>
+<p id="salesforce-account-help" class="edify-text-caption text-slate-500">Add the school in Salesforce first, then type its ID here.</p>
+</div>
+
+<div class="space-y-1">
+<label for="name" class="block edify-text-caption font-semibold text-slate-600">School name <span class="text-rose-500">*</span></label>
+<input
+type="text"
+name="name"
+id="name"
+maxlength="255"
+autocomplete="organization"
+required
+placeholder="e.g. Kampala Hope Academy"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus"
+>
+</div>
+
+<div class="space-y-1">
+<label for="district_id" class="block edify-text-caption font-semibold text-slate-600">District <span class="text-rose-500">*</span></label>
+<select
+name="district_id"
+id="district_id"
+hx-get="/schools/sub-counties"
+hx-trigger="change"
+hx-target="#onboard-school-sub-county"
+hx-swap="innerHTML"
+required
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] edify-surface focus:outline-none focus:ring-4 edify-primary-focus cursor-pointer"
+>
+<option value="" disabled selected>Select a district</option>
+{% for d in districts %}
+<option value="{{ d.id }}">{{ d.name }} ({{ d.region.name }})</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="space-y-1">
+<label for="onboard-school-sub-county" class="block edify-text-caption font-semibold text-slate-600">Sub-county</label>
+<select
+name="sub_county_id"
+id="onboard-school-sub-county"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] edify-surface focus:outline-none focus:ring-4 edify-primary-focus cursor-pointer"
+>
+<option value="">Choose a district first</option>
+</select>
+</div>
+
+<div class="space-y-1">
+<label for="account_owner_id" class="block edify-text-caption font-semibold text-slate-600">Staff name <span class="text-rose-500">*</span></label>
+<select
+name="account_owner_id"
+id="account_owner_id"
+required
+aria-describedby="staff-name-help"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] edify-surface focus:outline-none focus:ring-4 edify-primary-focus cursor-pointer"
+>
+<option value="" disabled{% if not default_owner_id %} selected{% endif %}>Select a CCEO or Program Lead</option>
+{% for member in staff %}
+<option value="{{ member.id }}"{% if member.id == default_owner_id %} selected{% endif %}>{{ member.user.name }} ({{ member.user.active_role }})</option>
+{% endfor %}
+</select>
+<p id="staff-name-help" class="edify-text-caption text-slate-500">Becomes the school&rsquo;s account owner.</p>
+</div>
+
+<div class="space-y-1">
+<label for="school_type" class="block edify-text-caption font-semibold text-slate-600">Current partner type</label>
+<select
+name="school_type"
+id="school_type"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] edify-surface focus:outline-none focus:ring-4 edify-primary-focus cursor-pointer"
+>
+{% for value, label in school_types %}
+<option value="{{ value }}" {% if value == "client" %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="space-y-1">
+<label for="enrollment" class="block edify-text-caption font-semibold text-slate-600">Enrolment</label>
+<input
+type="number"
+name="enrollment"
+id="enrollment"
+min="0"
+inputmode="numeric"
+placeholder="e.g. 250"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus"
+>
+</div>
+
+{% comment %}
+Optional, and never chosen on the person's behalf by where they came from. The
+options are the clusters of the staff member who will own the school, in any
+district (owner, 2026-09-21), refreshed when the owner, district or sub-county
+changes. The school's own district never changes with it.
+{% endcomment %}
+<div class="space-y-1">
+<label for="onboard-school-cluster" class="block edify-text-caption font-semibold text-slate-600">Cluster <span class="font-normal text-slate-500">(optional)</span></label>
+<select
+name="cluster_id"
+id="onboard-school-cluster"
+hx-get="/schools/cluster-options"
+hx-trigger="change from:#account_owner_id, change from:#district_id, change from:#onboard-school-sub-county"
+hx-include="#account_owner_id, #district_id, #onboard-school-sub-county, #onboard-cluster-touched"
+@change="document.getElementById('onboard-cluster-touched').value = '1'"
+{% if first_cluster_id %}hx-vals='{"first_cluster_id": "{{ first_cluster_id|escapejs }}"}'{% endif %}
+hx-target="this"
+hx-swap="innerHTML"
+hx-sync="this:replace"
+aria-describedby="onboard-cluster-help"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] edify-surface focus:outline-none focus:ring-4 edify-primary-focus cursor-pointer"
+>
+{% include "partials/schools/onboard_cluster_options.html" %}
+</select>
+<input type="hidden" id="onboard-cluster-touched" name="cluster_touched" value="">
+<p id="onboard-cluster-help" class="edify-text-caption text-slate-500">{% if embedded %}This session's cluster is chosen. Choose No cluster if the school only came to this session as a visitor. {% endif %}The district and sub-county bring the cluster the sub-county belongs to. A school near a district border may join a cluster across it; it stays in its own district.</p>
+</div>
+
+<div class="drawer-footer">
+{% if embedded %}
+<button type="button" @click="$dispatch('edify-school-register-cancel')" class="btn btn-secondary h-8">Back to the activity</button>
+{% else %}
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+{% endif %}
+{% if can_add_ssa %}
+<button type="submit" name="next" value="ssa" class="btn btn-secondary h-8">Save and add SSA score</button>
+{% endif %}
+<button type="submit" class="btn btn-primary h-8">Create school</button>
+</div>
+</form>

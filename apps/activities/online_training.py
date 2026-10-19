@@ -22,13 +22,20 @@ from __future__ import annotations
 
 from django.db.models import Q
 
-from apps.budget.costing import CLUSTER_TRAINING_TYPES
+from apps.core.activity_types import TRAINING_TYPES
 
 ONLINE = "online"
 
+#: Any training delivered online is free (owner, 2026-10-09: "online training
+#: fetches no cost it is free"), a catalogue item delivered online included:
+#: one scheduled as a "training" rather than a Group Training was priced with
+#: meals, a room, a facilitator and the officer's day (owner, 2026-10-15 cost
+#: audit).
+ONLINE_TRAINING_TYPES = TRAINING_TYPES
+
 #: A Group Training delivered online.
 ONLINE_TRAINING = Q(
-    activity_type__in=CLUSTER_TRAINING_TYPES, programme_delivery_mode=ONLINE
+    activity_type__in=ONLINE_TRAINING_TYPES, programme_delivery_mode=ONLINE
 )
 
 #: What a page writes beside the UGX 0 of an online training.
@@ -37,7 +44,7 @@ ONLINE_FREE_NOTE = "(online training: no cost)"
 
 def is_online_training(activity) -> bool:
     return (
-        activity.activity_type in CLUSTER_TRAINING_TYPES
+        activity.activity_type in ONLINE_TRAINING_TYPES
         and activity.programme_delivery_mode == ONLINE
     )
 
@@ -45,6 +52,6 @@ def is_online_training(activity) -> bool:
 def asked_for_online(activity_type: str, data: dict) -> bool:
     """Did the planner schedule this Group Training as an online one?"""
     return (
-        activity_type in CLUSTER_TRAINING_TYPES
+        activity_type in ONLINE_TRAINING_TYPES
         and str(data.get("programmeDeliveryMode") or "").strip() == ONLINE
     )

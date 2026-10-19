@@ -123,8 +123,15 @@ def cancel(activity_id: str, data: dict, principal) -> dict:
         return services.cancel(activity_id, data, principal)
     reason = {"reason": data.get("reason")}
     result: dict = {}
+    # The Training is called off first: the visit going first would, for the
+    # moment between the two, leave a Training whose visit is gone, which is
+    # priced as the visit day (services._settle_pair_training).
+    order = sorted(
+        _in_order(asked, other),
+        key=lambda member: member.activity_type != "in_school_training",
+    )
     with transaction.atomic():
-        for member in _in_order(asked, other):
+        for member in order:
             if member.id == asked.id:
                 result = services.cancel(member.id, data, principal)
             else:

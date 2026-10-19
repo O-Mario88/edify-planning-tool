@@ -29,7 +29,7 @@ hand-back decisions are the project's coordinator's (`item.project_locked`).
   <td data-label="Training">{{ item.training_name|default:"—" }}</td>
   <td data-label="Purpose of Assignment">{{ item.purpose_label|default:"—" }}</td>
   <td data-label="SSA Intervention">{{ item.intervention_label|default:"—" }}</td>
-  {% include "components/completion_cells.html" with row=item %}
+  {% include "components/completion_cells.html" with row=item evidence_column=True %}
   <td data-label="Status"><span class="partner-plan-table__status">
     {% if item.completion_gap %}<span class="partner-status-chip" data-tone="warning" data-completion-gap>{{ item.completion_gap }}</span>{% else %}
     <span class="partner-status-chip" data-tone="{{ item.status_tone }}" data-status="{{ item.delivery_phase }}"
@@ -37,6 +37,7 @@ hand-back decisions are the project's coordinator's (`item.project_locked`).
     {% if item.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
   </span></td>
   <td data-label="Activity date" data-activity-date>{% if item.activity_date %}{{ item.activity_date|date:"j M Y" }}{% elif item.stage == "awaiting_schedule" %}Awaiting scheduling{% else %}—{% endif %}</td>
+  <td data-label="Completed date" data-completed-on>{{ item.completed_on|date:"j M Y"|default:"—" }}</td>
   <td data-label="Actions" class="school-plan-table__actions">
     {% comment %}
     A school whose Partner work waits for verification offers its reviewer

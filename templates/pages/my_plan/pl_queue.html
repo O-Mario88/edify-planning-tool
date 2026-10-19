@@ -10,98 +10,23 @@ Completion Reviews (Programme Lead alignment, 2026-09-13): the team's completed
 work waiting on the lead, as one plain register. The view
 (my_plan_views.pl_queue_view) hands it rows read in bulk by
 apps.pl_review.services.review_register; every column is text with a tone,
-never a card per activity. Open reads the whole completion in a drawer.
+never a card per activity. Verify opens the whole completion in a drawer.
 The lead holds two decisions, named the same on every surface (owner,
 2026-09-24): Verified confirms the completion and marks it complete, and
-Return sends it back with a reason the officer reads on their My Plan.
+Return sends it back with a reason the officer reads on their My Plan. A
+CCEO's completion an older path left with Impact Assessment is listed too:
+the lead clears their own officers' work (owner, 2026-10-12).
 The register takes the Regional Programme Lead dashboard's table grammar.
-Open, Verified and Return are one Actions menu rather than three buttons
-(owner, 2026-09-26).
+Verify and Return are one Actions menu rather than separate buttons (owner,
+2026-09-26). Verify opens the completion with the forms the officer uploaded,
+and Verified is decided there, never from the row (owner, 2026-10-12: "PL
+should click verify, then the uploaded form").
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-completion-reviews>
   {% page_header eyebrow="Programme implementation" title="Completion Reviews" description="Your officers' completed work waiting on your decision: Verified, or Return with the reason — for example, participants not entered in Salesforce. The longest waiting comes first." element="div" %}
   {% endpage_header %}
 
-  {% paginate rows "review_page" as pager %}
-  {# Reads itself again when an officer sends in a completion or one is decided (static/js/live-regions.js): the number in the heading and the rows. #}
-  <section id="completion-reviews" data-live-region class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="completion-reviews-title" data-review-register>
-    <header class="rpl-card__header">
-      <div class="rpl-card__heading">
-        <h2 id="completion-reviews-title" class="rpl-card__title">Waiting on you</h2>
-        <span class="rpl-card__subtitle">{{ pager.total }} completion{{ pager.total|pluralize }}</span>
-      </div>
-    </header>
-
-    {% if filters %}
-    <form method="get" action="{{ queue_url }}" class="edify-filter-bar" aria-label="Completion review filters" x-data>
-      {% for field in filters %}
-      <label class="cce-filter">
-        <span class="cce-filter__label">{{ field.label }}</span>
-        <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
-          <option value="">{{ field.blank }}</option>
-          {% for option in field.options %}<option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>{% endfor %}
-        </select>
-      </label>
-      {% endfor %}
-    </form>
-    {% endif %}
-
-    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Completions waiting on you; scroll sideways for more columns">
-      <table class="rpl-table" data-mobile-table="scroll">
-        <caption class="sr-only">Completions waiting for your review, longest waiting first</caption>
-        <thead>
-          <tr>
-            <th scope="col">Officer</th>
-            <th scope="col">Activity</th>
-            <th scope="col">School ID</th>
-            <th scope="col">School or cluster</th>
-            <th scope="col">Date</th>
-            <th scope="col">Intervention</th>
-            <th scope="col">Attendance</th>
-            <th scope="col">Evidence</th>
-            <th scope="col">Salesforce ID</th>
-            <th scope="col" class="is-num">Days waiting</th>
-            <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in pager.rows %}
-          <tr data-review-row="{{ row.id }}">
-            <th scope="row" data-record-title><span>{{ row.cceo }}</span></th>
-            <td data-label="Activity">{{ row.activity }}</td>
-            <td data-label="School ID">{{ row.school_code|default:"—" }}</td>
-            <td data-label="School or cluster">{{ row.where|default:"—" }}{% if row.where_kind == "Cluster" %} <span class="rpl-muted">(cluster)</span>{% endif %}</td>
-            <td data-label="Date">{% if row.date %}{{ row.date|date:"j M Y" }}{% else %}—{% endif %}</td>
-            <td data-label="Intervention">{% if row.intervention %}<abbr title="{{ row.intervention_label }}">{{ row.intervention }}</abbr>{% else %}—{% endif %}</td>
-            <td data-label="Attendance">{{ row.attendance|default:"—" }}</td>
-            <td data-label="Evidence">{% if row.evidence_tone %}<span data-tone="{{ row.evidence_tone }}">{{ row.evidence }}</span>{% else %}{{ row.evidence }}{% endif %}</td>
-            <td data-label="Salesforce ID">{% if row.salesforce_id %}{{ row.salesforce_id }}{% else %}<span data-tone="warning">Not entered</span>{% endif %}</td>
-            <td class="is-num" data-label="Days waiting">{% if row.wait_tone %}<span data-tone="{{ row.wait_tone }}">{{ row.days_waiting }}</span>{% else %}{{ row.days_waiting }}{% endif %}</td>
-            <td class="is-end" data-record-action data-label="Actions">
-              {% row_actions row.cceo %}
-              <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ queue_url }}/{{ row.id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Open the completion from {{ row.cceo }}">Open</button>
-              <form role="none" method="post" action="{{ queue_url }}/{{ row.id }}/confirm">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="row-menu__item" role="menuitem" aria-label="Verify the completion from {{ row.cceo }}">Verified</button>
-              </form>
-              <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ queue_url }}/{{ row.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Return the completion from {{ row.cceo }}">Return</button>
-              {% endrow_actions %}
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td class="rpl-table__empty" colspan="11">
-              {% include "components/empty_state.html" with message="Nothing is waiting on you" hint="When an officer you supervise submits completed work, it appears here for your confirmation." compact="true" %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    {% include "components/table_pager.html" with pager=pager param="review_page" %}
-  </section>
+  {% include "partials/my_plan/completion_reviews_register.html" %}
 
   {% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-review-autoload></div>{% endif %}
 </div>

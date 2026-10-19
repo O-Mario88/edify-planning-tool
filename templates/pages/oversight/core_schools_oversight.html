@@ -1,26 +1,236 @@
 {% extends "layouts/shell.html" %}
-{% load components %}
-{% load static %}
-
-{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
+{% load components kpi_metrics table_pagination school_links frontend_filters %}
 
 {% block title %}Core School Oversight · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15">{% endblock %}
+
+{% comment %}
+Core School Oversight (owner, 2026-10-17, the Core School Intelligence
+brief): the Core schools analysed for the reader's scope — a CCEO their own,
+a Programme Lead their team, the country roles their country. Analysis only:
+planned work is on My Plan and Planning Oversight. Every figure is
+apps.core_schools.intelligence, defined in
+docs/core-school-intelligence-metrics.md; each count says how many schools it
+rests on, and a dash is a figure the records cannot give, never a zero.
+{% endcomment %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" id="core-workspace" data-live-region data-mobile-family="oversight" data-core-oversight="{{ tab }}">
 
-  {% page_header title="Core School Oversight" %}
-    {% slot eyebrow %}{% if is_programme_lead %}Programme Lead{% else %}Leadership{% endif %}{% endslot %}
-    {% slot description %}{% if is_programme_lead %} Track core packages and ongoing support for Core Trained, Core Graduate and Champion schools across your team. {% else %} Core packages and ongoing support for Core Trained, Core Graduate and Champion schools, grouped by Programme Lead and team member. {% endif %}{% endslot %}
-  {% slot aside %}
-    {% include "partials/oversight/period_filter_bar.html" with filter_label="Core schools oversight period" target_url="/core-schools-oversight/" annual_only=True target_id="#core-workspace" %}
-  {% endslot %}
+  {% page_header eyebrow="Oversight" title="Core School Oversight" %}
+    {% slot description %}Are the Core schools improving, is the package delivered, are schools taking part, and which need action: FY {{ fy }} against the year before.{% endslot %}
+    {% if can_export %}
+    <a href="/core-schools-oversight/?{{ query }}&amp;format=csv" class="edify-action-button secondary h-9" data-core-download>Download CSV</a>
+    {% endif %}
   {% endpage_header %}
 
-  <div id="core-workspace" data-live-region>
-    {% include "partials/oversight/core_schools_oversight_workspace.html" %}
+  {% filter_bar label="Core School Oversight filters" form_id="core-oversight-filters" extra_class="flex flex-wrap items-end gap-3" %}
+    <input type="hidden" name="tab" value="{{ tab }}">
+    {% if tab == "groups" %}<input type="hidden" name="group" value="{{ group }}">{% endif %}
+    <label class="block"><span class="edify-filter-label">Fiscal year</span>
+      <select name="fy" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for year in fy_options %}<option value="{{ year }}"{% if year == fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}</select></label>
+    <label class="block"><span class="edify-filter-label">District</span>
+      <select name="district" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700"><option value="">All districts</option>{% for d in districts %}<option value="{{ d }}"{% if d == selected.district %} selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
+    <label class="block"><span class="edify-filter-label">Type</span>
+      <select name="type" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700"><option value="">All Core types</option>{% for value, label in types %}<option value="{{ value }}"{% if value == selected.type %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label class="block"><span class="edify-filter-label">SSA trajectory</span>
+      <select name="trajectory" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700"><option value="">Any</option>{% for key, label in trajectory_filters.items %}<option value="{{ key }}"{% if key == selected.trajectory %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label class="block"><span class="edify-filter-label">Needs</span>
+      <select name="attention" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700"><option value="">Anything</option>{% for reason in attention_filters %}<option value="{{ reason }}"{% if reason == selected.attention %} selected{% endif %}>{{ reason }}</option>{% endfor %}</select></label>
+    <label class="block"><span class="edify-filter-label">Champion readiness</span>
+      <select name="readiness" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700"><option value="">Any</option>{% for status in readiness_filters %}<option value="{{ status }}"{% if status == selected.readiness %} selected{% endif %}>{{ status }}</option>{% endfor %}</select></label>
+    <label class="block"><span class="edify-filter-label">Sort</span>
+      <select name="sort" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for key, label in sorts.items %}<option value="{{ key }}"{% if key == selected.sort %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <button type="submit" class="edify-action-button primary h-9">Apply</button>
+  {% endfilter_bar %}
+
+  {% kpi_strip %}
+    {% kpi_metric %}{% kpi_label %}Core Schools{% endkpi_label %}{{ summary.schools }}{% kpi_helper %}{% if summary.schools != scope_schools %}of {{ scope_schools }} in your scope{% else %}In your scope{% endif %}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Current-Year SSA{% endkpi_label %}{{ summary.with_current_ssa }} of {{ summary.schools }}{% kpi_helper %}Confirmed in FY {{ fy }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Compared{% endkpi_label %}{{ summary.compared }} of {{ summary.schools }}{% kpi_helper %}Confirmed SSA in both years{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Improved{% endkpi_label %}{{ summary.improved }}{% kpi_helper %}Of {{ summary.compared }} compared{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Declined{% endkpi_label %}{{ summary.declined }}{% kpi_helper %}Of {{ summary.compared }} compared{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Average SSA{% endkpi_label %}{{ summary.avg_latest|default_if_none:"—" }}{% kpi_helper %}{{ summary.with_current_ssa }} schools, FY {{ fy }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Average SSA Change{% endkpi_label %}{% if summary.avg_change is None %}—{% else %}{% if summary.avg_change > 0 %}+{% endif %}{{ summary.avg_change }}{% endif %}{% kpi_helper %}Points, {{ summary.compared }} compared{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Package Complete{% endkpi_label %}{{ summary.package_complete }} of {{ summary.with_plan }}{% kpi_helper %}Visits {{ summary.visits_done }}/{{ summary.visits_target }} · Trainings {{ summary.trainings_done }}/{{ summary.trainings_target }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Session Attendance{% endkpi_label %}{% if summary.attendance_rate is None %}—{% else %}{{ summary.attendance_rate }}%{% endif %}{% kpi_helper %}{{ summary.attended }} of {{ summary.invited }} invitations{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Teacher Attendances{% endkpi_label %}{{ summary.teacher_attendances }}{% kpi_helper %}Headcounts, not unique people · {{ summary.leader_attendances }} leader attendances{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Enrolment Growth{% endkpi_label %}{% if summary.enrol_growth_pct is None %}—{% else %}{{ summary.enrol_growth_pct }}%{% endif %}{% kpi_helper %}{{ summary.enrol_compared }} schools with both years{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Need Attention{% endkpi_label %}{{ summary.needs_attention }}{% kpi_helper %}{{ summary.readiness|get_item:"Potential Champion" }} Potential Champion{% endkpi_helper %}{% endkpi_metric %}
+  {% endkpi_strip %}
+
+  <nav class="flex flex-wrap items-center gap-x-4 gap-y-1 edify-text-caption" aria-label="Open the schools behind the figures" data-core-drilldowns>
+    <span class="text-slate-500">Open the schools:</span>
+    <a href="?{{ query }}&amp;trajectory=improved" class="edify-primary-text font-semibold hover:underline" data-core-drill="improved">Improved ({{ summary.improved }})</a>
+    <a href="?{{ query }}&amp;trajectory=declined" class="edify-primary-text font-semibold hover:underline" data-core-drill="declined">Declined ({{ summary.declined }})</a>
+    <a href="?{{ query }}&amp;trajectory=not_comparable" class="edify-primary-text font-semibold hover:underline" data-core-drill="not_compared">Not compared ({{ summary.not_compared }})</a>
+    <a href="?{{ query }}&amp;tab=attention" class="edify-primary-text font-semibold hover:underline" data-core-drill="attention">Need attention ({{ summary.needs_attention }})</a>
+    <a href="?{{ query }}&amp;tab=champion" class="edify-primary-text font-semibold hover:underline" data-core-drill="champion">Potential Champions ({{ summary.readiness|get_item:"Potential Champion" }})</a>
+  </nav>
+
+  <nav class="oversight-entity-tabs" aria-label="Core School Oversight sections">
+    {% for key, label in tabs %}
+    <a class="oversight-entity-tabs__link{% if key == tab %} is-active{% endif %}" href="?{{ query }}&amp;tab={{ key }}"{% if key == tab %} aria-current="page"{% endif %}><span>{{ label }}</span></a>
+    {% endfor %}
+  </nav>
+
+  {% if tab == "schools" %}
+  {% paginate rows "page" as pager %}
+  {% data_table name="core-schools" %}
+    {% slot title %}Core Schools, FY {{ fy }}{% endslot %}
+    {% slot summary %}{{ rows|length }} school{{ rows|length|pluralize }}{% endslot %}
+    {% slot caption %}Each Core school: its latest and previous confirmed SSA and the change between them (only where both years are confirmed and comparable), its weakest intervention, the package against its plan, partner hand-overs, attendance at delivered cluster sessions, teacher and leader attendances (headcounts), enrolment and learning change, Champion readiness and what it needs. The name opens the school's profile.{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="No Core school in your scope matches." compact="true" %}{% endslot %}
+    {% slot footer %}{% include "components/table_pager.html" with pager=pager param="page" %}{% endslot %}
+    {% if rows %}
+    <thead><tr>
+      <th scope="col" class="px-3 py-2">School</th>
+      <th scope="col" class="px-3 py-2">School ID</th>
+      <th scope="col" class="px-3 py-2">Type</th>
+      <th scope="col" class="px-3 py-2">District</th>
+      <th scope="col" class="px-3 py-2">Cluster</th>
+      <th scope="col" class="px-3 py-2">CCEO</th>
+      <th scope="col" class="px-3 py-2 text-right">Latest SSA</th>
+      <th scope="col" class="px-3 py-2 text-right">Previous SSA</th>
+      <th scope="col" class="px-3 py-2 text-right">SSA Change</th>
+      <th scope="col" class="px-3 py-2">Trajectory</th>
+      <th scope="col" class="px-3 py-2">Weakest Intervention</th>
+      <th scope="col" class="px-3 py-2 text-right">Visits</th>
+      <th scope="col" class="px-3 py-2 text-right">Trainings</th>
+      <th scope="col" class="px-3 py-2 text-right">Package</th>
+      <th scope="col" class="px-3 py-2">Partner Hand-overs</th>
+      <th scope="col" class="px-3 py-2 text-right">Attendance</th>
+      <th scope="col" class="px-3 py-2 text-right">Teacher / Leader Attendances</th>
+      <th scope="col" class="px-3 py-2 text-right">Enrolment Change</th>
+      <th scope="col" class="px-3 py-2 text-right">Learning Change</th>
+      <th scope="col" class="px-3 py-2">Champion</th>
+      <th scope="col" class="px-3 py-2">Needs</th>
+    </tr></thead>
+    <tbody>
+      {% for r in pager.rows %}
+      <tr data-core-school-row="{{ r.code }}">
+        <th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link r.name r.id %}</th>
+        <td class="px-3 py-2 tabular-nums" data-label="School ID">{{ r.code|default:"—" }}</td>
+        <td class="px-3 py-2" data-label="Type">{{ r.type_label }}</td>
+        <td class="px-3 py-2" data-label="District">{{ r.district|default:"—" }}</td>
+        <td class="px-3 py-2" data-label="Cluster">{% if r.cluster_id and r.cluster %}<a href="/clusters/{{ r.cluster_id }}/profile" class="hover:underline">{{ r.cluster }}</a>{% else %}—{% endif %}</td>
+        <td class="px-3 py-2" data-label="CCEO">{{ r.owner }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Latest SSA">{% if r.ssa_now is None %}<span title="No confirmed SSA in FY {{ fy }}">—</span>{% else %}{{ r.ssa_now }}{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Previous SSA">{{ r.ssa_before|default_if_none:"—" }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="SSA Change">{% if r.ssa_change is None %}—{% else %}{% if r.ssa_change > 0 %}+{% endif %}{{ r.ssa_change }}{% endif %}</td>
+        <td class="px-3 py-2" data-label="Trajectory">{% if r.trajectory_tone %}<span class="edify-status-text" data-edify-tone="{{ r.trajectory_tone }}" title="{{ r.rule_label }}">{{ r.trajectory_label }}</span>{% else %}{{ r.trajectory_label }}{% endif %}</td>
+        <td class="px-3 py-2" data-label="Weakest Intervention">{% if r.weakest %}{{ r.weakest_label }} ({{ r.weakest_score }}){% else %}—{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Visits">{% if r.has_plan %}{{ r.visits_done }}/{{ r.visits_target }}{% else %}—{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Trainings">{% if r.has_plan %}{{ r.trainings_done }}/{{ r.trainings_target }}{% else %}—{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Package">{{ r.package_label }}</td>
+        <td class="px-3 py-2" data-label="Partner Hand-overs">{% if r.handovers_assigned or r.handovers_scheduled or r.handovers_completed %}{{ r.handovers_assigned }} unscheduled · {{ r.handovers_scheduled }} scheduled · {{ r.handovers_completed }} done{% else %}None{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Attendance">{% if r.attendance_rate is None %}—{% else %}{{ r.attendance_rate }}% <span class="edify-text-caption text-slate-500">({{ r.attended }}/{{ r.invited }})</span>{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Teacher / Leader Attendances">{{ r.teacher_attendances|default_if_none:"—" }} / {{ r.leader_attendances|default_if_none:"—" }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Enrolment Change">{% if r.enrol_change is None %}—{% else %}{% if r.enrol_change > 0 %}+{% endif %}{{ r.enrol_change }}{% if r.enrol_growth_pct is not None %} ({{ r.enrol_growth_pct }}%){% endif %}{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Learning Change">{% if r.learn_change is None %}—{% else %}{% if r.learn_change > 0 %}+{% endif %}{{ r.learn_change }} pts{% endif %}</td>
+        <td class="px-3 py-2" data-label="Champion">{{ r.champion }}</td>
+        <td class="px-3 py-2" data-label="Needs">{{ r.attention|join:"; "|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    {% endif %}
+  {% enddata_table %}
+
+  {% elif tab == "groups" %}
+  <nav class="oversight-entity-tabs" aria-label="Group the Core schools by">
+    {% for key, label in groupings.items %}
+    <a class="oversight-entity-tabs__link{% if key == group %} is-active{% endif %}" href="?{{ query }}&amp;tab=groups&amp;group={{ key }}"{% if key == group %} aria-current="page"{% endif %}><span>By {{ label }}</span></a>
+    {% endfor %}
+  </nav>
+  {% data_table name="core-groups" %}
+    {% slot title %}Core Schools by {{ groupings|get_item:group }}, FY {{ fy }}{% endslot %}
+    {% slot summary %}{{ grouped|length }} group{{ grouped|length|pluralize }}{% endslot %}
+    {% slot caption %}Each group's Core schools and the schools every figure rests on. A school counts in its own district and sub-region, never its cluster's. A rate is the group's totals, not an average of rates.{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="No Core school in your scope matches." compact="true" %}{% endslot %}
+    {% if grouped %}
+    <thead><tr>
+      <th scope="col" class="px-3 py-2">{{ groupings|get_item:group }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools</th>
+      <th scope="col" class="px-3 py-2 text-right">Current SSA</th>
+      <th scope="col" class="px-3 py-2 text-right">Average SSA</th>
+      <th scope="col" class="px-3 py-2 text-right">Compared</th>
+      <th scope="col" class="px-3 py-2 text-right">Improved</th>
+      <th scope="col" class="px-3 py-2 text-right">Declined</th>
+      <th scope="col" class="px-3 py-2 text-right">Average Change</th>
+      <th scope="col" class="px-3 py-2 text-right">Package Complete</th>
+      <th scope="col" class="px-3 py-2 text-right">Attendance</th>
+      <th scope="col" class="px-3 py-2 text-right">Teacher / Leader Attendances</th>
+      <th scope="col" class="px-3 py-2 text-right">Enrolment Growth</th>
+      <th scope="col" class="px-3 py-2 text-right">Need Attention</th>
+      <th scope="col" class="px-3 py-2 text-right">Potential Champions</th>
+    </tr></thead>
+    <tbody>
+      {% for g in grouped %}{% with s=g.summary %}
+      <tr data-core-group="{{ g.label }}">
+        <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ g.label }}</th>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.schools }}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.with_current_ssa }} of {{ s.schools }}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.avg_latest|default_if_none:"—" }}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.compared }}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.improved }}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.declined }}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{% if s.avg_change is None %}—{% else %}{% if s.avg_change > 0 %}+{% endif %}{{ s.avg_change }}{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.package_complete }} of {{ s.with_plan }}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{% if s.attendance_rate is None %}—{% else %}{{ s.attendance_rate }}%{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.teacher_attendances }} / {{ s.leader_attendances }}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{% if s.enrol_growth_pct is None %}—{% else %}{{ s.enrol_growth_pct }}%{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.needs_attention }}</td>
+        <td class="px-3 py-2 text-right tabular-nums">{{ s.readiness|get_item:"Potential Champion" }}</td>
+      </tr>
+      {% endwith %}{% endfor %}
+    </tbody>
+    {% endif %}
+  {% enddata_table %}
+
+  {% elif tab == "attention" %}
+  <div class="space-y-4">
+    {% for item in attention %}
+    <section class="card p-0 overflow-hidden" data-core-reason="{{ item.reason }}">
+      <header class="edify-table-titlebar flex items-center justify-between px-4 py-3"><h3>{{ item.reason }}</h3><span class="pill pill-neutral">{{ item.rows|length }}</span></header>
+      {% if item.rows %}
+      <ul class="divide-y edify-border">
+        {% for r in item.rows %}<li class="px-4 py-2 flex flex-wrap items-center justify-between gap-2"><span>{% school_link r.name r.id %} <span class="edify-text-caption text-slate-500">{{ r.code }} · {{ r.district|default:"—" }} · {{ r.owner }}</span></span><span class="edify-text-caption text-slate-600">Latest SSA {{ r.ssa_now|default_if_none:"—" }} · {{ r.trajectory_label }} · Package {{ r.package_label }}</span></li>{% endfor %}
+      </ul>
+      {% else %}<p class="px-4 py-3 edify-text-caption text-slate-500">No school.</p>{% endif %}
+    </section>
+    {% endfor %}
   </div>
 
+  {% elif tab == "recommendations" %}
+  <p class="edify-text-caption text-slate-600">The SSA recommendations recorded for each school from its confirmed SSA, with the recommended catalogue training (or why none is mapped) and where each stands. A recommendation is not an activity: support is planned from My Plan and Planning.</p>
+  <div class="space-y-4">
+    {% for r, recs in recommended %}
+    <section class="card p-0 overflow-hidden" data-core-recommendation-row="{{ r.code }}">
+      <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-2 px-4 py-3"><h3>{% school_link r.name r.id %} <span class="edify-text-caption text-slate-500">{{ r.code }} · {{ r.owner }}</span></h3><span class="flex items-center gap-2"><span class="pill pill-neutral">{{ recs|length }}</span><a href="/schools/{{ r.id }}?tab=core&amp;fy={{ fy }}" class="edify-primary-text font-semibold hover:underline edify-text-caption">Act on these</a></span></header>
+      <ul class="divide-y edify-border">
+        {% for rec in recs %}<li class="px-4 py-2 flex flex-wrap items-start justify-between gap-2"><span class="edify-text-caption"><span class="font-semibold">{{ rec.get_intervention_display }}{% if rec.score is not None %} ({{ rec.score|floatformat:1 }}{% if rec.score_band %}, {{ rec.score_band }}{% endif %}){% endif %}</span> · {% if rec.recommended_item %}{{ rec.recommended_item.display_name }}{% else %}No mapped training{% if rec.unmapped_reason %}: {{ rec.unmapped_reason }}{% endif %}{% endif %}{% if rec.reason %}<span class="block text-slate-500">{{ rec.reason }}</span>{% endif %}</span><span class="pill pill-neutral">{{ rec.get_state_display }}</span></li>{% endfor %}
+      </ul>
+    </section>
+    {% empty %}
+    <p class="edify-text-caption text-slate-500">No open recommendation for the schools shown.</p>
+    {% endfor %}
+  </div>
+
+  {% elif tab == "champion" %}
+  <p class="edify-text-caption text-slate-600">Edify's Champion rule: latest confirmed SSA average 8.0 or more, no intervention below 7.0, and all 8 package visits and trainings done. Readiness is a recommendation; a school becomes a Champion only through the Champion review.</p>
+  <div class="space-y-4">
+    {% for item in readiness %}
+    <section class="card p-0 overflow-hidden" data-core-readiness="{{ item.status }}">
+      <header class="edify-table-titlebar flex items-center justify-between px-4 py-3"><h3>{{ item.status }}</h3><span class="pill pill-neutral">{{ item.rows|length }}</span></header>
+      {% if item.rows %}
+      <ul class="divide-y edify-border">
+        {% for r in item.rows %}<li class="px-4 py-2 flex flex-wrap items-center justify-between gap-2"><span>{% school_link r.name r.id %} <span class="edify-text-caption text-slate-500">{{ r.code }} · {{ r.owner }}</span></span><span class="edify-text-caption text-slate-600">Latest SSA {{ r.ssa_now|default_if_none:"—" }} · Weakest {% if r.weakest %}{{ r.weakest_label }} ({{ r.weakest_score }}){% else %}—{% endif %} · Package {{ r.package_label }}{% if r.champion_score is not None %} · Champion score {{ r.champion_score }}{% endif %}</span>{% if item.status == "Potential Champion" and may_review_champions %}<button type="button" hx-get="/core-schools/{{ r.code }}/champion-review" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button secondary h-8" data-core-champion-review>Review</button>{% endif %}</li>{% endfor %}
+      </ul>
+      {% else %}<p class="px-4 py-3 edify-text-caption text-slate-500">No school.</p>{% endif %}
+    </section>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <p class="edify-text-caption text-slate-500">Improved and declined follow the published IA measurement rule for each SSA domain; where none is approved, any change counts. Teacher and leader figures are attendance headcounts, not unique people. Planned visits and trainings are on My Plan and Planning Oversight.</p>
 </div>
 {% endblock %}

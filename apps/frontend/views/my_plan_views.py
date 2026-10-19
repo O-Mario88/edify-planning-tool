@@ -1,6 +1,12 @@
-from apps.core.htmx_errors import error_fragment, notice_fragment
+from apps.core.htmx_errors import (
+    error_fragment,
+    error_message,
+    notice_fragment,
+    refusal_drawer,
+)
 from apps.core.redirects import local_redirect
-from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core import export_kinds
 from apps.ssa.plan_alignment import verdict_display
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
@@ -11,11 +17,12 @@ from apps.core.permissions import (
 )
 from apps.core.rbac import Permission
 from django.contrib import messages
+from apps.core.htmx_saved import saved_in_place
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from datetime import date, datetime
+from datetime import date
 from apps.audit.models import AuditLog
 from apps.audit.services import log as audit_log
 
@@ -34,6 +41,7 @@ from apps.activities.services import (
     in_school_training_pair,
     complete_partner_ssa_support,
     submit_for_review,
+    hand_in_with_id,
     record_attendance,
     ia_confirm,
     sf_kind,
@@ -52,7 +60,11 @@ from apps.evidence.services import (
     infer_kind_from_upload,
     resolve_evidence_kind,
 )
-from apps.core.enums import ActivityType, EvidenceKind, SsaIntervention
+from apps.core.enums import (
+    ActivityType,
+    EvidenceKind,  # noqa: F401 - UPLOAD-OFF: read by the commented-out upload
+    SsaIntervention,
+)
 from apps.pl_review.services import (
     confirm as pl_confirm,
     return_activity as pl_return,
@@ -66,6 +78,21 @@ from apps.core.interventions import (
     INTERVENTION_ABBREVIATIONS as SSA_SCORE_ABBREVIATIONS,
 )  # noqa: E402
 from apps.schools.lifecycle_service import active_schools
+
+#: Activities whose completion drawer records who attended: head counts for
+#: every one, and the school register for the cluster sessions among them.
+ATTENDANCE_ACTIVITY_TYPES = frozenset(
+    {
+        "training",
+        "in_school_training",
+        "school_improvement_training",
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "cluster_meeting",
+        "cluster_meeting_ssa_review",
+        "core_training",
+    }
+)
 
 
 def _forbid_staff_on_partner_activity(request, a, *, allow_confirmer=False):
@@ -98,10 +125,15 @@ def _forbid_staff_on_partner_activity(request, a, *, allow_confirmer=False):
 
 
 def _partner_ssa_completion_context(a: Activity) -> dict:
+    from apps.evidence import form_document
     from apps.evidence.models import EvidenceRecord
 
     return {
         "a": a,
+        # The visit form the scores are keyed from, as one button that opens
+        # one PDF (owner, 2026-10-14).
+        "uploaded_form": form_document.uploaded_form(a),
+        "form_name": form_document.form_name(a),
         "score_fields": [
             {
                 "code": code,
@@ -143,6 +175,30 @@ def _readiness_list(request, context) -> dict | None:
     }
 
 
+def _export_format(request) -> str:
+    """ "csv" or "xlsx" when this My Plan request is an export, else "". The
+    Export options drawer names the period without naming a format; its
+    request is a workbook."""
+    export = request.GET.get("export", "").strip().lower()
+    if not export and request.GET.get("format", "").strip().lower() in {
+        "xlsx",
+        "excel",
+    }:
+        export = "xlsx"
+    if export in {"csv", "xlsx", "excel"}:
+        return "csv" if export == "csv" else "xlsx"
+    if any(
+        k in request.GET
+        for k in ("from_month", "to_month", "start_date", "end_date", "period_type")
+    ):
+        return "xlsx"
+    return ""
+
+
+def _is_export_request(request) -> bool:
+    return bool(_export_format(request))
+
+
 @require_page_permission("my_plan")
 def my_plan_view(request):
     """The planning dashboard main view."""
@@ -165,8 +221,33 @@ def my_plan_view(request):
         "period": request.GET.get("period"),
         "q": request.GET.get("q", "").strip(),
     }
+    # An export reads the Export options drawer's kind of work and plan
+    # status itself, below, with their wider meanings. Handed to the page as
+    # its own filters they matched no activity ("visits_trainings" is no
+    # activity type) and every export came out blank (2026-10-12).
+    if _is_export_request(request):
+        query["activity_type"] = None
+        query["status"] = None
 
-    context = get_my_plan(request.user, query)
+    # The person's own Planned and remaining reads every school they hold
+    # and was more than a quarter of this page's time. The page is answered
+    # without it and asks for it once it has been drawn
+    # (my_plan_panel_views). It stays in the answer where the answer is the
+    # figures themselves, or the list of schools behind one of them, which
+    # the reader has just asked to be shown; an export never draws it.
+    from apps.frontend.views.my_plan_panel_views import plans_visits
+
+    wants_figures = request.GET.get(
+        "format", ""
+    ).strip().lower() == "readiness-json" or bool(
+        (request.GET.get("list") or "").strip()
+    )
+    context = get_my_plan(request.user, query, with_readiness=wants_figures)
+    context["readiness_later"] = (
+        not wants_figures
+        and not _is_export_request(request)
+        and plans_visits(request.user)
+    )
     context["plan_list"] = _readiness_list(request, context)
     context["topbar_search"] = {
         "placeholder": "Search my plan…",
@@ -196,97 +277,71 @@ def my_plan_view(request):
     # to export all of their plans into Excel." This is the personal plan every
     # one of them holds; the team and country plans export from their own
     # oversight pages. CSV stays, so existing links keep working.
-    export = request.GET.get("export", "").strip().lower()
-    if not export and request.GET.get("format", "").strip().lower() in {
-        "xlsx",
-        "excel",
-    }:
-        export = "xlsx"
-    if export in {"csv", "xlsx", "excel"} or any(
-        k in request.GET
-        for k in (
-            "from_month",
-            "to_month",
-            "start_date",
-            "end_date",
-            "period_type",
-        )
-    ):
-        if not export:
-            export = "xlsx"
-        # Owner, 2026-09-27: "All exported plan should have school ID." The
-        # School ID is the school's business code; a cluster session a row
-        # stands for as a whole has none. A cluster training is listed once
-        # per invited school, so its rows carry each school's own ID.
-        headers = [
-            "Activity ID",
-            "School ID",
-            "Type",
-            "School / Cluster",
-            "District",
-            "Cluster Planned From",
-            "Training Name",
-            "Mode of Delivery",
-            "Purpose of Visit / Topic",
-            "SSA Intervention",
-            "Planned Date",
-            "Status",
-            "Owner",
-            "Execution Role",
-            "Facilitated By",
-            "Participants",
-            "Salesforce ID",
-            "Evidence",
-            "Budget Status",
-            "Verification Status",
-            "Payment Status",
-            "Budget (UGX)",
-        ]
-        # Every table the page shows, the Core School and Programme School
-        # cards included — the export used to stop at the three general
-        # tables, so a Core School's visits and trainings never reached it.
+    export = _export_format(request)
+    if export:
+        # One layout for every plan export (apps.core.plan_export; owner,
+        # 2026-10-12): the school visits, the trainings and cluster meetings,
+        # and the other activities, each a sheet with the columns of its own
+        # My Plan table plus the District Type. Every table the page shows
+        # feeds it, the Core School and Programme School cards included.
+        from apps.core import plan_export
+
+        # A cluster session is one row (its columns open on the Cluster Name
+        # and carry no School ID): the Group Trainings table's rows, not the
+        # per-school rows of "Schools with Planned Training". What is left
+        # of that table is the in-school trainings, which are school work.
+        trainings = list(context.get("group_trainings", []))
+        meetings = list(context.get("cluster_meetings", []))
+        session_ids = {row["id"] for row in (*trainings, *meetings)}
+
+        def _kind(row, kind):
+            # Work handed to a partner is a partner schedule whatever its
+            # kind (owner, 2026-10-12: "partner schedules on its sheet").
+            if row.get("execution_role") == "Partner" or row.get("partner_name"):
+                kind = plan_export.PARTNER
+            return {**row, "export_kind": kind}
+
         feed = [
-            *context.get("core_school_visits", []),
-            *context.get("core_school_trainings", []),
-            *context.get("school_visits", []),
-            *context.get("cluster_trainings", []),
-            *context.get("cluster_meetings", []),
             *(
-                row
-                for group in context.get("programme_school_work", [])
-                for row in group["rows"]
+                _kind(row, plan_export.VISIT)
+                for row in (
+                    *context.get("core_school_visits", []),
+                    *context.get("core_school_trainings", []),
+                    *context.get("school_visits", []),
+                    *context.get("cluster_trainings", []),
+                    *(
+                        row
+                        for group in context.get("programme_school_work", [])
+                        for row in group["rows"]
+                    ),
+                )
+                if row["id"] not in session_ids
             ),
-            *context.get("programme_activities", []),
+            *(_kind(row, plan_export.TRAINING) for row in trainings),
+            *(_kind(row, plan_export.MEETING) for row in meetings),
+            *(
+                _kind(row, plan_export.OTHER)
+                for row in context.get("programme_activities", [])
+            ),
         ]
 
         from datetime import date
-        from apps.core.fy import get_operational_fy, month_range_to_dates
+
+        from apps.frontend.views.oversight_views import (
+            _period_filters,
+            export_period_bounds,
+        )
         from apps.planning.oversight_service import COMPLETED_WORK_STATUSES
 
-        period_type = (request.GET.get("period_type") or "").strip().lower()
-        raw_from_m = (request.GET.get("from_month") or "").strip()
-        raw_to_m = (request.GET.get("to_month") or "").strip()
-        raw_s_date = (request.GET.get("start_date") or "").strip()
-        raw_e_date = (request.GET.get("end_date") or "").strip()
-        fy_val = str(context.get("fy") or query.get("fy") or get_operational_fy())
-
-        filter_start_date = None
-        filter_end_date = None
-        if period_type == "month_range" or (
-            raw_from_m.isdigit() and raw_to_m.isdigit()
-        ):
-            f_m = int(raw_from_m) if raw_from_m.isdigit() else 10
-            t_m = int(raw_to_m) if raw_to_m.isdigit() else 9
-            filter_start_date, filter_end_date = month_range_to_dates(fy_val, f_m, t_m)
-        elif period_type == "custom_dates" or (raw_s_date and raw_e_date):
-            try:
-                s_d = datetime.strptime(raw_s_date, "%Y-%m-%d").date()
-                e_d = datetime.strptime(raw_e_date, "%Y-%m-%d").date()
-                if s_d > e_d:
-                    s_d, e_d = e_d, s_d
-                filter_start_date, filter_end_date = s_d, e_d
-            except (ValueError, TypeError):
-                pass
+        # The period the Export options drawer chose, read by the one rule
+        # every export reads it by (oversight_views._period_filters; owner,
+        # 2026-10-15: "make sure it only picks the plan for the selected
+        # period not everything"). This page kept its own copy, which read the
+        # hidden month pair before the custom dates.
+        period = _period_filters(request)
+        filter_start_date = filter_end_date = None
+        if period.get("period") == "custom" and period.get("date_start"):
+            filter_start_date, filter_end_date = export_period_bounds(period)
 
         if filter_start_date is not None and filter_end_date is not None:
 
@@ -310,13 +365,12 @@ def my_plan_view(request):
 
         req_status = (request.GET.get("status") or "").strip().lower()
         if req_status == "completed":
+            # By the work's status, never by the label's letters: "Not
+            # Complete" contains "complet", and matched (2026-10-12).
             feed = [
                 a
                 for a in feed
-                if a.get("raw_status") in COMPLETED_WORK_STATUSES
-                or "complet" in str(a.get("status", "")).lower()
-                or "complet" in str(a.get("status_label", "")).lower()
-                or "delivered" in str(a.get("status", "")).lower()
+                if a.get("is_completed") or a.get("status") in COMPLETED_WORK_STATUSES
             ]
         elif req_status == "scheduled":
             feed = [
@@ -344,95 +398,60 @@ def my_plan_view(request):
         rows = []
         seen = set()
         for a in feed:
-            is_cluster_row = a["activity_type"].startswith("cluster") and not a.get(
-                "is_cluster_invited"
-            )
-            school_code = "" if is_cluster_row else (a.get("school_id") or "")
-            key = (a["id"], school_code)
+            kind = a["export_kind"]
+            key = (a["id"], a.get("school_id") if kind == plan_export.VISIT else "")
             if key in seen:
                 continue
             seen.add(key)
             sequence = a.get("visit_number") or a.get("training_number") or ""
-            if a.get("is_cluster_invited"):
-                cluster_from = f"{a.get('cluster_name', '')} (Invited)"
-            elif a.get("delivery_type") == "in-school" or "in_school" in a.get(
-                "activity_type", ""
-            ):
-                cluster_from = "School Visit"
-            elif a.get("is_core"):
-                cluster_from = "Core School"
-            elif a.get("cluster_name"):
-                cluster_from = a.get("cluster_name", "")
-            else:
-                cluster_from = a.get("school_cluster_name", "")
-
-            training_name = (
-                a.get("training_name")
-                or a.get("meeting_training")
-                or a.get("activity_name")
-                or ""
+            activity = (
+                f"{a['activity_type_label']} ({sequence})"
+                if sequence
+                else a["activity_type_label"]
             )
-            mode_of_delivery = (
-                a.get("training_mode")
-                or a.get("meeting_kind")
-                or ("In-School" if not is_cluster_row else "Cluster Group")
-            )
+            school_work = kind in (plan_export.VISIT, plan_export.PARTNER)
             rows.append(
-                [
-                    a["id"],
-                    school_code,
-                    f"{a['activity_type_label']} ({sequence})"
-                    if sequence
-                    else a["activity_type_label"],
-                    a["cluster_name"] if is_cluster_row else a["school_name"],
-                    a["cluster_district"] if is_cluster_row else a["school_district"],
-                    cluster_from,
-                    training_name,
-                    mode_of_delivery,
-                    a.get("purpose") or "",
-                    a.get("focus_intervention") or "",
-                    a["planned_date"] or "",
-                    a["status_label"],
-                    a.get("owner", ""),
-                    a.get("execution_role", ""),
-                    a.get("facilitated_by") or a.get("partner_name") or "",
-                    a.get("expected_participants") or "",
-                    a.get("salesforce_activity_id") or "",
-                    a.get("evidence_status") or "",
-                    a.get("budget_status") or "",
-                    a.get("verification_status")
-                    or a.get("ia_verification_status")
-                    or "",
-                    a.get("payment_status") or "",
-                    a.get("budget_total", ""),
-                ]
+                plan_export.row(
+                    kind,
+                    activity_id=a["id"],
+                    partner=a.get("partner_name"),
+                    school_id=a.get("school_id") if school_work else "",
+                    school_name=a.get("school_name"),
+                    cluster_name=a.get("cluster_name"),
+                    venue=a.get("school_name") or a.get("cluster_name"),
+                    district=a.get("district"),
+                    district_type=a.get("district_type"),
+                    activity=activity,
+                    planned_date=a.get("planned_date"),
+                    executor=a.get("owner") or "Staff",
+                    purpose=a.get("purpose"),
+                    intervention=a.get("focus_intervention"),
+                    training=a.get("training_name")
+                    or a.get("meeting_training")
+                    or a.get("activity_name")
+                    or a.get("purpose")
+                    or a["activity_type_label"],
+                    participants=a.get("expected_participants"),
+                    cost=a.get("budget_total"),
+                    budget_status=a.get("budget_status"),
+                    verification=a.get("verification_status"),
+                    salesforce_id=a.get("salesforce_id"),
+                    evidence=a.get("evidence_label"),
+                    status=a.get("status_label"),
+                )
             )
-
-        budget_col_idx = headers.index("Budget (UGX)") + 1
 
         if export in {"xlsx", "excel"}:
             from apps.core.excel import workbook_response
 
-            return workbook_response(
-                "my_plan_export.xlsx",
-                [
-                    {
-                        "title": "My Plan",
-                        "headers": headers,
-                        "rows": rows,
-                        # Budget is a number, and a plan people add up.
-                        "number_formats": {budget_col_idx: "#,##0"},
-                    }
-                ],
-            )
+            return workbook_response("my_plan_export.xlsx", plan_export.sheets(rows))
 
         import csv
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="my_plan_export.csv"'
         writer = csv.writer(response)
-        writer.writerow(headers)
-        for row in rows:
+        for row in plan_export.csv_rows(rows):
             writer.writerow(row)
         return response
 
@@ -473,14 +492,17 @@ def my_plan_view(request):
     # My Training Summary (owner, 2026-10-06): the reader's own training
     # ceilings and what they have scheduled under them, never another
     # officer's (apps.planning.training_ceilings.own_summary).
-    from apps.planning.training_ceilings import own_summary, summary_totals
+    # It sits under Planned and remaining and comes with it, once the page
+    # has been drawn, for whoever that table is left out for
+    # (my_plan_panel_views).
+    if not context.get("readiness_later"):
+        from apps.frontend.views.my_plan_panel_views import training_summary
 
-    context["my_training_summary"] = own_summary(
-        request.user, str(context.get("fy") or get_operational_fy())
-    )
-    # The line over the card, in the Project Capacity shape (owner,
-    # 2026-10-06): trainings, ceilings, schools scheduled, balance, excess.
-    context["my_training_totals"] = summary_totals(context["my_training_summary"])
+        context.update(
+            training_summary(
+                request.user, str(context.get("fy") or get_operational_fy())
+            )
+        )
 
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/my_plan/workspace.html", context)
@@ -566,7 +588,7 @@ def _team_read_only(request, activity):
         return None
     from apps.core.scoping import TEAM_READ_ONLY_MESSAGE
 
-    return notice_fragment(TEAM_READ_ONLY_MESSAGE)
+    return refusal_drawer(request, TEAM_READ_ONLY_MESSAGE, title="Read only")
 
 
 def _can_cancel(activity, user) -> bool:
@@ -647,7 +669,7 @@ def activity_detail_view(request, activity_id):
     from apps.my_plan.services import status_tone
 
     scheduled_at = a.scheduled_date or a.created_at
-    has_evidence = bool(evidence_list)
+    # UPLOAD-OFF (owner, 2026-10-13): has_evidence = bool(evidence_list)
     is_complete = a.status in COMPLETED_WORK_STATUSES
     timeline = [
         {
@@ -656,12 +678,14 @@ def activity_detail_view(request, activity_id):
             "done": bool(a.scheduled_date or a.planned_date),
             "detail": "" if (a.scheduled_date or a.planned_date) else "Not scheduled",
         },
-        {
-            "label": "Evidence upload",
-            "when": evidence_list[0].created_at if has_evidence else None,
-            "done": has_evidence,
-            "detail": f"{len(evidence_list)} file(s)" if has_evidence else "Pending",
-        },
+        # UPLOAD-OFF (owner, 2026-10-13): no upload step between scheduling
+        # and completion.
+        # {
+        #     "label": "Evidence upload",
+        #     "when": evidence_list[0].created_at if has_evidence else None,
+        #     "done": has_evidence,
+        #     "detail": f"{len(evidence_list)} file(s)" if has_evidence else "Pending",
+        # },
         {
             "label": "Activity completion",
             "when": a.updated_at if is_complete else None,
@@ -701,14 +725,32 @@ def activity_detail_view(request, activity_id):
         from apps.budget.costing_service import planned_minimum_amounts
 
         minimum_amount = planned_minimum_amounts([a]).get(a.id)
+        missing = set(
+            (cost_snapshot.missing_configuration if cost_snapshot else None) or []
+        )
+        if minimum_amount is not None:
+            note = "Staff planning estimate. Funding is calculated at country operational rates."
+        elif missing == {"expectedParticipants"}:
+            # A session with no head count, not a rate the Country Director
+            # left out: it said "Ask the Country Director to set the missing
+            # rates" (owner, 2026-10-15 cost audit).
+            note = (
+                "No participant count is planned, so the participants' meals "
+                "are not priced and this activity cannot be requested. Edit it "
+                "and enter the number of participants."
+            )
+        elif "expectedParticipants" in missing:
+            note = (
+                "No participant count is planned and a rate is missing: enter "
+                "the number of participants, and ask the Country Director to "
+                "set the missing rates."
+            )
+        else:
+            note = "Minimum viable cost not configured. Ask the Country Director to set the missing rates."
         activity_cost = {
             "label": "Minimum Viable Cost",
             "amount": minimum_amount,
-            "note": (
-                "Staff planning estimate. Funding is calculated at country operational rates."
-                if minimum_amount is not None
-                else "Minimum viable cost not configured. Ask the Country Director to set the missing rates."
-            ),
+            "note": note,
             "amount_disbursed": 0,
         }
 
@@ -794,9 +836,11 @@ def partner_ssa_completion_drawer_view(request, activity_id):
             "SSA Support activity may complete it."
         )
     if a.status != "awaiting_ia_verification":
-        return notice_fragment(
+        return refusal_drawer(
+            request,
             "The partner must submit the completed SSA evidence before scores "
-            "and enrolment can be recorded."
+            "and enrolment can be recorded.",
+            title="Not yet submitted",
         )
     return render(
         request,
@@ -851,9 +895,7 @@ def partner_ssa_completion_action(request, activity_id):
             "score_count": len(payload["scores"]),
         },
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("my_plan")
@@ -914,43 +956,68 @@ def complete_drawer_view(request, activity_id):
             act = get_activity(a.id, request.user)
             attach_school_feedback()
         except Exception as e:
-            return error_fragment(e, action="Error starting completion", status=400)
+            return refusal_drawer(
+                request,
+                error_message(e, action="Error starting completion"),
+                title="Cannot complete",
+                tone="danger",
+            )
 
-    evidence_list = list(evidence_records_for_activity(a.id, request.user))
-    if paired_school_visit is not None:
-        evidence_list.extend(
-            evidence_records_for_activity(paired_school_visit.id, request.user)
-        )
+    # UPLOAD-OFF (owner, 2026-10-13): activities are completed with the visit
+    # ID and the training ID alone; the upload is switched off, not deleted
+    # ("just comment the code out, we may need it later").
+    # evidence_list = list(evidence_records_for_activity(a.id, request.user))
+    # if paired_school_visit is not None:
+    #     evidence_list.extend(
+    #         evidence_records_for_activity(paired_school_visit.id, request.user)
+    #     )
+    evidence_list = []
 
     cluster_schools = []
     guest_rows = []
     if a.cluster:
         from apps.activities.models import ClusterActivityAttendance
 
-        cluster_schools = (
-            active_schools().filter(cluster_id=a.cluster_id).order_by("name")
-        )
-        # The register opens on who was invited when this was scheduled, so
-        # the person who delivered confirms rather than reconstructs. Rows
-        # already marked attended stay ticked on a second visit.
+        members = active_schools().filter(cluster_id=a.cluster_id).order_by("name")
         rows = {
-            r.school_id: r for r in ClusterActivityAttendance.objects.filter(activity=a)
+            r.school_id: r
+            for r in ClusterActivityAttendance.objects.filter(
+                activity=a
+            ).select_related("school")
         }
-        cluster_schools = [
-            {
-                "id": s.id,
-                "name": s.name,
-                "school_id": s.school_id,
-                # No row at all means this drawer predates the invitation
-                # list; tick everyone, which is what it used to assume.
-                "ticked": (
-                    rows[s.id].attended or rows[s.id].invited
-                    if s.id in rows
-                    else not rows
-                ),
-            }
-            for s in cluster_schools
-        ]
+        # Checked means attended, and the register opens on what is already
+        # known, in this order: the attendance recorded at an earlier
+        # submission; else who was invited when this was scheduled, so the
+        # person who delivered confirms rather than reconstructs; else (a
+        # session older than the invitation list) every member, which is
+        # what it used to assume. A school added to the cluster after the
+        # invitations were sent is therefore NOT ticked for the person: it
+        # was not asked, and only they know whether it came (2026-10-14).
+        # Head counts are written by every submission, so they say a register
+        # was confirmed even when nobody was ticked — and completion releases
+        # the invitations of schools left unticked, so the rows alone cannot.
+        recorded = (
+            a.teachers_attended is not None
+            or bool(a.attended_school_ids)
+            or any(r.attended for r in rows.values())
+        )
+        member_ids = set()
+        for s in members:
+            member_ids.add(s.id)
+            row = rows.get(s.id)
+            if recorded:
+                ticked = bool(row and row.attended) or s.id in (
+                    a.attended_school_ids or []
+                )
+            elif rows:
+                ticked = bool(row and row.invited)
+            else:
+                ticked = True
+            cluster_schools.append(
+                {"id": s.id, "name": s.name, "school_id": s.school_id, "ticked": ticked}
+            )
+        # Schools from outside the cluster recorded against this session. A
+        # visit is attendance only: it never makes the school a member.
         guest_rows = [
             {
                 "id": r.school_id,
@@ -959,11 +1026,12 @@ def complete_drawer_view(request, activity_id):
                 "teachers": r.teachers,
                 "leaders": r.leaders,
                 "other": r.other,
+                "ticked": r.attended,
             }
-            for r in ClusterActivityAttendance.objects.filter(
-                activity=a, is_guest=True
-            ).select_related("school")
+            for r in rows.values()
+            if r.is_guest and r.school_id not in member_ids
         ]
+        guest_rows.sort(key=lambda g: g["name"].lower())
 
     needs_netsuite_id = False
     disbursed_amount = None
@@ -979,6 +1047,11 @@ def complete_drawer_view(request, activity_id):
         "evidence_list": evidence_list,
         "cluster_schools": cluster_schools,
         "guest_rows": guest_rows,
+        # Trainings and meetings record who came (head counts) and, for a
+        # cluster session, which schools. The two SSA variants of a cluster
+        # session are the same sessions and were missing from the list the
+        # template kept, so their registers were never shown (2026-10-14).
+        "records_attendance": a.activity_type in ATTENDANCE_ACTIVITY_TYPES,
         "can_add_school": has_permission(
             request.user, Permission.SCHOOL_CREATE_SINGLE.value
         ),
@@ -987,9 +1060,6 @@ def complete_drawer_view(request, activity_id):
         "needs_netsuite_id": needs_netsuite_id,
         "disbursed_amount": disbursed_amount,
         "is_paired_in_school_training": paired_school_visit is not None,
-        "requires_school_feedback": (
-            paired_school_visit is not None or a.activity_type in VISIT_TYPES
-        ),
         "paired_school_visit": (
             get_activity(paired_school_visit.id, request.user)
             if paired_school_visit is not None
@@ -1010,28 +1080,36 @@ def complete_drawer_view(request, activity_id):
 
         context["follow_up_options"] = follow_up_options(a.school, fy=a.fy)
         context["follow_up_selected_id"] = a.follow_up_of_activity_id or ""
-    # The platform already knows what this activity type needs, so the form
-    # says so and pre-selects the outstanding one rather than offering twelve
-    # kinds and letting someone guess wrong.
-    from apps.core.enums import EvidenceKind
-    from apps.evidence.requirements import checklist as evidence_checklist
-    from apps.evidence.requirements import required_kinds
+    # Which ID completes this activity: "visit", "training", or None for work
+    # Salesforce does not record, which has no ID to enter (owner, 2026-10-13).
+    from apps.activities.services import sf_kind_for_activity
 
-    _checklist = evidence_checklist(a)
-    if paired_school_visit is not None:
-        _checklist = [
-            *[{**item, "recordLabel": "Training"} for item in _checklist],
-            *[
-                {**item, "recordLabel": "School Visit"}
-                for item in evidence_checklist(paired_school_visit)
-            ],
-        ]
-    context["evidence_checklist"] = _checklist
-    required = set(required_kinds(a.activity_type))
-    if paired_school_visit is not None:
-        required.update(required_kinds(paired_school_visit.activity_type))
-    context["evidence_required_kinds"] = list(required)
-    context["evidence_kind_choices"] = EvidenceKind.choices
+    context["salesforce_kind"] = sf_kind_for_activity(a)
+
+    # UPLOAD-OFF (owner, 2026-10-13): the form no longer asks for a file, so
+    # there is no checklist of forms to build.
+    # # The platform already knows what this activity type needs, so the form
+    # # says so and pre-selects the outstanding one rather than offering twelve
+    # # kinds and letting someone guess wrong.
+    # from apps.core.enums import EvidenceKind
+    # from apps.evidence.requirements import checklist as evidence_checklist
+    # from apps.evidence.requirements import required_kinds
+    #
+    # _checklist = evidence_checklist(a)
+    # if paired_school_visit is not None:
+    #     _checklist = [
+    #         *[{**item, "recordLabel": "Training"} for item in _checklist],
+    #         *[
+    #             {**item, "recordLabel": "School Visit"}
+    #             for item in evidence_checklist(paired_school_visit)
+    #         ],
+    #     ]
+    # context["evidence_checklist"] = _checklist
+    # required = set(required_kinds(a.activity_type))
+    # if paired_school_visit is not None:
+    #     required.update(required_kinds(paired_school_visit.activity_type))
+    # context["evidence_required_kinds"] = list(required)
+    # context["evidence_kind_choices"] = EvidenceKind.choices
 
     return render(request, "partials/my_plan/complete_drawer.html", context)
 
@@ -1158,9 +1236,7 @@ def accountability_action(request, activity_id):
             "amount_returned": amount_returned,
         },
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("my_plan")
@@ -1218,9 +1294,7 @@ def confirm_reimbursement_receipt_action(request, activity_id):
         success=True,
         payload={"advance_id": adv.id, "amount": adv.reimbursed_amount},
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("my_plan")
@@ -1252,9 +1326,11 @@ def reschedule_drawer_view(request, activity_id):
     from apps.activities.editing import is_executed
 
     if is_executed(a):
-        return notice_fragment(
+        return refusal_drawer(
+            request,
             "This activity has already been carried out, so it can no longer "
-            "be rescheduled. Only an activity that is still scheduled can be."
+            "be rescheduled. Only an activity that is still scheduled can be.",
+            title="Cannot reschedule",
         )
 
     # Rescheduling deliberately reuses the shared schedule drawer in its safe
@@ -1370,9 +1446,7 @@ def reschedule_activity_action(request, activity_id):
                     },
                 )
             if request.headers.get("HX-Request") == "true":
-                response = HttpResponse("<script>window.location.reload();</script>")
-                response["HX-Trigger"] = "close-drawer"
-                return response
+                return saved_in_place()
             messages.success(request, "Activity rescheduled successfully.")
         except Exception as e:
             if request.headers.get("HX-Request") == "true":
@@ -1419,6 +1493,21 @@ def complete_activity_action(request, activity_id):
     act = get_activity(a.id, request.user)
 
     if request.method == "POST":
+        # The day the work was done (owner, 2026-10-16): asked of every
+        # completion, today or any day before, never a future one. Checked
+        # before anything is started or saved. The drawer always sends one
+        # (today unless changed); a post without it records today.
+        from apps.activities.completed_day import completion_day
+        from apps.core.exceptions import BadRequest as _BadRequest
+
+        try:
+            completed_on = (
+                completion_day(request.POST.get("actual_delivery_date", "").strip())
+                or timezone.localdate()
+            )
+        except _BadRequest as exc:
+            return notice_fragment(str(getattr(exc, "detail", exc)))
+
         # Handle start completion if still in scheduled status
         pair_needs_start = paired_school_visit is not None and (
             paired_school_visit.status in STARTABLE_STATUSES
@@ -1437,50 +1526,52 @@ def complete_activity_action(request, activity_id):
                 messages.error(request, f"Error starting completion: {e}")
                 return local_redirect(f"/my-plan/{a.id}")
 
-        # Each form may come as several pages — photographed or chosen
-        # together — merged into one PDF (owner, 2026-09-26).
-        uploads = []
-        evidence_files = request.FILES.getlist("evidence_file")
-        if evidence_files:
-            uploads.append(
-                (
-                    a,
-                    evidence_files,
-                    request.POST.get("evidence_kind"),
-                )
-            )
-        if paired_school_visit is not None:
-            training_files = request.FILES.getlist("training_evidence_file")
-            visit_files = request.FILES.getlist("visit_evidence_file")
-            if training_files:
-                uploads.append((a, training_files, EvidenceKind.ATTENDANCE_FORM))
-            if visit_files:
-                uploads.append(
-                    (paired_school_visit, visit_files, EvidenceKind.VISIT_FORM)
-                )
-        for target_activity, uploaded_files, asserted_kind in uploads:
-            uploaded_file = uploaded_files[0]
-            try:
-                record_pages_upload(
-                    principal=request.user,
-                    activity_id=target_activity.id,
-                    # What the person selected, else what this activity still
-                    # needs, else the file's shape. Inference alone can only say
-                    # "pdf" or "photo", which no requirement asks for -- so
-                    # completion was unreachable for every activity type that
-                    # declares one.
-                    kind=resolve_evidence_kind(
-                        uploaded_file,
-                        activity=target_activity,
-                        asserted=asserted_kind,
-                    ),
-                    files=uploaded_files,
-                )
-            except Exception as e:
-                if request.headers.get("HX-Request") == "true":
-                    return error_fragment(e, action="Upload Error", status=400)
-                messages.error(request, f"Upload error: {e}")
-                return local_redirect(f"/my-plan/{a.id}")
+        # UPLOAD-OFF (owner, 2026-10-13): completion takes no file. A file
+        # posted here is ignored, not stored.
+        # # Each form may come as several pages — photographed or chosen
+        # # together — merged into one PDF (owner, 2026-09-26).
+        # uploads = []
+        # evidence_files = request.FILES.getlist("evidence_file")
+        # if evidence_files:
+        #     uploads.append(
+        #         (
+        #             a,
+        #             evidence_files,
+        #             request.POST.get("evidence_kind"),
+        #         )
+        #     )
+        # if paired_school_visit is not None:
+        #     training_files = request.FILES.getlist("training_evidence_file")
+        #     visit_files = request.FILES.getlist("visit_evidence_file")
+        #     if training_files:
+        #         uploads.append((a, training_files, EvidenceKind.ATTENDANCE_FORM))
+        #     if visit_files:
+        #         uploads.append(
+        #             (paired_school_visit, visit_files, EvidenceKind.VISIT_FORM)
+        #         )
+        # for target_activity, uploaded_files, asserted_kind in uploads:
+        #     uploaded_file = uploaded_files[0]
+        #     try:
+        #         record_pages_upload(
+        #             principal=request.user,
+        #             activity_id=target_activity.id,
+        #             # What the person selected, else what this activity still
+        #             # needs, else the file's shape. Inference alone can only say
+        #             # "pdf" or "photo", which no requirement asks for -- so
+        #             # completion was unreachable for every activity type that
+        #             # declares one.
+        #             kind=resolve_evidence_kind(
+        #                 uploaded_file,
+        #                 activity=target_activity,
+        #                 asserted=asserted_kind,
+        #             ),
+        #             files=uploaded_files,
+        #         )
+        #     except Exception as e:
+        #         if request.headers.get("HX-Request") == "true":
+        #             return error_fragment(e, action="Upload Error", status=400)
+        #         messages.error(request, f"Upload error: {e}")
+        #         return local_redirect(f"/my-plan/{a.id}")
 
         salesforce_id = request.POST.get("salesforce_id", "").strip()
         visit_salesforce_id = request.POST.get("visit_salesforce_id", "").strip()
@@ -1552,17 +1643,19 @@ def complete_activity_action(request, activity_id):
 
                 from apps.core.exceptions import BadRequest
                 from apps.ssa.services import upload as upload_ssa
-                from apps.ssa.services import visit_assessment_date
 
                 # IA review (2026-09-13): dated by the visit, linked to it, and
-                # pending until a different verifier confirms the scores. A
-                # refusal (a duplicate date, an unverified prior-year record)
-                # is shown in the drawer, not returned as an error envelope.
+                # pending until a different verifier confirms the scores: for
+                # a CCEO's visit, the lead's approval of it; a lead's own are
+                # confirmed now (owner, 2026-10-16). A refusal (a duplicate
+                # date, an unverified prior-year record) is shown in the
+                # drawer, not returned as an error envelope.
                 try:
                     upload_ssa(
                         {
                             "schoolId": a.school.school_id,
-                            "dateOfSsa": visit_assessment_date(a).isoformat(),
+                            # The day the visit was done, as just entered.
+                            "dateOfSsa": completed_on.isoformat(),
                             "scores": scores_list,
                             "collectorType": "partner"
                             if a.delivery_type == "partner"
@@ -1590,6 +1683,7 @@ def complete_activity_action(request, activity_id):
             # answered; pass the answer on so `complete()` can hold the same
             # rule for every other door (SSA-01).
             "ssaCollected": request.POST.get("ssa_collected") == "yes",
+            "actualDeliveryDate": completed_on.isoformat(),
             "salesforceId": salesforce_id,
             "trainingSalesforceId": salesforce_id,
             "visitSalesforceId": visit_salesforce_id,
@@ -1597,6 +1691,14 @@ def complete_activity_action(request, activity_id):
             "leadersAttended": int(leaders) if leaders else 0,
             "otherParticipants": int(other) if other else 0,
             "attendedSchoolIds": attended_school_ids,
+            # The register's schools from outside the cluster, present only
+            # when the drawer drew that list (an empty list still means "the
+            # drawer had none"); absent, the recorded guests stay as they are.
+            "visitingSchoolIds": (
+                request.POST.getlist("visiting_school_ids")
+                if request.POST.get("visiting_register") == "1"
+                else None
+            ),
             # Which training this visit followed up. Required by complete()
             # for a follow-up visit and ignored for everything else.
             "followUpOfActivityId": request.POST.get(
@@ -1674,12 +1776,9 @@ def complete_activity_action(request, activity_id):
                     response = HttpResponse(
                         f"<script>window.location.assign({json.dumps(onetest_next)});</script>"
                     )
-                else:
-                    response = HttpResponse(
-                        "<script>window.location.reload();</script>"
-                    )
-                response["HX-Trigger"] = "close-drawer"
-                return response
+                    response["HX-Trigger"] = "close-drawer"
+                    return response
+                return saved_in_place()
             messages.success(
                 request,
                 (
@@ -1725,17 +1824,19 @@ def _review_refusal(request, activity_id: str, verb: str):
     )
 
 
-@require_page_permission("pl_review_queue")
-def pl_queue_view(request):
-    """Completion Reviews: the team's completed work waiting on this lead.
+#: Where a Programme Lead reads Completion Reviews: the Execution &
+#: Completion tab of the Planning Monitor their dashboard carries (owner,
+#: 2026-10-14).
+def reviews_on_dashboard_url(**query) -> str:
+    from urllib.parse import urlencode
 
-    A register rather than a stack of cards: one row per completion with the
-    officer, the work, where and when it happened, the intervention, who
-    attended, the evidence, the Salesforce reference and how long it has
-    waited — oldest first. Open shows the whole completion in a drawer,
-    Approve sends it to Impact Assessment, Return sends it back with the
-    reason the officer will read.
-    """
+    carried = urlencode({"view": "execution", **{k: v for k, v in query.items() if v}})
+    return "/dashboard?" + urlencode({"pm": carried}) + "#planning-monitor"
+
+
+def completion_reviews_context(request) -> dict:
+    """The register's rows, its officer filter and the drawer a link asked
+    for, for whichever page draws it."""
     from apps.pl_review.services import review_register
 
     register = review_register(request.user, cceo=request.GET.get("cceo") or "")
@@ -1760,14 +1861,62 @@ def pl_queue_view(request):
         if wanted and any(row["id"] == wanted for row in register["rows"])
         else ""
     )
+    return {"rows": register["rows"], "filters": filters, "autoload": autoload}
+
+
+def _back_to_register(request):
+    """Back to where the decision was made. The shared `_back` drops a
+    fragment, so a decision from the dashboard is put back on its section
+    rather than at the top of the page."""
+    response = _back(request, PL_REVIEW_QUEUE_URL)
+    if response.url.startswith("/dashboard?pm=") and "#" not in response.url:
+        response["Location"] = response.url + "#planning-monitor"
+    return response
+
+
+def _review_next(request) -> str:
+    """Where a decision made in a drawer returns to: the tab the register is
+    on when it was opened from the dashboard, else the page it was on."""
+    from urllib.parse import urlparse
+
+    here = request.META.get("HTTP_HX_CURRENT_URL", "")
+    if urlparse(here).path.rstrip("/") == "/dashboard":
+        return reviews_on_dashboard_url()
+    return here
+
+
+@require_page_permission("pl_review_queue")
+def pl_queue_view(request):
+    """Completion Reviews: the team's completed work waiting on this lead.
+
+    A register rather than a stack of cards: one row per completion with the
+    officer, the work, where and when it happened, the intervention, who
+    attended, the evidence, the Salesforce reference and how long it has
+    waited — oldest first. Open shows the whole completion in a drawer,
+    Approve sends it to Impact Assessment, Return sends it back with the
+    reason the officer will read.
+    """
+    from apps.frontend.views import dashboard_embed
+
+    # A Programme Lead reads the register on their dashboard (owner,
+    # 2026-10-14): the page opened on its own — a notification, a To-Do, an
+    # old link — lands on that tab, on the same officer and completion.
+    if dashboard_embed.reads_on_dashboard(request):
+        return local_redirect(
+            reviews_on_dashboard_url(
+                cceo=(request.GET.get("cceo") or "").strip(),
+                open=(request.GET.get("open") or "").strip(),
+            )
+        )
+    reviews = completion_reviews_context(request)
     return render(
         request,
         "pages/my_plan/pl_queue.html",
         {
-            "rows": register["rows"],
-            "filters": filters,
+            "rows": reviews["rows"],
+            "filters": reviews["filters"],
             "queue_url": PL_REVIEW_QUEUE_URL,
-            "autoload_drawer": autoload,
+            "autoload_drawer": reviews["autoload"],
         },
     )
 
@@ -1802,17 +1951,20 @@ def _review_facts(activity) -> list[dict]:
     predates cluster work and would hide a cluster session's files.
     """
     from apps.core.interventions import INTERVENTION_LABELS
-    from apps.evidence.models import EvidenceRecord
     from apps.pl_review.services import _attendance_label, _owning_staff_id, _people
 
     owner = _owning_staff_id(activity) or ""
     names, _profile_of = _people([owner])
     when = activity.actual_delivery_date or activity.planned_date
-    evidence = list(
-        EvidenceRecord.objects.filter(activity_id=activity.id, quarantined=False)
-        .order_by("created_at")
-        .values_list("original_name", "kind")[:20]
-    )
+    # UPLOAD-OFF (owner, 2026-10-13): activities are completed with the visit
+    # ID and the training ID alone, so there are no files to read here.
+    # from apps.evidence.models import EvidenceRecord
+    #
+    # evidence = list(
+    #     EvidenceRecord.objects.filter(activity_id=activity.id, quarantined=False)
+    #     .order_by("created_at")
+    #     .values_list("original_name", "kind")[:20]
+    # )
     where = (
         activity.school.name
         if activity.school_id
@@ -1833,14 +1985,15 @@ def _review_facts(activity) -> list[dict]:
         },
         *_ssa_basis_facts(activity),
         {"label": "Attendance", "value": _attendance_label(activity)},
-        {
-            "label": "Evidence",
-            "value": "\n".join(
-                f"{name or 'Unnamed file'} ({kind.replace('_', ' ')})"
-                for name, kind in evidence
-            )
-            or "No files uploaded",
-        },
+        # UPLOAD-OFF (owner, 2026-10-13): no uploaded form to list.
+        # {
+        #     "label": "Evidence",
+        #     "value": "\n".join(
+        #         f"{name or 'Unnamed file'} ({kind.replace('_', ' ')})"
+        #         for name, kind in evidence
+        #     )
+        #     or "No files uploaded",
+        # },
         {"label": "Salesforce ID", "value": activity.salesforce_activity_id or ""},
         {"label": "Purpose", "value": activity.activity_purpose_text or ""},
         {"label": "Outcome", "value": activity.actual_outcome or ""},
@@ -1856,18 +2009,33 @@ def pl_review_drawer(request, activity_id):
     Read-only by construction — the one form is the review decision itself.
     The officer's own record carries reschedule and completion controls, so
     the lead reads the completion here rather than on the officer's page.
+
+    The lead verifies on the visit ID or training ID the officer entered
+    (owner, 2026-10-13: "use strictly visit ID and training IDs to complete
+    the activities"); the uploaded form this drawer showed is switched off.
     """
+    from apps.activities.services import sf_kind_for_activity
     from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.evidence import form_document
     from apps.pl_review.services import reviewable_activity
 
+    # UPLOAD-OFF (owner, 2026-10-13):
+    # from apps.evidence.models import EvidenceRecord
+    # from apps.evidence.requirements import checklist, evidence_optional
+
+    template = "partials/my_plan/pl_review_drawer.html"
     try:
         activity = reviewable_activity(activity_id, request.user)
     except (BadRequest, Forbidden, NotFoundError) as exc:
-        return _drawer(
+        return render(
             request,
-            title="Completion review",
-            subtitle="Not waiting on you",
-            empty=str(getattr(exc, "detail", exc)),
+            template,
+            {
+                "form_title": "Verify completion",
+                "form_subtitle": "Not waiting on you",
+                "form_empty": str(getattr(exc, "detail", exc)),
+                "drawer_size": "md",
+            },
         )
     # The two decisions a reviewer holds, named the same on every surface
     # (owner, 2026-09-24): Verified, or Return with the reason. Partner
@@ -1878,23 +2046,61 @@ def pl_review_drawer(request, activity_id):
         if request.GET.get("from") == "partner-trainings"
         else "Verified"
     )
-    return _drawer(
+    # UPLOAD-OFF (owner, 2026-10-13): the uploaded forms left the drawer.
+    # # The uploaded forms themselves (owner, 2026-10-12: "click verify, then
+    # # the uploaded form"), newest first, each shown in the drawer. The facts
+    # # list them by name as well, so the Return drawer's shorter list stays
+    # # the same; here the files take the Evidence line's place.
+    # evidence = list(
+    #     EvidenceRecord.objects.filter(
+    #         activity_id=activity.id, quarantined=False
+    #     ).order_by("-created_at")[:20]
+    # )
+    # The ID the completion stands on: "visit", "training", or None for work
+    # Salesforce does not record.
+    salesforce_kind = sf_kind_for_activity(activity)
+    salesforce_id = (activity.salesforce_activity_id or "").strip()
+    return render(
         request,
-        title="Completion review",
-        subtitle=activity.activity_name_snapshot
-        or activity.get_activity_type_display(),
-        facts=_review_facts(activity),
-        action=f"{PL_REVIEW_QUEUE_URL}/{activity.id}/confirm",
-        submit=decision,
-        secondary={
-            "label": "Return",
-            "hx_get": f"{PL_REVIEW_QUEUE_URL}/{activity.id}/return-drawer",
+        template,
+        {
+            "form_title": "Verify completion",
+            "form_subtitle": activity.activity_name_snapshot
+            or activity.get_activity_type_display(),
+            # The ID has a panel of its own under the facts.
+            "form_facts": [
+                fact
+                for fact in _review_facts(activity)
+                if fact["label"] != "Salesforce ID"
+            ],
+            "salesforce_kind": salesforce_kind,
+            "salesforce_id": salesforce_id,
+            # Staff work asks for no upload now; where an activity still
+            # holds a form from before, or is a partner's, it is offered as
+            # one button that opens one PDF (owner, 2026-10-14: "fix it to
+            # show only one upload").
+            "uploaded_form": form_document.uploaded_form(activity),
+            # UPLOAD-OFF (owner, 2026-10-13):
+            # "evidence": evidence,
+            # "evidence_checklist": checklist(activity),
+            # # Nothing to confirm without the form: the lead returns it instead.
+            # "can_verify": bool(evidence) or evidence_optional(activity),
+            # Nothing to confirm without the ID: the lead returns it instead.
+            "can_verify": bool(salesforce_id) or salesforce_kind is None,
+            "form_action": f"{PL_REVIEW_QUEUE_URL}/{activity.id}/confirm",
+            "form_submit": decision,
+            "form_secondary": {
+                "label": "Return",
+                "hx_get": f"{PL_REVIEW_QUEUE_URL}/{activity.id}/return-drawer",
+            },
+            "form_note": (
+                f"{decision} confirms the completion against Salesforce and marks "
+                "it complete. Return sends it back to the officer with your "
+                "reason — for example, participants not entered in Salesforce."
+            ),
+            "form_next": _review_next(request),
+            "drawer_size": "md",
         },
-        note=(
-            f"{decision} confirms the completion against Salesforce and marks "
-            "it complete. Return sends it back to the officer with your "
-            "reason — for example, participants not entered in Salesforce."
-        ),
     )
 
 
@@ -1930,6 +2136,7 @@ def pl_return_drawer(request, activity_id):
         facts=facts,
         action=f"{PL_REVIEW_QUEUE_URL}/{activity.id}/return",
         submit="Return to officer",
+        next_url=_review_next(request),
         fields=[
             _field(
                 "reasons",
@@ -1981,7 +2188,7 @@ def pl_confirm_action(request, activity_id):
         except Exception as e:
             messages.error(request, str(getattr(e, "detail", e)))
 
-    return _back(request, PL_REVIEW_QUEUE_URL)
+    return _back_to_register(request)
 
 
 @require_page_permission("pl_review_queue")
@@ -2013,7 +2220,7 @@ def pl_return_action(request, activity_id):
             # act on; the page says so rather than returning silently.
             messages.error(request, str(getattr(e, "detail", e)))
 
-    return _back(request, PL_REVIEW_QUEUE_URL)
+    return _back_to_register(request)
 
 
 @require_page_permission("my_plan")
@@ -2058,9 +2265,7 @@ def start_activity_action(request, activity_id):
         )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -2071,14 +2276,20 @@ def _facilitator_context(user, activity) -> dict:
     training); the service repeats every check."""
     from apps.activities.facilitation import (
         FACILITATOR_EDITABLE_STATUSES,
+        facilitated_by_display,
         facilitator_label,
         takes_facilitator,
     )
     from apps.core.scoping import resolve_partner_ids
 
+    # Every activity's profile says who facilitates it (owner, 2026-10-12):
+    # "Staff", or "Partner (name)". Changing it stays a training's or a
+    # cluster meeting's.
+    shown = {"facilitated_by_display": facilitated_by_display(activity)}
     if not takes_facilitator(activity.activity_type):
-        return {}
+        return shown
     return {
+        **shown,
         "facilitated_by": facilitator_label(activity),
         "can_change_facilitator": (
             activity.delivery_type == "staff"
@@ -2111,9 +2322,7 @@ def facilitator_drawer_view(request, activity_id):
         except Exception as exc:
             return error_fragment(exc, action="Facilitator not changed", status=400)
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
         return local_redirect("/my-plan")
 
     from apps.activities.facilitation import session_noun
@@ -2349,11 +2558,13 @@ def edit_activity_drawer_view(request, activity_id):
         )
     state = editing.edit_state(a, request.user)
     if state == "locked":
-        return notice_fragment(editing.LOCKED_REASON)
+        return refusal_drawer(request, editing.LOCKED_REASON, title="Cannot edit")
     if state != "open":
-        return notice_fragment(
+        return refusal_drawer(
+            request,
             "This activity is not yours to edit, or it is no longer a "
-            "scheduled plan."
+            "scheduled plan.",
+            title="Cannot edit",
         )
     return render(
         request,
@@ -2438,9 +2649,7 @@ def edit_activity_action(request, activity_id):
         },
     )
     if request.headers.get("HX-Request") == "true":
-        response = HttpResponse("<script>window.location.reload();</script>")
-        response["HX-Trigger"] = "close-drawer"
-        return response
+        return saved_in_place()
     return local_redirect(f"/my-plan/{result.get('id') or activity_id}")
 
 
@@ -2570,9 +2779,7 @@ def cancel_activity_action(request, activity_id):
             )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -2588,6 +2795,17 @@ def evidence_upload_drawer_view(request, activity_id):
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
 
+    # Staff work is completed with its Salesforce ID and takes no upload; a
+    # partner's is verified from its form (owner, 2026-10-14).
+    from apps.evidence import form_document
+
+    if not form_document.takes_upload(a):
+        return refusal_drawer(
+            request,
+            form_document.STAFF_TAKES_NO_UPLOAD,
+            title="No upload for staff work",
+        )
+
     evidence_list = evidence_records_for_activity(activity_id, request.user)
     context = {
         "act": a,
@@ -2600,7 +2818,19 @@ def evidence_upload_drawer_view(request, activity_id):
     from apps.core.scoping import resolve_partner_ids
     from apps.evidence.requirements import checklist as evidence_checklist
 
-    context["evidence_checklist"] = evidence_checklist(a)
+    # Each form is ONE document (owner, 2026-10-14): where it is uploaded
+    # the slot offers it to open, and takes a file only as another page.
+    uploaded = form_document.uploaded_form(a)
+    context["evidence_checklist"] = [
+        {
+            **item,
+            "name": form_document.FORM_NAMES.get(item["kind"], item["label"]),
+            "document": uploaded
+            if item["uploaded"] and uploaded and uploaded["kind"] == item["kind"]
+            else None,
+        }
+        for item in evidence_checklist(a)
+    ]
     # Partners are never asked for a Salesforce ID — IA records it for their
     # work at Confirm Salesforce Entry (§12).
     context["is_partner_viewer"] = bool(resolve_partner_ids(request.user))
@@ -2641,6 +2871,7 @@ def _posted_evidence(request, activity) -> list[tuple[str, list]]:
     `evidence_file_<kind>`, in form order; or one form as `evidence_file`
     with `evidence_kind` (older drawers, and requests the field outbox saved
     before this change)."""
+    from apps.evidence import form_document
     from apps.evidence.services import VALID_KINDS
 
     uploads = []
@@ -2655,9 +2886,15 @@ def _posted_evidence(request, activity) -> list[tuple[str, list]]:
         # What the person selected, else what this activity still needs, else
         # the file's shape. Inference alone can only say "pdf" or "photo",
         # which no requirement asks for.
-        kind = resolve_evidence_kind(
-            legacy[0], activity=activity, asserted=request.POST.get("evidence_kind")
-        )
+        asserted = request.POST.get("evidence_kind")
+        kind = resolve_evidence_kind(legacy[0], activity=activity, asserted=asserted)
+        if asserted not in VALID_KINDS and kind not in form_document.FORM_KINDS:
+            # Nothing is outstanding because the form is already uploaded: a
+            # file sent with no kind (the offline drawer) is that form again,
+            # so the one-document rule decides it (owner, 2026-10-14), rather
+            # than it being filed beside the form as a loose photo.
+            if form_document.form_records(activity, form_document.form_kind(activity)):
+                kind = form_document.form_kind(activity)
         uploads.append((kind, legacy))
     return uploads
 
@@ -2672,13 +2909,21 @@ def evidence_upload_action(request, activity_id):
     if forbidden:
         return forbidden
 
+    # Staff work takes no upload (owner, 2026-10-14: "Only staff dont need to
+    # upload"); it is completed with its Salesforce ID in the Complete drawer.
+    from apps.core.exceptions import BadRequest
+    from apps.evidence import form_document
+
+    if request.method == "POST" and not form_document.takes_upload(a):
+        return error_fragment(
+            BadRequest(form_document.STAFF_TAKES_NO_UPLOAD), status=400
+        )
+
     if request.method == "POST":
         # One Submit saves the drawer (owner, 2026-09-26): each form's pages
         # and, on staff work, the Salesforce ID — so the Evidence and
         # Salesforce ID columns fill in together. The ID is saved first: if
         # an upload then fails, submitting again does not upload twice.
-        from apps.core.exceptions import BadRequest
-
         uploads = _posted_evidence(request, a)
         asks_sf = _asks_salesforce_id(request.user, a)
         sf_id = (request.POST.get("salesforce_id") or "").strip() if asks_sf else ""
@@ -2724,14 +2969,29 @@ def evidence_upload_action(request, activity_id):
                     )
             for kind, files in uploads:
                 # One file, or the pages of one form — photographed or chosen
-                # together — merged into one PDF (owner, 2026-09-26;
-                # apps.evidence.services.record_pages_upload).
-                record_pages_upload(
-                    principal=request.user,
-                    activity_id=activity_id,
-                    kind=kind,
-                    files=files,
-                )
+                # together — merged into one PDF (owner, 2026-09-26). A form
+                # already uploaded takes a file only as another page of it,
+                # when the partner says it is one, and stays one PDF (owner,
+                # 2026-10-14; apps.evidence.form_document.add_form_pages).
+                if kind in form_document.FORM_KINDS:
+                    form_document.add_form_pages(
+                        principal=request.user,
+                        activity_id=activity_id,
+                        kind=kind,
+                        files=files,
+                        another_page="yes"
+                        in (
+                            request.POST.get(f"another_page_{kind}", ""),
+                            request.POST.get("another_page", ""),
+                        ),
+                    )
+                else:
+                    record_pages_upload(
+                        principal=request.user,
+                        activity_id=activity_id,
+                        kind=kind,
+                        files=files,
+                    )
                 audit_log(
                     action="upload_evidence",
                     subject_kind="Activity",
@@ -2747,9 +3007,7 @@ def evidence_upload_action(request, activity_id):
             return error_fragment(e, status=400)
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -2759,11 +3017,13 @@ def salesforce_id_drawer_view(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
-    # This drawer is for completing partner work (owner, 2026-09-26). Staff
-    # enter the Salesforce ID for their own work in the upload drawer, with
-    # the form, so a link here for staff work opens that drawer.
-    if a.delivery_type != "partner":
-        return evidence_upload_drawer_view(request, activity_id)
+    # UPLOAD-OFF (owner, 2026-10-13): the upload drawer is switched off, so
+    # staff work opens this drawer too; its action already saves a staff ID.
+    # # This drawer is for completing partner work (owner, 2026-09-26). Staff
+    # # enter the Salesforce ID for their own work in the upload drawer, with
+    # # the form, so a link here for staff work opens that drawer.
+    # if a.delivery_type != "partner":
+    #     return evidence_upload_drawer_view(request, activity_id)
 
     context = {
         "act": a,
@@ -2776,8 +3036,22 @@ def salesforce_id_drawer_view(request, activity_id):
             and not is_partner_ssa_support_activity(a)
             and RolePermissionService.can_confirm_partner_activity(request.user, a)
         ),
+        # Saving the ID hands staff work in, so the drawer asks the day it
+        # was done (owner, 2026-10-16), as the Complete drawer does.
+        "asks_completion_day": _hands_in_with_id(a),
     }
     return render(request, "partials/my_plan/salesforce_id_drawer.html", context)
+
+
+def _hands_in_with_id(a) -> bool:
+    """Whether entering the Salesforce ID hands this work in
+    (``activities.services.hand_in_with_id``): staff work not yet handed in."""
+    from apps.activities.services import SUBMITTABLE_STATUSES
+
+    return a.delivery_type != "partner" and a.status in (
+        *STARTABLE_STATUSES,
+        *SUBMITTABLE_STATUSES,
+    )
 
 
 @require_page_permission("my_plan")
@@ -2803,6 +3077,22 @@ def salesforce_id_action(request, activity_id):
                 '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Salesforce ID is locked after IA confirmation. Ask IA to return the activity to make a correction.</div>',
                 status=400,
             )
+
+        # The day the work was done, when the ID hands it in (owner,
+        # 2026-10-16): today or earlier, never a future day; today when the
+        # post carries none.
+        from apps.activities.completed_day import completion_day
+        from apps.core.exceptions import BadRequest as _BadRequest
+
+        completed_on = None
+        if _hands_in_with_id(a):
+            try:
+                completed_on = (
+                    completion_day(request.POST.get("actual_delivery_date", "").strip())
+                    or timezone.localdate()
+                )
+            except _BadRequest as exc:
+                return notice_fragment(str(getattr(exc, "detail", exc)))
 
         # For partner work the Salesforce entry IS the completion: the partner
         # uploaded its form, and whoever records the entry — Impact Assessment
@@ -2833,9 +3123,7 @@ def salesforce_id_action(request, activity_id):
             except Exception as e:
                 return error_fragment(e, status=400)
             if request.headers.get("HX-Request") == "true":
-                response = HttpResponse("<script>window.location.reload();</script>")
-                response["HX-Trigger"] = "close-drawer"
-                return response
+                return saved_in_place()
             return local_redirect(f"/my-plan/{activity_id}")
 
         kind = sf_kind(a.activity_type)
@@ -2856,11 +3144,22 @@ def salesforce_id_action(request, activity_id):
             return error_fragment(e, status=409)
         except Exception as e:
             return error_fragment(e, status=400)
+        # The ID completes staff work: it is handed in to the Programme Lead,
+        # whatever day it was planned for (owner, 2026-10-15). What it still
+        # needs, attendance for a training, is said; the ID stays saved.
+        try:
+            hand_in_with_id(a.id, request.user, completed_on=completed_on)
+        except Exception as e:
+            # error_fragment shows a user-facing refusal as written and logs
+            # anything else behind its generic message.
+            return error_fragment(
+                e,
+                action="The Salesforce ID is saved. To complete the activity",
+                status=400,
+            )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -2897,10 +3196,10 @@ def submit_for_review_drawer_view(request, activity_id):
         has_participants = (a.teachers_attended or 0) + (a.leaders_attended or 0) > 0
 
     all_ready = (
-        has_evidence
-        and has_sf_id
-        and (not ssa_required or has_ssa)
-        and has_participants
+        # UPLOAD-OFF (owner, 2026-10-13): readiness no longer waits on a file.
+        # has_evidence
+        # and has_sf_id
+        has_sf_id and (not ssa_required or has_ssa) and has_participants
     )
 
     context = {
@@ -2943,9 +3242,7 @@ def submit_for_review_action(request, activity_id):
         )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -2986,6 +3283,62 @@ def evidence_packet_view(request, activity_id):
     return render(request, "pages/my_plan/evidence_packet.html", context)
 
 
+#: Shortest search the register's "+ Add School" runs. School IDs are short
+#: numbers, so two characters, not three.
+REGISTER_SEARCH_MIN = 2
+REGISTER_SEARCH_LIMIT = 8
+
+
+@require_page_permission("my_plan")
+def register_school_search_view(request, activity_id):
+    """Schools already in Edify, for a cluster session's attendance register.
+
+    "+ Add School" in the completion drawer looks here first, so a school that
+    is already in the directory is chosen rather than added a second time.
+    Any operating school can be found: a school from another cluster, or in
+    another district, attends as a visiting school.
+    """
+    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    if not a.cluster_id or not (
+        RolePermissionService.can_view_record(request.user, a)
+        and RolePermissionService.can_upload_evidence(request.user, a)
+    ):
+        return HttpResponseForbidden("Access Denied.")
+
+    query = (request.GET.get("q") or "").strip()[:80]
+    schools = []
+    if len(query) >= REGISTER_SEARCH_MIN:
+        schools = list(
+            active_schools()
+            .filter(
+                Q(name__icontains=query)
+                | Q(school_id__icontains=query)
+                | Q(salesforce_account_id__iexact=query)
+            )
+            .select_related("district")
+            .order_by("name")[:REGISTER_SEARCH_LIMIT]
+        )
+    from apps.clusters.models import Cluster
+
+    cluster_names = dict(
+        Cluster.objects.filter(
+            id__in={s.cluster_id for s in schools if s.cluster_id}
+        ).values_list("id", "name")
+    )
+    for school in schools:
+        school.cluster_name = cluster_names.get(school.cluster_id, "")
+    return render(
+        request,
+        "partials/my_plan/register_school_results.html",
+        {
+            "act_cluster_id": a.cluster_id,
+            "query": query,
+            "too_short": 0 < len(query) < REGISTER_SEARCH_MIN,
+            "schools": schools,
+        },
+    )
+
+
 @require_page_permission("my_plan")
 def attendance_upload_drawer_view(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
@@ -3019,7 +3372,8 @@ def attendance_upload_action(request, activity_id):
     if request.method == "POST":
         teachers = request.POST.get("teachers_attended", 0)
         leaders = request.POST.get("leaders_attended", 0)
-        attendance_file = request.FILES.get("attendance_file")
+        # UPLOAD-OFF (owner, 2026-10-13):
+        # attendance_file = request.FILES.get("attendance_file")
         notes = request.POST.get("notes", "").strip()
         attended_schools = request.POST.getlist("attended_schools")
 
@@ -3075,22 +3429,24 @@ def attendance_upload_action(request, activity_id):
             except Exception as exc:
                 return error_fragment(exc, action="Attendance Error", status=400)
 
-        if attendance_file:
-            # The governed Training Attendance form is PDF-only; a photographed
-            # sheet is welcome but is recorded as a supplementary PHOTO — it
-            # does not satisfy the form requirement, the PDF does. Several
-            # pages together are merged into one PDF (owner, 2026-09-26), and
-            # that PDF is the form.
-            attendance_files = request.FILES.getlist("attendance_file")
-            is_pdf = len(attendance_files) > 1 or (
-                attendance_file.name or ""
-            ).lower().endswith(".pdf")
-            record_pages_upload(
-                principal=request.user,
-                activity_id=activity_id,
-                kind="attendance_form" if is_pdf else "photo",
-                files=attendance_files or [attendance_file],
-            )
+        # UPLOAD-OFF (owner, 2026-10-13): the headcount is recorded; a posted
+        # sheet is ignored, not stored.
+        # if attendance_file:
+        #     # The governed Training Attendance form is PDF-only; a photographed
+        #     # sheet is welcome but is recorded as a supplementary PHOTO — it
+        #     # does not satisfy the form requirement, the PDF does. Several
+        #     # pages together are merged into one PDF (owner, 2026-09-26), and
+        #     # that PDF is the form.
+        #     attendance_files = request.FILES.getlist("attendance_file")
+        #     is_pdf = len(attendance_files) > 1 or (
+        #         attendance_file.name or ""
+        #     ).lower().endswith(".pdf")
+        #     record_pages_upload(
+        #         principal=request.user,
+        #         activity_id=activity_id,
+        #         kind="attendance_form" if is_pdf else "photo",
+        #         files=attendance_files or [attendance_file],
+        #     )
 
         audit_log(
             action="upload_attendance",
@@ -3104,9 +3460,7 @@ def attendance_upload_action(request, activity_id):
         )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -3132,7 +3486,8 @@ def ssa_evidence_upload_action(request, activity_id):
         return HttpResponseForbidden("Access Denied.")
 
     if request.method == "POST":
-        ssa_file = request.FILES.get("ssa_file")
+        # UPLOAD-OFF (owner, 2026-10-13):
+        # ssa_file = request.FILES.get("ssa_file")
         notes = request.POST.get("notes", "").strip()
 
         # Parse scores if provided — derived from the canonical enum so the
@@ -3186,13 +3541,15 @@ def ssa_evidence_upload_action(request, activity_id):
             except BadRequest as exc:
                 return notice_fragment(str(getattr(exc, "detail", exc)))
 
-        if ssa_file:
-            record_upload(
-                principal=request.user,
-                activity_id=activity_id,
-                kind="assessment_form",
-                file_obj=ssa_file,
-            )
+        # UPLOAD-OFF (owner, 2026-10-13): the scores are recorded; a posted form
+        # is ignored, not stored.
+        # if ssa_file:
+        #     record_upload(
+        #         principal=request.user,
+        #         activity_id=activity_id,
+        #         kind="assessment_form",
+        #         file_obj=ssa_file,
+        #     )
 
         audit_log(
             action="upload_ssa",
@@ -3206,9 +3563,7 @@ def ssa_evidence_upload_action(request, activity_id):
         )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -3342,22 +3697,29 @@ def evidence_center_view(request):
 
     rows = []
     for activity in page_obj.object_list:
-        if active_tab == "pending":
+        if active_tab == "pending" and activity.delivery_type == "partner":
+            # A partner's work is verified from its uploaded form.
             action = {
                 "label": "Upload evidence",
                 "url": f"/activities/{activity.id}/evidence",
                 "drawer": True,
             }
+        elif active_tab == "pending":
+            # UPLOAD-OFF (owner, 2026-10-13): staff work asks for no upload,
+            # so the row opens the activity instead of the upload drawer.
+            action = {
+                "label": "View details",
+                "url": f"/my-plan/{activity.id}",
+                "drawer": False,
+            }
         elif active_tab == "sf_missing":
-            # Staff enter their own work's ID in the upload drawer; the
-            # Salesforce ID drawer is for completing partner work.
+            # UPLOAD-OFF (owner, 2026-10-13): staff entered their own work's
+            # ID in the upload drawer (f"/activities/{activity.id}/evidence");
+            # the Salesforce ID drawer takes it for staff and partner work
+            # alike now.
             action = {
                 "label": "Enter SF ID",
-                "url": (
-                    f"/activities/{activity.id}/salesforce-id"
-                    if activity.delivery_type == "partner"
-                    else f"/activities/{activity.id}/evidence"
-                ),
+                "url": f"/activities/{activity.id}/salesforce-id",
                 "drawer": True,
             }
         elif active_tab == "verified":
@@ -3510,20 +3872,11 @@ def my_plan_export_drawer_view(request):
     )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    raw_from_month = (
-        request.GET.get("from_month") or request.GET.get("month") or ""
-    ).strip()
-    raw_to_month = (request.GET.get("to_month") or "").strip()
-    selected_from_month = (
-        int(raw_from_month)
-        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
-        else 10
-    )
-    selected_to_month = (
-        int(raw_to_month)
-        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
-        else 9
-    )
+    from apps.frontend.views.oversight_views import drawer_period
+
+    page_period = drawer_period(request)
+    selected_from_month = page_period["selected_from_month"]
+    selected_to_month = page_period["selected_to_month"]
 
     fy_start, fy_end = get_fy_date_range(fy)
     default_start_date = fy_start.strftime("%Y-%m-%d")
@@ -3542,11 +3895,13 @@ def my_plan_export_drawer_view(request):
         "months": FY_MONTHS,
         "selected_from_month": selected_from_month,
         "selected_to_month": selected_to_month,
-        "default_start_date": default_start_date,
-        "default_end_date": default_end_date,
+        "period_mode": page_period["period_mode"],
+        "default_start_date": page_period["default_start_date"] or default_start_date,
+        "default_end_date": page_period["default_end_date"] or default_end_date,
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
+        "kind_choices": export_kinds.KIND_CHOICES,
     }
     return render(
         request,

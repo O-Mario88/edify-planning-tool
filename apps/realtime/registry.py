@@ -136,6 +136,25 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="verification_reminders",
+        description=(
+            "Tells each Programme Lead, at the end of the day, how many of "
+            "their officers' completed activities wait on them to verify; "
+            "closes the notice from the day before."
+        ),
+        cron="daily 17:00 Africa/Nairobi",
+        cron_kwargs={"hour": 17, "minute": 0},
+        expected_runtime_seconds=30,
+        max_interval_minutes=60 * 30,
+        idempotent=True,
+        idempotency_note=(
+            "Keyed per lead per day (context_id verify-<date>); a re-run on "
+            "the same day sends nothing."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="acting_lifecycle",
         description=(
             "Records each acting leadership appointment's life in the audit "

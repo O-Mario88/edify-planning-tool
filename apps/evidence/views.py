@@ -35,18 +35,45 @@ class EvidenceUploadView(APIView):
     parser_classes = [MultiPartParser]
 
     def post(self, request: Request) -> Response:
-        file_obj = request.FILES.get("file")
+        """A partner's form, through the one door every upload takes
+        (apps.evidence.form_document): staff work takes none, and a second
+        file is taken only as another page (`anotherPage=yes`)."""
+        from . import form_document
+
+        files = [f for f in request.FILES.getlist("file") if f]
         activity_id = request.data.get("activityId", "")
         kind = request.data.get("kind", "visit_form")
-        return Response(
-            services.record_upload(
+        another = str(request.data.get("anotherPage", "")).lower() in (
+            "yes",
+            "true",
+            "1",
+        )
+        if kind in form_document.FORM_KINDS:
+            record = form_document.add_form_pages(
                 principal=request.user,
                 activity_id=activity_id,
                 kind=kind,
-                file_obj=file_obj,
-            ),
-            status=201,
-        )
+                files=files,
+                another_page=another,
+            )
+        else:
+            from apps.activities.models import Activity
+            from apps.core.exceptions import BadRequest
+
+            if not files:
+                raise BadRequest("A file is required.")
+            activity = Activity.objects.filter(
+                id=activity_id, deleted_at__isnull=True
+            ).first()
+            if activity is not None:
+                form_document.assert_takes_upload(activity)
+            record = services.record_upload(
+                principal=request.user,
+                activity_id=activity_id,
+                kind=kind,
+                file_obj=files[0],
+            )
+        return Response(record, status=201)
 
 
 class EvidenceActivityListView(APIView):
@@ -55,6 +82,22 @@ class EvidenceActivityListView(APIView):
 
     def get(self, request: Request, activity_id: str) -> Response:
         return Response(services.list_for_activity(activity_id, request.user))
+
+
+class EvidenceFormDocumentView(APIView):
+    """The activity's uploaded form as one PDF (owner, 2026-10-14: "View
+    Uploaded Visit Form" / "View Uploaded Training Attendance")."""
+
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request, activity_id: str):
+        from . import form_document
+
+        download = request.query_params.get("download", "").lower() == "1"
+        return form_document.document_response(
+            activity_id, request.user, download=download
+        )
 
 
 class EvidenceFileView(APIView):

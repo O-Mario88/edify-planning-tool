@@ -239,8 +239,9 @@
           && !element.closest('.edify-table-action')
           // Planning status chips, and Partner Monitoring's in the same
           // design, retain their semantic colour and compact border; Who's
-          // Online's status light is nothing but its paint.
-          && !element.matches('.school-planning-badge, .school-planning-badges, .partner-status-chip, .admin-presence-light, .sal-dot, .core-seq__mark')
+          // Online's status light is nothing but its paint. A group heading's
+          // count and mark are pills by design (components.css).
+          && !element.matches('.school-planning-badge, .school-planning-badges, .partner-status-chip, .admin-presence-light, .sal-dot, .core-seq__mark, .edify-group-head__count, .edify-group-head__mark')
           && !(popup && table.contains(popup))
           // An opened row's detail (the Staff Activity Log's, 2026-09-29) is
           // a page of its own inside one spanning cell, not a cell's text.

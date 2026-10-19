@@ -178,7 +178,7 @@ class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 border borde
 {% endif %}
 </div>
 
-<div class="edify-record-workspace grid lg:grid-cols-3 gap-6 items-start">
+<div class="edify-record-workspace grid lg:grid-cols-3 gap-x-4 gap-y-4 items-start">
 <div class="lg:col-span-2 space-y-6">
 <div
 id="participating-schools"
@@ -285,21 +285,18 @@ may withdraw it and its project work has not begun.{% endcomment %}
 </div>
 
 <div class="space-y-6">
-<div class="card p-6">
-<h3 class="edify-profile-section-title mb-4">Project Details</h3>
-<div class="space-y-4">
-<div>
-<p class="edify-profile-field__label mb-1">Project Name</p>
-<p class="edify-profile-field__value">{{ project.name }}</p>
-</div>
-<div>
-<p class="edify-profile-field__label mb-1">School Focus</p>
-<p class="edify-profile-field__value">{{ project.get_school_focus_display }}</p>
-</div>
-<div>
-<p class="edify-profile-field__label mb-1">Description</p>
-<p class="edify-profile-field__value">Special initiative to track progress and interventions across a selected cohort of schools.</p>
-</div>
+{% comment %}The project's own record (owner, 2026-10-16: profiles' cards made
+consistent). It was an older .card narrower than the cards above it, and its
+Description was a fixed sentence every project showed: a project has no
+description field, so the card now shows what the record holds.{% endcomment %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4" data-project-record>
+<h3 class="edify-profile-section-title border-b border-slate-100 pb-3">Project Details</h3>
+<div class="edify-field-grid grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div><p class="edify-profile-field__label">Project name</p><p class="edify-profile-field__value mt-0.5">{{ project.name }}</p></div>
+<div><p class="edify-profile-field__label">Code</p><p class="edify-profile-field__value mt-0.5">{{ project.code|default:"Not specified" }}</p></div>
+<div><p class="edify-profile-field__label">Category</p><p class="edify-profile-field__value mt-0.5">{{ project.get_category_display }}</p></div>
+<div><p class="edify-profile-field__label">School focus</p><p class="edify-profile-field__value mt-0.5">{{ project.get_school_focus_display }}</p></div>
+<div><p class="edify-profile-field__label">Measured</p><p class="edify-profile-field__value mt-0.5">{% if project.measurement_start_fy %}FY{{ project.measurement_start_fy }}{% if project.measurement_end_fy and project.measurement_end_fy != project.measurement_start_fy %} – FY{{ project.measurement_end_fy }}{% endif %}{% else %}Not specified{% endif %}</p></div>
 </div>
 </div>
 </div>

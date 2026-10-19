@@ -43,6 +43,7 @@ from datetime import date, timedelta
 from apps.ssa.models import SsaRecord
 from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
+from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
 from apps.activities.day_off import day_off_marks
 from apps.activities.models import Activity
 from apps.geography.models import District, Region
@@ -96,6 +97,14 @@ def _calendar_staff_audience(user) -> tuple[list[str] | None, list[str] | None]:
     activity_owner_ids = {value for value in (user.id, own_staff_id) if value}
     leave_staff_ids = {own_staff_id} if own_staff_id else set()
     return sorted(activity_owner_ids), sorted(leave_staff_ids)
+
+
+def off_calendar_done(activities):
+    """Completed work is never drawn (owner, 2026-10-14: "All completed
+    activities should be off the calendar completely"); My Plan and Planning
+    Oversight list it, in green. Both calendars — this page's and Leave's —
+    ask here, so neither can draw it again alone."""
+    return activities.exclude(status__in=OFFICER_COMPLETED_STATUSES)
 
 
 def _calendar_event_family(activity_type: str) -> str:
@@ -228,20 +237,18 @@ _CALENDAR_STATUS_FAMILIES: dict[str, tuple[str, ...]] = {
         "evidence_uploaded",
         "evidence_accepted",
         "salesforce_id_required",
-        "submitted_to_pl",
         "returned_by_pl",
-        "awaiting_ia_verification",
         "returned",
         "returned_by_ia",
     ),
-    "completed": tuple(COMPLETED_WORK_STATUSES),
+    # Completed work is never drawn (OFFICER_COMPLETED_STATUSES, owner
+    # 2026-10-14), so there is no "Completed" family to filter to.
     "cancelled": ("cancelled", "rejected"),
 }
 
 _CALENDAR_STATUS_OPTIONS = (
     ("scheduled", "Scheduled"),
     ("in_progress", "In progress"),
-    ("completed", "Completed"),
     ("cancelled", "Cancelled / rejected"),
 )
 
@@ -325,6 +332,7 @@ def calendar_view(request):
         activities = activities.exclude(
             status__in=["cancelled", "rejected", "awaiting_owner_approval"]
         )
+        activities = off_calendar_done(activities)
         if selected_status:
             activities = activities.filter(
                 status__in=_CALENDAR_STATUS_FAMILIES[selected_status]
@@ -2653,7 +2661,7 @@ def project_edit_drawer_view(request, project_id):
     is refused by the service, not by this view.
     """
     from apps.core.exceptions import Forbidden, NotFoundError
-    from apps.core.htmx_errors import error_fragment
+    from apps.core.htmx_errors import error_fragment, error_message, refusal_drawer
     from apps.projects.models import (
         PROJECT_INTERVENTION_CHOICES,
         ProjectCategory,
@@ -2664,7 +2672,7 @@ def project_edit_drawer_view(request, project_id):
     try:
         project = _project_for_editing(request, project_id)
     except (Forbidden, NotFoundError) as exc:
-        return error_fragment(exc, status=403)
+        return refusal_drawer(request, error_message(exc), title="Project", status=403)
 
     if request.method == "POST":
         payload = request.POST.dict()
@@ -3038,7 +3046,7 @@ def special_projects_my_plan_view(request):
                 "Purpose",
                 "Partner",
                 "Status",
-                "Evidence",
+                # UPLOAD-OFF (owner, 2026-10-13): "Evidence",
                 "Finance",
             ]
         )
@@ -3056,7 +3064,7 @@ def special_projects_my_plan_view(request):
                     row["purpose"],
                     row["partner"],
                     row["status"],
-                    row["evidence"],
+                    # UPLOAD-OFF (owner, 2026-10-13): row["evidence"],
                     row["finance"],
                 ]
             )

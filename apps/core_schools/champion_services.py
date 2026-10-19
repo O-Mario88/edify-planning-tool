@@ -10,7 +10,8 @@ from apps.core.scoping import assert_may_write_school
 from apps.core_schools.services import (
     CORE_PLAN_CLOSED_STATUSES,
     CORE_SLOT_DONE_STATUSES,
-    EXPECTED_CORE_SLOTS,
+    PACKAGE_WORK_KINDS,
+    PACKAGE_WORK_SLOTS,
     get_live_core_plan,
 )
 
@@ -42,7 +43,11 @@ class ChampionEligibilityService:
             .prefetch_related("scores")
             .order_by("date_of_ssa", "created_at")
         )
-        slot_statuses = list(plan.slots.values_list("status", flat=True))
+        slot_statuses = list(
+            plan.slots.filter(activity_type__in=PACKAGE_WORK_KINDS).values_list(
+                "status", flat=True
+            )
+        )
         activity_counts = school.activities.filter(deleted_at__isnull=True).aggregate(
             closed=Count("id", filter=Q(status="closed")),
             clean=Count("id", filter=Q(status="closed", evidence_status="accepted")),
@@ -119,8 +124,10 @@ class ChampionEligibilityService:
         balance_score = (min(lowest_score, 7.0) / 7.0) * 15.0
 
         # 4. Core Package Completion (10%)
-        # Total required slots come from CORE_PACKAGE_SPEC (9: 1 assessment +
-        # 4 visits + 4 trainings). Uses the same canonical "done" status
+        # The package's work: its 4 visits and 4 trainings (owner,
+        # 2026-10-16, "Score 8 slots only"; PACKAGE_WORK_SLOTS). The
+        # assessment slot nothing can complete is not counted: the SSA
+        # weighs in through the parts above. Uses the same canonical "done" status
         # set the real completion path writes (CORE_SLOT_DONE_STATUSES —
         # see apps.core_schools.services.resync_plan_completion) rather than
         # a hand-duplicated list of status spellings that can drift out of
@@ -151,7 +158,7 @@ class ChampionEligibilityService:
         eligible = (
             latest_avg >= 8.0
             and lowest_score >= 7.0
-            and completed_slots >= EXPECTED_CORE_SLOTS
+            and completed_slots >= PACKAGE_WORK_SLOTS
         )
 
         return {
@@ -169,18 +176,25 @@ class ChampionEligibilityService:
         }
 
     @staticmethod
-    def evaluate_all() -> list[dict]:
-        """Scan the estate without issuing queries per school.
+    def scan(school_codes=None) -> list[tuple]:
+        """``(profile, school, metrics)`` for every Core school the rule can
+        judge — a profile, a live plan and a confirmed SSA — among
+        ``school_codes`` (School IDs), or the whole estate. Reads only.
 
         This endpoint previously executed more than 9,000 queries against the
         development dataset and blocked the page for over 23 seconds.  Load
-        every input in bounded batches, score in memory, and persist status
-        transitions with one bulk update.
+        every input in bounded batches and score in memory. Core School
+        Intelligence reads the same scores (owner, 2026-10-17: the rule here
+        is Edify's official Champion criteria), so a school is judged one way
+        on every page.
         """
-        candidates = []
-        profiles = list(CoreSchoolProfile.objects.all())
+        judged: list[tuple] = []
+        profiles = CoreSchoolProfile.objects.all()
+        if school_codes is not None:
+            profiles = profiles.filter(school_id__in=list(school_codes))
+        profiles = list(profiles)
         if not profiles:
-            return candidates
+            return judged
 
         school_ids = [profile.school_id for profile in profiles]
         operational_fy = get_operational_fy()
@@ -190,9 +204,15 @@ class ChampionEligibilityService:
             CorePlan.objects.filter(school_id__in=school_ids)
             .exclude(status__in=CORE_PLAN_CLOSED_STATUSES)
             .annotate(
-                champion_total_slots=Count("slots"),
+                champion_total_slots=Count(
+                    "slots", filter=Q(slots__activity_type__in=PACKAGE_WORK_KINDS)
+                ),
                 champion_completed_slots=Count(
-                    "slots", filter=Q(slots__status__in=CORE_SLOT_DONE_STATUSES)
+                    "slots",
+                    filter=Q(
+                        slots__activity_type__in=PACKAGE_WORK_KINDS,
+                        slots__status__in=CORE_SLOT_DONE_STATUSES,
+                    ),
                 ),
             )
             .values(
@@ -256,8 +276,6 @@ class ChampionEligibilityService:
             )
         )
         schools_by_id = {school.school_id: school for school in schools}
-        profiles_to_update = []
-
         for profile in profiles:
             school = schools_by_id.get(profile.school_id)
             plan = plans_by_school.get(profile.school_id)
@@ -276,6 +294,16 @@ class ChampionEligibilityService:
                 clean_evidence=school.champion_clean_evidence_count,
                 all_ssas=len(confirmed),
             )
+            judged.append((profile, school, metrics))
+        return judged
+
+    @staticmethod
+    def evaluate_all() -> list[dict]:
+        """Every eligible school as a candidate, and a newly eligible one's
+        status moved to Potential Champion, in one bulk update."""
+        candidates = []
+        profiles_to_update = []
+        for profile, school, metrics in ChampionEligibilityService.scan():
             if metrics["eligible"]:
                 if profile.champion_status not in ["Champion", "Approved Champion"]:
                     profile.champion_status = "Potential Champion"

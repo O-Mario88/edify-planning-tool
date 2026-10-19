@@ -32,7 +32,6 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKSPACES = (
     "templates/partials/oversight/cd_team_detail.html",
     "templates/partials/oversight/cd_workspace.html",
-    "templates/partials/oversight/core_schools_oversight_workspace.html",
 )
 
 
@@ -142,39 +141,6 @@ class StripsAreAddressableTests(SimpleTestCase):
             with self.subTest(path=path):
                 self.assertNotIn("history.replaceState", source)
                 self.assertIn("tabState(", source)
-
-    def test_core_school_strips_offer_their_own_ids(self):
-        lead_body = render_to_string(
-            "partials/oversight/core_schools_oversight_workspace.html",
-            {
-                "request": _request("/team-planning-oversight/"),
-                "is_programme_lead": True,
-                "cceo_tabs": [
-                    {
-                        "id": "me",
-                        "name": "Me",
-                        "count": 1,
-                        "completed": 0,
-                        "schools": [],
-                        "tab_label": "My Core Schools",
-                        "heading": "My Core Schools",
-                    },
-                    {
-                        "id": "O1",
-                        "name": "Bob",
-                        "count": 1,
-                        "completed": 0,
-                        "schools": [],
-                    },
-                ],
-                "leads": [],
-                "fy": "2026",
-            },
-        )
-        self.assertIn(
-            "tabState('activeCceo', 'cceo', [&quot;me&quot;, &quot;O1&quot;], 'me')",
-            lead_body,
-        )
 
     def test_team_detail_officer_strip_offers_the_groups_on_the_page(self):
         body = render_to_string(

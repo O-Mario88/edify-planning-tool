@@ -112,6 +112,16 @@ class FilterExportFixture(TestCase):
         body = b"".join(response.streaming_content).decode()
         return list(csv.reader(io.StringIO(body)))
 
+    def export_tables(self, **params) -> dict[str, list[dict]]:
+        """The export's sheets (apps.core.plan_export), each a list of rows
+        keyed by column heading."""
+        from apps.core import plan_export
+
+        return plan_export.tables_from_csv(self.export_rows(**params))
+
+    def export_records(self, **params) -> list[dict]:
+        return [row for rows in self.export_tables(**params).values() for row in rows]
+
 
 class ExportScopeTest(FilterExportFixture):
     def test_the_export_never_contains_another_team(self):
@@ -122,11 +132,9 @@ class ExportScopeTest(FilterExportFixture):
         self.assertNotIn("99000", body, "another team's cost must not be exported")
 
     def test_the_export_totals_match_the_page(self):
-        rows = self.export_rows(fy=self.fy)
-
-        header, *data = rows
-        cost_column = header.index("Planned cost (UGX)")
-        exported_total = sum(int(row[cost_column] or 0) for row in data)
+        exported_total = sum(
+            int(row["Cost (UGX)"] or 0) for row in self.export_records(fy=self.fy)
+        )
 
         from apps.planning import oversight_service as svc
 
@@ -142,42 +150,99 @@ class ExportScopeTest(FilterExportFixture):
         )["planned_budget"]
         self.assertEqual(exported_total, page_total)
 
-    def test_the_export_names_every_attribution_column(self):
-        header = self.export_rows(fy=self.fy)[0]
+    def test_the_export_is_the_owners_columns(self):
+        """Owner, 2026-10-12: the columns of each sheet, named one by one;
+        they replace the wide attribution table of 2026-09-22. Who does the
+        work is the Executor."""
+        from apps.core import plan_export
 
-        for column in (
-            "Planned by",
-            "Operational owner",
-            "Executor type",
-            "Managing staff",
-            "Supervising PL",
-            "Partner",
-        ):
-            with self.subTest(column=column):
-                self.assertIn(column, header)
+        lines = self.export_rows(fy=self.fy)
+        self.assertIn(list(plan_export.VISIT_HEADERS), lines)
+        self.assertIn(list(plan_export.TRAINING_HEADERS), lines)
+        self.assertIn(list(plan_export.MEETING_HEADERS), lines)
+        self.assertIn(list(plan_export.PARTNER_HEADERS), lines)
+        self.assertIn(list(plan_export.OTHER_HEADERS), lines)
+        # The sheets, in the owner's order, the Budget of those activities last.
+        self.assertEqual(
+            [
+                line[0]
+                for line in lines
+                if len(line) == 1 and line[0] in plan_export.SHEET_ORDER
+            ],
+            list(plan_export.SHEET_ORDER),
+        )
+        self.assertEqual(
+            plan_export.VISIT_HEADERS,
+            (
+                "School ID",
+                "School Name",
+                "District",
+                "District Type",
+                "Activity",
+                "Planned Date",
+                "Executor",
+                "Purpose of Visit",
+                "Focus Intervention",
+                "Cost (UGX)",
+                "Budget Status",
+                "Verification",
+                "Salesforce ID",
+                # "Evidence" left with the upload (UPLOAD-OFF, 2026-10-13).
+                "Status",
+            ),
+        )
+        self.assertEqual(
+            plan_export.TRAINING_HEADERS,
+            (
+                "Cluster Name",
+                "District",
+                "District Type",
+                "Planned Date",
+                "Executor",
+                "Training",
+                "SSA Intervention",
+                "Participants",
+                "Cost (UGX)",
+                "Budget Status",
+                "Verification",
+                "Salesforce ID",
+                # "Evidence" left with the upload (UPLOAD-OFF, 2026-10-13).
+                "Status",
+            ),
+        )
+        for row in self.export_records(fy=self.fy):
+            self.assertIn(
+                row["District Type"],
+                ("Primary District", "Secondary District", "Mixed", ""),
+            )
+            # Who does the work: the Executor, or the Partner on its sheet.
+            self.assertTrue(row.get("Executor") or row.get("Partner"))
 
     def test_the_export_carries_no_free_text_notes(self):
         """A plan, not a record store — evidence and notes stay behind."""
-        header = self.export_rows(fy=self.fy)[0]
+        from apps.core import plan_export
 
-        for forbidden in ("Evidence file", "Note", "Message"):
-            with self.subTest(column=forbidden):
-                self.assertNotIn(forbidden, header)
+        for header in plan_export.ALL_HEADERS:
+            for forbidden in ("Evidence file", "Note", "Message"):
+                with self.subTest(column=forbidden):
+                    self.assertNotIn(forbidden, header)
 
 
 class FilterTest(FilterExportFixture):
     def test_filtering_by_activity_type_narrows_both_page_and_export(self):
-        rows = self.export_rows(fy=self.fy, activity_type="training")
+        tables = self.export_tables(fy=self.fy, activity_type="training")
 
-        self.assertEqual(len(rows) - 1, 1)
-        self.assertIn("training", rows[1])
+        self.assertEqual(len(tables["Group Trainings"]), 1)
+        self.assertEqual(tables["Cluster Meetings"], [])
+        self.assertEqual(tables["School Visits"], [])
+        self.assertEqual(tables["Other Activities"], [])
 
     def test_filtering_by_executor_type_separates_partner_from_staff(self):
-        partner_rows = self.export_rows(fy=self.fy, executor_type="partner")
-        staff_rows = self.export_rows(fy=self.fy, executor_type="staff")
+        partner_rows = self.export_records(fy=self.fy, executor_type="partner")
+        staff_rows = self.export_records(fy=self.fy, executor_type="staff")
 
-        self.assertEqual(len(partner_rows) - 1, 1)
-        self.assertEqual(len(staff_rows) - 1, 2)
+        self.assertEqual(len(partner_rows), 1)
+        self.assertEqual(len(staff_rows), 2)
 
     def test_an_applied_filter_changes_the_pages_totals_too(self):
         body = (
@@ -258,7 +323,7 @@ class CustomExportPeriodAndDrawerTest(FilterExportFixture):
         )
 
         # Export as CSV with month range 10 to 12 and status completed
-        rows = self.export_rows(
+        rows = self.export_records(
             fy=self.fy,
             period_type="month_range",
             from_month="10",
@@ -267,9 +332,9 @@ class CustomExportPeriodAndDrawerTest(FilterExportFixture):
             activity_type="visits_trainings",
             format="csv",
         )
-        # Header + 1 completed row
-        self.assertEqual(len(rows) - 1, 1)
-        self.assertIn("completed", rows[1])
+        # The one completed row.
+        self.assertEqual(len(rows), 1)
+        self.assertIn("omplete", rows[0]["Status"])
 
     def test_drawers_render_successfully(self):
         client = self.as_pl()
@@ -309,3 +374,81 @@ class CustomExportPeriodAndDrawerTest(FilterExportFixture):
             resp["Content-Type"],
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+
+
+class EveryoneAtOnceTest(FilterExportFixture):
+    """Owner, 2026-10-12: "make sure the cd and ia can export for everyone at
+    once not by program lead as currently it is"."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.cd_user, _ = cls._staff("cd@f.test", "Director", EdifyRole.COUNTRY_DIRECTOR)
+        cls.ia_user, _ = cls._staff(
+            "ia@f.test", "Assessor", EdifyRole.IMPACT_ASSESSMENT
+        )
+        # A second Lead, whose officer holds the "foreign" visit.
+        cls.pl2_user, cls.pl2 = cls._staff(
+            "pl2@f.test", "Second Lead", EdifyRole.COUNTRY_PROGRAM_LEAD
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisee=cls.other, supervisor=cls.pl2
+        )
+
+    def _costs(self, user, path, **params) -> list[int]:
+        from apps.core import plan_export
+
+        client = Client()
+        client.force_login(user)
+        response = client.get(path, {"fy": self.fy, **params})
+        self.assertEqual(response.status_code, 200)
+        body = b"".join(response.streaming_content).decode()
+        tables = plan_export.tables_from_csv(csv.reader(io.StringIO(body)))
+        return sorted(
+            int(row["Cost (UGX)"] or 0) for rows in tables.values() for row in rows
+        )
+
+    EVERYONE = [25_000, 40_000, 60_000, 99_000]
+
+    def test_the_team_export_is_everyone_for_the_cd_and_ia(self):
+        for user in (self.cd_user, self.ia_user):
+            with self.subTest(role=user.active_role):
+                self.assertEqual(self._costs(user, PL_EXPORT), self.EVERYONE)
+                self.assertEqual(
+                    self._costs(user, PL_EXPORT, program_lead="all"), self.EVERYONE
+                )
+
+    def test_one_leads_team_is_still_a_choice(self):
+        self.assertEqual(
+            self._costs(self.cd_user, PL_EXPORT, program_lead=self.pl2.id), [99_000]
+        )
+
+    def test_the_country_export_is_everyone_too(self):
+        path = "/country-planning-oversight/export"
+        self.assertEqual(self._costs(self.cd_user, path), self.EVERYONE)
+        self.assertEqual(
+            self._costs(self.cd_user, path, program_lead="all"), self.EVERYONE
+        )
+
+    def test_the_drawer_opens_on_everyone_whatever_tab_the_page_is_on(self):
+        client = Client()
+        client.force_login(self.cd_user)
+        for path in (
+            "/team-planning-oversight/export-drawer",
+            "/country-planning-oversight/export-drawer",
+        ):
+            html = client.get(
+                path, {"fy": self.fy, "program_lead": self.pl.id}
+            ).content.decode()
+            self.assertIn('<option value="all" selected>Everyone</option>', html)
+            self.assertIn("Second Lead&#x27;s team", html)
+            # The page's tab is not carried in as a hidden narrowing.
+            self.assertNotIn('type="hidden" name="program_lead"', html)
+
+    def test_a_program_lead_is_not_offered_other_teams(self):
+        html = (
+            self.as_pl()
+            .get("/team-planning-oversight/export-drawer", {"fy": self.fy})
+            .content.decode()
+        )
+        self.assertNotIn("Whose Plans", html)

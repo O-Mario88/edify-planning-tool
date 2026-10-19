@@ -39,6 +39,11 @@ def _confirmed_ssa(school, *, fy=None, score=6.0):
     from apps.core.fy import get_operational_fy
     from apps.ssa.models import SsaRecord, SsaScore
 
+    # The school's one SSA of the year (owner, 2026-10-14): a new reading
+    # replaces the fixture's earlier one rather than standing beside it.
+    SsaRecord.objects.filter(
+        school=school, fy=fy or get_operational_fy(), deleted_at__isnull=True
+    ).update(deleted_at=timezone.now())
     record = SsaRecord.objects.create(
         school=school,
         fy=fy or get_operational_fy(),

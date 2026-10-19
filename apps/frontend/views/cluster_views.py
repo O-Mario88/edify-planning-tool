@@ -1,7 +1,7 @@
 from django.utils.html import format_html
 from django.utils.html import escape
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.htmx_errors import error_fragment
+from apps.core.htmx_errors import error_fragment, error_message, refusal_drawer
 from apps.core.permissions import (
     has_permission,
     require_export_permission,
@@ -11,6 +11,7 @@ from apps.core.permissions import (
     get_scoped_object_or_404,
 )
 from django.contrib import messages
+from apps.core.htmx_saved import saved_in_place
 from django.http import HttpResponse, HttpResponseForbidden
 import csv
 import json
@@ -109,6 +110,8 @@ def _get_cost_preview_data(
     planned_date=None,
     responsible_user_id=None,
     materials=None,
+    principal=None,
+    facilitator_answer=None,
 ):
     """Cost preview via the central CostingService — no fallback/fabricated rates.
 
@@ -124,6 +127,9 @@ def _get_cost_preview_data(
             "expectedParticipants": participants,
             "clusterId": cluster_id,
             "plannedDate": planned_date,
+            "facilitated": _previews_a_facilitator(
+                cluster_id, act_type, principal, facilitator_answer
+            ),
             **materials,
         },
         minimum=True,
@@ -166,6 +172,25 @@ def _get_cost_preview_data(
         "blockers": result["blockers"],
         "allocationNote": result["allocationNote"],
     }
+
+
+def _previews_a_facilitator(cluster_id, act_type, principal, answer) -> bool:
+    """Whether the save will pay a partner the facilitation fee, decided as
+    the scheduler decides it (activities.services, "Facilitated by"): the
+    drawer's answer when it shows the field, blank being Staff; otherwise the
+    partner the cluster is assigned to. The figure before scheduling is the
+    figure written (owner, 2026-10-15: "no misleading costs")."""
+    if answer is not None:
+        return bool(str(answer).strip())
+    if principal is None:
+        return False
+    from apps.clusters.facilitation import default_facilitator_id
+
+    return bool(
+        default_facilitator_id(
+            cluster_id, activity_type=act_type, data={}, principal=principal
+        )
+    )
 
 
 def _per_school_from_categories(source) -> int:
@@ -501,6 +526,8 @@ def cluster_cost_preview_partial(request):
                 request.user, request.GET.get("responsible_staff_id")
             ),
             materials=_materials_from(request.GET),
+            principal=request.user,
+            facilitator_answer=request.GET.get("facilitating_partner_id"),
         )
         context = {
             "success": True,
@@ -718,6 +745,7 @@ def cluster_schedule_activity_view(request):
                             participants,
                             selected_cluster.id,
                             materials=_materials_from(request.POST),
+                            principal=request.user,
                         )
                     except Exception:
                         pass
@@ -1505,9 +1533,7 @@ def cluster_facilitator_action(request, cluster_id):
         if partner
         else f"{cluster.name} is facilitated by Edify staff.",
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("cluster_detail")
@@ -1835,6 +1861,7 @@ def planner_drawer_view(request):
             participants,
             selected_cluster.id,
             materials=_materials_from(request.GET),
+            principal=request.user,
         )
 
     from apps.activity_catalogue.availability import (
@@ -1937,7 +1964,12 @@ def cluster_detail_drawer_view(request, cluster_id):
         # Was an f-string: unescaped, and it printed whatever the exception
         # said. This one had no `status=`, which is why the earlier sweep of
         # these fragments walked past it.
-        return error_fragment(e, action="Could not open the cluster")
+        return refusal_drawer(
+            request,
+            error_message(e, action="Could not open the cluster"),
+            title="Cluster",
+            tone="danger",
+        )
 
 
 @require_page_permission("planning")
@@ -2466,7 +2498,12 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
     except (BadRequest, Forbidden, NotFoundError) as exc:
         return drawer(str(getattr(exc, "detail", exc)), posted, status=400)
     except Exception as exc:  # noqa: BLE001 — the service's sentence, shown as is
-        return error_fragment(exc, action="Could not schedule the day", status=400)
+        return refusal_drawer(
+            request,
+            error_message(exc, action="Could not schedule the day"),
+            title="Cannot schedule",
+            tone="danger",
+        )
     from apps.frontend.views.planning_views import (
         _ceiling_notice,
         _my_plan_url_for_scheduled_date,

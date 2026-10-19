@@ -38,6 +38,7 @@ from apps.schools.models import (
     UploadBatch,
 )
 from apps.ssa import services
+from apps.core.fy import get_operational_fy
 from apps.ssa.models import SsaRecord, SsaScore
 
 LOCMEM = {
@@ -98,10 +99,13 @@ class IntegrityFixture(TestCase):
         self, school=None, *, keyer=None, collector_type="staff", status="pending", **kw
     ):
         keyer = keyer or self.cceo
+        on = kw.pop("date_of_ssa", date(2026, 5, 1))
         return SsaRecord.objects.create(
             school=school or self.school,
-            date_of_ssa=kw.pop("date_of_ssa", date(2026, 5, 1)),
-            fy=kw.pop("fy", "2026"),
+            date_of_ssa=on,
+            # The year its date falls in: a school has one SSA a year (owner,
+            # 2026-10-14), so a test's several records are several years'.
+            fy=kw.pop("fy", get_operational_fy(on)),
             quarter="Q3",
             average_score=6.0,
             collector_type=collector_type,
@@ -128,8 +132,8 @@ class EverySourceLandsPendingTest(IntegrityFixture):
     def test_staff_ia_and_partner_keyed_scores_wait_for_a_verifier(self):
         for when, principal, collector, source in (
             ("2026-05-02", self.cceo, "staff", services.SOURCE_STAFF_KEYED),
-            ("2026-05-03", self.ia, "ia", services.SOURCE_IA_KEYED),
-            ("2026-05-04", self.cceo, "partner", services.SOURCE_PARTNER),
+            ("2025-05-03", self.ia, "ia", services.SOURCE_IA_KEYED),
+            ("2024-05-04", self.cceo, "partner", services.SOURCE_PARTNER),
         ):
             with self.subTest(collector=collector):
                 result = self._upload(principal, collector, when=when)
@@ -177,7 +181,7 @@ class VerifierAuthorityTest(IntegrityFixture):
             services.verify_record(record, self.ia)
         with self.assertRaises(Forbidden):
             services.return_record(record, self.ia, "Typo")
-        uploaded = self._record(keyer=self.cceo, date_of_ssa=date(2026, 5, 3))
+        uploaded = self._record(keyer=self.cceo, date_of_ssa=date(2025, 5, 3))
         uploaded.uploaded_by = self.ia2.id
         uploaded.save()
         with self.assertRaises(Forbidden):
@@ -201,12 +205,12 @@ class VerifierAuthorityTest(IntegrityFixture):
             ],
             services.BASIS_CD_FALLBACK,
         )
-        staff_scores = self._record(keyer=self.cceo, date_of_ssa=date(2026, 5, 4))
+        staff_scores = self._record(keyer=self.cceo, date_of_ssa=date(2025, 5, 4))
         with self.assertRaises(Forbidden):
             services.verify_record(staff_scores, self.cd)
         with self.assertRaises(Forbidden):
             services.verify_record(
-                self._record(date_of_ssa=date(2026, 5, 5)), self.cceo
+                self._record(date_of_ssa=date(2024, 5, 5)), self.cceo
             )
 
     def test_another_countrys_verifier_is_refused(self):
@@ -327,7 +331,7 @@ class VisitLinkedScoresTest(IntegrityFixture):
 class VerificationQueuePageTest(IntegrityFixture):
     def test_the_queue_lists_only_the_readers_country_and_offers_no_self_decision(self):
         mine = self._record(keyer=self.ia, collector_type="ia")
-        theirs = self._record(keyer=self.cceo, date_of_ssa=date(2026, 5, 2))
+        theirs = self._record(keyer=self.cceo, date_of_ssa=date(2025, 5, 2))
         self._record(self.ke_school, date_of_ssa=date(2026, 5, 3))
         self.client.force_login(self.ia)
         page = self.client.get("/ssa/verification/")
@@ -358,7 +362,7 @@ class VerificationQueuePageTest(IntegrityFixture):
     def test_the_return_drawer_posts_a_reason_and_refuses_own_scores(self):
         record = self._record()
         own = self._record(
-            keyer=self.ia, collector_type="ia", date_of_ssa=date(2026, 5, 9)
+            keyer=self.ia, collector_type="ia", date_of_ssa=date(2025, 5, 9)
         )
         self.client.force_login(self.ia)
         drawer = self.client.get(f"/ssa/verification/{record.id}/return-drawer")
@@ -382,7 +386,7 @@ class VerificationQueuePageTest(IntegrityFixture):
         with CaptureQueriesContext(connection) as small:
             self.client.get("/ssa/verification/")
         for day in range(2, 14):
-            self._record(date_of_ssa=date(2026, 4, day))
+            self._record(date_of_ssa=date(2026 - day, 4, day))
         with CaptureQueriesContext(connection) as large:
             self.client.get("/ssa/verification/")
         self.assertEqual(len(large), len(small))
@@ -520,8 +524,8 @@ class ReturnedTodoTest(IntegrityFixture):
             rows[0]["action_url"], "/ssa/verification/?status=returned&mine=1"
         )
 
-        self._record(keyer=self.ia, collector_type="ia", date_of_ssa=date(2026, 5, 7))
-        self._record(date_of_ssa=date(2026, 5, 8))  # staff scores: IA's to confirm
+        self._record(keyer=self.ia, collector_type="ia", date_of_ssa=date(2025, 5, 7))
+        self._record(date_of_ssa=date(2024, 5, 8))  # staff scores: IA's to confirm
         cd_rows = collection_todos(self.cd, self.cd.active_role, today)
         self.assertEqual([r["id"] for r in cd_rows], ["ssa-cd-fallback"])
         self.assertIn("Confirm 1 SSA record", cd_rows[0]["title"])

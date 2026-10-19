@@ -37,9 +37,17 @@ STREAM_ROWS = 5_000
 def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
     """A styled workbook as a download.
 
-    Each sheet is ``{title, headers, rows, widths?, number_formats?}``.
-    ``number_formats`` maps a 1-based column index to an Excel format, for the
-    money and count columns that otherwise arrive as bare integers.
+    Each sheet is ``{title, headers, rows, widths?, number_formats?,
+    row_styles?, filter?, freeze?}``. ``number_formats`` maps a 1-based column
+    index to an Excel format, for the money and count columns that otherwise
+    arrive as bare integers. ``row_styles`` maps a 1-based row index to one of
+    `LEDGER_STYLES`, for a sheet laid out as a sectioned ledger (the Budget's
+    Activity cost plan: a band naming each activity type, that table's own
+    column headings, its rows, a subtotal, a grand total) rather than one
+    heading row over a flat table; such a sheet passes ``filter=False`` and
+    ``freeze=None`` so the first row is not read as a filterable heading, and
+    may pass ``align`` (1-based column index to "center" or "right") so its
+    figures sit under their headings as they do on the page.
     """
     import datetime as _dt
     import openpyxl.cell.cell as _cell
@@ -86,10 +94,16 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
 
         if headers:
             style_header(sheet)
-            sheet.freeze_panes = "A2"
-            if sheet.max_row > 1:
+            sheet.freeze_panes = spec.get("freeze", "A2")
+            if sheet.max_row > 1 and spec.get("filter", True):
                 sheet.auto_filter.ref = sheet.dimensions
         style_body(sheet, spec.get("number_formats") or {})
+        style_ledger_rows(
+            sheet,
+            spec.get("row_styles") or {},
+            spec.get("align") or {},
+            spec.get("number_formats") or {},
+        )
 
         widths = spec.get("widths") or _widths_for(headers)
         for index, width in enumerate(widths, start=1):
@@ -191,6 +205,104 @@ def style_body(sheet, number_formats: dict[int, str] | None = None) -> None:
             sheet.cell(row_index, column).number_format = number_format
 
 
+#: The Budget page's ledger, in Excel, in the page's light-theme colours:
+#: the band that names each activity type and carries that table's column
+#: headings (`.budget-ledger-band`: --edify-band-surface, --edify-band-ink),
+#: the muted bold subtotal (`.budget-ledger-subtotal`: --edify-surface-muted),
+#: the grand total, and the plain caption under the sheet's title.
+LEDGER_BAND = "DCE6EC"
+LEDGER_INK = "17232B"
+LEDGER_SUBTOTAL = "E5EAED"
+LEDGER_STYLES = ("title", "caption", "band", "columns", "subtotal", "total")
+
+
+def ledger_styles() -> dict[str, dict]:
+    """One style set per `LEDGER_STYLES` name, as keyword arguments a cell
+    takes (`font`, `fill`, `border`, `alignment`)."""
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
+    band = PatternFill("solid", fgColor=LEDGER_BAND)
+    muted = PatternFill("solid", fgColor=LEDGER_SUBTOTAL)
+    ink = Font(color=LEDGER_INK, bold=True, size=10)
+    rule = Border(bottom=Side(style="thin", color=ROW_RULE))
+    middle = Alignment(vertical="center")
+    paper = PatternFill("solid", fgColor="FFFFFF")
+    return {
+        "title": {
+            "font": Font(bold=True, size=13, color=HEADER_FILL),
+            "fill": paper,
+            "border": Border(),
+            "alignment": middle,
+        },
+        "caption": {
+            "font": Font(size=9, color="52606D"),
+            "fill": paper,
+            "border": Border(),
+            "alignment": Alignment(vertical="center", wrap_text=False),
+        },
+        "band": {
+            "font": Font(color=LEDGER_INK, bold=True, italic=True, size=10),
+            "fill": band,
+            "border": Border(),
+            "alignment": middle,
+        },
+        "columns": {"font": ink, "fill": band, "border": Border(), "alignment": middle},
+        "subtotal": {
+            "font": Font(bold=True, size=10),
+            "fill": muted,
+            "border": rule,
+            "alignment": middle,
+        },
+        "total": {
+            "font": Font(bold=True, size=11, color=LEDGER_INK),
+            "fill": band,
+            "border": Border(),
+            "alignment": middle,
+        },
+    }
+
+
+#: Ledger rows whose text runs across the sheet, so no column alignment.
+_LEDGER_RUNNING_TEXT = ("title", "caption")
+
+
+def _aligned(alignment, horizontal):
+    from openpyxl.styles import Alignment
+
+    return Alignment(
+        horizontal=horizontal,
+        vertical=alignment.vertical if alignment else "top",
+        wrap_text=alignment.wrap_text if alignment else None,
+    )
+
+
+def style_ledger_rows(
+    sheet, row_styles: dict[int, str], align=None, number_formats=None
+) -> None:
+    """Restyle the named rows of a sectioned ledger after `style_body` has
+    banded the sheet, and set each column's alignment; a few dozen rows, so
+    plain cell assignment is fine."""
+    align = align or {}
+    if not row_styles and not align:
+        return
+    styles = ledger_styles()
+    width = sheet.max_column
+    for row_index in range(1, sheet.max_row + 1):
+        name = row_styles.get(row_index)
+        style = styles[name] if name else {}
+        for column in range(1, width + 1):
+            cell = sheet.cell(row_index, column)
+            for attribute, value in style.items():
+                setattr(cell, attribute, value)
+            if column in align and name not in _LEDGER_RUNNING_TEXT:
+                cell.alignment = _aligned(cell.alignment, align[column])
+            # A headerless sheet's first row is not a body row to style_body.
+            if name and column in (number_formats or {}):
+                cell.number_format = number_formats[column]
+        if name in ("band", "title", "total"):
+            sheet.row_dimensions[row_index].height = 22
+
+
 def _streamed_workbook(sheets: list[dict]):
     """The same workbook, written row by row instead of held in memory.
 
@@ -221,9 +333,14 @@ def _streamed_workbook(sheets: list[dict]):
         for index, column_width in enumerate(widths, start=1):
             sheet.column_dimensions[get_column_letter(index)].width = column_width
         sheet.sheet_view.showGridLines = False
+        row_styles = spec.get("row_styles") or {}
         if headers:
-            sheet.freeze_panes = "A2"
+            if spec.get("freeze", "A2"):
+                sheet.freeze_panes = spec.get("freeze", "A2")
             sheet.row_dimensions[1].height = 28
+        for row_index, name in row_styles.items():
+            if name in ("band", "title", "total"):
+                sheet.row_dimensions[row_index].height = 22
 
         def styled(value, **styles):
             cell = WriteOnlyCell(sheet, value)
@@ -244,7 +361,7 @@ def _streamed_workbook(sheets: list[dict]):
                     for value in headers
                 ]
             )
-            if rows:
+            if rows and spec.get("filter", True):
                 sheet.auto_filter.ref = f"A1:{get_column_letter(width)}{len(rows) + 1}"
 
         # Register each body style once and copy its indices into every cell,
@@ -266,11 +383,38 @@ def _streamed_workbook(sheets: list[dict]):
             probe.number_format = number_format
             format_ids[column] = probe._style.numFmtId
 
+        ledger = ledger_styles() if row_styles else {}
+        align = spec.get("align") or {}
+        plain = {
+            banded: {
+                "fill": PatternFill("solid", fgColor=BAND if banded else "FFFFFF"),
+                "border": Border(bottom=Side(style="thin", color=ROW_RULE)),
+                "alignment": Alignment(vertical="top", wrap_text=True),
+            }
+            for banded in (False, True)
+        }
+
         # The body starts on row 2; without a heading, row 1 is a body row
         # left unstyled, as style_body leaves it.
         for row_index, row in enumerate(rows, start=2 if headers else 1):
             values = list(row)
             values += [None] * (width - len(values))
+            if row_index in row_styles or (align and row_index >= 2):
+                # A ledger sheet is small: each cell takes its styles whole,
+                # a named row its own look, every row its columns' formats
+                # and alignment.
+                name = row_styles.get(row_index)
+                style = ledger[name] if name else plain[row_index % 2 == 0]
+                cells = []
+                for column, value in enumerate(values, start=1):
+                    cell = styled(value, **style)
+                    if column in formats:
+                        cell.number_format = formats[column]
+                    if column in align and name not in _LEDGER_RUNNING_TEXT:
+                        cell.alignment = _aligned(cell.alignment, align[column])
+                    cells.append(cell)
+                sheet.append(cells)
+                continue
             if row_index < 2:
                 sheet.append(values)
                 continue

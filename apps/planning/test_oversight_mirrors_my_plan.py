@@ -474,14 +474,18 @@ class CoreSchoolsOversightMirrorsMyPlanTest(MirrorFixture):
         charted = [str(tab["id"]) for tab in data["package_chart_tabs"]]
         self.assertEqual(charted, [str(data["cceo_tabs"][0]["id"]), str(self.james.id)])
 
-    def test_the_page_lists_the_planned_core_work(self):
+    def test_the_planned_core_work_is_on_planning_oversight_not_core_oversight(self):
+        """Owner, 2026-10-17: "Anything to do with planning goes on MY Plan or
+        Planning oversight Core and Cluster oversight get analysis". The
+        officer's planned core work is read above (`planned_core_work`) and
+        drawn in Planning Oversight's Core School Visits table; Core School
+        Oversight analyses the schools."""
         self.client.force_login(self.pl_user)
         response = self.client.get("/core-schools-oversight/", {"fy": self.fy})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'aria-label="Planned core visits and trainings"')
+        self.assertNotContains(response, "Planned core visits and trainings")
         for activity in self.james_work:
-            if activity.school_id == self.core_school.id:
-                self.assertContains(response, f'data-core-work-row="{activity.id}"')
+            self.assertNotContains(response, f'data-core-work-row="{activity.id}"')
 
     def test_a_cluster_training_reaching_a_core_school_is_core_work(self):
         """My Plan moves the core school's row of a group training to the core

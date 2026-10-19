@@ -1,0 +1,56 @@
+/* Where each activity row stands, as the whole row's ink (owner, 2026-10-14:
+   "All completed activities, visit, trainings, cluster meetings should be in
+   green the entire row. and overdue in red, not yet due in normal black
+   color on light mode and white on blue and dark mode").
+
+   The row says which (data-done / data-overdue, from
+   apps.activities.completion_columns.row_state); a row that says neither
+   keeps the page's ink. The colour is handed to the row as the theme's own
+   text variables, so every cell, link and status label in it that is drawn
+   in the theme's ink — including the table rules that are themselves
+   !important — reads it, with no rule of its own fighting them. The row's
+   Actions cell (data-record-action) is a control, not the record, and keeps
+   its colours.
+
+   The dark themes' own success and danger inks are soft; each gets a
+   brighter one that holds 4.5:1 on its surfaces, as pl-week.css does for
+   its overdue rows. */
+:root {
+  --edify-row-done-ink: var(--edify-success-text);
+  --edify-row-overdue-ink: var(--edify-danger-text);
+}
+:root.theme-dark {
+  --edify-row-done-ink: #4ade80;
+  --edify-row-overdue-ink: #ff5252;
+}
+:root.theme-blue {
+  --edify-row-done-ink: #6ee7a0;
+  --edify-row-overdue-ink: #ff6b6b;
+}
+
+/* Completed rows are tinted green too (owner, 2026-10-17: "it is not
+   changing the color of the completed activities ... to green"). The dark
+   green ink alone read as the page's own near-black; the theme's success
+   tint behind it makes the row green at a glance. --edify-table-row-tint is
+   the one hook the plain table surface reads (consistency.css). */
+tr[data-done] {
+  --edify-row-ink: var(--edify-row-done-ink);
+  --edify-table-row-tint: var(--edify-success-light);
+}
+tr[data-overdue] {
+  --edify-row-ink: var(--edify-row-overdue-ink);
+}
+
+tr:is([data-done], [data-overdue]) > :is(td, th):not([data-record-action]) {
+  --edify-text: var(--edify-row-ink);
+  --edify-text-muted: var(--edify-row-ink);
+  --edify-text-secondary: var(--edify-row-ink);
+  --edify-text-subtle: var(--edify-row-ink);
+  --edify-accent-text: var(--edify-row-ink);
+  --edify-primary-text: var(--edify-row-ink);
+  --brand-primary-text: var(--edify-row-ink);
+  --edify-success-text: var(--edify-row-ink);
+  --edify-warning-text: var(--edify-row-ink);
+  --edify-danger-text: var(--edify-row-ink);
+  color: var(--edify-row-ink);
+}

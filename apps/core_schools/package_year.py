@@ -284,28 +284,22 @@ def _next_open(Slot, plan, kind: str):
 
 
 def _recount(Slot, plan) -> None:
-    """``services.resync_plan_completion`` over the models in hand."""
-    done = {"visit": 0, "training": 0, "assessment": 0}
+    """``services.resync_plan_completion`` over the models in hand: the
+    visits and trainings. The assessment is the school's confirmed SSA, not a
+    slot (owner, 2026-10-16)."""
+    done = {"visit": 0, "training": 0}
     for kind, status in Slot.objects.filter(core_plan=plan).values_list(
         "activity_type", "status"
     ):
         if status in DONE_STATUSES and kind in done:
             done[kind] += 1
-    if (
-        plan.visits_completed,
-        plan.trainings_completed,
-        plan.assessment_completed,
-    ) != (done["visit"], done["training"], done["assessment"]):
+    if (plan.visits_completed, plan.trainings_completed) != (
+        done["visit"],
+        done["training"],
+    ):
         plan.visits_completed = done["visit"]
         plan.trainings_completed = done["training"]
-        plan.assessment_completed = done["assessment"]
-        plan.save(
-            update_fields=[
-                "visits_completed",
-                "trainings_completed",
-                "assessment_completed",
-            ]
-        )
+        plan.save(update_fields=["visits_completed", "trainings_completed"])
 
 
 def _compact(Slot, plan, kind: str) -> bool:

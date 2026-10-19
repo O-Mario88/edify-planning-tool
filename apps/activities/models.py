@@ -309,6 +309,12 @@ class Activity(SoftDeleteModel):
     # Actuals, captured at delivery — planned fields above are never copied
     # into these; planned, actual and verified information stay separate.
     actual_delivery_date = models.DateField(null=True, blank=True)
+    # The day the work was planned for, kept when it is completed on another
+    # day and moves there with its money (owner, 2026-10-16: "if an activity
+    # is completed earlier the system should record the actual completion
+    # date then free the planned date ... move the money to the completed
+    # date as well"; apps.activities.completed_day).
+    planned_date_before_completion = models.DateField(null=True, blank=True)
     actual_outcome = models.TextField(null=True, blank=True)
     actual_observations = models.TextField(null=True, blank=True)
     follow_up_note = models.TextField(null=True, blank=True)
@@ -541,6 +547,19 @@ class Activity(SoftDeleteModel):
             remember(instance)
         return instance
 
+    #: What a save that only re-prices the work writes
+    #: (`apps.budget.costing_service.apply_to_activities`).
+    COST_ONLY_FIELDS = frozenset({"est_cost_cents", "cost_missing", "updated_at"})
+    #: What neither a Core slot nor a package credit reads: the cost, the
+    #: day's batch the work is priced with, the other half of an in-school
+    #: training, and the SSA alignment note with its sources.
+    BESIDE_THE_PACKAGE_FIELDS = COST_ONLY_FIELDS | {
+        "daily_visit_batch",
+        "paired_school_visit",
+        "ssa_alignment",
+        "recommendation_source",
+    }
+
     def save(self, *args, **kwargs):
         # ``scheduled_date`` is an instant, not a date-only planning field.
         # Normalize direct model/admin/import writes before Django prepares the
@@ -550,6 +569,20 @@ class Activity(SoftDeleteModel):
             self.scheduled_date = _normalize_datetime_value(self.scheduled_date)
         self._link_training_intervention(kwargs.get("update_fields"))
         super().save(*args, **kwargs)
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and self.BESIDE_THE_PACKAGE_FIELDS.issuperset(
+            update_fields
+        ):
+            # Nothing the package reads was written. The Core slot mirror and
+            # the package credit below read the work's status, date, school,
+            # kind and year, none of which this save touched, and the save
+            # that last touched them ran both. A day's re-pricing saves every
+            # visit on it this way: nine visits asked for nine slot reads
+            # and, after the commit, nine credits that found nothing to do.
+            # Scheduling an in-school training saved its two records ten
+            # times, six of them to note the day's batch, the pair and the
+            # SSA alignment (2026-10-13).
+            return
         try:
             from apps.core_schools.models import CoreActivitySlot
             from apps.core_schools.services import resync_plan_completion
@@ -776,6 +809,19 @@ class ActivityScheduleCostLine(TimeStampedModel):
                 return "Returned"
             elif status == "cancelled":
                 return "Rejected"
+            # The rest of the advance lifecycle, which read "Draft Costed" or an
+            # execution word although money had moved or the owner had chosen
+            # (owner, 2026-10-15 cost audit: "no misleading costs").
+            elif status == "not_requested":
+                return "Not Requested"
+            elif status == "submitted_to_accountant":
+                return "Submitted to Accountant"
+            elif status == "accountability_pending":
+                return "Accountability Pending"
+            elif status == "reimbursement_disbursed":
+                return "Reimbursement Disbursed"
+            elif status == "reimbursed":
+                return "Reimbursed"
 
         # 2. Check WeeklyFundRequest status. These labels must track the
         # statuses weekly_service actually writes (submitted_to_pl/_cd,
@@ -807,7 +853,50 @@ class ActivityScheduleCostLine(TimeStampedModel):
             elif status == "not_requested":
                 return "Not Requested"
 
-        # 3. Check Activity execution status
+        # 3. A line no staff request will ever carry says why, by the rule
+        # that leaves it out (apps.fund_requests.fundable.fundable_lines), and
+        # names where its money actually stands. It read "Draft Costed", as if
+        # a request were coming (owner, 2026-10-15: "no misleading costs").
+        from apps.activities.facilitation import FEE_LINE_TYPE
+        from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
+
+        activity = self.activity
+        if activity.deleted_at or activity.status in NON_FUNDABLE_ACTIVITY_STATUSES:
+            return f"Not Funded: {activity.get_status_display()}"
+        if activity.scheduled_date is None:
+            return "Not Funded: Not Scheduled"
+        if activity.delivery_type == "partner" or (
+            self.line_item_type == FEE_LINE_TYPE and activity.facilitating_partner_id
+        ):
+            kinds = {p.payment_type for p in activity.partner_payments.all()}
+            if "clearance" in kinds:
+                return "Paid on Partner Invoice"
+            if "advance" in kinds:
+                return "Partner Invoice: 50% Paid"
+            return "Partner Invoice: Not Yet Paid"
+        from apps.fund_requests.fundable import is_vendor_transport
+
+        if is_vendor_transport(self):
+            from apps.fund_requests.finance_models import TransportPayment
+
+            payment = (
+                TransportPayment.objects.filter(
+                    batch_id=activity.daily_visit_batch_id
+                ).first()
+                if activity.daily_visit_batch_id
+                else None
+            )
+            if payment is not None and payment.status == "paid":
+                return "Paid to Transport Company"
+            return "Transport Company: Awaiting Payment"
+        if self.line_item_type == "accommodation" and self.vendor_paid:
+            return "Hotel Booked by Finance"
+        if activity.cost_missing:
+            return "Not Requested: Cost Setup Required"
+        if not self.amount:
+            return "No Cost: Rate Not Set"
+
+        # 4. Check Activity execution status
         if self.activity.status == "completed":
             return "Evidence Submitted"
         elif self.activity.status == "ia_verified":

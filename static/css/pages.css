@@ -4429,15 +4429,18 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
    round. A three-line row is readable; a row whose other seven columns are
    ellipses is not, and three stages — what a row actually carries once it is
    not also carrying its own history — still sit on one line. The second
-   decision stands: nothing is hidden, every stage is still on the row. */
+   decision stands: nothing is hidden, every stage is still on the row.
+
+   One line again (owner, 2026-10-17: "NO wrapping"). The strip now carries
+   three stages at most — the status, the budget, the approval — once the
+   Salesforce ID took its own column and "Complete" stopped being said
+   twice, so the cap goes and the card scrolls sideways if it must. */
 .mp-badges {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
-  row-gap: 3px;
   min-inline-size: 15rem;
-  max-inline-size: 18rem;
 }
 
 /* No outline: eight bordered pills across a row read as a fence. Colour alone

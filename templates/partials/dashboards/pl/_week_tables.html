@@ -20,12 +20,18 @@ Actions asks one thing of the lead per row:
 Completed work — verified, or with Impact Assessment — is not listed at all:
 it leaves the table the moment it is verified (owner, 2026-09-26). A row past
 its day is overdue and drawn red, links and status included, bright red in
-the dark themes (static/css/components/pl-week.css).
+the dark themes (static/css/components/pl-week.css); a row the officer has
+completed is green, past its day or not (owner, 2026-10-14;
+components/row-state.css).
 {% endcomment %}
 {% comment %}The officer's own week draws only the tables that hold work
 (owner, 2026-09-26: polish): an empty one is one line fewer to read past.
 {% endcomment %}
-{% if week.solo and not section.count %}
+{% if section.is_figure %}
+{% comment %}One figure's records (owner, 2026-10-14): only the tables that
+hold them, and one line when there are none.{% endcomment %}
+{% if not section.count %}<p class="plwk-list__none" data-pl-week-none="{{ section.key }}">Nothing {{ section.label|lower }}.</p>{% endif %}
+{% elif week.solo and not section.count %}
 {% include "components/empty_state.html" with message="Nothing left to complete this week." hint="Past-due work, of any age, is listed above in What needs you now." compact="true" %}
 {% endif %}
 {% comment %}Overdue draws only the tables that hold work too (owner,
@@ -36,7 +42,7 @@ week would push it down the page for nothing. With none, one line says so.
 <p class="plwk-list__none" data-pl-week-none="{{ section.key }}">Nothing {{ week.overdue_label|lower }}.</p>
 {% endif %}
 {% for table in section.tables %}
-{% if table.count or not week.solo and not section.is_overdue %}
+{% if table.count or not week.solo and not section.is_overdue and not section.is_figure %}
 <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs" data-pl-week-table="{{ table.key }}" data-pl-week-table-list="{{ section.key }}">
   {# The title band is named here, not left to micro-ux.js, so an empty list keeps it too. #}
   <div class="edify-table-titlebar px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
@@ -68,7 +74,7 @@ week would push it down the page for nothing. With none, one line says so.
     {% with selectable=table_pager.rows|any_attr:"can_pick" %}
     {% if table.key == "visits" %}
     <table class="w-full min-w-[840px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
-      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
+      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% elif section.is_figure %}{{ section.label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
           {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
@@ -76,19 +82,20 @@ week would push it down the page for nothing. With none, one line says so.
           <th scope="col" class="px-3 py-2.5">School Name</th>
           <th scope="col" class="px-3 py-2.5">Activity</th>
           <th scope="col" class="px-3 py-2.5">Planned Date</th>
+          <th scope="col" class="px-3 py-2.5">Completed Date</th>
           <th scope="col" class="px-3 py-2.5">Executor</th>
           <th scope="col" class="px-3 py-2.5">Purpose of Visit</th>
           <th scope="col" class="px-3 py-2.5">Focus Intervention</th>
           <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
           <th scope="col" class="px-3 py-2.5">Salesforce ID</th>
-          <th scope="col" class="px-3 py-2.5">Evidence</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2.5">Evidence</th> #}
           <th scope="col" class="px-3 py-2.5">Status</th>
           <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
         {% for row in table_pager.rows %}
-        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.is_overdue %} data-overdue{% endif %}>
+        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.done %} data-done{% elif row.is_overdue %} data-overdue{% endif %}>
           {% if selectable %}{% if row.can_pick %}{% firstof row.school_name row.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=pick_place pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
           <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
@@ -100,6 +107,7 @@ week would push it down the page for nothing. With none, one line says so.
           </td>
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ row.activity_type_label }}</td>
           <td class="px-3 py-2.5 whitespace-nowrap">{% include "partials/dashboards/pl/_week_planned_date.html" %}</td>
+          <td class="px-3 py-2.5 whitespace-nowrap tabular-nums" data-completed-on>{{ row.completed_on|date:"j M Y"|default:"—" }}</td>
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{% include "partials/dashboards/pl/_week_executor.html" %}</td>
           <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title="{{ row.purpose }}">{{ row.purpose|default:"—" }}</td>
           <td class="px-3 py-2.5">{% include "partials/dashboards/pl/_week_intervention.html" %}</td>
@@ -115,7 +123,7 @@ week would push it down the page for nothing. With none, one line says so.
     </table>
     {% elif table.key == "trainings" %}
     <table class="w-full min-w-[920px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
-      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
+      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% elif section.is_figure %}{{ section.label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
           {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
@@ -125,18 +133,19 @@ week would push it down the page for nothing. With none, one line says so.
           <th scope="col" class="px-3 py-2.5">Executor</th>
           <th scope="col" class="px-3 py-2.5">Training Name</th>
           <th scope="col" class="px-3 py-2.5">Planned Date</th>
+          <th scope="col" class="px-3 py-2.5">Completed Date</th>
           <th scope="col" class="px-3 py-2.5">SSA Intervention</th>
           <th scope="col" class="px-3 py-2.5 text-center">Participants</th>
           <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
           <th scope="col" class="px-3 py-2.5">Salesforce ID</th>
-          <th scope="col" class="px-3 py-2.5">Evidence</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2.5">Evidence</th> #}
           <th scope="col" class="px-3 py-2.5">Status</th>
           <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
         {% for row in table_pager.rows %}
-        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.is_overdue %} data-overdue{% endif %}>
+        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.done %} data-done{% elif row.is_overdue %} data-overdue{% endif %}>
           {% if selectable %}{% if row.can_pick %}{% firstof row.school_name row.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=pick_place pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
           <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
@@ -150,8 +159,9 @@ week would push it down the page for nothing. With none, one line says so.
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{% include "partials/dashboards/pl/_week_executor.html" %}</td>
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ row.activity_type_label }}</td>
           <td class="px-3 py-2.5 whitespace-nowrap">{% include "partials/dashboards/pl/_week_planned_date.html" %}</td>
+          <td class="px-3 py-2.5 whitespace-nowrap tabular-nums" data-completed-on>{{ row.completed_on|date:"j M Y"|default:"—" }}</td>
           <td class="px-3 py-2.5">{% include "partials/dashboards/pl/_week_intervention.html" %}</td>
-          <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants }}</td>
+          <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants|default:"—" }}</td>
           <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">UGX {{ row.budget_total|default:0|intcomma }}</td>
           {% include "components/completion_cells.html" with completion_cell_class="px-3 py-2.5 whitespace-nowrap" %}
           <td class="px-3 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-bold {{ row.status_class }}">{{ row.status_label }}</span></td>
@@ -164,27 +174,28 @@ week would push it down the page for nothing. With none, one line says so.
     </table>
     {% else %}
     <table class="w-full min-w-[880px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
-      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
+      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% elif section.is_figure %}{{ section.label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
           {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
           <th scope="col" class="ps-5 pe-3 py-2.5">Cluster Name</th>
           <th scope="col" class="px-3 py-2.5">District</th>
           <th scope="col" class="px-3 py-2.5">Planned Date</th>
+          <th scope="col" class="px-3 py-2.5">Completed Date</th>
           <th scope="col" class="px-3 py-2.5">Executor</th>
           <th scope="col" class="px-3 py-2.5">Purpose (Meeting Topic)</th>
           <th scope="col" class="px-3 py-2.5">SSA Intervention</th>
           <th scope="col" class="px-3 py-2.5 text-center">Participants</th>
           <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
           <th scope="col" class="px-3 py-2.5">Salesforce ID</th>
-          <th scope="col" class="px-3 py-2.5">Evidence</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col" class="px-3 py-2.5">Evidence</th> #}
           <th scope="col" class="px-3 py-2.5">Status</th>
           <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
         {% for row in table_pager.rows %}
-        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.is_overdue %} data-overdue{% endif %}>
+        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.done %} data-done{% elif row.is_overdue %} data-overdue{% endif %}>
           {% if selectable %}{% if row.can_pick %}{% firstof row.school_name row.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=pick_place pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="ps-5 pe-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
             {% if row.cluster_id %}
@@ -195,10 +206,11 @@ week would push it down the page for nothing. With none, one line says so.
           </td>
           <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{{ row.cluster_district|default:"—" }}</td>
           <td class="px-3 py-2.5 whitespace-nowrap">{% include "partials/dashboards/pl/_week_planned_date.html" %}</td>
+          <td class="px-3 py-2.5 whitespace-nowrap tabular-nums" data-completed-on>{{ row.completed_on|date:"j M Y"|default:"—" }}</td>
           <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{% include "partials/dashboards/pl/_week_executor.html" %}</td>
           <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title="{{ row.purpose }}">{{ row.purpose|default:"Cluster Meeting" }}</td>
           <td class="px-3 py-2.5">{% include "partials/dashboards/pl/_week_intervention.html" %}</td>
-          <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants }}</td>
+          <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants|default:"—" }}</td>
           <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">UGX {{ row.budget_total|default:0|intcomma }}</td>
           {% include "components/completion_cells.html" with completion_cell_class="px-3 py-2.5 whitespace-nowrap" %}
           <td class="px-3 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-bold {{ row.status_class }}">{{ row.status_label }}</span></td>
