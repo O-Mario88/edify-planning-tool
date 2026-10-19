@@ -163,8 +163,9 @@
     >
       {% comment %}apps.core.export_kinds.KIND_CHOICES (owner, 2026-10-12:
       "Only group training, Only visit, only cluster meeting, only online
-      meeting or All"); the first opens selected.{% endcomment %}
-      {% for value, text in kind_choices %}<option value="{{ value }}"{% if forloop.first %} selected{% endif %}>{{ text }}</option>{% endfor %}
+      meeting or All"); the kind the page was narrowed to opens selected
+      (`selected_kind`), else the first.{% endcomment %}
+      {% for value, text in kind_choices %}<option value="{{ value }}"{% if selected_kind %}{% if value == selected_kind %} selected{% endif %}{% elif forloop.first %} selected{% endif %}>{{ text }}</option>{% endfor %}
     </select>
   </div>
   {% endif %}
