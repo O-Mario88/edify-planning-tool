@@ -16,13 +16,20 @@ test('bar charts preserve units, palette, data and layout through range changes 
     window.chartFixture=window.EdifyChartSystem.renderDetached(card,options);
   });
   const card=page.locator('#chart-test-card');
-  await expect(card.locator('.apexcharts-bar-series')).toHaveCount(2);
-  await expect(card.locator('.apexcharts-line-series,.apexcharts-pie,.apexcharts-radialbar')).toHaveCount(0);
+  // Every bar chart is the cut-out since 2026-10-18 (upright columns here):
+  // the counts and the rate are two panels, drawn without the chart library.
+  await expect(card.locator('.edify-cutcol')).toHaveCount(2);
+  await expect(card.locator('.edify-cutcol').first().locator('.edify-cutcol__bar')).toHaveCount(6);
+  await expect(card.locator('.edify-cutcol').nth(1).locator('.edify-cutcol__bar')).toHaveCount(3);
+  await expect(card.locator('.apexcharts-canvas')).toHaveCount(0);
   await expect(card.locator('.edify-chart-data')).toHaveCount(2);
   await card.locator('summary').first().click();
   await expect(card.getByRole('cell',{name:'14',exact:true})).toBeVisible();
-  const colors=await card.locator('.apexcharts-bar-area').evaluateAll(nodes=>[...new Set(nodes.map(n=>n.getAttribute('fill')))]);
-  expect(colors).toContain('rgba(14,93,163,1)');expect(colors).toContain('rgba(234,88,12,1)');
+  // Any number of series in shades of one hue: Planned and Completed are two
+  // shades of the first series colour, named in the legend.
+  const fills=await card.locator('.edify-cutcol').first().locator('.edify-cutout__key').evaluateAll(keys=>keys.map(k=>k.style.getPropertyValue('--cutout-fill')));
+  expect(fills).toHaveLength(2);expect(new Set(fills).size).toBe(2);
+  for(const fill of fills)expect(fill).toContain('--edify-series-1');
   for(const width of [1440,390]){
     await page.setViewportSize({width,height:1000});
     for(const theme of ['light','dark','blue']){
@@ -36,7 +43,8 @@ test('bar charts preserve units, palette, data and layout through range changes 
   await card.getByRole('combobox').selectOption('1');
   await card.locator('summary').click();
   await expect(card.getByRole('rowheader',{name:'Period 14',exact:true})).toBeVisible();
-  await expect(card.locator('[data-edify-chart-stage]')).toHaveCount(1);
+  // A range change replaces the page's chart; it never stacks a second one.
+  await expect(card.locator('.edify-cutcol')).toHaveCount(1);
   await page.evaluate(()=>window.chartFixture.destroy());
   await expect(card.locator('[data-standard-charts]')).toHaveCount(0);
   // Cluster Oversight dropped its chart on 2026-09-23 for the member-by-member
@@ -50,7 +58,7 @@ test('bar charts preserve units, palette, data and layout through range changes 
     expect(response.status()).toBe(200);
     const plot = page.locator('[data-standard-charts]:visible').first();
     await plot.scrollIntoViewIfNeeded();
-    await expect(plot.locator('.apexcharts-bar-series').first()).toBeVisible();
+    await expect(plot.locator('.edify-cutcol__bar, .edify-cutout__bar').first()).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
   }
   expect(errors).toEqual([]);

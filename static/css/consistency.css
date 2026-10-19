@@ -4680,7 +4680,13 @@ main .hr-today-people > ul {
   font-weight: 500;
 }
 main .hr-today-people a { text-decoration: underline; text-underline-offset: 2px; }
-main .hr-today-queue--empty { padding-block: .75rem; }
+/* An empty queue is one line, so it keeps the compact block inset: the card
+   rule's padding reads --edify-surface-padding, which went to 16px a side on
+   2026-10-18 and grew every empty queue past its one-line height. */
+main .hr-today-queue--empty {
+  --edify-surface-padding: var(--edify-surface-padding-compact) var(--edify-surface-padding-inline);
+  padding-block: var(--edify-surface-padding-compact);
+}
 main .hr-today-queue--empty .edify-section {
   display: flex;
   flex-wrap: wrap;
