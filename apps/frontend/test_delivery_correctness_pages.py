@@ -201,6 +201,51 @@ class ClosedArchiveScopeTest(DirectoryFixture):
         self.assertEqual(response.context["enrollment_removed"], 200)
 
 
+class ClosureImpactOnTheArchiveTest(ClosedArchiveScopeTest):
+    """The Analytics page's School Closures figures given their home on the
+    Closed Schools page, for the roles that read them (owner, 2026-10-19:
+    "the four closure figures on Closed Schools for CD, RVP and Admin")."""
+
+    FIGURES = (
+        "Districts affected",
+        "Budget released",
+        "Activities cancelled",
+        "Partner work withdrawn",
+    )
+
+    def test_the_country_director_reads_the_four_figures(self):
+        self._close(self.school, self.cceo_user)
+
+        body = self.as_user(self.cd_user).get("/schools/closed").content.decode()
+
+        self.assertIn("data-closure-impact", body)
+        for figure in self.FIGURES:
+            self.assertIn(figure, body)
+
+    def test_an_officer_reads_the_archive_without_them(self):
+        self._close(self.school, self.cceo_user)
+
+        body = self.as_user(self.cceo_user).get("/schools/closed").content.decode()
+
+        self.assertIn("Dir Alpha", body)
+        self.assertNotIn("data-closure-impact", body)
+
+    def test_the_regional_vp_reads_the_figures_and_no_school(self):
+        """An RVP reads summaries, never school rows (rbac: "RVP is
+        summary-only")."""
+        rvp = _person(
+            "dir-rvp@t.test", "Dir Regional", EdifyRole.REGIONAL_VICE_PRESIDENT
+        )[0]
+        self._close(self.school, self.cceo_user)
+
+        response = self.as_user(rvp).get("/schools/closed")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn("data-closure-impact", body)
+        self.assertNotIn("Dir Alpha", body)
+
+
 class DeadViewRemovedTest(TestCase):
     def test_the_unrouted_completed_activities_view_is_gone(self):
         from apps.frontend.views import extended_views

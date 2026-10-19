@@ -370,7 +370,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     },
     # The archive. IA and CD are here because closure data quality and country
     # closure trends are theirs to watch; RVP works from aggregates and is not.
-    "closed_schools": {CCEO, PL, IA, CD, ADMIN},
+    # The RVP reads the archive's figures and the year's closure impact, never
+    # its schools (owner, 2026-10-19: School Closures' home is this page).
+    "closed_schools": {CCEO, PL, IA, CD, RVP, ADMIN},
     # Core Trained, Core Graduate and Champion schools in one list (owner,
     # 2026-09-21). The same readers as the directory it complements: the
     # officers who plan the work, their Programme Lead, and the country roles
