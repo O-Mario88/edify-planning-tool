@@ -7,14 +7,14 @@
       "bytes": 1491,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics",
-        "/analytics/",
         "/analytics/closure-quality",
-        "/analytics/country-director",
-        "/analytics/people",
-        "/analytics/program-lead",
         "/analytics/publishing",
-        "/analytics/publishing/"
+        "/analytics/publishing/",
+        "/completed-activities",
+        "/decision-log",
+        "/ia/dashboard/",
+        "/projects/analytics",
+        "/reports"
       ],
       "findings": [],
       "forms": 0,
@@ -38,8 +38,7 @@
         "/accounts",
         "/accounts/",
         "/projects/my-plan",
-        "/projects/planning",
-        "/ssa"
+        "/projects/planning"
       ],
       "findings": [],
       "forms": 0,
@@ -213,7 +212,7 @@
         "/admin-ops/support",
         "/admin-ops/team-plans",
         "/admin-panel/data-quality-center",
-        "/analytics/country-director"
+        "/business-transformation"
       ],
       "findings": [],
       "forms": 0,
@@ -737,8 +736,6 @@
       "bytes": 1436,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics/country-director",
-        "/analytics/program-lead",
         "/dashboard",
         "/projects/analytics"
       ],
@@ -895,7 +892,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4429,
+      "bytes": 4410,
       "deprecated_alternatives": [],
       "example_pages": [
         "/actions/mine",
@@ -1307,170 +1304,12 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 4151,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Activity Tracking",
-      "purpose": "Reusable activity tracking interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/activity_tracking.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 1559,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": " Target Area Badges",
-      "purpose": "Reusable  target area badges interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/_target_area_badges.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 5112,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Body",
-      "purpose": "Reusable body interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/body.html",
-      "variants": [
-        "executive"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4710,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Budget Finance",
-      "purpose": "Reusable budget finance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/budget_finance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3959,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cceo Leaderboard",
-      "purpose": "Reusable cceo leaderboard interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/cceo_leaderboard.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3260,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cceo Snapshot",
-      "purpose": "Reusable cceo snapshot interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/cceo_snapshot.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3461,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cluster Performance",
-      "purpose": "Reusable cluster performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/cluster_performance.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 6480,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics/country-director",
         "/analytics/country-director/ssa-heatmap"
       ],
       "findings": [],
@@ -1513,217 +1352,6 @@
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 2387,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Impact Summary",
-      "purpose": "Reusable impact summary interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/impact_summary.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1763,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Operational Risk",
-      "purpose": "Reusable operational risk interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/operational_risk.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3047,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Partner Performance",
-      "purpose": "Reusable partner performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/partner_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2573,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Performance Vs Target",
-      "purpose": "Reusable performance vs target interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/performance_vs_target.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3844,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Pl Oversight",
-      "purpose": "Reusable pl oversight interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/pl_oversight.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2569,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Recommended Actions",
-      "purpose": "Reusable recommended actions interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/recommended_actions.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1352,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Regional Summary",
-      "purpose": "Reusable regional summary interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/regional_summary.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2774,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Ssa Interventions",
-      "purpose": "Reusable ssa interventions interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/ssa_interventions.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2933,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Target By Pl",
-      "purpose": "Reusable target by pl interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/target_by_pl.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 11649,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/school-closures"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Closure Impact Workspace",
-      "purpose": "Reusable closure impact workspace interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 3,
-      "template": "partials/analytics/closure_impact_workspace.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -1744,44 +1372,6 @@
       ],
       "tables": 3,
       "template": "partials/analytics/closure_quality_workspace.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2933,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cluster Performance",
-      "purpose": "Reusable cluster performance interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cluster_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1017,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Core Champion Performance",
-      "purpose": "Reusable core champion performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/core_champion_performance.html",
       "variants": []
     },
     {
@@ -1812,51 +1402,6 @@
       ]
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 1168,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/country-director",
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Distributed Team",
-      "purpose": "Reusable distributed team interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/distributed_team.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2324,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Donor Reporting Snapshot",
-      "purpose": "Reusable donor reporting snapshot interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/donor_reporting_snapshot.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [],
       "bytes": 2528,
       "deprecated_alternatives": [],
@@ -1878,130 +1423,16 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 993,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Executive Pulse",
-      "purpose": "Reusable executive pulse interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/executive_pulse.html",
-      "variants": [
-        "executive",
-        "supporting"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 7320,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Filters",
-      "purpose": "Reusable filters interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/filters.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1957,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Impact Summary",
-      "purpose": "Reusable impact summary interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/impact_summary.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility",
-        "announced dynamic state"
-      ],
-      "bytes": 32588,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/impact"
-      ],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 3,
-      "kind": "application-partial",
-      "name": "Impact Workspace",
-      "purpose": "Reusable impact workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 6,
-      "template": "partials/analytics/impact_workspace.html",
-      "variants": [
-        "executive",
-        "{% if row.verdict == "
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2758,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Kpi Cards",
-      "purpose": "Reusable kpi cards interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/kpi_cards.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [],
       "bytes": 791,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics",
-        "/analytics/",
         "/analytics/closure-quality",
-        "/analytics/country-director",
-        "/analytics/people",
-        "/analytics/program-lead",
         "/analytics/publishing",
-        "/analytics/publishing/"
+        "/analytics/publishing/",
+        "/completed-activities",
+        "/decision-log",
+        "/reports"
       ],
       "findings": [],
       "forms": 0,
@@ -2015,50 +1446,6 @@
       ],
       "tables": 0,
       "template": "partials/analytics/panel.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 8169,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 2,
-      "kind": "application-partial",
-      "name": "Cd Overview",
-      "purpose": "Reusable cd overview interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/cd_overview.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 2140,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Closure Impact",
-      "purpose": "Reusable closure impact interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/closure_impact.html",
       "variants": []
     },
     {
@@ -2107,49 +1494,6 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10615,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Core School Health",
-      "purpose": "Reusable core school health interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 3,
-      "template": "partials/analytics/panels/core_school_health.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4952,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 2,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Decision Intelligence",
-      "purpose": "Reusable decision intelligence interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "error"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/decision_intelligence.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
       "bytes": 4203,
       "deprecated_alternatives": [],
       "example_pages": [],
@@ -2165,91 +1509,6 @@
       ],
       "tables": 1,
       "template": "partials/analytics/panels/decision_log.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 10533,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Declining Schools",
-      "purpose": "Reusable declining schools interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 3,
-      "template": "partials/analytics/panels/declining_schools.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 628,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Impact Analytics",
-      "purpose": "Reusable impact analytics interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/impact_analytics.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 775,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "People Analytics",
-      "purpose": "Reusable people analytics interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/people_analytics.html",
-      "variants": [
-        "executive"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 6878,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 3,
-      "kind": "application-partial",
-      "name": "Pl Overview",
-      "purpose": "Reusable pl overview interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/pl_overview.html",
       "variants": []
     },
     {
@@ -2297,94 +1556,10 @@
       ]
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 812,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Ssa Performance",
-      "purpose": "Reusable ssa performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/ssa_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 751,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Verification Quality",
-      "purpose": "Reusable verification quality interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/verification_quality.html",
-      "variants": [
-        "executive"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 1756,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Visit Effectiveness",
-      "purpose": "Reusable visit effectiveness interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/visit_effectiveness.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1637,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Performance Overview",
-      "purpose": "Reusable performance overview interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/performance_overview.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [],
       "bytes": 4048,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics/country-director",
-        "/analytics/program-lead",
         "/dashboard",
         "/dashboard/cd-approve",
         "/dashboard/cd-return",
@@ -2451,141 +1626,6 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 830,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Activity Tracking",
-      "purpose": "Reusable activity tracking interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/activity_tracking.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4632,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Body",
-      "purpose": "Reusable body interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/body.html",
-      "variants": [
-        "executive"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3368,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cluster Performance",
-      "purpose": "Reusable cluster performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/pl/cluster_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2999,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Core Champion",
-      "purpose": "Reusable core champion interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/core_champion.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 3967,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "District Performance",
-      "purpose": "Reusable district performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/pl/district_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1091,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Donor Snapshot",
-      "purpose": "Reusable donor snapshot interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/donor_snapshot.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
       "bytes": 3734,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -2606,139 +1646,6 @@
       "variants": [
         "info"
       ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2131,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Impact Summary",
-      "purpose": "Reusable impact summary interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/impact_summary.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2888,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 2,
-      "kind": "application-partial",
-      "name": "Insights",
-      "purpose": "Reusable insights interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/insights.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 3547,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Risk List",
-      "purpose": "Reusable risk list interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/pl/risk_list.html",
-      "variants": [
-        "{% if r.missed_training %}danger{% else %}neutral{% endif %}",
-        "{% if r.missed_visit %}danger{% else %}neutral{% endif %}"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2481,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Ssa Interventions",
-      "purpose": "Reusable ssa interventions interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/ssa_interventions.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1658,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/program-lead"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Staff Partner",
-      "purpose": "Reusable staff partner interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/staff_partner.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "keyboard focus visibility"
-      ],
-      "bytes": 5192,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Recommended Insights",
-      "purpose": "Reusable recommended insights interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/recommended_insights.html",
-      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -2805,14 +1712,12 @@
       "bytes": 1905,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics",
-        "/analytics/",
         "/analytics/closure-quality",
-        "/analytics/country-director",
-        "/analytics/people",
-        "/analytics/program-lead",
         "/analytics/publishing",
-        "/analytics/publishing/"
+        "/analytics/publishing/",
+        "/completed-activities",
+        "/decision-log",
+        "/reports"
       ],
       "findings": [],
       "forms": 0,
@@ -2858,60 +1763,18 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 1384,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Ssa Performance",
-      "purpose": "Reusable ssa performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/ssa_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2667,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Staff Partner Performance",
-      "purpose": "Reusable staff partner performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/staff_partner_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
       "bytes": 2128,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics",
-        "/analytics/",
         "/analytics/closure-quality",
-        "/analytics/country-director",
-        "/analytics/people",
-        "/analytics/program-lead",
         "/analytics/publishing",
-        "/analytics/publishing/"
+        "/analytics/publishing/",
+        "/completed-activities",
+        "/decision-log",
+        "/reports"
       ],
       "findings": [],
       "forms": 0,
@@ -2928,60 +1791,6 @@
       "tables": 0,
       "template": "partials/analytics/tab_rail.html",
       "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "announced dynamic state"
-      ],
-      "bytes": 6560,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Target By District",
-      "purpose": "Reusable target by district interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty",
-        "open"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/target_by_district.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 17142,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/analytics/visit-effectiveness"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Visit Effectiveness Workspace",
-      "purpose": "Reusable visit effectiveness workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/visit_effectiveness_workspace.html",
-      "variants": [
-        "danger",
-        "executive",
-        "info",
-        "neutral",
-        "success"
-      ]
     },
     {
       "accessibility_requirements": [],
@@ -3899,7 +2708,28 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4562,
+      "bytes": 1072,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>/profile"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Profile Learners",
+      "purpose": "Reusable profile learners interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/clusters/profile_learners.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 4063,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile"
@@ -4042,10 +2872,8 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4874,
+      "accessibility_requirements": [],
+      "bytes": 4382,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile"
@@ -5171,7 +3999,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 8659,
+      "bytes": 8656,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots/<str:snapshot_id>"
@@ -5195,7 +4023,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3046,
+      "bytes": 3097,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots"
@@ -5440,7 +4268,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17594,
+      "bytes": 17585,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -8094,9 +6922,18 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3729,
+      "bytes": 3856,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>/profile",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -8296,7 +7133,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7342,
+      "bytes": 7345,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9231,8 +8068,6 @@
       "bytes": 1416,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics/country-director",
-        "/analytics/program-lead",
         "/my-targets",
         "/performance-conversation",
         "/performance-conversation/<str:review_id>/document/<str:window>",
@@ -9736,6 +8571,32 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 792,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/ia/history/",
+        "/ia/partner-evidence/",
+        "/ia/returned/",
+        "/ia/verification/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Export Button",
+      "purpose": "Reusable export button interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/ia/export_button.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
@@ -9818,7 +8679,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 24974,
+      "bytes": 24959,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -11470,7 +10331,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3313,
+      "bytes": 3296,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/submit"
@@ -11716,7 +10577,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1903,
+      "bytes": 2233,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -12317,7 +11178,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9576,
+      "bytes": 9715,
       "deprecated_alternatives": [],
       "example_pages": [
         "/budget/export-drawer",
@@ -12636,7 +11497,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12431,
+      "bytes": 13267,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12793,31 +11654,6 @@
       ],
       "tables": 0,
       "template": "partials/oversight/resolve_return_drawer.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 7469,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Special Projects Workspace",
-      "purpose": "Reusable special projects workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/oversight/special_projects_workspace.html",
       "variants": []
     },
     {
@@ -14467,6 +13303,36 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
+      "bytes": 3473,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>/profile",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Decisions",
+      "purpose": "Reusable  decisions interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/profiles/_decisions.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
       "bytes": 2210,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -14756,7 +13622,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 60124,
+      "bytes": 60226,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile",
@@ -15255,10 +14121,7 @@
       "bytes": 15625,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/projects/monitoring",
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
+        "/projects/monitoring"
       ],
       "findings": [],
       "forms": 0,
@@ -15818,7 +14681,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4616,
+      "bytes": 4870,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/bulk-assign-project-drawer"
@@ -15953,7 +14816,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11218,
+      "bytes": 11365,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -16440,30 +15303,6 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1654,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/ssa"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Breakdown Table",
-      "purpose": "Reusable breakdown table interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/ssa/breakdown_table.html",
-      "variants": [
-        "{{ row.band.tone }}"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
       "bytes": 197,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -16483,40 +15322,6 @@
       "tables": 0,
       "template": "partials/ssa/manual_school_options.html",
       "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility",
-        "announced dynamic state"
-      ],
-      "bytes": 20835,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/ssa"
-      ],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Performance Workspace",
-      "purpose": "Reusable performance workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty",
-        "selected",
-        "open"
-      ],
-      "tables": 5,
-      "template": "partials/ssa/performance_workspace.html",
-      "variants": [
-        "danger",
-        "executive",
-        "{{ district.band.tone }}",
-        "{{ insight.tone }}",
-        "{{ row.tone }}"
-      ]
     },
     {
       "accessibility_requirements": [],
@@ -17135,7 +15940,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4378,
+      "bytes": 4381,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/staff-drawer"
@@ -17748,14 +16553,14 @@
       "bytes": 360,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics",
-        "/analytics/",
         "/analytics/closure-quality",
-        "/analytics/country-director",
-        "/analytics/people",
-        "/analytics/program-lead",
         "/analytics/publishing",
-        "/analytics/publishing/"
+        "/analytics/publishing/",
+        "/completed-activities",
+        "/core-schools",
+        "/country-map/",
+        "/country-planning-oversight/",
+        "/cpd-learning"
       ],
       "findings": [],
       "forms": 0,
@@ -27681,51 +26486,43 @@
       ]
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.analytics_views",
-      "backend_view": "apps.frontend.views.analytics_views.analytics_dashboard_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:analytics"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-D2B38D8D70",
-      "page_title": "Overview",
-      "page_type": "dashboard",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_id": "UI-PAGE-13F117F9FA",
+      "page_title": "Analytics Dashboard",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "analytics",
-      "primary_action": "Open highest-priority work",
-      "primary_user_decision": "Which priority requires attention next?",
-      "purpose": "GET to render the primary Analytics Dashboard with filters.",
+      "primary_action": "Analytics Dashboard",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate analytics dashboard within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
@@ -27742,19 +26539,9 @@
       "route_name": "analytics_dashboard",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.analytics.models",
-        "apps.audit.services",
-        "apps.clusters.models",
-        "apps.core.scoping",
-        "apps.geography.models",
-        "apps.partners.models",
-        "apps.system_health.services"
-      ],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -27762,71 +26549,59 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.analytics_views",
-      "backend_view": "apps.frontend.views.analytics_views.analytics_dashboard_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:analytics"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-6D56DC65A1",
-      "page_title": "Overview",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_id": "UI-PAGE-5711A519AC",
+      "page_title": "View",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "analytics",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "GET to render the primary Analytics Dashboard with filters.",
+      "primary_action": "Complete action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate view within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
@@ -27843,19 +26618,9 @@
       "route_name": "",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.analytics.models",
-        "apps.audit.services",
-        "apps.clusters.models",
-        "apps.core.scoping",
-        "apps.geography.models",
-        "apps.partners.models",
-        "apps.system_health.services"
-      ],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -27863,22 +26628,18 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -27892,7 +26653,7 @@
       "backend_view": "apps.frontend.views.closure_quality_views.closure_quality_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:pages/analytics/workspace.html",
         "template:partials/analytics/closure_quality_workspace.html",
@@ -27906,10 +26667,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -27926,7 +26684,7 @@
       "permission_key": "closure_quality",
       "primary_action": "Review decision evidence",
       "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Program performance, field execution, SSA improvement, and impact.",
+      "purpose": "Operate closure quality within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -27968,52 +26726,43 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.analytics_views",
-      "backend_view": "apps.frontend.views.analytics_views.cd_analytics_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/cd/body.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:cd_analytics"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-21F0B4B97B",
-      "page_title": "Overview",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_id": "UI-PAGE-53C4299426",
+      "page_title": "Cd Analytics",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "cd_analytics",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Country Director Analytics \u2014 the national leadership cockpit.",
+      "primary_action": "Cd Analytics",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate cd analytics within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CD"
@@ -28022,19 +26771,9 @@
       "route_name": "cd_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.analytics.models",
-        "apps.audit.services",
-        "apps.clusters.models",
-        "apps.core.scoping",
-        "apps.geography.models",
-        "apps.partners.models",
-        "apps.system_health.services"
-      ],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -28042,23 +26781,18 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/cd/body.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -28114,10 +26848,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28202,10 +26934,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28287,10 +27017,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28387,10 +27115,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28482,10 +27208,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28575,10 +27299,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28606,51 +27328,43 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.hr_views",
-      "backend_view": "apps.frontend.views.hr_views.people_analytics_section_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:hr_analytics"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-F3AF182F18",
+      "page_id": "UI-PAGE-39DA33DF2C",
       "page_title": "People Analytics",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "hr_analytics",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "People Analytics as a tab of the one Analytics page.",
+      "primary_action": "People Analytics",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate people analytics within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CD",
@@ -28661,16 +27375,9 @@
       "route_name": "people_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.audit.models",
-        "apps.documents.models",
-        "apps.hr.models",
-        "apps.notifications.services",
-        "apps.professional_development.models"
-      ],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -28678,72 +27385,59 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.analytics_views",
-      "backend_view": "apps.frontend.views.analytics_views.pl_analytics_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/pl/body.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:pl_analytics"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-B5ED79ABAD",
-      "page_title": "Overview",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_id": "UI-PAGE-6B53194FAD",
+      "page_title": "Pl Analytics",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "pl_analytics",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Program Lead Analytics \u2014 the supervised-team decision cockpit.",
+      "primary_action": "Pl Analytics",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate pl analytics within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "PL"
@@ -28752,19 +27446,9 @@
       "route_name": "pl_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.analytics.models",
-        "apps.audit.services",
-        "apps.clusters.models",
-        "apps.core.scoping",
-        "apps.geography.models",
-        "apps.partners.models",
-        "apps.system_health.services"
-      ],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -28772,23 +27456,18 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/pl/body.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -28844,10 +27523,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28931,10 +27608,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28971,7 +27646,7 @@
       "backend_view": "apps.frontend.views.closure_views.analytics_publishing_status_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:pages/analytics/workspace.html",
         "template:partials/analytics/panel.html",
@@ -28984,10 +27659,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -28996,7 +27668,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-5C082E0BC3",
-      "page_title": "Publishing",
+      "page_title": "\u00b7 Edify",
       "page_type": "analytics",
       "per_page_css": [
         "css/pages/analytics-dashboard.css"
@@ -29059,7 +27731,7 @@
       "backend_view": "apps.frontend.views.closure_views.analytics_publishing_status_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:pages/analytics/workspace.html",
         "template:partials/analytics/panel.html",
@@ -29072,10 +27744,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -29084,7 +27753,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-30F6E29C6E",
-      "page_title": "Publishing",
+      "page_title": "\u00b7 Edify",
       "page_type": "analytics",
       "per_page_css": [
         "css/pages/analytics-dashboard.css"
@@ -29202,10 +27871,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -29238,52 +27905,43 @@
       ]
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.closure_impact_views",
-      "backend_view": "apps.frontend.views.closure_impact_views.closure_impact_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/closure_impact_workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:closure_impact"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-32A0E647C0",
-      "page_title": "School Closures",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_id": "UI-PAGE-545BA3B8D9",
+      "page_title": "Closure Impact",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "closure_impact",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Program performance, field execution, SSA improvement, and impact.",
+      "primary_action": "Closure Impact",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate closure impact within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CD",
@@ -29293,12 +27951,9 @@
       "route_name": "closure_impact",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [
-        "apps.core.scoping",
-        "apps.geography.models"
-      ],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -29306,72 +27961,59 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
-      "tablet_status": "pass-automated-contract",
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/closure_impact_workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.ia_views",
-      "backend_view": "apps.frontend.views.ia_views.verification_quality_section_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:ia_dashboard"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-AF1CF4FDC0",
+      "page_id": "UI-PAGE-91B84014DE",
       "page_title": "Verification Quality",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "ia_dashboard",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Verification Quality as a tab of the one Analytics page.",
+      "primary_action": "Verification Quality",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate verification quality within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CD",
@@ -29381,22 +28023,9 @@
       "route_name": "verification_quality",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.audit.services",
-        "apps.core.scoping",
-        "apps.evidence.models",
-        "apps.geography.models",
-        "apps.notifications.models",
-        "apps.partners.models",
-        "apps.pl_review.services",
-        "apps.schools.models",
-        "apps.ssa.models"
-      ],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -29404,72 +28033,59 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.6,
-      "backend_module": "apps.frontend.views.visit_effectiveness_views",
-      "backend_view": "apps.frontend.views.visit_effectiveness_views.visit_effectiveness_view",
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/visit_effectiveness_workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:visit_effectiveness"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-91505FDFED",
+      "page_id": "UI-PAGE-547A00305A",
       "page_title": "Visit Effectiveness",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "visit_effectiveness",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Program performance, field execution, SSA improvement, and impact.",
+      "primary_action": "Visit Effectiveness",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate visit effectiveness within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -29483,44 +28099,30 @@
       "route_name": "visit_effectiveness",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [
-        "apps.activities.models",
-        "apps.core.scoping",
-        "apps.debriefs.models"
-      ],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
-      "tablet_status": "pass-automated-contract",
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/visit_effectiveness_workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
-        "text-[18px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -29581,10 +28183,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -29670,10 +28270,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -31085,8 +29683,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "candidate_pipeline",
       "primary_action": "\u2192",
@@ -35778,8 +34375,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "compensation_benefits",
       "primary_action": "\u2192",
@@ -36075,7 +34671,7 @@
       "backend_view": "apps.frontend.views.closure_views.completed_activities_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:pages/analytics/workspace.html",
         "template:partials/analytics/panel.html",
@@ -36088,10 +34684,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -36100,7 +34693,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-652212DA21",
-      "page_title": "Completed Work",
+      "page_title": "\u00b7 Edify",
       "page_type": "analytics",
       "per_page_css": [
         "css/pages/analytics-dashboard.css"
@@ -36368,8 +34961,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "compliance_register",
       "primary_action": "\u2192",
@@ -36811,51 +35403,43 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.decision_views",
-      "backend_view": "apps.frontend.views.decision_views.core_school_health_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:core_school_health"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-674EDB9BA4",
+      "page_id": "UI-PAGE-B23D2AF499",
       "page_title": "Core School Health",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "core_school_health",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Core-package health for CD and RVP.",
+      "primary_action": "Core School Health",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate core school health within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CD",
@@ -36869,7 +35453,7 @@
       "secondary_actions": [],
       "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -36877,22 +35461,18 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -42121,6 +40701,80 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.profile_decisions",
+      "backend_view": "apps.frontend.views.profile_decisions.country_profile_decisions_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:decision_intelligence"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-786F71C047",
+      "page_title": "Country Profile Decisions",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "decision_intelligence",
+      "primary_action": "Country Profile Decisions",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Record a decision on an insight, or rescan both engines, then return to the queue on the Country Profile.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "HR",
+        "RVP"
+      ],
+      "route": "/country-profile/decisions",
+      "route_name": "country_profile_decisions",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
@@ -42614,8 +41268,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "culture_engagement",
       "primary_action": "\u2192",
@@ -44949,7 +43602,7 @@
       "backend_view": "apps.frontend.views.decision_views.decision_log_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:pages/analytics/workspace.html",
         "template:partials/analytics/panel.html",
@@ -44962,10 +43615,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -45035,51 +43685,43 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.decision_views",
-      "backend_view": "apps.frontend.views.decision_views.decision_intelligence_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:decision_intelligence"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-F1B955629C",
+      "page_id": "UI-PAGE-385D05B8C0",
       "page_title": "Decision Intelligence",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "decision_intelligence",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Program performance, field execution, SSA improvement, and impact.",
+      "primary_action": "Decision Intelligence",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate decision intelligence within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
@@ -45093,7 +43735,7 @@
       "secondary_actions": [],
       "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -45101,71 +43743,59 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.decision_views",
-      "backend_view": "apps.frontend.views.decision_views.declining_schools_view",
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:declining_schools"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-A2AAB0EEE2",
+      "page_id": "UI-PAGE-8B495C8C60",
       "page_title": "Declining Schools",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "declining_schools",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Which schools are losing ground, and which interventions are failing.",
+      "primary_action": "Declining Schools",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate declining schools within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -45181,7 +43811,7 @@
       "secondary_actions": [],
       "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -45189,22 +43819,18 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -46146,8 +44772,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "employee_relations",
       "primary_action": "\u2192",
@@ -50499,8 +49124,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "health_safety",
       "primary_action": "\u2192",
@@ -52805,8 +51429,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "analytics",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "hr_analytics",
       "primary_action": "\u2192",
@@ -52893,8 +51516,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "hr_audit_log",
       "primary_action": "\u2192",
@@ -61368,55 +59990,43 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.6,
-      "backend_module": "apps.frontend.views.impact_views",
-      "backend_view": "apps.frontend.views.impact_views.impact_analytics_view",
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/analytics/impact_workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:impact_analytics"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard",
-        "GET /impact",
-        "GET /impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.previous_page }}",
-        "GET /impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.next_page }}"
-      ],
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-BD451D2966",
+      "page_id": "UI-PAGE-25C7D4666E",
       "page_title": "Impact Analytics",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "impact_analytics",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Role-scoped SSA contribution analysis across verified activity families.",
+      "primary_action": "Impact Analytics",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate impact analytics within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
@@ -61431,45 +60041,31 @@
       "route": "/impact",
       "route_name": "impact_analytics",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/impact"
-      ],
-      "services_and_models": [
-        "apps.core.scoping"
-      ],
+      "secondary_actions": [],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
-      "table_pattern": "shared-table-scroll",
-      "tables": true,
-      "tablet_status": "pass-automated-contract",
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/impact_workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
-        "text-[15px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -71380,8 +69976,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "offboarding",
       "primary_action": "\u2192",
@@ -71928,8 +70523,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "onboarding",
       "primary_action": "\u2192",
@@ -72169,8 +70763,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "org_structure",
       "primary_action": "\u2192",
@@ -77925,8 +76518,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "payroll_readiness",
       "primary_action": "\u2192",
@@ -78625,8 +77217,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "approval-or-verification",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "performance_reviews",
       "primary_action": "\u2192",
@@ -81674,8 +80265,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "policies",
       "primary_action": "\u2192",
@@ -85329,7 +83919,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-987AE1FD65",
-      "page_title": "Overview",
+      "page_title": "Special Project Analytics",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/special-project-analytics.css",
@@ -87613,8 +86203,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "pulse_surveys",
       "primary_action": "\u2192",
@@ -88207,8 +86796,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "recognition",
       "primary_action": "\u2192",
@@ -88448,8 +87036,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "recovery_plans",
       "primary_action": "\u2192",
@@ -88999,8 +87586,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "recruitment",
       "primary_action": "\u2192",
@@ -89375,7 +87961,7 @@
       "backend_view": "apps.frontend.views.extended_views.reports_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:pages/analytics/workspace.html",
         "template:partials/analytics/panel.html",
@@ -89388,10 +87974,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -91758,7 +90341,8 @@
         "CCEO",
         "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/schools/closed",
       "route_name": "closed_schools",
@@ -93236,53 +91820,43 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.6,
-      "backend_module": "apps.frontend.views.ssa_views",
-      "backend_view": "apps.frontend.views.ssa_views.ssa_performance_view",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.analytics_retired",
+      "backend_view": "apps.frontend.views.analytics_retired.view",
       "card_count": 0,
-      "charts": true,
-      "drawers": true,
+      "charts": false,
+      "drawers": false,
       "evidence": [
-        "template:pages/analytics/workspace.html",
-        "template:partials/ssa/performance_workspace.html",
-        "template:partials/analytics/panel.html",
-        "template:partials/analytics/scope.html",
         "test:referenced-by-automated-test",
         "permission:ssa_performance"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
-        "GET /analytics/customize-dashboard",
-        "GET /ssa"
-      ],
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
-      "page_id": "UI-PAGE-4A86903104",
-      "page_title": "SSA Performance",
-      "page_type": "analytics",
-      "per_page_css": [
-        "css/pages/analytics-dashboard.css"
-      ],
+      "page_id": "UI-PAGE-9698C6D294",
+      "page_title": "Ssa Master",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "ssa_performance",
-      "primary_action": "Review decision evidence",
-      "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Unified, role-scoped SSA intelligence workspace.",
+      "primary_action": "Ssa Master",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate ssa master within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
@@ -93302,42 +91876,29 @@
       "route": "/ssa",
       "route_name": "ssa_master",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/ssa"
-      ],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.core.scoping",
-        "apps.schools.models",
-        "apps.ssa.models",
-        "apps.ssa.services"
-      ],
+      "secondary_actions": [],
+      "services_and_models": [],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
-      "table_pattern": "shared-table-scroll",
-      "tables": true,
-      "tablet_status": "pass-automated-contract",
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
-        "count": 3,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/ssa/performance_workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -95551,8 +94112,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "planning-or-creation",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "succession_planning",
       "primary_action": "\u2192",
@@ -95838,10 +94398,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -96529,8 +95087,6 @@
         "GET /team-planning-oversight/",
         "GET /training-ceilings/set?fy={{ fy }}",
         "GET /training-ceilings/country/set?fy={{ fy }}",
-        "GET /team-planning-oversight/projects/export-drawer?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
-        "GET /team-planning-oversight/projects/export-drawer?project={{ selected_project }}&amp;fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
         "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}",
         "GET {{ row.detail_url }}"
       ],
@@ -97272,8 +95828,6 @@
         "GET /team-planning-oversight/",
         "GET /training-ceilings/set?fy={{ fy }}",
         "GET /training-ceilings/country/set?fy={{ fy }}",
-        "GET /team-planning-oversight/projects/export-drawer?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
-        "GET /team-planning-oversight/projects/export-drawer?project={{ selected_project }}&amp;fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
         "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -97377,8 +95931,6 @@
         "GET /team-planning-oversight/",
         "GET /training-ceilings/set?fy={{ fy }}",
         "GET /training-ceilings/country/set?fy={{ fy }}",
-        "GET /team-planning-oversight/projects/export-drawer?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
-        "GET /team-planning-oversight/projects/export-drawer?project={{ selected_project }}&amp;fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
         "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -100692,8 +99244,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "wellness",
       "primary_action": "\u2192",
@@ -101189,8 +99740,7 @@
       "page_title": "\u00b7 Edify",
       "page_type": "planning-or-creation",
       "per_page_css": [
-        "css/hcos-workspace.css",
-        "css/pages/analytics-dashboard.css"
+        "css/hcos-workspace.css"
       ],
       "permission_key": "workforce_planning",
       "primary_action": "\u2192",
@@ -104770,8 +103320,8 @@
       "templates": []
     },
     {
-      "callback": "apps.frontend.views.analytics_views.analytics_dashboard_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -104779,15 +103329,11 @@
       "required_permissions": [],
       "route": "/analytics",
       "route_name": "analytics_dashboard",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
-      "callback": "apps.frontend.views.analytics_views.analytics_dashboard_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -104795,11 +103341,7 @@
       "required_permissions": [],
       "route": "/analytics/",
       "route_name": "",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.closure_quality_views.closure_quality_view",
@@ -104819,8 +103361,8 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.analytics_views.cd_analytics_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -104828,12 +103370,7 @@
       "required_permissions": [],
       "route": "/analytics/country-director",
       "route_name": "cd_analytics",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/cd/body.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.analytics_views.cd_analytics_drilldown_view",
@@ -104918,8 +103455,8 @@
       "templates": []
     },
     {
-      "callback": "apps.frontend.views.hr_views.people_analytics_section_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -104927,15 +103464,11 @@
       "required_permissions": [],
       "route": "/analytics/people",
       "route_name": "people_analytics",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
-      "callback": "apps.frontend.views.analytics_views.pl_analytics_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -104943,12 +103476,7 @@
       "required_permissions": [],
       "route": "/analytics/program-lead",
       "route_name": "pl_analytics",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/pl/body.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.analytics_views.pl_analytics_drilldown_view",
@@ -105025,8 +103553,8 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.closure_impact_views.closure_impact_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -105034,16 +103562,11 @@
       "required_permissions": [],
       "route": "/analytics/school-closures",
       "route_name": "closure_impact",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/closure_impact_workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
-      "callback": "apps.frontend.views.ia_views.verification_quality_section_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -105051,15 +103574,11 @@
       "required_permissions": [],
       "route": "/analytics/verification-quality",
       "route_name": "verification_quality",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
-      "callback": "apps.frontend.views.visit_effectiveness_views.visit_effectiveness_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -105067,12 +103586,7 @@
       "required_permissions": [],
       "route": "/analytics/visit-effectiveness",
       "route_name": "visit_effectiveness",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/visit_effectiveness_workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.activities.views.view",
@@ -113055,8 +111569,8 @@
       "templates": []
     },
     {
-      "callback": "apps.frontend.views.decision_views.core_school_health_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -113064,11 +111578,7 @@
       "required_permissions": [],
       "route": "/core-school-health",
       "route_name": "core_school_health",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.core_schools_views.core_schools_view",
@@ -113875,6 +112385,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.profile_decisions.country_profile_decisions_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "decision_intelligence",
+      "required_permissions": [],
+      "route": "/country-profile/decisions",
+      "route_name": "country_profile_decisions",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.extended_views.coverage_view",
       "kind": "page",
       "methods": [
@@ -114315,25 +112837,20 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.decision_views.decision_intelligence_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
-        "GET",
-        "POST"
+        "GET"
       ],
       "page_permission": "decision_intelligence",
       "required_permissions": [],
       "route": "/decisions",
       "route_name": "decision_intelligence",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
-      "callback": "apps.frontend.views.decision_views.declining_schools_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -114341,11 +112858,7 @@
       "required_permissions": [],
       "route": "/declining-schools",
       "route_name": "declining_schools",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.finance_views.disbursements_view",
@@ -116901,8 +115414,8 @@
       "templates": []
     },
     {
-      "callback": "apps.frontend.views.impact_views.impact_analytics_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -116910,12 +115423,7 @@
       "required_permissions": [],
       "route": "/impact",
       "route_name": "impact_analytics",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/analytics/impact_workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.impact_report_views.brief_page",
@@ -121752,8 +120260,8 @@
       "templates": []
     },
     {
-      "callback": "apps.frontend.views.ssa_views.ssa_performance_view",
-      "kind": "page",
+      "callback": "apps.frontend.views.analytics_retired.view",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -121761,12 +120269,7 @@
       "required_permissions": [],
       "route": "/ssa",
       "route_name": "ssa_master",
-      "templates": [
-        "pages/analytics/workspace.html",
-        "partials/ssa/performance_workspace.html",
-        "partials/analytics/panel.html",
-        "partials/analytics/scope.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.ssa_views.ssa_performance_export_view",
@@ -123137,34 +121640,33 @@
     "django.urls.get_resolver",
     "apps.core.navigation.PAGE_PERMISSIONS",
     "apps.core.navigation.SIDEBAR_ITEMS",
-    "apps.core.navigation.ANALYTICS_SECTIONS",
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 608,
+    "accessibility_contract_pass": 595,
     "activity_states": 24,
-    "all_routes": 1416,
+    "all_routes": 1417,
     "api_routes": 364,
-    "component_templates": 705,
-    "full_pages": 271,
-    "mobile_contract_pass": 608,
-    "nonvisual_actions": 289,
+    "component_templates": 651,
+    "full_pages": 258,
+    "mobile_contract_pass": 595,
+    "nonvisual_actions": 303,
     "page_types": {
       "administration-or-configuration": 23,
-      "analytics": 19,
+      "analytics": 7,
       "approval-or-verification": 19,
-      "dashboard": 1,
-      "interaction-fragment": 623,
+      "dashboard": 0,
+      "interaction-fragment": 637,
       "operational-queue": 157,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 49
     },
     "partials_and_drawers": 334,
-    "permission_gated": 918,
+    "permission_gated": 919,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 935,
+    "routed_surfaces": 936,
     "scheduled_jobs": 39,
     "severity_counts": {
       "critical": 0,
@@ -123172,8 +121674,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 608,
-    "test_referenced": 844,
-    "theme_contract_pass": 608
+    "tablet_contract_pass": 595,
+    "test_referenced": 845,
+    "theme_contract_pass": 595
   }
 }

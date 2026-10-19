@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 662,
-  "templates": 253,
-  "distinct_titles": 632,
+  "titled_cards": 597,
+  "templates": 219,
+  "distinct_titles": 571,
   "with_card_key": 13,
-  "untitled_surfaces": 596,
-  "untitled_chrome": 154,
-  "untitled_nested": 189,
-  "untitled_headless": 253,
+  "untitled_surfaces": 557,
+  "untitled_chrome": 153,
+  "untitled_nested": 183,
+  "untitled_headless": 221,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 22,
+  "titles_in_several_templates": 19,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -36,10 +36,6 @@
    "templates/pages/escalations/index.html",
    "templates/pages/planning/visit_requests.html"
   ],
-  "cluster performance": [
-   "templates/partials/analytics/pl/cluster_performance.html",
-   "templates/partials/dashboards/admin/operations.html"
-  ],
   "danger zone": [
    "templates/pages/admin/user_detail.html",
    "templates/partials/schools/_details.html"
@@ -51,10 +47,6 @@
   "needs attention": [
    "templates/partials/analytics/closure_quality_workspace.html",
    "templates/partials/ia/operations.html"
-  ],
-  "operational risk / attention needed": [
-   "templates/partials/analytics/cd/operational_risk.html",
-   "templates/partials/dashboards/rvp/operations.html"
   ],
   "professional development": [
    "templates/pages/hr/my_performance.html",
@@ -86,11 +78,6 @@
   "schools needing urgent attention": [
    "templates/partials/dashboards/cceo/week.html",
    "templates/partials/dashboards/pl/programmes_view.html"
-  ],
-  "ssa performance by intervention": [
-   "templates/partials/analytics/cd/ssa_interventions.html",
-   "templates/partials/analytics/pl/ssa_interventions.html",
-   "templates/partials/analytics/ssa_performance.html"
   ],
   "submit mscs": [
    "templates/pages/targets/index.html",
@@ -3243,51 +3230,6 @@
    "branch_path": []
   },
   {
-   "template": "templates/partials/analytics/activity_tracking.html",
-   "line": 1,
-   "title": "Activity Tracking \u2139\ufe0f",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface p-4 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/budget_finance.html",
-   "line": 7,
-   "title": "Budget and Finance Health",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/cceo_leaderboard.html",
-   "line": 2,
-   "title": "CCEO Leaderboard",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "min-w-0 w-full edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/cceo_snapshot.html",
-   "line": 2,
-   "title": "CCEO Performance Snapshot",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "min-w-0 w-full edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/cluster_performance.html",
-   "line": 2,
-   "title": "Performance by Cluster",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": []
-  },
-  {
    "template": "templates/partials/analytics/cd/district_heatmap.html",
    "line": 8,
    "title": "SSA Heatmap (Average SSA Score by Intervention)",
@@ -3295,119 +3237,6 @@
    "has_card_key": false,
    "classes": "edify-surface self-start rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/impact_summary.html",
-   "line": 4,
-   "title": "Impact Summary (Cumulative FY)",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/operational_risk.html",
-   "line": 2,
-   "title": "Operational Risk / Attention Needed",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/partner_performance.html",
-   "line": 2,
-   "title": "Performance by Partner",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/pl_oversight.html",
-   "line": 2,
-   "title": "PL Oversight Summary",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/recommended_actions.html",
-   "line": 2,
-   "title": "Recommended Actions",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/regional_summary.html",
-   "line": 4,
-   "title": "Regional and District Summary",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/cd/ssa_interventions.html",
-   "line": 2,
-   "title": "SSA Performance by Intervention",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/closure_impact_workspace.html",
-   "line": 86,
-   "title": "By",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden",
-   "branch_path": [
-    [
-     0,
-     0
-    ],
-    [
-     4,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/closure_impact_workspace.html",
-   "line": 142,
-   "title": "Why schools closed",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden",
-   "branch_path": [
-    [
-     0,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/closure_impact_workspace.html",
-   "line": 187,
-   "title": "Closures by month",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "card p-4",
-   "branch_path": [
-    [
-     0,
-     0
-    ],
-    [
-     11,
-     0
-    ]
-   ]
   },
   {
    "template": "templates/partials/analytics/closure_quality_workspace.html",
@@ -3460,327 +3289,6 @@
    ]
   },
   {
-   "template": "templates/partials/analytics/cluster_performance.html",
-   "line": 2,
-   "title": "Cluster Performance (Top 10) \u2139\ufe0f",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface p-4 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/core_champion_performance.html",
-   "line": 3,
-   "title": "Core & Champion Schools \u2139\ufe0f",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface p-4 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/distributed_team.html",
-   "line": 2,
-   "title": "Team accountability",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/donor_reporting_snapshot.html",
-   "line": 10,
-   "title": "Reach and delivery (outputs)",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface p-4 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/impact_summary.html",
-   "line": 4,
-   "title": "Impact Summary \u2139\ufe0f",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "analytics-impact-card edify-surface rounded-surface p-4 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 44,
-   "title": "No paired assessment cycles yet",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-8 text-center space-y-2",
-   "branch_path": [
-    [
-     2,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 116,
-   "title": "Portfolio comparison by",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "impact-deferred-section edify-surface rounded-surface border border-slate-100 shadow-sm p-4 sm:p-5 space-y-3",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 201,
-   "title": "Dose\u2013response: support intensity vs improvement",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 213,
-   "title": "Funding vs improvement",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 234,
-   "title": "Difference in median change, focused vs not focused (weak-baseline schools) \u00b7 visits",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 260,
-   "title": "Difference in median change, focused vs not focused (weak-baseline schools) \u00b7 trainings",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 288,
-   "title": "Funding efficiency quadrants",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 306,
-   "title": "Target achievement \u2194 school improvement",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-amber-100 bg-amber-50/40 p-3",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 330,
-   "title": "Geography: median delta by district \u00d7 intervention",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 381,
-   "title": "Does geography matter?",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 392,
-   "title": "Field reality: why interventions are (not) moving",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     2,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/panels/core_school_health.html",
-   "line": 68,
-   "title": "Stuck at the completion gate",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     5,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/panels/core_school_health.html",
-   "line": 103,
-   "title": "Package progress",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     6,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/panels/core_school_health.html",
-   "line": 150,
-   "title": "By district",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     6,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/panels/decision_intelligence.html",
-   "line": 57,
-   "title": "Operational decisions",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/panels/decision_intelligence.html",
-   "line": 77,
-   "title": "Financial decisions",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/panels/declining_schools.html",
-   "line": 55,
-   "title": "Which interventions are failing",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/panels/declining_schools.html",
-   "line": 87,
-   "title": "Schools losing ground",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     5,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/panels/declining_schools.html",
-   "line": 136,
-   "title": "Where the decline is concentrated",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     5,
-     1
-    ]
-   ]
-  },
-  {
    "template": "templates/partials/analytics/panels/reports.html",
    "line": 93,
    "title": "Cumulative Progress Trend",
@@ -3806,261 +3314,6 @@
    "has_card_key": false,
    "classes": "edify-report-panel edify-report-panel--priorities edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between space-y-4",
    "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/pl/activity_tracking.html",
-   "line": 4,
-   "title": "Activity Tracking",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/pl/cluster_performance.html",
-   "line": 2,
-   "title": "Cluster Performance",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/pl/district_performance.html",
-   "line": 2,
-   "title": "District Performance Under My Team",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/pl/donor_snapshot.html",
-   "line": 9,
-   "title": "L. Reporting outputs (delivery, not impact)",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 flex flex-col",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/pl/impact_summary.html",
-   "line": 4,
-   "title": "Impact Summary",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/pl/insights.html",
-   "line": 2,
-   "title": "Recent Insights / Recommended Actions",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 flex flex-col",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/pl/risk_list.html",
-   "line": 3,
-   "title": "K. School Risk &amp; Attention List",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/pl/ssa_interventions.html",
-   "line": 2,
-   "title": "SSA Performance by Intervention",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/ssa_performance.html",
-   "line": 1,
-   "title": "SSA Performance by Intervention",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface p-4 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/staff_partner_performance.html",
-   "line": 1,
-   "title": "Staff & Partner Performance \u2139\ufe0f",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface p-4 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/target_by_district.html",
-   "line": 8,
-   "title": "District delivery gaps",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "analytics-priority-card edify-surface rounded-surface p-4 shadow-sm",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 62,
-   "title": "SSA change by intervention",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     0,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 67,
-   "title": "Delivered visits vs SSA change",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     0,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 81,
-   "title": "Visit purpose mix",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     0,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 86,
-   "title": "School outcomes",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     0,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 91,
-   "title": "Visit alignment funnel",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     0,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 100,
-   "title": "Quality vs volume",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     0,
-     1
-    ],
-    [
-     9,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 137,
-   "title": "Regional variation",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     0,
-     1
-    ],
-    [
-     9,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 168,
-   "title": "Cohort &amp; data quality",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     0,
-     1
-    ],
-    [
-     14,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 185,
-   "title": "What the data does not explain",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     0,
-     1
-    ],
-    [
-     15,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 217,
-   "title": "Recent school visit feedback",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 overflow-hidden",
-   "branch_path": [
-    [
-     17,
-     0
-    ]
-   ]
   },
   {
    "template": "templates/partials/business_transformation/portfolio.html",
@@ -6316,14 +5569,14 @@
   },
   {
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 98,
+   "line": 99,
    "title": "Withdrawal requests ()",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
-     14,
+     15,
      0
     ]
    ]
@@ -6481,6 +5734,24 @@
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/profiles/_decisions.html",
+   "line": 24,
+   "title": "Operational decisions \u00b7 awaiting",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/profiles/_decisions.html",
+   "line": 40,
+   "title": "Financial decisions \u00b7 awaiting",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
    "branch_path": []
   },
   {
@@ -7034,69 +6305,6 @@
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 64,
-   "title": "District SSA performance",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "sp-card sp-district-table-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 87,
-   "title": "Intervention gaps by district",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "sp-card sp-matrix-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 101,
-   "title": "Schools requiring urgent attentionUrgent-attention summary",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "sp-card sp-urgent-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 118,
-   "title": "Insights &amp; recommendations",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "sp-card sp-insights",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 128,
-   "title": "SSA performance by staff, cluster and partner",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "sp-card sp-district-table-card sp-breakdowns-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 150,
-   "title": "SSA performance FY vs FY",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "sp-card sp-fy-comparison",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 194,
-   "title": "SSA performance trend by year",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "sp-card sp-trend",
    "branch_path": []
   },
   {
