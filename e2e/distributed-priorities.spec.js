@@ -11,13 +11,15 @@ async function chooseTab(page,label){
  if(await tab.evaluate(a=>a.classList.contains('edify-rail-more__item')))await tab.locator('xpath=ancestor::details[1]/summary').click();
  await tab.click();
 }
-for(const [email,analytics,priorities='/priorities'] of [
- ['cceo@edify.org','/analytics'],['pl1@edify.org','/analytics/program-lead'],
- ['cd@edify.org','/analytics/country-director'],['rvp@edify.org','/analytics'],
- ['ia@edify.org','/analytics'],['hr@edify.org','/analytics'],
+// The Analytics entry is retired (owner, 2026-10-19): /analytics opens each
+// reader's own analysis home, which must be as sound as the page it replaced.
+for(const [email,home,priorities='/priorities'] of [
+ ['cceo@edify.org',/^\/cluster-oversight\/$/],['pl1@edify.org',/^\/staff\/[^/]+$/],
+ ['cd@edify.org',/^\/country-profile$/],['rvp@edify.org',/^\/country-profile$/],
+ ['ia@edify.org',/^\/country-profile$/],['hr@edify.org',/^\/dashboard$/],
  // The Accountant has no priority surface: /priorities refuses them and their agreement stays at /my-performance (2026-09-11).
- ['accountant@edify.org','/analytics','/my-performance'],['coordinator@edify.org','/analytics'],['admin@edify.org','/analytics']
-]) test(`${email} priorities and analytics are responsive and coherent`,async({page},info)=>{
+ ['accountant@edify.org',/^\/budget$/,'/my-performance'],['coordinator@edify.org',/^\/projects\/analytics$/],['admin@edify.org',/^\/country-profile$/]
+]) test(`${email} priorities and their analysis home are responsive and coherent`,async({page},info)=>{
  test.setTimeout(180000);const errors=watchPageErrors(page);
  await signIn(page,email,'edify',{acceptRequiredAgreements:false});
  const dashboard=await page.goto('/dashboard');expect(dashboard.status()).toBeLessThan(400);
@@ -39,16 +41,9 @@ for(const [email,analytics,priorities='/priorities'] of [
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
   }
  }
- const result=await page.goto(analytics);expect(result.status()).toBe(200);
- const quarter=page.locator('#pl-analytics-filters select[name=quarter], #cd-analytics-filters select[name=quarter]');
- if(await quarter.count()){
-  const refreshed=page.waitForResponse(r=>r.url().includes('quarter=Q1') && r.request().resourceType()==='xhr');
-  await quarter.first().selectOption('Q1');
-  expect((await refreshed).status()).toBe(200);
-  await expect(page).toHaveURL(/quarter=Q1/);
- }
- await expect(page.locator('.analytics-executive-pulse')).toHaveCount(1);
- await expect(page.locator('.analytics-executive-pulse > [data-context-metrics]')).toHaveCount(1);
+ const old=await page.request.get('/analytics',{maxRedirects:0});expect(old.status()).toBe(302);
+ const destination=old.headers()['location'];expect(new URL(destination,page.url()).pathname).toMatch(home);
+ const result=await page.goto(destination);expect(result.status()).toBe(200);
  for(const [width,height] of [[390,844],[768,1024],[1366,768]]){
   await page.setViewportSize({width,height});
   for(const theme of ['theme-light','theme-dark dark','theme-blue dark']){
@@ -56,6 +51,6 @@ for(const [email,analytics,priorities='/priorities'] of [
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
   }
  }
- await page.screenshot({path:info.outputPath('analytics.png')});
+ await page.screenshot({path:info.outputPath('analysis-home.png')});
  expect(errors).toEqual([]);
 });
