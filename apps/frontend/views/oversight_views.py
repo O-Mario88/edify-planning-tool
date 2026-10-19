@@ -2893,15 +2893,15 @@ def _export_response(items, filename: str, *, request_user, excel: bool = False)
             filename.replace(".csv", ".xlsx"), plan_export.sheets(rows)
         )
 
-    import csv
-
     from django.http import StreamingHttpResponse
 
     class _Echo:
         def write(self, value):
             return value
 
-    writer = csv.writer(_Echo())
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(_Echo())
     response = StreamingHttpResponse(
         (writer.writerow(row) for row in plan_export.csv_rows(rows)),
         content_type="text/csv",
@@ -4017,7 +4017,6 @@ def partner_oversight_send_action_view(request):
 def partner_oversight_export_view(request):
     """The current partner view, as CSV or (``format=xlsx``) as a workbook.
     Same scope, same period, same rows."""
-    import csv
 
     from django.http import StreamingHttpResponse
 
@@ -4108,7 +4107,9 @@ def partner_oversight_export_view(request):
         def write(self, value):
             return value
 
-    writer = csv.writer(_Echo())
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(_Echo())
     response = StreamingHttpResponse(
         (writer.writerow(row) for row in partner_oversight.export_rows(items)),
         content_type="text/csv",

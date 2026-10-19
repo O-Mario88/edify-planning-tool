@@ -239,6 +239,9 @@ class PlReviewAuthorizationTests(TestCase):
 
         rows = services.queue(self.pl)
         self.assertEqual([r["id"] for r in rows], [self.act.id])
+        # Verified only with its Salesforce ID (owner, 2026-10-19).
+        self.act.salesforce_activity_id = "SVE-6101"
+        self.act.save(update_fields=["salesforce_activity_id"])
         services.confirm(self.act.id, self.pl)
         self.act.refresh_from_db()
         self.assertEqual(self.act.status, "ia_verified")

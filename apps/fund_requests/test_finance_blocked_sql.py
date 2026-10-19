@@ -85,7 +85,8 @@ class FinanceBlockedSqlTest(TestCase):
             self._activity(**{**clean, "budget": False}),
             self._activity(**{**clean, "salesforce_activity_id": None}),
             self._activity(**{**clean, "salesforce_activity_id": ""}),
-            # No Salesforce record for SSA data gathering: no SF ID needed.
+            # An SSA data-gathering visit is a school visit in Salesforce
+            # (owner, 2026-10-19: "Salesforce ID is a MUST"): held without one.
             self._activity(
                 **{
                     **clean,
@@ -145,10 +146,11 @@ class FinanceBlockedSqlTest(TestCase):
         response = self.client.get("/accounts/blocked")
         self.assertEqual(response.status_code, 200)
         page = response.context["blocked"]
-        # Seven of the fourteen scenarios are blocked (see _scenarios): the
+        # Eight of the fourteen scenarios are blocked (see _scenarios): the
         # staff visit with no evidence file is not held (UPLOAD-OFF, owner
-        # 2026-10-13), the partner's is (owner, 2026-10-14).
-        self.assertEqual(len(page), 7)
+        # 2026-10-13), the partner's is (owner, 2026-10-14), and the SSA
+        # data-gathering visit with no Salesforce ID is (owner, 2026-10-19).
+        self.assertEqual(len(page), 8)
         self.assertContains(response, "Evidence Missing", count=1)
         self.assertContains(response, "Budget Line Missing")
 

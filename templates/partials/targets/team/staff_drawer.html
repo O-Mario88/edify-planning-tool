@@ -26,7 +26,7 @@
             <th class="py-2 px-2 text-center">Valid</th>
             <th class="py-2 px-2 text-center">Scheduled</th>
             <th class="py-2 px-2 text-center">SF ID missing</th>
-            <th class="py-2 px-2 text-center">IA pending</th>
+            <th class="py-2 px-2 text-center">PL pending</th>
             <th class="py-2 px-2 text-center">Returned</th>
             <th class="py-2 px-2 text-center">%</th>
           </tr>
@@ -48,7 +48,7 @@
       </table>
       {% include "components/table_pager.html" with pager=m_per_area_pager param="m_per_area_page" %}
     </div>
-    <p class="edify-text-caption text-slate-500">Valid = executed, evidenced, with an Activity SF ID and IA verification where required, credited to the month the work happened. Provisional work is never counted.</p>
+    <p class="edify-text-caption text-slate-500">Valid = executed, evidenced, with an Activity SF ID and the Programme Lead's verification, credited to the month the work happened. Provisional work is never counted.</p>
   </section>
 
   <p class="edify-text-caption font-semibold text-slate-500">Districts: <span class="text-slate-700">{{ m.district_label }}</span> &middot; SF ID compliance <span class="{% if m.sf_compliance < 90 %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ m.sf_compliance }}%</span>{% if m.core_pct is not None %} &middot; Core package {{ m.core_pct }}%{% endif %}</p>

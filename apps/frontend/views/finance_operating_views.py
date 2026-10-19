@@ -860,16 +860,25 @@ def activity_finance_detail_view(request, activity_id):
     return render(request, "pages/accounts/activity_finance_detail.html", context)
 
 
-#: The columns of each payout file.
+#: The columns of each payout file. The School ID sits beside the school's
+#: name (owner, 2026-10-19); the amount stays last.
 _BATCH_COLUMNS = {
     "advances": [
         "Activity ID",
-        "Type",
-        "School",
+        "Activity Type",
+        "School ID",
+        "School Name",
         "Responsible Staff ID",
         "Amount (UGX)",
     ],
-    "partners": ["Activity ID", "Type", "School", "Partner ID", "Amount (UGX)"],
+    "partners": [
+        "Activity ID",
+        "Activity Type",
+        "School ID",
+        "School Name",
+        "Partner ID",
+        "Amount (UGX)",
+    ],
 }
 
 
@@ -884,7 +893,6 @@ def batch_payments_view(request):
     lists, so a stale or foreign id refuses the file rather than widening it.
     "Export all eligible" is its own action, and nothing is capped silently.
     """
-    import csv
 
     from django.db.models import F
     from django.http import HttpResponseBadRequest
@@ -941,13 +949,16 @@ def batch_payments_view(request):
         response["Content-Disposition"] = (
             f'attachment; filename="batch_{export}_{suffix}.csv"'
         )
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         writer.writerow(_BATCH_COLUMNS[export])
         for a in rows.order_by("id").iterator(chunk_size=500):
             writer.writerow(
                 [
                     a.id,
                     a.get_activity_type_display(),
+                    a.school.school_id if a.school else "",
                     a.school.name if a.school else "Cluster-wide",
                     a.responsible_staff_id
                     if export == "advances"

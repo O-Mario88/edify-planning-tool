@@ -446,11 +446,11 @@ def my_plan_view(request):
 
             return workbook_response("my_plan_export.xlsx", plan_export.sheets(rows))
 
-        import csv
-
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="my_plan_export.csv"'
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         for row in plan_export.csv_rows(rows):
             writer.writerow(row)
         return response
@@ -1613,13 +1613,21 @@ def complete_activity_action(request, activity_id):
                         messages.error(request, f"Error: {e}")
                         return local_redirect(f"/my-plan/{activity_id}")
 
-        # Handle SSA collection expectations
+        # Handle SSA collection expectations. The SSA is optional at
+        # completion (owner, 2026-10-19: "Adding SSA scores can be optional
+        # but Salesforce ID is A MUST"): a blank score sheet, or "not
+        # collected" with no reason, completes the visit; a part-filled sheet
+        # is still refused, since an SSA is all eight scores or none.
+        interventions_map = {
+            code: f"score_{code}" for code, _label in SsaIntervention.choices
+        }
+        scores_entered = any(
+            request.POST.get(field_name, "").strip()
+            for field_name in interventions_map.values()
+        )
         if a.ssa_collection_expected:
             ssa_collected = request.POST.get("ssa_collected")
-            if ssa_collected == "yes":
-                interventions_map = {
-                    code: f"score_{code}" for code, _label in SsaIntervention.choices
-                }
+            if ssa_collected == "yes" and scores_entered:
 
                 def _label(code: str) -> str:
                     return code.replace("_", " ").title()
@@ -1670,19 +1678,13 @@ def complete_activity_action(request, activity_id):
                 a.ssa_not_collected_reason = None
             else:
                 reason = request.POST.get("ssa_not_collected_reason", "").strip()
-                if not reason:
-                    return HttpResponse(
-                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Please select a reason why SSA was not collected.</div>',
-                        status=400,
-                    )
-                a.ssa_not_collected_reason = reason
+                a.ssa_not_collected_reason = reason or None
             a.save(update_fields=["ssa_not_collected_reason", "updated_at"])
 
         payload = {
-            # The form already refused above unless this question was
-            # answered; pass the answer on so `complete()` can hold the same
-            # rule for every other door (SSA-01).
-            "ssaCollected": request.POST.get("ssa_collected") == "yes",
+            # Whether scores were recorded above; the SSA is optional.
+            "ssaCollected": request.POST.get("ssa_collected") == "yes"
+            and scores_entered,
             "actualDeliveryDate": completed_on.isoformat(),
             "salesforceId": salesforce_id,
             "trainingSalesforceId": salesforce_id,
@@ -2386,6 +2388,11 @@ def _edit_drawer_context(user, a) -> dict:
         context["other_half"] = visit if a.id == training.id else training
     context.update(_edit_project_context(user, a))
     context.update(_edit_training_context(a))
+    # What a visit is for (owner, 2026-10-19), changed on the visit itself.
+    from apps.activities.purpose_change import purpose_options
+
+    context["edit_purposes"] = purpose_options(a)
+    context["edit_purpose_core"] = (a.activity_type or "") == "core_visit"
     return context
 
 
@@ -2611,6 +2618,7 @@ def edit_activity_action(request, activity_id):
         ("schoolId", "school_id"),
         ("projectId", "project_id"),
         ("trainingCourseId", "training_course_id"),
+        ("purposeType", "purpose_type"),
     ):
         if name in request.POST:
             data[key] = request.POST.get(name, "").strip()
@@ -3054,6 +3062,26 @@ def _hands_in_with_id(a) -> bool:
     )
 
 
+def _sent_to_lead(missing: str) -> HttpResponse:
+    """The drawer closes: the ID is saved and the work is with the lead, who
+    is told what is still missing."""
+    from django.template.loader import render_to_string
+
+    response = HttpResponse(
+        render_to_string(
+            "partials/planning/saved_toast.html",
+            {
+                "message": (
+                    "Saved and sent to your Programme Lead to approve. "
+                    f"They will see what is still missing: {missing}"
+                )
+            },
+        )
+    )
+    response["HX-Trigger"] = "close-drawer"
+    return response
+
+
 @require_page_permission("my_plan")
 def salesforce_id_action(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
@@ -3150,6 +3178,15 @@ def salesforce_id_action(request, activity_id):
         try:
             hand_in_with_id(a.id, request.user, completed_on=completed_on)
         except Exception as e:
+            # Completed work with its ID reaches the lead whatever Submit
+            # finds missing (owner, 2026-10-19: it "MUST show for the PLs to
+            # approve"); the lead reads the gap and approves or returns it.
+            # Work no lead approves keeps the refusal.
+            from apps.core.exceptions import BadRequest as _Refused
+            from apps.pl_review.handed_in import hand_in_entered_work
+
+            if isinstance(e, _Refused) and hand_in_entered_work(apply=True, ids=[a.id]):
+                return _sent_to_lead(str(getattr(e, "detail", e)))
             # error_fragment shows a user-facing refusal as written and logs
             # anything else behind its generic message.
             return error_fragment(
@@ -3634,7 +3671,7 @@ def evidence_center_view(request):
         "sf_missing": "SF ID Missing",
         "submitted": "Submitted",
         "returned": "Returned",
-        "ia_pending": "IA Pending",
+        "ia_pending": "PL Pending",
         "verified": "Verified",
         "partner_ev": "Partner Work",
     }

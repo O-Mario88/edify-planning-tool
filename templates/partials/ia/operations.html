@@ -163,14 +163,14 @@ Verification Quality tab has no Map view, so they belong here for it.
       <div>
         <p class="ia-section-kicker">Country performance oversight</p>
         <h2 id="ia-performance-title">Activities and verification performance</h2>
-        <p>Current FY activity delivery and IA verification across every region, district, CCEO and Program Lead.</p>
+        <p>Current FY activity delivery and verification across every region, district, CCEO and Program Lead.</p>
       </div>
     </header>
 
     <div class="ia-performance-overview">
       <article class="ia-panel ia-trend-card">
         <header class="ia-card-heading">
-          <div><h3>Eight-week activity flow</h3><p>Planned work compared with completed IA verifications</p></div>
+          <div><h3>Eight-week activity flow</h3><p>Planned work compared with completed verifications</p></div>
         </header>
         {% comment %}Planned and IA-verified activities per week, drawn through the chart
         system (2026-09-05) — the same ordered palette, legend and axes as every
@@ -190,7 +190,7 @@ Verification Quality tab has no Map view, so they belong here for it.
                  cfg.colors = ['var(--edify-series-1)', 'var(--edify-success)'];
                  cfg.series = [
                    { name: 'Planned', data: weeks.map(w => w.planned) },
-                   { name: 'IA verified', data: weeks.map(w => w.verified) }
+                   { name: 'Verified', data: weeks.map(w => w.verified) }
                  ];
                  cfg.xaxis.categories = weeks.map(w => w.label);
                  /* Eight weeks of zero is a flat line on the floor, not an empty box:
@@ -200,7 +200,7 @@ Verification Quality tab has no Map view, so they belong here for it.
                  this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
                }
              }">
-          <div x-ref="el" role="img" aria-label="Planned and IA-verified activities over eight weeks"></div>
+          <div x-ref="el" role="img" aria-label="Planned and verified activities over eight weeks"></div>
         </div>
         <div class="ia-chart-values" aria-label="Exact weekly activity values">
           {% for week in activity_trend.weeks %}<span><b>{{ week.label }}</b><small>{{ week.planned }} planned · {{ week.verified }} verified</small></span>{% endfor %}
@@ -237,7 +237,7 @@ Verification Quality tab has no Map view, so they belong here for it.
                 <caption class="sr-only">{{ group.name }}: consolidated team reach, then each CCEO supervised</caption>
                 <thead>
                   <tr><th rowspan="2">Leader</th><th colspan="4" class="ia-monitor-table__band">Schools</th><th colspan="5" class="ia-monitor-table__band">Activities</th></tr>
-                  <tr><th># Schools</th><th># Planned</th><th># Achieved</th><th>% Achieved</th><th>Planned</th><th>Achieved</th><th>IA verified</th><th>Returned</th><th>Performance</th></tr>
+                  <tr><th># Schools</th><th># Planned</th><th># Achieved</th><th>% Achieved</th><th>Planned</th><th>Achieved</th><th>Verified</th><th>Returned</th><th>Performance</th></tr>
                 </thead>
                 <tbody>
                   {% if group.role %}<tr class="ia-monitor-table__lead"><td><strong>{{ group.name }}</strong><small>{{ group.role }} · lead and team, consolidated</small></td><td>{{ group.schools }}</td><td>{{ group.schools_planned }}</td><td>{{ group.schools_achieved }}</td><td><b>{{ group.schools_pct }}%</b></td><td>{{ group.planned }}</td><td>{{ group.achieved }}</td><td>{{ group.verified }}</td><td>{{ group.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ group.rate }}%"></i></span><b>{{ group.rate }}%</b></td></tr>{% endif %}

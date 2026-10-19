@@ -192,6 +192,28 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="hand_in_entered_work",
+        description=(
+            "Hands a CCEO's or a lead's completed work that holds its "
+            "Salesforce ID, and was never handed in, to the Programme Lead "
+            "to approve (owner, 2026-10-19), so the Execution & Completion "
+            "table and the counts never miss it."
+        ),
+        cron="every 30 min at :25 and :55 Africa/Nairobi",
+        # Five minutes before target_ledger_sync, so the ledger it rebuilds
+        # already reads the work handed in.
+        cron_kwargs={"minute": "25,55"},
+        expected_runtime_seconds=30,
+        max_interval_minutes=90,
+        idempotent=True,
+        idempotency_note=(
+            "apps.pl_review.handed_in only takes work not yet handed in; a "
+            "second run finds nothing to do."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="pd_reminders",
         description="Sends due Professional Development pre-course/in-progress/overdue reminders.",
         cron="daily 06:30 Africa/Nairobi",

@@ -120,6 +120,8 @@ def verification_analytics(principal, window_days: int | None = None) -> dict:
                 "decided_at": d.decided_at,
                 "activity_id": a.id,
                 "school_id": a.school_id,
+                # The School ID people know the school by, for the export.
+                "school_code": a.school.school_id if a.school_id else "",
                 "school": a.school.name if a.school_id else "Cluster-wide",
                 "activity_type": a.get_activity_type_display(),
                 "submitter_id": key,
@@ -230,9 +232,12 @@ def verification_analytics(principal, window_days: int | None = None) -> dict:
 
 EXPORT_HEADER = [
     "Decided at",
-    "Activity",
-    "School",
-    "Type",
+    # The Edify Activity ID, and the School ID beside the school's name
+    # (owner, 2026-10-19).
+    "Activity ID",
+    "School ID",
+    "School Name",
+    "Activity Type",
     "Submitted by",
     "Partner",
     "Decision",
@@ -247,6 +252,7 @@ def export_rows(data: dict):
         yield [
             timezone.localtime(r["decided_at"]).strftime("%Y-%m-%d %H:%M"),
             r["activity_id"],
+            r.get("school_code", ""),
             r["school"],
             r["activity_type"],
             r["submitter"],

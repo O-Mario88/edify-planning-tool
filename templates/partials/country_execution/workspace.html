@@ -50,7 +50,7 @@ do (owner, 2026-10-02); they can still be folded away.
   {% if targets.status == "ok" %}
   <p class="cpo-info" role="note">
     <strong>Targets</strong> for the people in this selection, {{ header.window_label }}: planned output {{ targets.target }} · validated actual {{ targets.achieved }} · remaining gap {{ targets.gap }}{% if targets.pct is not None %} · {{ targets.pct }}% achieved{% endif %}.
-    The same figures My Targets, Team Targets and CD Analytics read from the canonical target ledger; only IA-verified work earns credit, and nothing here recalculates performance.
+    The same figures My Targets, Team Targets and CD Analytics read from the canonical target ledger; only verified work earns credit, and nothing here recalculates performance.
   </p>
   {% elif targets.status == "week" %}
   <p class="cpo-info" role="note"><strong>Targets</strong> are set by month: a week has none of its own. Choose the month to read planned output against validated actual.</p>
@@ -65,7 +65,7 @@ do (owner, 2026-10-02); they can still be folded away.
       <h2 class="cpo-chart-name" id="cxo-funnel-name" data-no-titlebar>Execution Funnel
         <span class="cxo-hint" title="Partner work goes straight to IA: it has no PL review stage.">Staff and Partner</span></h2>
       {{ charts.funnel|json_script:"cxo-funnel-data" }}
-      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Execution funnel: planned, started, evidence submitted, PL reviewed (staff only), IA verified and fully closed, in total and for staff and Partner delivery. The figures are in the table under the chart."></div>
+      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Execution funnel: planned, started, evidence submitted, PL reviewed (staff only), verified and fully closed, in total and for staff and Partner delivery. The figures are in the table under the chart."></div>
       <details class="cpo-chart-data" open>
         <summary>Chart data</summary>
         <div class="cpo-tscroll">
@@ -82,7 +82,7 @@ do (owner, 2026-10-02); they can still be folded away.
       <h2 class="cpo-chart-name" id="cxo-trend-name" data-no-titlebar>Planned vs Executed vs Verified
         <span class="cxo-hint">{% if window.period == "week" %}Daily{% elif window.period == "month" %}Weekly{% elif window.period == "quarter" %}Monthly{% else %}Quarterly{% endif %}, cumulative</span></h2>
       {{ charts.trend|json_script:"cxo-trend-data" }}
-      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Planned, execution completed, IA verified and fully closed work, cumulative through {{ header.window_label }}. The figures are in the table under the chart."></div>
+      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Planned, execution completed, verified and fully closed work, cumulative through {{ header.window_label }}. The figures are in the table under the chart."></div>
       <details class="cpo-chart-data" open>
         <summary>Chart data</summary>
         <div class="cpo-tscroll">
