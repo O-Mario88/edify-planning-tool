@@ -953,8 +953,9 @@ PROFILE_TABS = (
     ("school_ssa", "Schools"),
     ("work", "Training & Visits"),
     ("attendance", "Meetings & Attendance"),
-    ("students", "Students"),
-    ("learning", "Learning Results"),
+    # Enrolment and learning results on one tab (owner, 2026-10-19: "Merge
+    # Students and Learning Results into one Learners tab").
+    ("learners", "Learners"),
     ("loans", "Loans & BT"),
     ("stories", "MSCS"),
     ("projects", "Projects"),
@@ -963,6 +964,10 @@ PROFILE_TABS = (
     ("history", "Membership History"),
     ("sources", "Sources"),
 )
+
+#: Tabs that became part of another (owner, 2026-10-19), for the addresses
+#: that still name them.
+_MERGED_TABS = {"students": "learners", "learning": "learners"}
 
 #: The sections the profile engine draws (owner, 2026-10-09: every profile
 #: reads the same way): address key → the engine's section and its name on
@@ -1087,16 +1092,11 @@ def _profile_tab_context(request, cluster, tab: str) -> dict:
 
     options = sorted(fy_options(), reverse=True)
     fy = _profile_fy(request, options, operational_fy)
-    if tab == "students":
+    if tab == "learners":
         return {
             "profile_fy": fy,
             "profile_fy_options": options,
             "enrolment": outcomes.cluster_enrolment(cluster, fy=fy),
-        }
-    if tab == "learning":
-        return {
-            "profile_fy": fy,
-            "profile_fy_options": options,
             "learning": outcomes.cluster_learning(cluster, fy=fy),
         }
     if tab == "loans":
@@ -1326,6 +1326,11 @@ def cluster_profile_view(request, cluster_id):
     """
     profile_tabs = _profile_tabs_for(request.user)
     tab = (request.GET.get("tab") or "").strip()
+    if tab in _MERGED_TABS:
+        # An address made before two tabs became one opens the one.
+        tab = _MERGED_TABS[tab]
+        request.GET = request.GET.copy()
+        request.GET["tab"] = tab
     if tab not in dict(profile_tabs):
         # The profile opens on its Summary; the shared sections read the tab
         # from the address, so the address is made to say so.
