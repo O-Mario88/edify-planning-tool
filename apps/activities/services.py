@@ -368,12 +368,15 @@ def sf_kind(activity_type: str) -> str:
 
 
 def sf_kind_for_activity(activity: Activity) -> str | None:
+    from .salesforce import NO_SALESFORCE_RECORD_TYPES
+
     configured = (activity.salesforce_record_type_snapshot or "").upper()
-    if configured in {"NONE", "SSA_DATA_GATHERING"}:
+    if configured in NO_SALESFORCE_RECORD_TYPES:
         return None
     if configured == "TRAINING":
         return "training"
-    if configured == "VISIT":
+    if configured in ("VISIT", "SSA_DATA_GATHERING"):
+        # An SSA data-gathering visit is a school visit in Salesforce.
         return "visit"
     return sf_kind(activity.activity_type)
 
@@ -4053,47 +4056,12 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     _is_testing = "test" in _sys.argv or "pytest" in _sys.modules
     visit_feedback = None
 
-    # SSA-01. A visit scheduled to collect an SSA must answer the SSA
-    # question — with the scores, or with a reason there are none.
-    #
-    # The rule already existed, in the web completion form, which refuses a
-    # 400 without it. It lived ONLY there. The same act has a second door,
-    # `POST /api/activities/<id>/complete`, built from this function by the
-    # `_action_view` factory, and that one never asked. Measured end to end:
-    # an activity with `ssa_collection_expected=True` completed through the
-    # API returned 200, advanced to `submitted_to_pl`, and then verified to
-    # `ia_verified` with the reason field still None — counted, reported and
-    # feeding the analytics, with nobody ever having answered the question.
-    #
-    # IA verification does not catch it, which was the obvious hope:
-    # `SSAValidationService.validate_ssa` computes a checklist RECOMMENDATION
-    # in `get_verification_checks`, and the IA's form can be submitted with
-    # the box ticked over it. Advisory, not a gate.
-    #
-    # Scoped exactly as the form scopes it — `ssa_collection_expected`, set
-    # when the visit's purpose is SSA collection. A visit that was never
-    # meant to collect one is untouched, and so is partner work: the
-    # partner's deliverable is the uploaded visit form, and Impact
-    # Assessment keys the scores at completion (complete_partner_ssa_support).
-    # Partner SSA Support handovers set ssa_collection_expected too, so
-    # without this scope the partner's own submit door refused every one of
-    # them (owner, 2026-09-12: "for partner, they just need to upload their
-    # visit forms").
-    #
-    # The caller must answer because the platform cannot infer it: SsaRecord
-    # is school-level with no link to the activity, so a pre-existing
-    # assessment for the school would otherwise satisfy a visit that
-    # collected nothing.
-    if a.ssa_collection_expected and a.delivery_type != "partner":
-        ssa_collected = bool(data.get("ssaCollected"))
-        reason = str(
-            data.get("ssaNotCollectedReason") or a.ssa_not_collected_reason or ""
-        ).strip()
-        if not ssa_collected and not reason:
-            raise BadRequest(
-                "This visit was scheduled to collect an SSA. Record the "
-                "scores, or give a reason the SSA was not collected."
-            )
+    # SSA-01, relaxed (owner, 2026-10-19): "Adding SSA scores can be
+    # optional but Salesforce ID is A MUST." A visit planned to collect the
+    # SSA completes with its Salesforce ID whether or not the scores, or a
+    # reason none were taken, are recorded. Scores entered in the Complete
+    # drawer are still kept against the visit; the Salesforce ID is still
+    # reserved below, and nothing completes without it.
 
     # A partner's work only: staff work asks for no file (_verified_from_upload).
     if _verified_from_upload(a):
@@ -4429,18 +4397,8 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
             "Upload the activity evidence before submitting to IA — partner "
             "evidence goes directly to IA for review."
         )
-    if a.ssa_collection_expected and not a.ssa_not_collected_reason:
-        from apps.ssa.models import SsaRecord
-
-        if not SsaRecord.objects.filter(
-            school=a.school,
-            fy=get_operational_fy(),
-            deleted_at__isnull=True,
-        ).exists():
-            raise BadRequest(
-                "Record all SSA scores, or give a reason that SSA was not collected, "
-                "before submitting this activity."
-            )
+    # The SSA is optional at completion (owner, 2026-10-19); the Salesforce
+    # ID above is not.
     # The staged path is the same completion, entered in pieces — so it
     # carries the same follow-up link rule (owner, 2026-09-21). It reads what
     # completion already bound, or the id this submission carries, and writes

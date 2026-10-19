@@ -801,7 +801,10 @@ def _partner_detail(item):
     snapshot = [
         ("Activity", a.get_activity_type_display()),
         ("School", a.school.name if a.school_id else "—"),
-        ("IA verification", "Verified"),
+        (
+            "IA verification" if a.delivery_type == "partner" else "PL verification",
+            "Verified",
+        ),
         ("Salesforce ID", a.salesforce_activity_id or "Missing"),
     ]
     return breakdown, snapshot

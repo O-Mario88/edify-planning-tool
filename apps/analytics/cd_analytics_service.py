@@ -2808,7 +2808,13 @@ class CDAnalyticsService:
                 "7+ days",
                 "?drill=risk&issue=sf_id",
             ),
-            card("IA Pending", ia_pending, "info", "30+ days", "?drill=risk&issue=ia"),
+            card(
+                "Verification Pending",
+                ia_pending,
+                "info",
+                "30+ days",
+                "?drill=risk&issue=ia",
+            ),
             # These two previously pointed at the generic budget drill, which
             # showed finance totals rather than the stalled work the card
             # counted. They now open their own rows.
@@ -3482,7 +3488,7 @@ class CDAnalyticsService:
             "no_training": "Schools with No Training",
             "low_ssa": "Low-SSA Schools (<5.0/10)",
             "evidence": "Evidence Pending",
-            "ia": "IA Pending",
+            "ia": "Verification Pending",
             "finance": "Finance Pending",
             "accountability": "Accountability Pending",
             "sf_id": "Salesforce ID Missing",

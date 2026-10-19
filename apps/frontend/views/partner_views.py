@@ -9,7 +9,6 @@ from apps.core.activity_types import (
     NOT_IN_PLAN_ACTIVITY_STATUSES,
     VISIT_TYPES,
 )
-import csv
 from collections import defaultdict
 
 from django.http import HttpResponse, HttpResponseForbidden
@@ -454,7 +453,9 @@ def _partner_workspace(request):
         response["Content-Disposition"] = (
             f'attachment; filename="partner-activities-fy-{selected_fy}.csv"'
         )
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         writer.writerow(
             [
                 "Partner",

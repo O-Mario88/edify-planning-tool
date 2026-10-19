@@ -417,7 +417,11 @@ def _status(activity, today: date) -> tuple[str, str]:
     if status == "submitted_to_pl":
         return "PL Pending", TONE_PLANNED
     if status == "awaiting_ia_verification":
-        return "IA Pending", TONE_PLANNED
+        # Staff work is the Programme Lead's to verify, a partner's IA's
+        # (owner, 2026-10-19).
+        if activity.delivery_type == "partner":
+            return "IA Pending", TONE_PLANNED
+        return "PL Pending", TONE_PLANNED
     if status == "completed":
         return "Awaiting Verification", TONE_PLANNED
     if status in _STILL_COMPLETING:

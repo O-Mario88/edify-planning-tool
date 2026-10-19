@@ -382,7 +382,6 @@ def pl_analytics_view(request):
 def pl_analytics_export_view(request):
     """CSV export of the PL's at-risk school list — scoped to the supervised
     portfolio (never another PL's schools)."""
-    import csv
 
     from django.http import HttpResponse
 
@@ -401,13 +400,26 @@ def pl_analytics_export_view(request):
     )
     resp = HttpResponse(content_type="text/csv")
     resp["Content-Disposition"] = 'attachment; filename="pl_analytics_risk.csv"'
-    w = csv.writer(resp)
+    from apps.core.excel import safe_csv_writer
+
+    w = safe_csv_writer(resp)
+    # Every export that lists schools carries the School ID (owner,
+    # 2026-10-19), the business code beside the name.
     w.writerow(
-        ["School", "District", "Issue", "Last Visit", "Last Training", "Next Action"]
+        [
+            "School ID",
+            "School Name",
+            "District",
+            "Issue",
+            "Last Visit",
+            "Last Training",
+            "Next Action",
+        ]
     )
     for r in rows:
         w.writerow(
             [
+                r["school_id"],
                 r["school"],
                 r["district"],
                 r["issue"],

@@ -1,6 +1,5 @@
 from apps.core.metrics import render_precomputed_metric_item
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
-import csv
 from urllib.parse import urlencode
 
 from django.shortcuts import render, redirect
@@ -100,7 +99,9 @@ def _export_hr_dashboard(data, *, fy, country, department, excel):
         )
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     writer.writerow(headers)
     writer.writerows(rows)
     return response

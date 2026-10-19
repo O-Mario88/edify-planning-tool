@@ -49,7 +49,6 @@ and every download writes an audit row against the report.
 
 from __future__ import annotations
 
-import csv
 import hashlib
 import json
 from collections import Counter
@@ -1753,7 +1752,9 @@ def csv_value(value):
 
 
 def write_csv(response, rows) -> None:
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     for row in rows:
         writer.writerow([csv_value(v) for v in row])
 

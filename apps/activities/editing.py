@@ -252,6 +252,10 @@ def edit(activity_id: str, data: dict, principal) -> dict:
       the training chosen (``training_change.change_training``).
     * ``facilitatingPartnerId`` — who facilitates a training or cluster
       meeting; blank is Staff (``services.set_facilitator``).
+    * ``purposeType`` — what a visit to one school is for (owner,
+      2026-10-19: a Training Follow Up that was meant as SSA Support). The
+      same visit takes the purpose, and what it decides follows
+      (``purpose_change.change_purpose``).
     * ``activityPurposeText``, ``expectedOutcome``, ``focusIntervention`` —
       ``services.patch_activity``.
 
@@ -369,6 +373,30 @@ def edit(activity_id: str, data: dict, principal) -> dict:
             "Change the training in one save, and the school or project in another."
         )
 
+    # The purpose a visit was planned for (owner, 2026-10-19: "he should be
+    # able to edit the activity to what he intended"), changed on the visit
+    # itself (apps.activities.purpose_change).
+    from apps.activities import purpose_change
+
+    purpose_moves = "purposeType" in data and str(
+        data.get("purposeType") or ""
+    ).strip() != (activity.purpose_type or "")
+    if purpose_moves and (
+        new_school is not None or new_project is not None or training_moves
+    ):
+        raise BadRequest(
+            "Change the purpose in one save, and the school, project or "
+            "training in another."
+        )
+    if purpose_moves and not reason:
+        raise BadRequest("Give the reason the purpose of this visit is changing.")
+    if purpose_moves and patch.get("activityPurposeText") == (
+        activity.activity_purpose_text or ""
+    ):
+        # The drawer posts the description it opened with; the purpose change
+        # renames a description that named the old purpose.
+        patch.pop("activityPurposeText")
+
     facilitator_moves = False
     if "facilitatingPartnerId" in data:
         from apps.activities.facilitation import takes_facilitator
@@ -393,6 +421,7 @@ def edit(activity_id: str, data: dict, principal) -> dict:
             or invitations_move
             or new_school is not None
             or new_project is not None
+            or (purpose_moves and purpose_change.moves_money(activity))
         ):
             # A change that moves money: the week's fund request, where it
             # has been sent and not paid, comes back to its owner instead of
@@ -430,6 +459,15 @@ def edit(activity_id: str, data: dict, principal) -> dict:
                 principal=principal,
             )
 
+        if purpose_moves:
+            reprice = purpose_change.moves_money(activity)
+            purpose_change.change_purpose(
+                activity, data.get("purposeType"), principal, reason=reason
+            )
+            if reprice:
+                # Priced as a visit planned for this purpose; a refusal here
+                # rolls the whole change back.
+                services.reprice_activity(activity, principal)
         if patch:
             services.patch_activity(activity.id, patch, principal)
         if facilitator_moves:

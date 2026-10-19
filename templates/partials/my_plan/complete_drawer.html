@@ -148,7 +148,8 @@ left its initial state: choosing "No" changed nothing on screen, the reason
 field stayed hidden, and the server then rejected the submit pointing at a
 field the user could not see (2026-08 UI/UX audit, UX-006).{% endcomment %}
 <div class="space-y-3" x-data="{ ssaCollected: 'yes' }">
-<h4 class="text-[13px] font-semibold text-slate-800">SSA scores</h4>
+<h4 class="text-[13px] font-semibold text-slate-800">SSA scores <span class="font-normal text-slate-500">(optional)</span></h4>
+<p class="edify-text-caption text-slate-500" data-ssa-optional>Enter all eight scores if they were collected, or leave them blank. The Salesforce ID below is what completes the visit.</p>
 
 <fieldset class="space-y-2">
 <legend class="block edify-text-caption font-semibold text-slate-600">Were SSA scores collected on this activity?</legend>
@@ -177,7 +178,7 @@ field the user could not see (2026-08 UI/UX audit, UX-006).{% endcomment %}
 
 <!-- SSA Bypass Reason -->
 <div x-show="ssaCollected === 'no'" class="space-y-1">
-<label for="ssa_not_collected_reason" class="block edify-text-caption font-semibold text-slate-600">Reason SSA was not collected</label>
+<label for="ssa_not_collected_reason" class="block edify-text-caption font-semibold text-slate-600">Reason SSA was not collected <span class="font-normal text-slate-500">(optional)</span></label>
 <select name="ssa_not_collected_reason" id="ssa_not_collected_reason" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none">
 <option value="">Choose a reason…</option>
 <option value="School leader unavailable">School leader unavailable</option>

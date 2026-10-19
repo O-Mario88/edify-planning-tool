@@ -79,11 +79,14 @@ run that is still scheduled.
     projectId: '{{ edit_project.id|default:''|escapejs }}',
     firstProjectId: '{{ edit_project.id|default:''|escapejs }}',
     focus: '{{ act.focus_intervention|default:''|escapejs }}',
+    purpose: '{{ act.purpose_type|default:''|escapejs }}',
+    firstPurpose: '{{ act.purpose_type|default:''|escapejs }}',
+    get purposeMoved() { return this.purpose !== this.firstPurpose; },
     projectLinks: {% if project_links_json %}{{ project_links_json }}{% else %}{}{% endif %},
     get dayMoved() { return this.planDay !== this.firstDay || this.lastDay !== this.firstLastDay; },
     get schoolMoved() { return this.schoolCode !== this.firstSchoolCode; },
     get projectMoved() { return this.projectId !== this.firstProjectId; },
-    get asksWhy() { return this.dayMoved || this.schoolMoved || this.projectMoved; },
+    get asksWhy() { return this.dayMoved || this.schoolMoved || this.projectMoved || this.purposeMoved; },
     get focusOptions() { return this.projectLinks[this.projectId] || []; },
     projectChosen() {
       /* The focus follows the project: keep it when the new project is linked
@@ -135,6 +138,23 @@ run that is still scheduled.
     {% else %}
     <input id="edit_training_course_id" type="text" readonly value="{% firstof edit_training.name act.activity_name_snapshot %}{% if edit_training.delivery %} · {{ edit_training.delivery }}{% endif %}" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 font-semibold text-slate-700 cursor-not-allowed focus:outline-none">
     {% endif %}
+  </div>
+  {% endif %}
+
+  {% if edit_purposes %}
+  {% comment %}What the visit is for (owner, 2026-10-19: "The user had intended
+  to schedule ssa support visit. he should be able to edit the activity to
+  what he intended"). The same visit takes the purpose chosen; its school,
+  day and notes stay.{% endcomment %}
+  <div class="space-y-1" data-edit-purpose>
+    <label for="edit_purpose_type" class="block edify-text-caption font-semibold text-slate-600">Purpose of visit <span class="text-rose-500">*</span></label>
+    <select id="edit_purpose_type" name="purpose_type" x-model="purpose" required
+            aria-describedby="edit-purpose-help"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      {% if not act.purpose_type %}<option value="">Select a purpose…</option>{% endif %}
+      {% for value, label in edit_purposes %}<option value="{{ value }}"{% if value == act.purpose_type %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <p id="edit-purpose-help" class="edify-text-caption text-slate-500"><span x-show="purposeMoved" style="display:none">The visit keeps its ID, school and day. SSA Support asks for the SSA at completion; a Training Follow Up asks which training it followed up. </span>{% if edit_purpose_core %}A Core package visit is a Training Follow Up or SSA Support.{% endif %}</p>
   </div>
   {% endif %}
 

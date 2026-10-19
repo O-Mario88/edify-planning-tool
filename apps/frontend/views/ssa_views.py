@@ -19,7 +19,6 @@ from apps.core.exceptions import BadRequest
 from apps.core.enums import VerificationStatus, SsaIntervention
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
 from django.utils import timezone
-import csv
 
 
 @require_page_permission("ssa_performance")
@@ -135,7 +134,9 @@ def ssa_performance_export_view(request):
     response["Content-Disposition"] = (
         f'attachment; filename="ssa-performance-fy{fy}-{period}.csv"'
     )
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     writer.writerow(
         [
             "School ID",
@@ -183,7 +184,9 @@ def ssa_template_download_view(request):
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="ssa_upload_template.csv"'
 
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     # Header row
     headers = ["School ID", "Assessment Date", "SSA Year"]
     for _code, label in SsaIntervention.choices:

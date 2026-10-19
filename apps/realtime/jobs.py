@@ -16,6 +16,8 @@ being reimplemented per job.
                                       staleness" finding: My Targets/Team Targets/CD
                                       Analytics no longer depend on someone having opened
                                       a page recently to see a fresh number).
+  • hand_in_entered_work           — every 30 min — hands completed work holding its
+                                      Salesforce ID to the Programme Lead to approve.
   • pd_reminders                   — daily 06:30 — apps.professional_development.reminders.
   • field_debrief_recurring_issues — daily 05:30 — apps.debriefs.insight_service.
   • mfa_challenge_purge            — daily 03:20 — deletes spent second-factor
@@ -682,6 +684,21 @@ def target_ledger_sync_job():
     if not _enabled():
         return
     run_tracked_job("target_ledger_sync", _do_target_ledger_sync)
+
+
+# ── 5b. Completed work holding its Salesforce ID reaches its lead ───────────
+def _do_hand_in_entered_work() -> int:
+    """Owner, 2026-10-19: completed work with its Salesforce ID "MUST show
+    for the PLs to approve". Returns how many were handed in."""
+    from apps.pl_review.handed_in import hand_in_entered_work
+
+    return len(hand_in_entered_work(apply=True))
+
+
+def hand_in_entered_work_job():
+    if not _enabled():
+        return
+    run_tracked_job("hand_in_entered_work", _do_hand_in_entered_work)
 
 
 # ── Scheduler history retention ──────────────────────────────────────────────
