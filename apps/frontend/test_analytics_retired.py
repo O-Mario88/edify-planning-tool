@@ -215,14 +215,16 @@ class HomeTest(RetiredFixture):
         self.assertNotIn("CD Analytics", body)
 
 
-#: The addresses the redirects answer, and the Analytics page's own actions.
+#: The addresses the redirects answer, and the Analytics page's own actions:
+#: not a segment of a longer path (after a word, `/`, `.`, `-`, `>` or `}`),
+#: and not prose ("/impact's").
 RETIRED_ADDRESS = re.compile(
-    r"(?<![\w/.-])/(?:"
+    r"(?<![\w/.>}-])/(?:"
     r"analytics(?:/(?:program-lead|country-director|visit-effectiveness"
     r"|school-closures|people|verification-quality|export|schedule-report"
     r"|customize-dashboard))?/?"
     r"|ssa|impact|declining-schools|core-school-health|decisions"
-    r")(?=[\"'`?#{])"
+    r")(?=[\"'`?#{])(?!'\w)"
 )
 
 #: Files that may still name a retired address, and why.
@@ -237,6 +239,8 @@ NAMES_A_RETIRED_ADDRESS = {
     # Who's Online names the part of the system a path belongs to; it links
     # nowhere.
     "apps/accounts/presence_labels.py": "labels a path, links nowhere",
+    # The KPI inventory files templates under /analytics/ by their path.
+    "apps/system_health/kpi_inventory.py": "classifies template paths",
 }
 
 
@@ -290,6 +294,10 @@ class NoRetiredLinksTest(SimpleTestCase):
             '"/ia/analytics/"',
             '"/api/analytics/map-subcounties"',
             '"/analytics/country-director/drilldown?drill=risk"',
+            # A live route of another app, and prose naming an old page.
+            'path("<str:school_id>/impact", views.SchoolImpactView.as_view())',
+            'href="/schools/{{ school.id }}/impact"',
+            "the second engine answering /impact's question",
         ):
             with self.subTest(line=line):
                 self.assertIsNone(RETIRED_ADDRESS.search(line))

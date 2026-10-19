@@ -3,10 +3,10 @@
  "schema_version": 1,
  "summary": {
   "by_evidence": {
-   "browser-rendered": 846,
+   "browser-rendered": 848,
    "none": 309,
    "page-tested": 1554,
-   "request-tested": 1419
+   "request-tested": 1417
   },
   "by_kind": {
    "button": 1420,
@@ -12981,11 +12981,11 @@
   {"accessible_name": "Turn on", "destination": "                                  ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-976B4784A877", "kind": "button", "line": 32, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/settings/two_step_app.html"},
   {"accessible_name": "Cancel", "destination": "/settings", "destination_route": "/settings", "evidence": "request-tested", "high_consequence": false, "id": "INT-EA3C476EE6B8", "kind": "link", "line": 33, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/settings/two_step_app.html"},
   {"accessible_name": "Remove the authenticator app", "destination": "                                   ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-B45E4CE9AF4C", "kind": "button", "line": 44, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/settings/two_step_app.html"},
-  {"accessible_name": "Back to SSA Performance", "destination": "/ssa", "destination_route": "/ssa", "evidence": "request-tested", "high_consequence": false, "id": "INT-B636ACA448BF", "kind": "link", "line": 10, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/manual_entry.html"},
-  {"accessible_name": "{{ field.label }}: {{ error }}", "destination": "#{{ field.id_for_label }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A688A6DDDD68", "kind": "link", "line": 36, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/manual_entry.html"},
-  {"accessible_name": "Open Upload Center", "destination": "/uploads", "destination_route": "/uploads", "evidence": "request-tested", "high_consequence": false, "id": "INT-A65670018EAD", "kind": "link", "line": 110, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/manual_entry.html"},
-  {"accessible_name": "Cancel", "destination": "/ssa", "destination_route": "/ssa", "evidence": "request-tested", "high_consequence": false, "id": "INT-997B46A30232", "kind": "link", "line": 114, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/manual_entry.html"},
-  {"accessible_name": "Save SSA Score", "destination": "/ssa/manual/", "destination_route": "/ssa/manual/", "evidence": "request-tested", "high_consequence": false, "id": "INT-8578B45AC315", "kind": "button", "line": 117, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/ssa/manual_entry.html"},
+  {"accessible_name": "Back to {{ home.label }}", "destination": "{{ home.href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-860E348E98B8", "kind": "link", "line": 12, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/manual_entry.html"},
+  {"accessible_name": "{{ field.label }}: {{ error }}", "destination": "#{{ field.id_for_label }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A688A6DDDD68", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/manual_entry.html"},
+  {"accessible_name": "Open Upload Center", "destination": "/uploads", "destination_route": "/uploads", "evidence": "request-tested", "high_consequence": false, "id": "INT-A65670018EAD", "kind": "link", "line": 113, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/manual_entry.html"},
+  {"accessible_name": "Cancel", "destination": "{{ request.user|analysis_home:'ssa'|get_item:'href' }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A2D64229DEAE", "kind": "link", "line": 117, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/manual_entry.html"},
+  {"accessible_name": "Save SSA Score", "destination": "/ssa/manual/", "destination_route": "/ssa/manual/", "evidence": "request-tested", "high_consequence": false, "id": "INT-8578B45AC315", "kind": "button", "line": 120, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/ssa/manual_entry.html"},
   {"accessible_name": "Upload history", "destination": "/ssa/upload/history/", "destination_route": "/ssa/upload/history/", "evidence": "request-tested", "high_consequence": false, "id": "INT-955C5A6CF24B", "kind": "link", "line": 12, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_center.html"},
   {"accessible_name": "Add SSA Score", "destination": "/ssa/manual/", "destination_route": "/ssa/manual/", "evidence": "request-tested", "high_consequence": false, "id": "INT-517FB10B65F5", "kind": "link", "line": 14, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_center.html"},
   {"accessible_name": "Download Template", "destination": "/ssa/upload/template", "destination_route": "/ssa/upload/template", "evidence": "request-tested", "high_consequence": false, "id": "INT-C012A53D7C4C", "kind": "link", "line": 38, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/ssa/upload_center.html"},
