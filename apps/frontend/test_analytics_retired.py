@@ -109,6 +109,30 @@ class SidebarTest(RetiredFixture):
             with self.subTest(role=user.active_role):
                 self.assertNotIn("Analytics", self.entries(user))
 
+    def test_hr_reads_people_analytics_from_its_monthly_group(self):
+        """Owner, 2026-10-19: "Give HR a People Analytics sidebar entry
+        (/hr-analytics) in their monthly group." It was the HR's Analytics tab
+        until the Analytics entry was retired."""
+        hr = _person("ret-hr-nav@t.test", EdifyRole.HUMAN_RESOURCES)
+        monthly = next(
+            group
+            for group in build_sidebar_for_user(hr, "/dashboard")
+            if group["label"] == "MONTHLY"
+        )
+        self.assertIn(
+            ("People Analytics", "/hr-analytics"),
+            [(item["label"], item["url"]) for item in monthly["items"]],
+        )
+        lit = [
+            item["label"]
+            for group in build_sidebar_for_user(hr, "/hr-analytics")
+            for item in group["items"]
+            if item["active"]
+        ]
+        self.assertEqual(lit, ["People Analytics"])
+        # The Country Director may open the page but is not offered it.
+        self.assertNotIn("People Analytics", self.entries(self.cd))
+
     def test_the_three_tools_have_entries_of_their_own(self):
         entries = self.entries(self.ia)
         for label in ("Reports", "Decision Log", "Closure Quality"):

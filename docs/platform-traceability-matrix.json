@@ -3327,6 +3327,7 @@
         "employee_relations",
         "health_safety",
         "help",
+        "hr_analytics",
         "hr_audit_log",
         "hr_today",
         "leave_approvals",
@@ -4980,8 +4981,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "2de9e51ad9dc361f36553d5a4ab72f221f81dc6ca436062c8da8e516acc3002c",
-    "sources": "16eeb257c084093ff7523d3935aa2c6f653d91f5895fce5cb8f545a996c9032e",
+    "payload": "07d0e452abe2b3b2d5cfb091deb2cdfaa601f92b24eb281fbaae1ce26c332091",
+    "sources": "ba21970ce522dd80c3ebc1d28328d523ef2164e7ca8a29bd248691ca6a1d66af",
     "sourceCount": 265,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

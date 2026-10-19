@@ -2309,6 +2309,15 @@ SIDEBAR_ITEMS = [
                 "page_key": "workforce_planning",
             },
             {
+                # HR's Analytics tab until the Analytics entry was retired
+                # (owner, 2026-10-19: "Give HR a People Analytics sidebar
+                # entry (/hr-analytics) in their monthly group").
+                "label": "People Analytics",
+                "url": "/hr-analytics",
+                "page_key": "hr_analytics",
+                "visible_to": {HR},
+            },
+            {
                 "label": "Recruitment",
                 "url": "/recruitment",
                 "page_key": "recruitment",

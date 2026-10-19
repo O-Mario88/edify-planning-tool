@@ -51434,7 +51434,7 @@
       "permission_key": "hr_analytics",
       "primary_action": "\u2192",
       "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Operate hr analytics within the frontend workflow.",
+      "purpose": "Operate people analytics within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
