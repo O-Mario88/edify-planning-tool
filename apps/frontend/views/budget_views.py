@@ -174,7 +174,35 @@ def budget_view(request):
         ctx["country_workflow"] = get_country_monthly_budget(
             request.user, {"fy": fy, "month": anchor.month}
         )
+        ctx["finance_health"] = _finance_health(request.user, fy)
     return render(request, "pages/budgets/monthly.html", ctx)
+
+
+def _finance_health(user, fy) -> dict:
+    """The country's advance pipeline for the year — requested, pending,
+    confirmed, disbursed, accounted, returned — read as the Country Director
+    Analytics read it (`CDAnalyticsService.budget_finance_health`), with its
+    quarterly requests as a chart. Budget and Finance Health's home (owner,
+    2026-10-18: the Analytics page's sections given homes in the pages they
+    belong to)."""
+    from apps.analytics.cd_analytics_service import (
+        CDAnalyticsService,
+        country_for,
+        resolve_cd_scope,
+    )
+
+    health = CDAnalyticsService.budget_finance_health(
+        resolve_cd_scope(str(fy), country=country_for(user))
+    )
+    return {
+        **health,
+        "chart": {
+            "chart": {"type": "bar"},
+            "series": [{"name": "Requested (UGX)", "data": health["quarter_vals"]}],
+            "xaxis": {"categories": health["quarter_labels"]},
+            "yaxis": {"min": 0, "title": {"text": "UGX requested"}},
+        },
+    }
 
 
 def _mission_status_for_cceo(user, week_start):

@@ -409,6 +409,32 @@ class CDAnalyticsTest(TestCase):
         self.assertEqual(bf["disbursed"], 80_000)  # 50k disbursed + 30k accounted
         self.assertEqual(bf["utilization_pct"], 44)  # 80k / 180k
 
+    def test_the_budget_page_carries_the_country_s_finance_health(self):
+        """Budget and Finance Health's home (owner, 2026-10-18: the Analytics
+        page's sections given homes in the pages they belong to): the Budget
+        page as a country role reads it, from the same advance pipeline."""
+        from django.test import Client
+
+        client = Client()
+        client.force_login(self.cd)
+
+        body = client.get("/budget", {"fy": FY, "month": "4"}).content.decode()
+
+        self.assertIn("data-finance-health", body)
+        self.assertIn("180,000", body)  # requested: 100k + 50k + 30k
+        self.assertIn("80,000", body)  # disbursed: 50k + 30k accounted
+        self.assertIn("44%", body)  # utilisation, 80k of 180k
+
+    def test_a_team_budget_has_no_country_finance_health(self):
+        from django.test import Client
+
+        client = Client()
+        client.force_login(self.pl_a)
+
+        body = client.get("/budget", {"fy": FY, "month": "4"}).content.decode()
+
+        self.assertNotIn("data-finance-health", body)
+
     # ── 10. operational risk counts real workflow gaps ───────────────────────
     def test_cd_operational_risk_counts_real_workflow_gaps(self):
         d = self._dash()

@@ -177,6 +177,27 @@
   {% if groups %}
   <p class="edify-text-caption font-medium text-slate-500">Source: {{ source_description }} · Total: {{ total|ugx }}</p>
   {% endif %}
+  {% if finance_health %}
+  {% comment %}Budget and Finance Health (owner, 2026-10-18: the Analytics
+  page's sections given homes in the pages they belong to): the year's advance
+  pipeline as the Country Director Analytics read it, money requested through
+  to money accounted for, and the requests by quarter.{% endcomment %}
+  <section class="space-y-3" data-finance-health aria-labelledby="finance-health-heading">
+    <h2 id="finance-health-heading" class="text-[15px] font-bold text-slate-800">Finance Health, FY {{ fy }}</h2>
+    {% kpi_strip title="Advance Pipeline" %}
+      {% kpi_metric %}{% kpi_label %}Requested{% endkpi_label %}UGX {{ finance_health.requested|intcomma }}{% kpi_helper %}Every advance in the pipeline{% endkpi_helper %}{% endkpi_metric %}
+      {% for status in finance_health.statuses|slice:"1:3" %}
+      {% kpi_metric %}{% kpi_label %}{{ status.label }}{% endkpi_label %}UGX {{ status.amount|intcomma }}{% endkpi_metric %}
+      {% endfor %}
+      {% kpi_metric %}{% kpi_label %}Disbursed{% endkpi_label %}UGX {{ finance_health.disbursed|intcomma }}{% kpi_helper %}{{ finance_health.utilization_pct|default:0 }}% of requested{% endkpi_helper %}{% endkpi_metric %}
+      {% kpi_metric %}{% kpi_label %}Accounted{% endkpi_label %}UGX {{ finance_health.accounted|intcomma }}{% endkpi_metric %}
+      {% for status in finance_health.statuses|slice:"5:" %}
+      {% kpi_metric %}{% kpi_label %}{{ status.label }}{% endkpi_label %}UGX {{ status.amount|intcomma }}{% endkpi_metric %}
+      {% endfor %}
+    {% endkpi_strip %}
+    {% include "components/bar_chart.html" with title="Advances Requested by Quarter" subtitle="UGX requested against each quarter's activities" chart_payload=finance_health.chart %}
+  </section>
+  {% endif %}
   {% if country_workflow and selected_period == "month" %}
   <section class="rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm" aria-labelledby="country-budget-approval-heading">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
