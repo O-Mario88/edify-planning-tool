@@ -56,8 +56,19 @@ MODULE_PAGES = {
 }
 
 
+def _reader(user):
+    """The User behind ``user``: services pass a User or a scope principal,
+    which carries the User's ``user_id`` but not the page permissions."""
+    if hasattr(user, "is_authenticated"):
+        return user
+    from apps.accounts.models import User
+
+    return User.objects.filter(id=getattr(user, "user_id", None)).first()
+
+
 def destination(user, section: str) -> str:
     """Where ``section``'s old link takes ``user``."""
+    user = _reader(user)
     if section in MODULE_PAGES:
         return MODULE_PAGES[section]
     if section == "core_school_health":

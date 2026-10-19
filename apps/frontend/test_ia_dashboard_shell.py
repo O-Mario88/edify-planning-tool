@@ -538,7 +538,7 @@ class IaNoticeTest(IaShellFixture):
                 self.assertEqual(route, expected)
         # Other roles keep their own routes.
         route, _ = R.resolve("critical_school_ssa", "School", "s1", "CountryDirector")
-        self.assertEqual(route, "/analytics/country-director")
+        self.assertEqual(route, "/country-profile?tab=ssa")
 
     def test_the_country_director_hears_about_ia_officers_own_work(self):
         from apps.realtime.jobs import _do_ia_verification_digest

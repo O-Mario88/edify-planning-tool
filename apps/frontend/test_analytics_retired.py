@@ -205,6 +205,18 @@ class HomeTest(RetiredFixture):
             with self.subTest(section=section, role=user.active_role):
                 self.assertEqual(home(user, section), {"href": href, "label": label})
 
+    def test_a_scope_principal_is_read_as_its_user(self):
+        """Services pass a scope principal (its ``user_id`` and role) as often
+        as a User; the home is the same either way."""
+        from types import SimpleNamespace
+
+        for user in (self.cd, self.pl, self.cceo, self.hr):
+            principal = SimpleNamespace(
+                user_id=user.id, id=user.id, active_role=user.active_role
+            )
+            with self.subTest(role=user.active_role):
+                self.assertEqual(home(principal, "ssa"), home(user, "ssa"))
+
     def test_the_country_director_s_dashboard_opens_the_country_profile(self):
         # /dashboard opens Country Oversight; the command dashboard answers
         # when a link names its view.

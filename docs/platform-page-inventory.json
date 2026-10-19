@@ -27676,7 +27676,9 @@
       "route_name": "analytics_dashboard",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -27755,7 +27757,9 @@
       "route_name": "",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -27908,7 +27912,9 @@
       "route_name": "cd_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -28524,7 +28530,9 @@
       "route_name": "people_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -28595,7 +28603,9 @@
       "route_name": "pl_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -29106,7 +29116,9 @@
       "route_name": "closure_impact",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -29178,7 +29190,9 @@
       "route_name": "verification_quality",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -29254,7 +29268,9 @@
       "route_name": "visit_effectiveness",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -36610,7 +36626,9 @@
       "route_name": "core_school_health",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -44818,7 +44836,9 @@
       "route_name": "decision_intelligence",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -44894,7 +44914,9 @@
       "route_name": "declining_schools",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -61127,7 +61149,9 @@
       "route_name": "impact_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -92962,7 +92986,9 @@
       "route_name": "ssa_master",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
