@@ -997,12 +997,6 @@ urlpatterns = [
         oversight_views.partner_oversight_view,
         name="partner_oversight",
     ),
-    # Each Partner analysed by the profile engine (owner, 2026-10-18).
-    path(
-        "partner-oversight/analysis",
-        oversight_views.partner_oversight_analysis_view,
-        name="partner_oversight_analysis",
-    ),
     path(
         "partner-oversight/allowance-drawer",
         oversight_views.partner_allowance_drawer,
@@ -2867,12 +2861,6 @@ urlpatterns = [
         "projects/monitoring",
         extended_views.project_monitoring_view,
         name="project_monitoring",
-    ),
-    # Every watched project analysed by the profile engine (owner, 2026-10-18).
-    path(
-        "projects/monitoring/analysis",
-        extended_views.project_monitoring_analysis_view,
-        name="project_monitoring_analysis",
     ),
     # One school's project work, read only, for everyone in the page's lens;
     # and the Project Coordinator's two decisions on partner work — withdraw

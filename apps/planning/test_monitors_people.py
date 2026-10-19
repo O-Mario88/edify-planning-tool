@@ -596,9 +596,6 @@ class IaReadsTheMonitorsOnPlanningOversight(PeopleFixture):
                 # keep the order they were given.
                 ("trainings", "Training Summary"),
                 ("portfolio", "Country Portfolio"),
-                # Owner, 2026-10-18: each team member read by their
-                # profile's engine, beside the portfolio it analyses.
-                ("analysis", "Analysis"),
                 ("coverage", "Schools & Coverage"),
                 ("targets", "Target Performance"),
             ],

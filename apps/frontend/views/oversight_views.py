@@ -477,8 +477,6 @@ def _lens_tabs(
         # Special Projects, Execution & Completion), which stay together.
         ("trainings", "Training Summary"),
         ("portfolio", "Country Portfolio" if country else "Team Portfolio"),
-        # Each member read by their profile's engine (owner, 2026-10-18).
-        ("analysis", "Analysis"),
         ("coverage", "Schools & Coverage"),
         ("targets", "Target Performance"),
     )
@@ -550,14 +548,6 @@ def country_lens_tabs(active: str) -> list[dict]:
                 "Country Execution & Completion Oversight",
                 "Execution & Completion",
                 f"{COUNTRY_OVERSIGHT_PATH}?view=execution",
-            ),
-            # Each Programme Lead read by their profile's engine (owner,
-            # 2026-10-18).
-            (
-                "analysis",
-                "Country Analysis",
-                "Analysis",
-                f"{COUNTRY_OVERSIGHT_PATH}?view=analysis",
             ),
         )
     ]
@@ -722,50 +712,6 @@ def country_map_view(request):
         return render(request, "partials/oversight/portfolio_workspace.html", context)
     context.update(country_map_context(period["fy"]))
     return render(request, "pages/oversight/country_map.html", context)
-
-
-def _analysis_lens_context(request, *, country: bool) -> dict:
-    """The Analysis lens (owner, 2026-10-18: "make sure the existing analytics
-    are integrated into the profiles and oversights"): each person read by
-    their profile's engine — Country Planning Oversight's Programme Leads over
-    their teams, Team Oversight's members over their own schools
-    (`apps.planning.team_analysis`). A country reader chooses the team."""
-    from apps.analytics import oversight_analysis
-    from apps.planning import team_analysis
-
-    period = oversight_analysis.period_context(request)
-    keep = {"view": "analysis"}
-    leads = []
-    if country:
-        rows = team_analysis.lead_rows(
-            request.user, fy=period["fy"], period=period["period"]
-        )
-    else:
-        chosen = (request.GET.get("program_lead") or "").strip() or None
-        lead_id = team_analysis.team_lead_id(request.user, chosen)
-        rows = team_analysis.team_rows(
-            request.user,
-            fy=period["fy"],
-            period=period["period"],
-            program_lead_id=lead_id,
-        )
-        if is_country_reader(request.user):
-            keep["program_lead"] = lead_id or ""
-            leads = [
-                {
-                    "key": lead["id"],
-                    "label": lead["name"],
-                    "is_active": str(lead_id) in {str(i) for i in lead["ids"]},
-                }
-                for lead in team_analysis.leads()
-            ]
-    return {
-        **period,
-        "rows": rows,
-        "summary": oversight_analysis.summarise(rows),
-        "analysis_keep": keep,
-        "analysis_leads": leads,
-    }
 
 
 def _portfolio_context(request, period: dict, *, base_url: str) -> dict:
@@ -2133,12 +2079,9 @@ def team_planning_oversight_view(request):
             "projects",
             "execution",
             "trainings",
-            "analysis",
         }
         else "planning"
     )
-    if active_view == "analysis" and not can_view_portfolio:
-        active_view = "planning"
     if active_view == "trainings" and not can_view_trainings:
         active_view = "planning"
     if active_view == "targets" and not can_view_targets:
@@ -2161,8 +2104,6 @@ def team_planning_oversight_view(request):
             ("trainings", can_view_trainings),
             ("execution", can_view_monitors),
             ("portfolio", can_view_portfolio),
-            # The analysis is a programme question, for the portfolio's readers.
-            ("analysis", can_view_portfolio),
             ("coverage", can_view_coverage),
             ("targets", can_view_targets),
         )
@@ -2239,20 +2180,6 @@ def team_planning_oversight_view(request):
         }
         if request.headers.get("HX-Request") == "true":
             return render(request, _MONITOR_TEMPLATES[active_view], context)
-        return render(request, "pages/oversight/team_planning.html", context)
-
-    if active_view == "analysis":
-        context = {
-            **period,
-            **_analysis_lens_context(request, country=False),
-            "active_oversight_view": active_view,
-            "lens_tabs": lens_tabs,
-            "lens_base_url": TEAM_OVERSIGHT_PATH,
-            "can_view_team_targets": can_view_targets,
-            "can_view_team_planning": can_view_planning,
-            "can_view_school_coverage": can_view_coverage,
-            "can_view_portfolio": can_view_portfolio,
-        }
         return render(request, "pages/oversight/team_planning.html", context)
 
     # The portfolio and cluster lenses stand on the school and cluster records,
@@ -2593,15 +2520,6 @@ def country_planning_oversight_view(request):
     # link to them here opens it with the same filters.
     if requested_view == "monitor":
         return _to_planning_monitor(request, requested_view)
-    if requested_view == "analysis":
-        context = {
-            **period,
-            **_analysis_lens_context(request, country=True),
-            "active_oversight_view": "analysis",
-            "lens_tabs": country_lens_tabs("analysis"),
-            "lens_base_url": COUNTRY_OVERSIGHT_PATH,
-        }
-        return render(request, "pages/oversight/country_planning.html", context)
     if requested_view not in {"plan", "planning", "portfolio"}:
         from apps.frontend.views.country_oversight_views import coverage_page
 
@@ -3449,31 +3367,6 @@ def country_planning_team_view(request, staff_id: str):
 
 
 # ── Partner oversight ────────────────────────────────────────────────────────
-@require_page_permission("partner_oversight")
-def partner_oversight_analysis_view(request):
-    """Partner Monitoring's Analysis: each Partner the reader monitors, read
-    by the profile engine over the hand-overs the reader's own monitoring
-    view shows (owner, 2026-10-18: "make sure the existing analytics are
-    integrated into the profiles and oversights ... Partner monitoring").
-    `apps.planning.partner_analysis` says how; this view only reads it."""
-    from django.http import HttpResponseForbidden
-
-    from apps.analytics import oversight_analysis
-    from apps.planning import partner_analysis
-
-    if not has_permission(request.user, Permission.PARTNER_MONITORING_VIEW.value):
-        return HttpResponseForbidden("You do not monitor Partner work.")
-    period = oversight_analysis.period_context(request)
-    rows = partner_analysis.partner_rows(
-        request.user, fy=period["fy"], period=period["period"]
-    )
-    return render(
-        request,
-        "pages/oversight/partner_analysis.html",
-        {**period, "rows": rows, "summary": oversight_analysis.summarise(rows)},
-    )
-
-
 # The Program Lead's lens on partner-delivered work. Organised by partner
 # because that is the unit a supervisor chases: "has Partner X scheduled the
 # four schools we gave them" is one question, not four.

@@ -30,7 +30,7 @@ still open — the second Country Oversight tab.{% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
   {% page_header eyebrow="Leadership" title="Country Planning Oversight" %}
-    {% slot description %}{% if active_oversight_view == "analysis" %}Each Programme Lead, read as their profile reads them: their whole team's schools, the work done there and how its SSA moved, {{ fy_label }}{% if period_label %}, {{ period_label }}{% endif %}.{% elif active_oversight_view == "monitor" %}Each CCEO's year against the visits it should hold, the schools planned for training, and the schools nobody has planned for yet — planned and delivered, as it happens.{% elif active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}{% endslot %}
+    {% slot description %}{% if active_oversight_view == "monitor" %}Each CCEO's year against the visits it should hold, the schools planned for training, and the schools nobody has planned for yet — planned and delivered, as it happens.{% elif active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}{% endslot %}
   {% slot aside %}
     {% comment %}The country read as a profile: its sub-regions, districts,
     teams, clusters and schools (owner, 2026-10-09).{% endcomment %}
@@ -63,13 +63,7 @@ still open — the second Country Oversight tab.{% endcomment %}
   the shared lens workspaces swap #oversight-workspace as they do on Team
   Oversight. One element carrying both keeps the shared partials shared.{% endcomment %}
   <div id="country-workspace"><div id="oversight-workspace" data-live-region>
-    {% if active_oversight_view == "analysis" %}
-      {% comment %}Each Programme Lead read by their profile's engine over the
-      whole team (owner, 2026-10-18; apps.planning.team_analysis).{% endcomment %}
-      <div class="space-y-4" data-country-analysis>
-        {% include "partials/oversight/analysis_body.html" with action="/country-planning-oversight/" subject="Programme Lead" subjects="Programme Leads" table_name="country-analysis" caption="Each Programme Lead over their whole team's schools: the work planned and done there, Partner hand-overs by stage, and the schools' SSA this year against the year before. The figures are the Lead's profile; open a name to see them by team member, district, cluster and school." empty="No Programme Lead's team holds a school." %}
-      </div>
-    {% elif active_oversight_view == "portfolio" %}
+    {% if active_oversight_view == "portfolio" %}
       {% include "partials/oversight/portfolio_workspace.html" %}
     {% elif active_oversight_view == "monitor" %}
       {% include "partials/oversight/monitor_workspace.html" %}

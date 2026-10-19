@@ -3567,9 +3567,9 @@ def project_detail_view(request, project_id):
         f"/projects/{project.id}",
         # The project's navigation above already has an Overview: here the
         # page's own content is its delivery, the engine's overview the
-        # analysis of its schools.
+        # summary of its schools, named as the cluster profile names it.
         lead=(("delivery", "Delivery"),),
-        labels={"overview": "Analysis"},
+        labels={"overview": "Summary"},
     )
     return render(request, "pages/projects/detail.html", context)
 
@@ -4890,27 +4890,6 @@ def _monitoring_fy(request) -> str:
 
     requested = (request.GET.get("fy") or "").strip()
     return requested if requested in fy_options() else get_operational_fy()
-
-
-@require_page_permission("project_monitoring")
-def project_monitoring_analysis_view(request):
-    """Project Monitoring's Analysis: every project the reader watches, read
-    by the profile engine over the enrolments Monitoring shows them (owner,
-    2026-10-18: "make sure the existing analytics are integrated into the
-    profiles and oversights ... project monitoring").
-    `apps.projects.project_analysis` says how; this view only reads it."""
-    from apps.analytics import oversight_analysis
-    from apps.projects import project_analysis
-
-    period = oversight_analysis.period_context(request)
-    rows = project_analysis.project_rows(
-        request.user, fy=period["fy"], period=period["period"]
-    )
-    return render(
-        request,
-        "pages/projects/monitoring_analysis.html",
-        {**period, "rows": rows, "summary": oversight_analysis.summarise(rows)},
-    )
 
 
 @require_page_permission("project_monitoring")
