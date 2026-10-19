@@ -18,13 +18,13 @@ apps.analytics.programme_rollout_service.ssa_rollout.
   </header>
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="SSA rollout by officer; scroll sideways for more columns">
     <table class="rpl-table" data-mobile-table="scroll">
-      <caption class="sr-only">Each officer's portfolio schools this year: confirmed SSA, collected and awaiting IA verification, collection scheduled or with a partner, and not yet planned.</caption>
+      <caption class="sr-only">Each officer's portfolio schools this year: confirmed SSA, collected and awaiting PL verification, collection scheduled or with a partner, and not yet planned.</caption>
       <thead>
         <tr>
           <th scope="col">Officer</th>
           <th scope="col" class="is-num">Portfolio schools</th>
           <th scope="col" class="is-num">Confirmed SSA</th>
-          <th scope="col" class="is-num">Awaiting IA verification</th>
+          <th scope="col" class="is-num">Awaiting PL verification</th>
           <th scope="col" class="is-num">Scheduled or with a partner</th>
           <th scope="col" class="is-num">Not yet planned</th>
           <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
@@ -36,7 +36,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
           <th scope="row" data-record-title><span>{% if row.profile_url %}<a href="{{ row.profile_url }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</span></th>
           <td class="is-num" data-label="Portfolio schools">{{ row.portfolio|intcomma }}</td>
           <td class="is-num" data-label="Confirmed SSA">{% if row.portfolio %}<span data-tone="{% if row.coverage >= 80 %}success{% elif row.coverage >= 50 %}warning{% else %}danger{% endif %}">{{ row.confirmed|intcomma }} · {{ row.coverage }}%</span>{% else %}<span class="rpl-muted">No schools</span>{% endif %}</td>
-          <td class="is-num" data-label="Awaiting IA verification">{{ row.awaiting|intcomma }}</td>
+          <td class="is-num" data-label="Awaiting PL verification">{{ row.awaiting|intcomma }}</td>
           <td class="is-num" data-label="Scheduled or with a partner">{{ row.scheduled|intcomma }}</td>
           <td class="is-num" data-label="Not yet planned">{% if row.not_planned %}<span data-tone="danger">{{ row.not_planned|intcomma }}</span>{% else %}0{% endif %}</td>
           <td class="is-end" data-record-action data-label="Actions">
@@ -64,7 +64,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
           <th scope="row" data-record-title><span>Whole team</span></th>
           <td class="is-num" data-label="Portfolio schools">{{ rollout.summary.portfolio|intcomma }}</td>
           <td class="is-num" data-label="Confirmed SSA">{{ rollout.summary.confirmed|intcomma }}{% if rollout.summary.coverage is not None %} · {{ rollout.summary.coverage }}%{% endif %}</td>
-          <td class="is-num" data-label="Awaiting IA verification">{{ rollout.summary.awaiting|intcomma }}</td>
+          <td class="is-num" data-label="Awaiting PL verification">{{ rollout.summary.awaiting|intcomma }}</td>
           <td class="is-num" data-label="Scheduled or with a partner">{{ rollout.summary.scheduled|intcomma }}</td>
           <td class="is-num" data-label="Not yet planned">{{ rollout.summary.not_planned|intcomma }}</td>
           <td class="is-end" data-record-action data-label="Actions">{% if rollout.summary.not_planned %}<a href="{{ schools_url }}?kind=ssa_not_planned&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_not_planned&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Not planned</a>{% endif %}</td>
@@ -73,7 +73,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
       </tbody>
     </table>
   </div>
-  <div class="rpl-card__footnote">A school takes the first state it qualifies for. A school two officers share counts in both rows and once in the team total. Awaiting IA verification includes a collection held whose confirmed record has not arrived.</div>
+  <div class="rpl-card__footnote">A school takes the first state it qualifies for. A school two officers share counts in both rows and once in the team total. Awaiting PL verification includes a collection held whose confirmed record has not arrived.</div>
 </section>
 
 {% paginate rollout.clusters "cluster_page" as cluster_pager %}
@@ -93,7 +93,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
           <th scope="col">Officers</th>
           <th scope="col" class="is-num">Schools</th>
           <th scope="col" class="is-num">Confirmed SSA</th>
-          <th scope="col" class="is-num">Awaiting IA verification</th>
+          <th scope="col" class="is-num">Awaiting PL verification</th>
           <th scope="col" class="is-num">Scheduled or with a partner</th>
           <th scope="col" class="is-num">Not yet planned</th>
           <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
@@ -106,7 +106,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
           <td data-label="Officers">{{ row.officers|default:"—" }}</td>
           <td class="is-num" data-label="Schools">{{ row.portfolio|intcomma }}</td>
           <td class="is-num" data-label="Confirmed SSA"><span data-tone="{% if row.coverage >= 80 %}success{% elif row.coverage >= 50 %}warning{% else %}danger{% endif %}">{{ row.confirmed|intcomma }} · {{ row.coverage }}%</span></td>
-          <td class="is-num" data-label="Awaiting IA verification">{{ row.awaiting|intcomma }}</td>
+          <td class="is-num" data-label="Awaiting PL verification">{{ row.awaiting|intcomma }}</td>
           <td class="is-num" data-label="Scheduled or with a partner">{{ row.scheduled|intcomma }}</td>
           <td class="is-num" data-label="Not yet planned">{% if row.not_planned %}<span data-tone="danger">{{ row.not_planned|intcomma }}</span>{% else %}0{% endif %}</td>
           <td class="is-end" data-record-action data-label="Actions">{% if row.not_planned %}<a href="{{ schools_url }}?kind=ssa_not_planned&amp;cluster={{ row.cluster }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_not_planned&amp;cluster={{ row.cluster }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Not planned</a>{% endif %}</td>

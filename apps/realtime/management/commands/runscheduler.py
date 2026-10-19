@@ -68,6 +68,7 @@ class Command(BaseCommand):
             "verification_reminders": jobs.verification_reminders_job,
             "acting_lifecycle": jobs.acting_lifecycle_job,
             "target_ledger_sync": jobs.target_ledger_sync_job,
+            "hand_in_entered_work": jobs.hand_in_entered_work_job,
             "pd_reminders": jobs.pd_reminders_job,
             "loan_tracking_notifications": jobs.loan_tracking_notifications_job,
             "field_debrief_recurring_issues": jobs.field_debrief_recurring_issues_job,

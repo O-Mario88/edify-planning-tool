@@ -41,14 +41,16 @@ NOT_HANDED_IN_STATUSES = (
 )
 
 
-def _candidates():
+def _candidates(ids=None):
     from apps.activities.models import Activity
     from apps.pl_review.services import LEAD_REVIEWABLE_STATUSES, lead_verified_q
 
     holds_id = ~Q(salesforce_activity_id__isnull=True) & ~Q(salesforce_activity_id="")
+    found = Activity.objects.filter(deleted_at__isnull=True)
+    if ids is not None:
+        found = found.filter(id__in=list(ids))
     return (
-        Activity.objects.filter(deleted_at__isnull=True)
-        .filter(lead_verified_q())
+        found.filter(lead_verified_q())
         .filter(holds_id)
         .filter(
             Q(status__in=NOT_HANDED_IN_STATUSES)
@@ -58,9 +60,15 @@ def _candidates():
     )
 
 
-def hand_in_entered_work(*, apply: bool = False) -> list[dict]:
+def hand_in_entered_work(*, apply: bool = False, ids=None) -> list[dict]:
     """What there is to do, and with ``apply`` it is done. Each row says the
-    activity and what happens to it; an empty list means nothing to do."""
+    activity and what happens to it; an empty list means nothing to do.
+
+    ``ids`` narrows it to those activities: the Salesforce ID drawer hands in
+    the one it saved an ID on when the Submit gates find something missing
+    (owner, 2026-10-19: completed work with its Salesforce ID "MUST show for
+    the PLs to approve"). The lead sees what is missing and approves or
+    returns it. The scheduled job runs it for everything."""
     from apps.pl_review.services import (
         LEAD_REVIEWABLE_STATUSES,
         approve_on_hand_in,
@@ -68,7 +76,7 @@ def hand_in_entered_work(*, apply: bool = False) -> list[dict]:
     )
 
     done = []
-    for activity in _candidates():
+    for activity in _candidates(ids):
         lead_own = bool(programme_lead_owner(activity))
         if activity.status in LEAD_REVIEWABLE_STATUSES and not lead_own:
             # A CCEO's, already with the lead.

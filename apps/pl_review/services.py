@@ -44,12 +44,26 @@ LEAD_VERIFIED_ROLES = (EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.valu
 
 
 def _lead_verified_profiles():
+    """The staff whose staff-delivered work a Programme Lead verifies: every
+    CCEO and lead, and anyone else a Programme Lead supervises (owner,
+    2026-10-19: "Only Partner work is verified by Impact Assessment (IA).
+    Staff work is verified by PL"). A staff member no lead supervises has no
+    lead to send work to, so IA keeps theirs rather than it waiting on
+    nobody."""
     from apps.accounts.models import StaffProfile
 
     holds = Q()
     for role in LEAD_VERIFIED_ROLES:
         holds |= Q(user__roles__contains=[role])
-    return StaffProfile.objects.filter(holds, deleted_at__isnull=True)
+    supervised_by_lead = Q(
+        supervisor_links__supervisor__user__roles__contains=[
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        ],
+        supervisor_links__supervisor__deleted_at__isnull=True,
+    )
+    return StaffProfile.objects.filter(
+        holds | supervised_by_lead, deleted_at__isnull=True
+    ).distinct()
 
 
 def lead_verified_owner_q(field: str = "responsible_staff_id") -> Q:

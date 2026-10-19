@@ -13,7 +13,6 @@ set what the scores weigh (apps.clusters.scores).
 
 from __future__ import annotations
 
-import csv
 
 from django.contrib import messages
 from django.http import HttpResponse
@@ -41,7 +40,9 @@ def _csv(table, section_key: str, fy: str) -> HttpResponse:
     response["Content-Disposition"] = (
         f'attachment; filename="cluster-oversight-{section_key}-fy{fy}.csv"'
     )
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     for line in table.as_csv_rows():
         # A cell that begins with =, +, - or @ is a formula to a spreadsheet;
         # a quote in front keeps a school's name from being run as one. A

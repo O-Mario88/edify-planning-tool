@@ -13,7 +13,6 @@ from apps.core.permissions import (
 from django.contrib import messages
 from apps.core.htmx_saved import saved_in_place
 from django.http import HttpResponse, HttpResponseForbidden
-import csv
 import json
 from datetime import datetime, timedelta
 
@@ -311,7 +310,9 @@ def cluster_list_view(request):
     if export_format in ["csv", "xlsx"]:
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="clusters_export.csv"'
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         writer.writerow(
             [
                 "Cluster Name",

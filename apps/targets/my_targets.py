@@ -1364,7 +1364,7 @@ class MyTargetQueryService:
                 elif a.status in COMPLETED_STATUSES:
                     if (a.salesforce_activity_id or "").strip():
                         if a.status == "awaiting_ia_verification":
-                            row["why"] = "Awaiting IA verification"
+                            row["why"] = "Awaiting PL verification"
                             out["ia_pending"].append(row)
                         else:
                             out["validated"].append(row)
@@ -1391,7 +1391,7 @@ class MyTargetQueryService:
                 if r.verification_status == "confirmed":
                     out["validated"].append(row)
                 else:
-                    row["why"] = "Awaiting IA verification"
+                    row["why"] = "Awaiting PL verification"
                     out["ia_pending"].append(row)
         else:  # mscs
             for s in MostSignificantChangeStory.objects.filter(

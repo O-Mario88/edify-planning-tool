@@ -2893,15 +2893,15 @@ def _export_response(items, filename: str, *, request_user, excel: bool = False)
             filename.replace(".csv", ".xlsx"), plan_export.sheets(rows)
         )
 
-    import csv
-
     from django.http import StreamingHttpResponse
 
     class _Echo:
         def write(self, value):
             return value
 
-    writer = csv.writer(_Echo())
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(_Echo())
     response = StreamingHttpResponse(
         (writer.writerow(row) for row in plan_export.csv_rows(rows)),
         content_type="text/csv",
@@ -3453,8 +3453,15 @@ def partner_oversight_view(request):
         (entry for entry in partner_tabs if entry["key"] == requested_partner),
         partner_tabs[0] if partner_tabs else None,
     )
+    # Partners needing follow-up (owner, 2026-10-19: the Analytics page's
+    # Recommended Actions, given its home here): the Country Director
+    # Analytics' recommendation, on the Partner's tab and under its name.
+    from apps.planning.partner_follow_up import partners_needing_follow_up
+
+    follow_up = partners_needing_follow_up(request.user, period["fy"])
     for entry in partner_tabs:
         entry["is_active"] = entry is active_partner
+        entry["follow_up"] = follow_up.get(entry["key"], "")
     partner_id = active_partner["key"] if active_partner else ""
     partner_items = [i for i in team_items if partner_id and i.partner_id == partner_id]
     partner_trainings = [
@@ -3539,7 +3546,11 @@ def partner_oversight_view(request):
     )
     partner_group = None
     if active_partner:
-        partner_group = {"id": partner_id, "name": active_partner["label"]}
+        partner_group = {
+            "id": partner_id,
+            "name": active_partner["label"],
+            "follow_up": follow_up.get(partner_id, ""),
+        }
         partner_oversight._attach_partner_identity([partner_group])
 
     context = {
@@ -4017,7 +4028,6 @@ def partner_oversight_send_action_view(request):
 def partner_oversight_export_view(request):
     """The current partner view, as CSV or (``format=xlsx``) as a workbook.
     Same scope, same period, same rows."""
-    import csv
 
     from django.http import StreamingHttpResponse
 
@@ -4108,7 +4118,9 @@ def partner_oversight_export_view(request):
         def write(self, value):
             return value
 
-    writer = csv.writer(_Echo())
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(_Echo())
     response = StreamingHttpResponse(
         (writer.writerow(row) for row in partner_oversight.export_rows(items)),
         content_type="text/csv",

@@ -298,6 +298,7 @@ class FinanceBlockedReasonService:
         from django.db.models.functions import Coalesce, Upper
 
         from apps.activities.models import ActivityScheduleCostLine
+        from apps.activities.salesforce import NO_SALESFORCE_RECORD_TYPES
         from apps.evidence.models import EvidenceRecord
 
         if queryset is None:
@@ -327,10 +328,10 @@ class FinanceBlockedReasonService:
             | (Q(delivery_type="partner") & Q(fin_has_evidence=False))
             | Q(fin_has_budget_lines=False)
             # Rule 3: work with a Salesforce record and no SF ID. Only
-            # the NONE and SSA_DATA_GATHERING snapshots have no record
+            # the admin and field events have no record
             # (sf_kind_for_activity), and "" counts as no ID.
             | (
-                ~Q(fin_sf_record_type__in=("NONE", "SSA_DATA_GATHERING"))
+                ~Q(fin_sf_record_type__in=tuple(NO_SALESFORCE_RECORD_TYPES))
                 & (
                     Q(salesforce_activity_id__isnull=True)
                     | Q(salesforce_activity_id="")

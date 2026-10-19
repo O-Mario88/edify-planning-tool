@@ -197,7 +197,7 @@ DETAILS = (
     C("cost", "Planned Cost (UGX)", numeric=True),
     C("salesforce", "Salesforce ID"),
     # UPLOAD-OFF (owner, 2026-10-13): C("evidence", "Evidence"),
-    C("ia", "IA Verification"),
+    C("ia", "Verification"),
     C("payment", "Payment"),
     C("rescheduled", "Times Rescheduled", numeric=True),
     C("recorded", "Recorded On", is_date=True),
