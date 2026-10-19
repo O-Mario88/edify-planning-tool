@@ -387,7 +387,7 @@ class CDDashboardService:
                 target_progress,
                 "primary",
                 "valid completed vs assigned targets",
-                "/analytics/country-director",
+                "/country-profile",
                 trend(
                     now["target_pct"],
                     prior and prior["target_pct"],
@@ -401,7 +401,7 @@ class CDDashboardService:
                 f"{active_schools:,}",
                 "success",
                 "completed activity this period",
-                "/analytics/country-director",
+                "/country-profile",
                 trend(active_schools, prior and prior["active_schools"], label=vs),
             ),
             card(
@@ -410,7 +410,7 @@ class CDDashboardService:
                 f"{core['pct']}%",
                 "info",
                 f"{core['on_track']} of {core['total']} core plans",
-                "/core-school-health",
+                "/core-schools-oversight/",
                 trend(
                     core["pct"], prior and prior["core"]["pct"], unit=" pts", label=vs
                 ),
@@ -554,7 +554,7 @@ class CDDashboardService:
                     "title": f"{len(behind)} Region{'s' if len(behind) > 1 else ''} Behind Target",
                     "line1": f"{worst['name']} is at {worst['achievement']}% vs the {REGION_BEHIND_THRESHOLD}% threshold.",
                     "action": "View Regional Performance",
-                    "link": "/analytics/country-director",
+                    "link": "/country-profile",
                 }
             )
 
@@ -1147,7 +1147,7 @@ class CDDashboardService:
                 returned,
                 "warning",
                 "sent back by PL / IA",
-                "/analytics/country-director",
+                "/country-profile",
             ),
             c(
                 "school",
@@ -1171,7 +1171,7 @@ class CDDashboardService:
                 core["behind"],
                 "violet",
                 "4 visits + 4 trainings",
-                "/core-school-health",
+                "/core-schools-oversight/",
             ),
             c(
                 "calendar",
@@ -1400,7 +1400,7 @@ class CDDashboardService:
             {
                 "label": "View High-Risk Regions",
                 "icon": "warning",
-                "url": "/analytics/country-director",
+                "url": "/country-profile",
                 "helper": "regional risk intelligence",
             },
             {
@@ -1412,7 +1412,7 @@ class CDDashboardService:
             {
                 "label": "See Core School Delays",
                 "icon": "shield",
-                "url": "/core-school-health",
+                "url": "/core-schools-oversight/",
                 "helper": "4 visits + 4 trainings",
             },
             {

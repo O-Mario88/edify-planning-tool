@@ -44,7 +44,7 @@ def _fallback(user) -> str:
         return "/cluster-oversight/"
     if role == EdifyRole.PROJECT_COORDINATOR.value:
         return "/projects/analytics"
-    if role == EdifyRole.ACCOUNTANT.value:
+    if role == EdifyRole.PROGRAM_ACCOUNTANT.value:
         return "/budget"
     return "/dashboard"
 
@@ -81,6 +81,32 @@ def destination(user, section: str) -> str:
             else _fallback(user)
         )
     return _profile(user) or _fallback(user)
+
+
+#: Each home's name, by the start of its address, as its own page reads.
+HOME_NAMES = (
+    ("/country-profile", "Country Profile"),
+    ("/staff/", "My Profile"),
+    ("/cluster-oversight/", "Cluster Oversight"),
+    ("/core-schools-oversight/", "Core School Oversight"),
+    ("/schools/closed", "Closed Schools"),
+    ("/projects/analytics", "Project Analytics"),
+    ("/budget", "Budget"),
+    ("/hr-analytics", "HR Analytics"),
+    ("/ia/dashboard/", "Impact Assessment Dashboard"),
+)
+
+
+def home(user, section: str = "overview") -> dict:
+    """The page ``section``'s reading lives on for ``user``, and its name.
+
+    A link that once opened an Analytics section opens this page and says
+    its name, rather than an old address that redirects."""
+    href = destination(user, section)
+    label = next(
+        (name for start, name in HOME_NAMES if href.startswith(start)), "Dashboard"
+    )
+    return {"href": href, "label": label}
 
 
 def retired(section: str, page_key: str):

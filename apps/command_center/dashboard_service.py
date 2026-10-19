@@ -577,6 +577,9 @@ class DashboardMetricsService:
         }
 
         # 11b. Attention Needed — real counts only; empty list when clean.
+        from apps.frontend.views.analytics_retired import home
+
+        ssa_home = home(user, "ssa")
         attention_items = []
         if without_ssa_count:
             attention_items.append(
@@ -585,7 +588,7 @@ class DashboardMetricsService:
                     "cls": "red-bg",
                     "title": f"{without_ssa_count} schools",
                     "detail": "Missing a verified SSA this year",
-                    "href": "/ssa",
+                    "href": ssa_home["href"],
                 }
             )
         _fund_pending = fund_summary["fy_pending"]
@@ -632,8 +635,8 @@ class DashboardMetricsService:
                 "detail": f"{without_ssa_count} school"
                 + ("s" if without_ssa_count > 1 else "")
                 + " missing a verified SSA this year.",
-                "cta_label": "Go to SSA",
-                "cta_href": "/ssa",
+                "cta_label": f"Open {ssa_home['label']}",
+                "cta_href": ssa_home["href"],
             }
         elif _evidence_pending:
             recommended_action = {

@@ -57,7 +57,7 @@ its distribution table, then the region and district delivery table beneath.
         1,700 of the Country Director dashboard's nodes.{% endcomment %}
         {% for d in r.districts %}
         <template x-if="open"><tr class="border-t border-slate-50 bg-slate-50">
-          <td class="px-3 py-2 pl-9 text-slate-600"><a href="/analytics/country-director?fy={{ fy }}&district={{ d.id }}" class="hover:underline">{{ d.name }}</a></td>
+          <td class="px-3 py-2 pl-9 text-slate-600"><a href="/districts/{{ d.id }}" class="hover:underline">{{ d.name }}</a></td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.schools|intcomma }}</td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.schools_planned|intcomma }}</td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.schools_achieved|intcomma }}</td>

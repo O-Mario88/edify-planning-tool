@@ -326,12 +326,15 @@ def recommendations(principal, query: dict) -> list[dict]:
 
     Each recommendation has: priority, reason, affectedRecords, suggestedAction,
     link, roleOwner. Generated from live data — no hardcoded recommendations."""
+    from apps.frontend.views.analytics_retired import destination
+
     school_ids = _scoped_school_ids(principal)
     role = principal.active_role
     recs: list[dict] = []
 
     if not school_ids:
         return recs
+    ssa_link = destination(principal, "ssa")
 
     # 1. Schools without SSA (planning locked) — highest priority.
     from apps.schools.models import School as _S
@@ -346,7 +349,7 @@ def recommendations(principal, query: dict) -> list[dict]:
                 "reason": f"{no_ssa} schools have no current-FY SSA — planning is locked for them.",
                 "affectedCount": no_ssa,
                 "suggestedAction": "Upload SSA for these schools to unlock planning.",
-                "link": "/ssa",
+                "link": ssa_link,
                 "roleOwner": "ImpactAssessment",
             }
         )
@@ -397,7 +400,7 @@ def recommendations(principal, query: dict) -> list[dict]:
                     "reason": f"'{weakest.replace('_', ' ').title()}' is the weakest intervention (avg {weak_data.get('current', '?')}) with {below} schools below 5.0.",
                     "affectedCount": below,
                     "suggestedAction": f"Focus training and coaching on {weakest.replace('_', ' ')}.",
-                    "link": "/analytics",
+                    "link": ssa_link,
                     "roleOwner": role,
                 }
             )
