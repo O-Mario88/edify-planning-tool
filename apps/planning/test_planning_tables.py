@@ -1063,7 +1063,7 @@ class ImpactAssessmentTablesTest(TableWorld):
             "Facilitated By",
             "Planned Cost (UGX)",
             "Salesforce ID",
-            "IA Verification",
+            "Verification",
         ):
             with self.subTest(column=label):
                 self.assertIn(label, headers)
