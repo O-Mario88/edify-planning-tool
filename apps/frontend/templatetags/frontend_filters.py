@@ -4,6 +4,17 @@ register = template.Library()
 
 
 @register.filter
+def fy_label(fy) -> str:
+    """ "FY 2025/26" for the year that ends in 2026: the one way every page
+    names a fiscal year (`ssa.year_comparison.fy_label`; owner, 2026-10-19:
+    the same two years were "FY 2025 to FY 2026" on one tab and
+    "FY 2024/25 to FY 2025/26" on the next)."""
+    from apps.ssa.year_comparison import fy_label as label
+
+    return label(fy)
+
+
+@register.filter
 def replace_underscore(value):
     if not value:
         return ""
