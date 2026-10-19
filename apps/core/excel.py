@@ -146,10 +146,17 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
         headers = list(spec.get("headers") or [])
         if headers:
             sheet.append(headers)
-        for row in spec.get("rows") or []:
-            sheet.append(list(row))
-            for cell in sheet[sheet.max_row]:
-                _keep_as_text(cell)
+        # The sheet was just made: its rows start under the heading. The row
+        # number is counted here rather than read back, since reading a row
+        # (`sheet[n]`) rescans the sheet's width every time.
+        for row_number, row in enumerate(
+            spec.get("rows") or [], start=2 if headers else 1
+        ):
+            values = list(row)
+            sheet.append(values)
+            for column, value in enumerate(values, start=1):
+                if isinstance(value, str) and value.startswith("="):
+                    _keep_as_text(sheet.cell(row=row_number, column=column))
 
         if headers:
             style_header(sheet)
