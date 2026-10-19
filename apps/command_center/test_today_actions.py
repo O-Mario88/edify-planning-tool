@@ -130,6 +130,9 @@ class CompletionDecisionTests(TestCase):
             quarter="Q4",
             responsible_staff_id=self.cceo_sp.id,
             planned_date=timezone.now(),
+            # Handed in with its Salesforce ID: the lead verifies nothing
+            # without one (owner, 2026-10-19).
+            salesforce_activity_id="SVE-TODAY-0001",
         )
         self.todo = f"plrev-{self.activity.id}"
 

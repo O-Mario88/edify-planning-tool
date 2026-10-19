@@ -189,7 +189,9 @@ class OneReviewRuleTest(ReviewFixture):
         self.assertIn(by_user.id, {row["id"] for row in services.queue(self.pl_user)})
 
     def test_a_user_id_filed_completion_is_approvable_from_the_page(self):
-        by_user = self._completion(self.james_user.id)
+        by_user = self._completion(
+            self.james_user.id, salesforce_activity_id="SVE-5191"
+        )
 
         response = self.as_user(self.pl_user).post(f"{QUEUE_URL}/{by_user.id}/confirm")
 
@@ -563,7 +565,7 @@ class OneDecisionPerCompletionTest(ReviewFixture):
         return AuditLog.objects.filter(action=action, subject_id=work.id).count()
 
     def test_a_second_approval_is_refused_and_not_recorded_twice(self):
-        work = self._completion(self.james.id)
+        work = self._completion(self.james.id, salesforce_activity_id="SVE-5565")
         stale = self._read_before_the_other_decision(work)
         services.confirm(work.id, self.pl_user)
 
@@ -590,7 +592,7 @@ class OneDecisionPerCompletionTest(ReviewFixture):
         self.assertEqual(self._decisions(work, "pl_review_confirm"), 0)
 
     def test_a_return_that_lost_to_an_approval_leaves_the_work_verified(self):
-        work = self._completion(self.james.id)
+        work = self._completion(self.james.id, salesforce_activity_id="SVE-5592")
         stale = self._read_before_the_other_decision(work)
         services.confirm(work.id, self.pl_user)
 
@@ -631,6 +633,7 @@ class SimultaneousApprovalsTest(TransactionTestCase):
             planned_date=date.today() - timedelta(days=3),
             responsible_staff_id=officer.id,
             school=school,
+            salesforce_activity_id="SVE-5636",
         )
 
     def test_two_simultaneous_approvals_apply_once(self):

@@ -18,6 +18,10 @@ Pinned here:
      return, and the officer is told what the lead will see missing.
   3. The scheduled sweep hands in any work that holds its ID and was left
      behind, so the table and the counts never miss completed work.
+  4. Nobody verifies work that came in without its ID, whatever the door:
+     the Programme Lead's Verified, posted directly, and Impact Assessment's
+     confirmation of staff work both refuse it (owner, 2026-10-19: "make
+     sure that all completion should have salesforce ID").
 """
 
 from __future__ import annotations
@@ -123,6 +127,62 @@ class TheDrawersAskForTheId(_Fixture):
         )
         self.assertNotContains(response, 'name="salesforce_id"')
         self.assertContains(response, "has no Salesforce record")
+
+
+class NobodyVerifiesWorkWithoutItsId(_Fixture):
+    """Seen live (2026-10-19): two "School Visit + SSA Collection" visits were
+    handed in with no ID and waited on the lead's Verified."""
+
+    def test_the_lead_cannot_verify_a_visit_handed_in_without_it(self):
+        from apps.pl_review import services
+
+        work = self._completion(
+            self.james.id, salesforce_record_type_snapshot=SSA_GATHERING
+        )
+        with self.assertRaises(BadRequest):
+            services.confirm(work.id, self.pl_user)
+        work.refresh_from_db()
+        self.assertEqual(work.status, "submitted_to_pl")
+
+    def test_posting_verified_directly_moves_nothing(self):
+        work = self._completion(self.james.id)
+        self.as_user(self.pl_user).post(
+            f"{QUEUE_URL}/{work.id}/confirm", headers={"HX-Request": "true"}
+        )
+        work.refresh_from_db()
+        self.assertEqual(work.status, "submitted_to_pl")
+
+    def test_the_lead_verifies_it_once_the_id_is_in(self):
+        from apps.pl_review import services
+
+        work = self._completion(
+            self.james.id,
+            salesforce_record_type_snapshot=SSA_GATHERING,
+            salesforce_activity_id="SVE-8301",
+        )
+        services.confirm(work.id, self.pl_user)
+        work.refresh_from_db()
+        self.assertEqual(work.status, "ia_verified")
+
+    def test_a_field_event_is_verified_without_one(self):
+        from apps.pl_review import services
+
+        work = self._completion(self.james.id, salesforce_record_type_snapshot="NONE")
+        services.confirm(work.id, self.pl_user)
+        work.refresh_from_db()
+        self.assertEqual(work.status, "ia_verified")
+
+    def test_ia_cannot_confirm_staff_work_without_it(self):
+        from apps.activities.salesforce import ENTRY_SOURCE_IA_CONFIRMATION
+        from apps.activities.services import _confirm_activity_after_authorization
+
+        work = self._completion(self.james.id, status="awaiting_ia_verification")
+        with self.assertRaises(BadRequest):
+            _confirm_activity_after_authorization(
+                work, {}, self.pl_user, entry_source=ENTRY_SOURCE_IA_CONFIRMATION
+            )
+        work.refresh_from_db()
+        self.assertEqual(work.status, "awaiting_ia_verification")
 
 
 class StartedWorkCannotSkipTheId(_Fixture):

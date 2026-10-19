@@ -278,7 +278,7 @@ class AttendanceKeepsTheCurrentStatusTest(FieldWorkFixture):
         self.assertIsNone(work.teachers_attended)
 
     def test_attendance_during_review_keeps_the_leads_approval(self):
-        work = self._work("submitted_to_pl")
+        work = self._work("submitted_to_pl", salesforce_activity_id="SVE-STALE-0301")
         stale = self._read_before_the_other_write(work)
         pl_review.confirm(work.id, self.pl_user)
 

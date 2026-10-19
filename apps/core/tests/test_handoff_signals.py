@@ -190,6 +190,8 @@ class ActivityChainNotificationTests(TestCase):
         # its evidence in one act (pl_review.services.confirm, 2026-09-19), so
         # the hand-off it signals is back to the officer whose work it was;
         # Impact Assessment is no longer in the staff-work chain.
+        self.act.salesforce_activity_id = "SVE-6201"
+        self.act.save(update_fields=["salesforce_activity_id"])
         with self.captureOnCommitCallbacks(execute=True):
             services.confirm(self.act.id, self.pl)
         self.assertTrue(

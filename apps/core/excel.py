@@ -125,7 +125,6 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
         _cell._TYPES[_now_dt] = "d"
 
     from openpyxl import Workbook
-    from openpyxl.cell import WriteOnlyCell
     from openpyxl.utils import get_column_letter
 
     if any(
@@ -147,12 +146,17 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
         headers = list(spec.get("headers") or [])
         if headers:
             sheet.append(headers)
-        for row in spec.get("rows") or []:
-            # Each cell is made and kept as text before the row is appended:
-            # reading the row back (`sheet[sheet.max_row]`) rescans the
-            # sheet's width every row, the quadratic cost the 2026-09-24
-            # audit removed.
-            sheet.append([_keep_as_text(WriteOnlyCell(sheet, value)) for value in row])
+        # The sheet was just made: its rows start under the heading. The row
+        # number is counted here rather than read back, since reading a row
+        # (`sheet[n]`) rescans the sheet's width every time.
+        for row_number, row in enumerate(
+            spec.get("rows") or [], start=2 if headers else 1
+        ):
+            values = list(row)
+            sheet.append(values)
+            for column, value in enumerate(values, start=1):
+                if isinstance(value, str) and value.startswith("="):
+                    _keep_as_text(sheet.cell(row=row_number, column=column))
 
         if headers:
             style_header(sheet)

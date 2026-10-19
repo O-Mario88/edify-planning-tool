@@ -1063,6 +1063,8 @@ class ImpactAssessmentTablesTest(TableWorld):
             "Facilitated By",
             "Planned Cost (UGX)",
             "Salesforce ID",
+            # Staff and partner rows together: staff work is verified by
+            # the Programme Lead, partner work by IA (owner, 2026-10-19).
             "Verification",
         ):
             with self.subTest(column=label):
