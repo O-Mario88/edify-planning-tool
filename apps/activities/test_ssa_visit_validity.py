@@ -167,22 +167,17 @@ class SsaVisitValidity(TestCase):
 
     # --------------------------------------------------------- asking (door 2)
 
-    def test_the_api_completion_door_asks_the_ssa_question(self):
-        """`complete()` is the domain act behind BOTH the web form and the
-        generated `/api/activities/<id>/complete` route. The rule has to live
-        here, or the API door keeps its own laxer standard."""
+    def test_the_api_completion_door_completes_without_the_ssa(self):
+        """The SSA is optional at completion (owner, 2026-10-19: "Adding SSA
+        scores can be optional but Salesforce ID is A MUST"). It used to be
+        refused here until the scores or a reason were given. Verification
+        below still asks for the scores before IA certifies a partner's."""
         activity = self._visit()
 
-        with self.assertRaises(BadRequest) as caught:
-            services.complete(str(activity.id), {"salesforceId": self.sf_id}, self.cceo)
+        services.complete(str(activity.id), {"salesforceId": self.sf_id}, self.cceo)
 
-        self.assertIn("ssa", str(caught.exception).lower())
         activity.refresh_from_db()
-        self.assertEqual(
-            activity.status,
-            "completion_started",
-            "An SSA visit completed without answering the SSA question.",
-        )
+        self.assertNotEqual(activity.status, "completion_started")
 
     def test_a_visit_that_never_expected_an_ssa_is_untouched(self):
         """Scoped exactly as the form scopes it. Ordinary support visits,

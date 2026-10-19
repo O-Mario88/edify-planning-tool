@@ -1170,8 +1170,8 @@ def context_panel(thread: MessageThread, user) -> dict:
             "partner_scheduled": "Confirm partner schedule",
             "in_progress": "Complete the activity",
             "completion_started": "Submit for verification",
-            "completed": "Await IA verification",
-            "awaiting_ia_verification": "IA verification",
+            "completed": "Await verification",
+            "awaiting_ia_verification": "Verification",
             "returned_by_ia": "Fix and resubmit",
             "ia_verified": "Accountant confirmation",
         }

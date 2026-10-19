@@ -1008,7 +1008,6 @@ def planning_dashboard_view(request):
 
     # CSV export of the currently filtered list (same pattern as /clusters).
     if request.GET.get("export", "").strip() == "csv":
-        import csv
         from django.http import HttpResponse
 
         export_filters = dict(filters, page=1, per_page=5000)
@@ -1017,7 +1016,9 @@ def planning_dashboard_view(request):
         )
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="planning_export.csv"'
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         # The export carries what the page shows, from the same services: the
         # Responsible column and both planning indicators, never a copy of
         # them held on the school.
@@ -3548,13 +3549,14 @@ def bulk_action_view(request):
 
     if action == "export":
         # CSV Export simple response
-        import csv
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = (
             'attachment; filename="bulk_planning_export.csv"'
         )
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         writer.writerow(
             ["School ID", "Name", "District", "Cluster", "Planning Readiness"]
         )

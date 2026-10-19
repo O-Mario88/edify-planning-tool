@@ -9,13 +9,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - API routes: **364**
 - Roles: **15**
 - Permission keys: **127**
-- Scheduled jobs: **38**
+- Scheduled jobs: **39**
 - Activity states: **24**
-- Shared component templates: **698**
+- Shared component templates: **699**
 - Full pages: **271**
 - Partials and drawers: **334**
 - Permission-gated surfaces: **916**
-- Referenced by automated tests: **836**
+- Referenced by automated tests: **844**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -504,17 +504,17 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-E7FA5C31DB | /ia/samples/draw | Ia Sample Draw | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E02D9364E8 | /ia/school-evidence/ | School Evidence · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-287A7E5814 | /ia/school-evidence/<str:kind>/<str:record_id>/ | Ia School Evidence Record | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-25197CBE23 | /ia/school-evidence/<str:kind>/<str:record_id>/correct | Ia School Evidence Correct | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-1170C5FCBB | /ia/school-evidence/<str:kind>/<str:record_id>/decide | Ia School Evidence Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-25197CBE23 | /ia/school-evidence/<str:kind>/<str:record_id>/correct | Ia School Evidence Correct | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-1170C5FCBB | /ia/school-evidence/<str:kind>/<str:record_id>/decide | Ia School Evidence Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B06584D752 | /ia/school-evidence/<str:kind>/new | Ia School Evidence New | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-6AB218D915 | /ia/school-evidence/<str:kind>/save | Ia School Evidence Create | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-C0C2F88AD3 | /ia/school-evidence/edtech/<str:deployment_id>/check | Ia School Evidence Check Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
-| UI-PAGE-DEF87681CA | /ia/school-evidence/edtech/<str:deployment_id>/check/save | Ia School Evidence Check Create | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-6AB218D915 | /ia/school-evidence/<str:kind>/save | Ia School Evidence Create | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-C0C2F88AD3 | /ia/school-evidence/edtech/<str:deployment_id>/check | Ia School Evidence Check Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-DEF87681CA | /ia/school-evidence/edtech/<str:deployment_id>/check/save | Ia School Evidence Check Create | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-22DA3CC970 | /ia/school-evidence/learning/template.csv | Ia School Evidence Learning Template | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-169D9A9D51 | /ia/school-evidence/learning/upload | Ia School Evidence Learning Upload | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-169D9A9D51 | /ia/school-evidence/learning/upload | Ia School Evidence Learning Upload | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-6116946394 | /ia/stories/ | Most Significant Change · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-99FC599EB9 | /ia/stories/<str:story_id>/ | Ia Story Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
-| UI-PAGE-4336351244 | /ia/stories/<str:story_id>/decide | Ia Story Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-99FC599EB9 | /ia/stories/<str:story_id>/ | Ia Story Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-4336351244 | /ia/stories/<str:story_id>/decide | Ia Story Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-A05C99B6EA | /ia/verification/ | Verification Queue | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-107DE82212 | /ia/verification/<str:activity_id>/ | IA Review Workspace - Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-374CDD4882 | /ia/verification/<str:activity_id>/return | Ia Return Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

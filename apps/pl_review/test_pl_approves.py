@@ -128,14 +128,17 @@ class EnteringTheIdCompletesStaffWork(_Fixture):
         work.refresh_from_db()
         self.assertEqual(work.status, "submitted_to_pl")
 
-    def test_a_training_without_attendance_keeps_the_id_and_says_why(self):
+    def test_a_training_without_attendance_reaches_the_lead_and_says_why(self):
+        # Owner, 2026-10-19: completed work with its Salesforce ID "MUST show
+        # for the PLs to approve". It used to keep the ID and stay started,
+        # on no lead's table.
         work = self._started(self.james.id, activity_type="cluster_training")
         response = self._enter(self.james_user, work, "TS-7303")
-        self.assertEqual(response.status_code, 400)
-        self.assertContains(response, "attendance", status_code=400)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "attendance")
         work.refresh_from_db()
         self.assertEqual(work.salesforce_activity_id, "TS-7303")
-        self.assertEqual(work.status, "completion_started")
+        self.assertEqual(work.status, "submitted_to_pl")
 
 
 class WorkHoldingItsIdIsHandedIn(_Fixture):

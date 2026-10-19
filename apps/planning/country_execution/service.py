@@ -986,7 +986,7 @@ def lead_charts(snapshot: ExecSnapshot) -> list[dict]:
         "keys": keys,
         "series": [
             {
-                "name": "IA Verified",
+                "name": "Verified",
                 "color": LEAD_CHART_COLOURS["verified"],
                 "data": [x.verified for x in t],
             },
@@ -1206,7 +1206,7 @@ def charts(snapshot: ExecSnapshot) -> dict:
         ("Started", "started"),
         ("Evidence Submitted", "executed"),
         ("PL Reviewed (Staff only)", "pl_reviewed"),
-        ("IA Verified", "verified"),
+        ("Verified", "verified"),
         ("Fully Closed", "closed"),
     )
     funnel = {
@@ -1243,7 +1243,7 @@ def charts(snapshot: ExecSnapshot) -> dict:
             "name": "Execution Completed",
             "data": cumulate(c.trend("exec", count), current),
         },
-        {"name": "IA Verified", "data": cumulate(c.trend("ver", count), current)},
+        {"name": "Verified", "data": cumulate(c.trend("ver", count), current)},
         {"name": "Fully Closed", "data": cumulate(c.trend("closed", count), current)},
     ]
     trend = {

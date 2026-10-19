@@ -510,7 +510,9 @@ def commit_priority_batch(*, batch_id: str, principal):
 
 def csv_template() -> str:
     buffer = io.StringIO()
-    writer = csv.writer(buffer)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(buffer)
     writer.writerow(TEMPLATE_HEADERS)
     writer.writerow(
         [

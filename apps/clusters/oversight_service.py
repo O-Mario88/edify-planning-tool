@@ -147,7 +147,11 @@ def session_status(item) -> tuple[str, str]:
     if status == "submitted_to_pl":
         return "PL Pending", TONE_PENDING
     if status in _IA_PENDING_STATUSES:
-        return "IA Pending", TONE_PENDING
+        # Staff work is the Programme Lead's to verify, a partner's IA's
+        # (owner, 2026-10-19).
+        if item.is_partner_work:
+            return "IA Pending", TONE_PENDING
+        return "PL Pending", TONE_PENDING
     if status == "completed":
         return "Awaiting Verification", TONE_PENDING
     if status in AWAITING_VERIFICATION_STATUSES:

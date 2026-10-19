@@ -2667,7 +2667,7 @@
    "audit_id": "KPI-SOURCE-134",
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 1045,
+   "line": 1046,
    "label": null,
    "keys": [
     "label",
@@ -3320,7 +3320,7 @@
    "audit_id": "KPI-SOURCE-172",
    "kind": "other",
    "module": "apps/frontend/views/cluster_management_views.py",
-   "line": 191,
+   "line": 192,
    "label": null,
    "keys": [
     "default",
@@ -3339,7 +3339,7 @@
    "audit_id": "KPI-SOURCE-173",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 1779,
+   "line": 1780,
    "label": null,
    "keys": [
     "label",
@@ -3356,7 +3356,7 @@
    "audit_id": "KPI-SOURCE-174",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 158,
+   "line": 157,
    "label": null,
    "keys": [
     "amount",
@@ -3375,7 +3375,7 @@
    "audit_id": "KPI-SOURCE-175",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 711,
+   "line": 712,
    "label": null,
    "keys": [
     "label",
@@ -3951,7 +3951,7 @@
    "audit_id": "KPI-SOURCE-208",
    "kind": "other",
    "module": "apps/frontend/views/core_oversight_views.py",
-   "line": 246,
+   "line": 247,
    "label": "Search Core schools by name or School ID",
    "keys": [
     "attach_to",
@@ -4046,7 +4046,7 @@
    "audit_id": "KPI-SOURCE-213",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 870,
+   "line": 869,
    "label": null,
    "keys": [
     "count",
@@ -4065,7 +4065,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 878,
+   "line": 877,
    "label": null,
    "keys": [
     "count",
@@ -4084,7 +4084,7 @@
    "audit_id": "KPI-SOURCE-215",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2407,
+   "line": 2406,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -4104,7 +4104,7 @@
    "audit_id": "KPI-SOURCE-216",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3980,
+   "line": 3984,
    "label": null,
    "keys": [
     "label",
@@ -4121,7 +4121,7 @@
    "audit_id": "KPI-SOURCE-217",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4794,
+   "line": 4798,
    "label": null,
    "keys": [
     "count",
@@ -4140,7 +4140,7 @@
    "audit_id": "KPI-SOURCE-218",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 892,
+   "line": 891,
    "label": null,
    "keys": [
     "count",
@@ -4159,7 +4159,7 @@
    "audit_id": "KPI-SOURCE-219",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1368,
+   "line": 1367,
    "label": null,
    "keys": [
     "achieved",
@@ -4180,7 +4180,7 @@
    "audit_id": "KPI-SOURCE-220",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1475,
+   "line": 1474,
    "label": null,
    "keys": [
     "label",
@@ -4197,7 +4197,7 @@
    "audit_id": "KPI-SOURCE-221",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3886,
+   "line": 3890,
    "label": "About",
    "keys": [
     "label",
@@ -4214,7 +4214,7 @@
    "audit_id": "KPI-SOURCE-222",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3887,
+   "line": 3891,
    "label": "Raised by",
    "keys": [
     "label",
@@ -4231,7 +4231,7 @@
    "audit_id": "KPI-SOURCE-223",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3888,
+   "line": 3892,
    "label": "Flag",
    "keys": [
     "label",
@@ -4248,7 +4248,7 @@
    "audit_id": "KPI-SOURCE-224",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3889,
+   "line": 3893,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -4345,7 +4345,7 @@
    "audit_id": "KPI-SOURCE-229",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1402,
+   "line": 1413,
    "label": "Week",
    "keys": [
     "label",
@@ -4362,7 +4362,7 @@
    "audit_id": "KPI-SOURCE-230",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1403,
+   "line": 1414,
    "label": "Amount",
    "keys": [
     "label",
@@ -4379,7 +4379,7 @@
    "audit_id": "KPI-SOURCE-231",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1404,
+   "line": 1415,
    "label": "Name",
    "keys": [
     "label",
@@ -4396,7 +4396,7 @@
    "audit_id": "KPI-SOURCE-232",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1411,
+   "line": 1415,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",
@@ -7001,7 +7001,7 @@
    "audit_id": "KPI-SOURCE-383",
    "kind": "other",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 182,
+   "line": 181,
    "label": "Financial year",
    "keys": [
     "blank",
@@ -7021,7 +7021,7 @@
    "audit_id": "KPI-SOURCE-384",
    "kind": "other",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 189,
+   "line": 188,
    "label": "Status",
    "keys": [
     "blank",
@@ -7041,7 +7041,7 @@
    "audit_id": "KPI-SOURCE-385",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1011,
+   "line": 1010,
    "label": "School",
    "keys": [
     "label",
@@ -7058,7 +7058,7 @@
    "audit_id": "KPI-SOURCE-386",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1012,
+   "line": 1011,
    "label": "Financial year",
    "keys": [
     "label",
@@ -7075,7 +7075,7 @@
    "audit_id": "KPI-SOURCE-387",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1089,
+   "line": 1088,
    "label": "Evidence reference",
    "keys": [
     "label",
@@ -7092,7 +7092,7 @@
    "audit_id": "KPI-SOURCE-388",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1090,
+   "line": 1089,
    "label": "Notes",
    "keys": [
     "label",
@@ -7109,7 +7109,7 @@
    "audit_id": "KPI-SOURCE-389",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1091,
+   "line": 1090,
    "label": "Recorded by",
    "keys": [
     "label",
@@ -7126,7 +7126,7 @@
    "audit_id": "KPI-SOURCE-390",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1092,
+   "line": 1091,
    "label": "Status",
    "keys": [
     "label",
@@ -7143,7 +7143,7 @@
    "audit_id": "KPI-SOURCE-391",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1448,
+   "line": 1449,
    "label": "School",
    "keys": [
     "label",
@@ -7160,7 +7160,7 @@
    "audit_id": "KPI-SOURCE-392",
    "kind": "other",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 398,
+   "line": 397,
    "label": "Subject",
    "keys": [
     "blank",
@@ -7180,7 +7180,7 @@
    "audit_id": "KPI-SOURCE-393",
    "kind": "other",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 682,
+   "line": 681,
    "label": "Technology",
    "keys": [
     "blank",
@@ -7200,7 +7200,7 @@
    "audit_id": "KPI-SOURCE-394",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1016,
+   "line": 1015,
    "label": "Assessment",
    "keys": [
     "label",
@@ -7217,7 +7217,7 @@
    "audit_id": "KPI-SOURCE-395",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1020,
+   "line": 1019,
    "label": "Assessed on",
    "keys": [
     "label",
@@ -7234,7 +7234,7 @@
    "audit_id": "KPI-SOURCE-396",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1021,
+   "line": 1020,
    "label": "Class \u00b7 subject",
    "keys": [
     "label",
@@ -7251,7 +7251,7 @@
    "audit_id": "KPI-SOURCE-397",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1025,
+   "line": 1024,
    "label": "Learners tested",
    "keys": [
     "label",
@@ -7268,7 +7268,7 @@
    "audit_id": "KPI-SOURCE-398",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1026,
+   "line": 1025,
    "label": "Mean score",
    "keys": [
     "label",
@@ -7285,7 +7285,7 @@
    "audit_id": "KPI-SOURCE-399",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1027,
+   "line": 1026,
    "label": "Maximum score",
    "keys": [
     "label",
@@ -7302,7 +7302,7 @@
    "audit_id": "KPI-SOURCE-400",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1028,
+   "line": 1027,
    "label": "Learners proficient",
    "keys": [
     "label",
@@ -7319,7 +7319,7 @@
    "audit_id": "KPI-SOURCE-401",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1083,
+   "line": 1082,
    "label": "Recorded from",
    "keys": [
     "label",
@@ -7336,7 +7336,7 @@
    "audit_id": "KPI-SOURCE-402",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1096,
+   "line": 1095,
    "label": null,
    "keys": [
     "label",
@@ -7353,7 +7353,7 @@
    "audit_id": "KPI-SOURCE-403",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1104,
+   "line": 1103,
    "label": "What to correct",
    "keys": [
     "label",
@@ -7370,7 +7370,7 @@
    "audit_id": "KPI-SOURCE-404",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1454,
+   "line": 1455,
    "label": "{\u2026} \u00b7 {\u2026}",
    "keys": [
     "label",
@@ -7387,7 +7387,7 @@
    "audit_id": "KPI-SOURCE-405",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1032,
+   "line": 1031,
    "label": "Observed on",
    "keys": [
     "label",
@@ -7404,7 +7404,7 @@
    "audit_id": "KPI-SOURCE-406",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1033,
+   "line": 1032,
    "label": "Devotions a week",
    "keys": [
     "label",
@@ -7421,7 +7421,7 @@
    "audit_id": "KPI-SOURCE-407",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1034,
+   "line": 1033,
    "label": "Active groups",
    "keys": [
     "label",
@@ -7438,7 +7438,7 @@
    "audit_id": "KPI-SOURCE-408",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1038,
+   "line": 1037,
    "label": "Learners in groups",
    "keys": [
     "label",
@@ -7455,7 +7455,7 @@
    "audit_id": "KPI-SOURCE-409",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1039,
+   "line": 1038,
    "label": "Learners enrolled",
    "keys": [
     "label",
@@ -7472,7 +7472,7 @@
    "audit_id": "KPI-SOURCE-410",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1040,
+   "line": 1039,
    "label": "Staff in devotions",
    "keys": [
     "label",
@@ -7489,7 +7489,7 @@
    "audit_id": "KPI-SOURCE-411",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1044,
+   "line": 1043,
    "label": "Spiritual lead in post",
    "keys": [
     "label",
@@ -7506,7 +7506,7 @@
    "audit_id": "KPI-SOURCE-412",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1048,
+   "line": 1047,
    "label": "Bible lessons timetabled",
    "keys": [
     "label",
@@ -7523,7 +7523,7 @@
    "audit_id": "KPI-SOURCE-413",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1055,
+   "line": 1054,
    "label": "Technology",
    "keys": [
     "label",
@@ -7540,7 +7540,7 @@
    "audit_id": "KPI-SOURCE-414",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1059,
+   "line": 1058,
    "label": "Deployed on",
    "keys": [
     "label",
@@ -7557,7 +7557,7 @@
    "audit_id": "KPI-SOURCE-415",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1060,
+   "line": 1059,
    "label": "Funded by",
    "keys": [
     "label",
@@ -7574,7 +7574,7 @@
    "audit_id": "KPI-SOURCE-416",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1061,
+   "line": 1060,
    "label": "Special project",
    "keys": [
     "label",
@@ -7591,7 +7591,7 @@
    "audit_id": "KPI-SOURCE-417",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1062,
+   "line": 1061,
    "label": "Teachers trained",
    "keys": [
     "label",
@@ -7608,7 +7608,7 @@
    "audit_id": "KPI-SOURCE-418",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1063,
+   "line": 1062,
    "label": "Learners with access",
    "keys": [
     "label",
@@ -7625,7 +7625,7 @@
    "audit_id": "KPI-SOURCE-419",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1070,
+   "line": 1069,
    "label": "Deployment",
    "keys": [
     "label",
@@ -7642,7 +7642,7 @@
    "audit_id": "KPI-SOURCE-420",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1074,
+   "line": 1073,
    "label": "Checked on",
    "keys": [
     "label",
@@ -7659,7 +7659,7 @@
    "audit_id": "KPI-SOURCE-421",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1075,
+   "line": 1074,
    "label": "Units working",
    "keys": [
     "label",
@@ -7676,7 +7676,7 @@
    "audit_id": "KPI-SOURCE-422",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1076,
+   "line": 1075,
    "label": "Teachers using",
    "keys": [
     "label",
@@ -7693,7 +7693,7 @@
    "audit_id": "KPI-SOURCE-423",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1077,
+   "line": 1076,
    "label": "Learners using",
    "keys": [
     "label",
@@ -7710,7 +7710,7 @@
    "audit_id": "KPI-SOURCE-424",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1078,
+   "line": 1077,
    "label": "Hours of use a week",
    "keys": [
     "label",
@@ -7727,7 +7727,7 @@
    "audit_id": "KPI-SOURCE-425",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_school_evidence_views.py",
-   "line": 1079,
+   "line": 1078,
    "label": "Issues",
    "keys": [
     "label",
@@ -7937,7 +7937,7 @@
    "audit_id": "KPI-SOURCE-437",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 550,
+   "line": 559,
    "label": "Search the queue by school, School ID, Salesforce ID or owner",
    "keys": [
     "hx_get",
@@ -7960,7 +7960,7 @@
    "audit_id": "KPI-SOURCE-438",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1700,
+   "line": 1731,
    "label": "Schools Missing SSA",
    "keys": [
     "label",
@@ -7977,7 +7977,7 @@
    "audit_id": "KPI-SOURCE-439",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1701,
+   "line": 1732,
    "label": "Duplicate Records Detected",
    "keys": [
     "label",
@@ -7994,7 +7994,7 @@
    "audit_id": "KPI-SOURCE-440",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1705,
+   "line": 1736,
    "label": "Schools with Missing Fields",
    "keys": [
     "label",
@@ -8011,7 +8011,7 @@
    "audit_id": "KPI-SOURCE-441",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1706,
+   "line": 1737,
    "label": "Activities Missing Salesforce IDs",
    "keys": [
     "label",
@@ -8028,7 +8028,7 @@
    "audit_id": "KPI-SOURCE-442",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 534,
+   "line": 542,
    "label": null,
    "keys": [
     "clear_url",
@@ -8047,7 +8047,7 @@
    "audit_id": "KPI-SOURCE-443",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1763,
+   "line": 1794,
    "label": "SSA done",
    "keys": [
     "color",
@@ -8066,7 +8066,7 @@
    "audit_id": "KPI-SOURCE-444",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1769,
+   "line": 1800,
    "label": "Scheduled",
    "keys": [
     "color",
@@ -8085,7 +8085,7 @@
    "audit_id": "KPI-SOURCE-445",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1775,
+   "line": 1806,
    "label": "Not done",
    "keys": [
     "color",
@@ -8104,7 +8104,7 @@
    "audit_id": "KPI-SOURCE-446",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1800,
+   "line": 1831,
    "label": "Confirmed",
    "keys": [
     "color",
@@ -8123,7 +8123,7 @@
    "audit_id": "KPI-SOURCE-447",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1806,
+   "line": 1837,
    "label": "Pending",
    "keys": [
     "color",
@@ -8142,7 +8142,7 @@
    "audit_id": "KPI-SOURCE-448",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1812,
+   "line": 1843,
    "label": "Returned / flagged",
    "keys": [
     "color",
@@ -8161,7 +8161,7 @@
    "audit_id": "KPI-SOURCE-449",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 653,
+   "line": 662,
    "label": null,
    "keys": [
     "label",
@@ -8603,7 +8603,7 @@
    "audit_id": "KPI-SOURCE-474",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1933,
+   "line": 1935,
    "label": "SSA basis",
    "keys": [
     "label",
@@ -8620,7 +8620,7 @@
    "audit_id": "KPI-SOURCE-475",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1974,
+   "line": 1976,
    "label": "Officer",
    "keys": [
     "label",
@@ -8637,7 +8637,7 @@
    "audit_id": "KPI-SOURCE-476",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1975,
+   "line": 1977,
    "label": "Activity",
    "keys": [
     "label",
@@ -8654,7 +8654,7 @@
    "audit_id": "KPI-SOURCE-477",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1980,
+   "line": 1982,
    "label": "School or cluster",
    "keys": [
     "label",
@@ -8671,7 +8671,7 @@
    "audit_id": "KPI-SOURCE-478",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1981,
+   "line": 1983,
    "label": "Delivered",
    "keys": [
     "label",
@@ -8688,7 +8688,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1982,
+   "line": 1984,
    "label": "Intervention",
    "keys": [
     "label",
@@ -8705,7 +8705,7 @@
    "audit_id": "KPI-SOURCE-480",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1987,
+   "line": 1989,
    "label": "Attendance",
    "keys": [
     "label",
@@ -8722,7 +8722,7 @@
    "audit_id": "KPI-SOURCE-481",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1997,
+   "line": 1999,
    "label": "Salesforce ID",
    "keys": [
     "label",
@@ -8739,7 +8739,7 @@
    "audit_id": "KPI-SOURCE-482",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1998,
+   "line": 2000,
    "label": "Purpose",
    "keys": [
     "label",
@@ -8756,7 +8756,7 @@
    "audit_id": "KPI-SOURCE-483",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1999,
+   "line": 2001,
    "label": "Outcome",
    "keys": [
     "label",
@@ -8773,7 +8773,7 @@
    "audit_id": "KPI-SOURCE-484",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2000,
+   "line": 2002,
    "label": "Observations",
    "keys": [
     "label",
@@ -8790,7 +8790,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2001,
+   "line": 2003,
    "label": "Follow-up",
    "keys": [
     "label",
@@ -8807,7 +8807,7 @@
    "audit_id": "KPI-SOURCE-486",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3652,
+   "line": 3689,
    "label": null,
    "keys": [
     "count",
@@ -8825,7 +8825,7 @@
    "audit_id": "KPI-SOURCE-487",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3776,
+   "line": 3813,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -8886,7 +8886,7 @@
    "audit_id": "KPI-SOURCE-490",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1847,
+   "line": 1849,
    "label": "Officer",
    "keys": [
     "blank",
@@ -8906,7 +8906,7 @@
    "audit_id": "KPI-SOURCE-491",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1937,
+   "line": 1939,
    "label": "Why it departs from the SSA",
    "keys": [
     "label",
@@ -9350,7 +9350,7 @@
    "audit_id": "KPI-SOURCE-516",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 890,
+   "line": 891,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -9373,7 +9373,7 @@
    "audit_id": "KPI-SOURCE-517",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/school_views.py",
-   "line": 911,
+   "line": 912,
    "label": null,
    "keys": [
     "count",
@@ -9663,7 +9663,7 @@
    "audit_id": "KPI-SOURCE-534",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 783,
+   "line": 786,
    "label": "School",
    "keys": [
     "label",
@@ -9680,7 +9680,7 @@
    "audit_id": "KPI-SOURCE-535",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 787,
+   "line": 790,
    "label": "Assessment date",
    "keys": [
     "label",
@@ -9697,7 +9697,7 @@
    "audit_id": "KPI-SOURCE-536",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 788,
+   "line": 791,
    "label": "Average score",
    "keys": [
     "label",
@@ -9714,7 +9714,7 @@
    "audit_id": "KPI-SOURCE-537",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 789,
+   "line": 792,
    "label": "How it arrived",
    "keys": [
     "label",
@@ -10094,7 +10094,7 @@
    "audit_id": "KPI-SOURCE-558",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1410,
+   "line": 1413,
    "label": "Disbursed",
    "keys": [
     "color",
@@ -10114,7 +10114,7 @@
    "audit_id": "KPI-SOURCE-559",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1417,
+   "line": 1420,
    "label": "Approved",
    "keys": [
     "color",
@@ -10134,7 +10134,7 @@
    "audit_id": "KPI-SOURCE-560",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1424,
+   "line": 1427,
    "label": "Pending",
    "keys": [
     "color",
@@ -10154,7 +10154,7 @@
    "audit_id": "KPI-SOURCE-561",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1431,
+   "line": 1434,
    "label": "Returned",
    "keys": [
     "color",
@@ -10174,7 +10174,7 @@
    "audit_id": "KPI-SOURCE-562",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1499,
+   "line": 1502,
    "label": null,
    "keys": [
     "amount",
@@ -10193,7 +10193,7 @@
    "audit_id": "KPI-SOURCE-563",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1669,
+   "line": 1672,
    "label": "Priority",
    "keys": [
     "label",
@@ -40058,7 +40058,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.evidence_services.counts",
-   "source_location": "apps/frontend/views/ia_school_evidence_views.py:141",
+   "source_location": "apps/frontend/views/ia_school_evidence_views.py:140",
    "source_models": [
     "apps.impact.models.LearningAssessmentResult",
     "apps.impact.models.DiscipleshipIndicatorRecord",
@@ -40100,7 +40100,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.evidence_services.counts",
-   "source_location": "apps/frontend/views/ia_school_evidence_views.py:147",
+   "source_location": "apps/frontend/views/ia_school_evidence_views.py:146",
    "source_models": [
     "apps.impact.models.LearningAssessmentResult",
     "apps.impact.models.DiscipleshipIndicatorRecord",
@@ -40142,7 +40142,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.evidence_services.counts",
-   "source_location": "apps/frontend/views/ia_school_evidence_views.py:152",
+   "source_location": "apps/frontend/views/ia_school_evidence_views.py:151",
    "source_models": [
     "apps.impact.models.LearningAssessmentResult",
     "apps.impact.models.DiscipleshipIndicatorRecord",
@@ -40184,7 +40184,7 @@
    "priority": "medium",
    "implementation_status": "completed",
    "service": "apps.impact.evidence_services.counts",
-   "source_location": "apps/frontend/views/ia_school_evidence_views.py:157",
+   "source_location": "apps/frontend/views/ia_school_evidence_views.py:156",
    "source_models": [
     "apps.impact.models.LearningAssessmentResult",
     "apps.impact.models.DiscipleshipIndicatorRecord",
@@ -40226,7 +40226,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.evidence_services.counts",
-   "source_location": "apps/frontend/views/ia_school_evidence_views.py:163",
+   "source_location": "apps/frontend/views/ia_school_evidence_views.py:162",
    "source_models": [
     "apps.impact.models.LearningAssessmentResult",
     "apps.impact.models.DiscipleshipIndicatorRecord",
@@ -41490,7 +41490,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.reports.counts",
-   "source_location": "apps/impact/reports.py:1876",
+   "source_location": "apps/impact/reports.py:1877",
    "source_models": [
     "apps.impact.models.ImpactReport"
    ],
@@ -41530,7 +41530,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.reports.counts",
-   "source_location": "apps/impact/reports.py:1883",
+   "source_location": "apps/impact/reports.py:1884",
    "source_models": [
     "apps.impact.models.ImpactReport"
    ],
@@ -41570,7 +41570,7 @@
    "priority": "medium",
    "implementation_status": "completed",
    "service": "apps.impact.reports.counts",
-   "source_location": "apps/impact/reports.py:1890",
+   "source_location": "apps/impact/reports.py:1891",
    "source_models": [
     "apps.impact.models.ImpactReport"
    ],
@@ -41610,7 +41610,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.reports.counts",
-   "source_location": "apps/impact/reports.py:1896",
+   "source_location": "apps/impact/reports.py:1897",
    "source_models": [
     "apps.impact.models.ImpactReportRecommendation",
     "apps.impact.models.ImpactReport"
@@ -41651,7 +41651,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.reports.counts",
-   "source_location": "apps/impact/reports.py:1902",
+   "source_location": "apps/impact/reports.py:1903",
    "source_models": [
     "apps.impact.models.ImpactReportRelease",
     "apps.impact.models.ImpactReport"
@@ -41689,7 +41689,7 @@
    "priority": "medium",
    "implementation_status": "completed",
    "service": "apps.impact.reports.cd_impact_findings",
-   "source_location": "apps/impact/reports.py:2022",
+   "source_location": "apps/impact/reports.py:2023",
    "source_models": [
     "apps.impact.models.ImpactReportRelease",
     "apps.impact.models.ImpactReport"
@@ -41727,7 +41727,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.reports.cd_impact_findings",
-   "source_location": "apps/impact/reports.py:2037",
+   "source_location": "apps/impact/reports.py:2038",
    "source_models": [
     "apps.impact.models.ImpactReport"
    ],
@@ -41764,7 +41764,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.reports.cd_impact_findings",
-   "source_location": "apps/impact/reports.py:2043",
+   "source_location": "apps/impact/reports.py:2044",
    "source_models": [
     "apps.impact.models.ImpactReportRecommendation",
     "apps.impact.models.ImpactReport"
@@ -41802,7 +41802,7 @@
    "priority": "high",
    "implementation_status": "completed",
    "service": "apps.impact.reports.cd_impact_findings",
-   "source_location": "apps/impact/reports.py:2049",
+   "source_location": "apps/impact/reports.py:2050",
    "source_models": [
     "apps.impact.models.ImpactReportRecommendation",
     "apps.impact.models.ImpactReport"
@@ -42305,7 +42305,7 @@
   {
    "audit_id": "KPI-PAYLOAD-009",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 741,
+   "line": 742,
    "function": "_build_fund_requests_context",
    "target": "kpi_strip_items",
    "source_item_count": 6,
@@ -42367,7 +42367,7 @@
   {
    "audit_id": "KPI-PAYLOAD-011",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1183,
+   "line": 1184,
    "function": "dashboard_view",
    "target": "cceo_kpi_items",
    "source_item_count": 4,
@@ -42393,7 +42393,7 @@
   {
    "audit_id": "KPI-PAYLOAD-012",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1608,
+   "line": 1609,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,
@@ -42422,7 +42422,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3439,
+   "line": 3443,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -42444,7 +42444,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4181,
+   "line": 4185,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
@@ -42527,7 +42527,7 @@
   {
    "audit_id": "KPI-PAYLOAD-017",
    "module": "apps/frontend/views/school_views.py",
-   "line": 625,
+   "line": 626,
    "function": "school_directory_view",
    "target": "kpi_strip_items",
    "source_item_count": 8,
@@ -42559,7 +42559,7 @@
   {
    "audit_id": "KPI-PAYLOAD-018",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 32,
+   "line": 31,
    "function": "ssa_performance_view",
    "target": "ssa_kpi_items",
    "source_item_count": 6,
@@ -42587,7 +42587,7 @@
   {
    "audit_id": "KPI-PAYLOAD-019",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1337,
+   "line": 1340,
    "function": "get_disbursement_dashboard",
    "target": "kpis",
    "source_item_count": 6,

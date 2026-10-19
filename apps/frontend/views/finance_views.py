@@ -17,7 +17,6 @@ from apps.core.rbac import Permission
 from apps.core.exceptions import BadRequest
 from django.contrib import messages
 from django.utils import timezone
-import csv
 
 from apps.core.htmx_saved import saved_and_reloaded
 from django.http import HttpResponse, HttpResponseNotFound
@@ -76,7 +75,9 @@ def _disbursement_voucher(ctx):
     response = HttpResponse(content_type="text/csv")
     slug = selected["key"].replace(":", "-")
     response["Content-Disposition"] = f'attachment; filename="voucher-{slug}.csv"'
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     writer.writerow(["Payment voucher", selected["name"]])
     writer.writerow(["Fund type", selected["kind_label"]])
     writer.writerow(["Reference", selected["subtitle"]])
@@ -128,7 +129,9 @@ def disbursements_view(request):
         response["Content-Disposition"] = (
             f'attachment; filename="disbursements-{ctx["fy"]}-{ctx["month"]:02d}.csv"'
         )
-        writer = csv.writer(response)
+        from apps.core.excel import safe_csv_writer
+
+        writer = safe_csv_writer(response)
         writer.writerow(
             ["Requester", "Fund type", "Reference", "Amount (UGX)", "Status"]
         )
@@ -769,7 +772,6 @@ def cost_intelligence_view(request):
 @require_page_permission("consolidated_fund_allocation")
 @require_export_permission
 def fund_allocation_view(request):
-    import csv
     from django.http import HttpResponse
     from apps.budget.allocation_service import MonthlyFundAllocationService
 
@@ -931,7 +933,9 @@ def fund_allocation_view(request):
             )
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
-        csv.writer(response).writerows(rows)
+        from apps.core.excel import safe_csv_writer
+
+        safe_csv_writer(response).writerows(rows)
         return response
 
     # ── On-screen page: the country cost-plan (same format as the budget) ──

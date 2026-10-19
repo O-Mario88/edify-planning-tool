@@ -44,7 +44,7 @@
 
   {% if pipeline.ia_pending %}
   <section class="space-y-1.5">
-    <h4 class="edify-text-caption font-semibold text-slate-600">Awaiting IA verification ({{ pipeline.ia_pending|length }})</h4>
+    <h4 class="edify-text-caption font-semibold text-slate-600">Awaiting PL verification ({{ pipeline.ia_pending|length }})</h4>
     <ul class="divide-y divide-slate-100 border-y border-slate-100">
       {% for r in pipeline.ia_pending %}
       <li class="py-2"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.name }}</p><p class="edify-text-caption text-slate-500">{{ r.type }} · {{ r.date|date:"d M Y" }}</p></li>

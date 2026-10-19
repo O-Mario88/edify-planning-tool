@@ -7,6 +7,8 @@ from django.db import transaction
 from django.db.models import Count, Sum
 from django.utils import timezone
 
+from apps.activities.salesforce import NO_SALESFORCE_RECORD_TYPES
+
 from .models import (
     MilestoneActivityRule,
     MilestonePeriodTarget,
@@ -69,10 +71,11 @@ def counting_basis_families(bases) -> set[str]:
     return families
 
 
-# Record types that legitimately carry no Salesforce Activity ID. Same set the
-# `closed_activity_must_have_sf_id` database constraint exempts — stated once
-# here so the credit rule and the constraint cannot drift apart.
-SALESFORCE_EXEMPT_RECORD_TYPES = {"NONE", "SSA_DATA_GATHERING"}
+# Record types that legitimately carry no Salesforce Activity ID: the admin and
+# field events only (apps.activities.salesforce.NO_SALESFORCE_RECORD_TYPES).
+# The `closed_activity_must_have_sf_id` database constraint still exempts
+# SSA_DATA_GATHERING too; it is the looser backstop, this the rule.
+SALESFORCE_EXEMPT_RECORD_TYPES = NO_SALESFORCE_RECORD_TYPES
 
 
 def _salesforce_reference_satisfied(activity) -> bool:
