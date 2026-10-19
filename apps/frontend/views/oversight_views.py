@@ -3376,34 +3376,19 @@ def partner_oversight_analysis_view(request):
     `apps.planning.partner_analysis` says how; this view only reads it."""
     from django.http import HttpResponseForbidden
 
-    from apps.analytics import profile_intelligence as engine
-    from apps.frontend.views.profile_views import fy_choices
+    from apps.analytics import oversight_analysis
     from apps.planning import partner_analysis
 
     if not has_permission(request.user, Permission.PARTNER_MONITORING_VIEW.value):
         return HttpResponseForbidden("You do not monitor Partner work.")
-    options = fy_choices()
-    fy = request.GET.get("fy", "")
-    if fy not in {option["value"] for option in options}:
-        fy = options[0]["value"]
-    period = request.GET.get("period", "")
-    if period not in dict(engine.period_options()):
-        period = engine.PERIOD_YEAR
-    rows = partner_analysis.partner_rows(request.user, fy=fy, period=period)
+    period = oversight_analysis.period_context(request)
+    rows = partner_analysis.partner_rows(
+        request.user, fy=period["fy"], period=period["period"]
+    )
     return render(
         request,
         "pages/oversight/partner_analysis.html",
-        {
-            "rows": rows,
-            "summary": partner_analysis.summarise(rows),
-            "fy": fy,
-            "fy_label": next(o["label"] for o in options if o["value"] == fy),
-            "fy_options": options,
-            "period": period,
-            "period_options": engine.period_options(),
-            "period_label": engine.period_window(fy, period)[2],
-            "partner_view": "analysis",
-        },
+        {**period, "rows": rows, "summary": oversight_analysis.summarise(rows)},
     )
 
 

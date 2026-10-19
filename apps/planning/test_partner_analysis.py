@@ -79,7 +79,7 @@ class RowsTest(AnalysisFixture):
         rows = analysis.partner_rows(self.director, fy=str(self.fy))
         summary = analysis.summarise(rows)
 
-        self.assertEqual(summary["partners"], 2)
+        self.assertEqual(summary["subjects"], 2)
         self.assertEqual(summary["schools"], 2)
         self.assertEqual(summary["handovers"]["assigned"], 2)
         self.assertEqual(summary["handovers"]["scheduled"], 1)

@@ -4893,6 +4893,27 @@ def _monitoring_fy(request) -> str:
 
 
 @require_page_permission("project_monitoring")
+def project_monitoring_analysis_view(request):
+    """Project Monitoring's Analysis: every project the reader watches, read
+    by the profile engine over the enrolments Monitoring shows them (owner,
+    2026-10-18: "make sure the existing analytics are integrated into the
+    profiles and oversights ... project monitoring").
+    `apps.projects.project_analysis` says how; this view only reads it."""
+    from apps.analytics import oversight_analysis
+    from apps.projects import project_analysis
+
+    period = oversight_analysis.period_context(request)
+    rows = project_analysis.project_rows(
+        request.user, fy=period["fy"], period=period["period"]
+    )
+    return render(
+        request,
+        "pages/projects/monitoring_analysis.html",
+        {**period, "rows": rows, "summary": oversight_analysis.summarise(rows)},
+    )
+
+
+@require_page_permission("project_monitoring")
 def project_monitoring_school_view(request):
     """One school's project work, read only — the row's View drawer.
 

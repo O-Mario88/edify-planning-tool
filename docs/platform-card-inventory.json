@@ -2716,7 +2716,7 @@
   },
   {
    "template": "templates/pages/projects/monitoring.html",
-   "line": 186,
+   "line": 187,
    "title": "My project allocations",
    "heading_level": 2,
    "has_card_key": false,

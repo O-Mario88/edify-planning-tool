@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **706**
+Components and application partials: **707**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -492,6 +492,8 @@ Components and application partials: **706**
 | `partials/oversight/_readiness_row.html` | application-partial | Reusable  readiness row interface primitive | danger, {{ figures.score_tone }}; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/<br>/planning-monitor/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/_row_actions.html` | application-partial | Reusable  row actions interface primitive | canonical; default, open | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/team/<str:staff_id><br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/allowance_grant_drawer.html` | application-partial | Reusable allowance grant drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /partner-oversight/allowance-drawer | 0 |
+| `partials/oversight/analysis_body.html` | application-partial | Reusable analysis body interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /partner-oversight/analysis<br>/projects/monitoring/analysis | 0 |
+| `partials/oversight/analysis_switch.html` | application-partial | Reusable analysis switch interface primitive | canonical; default | inherits containing page contract | accessible name and label | /partner-oversight/<br>/partner-oversight/analysis<br>/projects/monitoring<br>/projects/monitoring/analysis | 0 |
 | `partials/oversight/bulk_withdrawal_drawer.html` | application-partial | Reusable bulk withdrawal drawer interface primitive | canonical; default, error, open | explicit responsive contract | accessible name and label | /partner-oversight/withdraw/bulk | 0 |
 | `partials/oversight/bulk_withdrawal_result.html` | application-partial | Reusable bulk withdrawal result interface primitive | danger; default, error | inherits containing page contract | announced dynamic state | /partner-oversight/withdraw/bulk | 0 |
 | `partials/oversight/cd_team_detail.html` | application-partial | Reusable cd team detail interface primitive | canonical; default, selected, open | inherits containing page contract | accessible name and label | /country-planning-oversight/team/<str:staff_id><br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
@@ -509,7 +511,6 @@ Components and application partials: **706**
 | `partials/oversight/partner_school_row.html` | application-partial | Reusable partner school row interface primitive | danger, warning, {{ item.status_tone }}; default, open | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/partner_trainings_table.html` | application-partial | Reusable partner trainings table interface primitive | {{ item.status_tone }}; default, empty | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/partner_verify_drawer.html` | application-partial | Reusable partner verify drawer interface primitive | warning; default, error, disabled | inherits containing page contract | accessible name and label, announced dynamic state | dynamic / parent-owned | 0 |
-| `partials/oversight/partner_view_switch.html` | application-partial | Reusable partner view switch interface primitive | canonical; default | inherits containing page contract | accessible name and label | /partner-oversight/<br>/partner-oversight/analysis | 0 |
 | `partials/oversight/partner_work_row.html` | application-partial | Reusable partner work row interface primitive | danger, warning, {{ item.status_tone }}; default, open | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/partner_work_tables.html` | application-partial | Reusable partner work tables interface primitive | canonical; default, empty, open | inherits containing page contract | accessible name and label, announced dynamic state | /partner-oversight/ | 0 |
 | `partials/oversight/partner_workspace.html` | application-partial | Reusable partner workspace interface primitive | executive, info, warning, {% if summary.overdue %}danger{% else %}neutral{% endif %}; default | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |

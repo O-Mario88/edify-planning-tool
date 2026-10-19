@@ -2868,6 +2868,12 @@ urlpatterns = [
         extended_views.project_monitoring_view,
         name="project_monitoring",
     ),
+    # Every watched project analysed by the profile engine (owner, 2026-10-18).
+    path(
+        "projects/monitoring/analysis",
+        extended_views.project_monitoring_analysis_view,
+        name="project_monitoring_analysis",
+    ),
     # One school's project work, read only, for everyone in the page's lens;
     # and the Project Coordinator's two decisions on partner work — withdraw
     # or reassign, and resolve a hand-back (owner, 2026-09-24).

@@ -20,14 +20,10 @@ number of schools.
 
 from __future__ import annotations
 
-from dataclasses import replace
-
+from apps.analytics import oversight_analysis as analysis
 from apps.analytics import profile_intelligence as engine
 
-#: The four hand-over figures, in the order a hand-over moves through them.
-HANDOVER_KEYS = ("assigned", "awaiting", "scheduled", "completed")
-#: The work figures a row carries for visits and for trainings.
-WORK_KEYS = ("planned", "completed", "overdue")
+summarise = analysis.summarise
 
 
 def partner_rows(principal, *, fy, period: str = engine.PERIOD_YEAR) -> list[dict]:
@@ -50,63 +46,22 @@ def partner_rows(principal, *, fy, period: str = engine.PERIOD_YEAR) -> list[dic
     partners = Partner.objects.filter(
         id__in=held.values("partner_id"), deleted_at__isnull=True
     ).order_by("name")
-    rows = []
-    for partner in partners:
+
+    def scope_of(partner):
         scope = engine.partner_scope(partner)
-        if team_q is not None:
-            scope = replace(
-                scope,
-                schools=scope.schools.filter(
-                    id__in=held.filter(partner=partner).values("school_id")
-                ),
-                covers="Assigned portfolio in your team",
-            )
-        profile = engine.build(scope, fy, period)
-        if profile["portfolio"]["schools"]:
-            rows.append(_row(partner, profile))
-    return rows
+        if team_q is None:
+            return scope
+        return analysis.narrowed(
+            scope,
+            held.filter(partner=partner).values("school_id"),
+            "Assigned portfolio in your team",
+        )
 
-
-def _row(partner, profile: dict) -> dict:
-    portfolio = profile["portfolio"]
-    execution = profile["execution"]
-    ssa = profile["ssa"]
-    return {
-        "id": partner.id,
-        "name": partner.name,
-        "href": f"/partners/{partner.id}?tab=overview",
-        "schools": portfolio["schools"],
-        "districts": portfolio["districts"],
-        "handovers": {key: portfolio["handovers"][key] for key in HANDOVER_KEYS},
-        "visits": {key: execution["visits"][key] for key in WORK_KEYS},
-        "trainings": {key: execution["trainings"][key] for key in WORK_KEYS},
-        "ssa_now": ssa["current"],
-        "ssa_change": ssa["overall"]["change"],
-        "assessed": portfolio["assessed"],
-        "assessable": portfolio["assessable"],
-        "improved": portfolio["improved"],
-        "declined": portfolio["declined"],
-        # What the profile says needs attention, each with its count.
-        "attention": [item for item in profile["attention"] if item],
-    }
-
-
-def summarise(rows) -> dict:
-    """The rows added up: every figure is its rows' total."""
-    rows = list(rows)
-
-    def total(key, inner=None):
-        return sum(r[key][inner] if inner else r[key] for r in rows)
-
-    return {
-        "partners": len(rows),
-        "schools": total("schools"),
-        "handovers": {key: total("handovers", key) for key in HANDOVER_KEYS},
-        "visits": {key: total("visits", key) for key in WORK_KEYS},
-        "trainings": {key: total("trainings", key) for key in WORK_KEYS},
-        "assessed": total("assessed"),
-        "assessable": total("assessable"),
-        "improved": total("improved"),
-        "declined": total("declined"),
-        "needing_attention": sum(1 for r in rows if r["attention"]),
-    }
+    return analysis.read(
+        (
+            (p.id, p.name, f"/partners/{p.id}?tab=overview", scope_of(p))
+            for p in partners
+        ),
+        fy=fy,
+        period=period,
+    )
