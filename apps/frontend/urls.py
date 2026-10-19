@@ -997,6 +997,12 @@ urlpatterns = [
         oversight_views.partner_oversight_view,
         name="partner_oversight",
     ),
+    # Each Partner analysed by the profile engine (owner, 2026-10-18).
+    path(
+        "partner-oversight/analysis",
+        oversight_views.partner_oversight_analysis_view,
+        name="partner_oversight_analysis",
+    ),
     path(
         "partner-oversight/allowance-drawer",
         oversight_views.partner_allowance_drawer,

@@ -1,0 +1,105 @@
+{% extends "layouts/shell.html" %}
+{% load components kpi_metrics table_pagination frontend_filters static %}
+
+{% block title %}Partner Monitoring · Analysis · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15">{% endblock %}
+
+{% comment %}
+Partner Monitoring's Analysis (owner, 2026-10-18: "make sure the existing
+analytics are integrated into the profiles and oversights ... Partner
+monitoring"): every Partner the reader monitors, each read by the profile
+engine over the hand-overs the reader's Monitoring view shows
+(apps.planning.partner_analysis). A Partner's name opens its profile, where
+the same figures are broken down. Assigned, awaiting the Partner's date,
+scheduled and completed stay four figures; a missing figure reads 0, as on
+every profile (owner, 2026-10-18).
+{% endcomment %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace data-partner-analysis>
+
+  {% page_header eyebrow="Supervision" title="Partner Monitoring" %}
+    {% slot description %}Every Partner you monitor: what was handed to it, what it scheduled and delivered, and how its schools' SSA moved, {{ fy_label }}{% if period_label %}, {{ period_label }}{% endif %}.{% endslot %}
+  {% endpage_header %}
+
+  {% include "partials/oversight/partner_view_switch.html" %}
+
+  {% filter_bar action="/partner-oversight/analysis" label="Partner analysis filters" %}
+    <label class="block">
+      <span class="edify-filter-label">Fiscal year</span>
+      <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        {% for option in fy_options %}<option value="{{ option.value }}"{% if option.value == fy %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+      </select>
+    </label>
+    {% comment %}The part of the year the work is read for. SSA is a yearly
+    reading and stays the year's.{% endcomment %}
+    <label class="block">
+      <span class="edify-filter-label">Period</span>
+      <select name="period" aria-label="Period" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        {% for key, label in period_options %}<option value="{{ key }}"{% if key == period %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+  {% endfilter_bar %}
+
+  {% kpi_strip title="Partner Portfolio" %}
+    {% kpi_metric %}{% kpi_label %}Partners{% endkpi_label %}{{ summary.partners|intcomma }}{% kpi_helper %}{{ summary.needing_attention|intcomma }} with something needing attention{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Schools Held{% endkpi_label %}{{ summary.schools|intcomma }}{% kpi_helper %}Schools handed to a Partner and not taken back{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Hand-overs Assigned{% endkpi_label %}{{ summary.handovers.assigned|intcomma }}{% kpi_helper %}{{ summary.handovers.awaiting|intcomma }} awaiting the Partner's date{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Scheduled{% endkpi_label %}{{ summary.handovers.scheduled|intcomma }}{% kpi_helper %}Dated by the Partner, not yet completed{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Completed{% endkpi_label %}{{ summary.handovers.completed|intcomma }}{% kpi_helper %}Hand-overs the Partner completed{% endkpi_helper %}{% endkpi_metric %}
+  {% endkpi_strip %}
+
+  {% kpi_strip title="Delivery And SSA" %}
+    {% kpi_metric %}{% kpi_label %}Partner Visits{% endkpi_label %}{{ summary.visits.completed|intcomma }} of {{ summary.visits.planned|intcomma }}{% kpi_helper %}Completed of planned · {{ summary.visits.overdue|intcomma }} overdue{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Partner Trainings{% endkpi_label %}{{ summary.trainings.completed|intcomma }} of {{ summary.trainings.planned|intcomma }}{% kpi_helper %}Completed of planned · {{ summary.trainings.overdue|intcomma }} overdue{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Schools Assessed{% endkpi_label %}{{ summary.assessed|intcomma }}{% kpi_helper %}of {{ summary.assessable|intcomma }} with a confirmed SSA in {{ fy_label }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}SSA Improved{% endkpi_label %}{{ summary.improved|intcomma }}{% kpi_helper %}Schools, by the IA change rule{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}SSA Declined{% endkpi_label %}{{ summary.declined|intcomma }}{% kpi_helper %}Schools, by the IA change rule{% endkpi_helper %}{% endkpi_metric %}
+  {% endkpi_strip %}
+
+  {% paginate rows "page" as pager %}
+  {% data_table name="partner-analysis" %}
+    {% slot title %}Partners, {{ fy_label }}{% endslot %}
+    {% slot summary %}{{ rows|length }} Partner{{ rows|length|pluralize }}{% endslot %}
+    {% slot caption %}Each Partner over the schools handed to it in your view: its hand-overs by stage, the visits and trainings it delivers, and its schools' SSA this year against the year before. The figures are its profile's; open a Partner to see them broken down.{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="No Partner holds a school in your view." compact="true" %}{% endslot %}
+    {% slot footer %}{% include "components/table_pager.html" with pager=pager param="page" %}{% endslot %}
+    {% if rows %}
+    <thead><tr>
+      <th scope="col" class="px-3 py-2">Partner</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools</th>
+      <th scope="col" class="px-3 py-2 text-right">Assigned</th>
+      <th scope="col" class="px-3 py-2 text-right">Awaiting Date</th>
+      <th scope="col" class="px-3 py-2 text-right">Scheduled</th>
+      <th scope="col" class="px-3 py-2 text-right">Completed</th>
+      <th scope="col" class="px-3 py-2 text-right">Visits</th>
+      <th scope="col" class="px-3 py-2 text-right">Trainings</th>
+      <th scope="col" class="px-3 py-2 text-right">Overdue</th>
+      <th scope="col" class="px-3 py-2 text-right">SSA Score</th>
+      <th scope="col" class="px-3 py-2 text-right">SSA Change</th>
+      <th scope="col" class="px-3 py-2 text-right">Improved / Declined</th>
+      <th scope="col" class="px-3 py-2">Needs Attention</th>
+    </tr></thead>
+    <tbody>
+      {% for r in pager.rows %}
+      <tr data-partner-analysis-row="{{ r.id }}">
+        <th scope="row" class="px-3 py-2 text-left" data-record-title><a href="{{ r.href }}" class="edify-primary-text font-semibold hover:underline">{{ r.name }}</a></th>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Schools">{{ r.schools|intcomma }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Assigned">{{ r.handovers.assigned|intcomma }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Awaiting Date">{{ r.handovers.awaiting|intcomma }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Scheduled">{{ r.handovers.scheduled|intcomma }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Completed">{{ r.handovers.completed|intcomma }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Visits" title="Completed of planned">{{ r.visits.completed|intcomma }}/{{ r.visits.planned|intcomma }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Trainings" title="Completed of planned">{{ r.trainings.completed|intcomma }}/{{ r.trainings.planned|intcomma }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Overdue">{{ r.visits.overdue|add:r.trainings.overdue|intcomma }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="SSA Score" title="{{ r.assessed }} of {{ r.assessable }} schools assessed">{{ r.ssa_now|default_if_none:0|floatformat:2 }}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="SSA Change">{% if r.ssa_change is None %}0.00{% else %}{% if r.ssa_change > 0 %}+{% endif %}{{ r.ssa_change|floatformat:2 }}{% endif %}</td>
+        <td class="px-3 py-2 text-right tabular-nums" data-label="Improved / Declined">{{ r.improved|intcomma }} / {{ r.declined|intcomma }}</td>
+        <td class="px-3 py-2" data-label="Needs Attention">{% for item in r.attention %}<span class="block">{{ item.text }}</span>{% empty %}Nothing{% endfor %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    {% endif %}
+  {% enddata_table %}
+</div>
+{% endblock %}

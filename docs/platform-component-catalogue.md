@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **705**
+Components and application partials: **706**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -509,6 +509,7 @@ Components and application partials: **705**
 | `partials/oversight/partner_school_row.html` | application-partial | Reusable partner school row interface primitive | danger, warning, {{ item.status_tone }}; default, open | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/partner_trainings_table.html` | application-partial | Reusable partner trainings table interface primitive | {{ item.status_tone }}; default, empty | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/partner_verify_drawer.html` | application-partial | Reusable partner verify drawer interface primitive | warning; default, error, disabled | inherits containing page contract | accessible name and label, announced dynamic state | dynamic / parent-owned | 0 |
+| `partials/oversight/partner_view_switch.html` | application-partial | Reusable partner view switch interface primitive | canonical; default | inherits containing page contract | accessible name and label | /partner-oversight/<br>/partner-oversight/analysis | 0 |
 | `partials/oversight/partner_work_row.html` | application-partial | Reusable partner work row interface primitive | danger, warning, {{ item.status_tone }}; default, open | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/partner_work_tables.html` | application-partial | Reusable partner work tables interface primitive | canonical; default, empty, open | inherits containing page contract | accessible name and label, announced dynamic state | /partner-oversight/ | 0 |
 | `partials/oversight/partner_workspace.html` | application-partial | Reusable partner workspace interface primitive | executive, info, warning, {% if summary.overdue %}danger{% else %}neutral{% endif %}; default | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |

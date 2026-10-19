@@ -1,0 +1,9 @@
+{% comment %}
+Partner Monitoring's two views (owner, 2026-10-18): Monitoring, one Partner's
+hand-overs and work at a time, and Analysis, every Partner the reader
+monitors read by the profile engine. `partner_view` names the open one.
+{% endcomment %}
+<nav class="oversight-entity-tabs" aria-label="Partner Monitoring views" data-partner-view-switch>
+  <a class="oversight-entity-tabs__link{% if partner_view != 'analysis' %} is-active{% endif %}" href="/partner-oversight/"{% if partner_view != 'analysis' %} aria-current="page"{% endif %}><span>Monitoring</span></a>
+  <a class="oversight-entity-tabs__link{% if partner_view == 'analysis' %} is-active{% endif %}" href="/partner-oversight/analysis"{% if partner_view == 'analysis' %} aria-current="page"{% endif %}><span>Analysis</span></a>
+</nav>
