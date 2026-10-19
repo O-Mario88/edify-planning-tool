@@ -118,13 +118,6 @@ class TheOwnersColumnsTest(_ColumnsFixture):
                 ).content.decode()
                 self.assertEqual(_headings(body), [*PAGE_COLUMNS, "Actions"])
 
-    def test_planning_oversight_s_special_projects_tab_draws_the_same(self):
-        self.client.force_login(self.ia_user)
-        body = self.client.get(
-            "/team-planning-oversight/", {"view": "projects", "fy": self.fy}
-        ).content.decode()
-        self.assertEqual(_headings(body), [*PAGE_COLUMNS, "Actions"])
-
     def test_the_workbook_s_first_sheet_is_exactly_the_columns(self):
         _response, book = self.workbook(self.ia_user, "/projects/export")
         sheet = book["Project Schools"]
@@ -610,28 +603,6 @@ class WhereTheExportsAreTest(_ExportFixture):
         body = self.client.get("/projects/monitoring", {"fy": self.fy}).content.decode()
         self.assertIn("data-project-schools", body)
         self.assertNotIn("data-project-export", body)
-
-    def test_planning_oversight_offers_all_projects_and_the_open_project(self):
-        self.client.force_login(self.ia_user)
-        every = f'href="/team-planning-oversight/projects/export?fy={self.fy}'
-        one = f"/team-planning-oversight/projects/{self.second.id}/export?fy={self.fy}"
-
-        # All Projects: one file of every project is the only export.
-        body = self.client.get(
-            "/team-planning-oversight/", {"view": "projects", "fy": self.fy}
-        ).content.decode()
-        self.assertIn(every, body)
-        self.assertEqual(body.count("data-project-export-all"), 1)
-        self.assertNotIn("data-project-export=", body)
-
-        # A project's tab: that project can be exported on its own as well.
-        body = self.client.get(
-            "/team-planning-oversight/",
-            {"view": "projects", "fy": self.fy, "project": self.second.id},
-        ).content.decode()
-        self.assertIn(every, body)
-        self.assertIn(one, body)
-        self.assertEqual(body.count("data-project-export="), 1)
 
     def test_the_coordinators_projects_page_offers_all_projects(self):
         self.client.force_login(self.coord_user)

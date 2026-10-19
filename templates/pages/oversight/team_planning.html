@@ -4,14 +4,14 @@
 
 {% block title %}Planning Oversight · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15"><link rel="stylesheet" href="{% static 'css/components/row-state.css' %}?v=20261017rows3">{% if request.GET.followup or active_oversight_view == "projects" %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15"><link rel="stylesheet" href="{% static 'css/components/row-state.css' %}?v=20261017rows3">{% if request.GET.followup %}
 <link rel="stylesheet" href="{% static 'css/pages/country-oversight.css' %}?v=20261018merge1">{% endif %}{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
   {% page_header title="Planning Oversight" %}
-    {% slot description %}{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "monitor" %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% elif active_oversight_view == "trainings" %}Every training with a school committed to it this year: the schools covered out of the Country Ceiling, the schools planned by staff, those assigned to a partner that still await the partner's date, what remains, then each officer's schools against the ceiling their Programme Lead set.{% elif active_oversight_view == "projects" %}Every live project and the schools assigned to it: whether planned by the coordinator or handed to a partner and scheduled, whether the work happened, and whether its focus SSA interventions moved.{% elif active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is past its date.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}{% endslot %}
+    {% slot description %}{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "monitor" %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% elif active_oversight_view == "trainings" %}Every training with a school committed to it this year: the schools covered out of the Country Ceiling, the schools planned by staff, those assigned to a partner that still await the partner's date, what remains, then each officer's schools against the ceiling their Programme Lead set.{% elif active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is past its date.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}{% endslot %}
   {% slot aside %}
     {% if active_oversight_view == "planning" %}
     {% comment %}CSV and Excel as one Export menu in the header (owner,
@@ -32,33 +32,6 @@
     set the Country Ceiling and Leads will set each staff ceiling"). Admin
     and Impact Assessment are offered it; the Country Director reads.{% endcomment %}
     <button type="button" hx-get="/training-ceilings/country/set?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button primary h-9" data-set-country-ceiling>+ Set Country Ceiling</button>
-    {% endif %}
-    {% if active_oversight_view == "projects" and can_export %}
-    {% comment %}The two exports (owner, 2026-10-05: "export either all
-    projects in 1 file or select a project to export"): every project in one
-    file, or the project whose tab is open. Both follow the filters.{% endcomment %}
-    <div id="oversight-export-slot" class="oversight-export-slot flex flex-wrap items-center gap-2">
-      <a class="edify-action-button secondary h-9 inline-flex items-center gap-1.5"
-         href="/team-planning-oversight/projects/export?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}"
-         hx-get="/team-planning-oversight/projects/export-drawer?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}"
-         hx-target="#drawer-container"
-         hx-swap="innerHTML"
-         title="Export every project and its schools to one Excel file" data-oversight-export data-project-export-all>
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        <span>Export all projects</span>
-      </a>
-      {% if selected_project and selected_project != "all" %}
-      <a class="edify-action-button secondary h-9 inline-flex items-center gap-1.5"
-         href="/team-planning-oversight/projects/{{ selected_project }}/export?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}"
-         hx-get="/team-planning-oversight/projects/export-drawer?project={{ selected_project }}&amp;fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}"
-         hx-target="#drawer-container"
-         hx-swap="innerHTML"
-         title="Export the open project and its schools to Excel" data-project-export="{{ selected_project }}">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        <span>Export this project</span>
-      </a>
-      {% endif %}
-    </div>
     {% endif %}
     {% if active_oversight_view == "targets" %}
     <div class="tt-page-header__context" aria-label="Current reporting context">
@@ -106,8 +79,6 @@
         {% include "partials/oversight/portfolio_workspace.html" %}
       {% elif active_oversight_view == "monitor" %}
         {% include "partials/oversight/monitor_workspace.html" %}
-      {% elif active_oversight_view == "projects" %}
-        {% include "partials/oversight/special_projects_workspace.html" %}
       {% elif active_oversight_view == "trainings" %}
         {% include "partials/oversight/training_summary_workspace.html" %}
       {% elif active_oversight_view == "execution" %}
