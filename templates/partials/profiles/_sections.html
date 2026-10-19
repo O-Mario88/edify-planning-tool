@@ -126,6 +126,7 @@ are the SSA tab's alone.{% endcomment %}
   </tbody>
 {% enddata_table %}
 {% endif %}
+{% if pi.decisions %}{% include "partials/profiles/_decisions.html" with d=pi.decisions %}{% endif %}
 
 {% elif pi.section == "ssa" %}
 {% comment %}The best and struggling intervention are the Overview's (owner,

@@ -196,7 +196,6 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
             "templates/pages/analytics/closure_impact.html",
             "templates/pages/analytics/publishing_status.html",
             "templates/pages/ssa/performance.html",
-            "templates/pages/decisions/index.html",
             "templates/pages/audit/decision_log.html",
             "templates/pages/reports/index.html",
             "templates/pages/projects/analytics.html",
