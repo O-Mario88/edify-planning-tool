@@ -506,7 +506,12 @@ class WorkspaceTest(_Scored):
         self.client.force_login(mine)
         body = self._section("my").content.decode()
         self.assertIn(f'data-cluster-oversight-row="{self.cluster.id}"', body)
-        self.assertIn(f'href="/cluster-oversight/my?fy={self.fy}"', body)
+        # A CCEO's Command Center is their own clusters already, so My
+        # Clusters would draw the same table twice (owner, 2026-10-19: "there
+        # is a lot of duplications on the profile pages and oversights"): the
+        # tab is offered only where it reads fewer clusters than the Command
+        # Center.
+        self.assertNotIn(f'href="/cluster-oversight/my?fy={self.fy}"', body)
 
     def test_one_sidebar_entry_for_every_role_that_reads_clusters(self):
         from apps.core.navigation import build_sidebar_for_user
