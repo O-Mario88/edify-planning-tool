@@ -77,12 +77,46 @@ _TYPES = {
 KINDS = frozenset(_TYPES) | {ALL}
 
 
+#: Planning Oversight's activity tabs (``?activity=``,
+#: ``oversight_service.ACTIVITY_FAMILIES``) as kinds. Its Group Trainings tab
+#: holds every training type, in-school ones too, so it is ``trainings``.
+TAB_KINDS = {"visits": VISITS, "meetings": MEETINGS, "trainings": TRAININGS}
+#: How the drawer names ``trainings``, offered when the page's tab chose it.
+TRAININGS_CHOICE = (TRAININGS, "Trainings only (group and in-school)")
+
+
 def read_kind(source) -> str:
     """The kind a request (or any mapping with ``get``) asks for; a blank or
     unknown value is the whole page."""
     query = getattr(source, "GET", source)
     kind = (query.get("activity_type") or "").strip().lower()
     return kind if kind in KINDS else ALL
+
+
+def tab_kind(source) -> str | None:
+    """The kind Planning Oversight's activity tab narrowed the page to, or
+    None for All Activities (owner, 2026-10-19: "When i select Visit only it
+    was exporting everything")."""
+    query = getattr(source, "GET", source)
+    return TAB_KINDS.get((query.get("activity") or "").strip().lower())
+
+
+def read_kind_or_tab(source) -> str:
+    """The drawer's kind when it sent one, else the page's tab: the plain
+    Export link and an old bookmark carry the tab alone."""
+    query = getattr(source, "GET", source)
+    if (query.get("activity_type") or "").strip():
+        return read_kind(query)
+    return tab_kind(query) or ALL
+
+
+def choices_for(kind: str | None) -> tuple:
+    """The drawer's choices, with ``trainings`` added after group trainings
+    when the page's tab asks for it."""
+    if kind != TRAININGS:
+        return KIND_CHOICES
+    at = [value for value, _ in KIND_CHOICES].index(GROUP_TRAININGS) + 1
+    return (*KIND_CHOICES[:at], TRAININGS_CHOICE, *KIND_CHOICES[at:])
 
 
 def keeps(kind: str, activity_type, *, online: bool = False) -> bool:
