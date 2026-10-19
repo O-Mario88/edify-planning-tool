@@ -2363,6 +2363,7 @@ _CORE_IN_FLIGHT_STATUSES = frozenset(
         "Submitted",
         "submitted",
         "IA Pending",
+        "PL Pending",
         "ia_pending",
     }
 )

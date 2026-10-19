@@ -560,6 +560,21 @@ class Activity(SoftDeleteModel):
         "recommendation_source",
     }
 
+    #: The verification statuses keep their stored names; what a reader sees
+    #: says who verifies (owner, 2026-10-19: "Only Partner work is verified
+    #: by Impact Assessment (IA). Staff work is verified by PL").
+    _STAFF_VERIFICATION_LABELS = {
+        "awaiting_ia_verification": "Awaiting PL Verification",
+        "ia_verified": "PL Verified",
+    }
+
+    def get_status_display(self) -> str:
+        if self.delivery_type != "partner" and self.status in (
+            self._STAFF_VERIFICATION_LABELS
+        ):
+            return self._STAFF_VERIFICATION_LABELS[self.status]
+        return dict(ActivityStatus.choices).get(self.status, self.status)
+
     def save(self, *args, **kwargs):
         # ``scheduled_date`` is an instant, not a date-only planning field.
         # Normalize direct model/admin/import writes before Django prepares the
@@ -900,7 +915,7 @@ class ActivityScheduleCostLine(TimeStampedModel):
         if self.activity.status == "completed":
             return "Evidence Submitted"
         elif self.activity.status == "ia_verified":
-            return "IA Verified"
+            return self.activity.get_status_display()
 
         return "Draft Costed"
 

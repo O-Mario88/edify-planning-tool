@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **705**
+Components and application partials: **706**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -399,6 +399,7 @@ Components and application partials: **705**
 | `partials/ia/_geography_cards.html` | application-partial | Reusable  geography cards interface primitive | canonical; default, empty, open | inherits containing page contract | inherits semantic parent contract | /ia/dashboard/ | 0 |
 | `partials/ia/dashboard_body.html` | application-partial | Reusable dashboard body interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /ia/dashboard/ | 0 |
 | `partials/ia/evidence_table.html` | application-partial | Reusable evidence table interface primitive | {{ cell.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | /ia/learning/<br>/ia/lending-evidence/<br>/ia/school-evidence/<br>/ia/stories/ | 0 |
+| `partials/ia/export_button.html` | application-partial | Reusable export button interface primitive | canonical; default | inherits containing page contract | accessible name and label | /ia/history/<br>/ia/partner-evidence/<br>/ia/returned/<br>/ia/verification/ | 0 |
 | `partials/ia/framework_register.html` | application-partial | Reusable framework register interface primitive | {{ cell.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | /ia/framework/ | 0 |
 | `partials/ia/impact_reports_table.html` | application-partial | Reusable impact reports table interface primitive | {{ cell.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | /ia/impact-reports/<br>/ia/impact-reports/<str:report_id>/<br>/impact-briefs/<str:release_id>/ | 0 |
 | `partials/ia/learning_qualitative.html` | application-partial | Reusable learning qualitative interface primitive | canonical; default, empty | explicit responsive contract | accessible name and label | /ia/learning/ | 0 |

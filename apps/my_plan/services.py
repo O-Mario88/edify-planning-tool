@@ -625,15 +625,9 @@ def compute_next_action(a, today) -> dict:
 
     # 5.5 Ready to Submit for Review
     if a.status in _WORKED_STATUSES and form_step_met and a.salesforce_activity_id:
-        ssa_done = True
-        if a.activity_type in [
-            "baseline_ssa_visit",
-            "school_visit_ssa_collection",
-            "partner_ssa_collection",
-            "cluster_training_ssa_collection",
-        ]:
-            if a.school and a.school.current_fy_ssa_status != "done":
-                ssa_done = False
+        # The SSA is optional at completion (owner, 2026-10-19: "Adding SSA
+        # scores can be optional but Salesforce ID is A MUST"): Submit waits
+        # on the Salesforce ID, never on the school's SSA.
         participants_done = True
         if a.activity_type in [
             "training",
@@ -645,7 +639,7 @@ def compute_next_action(a, today) -> dict:
                 a.leaders_attended or 0
             ) > 0
 
-        if ssa_done and participants_done:
+        if participants_done:
             return {
                 "text": "Submit",
                 "action": "submit",

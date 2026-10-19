@@ -26,6 +26,7 @@ Pinned here:
 
 from __future__ import annotations
 
+import itertools
 from datetime import date, timedelta
 
 from apps.accounts.models import StaffSchoolAssignment
@@ -44,6 +45,11 @@ from apps.ssa.pl_confirmation import (
 )
 
 CODES = [code for code, _label in SsaIntervention.choices]
+
+
+#: Handed-in statuses: such work always carries its Salesforce ID.
+HANDED_IN = frozenset({"submitted_to_pl", "awaiting_ia_verification"})
+_SF_IDS = itertools.count(1)
 
 
 class _Fixture(ReviewFixture):
@@ -68,6 +74,10 @@ class _Fixture(ReviewFixture):
     def _visit(self, owner_id, **extra):
         values = {"status": "completion_started"}
         values.update(extra)
+        if values["status"] in HANDED_IN and "salesforce_activity_id" not in values:
+            # Work is handed in with its Salesforce ID, and the lead verifies
+            # nothing without one (owner, 2026-10-19).
+            values["salesforce_activity_id"] = f"SVE-SSAPL-{next(_SF_IDS)}"
         return self._completion(owner_id, **values)
 
 

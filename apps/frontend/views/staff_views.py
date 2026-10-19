@@ -757,7 +757,6 @@ def my_targets_area_drawer_view(request):
 @require_page_permission("my_target")
 def my_targets_export_view(request):
     """Role-scoped CSV export of the signed-in user's target results."""
-    import csv
 
     from django.http import HttpResponse
     from django.utils import timezone as _tz
@@ -769,7 +768,9 @@ def my_targets_export_view(request):
     TargetAchievementService.rebuild(request.user, fy)
     resp = HttpResponse(content_type="text/csv")
     resp["Content-Disposition"] = f'attachment; filename="my_targets_{fy}.csv"'
-    w = csv.writer(resp)
+    from apps.core.excel import safe_csv_writer
+
+    w = safe_csv_writer(resp)
     w.writerow(
         [
             f"My Targets — {request.user.name}",
@@ -1634,9 +1635,9 @@ def team_targets_sfid_backlog_view(request):
 # view for an arbitrary slice of the team's work.
 VALIDATION_BACKLOGS = {
     "awaiting_ia_verification": {
-        "title": "Awaiting IA Verification",
-        "subtitle": "Completed team activities submitted to Internal Audit, not yet verified",
-        "badge": "Awaiting IA",
+        "title": "Awaiting PL Verification",
+        "subtitle": "Completed team activities waiting for their Programme Lead's verification",
+        "badge": "Awaiting PL",
         "tone": "warning",
         "helper": (
             "Work here is done and visible but not yet credited — it counts as "
@@ -1805,7 +1806,6 @@ def team_targets_export_view(request):
     from django.http import HttpResponse
     from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
     from apps.targets.team_targets import PLTeamTargetsService
-    import csv
 
     fy = (request.GET.get("fy") or "").strip() or Cal.current()["fy"]
     raw_month = (request.GET.get("month") or "").strip()
@@ -1822,7 +1822,9 @@ def team_targets_export_view(request):
     )
     resp = HttpResponse(content_type="text/csv")
     resp["Content-Disposition"] = f'attachment; filename="team-targets-fy{fy}.csv"'
-    writer = csv.writer(resp)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(resp)
     writer.writerow(
         [
             f"Team Targets — FY {fy}",

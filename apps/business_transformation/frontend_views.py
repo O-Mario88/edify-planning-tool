@@ -1,4 +1,3 @@
-import csv
 from datetime import timedelta
 from urllib.parse import urlencode
 
@@ -287,7 +286,9 @@ def loan_export_action(request):
     response["Content-Disposition"] = (
         'attachment; filename="uganda-governed-loan-register.csv"'
     )
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     writer.writerow(
         [
             "Lending partner",
@@ -368,7 +369,9 @@ def loan_application_export_action(request):
     response["Content-Disposition"] = (
         'attachment; filename="uganda-loan-applications.csv"'
     )
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     writer.writerow(
         [
             "Application reference",

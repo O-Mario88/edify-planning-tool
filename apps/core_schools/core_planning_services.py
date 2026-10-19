@@ -1311,7 +1311,7 @@ class CorePackageProgressService:
                 "iaverified",
             ]:
                 return {
-                    "status": "IA Verified",
+                    "status": "Verified",
                     "pill_class": "bg-emerald-100 text-emerald-900 border-emerald-300",
                     "label": "✔",
                 }
@@ -1352,9 +1352,9 @@ class CorePackageProgressService:
             "ia pending",
         ]:
             return {
-                "status": "IA Pending",
+                "status": "Verification Pending",
                 "pill_class": "bg-purple-50 text-purple-700 border-purple-200",
-                "label": "IA Pend",
+                "label": "Pending",
             }
         elif status in [
             "returned",

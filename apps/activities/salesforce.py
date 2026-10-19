@@ -49,6 +49,16 @@ _RECORD_ID_RE = re.compile(r"^[A-Z0-9]{15}(?:[A-Z0-9]{3})?$")
 # Salesforce entry belongs to the staff member who verifies it.
 ENTRY_AUTHORIZED_ROLES = ("CCEO", "Program Lead", "ImpactAssessment", "Admin")
 
+#: Catalogue record types with no Salesforce record, so no Activity ID: the
+#: admin and field events (a district meeting, a partner-meeting budget).
+#: Every visit and training is completed with its ID (owner, 2026-10-19:
+#: "Salesforce ID is a MUST. Any activity without salesforce ID CANNOT be
+#: completed"). SSA_DATA_GATHERING used to sit here too, and the school
+#: visits filed under it ("School Visit + SSA Collection", "Data Gathering -
+#: ASA/SSA Project") completed, verified and counted with no ID although
+#: their catalogue entries say one is required: they are visits.
+NO_SALESFORCE_RECORD_TYPES = frozenset({"NONE"})
+
 ENTRY_SOURCE_STAFF_SELF = "staff_self_entry"
 ENTRY_SOURCE_MANAGING_STAFF = "managing_staff_for_partner"
 ENTRY_SOURCE_IA_CONFIRMATION = "ia_confirmation"

@@ -163,7 +163,7 @@ def _history(row, *, evidence, money_moved, paired) -> str:
         "",
         "pending",
     ):
-        return "IA review"
+        return "verification"
     if row["payment_status"] not in (None, "", "none") or row["id"] in money_moved:
         return "money moved"
     if row["paired_school_visit_id"] or row["id"] in paired:

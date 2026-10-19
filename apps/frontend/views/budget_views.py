@@ -366,7 +366,6 @@ def _scoped_base_querysets(request, fy):
 
 
 def _export_weekly_fund_requests_csv(wfr_qs):
-    import csv
     from django.http import HttpResponse
     from apps.accounts.models import User
 
@@ -378,7 +377,9 @@ def _export_weekly_fund_requests_csv(wfr_qs):
     )
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="weekly_fund_requests.csv"'
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     writer.writerow(
         [
             "Request ID",

@@ -10,7 +10,6 @@ and the figures are defined in docs/core-school-intelligence-metrics.md.
 
 from __future__ import annotations
 
-import csv
 
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
@@ -117,7 +116,9 @@ def _csv(rows, fy: str) -> HttpResponse:
     response["Content-Disposition"] = (
         f'attachment; filename="core-school-oversight-fy{fy}.csv"'
     )
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     writer.writerow(CSV_HEADERS)
     for r in rows:
         writer.writerow(

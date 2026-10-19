@@ -55,6 +55,6 @@
     {% include "components/table_pager.html" with pager=cceo_leaderboard_rows_pager param="cceo_leaderboard_rows_page" %}
   </div>
   {% if cceo_leaderboard.measured_count %}
-  <p class="edify-text-caption text-slate-400 font-medium pt-1">Validated credit only — work awaiting evidence, IA verification or a Salesforce ID is not counted here. Median {{ cceo_leaderboard.country_median }}% across {{ cceo_leaderboard.measured_count }} CCEO(s) with a target set.</p>
+  <p class="edify-text-caption text-slate-400 font-medium pt-1">Validated credit only — work awaiting evidence, PL verification or a Salesforce ID is not counted here. Median {{ cceo_leaderboard.country_median }}% across {{ cceo_leaderboard.measured_count }} CCEO(s) with a target set.</p>
   {% endif %}
 </div>

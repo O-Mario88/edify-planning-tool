@@ -21,7 +21,6 @@ from with that message.
 
 from __future__ import annotations
 
-import csv
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -1387,7 +1386,9 @@ def learning_template_csv(request):
     response["Content-Disposition"] = (
         'attachment; filename="learning_results_template.csv"'
     )
-    writer = csv.writer(response)
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
     writer.writerow(ev.LEARNING_CSV_COLUMNS)
     sample_day = f"{int(get_operational_fy()) - 1}-11-15"
     writer.writerow(

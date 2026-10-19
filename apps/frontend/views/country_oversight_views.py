@@ -1304,14 +1304,30 @@ def _school_sheet(request, filters) -> dict:
 def _followup_sheet(fy: str) -> dict:
     from apps.planning.followup_models import PlanningOversightFollowUp
 
+    from django.db.models import Q
+
+    from apps.schools.models import School
+
+    followups = list(
+        PlanningOversightFollowUp.objects.filter(fy=fy).order_by("-assigned_at")
+    )
+    # The School ID beside the name (owner, 2026-10-19), whichever key the
+    # follow-up was filed under: the school's record or its School ID.
+    keys = {row.school_id for row in followups if row.school_id}
+    codes = {}
+    for pk, code in School.objects.filter(
+        Q(id__in=keys) | Q(school_id__in=keys)
+    ).values_list("id", "school_id"):
+        codes[pk] = codes[code] = code
     rows = []
-    for row in PlanningOversightFollowUp.objects.filter(fy=fy).order_by("-assigned_at"):
+    for row in followups:
         issue = fu.issue_of(row.issue_type)
         rows.append(
             [
                 row.assigned_at.date().isoformat(),
                 row.program_lead_name,
                 row.cceo_name,
+                codes.get(row.school_id or "", ""),
                 row.school_name,
                 issue.label if issue else row.issue_type,
                 row.period_label,
@@ -1332,7 +1348,8 @@ def _followup_sheet(fy: str) -> dict:
             "Sent",
             "Programme Lead",
             "CCEO",
-            "School",
+            "School ID",
+            "School Name",
             "Issue",
             "Period",
             "Required",

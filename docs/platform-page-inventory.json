@@ -5121,7 +5121,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 8659,
+      "bytes": 8656,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots/<str:snapshot_id>"
@@ -5145,7 +5145,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3046,
+      "bytes": 3097,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots"
@@ -5390,7 +5390,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17594,
+      "bytes": 17585,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -8246,7 +8246,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7342,
+      "bytes": 7345,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9684,6 +9684,32 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 792,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/ia/history/",
+        "/ia/partner-evidence/",
+        "/ia/returned/",
+        "/ia/verification/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Export Button",
+      "purpose": "Reusable export button interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/ia/export_button.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
@@ -9766,7 +9792,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 24981,
+      "bytes": 24966,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -10591,7 +10617,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 29894,
+      "bytes": 30200,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -10746,7 +10772,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22132,
+      "bytes": 23792,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"
@@ -11418,7 +11444,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3313,
+      "bytes": 3296,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/submit"
@@ -17051,7 +17077,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4378,
+      "bytes": 4381,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/staff-drawer"
@@ -39804,7 +39830,8 @@
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -39902,7 +39929,8 @@
         "/country-planning-oversight/send"
       ],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "components/drawers/base_drawer.html"
@@ -40979,7 +41007,8 @@
         "/country-planning-oversight/follow-up"
       ],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "components/drawers/base_drawer.html"
@@ -41057,7 +41086,8 @@
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -41139,7 +41169,8 @@
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -41222,7 +41253,8 @@
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -41306,7 +41338,8 @@
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -41470,7 +41503,8 @@
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -41547,7 +41581,8 @@
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -41627,7 +41662,8 @@
         "/country-planning-oversight/table/{{ spec.key }}"
       ],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -59826,7 +59862,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_school_evidence"
       ],
       "filters": "none",
@@ -59884,7 +59920,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -59902,7 +59938,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_school_evidence"
       ],
       "filters": "none",
@@ -59960,7 +59996,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -60061,7 +60097,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_school_evidence"
       ],
       "filters": "none",
@@ -60119,7 +60155,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -60138,7 +60174,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/hr/form_drawer.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_school_evidence"
       ],
       "filters": "none",
@@ -60202,7 +60238,7 @@
       "templates": [
         "partials/hr/form_drawer.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -60220,7 +60256,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_school_evidence"
       ],
       "filters": "none",
@@ -60278,7 +60314,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -60372,7 +60408,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_school_evidence"
       ],
       "filters": "none",
@@ -60430,7 +60466,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -60529,7 +60565,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/hr/form_drawer.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_stories"
       ],
       "filters": "none",
@@ -60592,7 +60628,7 @@
       "templates": [
         "partials/hr/form_drawer.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -60610,7 +60646,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_stories"
       ],
       "filters": "none",
@@ -60667,7 +60703,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -79425,7 +79461,8 @@
         "/planning-follow-ups/{{ followup.id }}/return"
       ],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -79515,7 +79552,8 @@
         "/planning-follow-ups/{{ followup.id }}/return"
       ],
       "services_and_models": [
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -101316,6 +101354,20 @@
         "retryable": true
       },
       {
+        "cron": "every 30 min at :25 and :55 Africa/Nairobi",
+        "cron_kwargs": {
+          "minute": "25,55"
+        },
+        "description": "Hands a CCEO's or a lead's completed work that holds its Salesforce ID, and was never handed in, to the Programme Lead to approve (owner, 2026-10-19), so the Execution & Completion table and the counts never miss it.",
+        "expected_runtime_seconds": 30,
+        "idempotency_note": "apps.pl_review.handed_in only takes work not yet handed in; a second run finds nothing to do.",
+        "idempotent": true,
+        "max_interval_minutes": 90,
+        "max_retries": 2,
+        "name": "hand_in_entered_work",
+        "retryable": true
+      },
+      {
         "cron": "daily 06:30 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 6,
@@ -122670,7 +122722,7 @@
     "activity_states": 24,
     "all_routes": 1416,
     "api_routes": 364,
-    "component_templates": 705,
+    "component_templates": 706,
     "full_pages": 258,
     "mobile_contract_pass": 595,
     "nonvisual_actions": 302,
@@ -122690,7 +122742,7 @@
     "permission_keys": 127,
     "roles": 15,
     "routed_surfaces": 935,
-    "scheduled_jobs": 38,
+    "scheduled_jobs": 39,
     "severity_counts": {
       "critical": 0,
       "high": 0,
@@ -122698,7 +122750,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 595,
-    "test_referenced": 836,
+    "test_referenced": 844,
     "theme_contract_pass": 595
   }
 }

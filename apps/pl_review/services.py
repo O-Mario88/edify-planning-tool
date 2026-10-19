@@ -44,12 +44,26 @@ LEAD_VERIFIED_ROLES = (EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.valu
 
 
 def _lead_verified_profiles():
+    """The staff whose staff-delivered work a Programme Lead verifies: every
+    CCEO and lead, and anyone else a Programme Lead supervises (owner,
+    2026-10-19: "Only Partner work is verified by Impact Assessment (IA).
+    Staff work is verified by PL"). A staff member no lead supervises has no
+    lead to send work to, so IA keeps theirs rather than it waiting on
+    nobody."""
     from apps.accounts.models import StaffProfile
 
     holds = Q()
     for role in LEAD_VERIFIED_ROLES:
         holds |= Q(user__roles__contains=[role])
-    return StaffProfile.objects.filter(holds, deleted_at__isnull=True)
+    supervised_by_lead = Q(
+        supervisor_links__supervisor__user__roles__contains=[
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        ],
+        supervisor_links__supervisor__deleted_at__isnull=True,
+    )
+    return StaffProfile.objects.filter(
+        holds | supervised_by_lead, deleted_at__isnull=True
+    ).distinct()
 
 
 def lead_verified_owner_q(field: str = "responsible_staff_id") -> Q:
@@ -589,11 +603,24 @@ def _approve(a: Activity, reviewer_id: str) -> None:
     approved and counted from now (owner, 2026-10-15). Inside the caller's
     transaction."""
     from apps.activities.ia_models import IAVerification
+    from apps.activities.services import sf_kind_for_activity
     from apps.core.enums import ActivityStatus, EvidenceStatus, VerificationStatus
     from apps.evidence.models import EvidenceRecord
     from apps.hr.milestone_progress import record_activity_progress
     from apps.integrations.services import enqueue_activity_salesforce_sync
 
+    # No completion is verified without its Salesforce ID (owner, 2026-10-19:
+    # "make sure that all completion should have salesforce ID"). The drawer
+    # hides Verified without one; this holds for a direct post, and for work
+    # handed in before the rule reached SSA data-gathering visits.
+    if (
+        sf_kind_for_activity(a) is not None
+        and not (a.salesforce_activity_id or "").strip()
+    ):
+        raise BadRequest(
+            "This completion has no Salesforce ID. Return it to the officer "
+            "to enter the ID; it cannot be verified without one."
+        )
     reviewed_at = timezone.now()
     was_with_ia = a.status == "awaiting_ia_verification"
     a.status = ActivityStatus.IA_VERIFIED

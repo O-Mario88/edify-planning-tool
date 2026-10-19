@@ -60,13 +60,26 @@ def country_export(user, dataset, fy=None, quarter=None, month=None, filters=Non
     if dataset == "risk":
         from apps.analytics.cd_dashboard_service import CDDashboardService
 
+        from apps.planning.country_execution.service import school_codes
+
         rows = CDDashboardService.priority_schools(cd, acts, limit=None)
-        header = ["School", "District / Region", "Risk", "Severity", "Factors"]
+        # The rows carry the school's record key; the export names the
+        # School ID people know it by (owner, 2026-10-19).
+        codes = school_codes(r["id"] for r in rows)
+        header = [
+            "School ID",
+            "School Name",
+            "District / Region",
+            "Risk",
+            "Severity",
+            "Factors",
+        ]
         return (
             "priority-schools",
             header,
             [
                 [
+                    codes.get(r["id"], ""),
                     r["school"],
                     r["region"],
                     r["risk"],
@@ -101,8 +114,8 @@ def country_export(user, dataset, fy=None, quarter=None, month=None, filters=Non
 
         report = core_school_health(user, {"fy": fy})
         header = [
-            "School",
-            "Code",
+            "School ID",
+            "School Name",
             "District",
             "Status",
             "Slots Done",
@@ -118,8 +131,8 @@ def country_export(user, dataset, fy=None, quarter=None, month=None, filters=Non
         ]
         rows = [
             [
-                r["name"],
                 r["code"],
+                r["name"],
                 r["district"],
                 r["status"],
                 f"{r['slotsDone']}/{r['slotsTotal']}",

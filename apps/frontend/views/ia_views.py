@@ -23,8 +23,10 @@ from apps.core.donut import build_gauge, build_rings
 from apps.core.permissions import (
     RolePermissionService,
     ia_officer_staff_ids,
+    require_export_permission,
     require_page_permission,
 )
+from apps.activities import ia_export
 from apps.core.rbac import Permission
 from apps.core.scoping import activity_country_q, resolve_user_scope
 from apps.audit.services import log as audit_log
@@ -230,6 +232,7 @@ IA_QUEUE_DRILLDOWNS = {
 }
 
 
+@require_export_permission
 @require_page_permission("ia_verification_queue")
 def ia_verification_queue_view(request):
     """Central queue of activities waiting for verification.
@@ -417,6 +420,11 @@ def ia_verification_queue_view(request):
             | Q(responsible_staff_id__in=_ia_staff_ids_named(search_q))
         )
 
+    if ia_export.wants_export(request):
+        return ia_export.download(
+            request, "ia-verification-queue", "Verification Queue", filtered_qs
+        )
+
     # The queue KPIs, on the population the table below actually shows.
     waiting_count = filtered_qs.count()
     ssa_pending = filtered_qs.filter(ssa_collection_expected=True).count()
@@ -542,6 +550,7 @@ def ia_verification_queue_view(request):
     context = {
         "queue": serialized_queue,
         "page_obj": page_obj,
+        "may_export": RolePermissionService.can_export(request.user, request.path),
         "drilldowns": drilldown_chips,
         "missing_sf_mode": missing_sf_mode,
         # The queue offered twelve dropdowns and nowhere to type. A reviewer is
@@ -855,6 +864,7 @@ def ia_return_action(request, activity_id):
     return redirect("/ia/verification/")
 
 
+@require_export_permission
 @require_page_permission("ia_returned")
 def ia_returned_view(request):
     """History of everything IA has returned."""
@@ -865,6 +875,10 @@ def ia_returned_view(request):
         .filter(_ia_reach_q(request))
         .order_by("-updated_at")
     )
+    if ia_export.wants_export(request):
+        return ia_export.download(
+            request, "ia-returned", "Returned Activities", returned_activities
+        )
 
     from apps.activities.verification_analytics import _staff_names
 
@@ -895,10 +909,14 @@ def ia_returned_view(request):
             }
         )
 
-    context = {"returned": serialized_returned}
+    context = {
+        "returned": serialized_returned,
+        "may_export": RolePermissionService.can_export(request.user, request.path),
+    }
     return render(request, "pages/ia/returned_activities.html", context)
 
 
+@require_export_permission
 @require_page_permission("ia_history")
 def ia_history_view(request):
     """Everything IA has verified."""
@@ -908,6 +926,16 @@ def ia_history_view(request):
         _staff_names,
     )
 
+    if ia_export.wants_export(request):
+        verified = (
+            Activity.objects.filter(_ia_reach_q(request))
+            .filter(verification_history__isnull=False)
+            .distinct()
+            .order_by("-ia_confirmed_at", "-pl_reviewed_at", "id")
+        )
+        return ia_export.download(
+            request, "ia-verification-history", "Verification History", verified
+        )
     entries = list(
         VerificationHistory.objects.filter(
             activity__in=Activity.objects.filter(_ia_reach_q(request)).values("id")
@@ -942,7 +970,10 @@ def ia_history_view(request):
         }
         for e in entries
     ]
-    context = {"history": history}
+    context = {
+        "history": history,
+        "may_export": RolePermissionService.can_export(request.user, request.path),
+    }
     return render(request, "pages/ia/verification_history.html", context)
 
 
@@ -2531,6 +2562,7 @@ def _partner_queue_row(a, partner_names, partner_users, today):
     }
 
 
+@require_export_permission
 @require_page_permission("ia_partner_evidence")
 def ia_partner_evidence_queue_view(request):
     """§10.1 the queue: partner work awaiting IA verification."""
@@ -2547,6 +2579,10 @@ def ia_partner_evidence_queue_view(request):
         .prefetch_related("evidence")
         .order_by("submitted_to_ia_at")
     )
+    if ia_export.wants_export(request):
+        return ia_export.download(
+            request, "ia-partner-evidence", "Partner Evidence", qs
+        )
     total = qs.count()
     activities = list(qs[:QUEUE_PAGE_SIZE])
     partner_ids = {a.assigned_partner_id for a in activities if a.assigned_partner_id}
@@ -2560,7 +2596,12 @@ def ia_partner_evidence_queue_view(request):
     return render(
         request,
         "pages/ia/partner_evidence_queue.html",
-        {"rows": rows, "total": total, "shown": len(rows)},
+        {
+            "rows": rows,
+            "total": total,
+            "shown": len(rows),
+            "may_export": RolePermissionService.can_export(request.user, request.path),
+        },
     )
 
 
