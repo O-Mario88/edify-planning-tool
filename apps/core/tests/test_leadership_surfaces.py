@@ -36,37 +36,14 @@ def _user(email, name, role):
 
 
 class DecisionIntelligencePageTests(TestCase):
-    """Two complete engines had no page anywhere in the platform."""
+    """Two complete engines had no page anywhere in the platform. The page
+    they got left with the Analytics entry (owner, 2026-10-19); the engines'
+    own guarantees stay tested here."""
 
     def setUp(self):
         self.cd = _user("cd-di@t.org", "Cody", EdifyRole.COUNTRY_DIRECTOR.value)
         StaffProfile.objects.create(user=self.cd, title="CD", country="Uganda")
         self.client = Client()
-
-    def test_cd_can_open_the_page(self):
-        self.client.force_login(self.cd)
-        resp = self.client.get("/decisions")
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.context["can_review_leadership"])
-        self.assertTrue(resp.context["can_review_budget"])
-
-    def test_rvp_reviews_leadership_but_not_finance(self):
-        rvp = _user("rvp-di@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
-        StaffProfile.objects.create(user=rvp, title="RVP", country="Uganda")
-        self.client.force_login(rvp)
-        resp = self.client.get("/decisions")
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.context["can_review_leadership"])
-        self.assertFalse(
-            resp.context["can_review_budget"],
-            "RVP holds budgetIntelligence.view but not budgetDecision.review",
-        )
-
-    def test_field_role_is_denied(self):
-        cceo = _user("cceo-di@t.org", "Cara", EdifyRole.CCEO.value)
-        self.client.force_login(cceo)
-        resp = self.client.get("/decisions", follow=True)
-        self.assertNotIn("Decision Intelligence — Edify", resp.content.decode())
 
     def test_budget_snapshot_does_not_raise(self):
         """It filtered on a deleted_at column the model lacks — a latent 500
@@ -76,11 +53,6 @@ class DecisionIntelligencePageTests(TestCase):
         snap = services.snapshot(self.cd, {})
         self.assertIn("totalInsights", snap)
         self.assertIn("amountAtRisk", snap)
-
-    def test_recompute_runs_both_engines(self):
-        self.client.force_login(self.cd)
-        resp = self.client.post("/decisions", {"action": "recompute"}, follow=True)
-        self.assertEqual(resp.status_code, 200)
 
 
 class DecliningSchoolsTests(TestCase):
@@ -123,13 +95,6 @@ class DecliningSchoolsTests(TestCase):
         self.assertFalse(data["canViewSchoolDetail"])
         self.assertEqual(data["schools"], [])
 
-    def test_page_renders_for_both_roles(self):
-        client = Client()
-        for user in (self.cd, self.rvp):
-            client.force_login(user)
-            resp = client.get("/declining-schools")
-            self.assertEqual(resp.status_code, 200)
-
 
 class CoreSchoolHealthTests(TestCase):
     """The CD's core KPIs linked to a page the CD is 403'd from."""
@@ -142,16 +107,6 @@ class CoreSchoolHealthTests(TestCase):
         )
         StaffProfile.objects.create(user=self.rvp, title="RVP", country="Uganda")
         self.client = Client()
-
-    def test_cd_reaches_the_leadership_page(self):
-        self.client.force_login(self.cd)
-        self.assertEqual(self.client.get("/core-school-health").status_code, 200)
-
-    def test_rvp_reaches_it_without_school_identity(self):
-        self.client.force_login(self.rvp)
-        resp = self.client.get("/core-school-health")
-        self.assertEqual(resp.status_code, 200)
-        self.assertFalse(resp.context["d"]["canViewSchoolDetail"])
 
     def test_cd_is_still_blocked_from_the_operational_page(self):
         """The leadership lens must not become a back door into field tooling."""
@@ -299,15 +254,6 @@ class CceoLeaderboardTests(TestCase):
         self.assertEqual(S._achievement_band(80), "On Track")
         self.assertEqual(S._achievement_band(60), "Watch")
         self.assertEqual(S._achievement_band(10), "Critical")
-
-    def test_cockpit_exposes_the_leaderboard(self):
-        cd = _user("cd-lb@t.org", "Cody", EdifyRole.COUNTRY_DIRECTOR.value)
-        StaffProfile.objects.create(user=cd, title="CD", country="Uganda")
-        client = Client()
-        client.force_login(cd)
-        resp = client.get("/analytics/country-director")
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn("CCEO Leaderboard", resp.content.decode())
 
 
 class RiskDrilldownCoverageTests(TestCase):

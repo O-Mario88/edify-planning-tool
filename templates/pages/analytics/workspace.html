@@ -1,13 +1,12 @@
 {% extends "layouts/shell.html" %}
 {% load static frontend_filters %}
 {% comment %}
-The one Analytics page.
+The shell of the pages that were Analytics sections.
 
-Every section of the Analytics workspace renders THIS template with its own
-panel: the header, the filter row, the tiles and the tablist are written once
-here and stay fixed, and the tab swaps only `#analytics-panel` (owner,
-2026-09-05). A section reached by a deep link renders the same shell around
-the same panel, so a bookmark and a tab click land on identical pages.
+The Analytics entry is retired (owner, 2026-10-19): Reports, the Decision Log
+and Closure Quality are pages of their own, so each is headed by its own name
+and carries no Analytics tabs, tiles or Analytics-page actions. The panel and
+its decision frame are unchanged.
 
 Context a section view supplies:
   panel_template    required — the partial holding that section's own content
@@ -26,44 +25,9 @@ Context a section view supplies:
 
 <header class="edify-page-header">
   <div class="lg:max-w-[560px] edify-page-header__lead">
-    <h1 class="edify-page-title edify-page-header__title">Analytics</h1>
-    <p class="edify-page-header__description">Program performance, field execution, SSA improvement, and impact.</p>
-  </div>
-
-  <div class="analytics-header-actions edify-page-header__controls flex flex-wrap items-center gap-2">
-    {% comment %}
-    The SSA section renders this shell for every role, including partner, BT
-    and MFI readers the Analytics routes refuse: each control is drawn only
-    for a reader its own route admits (apps.core.permissions.can_open_url).
-    {% endcomment %}
-    {% url 'frontend:analytics_export' as analytics_export_url %}
-    {% if request.user|can_open:analytics_export_url %}
-    <a href="{{ analytics_export_url }}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}"
-      class="btn btn-ghost h-8" aria-label="Export to Excel" title="Export to Excel">
-      <svg aria-hidden="true" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
-      {# One Excel export (owner, 2026-09-27: "It should be export in excel not csv"). #}
-      <span>Export</span>
-    </a>
-    {% endif %}
-    {% if request.user|can_open:"/analytics/schedule-report" %}
-    <button type="button" hx-get="/analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" hx-target="#drawer-container" hx-swap="innerHTML"
-      class="btn btn-ghost h-8">
-      <svg aria-hidden="true" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l8.1 5.4a1.6 1.6 0 001.8 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-      <span class="analytics-action-label--desktop">Send to Inbox</span>
-      <span class="analytics-action-label--mobile">Send</span>
-    </button>
-    {% endif %}
-    {% if request.user|can_open:"/analytics/customize-dashboard" %}
-    <button type="button" hx-get="/analytics/customize-dashboard" hx-target="#drawer-container" hx-swap="innerHTML"
-      class="btn btn-ghost h-8">
-      <svg aria-hidden="true" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      <span class="analytics-action-label--desktop">Customize</span>
-      <span class="analytics-action-label--mobile">Layout</span>
-    </button>
-    {% endif %}
+    <h1 class="edify-page-title edify-page-header__title">{{ panel_title|default:"Analytics" }}</h1>
   </div>
 </header>
-{# Out of the header's actions, so a phone keeps them on the title's line (owner, 2026-09-27). #}
 <span id="analytics-panel-updating" class="htmx-indicator edify-text-caption text-slate-400" role="status">Updating…</span>
 
 

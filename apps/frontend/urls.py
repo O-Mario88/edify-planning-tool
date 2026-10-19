@@ -8,9 +8,7 @@ from .views import (
     extra_work_views,
     hr_today_views,
     work_plan_views,
-    visit_effectiveness_views,
     closure_quality_views,
-    closure_impact_views,
     pwa_views,
     rvp_views,
     auth_views,
@@ -30,6 +28,7 @@ from .views import (
     budget_views,
     my_plan_panel_views,
     my_plan_views,
+    analytics_retired,
     analytics_views,
     staff_views,
     finance_views,
@@ -39,7 +38,6 @@ from .views import (
     project_capacity_views,
     message_views,
     core_schools_views,
-    impact_views,
     ssa_views,
     ia_views,
     ia_outcome_views,
@@ -1593,16 +1591,21 @@ urlpatterns = [
         name="activity_timeline",
     ),
     # Analytics & System Health
+    # The Analytics entry is retired (owner, 2026-10-19: "Remove the whole
+    # Analytics entry now. Send every section's old link to the closest
+    # profile or oversight page"): each section's address opens its home
+    # (views/analytics_retired.py). Reports, the Decision Log and Closure
+    # Quality keep their pages and have sidebar entries of their own.
     path(
         "analytics",
-        analytics_views.analytics_dashboard_view,
+        analytics_retired.retired("overview", "analytics"),
         name="analytics_dashboard",
     ),
-    path("analytics/", analytics_views.analytics_dashboard_view),
+    path("analytics/", analytics_retired.retired("overview", "analytics")),
     # Program Lead Analytics cockpit (supervised-team scope).
     path(
         "analytics/program-lead",
-        analytics_views.pl_analytics_view,
+        analytics_retired.retired("overview", "pl_analytics"),
         name="pl_analytics",
     ),
     path(
@@ -1617,7 +1620,7 @@ urlpatterns = [
     ),
     path(
         "analytics/country-director",
-        analytics_views.cd_analytics_view,
+        analytics_retired.retired("overview", "cd_analytics"),
         name="cd_analytics",
     ),
     path(
@@ -2453,7 +2456,7 @@ urlpatterns = [
     # ── GROUP 4: SSA, FY & Planning ──────────────────────────────────────────
     # Keep the legacy route name for reverse() compatibility; the destination
     # is now the unified SSA Performance workspace.
-    path("ssa", ssa_views.ssa_performance_view, name="ssa_master"),
+    path("ssa", analytics_retired.retired("ssa", "ssa_performance"), name="ssa_master"),
     path(
         "ssa/export",
         ssa_views.ssa_performance_export_view,
@@ -2461,7 +2464,7 @@ urlpatterns = [
     ),
     path(
         "analytics/visit-effectiveness",
-        visit_effectiveness_views.visit_effectiveness_view,
+        analytics_retired.retired("visit_effectiveness", "visit_effectiveness"),
         name="visit_effectiveness",
     ),
     path(
@@ -2471,23 +2474,26 @@ urlpatterns = [
     ),
     path(
         "analytics/school-closures",
-        closure_impact_views.closure_impact_view,
+        analytics_retired.retired("closures", "closure_impact"),
         name="closure_impact",
     ),
-    # People and Verification Quality are pages of other modules (HR, IA) with
-    # their own chrome. The Analytics workspace reaches the same content here,
-    # as tabs of the one Analytics page (owner, 2026-09-05).
+    # People and Verification Quality were HR's and IA's own pages shown as
+    # Analytics tabs; they open those pages.
     path(
         "analytics/people",
-        hr_views.people_analytics_section_view,
+        analytics_retired.retired("people", "hr_analytics"),
         name="people_analytics",
     ),
     path(
         "analytics/verification-quality",
-        ia_views.verification_quality_section_view,
+        analytics_retired.retired("verification_quality", "ia_dashboard"),
         name="verification_quality",
     ),
-    path("impact", impact_views.impact_analytics_view, name="impact_analytics"),
+    path(
+        "impact",
+        analytics_retired.retired("impact", "impact_analytics"),
+        name="impact_analytics",
+    ),
     path("fy", extended_views.fy_overview_view, name="fy_overview"),
     path("calendar", extended_views.calendar_view, name="calendar"),
     path(
@@ -2993,17 +2999,17 @@ urlpatterns = [
     path("escalations", escalation_views.escalations_view, name="escalations"),
     path(
         "decisions",
-        decision_views.decision_intelligence_view,
+        analytics_retired.retired("decisions", "decision_intelligence"),
         name="decision_intelligence",
     ),
     path(
         "declining-schools",
-        decision_views.declining_schools_view,
+        analytics_retired.retired("declining", "declining_schools"),
         name="declining_schools",
     ),
     path(
         "core-school-health",
-        decision_views.core_school_health_view,
+        analytics_retired.retired("core_school_health", "core_school_health"),
         name="core_school_health",
     ),
     path("decision-log", decision_views.decision_log_view, name="decision_log"),

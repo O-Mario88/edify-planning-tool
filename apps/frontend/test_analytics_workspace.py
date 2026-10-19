@@ -1,10 +1,13 @@
-"""The Analytics workspace: one sidebar door, many analysis sections.
+"""What replaced the Analytics workspace.
 
-Every analysis page in the platform used to carry its own sidebar link. They
-are now sections of a single workspace, switched between with the
-sub-navigation the shell renders. These tests hold that consolidation in
-place: the sections stay reachable, permission still decides what each role is
-offered, and no analysis page quietly loses its way back into the product.
+Every analysis page used to be a section of one Analytics workspace behind one
+sidebar door. The entry is retired (owner, 2026-10-19: "Remove the whole
+Analytics entry now. Send every section's old link to the closest profile or
+oversight page, and give only Reports, Decision Log and Closure Quality their
+own sidebar entries"); apps/frontend/test_analytics_retired.py holds the old
+links and the three entries. These tests hold the rest in place: the pages
+folded away keep no sidebar link of their own, the sidebar's groups stay
+readable, and Impact Assessment's own workspace still carries its pages.
 """
 
 from __future__ import annotations
@@ -13,22 +16,20 @@ from django.test import Client, TestCase
 
 from apps.accounts.models import StaffProfile, User
 from apps.core.navigation import (
-    ANALYTICS_SECTIONS,
     IA_SECTIONS,
-    PROJECT_MONITORING_SECTIONS,
     PAGE_PERMISSIONS,
     SIDEBAR_ITEMS,
-    build_analytics_sections,
+    WORKSPACES,
     build_workspace,
     build_sidebar_for_user,
-    get_user_role_slug,
 )
 from apps.core.rbac import EdifyRole
 
-# The pages that were folded into the workspace. If one of these ever needs a
+# Pages that were folded into other pages. If one of these ever needs a
 # sidebar link again that is a product decision, not a refactor — this list is
 # where it gets recorded.
 MERGED_AWAY_LABELS = {
+    "Analytics",
     "Decision Intelligence",
     "SSA Performance",
     "Declining Schools",
@@ -36,8 +37,6 @@ MERGED_AWAY_LABELS = {
     "Impact Analytics",
     "Visit Effectiveness",
     "Analytics Publishing",
-    "Reports",
-    "Decision Log",
     "Completed Archive",
     "HR Analytics",
     # Merged into the Leave workspace.
@@ -59,44 +58,9 @@ def _user(email: str, role: str) -> User:
     return user
 
 
-class AnalyticsWorkspaceStructureTest(TestCase):
-    def test_every_section_declares_a_real_permission_key(self):
-        for section in ANALYTICS_SECTIONS:
-            with self.subTest(section=section["key"]):
-                self.assertIn(section["page_key"], PAGE_PERMISSIONS)
-                self.assertTrue(PAGE_PERMISSIONS[section["page_key"]])
-
-    def test_section_keys_and_urls_are_unique(self):
-        keys = [s["key"] for s in ANALYTICS_SECTIONS]
-        urls = [s["url"] for s in ANALYTICS_SECTIONS]
-        self.assertEqual(len(keys), len(set(keys)))
-        self.assertEqual(len(urls), len(set(urls)))
-
-    def test_sections_are_consolidated_into_five_product_areas(self):
-        clusters = {
-            section["key"]: section["cluster"] for section in ANALYTICS_SECTIONS
-        }
-
-        self.assertEqual(
-            clusters,
-            {
-                "overview": "overview",
-                "ssa": "school_performance",
-                "visit_effectiveness": "school_performance",
-                "impact": "impact_decisions",
-                "declining_schools": "school_performance",
-                "core_school_health": "school_performance",
-                "decision_intelligence": "impact_decisions",
-                "decision_log": "impact_decisions",
-                "people": "delivery",
-                "verification_quality": "delivery",
-                "closure_quality": "delivery",
-                "closure_impact": "school_performance",
-                "completed_work": "delivery",
-                "reports": "reporting",
-                "publishing": "reporting",
-            },
-        )
+class SidebarStructureTest(TestCase):
+    def test_there_is_no_analytics_workspace(self):
+        self.assertNotIn("analytics", WORKSPACES)
 
     def test_merged_pages_no_longer_hold_their_own_sidebar_links(self):
         labels = {
@@ -104,63 +68,18 @@ class AnalyticsWorkspaceStructureTest(TestCase):
         }
         self.assertEqual(labels & MERGED_AWAY_LABELS, set())
 
-    def test_the_sidebar_offers_exactly_one_analytics_door(self):
-        for role in EdifyRole:
-            user = _user(f"{role.name.lower()}@door.test", role.value)
-            sections = build_analytics_sections(user, "/dashboard")
-            hub_items = [
-                item
-                for group in build_sidebar_for_user(user, "/dashboard")
-                for item in group["items"]
-                if item["url"] in {s["url"] for s in sections}
-            ]
-            with self.subTest(role=role.value):
-                if role == EdifyRole.IMPACT_ASSESSMENT:
-                    # Impact Assessment's one door into the analyses it reads
-                    # is its own workspace strip (IA_SECTIONS); its sidebar
-                    # carries no analytics section at all (IA review,
-                    # 2026-09-13).
-                    self.assertEqual(hub_items, [])
-                    ia_urls = {s["url"] for s in IA_SECTIONS}
-                    for url in ("/ssa", "/impact", "/declining-schools", "/reports"):
-                        self.assertIn(url, ia_urls)
-                elif role == EdifyRole.PROJECT_COORDINATOR:
-                    # The coordinator's one door is the Analytics tab of
-                    # Project Monitoring (owner, 2026-09-30: "Analytics a tab
-                    # of Monitoring"): the sidebar carries no entry of its
-                    # own, and the tab opens the first section they can reach.
-                    self.assertEqual(hub_items, [])
-                    self.assertIn(
-                        sections[0]["url"],
-                        {s["url"] for s in PROJECT_MONITORING_SECTIONS},
-                    )
-                elif sections:
-                    self.assertEqual(len(hub_items), 1)
-                    # It opens the first section the role can actually reach.
-                    self.assertEqual(hub_items[0]["url"], sections[0]["url"])
-                else:
-                    self.assertEqual(hub_items, [])
-
     def test_single_item_groups_render_as_the_link_itself(self):
         """A collapsed heading over a single link costs a click and reveals
         what the heading already said, so one-link groups are marked standalone
         and the sidebar drops the accordion."""
         for role in (EdifyRole.COUNTRY_DIRECTOR, EdifyRole.COUNTRY_PROGRAM_LEAD):
             user = _user(f"standalone-{role.name.lower()}@door.test", role.value)
-            groups = build_sidebar_for_user(user, "/dashboard")
-            for group in groups:
+            for group in build_sidebar_for_user(user, "/dashboard"):
                 with self.subTest(role=role.value, group=group["label"]):
                     self.assertEqual(group["standalone"], len(group["items"]) == 1)
                     if group["standalone"]:
                         # Nothing to expand, so it must not start collapsed.
                         self.assertTrue(group["expanded"])
-            analytics = [
-                item
-                for group in groups
-                for item in group["items"]
-                if item["label"] == "Analytics"
-            ]
-            self.assertEqual(len(analytics), 1)
 
         lead = _user(
             "standalone-reference@door.test", EdifyRole.COUNTRY_PROGRAM_LEAD.value
@@ -175,174 +94,27 @@ class AnalyticsWorkspaceStructureTest(TestCase):
         self.assertIn("Closed Schools", [i["label"] for i in reference["items"]])
         self.assertFalse(reference["standalone"])
 
-    def test_a_role_with_one_section_gets_that_section_by_name(self):
-        """An "Analytics" link that opens a single page is a lie about scope."""
+    def test_a_partner_keeps_the_decision_log_by_name(self):
         partner = _user("solo@door.test", EdifyRole.PARTNER_FIELD_OFFICER.value)
-        sections = build_analytics_sections(partner, "/dashboard")
         labels = {
             item["label"]
             for group in build_sidebar_for_user(partner, "/dashboard")
             for item in group["items"]
         }
-        if len(sections) == 1:
-            self.assertIn(sections[0]["label"], labels)
-            self.assertNotIn("Analytics", labels)
-        else:
-            self.assertIn("Analytics", labels)
+        self.assertIn("Decision Log", labels)
+        self.assertNotIn("Analytics", labels)
 
-
-class AnalyticsWorkspaceScopingTest(TestCase):
-    def test_sections_offered_match_the_role_permission_map_exactly(self):
-        for role in EdifyRole:
-            user = _user(f"{role.name.lower()}@scope.test", role.value)
-            slug = get_user_role_slug(user)
-            offered = {s["key"] for s in build_analytics_sections(user, "/dashboard")}
-            entitled = {
-                s["key"]
-                for s in ANALYTICS_SECTIONS
-                if slug in PAGE_PERMISSIONS[s["page_key"]]
-            }
-            with self.subTest(role=role.value):
-                self.assertEqual(offered, entitled)
-
-    def test_every_offered_section_actually_opens(self):
+    def test_the_sub_navigation_stays_off_pages_outside_a_workspace(self):
         client = Client()
-        for role in EdifyRole:
-            user = _user(f"{role.name.lower()}@open.test", role.value)
-            client.force_login(user)
-            for section in build_analytics_sections(user, "/dashboard"):
-                with self.subTest(role=role.value, section=section["key"]):
-                    response = client.get(section["url"])
-                    self.assertEqual(
-                        response.status_code,
-                        200,
-                        f"{role.value} was offered {section['url']} "
-                        f"but got {response.status_code}",
-                    )
-            client.logout()
-
-
-class AnalyticsWorkspaceActiveStateTest(TestCase):
-    def setUp(self):
-        self.admin = _user("active@state.test", EdifyRole.ADMIN.value)
-
-    def test_exactly_one_section_is_active_on_each_section_page(self):
-        for section in ANALYTICS_SECTIONS:
-            url = section["url"]
-            with self.subTest(url=url):
-                active = [
-                    s["label"]
-                    for s in build_analytics_sections(self.admin, url)
-                    if s["active"]
-                ]
-                self.assertEqual(active, [section["label"]])
-
-    def test_publishing_highlights_on_its_canonical_url(self):
-        """It was registered with a trailing slash the route does not use, so
-        prefix matching never matched and the link never lit up."""
-        active = [
-            s["key"]
-            for s in build_analytics_sections(self.admin, "/analytics/publishing")
-            if s["active"]
-        ]
-        self.assertEqual(active, ["publishing"])
-
-    def test_the_generic_analytics_url_stays_owned_by_overview(self):
-        """A role_urls override adds a destination, it does not close the
-        generic one. /analytics is a real page for a Program Lead whose
-        Overview points at /analytics/program-lead — and when it matched no
-        section, the sub-navigation vanished on the page the workspace is
-        named after."""
-        for role in (
-            EdifyRole.COUNTRY_PROGRAM_LEAD,
-            EdifyRole.COUNTRY_DIRECTOR,
-            EdifyRole.PROJECT_COORDINATOR,
-        ):
-            user = _user(f"{role.name.lower()}@generic.test", role.value)
-            role_url = build_analytics_sections(user, "/dashboard")[0]["url"]
-            self.assertNotEqual(role_url, "/analytics")
-            with self.subTest(role=role.value):
-                for path in ("/analytics", role_url):
-                    active = [
-                        s["key"]
-                        for s in build_analytics_sections(user, path)
-                        if s["active"]
-                    ]
-                    self.assertEqual(active, ["overview"], f"path {path}")
-
-    def test_admin_keeps_overview_active_on_role_specific_cockpits(self):
-        for path in (
-            "/analytics/program-lead",
-            "/analytics/country-director",
-            "/projects/analytics",
-        ):
-            with self.subTest(path=path):
-                active = [
-                    s["key"]
-                    for s in build_analytics_sections(self.admin, path)
-                    if s["active"]
-                ]
-                self.assertEqual(active, ["overview"])
-                workspace = build_workspace(self.admin, path)
-                self.assertIsNotNone(workspace)
-                self.assertEqual(workspace["key"], "analytics")
-
-    def test_nested_non_analytics_routes_do_not_claim_a_section(self):
-        # /ssa/upload/ is the IA upload centre, not SSA Performance.
-        for path in ("/ssa/upload/", "/dashboard", "/schools"):
-            with self.subTest(path=path):
-                self.assertEqual(
-                    [
-                        s["label"]
-                        for s in build_analytics_sections(self.admin, path)
-                        if s["active"]
-                    ],
-                    [],
-                )
-
-
-class AnalyticsWorkspaceRenderTest(TestCase):
-    def setUp(self):
-        self.user = _user("render@workspace.test", EdifyRole.COUNTRY_DIRECTOR.value)
-        self.client = Client()
-        self.client.force_login(self.user)
-
-    def test_the_sub_navigation_renders_on_a_section_page(self):
-        """Every section page carries the one Analytics tablist.
-
-        Impact and SSA used to be standalone pages with a grouped strip and a
-        view menu, so the chrome changed as a reader crossed into them. They
-        are tabs of the one Analytics page now (2026-09-05): every section is
-        a real link in one tablist, and the current one is the selected tab.
-        """
-
-        response = self.client.get("/impact")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "edify-section-nav")
-        self.assertContains(response, 'aria-label="Analytics sections"')
-        self.assertContains(response, 'role="tablist"')
-        self.assertContains(response, 'href="/ssa"')
-        self.assertContains(response, 'href="/decisions"')
-        self.assertContains(response, 'href="/decision-log"')
-        self.assertContains(response, 'href="/analytics/people"')
-        self.assertContains(response, 'href="/analytics/verification-quality"')
-        self.assertContains(response, 'aria-selected="true"')
-        # No grouped strip and no view menu inside the workspace any more.
-        self.assertNotContains(response, "edify-section-nav__view-menu")
-        self.assertNotContains(response, "edify-section-nav__clusters")
-
-        school_response = self.client.get("/ssa")
-        self.assertContains(school_response, 'href="/analytics/visit-effectiveness"')
-        self.assertContains(school_response, 'href="/declining-schools"')
-        self.assertContains(school_response, 'role="tablist"')
-
-    def test_the_sub_navigation_stays_off_pages_outside_the_workspace(self):
+        client.force_login(
+            _user("render@workspace.test", EdifyRole.COUNTRY_DIRECTOR.value)
+        )
         # The Country Director's dashboard is Country Oversight (owner,
         # 2026-09-28): /dashboard sends them there.
         self.assertEqual(
-            self.client.get("/dashboard")["Location"], "/country-planning-oversight/"
+            client.get("/dashboard")["Location"], "/country-planning-oversight/"
         )
-        response = self.client.get("/country-planning-oversight/")
+        response = client.get("/country-planning-oversight/")
         self.assertEqual(response.status_code, 200)
         # The shared head may name this component in native prefetch rules;
         # what must stay absent is the workspace navigation element itself.
@@ -356,24 +128,35 @@ class IAWorkspaceContractTest(TestCase):
         self.client.force_login(self.user)
 
     def test_sections_are_distinct_authorized_backend_routes(self):
-        # 31 as of 2026-09-19: every Impact Assessment page, clustered by the
+        # 26 as of 2026-10-19: every Impact Assessment page, clustered by the
         # role description's responsibilities (IA review), where the strip
         # used to carry 11 verification-first sections. Impact Attribution
         # left the strip when it became Programme Learning's Training tab;
         # Country Oversight joined it when the owner gave IA the country lens
         # read-only ("All the team activities but he cannot modify or edit any
         # of the team activities"), and Cluster Oversight and Core School
-        # Oversight joined beside it when those pages opened to IA.
-        self.assertEqual(len(IA_SECTIONS), 31)
-        self.assertEqual(len({s["key"] for s in IA_SECTIONS}), 31)
-        self.assertEqual(len({s["url"] for s in IA_SECTIONS}), 31)
+        # Oversight joined beside it when those pages opened to IA. SSA
+        # Performance, Declining Schools, Core School Health, Contribution
+        # Analysis and Visit Effectiveness left with the Analytics entry: the
+        # oversight pages hold what they read.
+        self.assertEqual(len(IA_SECTIONS), 26)
+        self.assertEqual(len({s["key"] for s in IA_SECTIONS}), 26)
+        self.assertEqual(len({s["url"] for s in IA_SECTIONS}), 26)
+        retired = {
+            "/ssa",
+            "/declining-schools",
+            "/core-school-health",
+            "/impact",
+            "/analytics/visit-effectiveness",
+        }
+        self.assertEqual({s["url"] for s in IA_SECTIONS} & retired, set())
         for section in IA_SECTIONS:
             with self.subTest(section=section["key"]):
                 self.assertIn(section["page_key"], PAGE_PERMISSIONS)
                 self.assertIn("IA", PAGE_PERMISSIONS[section["page_key"]])
 
     def test_shared_analytics_routes_stay_in_the_ia_workspace_for_ia(self):
-        for path in ("/ia/dashboard/", "/impact", "/reports", "/ssa"):
+        for path in ("/ia/dashboard/", "/reports", "/decision-log"):
             with self.subTest(path=path):
                 workspace = build_workspace(self.user, path)
                 self.assertIsNotNone(workspace)
@@ -394,12 +177,9 @@ class IAWorkspaceContractTest(TestCase):
         self.assertContains(response, 'href="/evidence/"')
         self.assertContains(response, 'aria-current="page"')
 
-    def test_the_overview_page_carries_the_sub_navigation(self):
-        """Shared analytics pages remain inside IA's role workspace. The generic
-        /analytics overview left it in the IA review (2026-09-13): it is not an
-        Impact Assessment analysis, so the strip carries Contribution Analysis
-        and the other pages IA reads instead."""
-        for path in ("/impact",):
+    def test_a_shared_page_carries_the_sub_navigation(self):
+        """Shared pages remain inside IA's role workspace."""
+        for path in ("/reports", "/decision-log"):
             with self.subTest(path=path):
                 response = self.client.get(path)
                 self.assertEqual(response.status_code, 200)
@@ -411,7 +191,7 @@ class IAWorkspaceContractTest(TestCase):
     def test_sections_are_links_not_tabs(self):
         """Cross-route links described as tabs mislead assistive technology and
         inherit platform.css's in-page tab styling."""
-        response = self.client.get("/impact")
+        response = self.client.get("/reports")
         body = response.content.decode()
         nav = body[body.index("edify-section-nav") : body.index("</nav>")]
         self.assertNotIn('role="tab"', nav)

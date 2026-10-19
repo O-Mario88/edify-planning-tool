@@ -119,27 +119,6 @@ class GeographyFilterTest(TestCase):
         data = self._data(sub_county=self.sc_a.id)
         self.assertEqual(data["filters"]["selected_sub_county"], self.sc_a.id)
 
-    def test_both_filters_are_offered_on_the_page(self):
-        self.client.force_login(self.user)
-        html = self.client.get("/analytics").content.decode()
-        self.assertIn('name="sub_region"', html)
-        self.assertIn('name="sub_county"', html)
-
-    def test_the_options_are_scoped_to_schools_that_exist(self):
-        """A filter option that returns nothing is a dead end, not a choice."""
-        self.client.force_login(self.user)
-        html = self.client.get("/analytics").content.decode()
-        # sr_a has a school; the sub-county list only carries assigned ones.
-        self.assertIn(self.sr_a.name, html)
-        self.assertIn(self.sc_a.name, html)
-
-    def test_sub_county_options_are_prefixed_with_their_district(self):
-        # "Central Division" exists in many districts; the bare name is
-        # ambiguous in a flat list.
-        self.client.force_login(self.user)
-        html = self.client.get("/analytics").content.decode()
-        self.assertIn(f"{self.d_a.name} · {self.sc_a.name}", html)
-
     def test_an_unknown_id_does_not_error(self):
         # The value arrives from a query string, so it is user input.
         data = self._data(sub_region="no-such-id")

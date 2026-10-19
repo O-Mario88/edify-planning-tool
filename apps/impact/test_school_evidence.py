@@ -767,19 +767,6 @@ class OutcomesAndProgressTests(EvidenceFixture):
         self.assertNotContains(response, "SSA domain change")
         self.assertContains(response, "SSA history")
 
-    def test_declining_schools_survives_a_bad_fy_and_names_interventions(self):
-        cb = "christlike_behaviour"
-        self._ssa(self.school, date(2025, 2, 1), {cb: 8}, fy="2025")
-        self._ssa(self.school, date(2026, 2, 1), {cb: 4}, fy="2026")
-        self.client.force_login(self.cd)
-        bad = self.client.get("/declining-schools", {"fy": "abc"}, follow=True)
-        self.assertEqual(bad.status_code, 200)
-        self.assertIn("fy=", bad.redirect_chain[0][0])
-        response = self.client.get("/declining-schools", {"fy": "2026"})
-        self.assertContains(response, "Christlike Behaviour")
-        self.assertNotContains(response, "Christlike_Behaviour")
-        self.assertContains(response, f'href="/schools/{self.school.id}"')
-
     def test_ssa_performance_draws_no_bar_and_no_success_for_missing_data(self):
         from apps.analytics.ssa_performance_service import build_dashboard
 

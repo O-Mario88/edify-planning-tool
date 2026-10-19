@@ -180,24 +180,6 @@ class SchoolVisitFeedbackTest(TestCase):
         self.assertEqual(_visit_feedback_review(rvp)[0]["school_id"], "")
         self.assertEqual(_visit_feedback_review(ia)[0]["school_name"], self.school.name)
 
-    def test_rvp_can_read_feedback_in_visit_effectiveness_without_school_identity(self):
-        self._feedback()
-        rvp, rvp_staff = self._staff_user(
-            "feedback-rvp-page@example.org", EdifyRole.REGIONAL_VICE_PRESIDENT
-        )
-        StaffGeographyAssignment.objects.create(
-            staff=rvp_staff, region_id=self.region.id
-        )
-        self.client.force_login(rvp)
-
-        response = self.client.get("/analytics/visit-effectiveness")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Recent school visit feedback")
-        self.assertContains(response, "Attendance registers were current")
-        self.assertContains(response, "School identity protected")
-        self.assertNotContains(response, self.school.name)
-
     @staticmethod
     def _feedback_text():
         return "Attendance registers were current and classrooms were orderly."

@@ -251,91 +251,6 @@ class WhereTheLossesAreTest(ClosureImpactFixture):
         )
 
 
-class ThePageIsReachableTest(ClosureImpactFixture):
-    def _client(self, user):
-        from django.test import Client
-
-        c = Client()
-        c.force_login(user)
-        return c
-
-    def test_the_cd_can_open_it(self):
-        self.close(self.school("s1", district=self.kampala))
-
-        response = self._client(self.cd_user).get("/analytics/school-closures")
-
-        self.assertEqual(response.status_code, 200)
-        body = response.content.decode()
-        self.assertIn("School Closures", body)
-        self.assertIn("Kampala", body)
-
-    def test_a_cceo_cannot(self):
-        response = self._client(self.cceo_user).get("/analytics/school-closures")
-
-        self.assertIn(response.status_code, (302, 403))
-
-    def test_an_empty_period_says_so_rather_than_showing_zeros(self):
-        response = self._client(self.cd_user).get("/analytics/school-closures")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("No schools closed in this period", response.content.decode())
-
-    def test_grouping_by_region_is_honoured(self):
-        self.close(self.school("s1", district=self.kampala))
-
-        body = (
-            self._client(self.cd_user)
-            .get("/analytics/school-closures?by=region&period=all")
-            .content.decode()
-        )
-
-        self.assertIn("Central", body)
-
-    def test_an_unknown_grouping_falls_back_rather_than_erroring(self):
-        self.close(self.school("s1", district=self.kampala))
-
-        response = self._client(self.cd_user).get(
-            "/analytics/school-closures?by=account_owner_id&period=all"
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Kampala", response.content.decode())
-
-    def test_the_filter_swaps_only_the_body(self):
-        self.close(self.school("s1", district=self.kampala))
-
-        # The header htmx sends for this form: it targets `#closure-impact-body`.
-        # Naming the target is what keeps the branch from answering a tab click
-        # or a workspace scope change, which are HX requests too.
-        response = self._client(self.cd_user).get(
-            "/analytics/school-closures?period=all",
-            headers={"HX-Request": "true", "HX-Target": "closure-impact-body"},
-        )
-
-        body = response.content.decode()
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn("<h1", body)
-        self.assertNotIn('role="tablist"', body)
-        self.assertIn("Schools lost", body)
-
-    def test_a_tab_click_gets_the_panel_not_the_body(self):
-        """School Closures is a tab of the one Analytics page, so a tab click
-        must answer with the panel — its decision frame, its scope caption and
-        its own controls — rather than the bare body the filter asks for."""
-        self.close(self.school("s1", district=self.kampala))
-
-        response = self._client(self.cd_user).get(
-            "/analytics/school-closures",
-            headers={"HX-Request": "true", "HX-Target": "analytics-panel"},
-        )
-
-        body = response.content.decode()
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn("<h1", body)
-        self.assertIn("Decision and data context", body)
-        self.assertIn("School closure filters", body)
-
-
 class TheTwoClosurePagesStaySeparateTest(ClosureImpactFixture):
     """IA asks which records are wrong; the CD asks what the country lost.
 
@@ -375,15 +290,10 @@ class RvpSeesTheirRegionsOnlyTest(ClosureImpactFixture):
     Two rules, and they are separate: *which* closures are counted (their
     assigned regions) and *what detail* is shown (aggregates, never a school
     row). Getting the first right while leaking the second would still be a
-    breach, so both are tested.
+    breach, so both are tested: the first here, the second where the figures
+    are read now, the Closed Schools page (the Analytics page that held them
+    is retired, owner, 2026-10-19; apps/frontend/test_delivery_correctness_pages).
     """
-
-    def _client(self, user):
-        from django.test import Client
-
-        c = Client()
-        c.force_login(user)
-        return c
 
     def _rvp(self, *regions, email="rvp@c.test"):
         from apps.accounts.models import StaffGeographyAssignment
@@ -450,40 +360,6 @@ class RvpSeesTheirRegionsOnlyTest(ClosureImpactFixture):
 
         self.assertFalse(scope.rvp_region_scoped)
         self.assertEqual(ca.country_summary(scope=scope)["schools_lost"], 2)
-
-    def test_no_school_identity_reaches_an_rvp(self):
-        """The invariant that makes this page safe to share with a
-        summary-only role. If a per-school list is ever added, this fails."""
-        self._close_one_each()
-        rvp = self._rvp(self.region, self.other_region)
-
-        body = (
-            self._client(rvp)
-            .get("/analytics/school-closures?period=all")
-            .content.decode()
-        )
-
-        self.assertEqual(
-            self._client(rvp).get("/analytics/school-closures").status_code, 200
-        )
-        self.assertNotIn("School s1", body)
-        self.assertNotIn("School s2", body)
-        self.assertNotIn(">s1<", body)
-        # The aggregates it IS entitled to are present.
-        self.assertIn("Kampala", body)
-        self.assertIn("Schools lost", body)
-
-    def test_the_page_names_the_scope_rather_than_calling_it_the_country(self):
-        """ "The country lost 40 schools" reads as the country. It is not."""
-        self._close_one_each()
-
-        body = (
-            self._client(self._rvp(self.region))
-            .get("/analytics/school-closures?period=all")
-            .content.decode()
-        )
-
-        self.assertIn("Central", body)
 
     def test_the_cd_still_sees_the_whole_country(self):
         from apps.core.scoping import resolve_user_scope

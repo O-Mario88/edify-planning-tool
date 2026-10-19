@@ -1536,7 +1536,7 @@
    ],
    "route": "/analytics",
    "route_name": "analytics_dashboard",
-   "view": "apps.frontend.views.analytics_views.analytics_dashboard_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "analytics",
@@ -1556,7 +1556,7 @@
    ],
    "route": "/analytics/",
    "route_name": "",
-   "view": "apps.frontend.views.analytics_views.analytics_dashboard_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "closure_quality",
@@ -1580,7 +1580,7 @@
    ],
    "route": "/analytics/country-director",
    "route_name": "cd_analytics",
-   "view": "apps.frontend.views.analytics_views.cd_analytics_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "cd_analytics",
@@ -1690,7 +1690,7 @@
    ],
    "route": "/analytics/people",
    "route_name": "people_analytics",
-   "view": "apps.frontend.views.hr_views.people_analytics_section_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "pl_analytics",
@@ -1702,7 +1702,7 @@
    ],
    "route": "/analytics/program-lead",
    "route_name": "pl_analytics",
-   "view": "apps.frontend.views.analytics_views.pl_analytics_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "pl_analytics",
@@ -1785,7 +1785,7 @@
    ],
    "route": "/analytics/school-closures",
    "route_name": "closure_impact",
-   "view": "apps.frontend.views.closure_impact_views.closure_impact_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "ia_dashboard",
@@ -1798,7 +1798,7 @@
    ],
    "route": "/analytics/verification-quality",
    "route_name": "verification_quality",
-   "view": "apps.frontend.views.ia_views.verification_quality_section_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "visit_effectiveness",
@@ -1815,7 +1815,7 @@
    ],
    "route": "/analytics/visit-effectiveness",
    "route_name": "visit_effectiveness",
-   "view": "apps.frontend.views.visit_effectiveness_views.visit_effectiveness_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "",
@@ -8269,7 +8269,7 @@
    ],
    "route": "/core-school-health",
    "route_name": "core_school_health",
-   "view": "apps.frontend.views.decision_views.core_school_health_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "core_schools",
@@ -9747,7 +9747,7 @@
    ],
    "route": "/decisions",
    "route_name": "decision_intelligence",
-   "view": "apps.frontend.views.decision_views.decision_intelligence_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "declining_schools",
@@ -9764,7 +9764,7 @@
    ],
    "route": "/declining-schools",
    "route_name": "declining_schools",
-   "view": "apps.frontend.views.decision_views.declining_schools_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "disbursements",
@@ -12598,7 +12598,7 @@
    ],
    "route": "/impact",
    "route_name": "impact_analytics",
-   "view": "apps.frontend.views.impact_views.impact_analytics_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "schools",
@@ -15101,24 +15101,6 @@
     "Accountant",
     "Admin"
    ],
-   "route": "/partner-oversight/analysis",
-   "route_name": "partner_oversight_analysis",
-   "view": "apps.frontend.views.oversight_views.partner_oversight_analysis_view"
-  },
-  {
-   "page_permission": "partner_oversight",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "RegionalVicePresident",
-    "RegionalProgramLead",
-    "ImpactAssessment",
-    "Accountant",
-    "Admin"
-   ],
    "route": "/partner-oversight/detail",
    "route_name": "partner_oversight_detail",
    "view": "apps.frontend.views.oversight_views.partner_oversight_detail_view"
@@ -17351,22 +17333,6 @@
     "ProjectCoordinator",
     "Admin"
    ],
-   "route": "/projects/monitoring/analysis",
-   "route_name": "project_monitoring_analysis",
-   "view": "apps.frontend.views.extended_views.project_monitoring_analysis_view"
-  },
-  {
-   "page_permission": "project_monitoring",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "ProjectCoordinator",
-    "Admin"
-   ],
    "route": "/projects/monitoring/resolve",
    "route_name": "project_monitoring_resolve",
    "view": "apps.frontend.views.extended_views.project_monitoring_resolve_view"
@@ -18230,6 +18196,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "RegionalVicePresident",
     "ImpactAssessment",
     "Admin"
    ],
@@ -18443,7 +18410,7 @@
    ],
    "route": "/ssa",
    "route_name": "ssa_master",
-   "view": "apps.frontend.views.ssa_views.ssa_performance_view"
+   "view": "apps.frontend.views.analytics_retired.view"
   },
   {
    "page_permission": "ssa_performance",
@@ -19856,27 +19823,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 466,
-  "Admin": 1118,
+  "Accountant": 465,
+  "Admin": 1116,
   "BusinessTransformationOfficer": 244,
-  "CCEO": 596,
-  "CountryDirector": 854,
+  "CCEO": 594,
+  "CountryDirector": 852,
   "HumanResources": 332,
-  "ImpactAssessment": 723,
+  "ImpactAssessment": 721,
   "MfiLoanOfficer": 138,
   "MfiPartnerAdmin": 141,
   "PartnerAdmin": 241,
   "PartnerFieldOfficer": 241,
-  "Program Lead": 702,
-  "ProjectCoordinator": 496,
-  "RegionalProgramLead": 356,
+  "Program Lead": 700,
+  "ProjectCoordinator": 495,
+  "RegionalProgramLead": 355,
   "RegionalVicePresident": 430
  },
  "summary": {
   "page_keys_declared": 185,
   "page_keys_in_navigation": 202,
-  "routes_guarded": 1215,
-  "routes_total": 1418,
+  "routes_guarded": 1213,
+  "routes_total": 1416,
   "routes_unguarded": 203,
   "surfaces_no_role_can_reach": 0
  },

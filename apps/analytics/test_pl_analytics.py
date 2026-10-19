@@ -10,10 +10,8 @@ workflow state.
 from __future__ import annotations
 
 from datetime import date
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -214,34 +212,6 @@ class PLAnalyticsTest(TestCase):
         self.assertEqual(ids, {self.cceo_a1_sp.id})
         self.assertNotIn(self.cceo_b1_sp.id, ids)
 
-    def test_the_cockpit_no_longer_builds_the_country_map(self):
-        """The map moved to the Map view of the home dashboard (owner,
-        2026-09-05), and the cockpit kept computing it for nothing until the
-        Programme Lead alignment (2026-09-13). It builds only what it draws."""
-        data = PLAnalyticsService.get_dashboard(self.pl_a, fy=FY)
-        for unused in (
-            "subregion_performance",
-            "district_insight",
-            "subcounty_insight",
-            "team_performance",
-            "cceo_performance",
-        ):
-            with self.subTest(section=unused):
-                self.assertNotIn(unused, data)
-
-        self.client.force_login(self.pl_a)
-        with patch(
-            "apps.analytics.country_map_context.country_map_context"
-        ) as country_map:
-            response = self.client.get("/analytics/program-lead", {"fy": FY})
-
-        self.assertEqual(response.status_code, 200)
-        country_map.assert_not_called()
-        self.assertNotContains(response, "Performance by Sub-Region")
-        dashboard = self.client.get("/dashboard", {"fy": FY, "view": "map"})
-        self.assertContains(dashboard, "Performance by Sub-Region")
-        self.assertContains(dashboard, "Country-wide system data")
-
     @override_settings(
         ANALYTICS_DASHBOARD_CACHE_SECONDS=60,
         CACHES={
@@ -251,21 +221,6 @@ class PLAnalyticsTest(TestCase):
             }
         },
     )
-    def test_pl_analytics_reuses_the_same_short_lived_snapshot(self):
-        cache.clear()
-        self.client.force_login(self.pl_a)
-        with patch.object(
-            PLAnalyticsService,
-            "get_dashboard",
-            wraps=PLAnalyticsService.get_dashboard,
-        ) as get_dashboard:
-            first = self.client.get("/analytics/program-lead", {"fy": FY})
-            second = self.client.get("/analytics/program-lead", {"fy": FY})
-
-        self.assertEqual(first.status_code, 200)
-        self.assertEqual(second.status_code, 200)
-        self.assertEqual(get_dashboard.call_count, 1)
-
     # ── 2. cannot see another PL's data ──────────────────────────────────────
     def test_pl_cannot_see_other_pl_data(self):
         scope = resolve_pl_scope(self.pl_a)

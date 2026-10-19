@@ -354,14 +354,6 @@ class IaDashboardShellTest(IaShellFixture):
             [self.staff_work.id, self.fresh_work.id],
         )
 
-    def test_the_verification_quality_tab_stops_at_the_border_too(self):
-        self.client.force_login(self.cd)
-        response = self.client.get("/analytics/verification-quality")
-        self.assertEqual(response.status_code, 200)
-        html = response.content.decode()
-        self.assertIn("District monitoring", html)
-        self.assertNotIn("Shell Mombasa", html)
-
     def test_other_roles_are_refused(self):
         self.client.force_login(self.cceo)
         response = self.client.get("/ia/dashboard/")

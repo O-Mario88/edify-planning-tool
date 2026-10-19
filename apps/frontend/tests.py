@@ -1,11 +1,9 @@
 import json
 from datetime import date
-from unittest.mock import patch
 
-from django.core.cache import cache
 from freezegun import freeze_time
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
@@ -961,35 +959,6 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get("/my-plan")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/my_plan/index.html")
-
-    def test_analytics_dashboard_view_renders(self):
-        """Analytics became one page with tabs on 2026-09-05: every section
-        renders `pages/analytics/workspace.html` around its own panel, and the
-        overview's panel is still the KPI-and-content container."""
-        self.client.force_login(self.cceo_user)
-        response = self.client.get("/analytics")
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "pages/analytics/workspace.html")
-        self.assertTemplateUsed(response, "partials/analytics/kpi_cards.html")
-        self.assertTemplateUsed(response, "partials/analytics/tab_rail.html")
-
-    @override_settings(ANALYTICS_DASHBOARD_CACHE_SECONDS=30)
-    def test_analytics_snapshot_is_reused_within_the_ttl(self):
-        from apps.analytics.analytics_dashboard_service import AnalyticsDashboardService
-
-        cache.clear()
-        self.addCleanup(cache.clear)
-        self.client.force_login(self.cceo_user)
-        with patch.object(
-            AnalyticsDashboardService,
-            "get_analytics_data",
-            wraps=AnalyticsDashboardService.get_analytics_data,
-        ) as build:
-            first = self.client.get("/analytics", {"quarter": "Q2"})
-            second = self.client.get("/analytics", {"quarter": "Q2"})
-        self.assertEqual(first.status_code, 200)
-        self.assertEqual(second.status_code, 200)
-        build.assert_called_once()
 
     def test_system_health_view_renders(self):
         admin_user = get_user_model().objects.create(

@@ -89,13 +89,7 @@ class CountryExportSetTest(TestCase):
         self.assertEqual(normalise_dataset(None), "delivery")
         self.assertEqual(normalise_dataset(" Risk "), "risk")
 
-    def test_the_page_offers_one_export_and_a_cceo_gets_nothing(self):
-        self.client.force_login(self.cd)
-        page = self.client.get("/analytics/country-director")
-        self.assertEqual(page.status_code, 200)
-        self.assertContains(page, 'data-component="cd-export"')
-        self.assertContains(page, "/analytics/country-director/export?fy=")
-        self.assertNotContains(page, "/analytics/country-director/export?set=")
+    def test_a_cceo_gets_nothing(self):
         self.client.force_login(self.cceo)
         response = self.client.get("/analytics/country-director/export?set=finance")
         self.assertNotEqual(response.status_code, 200)

@@ -202,7 +202,6 @@
       "pages": [
         "acting_leadership",
         "actions_sent",
-        "analytics",
         "calendar",
         "cce_training_feedback",
         "closed_schools",
@@ -212,6 +211,7 @@
         "core_schools_oversight",
         "dashboard",
         "debriefs_list",
+        "decision_log",
         "escalations",
         "extra_work",
         "fund_approvals",
@@ -232,7 +232,6 @@
         "performance_conversations",
         "performance_reviews",
         "personal_time_off",
-        "pl_analytics",
         "planning",
         "priorities_master",
         "programme_rollout",
@@ -730,7 +729,6 @@
       "pages": [
         "acting_leadership",
         "actions_sent",
-        "analytics",
         "calendar",
         "cce_training_feedback",
         "closed_schools",
@@ -740,6 +738,7 @@
         "core_schools_oversight",
         "dashboard",
         "debriefs_list",
+        "decision_log",
         "disbursements",
         "escalations",
         "extra_work",
@@ -761,7 +760,6 @@
         "partner_oversight",
         "performance_reviews",
         "personal_time_off",
-        "pl_analytics",
         "pl_review_queue",
         "planning",
         "priorities_master",
@@ -1073,7 +1071,6 @@
         "project.assignSchool"
       ],
       "pages": [
-        "analytics",
         "calendar",
         "closed_schools",
         "cluster_detail",
@@ -1083,6 +1080,7 @@
         "core_schools_oversight",
         "dashboard",
         "debriefs_list",
+        "decision_log",
         "escalations",
         "extra_work",
         "fund_requests",
@@ -1658,7 +1656,6 @@
         "actions_sent",
         "calendar",
         "cce_training_feedback",
-        "cd_analytics",
         "closed_schools",
         "cluster_oversight",
         "clusters",
@@ -1669,6 +1666,7 @@
         "cpd_learning",
         "dashboard",
         "debriefs_list",
+        "decision_log",
         "escalations",
         "extra_work",
         "fund_approvals",
@@ -1701,6 +1699,7 @@
         "quality_checks",
         "recruitment",
         "report_problem",
+        "reports",
         "school_directory",
         "school_profile",
         "settings",
@@ -2535,6 +2534,7 @@
         "core_schools_oversight",
         "dashboard",
         "debriefs_list",
+        "decision_log",
         "escalations",
         "fund_approvals",
         "fund_requests",
@@ -2553,7 +2553,6 @@
         "partner_oversight",
         "performance_reviews",
         "personal_time_off",
-        "pl_analytics",
         "planning",
         "priorities_master",
         "programme_rollout",
@@ -2808,7 +2807,6 @@
         "payment.act"
       ],
       "pages": [
-        "analytics",
         "calendar",
         "closed_schools",
         "cluster_oversight",
@@ -2817,6 +2815,7 @@
         "core_schools_oversight",
         "dashboard",
         "debriefs_list",
+        "decision_log",
         "escalations",
         "extra_work",
         "fund_requests",
@@ -3066,7 +3065,6 @@
         "data.export"
       ],
       "pages": [
-        "analytics",
         "calendar",
         "closed_schools",
         "cluster_oversight",
@@ -3075,6 +3073,7 @@
         "core_schools_oversight",
         "dashboard",
         "debriefs_list",
+        "decision_log",
         "escalations",
         "extra_work",
         "fund_requests",
@@ -3318,13 +3317,13 @@
       "permissions": [],
       "pages": [
         "acting_leadership",
-        "analytics",
         "calendar",
         "candidate_pipeline",
         "compensation_benefits",
         "compliance_register",
         "cpd_learning",
         "dashboard",
+        "decision_log",
         "employee_relations",
         "health_safety",
         "help",
@@ -3598,6 +3597,7 @@
         "core_schools_oversight",
         "dashboard",
         "debriefs_list",
+        "decision_log",
         "escalations",
         "evidence_center",
         "fund_approvals",
@@ -3615,7 +3615,6 @@
         "partner_oversight",
         "performance_reviews",
         "personal_time_off",
-        "pl_analytics",
         "planning",
         "priorities_master",
         "programme_rollout",
@@ -3806,6 +3805,7 @@
         "business_transformation_reports",
         "calendar",
         "dashboard",
+        "decision_log",
         "help",
         "loans",
         "messages",
@@ -3814,7 +3814,6 @@
         "report_problem",
         "school_profile",
         "settings",
-        "ssa_performance",
         "todos"
       ],
       "objectGuards": [
@@ -3985,6 +3984,7 @@
         "business_transformation_reports",
         "calendar",
         "dashboard",
+        "decision_log",
         "help",
         "loans",
         "messages",
@@ -3993,7 +3993,6 @@
         "report_problem",
         "school_profile",
         "settings",
-        "ssa_performance",
         "todos"
       ],
       "objectGuards": [
@@ -4180,6 +4179,7 @@
         "business_transformation_reports",
         "calendar",
         "dashboard",
+        "decision_log",
         "help",
         "loans",
         "messages",
@@ -4188,7 +4188,6 @@
         "report_problem",
         "school_profile",
         "settings",
-        "ssa_performance",
         "todos"
       ],
       "objectGuards": [],
@@ -4385,6 +4384,7 @@
         "business_transformation_reports",
         "calendar",
         "dashboard",
+        "decision_log",
         "help",
         "loans",
         "messages",
@@ -4394,7 +4394,6 @@
         "report_problem",
         "school_profile",
         "settings",
-        "ssa_performance",
         "todos"
       ],
       "objectGuards": [],
@@ -4825,7 +4824,6 @@
       ],
       "permissions": [],
       "pages": [
-        "analytics",
         "calendar",
         "closed_schools",
         "cluster_oversight",
@@ -4834,6 +4832,7 @@
         "core_schools_oversight",
         "dashboard",
         "debriefs_list",
+        "decision_log",
         "escalations",
         "extra_work",
         "fund_requests",
@@ -4981,8 +4980,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "ecd20c6b31faacdc85f99d0e3394aba6bca9777bac3960e795979f547d65458d",
-    "sources": "2eb2ec86219c60b4911eed0aeeb144644d476fbc3893939170ec66a8b1caa046",
+    "payload": "2de9e51ad9dc361f36553d5a4ab72f221f81dc6ca436062c8da8e516acc3002c",
+    "sources": "01ed48efdbe20ce0300ebb4035e095675fcbf30c61c7aa5ce070e4c0f61772b0",
     "sourceCount": 265,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

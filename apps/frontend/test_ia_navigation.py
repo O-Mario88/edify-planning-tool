@@ -99,6 +99,11 @@ IA_SIDEBAR = [
     (
         "MONTHLY",
         [
+            # The three pages that kept sidebar entries when the Analytics
+            # entry was retired (owner, 2026-10-19).
+            ("Reports", "/reports"),
+            ("Decision Log", "/decision-log"),
+            ("Closure Quality", "/analytics/closure-quality"),
             ("My Targets", "/my-targets"),
             ("Impact Reports", "/ia/impact-reports/"),
             ("Programme Learning", "/ia/learning/"),
@@ -157,15 +162,14 @@ class IaSidebarTest(SimpleTestCase):
         ):
             with self.subTest(label=label):
                 self.assertNotIn(label, labels)
-        # The shared analytics pages sit in the workspace strip, not the
-        # sidebar: the Analytics workspace has one door.
+        # The retired Analytics addresses are doors to nowhere of IA's own.
+        # Reports and the Decision Log are entries of their own since the
+        # Analytics entry was retired (owner, 2026-10-19).
         for url in (
             "/analytics",
             "/ia/notifications/",
             "/impact",
             "/ssa",
-            "/reports",
-            "/decision-log",
         ):
             with self.subTest(url=url):
                 self.assertNotIn(url, urls)
@@ -264,10 +268,12 @@ class IaSidebarTest(SimpleTestCase):
             "Programme Learning",
             "Planning Oversight",
             "Quality Flags",
-            "Analytics",
+            "Reports",
+            "Decision Log",
         ):
             with self.subTest(label=label):
                 self.assertEqual(cd_labels.count(label), 1)
+        self.assertNotIn("Analytics", cd_labels)
         # IA's own collection and framework doors stay with IA.
         for label in (
             "Measurement Framework",
@@ -331,8 +337,6 @@ class IaWorkspaceRegistryTest(SimpleTestCase):
 
     def test_mislabelled_sections_carry_their_real_names(self):
         labels = {s["url"]: s["label"] for s in IA_SECTIONS}
-        self.assertEqual(labels["/core-school-health"], "Core School Health")
-        self.assertEqual(labels["/impact"], "Contribution Analysis")
         self.assertEqual(labels["/reports"], "Programme Output Reports")
         self.assertNotIn("/analytics", labels)
         self.assertNotIn("IA Analytics", labels.values())
@@ -359,11 +363,6 @@ class IaWorkspaceRegistryTest(SimpleTestCase):
             ("/ssa/verification/", "SSA Verification"),
             ("/ssa/upload/batch1/result/", "SSA Upload Center"),
             ("/ssa/unmatched", "Unmatched SSA"),
-            ("/ssa", "SSA Performance"),
-            ("/declining-schools", "Declining Schools"),
-            ("/core-school-health", "Core School Health"),
-            ("/impact", "Contribution Analysis"),
-            ("/analytics/visit-effectiveness", "Visit Effectiveness"),
             ("/reports", "Programme Output Reports"),
             ("/analytics/publishing", "Publishing"),
             ("/decision-log", "Decision Log"),
@@ -377,15 +376,17 @@ class IaWorkspaceRegistryTest(SimpleTestCase):
                     [active],
                 )
 
-    def test_the_generic_analytics_page_is_not_in_the_ia_strip(self):
-        workspace = build_workspace(_user(IA), "/analytics")
-        self.assertIsNotNone(workspace)
-        self.assertEqual(workspace["key"], "analytics")
-
-    def test_other_roles_keep_the_analytics_workspace_on_shared_pages(self):
-        for path in ("/ssa", "/impact", "/reports"):
+    def test_the_retired_analytics_addresses_are_not_in_the_ia_strip(self):
+        for path in ("/analytics", "/ssa", "/impact", "/declining-schools"):
             with self.subTest(path=path):
-                self.assertEqual(build_workspace(_user(CD), path)["key"], "analytics")
+                self.assertIsNone(build_workspace(_user(IA), path))
+
+    def test_other_roles_read_shared_pages_without_a_strip(self):
+        """The Analytics workspace that held them is retired (owner,
+        2026-10-19); other roles reach them from their own sidebar entries."""
+        for path in ("/reports", "/decision-log"):
+            with self.subTest(path=path):
+                self.assertIsNone(build_workspace(_user(CD), path))
 
 
 class IaGrantsTest(SimpleTestCase):

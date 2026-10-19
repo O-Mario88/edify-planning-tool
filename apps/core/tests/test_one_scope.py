@@ -135,12 +135,6 @@ class RvpPagesReturnDataTests(TestCase):
         schools, _scope = _scoped_schools(self.rvp)
         self.assertEqual(schools.count(), 3)
 
-    def test_ssa_page_loads(self):
-        self.assertEqual(self.client.get("/ssa").status_code, 200)
-
-    def test_analytics_page_loads(self):
-        self.assertEqual(self.client.get("/analytics").status_code, 200)
-
 
 class CdAggregateScopeTests(TestCase):
     """The CD's role-overview reported '0 schools' beside country-wide SSA,

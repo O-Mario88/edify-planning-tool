@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 663,
+  "titled_cards": 662,
   "templates": 253,
-  "distinct_titles": 633,
+  "distinct_titles": 632,
   "with_card_key": 13,
-  "untitled_surfaces": 596,
-  "untitled_chrome": 154,
+  "untitled_surfaces": 594,
+  "untitled_chrome": 153,
   "untitled_nested": 189,
-  "untitled_headless": 253,
+  "untitled_headless": 252,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 22,
   "ambiguous_titles": 1
@@ -611,32 +611,32 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 181,
+   "line": 202,
    "title": "Monthly Budget Approval",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm",
    "branch_path": [
     [
-     20,
+     21,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 234,
+   "line": 255,
    "title": "Disbursement and Accountability",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface shadow-sm",
    "branch_path": [
     [
-     20,
+     21,
      0
     ],
     [
-     24,
+     25,
      0
     ]
    ]
@@ -2716,7 +2716,7 @@
   },
   {
    "template": "templates/pages/projects/monitoring.html",
-   "line": 187,
+   "line": 186,
    "title": "My project allocations",
    "heading_level": 2,
    "has_card_key": false,
@@ -6316,14 +6316,14 @@
   },
   {
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 98,
+   "line": 99,
    "title": "Withdrawal requests ()",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
-     14,
+     15,
      0
     ]
    ]
@@ -6888,7 +6888,7 @@
   },
   {
    "template": "templates/partials/schools/_core_school.html",
-   "line": 60,
+   "line": 31,
    "title": "Package and Support",
    "heading_level": 3,
    "has_card_key": false,
@@ -6897,7 +6897,7 @@
   },
   {
    "template": "templates/partials/schools/_core_school.html",
-   "line": 68,
+   "line": 39,
    "title": "Participation",
    "heading_level": 3,
    "has_card_key": false,
@@ -6906,7 +6906,7 @@
   },
   {
    "template": "templates/partials/schools/_core_school.html",
-   "line": 73,
+   "line": 44,
    "title": "Outcomes",
    "heading_level": 3,
    "has_card_key": false,
@@ -6915,7 +6915,7 @@
   },
   {
    "template": "templates/partials/schools/_core_school.html",
-   "line": 80,
+   "line": 51,
    "title": "Recommended Support",
    "heading_level": 3,
    "has_card_key": false,
@@ -6924,7 +6924,7 @@
   },
   {
    "template": "templates/partials/schools/_core_school.html",
-   "line": 100,
+   "line": 71,
    "title": "Champion Readiness:",
    "heading_level": 3,
    "has_card_key": false,
@@ -7011,26 +7011,12 @@
   },
   {
    "template": "templates/partials/schools/_ssa_records.html",
-   "line": 52,
-   "title": "Current confirmed SSA",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/schools/_ssa_records.html",
-   "line": 65,
+   "line": 48,
    "title": "SSA history",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
-   "branch_path": [
-    [
-     10,
-     0
-    ]
-   ]
+   "branch_path": []
   },
   {
    "template": "templates/partials/schools/business_transformation.html",

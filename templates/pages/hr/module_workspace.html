@@ -8,13 +8,12 @@ every authenticated page.
 {% endcomment %}
 {% block feature_css %}
 <link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20261002tabs15">
-{% if workspace.key == "analytics" %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20261002tokens2">{% endif %}
 {% endblock %}
 
 {% block title %}{{ title }} · Edify{% endblock %}
 
 {% block shell_content %}
-<section class="hcos-workspace edify-page-canvas" aria-labelledby="hcos-title" data-mobile-family="performance"{% if workspace.key == "analytics" %} data-analytics-enterprise{% endif %}>
+<section class="hcos-workspace edify-page-canvas" aria-labelledby="hcos-title" data-mobile-family="performance">
   {% comment %}A Programme Lead's team register (team_view) sits in Team
   Performance, not under Human Capital, and "HR overview" is not their page
   (Program Lead alignment, 2026-09-13).{% endcomment %}
@@ -65,10 +64,6 @@ every authenticated page.
   </header>
 
   {% include "partials/analytics/section_nav.html" %}
-
-  {% if workspace.key == "analytics" %}
-  {% include "components/analytics_decision_frame.html" with question="Where are workforce capacity, review workload or compliance gaps most likely to constrain delivery?" evidence="Live workforce, review and compliance records" freshness="Current operational scope" confidence="No unsupported demographic inference" %}
-  {% endif %}
 
   {% if notice %}<div class="edify-note" data-tone="{{ notice.tone|default:'info' }}" role="status">{{ notice.text }}</div>{% endif %}
 

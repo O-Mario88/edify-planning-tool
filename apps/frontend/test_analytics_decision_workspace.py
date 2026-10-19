@@ -142,18 +142,9 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         )
         self.assertIn('data-mobile-table="scroll"', cluster_template)
 
-    def test_analytics_navigation_exposes_named_workspace_areas(self):
-        navigation = _read("apps/core/navigation.py")
+    def test_the_section_nav_shows_named_workspace_areas(self):
         partial = _read("templates/partials/_section_nav.html")
 
-        for label in (
-            "Overview",
-            "School Performance",
-            "Impact & Decisions",
-            "Delivery & Quality",
-            "Reporting",
-        ):
-            self.assertIn(label, navigation)
         self.assertIn("workspace.groups", partial)
         self.assertIn("edify-section-nav__cluster", partial)
         self.assertIn("edify-section-nav__view-menu", partial)
@@ -164,9 +155,6 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         )
         self.assertIn('x-show="open"', partial)
         self.assertNotIn('role="tab"', partial)
-        self.assertIn(
-            "Admin can inspect every role-specific Overview cockpit", navigation
-        )
 
     def test_a_bare_htmx_request_gets_a_fragment_not_a_page(self):
         """HX-Request without HX-Target asked for a fragment: the renderer
@@ -178,30 +166,23 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         )
         self.assertIn("return render(request, SCOPE_TEMPLATE, context)", source)
 
-    def test_every_analytics_tab_renders_through_the_one_workspace(self):
-        """Every tab of the Analytics rail is the same page.
-
-        Six of the fifteen tabs were separate pages with their own header and
-        a different, grouped rail, so the chrome changed as a reader crossed
-        them (owner, 2026-09-05: "rebuild and fix ... to make it enterprise
-        grade"). A tab's view now hands its panel to render_analytics_section,
-        which is the only way the header, filter row, tiles and tablist stay
-        fixed around it.
-        """
+    def test_the_three_tools_render_through_the_one_shell(self):
+        """Reports, the Decision Log and Closure Quality, the pages that kept
+        sidebar entries when the Analytics entry was retired (owner,
+        2026-10-19), share one shell: render_analytics_section draws the
+        header and the decision frame around each panel."""
 
         import inspect
 
         from django.urls import resolve
 
-        from apps.core.navigation import ANALYTICS_SECTIONS
-
-        for section in ANALYTICS_SECTIONS:
-            with self.subTest(section=section["key"]):
-                view = inspect.unwrap(resolve(section["url"]).func)
+        for url in ("/reports", "/decision-log", "/analytics/closure-quality"):
+            with self.subTest(url=url):
+                view = inspect.unwrap(resolve(url).func)
                 self.assertIn(
                     "render_analytics_section(",
                     inspect.getsource(view),
-                    f"{section['url']} does not render through the workspace",
+                    f"{url} does not render through the shell",
                 )
 
     def test_every_analytics_route_uses_the_enterprise_anatomy(self):

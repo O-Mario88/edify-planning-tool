@@ -3,24 +3,24 @@
  "schema_version": 1,
  "summary": {
   "by_evidence": {
-   "browser-rendered": 873,
-   "none": 292,
-   "page-tested": 1555,
-   "request-tested": 1426
+   "browser-rendered": 844,
+   "none": 309,
+   "page-tested": 1552,
+   "request-tested": 1421
   },
   "by_kind": {
-   "button": 1422,
+   "button": 1420,
    "disclosure": 75,
-   "field": 1380,
-   "link": 1208,
+   "field": 1374,
+   "link": 1196,
    "tab": 61
   },
-  "controls": 4146,
+  "controls": 4126,
   "high_consequence": 208,
   "state_changing": 473,
-  "templates_scanned": 707,
+  "templates_scanned": 702,
   "unresolved_destinations": 0,
-  "untested": 292,
+  "untested": 309,
   "untested_state_changing": 21
  },
  "templates": {
@@ -88,17 +88,9 @@
     "/admin-panel/users",
     "/admin-panel/users/<str:user_id>",
     "/admin-panel/workflow-rules",
-    "/analytics",
-    "/analytics/",
     "/analytics/closure-quality",
-    "/analytics/country-director",
-    "/analytics/people",
-    "/analytics/program-lead",
     "/analytics/publishing",
     "/analytics/publishing/",
-    "/analytics/school-closures",
-    "/analytics/verification-quality",
-    "/analytics/visit-effectiveness",
     "/budget",
     "/budget/",
     "/budgets/overview",
@@ -122,7 +114,6 @@
     "/completed-activities/<str:activity_id>",
     "/completed-activities/<str:activity_id>/",
     "/compliance-register",
-    "/core-school-health",
     "/core-schools-oversight/",
     "/core-schools/<str:plan_id>",
     "/core-schools/champion-candidates",
@@ -146,8 +137,6 @@
     "/debriefs/submit",
     "/debriefs/weekly-report",
     "/decision-log",
-    "/decisions",
-    "/declining-schools",
     "/disbursements",
     "/districts",
     "/districts/<str:district_id>",
@@ -206,7 +195,6 @@
     "/ia/stories/",
     "/ia/verification/",
     "/ia/verification/<str:activity_id>/",
-    "/impact",
     "/impact-briefs/<str:release_id>/",
     "/leave/approvals",
     "/leave/approvals/",
@@ -250,7 +238,6 @@
     "/ownership-transfers/",
     "/partner-invoices/<str:invoice_id>",
     "/partner-oversight/",
-    "/partner-oversight/analysis",
     "/partner/activities",
     "/partner/activities/<str:activity_id>/evidence",
     "/partner/assigned-activities",
@@ -289,7 +276,6 @@
     "/projects/capacity",
     "/projects/filter",
     "/projects/monitoring",
-    "/projects/monitoring/analysis",
     "/projects/my-plan",
     "/projects/planning",
     "/public-holidays",
@@ -311,7 +297,6 @@
     "/settings",
     "/settings/activity-catalogue/",
     "/settings/two-step/app",
-    "/ssa",
     "/ssa/manual/",
     "/ssa/unmatched",
     "/ssa/upload/",
@@ -364,48 +349,14 @@
   },
   "components/analytics_decision_frame.html": {
    "pages": [
-    "/analytics",
-    "/analytics/",
     "/analytics/closure-quality",
-    "/analytics/country-director",
-    "/analytics/people",
-    "/analytics/program-lead",
     "/analytics/publishing",
     "/analytics/publishing/",
-    "/analytics/school-closures",
-    "/analytics/verification-quality",
-    "/analytics/visit-effectiveness",
-    "/candidate-pipeline",
-    "/compensation-benefits",
     "/completed-activities",
-    "/compliance-register",
-    "/core-school-health",
-    "/culture-engagement",
     "/decision-log",
-    "/decisions",
-    "/declining-schools",
-    "/employee-relations",
-    "/health-safety",
-    "/hr-analytics",
-    "/hr-audit-log",
     "/ia/dashboard/",
-    "/impact",
-    "/offboarding",
-    "/onboarding",
-    "/org-structure",
-    "/payroll-readiness",
-    "/performance-reviews",
-    "/policies",
     "/projects/analytics",
-    "/pulse-surveys",
-    "/recognition",
-    "/recovery-plans",
-    "/recruitment",
-    "/reports",
-    "/ssa",
-    "/succession-planning",
-    "/wellness",
-    "/workforce-planning"
+    "/reports"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -429,24 +380,16 @@
     "/accounts",
     "/accounts/",
     "/projects/my-plan",
-    "/projects/planning",
-    "/ssa"
+    "/projects/planning"
    ],
    "roles": [
     "ACCOUNTANT",
     "ADMIN",
-    "BUSINESS_TRANSFORMATION",
     "CCEO",
     "CD",
-    "HR",
     "IA",
-    "MFI_ADMIN",
-    "MFI_OFFICER",
-    "PARTNER",
     "PL",
-    "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
+    "PROJECT_COORDINATOR"
    ]
   },
   "components/button.html": {
@@ -491,9 +434,6 @@
     "/admin-ops/support",
     "/admin-ops/team-plans",
     "/admin-panel/data-quality-center",
-    "/analytics/country-director",
-    "/analytics/program-lead",
-    "/analytics/visit-effectiveness",
     "/business-transformation",
     "/business-transformation/business-accounting-finance",
     "/business-transformation/government-requirements",
@@ -542,7 +482,6 @@
     "/ia/lending-evidence/",
     "/ia/school-evidence/",
     "/ia/stories/",
-    "/impact",
     "/leave/approvals",
     "/leave/approvals/",
     "/loans",
@@ -586,7 +525,6 @@
     "/recovery-plans",
     "/recruitment",
     "/schools",
-    "/ssa",
     "/staff",
     "/staff-activity",
     "/staff/<str:user_id>",
@@ -890,7 +828,6 @@
     "/activities/closure/blocked/",
     "/admin-panel/school-upload-history",
     "/analytics/closure-quality",
-    "/analytics/school-closures",
     "/budget",
     "/budget/",
     "/business-transformation",
@@ -971,7 +908,6 @@
     "/ownership-transfers/",
     "/partner-invoices/<str:invoice_id>",
     "/partner-oversight/",
-    "/partner-oversight/analysis",
     "/partner/activities",
     "/partner/assignments",
     "/partner/evidence",
@@ -993,7 +929,6 @@
     "/projects/capacity",
     "/projects/filter",
     "/projects/monitoring",
-    "/projects/monitoring/analysis",
     "/quality-checks",
     "/schools/<str:school_id>",
     "/schools/closed",
@@ -1118,17 +1053,9 @@
     "/admin-panel/users",
     "/admin-panel/users/<str:user_id>",
     "/admin-panel/workflow-rules",
-    "/analytics",
-    "/analytics/",
     "/analytics/closure-quality",
-    "/analytics/country-director",
-    "/analytics/people",
-    "/analytics/program-lead",
     "/analytics/publishing",
     "/analytics/publishing/",
-    "/analytics/school-closures",
-    "/analytics/verification-quality",
-    "/analytics/visit-effectiveness",
     "/budget",
     "/budget/",
     "/budgets/overview",
@@ -1152,7 +1079,6 @@
     "/completed-activities/<str:activity_id>",
     "/completed-activities/<str:activity_id>/",
     "/compliance-register",
-    "/core-school-health",
     "/core-schools-oversight/",
     "/core-schools/<str:plan_id>",
     "/core-schools/champion-candidates",
@@ -1176,8 +1102,6 @@
     "/debriefs/submit",
     "/debriefs/weekly-report",
     "/decision-log",
-    "/decisions",
-    "/declining-schools",
     "/disbursements",
     "/districts",
     "/districts/<str:district_id>",
@@ -1236,7 +1160,6 @@
     "/ia/stories/",
     "/ia/verification/",
     "/ia/verification/<str:activity_id>/",
-    "/impact",
     "/impact-briefs/<str:release_id>/",
     "/leave/approvals",
     "/leave/approvals/",
@@ -1278,7 +1201,6 @@
     "/ownership-transfers/",
     "/partner-invoices/<str:invoice_id>",
     "/partner-oversight/",
-    "/partner-oversight/analysis",
     "/partner/activities",
     "/partner/activities/<str:activity_id>/evidence",
     "/partner/assigned-activities",
@@ -1315,7 +1237,6 @@
     "/projects/capacity",
     "/projects/filter",
     "/projects/monitoring",
-    "/projects/monitoring/analysis",
     "/projects/my-plan",
     "/projects/planning",
     "/public-holidays",
@@ -1337,7 +1258,6 @@
     "/settings",
     "/settings/activity-catalogue/",
     "/settings/two-step/app",
-    "/ssa",
     "/ssa/manual/",
     "/ssa/unmatched",
     "/ssa/upload/",
@@ -1507,17 +1427,9 @@
     "/admin-panel/users",
     "/admin-panel/users/<str:user_id>",
     "/admin-panel/workflow-rules",
-    "/analytics",
-    "/analytics/",
     "/analytics/closure-quality",
-    "/analytics/country-director",
-    "/analytics/people",
-    "/analytics/program-lead",
     "/analytics/publishing",
     "/analytics/publishing/",
-    "/analytics/school-closures",
-    "/analytics/verification-quality",
-    "/analytics/visit-effectiveness",
     "/budget",
     "/budget/",
     "/budgets/overview",
@@ -1541,7 +1453,6 @@
     "/completed-activities/<str:activity_id>",
     "/completed-activities/<str:activity_id>/",
     "/compliance-register",
-    "/core-school-health",
     "/core-schools-oversight/",
     "/core-schools/<str:plan_id>",
     "/core-schools/champion-candidates",
@@ -1565,8 +1476,6 @@
     "/debriefs/submit",
     "/debriefs/weekly-report",
     "/decision-log",
-    "/decisions",
-    "/declining-schools",
     "/disbursements",
     "/districts",
     "/districts/<str:district_id>",
@@ -1625,7 +1534,6 @@
     "/ia/stories/",
     "/ia/verification/",
     "/ia/verification/<str:activity_id>/",
-    "/impact",
     "/impact-briefs/<str:release_id>/",
     "/leave/approvals",
     "/leave/approvals/",
@@ -1667,7 +1575,6 @@
     "/ownership-transfers/",
     "/partner-invoices/<str:invoice_id>",
     "/partner-oversight/",
-    "/partner-oversight/analysis",
     "/partner/activities",
     "/partner/activities/<str:activity_id>/evidence",
     "/partner/assigned-activities",
@@ -1704,7 +1611,6 @@
     "/projects/capacity",
     "/projects/filter",
     "/projects/monitoring",
-    "/projects/monitoring/analysis",
     "/projects/my-plan",
     "/projects/planning",
     "/public-holidays",
@@ -1726,7 +1632,6 @@
     "/settings",
     "/settings/activity-catalogue/",
     "/settings/two-step/app",
-    "/ssa",
     "/ssa/manual/",
     "/ssa/unmatched",
     "/ssa/upload/",
@@ -1824,13 +1729,9 @@
     "/admin-panel/staff-setup-queue",
     "/admin-panel/users",
     "/analytics/closure-quality",
-    "/analytics/country-director",
     "/analytics/country-director/ssa-heatmap",
     "/analytics/drilldown",
-    "/analytics/program-lead",
     "/analytics/program-lead/drilldown",
-    "/analytics/school-closures",
-    "/analytics/visit-effectiveness",
     "/budget",
     "/budget/",
     "/budgets/overview",
@@ -1909,7 +1810,6 @@
     "/ia/school-evidence/",
     "/ia/stories/",
     "/ia/verification/",
-    "/impact",
     "/impact-briefs/<str:release_id>/",
     "/leave/approvals",
     "/leave/approvals/",
@@ -1939,7 +1839,6 @@
     "/ownership-transfers/",
     "/partials/projects/<str:project_id>/schools",
     "/partner-oversight/",
-    "/partner-oversight/analysis",
     "/partner-oversight/detail",
     "/partner/activities",
     "/partner/assigned-activities",
@@ -1965,7 +1864,6 @@
     "/projects/analytics",
     "/projects/capacity",
     "/projects/monitoring",
-    "/projects/monitoring/analysis",
     "/projects/my-plan",
     "/projects/planning",
     "/quality-checks",
@@ -1973,7 +1871,6 @@
     "/schools/closed",
     "/schools/upload",
     "/schools/upload/<str:batch_id>/preview",
-    "/ssa",
     "/ssa/upload/<str:batch_id>/preview/",
     "/ssa/upload/<str:batch_id>/result/",
     "/ssa/upload/history/",
@@ -2095,17 +1992,9 @@
     "/admin-panel/users",
     "/admin-panel/users/<str:user_id>",
     "/admin-panel/workflow-rules",
-    "/analytics",
-    "/analytics/",
     "/analytics/closure-quality",
-    "/analytics/country-director",
-    "/analytics/people",
-    "/analytics/program-lead",
     "/analytics/publishing",
     "/analytics/publishing/",
-    "/analytics/school-closures",
-    "/analytics/verification-quality",
-    "/analytics/visit-effectiveness",
     "/budget",
     "/budget/",
     "/budgets/overview",
@@ -2129,7 +2018,6 @@
     "/completed-activities/<str:activity_id>",
     "/completed-activities/<str:activity_id>/",
     "/compliance-register",
-    "/core-school-health",
     "/core-schools-oversight/",
     "/core-schools/<str:plan_id>",
     "/core-schools/champion-candidates",
@@ -2153,8 +2041,6 @@
     "/debriefs/submit",
     "/debriefs/weekly-report",
     "/decision-log",
-    "/decisions",
-    "/declining-schools",
     "/disbursements",
     "/districts",
     "/districts/<str:district_id>",
@@ -2213,7 +2099,6 @@
     "/ia/stories/",
     "/ia/verification/",
     "/ia/verification/<str:activity_id>/",
-    "/impact",
     "/impact-briefs/<str:release_id>/",
     "/leave/approvals",
     "/leave/approvals/",
@@ -2255,7 +2140,6 @@
     "/ownership-transfers/",
     "/partner-invoices/<str:invoice_id>",
     "/partner-oversight/",
-    "/partner-oversight/analysis",
     "/partner/activities",
     "/partner/activities/<str:activity_id>/evidence",
     "/partner/assigned-activities",
@@ -2292,7 +2176,6 @@
     "/projects/capacity",
     "/projects/filter",
     "/projects/monitoring",
-    "/projects/monitoring/analysis",
     "/projects/my-plan",
     "/projects/planning",
     "/public-holidays",
@@ -2314,7 +2197,6 @@
     "/settings",
     "/settings/activity-catalogue/",
     "/settings/two-step/app",
-    "/ssa",
     "/ssa/manual/",
     "/ssa/unmatched",
     "/ssa/upload/",
@@ -2691,45 +2573,6 @@
   "pages/analytics/visit_effectiveness.html": {
    "pages": [],
    "roles": []
-  },
-  "pages/analytics/workspace.html": {
-   "pages": [
-    "/analytics",
-    "/analytics/",
-    "/analytics/closure-quality",
-    "/analytics/country-director",
-    "/analytics/people",
-    "/analytics/program-lead",
-    "/analytics/publishing",
-    "/analytics/publishing/",
-    "/analytics/school-closures",
-    "/analytics/verification-quality",
-    "/analytics/visit-effectiveness",
-    "/completed-activities",
-    "/core-school-health",
-    "/decision-log",
-    "/decisions",
-    "/declining-schools",
-    "/impact",
-    "/reports",
-    "/ssa"
-   ],
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "BUSINESS_TRANSFORMATION",
-    "CCEO",
-    "CD",
-    "HR",
-    "IA",
-    "MFI_ADMIN",
-    "MFI_OFFICER",
-    "PARTNER",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
-   ]
   },
   "pages/audit/decision_log.html": {
    "pages": [],
@@ -4597,7 +4440,8 @@
     "CCEO",
     "CD",
     "IA",
-    "PL"
+    "PL",
+    "RVP"
    ]
   },
   "pages/schools/detail.html": {
@@ -5322,26 +5166,15 @@
    ]
   },
   "partials/analytics/cd/body.html": {
-   "pages": [
-    "/analytics/country-director"
-   ],
-   "roles": [
-    "ADMIN",
-    "CD"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/analytics/cd/budget_finance.html": {
-   "pages": [
-    "/analytics/country-director"
-   ],
-   "roles": [
-    "ADMIN",
-    "CD"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/analytics/cd/district_heatmap.html": {
    "pages": [
-    "/analytics/country-director",
     "/analytics/country-director/ssa-heatmap"
    ],
    "roles": [
@@ -5359,31 +5192,16 @@
    ]
   },
   "partials/analytics/cd/operational_risk.html": {
-   "pages": [
-    "/analytics/country-director"
-   ],
-   "roles": [
-    "ADMIN",
-    "CD"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/analytics/cd/recommended_actions.html": {
-   "pages": [
-    "/analytics/country-director"
-   ],
-   "roles": [
-    "ADMIN",
-    "CD"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/analytics/cd/ssa_interventions.html": {
-   "pages": [
-    "/analytics/country-director"
-   ],
-   "roles": [
-    "ADMIN",
-    "CD"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/analytics/closure_quality_workspace.html": {
    "pages": [
@@ -5437,20 +5255,8 @@
    "roles": []
   },
   "partials/analytics/impact_workspace.html": {
-   "pages": [
-    "/impact"
-   ],
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/analytics/kpi_cards.html": {
    "pages": [],
@@ -5505,31 +5311,16 @@
    "roles": []
   },
   "partials/analytics/pl/body.html": {
-   "pages": [
-    "/analytics/program-lead"
-   ],
-   "roles": [
-    "ADMIN",
-    "PL"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/analytics/pl/insights.html": {
-   "pages": [
-    "/analytics/program-lead"
-   ],
-   "roles": [
-    "ADMIN",
-    "PL"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/analytics/pl/risk_list.html": {
-   "pages": [
-    "/analytics/program-lead"
-   ],
-   "roles": [
-    "ADMIN",
-    "PL"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/analytics/recommended_insights.html": {
    "pages": [],
@@ -5577,25 +5368,12 @@
   },
   "partials/analytics/scope.html": {
    "pages": [
-    "/analytics",
-    "/analytics/",
     "/analytics/closure-quality",
-    "/analytics/country-director",
-    "/analytics/people",
-    "/analytics/program-lead",
     "/analytics/publishing",
     "/analytics/publishing/",
-    "/analytics/school-closures",
-    "/analytics/verification-quality",
-    "/analytics/visit-effectiveness",
     "/completed-activities",
-    "/core-school-health",
     "/decision-log",
-    "/decisions",
-    "/declining-schools",
-    "/impact",
-    "/reports",
-    "/ssa"
+    "/reports"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -5616,25 +5394,12 @@
   },
   "partials/analytics/tab_rail.html": {
    "pages": [
-    "/analytics",
-    "/analytics/",
     "/analytics/closure-quality",
-    "/analytics/country-director",
-    "/analytics/people",
-    "/analytics/program-lead",
     "/analytics/publishing",
     "/analytics/publishing/",
-    "/analytics/school-closures",
-    "/analytics/verification-quality",
-    "/analytics/visit-effectiveness",
     "/completed-activities",
-    "/core-school-health",
     "/decision-log",
-    "/decisions",
-    "/declining-schools",
-    "/impact",
-    "/reports",
-    "/ssa"
+    "/reports"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -5658,18 +5423,8 @@
    "roles": []
   },
   "partials/analytics/visit_effectiveness_workspace.html": {
-   "pages": [
-    "/analytics/visit-effectiveness"
-   ],
-   "roles": [
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RVP"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/business_transformation/loan_drawer.html": {
    "pages": [
@@ -6088,7 +5843,7 @@
     "PL"
    ]
   },
-  "partials/clusters/profile_learning.html": {
+  "partials/clusters/profile_learners.html": {
    "pages": [
     "/clusters/<str:cluster_id>/profile"
    ],
@@ -6149,18 +5904,6 @@
    ]
   },
   "partials/clusters/profile_stories.html": {
-   "pages": [
-    "/clusters/<str:cluster_id>/profile"
-   ],
-   "roles": [
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL"
-   ]
-  },
-  "partials/clusters/profile_students.html": {
    "pages": [
     "/clusters/<str:cluster_id>/profile"
    ],
@@ -9447,47 +9190,6 @@
     "RVP"
    ]
   },
-  "partials/oversight/analysis_body.html": {
-   "pages": [
-    "/country-planning-oversight/",
-    "/partner-oversight/analysis",
-    "/projects/monitoring/analysis",
-    "/team-planning-oversight/",
-    "/team-targets",
-    "/team-targets/"
-   ],
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "HR",
-    "IA",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
-   ]
-  },
-  "partials/oversight/analysis_switch.html": {
-   "pages": [
-    "/partner-oversight/",
-    "/partner-oversight/analysis",
-    "/projects/monitoring",
-    "/projects/monitoring/analysis"
-   ],
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
-   ]
-  },
   "partials/oversight/bulk_withdrawal_drawer.html": {
    "pages": [
     "/partner-oversight/withdraw/bulk"
@@ -9822,23 +9524,6 @@
     "IA",
     "PL",
     "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
-   ]
-  },
-  "partials/oversight/special_projects_workspace.html": {
-   "pages": [
-    "/team-planning-oversight/",
-    "/team-targets",
-    "/team-targets/"
-   ],
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "CD",
-    "HR",
-    "IA",
-    "PL",
     "RPL",
     "RVP"
    ]
@@ -10995,22 +10680,15 @@
   },
   "partials/projects/monitoring_school_table.html": {
    "pages": [
-    "/projects/monitoring",
-    "/team-planning-oversight/",
-    "/team-targets",
-    "/team-targets/"
+    "/projects/monitoring"
    ],
    "roles": [
-    "ACCOUNTANT",
     "ADMIN",
     "CCEO",
     "CD",
-    "HR",
     "IA",
     "PL",
-    "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
+    "PROJECT_COORDINATOR"
    ]
   },
   "partials/projects/my_plan_activity_table.html": {
@@ -11427,25 +11105,8 @@
    ]
   },
   "partials/ssa/performance_workspace.html": {
-   "pages": [
-    "/ssa"
-   ],
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "BUSINESS_TRANSFORMATION",
-    "CCEO",
-    "CD",
-    "HR",
-    "IA",
-    "MFI_ADMIN",
-    "MFI_OFFICER",
-    "PARTNER",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/staff_activity/_embed_head.html": {
    "pages": [
@@ -11972,7 +11633,7 @@
   {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-DA69FD4ED621", "kind": "button", "line": 1249, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "base.html"},
   {"accessible_name": "Data context {{ freshness|default:\"Live to current filters\" }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F43BB5A63B9D", "kind": "disclosure", "line": 11, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "components/analytics_decision_frame.html"},
   {"accessible_name": "{{ action_label }}→", "destination": "{{ action_href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E98DADB80B7E", "kind": "link", "line": 32, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/analytics_decision_frame.html"},
-  {"accessible_name": "Data details · {{ engine.record_count }} records", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-26C6E0BD5314", "kind": "disclosure", "line": 6, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "components/analytics_provenance.html"},
+  {"accessible_name": "Data details · {{ engine.record_count }} records", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-26C6E0BD5314", "kind": "disclosure", "line": 6, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "components/analytics_provenance.html"},
   {"accessible_name": "{{ label }}", "destination": "{{ href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-754977E0FFAA", "kind": "link", "line": 25, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/button.html"},
   {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-2667832FE251", "kind": "button", "line": 29, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "components/button.html"},
   {"accessible_name": "{{ action_label }} →", "destination": "{{ action_href }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-B45DF41B1FC2", "kind": "link", "line": 44, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/card.html"},
@@ -12234,9 +11895,6 @@
   {"accessible_name": "Analytics filters Change period, geography, or programme scope ⌄", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-AFEC3B4F4EFC", "kind": "disclosure", "line": 50, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "pages/analytics/index.html"},
   {"accessible_name": "Assessment comparison", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-0ED5A0948BDC", "kind": "field", "line": 19, "method": "", "selector": "select[name=comparison]", "state_changing": false, "tag": "select", "template": "pages/analytics/visit_effectiveness.html"},
   {"accessible_name": "School type", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-896C81765F1C", "kind": "field", "line": 26, "method": "", "selector": "select[name=school_type]", "state_changing": false, "tag": "select", "template": "pages/analytics/visit_effectiveness.html"},
-  {"accessible_name": "Export to Excel", "destination": "{{ analytics_export_url }}                              ?{{ request.GET.urlencode }}           ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F2B054AA0B76", "kind": "link", "line": 41, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/analytics/workspace.html"},
-  {"accessible_name": "Send to Inbox Send", "destination": "/analytics/schedule-report                              ?{{ request.GET.urlencode }}           ", "destination_route": "/analytics/schedule-report", "evidence": "request-tested", "high_consequence": false, "id": "INT-25453D486F7D", "kind": "button", "line": 49, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/analytics/workspace.html"},
-  {"accessible_name": "Customize Layout", "destination": "/analytics/customize-dashboard", "destination_route": "/analytics/customize-dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-7ACA19B82530", "kind": "button", "line": 57, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/analytics/workspace.html"},
   {"accessible_name": "Last {{ option }} days", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-B96014AE7EA9", "kind": "field", "line": 21, "method": "", "selector": "#days-select", "state_changing": false, "tag": "select", "template": "pages/audit/decision_log.html"},
   {"accessible_name": "All", "destination": "?days={{ log.days }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-7ACF3F258665", "kind": "link", "line": 28, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/audit/decision_log.html"},
   {"accessible_name": "{{ g }}", "destination": "?group={{ g }}&days={{ log.days }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-E4A224B3E169", "kind": "link", "line": 30, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/audit/decision_log.html"},
@@ -12283,11 +11941,11 @@
   {"accessible_name": "Add item", "destination": "/country-budget/action", "destination_route": "/country-budget/action", "evidence": "request-tested", "high_consequence": false, "id": "INT-0028EBA9DE0E", "kind": "button", "line": 107, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/budgets/monthly.html"},
   {"accessible_name": "Short explanation", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-183AEB54C544", "kind": "field", "line": 111, "method": "", "selector": "#admin-justification", "state_changing": false, "tag": "input", "template": "pages/budgets/monthly.html"},
   {"accessible_name": "All districts {{ d.name }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-B25260D195BC", "kind": "field", "line": 153, "method": "", "selector": "#budget-district-filter", "state_changing": false, "tag": "select", "template": "pages/budgets/monthly.html"},
-  {"accessible_name": "View plan sources", "destination": "/country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}", "destination_route": "/country-budget/plan-sources", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-226DF99B7F79", "kind": "button", "line": 188, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/budgets/monthly.html"},
-  {"accessible_name": "Submitted budgets", "destination": "/country-budget/history?fy={{ country_workflow.fy }}", "destination_route": "/country-budget/history", "evidence": "request-tested", "high_consequence": false, "id": "INT-5A5988C37120", "kind": "link", "line": 194, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/budgets/monthly.html"},
-  {"accessible_name": "Submit {{ country_workflow.month_label }} budget to RVP", "destination": "/country-budget/action", "destination_route": "/country-budget/action", "evidence": "request-tested", "high_consequence": true, "id": "INT-2D196B35E53C", "kind": "button", "line": 205, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/budgets/monthly.html"},
-  {"accessible_name": "Approve", "destination": "/country-budget/action", "destination_route": "/country-budget/action", "evidence": "request-tested", "high_consequence": true, "id": "INT-BE4D0013DD0A", "kind": "button", "line": 217, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/budgets/monthly.html"},
-  {"accessible_name": "Return", "destination": "/country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}", "destination_route": "/country-budget/return", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-96A90DEDD508", "kind": "button", "line": 219, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/budgets/monthly.html"},
+  {"accessible_name": "View plan sources", "destination": "/country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}", "destination_route": "/country-budget/plan-sources", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-226DF99B7F79", "kind": "button", "line": 209, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/budgets/monthly.html"},
+  {"accessible_name": "Submitted budgets", "destination": "/country-budget/history?fy={{ country_workflow.fy }}", "destination_route": "/country-budget/history", "evidence": "request-tested", "high_consequence": false, "id": "INT-5A5988C37120", "kind": "link", "line": 215, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/budgets/monthly.html"},
+  {"accessible_name": "Submit {{ country_workflow.month_label }} budget to RVP", "destination": "/country-budget/action", "destination_route": "/country-budget/action", "evidence": "request-tested", "high_consequence": true, "id": "INT-2D196B35E53C", "kind": "button", "line": 226, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/budgets/monthly.html"},
+  {"accessible_name": "Approve", "destination": "/country-budget/action", "destination_route": "/country-budget/action", "evidence": "request-tested", "high_consequence": true, "id": "INT-BE4D0013DD0A", "kind": "button", "line": 238, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/budgets/monthly.html"},
+  {"accessible_name": "Return", "destination": "/country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}", "destination_route": "/country-budget/return", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-96A90DEDD508", "kind": "button", "line": 240, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/budgets/monthly.html"},
   {"accessible_name": "{{ fy }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-BC20F38AD6C9", "kind": "field", "line": 9, "method": "", "selector": "#impact-fy", "state_changing": false, "tag": "input", "template": "pages/business_transformation/impact_reports.html"},
   {"accessible_name": "All impact states {{ label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-9BA3F1466214", "kind": "field", "line": 9, "method": "", "selector": "#impact-purpose", "state_changing": false, "tag": "select", "template": "pages/business_transformation/impact_reports.html"},
   {"accessible_name": "Prepare", "destination": "/ia/lending-evidence/conclusions/{{ assessment.id }}/", "destination_route": "/ia/lending-evidence/conclusions/<str:assessment_id>/", "evidence": "request-tested", "high_consequence": false, "id": "INT-6E339A511D54", "kind": "button", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/business_transformation/impact_reports.html"},
@@ -12666,13 +12324,13 @@
   {"accessible_name": "{{ item.count }} people", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-7AD9CD742DEC", "kind": "disclosure", "line": 69, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "pages/hr/hr_today.html"},
   {"accessible_name": "{{ person.name }}", "destination": "{{ person.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-34123680B6E8", "kind": "link", "line": 72, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/hr_today.html"},
   {"accessible_name": "Open", "destination": "{{ item.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-5370E3707849", "kind": "link", "line": 87, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/hr_today.html"},
-  {"accessible_name": "My Team", "destination": "/my-team", "destination_route": "/my-team", "evidence": "request-tested", "high_consequence": false, "id": "INT-5B7D732659F2", "kind": "link", "line": 22, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
-  {"accessible_name": "Human Capital", "destination": "/dashboard", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-781CE99951D8", "kind": "link", "line": 22, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
-  {"accessible_name": "{{ action.label }}", "destination": "{{ action.href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F94158BB41E7", "kind": "link", "line": 44, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
-  {"accessible_name": "{{ action.label }}", "destination": "{{ action.drawer }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-28B96C79903B", "kind": "button", "line": 47, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/hr/module_workspace.html"},
-  {"accessible_name": "{{ primary_action.label }} →", "destination": "{{ primary_action.href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-6DC5AAB66A8B", "kind": "link", "line": 54, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
-  {"accessible_name": "My Team", "destination": "/my-team", "destination_route": "/my-team", "evidence": "request-tested", "high_consequence": false, "id": "INT-96CC5FFE2B09", "kind": "link", "line": 60, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
-  {"accessible_name": "HR overview", "destination": "/dashboard", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-5C4A89482145", "kind": "link", "line": 62, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
+  {"accessible_name": "My Team", "destination": "/my-team", "destination_route": "/my-team", "evidence": "request-tested", "high_consequence": false, "id": "INT-5B7D732659F2", "kind": "link", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
+  {"accessible_name": "Human Capital", "destination": "/dashboard", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-781CE99951D8", "kind": "link", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
+  {"accessible_name": "{{ action.label }}", "destination": "{{ action.href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F94158BB41E7", "kind": "link", "line": 43, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
+  {"accessible_name": "{{ action.label }}", "destination": "{{ action.drawer }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-28B96C79903B", "kind": "button", "line": 46, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/hr/module_workspace.html"},
+  {"accessible_name": "{{ primary_action.label }} →", "destination": "{{ primary_action.href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-6DC5AAB66A8B", "kind": "link", "line": 53, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
+  {"accessible_name": "My Team", "destination": "/my-team", "destination_route": "/my-team", "evidence": "request-tested", "high_consequence": false, "id": "INT-96CC5FFE2B09", "kind": "link", "line": 59, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
+  {"accessible_name": "HR overview", "destination": "/dashboard", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-5C4A89482145", "kind": "link", "line": 61, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/module_workspace.html"},
   {"accessible_name": "Distribute targets", "destination": "/target-distribution?fy={{ fy }}", "destination_route": "/target-distribution", "evidence": "request-tested", "high_consequence": false, "id": "INT-079B66C8B7FA", "kind": "link", "line": 9, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/my_performance.html"},
   {"accessible_name": "Distribute to my team", "destination": "/target-distribution/team?fy={{ fy }}", "destination_route": "/target-distribution/team", "evidence": "request-tested", "high_consequence": false, "id": "INT-B9F30FE021C9", "kind": "link", "line": 10, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/my_performance.html"},
   {"accessible_name": "Strategy & approval", "destination": "/strategic-priorities?fy={{ fy }}", "destination_route": "/strategic-priorities", "evidence": "request-tested", "high_consequence": false, "id": "INT-962B4AF2B60D", "kind": "link", "line": 11, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/hr/my_performance.html"},
@@ -12967,16 +12625,11 @@
   {"accessible_name": "Any {{ status }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F9DFAA401C0B", "kind": "field", "line": 40, "method": "", "selector": "select[name=readiness]", "state_changing": false, "tag": "select", "template": "pages/oversight/core_schools_oversight.html"},
   {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-4131D7832699", "kind": "field", "line": 42, "method": "", "selector": "select[name=sort]", "state_changing": false, "tag": "select", "template": "pages/oversight/core_schools_oversight.html"},
   {"accessible_name": "Apply", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-FE1444EA7E49", "kind": "button", "line": 43, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "Improved ({{ summary.improved }})", "destination": "?{{ query }}&trajectory=improved", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-D9D708771AF6", "kind": "link", "line": 63, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "Declined ({{ summary.declined }})", "destination": "?{{ query }}&trajectory=declined", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0228F4E8BE84", "kind": "link", "line": 64, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "Not compared ({{ summary.not_compared }})", "destination": "?{{ query }}&trajectory=not_comparable", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-5531D7A8BCAA", "kind": "link", "line": 65, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "Need attention ({{ summary.needs_attention }})", "destination": "?{{ query }}&tab=attention", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-C5D2AF8195A0", "kind": "link", "line": 66, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "Potential Champions ({{ summary.readiness|get_item:\"Potential Champion\" }})", "destination": "?{{ query }}&tab=champion", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-35C4A853A7F7", "kind": "link", "line": 67, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "{{ label }}", "destination": "?{{ query }}&tab={{ key }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A057E4D029E7", "kind": "link", "line": 72, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "{{ r.cluster }}", "destination": "/clusters/{{ r.cluster_id }}/profile", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-30CF6925752A", "kind": "link", "line": 115, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "By {{ label }}", "destination": "?{{ query }}&tab=groups&group={{ key }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-9A95AE1A3DCC", "kind": "link", "line": 141, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "Act on these", "destination": "/schools/{{ r.id }}?tab=core&fy={{ fy }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-F52F26E6A430", "kind": "link", "line": 208, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
-  {"accessible_name": "Review", "destination": "/core-schools/{{ r.code }}/champion-review", "destination_route": "/core-schools/<str:school_id>/champion-review", "evidence": "request-tested", "high_consequence": false, "id": "INT-BB95C9C50406", "kind": "button", "line": 226, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/core_schools_oversight.html"},
+  {"accessible_name": "{{ label }}", "destination": "?{{ query }}&tab={{ key }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A057E4D029E7", "kind": "link", "line": 67, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
+  {"accessible_name": "{{ r.cluster }}", "destination": "/clusters/{{ r.cluster_id }}/profile", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-30CF6925752A", "kind": "link", "line": 110, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
+  {"accessible_name": "By {{ label }}", "destination": "?{{ query }}&tab=groups&group={{ key }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-9A95AE1A3DCC", "kind": "link", "line": 136, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
+  {"accessible_name": "Act on these", "destination": "/schools/{{ r.id }}?tab=core&fy={{ fy }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-F52F26E6A430", "kind": "link", "line": 203, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/core_schools_oversight.html"},
+  {"accessible_name": "Review", "destination": "/core-schools/{{ r.code }}/champion-review", "destination_route": "/core-schools/<str:school_id>/champion-review", "evidence": "request-tested", "high_consequence": false, "id": "INT-BB95C9C50406", "kind": "button", "line": 221, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/core_schools_oversight.html"},
   {"accessible_name": "Country Execution & Completion Oversight", "destination": "/country-planning-oversight/?{{ query }}", "destination_route": "/country-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-B0607DBC6908", "kind": "link", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/country_execution_table.html"},
   {"accessible_name": "Export {{ spec.title }} to Excel", "destination": "{{ export_path }}?{{ query }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-182B9C7C210A", "kind": "link", "line": 23, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/country_execution_table.html"},
   {"accessible_name": "Programme Lead", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-85094D778AF7", "kind": "field", "line": 42, "method": "", "selector": "select[name=program_lead]", "state_changing": false, "tag": "select", "template": "pages/oversight/country_execution_table.html"},
@@ -13000,10 +12653,7 @@
   {"accessible_name": "Add Partner Organisation", "destination": "/partners/create", "destination_route": "/partners/create", "evidence": "request-tested", "high_consequence": false, "id": "INT-6F5687CADB1D", "kind": "button", "line": 14, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/partner_oversight.html"},
   {"accessible_name": "+ Set Training Capacity", "destination": "/training-ceilings/set?fy={{ fy }}", "destination_route": "/training-ceilings/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-D684ED226E53", "kind": "button", "line": 28, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/team_planning.html"},
   {"accessible_name": "+ Set Country Ceiling", "destination": "/training-ceilings/country/set?fy={{ fy }}", "destination_route": "/training-ceilings/country/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-519B4212C7AD", "kind": "button", "line": 34, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/team_planning.html"},
-  {"accessible_name": "Export every project and its schools to one Excel file", "destination": "/team-planning-oversight/projects/export-drawer?fy={{ fy }}                       &stage={{ selected_stage }}                                           &project_status={{ selected_project_status }}           ", "destination_route": "/team-planning-oversight/projects/export-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-CD39F1630594", "kind": "link", "line": 41, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
-  {"accessible_name": "Export the open project and its schools to Excel", "destination": "/team-planning-oversight/projects/export-drawer?project={{ selected_project }}&fy={{ fy }}                       &stage={{ selected_stage }}                                           &project_status={{ selected_project_status }}           ", "destination_route": "/team-planning-oversight/projects/export-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-D5AA8D22FADD", "kind": "link", "line": 51, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
-  {"accessible_name": "{{ lead.label }}", "destination": "/team-planning-oversight/?view=analysis&program_lead={{ lead.key }}&fy={{ fy }}&period={{ period }}", "destination_route": "/team-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-292DCEBE420F", "kind": "link", "line": 125, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
-  {"accessible_name": "Evidence gaps", "destination": "/evidence/?tab=pending", "destination_route": "/evidence/", "evidence": "request-tested", "high_consequence": false, "id": "INT-610EB240B8FB", "kind": "link", "line": 154, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
+  {"accessible_name": "Evidence gaps", "destination": "/evidence/?tab=pending", "destination_route": "/evidence/", "evidence": "request-tested", "high_consequence": false, "id": "INT-610EB240B8FB", "kind": "link", "line": 111, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
   {"accessible_name": "Status", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-13A6673C139F", "kind": "field", "line": 19, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "pages/partner/activities.html"},
   {"accessible_name": "Return", "destination": "/partner/assignments/{{ assignment.id }}/return-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/return-drawer", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-426E7F2A74E4", "kind": "button", "line": 48, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/activities.html"},
   {"accessible_name": "Schedule", "destination": "/partner/assignments/{{ assignment.id }}/schedule-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/schedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-F9C65452187C", "kind": "button", "line": 49, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/activities.html"},
@@ -13181,12 +12831,12 @@
   {"accessible_name": "Consolidated tables", "destination": "{{ consolidated_tables_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-11F6CC2877DE", "kind": "link", "line": 63, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/monitoring.html"},
   {"accessible_name": "Export every project and its schools to one Excel file", "destination": "/projects/export?fy={{ fy }}                       &stage={{ selected_stage }}                                &{{ filter_query }}           ", "destination_route": "/projects/export", "evidence": "request-tested", "high_consequence": false, "id": "INT-30E4C1465813", "kind": "link", "line": 70, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/monitoring.html"},
   {"accessible_name": "Export {{ row.name }} and its schools to Excel", "destination": "/projects/{{ row.id }}/export?fy={{ fy }}                       &stage={{ selected_stage }}                                &{{ filter_query }}           ", "destination_route": "/projects/<str:project_id>/export", "evidence": "request-tested", "high_consequence": false, "id": "INT-E3437B01C0E3", "kind": "link", "line": 78, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "{{ field.label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-356A1BE5DA81", "kind": "field", "line": 108, "method": "", "selector": "", "state_changing": false, "tag": "select", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "View", "destination": "/projects/monitoring?project={{ a.project_id }}&fy={{ fy }}", "destination_route": "/projects/monitoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-7099C3ECAC31", "kind": "link", "line": 203, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?project={{ entry.key }}&stage={{ selected_stage }}&fy={{ fy }}                     &{{ filter_query }}           ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E9947CF292DE", "kind": "link", "line": 219, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "Assign to partner", "destination": "/projects/planning/bulk-partner", "destination_route": "/projects/planning/bulk-partner", "evidence": "request-tested", "high_consequence": false, "id": "INT-84B4EF098349", "kind": "button", "line": 340, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "Schedule", "destination": "/projects/planning/bulk-schedule", "destination_route": "/projects/planning/bulk-schedule", "evidence": "request-tested", "high_consequence": false, "id": "INT-2E753B79E4F2", "kind": "button", "line": 351, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "Clear", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-5BBA768E2300", "kind": "button", "line": 357, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "{{ field.label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-356A1BE5DA81", "kind": "field", "line": 107, "method": "", "selector": "", "state_changing": false, "tag": "select", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "View", "destination": "/projects/monitoring?project={{ a.project_id }}&fy={{ fy }}", "destination_route": "/projects/monitoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-7099C3ECAC31", "kind": "link", "line": 202, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?project={{ entry.key }}&stage={{ selected_stage }}&fy={{ fy }}                     &{{ filter_query }}           ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E9947CF292DE", "kind": "link", "line": 218, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Assign to partner", "destination": "/projects/planning/bulk-partner", "destination_route": "/projects/planning/bulk-partner", "evidence": "request-tested", "high_consequence": false, "id": "INT-84B4EF098349", "kind": "button", "line": 339, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Schedule", "destination": "/projects/planning/bulk-schedule", "destination_route": "/projects/planning/bulk-schedule", "evidence": "request-tested", "high_consequence": false, "id": "INT-2E753B79E4F2", "kind": "button", "line": 350, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Clear", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-5BBA768E2300", "kind": "button", "line": 356, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
   {"accessible_name": "Export filtered project plan as CSV", "destination": "{{ export_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F4C819D95A5F", "kind": "link", "line": 24, "method": "GET", "selector": "#sp-plan-export-link", "state_changing": false, "tag": "a", "template": "pages/projects/my_plan.html"},
   {"accessible_name": "Export", "destination": "{{ export_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-9361350178C6", "kind": "link", "line": 39, "method": "GET", "selector": "#spp-export", "state_changing": false, "tag": "a", "template": "pages/projects/planning.html"},
   {"accessible_name": "Assigned to user ID", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-D9DD46D43BEF", "kind": "field", "line": 30, "method": "", "selector": "select[name=assigned_to_user_id]", "state_changing": false, "tag": "select", "template": "pages/quality_checks/index.html"},
@@ -13198,8 +12848,8 @@
   {"accessible_name": "Resolve", "destination": "/quality-checks?resolve={{ f.id }}", "destination_route": "/quality-checks", "evidence": "request-tested", "high_consequence": false, "id": "INT-C1800DE3F10A", "kind": "button", "line": 112, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/quality_checks/index.html"},
   {"accessible_name": "Resolve", "destination": "/quality-checks?resolve={{ f.id }}", "destination_route": "/quality-checks", "evidence": "request-tested", "high_consequence": false, "id": "INT-9ABED9D5AFB5", "kind": "button", "line": 115, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/quality_checks/index.html"},
   {"accessible_name": "Clear search“{{ q|truncatechars:24 }}”", "destination": "/schools/closed", "destination_route": "/schools/closed", "evidence": "request-tested", "high_consequence": false, "id": "INT-CFD98117F4D6", "kind": "link", "line": 33, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/schools/closed.html"},
-  {"accessible_name": "View", "destination": "/schools/{{ row.school.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-D034590A5C3C", "kind": "link", "line": 102, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/schools/closed.html"},
-  {"accessible_name": "View school", "destination": "/schools/{{ row.school.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-A3D794E89330", "kind": "link", "line": 130, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/schools/closed.html"},
+  {"accessible_name": "View", "destination": "/schools/{{ row.school.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-D034590A5C3C", "kind": "link", "line": 115, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/schools/closed.html"},
+  {"accessible_name": "View school", "destination": "/schools/{{ row.school.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-A3D794E89330", "kind": "link", "line": 143, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/schools/closed.html"},
   {"accessible_name": "Confirm the school is operating again and how you know.", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0822D751671C", "kind": "field", "line": 49, "method": "", "selector": "input[name=reason]", "state_changing": false, "tag": "input", "template": "pages/schools/detail.html"},
   {"accessible_name": "e.g. 380", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-9009B7AFFA40", "kind": "field", "line": 55, "method": "", "selector": "input[name=enrollment]", "state_changing": false, "tag": "input", "template": "pages/schools/detail.html"},
   {"accessible_name": "Reopen school", "destination": "/schools/{{ school.school_id }}/reopen", "destination_route": "/schools/<str:school_id>/reopen", "evidence": "request-tested", "high_consequence": true, "id": "INT-BFD405DD79DE", "kind": "button", "line": 59, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/schools/detail.html"},
@@ -13478,10 +13128,10 @@
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-345C0C028BBC", "kind": "field", "line": 19, "method": "", "selector": "#rp-password", "state_changing": false, "tag": "input", "template": "partials/admin/reset_password_drawer.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C8D3F627E3AA", "kind": "button", "line": 24, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/admin/reset_password_drawer.html"},
   {"accessible_name": "Reset password", "destination": "                                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-62D7F5C93694", "kind": "button", "line": 25, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/admin/reset_password_drawer.html"},
-  {"accessible_name": "Performance driversTarget delivery, SSA, Program Leads and district signals", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-9118CB16A28C", "kind": "disclosure", "line": 23, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
-  {"accessible_name": "Impact and delivery networkVerified impact, partner delivery, clusters and regional context", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-705F8A6CF026", "kind": "disclosure", "line": 40, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
-  {"accessible_name": "People and portfolio oversightPL accountability and CCEO execution detail", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E87538847071", "kind": "disclosure", "line": 57, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
-  {"accessible_name": "Finance and reporting evidenceBudget execution and the financial context behind delivery", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-60220CAD1BE0", "kind": "disclosure", "line": 72, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
+  {"accessible_name": "Performance driversTarget delivery, SSA, Program Leads and district signals", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-9118CB16A28C", "kind": "disclosure", "line": 23, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
+  {"accessible_name": "Impact and delivery networkVerified impact, partner delivery, clusters and regional context", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-705F8A6CF026", "kind": "disclosure", "line": 40, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
+  {"accessible_name": "People and portfolio oversightPL accountability and CCEO execution detail", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-E87538847071", "kind": "disclosure", "line": 57, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
+  {"accessible_name": "Finance and reporting evidenceBudget execution and the financial context behind delivery", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-60220CAD1BE0", "kind": "disclosure", "line": 72, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
   {"accessible_name": "Review →", "destination": "/analytics/country-director/drilldown?drill=budget&fy={{ fy }}", "destination_route": "/analytics/country-director/drilldown", "evidence": "request-tested", "high_consequence": false, "id": "INT-1ADC930289E5", "kind": "link", "line": 13, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/cd/budget_finance.html"},
   {"accessible_name": "{{ lbl }}", "destination": "/analytics/country-director/ssa-heatmap?level={{ lvl }}&fy={{ fy }}&quarter={{ quarter }}&month={{ month }}", "destination_route": "/analytics/country-director/ssa-heatmap", "evidence": "request-tested", "high_consequence": false, "id": "INT-BFA45D23A916", "kind": "button", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/analytics/cd/district_heatmap.html"},
   {"accessible_name": "{{ a.label }}", "destination": "{{ a.href }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1B4F515C2A25", "kind": "link", "line": 165, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/cd/drilldown.html"},
@@ -13512,13 +13162,13 @@
   {"accessible_name": "School type", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-CC41542BD5E3", "kind": "field", "line": 97, "method": "", "selector": "select[name=school_type]", "state_changing": false, "tag": "select", "template": "partials/analytics/filters.html"},
   {"accessible_name": "Activity type", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-05C0CF8DAA3C", "kind": "field", "line": 107, "method": "", "selector": "select[name=activity_type]", "state_changing": false, "tag": "select", "template": "partials/analytics/filters.html"},
   {"accessible_name": "Clear", "destination": "/analytics", "destination_route": "/analytics", "evidence": "request-tested", "high_consequence": false, "id": "INT-F2D4B57FDEFF", "kind": "link", "line": 116, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/filters.html"},
-  {"accessible_name": "{{ option.label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-96E59927120F", "kind": "field", "line": 15, "method": "", "selector": "#ia-fy", "state_changing": false, "tag": "select", "template": "partials/analytics/impact_workspace.html"},
-  {"accessible_name": "{{ option.label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-1ACB67A34712", "kind": "field", "line": 23, "method": "", "selector": "#ia-group-by", "state_changing": false, "tag": "select", "template": "partials/analytics/impact_workspace.html"},
+  {"accessible_name": "{{ option.label }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-96E59927120F", "kind": "field", "line": 15, "method": "", "selector": "#ia-fy", "state_changing": false, "tag": "select", "template": "partials/analytics/impact_workspace.html"},
+  {"accessible_name": "{{ option.label }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-1ACB67A34712", "kind": "field", "line": 23, "method": "", "selector": "#ia-group-by", "state_changing": false, "tag": "select", "template": "partials/analytics/impact_workspace.html"},
   {"accessible_name": "Reset Impact Analytics filters", "destination": "/impact", "destination_route": "/impact", "evidence": "request-tested", "high_consequence": false, "id": "INT-F66FF4632F4B", "kind": "link", "line": 30, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/impact_workspace.html"},
   {"accessible_name": "Apply filters", "destination": "/impact", "destination_route": "/impact", "evidence": "request-tested", "high_consequence": false, "id": "INT-9EED25E76E10", "kind": "button", "line": 40, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/analytics/impact_workspace.html"},
   {"accessible_name": "Previous page", "destination": "/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.previous_page }}", "destination_route": "/impact", "evidence": "request-tested", "high_consequence": false, "id": "INT-1C450B3FE29B", "kind": "link", "line": 184, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/impact_workspace.html"},
   {"accessible_name": "Next page", "destination": "/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.next_page }}", "destination_route": "/impact", "evidence": "request-tested", "high_consequence": false, "id": "INT-A7347C4CB13E", "kind": "link", "line": 191, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/impact_workspace.html"},
-  {"accessible_name": "Methodology and limitationsHow the cohorts, comparisons and confidence statements are computed", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-5EF5F7A54CCB", "kind": "disclosure", "line": 421, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/impact_workspace.html"},
+  {"accessible_name": "Methodology and limitationsHow the cohorts, comparisons and confidence statements are computed", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-5EF5F7A54CCB", "kind": "disclosure", "line": 421, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/impact_workspace.html"},
   {"accessible_name": "Delivery and reporting evidence Activity, staff, partner, SSA, impact, and donor detail ⌄", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-5942054CB2E5", "kind": "disclosure", "line": 38, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/kpi_cards.html"},
   {"accessible_name": "Export to Excel: {{ label }} ,", "destination": "/analytics/country-director/export?fy={{ fy }}                &quarter={{ quarter }}                         &month={{ month }}           ", "destination_route": "/analytics/country-director/export", "evidence": "request-tested", "high_consequence": false, "id": "INT-E8655683489F", "kind": "link", "line": 22, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/panels/cd_overview.html"},
   {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-E9F806473DC3", "kind": "field", "line": 39, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/analytics/panels/cd_overview.html"},
@@ -13558,9 +13208,9 @@
   {"accessible_name": "Add SSA Score", "destination": "/ssa/manual/", "destination_route": "/ssa/manual/", "evidence": "request-tested", "high_consequence": false, "id": "INT-C54EA4C3C86E", "kind": "link", "line": 10, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/panels/ssa_performance.html"},
   {"accessible_name": "Upload Center", "destination": "/uploads", "destination_route": "/uploads", "evidence": "request-tested", "high_consequence": false, "id": "INT-23CFA9E31041", "kind": "link", "line": 11, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/panels/ssa_performance.html"},
   {"accessible_name": "School type", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-D68E594A4E8D", "kind": "field", "line": 19, "method": "", "selector": "select[name=school_type]", "state_changing": false, "tag": "select", "template": "partials/analytics/panels/visit_effectiveness.html"},
-  {"accessible_name": "Performance driversTeam, intervention, district and cluster comparisons", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-24845CF46A90", "kind": "disclosure", "line": 23, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/pl/body.html"},
-  {"accessible_name": "Impact and field executionSchool movement, CCEO delivery, activity volume and service coverage", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-4FDDBFB0E9A6", "kind": "disclosure", "line": 40, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/pl/body.html"},
-  {"accessible_name": "Reporting evidenceDonor-ready summary derived from the same scoped records", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-FA88ABAF8792", "kind": "disclosure", "line": 65, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/pl/body.html"},
+  {"accessible_name": "Performance driversTeam, intervention, district and cluster comparisons", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-24845CF46A90", "kind": "disclosure", "line": 23, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/pl/body.html"},
+  {"accessible_name": "Impact and field executionSchool movement, CCEO delivery, activity volume and service coverage", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-4FDDBFB0E9A6", "kind": "disclosure", "line": 40, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/pl/body.html"},
+  {"accessible_name": "Reporting evidenceDonor-ready summary derived from the same scoped records", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-FA88ABAF8792", "kind": "disclosure", "line": 65, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/pl/body.html"},
   {"accessible_name": "View", "destination": "/analytics/program-lead/drilldown{{ i.link }}&fy={{ fy }}                &quarter={{ quarter }}           ", "destination_route": "/analytics/program-lead/drilldown", "evidence": "request-tested", "high_consequence": false, "id": "INT-D3E5E28027DF", "kind": "button", "line": 15, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/analytics/pl/insights.html"},
   {"accessible_name": "{{ insights.cta }}", "destination": "/analytics/program-lead/drilldown{{ insights.cta_link }}&fy={{ fy }}                &quarter={{ quarter }}           ", "destination_route": "/analytics/program-lead/drilldown", "evidence": "request-tested", "high_consequence": false, "id": "INT-BA43AA13D3E5", "kind": "button", "line": 31, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/analytics/pl/insights.html"},
   {"accessible_name": "View full risk list", "destination": "/analytics/program-lead/drilldown?drill=risk&fy={{ fy }}                &quarter={{ quarter }}           ", "destination_route": "/analytics/program-lead/drilldown", "evidence": "request-tested", "high_consequence": false, "id": "INT-A8BFC134B235", "kind": "button", "line": 9, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/analytics/pl/risk_list.html"},
@@ -13585,7 +13235,7 @@
   {"accessible_name": "Critical {{ target_by_district_summary.critical|default:0 }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-03D40836228C", "kind": "button", "line": 31, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/analytics/target_by_district.html"},
   {"accessible_name": "{{ group.name }} {{ group.region }} · {{ group.districts|length }} district{{ group.districts|length|pluralize }} {{ group.critical_count }} critical {{ group.w", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-1B8912F246AE", "kind": "disclosure", "line": 45, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/target_by_district.html"},
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-FF2F0514DA35", "kind": "button", "line": 90, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/analytics/target_by_district.html"},
-  {"accessible_name": "Methodology and limitationsComparison cohorts, exclusions and interpretation rules", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0FC60DCF0C03", "kind": "disclosure", "line": 201, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/visit_effectiveness_workspace.html"},
+  {"accessible_name": "Methodology and limitationsComparison cohorts, exclusions and interpretation rules", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-0FC60DCF0C03", "kind": "disclosure", "line": 201, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/visit_effectiveness_workspace.html"},
   {"accessible_name": "", "destination": "/schools/{{ item.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-ABDDBDB986BA", "kind": "link", "line": 228, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/analytics/visit_effectiveness_workspace.html"},
   {"accessible_name": "Loan-19650", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-7CA113C02DA5", "kind": "field", "line": 30, "method": "", "selector": "input[name=salesforceLoanId]", "state_changing": false, "tag": "input", "template": "partials/business_transformation/loan_drawer.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-1DF4B9C48E63", "kind": "button", "line": 34, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/business_transformation/loan_drawer.html"},
@@ -13782,7 +13432,7 @@
   {"accessible_name": "Schedule support for {{ row.name }}", "destination": "/planning/schedule-modal?school_id={{ row.code }}", "destination_route": "/planning/schedule-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-16F0A48C08B3", "kind": "button", "line": 96, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/clusters/profile_interventions.html"},
   {"accessible_name": "All SSA areas", "destination": "/clusters/{{ cluster.id }}/profile?tab=interventions&fy={{ profile_fy }}&view=all", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-C737016516AB", "kind": "link", "line": 107, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_interventions.html"},
   {"accessible_name": "{{ row.name }}", "destination": "/activities/{{ row.activity_id }}", "destination_route": "/activities/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-5337BE3D5086", "kind": "link", "line": 130, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_interventions.html"},
-  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A13732E35C91", "kind": "field", "line": 18, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/clusters/profile_learning.html"},
+  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-73BB2F9BC738", "kind": "field", "line": 12, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/clusters/profile_learners.html"},
   {"accessible_name": "Open the loan record for {{ row.name }}", "destination": "/loans/{{ row.id }}/drawer", "destination_route": "/loans/<str:loan_id>/drawer", "evidence": "page-tested", "high_consequence": false, "id": "INT-384A473CDD99", "kind": "button", "line": 49, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/clusters/profile_loans.html"},
   {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-CB3A843673A3", "kind": "field", "line": 23, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/clusters/profile_scores.html"},
   {"accessible_name": "{{ composite.label }} — {{ composite.score }}", "destination": "/clusters/{{ cluster.id }}/profile?tab=scores&fy={{ profile_fy }}&part={{ composite.key }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-589FB86DE2B0", "kind": "link", "line": 31, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_scores.html"},
@@ -13791,15 +13441,14 @@
   {"accessible_name": "Change the weights", "destination": "/cluster-oversight/scoring", "destination_route": "/cluster-oversight/scoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-C3FBC3D51A71", "kind": "link", "line": 73, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_scores.html"},
   {"accessible_name": "{{ metric.figure }}", "destination": "{{ profile_url }}?                                          tab={{ metric.opens|slice:", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0591C71DB6A2", "kind": "link", "line": 28, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_sources.html"},
   {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3B7F68E72716", "kind": "field", "line": 20, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/clusters/profile_ssa.html"},
-  {"accessible_name": "By Intervention", "destination": "{{ profile_url }}?tab=ssa&fy={{ profile_fy }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-326ADA0CA70D", "kind": "link", "line": 38, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
-  {"accessible_name": "By School", "destination": "{{ profile_url }}?tab=ssa&fy={{ profile_fy }}&view=schools", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-35B44E492952", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
-  {"accessible_name": "All SSA areas", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-B53521611044", "kind": "link", "line": 84, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
-  {"accessible_name": "{{ area.improved }} school{{ area.improved|pluralize }} improved on {{ area.label }}", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}&area={{ area.key }}&verdict=improved", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-B500A92017B3", "kind": "link", "line": 145, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
-  {"accessible_name": "{{ area.held }} school{{ area.held|pluralize }} did not change on {{ area.label }}", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}&area={{ area.key }}&verdict=no_change", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-A9AF61F86C8F", "kind": "link", "line": 146, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
-  {"accessible_name": "{{ area.declined }} school{{ area.declined|pluralize }} declined on {{ area.label }}", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}&area={{ area.key }}&verdict=declined", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-4A786FFE37C7", "kind": "link", "line": 147, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
-  {"accessible_name": "{{ area.not_compared }} school{{ area.not_compared|pluralize }} not compared on {{ area.label }}", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}&area={{ area.key }}&verdict=not_compared", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-553FAC481FE3", "kind": "link", "line": 148, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
+  {"accessible_name": "By Intervention", "destination": "{{ profile_url }}?tab=ssa&fy={{ profile_fy }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-326ADA0CA70D", "kind": "link", "line": 31, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
+  {"accessible_name": "By School", "destination": "{{ profile_url }}?tab=ssa&fy={{ profile_fy }}&view=schools", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-35B44E492952", "kind": "link", "line": 32, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
+  {"accessible_name": "All SSA areas", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-B53521611044", "kind": "link", "line": 77, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
+  {"accessible_name": "{{ area.improved }} school{{ area.improved|pluralize }} improved on {{ area.label }}", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}&area={{ area.key }}&verdict=improved", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-B500A92017B3", "kind": "link", "line": 138, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
+  {"accessible_name": "{{ area.held }} school{{ area.held|pluralize }} did not change on {{ area.label }}", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}&area={{ area.key }}&verdict=no_change", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-A9AF61F86C8F", "kind": "link", "line": 139, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
+  {"accessible_name": "{{ area.declined }} school{{ area.declined|pluralize }} declined on {{ area.label }}", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}&area={{ area.key }}&verdict=declined", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-4A786FFE37C7", "kind": "link", "line": 140, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
+  {"accessible_name": "{{ area.not_compared }} school{{ area.not_compared|pluralize }} not compared on {{ area.label }}", "destination": "/clusters/{{ cluster.id }}/profile?tab=ssa&fy={{ profile_fy }}&area={{ area.key }}&verdict=not_compared", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-553FAC481FE3", "kind": "link", "line": 141, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/clusters/profile_ssa.html"},
   {"accessible_name": "Open the story {{ row.title }}", "destination": "/ia/stories/{{ row.id }}/", "destination_route": "/ia/stories/<str:story_id>/", "evidence": "request-tested", "high_consequence": false, "id": "INT-172FDE629B0E", "kind": "button", "line": 37, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/clusters/profile_stories.html"},
-  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F7003DE5D1A8", "kind": "field", "line": 17, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/clusters/profile_students.html"},
   {"accessible_name": "0", "destination": "/clusters/cost-preview", "destination_route": "/clusters/cost-preview", "evidence": "request-tested", "high_consequence": false, "id": "INT-B3DFA53F0510", "kind": "field", "line": 26, "method": "GET", "selector": "#printing_pages", "state_changing": false, "tag": "input", "template": "partials/clusters/training_materials_fields.html"},
   {"accessible_name": "0", "destination": "/clusters/cost-preview", "destination_route": "/clusters/cost-preview", "evidence": "request-tested", "high_consequence": false, "id": "INT-864DE7A7B25A", "kind": "field", "line": 34, "method": "GET", "selector": "#photocopy_pages", "state_changing": false, "tag": "input", "template": "partials/clusters/training_materials_fields.html"},
   {"accessible_name": "Photocopies to make", "destination": "/clusters/cost-preview", "destination_route": "/clusters/cost-preview", "evidence": "request-tested", "high_consequence": false, "id": "INT-88DACE7AC38C", "kind": "field", "line": 42, "method": "GET", "selector": "#photocopy_copies", "state_changing": false, "tag": "input", "template": "partials/clusters/training_materials_fields.html"},
@@ -15075,11 +14724,6 @@
   {"accessible_name": "Why this school needs more partner support", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-0A97E94E82C8", "kind": "field", "line": 52, "method": "", "selector": "#ag-reason", "state_changing": false, "tag": "textarea", "template": "partials/oversight/allowance_grant_drawer.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-6D55804C7922", "kind": "button", "line": 57, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/allowance_grant_drawer.html"},
   {"accessible_name": "Grant allowance", "destination": "/partner-oversight/allowance-grant", "destination_route": "/partner-oversight/allowance-grant", "evidence": "request-tested", "high_consequence": false, "id": "INT-E5ABD245F4FF", "kind": "button", "line": 58, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/allowance_grant_drawer.html"},
-  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-8CACA6B95981", "kind": "field", "line": 19, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/oversight/analysis_body.html"},
-  {"accessible_name": "Period", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-12233C13FBB2", "kind": "field", "line": 27, "method": "", "selector": "select[name=period]", "state_changing": false, "tag": "select", "template": "partials/oversight/analysis_body.html"},
-  {"accessible_name": "{{ r.name }}", "destination": "{{ r.href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F2BEA58DA54B", "kind": "link", "line": 75, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/analysis_body.html"},
-  {"accessible_name": "Monitoring", "destination": "{{ monitoring_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A43DD723C079", "kind": "link", "line": 9, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/analysis_switch.html"},
-  {"accessible_name": "Analysis", "destination": "{{ analysis_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-937220A3A1CC", "kind": "link", "line": 10, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/analysis_switch.html"},
   {"accessible_name": "Choose a reason… {{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1C76D254FE59", "kind": "field", "line": 56, "method": "", "selector": "#bwd-reason-category", "state_changing": false, "tag": "select", "template": "partials/oversight/bulk_withdrawal_drawer.html"},
   {"accessible_name": "Why this work is being withdrawn and what happens next", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FB3F111BD4AF", "kind": "field", "line": 65, "method": "", "selector": "#bwd-partner-reason", "state_changing": false, "tag": "textarea", "template": "partials/oversight/bulk_withdrawal_drawer.html"},
   {"accessible_name": "Staff only, never shown to the partner", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B3F61C01BCDF", "kind": "field", "line": 72, "method": "", "selector": "#bwd-internal-note", "state_changing": false, "tag": "textarea", "template": "partials/oversight/bulk_withdrawal_drawer.html"},
@@ -15165,13 +14809,13 @@
   {"accessible_name": "Select every school on this page that can be withdrawn", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2891F63AB9D4", "kind": "field", "line": 72, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "partials/oversight/partner_work_tables.html"},
   {"accessible_name": "Export to Excel", "destination": "/partner-oversight/export-drawer?member={{ member }}&activity_type={{ activity_type }}&status={{ status }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}                     &program_lead={{ program_lead }}                                                &partner={{ partner }}           ", "destination_route": "/partner-oversight/export-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-69E37C5DC9CE", "kind": "link", "line": 30, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
   {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?program_lead={{ entry.key }}&partner=all&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F142E9FBF815", "kind": "link", "line": 48, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
-  {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?partner={{ entry.key }}                     &program_lead={{ program_lead }}           &period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2214C19C40BC", "kind": "link", "line": 68, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
-  {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?program_lead={{ program_lead }}&partner={{ partner }}&member={{ entry.key }}&work={{ work }}&period={{ period }}&fy={{ fy }}&month={{ selected_month }}&quarter={{ selected_quarter }}&week={{ week }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6E74232D11DE", "kind": "link", "line": 81, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
-  {"accessible_name": "Add a note (optional)", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-394548C9FC9C", "kind": "field", "line": 144, "method": "", "selector": "input[name=note]", "state_changing": false, "tag": "input", "template": "partials/oversight/partner_workspace.html"},
-  {"accessible_name": "Approve", "destination": "/partner-oversight/withdraw/review", "destination_route": "/partner-oversight/withdraw/review", "evidence": "request-tested", "high_consequence": true, "id": "INT-0C591F012768", "kind": "button", "line": 147, "method": "POST", "selector": "button[name=decision]", "state_changing": true, "tag": "button", "template": "partials/oversight/partner_workspace.html"},
-  {"accessible_name": "Reject", "destination": "/partner-oversight/withdraw/review", "destination_route": "/partner-oversight/withdraw/review", "evidence": "request-tested", "high_consequence": true, "id": "INT-5A75DF175923", "kind": "button", "line": 148, "method": "POST", "selector": "button[name=decision]", "state_changing": true, "tag": "button", "template": "partials/oversight/partner_workspace.html"},
-  {"accessible_name": "{{ active_partner.name }}", "destination": "{{ active_partner.profile_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C70389294394", "kind": "link", "line": 164, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
-  {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?program_lead={{ program_lead }}&partner={{ partner }}&member={{ member }}&work={{ entry.key }}&status={{ status }}&period={{ period }}&fy={{ fy }}&month={{ selected_month }}&quarter={{ selected_quarter }}&week={{ week }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-86F2899075AA", "kind": "link", "line": 185, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
+  {"accessible_name": "{{ entry.label }} {{ entry.count }} {{ entry.follow_up }}", "destination": "?partner={{ entry.key }}                     &program_lead={{ program_lead }}           &period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-709416B8CC79", "kind": "link", "line": 68, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
+  {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?program_lead={{ program_lead }}&partner={{ partner }}&member={{ entry.key }}&work={{ work }}&period={{ period }}&fy={{ fy }}&month={{ selected_month }}&quarter={{ selected_quarter }}&week={{ week }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6E74232D11DE", "kind": "link", "line": 82, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
+  {"accessible_name": "Add a note (optional)", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-394548C9FC9C", "kind": "field", "line": 145, "method": "", "selector": "input[name=note]", "state_changing": false, "tag": "input", "template": "partials/oversight/partner_workspace.html"},
+  {"accessible_name": "Approve", "destination": "/partner-oversight/withdraw/review", "destination_route": "/partner-oversight/withdraw/review", "evidence": "request-tested", "high_consequence": true, "id": "INT-0C591F012768", "kind": "button", "line": 148, "method": "POST", "selector": "button[name=decision]", "state_changing": true, "tag": "button", "template": "partials/oversight/partner_workspace.html"},
+  {"accessible_name": "Reject", "destination": "/partner-oversight/withdraw/review", "destination_route": "/partner-oversight/withdraw/review", "evidence": "request-tested", "high_consequence": true, "id": "INT-5A75DF175923", "kind": "button", "line": 149, "method": "POST", "selector": "button[name=decision]", "state_changing": true, "tag": "button", "template": "partials/oversight/partner_workspace.html"},
+  {"accessible_name": "{{ active_partner.name }}", "destination": "{{ active_partner.profile_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C70389294394", "kind": "link", "line": 165, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
+  {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?program_lead={{ program_lead }}&partner={{ partner }}&member={{ member }}&work={{ entry.key }}&status={{ status }}&period={{ period }}&fy={{ fy }}&month={{ selected_month }}&quarter={{ selected_quarter }}&week={{ week }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-86F2899075AA", "kind": "link", "line": 191, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_workspace.html"},
   {"accessible_name": "Time period", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-2793F2F83308", "kind": "field", "line": 27, "method": "", "selector": "select[name=period]", "state_changing": false, "tag": "select", "template": "partials/oversight/period_filter_bar.html"},
   {"accessible_name": "Financial year", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-B47FAF387A04", "kind": "field", "line": 38, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/oversight/period_filter_bar.html"},
   {"accessible_name": "Week", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-92D8A578CF7B", "kind": "field", "line": 48, "method": "", "selector": "input[name=week]", "state_changing": false, "tag": "input", "template": "partials/oversight/period_filter_bar.html"},
@@ -15193,10 +14837,6 @@
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0CF83899BB28", "kind": "field", "line": 68, "method": "", "selector": "#resolve-note", "state_changing": false, "tag": "textarea", "template": "partials/oversight/resolve_return_drawer.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6BBCF651544D", "kind": "button", "line": 73, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/resolve_return_drawer.html"},
   {"accessible_name": "Record decision", "destination": "                                                            ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-95C70ECA9721", "kind": "button", "line": 74, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/resolve_return_drawer.html"},
-  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3CAA22A30544", "kind": "field", "line": 46, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/oversight/special_projects_workspace.html"},
-  {"accessible_name": "Planning stage", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C69DF5EC9AD6", "kind": "field", "line": 54, "method": "", "selector": "select[name=stage]", "state_changing": false, "tag": "select", "template": "partials/oversight/special_projects_workspace.html"},
-  {"accessible_name": "Project status", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6EB3BCD0F8FD", "kind": "field", "line": 63, "method": "", "selector": "select[name=project_status]", "state_changing": false, "tag": "select", "template": "partials/oversight/special_projects_workspace.html"},
-  {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?view=projects&project={{ entry.key }}&stage={{ selected_stage }}&project_status={{ selected_project_status }}&fy={{ fy }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C2BEB25DAA87", "kind": "link", "line": 74, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/special_projects_workspace.html"},
   {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?program_lead={{ entry.key }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}                                      &{{ key }}={{ value }}            ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E1C8D2F65F68", "kind": "link", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/team_country_workspace.html"},
   {"accessible_name": "Recovery plan Partner backlog Costing backlog", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-482E6AEC5599", "kind": "field", "line": 51, "method": "", "selector": "#team-issue", "state_changing": false, "tag": "select", "template": "partials/oversight/team_country_workspace.html"},
   {"accessible_name": "Send to PL", "destination": "/country-planning-oversight/send", "destination_route": "/country-planning-oversight/send", "evidence": "request-tested", "high_consequence": true, "id": "INT-95874CA40854", "kind": "button", "line": 56, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/team_country_workspace.html"},
@@ -15557,26 +15197,26 @@
   {"accessible_name": "{{ row.name }}", "destination": "{{ row.href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-49FB0EE44923", "kind": "link", "line": 36, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_rail.html"},
   {"accessible_name": "{{ row.name }}", "destination": "{{ pi.group_url }}{{ row.id }}?fy={{ pi.fy }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-BC67E1A9DA2C", "kind": "link", "line": 29, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_ranking.html"},
   {"accessible_name": "{{ row.name }}", "destination": "/clusters/{{ row.id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-E3F1EBD286CF", "kind": "link", "line": 29, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_ranking.html"},
-  {"accessible_name": "{{ line.label }}", "destination": "{{ pi.href }}{{ pi.param }}={{ line.tab }}&fy={{ pi.fy }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0CEC95DC53F0", "kind": "link", "line": 92, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ line.count|intcomma }}", "destination": "{{ pi.href }}{{ pi.param }}={{ line.tab }}&fy={{ pi.fy }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-6BF8A436A60F", "kind": "link", "line": 93, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ pi.stories.total|intcomma }} in {{ pi.profile.fy_label }}", "destination": "{{ pi.records }}stories", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-25C9DD6D0E14", "kind": "link", "line": 120, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ pi.stories.approved|intcomma }} approved", "destination": "{{ pi.records }}stories_approved", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0715C02F6845", "kind": "link", "line": 120, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.label }}", "destination": "{{ pi.records }}intervention&key={{ row.key }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-DD945EF818DE", "kind": "link", "line": 153, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "All interventions", "destination": "{{ pi.records }}ssa", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-48DC5181A316", "kind": "link", "line": 163, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "Cluster Oversight", "destination": "/cluster-oversight/", "destination_route": "/cluster-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-086DB96854E1", "kind": "link", "line": 193, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.name }}", "destination": "/clusters/{{ row.id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-71C774ADE4C7", "kind": "link", "line": 224, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.sessions|intcomma }}", "destination": "/clusters/{{ row.id }}/profile?tab=attendance&fy={{ pi.fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-5FBA539FFBA5", "kind": "link", "line": 237, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.attendance_rate }}%", "destination": "/clusters/{{ row.id }}/profile?tab=attendance&fy={{ pi.fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-474210914854", "kind": "link", "line": 238, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.absent|intcomma }}", "destination": "/clusters/{{ row.id }}/profile?tab=attendance&fy={{ pi.fy }}&show=missing", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-9E709D29BA1F", "kind": "link", "line": 239, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.health_band }}", "destination": "/clusters/{{ row.id }}/profile?tab=scores&fy={{ pi.fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-A6042509ECD4", "kind": "link", "line": 240, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.impact_band }}", "destination": "/clusters/{{ row.id }}/profile?tab=scores&fy={{ pi.fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-9F6193DFAD96", "kind": "link", "line": 241, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.planned|intcomma }}", "destination": "{{ pi.records }}{{ what }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-76A59912CF7F", "kind": "link", "line": 338, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.completed|intcomma }}", "destination": "{{ pi.records }}{{ what }}_done", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-084C26119393", "kind": "link", "line": 339, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.overdue|intcomma }}", "destination": "{{ pi.records }}{{ what }}_overdue", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-3BBA610857F8", "kind": "link", "line": 342, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.name }}", "destination": "/projects/monitoring?project={{ row.id }}", "destination_route": "/projects/monitoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-CD637134C849", "kind": "link", "line": 389, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.name }}", "destination": "{{ pi.href }}{{ pi.param }}={{ pi.at.schools }}&fy={{ pi.fy }}&sub_county={{ row.id }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-930EC8BF3429", "kind": "link", "line": 440, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.name }}", "destination": "{{ pi.group_url }}{{ row.id }}?fy={{ pi.fy }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-737394405DD1", "kind": "link", "line": 440, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
-  {"accessible_name": "{{ row.schools|intcomma }}", "destination": "{{ pi.href }}{{ pi.param }}={{ pi.at.schools }}&fy={{ pi.fy }}&sub_county={{ row.id }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-6A3A163F2DFC", "kind": "link", "line": 441, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ line.label }}", "destination": "{{ pi.href }}{{ pi.param }}={{ line.tab }}&fy={{ pi.fy }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0CEC95DC53F0", "kind": "link", "line": 90, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ line.count|intcomma }}", "destination": "{{ pi.href }}{{ pi.param }}={{ line.tab }}&fy={{ pi.fy }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-6BF8A436A60F", "kind": "link", "line": 91, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ pi.stories.total|intcomma }} in {{ pi.profile.fy_label }}", "destination": "{{ pi.records }}stories", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-25C9DD6D0E14", "kind": "link", "line": 118, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ pi.stories.approved|intcomma }} approved", "destination": "{{ pi.records }}stories_approved", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0715C02F6845", "kind": "link", "line": 118, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.label }}", "destination": "{{ pi.records }}intervention&key={{ row.key }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-DD945EF818DE", "kind": "link", "line": 152, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "All interventions", "destination": "{{ pi.records }}ssa", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-48DC5181A316", "kind": "link", "line": 162, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "Cluster Oversight", "destination": "/cluster-oversight/", "destination_route": "/cluster-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-086DB96854E1", "kind": "link", "line": 192, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.name }}", "destination": "/clusters/{{ row.id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-71C774ADE4C7", "kind": "link", "line": 223, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.sessions|intcomma }}", "destination": "/clusters/{{ row.id }}/profile?tab=attendance&fy={{ pi.fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-5FBA539FFBA5", "kind": "link", "line": 236, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.attendance_rate }}%", "destination": "/clusters/{{ row.id }}/profile?tab=attendance&fy={{ pi.fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-474210914854", "kind": "link", "line": 237, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.absent|intcomma }}", "destination": "/clusters/{{ row.id }}/profile?tab=attendance&fy={{ pi.fy }}&show=missing", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-9E709D29BA1F", "kind": "link", "line": 238, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.health_band }}", "destination": "/clusters/{{ row.id }}/profile?tab=scores&fy={{ pi.fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-A6042509ECD4", "kind": "link", "line": 239, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.impact_band }}", "destination": "/clusters/{{ row.id }}/profile?tab=scores&fy={{ pi.fy }}", "destination_route": "/clusters/<str:cluster_id>/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-9F6193DFAD96", "kind": "link", "line": 240, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.planned|intcomma }}", "destination": "{{ pi.records }}{{ what }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-76A59912CF7F", "kind": "link", "line": 337, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.completed|intcomma }}", "destination": "{{ pi.records }}{{ what }}_done", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-084C26119393", "kind": "link", "line": 338, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.overdue|intcomma }}", "destination": "{{ pi.records }}{{ what }}_overdue", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-3BBA610857F8", "kind": "link", "line": 341, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.name }}", "destination": "/projects/monitoring?project={{ row.id }}", "destination_route": "/projects/monitoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-CD637134C849", "kind": "link", "line": 388, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.name }}", "destination": "{{ pi.href }}{{ pi.param }}={{ pi.at.schools }}&fy={{ pi.fy }}&sub_county={{ row.id }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-930EC8BF3429", "kind": "link", "line": 439, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.name }}", "destination": "{{ pi.group_url }}{{ row.id }}?fy={{ pi.fy }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-737394405DD1", "kind": "link", "line": 439, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
+  {"accessible_name": "{{ row.schools|intcomma }}", "destination": "{{ pi.href }}{{ pi.param }}={{ pi.at.schools }}&fy={{ pi.fy }}&sub_county={{ row.id }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-6A3A163F2DFC", "kind": "link", "line": 440, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_sections.html"},
   {"accessible_name": "{{ label }}", "destination": "{{ pi.href }}{{ pi.param }}={{ key }}&fy={{ pi.fy }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E18983957D29", "kind": "link", "line": 6, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/profiles/_tabs.html"},
   {"accessible_name": "{{ row.name }}", "destination": "{{ row.url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-DE19F2AD5C6C", "kind": "link", "line": 38, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/programme_rollout/school_list_drawer.html"},
   {"accessible_name": "{{ row.name }}", "destination": "{{ row.profile_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F48486F36A0C", "kind": "link", "line": 59, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/programme_rollout/spiritual.html"},
@@ -15771,14 +15411,15 @@
   {"accessible_name": "Impact", "destination": "/projects/analytics?project={{ workspace_project.id }}", "destination_route": "/projects/analytics", "evidence": "request-tested", "high_consequence": false, "id": "INT-8FE447EE9F0F", "kind": "link", "line": 12, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/projects/workspace_nav.html"},
   {"accessible_name": "Issues", "destination": "/projects/my-plan?project={{ workspace_project.id }}#project-attention", "destination_route": "/projects/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-986FE001E28B", "kind": "link", "line": 13, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/projects/workspace_nav.html"},
   {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-FE9913BB9CAA", "kind": "button", "line": 14, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/refusal_drawer.html"},
-  {"accessible_name": "Plan support", "destination": "/planning/schedule-modal?school_id={{ core.id }}", "destination_route": "/planning/schedule-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-711BAE8628EE", "kind": "button", "line": 89, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/_core_school.html"},
-  {"accessible_name": "Accept", "destination": "/core-schools/recommendations/{{ rec.id }}/accept", "destination_route": "/core-schools/recommendations/<str:rec_id>/<str:action>", "evidence": "request-tested", "high_consequence": false, "id": "INT-22A34E916627", "kind": "button", "line": 90, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/_core_school.html"},
-  {"accessible_name": "Reason to defer", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AD31D0C48F92", "kind": "field", "line": 91, "method": "", "selector": "input[name=reason]", "state_changing": false, "tag": "input", "template": "partials/schools/_core_school.html"},
-  {"accessible_name": "Defer", "destination": "/core-schools/recommendations/{{ rec.id }}/defer", "destination_route": "/core-schools/recommendations/<str:rec_id>/<str:action>", "evidence": "request-tested", "high_consequence": false, "id": "INT-B67597FBFB76", "kind": "button", "line": 91, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/_core_school.html"},
-  {"accessible_name": "Reason to reject", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8A2B8F0A3B81", "kind": "field", "line": 92, "method": "", "selector": "input[name=reason]", "state_changing": false, "tag": "input", "template": "partials/schools/_core_school.html"},
-  {"accessible_name": "Reject", "destination": "/core-schools/recommendations/{{ rec.id }}/reject", "destination_route": "/core-schools/recommendations/<str:rec_id>/<str:action>", "evidence": "request-tested", "high_consequence": true, "id": "INT-65D572293E5B", "kind": "button", "line": 92, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/_core_school.html"},
-  {"accessible_name": "Open Champion review", "destination": "/core-schools/{{ core.code }}/champion-review", "destination_route": "/core-schools/<str:school_id>/champion-review", "evidence": "request-tested", "high_consequence": false, "id": "INT-C21E9EF1CA50", "kind": "button", "line": 112, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/_core_school.html"},
-  {"accessible_name": "Core School Oversight", "destination": "/core-schools-oversight/?fy={{ core_fy }}&q={{ core.code|urlencode }}", "destination_route": "/core-schools-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-04A70E34C818", "kind": "link", "line": 116, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/_core_school.html"},
+  {"accessible_name": "Each intervention's scores are on the SSA tab.", "destination": "{{ pi.href }}{{ pi.param }}={{ pi.at.ssa }}&fy={{ core_fy }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-392CBD2E5314", "kind": "link", "line": 23, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/_core_school.html"},
+  {"accessible_name": "Plan support", "destination": "/planning/schedule-modal?school_id={{ core.id }}", "destination_route": "/planning/schedule-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-711BAE8628EE", "kind": "button", "line": 60, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/_core_school.html"},
+  {"accessible_name": "Accept", "destination": "/core-schools/recommendations/{{ rec.id }}/accept", "destination_route": "/core-schools/recommendations/<str:rec_id>/<str:action>", "evidence": "request-tested", "high_consequence": false, "id": "INT-22A34E916627", "kind": "button", "line": 61, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/_core_school.html"},
+  {"accessible_name": "Reason to defer", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AD31D0C48F92", "kind": "field", "line": 62, "method": "", "selector": "input[name=reason]", "state_changing": false, "tag": "input", "template": "partials/schools/_core_school.html"},
+  {"accessible_name": "Defer", "destination": "/core-schools/recommendations/{{ rec.id }}/defer", "destination_route": "/core-schools/recommendations/<str:rec_id>/<str:action>", "evidence": "request-tested", "high_consequence": false, "id": "INT-B67597FBFB76", "kind": "button", "line": 62, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/_core_school.html"},
+  {"accessible_name": "Reason to reject", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8A2B8F0A3B81", "kind": "field", "line": 63, "method": "", "selector": "input[name=reason]", "state_changing": false, "tag": "input", "template": "partials/schools/_core_school.html"},
+  {"accessible_name": "Reject", "destination": "/core-schools/recommendations/{{ rec.id }}/reject", "destination_route": "/core-schools/recommendations/<str:rec_id>/<str:action>", "evidence": "request-tested", "high_consequence": true, "id": "INT-65D572293E5B", "kind": "button", "line": 63, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/_core_school.html"},
+  {"accessible_name": "Open Champion review", "destination": "/core-schools/{{ core.code }}/champion-review", "destination_route": "/core-schools/<str:school_id>/champion-review", "evidence": "request-tested", "high_consequence": false, "id": "INT-C21E9EF1CA50", "kind": "button", "line": 83, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/_core_school.html"},
+  {"accessible_name": "Core School Oversight", "destination": "/core-schools-oversight/?fy={{ core_fy }}&q={{ core.code|urlencode }}", "destination_route": "/core-schools-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-04A70E34C818", "kind": "link", "line": 87, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/_core_school.html"},
   {"accessible_name": "{{ school.district.name }}", "destination": "/districts/{{ school.district.id }}", "destination_route": "/districts/<str:district_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-52CC8056ACEB", "kind": "link", "line": 18, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/_details.html"},
   {"accessible_name": "{{ school.sub_county.name }}", "destination": "/schools?sub_county={{ school.sub_county.id }}", "destination_route": "/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-8DF35E934178", "kind": "link", "line": 22, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/_details.html"},
   {"accessible_name": "{{ school.assigned_staff }}", "destination": "/staff/{{ school.account_owner_id }}", "destination_route": "/staff/<str:user_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-638422082001", "kind": "link", "line": 48, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/_details.html"},
@@ -15910,16 +15551,16 @@
   {"accessible_name": "Not Assigned to Project {{ not_assigned_count }}", "destination": "/schools", "destination_route": "/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-27804B57C192", "kind": "tab", "line": 64, "method": "GET", "selector": "#schools-tab-not-assigned", "state_changing": false, "tag": "button", "template": "partials/schools/tabs.html"},
   {"accessible_name": "Assigned to Project {{ assigned_count }}", "destination": "/schools", "destination_route": "/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-6C326E91BFC2", "kind": "tab", "line": 84, "method": "GET", "selector": "#schools-tab-assigned", "state_changing": false, "tag": "button", "template": "partials/schools/tabs.html"},
   {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3368908AA6B2", "kind": "button", "line": 14, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/toast_success.html"},
-  {"accessible_name": "{{ option.label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0B27BFBF1120", "kind": "field", "line": 14, "method": "", "selector": "#sp-fy", "state_changing": false, "tag": "select", "template": "partials/ssa/performance_workspace.html"},
-  {"accessible_name": "{{ option.1 }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-16521BC72313", "kind": "field", "line": 22, "method": "", "selector": "#sp-quarter", "state_changing": false, "tag": "select", "template": "partials/ssa/performance_workspace.html"},
-  {"accessible_name": "All districts {{ district.district__name }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-AECBA5C008E7", "kind": "field", "line": 30, "method": "", "selector": "#sp-district", "state_changing": false, "tag": "select", "template": "partials/ssa/performance_workspace.html"},
+  {"accessible_name": "{{ option.label }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-0B27BFBF1120", "kind": "field", "line": 14, "method": "", "selector": "#sp-fy", "state_changing": false, "tag": "select", "template": "partials/ssa/performance_workspace.html"},
+  {"accessible_name": "{{ option.1 }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-16521BC72313", "kind": "field", "line": 22, "method": "", "selector": "#sp-quarter", "state_changing": false, "tag": "select", "template": "partials/ssa/performance_workspace.html"},
+  {"accessible_name": "All districts {{ district.district__name }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-AECBA5C008E7", "kind": "field", "line": 30, "method": "", "selector": "#sp-district", "state_changing": false, "tag": "select", "template": "partials/ssa/performance_workspace.html"},
   {"accessible_name": "Reset SSA Performance filters", "destination": "/ssa", "destination_route": "/ssa", "evidence": "request-tested", "high_consequence": false, "id": "INT-C0E77D65F275", "kind": "link", "line": 38, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/ssa/performance_workspace.html"},
   {"accessible_name": "Export", "destination": "/ssa/export?fy={{ dashboard.filters.fy }}&quarter={{ dashboard.filters.quarter }}                                 &region={{ dashboard.filters.region }}                                              &district={{ dashboard.filters.district }}           ", "destination_route": "/ssa/export", "evidence": "request-tested", "high_consequence": false, "id": "INT-D96DE883D3B1", "kind": "link", "line": 43, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/ssa/performance_workspace.html"},
   {"accessible_name": "Apply filters", "destination": "/ssa", "destination_route": "/ssa", "evidence": "request-tested", "high_consequence": false, "id": "INT-1E61ECF39853", "kind": "button", "line": 54, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
   {"accessible_name": "{{ school.name }}", "destination": "/schools/{{ school.id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-2C1ECE4505A1", "kind": "link", "line": 109, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/ssa/performance_workspace.html"},
-  {"accessible_name": "Staff", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A4D6BBE3348C", "kind": "tab", "line": 135, "method": "", "selector": "#sp-breakdown-tab-staff", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
-  {"accessible_name": "Cluster", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-436AC2D543ED", "kind": "tab", "line": 136, "method": "", "selector": "#sp-breakdown-tab-cluster", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
-  {"accessible_name": "Partner", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-34494CC41AAA", "kind": "tab", "line": 137, "method": "", "selector": "#sp-breakdown-tab-partner", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
+  {"accessible_name": "Staff", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-A4D6BBE3348C", "kind": "tab", "line": 135, "method": "", "selector": "#sp-breakdown-tab-staff", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
+  {"accessible_name": "Cluster", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-436AC2D543ED", "kind": "tab", "line": 136, "method": "", "selector": "#sp-breakdown-tab-cluster", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
+  {"accessible_name": "Partner", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-34494CC41AAA", "kind": "tab", "line": 137, "method": "", "selector": "#sp-breakdown-tab-partner", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
   {"accessible_name": "Export", "destination": "/staff-activity/export?{{ query }}", "destination_route": "/staff-activity/export", "evidence": "request-tested", "high_consequence": false, "id": "INT-230D8B99C774", "kind": "link", "line": 15, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/staff_activity/_embed_head.html"},
   {"accessible_name": "Follow-up Queue {{ follow_up_count }}", "destination": "/staff-activity/follow-ups", "destination_route": "/staff-activity/follow-ups", "evidence": "request-tested", "high_consequence": false, "id": "INT-0CBA35D18811", "kind": "button", "line": 20, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/staff_activity/_embed_head.html"},
   {"accessible_name": "{{ link.label }}", "destination": "{{ link.href }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1FD849C3E6C7", "kind": "link", "line": 16, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/staff_activity/_filters.html"},

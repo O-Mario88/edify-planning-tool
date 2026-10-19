@@ -234,8 +234,9 @@ class RegionalProgramLeadTest(TestCase):
     # ── Performance it reads (owner, 2026-09-12, second message) ─────────
     def test_ssa_performance_reads_the_country_with_the_breakdowns(self):
         """ "SSA performance by staff, district, cluster, partner, country
-        overall" — the intelligence surface is country-wide for this role,
-        and the page's own filters narrow it."""
+        overall" — the intelligence surface is country-wide for this role.
+        The SSA Performance page that drew it left with the Analytics entry
+        (owner, 2026-10-19)."""
         from apps.analytics.ssa_performance_service import build_dashboard
 
         dashboard = build_dashboard(self.rpl, {"fy": "2026"})
@@ -245,11 +246,6 @@ class RegionalProgramLeadTest(TestCase):
             "country overall: both Ugandan regions count, Kenya does not",
         )
         self.assertEqual(set(dashboard["breakdowns"]), {"staff", "cluster", "partner"})
-        self.client.force_login(self.rpl)
-        page = self.client.get("/ssa")
-        self.assertEqual(page.status_code, 200)
-        for tab in ("staff", "cluster", "partner"):
-            self.assertContains(page, f'data-breakdown-tab="{tab}"')
 
     def test_team_performance_lists_the_region_s_officers_under_their_lead(self):
         from apps.targets.team_targets import supervised_users
