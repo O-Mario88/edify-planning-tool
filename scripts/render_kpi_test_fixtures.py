@@ -54,23 +54,6 @@ CASES = [
         ),
     ),
     (
-        "closure-impact",
-        "partials/analytics/closure_impact_workspace.html",
-        0,
-        dict(
-            summary=dict(
-                schools_lost=23,
-                reopened=2,
-                learners_lost=12048,
-                schools_counted=20,
-                schools_without_enrollment=3,
-                districts_affected=6,
-                average_school_size=524,
-                budget_released=120000000,
-            )
-        ),
-    ),
-    (
         "finance-sources",
         "partials/finance/country_budget/root.html",
         -1,
