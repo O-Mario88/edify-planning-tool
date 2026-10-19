@@ -310,26 +310,12 @@ def _page_context_by_template() -> dict[str, dict]:
             "purpose": "Review partners and open the records requiring oversight.",
             "primary_action": "Open or create a partner record",
         },
-        "templates/partials/analytics/impact_workspace.html": {
-            "route": "/impact",
-            "page_title": "Impact Readiness",
-            "role_access": [],
-            "purpose": "Compare verified outcomes and identify weak evidence.",
-            "primary_action": "Open the affected impact records",
-        },
         "templates/partials/finance/fund_allocation_kpis.html": {
             "route": "/finance/fund-allocation",
             "page_title": "Consolidated Fund Allocation",
             "role_access": [],
             "purpose": "Review country allocation context alongside costed activities.",
             "primary_action": "Review the allocation lines",
-        },
-        "templates/partials/ssa/performance_workspace.html": {
-            "route": "/ssa",
-            "page_title": "SSA Performance",
-            "role_access": [],
-            "purpose": "Identify schools and interventions furthest from the SSA standard.",
-            "primary_action": "Open the affected schools or add a confirmed SSA score",
         },
     }
     for template, page in indirect_routes.items():

@@ -42,13 +42,6 @@ class DashboardViewSourceTest(TestCase):
     """What the templates say, independent of data."""
 
     def test_the_map_left_the_analytics_workspace_for_the_dashboards(self):
-        for panel in (
-            "templates/partials/analytics/kpi_cards.html",
-            "templates/partials/analytics/cd/body.html",
-            "templates/partials/analytics/pl/body.html",
-        ):
-            with self.subTest(panel=panel):
-                self.assertNotIn(MAP_INCLUDE, _read(panel))
         for view in (
             "templates/partials/dashboards/cd/map_view.html",
             "templates/partials/dashboards/pl/map_view.html",

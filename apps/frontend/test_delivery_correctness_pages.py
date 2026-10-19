@@ -254,22 +254,11 @@ class DeadViewRemovedTest(TestCase):
 
 
 class ReportsLinkFollowsAccessTest(TestCase):
-    """District delivery gaps offers "View reports" only to readers of /reports.
+    """The Programme Lead lost `reports` (unscoped counts) on 2026-09-13.
 
-    The Programme Lead lost `reports` (unscoped counts) on 2026-09-13; the
-    analytics view hands the partial `can_open_reports` from the page rule.
+    The District delivery gaps card that offered "View reports" left with the
+    Analytics entry (owner, 2026-10-19); the rule itself stands.
     """
-
-    def test_the_link_is_drawn_only_when_the_reader_may_open_reports(self):
-        from django.template.loader import render_to_string
-
-        template = "partials/analytics/target_by_district.html"
-        self.assertIn(
-            'href="/reports"', render_to_string(template, {"can_open_reports": True})
-        )
-        self.assertNotIn(
-            'href="/reports"', render_to_string(template, {"can_open_reports": False})
-        )
 
     def test_the_programme_lead_may_not_open_reports(self):
         from apps.core.permissions import RolePermissionService

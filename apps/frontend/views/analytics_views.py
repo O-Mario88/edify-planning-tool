@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import json
 
 from django.conf import settings
@@ -7,16 +6,13 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 from apps.core.permissions import (
-    RolePermissionService,
     require_export_permission,
     require_page_permission,
 )
 from django.utils import timezone
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.core.fy import get_operational_fy
-from apps.geography.models import Region, District, SubRegion, SubCounty
-from apps.clusters.models import Cluster
-from apps.partners.models import Partner
+from apps.geography.models import District
 from apps.accounts.models import StaffProfile
 from apps.activities.models import Activity
 from apps.analytics.analytics_dashboard_service import (
@@ -54,212 +50,6 @@ def _analytics_filters(request, source=None):
     return {key: data.get(key) for key in ANALYTICS_FILTER_KEYS}
 
 
-def analytics_scope_kpis(request) -> dict:
-    """The workspace tile strip for the scope the filters ask for.
-
-    Every Analytics section renders the same four signals above its tablist,
-    so they are computed once here from the same cached dataset the overview
-    reads rather than recomputed per section.
-    """
-    from apps.analytics.models import (
-        DEFAULT_ANALYTICS_CARDS,
-        AnalyticsDashboardPreference,
-    )
-    from apps.analytics.report_delivery import CARD_CATEGORY
-    from apps.analytics.views import _get_cache_key
-
-    filters = _analytics_filters(request)
-    data = stampede_safe_get_or_compute(
-        _get_cache_key("workspace-dashboard", request.user, filters),
-        lambda: AnalyticsDashboardService.get_analytics_data(request.user, filters),
-        timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
-    )
-    preference = AnalyticsDashboardPreference.objects.filter(
-        user_id=request.user.id
-    ).first()
-    visible = preference.visible_cards if preference else DEFAULT_ANALYTICS_CARDS
-    items = [
-        item
-        for item in data.get("kpi_strip_items", [])
-        if CARD_CATEGORY.get(item.get("label"), "reach") in visible
-    ]
-    preferred = (
-        "Overall Target Achievement",
-        "SSA Average",
-        "Schools Impacted",
-        "Total Activities Completed",
-    )
-    headlines = [
-        item for label in preferred for item in items if item.get("label") == label
-    ]
-    headlines.extend(item for item in items if item not in headlines)
-    return {
-        "distributed": data.get("distributed"),
-        "executive_kpi_items": headlines[:4],
-        "additional_kpi_items": [item for item in items if item not in headlines[:4]],
-        "as_of_date": data.get("as_of_date"),
-    }
-
-
-@require_page_permission("analytics")
-def analytics_dashboard_view(request):
-    """GET to render the primary Analytics Dashboard with filters."""
-    # 1. Gather all filters from GET parameters
-    filters = _analytics_filters(request)
-
-    # Share the backend-safe, role/portfolio/filter-isolated key with the tabs.
-    from apps.analytics.views import _get_cache_key
-
-    analytics_key = _get_cache_key("workspace-dashboard", request.user, filters)
-    data = stampede_safe_get_or_compute(
-        analytics_key,
-        lambda: AnalyticsDashboardService.get_analytics_data(request.user, filters),
-        timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
-    )
-    from apps.analytics.models import (
-        DEFAULT_ANALYTICS_CARDS,
-        AnalyticsDashboardPreference,
-    )
-    from apps.analytics.report_delivery import CARD_CATEGORY
-
-    preference = AnalyticsDashboardPreference.objects.filter(
-        user_id=request.user.id
-    ).first()
-    visible_cards = preference.visible_cards if preference else DEFAULT_ANALYTICS_CARDS
-    data["kpi_strip_items"] = [
-        item
-        for item in data.get("kpi_strip_items", [])
-        if CARD_CATEGORY.get(item.get("label"), "reach") in visible_cards
-    ]
-    # The overview is a decision surface, so its first row carries four
-    # signals rather than every available reporting measure. The remaining
-    # metrics stay one disclosure away and keep respecting the user's card
-    # visibility preferences.
-    executive_labels = (
-        "Overall Target Achievement",
-        "SSA Average",
-        "Schools Impacted",
-        "Total Activities Completed",
-    )
-    items_by_label = {item.get("label"): item for item in data["kpi_strip_items"]}
-    executive_items = [
-        items_by_label[label] for label in executive_labels if label in items_by_label
-    ]
-    if len(executive_items) < 4:
-        executive_items.extend(
-            item for item in data["kpi_strip_items"] if item not in executive_items
-        )
-    data["executive_kpi_items"] = executive_items[:4]
-    data["additional_kpi_items"] = [
-        item for item in data["kpi_strip_items"] if item not in executive_items[:4]
-    ]
-    analytics_layout = preference.layout if preference else "grid"
-
-    # 3. Retrieve options list for dropdown filters
-    #
-    # Derived from the schools this user can actually reach, so every option is
-    # a place results can come from. Listing every district in the country put
-    # more than a hundred dead ends in a control whose whole job is to narrow —
-    # and picking one returned an empty page that looked identical to a broken
-    # filter.
-    from apps.core.scoping import resolve_user_scope, school_queryset
-
-    _scope = resolve_user_scope(request.user)
-    _scoped_schools = school_queryset(_scope).filter(deleted_at__isnull=True)
-
-    regions = Region.objects.all().order_by("name")
-    districts = (
-        District.objects.filter(id__in=_scoped_schools.values("district_id"))
-        .distinct()
-        .order_by("name")
-    )
-    # Sub-region reaches schools through the district, matching the SSA heatmap
-    # and the map. School.sub_region_id is a CharField populated on no school,
-    # so scoping through it would offer an empty list.
-    sub_regions = (
-        SubRegion.objects.filter(districts__in=_scoped_schools.values("district_id"))
-        .distinct()
-        .order_by("name")
-    )
-    # Scoped to the sub-counties schools are ACTUALLY assigned to, not to every
-    # sub-county in the country. The map draws boundaries for all of them from
-    # static GeoJSON, which makes coverage look complete; the assignment on
-    # School.sub_county is what a filter can actually return rows for, and it
-    # is set on a small minority of schools today. Listing the rest would be
-    # thousands of options that all return nothing.
-    sub_counties = (
-        SubCounty.objects.filter(id__in=_scoped_schools.values("sub_county_id"))
-        .distinct()
-        .select_related("district")
-        .order_by("district__name", "name")
-    )
-    # Cluster carries its own district, so it scopes through the same set
-    # rather than through School.cluster_id, which is a CharField.
-    clusters = (
-        Cluster.objects.filter(district_id__in=_scoped_schools.values("district_id"))
-        .distinct()
-        .order_by("name")
-    )
-    staff_profiles = (
-        StaffProfile.objects.filter(deleted_at__isnull=True)
-        .select_related("user")
-        .order_by("user__name")
-    )
-    partners = Partner.objects.filter(deleted_at__isnull=True).order_by("name")
-
-    # 4. Render context
-    context = {
-        **data,
-        "regions": regions,
-        "sub_regions": sub_regions,
-        "districts": districts,
-        "sub_counties": sub_counties,
-        "clusters": clusters,
-        "staff_profiles": staff_profiles,
-        "partners": partners,
-        # Action settings
-        "use_dark_sidebar": False,
-        "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
-        "analytics_layout": analytics_layout,
-        # "View reports" is drawn only for readers who may open /reports; the
-        # Programme Lead no longer may (2026-09-13), and a link that answers
-        # "access denied" is worse than none.
-        "can_open_reports": RolePermissionService.can_view_page(
-            request.user, "reports"
-        ),
-        # The service has always narrowed schools, activities and SSA by `q`;
-        # there was simply no control anywhere on the page to type it into, so
-        # the top bar showed the generic global form and a working backend
-        # search sat unreachable. It filters the entity lists behind the
-        # numbers — never the charts' rendered labels.
-        "topbar_search": {
-            "placeholder": "Search analytics records…",
-            "label": "Search analytics by school, School ID, cluster or staff",
-            "name": "q",
-            "value": filters.get("q") or "",
-            "hx_get": "/analytics",
-            "hx_target": "#analytics-kpi-and-content-container",
-            "hx_trigger": "keyup changed delay:300ms, search",
-            "hx_include": "#analytics-filters-form",
-        },
-    }
-
-    # The workspace renderer decides the shape: a tab click gets the panel, a
-    # filter change gets the tiles and the panel together, a deep link gets the
-    # whole shell around the same panel.
-    from apps.frontend.views.analytics_render import render_analytics_section
-
-    return render_analytics_section(
-        request,
-        "partials/analytics/kpi_cards.html",
-        context,
-        section_key="overview",
-        panel_title="Analytics",
-        tiles_template="partials/analytics/executive_pulse.html",
-        filters_template="partials/analytics/filters.html",
-    )
-
-
 @require_page_permission("analytics")
 @require_export_permission
 def analytics_export_view(request):
@@ -290,90 +80,6 @@ def analytics_export_view(request):
                 "rows": rows,
             }
         ],
-    )
-
-
-@require_page_permission("pl_analytics")
-def pl_analytics_view(request):
-    """Program Lead Analytics — the supervised-team decision cockpit.
-
-    This is what Overview means for a Program Lead, so it renders through the
-    Analytics workspace shell like every other section: the header, the scope
-    filters, the tiles and the tablist are written once and stay fixed, and the
-    cockpit is the panel beneath them. Its own filter row still swaps only
-    `#pl-analytics-body` (charts re-init via Alpine). Everything is scoped to
-    the PL's supervised team by PLAnalyticsService."""
-    from apps.analytics.pl_analytics_service import PLAnalyticsService
-
-    filters = {
-        "district": request.GET.get("district"),
-        "cluster": request.GET.get("cluster"),
-        "cceo": request.GET.get("cceo"),
-        "partner": request.GET.get("partner"),
-        "school_type": request.GET.get("school_type"),
-        "activity_type": request.GET.get("activity_type"),
-        "quarter": request.GET.get("quarter"),
-    }
-    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    quarter = (request.GET.get("quarter") or "").strip() or None
-
-    dashboard_fingerprint = hashlib.sha256(
-        json.dumps(
-            {
-                "fy": fy,
-                "quarter": quarter,
-                "filters": filters,
-                "role": request.user.active_role,
-            },
-            sort_keys=True,
-            default=str,
-        ).encode()
-    ).hexdigest()[:20]
-    # v3: the cockpit stopped carrying the country map and the two sections no
-    # template drew (Programme Lead alignment, 2026-09-13).
-    dashboard_key = (
-        f"program-lead-analytics:v3:{request.user.id}:{dashboard_fingerprint}"
-    )
-    from apps.hr.accountability_cache import revision
-
-    dashboard_key += ":" + revision()
-    data = stampede_safe_get_or_compute(
-        dashboard_key,
-        lambda: PLAnalyticsService.get_dashboard(
-            request.user,
-            fy=fy,
-            quarter=quarter,
-            filters=filters,
-        ),
-        timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
-    )
-    context = {
-        **data,
-        "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
-    }
-    # The filter row's own swap has to name its target. A tab click
-    # (HX-Target: analytics-panel) and a scope change (analytics-scope) are HX
-    # requests too, and answering either with a bare body would replace the
-    # whole workspace with this cockpit's charts.
-    if request.headers.get("HX-Target") == "pl-analytics-body":
-        return render(request, "partials/analytics/pl/body.html", context)
-    from apps.frontend.views.analytics_render import render_analytics_section
-
-    return render_analytics_section(
-        request,
-        "partials/analytics/panels/pl_overview.html",
-        context,
-        section_key="overview",
-        panel_title="Program Lead Analytics",
-        frame={
-            "question": (
-                "Which schools, clusters and team members need my "
-                "intervention this week?"
-            ),
-            "evidence": "My supervised portfolio and confirmed delivery",
-            "freshness": "Live to the selected period",
-            "confidence": "Role-scoped and verification-aware",
-        },
     )
 
 
@@ -865,7 +571,6 @@ def system_health_view(request):
 
 
 # ── Country Director Analytics — national leadership-intelligence cockpit ──────
-from apps.analytics.cd_export_service import DATASETS as EXPORT_DATASETS  # noqa: E402
 from apps.analytics.cd_export_service import dataset_label  # noqa: E402
 
 
@@ -885,104 +590,6 @@ def _cd_filters(request):
         "quarter": request.GET.get("quarter"),
         "month": request.GET.get("month"),
     }
-
-
-@require_page_permission("cd_analytics")
-def cd_analytics_view(request):
-    """Country Director Analytics — the national leadership cockpit.
-
-    Country-wide intelligence across every PL, CCEO, district, region, partner,
-    cluster and school. This is what Overview means for a Country Director, so
-    it renders through the Analytics workspace shell like every other section
-    and the cockpit is the panel; its own filter row still swaps only
-    `#cd-analytics-body`. The CD sees everything but acts only through
-    oversight workflows — CDAnalyticsService never emits field-execution
-    actions."""
-    from apps.analytics.cd_analytics_service import CDAnalyticsService
-
-    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    quarter = (request.GET.get("quarter") or "").strip() or None
-    month = (request.GET.get("month") or "").strip() or None
-    filters = _cd_filters(request)
-    dashboard_fingerprint = hashlib.sha256(
-        json.dumps(
-            {
-                "fy": fy,
-                "quarter": quarter,
-                "month": month,
-                "filters": filters,
-                "role": request.user.active_role,
-            },
-            sort_keys=True,
-            default=str,
-        ).encode()
-    ).hexdigest()[:20]
-    dashboard_key = (
-        f"country-director-analytics:v2:{request.user.id}:{dashboard_fingerprint}"
-    )
-    from apps.hr.accountability_cache import revision
-
-    dashboard_key += ":" + revision()
-    data = stampede_safe_get_or_compute(
-        dashboard_key,
-        lambda: CDAnalyticsService.get_dashboard(
-            request.user,
-            fy=fy,
-            quarter=quarter,
-            month=month,
-            filters=filters,
-            include_regional_map=True,
-        ),
-        timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
-    )
-    # Month-of-FY labels (FY starts in October).
-    _fy_months = [
-        "Oct",
-        "Nov",
-        "Dec",
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-    ]
-    month_options = [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)]
-    context = {
-        "export_sets": [(k, dataset_label(k)) for k in EXPORT_DATASETS],
-        **data,
-        "month_options": month_options,
-        "month": (month or ""),
-        # The heatmap ships rendered at district and swaps level on demand; the
-        # tabs need their labels on the first paint too.
-        "heatmap_levels": _heatmap_level_choices(),
-        "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
-    }
-    # Named target, for the reason given on the PL cockpit: a tab click and a
-    # scope change are HX requests too, and this branch answers neither.
-    if request.headers.get("HX-Target") == "cd-analytics-body":
-        return render(request, "partials/analytics/cd/body.html", context)
-    from apps.frontend.views.analytics_render import render_analytics_section
-
-    return render_analytics_section(
-        request,
-        "partials/analytics/panels/cd_overview.html",
-        context,
-        section_key="overview",
-        panel_title="Country Director Analytics",
-        frame={
-            "question": (
-                "Where is country performance off plan, why, and which "
-                "leadership action has the highest leverage?"
-            ),
-            "evidence": "Country delivery, SSA, finance and field risk",
-            "freshness": "Live to the selected period",
-            "confidence": "Country-wide, verification-aware",
-        },
-    )
 
 
 @require_page_permission("cd_analytics")
@@ -1089,7 +696,6 @@ def cd_analytics_export_view(request):
     from apps.analytics.cd_export_service import (
         DATASETS,
         country_export,
-        dataset_label,
         normalise_dataset,
     )
     from apps.core.excel import table_download
@@ -1128,7 +734,6 @@ def combine_map_boundaries_view(request):
     layer is drawn. The arithmetic happens on the server, where it has one
     implementation and tests behind it.
     """
-    import json
 
     from apps.analytics.subcounty_insight import combine_boundaries
 

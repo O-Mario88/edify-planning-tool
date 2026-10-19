@@ -31,8 +31,6 @@ class SchoolReachColumnsTest(SimpleTestCase):
         for path in (
             "templates/partials/ia/dashboard_body.html",
             "templates/partials/dashboards/cd/body.html",
-            "templates/partials/analytics/pl/district_performance.html",
-            "templates/partials/analytics/target_by_district.html",
         ):
             source = _read(path)
             for header in HEADERS:
@@ -62,11 +60,3 @@ class SchoolReachColumnsTest(SimpleTestCase):
                 source = _read(path)
                 self.assertIn(marker, source)
                 self.assertIn('"schools_pct"', source)
-
-    def test_the_program_lead_list_became_a_table_that_still_opens_the_drawer(self):
-        source = _read("templates/partials/analytics/pl/district_performance.html")
-        self.assertIn('class="w-full text-left text-[12px] pl-district-table"', source)
-        self.assertIn(
-            "/analytics/program-lead/drilldown?drill=district&id={{ d.id }}", source
-        )
-        self.assertIn("hx-trigger=\"click, keyup[key=='Enter']\"", source)

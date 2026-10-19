@@ -55,22 +55,6 @@ class FilterReachesItsViewTest(SimpleTestCase):
         self.assertIn('"attach_to": "admin-users-filters"', view)
         self.assertIn('"name": "q"', view)
 
-    def test_cd_analytics_passes_region_to_the_service(self):
-        view = _read("apps/frontend/views/analytics_views.py")
-        panel = _read("templates/partials/analytics/panels/cd_overview.html")
-        service = _read("apps/analytics/cd_analytics_service.py")
-        # The control exists, the view forwards it, the service reads it.
-        self.assertIn('name="region"', panel)
-        self.assertIn('"region": request.GET.get("region")', view)
-        self.assertIn('filters.get("region")', service)
-
-    def test_visit_effectiveness_states_its_comparison_instead_of_offering_it(self):
-        panel = _read("templates/partials/analytics/panels/visit_effectiveness.html")
-        self.assertNotIn('name="comparison"', panel)
-        self.assertIn("SSA performance FY", panel)
-        # The one control that IS read stays.
-        self.assertIn('name="school_type"', panel)
-
     def test_planning_draws_the_filters_it_honours(self):
         page = _read("templates/pages/planning/index.html")
         view = _read("apps/frontend/views/planning_views.py")
