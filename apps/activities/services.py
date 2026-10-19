@@ -4779,14 +4779,13 @@ def _confirm_locked_activity(
             a.refresh_from_db(
                 fields=["salesforce_activity_id", "salesforce_activity_type"]
             )
-    if (
-        a.delivery_type == "partner"
-        and sf_kind_for_activity(a) is not None
-        and not a.salesforce_activity_id
-    ):
+    # Staff work as well as partner work (owner, 2026-10-19: "make sure that
+    # all completion should have salesforce ID"): staff work reaching this
+    # step without one was handed in before the rule covered it.
+    if sf_kind_for_activity(a) is not None and not a.salesforce_activity_id:
         raise BadRequest(
-            "Enter the Salesforce ID to complete — partner work is confirmed "
-            "with its Salesforce entry."
+            "Enter the Salesforce ID to complete — work is confirmed with its "
+            "Salesforce entry."
         )
     if (data or {}).get("verificationNote"):
         a.pl_review_note = str(data["verificationNote"]).strip()

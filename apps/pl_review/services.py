@@ -603,11 +603,24 @@ def _approve(a: Activity, reviewer_id: str) -> None:
     approved and counted from now (owner, 2026-10-15). Inside the caller's
     transaction."""
     from apps.activities.ia_models import IAVerification
+    from apps.activities.services import sf_kind_for_activity
     from apps.core.enums import ActivityStatus, EvidenceStatus, VerificationStatus
     from apps.evidence.models import EvidenceRecord
     from apps.hr.milestone_progress import record_activity_progress
     from apps.integrations.services import enqueue_activity_salesforce_sync
 
+    # No completion is verified without its Salesforce ID (owner, 2026-10-19:
+    # "make sure that all completion should have salesforce ID"). The drawer
+    # hides Verified without one; this holds for a direct post, and for work
+    # handed in before the rule reached SSA data-gathering visits.
+    if (
+        sf_kind_for_activity(a) is not None
+        and not (a.salesforce_activity_id or "").strip()
+    ):
+        raise BadRequest(
+            "This completion has no Salesforce ID. Return it to the officer "
+            "to enter the ID; it cannot be verified without one."
+        )
     reviewed_at = timezone.now()
     was_with_ia = a.status == "awaiting_ia_verification"
     a.status = ActivityStatus.IA_VERIFIED
