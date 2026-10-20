@@ -732,20 +732,22 @@ class TrainingsCarryTheirIntervention(PeopleFixture):
             )
         self.client.force_login(self.cd_user)
         response = self.client.get(f"/country-planning-oversight/export?fy={FY}")
-        from apps.core import plan_export
-
-        tables = plan_export.tables_from_csv(
-            csv.reader(b"".join(response.streaming_content).decode().splitlines())
+        header, *rows = csv.reader(
+            b"".join(response.streaming_content).decode().splitlines()
         )
-        # One row a session (owner, 2026-10-12: the training columns open on
-        # the Cluster Name and carry no School ID), with its training and its
-        # SSA intervention by name. The page still lists it once per invited
+        # One row a session (owner, 2026-10-20: "One row per cluster
+        # training"), with no School ID, its training and its SSA
+        # intervention by name. The page still lists it once per invited
         # school.
-        trainings = tables[plan_export.TRAINING_SHEET]
+        trainings = [
+            dict(zip(header, row))
+            for row in rows
+            if row[header.index("Activity type")] == "cluster_training"
+        ]
         self.assertEqual(len(trainings), 1)
-        self.assertEqual(trainings[0]["Cluster Name"], self.cluster.name)
-        self.assertEqual(trainings[0]["Training"], "Discipleship Dynamics")
+        self.assertEqual(trainings[0]["Cluster"], self.cluster.name)
+        self.assertEqual(trainings[0]["School ID"], "")
+        self.assertEqual(trainings[0]["Training name"], "Discipleship Dynamics")
         self.assertEqual(
-            trainings[0]["SSA Intervention"], "Exposure to the Word of God"
+            trainings[0]["SSA intervention"], "Exposure to the Word of God"
         )
-        self.assertNotIn("School ID", trainings[0])

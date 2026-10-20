@@ -25,11 +25,13 @@ event, a conference) and, last, Budget — the Budget page's Activity cost
 plan laid out from the cost lines of exactly the activities on the sheets
 before it (`budget_sheet`).
 
-Each exporter hands over plain rows (`row(...)`), so My Plan, Team and
-Country Planning Oversight and Cluster Oversight cannot lay the same work out
-three ways. What is read here is read the same for all of them: a session's
-planned people and a group training's cost (`session_figures`), the budget
-statuses and the Budget sheet's cost lines.
+Each exporter hands over plain rows (`row(...)`), so My Plan and Cluster
+Oversight cannot lay the same work out two ways. Team and Country Planning
+Oversight export one table of their own instead (owner, 2026-10-20;
+`apps.planning.oversight_service.export_rows`), reading a session's people
+and cost through `session_figures` too. What is read here is read the same
+for every exporter: a session's planned people and a group training's cost
+(`session_figures`), the budget statuses and the Budget sheet's cost lines.
 """
 
 from __future__ import annotations

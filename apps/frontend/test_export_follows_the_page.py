@@ -29,11 +29,14 @@ EVERY_COST = VISITS_COST + 60_000  # and James's training
 
 
 def _grand_total(response) -> int:
+    """The planned cost of every row in the workbook's one table (owner,
+    2026-10-20: Planning Oversight exports no Budget sheet)."""
     from openpyxl import load_workbook
 
     book = load_workbook(io.BytesIO(response.content), read_only=True)
-    first = [c for c in next(book["Budget"].iter_rows(values_only=True)) if c]
-    return first[first.index("Grand total") + 1]
+    header, *rows = book.worksheets[0].iter_rows(values_only=True)
+    at = header.index("Planned cost (UGX)")
+    return sum(row[at] or 0 for row in rows)
 
 
 def _selected_kind(html: str) -> str:
@@ -68,7 +71,7 @@ class TheExportFollowsThePagesTab(FilterExportFixture):
                 html = self.as_pl().get(DRAWER, {"activity": tab}).content.decode()
                 self.assertEqual(_selected_kind(html), kind)
 
-    def test_the_export_link_alone_holds_the_tabs_work_and_budget(self):
+    def test_the_export_link_alone_holds_the_tabs_work(self):
         response = self.as_pl().get(
             PL_EXPORT,
             {"owner": self.james.id, "activity": "visits", "format": "xlsx"},
@@ -87,7 +90,7 @@ class TheExportFollowsThePagesTab(FilterExportFixture):
         )
         self.assertEqual(_grand_total(response), EVERY_COST)
 
-    def test_visits_only_from_the_drawer_holds_visits_and_their_budget(self):
+    def test_visits_only_from_the_drawer_holds_visits_alone(self):
         response = self.as_pl().get(
             PL_EXPORT,
             {

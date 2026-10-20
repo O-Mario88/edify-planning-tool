@@ -158,10 +158,10 @@ class PlanningOversightShowsTheTrainingsOwnCost(export_tests.FilterExportFixture
 
         rows = [
             row
-            for row in self.export_tables(fy=self.fy)["School Visits"]
-            if row["Activity"] == "In-school Training"
+            for row in self.export_records(fy=self.fy)
+            if row["Activity type"] == "in_school_training"
         ]
-        self.assertEqual([row["Cost (UGX)"] for row in rows], ["73000"])
+        self.assertEqual([row["Planned cost (UGX)"] for row in rows], ["73000"])
         items = [
             item
             for item in svc.build_items(self.pl_user, fy=self.fy)

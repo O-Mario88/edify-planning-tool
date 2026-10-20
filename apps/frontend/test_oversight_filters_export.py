@@ -112,15 +112,11 @@ class FilterExportFixture(TestCase):
         body = b"".join(response.streaming_content).decode()
         return list(csv.reader(io.StringIO(body)))
 
-    def export_tables(self, **params) -> dict[str, list[dict]]:
-        """The export's sheets (apps.core.plan_export), each a list of rows
-        keyed by column heading."""
-        from apps.core import plan_export
-
-        return plan_export.tables_from_csv(self.export_rows(**params))
-
     def export_records(self, **params) -> list[dict]:
-        return [row for rows in self.export_tables(**params).values() for row in rows]
+        """The export's one table (owner, 2026-10-20), each row keyed by its
+        column heading."""
+        header, *rows = self.export_rows(**params)
+        return [dict(zip(header, row)) for row in rows]
 
 
 class ExportScopeTest(FilterExportFixture):
@@ -133,7 +129,8 @@ class ExportScopeTest(FilterExportFixture):
 
     def test_the_export_totals_match_the_page(self):
         exported_total = sum(
-            int(row["Cost (UGX)"] or 0) for row in self.export_records(fy=self.fy)
+            int(row["Planned cost (UGX)"] or 0)
+            for row in self.export_records(fy=self.fy)
         )
 
         from apps.planning import oversight_service as svc
@@ -151,26 +148,22 @@ class ExportScopeTest(FilterExportFixture):
         self.assertEqual(exported_total, page_total)
 
     def test_the_export_is_the_owners_columns(self):
-        """Owner, 2026-10-12: the columns of each sheet, named one by one;
-        they replace the wide attribution table of 2026-09-22. Who does the
-        work is the Executor."""
-        from apps.core import plan_export
+        """Owner, 2026-10-20: Planning Oversight exports one table of the
+        owner's columns, no sheets and no Budget. Who does the work is the
+        Executor, or the Partner."""
+        from apps.planning.oversight_service import EXPORT_HEADERS
 
         lines = self.export_rows(fy=self.fy)
-        self.assertIn(list(plan_export.VISIT_HEADERS), lines)
-        self.assertIn(list(plan_export.TRAINING_HEADERS), lines)
-        self.assertIn(list(plan_export.MEETING_HEADERS), lines)
-        self.assertIn(list(plan_export.PARTNER_HEADERS), lines)
-        self.assertIn(list(plan_export.OTHER_HEADERS), lines)
-        # The sheets, in the owner's order, the Budget of those activities last.
-        self.assertEqual(
-            [
-                line[0]
-                for line in lines
-                if len(line) == 1 and line[0] in plan_export.SHEET_ORDER
-            ],
-            list(plan_export.SHEET_ORDER),
-        )
+        self.assertEqual(lines[0], list(EXPORT_HEADERS))
+        self.assertEqual(lines.count(list(EXPORT_HEADERS)), 1)
+        for row in self.export_records(fy=self.fy):
+            self.assertTrue(row["Executor"] or row["Partner"])
+
+    def test_my_plan_keeps_the_owners_sheet_columns(self):
+        """Owner, 2026-10-12: the columns of each of My Plan's sheets, named
+        one by one."""
+        from apps.core import plan_export
+
         self.assertEqual(
             plan_export.VISIT_HEADERS,
             (
@@ -210,19 +203,13 @@ class ExportScopeTest(FilterExportFixture):
                 "Status",
             ),
         )
-        for row in self.export_records(fy=self.fy):
-            self.assertIn(
-                row["District Type"],
-                ("Primary District", "Secondary District", "Mixed", ""),
-            )
-            # Who does the work: the Executor, or the Partner on its sheet.
-            self.assertTrue(row.get("Executor") or row.get("Partner"))
 
     def test_the_export_carries_no_free_text_notes(self):
         """A plan, not a record store — evidence and notes stay behind."""
         from apps.core import plan_export
+        from apps.planning.oversight_service import EXPORT_HEADERS
 
-        for header in plan_export.ALL_HEADERS:
+        for header in (*plan_export.ALL_HEADERS, EXPORT_HEADERS):
             for forbidden in ("Evidence file", "Note", "Message"):
                 with self.subTest(column=forbidden):
                     self.assertNotIn(forbidden, header)
@@ -230,12 +217,9 @@ class ExportScopeTest(FilterExportFixture):
 
 class FilterTest(FilterExportFixture):
     def test_filtering_by_activity_type_narrows_both_page_and_export(self):
-        tables = self.export_tables(fy=self.fy, activity_type="training")
+        rows = self.export_records(fy=self.fy, activity_type="training")
 
-        self.assertEqual(len(tables["Group Trainings"]), 1)
-        self.assertEqual(tables["Cluster Meetings"], [])
-        self.assertEqual(tables["School Visits"], [])
-        self.assertEqual(tables["Other Activities"], [])
+        self.assertEqual([row["Table"] for row in rows], ["Training"])
 
     def test_filtering_by_executor_type_separates_partner_from_staff(self):
         partner_rows = self.export_records(fy=self.fy, executor_type="partner")
@@ -334,7 +318,7 @@ class CustomExportPeriodAndDrawerTest(FilterExportFixture):
         )
         # The one completed row.
         self.assertEqual(len(rows), 1)
-        self.assertIn("omplete", rows[0]["Status"])
+        self.assertIn("omplete", rows[0]["Activity status"])
 
     def test_drawers_render_successfully(self):
         client = self.as_pl()
@@ -396,17 +380,14 @@ class EveryoneAtOnceTest(FilterExportFixture):
         )
 
     def _costs(self, user, path, **params) -> list[int]:
-        from apps.core import plan_export
-
         client = Client()
         client.force_login(user)
         response = client.get(path, {"fy": self.fy, **params})
         self.assertEqual(response.status_code, 200)
         body = b"".join(response.streaming_content).decode()
-        tables = plan_export.tables_from_csv(csv.reader(io.StringIO(body)))
-        return sorted(
-            int(row["Cost (UGX)"] or 0) for rows in tables.values() for row in rows
-        )
+        header, *rows = csv.reader(io.StringIO(body))
+        at = header.index("Planned cost (UGX)")
+        return sorted(int(row[at] or 0) for row in rows)
 
     EVERYONE = [25_000, 40_000, 60_000, 99_000]
 
