@@ -1539,27 +1539,57 @@ def _training_name(item) -> str:
     return "" if name == "—" else name
 
 
-#: The table each exported row is on, in the page's order (owner,
-#: 2026-09-29: the export carries the page's columns — the Training Name
-#: and the SSA intervention of every training — and a School ID on every
-#: school row, a cluster training listed once per invited school as the
-#: "Schools with Planned Training" table lists it).
+#: The page's four tables, in its order, and the name an exported row gives
+#: the one it is on (owner, 2026-09-29).
 EXPORT_STREAMS = (
     ("client_school_visits", "Client School Visit"),
     ("core_school_visits", "Core School Visit"),
     ("cluster_meetings", "Cluster Meeting"),
     ("planned_trainings", "Training"),
 )
+_TABLE_NAMES = dict(EXPORT_STREAMS)
+_TABLE_ORDER = {key: n for n, (key, _) in enumerate(EXPORT_STREAMS)}
 
+
+def page_table(item) -> str:
+    """Which of the page's four tables an item is listed on (a key of
+    EXPORT_STREAMS); the page and its export read it here alike.
+
+    The canonical groupings first, the ones My Plan and the family strip read
+    (owner, 2026-09-28: "a cceo may have 300 visits planned but the PL is
+    seeing like 100"). Matching on the word "training" filed every Training
+    Follow Up VISIT under trainings, so a lead read fewer visits than the
+    officer had planned; and "core" in the school type made a Core Trained
+    school's visits core visits, where My Plan (school_type == "core") does
+    not.
+    """
+    atype = str(item.activity_type or "").lower()
+    is_visit = atype in VISIT_TYPES and not item.is_in_school_training
+    if not is_visit and (
+        item.is_in_school_training
+        or atype in TRAINING_TYPES
+        or (atype not in CLUSTER_MEETING_TYPES and "training" in atype)
+        or bool(item.training_name and item.training_name != "—")
+    ):
+        return "planned_trainings"
+    if not is_visit and (atype in CLUSTER_MEETING_TYPES or "meeting" in atype):
+        return "cluster_meetings"
+    stype = str(item.school_type or "").lower()
+    if stype == "core" or atype.startswith("core_"):
+        return "core_school_visits"
+    return "client_school_visits"
+
+
+#: The owner's columns, in the owner's order (owner, 2026-10-20: "the
+#: planning oversight table export columns should have ..."): one table, no
+#: Budget sheet.
 EXPORT_COLUMNS = (
     ("Financial year", lambda i: i.fy),
-    ("Table", lambda i: getattr(i, "export_table", "")),
-    ("Activity ID", lambda i: i.activity_id or ""),
+    ("Table", lambda i: _TABLE_NAMES[page_table(i)]),
     ("School ID", _export_school_id),
     ("School name", lambda i: i.school_name if i.school_id else ""),
     ("District", lambda i: i.district_name),
     ("Cluster", lambda i: i.cluster_name),
-    ("Cluster planned from", lambda i: getattr(i, "cluster_planned_from", "") or ""),
     ("Activity type", lambda i: i.activity_type),
     ("Training name", _training_name),
     ("SSA intervention", lambda i: _intervention_label(i.target_intervention)),
@@ -1567,7 +1597,7 @@ EXPORT_COLUMNS = (
         "Purpose of visit",
         lambda i: "" if i.purpose_of_visit == "—" else i.purpose_of_visit,
     ),
-    ("Planned date", lambda i: i.planned_date.isoformat() if i.planned_date else ""),
+    ("Planned date", lambda i: i.planned_date or ""),
     ("Delivery type", lambda i: i.delivery_type),
     ("Participants", lambda i: i.participants or ""),
     ("Planning stage", lambda i: i.stage),
@@ -1589,124 +1619,84 @@ EXPORT_COLUMNS = (
     ("Risks", lambda i: "; ".join(r["key"] for r in i.risks)),
     ("Next action owner", lambda i: i.next_action_owner_name),
 )
+EXPORT_HEADERS = tuple(label for label, _ in EXPORT_COLUMNS)
 
 
-def export_rows(items):
-    """Header row then one row per item, in the order given.
-
-    The views hand it the rows of the page's four tables
-    (``stream_rows``), so an export cannot contain a row the viewer could not
-    see or a total the page did not show. No evidence files or free-text
-    notes are included — an export is a plan, not a record store.
-    """
-    yield [label for label, _ in EXPORT_COLUMNS]
-    for item in items:
-        yield [getter(item) for _, getter in EXPORT_COLUMNS]
-
-
-def stream_rows(owner_groups):
-    """The rows of each person's four tables, in the page's order, each
-    marked with the table it is on."""
-    for group in owner_groups:
-        for key, table in EXPORT_STREAMS:
-            for item in group.get(key, ()):
-                item.export_table = table
-                yield item
-
-
-def plan_export_rows(items) -> list[dict]:
-    """The items as `apps.core.plan_export` rows: the school visits, the group
-    trainings, the cluster meetings, the partner schedules and the other
-    activities, each with its District and District Type (owner, 2026-10-12).
-
-    A cluster session is one row however many schools it invites — the
-    owner's columns for a training open on the Cluster Name and carry no
-    School ID — so an item listed once per invited school is exported once.
-    An in-school training is school work and sits with the visits.
-    """
-    from apps.core import plan_export
-    from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
-    from apps.daily_visit_batches.district_marks import (
-        district_type_labels,
-        label_of,
-    )
-
-    from apps.pl_review.services import lead_verified_owner_ids
-
-    items = list(items)
-    ids = [i.activity_id for i in items if i.activity_id]
-    lead_ids = lead_verified_owner_ids()
-    district_types = district_type_labels(ids)
-    budget_statuses = plan_export.budget_status_labels(ids)
-    session_types = set(CLUSTER_MEETING_TYPES) | set(TRAINING_TYPES)
-
+def _one_row_per_activity(items) -> list:
+    """A cluster session once however many schools it invites (owner,
+    2026-10-20: "One row per cluster training"); a visit once per school."""
     rows, seen = [], set()
     for i in items:
-        is_session = i.activity_type in session_types and not i.is_in_school_training
-        # Work handed to a partner is a partner schedule whatever its kind
-        # (owner, 2026-10-12: "partner schedules on its sheet").
-        if i.is_partner_work:
-            kind = plan_export.PARTNER
-        elif is_session:
-            kind = (
-                plan_export.MEETING
-                if i.activity_type in CLUSTER_MEETING_TYPES
-                else plan_export.TRAINING
-            )
-        elif i.school_id:
-            kind = plan_export.VISIT
-        else:
-            kind = plan_export.OTHER
+        is_visit = page_table(i).endswith("_school_visits")
         key = (
             i.activity_id or i.partner_assignment_id or id(i),
-            "" if kind != plan_export.VISIT else i.school_id,
+            i.school_id if is_visit else "",
         )
-        if key in seen:
-            continue
-        seen.add(key)
-        # "In School Visit" only for a Training that carries nothing of its
-        # own; a partner facilitator's fee is its own money (owner,
-        # 2026-10-15: wording must not misstate where money stands).
-        if i.cost_on_school_visit and not i.planned_cost:
-            budget_status = "In School Visit"
-        else:
-            budget_status = budget_statuses.get(i.activity_id, "No Budget")
-        intervention = _intervention_label(i.target_intervention)
-        purpose = "" if i.purpose_of_visit == "—" else i.purpose_of_visit
-        rows.append(
-            plan_export.row(
-                kind,
-                activity_id=i.activity_id,
-                partner=i.partner_name,
-                school_id=_export_school_id(i),
-                school_name=i.school_name,
-                cluster_name=i.cluster_name or i.school_name or i.non_school_context,
-                venue=i.non_school_context or i.cluster_name,
-                district=i.district_name,
-                district_type=label_of(district_types, i.activity_id),
-                activity=plan_export.activity_label(i.activity_type),
-                planned_date=i.planned_date,
-                executor=i.executor_name,
-                purpose=purpose,
-                intervention=intervention,
-                training=_training_name(i)
-                or (plan_export.activity_label(i.activity_type) if is_session else ""),
-                participants=i.participants,
-                cost=i.planned_cost,
-                budget_status=budget_status,
-                verification=plan_export.verification_label(
-                    i.activity_status,
-                    i.ia_status,
-                    lead_approves=not i.is_partner_work
-                    and str(i.executor_id or "") in lead_ids,
-                ),
-                salesforce_id=i.salesforce_id,
-                evidence=i.evidence_label or _label(i.evidence_status),
-                status=i.completion_gap
-                or _label(i.activity_status or i.assignment_status),
-            )
-        )
+        if key not in seen:
+            seen.add(key)
+            rows.append(i)
     return rows
+
+
+def _session_kind(item) -> str:
+    """A group training or a cluster meeting as `apps.core.plan_export` reads
+    one; "" for any other work."""
+    from apps.core import plan_export
+
+    if item.is_partner_work or item.is_in_school_training:
+        return ""
+    if item.activity_type in CLUSTER_MEETING_TYPES:
+        return plan_export.MEETING
+    if item.activity_type in TRAINING_TYPES:
+        return plan_export.TRAINING
+    return ""
+
+
+def _with_session_figures(items: list) -> list:
+    """A session's planned people and a group training's own cost, read as
+    every plan export reads them (`plan_export.session_figures`, owner,
+    2026-10-15), on copies of the items."""
+    from dataclasses import replace
+
+    from apps.core import plan_export
+
+    figures = plan_export.session_figures(
+        {
+            "kind": _session_kind(i),
+            "activity_id": i.activity_id,
+            "participants": i.participants,
+            "cost": i.planned_cost,
+        }
+        for i in items
+    )
+    return [
+        replace(i, participants=f["participants"], planned_cost=f["cost"])
+        if (f["participants"], f["cost"]) != (i.participants, i.planned_cost)
+        else i
+        for i, f in zip(items, figures)
+    ]
+
+
+def export_rows(items) -> list[list]:
+    """Header row then one row per activity: the page's tables in its order,
+    each by planned date.
+
+    The views hand it the items the page's tables are drawn from, so an export
+    cannot contain a row the viewer could not see. The Salesforce ID is read
+    as the tables read it (`completion_columns.annotate`). No evidence files
+    or free-text notes are included — an export is a plan, not a record store.
+    """
+    from apps.activities.completion_columns import annotate
+
+    rows = annotate(_with_session_figures(_one_row_per_activity(items)))
+    rows = sorted(
+        rows,
+        key=lambda i: (_TABLE_ORDER[page_table(i)], i.planned_date or date.max),
+    )
+    return [
+        list(EXPORT_HEADERS),
+        *([getter(i) for _, getter in EXPORT_COLUMNS] for i in rows),
+    ]
 
 
 # ── Folds ────────────────────────────────────────────────────────────────────

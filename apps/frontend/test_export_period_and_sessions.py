@@ -134,6 +134,13 @@ class SessionFixture(FilterExportFixture):
         lines = list(csv.reader(io.StringIO(response.content.decode())))
         return plan_export.tables_from_csv(lines)
 
+    def oversight_dates(self, **params):
+        return {
+            row["Planned date"]
+            for row in self.export_records(**params)
+            if row["Planned date"]
+        }
+
     @staticmethod
     def dates(tables):
         return {
@@ -155,9 +162,17 @@ class AGroupTrainingReadsItsPeopleAndItsOwnCost(SessionFixture):
         return rows[0]
 
     def test_planning_oversight(self):
-        row = self._row(self.export_tables(fy=self.fy))
-        self.assertEqual(row["Participants"], "12")
-        self.assertEqual(row["Cost (UGX)"], str(MEALS + VENUE + FACILITATION))
+        # One table (owner, 2026-10-20): the cluster training is one row.
+        rows = [
+            row
+            for row in self.export_records(fy=self.fy)
+            if row["Cluster"] == "Kasangati Cluster"
+        ]
+        self.assertEqual(len(rows), 1, rows)
+        self.assertEqual(rows[0]["Participants"], "12")
+        self.assertEqual(
+            rows[0]["Planned cost (UGX)"], str(MEALS + VENUE + FACILITATION)
+        )
 
     def test_my_plan(self):
         row = self._row(self.my_plan_tables(fy=self.fy))
@@ -204,9 +219,7 @@ class TheChosenPeriodIsTheOneExported(SessionFixture):
         }
 
     def test_custom_dates_on_planning_oversight(self):
-        self.assertEqual(
-            self.dates(self.export_tables(**self._custom())), {self.day.isoformat()}
-        )
+        self.assertEqual(self.oversight_dates(**self._custom()), {self.day.isoformat()})
 
     def test_custom_dates_on_my_plan(self):
         self.assertEqual(
@@ -214,7 +227,7 @@ class TheChosenPeriodIsTheOneExported(SessionFixture):
         )
 
     def test_a_month_on_planning_oversight(self):
-        dates = self.dates(self.export_tables(**self._months()))
+        dates = self.oversight_dates(**self._months())
         self.assertIn(self.day.isoformat(), dates)
         self.assertEqual({d[:7] for d in dates}, {self.day.isoformat()[:7]})
 
@@ -223,15 +236,16 @@ class TheChosenPeriodIsTheOneExported(SessionFixture):
         self.assertIn(self.day.isoformat(), dates)
         self.assertEqual({d[:7] for d in dates}, {self.day.isoformat()[:7]})
 
-    def test_the_budget_sheet_holds_the_period_alone(self):
+    def test_the_workbook_holds_the_period_alone(self):
         from openpyxl import load_workbook
 
         response = self.as_pl().get(
             PL_EXPORT, {**self._custom(), "format": "xlsx", "owner": self.james.id}
         )
         book = load_workbook(io.BytesIO(response.content), read_only=True)
-        budget = [list(r) for r in book["Budget"].iter_rows(values_only=True)]
-        self.assertEqual(budget[0][5], MEALS + VENUE + FACILITATION + TRANSPORT + LUNCH)
+        header, *rows = book.worksheets[0].iter_rows(values_only=True)
+        at = header.index("Planned date")
+        self.assertEqual({row[at].date() for row in rows}, {self.day})
 
 
 class TheDrawerOpensOnThePagesPeriod(SessionFixture):
