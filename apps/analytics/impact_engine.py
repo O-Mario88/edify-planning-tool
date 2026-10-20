@@ -244,13 +244,25 @@ IMPROVEMENT_COLUMNS = [
 ]
 
 
-def improvement_rows(school_ids: list[str], fy: str) -> list[dict] | None:
+def improvement_rows(
+    school_ids: list[str], fy: str, *, latest: tuple[dict, dict] | None = None
+) -> list[dict] | None:
     """improvement_frame's rows as plain dicts, in the frame's order — what
     ``improvement_frame(...).to_dict("records")`` returns, without building
-    the frame. None when no school has a confirmed SSA in both cycles."""
+    the frame. None when no school has a confirmed SSA in both cycles.
+
+    ``latest`` is ``(fy's, the year before's)`` `_latest_confirmed_records`
+    of ``school_ids``, for a caller that has read them already (the cluster
+    SSA movement does, to say why a school is in no comparison): a school's
+    latest record of a year is the same whichever schools are asked about,
+    so the pairs are the same, two queries fewer."""
     prev_fy = str(int(fy) - 1)
-    curr = _latest_confirmed_records(school_ids, fy)
-    prev = _latest_confirmed_records(list(curr.keys()), prev_fy)
+    if latest is None:
+        curr = _latest_confirmed_records(school_ids, fy)
+        prev = _latest_confirmed_records(list(curr.keys()), prev_fy)
+    else:
+        curr, before = latest
+        prev = {sid: before[sid] for sid in curr if sid in before}
     paired_schools = [sid for sid in curr if sid in prev]
     if not paired_schools:
         return None

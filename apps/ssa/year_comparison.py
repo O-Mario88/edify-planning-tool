@@ -119,13 +119,14 @@ def school_current_scores(schools, fy) -> dict[str, dict]:
     intervention it scored, as `school_year_scores` and
     `school_intervention_scores` read them. A school with no record in
     ``fy`` is not in it. Two queries."""
+    from apps.core.scoping import any_id
     from apps.ssa.current_year import CURRENT_SSA_STATUSES
     from apps.ssa.models import SsaRecord, SsaScore
 
     latest: dict[str, dict] = {}
     for row in (
         SsaRecord.objects.filter(
-            school_id__in=schools,
+            any_id("school_id", schools),
             fy=str(fy),
             deleted_at__isnull=True,
             verification_status__in=CURRENT_SSA_STATUSES,
@@ -138,7 +139,7 @@ def school_current_scores(schools, fy) -> dict[str, dict]:
     areas: dict[str, dict[str, float]] = defaultdict(dict)
     if school_of:
         for record_id, intervention, score in SsaScore.objects.filter(
-            ssa_record_id__in=list(school_of), score__isnull=False
+            any_id("ssa_record_id", school_of), score__isnull=False
         ).values_list("ssa_record_id", "intervention", "score"):
             areas[school_of[record_id]][intervention] = round(float(score), 2)
     return {

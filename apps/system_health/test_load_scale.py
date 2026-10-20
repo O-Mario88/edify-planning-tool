@@ -336,7 +336,8 @@ class ScaleGateTest(TestCase):
         ("/settings", 800),
         # /analytics left this list with the Analytics entry (owner,
         # 2026-10-19); test_country_profile_is_scale_invariant holds the page
-        # that took over its aggregation.
+        # that took over its aggregation, and a CCEO's old link opens this.
+        ("/cluster-oversight/", 1500),
         ("/system-health", 1500),
     )
     BUDGET_FACTOR = 4
@@ -441,6 +442,11 @@ class ScaleGateTest(TestCase):
 
     # ── the whole-population pages ────────────────────────────────────────
     @override_settings(DEBUG=False)
+    def test_cluster_oversight_is_scale_invariant(self):
+        """A CCEO's Cluster Oversight reads every school of every cluster they
+        hold -- in this fixture every district's cluster, so the estate."""
+        self._assert_scale_invariant("/cluster-oversight/")
+
     def test_country_profile_is_scale_invariant(self):
         """The Country Profile reads every school by sub-region, district,
         staff and cluster -- the heaviest aggregation in the product since
@@ -744,6 +750,7 @@ SLO_MS: dict[str, int] = {
     "/todos": 800,
     "/notifications": 800,
     "/settings": 800,
+    "/cluster-oversight/": 1500,
     "/system-health": 1500,
 }
 
