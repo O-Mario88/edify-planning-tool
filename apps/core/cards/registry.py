@@ -100,7 +100,7 @@ CARD_REGISTRY: tuple[CardSpec, ...] = (
         period=Period.FINANCIAL_YEAR,
         filter_behaviour=FilterBehaviour.FIXED_CONTEXT,
         empty_message="No verified SSA scores are available yet.",
-        drilldown="/ssa",
+        drilldown="/country-profile?tab=ssa",
         refresh_events=("ssa_verified",),
     ),
     CardSpec(

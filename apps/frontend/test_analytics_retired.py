@@ -7,11 +7,17 @@ Reports, Decision Log and Closure Quality their own sidebar entries."
 
 from __future__ import annotations
 
-from django.test import TestCase
+import re
+from pathlib import Path
+
+from django.conf import settings
+from django.test import SimpleTestCase, TestCase
+from django.urls import resolve
 
 from apps.accounts.models import StaffProfile, User
 from apps.core.navigation import build_sidebar_for_user
 from apps.core.rbac import EdifyRole
+from apps.frontend.views.analytics_retired import home
 
 
 def _person(email, role):
@@ -34,6 +40,8 @@ class RetiredFixture(TestCase):
         cls.pl = _person("ret-pl@t.test", EdifyRole.COUNTRY_PROGRAM_LEAD)
         cls.cceo = _person("ret-cceo@t.test", EdifyRole.CCEO)
         cls.ia = _person("ret-ia@t.test", EdifyRole.IMPACT_ASSESSMENT)
+        cls.hr = _person("ret-home-hr@t.test", EdifyRole.HUMAN_RESOURCES)
+        cls.accountant = _person("ret-home-acc@t.test", EdifyRole.PROGRAM_ACCOUNTANT)
 
 
 class OldLinksTest(RetiredFixture):
@@ -184,8 +192,6 @@ class OldLinksKeepTheirGuardTest(RetiredFixture):
     )
 
     def test_each_old_address_declares_its_page_s_permission(self):
-        from django.urls import resolve
-
         for url, page_key in self.RETIRED:
             with self.subTest(url=url):
                 self.assertEqual(resolve(url).func.page_permission, page_key)
@@ -200,3 +206,140 @@ class OldLinksKeepTheirGuardTest(RetiredFixture):
             "Access Denied",
             " ".join(str(m) for m in response.wsgi_request._messages),
         )
+
+
+class HomeTest(RetiredFixture):
+    """A link that once opened Analytics opens the section's home for its
+    reader, and says that page's name."""
+
+    def test_each_reader_s_home_is_named(self):
+        cases = (
+            (self.cd, "overview", "/country-profile", "Country Profile"),
+            (self.pl, "overview", f"/staff/{self.pl.id}", "My Profile"),
+            (self.cceo, "overview", "/cluster-oversight/", "Cluster Oversight"),
+            (self.hr, "overview", "/dashboard", "Dashboard"),
+            (self.accountant, "overview", "/budget", "Budget"),
+            (self.cd, "ssa", "/country-profile?tab=ssa", "Country Profile"),
+            (self.cceo, "ssa", "/cluster-oversight/ssa", "Cluster Oversight"),
+            (self.ia, "impact", "/cluster-oversight/impact", "Cluster Oversight"),
+            (
+                self.cd,
+                "declining",
+                "/country-profile?tab=schools&show=declined",
+                "Country Profile",
+            ),
+            (
+                self.cd,
+                "core_school_health",
+                "/core-schools-oversight/",
+                "Core School Oversight",
+            ),
+            (self.cd, "closures", "/schools/closed", "Closed Schools"),
+        )
+        for user, section, href, label in cases:
+            with self.subTest(section=section, role=user.active_role):
+                self.assertEqual(home(user, section), {"href": href, "label": label})
+
+    def test_a_scope_principal_is_read_as_its_user(self):
+        """Services pass a scope principal (its ``user_id`` and role) as often
+        as a User; the home is the same either way."""
+        from types import SimpleNamespace
+
+        for user in (self.cd, self.pl, self.cceo, self.hr):
+            principal = SimpleNamespace(
+                user_id=user.id, id=user.id, active_role=user.active_role
+            )
+            with self.subTest(role=user.active_role):
+                self.assertEqual(home(principal, "ssa"), home(user, "ssa"))
+
+    def test_the_country_director_s_dashboard_opens_the_country_profile(self):
+        # /dashboard opens Country Oversight; the command dashboard answers
+        # when a link names its view.
+        self.client.force_login(self.cd)
+        body = self.client.get("/dashboard?view=map").content.decode()
+        self.assertIn('href="/country-profile"', body)
+        self.assertIn("Open Country Profile", body)
+        self.assertNotIn("CD Analytics", body)
+
+
+#: The addresses the redirects answer: not a segment of a longer path (after a
+#: word, `/`, `.`, `-`, `>` or `}`), and not prose ("/impact's").
+RETIRED_ADDRESS = re.compile(
+    r"(?<![\w/.>}-])/(?:"
+    r"analytics(?:/(?:program-lead|country-director|visit-effectiveness"
+    r"|school-closures|people|verification-quality))?/?"
+    r"|ssa|impact|declining-schools|core-school-health|decisions"
+    r")(?=[\"'`?#{])(?!'\w)"
+)
+
+#: Files that may still name a retired address, and why.
+NAMES_A_RETIRED_ADDRESS = {
+    # The redirects themselves and the sidebar's record of what retired.
+    "apps/frontend/urls.py": "routes the old addresses",
+    "apps/frontend/views/analytics_retired.py": "answers the old addresses",
+    "apps/core/navigation.py": "keeps each old address's page key",
+    # Who's Online names the part of the system a path belongs to; it links
+    # nowhere.
+    "apps/accounts/presence_labels.py": "labels a path, links nowhere",
+    # The KPI inventory files templates under /analytics/ by their path.
+    "apps/system_health/kpi_inventory.py": "classifies template paths",
+}
+
+
+def _is_test(path: Path) -> bool:
+    return (
+        path.name.startswith("test_")
+        or path.name in {"tests.py", "conftest.py"}
+        or "tests" in path.parts
+        or "migrations" in path.parts
+    )
+
+
+class NoRetiredLinksTest(SimpleTestCase):
+    """No page, partial or service links an address the redirects answer:
+    each link names and opens the page its reading lives on now."""
+
+    def test_nothing_links_a_retired_address(self):
+        root = Path(settings.BASE_DIR)
+        found = []
+        for folder, suffixes in (
+            ("templates", {".html"}),
+            ("apps", {".py", ".html"}),
+            ("static/js", {".js"}),
+        ):
+            for path in sorted((root / folder).rglob("*")):
+                relative = path.relative_to(root).as_posix()
+                if (
+                    path.suffix not in suffixes
+                    or _is_test(path)
+                    or relative in NAMES_A_RETIRED_ADDRESS
+                ):
+                    continue
+                for number, line in enumerate(path.read_text().splitlines(), 1):
+                    if RETIRED_ADDRESS.search(line):
+                        found.append(f"{relative}:{number}: {line.strip()[:100]}")
+        self.assertEqual(found, [], "\n".join(found))
+
+    def test_the_scan_sees_a_retired_link(self):
+        for line in (
+            '<a href="/analytics">',
+            '"href": "/ssa"',
+            'f"/ssa?fy={fy}"',
+            "'/analytics/country-director'",
+            "/analytics{'?' + query}",
+        ):
+            with self.subTest(line=line):
+                self.assertIsNotNone(RETIRED_ADDRESS.search(line))
+        for line in (
+            '<a href="/analytics/closure-quality">',
+            '"/ssa/export?fy=1"',
+            '"/ia/analytics/"',
+            '"/api/analytics/map-subcounties"',
+            '"/analytics/country-director/drilldown?drill=risk"',
+            # A live route of another app, and prose naming an old page.
+            'path("<str:school_id>/impact", views.SchoolImpactView.as_view())',
+            'href="/schools/{{ school.id }}/impact"',
+            "the second engine answering /impact's question",
+        ):
+            with self.subTest(line=line):
+                self.assertIsNone(RETIRED_ADDRESS.search(line))

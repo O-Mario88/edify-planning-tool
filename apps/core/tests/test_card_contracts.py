@@ -7,6 +7,8 @@ than no declaration at all -- it looks audited.
 
 from __future__ import annotations
 
+from urllib.parse import urlsplit
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import resolve
@@ -25,7 +27,8 @@ class DrilldownResolutionTests(TestCase):
             if not card.drilldown:
                 continue
             try:
-                resolve(card.drilldown)
+                # A drill-down may open a tab of its page (?tab=ssa).
+                resolve(urlsplit(card.drilldown).path)
             except Resolver404:
                 unresolved.append(f"{card.key} -> {card.drilldown}")
         self.assertEqual(unresolved, [], f"card drill-downs that 404: {unresolved}")

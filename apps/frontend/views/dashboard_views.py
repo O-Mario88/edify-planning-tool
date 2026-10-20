@@ -675,7 +675,7 @@ def dashboard_view(request):
                         + (data.get("leadership_attention") or [])
                         or [{}]
                     )[0].get("action")
-                    or "Open country analytics"
+                    or "Open Country Profile"
                 ),
                 "url": (
                     (
@@ -683,7 +683,7 @@ def dashboard_view(request):
                         + (data.get("leadership_attention") or [])
                         or [{}]
                     )[0].get("link")
-                    or "/analytics/country-director"
+                    or "/country-profile"
                 ),
             },
         }

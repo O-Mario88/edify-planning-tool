@@ -56,8 +56,19 @@ MODULE_PAGES = {
 }
 
 
+def _reader(user):
+    """The User behind ``user``: services pass a User or a scope principal,
+    which carries the User's ``user_id`` but not the page permissions."""
+    if hasattr(user, "is_authenticated"):
+        return user
+    from apps.accounts.models import User
+
+    return User.objects.filter(id=getattr(user, "user_id", None)).first()
+
+
 def destination(user, section: str) -> str:
     """Where ``section``'s old link takes ``user``."""
+    user = _reader(user)
     if section in MODULE_PAGES:
         return MODULE_PAGES[section]
     if section == "core_school_health":
@@ -81,6 +92,32 @@ def destination(user, section: str) -> str:
             else _fallback(user)
         )
     return _profile(user) or _fallback(user)
+
+
+#: Each home's name, by the start of its address, as its own page reads.
+HOME_NAMES = (
+    ("/country-profile", "Country Profile"),
+    ("/staff/", "My Profile"),
+    ("/cluster-oversight/", "Cluster Oversight"),
+    ("/core-schools-oversight/", "Core School Oversight"),
+    ("/schools/closed", "Closed Schools"),
+    ("/projects/analytics", "Project Analytics"),
+    ("/budget", "Budget"),
+    ("/hr-analytics", "HR Analytics"),
+    ("/ia/dashboard/", "Impact Assessment Dashboard"),
+)
+
+
+def home(user, section: str = "overview") -> dict:
+    """The page ``section``'s reading lives on for ``user``, and its name.
+
+    A link that once opened an Analytics section opens this page and says
+    its name, rather than an old address that redirects."""
+    href = destination(user, section)
+    label = next(
+        (name for start, name in HOME_NAMES if href.startswith(start)), "Dashboard"
+    )
+    return {"href": href, "label": label}
 
 
 def retired(section: str, page_key: str):

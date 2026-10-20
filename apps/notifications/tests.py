@@ -63,10 +63,9 @@ class NotificationsWorkflowTest(TestCase):
         # The team's SSA rollout, not the roster: My Team is the Programme
         # Lead's people page (2026-09-13).
         self.assertEqual(pl_route, "/programme-rollout?view=ssa")
-        # The CD's own Analytics nav entry points at the national cockpit, so
-        # the notification must land there too — /analytics is the generic page
-        # and dropped the CD somewhere their sidebar never takes them.
-        self.assertEqual(cd_route, "/analytics/country-director")
+        # The country's SSA is read on the Country Profile (the Analytics
+        # entry is retired, owner 2026-10-19).
+        self.assertEqual(cd_route, "/country-profile?tab=ssa")
         # The queue that resolves it, not the dashboard, which opens on
         # Outcomes (IA review, 2026-09-13).
         self.assertEqual(ia_route, "/ssa/verification/")
@@ -82,7 +81,7 @@ class NotificationsWorkflowTest(TestCase):
         rvp_route, _ = NotificationLinkResolver.resolve(
             "critical_school_ssa", "School", "S1", "RegionalVicePresident"
         )
-        self.assertEqual(rvp_route, "/declining-schools")
+        self.assertEqual(rvp_route, "/country-profile?tab=schools&show=declined")
 
         # Partner Scheduled Activity
         partner_route, _ = NotificationLinkResolver.resolve(
@@ -166,10 +165,10 @@ class NotificationsWorkflowTest(TestCase):
         # Assert 4 notifications created
         self.assertEqual(Notification.objects.count(), 4)
 
-        # Assert CD's notification has country insights link
+        # Assert CD's notification opens the Country Profile's SSA
         cd_notif = Notification.objects.get(recipient_id=self.cd.id)
-        self.assertEqual(cd_notif.target_route, "/analytics/country-director")
-        self.assertEqual(cd_notif.action_label, "Country Insights")
+        self.assertEqual(cd_notif.target_route, "/country-profile?tab=ssa")
+        self.assertEqual(cd_notif.action_label, "Open Country Profile")
         self.assertEqual(cd_notif.category, "planning")
         self.assertTrue(cd_notif.action_required)
 

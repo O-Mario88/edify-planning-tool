@@ -2017,6 +2017,8 @@ def _pl_analytics_todos(principal, role):
 
     from apps.analytics.pl_analytics_service import PLAnalyticsService
 
+    # The team's signals are read on the lead's own profile, their team's.
+    profile = {"href": f"/staff/{principal.user_id}", "label": "My Profile"}
     out = []
     try:
         for t in PLAnalyticsService.pl_todos(principal):
@@ -2032,9 +2034,9 @@ def _pl_analytics_todos(principal, role):
                     "status_tone": "info",
                     "due_label": "—",
                     "due_tone": "neutral",
-                    "linked": "Program Lead Analytics",
+                    "linked": profile["label"],
                     "action_label": t.get("action_label", "Review"),
-                    "action_url": t.get("action_url", "/analytics/program-lead"),
+                    "action_url": t.get("action_url", profile["href"]),
                     "actionable": True,
                     "source": "PL Analytics",
                     "_due_sort": _date.today(),
@@ -2763,6 +2765,8 @@ def _cd_analytics_todos(principal, role):
 
     from apps.analytics.cd_analytics_service import CDAnalyticsService
 
+    # The country's signals are read on the Country Profile.
+    profile = {"href": "/country-profile", "label": "Country Profile"}
     out = []
     try:
         for t in CDAnalyticsService.cd_todos(principal):
@@ -2778,9 +2782,9 @@ def _cd_analytics_todos(principal, role):
                     "status_tone": "info",
                     "due_label": "—",
                     "due_tone": "neutral",
-                    "linked": "Country Director Analytics",
+                    "linked": profile["label"],
                     "action_label": t.get("action_label", "Review"),
-                    "action_url": t.get("action_url", "/analytics/country-director"),
+                    "action_url": t.get("action_url", profile["href"]),
                     "actionable": True,
                     "source": "CD Analytics",
                     "_due_sort": _date.today(),

@@ -3272,7 +3272,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4036,
+      "bytes": 4064,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3341,7 +3341,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 19855,
+      "bytes": 19870,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -5457,7 +5457,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7382,
+      "bytes": 7344,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6345,7 +6345,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2818,
+      "bytes": 2838,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6500,7 +6500,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5015,
+      "bytes": 5035,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6526,7 +6526,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4961,
+      "bytes": 4992,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8655,7 +8655,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6041,
+      "bytes": 6016,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/learning/"
@@ -8679,7 +8679,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 24959,
+      "bytes": 24966,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -26539,7 +26539,9 @@
       "route_name": "analytics_dashboard",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -26618,7 +26620,9 @@
       "route_name": "",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -26771,7 +26775,9 @@
       "route_name": "cd_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -27375,7 +27381,9 @@
       "route_name": "people_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -27446,7 +27454,9 @@
       "route_name": "pl_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -27951,7 +27961,9 @@
       "route_name": "closure_impact",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -28023,7 +28035,9 @@
       "route_name": "verification_quality",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -28099,7 +28113,9 @@
       "route_name": "visit_effectiveness",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -35451,7 +35467,9 @@
       "route_name": "core_school_health",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -41379,7 +41397,7 @@
         "css/admin-dashboard.css"
       ],
       "permission_key": "dashboard",
-      "primary_action": "Open CD Analytics",
+      "primary_action": "Open Country Profile",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
       "remediation": "No automated remediation outstanding",
@@ -43733,7 +43751,9 @@
       "route_name": "decision_intelligence",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -43809,7 +43829,9 @@
       "route_name": "declining_schools",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -60042,7 +60064,9 @@
       "route_name": "impact_analytics",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],
@@ -91877,7 +91901,9 @@
       "route_name": "ssa_master",
       "search": "shared topbar search or none",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.accounts.models"
+      ],
       "shared_layout": [
         "standalone-document-or-fragment"
       ],

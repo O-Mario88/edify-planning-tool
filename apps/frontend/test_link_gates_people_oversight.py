@@ -401,11 +401,11 @@ class PeoplePageLinkTest(TestCase):
 
 
 class CoreSchoolsReportLinkGateTest(SimpleTestCase):
-    """The Accountant opens Core Schools but not Visit Effectiveness, so the
-    "View Full Report" and analysis links are drawn only for roles that can
-    follow them."""
+    """The Core cards' analysis lives on Core School Oversight; the Accountant
+    opens Core Schools but not Core School Oversight, so its links are drawn
+    only for roles that can follow them."""
 
-    def test_visit_effectiveness_links_follow_the_page_gate(self):
+    def test_core_school_oversight_links_follow_the_page_gate(self):
         for template in (
             "partials/core_schools/intervention_impact.html",
             "partials/core_schools/performance_insights.html",
@@ -414,5 +414,6 @@ class CoreSchoolsReportLinkGateTest(SimpleTestCase):
                 with self.subTest(template=template, role=role):
                     html = _render(template, role)
                     self.assertEqual(
-                        "/analytics/visit-effectiveness" in html, drawn, role
+                        'href="/core-schools-oversight/"' in html, drawn, role
                     )
+                    self.assertNotIn("/analytics", html)

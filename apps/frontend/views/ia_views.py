@@ -1703,12 +1703,12 @@ def _ia_operations_context(request, header: dict) -> dict:
                 "href": "/data-quality/duplicates",
             },
             {
-                # SSA Performance, reached from IA's workspace strip; the
-                # generic Analytics hub is not an Impact Assessment door.
+                # The country's SSA, read on the Country Profile: IA, the CD
+                # and Admin, this dashboard's readers, are country readers.
                 "count": districts_below_target,
                 "text": "districts below 50% SSA completion",
                 "severity": "info",
-                "href": "/ssa",
+                "href": "/country-profile?tab=ssa",
             },
             {
                 "count": overdue_returns,

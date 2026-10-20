@@ -396,7 +396,9 @@ class FrontendViewsTestCase(TestCase):
         self.assertTemplateUsed(response, "pages/dashboards/main.html")
         reco = response.context["recommended_action"]
         self.assertIsNotNone(reco)
-        self.assertEqual(reco["cta_href"], "/ssa")
+        # The Admin reads the country's SSA on the Country Profile.
+        self.assertEqual(reco["cta_href"], "/country-profile?tab=ssa")
+        self.assertEqual(reco["cta_label"], "Open Country Profile")
         self.assertIn("1 school", reco["detail"])
         self.assertNotContains(response, "Confirm this week")
 
