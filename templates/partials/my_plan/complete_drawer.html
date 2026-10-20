@@ -43,6 +43,7 @@ this.notice = `${school.name} is on the register, ticked as attended${this.added
 >
 <form
 x-show="!registering"
+{% if purpose_choices %}x-data="{ purpose: '{{ current_purpose|escapejs }}' }"{% endif %}
 hx-post="/my-plan/{{ act.id }}/complete"
 hx-encoding="multipart/form-data"
 hx-request='{"timeout":120000}'
@@ -67,6 +68,56 @@ its money move to that day and its planned day is free
 <input type="date" name="actual_delivery_date" id="actual_delivery_date" required max="{{ today_iso }}" value="{{ act.actualDeliveryDate|default:today_iso }}" aria-describedby="actual-delivery-date-help" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus">
 <p id="actual-delivery-date-help" class="edify-text-caption text-slate-500">Today or an earlier day. Done before its planned day, it moves to this day with its cost, and the planned day is free for other work.</p>
 </div>
+
+{% if purpose_choices %}
+{% comment %}What the visit was for, chosen as it is completed (owner,
+2026-10-20): SSA Support, In-school Training or Training Follow Up. The visit
+takes the purpose before it is completed (apps.activities.completion_purpose),
+and the sections below follow the choice. Each section is a fieldset disabled
+while another purpose is chosen, so its fields are neither required nor
+sent.{% endcomment %}
+<div class="space-y-1" data-completion-purpose>
+<label for="purpose_type" class="block edify-text-caption font-semibold text-slate-600">Purpose of the visit <span class="text-rose-500">*</span></label>
+<select name="purpose_type" id="purpose_type" x-model="purpose" required aria-describedby="purpose-type-help"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">
+{% if not current_purpose %}<option value="">Select the purpose</option>{% endif %}
+{% for value, label in purpose_choices %}<option value="{{ value }}"{% if value == current_purpose %} selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+<p id="purpose-type-help" class="edify-text-caption text-slate-500">What the visit was for. Completing it as an In-school Training (with or without SSA Collection) adds the training to this visit, and each takes its own Salesforce ID.</p>
+</div>
+
+{% if offers_in_school_training %}
+<fieldset class="space-y-3 min-w-0" data-completion-training aria-labelledby="training-delivered-heading" x-show="purpose === 'in_school_training' || purpose === 'in_school_training_ssa'" x-cloak :disabled="purpose !== 'in_school_training' &amp;&amp; purpose !== 'in_school_training_ssa'" disabled>
+<h4 id="training-delivered-heading" class="text-[13px] font-semibold text-slate-800">Training delivered</h4>
+<div class="space-y-1">
+<label for="training_course_id" class="block edify-text-caption font-semibold text-slate-600">Which training was delivered? <span class="text-rose-500">*</span></label>
+<select id="training_course_id" name="training_course_id" required
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">
+<option value="">Select the training</option>
+{% for course in training_courses %}<option value="{{ course.id }}">{{ course.label }} &middot; {{ course.ssaInterventionLabel }}</option>{% endfor %}
+</select>
+</div>
+<div class="grid gap-3 sm:grid-cols-2">
+<div class="space-y-1">
+<label for="training_teachers_attended" class="block edify-text-caption font-semibold text-slate-600">Teachers attended</label>
+<input type="number" name="teachers_attended" id="training_teachers_attended" min="0" value="0"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:outline-none focus:ring-2 edify-primary-focus">
+</div>
+<div class="space-y-1">
+<label for="training_leaders_attended" class="block edify-text-caption font-semibold text-slate-600">Leaders attended</label>
+<input type="number" name="leaders_attended" id="training_leaders_attended" min="0" value="0"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:outline-none focus:ring-2 edify-primary-focus">
+</div>
+</div>
+<div class="space-y-1">
+<label for="training_salesforce_id" class="block edify-text-caption font-semibold text-slate-600">Training ID <span class="text-rose-500">*</span></label>
+<input type="text" name="training_salesforce_id" id="training_salesforce_id" required autocomplete="off" placeholder="e.g. TS-998877"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus">
+<p class="edify-text-caption text-slate-500">The training's ID from Salesforce. The visit's ID is asked below; both are checked together.</p>
+</div>
+</fieldset>
+{% endif %}
+{% endif %}
 
 {# UPLOAD-OFF (owner, 2026-10-13): an activity is completed with its visit ID or training ID alone. The Evidence section (the file inputs, the checklist and the list of uploaded files) is switched off, not deleted; remove the comment tags around it to bring it back. #}
 {% comment %}UPLOAD-OFF
@@ -140,23 +191,32 @@ class="w-full edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 
 </div>
 {% endcomment %}
 
-{% if act.ssaCollectionExpected %}
+{% if asks_ssa %}
 {% comment %}The model holds the radio's own string value. Alpine will not
 overwrite a radio's value when a static value= attribute is present, so the
 old `:value="true"`/`:value="false"` bindings were inert and the model never
 left its initial state: choosing "No" changed nothing on screen, the reason
 field stayed hidden, and the server then rejected the submit pointing at a
-field the user could not see (2026-08 UI/UX audit, UX-006).{% endcomment %}
-<div class="space-y-3" x-data="{ ssaCollected: 'yes' }">
+field the user could not see (2026-08 UI/UX audit, UX-006).
+
+Shown on every visit that collects the SSA, and on an In-school Training,
+whose scores are recorded on its school visit. With a choice of purpose it is
+asked for SSA Support and for an In-school Training (owner, 2026-10-20: "the
+purpose is in-school training and ssa collection").{% endcomment %}
+<fieldset class="space-y-3 min-w-0" data-ssa-section x-data="{ ssaCollected: '{{ ssa_default }}' }"{% if purpose_choices %} x-show="['ssa_support', 'in_school_training', 'in_school_training_ssa'].includes(purpose)" x-cloak :disabled="!['ssa_support', 'in_school_training', 'in_school_training_ssa'].includes(purpose)"{% if current_purpose != "ssa_support" %} disabled{% endif %}{% endif %}>
 <h4 class="text-[13px] font-semibold text-slate-800">SSA scores <span class="font-normal text-slate-500">(optional)</span></h4>
+{% if is_paired_in_school_training %}
+<p class="edify-text-caption text-slate-500" data-ssa-optional>If the school's SSA was collected at this training, enter all eight scores. They are recorded on the school visit. The Salesforce IDs below are what complete the training and the visit.</p>
+{% else %}
 <p class="edify-text-caption text-slate-500" data-ssa-optional>Enter all eight scores if they were collected, or leave them blank. The Salesforce ID below is what completes the visit.</p>
+{% endif %}
 
 <fieldset class="space-y-2">
 <legend class="block edify-text-caption font-semibold text-slate-600">Were SSA scores collected on this activity?</legend>
 <div class="flex flex-wrap items-center gap-4">
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collected" value="yes" x-model="ssaCollected" checked class="h-4 w-4 edify-primary-text edify-primary-focus">
-<span>Yes, collected</span>
+<input type="radio" name="ssa_collected" value="yes" x-model="ssaCollected"{% if ssa_default == "yes" %} checked{% endif %} class="h-4 w-4 edify-primary-text edify-primary-focus">
+<span>SSA data collected</span>
 </label>
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
 <input type="radio" name="ssa_collected" value="no" x-model="ssaCollected" class="h-4 w-4 edify-primary-text edify-primary-focus">
@@ -177,6 +237,7 @@ field the user could not see (2026-08 UI/UX audit, UX-006).{% endcomment %}
 </div>
 
 <!-- SSA Bypass Reason -->
+{% if not is_paired_in_school_training or pair_collects_ssa %}
 <div x-show="ssaCollected === 'no'" class="space-y-1">
 <label for="ssa_not_collected_reason" class="block edify-text-caption font-semibold text-slate-600">Reason SSA was not collected <span class="font-normal text-slate-500">(optional)</span></label>
 <select name="ssa_not_collected_reason" id="ssa_not_collected_reason" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none">
@@ -189,8 +250,9 @@ field the user could not see (2026-08 UI/UX audit, UX-006).{% endcomment %}
 <option value="Other">Other</option>
 </select>
 </div>
-</div>
+{% endif %}
 <hr class="border-slate-100">
+</fieldset>
 {% endif %}
 
 <!-- Completion details -->
@@ -504,7 +566,8 @@ class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary
 {% endif %}
 </div>
 
-{% if is_training_follow_up %}
+{% if shows_follow_up %}
+{% if purpose_choices %}<fieldset class="min-w-0" data-follow-up-section x-show="purpose === 'training_follow_up'" x-cloak :disabled="purpose !== 'training_follow_up'"{% if current_purpose != "training_follow_up" %} disabled{% endif %}>{% endif %}
 <hr class="border-slate-100">
 {% comment %}The training this visit followed up, named at completion and
 never optional (owner, 2026-09-21). The list is the school's completed
@@ -537,6 +600,7 @@ class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] 
 </div>
 {% endif %}
 </div>
+{% if purpose_choices %}</fieldset>{% endif %}
 {% endif %}
 
 <hr class="border-slate-100">

@@ -2170,6 +2170,7 @@ def create(
     core_slot_verified: bool = False,
     training_course=None,
     ssa_default_focus: bool = True,
+    joins_planned_visit: bool = False,
 ) -> dict:
     """Create and cost one governed Activity (see `_create`).
 
@@ -2190,6 +2191,7 @@ def create(
             core_slot_verified=core_slot_verified,
             training_course=training_course,
             ssa_default_focus=ssa_default_focus,
+            joins_planned_visit=joins_planned_visit,
         )
 
 
@@ -2201,6 +2203,7 @@ def _create(
     core_slot_verified: bool = False,
     training_course=None,
     ssa_default_focus: bool = True,
+    joins_planned_visit: bool = False,
 ) -> dict:
     """Create and cost one governed Activity.
 
@@ -2212,6 +2215,12 @@ def _create(
     ``ssa_default_focus=False`` lets a caller that pairs this activity with
     another keep the intervention it was given, even none, rather than have the
     SSA name one (the In-school Training's companion School Visit).
+
+    ``joins_planned_visit=True`` lets an In-school Training join the School
+    Visit it was delivered on, on that visit's day, even a day that has
+    passed: the visit was planned, and the officer completing it says a
+    training was delivered there (``planning.services.pair_training_with_visit``).
+    Every other gate still runs.
 
     ``skip_cost_snapshot`` and ``core_slot_verified`` are trusted,
     internal-caller flags (the Daily Visit Batch service and the Core Schools
@@ -2337,7 +2346,7 @@ def _create(
         if scheduled_date
         else data.get("quarter", get_quarter_for_date())
     )
-    if scheduled_date:
+    if scheduled_date and not joins_planned_visit:
         # A date is plannable only in an open fiscal year (owner, 2026-09-15:
         # FY2027 is planned from September 2026, FY2028 is not yet open).
         from apps.planning.fy_policy import assert_date_plannable
@@ -4042,6 +4051,11 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     a = _get_for_execution(activity_id, principal)
     if a.status not in COMPLETABLE_STATUSES:
         raise BadRequest("Click Complete first to unlock completion.")
+    # An In-school Training + SSA Collection names its training first
+    # (owner, 2026-10-20; apps.activities.ssa_collection_to_training).
+    from apps.activities.ssa_collection_to_training import assert_training_named
+
+    assert_training_named(a)
     # The day the work was done (owner, 2026-10-16): today or any day
     # before, never a future one. Asked before anything is changed.
     from apps.activities.completed_day import completion_day
@@ -4351,6 +4365,11 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
     a = _get_for_execution(activity_id, principal)
     if a.status not in SUBMITTABLE_STATUSES:
         raise BadRequest("Activity is not ready to be submitted for review.")
+    # An In-school Training + SSA Collection names its training first
+    # (owner, 2026-10-20; apps.activities.ssa_collection_to_training).
+    from apps.activities.ssa_collection_to_training import assert_training_named
+
+    assert_training_named(a)
 
     # A partner's work only: staff work asks for no file (_verified_from_upload).
     if _verified_from_upload(a):

@@ -80,6 +80,7 @@ run that is still scheduled.
     firstProjectId: '{{ edit_project.id|default:''|escapejs }}',
     focus: '{{ act.focus_intervention|default:''|escapejs }}',
     purpose: '{{ act.purpose_type|default:''|escapejs }}',
+    awaitsTraining: {{ edit_awaits_training|yesno:'true,false' }},
     firstPurpose: '{{ act.purpose_type|default:''|escapejs }}',
     get purposeMoved() { return this.purpose !== this.firstPurpose; },
     projectLinks: {% if project_links_json %}{{ project_links_json }}{% else %}{}{% endif %},
@@ -154,8 +155,23 @@ run that is still scheduled.
       {% if not act.purpose_type %}<option value="">Select a purpose…</option>{% endif %}
       {% for value, label in edit_purposes %}<option value="{{ value }}"{% if value == act.purpose_type %} selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
-    <p id="edit-purpose-help" class="edify-text-caption text-slate-500"><span x-show="purposeMoved" style="display:none">The visit keeps its ID, school and day. SSA Support asks for the SSA at completion; a Training Follow Up asks which training it followed up. </span>{% if edit_purpose_core %}A Core package visit is a Training Follow Up or SSA Support.{% endif %}</p>
+    <p id="edit-purpose-help" class="edify-text-caption text-slate-500"><span x-show="purposeMoved" style="display:none">The visit keeps its ID, school and day. SSA Support asks for the SSA at completion; a Training Follow Up asks which training it followed up; an In-school Training adds the training chosen below to this visit, and with SSA Collection the visit also collects the SSA. </span>{% if edit_purpose_core %}A Core package visit is a Training Follow Up or SSA Support.{% endif %}</p>
   </div>
+  {% if edit_purpose_trainings %}
+  {% comment %}The training an In-school Training delivers, named before it
+  is saved (owner, 2026-10-20: "if it is inschool training, the training name
+  has to be selected"). Disabled, and so neither required nor sent, while
+  another purpose is chosen.{% endcomment %}
+  <fieldset class="space-y-1 min-w-0" data-edit-purpose-training x-show="(purpose === 'in_school_training' || purpose === 'in_school_training_ssa') &amp;&amp; (purposeMoved || awaitsTraining)" x-cloak :disabled="!((purpose === 'in_school_training' || purpose === 'in_school_training_ssa') &amp;&amp; (purposeMoved || awaitsTraining))" disabled>
+    <label for="edit_purpose_training_course_id" class="block edify-text-caption font-semibold text-slate-600">Which training? <span class="text-rose-500">*</span></label>
+    <select id="edit_purpose_training_course_id" name="purpose_training_course_id" :required="purposeMoved"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      <option value="">Select a training…</option>
+      {% for course in edit_purpose_trainings %}<option value="{{ course.id }}">{{ course.label }} &middot; {{ course.ssaInterventionLabel }}</option>{% endfor %}
+    </select>
+    {% if edit_awaits_training %}<p class="edify-text-caption text-slate-500" data-awaits-training>This visit is an In-school Training + SSA Collection. Name the training delivered here or when completing it.</p>{% endif %}
+  </fieldset>
+  {% endif %}
   {% endif %}
 
   <div class="space-y-1">

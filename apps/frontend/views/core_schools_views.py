@@ -24,7 +24,11 @@ from apps.geography.models import Region, District
 from apps.accounts.models import StaffProfile
 from apps.partners.models import Partner, PartnerAssignment
 from apps.partners import services as partner_services
-from apps.partners.purposes import PARTNER_VISIT_PURPOSES
+from apps.partners.purposes import (
+    IN_SCHOOL_TRAINING_PURPOSES,
+    PARTNER_VISIT_PURPOSES,
+    split_training_purpose,
+)
 from apps.core_schools.package_credit import NON_PACKAGE_VISIT_PURPOSES
 from apps.activities.models import Activity
 from apps.core_schools.models import (
@@ -734,7 +738,7 @@ def core_schedule_visit_drawer(request):
     purposes = [
         (value, label)
         for value, label in STAFF_VISIT_PURPOSES
-        if not (visits_only and value == "in_school_training")
+        if not (visits_only and value in IN_SCHOOL_TRAINING_PURPOSES)
     ]
 
     from apps.frontend.views.planning_views import _school_training_follow_up_options
@@ -823,6 +827,15 @@ def core_schedule_visit_action(request):
             status=400,
         )
 
+    # In-school Training + SSA Collection: the In-school Training pair, its
+    # school visit collecting the SSA (owner, 2026-10-20). Partners are not
+    # handed it: a partner post keeps the value, which the partner purposes
+    # refuse.
+    training_collects_ssa = False
+    if not partner_id:
+        purpose_of_visit, training_collects_ssa = split_training_purpose(
+            purpose_of_visit
+        )
     try:
         if purpose_of_visit:
             purpose_of_visit = normalise_visit_purpose(
@@ -837,6 +850,7 @@ def core_schedule_visit_action(request):
                 scheduled_for=scheduled_for,
                 responsible_staff_id=responsible_staff_id,
                 partner_id=partner_id,
+                collects_ssa=training_collects_ssa,
             )
         if not purpose_of_visit:
             # An unnamed visit is read as SSA Support, as it always was. It
@@ -1092,7 +1106,13 @@ def _schedule_core_outreach_visit(
 
 
 def _schedule_core_in_school_training(
-    request, *, school, scheduled_for, responsible_staff_id, partner_id
+    request,
+    *,
+    school,
+    scheduled_for,
+    responsible_staff_id,
+    partner_id,
+    collects_ssa=False,
 ):
     """In-school Training chosen from the Core visit drawer.
 
@@ -1125,6 +1145,9 @@ def _schedule_core_in_school_training(
         "catalogueItemId": course_id,
         "responsibleStaffId": responsible_staff_id,
     }
+    if collects_ssa:
+        # In-school Training + SSA Collection: the visit collects the SSA.
+        payload["ssaCollectionExpected"] = True
     # A universal training is on top of the package's four (owner,
     # 2026-10-06: "School Improvement Planning training is universal every
     # schools can attend"): it is scheduled like any other and takes no slot.

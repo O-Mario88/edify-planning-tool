@@ -29,8 +29,21 @@ PARTNER_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
 # bulk. It was staff-only before it was withdrawn and it is staff-only now:
 # PARTNER_VISIT_PURPOSES is unchanged, so a partner still cannot be handed
 # one.
+#
+# In-school Training + SSA Collection (owner, 2026-10-20: "Add Inschool
+# training + SSA Collection to the purpose of visits ... it should appear
+# everywhere except the partner assignment drawer"): an In-school Training
+# whose companion school visit also collects the school's SSA. It is planned
+# as the In-school Training pair it is (``split_training_purpose``), the
+# visit marked as collecting the SSA; partners are not handed it.
+IN_SCHOOL_TRAINING = "in_school_training"
+IN_SCHOOL_TRAINING_SSA = "in_school_training_ssa"
+IN_SCHOOL_TRAINING_PURPOSES = frozenset({IN_SCHOOL_TRAINING, IN_SCHOOL_TRAINING_SSA})
+
 STAFF_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
-    *PARTNER_VISIT_PURPOSES,
+    PARTNER_VISIT_PURPOSES[0],
+    (IN_SCHOOL_TRAINING_SSA, "In-school Training + SSA Collection"),
+    *PARTNER_VISIT_PURPOSES[1:],
     ("donor_visit", "Donor Visit"),
     ("story_gathering", "Content/Story Collection"),
     ("school_invitation", "School Invitation"),
@@ -83,6 +96,7 @@ INTERVENTION_FREE_PURPOSES = frozenset(
 
 PURPOSE_ACTIVITY_TYPES = {
     "in_school_training": "in_school_training",
+    IN_SCHOOL_TRAINING_SSA: "in_school_training",
     "training_follow_up": "training_follow_up_visit",
     "ssa_support": "school_visit_ssa_collection",
     "donor_visit": "donor_visit",
@@ -106,6 +120,17 @@ _LABELS = {
 def visit_purpose_label(value: str | None, fallback: str = "—") -> str:
     """Return a plain-language label suitable for a staff-facing table."""
     return _LABELS.get(str(value or ""), fallback)
+
+
+def split_training_purpose(value: str | None) -> tuple[str, bool]:
+    """The purpose a plan is made under, and whether its school visit
+    collects the SSA: In-school Training + SSA Collection is planned as an
+    In-school Training whose visit collects it. Every other purpose is
+    returned as it came, collecting nothing extra."""
+    purpose = str(value or "").strip()
+    if purpose == IN_SCHOOL_TRAINING_SSA:
+        return IN_SCHOOL_TRAINING, True
+    return purpose, False
 
 
 def purpose_activity_type(value: str | None, fallback: str = "school_visit") -> str:
@@ -152,7 +177,7 @@ def normalise_cluster_bulk_purpose(value: str | None) -> str:
     purpose = str(value or "").strip()
     if not purpose:
         raise BadRequest("Choose what this day of visits is for.")
-    if purpose == "in_school_training":
+    if purpose in IN_SCHOOL_TRAINING_PURPOSES:
         raise BadRequest(
             "In-school Training is scheduled one school at a time, from that "
             "school's own Schedule drawer — it pairs a governed course with "
@@ -187,6 +212,9 @@ def _fallback_for_activity_type(activity_type: str | None, for_partner: bool) ->
 __all__ = [
     "CLUSTER_BULK_MAXIMUM_SCHOOLS",
     "CLUSTER_BULK_VISIT_PURPOSES",
+    "IN_SCHOOL_TRAINING",
+    "IN_SCHOOL_TRAINING_PURPOSES",
+    "IN_SCHOOL_TRAINING_SSA",
     "INTERVENTION_FREE_PURPOSES",
     "PARTNER_VISIT_PURPOSES",
     "RETIRED_VISIT_PURPOSES",
@@ -194,5 +222,6 @@ __all__ = [
     "normalise_cluster_bulk_purpose",
     "normalise_visit_purpose",
     "purpose_activity_type",
+    "split_training_purpose",
     "visit_purpose_label",
 ]

@@ -670,6 +670,10 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
     Both land on the same day. The School Visit carries the visit cost and
     the Training costs nothing (owner, 2026-09-28; see
     apps.activities.pair_costing).
+
+    ``ssaCollectionExpected`` is the visit's: In-school Training + SSA
+    Collection (owner, 2026-10-20) is this pair, its school visit collecting
+    the school's SSA. The Training never collects it.
     """
     from apps.activities.models import Activity
     from apps.activities.services import create as create_activity
@@ -715,8 +719,15 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
         )
 
     focus = selected["ssaIntervention"] or None
+    visit_collects_ssa = bool(
+        data.get("ssaCollectionExpected") or data.get("ssa_collection_expected")
+    )
     base = {
-        **data,
+        **{
+            key: value
+            for key, value in data.items()
+            if key not in ("ssaCollectionExpected", "ssa_collection_expected")
+        },
         "focusIntervention": focus,
         "purposeIntervention": focus,
         "requireCatalogue": True,
@@ -761,6 +772,7 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
             "activityType": ActivityType.SCHOOL_VISIT,
             "catalogueItemId": visit_profile.id,
             "purposeType": "in_school_training_delivery_visit",
+            "ssaCollectionExpected": visit_collects_ssa,
             "activityPurposeText": (f"School visit accompanying {course.display_name}"),
             "expectedOutcome": data.get("expectedOutcome")
             or (f"Complete the school visit and {course.display_name} training."),
@@ -797,6 +809,175 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
         "pairedSchoolVisitId": visit_result["id"],
         "pairedSchoolVisit": visit_result,
     }
+
+
+@transaction.atomic
+def pair_training_with_visit(
+    visit,
+    course_id: str,
+    principal,
+    *,
+    reason: str = "",
+    purpose: str = "in_school_training",
+):
+    """Make a planned school visit the companion of an In-school Training
+    delivered on it, and create that training beside it. Returns the training.
+
+    Owner, 2026-10-20: the Complete and Edit drawers offer every purpose a
+    visit is made for — SSA Support, In-school Training, Training Follow Up —
+    and a visit planned as something else may become an In-school Training.
+    Asked what that means, the owner chose: the drawer asks which training
+    was delivered ("the training name has to be selected"), the training is
+    created beside the visit as its pair, and both are completed with their
+    own IDs (TS- and SV-/SVE-). Called by ``activities.editing.edit``, inside
+    its money take-back. ``purpose`` In-school Training + SSA Collection
+    leaves the visit collecting the school's SSA; In-school Training does not.
+
+    The visit stays the one activity (its ID, school, day, owner and notes)
+    and becomes the pair's School Visit, which carries the journey's cost as
+    a planned pair does; the training is created on the visit's day and
+    costs nothing (apps.activities.pair_costing). The school's rules are
+    asked as scheduling asks them, and a refusal leaves the visit as it was.
+    """
+    from apps.activities.models import Activity
+    from apps.activities.services import create as create_activity
+    from apps.activities.services import reprice_activity
+    from apps.activity_catalogue.availability import (
+        validate_in_school_training_course_selection,
+    )
+    from apps.activity_catalogue.services import (
+        apply_catalogue_snapshot,
+        get_selectable_item,
+        resolve_item_for_workflow_kind,
+    )
+    from apps.audit.services import log as audit_log
+    from apps.core.clock import local_day
+    from apps.core.enums import ActivityType
+    from apps.partners.purposes import (
+        IN_SCHOOL_TRAINING_SSA,
+        split_training_purpose,
+        visit_purpose_label,
+    )
+
+    course_id = str(course_id or "").strip()
+    if not course_id:
+        raise BadRequest("Select the training delivered on this visit.")
+    day = visit.planned_date or local_day(visit.scheduled_date)
+    selected = validate_in_school_training_course_selection(course_id, on_date=day)
+    course = get_selectable_item(course_id, on_date=day)
+    training_profile = resolve_item_for_workflow_kind(
+        ActivityType.IN_SCHOOL_TRAINING, on_date=day
+    )
+    visit_profile = resolve_item_for_workflow_kind(
+        ActivityType.SCHOOL_VISIT, on_date=day
+    )
+    if training_profile is None or visit_profile is None:
+        raise BadRequest(
+            "The standard In-school Training and School Visit profiles must "
+            "both be active before this work can be completed as a training."
+        )
+
+    previous = {
+        "purposeType": visit.purpose_type or None,
+        "purpose": visit_purpose_label(visit.purpose_type, "") or None,
+        "activityType": visit.activity_type,
+        "catalogueItemId": visit.catalogue_item_id,
+        "ssaCollectionExpected": bool(visit.ssa_collection_expected),
+        "followUpOfActivityId": visit.follow_up_of_activity_id,
+    }
+    focus = selected["ssaIntervention"] or None
+
+    # The visit first: as the pair's companion it leaves the school's count of
+    # support visits, so the training below is asked about that count alone.
+    visit.activity_type = ActivityType.SCHOOL_VISIT
+    apply_catalogue_snapshot(
+        visit,
+        item=visit_profile,
+        recommendation_reason=visit.recommendation_reason or "",
+        requested_intervention=focus,
+        override_reason=visit.override_reason or "",
+        recommendation_source=visit.recommendation_source or {},
+        intervention_optional=True,
+    )
+    visit.salesforce_activity_type = "visit"
+    visit.purpose_type = "in_school_training_delivery_visit"
+    # In-school Training + SSA Collection: the visit collects the school's
+    # SSA (owner, 2026-10-20); its scores are recorded on it.
+    _purpose, visit.ssa_collection_expected = split_training_purpose(purpose)
+    visit.activity_purpose_text = f"School visit accompanying {course.display_name}"
+    visit.save(
+        update_fields=[
+            "activity_type",
+            "salesforce_activity_type",
+            "purpose_type",
+            "ssa_collection_expected",
+            "activity_purpose_text",
+            "updated_at",
+        ]
+    )
+
+    scheduled = visit.scheduled_date
+    training_result = create_activity(
+        {
+            "schoolId": visit.school.school_id,
+            "scheduledDate": scheduled.isoformat() if scheduled else day.isoformat(),
+            "plannedMonth": day.month,
+            "plannedWeek": min(5, (day.day - 1) // 7 + 1),
+            "deliveryType": "staff",
+            "responsibleStaffId": visit.responsible_staff_id,
+            "activityType": ActivityType.IN_SCHOOL_TRAINING,
+            "catalogueItemId": training_profile.id,
+            "purposeType": "in_school_training",
+            "focusIntervention": focus,
+            "purposeIntervention": focus,
+            "activityPurposeText": course.display_name,
+            "expectedOutcome": visit.expected_outcome
+            or f"Complete the school visit and {course.display_name} training.",
+            "requireCatalogue": True,
+            **({"projectId": visit.project_id} if visit.project_id else {}),
+        },
+        principal,
+        training_course=course,
+        skip_cost_snapshot=True,
+        joins_planned_visit=True,
+    )
+    training = Activity.objects.select_for_update().get(id=training_result["id"])
+    training.paired_school_visit_id = visit.id
+    training.save(update_fields=["paired_school_visit", "updated_at"])
+    visit.ssa_alignment = training.ssa_alignment
+    visit.recommendation_source = {
+        **(visit.recommendation_source or {}),
+        "ssa": {
+            **((training.recommendation_source or {}).get("ssa") or {}),
+            "pairedWithActivityId": training.id,
+        },
+    }
+    visit.save(update_fields=["ssa_alignment", "recommendation_source", "updated_at"])
+    # Priced as a planned pair's visit: the journey's cost on the visit, the
+    # training at UGX 0 beside it.
+    reprice_activity(visit, principal)
+
+    audit_log(
+        action="activity.purpose_changed",
+        subject_kind="Activity",
+        subject_id=str(visit.id),
+        actor_id=str(getattr(principal, "id", "") or ""),
+        actor_role=getattr(principal, "active_role", None),
+        reason=reason or None,
+        payload={
+            "from": previous,
+            "to": {
+                "purposeType": purpose,
+                "purpose": visit_purpose_label(purpose),
+                "activityType": visit.activity_type,
+                "catalogueItemId": visit.catalogue_item_id,
+                "ssaCollectionExpected": purpose == IN_SCHOOL_TRAINING_SSA,
+                "trainingActivityId": training.id,
+                "trainingCourseId": course.id,
+            },
+        },
+    )
+    return training
 
 
 def assign_school_visit_to_partner(data: dict, principal) -> dict:

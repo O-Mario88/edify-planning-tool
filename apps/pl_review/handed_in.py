@@ -49,9 +49,15 @@ def _candidates(ids=None):
     found = Activity.objects.filter(deleted_at__isnull=True)
     if ids is not None:
         found = found.filter(id__in=list(ids))
+    # A visit awaiting its In-school Training is handed in with its training,
+    # from the Complete drawer (owner, 2026-10-20;
+    # apps.activities.ssa_collection_to_training).
+    from apps.activities.ssa_collection_to_training import awaiting_training_q
+
     return (
         found.filter(lead_verified_q())
         .filter(holds_id)
+        .exclude(awaiting_training_q())
         .filter(
             Q(status__in=NOT_HANDED_IN_STATUSES)
             | Q(status__in=LEAD_REVIEWABLE_STATUSES)

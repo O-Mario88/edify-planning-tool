@@ -42,7 +42,7 @@ followUpRequiresTraining: {{ follow_up_requires_training|yesno:"true,false" }},
 {% comment %}The governed Training Catalogue owns category and SSA mapping.
 The planner chooses one course; Alpine presents its metadata immediately and
 the backend derives the same values again from the selected id.{% endcomment %}
-get showTrainingActivityPicker() { return this.purposeOfVisit === 'in_school_training'; },
+get showTrainingActivityPicker() { return ['in_school_training', 'in_school_training_ssa'].includes(this.purposeOfVisit); },
 get showFollowUpPicker() { return this.purposeOfVisit === 'training_follow_up'; },
 get showSsaDataGathering() { return this.purposeOfVisit === 'ssa_support'; },
 get followUpWithoutSource() { return this.showFollowUpPicker && !this.followUpRequiresTraining && !this.sourceActivityId; },
