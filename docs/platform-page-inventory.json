@@ -9660,7 +9660,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 25555,
+      "bytes": 25633,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"

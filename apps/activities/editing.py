@@ -410,13 +410,13 @@ def edit(activity_id: str, data: dict, principal) -> dict:
         )
     )
     if becomes_training:
-        if (
-            not purpose_change.may_change_purpose(activity)
-            or (activity.activity_type or "") == "core_visit"
-        ):
+        # A Core visit too (owner, 2026-10-20): its training takes the
+        # package's next open training slot once it is saved
+        # (apps.core_schools.package_credit), and the visit keeps its own.
+        if not purpose_change.may_change_purpose(activity):
             raise BadRequest(
-                "A Core package visit is a Training Follow Up or SSA Support. "
-                "Its trainings are planned from Core Schools."
+                "The purpose is changed on a planned visit to one school. "
+                "Cancel this activity and plan the In-school Training you need."
             )
         if not str(data.get("purposeTrainingCourseId") or "").strip():
             raise BadRequest("Select the training delivered on this visit.")
@@ -451,10 +451,10 @@ def edit(activity_id: str, data: dict, principal) -> dict:
             or invitations_move
             or new_school is not None
             or new_project is not None
-            or (
-                (purpose_moves or becomes_training)
-                and purpose_change.moves_money(activity)
-            )
+            # A visit that becomes a training's visit is priced as one, a
+            # Core visit as well as a client school's.
+            or becomes_training
+            or (purpose_moves and purpose_change.moves_money(activity))
         ):
             # A change that moves money: the week's fund request, where it
             # has been sent and not paid, comes back to its owner instead of

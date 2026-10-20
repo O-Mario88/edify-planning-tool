@@ -91,7 +91,10 @@ def purpose_options(activity) -> list[tuple[str, str]]:
     if not may_change_purpose(activity):
         return []
     if _is_core_slot(activity):
-        allowed = CORE_PACKAGE_VISIT_PURPOSES
+        # A Core visit may also be completed as an In-school Training (owner,
+        # 2026-10-20: "Yes, take a training slot"): the training takes the
+        # package's next open training slot, and the visit keeps its own.
+        allowed = (*CORE_PACKAGE_VISIT_PURPOSES, *sorted(IN_SCHOOL_TRAINING_PURPOSES))
     else:
         allowed = tuple(value for value, _label in STAFF_VISIT_PURPOSES)
     labels = dict(STAFF_VISIT_PURPOSES)
@@ -177,8 +180,9 @@ def change_purpose(activity, purpose, principal, *, reason: str = "") -> bool:
     if purpose not in offered:
         if _is_core_slot(activity):
             raise BadRequest(
-                "A Core package visit is a Training Follow Up or SSA Support. "
-                "A donor, story or other visit is planned from Core Schools."
+                "A Core package visit is a Training Follow Up, SSA Support or "
+                "an In-school Training. A donor, story or other visit is "
+                "planned from Core Schools."
             )
         raise BadRequest("Choose one of the visit purposes offered.")
 
