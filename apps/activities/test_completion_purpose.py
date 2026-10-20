@@ -473,3 +473,96 @@ class TwoTrainingPurposes(_Drawer):
         response = self._drawer(training)
         self.assertContains(response, 'x-model="ssaCollected" checked')
         self.assertContains(response, 'name="ssa_not_collected_reason"')
+
+
+class ACoreVisitBecomesAnInSchoolTraining(_Drawer):
+    """Owner, 2026-10-20 (asked whether Core visits offer the In-school
+    Training purposes too): "Yes, take a training slot". The training takes
+    the package's next open training slot; the visit keeps its own."""
+
+    def setUp(self):
+        super().setUp()
+        from apps.accounts.models import StaffSchoolAssignment
+        from apps.activities.test_activity_editing import _weekday
+        from apps.core.fy import get_operational_fy
+        from apps.core_schools.models import CorePlan, cplan_id
+        from apps.core_schools.services import create_package_slots
+        from apps.schools.models import School
+
+        self.day = _weekday(8)
+        self.fy = get_operational_fy(self.day)
+        self.core = School.objects.create(
+            school_id="PURPOSE-CORE",
+            name="Purpose Core",
+            region=self.region,
+            district=self.district,
+            school_type="core",
+            account_owner_id=self.cceo_staff.id,
+        )
+        StaffSchoolAssignment.objects.create(
+            staff=self.cceo_staff, school_id=self.core.id
+        )
+        self.plan = CorePlan.objects.create(
+            id=cplan_id("PURPOSE-CORE", fy=self.fy),
+            school_id="PURPOSE-CORE",
+            fy=self.fy,
+            status="Active",
+        )
+        create_package_slots(self.plan, "PURPOSE-CORE", ["leadership"])
+        with self.captureOnCommitCallbacks(execute=True):
+            self.visit = Activity.objects.create(
+                activity_type="core_visit",
+                purpose_type="ssa_support",
+                ssa_collection_expected=True,
+                status="scheduled",
+                delivery_type="staff",
+                fy=self.fy,
+                quarter="Q1",
+                planned_date=self.day,
+                school=self.core,
+                responsible_staff_id=str(self.cceo_staff.id),
+                activity_purpose_text="Core School Assessment",
+            )
+
+    def _slot_of(self, activity):
+        from apps.core_schools.models import CoreActivitySlot
+
+        return CoreActivitySlot.objects.filter(activity_id=activity.id).first()
+
+    def test_the_drawers_offer_the_training_purposes(self):
+        for url in (
+            f"/my-plan/{self.visit.id}/complete-drawer",
+            f"/my-plan/{self.visit.id}/edit-drawer",
+        ):
+            response = self._client().get(url, headers={"HX-Request": "true"})
+            for value in (
+                "ssa_support",
+                "training_follow_up",
+                "in_school_training",
+                "in_school_training_ssa",
+            ):
+                self.assertContains(response, f'value="{value}"')
+
+    def test_the_training_takes_a_training_slot_and_the_visit_keeps_its_own(self):
+        visit_slot = self._slot_of(self.visit)
+        self.assertEqual(visit_slot.activity_type, "visit")
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self._client().post(
+                f"/my-plan/{self.visit.id}/edit",
+                {
+                    "reason": "A training was delivered",
+                    "purpose_type": "in_school_training_ssa",
+                    "purpose_training_course_id": _a_course_id(),
+                },
+                headers={"HX-Request": "true"},
+            )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.visit.refresh_from_db()
+        training = Activity.objects.get(paired_school_visit_id=self.visit.id)
+        self.assertEqual(self.visit.activity_type, "school_visit")
+        self.assertTrue(self.visit.ssa_collection_expected)
+        self.assertEqual(self._slot_of(self.visit).id, visit_slot.id)
+        training_slot = self._slot_of(training)
+        self.assertIsNotNone(training_slot)
+        self.assertEqual(training_slot.activity_type, "training")
+        self.assertEqual(training_slot.core_plan_id, self.plan.id)
