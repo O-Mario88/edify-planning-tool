@@ -364,6 +364,7 @@ def _funded_schools(members) -> dict[str, int]:
     rather than the reader's own slice of the register.
     """
     from apps.business_transformation.models import MfiLoan
+    from apps.core.scoping import any_id
 
     school_cluster = {s["id"]: cid for cid, rows in members.items() for s in rows}
     counts = {cid: 0 for cid in members}
@@ -371,7 +372,7 @@ def _funded_schools(members) -> dict[str, int]:
         return counts
     for school_id in (
         MfiLoan.objects.filter(
-            school_id__in=list(school_cluster),
+            any_id("school_id", school_cluster),
             deleted_at__isnull=True,
             status__in=outcomes._FUNDED,
         )

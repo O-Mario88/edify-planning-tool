@@ -555,7 +555,13 @@ def ssa_movement_by_cluster(cluster_ids, *, fy: str, members=None) -> dict[str, 
         return countries.get(school_id, "")
 
     book = change_rules.RuleBook()
-    raw = improvement_rows(school_ids, fy) or []
+    # Each year's latest confirmed records, read once: they make the pairs,
+    # and say why a school is in no comparison (which year has none).
+    now = _latest_confirmed_records(school_ids, fy) if school_ids else {}
+    before = (
+        _latest_confirmed_records(school_ids, str(int(fy) - 1)) if school_ids else {}
+    )
+    raw = improvement_rows(school_ids, fy, latest=(now, before)) or []
     pairs = change_rules.classify_pairs(raw, book=book, country_for=country_for)
     verdicts = change_rules.school_verdicts(pairs, book=book, country_for=country_for)
     by_school: dict[str, dict[str, dict]] = {}
@@ -564,12 +570,7 @@ def ssa_movement_by_cluster(cluster_ids, *, fy: str, members=None) -> dict[str, 
 
     # Why a school is in no comparison: which year has no confirmed SSA, or
     # the two readings are the same assessment period read twice.
-    has_now = set(_latest_confirmed_records(school_ids, fy)) if school_ids else set()
-    has_before = (
-        set(_latest_confirmed_records(school_ids, str(int(fy) - 1)))
-        if school_ids
-        else set()
-    )
+    has_now, has_before = set(now), set(before)
     return {
         cid: _movement_of(
             members.get(cid, []), by_school, verdicts, has_now, has_before, fy, book

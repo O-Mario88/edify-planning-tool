@@ -65,6 +65,7 @@ def enrolment_by_cluster(
     completed (``SchoolEnrollmentHistory``); the latest figure is the school
     record's own. Two queries: the schools and the yearly figures.
     """
+    from apps.core.scoping import any_id
     from apps.schools.models import School, SchoolEnrollmentHistory
 
     cluster_ids = list(cluster_ids)
@@ -74,13 +75,13 @@ def enrolment_by_cluster(
     school_ids = [s["id"] for rows in members.values() for s in rows]
     latest = {
         row["id"]: row
-        for row in School.objects.filter(id__in=school_ids).values(
+        for row in School.objects.filter(any_id("id", school_ids)).values(
             "id", "enrollment", "last_enrollment_date"
         )
     }
     yearly: dict[str, dict[str, int]] = {}
     for school_id, year, enrolment in SchoolEnrollmentHistory.objects.filter(
-        school_id__in=school_ids, fy__in=[fy, previous_fy]
+        any_id("school_id", school_ids), fy__in=[fy, previous_fy]
     ).values_list("school_id", "fy", "enrollment"):
         yearly.setdefault(school_id, {})[str(year)] = enrolment
 
@@ -158,11 +159,12 @@ def _school_scores(school_ids, years) -> dict[str, dict[str, dict]]:
     share to take and is left out.
     """
     from apps.core.enums import VerificationStatus
+    from apps.core.scoping import any_id
     from apps.impact.models import LearningAssessmentResult
 
     totals: dict[tuple[str, str], list[float]] = {}
     for row in LearningAssessmentResult.objects.filter(
-        school_id__in=list(school_ids),
+        any_id("school_id", school_ids),
         fy__in=list(years),
         deleted_at__isnull=True,
         verification_status=VerificationStatus.CONFIRMED.value,
@@ -288,6 +290,7 @@ def loans_by_cluster(cluster_ids, principal, *, members=None) -> dict[str, LoanS
     shows nothing to is shown nothing here. One query.
     """
     from apps.business_transformation.services import scoped_loans
+    from apps.core.scoping import any_id
 
     cluster_ids = list(cluster_ids)
     members = members if members is not None else member_schools(cluster_ids)
@@ -298,7 +301,7 @@ def loans_by_cluster(cluster_ids, principal, *, members=None) -> dict[str, LoanS
         return out
     loans = (
         scoped_loans(principal)
-        .filter(school_id__in=list(school_cluster), deleted_at__isnull=True)
+        .filter(any_id("school_id", school_cluster), deleted_at__isnull=True)
         .exclude(status="canceled")
         .order_by("school__name", "-disbursement_date", "-created_at")
     )
@@ -372,6 +375,7 @@ def stories_by_cluster(
     from apps.accounts.models import User
     from apps.core.enums import SsaIntervention
     from apps.core.fy import get_fy_date_range
+    from apps.core.scoping import any_id
     from apps.targets.models import MostSignificantChangeStory, MSCSStatus
 
     cluster_ids = list(cluster_ids)
@@ -383,7 +387,7 @@ def stories_by_cluster(
         return out
     stories = (
         MostSignificantChangeStory.objects.filter(
-            Q(cluster_id__in=cluster_ids) | Q(school_id__in=list(school_cluster))
+            Q(cluster_id__in=cluster_ids) | Q(any_id("school_id", school_cluster))
         )
         .exclude(status=MSCSStatus.DRAFT)
         .select_related("school")

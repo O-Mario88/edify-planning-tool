@@ -394,6 +394,54 @@ class OversightColumnsTest(_Sessions):
         self.assertIn(">50%</a>", body)
 
 
+class SsaMovementReadsEachYearOnceTest(_ClusterCase):
+    """The SSA movement reads each year's latest confirmed records once: they
+    make the pairs and say why a school is in no comparison. Read twice, at
+    15,000 schools each read was some 60ms the Cluster Oversight page paid
+    again."""
+
+    _ssa = OversightColumnsTest._ssa
+
+    def test_each_year_is_read_once_and_the_movement_is_unchanged(self):
+        from unittest import mock
+
+        from apps.analytics import impact_engine
+        from apps.clusters import profile_insights as insights
+
+        compared, unpaired = self._school(0), self._school(1)
+        self._ssa(compared, self.last_fy, 5.0)
+        self._ssa(compared, self.fy, 6.5)
+        self._ssa(unpaired, self.fy, 4.0)
+        ids = [compared.id, unpaired.id]
+        latest = (
+            impact_engine._latest_confirmed_records(ids, self.fy),
+            impact_engine._latest_confirmed_records(ids, self.last_fy),
+        )
+        self.assertEqual(
+            impact_engine.improvement_rows(ids, self.fy, latest=latest),
+            impact_engine.improvement_rows(ids, self.fy),
+        )
+
+        reads = mock.patch.object(
+            impact_engine,
+            "_latest_confirmed_records",
+            side_effect=impact_engine._latest_confirmed_records,
+        )
+        with reads as read:
+            movement = insights.ssa_movement_by_cluster([self.cluster.id], fy=self.fy)
+
+        self.assertEqual(
+            sorted(call.args[1] for call in read.call_args_list),
+            sorted([self.fy, self.last_fy]),
+        )
+        rows = {
+            row["id"]: row
+            for row in movement[self.cluster.id]["schools_by_area"][insights.OVERALL]
+        }
+        self.assertNotEqual(rows[compared.id]["verdict"], insights.NOT_COMPARED)
+        self.assertEqual(rows[unpaired.id]["verdict"], insights.NOT_COMPARED)
+
+
 class AbsentSchoolsTodoTest(_Sessions):
     def setUp(self):
         super().setUp()
