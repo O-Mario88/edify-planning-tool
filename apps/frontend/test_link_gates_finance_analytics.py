@@ -6,7 +6,8 @@ that refuse them, so a click landed on "Access Denied":
 - /budget offered "Weekly Advance Request" to the RVP, who cannot open
   /fund-requests/weekly;
 - the Analytics "Recommended Strategy" card offered "View Action Plan"
-  (/planning) to the RVP, the Regional Lead and HR;
+  (/planning) to the RVP, the Regional Lead and HR (the card left with the
+  Analytics entry, owner, 2026-10-19);
 - /ssa rendered the Analytics shell for partner, BT and MFI readers, and its
   header offered Download CSV, Send to Inbox and Customize, all Analytics
   routes those roles cannot open (the page and those controls left with the
@@ -50,25 +51,6 @@ def _user(email, role):
         password="x",
         is_active=True,
     )
-
-
-class RecommendedStrategyLinkTest(SimpleTestCase):
-    TEMPLATE = "partials/analytics/recommended_insights.html"
-
-    def test_readers_planning_refuses_see_the_strategy_without_the_link(self):
-        for role in ("RegionalVicePresident", "RegionalProgramLead", "HumanResources"):
-            with self.subTest(role=role):
-                html = _render(self.TEMPLATE, role, {"insights": []})
-                self.assertIn("Recommended Strategy", html)
-                self.assertNotIn("View Action Plan", html)
-                self.assertNotIn('href="/planning"', html)
-
-    def test_readers_who_plan_keep_the_link(self):
-        for role in ("CountryDirector", "Program Lead", "Admin"):
-            with self.subTest(role=role):
-                html = _render(self.TEMPLATE, role, {"insights": []})
-                self.assertIn('href="/planning"', html)
-                self.assertIn("View Action Plan", html)
 
 
 class AdminClusterTableLinksTest(SimpleTestCase):

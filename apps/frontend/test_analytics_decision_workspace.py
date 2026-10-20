@@ -15,54 +15,6 @@ def _read(relative_path: str) -> str:
 
 
 class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
-    def test_overview_leads_with_four_signals_and_geographic_priorities(self):
-        """The four signals moved out of the overview and above the tablist on
-        2026-09-05: they describe the scope the filters ask for, so they are
-        the same on every Analytics tab rather than one section's opening row.
-        They still lead the workspace; the panel opens on its decision cards."""
-        pulse = _read("templates/partials/analytics/executive_pulse.html")
-        cards = _read("templates/partials/analytics/kpi_cards.html")
-
-        self.assertIn("items=executive_kpi_items", pulse)
-        self.assertIn("items=additional_kpi_items", pulse)
-        scope = _read("templates/partials/analytics/scope.html")
-        self.assertLess(scope.index("tiles_template"), scope.index("tab_rail.html"))
-        # The country map moved to the Map view of the home dashboards
-        # (owner, 2026-09-05): the overview opens on its decision cards.
-        self.assertNotIn("regional_performance.html", cards)
-        self.assertNotIn("analytics-row--geography", cards)
-        self.assertLess(
-            cards.index("target_by_district.html"),
-            cards.index("recommended_insights.html"),
-        )
-        self.assertIn("analytics-evidence-disclosure", cards)
-
-    def test_district_priorities_are_complete_grouped_and_ranked(self):
-        service = _read("apps/analytics/analytics_dashboard_service.py")
-        template = _read("templates/partials/analytics/target_by_district.html")
-
-        self.assertIn('select_related("region", "sub_region")', service)
-        self.assertIn("target_by_district_groups", service)
-        self.assertNotIn("shown_districts = list(all_districts[:8])", service)
-        self.assertIn("grouped by sub-region", template)
-        self.assertIn("Needs attention", template)
-        self.assertIn("View all {{ group.districts|length }} districts", template)
-        # Each filter says how many districts it holds, and a filter that
-        # finds nothing says so — in a scope of two critical districts all
-        # three filters showed the same rows and read as a broken control
-        # (owner, 2026-09-05).
-        self.assertIn("target_by_district_summary", service)
-        for count in ("districts", "attention", "critical"):
-            self.assertIn(
-                "{{ target_by_district_summary.%s|default:0 }}</span>" % count, template
-            )
-        # The filters are the platform's tab rail (owner, 2026-09-27), and the
-        # count is the tab's own count.
-        self.assertIn('class="analytics-priority-filters" data-edify-tablist', template)
-        self.assertEqual(template.count("data-edify-tab-count"), 3)
-        self.assertIn('class="analytics-priority-empty"', template)
-        self.assertIn("No critical district in this scope", template)
-
     def test_map_keeps_original_visual_while_distribution_uses_new_layout(self):
         map_template = "\n".join(
             (
@@ -137,10 +89,6 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
             "font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size))",
             map_template[map_template.index("@media (max-width:48rem){") :],
         )
-        cluster_template = _read(
-            "templates/partials/analytics/cluster_performance.html"
-        )
-        self.assertIn('data-mobile-table="scroll"', cluster_template)
 
     def test_the_section_nav_shows_named_workspace_areas(self):
         partial = _read("templates/partials/_section_nav.html")
@@ -188,15 +136,6 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
     def test_every_analytics_route_uses_the_enterprise_anatomy(self):
         templates = (
             "templates/pages/analytics/workspace.html",
-            "templates/pages/analytics/index.html",
-            "templates/pages/analytics/impact.html",
-            "templates/pages/analytics/visit_effectiveness.html",
-            "templates/pages/analytics/declining_schools.html",
-            "templates/pages/analytics/closure_quality.html",
-            "templates/pages/analytics/closure_impact.html",
-            "templates/pages/analytics/publishing_status.html",
-            "templates/pages/ssa/performance.html",
-            "templates/pages/decisions/index.html",
             "templates/pages/audit/decision_log.html",
             "templates/pages/reports/index.html",
             "templates/pages/projects/analytics.html",
@@ -229,47 +168,12 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("edify:analytics-interaction", script)
         self.assertIn('aria-label="Decision and data context"', decision_frame)
 
-    def test_impact_contribution_results_are_complete_scrollable_tables(self):
-        template = _read("templates/partials/analytics/impact_workspace.html")
-        css = _read("static/css/pages/analytics-dashboard.css")
-
-        self.assertIn("data-impact-driver-table", template)
-        self.assertIn("data-impact-group-table", template)
-        self.assertIn("data-impact-lagging-table", template)
-        self.assertEqual(template.count('data-mobile-table="scroll"'), 3)
-        self.assertEqual(template.count('class="impact-table-scroll"'), 3)
-        self.assertEqual(template.count("data-table-scroll-region"), 3)
-        self.assertIn('<caption class="sr-only">', template)
-        self.assertIn('<th scope="col">Adjusted p</th>', template)
-        self.assertIn('<th scope="col">Median SSA Δ</th>', template)
-        self.assertIn('<th scope="col">Paired schools</th>', template)
-        self.assertIn("driver.schools_unexposed", template)
-        self.assertNotIn(
-            "{{ row.district }} · {{ row.intervention }} — median Δ",
-            template,
-        )
-        self.assertNotIn(
-            'class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3"',
-            template,
-        )
-        self.assertIn(".impact-table-scroll", css)
-        self.assertIn("overflow-x: auto", css)
-        self.assertIn("min-inline-size: 126rem", css)
-        self.assertIn("min-inline-size: 42rem", css)
-        self.assertIn(":focus-visible", css)
-
     def test_role_dashboards_prioritize_actions_and_disclose_evidence(self):
-        pl = _read("templates/partials/analytics/pl/body.html")
-        cd = _read("templates/partials/analytics/cd/body.html")
-        # Both bodies became shared partials when these sections also became
-        # tabs of the one Analytics page (2026-09-05).
+        # The Programme Lead and Country Director cockpits left with the
+        # Analytics entry (owner, 2026-10-19).
         ia = _read("templates/partials/ia/dashboard_body.html")
         reports = _read("templates/partials/analytics/panels/reports.html")
 
-        self.assertIn("Priority intelligence", pl)
-        self.assertEqual(pl.count("data-analytics-disclosure"), 3)
-        self.assertIn("Leadership priorities", cd)
-        self.assertEqual(cd.count("data-analytics-disclosure"), 4)
         self.assertEqual(ia.count("data-analytics-disclosure"), 3)
         # One disclosure since the period matrix moved to the target pages.
         self.assertEqual(reports.count("data-analytics-disclosure"), 1)

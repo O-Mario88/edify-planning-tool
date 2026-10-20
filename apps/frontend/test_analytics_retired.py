@@ -40,8 +40,8 @@ class RetiredFixture(TestCase):
         cls.pl = _person("ret-pl@t.test", EdifyRole.COUNTRY_PROGRAM_LEAD)
         cls.cceo = _person("ret-cceo@t.test", EdifyRole.CCEO)
         cls.ia = _person("ret-ia@t.test", EdifyRole.IMPACT_ASSESSMENT)
-        cls.hr = _person("ret-hr@t.test", EdifyRole.HUMAN_RESOURCES)
-        cls.accountant = _person("ret-acc@t.test", EdifyRole.PROGRAM_ACCOUNTANT)
+        cls.hr = _person("ret-home-hr@t.test", EdifyRole.HUMAN_RESOURCES)
+        cls.accountant = _person("ret-home-acc@t.test", EdifyRole.PROGRAM_ACCOUNTANT)
 
 
 class OldLinksTest(RetiredFixture):
@@ -58,10 +58,6 @@ class OldLinksTest(RetiredFixture):
             self.lands(self.pl, "/analytics/program-lead"), f"/staff/{self.pl.id}"
         )
         self.assertEqual(self.lands(self.cceo, "/analytics"), "/cluster-oversight/")
-        # A reader with no profile and no oversight of their own: HR lands on
-        # the Dashboard, the Accountant on the Budget.
-        self.assertEqual(self.lands(self.hr, "/analytics"), "/dashboard")
-        self.assertEqual(self.lands(self.accountant, "/analytics"), "/budget")
 
     def test_each_section_opens_its_closest_page(self):
         cases = (
@@ -86,6 +82,21 @@ class OldLinksTest(RetiredFixture):
             with self.subTest(url=url, role=user.active_role):
                 self.assertEqual(self.lands(user, url), destination)
 
+    def test_a_reader_with_no_profile_lands_on_their_home(self):
+        """A reader the profiles do not hold opens their own home page."""
+        hr = _person("ret-hr@t.test", EdifyRole.HUMAN_RESOURCES)
+        accountant = _person("ret-acc@t.test", EdifyRole.PROGRAM_ACCOUNTANT)
+        partner = _person("ret-partner@t.test", EdifyRole.PARTNER_FIELD_OFFICER)
+        cases = (
+            (hr, "/analytics", "/dashboard"),
+            (hr, "/ssa", "/dashboard"),
+            (accountant, "/analytics", "/budget"),
+            (partner, "/ssa", "/dashboard"),
+        )
+        for user, url, destination in cases:
+            with self.subTest(url=url, role=user.active_role):
+                self.assertEqual(self.lands(user, url), destination)
+
     def test_the_three_tools_stay_where_they_are(self):
         self.client.force_login(self.ia)
         for url in ("/decision-log", "/reports", "/analytics/closure-quality"):
@@ -105,6 +116,30 @@ class SidebarTest(RetiredFixture):
         for user in (self.cd, self.pl, self.cceo, self.ia):
             with self.subTest(role=user.active_role):
                 self.assertNotIn("Analytics", self.entries(user))
+
+    def test_hr_reads_people_analytics_from_its_monthly_group(self):
+        """Owner, 2026-10-19: "Give HR a People Analytics sidebar entry
+        (/hr-analytics) in their monthly group." It was the HR's Analytics tab
+        until the Analytics entry was retired."""
+        hr = _person("ret-hr-nav@t.test", EdifyRole.HUMAN_RESOURCES)
+        monthly = next(
+            group
+            for group in build_sidebar_for_user(hr, "/dashboard")
+            if group["label"] == "MONTHLY"
+        )
+        self.assertIn(
+            ("People Analytics", "/hr-analytics"),
+            [(item["label"], item["url"]) for item in monthly["items"]],
+        )
+        lit = [
+            item["label"]
+            for group in build_sidebar_for_user(hr, "/hr-analytics")
+            for item in group["items"]
+            if item["active"]
+        ]
+        self.assertEqual(lit, ["People Analytics"])
+        # The Country Director may open the page but is not offered it.
+        self.assertNotIn("People Analytics", self.entries(self.cd))
 
     def test_the_three_tools_have_entries_of_their_own(self):
         entries = self.entries(self.ia)
@@ -227,14 +262,12 @@ class HomeTest(RetiredFixture):
         self.assertNotIn("CD Analytics", body)
 
 
-#: The addresses the redirects answer, and the Analytics page's own actions:
-#: not a segment of a longer path (after a word, `/`, `.`, `-`, `>` or `}`),
-#: and not prose ("/impact's").
+#: The addresses the redirects answer: not a segment of a longer path (after a
+#: word, `/`, `.`, `-`, `>` or `}`), and not prose ("/impact's").
 RETIRED_ADDRESS = re.compile(
     r"(?<![\w/.>}-])/(?:"
     r"analytics(?:/(?:program-lead|country-director|visit-effectiveness"
-    r"|school-closures|people|verification-quality|export|schedule-report"
-    r"|customize-dashboard))?/?"
+    r"|school-closures|people|verification-quality))?/?"
     r"|ssa|impact|declining-schools|core-school-health|decisions"
     r")(?=[\"'`?#{])(?!'\w)"
 )
@@ -245,9 +278,6 @@ NAMES_A_RETIRED_ADDRESS = {
     "apps/frontend/urls.py": "routes the old addresses",
     "apps/frontend/views/analytics_retired.py": "answers the old addresses",
     "apps/core/navigation.py": "keeps each old address's page key",
-    # Decision Intelligence stays as it is until the owner decides where the
-    # leadership and budget review goes.
-    "apps/frontend/views/decision_views.py": "Decision Intelligence's own form",
     # Who's Online names the part of the system a path belongs to; it links
     # nowhere.
     "apps/accounts/presence_labels.py": "labels a path, links nowhere",

@@ -16,7 +16,7 @@ const { watchPageErrors } = require('./helpers/page-errors');
 const WIDTHS = [320, 360, 390, 430];
 const PAGES = {
   'cceo@edify.org': ['/dashboard', '/my-plan', '/core-schools', '/schools', '/planning', '/work-plan'],
-  'cd@edify.org': ['/staff', '/projects/planning', '/clusters', '/analytics/country-director'],
+  'cd@edify.org': ['/staff', '/projects/planning', '/clusters', '/country-profile'],
   'pl1@edify.org': ['/dashboard'],
   'hr@edify.org': ['/my-performance'],
 };

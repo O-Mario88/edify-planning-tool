@@ -148,9 +148,11 @@ class InventoryTests(SimpleTestCase):
         self.assertGreater(len(self.inventory.payload_groups), 30)
         # 190 since 2026-09-13: the Regional HR Director's panel went from
         # twelve tiles to eight, the rest moving into the dashboard's cards.
+        # 180 since 2026-10-19: the Analytics cockpits' groups left with the
+        # Analytics entry (owner).
         self.assertGreater(
             sum(group.source_item_count for group in self.inventory.payload_groups),
-            190,
+            180,
         )
         for group in self.inventory.payload_groups:
             with self.subTest(group=group.audit_id):

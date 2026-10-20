@@ -30,8 +30,11 @@ test('table title bands and column ink respect theme and viewport',async({page})
    expect(name).toBeGreaterThan(column);expect(column).toBeGreaterThan(cell);
    expect(column-cell).toBeLessThanOrEqual(1.5);
    await expect(page.locator('h2')).toHaveCSS('font-weight','700');
+   // The header row keeps its band, the title band's tone, since 2026-10-18
+   // ("enterprise-grade consistency"); it was flattened to the cells before.
    const background=await page.locator('th').first().evaluate(e=>getComputedStyle(e).backgroundColor);
-   expect(background).toBe(await page.locator('td').first().evaluate(e=>getComputedStyle(e).backgroundColor));
+   expect(background).toBe('rgb(220, 230, 236)');
+   expect(background).not.toBe(await page.locator('td').first().evaluate(e=>getComputedStyle(e).backgroundColor));
   }
   await expect(page.locator('h1')).not.toHaveClass(/edify-table-titlebar/);
   // The classes base.html writes for each theme: the band then takes that theme's own table-header tone.

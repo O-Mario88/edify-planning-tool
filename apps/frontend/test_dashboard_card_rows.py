@@ -26,8 +26,6 @@ class DashboardCardRowContractTest(SimpleTestCase):
         dashboard_templates = (
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/hr/body.html",
-            "templates/partials/analytics/cd/body.html",
-            "templates/partials/analytics/pl/body.html",
             "templates/partials/debriefs/dashboard_body.html",
         )
         for path in dashboard_templates:
@@ -51,17 +49,6 @@ class DashboardCardRowContractTest(SimpleTestCase):
             source.index("data-cd-priority-schools-card"),
         )
         self.assertIn("lg:flex-row lg:items-center", source)
-
-    def test_cd_analytics_groups_supporting_evidence_by_decision_context(self):
-        source = self._source("templates/partials/analytics/cd/body.html")
-        self.assertIn("Leadership priorities", source)
-        self.assertIn('data-analytics-id="cd-performance-drivers"', source)
-        self.assertIn('data-analytics-id="cd-impact-delivery"', source)
-        self.assertIn('data-analytics-id="cd-people-oversight"', source)
-        self.assertIn('data-analytics-id="cd-finance-reporting"', source)
-        self.assertEqual(source.count("data-cd-analytics-row"), 6)
-        self.assertEqual(source.count("data-cd-analytics-wide-card"), 1)
-        self.assertNotIn("lg:grid-cols-3 gap-5 items-start", source)
 
     def test_pl_dashboard_views_pack_two_intrinsic_columns(self):
         """The Program Lead's views (2026-09-13) share the Regional Lead
@@ -129,34 +116,6 @@ class DashboardCardRowContractTest(SimpleTestCase):
         self.assertIn("grid-template-columns: minmax(0, 1.38fr) minmax(0, 1fr)", main)
         self.assertIn(".admin-col { align-content: start; }", css)
 
-    def test_cd_program_lead_surfaces_show_supervised_cceo_area_results(self):
-        dashboard = self._source("templates/partials/dashboards/cd/body.html")
-        oversight = self._source("templates/partials/analytics/cd/pl_oversight.html")
-        drawer = self._source("templates/partials/analytics/cd/drilldown.html")
-
-        # The dashboard carries one column per target area, in the owner's
-        # order (2026-09-05); each is looked up by key, never by position.
-        service = self._source("apps/analytics/cd_dashboard_service.py")
-        columns = service.split("PL_AREA_COLUMNS = (", 1)[1].split(")\n", 1)[0]
-        self.assertEqual(
-            re.findall(r'\("(\w+)", "([^"]+)"\)', columns),
-            [
-                ("mscs", "MSCS"),
-                ("school_visits", "School Visit"),
-                ("cluster_trainings", "Training"),
-                ("ssa_completed", "SSA Completed"),
-                ("cluster_meetings", "Cluster Meetings"),
-            ],
-        )
-        self.assertEqual(
-            dashboard.count("{% for key, label in pl_performance.area_columns %}"), 2
-        )
-        self.assertIn("r.areas_by_key|get_item:key", dashboard)
-        self.assertNotIn("Supervised CCEO Areas", dashboard)
-        self.assertIn("CCEO Area Results", oversight)
-        self.assertIn("Supervised CCEOs · all target areas", drawer)
-        self.assertIn("{% for area in c.areas %}", drawer)
-
 
 class TemplateCommentSyntaxTest(SimpleTestCase):
     """A `{# #}` comment is single-line only; a wrapped one leaks onto the page.
@@ -170,7 +129,6 @@ class TemplateCommentSyntaxTest(SimpleTestCase):
     """
 
     def test_no_template_wraps_a_hash_comment_over_several_lines(self):
-        import re
         from pathlib import Path
 
         from django.conf import settings

@@ -290,7 +290,9 @@ class ComponentAdoptionRatchetTests(TestCase):
         for _path, source in _page_templates():
             for name in used:
                 used[name] += source.count("{% " + name + " ")
-        self.assertGreaterEqual(used["page_header"], 105, used)
+        # 104 since 2026-10-19: a page that used it left with the Analytics
+        # entry (owner); a page deleted is not a header undone.
+        self.assertGreaterEqual(used["page_header"], 104, used)
         self.assertGreaterEqual(used["filter_bar"], 7, used)
         self.assertGreaterEqual(used["data_table"], 4, used)
 

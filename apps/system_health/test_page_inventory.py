@@ -268,17 +268,19 @@ class PageInventoryTest(SimpleTestCase):
         as if it had no interface (2026-09-05).
         """
 
-        from apps.frontend.views.analytics_views import analytics_dashboard_view
-        from apps.frontend.views.decision_views import core_school_health_view
+        # The Analytics entry is retired (owner, 2026-10-19); Reports and the
+        # Decision Log still delegate to the same renderer.
+        from apps.frontend.views.decision_views import decision_log_view
+        from apps.frontend.views.extended_views import reports_view
 
-        for view in (analytics_dashboard_view, core_school_health_view):
+        for view in (decision_log_view, reports_view):
             templates = _view_templates(view)
             # The page a plain GET returns leads; the HTMX fragments follow.
             self.assertEqual(templates[0], "pages/analytics/workspace.html", view)
             self.assertIn("partials/analytics/scope.html", templates)
             self.assertIn("partials/analytics/panel.html", templates)
             self.assertEqual(
-                _surface_kind("/analytics", "analytics_dashboard", templates), "page"
+                _surface_kind("/decision-log", "decision_log", templates), "page"
             )
 
         # A drawer is a drawer whichever template its source happens to name

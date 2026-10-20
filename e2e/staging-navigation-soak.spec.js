@@ -3,7 +3,7 @@ const { signIn } = require('./helpers/auth');
 
 const enabled = process.env.EDIFY_STAGING_SOAK === '1';
 const password = process.env.EDIFY_E2E_PASSWORD || 'edify';
-const routes = ['/schools', '/analytics', '/system-health', '/dashboard', '/todos'];
+const routes = ['/schools', '/country-profile', '/system-health', '/dashboard', '/todos'];
 
 async function counters(page, cdp) {
   await cdp.send('HeapProfiler.collectGarbage');

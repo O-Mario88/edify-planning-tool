@@ -29,6 +29,7 @@ from .views import (
     my_plan_panel_views,
     my_plan_views,
     analytics_retired,
+    profile_decisions,
     analytics_views,
     staff_views,
     finance_views,
@@ -2548,6 +2549,11 @@ urlpatterns = [
         name="sub_region_profile",
     ),
     path("country-profile", profile_views.country_profile_view, name="country_profile"),
+    path(
+        "country-profile/decisions",
+        profile_decisions.country_profile_decisions_view,
+        name="country_profile_decisions",
+    ),
     path("reports", extended_views.reports_view, name="reports"),
     path("coverage", extended_views.coverage_view, name="coverage"),
     # ── GROUP 6: Admin, Settings, Messages, Leaves & Search ───────────────────

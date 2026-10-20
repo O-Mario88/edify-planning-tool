@@ -56,41 +56,6 @@ def render_analytics_section(
         "frame_freshness": frame.get("freshness"),
         "frame_confidence": frame.get("confidence"),
     }
-    if section_key == "overview" and request.user.active_role in {
-        "Program Lead",
-        "CountryDirector",
-        "RegionalVicePresident",
-    }:
-        from apps.hr.accountability import leadership_priority_rows
-
-        narrowed = any(
-            request.GET.get(key) not in (None, "", "All")
-            for key in (
-                "region",
-                "sub_region",
-                "district",
-                "sub_county",
-                "cluster",
-                "staff",
-                "cceo",
-                "pl",
-                "partner",
-                "school_type",
-                "activity_type",
-                "q",
-            )
-        )
-        context["distributed_team"] = (
-            []
-            if narrowed
-            else leadership_priority_rows(
-                request.user,
-                request.GET.get("fy"),
-                quarter=request.GET.get("quarter"),
-                month=request.GET.get("month"),
-            )
-        )
-
     target = request.headers.get("HX-Target")
     if target == "analytics-panel":
         return render(request, PANEL_TEMPLATE, context)

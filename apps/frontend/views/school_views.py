@@ -766,6 +766,12 @@ def school_directory_view(request):
             visit_status=visit_by_school.get(s.id),
             training_coverage=training_by_school.get(s.id),
         )
+        # The projects already holding the school (prefetched above), so the
+        # bulk Add to project counts only the ticked schools a project would
+        # gain: the save skips the rest (owner, 2026-10-19).
+        row["project_ids"] = " ".join(
+            pa.project_id for pa in s.project_assignments.all()
+        )
         if group_by_owner:
             # Group headers, drawn where the owner changes.
             from apps.planning.owner_groups import group_label as _group_label
@@ -2218,6 +2224,19 @@ def bulk_assign_project_drawer_view(request):
     projects = annotate_allocations(
         annotate_coordinator_names(assignable_projects(request.user)), request.user
     )
+    # The save skips a school already in the project, so it uses no place:
+    # each project's figure is the ticked schools it does not hold yet, the
+    # count the save checks (owner, 2026-10-19: blocked with places left).
+    held = set(
+        ProjectSchoolAssignment.objects.filter(
+            project_id__in=[p.id for p in projects],
+            school_id__in=[school.id for school in schools],
+        ).values_list("project_id", "school_id")
+    )
+    for project in projects:
+        project.ticked_new = sum(
+            (project.id, school.id) not in held for school in schools
+        )
     return render(
         request,
         "partials/schools/bulk_assign_project_drawer.html",

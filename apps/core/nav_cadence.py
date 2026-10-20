@@ -136,6 +136,7 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "cost_intelligence": (MONTHLY, 85),
     "finance_approval_history": (MONTHLY, 90),
     "workforce_planning": (MONTHLY, 95),
+    "hr_analytics": (MONTHLY, 96),
     "policy_compliance": (MONTHLY, 100),
     "compliance_register": (MONTHLY, 105),
     "compensation_benefits": (MONTHLY, 110),

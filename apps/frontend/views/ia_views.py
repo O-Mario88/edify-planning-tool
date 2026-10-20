@@ -2398,31 +2398,6 @@ def ia_dashboard_view(request):
     return response
 
 
-@require_page_permission("ia_dashboard")
-def verification_quality_section_view(request):
-    """Verification Quality as a tab of the one Analytics page."""
-
-    context = _ia_dashboard_context(request)
-    from apps.frontend.views.analytics_render import render_analytics_section
-
-    return render_analytics_section(
-        request,
-        "partials/analytics/panels/verification_quality.html",
-        context,
-        section_key="verification_quality",
-        panel_title="Verification Quality",
-        frame={
-            "question": (
-                "What must Impact Assessment verify next, where is quality risk "
-                "accumulating, and what is blocking trusted reporting?"
-            ),
-            "evidence": "Verification queues, evidence quality and SSA coverage",
-            "freshness": context["date_range"],
-            "confidence": "Verification-controlled",
-        },
-    )
-
-
 #: The notification categories Impact Assessment's own notices travel under.
 IA_NOTIFICATION_CATEGORIES = ("verification", "ia", "ssa")
 

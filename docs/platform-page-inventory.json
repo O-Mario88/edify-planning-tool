@@ -1304,151 +1304,6 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 4151,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Activity Tracking",
-      "purpose": "Reusable activity tracking interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/activity_tracking.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 1559,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": " Target Area Badges",
-      "purpose": "Reusable  target area badges interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/_target_area_badges.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 5112,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Body",
-      "purpose": "Reusable body interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/body.html",
-      "variants": [
-        "executive"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4710,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Budget Finance",
-      "purpose": "Reusable budget finance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/budget_finance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3959,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cceo Leaderboard",
-      "purpose": "Reusable cceo leaderboard interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/cceo_leaderboard.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3260,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cceo Snapshot",
-      "purpose": "Reusable cceo snapshot interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/cceo_snapshot.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3461,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cluster Performance",
-      "purpose": "Reusable cluster performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/cluster_performance.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -1497,201 +1352,6 @@
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 2387,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Impact Summary",
-      "purpose": "Reusable impact summary interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/impact_summary.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1763,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Operational Risk",
-      "purpose": "Reusable operational risk interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/operational_risk.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3047,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Partner Performance",
-      "purpose": "Reusable partner performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/partner_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2573,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Performance Vs Target",
-      "purpose": "Reusable performance vs target interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/performance_vs_target.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3844,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Pl Oversight",
-      "purpose": "Reusable pl oversight interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cd/pl_oversight.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2569,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Recommended Actions",
-      "purpose": "Reusable recommended actions interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/recommended_actions.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1352,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Regional Summary",
-      "purpose": "Reusable regional summary interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/regional_summary.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2774,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Ssa Interventions",
-      "purpose": "Reusable ssa interventions interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/ssa_interventions.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2933,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Target By Pl",
-      "purpose": "Reusable target by pl interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/cd/target_by_pl.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 11649,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Closure Impact Workspace",
-      "purpose": "Reusable closure impact workspace interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 3,
-      "template": "partials/analytics/closure_impact_workspace.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -1712,44 +1372,6 @@
       ],
       "tables": 3,
       "template": "partials/analytics/closure_quality_workspace.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2933,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cluster Performance",
-      "purpose": "Reusable cluster performance interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/cluster_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1017,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Core Champion Performance",
-      "purpose": "Reusable core champion performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/core_champion_performance.html",
       "variants": []
     },
     {
@@ -1780,48 +1402,6 @@
       ]
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 1168,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Distributed Team",
-      "purpose": "Reusable distributed team interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/distributed_team.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2324,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Donor Reporting Snapshot",
-      "purpose": "Reusable donor reporting snapshot interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/donor_reporting_snapshot.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [],
       "bytes": 2528,
       "deprecated_alternatives": [],
@@ -1840,116 +1420,6 @@
       ],
       "tables": 1,
       "template": "partials/analytics/drilldown_drawer.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 993,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Executive Pulse",
-      "purpose": "Reusable executive pulse interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/executive_pulse.html",
-      "variants": [
-        "executive",
-        "supporting"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 7320,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Filters",
-      "purpose": "Reusable filters interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/filters.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1957,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Impact Summary",
-      "purpose": "Reusable impact summary interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/impact_summary.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility",
-        "announced dynamic state"
-      ],
-      "bytes": 32588,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 3,
-      "kind": "application-partial",
-      "name": "Impact Workspace",
-      "purpose": "Reusable impact workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 6,
-      "template": "partials/analytics/impact_workspace.html",
-      "variants": [
-        "executive",
-        "{% if row.verdict == "
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2758,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Kpi Cards",
-      "purpose": "Reusable kpi cards interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/kpi_cards.html",
       "variants": []
     },
     {
@@ -1976,50 +1446,6 @@
       ],
       "tables": 0,
       "template": "partials/analytics/panel.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 8169,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 2,
-      "kind": "application-partial",
-      "name": "Cd Overview",
-      "purpose": "Reusable cd overview interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/cd_overview.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 2140,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Closure Impact",
-      "purpose": "Reusable closure impact interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/closure_impact.html",
       "variants": []
     },
     {
@@ -2068,49 +1494,6 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10615,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Core School Health",
-      "purpose": "Reusable core school health interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 3,
-      "template": "partials/analytics/panels/core_school_health.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4952,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 2,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Decision Intelligence",
-      "purpose": "Reusable decision intelligence interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "error"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/decision_intelligence.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
       "bytes": 4203,
       "deprecated_alternatives": [],
       "example_pages": [],
@@ -2126,91 +1509,6 @@
       ],
       "tables": 1,
       "template": "partials/analytics/panels/decision_log.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 10533,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Declining Schools",
-      "purpose": "Reusable declining schools interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 3,
-      "template": "partials/analytics/panels/declining_schools.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 628,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Impact Analytics",
-      "purpose": "Reusable impact analytics interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/impact_analytics.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 775,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "People Analytics",
-      "purpose": "Reusable people analytics interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/people_analytics.html",
-      "variants": [
-        "executive"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 6878,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 3,
-      "kind": "application-partial",
-      "name": "Pl Overview",
-      "purpose": "Reusable pl overview interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/pl_overview.html",
       "variants": []
     },
     {
@@ -2256,88 +1554,6 @@
       "variants": [
         "executive"
       ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 812,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Ssa Performance",
-      "purpose": "Reusable ssa performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/ssa_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 751,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Verification Quality",
-      "purpose": "Reusable verification quality interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/verification_quality.html",
-      "variants": [
-        "executive"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 1756,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Visit Effectiveness",
-      "purpose": "Reusable visit effectiveness interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/panels/visit_effectiveness.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1637,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Performance Overview",
-      "purpose": "Reusable performance overview interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/performance_overview.html",
-      "variants": []
     },
     {
       "accessibility_requirements": [],
@@ -2410,129 +1626,6 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 830,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Activity Tracking",
-      "purpose": "Reusable activity tracking interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/activity_tracking.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4632,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Body",
-      "purpose": "Reusable body interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/body.html",
-      "variants": [
-        "executive"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3368,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Cluster Performance",
-      "purpose": "Reusable cluster performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/pl/cluster_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2999,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Core Champion",
-      "purpose": "Reusable core champion interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/core_champion.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 3967,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "District Performance",
-      "purpose": "Reusable district performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/pl/district_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1091,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Donor Snapshot",
-      "purpose": "Reusable donor snapshot interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/donor_snapshot.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
       "bytes": 3734,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -2553,129 +1646,6 @@
       "variants": [
         "info"
       ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2131,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Impact Summary",
-      "purpose": "Reusable impact summary interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/impact_summary.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2888,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 2,
-      "kind": "application-partial",
-      "name": "Insights",
-      "purpose": "Reusable insights interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/insights.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 3547,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Risk List",
-      "purpose": "Reusable risk list interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/pl/risk_list.html",
-      "variants": [
-        "{% if r.missed_training %}danger{% else %}neutral{% endif %}",
-        "{% if r.missed_visit %}danger{% else %}neutral{% endif %}"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2481,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Ssa Interventions",
-      "purpose": "Reusable ssa interventions interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/ssa_interventions.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 1658,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Staff Partner",
-      "purpose": "Reusable staff partner interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/pl/staff_partner.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "keyboard focus visibility"
-      ],
-      "bytes": 5192,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Recommended Insights",
-      "purpose": "Reusable recommended insights interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/recommended_insights.html",
-      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -2793,46 +1763,6 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 1384,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Ssa Performance",
-      "purpose": "Reusable ssa performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/ssa_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2667,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Staff Partner Performance",
-      "purpose": "Reusable staff partner performance interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/staff_partner_performance.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
@@ -2861,58 +1791,6 @@
       "tables": 0,
       "template": "partials/analytics/tab_rail.html",
       "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "announced dynamic state"
-      ],
-      "bytes": 6560,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Target By District",
-      "purpose": "Reusable target by district interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty",
-        "open"
-      ],
-      "tables": 0,
-      "template": "partials/analytics/target_by_district.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 17142,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Visit Effectiveness Workspace",
-      "purpose": "Reusable visit effectiveness workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/analytics/visit_effectiveness_workspace.html",
-      "variants": [
-        "danger",
-        "executive",
-        "info",
-        "neutral",
-        "success"
-      ]
     },
     {
       "accessibility_requirements": [],
@@ -8044,9 +6922,18 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3729,
+      "bytes": 3856,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>/profile",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -14416,6 +13303,36 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
+      "bytes": 3473,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>/profile",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Decisions",
+      "purpose": "Reusable  decisions interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/profiles/_decisions.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
       "bytes": 2210,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -14705,7 +13622,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 60124,
+      "bytes": 60226,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile",
@@ -15764,7 +14681,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4616,
+      "bytes": 4870,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/bulk-assign-project-drawer"
@@ -15899,7 +14816,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11218,
+      "bytes": 11365,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -16386,28 +15303,6 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1654,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Breakdown Table",
-      "purpose": "Reusable breakdown table interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/ssa/breakdown_table.html",
-      "variants": [
-        "{{ row.band.tone }}"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
       "bytes": 197,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -16427,38 +15322,6 @@
       "tables": 0,
       "template": "partials/ssa/manual_school_options.html",
       "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility",
-        "announced dynamic state"
-      ],
-      "bytes": 20835,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Performance Workspace",
-      "purpose": "Reusable performance workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty",
-        "selected",
-        "open"
-      ],
-      "tables": 5,
-      "template": "partials/ssa/performance_workspace.html",
-      "variants": [
-        "danger",
-        "executive",
-        "{{ district.band.tone }}",
-        "{{ insight.tone }}",
-        "{{ row.tone }}"
-      ]
     },
     {
       "accessibility_requirements": [],
@@ -27991,10 +26854,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28079,10 +26940,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28164,10 +27023,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28264,10 +27121,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28359,10 +27214,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28452,10 +27305,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28682,10 +27533,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -28769,10 +27618,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -29034,10 +27881,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -29354,10 +28199,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -29443,10 +28286,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -41878,6 +40719,80 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.profile_decisions",
+      "backend_view": "apps.frontend.views.profile_decisions.country_profile_decisions_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:decision_intelligence"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-786F71C047",
+      "page_title": "Country Profile Decisions",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "decision_intelligence",
+      "primary_action": "Country Profile Decisions",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Record a decision on an insight, or rescan both engines, then return to the queue on the Country Profile.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "HR",
+        "RVP"
+      ],
+      "route": "/country-profile/decisions",
+      "route_name": "country_profile_decisions",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
@@ -52541,7 +51456,7 @@
       "permission_key": "hr_analytics",
       "primary_action": "\u2192",
       "primary_user_decision": "What changed, why, and where should action be taken?",
-      "purpose": "Operate hr analytics within the frontend workflow.",
+      "purpose": "Operate people analytics within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -95509,10 +94424,8 @@
         "apps.activities.models",
         "apps.analytics.models",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.core.scoping",
         "apps.geography.models",
-        "apps.partners.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -113498,6 +112411,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.profile_decisions.country_profile_decisions_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "decision_intelligence",
+      "required_permissions": [],
+      "route": "/country-profile/decisions",
+      "route_name": "country_profile_decisions",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.extended_views.coverage_view",
       "kind": "page",
       "methods": [
@@ -122746,28 +121671,28 @@
   "summary": {
     "accessibility_contract_pass": 595,
     "activity_states": 24,
-    "all_routes": 1416,
+    "all_routes": 1417,
     "api_routes": 364,
-    "component_templates": 706,
+    "component_templates": 651,
     "full_pages": 258,
     "mobile_contract_pass": 595,
-    "nonvisual_actions": 302,
+    "nonvisual_actions": 303,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 7,
       "approval-or-verification": 19,
       "dashboard": 0,
-      "interaction-fragment": 636,
+      "interaction-fragment": 637,
       "operational-queue": 157,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 49
     },
     "partials_and_drawers": 334,
-    "permission_gated": 918,
+    "permission_gated": 919,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 935,
+    "routed_surfaces": 936,
     "scheduled_jobs": 39,
     "severity_counts": {
       "critical": 0,
@@ -122776,7 +121701,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 595,
-    "test_referenced": 844,
+    "test_referenced": 845,
     "theme_contract_pass": 595
   }
 }

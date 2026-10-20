@@ -17,7 +17,7 @@ test('phone page-header actions take the 32px action height', async ({ browser }
   const context = await browser.newContext({ isMobile: true, hasTouch: true, viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await signIn(page, 'cd@edify.org', 'edify', { acceptRequiredAgreements: false });
-  for (const route of ['/analytics', '/my-plan', '/my-performance']) {
+  for (const route of ['/country-profile', '/my-plan', '/my-performance']) {
     await page.goto(route);
     const heights = await page.locator('main .edify-page-header :is(a.btn, button.btn, a.edify-action-button, button.edify-action-button):visible')
       .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)));
@@ -29,7 +29,7 @@ test('phone page-header actions take the 32px action height', async ({ browser }
 test('filters are fields of the row, not hand-rolled panels', async ({ page }) => {
   test.setTimeout(120_000);
   await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
-  for (const route of ['/core-schools', '/work-plan', '/analytics', '/projects']) {
+  for (const route of ['/core-schools', '/work-plan', '/cluster-oversight/', '/projects']) {
     await page.goto(route);
     await expect(page.locator('main').getByText(/Apply Advanced Filters/i), route).toHaveCount(0);
     await expect(page.locator('main details.analytics-more-filters, main .work-plan-filter-popover, main button[hx-get*="/projects/filters-drawer"]'), route).toHaveCount(0);
@@ -50,12 +50,11 @@ test('pill groups are the platform tab rail', async ({ page }) => {
 test('exports are one Excel button', async ({ page }) => {
   test.setTimeout(120_000);
   await signIn(page, 'cd@edify.org', 'edify', { acceptRequiredAgreements: false });
-  await page.goto('/analytics');
+  // The Analytics page and its cockpit exports are retired (owner,
+  // 2026-10-19); Planning Oversight's header carries the one export.
+  await page.goto('/team-planning-oversight/?view=planning');
   await expect(page.locator('main .edify-page-header').getByText(/CSV/)).toHaveCount(0);
-  await expect(page.locator('main .edify-page-header a[aria-label="Export to Excel"]')).toHaveCount(1);
-  await page.goto('/analytics/country-director');
-  await expect(page.locator('main [data-component="cd-export-set"]')).toHaveCount(0);
-  await expect(page.locator('main a[data-component="cd-export"]')).toHaveCount(1);
+  await expect(page.locator('main .edify-page-header a[data-oversight-export]')).toHaveCount(1);
 });
 
 test("a table's title band carries no shortcut buttons", async ({ page }) => {

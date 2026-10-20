@@ -17,10 +17,6 @@ class BarChartSystemContractTest(SimpleTestCase):
 
     COMPARISON_CHARTS = (
         "static/js/alpine-components.js",
-        "templates/partials/analytics/cd/performance_vs_target.html",
-        "templates/partials/analytics/cd/target_by_pl.html",
-        "templates/partials/analytics/performance_overview.html",
-        "templates/partials/analytics/pl/staff_partner.html",
         "templates/partials/dashboards/cd/body.html",
         "templates/partials/dashboards/pl/body.html",
         "templates/pages/dashboards/rvp.html",
@@ -58,11 +54,7 @@ class BarChartSystemContractTest(SimpleTestCase):
 
     def test_line_charts_are_waves_that_never_dip_below_their_points(self):
         line_charts = (
-            "templates/partials/analytics/cd/performance_vs_target.html",
-            "templates/partials/analytics/performance_overview.html",
-            "templates/partials/analytics/pl/core_champion.html",
             "templates/partials/ia/dashboard_body.html",
-            "templates/partials/ssa/performance_workspace.html",
             "templates/partials/targets/team/body.html",
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/hr/body.html",
@@ -246,8 +238,6 @@ class ChartDefectRegressionTest(SimpleTestCase):
         "templates/pages/dashboards/rvp.html",
         "templates/partials/dashboards/cd/body.html",
         "templates/partials/dashboards/pl/body.html",
-        "templates/partials/analytics/cd/performance_vs_target.html",
-        "templates/partials/analytics/performance_overview.html",
     )
 
     def test_legend_swatches_keep_their_series_colour(self):
@@ -303,10 +293,3 @@ class ChartDefectRegressionTest(SimpleTestCase):
             source = path.read_text(encoding="utf-8")
             self.assertNotIn("<option>This FY</option>", source, str(path))
             self.assertNotIn("<option>This Quarter</option>", source, str(path))
-
-    def test_a_chart_that_cannot_draw_says_so_visibly(self):
-        workspace = _read("templates/partials/analytics/impact_workspace.html")
-        self.assertNotIn('class="sr-only" x-ref="status"', workspace)
-        self.assertIn('class="analytics-chart-status" x-ref="status"', workspace)
-        css = _read("static/css/pages/analytics-dashboard.css")
-        self.assertIn(".analytics-chart-status:empty {", css)

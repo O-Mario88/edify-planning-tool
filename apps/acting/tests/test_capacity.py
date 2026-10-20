@@ -41,7 +41,6 @@ PL_PAGES = (
     # Cluster Oversight and Core School Oversight are not here: a CCEO reads
     # each for their own clusters and Core schools (owner, 2026-10-17).
     "/staff-activity/follow-ups",
-    "/analytics/program-lead",
     "/programme-rollout",
     "/quality-checks",
     "/actions/sent",
@@ -68,7 +67,9 @@ PERSONAL = ("/fund-requests/weekly", "/my-targets", "/personal-time-off/")
 
 CD_PAGES = (
     "/country-planning-oversight/",
-    "/analytics/country-director",
+    # The country's analysis is the Country Profile since the Analytics entry
+    # was retired (owner, 2026-10-19).
+    "/country-profile",
     "/coverage",
 )
 # A Programme Lead reads these two on their dashboard: the dashboard's own

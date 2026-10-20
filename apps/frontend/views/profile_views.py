@@ -431,6 +431,29 @@ def sub_region_profile_view(request, sub_region_id):
     )
 
 
+def _add_decisions(user, pi: dict) -> None:
+    """The decision review on the Country Profile's Overview, and its lines in
+    Needs Attention, for a reader who holds it (profile_decisions)."""
+    from apps.frontend.views import profile_decisions
+
+    decisions = profile_decisions.for_reader(user, pi["fy"])
+    if decisions is None:
+        return
+    pi["decisions"] = decisions
+    rail = pi.get("rail")
+    if rail:
+        lines = profile_decisions.attention_links(decisions)
+        pi["rail"] = {
+            **rail,
+            "parts": [
+                {**part, "links": [*lines, *part["links"]]}
+                if part["key"] == "attention"
+                else part
+                for part in rail["parts"]
+            ],
+        }
+
+
 @require_page_permission("country_planning_oversight")
 def country_profile_view(request):
     """The country: every school, read by sub-region, district, staff and
@@ -439,11 +462,14 @@ def country_profile_view(request):
 
     country = country_of(request.user)
     scope = engine.country_scope(country)
+    pi = profile_context(request, scope, "/country-profile")
+    if pi["section"] == "overview":
+        _add_decisions(request.user, pi)
     return render(
         request,
         "pages/profiles/profile.html",
         {
-            "pi": profile_context(request, scope, "/country-profile"),
+            "pi": pi,
             "profile_title": f"{country or 'Country'} Profile",
             "profile_lead": "Edify Operations",
             "back_href": "",

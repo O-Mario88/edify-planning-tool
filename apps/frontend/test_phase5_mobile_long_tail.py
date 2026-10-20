@@ -23,17 +23,8 @@ class PhaseFiveMobileLongTailContractTest(SimpleTestCase):
     def test_analytics_pages_share_compact_filter_and_chart_family(self):
         self.assert_family(
             "analytics",
-            (
-                "templates/pages/analytics/workspace.html",
-                "templates/pages/analytics/index.html",
-                "templates/pages/analytics/impact.html",
-                "templates/pages/analytics/declining_schools.html",
-                "templates/pages/analytics/visit_effectiveness.html",
-            ),
+            ("templates/pages/analytics/workspace.html",),
         )
-        index = _read("templates/pages/analytics/index.html")
-        self.assertIn("Analytics filters", index)
-        self.assertIn("mobile-family-filter", index)
 
     def test_performance_pages_share_touch_safe_record_family(self):
         self.assert_family(

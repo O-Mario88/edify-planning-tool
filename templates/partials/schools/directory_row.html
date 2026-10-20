@@ -19,6 +19,8 @@ route's, so one constant URL answers it for every row.
         id="select-school-{{ school.id }}"
         value="{{ school.id }}"
         x-model="selectedSchools"
+        data-project-ids="{{ school.project_ids }}"
+        x-init="schoolProjects[$el.value] = $el.dataset.projectIds.split(' ').filter(Boolean)"
       >
       <span class="sr-only">Select {{ school.school_name }}</span>
     </label>

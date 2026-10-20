@@ -37,9 +37,10 @@ Confidence {{ i.confidenceScore|floatformat:0 }}%{% if i.confidenceLevel %} ({{ 
 </div>
 
 {% if can_review and i.isUndecided %}
-<form method="POST" class="m-0 flex flex-col gap-2 w-full sm:w-[260px] shrink-0">
+<form method="POST"{% if review_url %} action="{{ review_url }}"{% endif %} class="m-0 flex flex-col gap-2 w-full sm:w-[260px] shrink-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="{{ review_action }}">
+{% if fy %}<input type="hidden" name="fy" value="{{ fy }}">{% endif %}
 <input type="hidden" name="insight_id" value="{{ i.id }}">
 <label class="sr-only" for="status-{{ i.id }}">Decision</label>
 <select id="status-{{ i.id }}" name="status" required class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">

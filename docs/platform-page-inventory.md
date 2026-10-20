@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **935**
-- All registered routes: **1416**
+- Routed product surfaces: **936**
+- All registered routes: **1417**
 - API routes: **364**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **39**
 - Activity states: **24**
-- Shared component templates: **706**
+- Shared component templates: **651**
 - Full pages: **258**
 - Partials and drawers: **334**
-- Permission-gated surfaces: **918**
-- Referenced by automated tests: **844**
+- Permission-gated surfaces: **919**
+- Referenced by automated tests: **845**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -297,6 +297,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-5E9536B255 | /country-planning-oversight/table/<str:key> | · Country Planning Oversight · Edify | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F26256AF53 | /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9960305561 | /country-profile | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-786F71C047 | /country-profile/decisions | Country Profile Decisions | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3C3DB87ABF | /coverage | Coverage · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6E4DAD286B | /cpd-learning | CPD & Learning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-442BF26C2E | /cpd-learning/action | Pd Dashboard Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

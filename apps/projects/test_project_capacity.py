@@ -589,3 +589,51 @@ class TheCapacityPagesTest(_Fixture):
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(ProjectSchoolAssignment.objects.count(), 3)
+
+
+class SchoolsAlreadyInTheProjectUseNoPlaceTest(_Fixture):
+    """Owner, 2026-10-19: Add to project blocked a selection with places
+    still left. The bulk screens counted every ticked school against what
+    remains, while the save skips the schools already in the project, so a
+    list holding a few enrolled schools greyed the button out near the
+    ceiling. They count only the schools the save would add."""
+
+    def setUp(self):
+        super().setUp()
+        self.allow(10)
+        for school in self.schools[:6]:
+            self.add(school)
+        # Four places left; two of the five ticked are already enrolled.
+        self.ticked = self.schools[4:9]
+        self.client.force_login(self.cceo_user)
+
+    def test_the_list_drawer_counts_only_the_new_schools(self):
+        drawer = self.client.get(
+            "/schools/bulk-assign-project-drawer",
+            {"school_ids": ",".join(s.school_id for s in self.ticked)},
+        )
+        body = drawer.content.decode()
+        self.assertIn(f'value="{self.project.id}" data-remaining="4"', body)
+        self.assertIn('data-new="3"', body)
+        self.assertIn("newCount > capLeft", body)
+        self.assertNotIn("5 > capLeft", body)
+
+    def test_the_directory_rows_say_which_projects_hold_them(self):
+        page = self.client.get("/schools", {"search": "CAP-0"})
+        body = page.content.decode()
+        self.assertIn(f'data-project-ids="{self.project.id}"', body)
+        self.assertIn("schoolProjects[", body)
+        self.assertIn("newCount() > capLeft", body)
+        self.assertNotIn("selectedSchools.length > capLeft", body)
+
+    def test_the_save_takes_the_same_selection(self):
+        self.client.post(
+            "/schools/bulk-assign-project",
+            {
+                "project_id": self.project.id,
+                "school_ids": ",".join(s.id for s in self.ticked),
+                "override_reason": "Cohort.",
+            },
+        )
+        self.assertEqual(ProjectSchoolAssignment.objects.count(), 9)
+        self.assertEqual(self.held().remaining, 1)

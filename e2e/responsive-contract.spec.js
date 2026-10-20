@@ -42,14 +42,16 @@ const FAMILIES = [
   { family: 'performance', email: 'cceo@edify.org', route: '/my-performance' },
   { family: 'partner-monitoring', email: 'pl1@edify.org', route: '/partner-oversight/' },
   { family: 'team-oversight', email: 'cd@edify.org', route: '/country-planning-oversight/' },
-  { family: 'analytics', email: 'cd@edify.org', route: '/analytics' },
+  // The Analytics page and the Programme Lead's cockpit are retired (owner,
+  // 2026-10-19): the analysis is the profiles', and the tools are pages of their own.
+  { family: 'profile', email: 'cd@edify.org', route: '/country-profile' },
   { family: 'verification', email: 'ia@edify.org', route: '/ia/verification/' },
   { family: 'finance', email: 'accountant@edify.org', route: '/fund-requests' },
   { family: 'hr', email: 'hr@edify.org', route: '/hr-today' },
   { family: 'loans', email: 'mfi-admin@edify.org', route: '/loans' },
   { family: 'administration', email: 'admin@edify.org', route: '/admin-panel/users' },
   { family: 'settings', email: 'cceo@edify.org', route: '/settings' },
-  { family: 'program-lead-analytics', email: 'pl1@edify.org', route: '/analytics/program-lead' },
+  { family: 'reports', email: 'cd@edify.org', route: '/reports' },
 ];
 
 function onlyChromiumDesktop({ browserName, isMobile }) {
