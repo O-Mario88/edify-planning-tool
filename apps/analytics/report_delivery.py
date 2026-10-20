@@ -33,8 +33,9 @@ def send_analytics_snapshot(*, user, categories: list[str], filters=None, now=No
     `filters` are the Analytics page's own (fy, district, ...): the snapshot is
     the report the reader was looking at, inside their permission scope
     (controls audit F-06, 2026-09-14)."""
-    from urllib.parse import urlencode
+    from apps.frontend.views.analytics_retired import home
 
+    place = home(user)
     filters = {key: value for key, value in (filters or {}).items() if value}
     generated_at = now or timezone.now()
     dashboard = AnalyticsDashboardService.get_analytics_data(user, filters)
@@ -66,8 +67,7 @@ def send_analytics_snapshot(*, user, categories: list[str], filters=None, now=No
                 else "Filters: none (your full analytics scope)\n"
             )
             + f"\n{metric_lines or 'No metrics matched the selected categories.'}\n\n"
-            "Open Analytics to review the live dashboard or download the current CSV: "
-            f"/analytics{'?' + urlencode(filters) if filters else ''}"
+            f"Open {place['label']} for the live figures: {place['href']}"
         ),
         recipient_ids=[str(user.id)],
         category="Strategic report",

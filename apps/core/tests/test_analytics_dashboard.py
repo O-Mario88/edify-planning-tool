@@ -198,4 +198,23 @@ class AnalyticsDashboardTest(TestCase):
         )
         body = thread.messages.first().body
         self.assertIn("Filters: fy 2025, district abim", body)
-        self.assertIn("/analytics?fy=2025&district=abim", body)
+        # The link opens the page the overview's reading lives on now.
+        self.assertIn(
+            "Open Country Profile for the live figures: /country-profile", body
+        )
+
+    def test_a_scheduled_snapshot_carries_its_filters_and_opens_the_reader_s_home(self):
+        """The scheduled delivery sends the report it was saved with (controls
+        audit F-06, 2026-09-14), and its link opens the page the Analytics
+        overview's reading lives on now (owner, 2026-10-19)."""
+        from apps.analytics.report_delivery import send_analytics_snapshot
+
+        thread = send_analytics_snapshot(
+            user=self.user, categories=["targets", "ssa"], filters={"fy": "2026"}
+        )
+        body = thread.messages.first().body
+        self.assertIn("Filters: fy 2026", body)
+        self.assertIn(
+            "Open Country Profile for the live figures: /country-profile", body
+        )
+        self.assertNotIn("/analytics", body)

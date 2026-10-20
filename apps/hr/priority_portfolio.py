@@ -69,14 +69,17 @@ def priority_portfolio(
     ssa_rows = []
     missing_count = len(set(map(str, school_ids)) - set(latest_by_school))
     if missing_count:
+        from apps.frontend.views.analytics_retired import home
+
+        ssa_home = home(user, "ssa")
         ssa_rows.append(
             {
                 "title": "Complete current-FY SSA coverage",
                 "detail": f"{missing_count} assigned school(s) have no confirmed FY{fy} SSA.",
                 "meta": "Confirmed SSA only",
                 "tone": "danger",
-                "action": "Open SSA",
-                "url": f"/ssa?fy={fy}",
+                "action": f"Open {ssa_home['label']}",
+                "url": ssa_home["href"],
             }
         )
     weak: dict[str, list[float]] = defaultdict(list)

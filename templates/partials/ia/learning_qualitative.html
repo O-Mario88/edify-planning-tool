@@ -78,7 +78,7 @@ verified loan impact conclusions or EdTech check issues. Lists, not tiles.
       <ul class="mt-1 space-y-1">
         <li class="text-[12px] edify-text-muted">{{ view_data.effectiveness.comparable_schools }} comparable schools, {{ view_data.effectiveness.baseline_fy }} → {{ view_data.effectiveness.followup_fy }}{% if view_data.effectiveness.excluded_fys %} ({{ view_data.effectiveness.excluded_fys }} excluded){% endif %}</li>
         <li class="text-[12px] edify-text-muted">Visits and SSA change: {{ view_data.effectiveness.verdict }}{% if view_data.effectiveness.r is not None %} (r {{ view_data.effectiveness.r }}, p {{ view_data.effectiveness.p }}, n {{ view_data.effectiveness.n }}){% endif %} · {{ view_data.effectiveness.grade.label }}</li>
-        <li class="text-[12px]"><a href="/analytics/visit-effectiveness" class="edify-primary-text">Open School Visit Effectiveness</a></li>
+        <li class="text-[12px]"><a href="/country-profile" class="edify-primary-text">Open Country Profile</a></li>
       </ul>
     </div>
     {% endif %}

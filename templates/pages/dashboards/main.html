@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load static %}
+{% load static frontend_filters %}
 
 {% comment %}
 Scoped here rather than loaded platform-wide: admin-dashboard.css is 29 KB
@@ -25,10 +25,12 @@ and only this page and its own partials use it.
         {% include "partials/dashboards/admin/_icon.html" with name="calendar" only %}
         <span>{% if admin_ops %}Open Admin My Plan{% else %}Open My Plan{% endif %}</span>
       </a>
-      <a href="/analytics" class="admin-button admin-button--secondary">
+      {% with home=request.user|analysis_home %}{% if home.href != "/dashboard" %}
+      <a href="{{ home.href }}" class="admin-button admin-button--secondary">
         {% include "partials/dashboards/admin/_icon.html" with name="analytics" only %}
-        <span>View Analytics</span>
+        <span>Open {{ home.label }}</span>
       </a>
+      {% endif %}{% endwith %}
     </div>
   </header>
 
