@@ -334,7 +334,9 @@ class ScaleGateTest(TestCase):
         ("/todos", 800),
         ("/notifications", 800),
         ("/settings", 800),
-        ("/analytics", 1500),
+        # /analytics left this list with the Analytics entry (owner,
+        # 2026-10-19); test_country_profile_is_scale_invariant holds the page
+        # that took over its aggregation.
         ("/system-health", 1500),
     )
     BUDGET_FACTOR = 4
@@ -439,10 +441,11 @@ class ScaleGateTest(TestCase):
 
     # ── the whole-population pages ────────────────────────────────────────
     @override_settings(DEBUG=False)
-    def test_analytics_page_is_scale_invariant(self):
-        """/analytics carries the sub-region roll-up and the map -- the
-        heaviest aggregation in the product."""
-        self._assert_scale_invariant("/analytics")
+    def test_country_profile_is_scale_invariant(self):
+        """The Country Profile reads every school by sub-region, district,
+        staff and cluster -- the heaviest aggregation in the product since
+        the Analytics page it took over from was retired (owner, 2026-10-19)."""
+        self._assert_scale_invariant("/country-profile", client=self._cd_client())
 
     @override_settings(DEBUG=False)
     def test_cceo_dashboard_is_scale_invariant(self):
@@ -741,7 +744,6 @@ SLO_MS: dict[str, int] = {
     "/todos": 800,
     "/notifications": 800,
     "/settings": 800,
-    "/analytics": 1500,
     "/system-health": 1500,
 }
 
