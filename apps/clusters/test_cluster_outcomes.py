@@ -90,7 +90,7 @@ class EnrolmentTest(_ClusterCase):
         self.assertIsNone(summary.growth_pct)
 
     def test_the_tab_lists_each_school_and_says_how_growth_is_counted(self):
-        body = self._page(tab="students").content.decode()
+        body = self._page(tab="learners").content.decode()
 
         self.assertIn('data-cluster-profile-panel="students"', body)
         self.assertIn("500 to 600 learners (+20.0%)", body)
@@ -147,11 +147,32 @@ class LearningTest(_ClusterCase):
             (summary.before, summary.after, summary.change), (55.0, 60.0, 5.0)
         )
 
-        body = self._page(tab="learning").content.decode()
+        body = self._page(tab="learners").content.decode()
         self.assertIn('data-cluster-profile-panel="learning"', body)
         self.assertIn("55.0% to 60.0% mean score", body)
         self.assertIn("1 improved, 0 unchanged, 1 declined", body)
         self.assertIn("not a measure of what any one activity caused", body)
+
+
+class LearnersTabTest(_ClusterCase):
+    """Owner, 2026-10-19: "Merge Students and Learning Results into one
+    Learners tab on the cluster profile"."""
+
+    def test_one_tab_holds_enrolment_and_learning_under_one_year(self):
+        body = self._page(tab="learners").content.decode()
+
+        self.assertIn('data-cluster-profile-panel="students"', body)
+        self.assertIn('data-cluster-profile-panel="learning"', body)
+        self.assertEqual(body.count('name="fy"'), 1)
+        self.assertIn("<span>Learners</span>", body)
+        self.assertNotIn("<span>Students</span>", body)
+        self.assertNotIn("<span>Learning Results</span>", body)
+
+    def test_an_old_students_or_learning_address_opens_the_learners_tab(self):
+        for old in ("students", "learning"):
+            with self.subTest(tab=old):
+                body = self._page(tab=old).content.decode()
+                self.assertIn('data-cluster-profile-panel="learning"', body)
 
 
 class LoansTest(_ClusterCase):

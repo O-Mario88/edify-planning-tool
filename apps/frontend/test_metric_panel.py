@@ -37,15 +37,11 @@ CONVERTED = (
     "templates/partials/dashboards/pl/coaching_view.html",
     "templates/partials/dashboards/pl/programmes_view.html",
     "templates/partials/dashboards/pl/collaboration_view.html",
-    "templates/partials/analytics/pl/activity_tracking.html",
     "templates/partials/hr/pd_dashboard/body.html",
     "templates/partials/finance/country_budget/root.html",
     "templates/partials/finance/country_budget/execution.html",
     # The icon-led tiles (owner, 2026-09-07: "fold in those tiles too"): three
     # impact summaries whose tinted boxes each carried a filled icon chip.
-    "templates/partials/analytics/cd/impact_summary.html",
-    "templates/partials/analytics/pl/impact_summary.html",
-    "templates/partials/analytics/impact_summary.html",
 )
 
 # A metric drawn as a tinted rectangle: the shape that was removed. The
@@ -154,25 +150,6 @@ class MetricPanelTest(SimpleTestCase):
                     if "tabular-nums" in body or "edify-kpi-label" in body:
                         offenders.append(line.strip()[:120])
                 self.assertEqual(offenders, [])
-
-    def test_a_metric_can_lead_with_its_mark_beside_it(self):
-        from django.template.loader import render_to_string
-
-        rendered = render_to_string(
-            "partials/analytics/cd/impact_summary.html",
-            {
-                "impact_summary": {
-                    "students_impacted": 120,
-                    "teachers_trained": 25,
-                    "leaders_trained": 8,
-                    "schools_improved": 4,
-                    "champion_candidates": 7,
-                }
-            },
-        )
-        self.assertEqual(rendered.count('data-component="context-metric"'), 5)
-        self.assertIn("Champion school candidates", rendered)
-        self.assertRegex(rendered, r'class="context-metrics__value"[^>]*>\s*7\s*</')
 
     def test_the_prose_normaliser_leaves_component_type_alone(self):
         """consistency.css flattens every <p> in a page to body size. A

@@ -23,7 +23,6 @@ LEGACY_HERO_TEMPLATES = (
     "templates/pages/accounts/returned.html",
     "templates/pages/accounts/variance_review.html",
     "templates/pages/accounts/weekly_requests.html",
-    "templates/pages/analytics/publishing_status.html",
     "templates/pages/budgets/monthly.html",
     "templates/pages/closure/activity_timeline.html",
     "templates/pages/closure/blocked_closure.html",

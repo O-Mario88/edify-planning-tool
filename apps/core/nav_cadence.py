@@ -114,7 +114,11 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     # Each month: budgets, reports and progress against targets.
     "monthly_budget": (MONTHLY, 10),
     "work_plan": (MONTHLY, 15),
-    "analytics": (MONTHLY, 20),
+    # The three pages that kept sidebar entries when the Analytics entry was
+    # retired (owner, 2026-10-19), in the slot it held.
+    "reports": (MONTHLY, 20),
+    "decision_log": (MONTHLY, 21),
+    "closure_quality": (MONTHLY, 22),
     "my_target": (MONTHLY, 25),
     # Acting leadership is arranged a month at a time (apps.acting).
     "acting_leadership": (MONTHLY, 27),
@@ -132,6 +136,7 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "cost_intelligence": (MONTHLY, 85),
     "finance_approval_history": (MONTHLY, 90),
     "workforce_planning": (MONTHLY, 95),
+    "hr_analytics": (MONTHLY, 96),
     "policy_compliance": (MONTHLY, 100),
     "compliance_register": (MONTHLY, 105),
     "compensation_benefits": (MONTHLY, 110),

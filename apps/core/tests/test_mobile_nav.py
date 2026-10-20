@@ -129,7 +129,7 @@ class MobileNavAuthorizationTests(SimpleTestCase):
             }
             # Standalone destinations are authorized through PAGE_PERMISSIONS
             # rather than the sidebar, so they are allowed to sit outside it.
-            standalone = {"/messages", "/ssa", "/ssa/verification/"}
+            standalone = {"/messages"}
             for item in nav_for(role):
                 with self.subTest(role=role, url=item["url"]):
                     self.assertIn(item["url"], sidebar_urls | standalone)
@@ -227,13 +227,6 @@ class MobileNavDestinationTests(SimpleTestCase):
         self.assertEqual(
             urls, ["/ia/dashboard/", "/todos", "/ia/verification/", "/messages"]
         )
-
-    def test_non_ia_roles_get_the_plain_ssa_page(self):
-        # role_urls sends only IA to the verification queue.
-        nav = build_mobile_nav_for_user(_User(ROLE_LABELS[CD]), "/ssa")
-        ssa = [i for i in nav if i["page_key"] == "ssa"]
-        if ssa:
-            self.assertEqual(ssa[0]["url"], "/ssa")
 
 
 class MobileNavActiveStateTests(SimpleTestCase):

@@ -42,13 +42,6 @@ class DashboardViewSourceTest(TestCase):
     """What the templates say, independent of data."""
 
     def test_the_map_left_the_analytics_workspace_for_the_dashboards(self):
-        for panel in (
-            "templates/partials/analytics/kpi_cards.html",
-            "templates/partials/analytics/cd/body.html",
-            "templates/partials/analytics/pl/body.html",
-        ):
-            with self.subTest(panel=panel):
-                self.assertNotIn(MAP_INCLUDE, _read(panel))
         for view in (
             "templates/partials/dashboards/cd/map_view.html",
             "templates/partials/dashboards/pl/map_view.html",
@@ -426,12 +419,3 @@ class DashboardViewRenderTest(TestCase):
         self.assertIn('name="view" value="team"', html)
         html = self._get(self.rvp, "/dashboard?view=operations").content.decode()
         self.assertIn('name="view" value="operations"', html)
-
-    def test_the_analytics_overview_no_longer_draws_the_map(self):
-        html = self._get(self.cd, "/analytics").content.decode()
-        self.assertNotIn("subregionMap()", html)
-        self.assertIn("Geographic priorities", html)
-        html = self._get(self.ia, "/analytics/verification-quality").content.decode()
-        self.assertNotIn("subregionMap()", html)
-        self.assertNotIn("data-dashboard-views", html)
-        self.assertIn("District monitoring</h3>", html)

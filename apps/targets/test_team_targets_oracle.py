@@ -1219,6 +1219,10 @@ def _frozen_get_page(
         "attention": attention,
         "members": members,
         "group_by_lead": group_by_lead,
+        # The ranked order (owner, 2026-10-18) came after the freeze; in the
+        # default order every page is as it was, and says it is not ranked.
+        "ranked": False,
+        "order": "",
         "key_progress": key_progress,
         "distribution": distribution,
         "districts_behind": districts_behind,

@@ -11,15 +11,7 @@ has a confirmed result in both years. The wording is "schools that took part
 attribution.
 {% endcomment %}
 <div class="space-y-4" data-cluster-profile-panel="learning">
-{% filter_bar label="Learning results year" form_id="cluster-learning-year" extra_class="flex flex-wrap items-end gap-3" %}
-<input type="hidden" name="tab" value="learning">
-<label class="block">
-<span class="edify-filter-label">Fiscal year</span>
-<select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
-{% for year in profile_fy_options %}<option value="{{ year }}"{% if year == profile_fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}
-</select>
-</label>
-{% endfilter_bar %}
+{% comment %}The year is the Learners tab's one filter (profile_learners.html).{% endcomment %}
 {% paginate learning.rows "learning_page" as learning_pager %}
 {% data_table name="cluster-learning" %}
 {% slot title %}Learning Results, FY {{ learning.previous_fy }} to FY {{ learning.fy }}{% endslot %}

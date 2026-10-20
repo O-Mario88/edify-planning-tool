@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
 const fs=require('fs'),path=require('path');
-const roles=[['CCEO','cceo',['/dashboard','/planning','/schools','/core-schools','/clusters']],['Program Lead','pl1',['/dashboard','/team-planning-oversight/']],['Country Director','cd',['/dashboard','/budget']],['RVP','rvp',['/dashboard']],['ImpactAssessment','ia',['/ia/dashboard/']],['Accountant','accountant',['/accounts','/accounts/partner-payments/']],['HumanResources','hr',['/dashboard','/personal-time-off/','/leave/approvals/','/hr-today']],['ProjectCoordinator','coordinator',['/dashboard','/projects']],['PartnerAdmin','partner-admin',['/partner/today']],['PartnerFieldOfficer','partner',['/partner/today']],['BusinessTransformationOfficer','business-transformation',['/dashboard']],['MfiPartnerAdmin','mfi-admin',['/dashboard']],['MfiLoanOfficer','mfi-officer',['/dashboard']],['Admin','admin',['/dashboard','/team-targets','/analytics','/hr-today','/leave/approvals/','/admin-panel/users','/staff','/partners','/projects','/loans']]];
+const roles=[['CCEO','cceo',['/dashboard','/planning','/schools','/core-schools','/clusters']],['Program Lead','pl1',['/dashboard','/team-planning-oversight/']],['Country Director','cd',['/dashboard','/budget']],['RVP','rvp',['/dashboard']],['ImpactAssessment','ia',['/ia/dashboard/']],['Accountant','accountant',['/accounts','/accounts/partner-payments/']],['HumanResources','hr',['/dashboard','/personal-time-off/','/leave/approvals/','/hr-today']],['ProjectCoordinator','coordinator',['/dashboard','/projects']],['PartnerAdmin','partner-admin',['/partner/today']],['PartnerFieldOfficer','partner',['/partner/today']],['BusinessTransformationOfficer','business-transformation',['/dashboard']],['MfiPartnerAdmin','mfi-admin',['/dashboard']],['MfiLoanOfficer','mfi-officer',['/dashboard']],['Admin','admin',['/dashboard','/team-targets','/country-profile','/hr-today','/leave/approvals/','/admin-panel/users','/staff','/partners','/projects','/loans']]];
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
 for(const [role,user,routes] of roles)test('populated landscape pages: '+role,async({page})=>{
  test.setTimeout(240000);const results=[];
@@ -16,7 +16,7 @@ for(const [role,user,routes] of roles)test('populated landscape pages: '+role,as
    const detail=await page.locator('main a[href]').evaluateAll(links=>links.map(a=>a.getAttribute('href')).find(h=>/^\/(schools|clusters|projects|partners|staff|loans)\/(?:[0-9]+|c[a-z0-9]{8,})\/?$/.test(h)));
    if(detail&&!visitRoutes.includes(detail))visitRoutes.push(detail);
   }
-  for(const [width,height] of (['/team-targets','/hr-today','/leave/approvals/','/analytics'].includes(url) ? [[390,844],[768,1024],[1280,720],[1920,1080]] : [[1280,720],[1920,1080]])){
+  for(const [width,height] of (['/team-targets','/hr-today','/leave/approvals/'].includes(url) ? [[390,844],[768,1024],[1280,720],[1920,1080]] : [[1280,720],[1920,1080]])){
    await page.setViewportSize({width,height});
    // The rails refit 150ms after a resize (micro-ux.js) and fold what does not fit into More; until they have, a rail's
    // own width reads as overflow. Wait for that itself, not for a fixed time: 400ms was not enough for WebKit on a CI

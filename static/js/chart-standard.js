@@ -37,6 +37,8 @@
     let categories = [...(input.xaxis?.categories || input.labels || [])];
     let horizontal = !!input.plotOptions?.bar?.horizontal;
     let axes = input.yaxis || {};
+    // Parts of a whole: each bar's segments add up to the row's total.
+    const stacked = !!input.chart?.stacked && !['line', 'area'].includes(type);
     if (['donut', 'pie', 'radialBar'].includes(type)) {
       categories = input.labels || series.map((_, i) => String(i + 1));
       series = [{name: type === 'radialBar' ? 'Percent' : 'Value', data: series.map(number)}];
@@ -76,7 +78,7 @@
       groups.get(key).series.push(s);
     });
     return [...groups.values()].flatMap(group => paginate(group.series, categories, horizontal, group.axis,
-      groups.size > 1 ? (group.axis.title?.text || (group.axis.opposite ? 'Achievement (%)' : 'Activities')) : '', width).map(panel => ({...panel, trend: ['line', 'area'].includes(type)})));
+      groups.size > 1 ? (group.axis.title?.text || (group.axis.opposite ? 'Achievement (%)' : 'Activities')) : '', width).map(panel => ({...panel, trend: ['line', 'area'].includes(type), stacked})));
   }
 
   /* How many categories one page holds. More series per category means
@@ -101,7 +103,7 @@
         const last = Math.min(c + size, categories.length);
         const range = categories.length > size ? `${categories[c]} – ${categories[last - 1]}` : '';
         result.push({series: slice.map(row => ({...row, data: row.data.slice(c, c + size)})),
-          categories: categories.slice(c, c + size), horizontal, axis,
+          categories: categories.slice(c, c + size), horizontal, axis, offset: c,
           title: [title, series.length > MAX_SERIES ? slice.map(row => row.name).join(' / ') : '', range].filter(Boolean).join(' · ')});
       }
     }
@@ -141,9 +143,30 @@
    *
    * Drawn in the page, not by the chart library: two bars on one line is not
    * a form the library has, and marks made of elements take the theme from
-   * the stylesheet with nothing to redraw. */
+   * the stylesheet with nothing to redraw.
+   *
+   * Owner, 2026-10-18, with the same reference: "I want all the horizontal
+   * graphs to look exactly like that. Apply the same design to the vertical
+   * bar graphs ... apply platform wide." So every bar chart of measures that
+   * are not below zero is this form, whatever its series count, and a column
+   * chart is the same form stood upright (cutOutColumns). Each series keeps
+   * its own shade of the first series' hue (SHADES, by its place in the
+   * payload, so a measure keeps its shade on every page); bars on one line
+   * are drawn longest first, so every shorter one lies on top of the longer.
+   * A trend keeps its line, and a value below zero keeps the library's bars,
+   * which can draw under a zero line. */
   const CUT_OUT_LABEL_PX = 34;
-  const cutsOut = panel => panel.horizontal && !panel.trend && panel.series.length <= 2
+  /* The shade of each series: the share of the first series' hue mixed into
+     the surface. Neighbouring shades are far apart, so a bar lying on top of
+     another, or a part beside the next, always reads against it; the first
+     five are evenly spread, no two closer than a fifth of the hue. */
+  const SHADES = [100, 33, 78, 10, 55, 89, 44, 22];
+  const shadeOf = index => SHADES[index % SHADES.length];
+  const fillOf = index => shadeOf(index) === 100 ? 'var(--edify-series-1)'
+    : `color-mix(in srgb, var(--edify-series-1) ${shadeOf(index)}%, var(--edify-surface))`;
+  /* A number written on a bar is white on the darker shades, ink on the light. */
+  const onDark = index => shadeOf(index) >= 60;
+  const cutsOut = panel => !panel.trend && panel.series.length <= MAX_SERIES
     && panel.series.some(s => s.data.some(v => v != null)) && panel.series.every(s => s.data.every(v => v == null || v >= 0));
 
   /* A round scale end at or above the largest value, in five steps at most. */
@@ -158,53 +181,132 @@
     return {max: Math.ceil(top / step) * step, step};
   }
 
-  function cutOut(slot, panel) {
+  /* The legend: a ruled box naming each series beside its shade. A series
+     with no value anywhere (this year, in its first weeks) says so once,
+     here, instead of "Not measured" on every row. */
+  function cutOutLegend(el, panel) {
+    const legend = el('ul', 'edify-cutout__legend');
+    panel.series.forEach((series, i) => {
+      const unmeasured = series.data.every(v => v == null);
+      const item = el('li', '', unmeasured ? `${series.name} · not measured` : series.name);
+      const key = el('i', `edify-cutout__key edify-cutout__key--${i ? 'second' : 'first'}`);
+      key.style.setProperty('--cutout-fill', fillOf(i));
+      item.prepend(key); legend.appendChild(item);
+    });
+    return legend;
+  }
+
+  /* What a line of bars says: the shortest bar's value inside it, the
+     longest one's after the bar, and with three or more series the ones in
+     between after it too, so no figure is only in the table. When the
+     shortest bar has no room for its number, every value is written after
+     the bar with its name ("1.6 Hispanic, 8.8 Total"). */
+  function cutOutWords(panel, values, mark) {
+    const named = values.map((v, i) => ({v, i})).filter(bar => bar.v != null).sort((a, b) => b.v - a.v || a.i - b.i);
+    const spelled = named.map(bar => `${mark(bar.v)} ${panel.series[bar.i].name}`).join(', ');
+    if (!named.length) return {inside: null, after: format(null), spelled};
+    if (named.length === 1) {
+      const lone = panel.series.length === 1 || panel.series.some((s, i) => i !== named[0].i && s.data.every(v => v == null));
+      return {inside: null, after: lone ? mark(named[0].v) : spelled, spelled};
+    }
+    const shortest = named[named.length - 1];
+    const between = named.slice(1, -1).map(bar => `${mark(bar.v)} ${panel.series[bar.i].name}`);
+    return {inside: shortest, after: [mark(named[0].v), ...between].join(', '), spelled};
+  }
+
+  /* A chart whose bars open something (a Lead's row on Country Oversight)
+     makes each line a control: a click, Enter or Space picks its category. */
+  function pickable(node, index, label, pick) {
+    if (!pick) return;
+    node.setAttribute('role', 'button');
+    node.tabIndex = 0;
+    node.setAttribute('aria-label', label);
+    node.dataset.pick = '';
+    node.addEventListener('click', () => pick(index));
+    node.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); pick(index); }
+    });
+  }
+
+  /* Parts of a whole on one line (owner, 2026-10-18, stacked charts in the
+     cut-out form): each part in its series' shade, laid end to end from
+     zero, its value inside it where it fits. No total is written after the
+     line: a total is the server's to compute, and the page's own table
+     prints it. A line of nothing says 0 (or "Not measured"). */
+  function cutOutParts(el, track, end, panel, values, share, mark) {
+    const parts = [];
+    let start = 0;
+    values.forEach((value, i) => {
+      if (!value) return;
+      const node = el('span', 'edify-cutout__bar edify-cutout__bar--part');
+      node.style.setProperty('--cutout-fill', fillOf(i));
+      node.style.insetInlineStart = share(start);
+      node.style.width = share(value);
+      const inside = el('b', onDark(i) ? '' : 'edify-cutout__ink', mark(value)); node.appendChild(inside);
+      parts.push({node, inside});
+      track.appendChild(node);
+      start += value;
+    });
+    end.style.insetInlineStart = share(start);
+    end.textContent = values.every(v => v == null) ? format(null) : values.every(v => !v) ? mark(0) : '';
+    track.title = panel.series.map((s, i) => values[i] == null ? '' : `${mark(values[i])} ${s.name}`).filter(Boolean).join(', ');
+    return parts;
+  }
+
+  function cutOut(slot, panel, pick) {
     const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text != null) node.textContent = text; return node; };
     const say = formatterFor(panel);
     const mark = value => value == null ? format(value) : say === format ? formatMark(value) : say(value);
-    const scale = cutOutScale(panel);
+    // How far each stacked line reaches, for the scale's end only.
+    const reach = panel.categories.map((_, index) => panel.series.reduce((length, s) => length + (s.data[index] || 0), 0));
+    const scale = cutOutScale(panel.stacked ? {...panel, series: [{data: reach}]} : panel);
     const share = value => `${Math.min(100, (value / scale.max) * 100)}%`;
-    const pair = panel.series.length === 2;
-    // A series with no value anywhere (this year, in its first weeks) says so
-    // once, in the legend, instead of "Not measured" on every row.
-    const unmeasured = pair ? panel.series.findIndex(series => series.data.every(v => v == null)) : -1;
     const root = el('div', 'edify-cutout');
     root.dataset.series = String(panel.series.length);
-    if (pair) {
-      const legend = el('ul', 'edify-cutout__legend');
-      panel.series.forEach((series, i) => { const item = el('li', '', unmeasured === i ? `${series.name} · not measured` : series.name); item.prepend(el('i', `edify-cutout__key edify-cutout__key--${i ? 'second' : 'first'}`)); legend.appendChild(item); });
-      root.appendChild(legend);
-    }
+    if (panel.stacked) root.dataset.stacked = '';
+    if (panel.series.length > 1) root.appendChild(cutOutLegend(el, panel));
     const rows = el('ol', 'edify-cutout__rows');
     const fit = [];
+    const parts = [];
     panel.categories.forEach((category, index) => {
       const row = el('li', 'edify-cutout__row');
       const name = el('span', 'edify-cutout__name', String(category)); name.title = String(category); row.appendChild(name);
       const track = el('span', 'edify-cutout__track');
       const values = panel.series.map(series => series.data[index]);
+      if (panel.stacked) {
+        const end = el('span', 'edify-cutout__end');
+        parts.push(...cutOutParts(el, track, end, panel, values, share, mark));
+        track.appendChild(end);
+        row.appendChild(track);
+        pickable(row, (panel.offset || 0) + index, `${category}: ${track.title}`, pick);
+        rows.appendChild(row);
+        return;
+      }
       const measured = values.filter(v => v != null);
       const longest = measured.length ? Math.max(...measured) : null;
+      const words = cutOutWords(panel, values, mark);
+      track.title = words.spelled;
       const end = el('span', 'edify-cutout__end');
-      // Drawn longest first, so the shorter bar lies on top of it.
-      values.map((value, i) => ({value, i})).filter(bar => bar.value != null).sort((a, b) => b.value - a.value || a.i - b.i)
-        .forEach((bar, order, drawn) => {
+      // Drawn longest first, so each shorter bar lies on top of the longer;
+      // of two the same length, the first series lies on top.
+      values.map((value, i) => ({value, i})).filter(bar => bar.value != null).sort((a, b) => b.value - a.value || b.i - a.i)
+        .forEach(bar => {
           const node = el('span', `edify-cutout__bar edify-cutout__bar--${bar.i ? 'second' : 'first'}`);
+          node.style.setProperty('--cutout-fill', fillOf(bar.i));
           node.style.width = share(bar.value);
-          if (order === drawn.length - 1 && drawn.length === 2) {
-            const inside = el('b', '', mark(bar.value)); node.appendChild(inside);
-            fit.push({node, inside, end, text: mark(longest), spelled: values.map((v, i) => `${mark(v)} ${panel.series[i].name}`).join(', ')});
+          if (words.inside && words.inside.i === bar.i) {
+            const inside = el('b', onDark(bar.i) ? '' : 'edify-cutout__ink', mark(bar.value)); node.appendChild(inside);
+            fit.push({node, inside, end, spelled: words.spelled});
           }
           track.appendChild(node);
         });
       end.style.insetInlineStart = longest == null ? '0' : share(longest);
-      end.dataset.over = pair && values[1] === longest && values[0] !== longest ? 'second' : 'first';
-      end.textContent = !pair ? mark(values[0])
-        : measured.length === 2 ? mark(longest)
-        : !measured.length ? format(null)
-        : unmeasured >= 0 ? mark(measured[0])
-        : values.map((v, i) => `${mark(v)} ${panel.series[i].name}`).join(', ');
+      const top = values.findIndex(v => v === longest);
+      end.dataset.over = top > 0 && !onDark(top) ? 'second' : 'first';
+      end.textContent = words.after;
       track.appendChild(end);
       row.appendChild(track);
+      pickable(row, (panel.offset || 0) + index, `${category}: ${words.spelled}`, pick);
       rows.appendChild(row);
     });
     root.appendChild(rows);
@@ -219,11 +321,91 @@
     slot.appendChild(root);
     // A number goes inside its bar only where the bar holds it; a value after
     // a bar that runs off the plot is written inside the end of the bar.
-    fit.forEach(row => { if (row.node.offsetWidth && row.node.offsetWidth < Math.max(CUT_OUT_LABEL_PX, row.inside.offsetWidth + 12)) { row.inside.remove(); row.end.textContent = row.spelled; } });
+    if (root.offsetWidth) fit.forEach(row => { if (row.node.offsetWidth < Math.max(CUT_OUT_LABEL_PX, row.inside.offsetWidth + 12)) { row.inside.remove(); row.end.textContent = row.spelled; } });
+    // A part too narrow for its number (a sliver of a pixel included) leaves
+    // it to the line's title and the data table under the chart. A chart in
+    // a hidden panel has no widths yet and keeps its numbers.
+    if (root.offsetWidth) parts.forEach(part => { if (part.node.offsetWidth < part.inside.offsetWidth + 8) part.inside.remove(); });
     const edge = root.getBoundingClientRect().right;
     rows.querySelectorAll('.edify-cutout__end').forEach(end => {
       if (edge && end.getBoundingClientRect().right > edge) end.classList.add('edify-cutout__end--inside');
     });
+    return {destroy() { root.remove(); }};
+  }
+
+  /* ── Vertical bars: the cut-out stood upright ──────────────────────────
+   * Owner, 2026-10-18: "Apply the same design to the vertical bar graphs".
+   * One column per category on one scale, every series from the same
+   * baseline: the longest at the back, each shorter one in front of it in
+   * its own shade, the shortest one's value inside its top, the longest
+   * one's above the column. The legend is the same ruled box, the value
+   * scale one rule beside the plot with its unit under the chart, and the
+   * category names under the baseline. */
+  const COLUMN_PX = 28;
+  function cutOutColumns(slot, panel, pick) {
+    const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text != null) node.textContent = text; return node; };
+    const say = formatterFor(panel);
+    const mark = value => value == null ? format(value) : say === format ? formatMark(value) : say(value);
+    const scale = cutOutScale(panel);
+    const share = value => `${Math.min(100, (value / scale.max) * 100)}%`;
+    const root = el('div', 'edify-cutcol');
+    root.dataset.series = String(panel.series.length);
+    if (panel.series.length > 1) root.appendChild(cutOutLegend(el, panel));
+    const body = el('div', 'edify-cutcol__body');
+    const axis = el('div', 'edify-cutcol__axis');
+    axis.setAttribute('aria-hidden', 'true');
+    let widest = 0;
+    for (let tick = 0; tick <= scale.max + scale.step / 1000; tick += scale.step) {
+      const text = say(Number(tick.toFixed(6)));
+      widest = Math.max(widest, text.length);
+      const label = el('span', '', text); label.style.insetBlockEnd = share(tick); axis.appendChild(label);
+    }
+    // The scale is as wide as its longest number, so "1,000" is never cut.
+    axis.style.minInlineSize = `calc(${widest}ch + .5rem)`;
+    body.appendChild(axis);
+    const cols = el('ol', 'edify-cutcol__columns');
+    cols.style.setProperty('--cutcol-count', String(Math.max(1, panel.categories.length)));
+    const fit = [];
+    panel.categories.forEach((category, index) => {
+      const col = el('li', 'edify-cutcol__column');
+      const track = el('span', 'edify-cutcol__track');
+      const values = panel.series.map(series => series.data[index]);
+      const measured = values.filter(v => v != null);
+      const longest = measured.length ? Math.max(...measured) : null;
+      const words = cutOutWords(panel, values, mark);
+      track.title = `${category}: ${words.spelled}`;
+      const end = el('span', 'edify-cutcol__end');
+      values.map((value, i) => ({value, i})).filter(bar => bar.value != null).sort((a, b) => b.value - a.value || b.i - a.i)
+        .forEach(bar => {
+          const node = el('span', 'edify-cutcol__bar');
+          node.style.setProperty('--cutout-fill', fillOf(bar.i));
+          node.style.height = share(bar.value);
+          if (words.inside && words.inside.i === bar.i) {
+            const inside = el('b', onDark(bar.i) ? '' : 'edify-cutout__ink', mark(bar.value)); node.appendChild(inside);
+            fit.push({node, inside});
+          }
+          track.appendChild(node);
+        });
+      end.style.insetBlockEnd = longest == null ? '0' : share(longest);
+      // A column's top is one number wide: the longest value stands above
+      // it; every value is in the column's title and the chart's data table.
+      end.textContent = longest == null ? format(null) : mark(longest);
+      track.appendChild(end);
+      col.appendChild(track);
+      const name = el('span', 'edify-cutcol__name', String(category)); name.title = String(category);
+      col.appendChild(name);
+      pickable(col, (panel.offset || 0) + index, track.title, pick);
+      cols.appendChild(col);
+    });
+    body.appendChild(cols);
+    root.appendChild(body);
+    const unit = panel.axis?.title?.text;
+    if (unit) root.appendChild(el('p', 'edify-cutout__unit', unit));
+    slot.appendChild(root);
+    // A value goes inside its column only where the column holds it (a
+    // column of nothing holds nothing). A chart in a hidden panel has no
+    // heights yet and keeps its numbers.
+    if (root.offsetWidth) fit.forEach(item => { if (item.node.offsetHeight < 22) item.inside.remove(); });
     return {destroy() { root.remove(); }};
   }
 
@@ -331,6 +513,9 @@
     el.appendChild(wrap);
     const charts = [];
     const redraws = [];
+    // The library's click on a bar, kept for the cut-out's lines.
+    const select = input.chart?.events?.dataPointSelection;
+    const pick = typeof select === 'function' ? index => select(null, null, {dataPointIndex: index, seriesIndex: 0}) : null;
     // Measured before the panels are cut, so a page is one the card can hold.
     const width = el.clientWidth || 0;
     const groups = panels(input, width);
@@ -364,10 +549,14 @@
       // A phone gets a scrollable plot at a readable bar width, never a
       // squeezed one; a desktop card fits the whole page of categories.
       const bars = panel.categories.length * panel.series.length;
-      slot.style.minWidth = `${panel.horizontal ? 300 : Math.max(300, bars * BAR_MIN_PX + PLOT_INSET)}px`;
+      // An upright cut-out draws one column per category, whatever the
+      // series, and needs no more room than its columns: a narrow card
+      // (Overdue by Age) holds four of them without scrolling.
+      const columns = !panel.horizontal && cutsOut(panel);
+      slot.style.minWidth = `${panel.horizontal ? 300 : columns ? panel.categories.length * COLUMN_PX + PLOT_INSET : Math.max(300, bars * BAR_MIN_PX + PLOT_INSET)}px`;
       viewport.appendChild(slot); wrap.appendChild(viewport);
       if (cutsOut(panel)) {
-        currentChart = cutOut(slot, panel);
+        currentChart = panel.horizontal ? cutOut(slot, panel, pick) : cutOutColumns(slot, panel, pick);
       } else if (panel.series.some(series => series.data.some(value => value != null))) {
         const width = viewport.clientWidth || el.clientWidth || 0;
         currentChart = draw(slot, options(panel, width));
@@ -378,6 +567,9 @@
         empty.textContent = 'No measured data for this selection';
         slot.appendChild(empty);
       }
+      // A page that prints the chart's figures in its own table under the
+      // chart (Country Oversight) says so, and the chart adds none.
+      if (input._edifyOwnTable) return;
       const details = document.createElement('details'); details.className = 'edify-chart-data';
       const toggle = document.createElement('summary'); toggle.textContent = 'View chart data'; details.appendChild(toggle);
       const table = document.createElement('table'); const head = document.createElement('thead'); const row = document.createElement('tr');
@@ -439,10 +631,11 @@
       waiting.destroy = () => chart?.destroy?.();
     }) ? waiting : null;
   }
-  /* Cut-out bars need no chart library, so a page that loads none (a school
-   * or cluster profile) still draws them; anything else waits for it. */
+  /* Cut-out bars and columns need no chart library, so a page that loads
+   * none (a school or cluster profile) still draws them; anything else waits
+   * for it. */
   const needsLibrary = input => input._edifyStandard || panels(input, 0).some(panel => !cutsOut(panel) && panel.series.some(s => s.data.some(v => v != null)));
-  const api = {panels, options, render, needsLibrary, palette, pageSize, barShare, colorFor, initialPage, whenLibraryRuns, late, cutsOut, cutOutScale};
+  const api = {panels, options, render, needsLibrary, palette, pageSize, barShare, colorFor, initialPage, whenLibraryRuns, late, cutsOut, cutOutScale, cutOutWords, shadeOf};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.EdifyBarStandard = api;
 })(typeof window !== 'undefined' ? window : globalThis);

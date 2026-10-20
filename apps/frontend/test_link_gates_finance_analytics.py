@@ -6,10 +6,12 @@ that refuse them, so a click landed on "Access Denied":
 - /budget offered "Weekly Advance Request" to the RVP, who cannot open
   /fund-requests/weekly;
 - the Analytics "Recommended Strategy" card offered "View Action Plan"
-  (/planning) to the RVP, the Regional Lead and HR;
-- /ssa renders the Analytics shell for partner, BT and MFI readers, and its
+  (/planning) to the RVP, the Regional Lead and HR (the card left with the
+  Analytics entry, owner, 2026-10-19);
+- /ssa rendered the Analytics shell for partner, BT and MFI readers, and its
   header offered Download CSV, Send to Inbox and Customize, all Analytics
-  routes those roles cannot open;
+  routes those roles cannot open (the page and those controls left with the
+  Analytics entry, owner, 2026-10-19);
 - the Admin dashboard's cluster table linked every cluster to
   href="/clusters/" because its rows carried no id;
 - the Work Plan's row action and "View details" sent the RVP and HR to
@@ -27,12 +29,6 @@ from django.template.loader import render_to_string
 from django.test import RequestFactory, SimpleTestCase, TestCase
 
 from apps.frontend.work_plan_tables import DETAIL_PAGE_PARAM
-
-ANALYTICS_CONTROLS = (
-    'href="/analytics/export',
-    'hx-get="/analytics/schedule-report',
-    'hx-get="/analytics/customize-dashboard"',
-)
 
 
 def _viewer(role):
@@ -55,25 +51,6 @@ def _user(email, role):
         password="x",
         is_active=True,
     )
-
-
-class RecommendedStrategyLinkTest(SimpleTestCase):
-    TEMPLATE = "partials/analytics/recommended_insights.html"
-
-    def test_readers_planning_refuses_see_the_strategy_without_the_link(self):
-        for role in ("RegionalVicePresident", "RegionalProgramLead", "HumanResources"):
-            with self.subTest(role=role):
-                html = _render(self.TEMPLATE, role, {"insights": []})
-                self.assertIn("Recommended Strategy", html)
-                self.assertNotIn("View Action Plan", html)
-                self.assertNotIn('href="/planning"', html)
-
-    def test_readers_who_plan_keep_the_link(self):
-        for role in ("CountryDirector", "Program Lead", "Admin"):
-            with self.subTest(role=role):
-                html = _render(self.TEMPLATE, role, {"insights": []})
-                self.assertIn('href="/planning"', html)
-                self.assertIn("View Action Plan", html)
 
 
 class AdminClusterTableLinksTest(SimpleTestCase):
@@ -238,29 +215,6 @@ class LinkGatePagesTest(TestCase):
         response = self.client.get("/budget?fy=2026&period=month")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="/fund-requests/weekly"')
-
-    def test_ssa_page_draws_no_analytics_controls_for_readers_analytics_refuses(self):
-        for index, role in enumerate(
-            (
-                "PartnerFieldOfficer",
-                "BusinessTransformationOfficer",
-                "MfiLoanOfficer",
-                "MfiPartnerAdmin",
-            )
-        ):
-            with self.subTest(role=role):
-                self.client.force_login(_user(f"ssa-gate-{index}@edify.test", role))
-                response = self.client.get("/ssa")
-                self.assertEqual(response.status_code, 200)
-                for control in ANALYTICS_CONTROLS:
-                    self.assertNotContains(response, control)
-
-    def test_ssa_page_keeps_analytics_controls_for_analytics_readers(self):
-        self.client.force_login(_user("ssa-gate-cd@edify.test", "CountryDirector"))
-        response = self.client.get("/ssa")
-        self.assertEqual(response.status_code, 200)
-        for control in ANALYTICS_CONTROLS:
-            self.assertContains(response, control)
 
     def test_admin_dashboard_links_each_cluster_by_its_id(self):
         from apps.clusters.models import Cluster

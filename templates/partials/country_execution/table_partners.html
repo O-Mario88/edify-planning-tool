@@ -1,22 +1,20 @@
-{% load table_pagination %}{% comment %}Each Partner organisation's delivery (spec §15). Partner work goes
-straight to Impact Assessment, so nothing here waits on a Programme Lead;
-payment follows IA verification.{% endcomment %}
+{% load table_pagination %}{% comment %}Each Partner organisation's delivery (spec §15), from assignment to
+payment (owner, 2026-10-18). Partner work goes straight to Impact Assessment,
+so nothing here waits on a Programme Lead; payment follows IA verification.{% endcomment %}
 <div class="cpo-tscroll" data-mobile-table="scroll">
   {% paginate partner_list "partners_page" as partners_pager %}
-  <table class="cpo-table cxo-table">
+  <table class="cpo-table cpo-table--flat cxo-table">
     <thead>
       <tr>
         <th scope="col" class="cpo-namecol">Partner</th>
+        <th scope="col" title="Everything in the Partner's hands: work dated in the period, and hand-overs it has not dated yet, whichever year they were made in">Assigned</th>
         <th scope="col" title="Partner activities dated in the period">Scheduled</th>
         <th scope="col">Started</th>
         <th scope="col" title="Evidence submitted to IA">Evidence Submitted</th>
-        <th scope="col" title="Returned by IA and not yet resubmitted">Returned by IA</th>
-        <th scope="col">IA Verified</th>
-        <th scope="col" title="Verified, payment not yet made">Awaiting Payment</th>
-        <th scope="col">Paid</th>
-        <th scope="col" title="Hand-overs the Partner has not dated yet, whichever year they were made in">Assigned, Unscheduled</th>
+        <th scope="col" title="IA verified, with the Salesforce ID and the form both in: green on My Plan">Verified</th>
+        <th scope="col" title="Evidence submitted and waiting on IA">Awaiting Verification</th>
+        <th scope="col" title="Payments made, and verified work not yet paid">Payment</th>
         <th scope="col">Overdue</th>
-        <th scope="col" title="Schools where the Partner's work reached submission">Schools Served</th>
         <th scope="col" class="cpo-actcol">Action</th>
       </tr>
     </thead>
@@ -24,16 +22,14 @@ payment follows IA verification.{% endcomment %}
       {% for row in partners_pager.rows %}
       <tr data-level="1">
         <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.name }}</span></th>
+        <td>{{ row.assigned }}</td>
         <td>{{ row.due }}</td>
         <td>{{ row.started }}</td>
         <td>{{ row.executed }}</td>
-        <td>{% if row.returned %}<span class="cpo-alert">{{ row.returned }}</span>{% else %}0{% endif %}</td>
         <td>{{ row.verified }}</td>
-        <td>{{ row.awaiting_payment }}</td>
-        <td>{{ row.paid }}</td>
-        <td>{{ row.unscheduled }}</td>
+        <td>{% if row.awaiting_verification %}<span class="cpo-alert">{{ row.awaiting_verification }}</span>{% else %}0{% endif %}</td>
+        <td class="cpo-cover"><span>{{ row.paid }} paid</span>{% if row.awaiting_payment %} <span class="cpo-pct" data-tone="none">({{ row.awaiting_payment }} due)</span>{% endif %}</td>
         <td>{% if row.overdue %}<span class="cpo-alert">{{ row.overdue }}</span>{% else %}0{% endif %}</td>
-        <td>{{ row.schools }}</td>
         <td class="cpo-actcell">
           <div class="cpo-acts">
             <button type="button" class="cpo-view"
@@ -43,7 +39,7 @@ payment follows IA verification.{% endcomment %}
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="12" class="cpo-empty">No Partner has work in this selection.</td></tr>
+      <tr><td colspan="10" class="cpo-empty">No Partner has work in this selection.</td></tr>
       {% endfor %}
     </tbody>
   </table>

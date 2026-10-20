@@ -101,6 +101,10 @@ SECTIONS_OF = {
         "activities",
         "projects",
     ),
+    # A project's own schools and work (owner, 2026-10-18). Its "projects"
+    # would be itself, and its activities have the project's own Activities
+    # page (partials/projects/workspace_nav.html), so it has neither.
+    "project": ("overview", "ssa", "districts", "clusters", "schools"),
     "cluster": ("overview", "schools", "activities", "projects"),
     # School 360 (the brief, 2026-10-10): the same sections over one school.
     "school": ("overview", "ssa", "activities", "academic", "stories", "projects"),
@@ -377,7 +381,7 @@ def profile_context(
     return context
 
 
-def rail_for(context: dict, profile: dict, *, lead: tuple = ()) -> dict:
+def rail_for(context: dict, profile: dict, *, lead: tuple = ()) -> dict | None:
     """The insight rail of ``profile`` (`apps.analytics.profile_rail`), its
     lines opening the tabs and records of the page ``context`` describes
     (owner, 2026-10-10: the short reads sit in a column beside the tables)."""
@@ -393,6 +397,12 @@ def rail_for(context: dict, profile: dict, *, lead: tuple = ()) -> dict:
         url = f"{context['records']}{what}"
         return f"{url}&key={quote(str(key))}" if key else url
 
+    # The rail sits beside the Overview alone: beside any other tab it was
+    # the Overview's summary a second time (owner, 2026-10-19: "ssa [scores]
+    # are duplicated more than 2 times ... look at all other duplications
+    # apart frm ssa and fix it").
+    if context.get("section") != "overview":
+        return None
     return profile_rail.build(
         profile, tab_url=tab_url, records_url=records_url, lead=lead
     )
@@ -421,6 +431,29 @@ def sub_region_profile_view(request, sub_region_id):
     )
 
 
+def _add_decisions(user, pi: dict) -> None:
+    """The decision review on the Country Profile's Overview, and its lines in
+    Needs Attention, for a reader who holds it (profile_decisions)."""
+    from apps.frontend.views import profile_decisions
+
+    decisions = profile_decisions.for_reader(user, pi["fy"])
+    if decisions is None:
+        return
+    pi["decisions"] = decisions
+    rail = pi.get("rail")
+    if rail:
+        lines = profile_decisions.attention_links(decisions)
+        pi["rail"] = {
+            **rail,
+            "parts": [
+                {**part, "links": [*lines, *part["links"]]}
+                if part["key"] == "attention"
+                else part
+                for part in rail["parts"]
+            ],
+        }
+
+
 @require_page_permission("country_planning_oversight")
 def country_profile_view(request):
     """The country: every school, read by sub-region, district, staff and
@@ -429,11 +462,14 @@ def country_profile_view(request):
 
     country = country_of(request.user)
     scope = engine.country_scope(country)
+    pi = profile_context(request, scope, "/country-profile")
+    if pi["section"] == "overview":
+        _add_decisions(request.user, pi)
     return render(
         request,
         "pages/profiles/profile.html",
         {
-            "pi": profile_context(request, scope, "/country-profile"),
+            "pi": pi,
             "profile_title": f"{country or 'Country'} Profile",
             "profile_lead": "Edify Operations",
             "back_href": "",

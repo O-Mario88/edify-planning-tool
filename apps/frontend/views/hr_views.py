@@ -1031,6 +1031,7 @@ def pd_dashboard_action_view(request):
                     "submitted_to_supervisor",
                     "submitted_to_hr",
                     "pending_exception",
+                    "submitted_to_cd",
                     "approved_pending_funding",
                     "approved_unfunded",
                     "disbursed",
@@ -2656,38 +2657,6 @@ def _hr_analytics_workspace(request) -> dict:
 @require_page_permission("hr_analytics")
 def hr_analytics_view(request):
     return _render_workspace(request, **_hr_analytics_workspace(request))
-
-
-@require_page_permission("hr_analytics")
-def people_analytics_section_view(request):
-    """People Analytics as a tab of the one Analytics page."""
-
-    workspace = _hr_analytics_workspace(request)
-    paginator = Paginator(workspace["rows"], TABLE_PAGE_SIZE)
-    page = paginator.get_page(request.GET.get("page") or 1)
-    from apps.frontend.views.analytics_render import render_analytics_section
-
-    return render_analytics_section(
-        request,
-        "partials/analytics/panels/people_analytics.html",
-        {
-            **workspace,
-            "page_obj": page,
-            "rows": page.object_list,
-            "search": (request.GET.get("q") or "").strip(),
-        },
-        section_key="people",
-        panel_title=workspace["title"],
-        frame={
-            "question": (
-                "Where are workforce capacity, review workload or compliance "
-                "gaps most likely to constrain delivery?"
-            ),
-            "evidence": "Live workforce, review and compliance records",
-            "freshness": "Current operational scope",
-            "confidence": "No unsupported demographic inference",
-        },
-    )
 
 
 def _audit_action_label(action: str) -> str:

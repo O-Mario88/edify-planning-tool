@@ -188,27 +188,6 @@ class SsaFilterRowContractTest(SimpleTestCase):
 
 
 class YearComparisonWordingTest(SimpleTestCase):
-    def test_a_year_comparison_names_both_years_the_way_the_owner_reads_it(self):
-        ssa = _read("templates/partials/ssa/performance_workspace.html")
-        self.assertIn(
-            'SSA performance FY{{ dashboard.improvement_monitor.baseline_fy|slice:"2:" }} '
-            'vs FY{{ dashboard.improvement_monitor.comparison_fy|slice:"2:" }}',
-            ssa,
-        )
-        self.assertNotIn("baseline →", ssa)
-        for path in (
-            "templates/partials/analytics/panels/visit_effectiveness.html",
-            "templates/pages/analytics/visit_effectiveness.html",
-        ):
-            source = _read(path)
-            self.assertIn(
-                'SSA performance FY{{ d.methodology.baseline_fy|slice:"-2:" }} '
-                'vs FY{{ d.methodology.followup_fy|slice:"-2:" }}',
-                source,
-                path,
-            )
-            self.assertNotIn("{{ d.methodology.baseline_fy }} → ", source, path)
-
     def test_no_template_joins_two_years_with_an_arrow(self):
         import re
 

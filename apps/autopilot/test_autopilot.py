@@ -7,7 +7,7 @@ supersedes rather than stacks; and acceptance routes through the canonical
 create() funnel with per-item refusals surfaced, never forced.
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 from django.test import TestCase
 
@@ -58,8 +58,17 @@ def _confirmed_ssa(school, *, fy=None, score=6.0):
     return record
 
 
-# A fixed Monday inside FY2027 keeps the week deterministic.
-WEEK = date(2026, 10, 19)
+def _coming_monday() -> date:
+    """The next Monday by the platform's own day. The funnel refuses work on
+    a day that has passed, so a fixed week (19 October 2026) failed from that
+    day on; a week always ahead keeps the proposal schedulable."""
+    from django.utils import timezone
+
+    today = timezone.localdate()
+    return today + timedelta(days=7 - today.weekday())
+
+
+WEEK = _coming_monday()
 
 
 class AutopilotFixture(TestCase):
@@ -144,8 +153,8 @@ class GenerationTests(AutopilotFixture):
         Leave.objects.create(
             staff=self.staff,
             type="personal_time_off",
-            start_date="2026-10-19",
-            end_date="2026-10-24",
+            start_date=WEEK,
+            end_date=WEEK + timedelta(days=5),
             days=6,
             status="approved",
         )

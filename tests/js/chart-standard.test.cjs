@@ -157,9 +157,11 @@ test('a chart asked for before the library has run is drawn once it has', () => 
   }
 });
 // Owner, 2026-10-09, with a reference chart: "use the graph format (Horizontal
-// Cut out bar graph) above for all horizontal bar graphs".
-test('a horizontal chart of one or two series is cut-out bars; anything else keeps the library', () => {
-  const {cutsOut, cutOutScale, needsLibrary} = require('../../static/js/chart-standard.js');
+// Cut out bar graph) above for all horizontal bar graphs"; 2026-10-18, with
+// the same reference: "I want all the horizontal graphs to look exactly like
+// that. Apply the same design to the vertical bar graphs ... platform wide".
+test('every bar chart of measures not below zero is the cut-out, upright or across; a trend or a value below zero keeps the library', () => {
+  const {cutsOut, cutOutScale, needsLibrary, shadeOf} = require('../../static/js/chart-standard.js');
   const years = {chart: {type: 'bar'}, plotOptions: {bar: {horizontal: true}},
     series: [{name: 'FY 2024/25', data: [4.9, 5]}, {name: 'FY 2025/26', data: [5.9, 4.2]}],
     xaxis: {categories: ['Leadership', 'Enrolment']}, yaxis: {min: 0, max: 10, title: {text: 'SSA score (0–10)'}}};
@@ -173,19 +175,44 @@ test('a horizontal chart of one or two series is cut-out bars; anything else kee
   assert.deepEqual(cutOutScale({series: [{data: [37.7, 14.4]}], axis: {}}), {max: 40, step: 10});
   assert.deepEqual(cutOutScale({series: [{data: [83]}], axis: {}}), {max: 100, step: 25});
 
-  // Vertical bars, three series and a value below zero are not this form.
-  assert.equal(cutsOut(panels({...years, plotOptions: {}})[0]), false);
+  // Columns and three or more series are the same form, each series in its
+  // own shade of the first series' hue, neighbours far apart.
+  const columns = panels({...years, plotOptions: {}})[0];
+  assert.equal(columns.horizontal, false);
+  assert.equal(cutsOut(columns), true);
   const three = {...years, series: [...years.series, {name: 'Target', data: [7, 7]}]};
-  assert.equal(cutsOut(panels(three)[0]), false);
-  assert.equal(needsLibrary(three), true);
+  assert.equal(cutsOut(panels(three)[0]), true);
+  assert.equal(needsLibrary(three), false);
+  assert.deepEqual([0, 1, 2, 3, 4].map(shadeOf), [100, 33, 78, 10, 55]);
+
+  // A trend keeps its line, and a value below zero the library's bars.
+  assert.equal(cutsOut(panels({...years, chart: {type: 'line'}})[0]), false);
   const signed = {...years, series: [{name: 'Change', data: [1, -0.8]}]};
   assert.equal(cutsOut(panels(signed)[0]), false);
+  assert.equal(needsLibrary(signed), true);
   // Nothing measured draws the "no data" line, which needs no library either.
   const empty = {...years, series: [{name: 'FY 2025/26', data: [null, null]}]};
   assert.equal(cutsOut(panels(empty)[0]), false);
   assert.equal(needsLibrary(empty), false);
   // A chart a page built for the library itself still waits for it.
   assert.equal(needsLibrary({...years, _edifyStandard: true}), true);
+});
+
+// Country Oversight's parts-of-a-whole bars (owner, 2026-10-18): stacked, they
+// stay parts laid end to end, and a click on a later page still names its row.
+test('a stacked chart stays parts of a whole, and each page knows where its rows start', () => {
+  const {cutsOut} = require('../../static/js/chart-standard.js');
+  const leads = Array.from({length: 12}, (_, i) => `Lead ${i + 1}`);
+  const input = {chart: {type: 'bar', stacked: true}, plotOptions: {bar: {horizontal: true}},
+    series: [{name: 'Done', data: leads.map(() => 3)}, {name: 'Planned', data: leads.map(() => 5)}],
+    xaxis: {categories: leads}};
+  const pages = panels(input);
+  assert.equal(pages.length, 2);
+  assert.ok(pages.every(page => page.stacked && cutsOut(page)));
+  assert.deepEqual(pages.map(page => page.offset), [0, 10]);
+  // A line chart is never stacked parts, whatever it asks for.
+  assert.equal(panels({...input, chart: {type: 'line', stacked: true}})[0].stacked, false);
+  assert.equal(panels({...input, chart: {type: 'bar'}})[0].stacked, false);
 });
 // Owner, 2026-10-09: "fix all the line graph with starting point 0 and fix
 // the labels the line should be wave like".

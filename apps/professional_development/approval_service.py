@@ -1,7 +1,9 @@
 """PDApprovalRoutingService — one routing engine for every employee role.
 
-The lifecycle is identical for everyone: Supervisor → HR → Finance. Only the
-*people* filling those seats change, resolved generically:
+The lifecycle is identical for everyone: Supervisor → HR → Country Director →
+Finance — the four signatures of the Staff Development Fund request form
+(owner, 2026-10-18). Only the *people* filling those seats change, resolved
+generically:
 
   Stage 1 (Supervisor) = the person the organisation's reporting line names,
     resolved by apps.hr.review_authority — the one place that answers "who
@@ -18,7 +20,11 @@ The lifecycle is identical for everyone: Supervisor → HR → Finance. Only the
     pool excludes them (conflict of interest, §13/§31); if no other HR user
     exists, an independent CD/RVP reviews instead — never the requester.
 
-  Stage 3 (Finance) = an active Accountant user, same self-exclusion rule.
+  Stage 3 (Country Director) = the serving Country Director of the request's
+    country. A Country Director's own request is signed by the Regional Vice
+    President; nobody signs their own.
+
+  Stage 4 (Finance) = an active Accountant user, same self-exclusion rule.
 
 No employee may approve, sign off, or clear their own request — enforced by
 `_pick_approver` at the point a reviewer is resolved, not just at submit time.
@@ -213,6 +219,34 @@ def _may_review_hr_stage(req: ProfessionalDevelopmentRequest, principal) -> bool
     return actor_country == req.country
 
 
+def _requester_is_director(req: ProfessionalDevelopmentRequest) -> bool:
+    return (
+        StaffProfile.objects.filter(id=req.staff_id)
+        .filter(
+            Q(user__active_role=COUNTRY_DIRECTOR)
+            | Q(user__roles__contains=[COUNTRY_DIRECTOR])
+        )
+        .exists()
+    )
+
+
+def _may_review_cd_stage(req: ProfessionalDevelopmentRequest, principal) -> bool:
+    """Who signs as Country Director: the Director of the request's country,
+    or — for a Director's own request — the Regional Vice President. Admin
+    may act for either; nobody acts on their own request."""
+    if req.staff_id == (getattr(principal, "staff_profile_id", None) or ""):
+        return False
+    role = getattr(principal, "active_role", "")
+    if role == "Admin":
+        return True
+    if _requester_is_director(req):
+        return role == "RegionalVicePresident"
+    if role != COUNTRY_DIRECTOR:
+        return False
+    country = _principal_country(principal)
+    return bool(country and req.country and country == req.country)
+
+
 class PDApprovalRoutingService:
     @staticmethod
     def supervisor_for(staff: StaffProfile) -> StaffProfile | None:
@@ -324,6 +358,8 @@ class PDApprovalRoutingService:
             return principal.user_id in acting
         if req.status in (PDStatus.SUBMITTED_TO_HR, PDStatus.PENDING_EXCEPTION):
             return _may_review_hr_stage(req, principal)
+        if req.status == PDStatus.SUBMITTED_TO_CD:
+            return _may_review_cd_stage(req, principal)
         return False
 
     # ── Submission ────────────────────────────────────────────────────────────
@@ -339,33 +375,25 @@ class PDApprovalRoutingService:
             PDStatus.RETURNED_BY_HR,
         ):
             raise BadRequest("Only a draft or returned request can be submitted.")
-        required = [
-            req.course_name,
-            req.course_type,
-            req.institution,
-            req.start_date,
-            req.end_date,
-            req.funding_type,
-        ]
-        if any(v in (None, "") for v in required):
+        # What the Staff Development Fund request form asks for (owner,
+        # 2026-10-18), and its attachment (a): the programme and registration
+        # forms. The abstract (b) is optional.
+        required = {
+            "Purpose for which funding is sought": req.purpose,
+            "Start date": req.start_date,
+            "End date": req.end_date,
+            "Duration of activity": req.duration,
+            "Title of course, conference or paper": req.course_name,
+            "How the course will impact your work in Edify": req.relevance_to_role,
+            "Fiscal year the funds are budgeted for": req.fy,
+        }
+        missing = [label for label, value in required.items() if value in (None, "")]
+        if missing:
+            raise BadRequest("Complete the form: " + ", ".join(missing) + ".")
+        if not req.evidence_files.filter(status="uploaded", kind="programme").exists():
             raise BadRequest(
-                "Course name, type, institution, dates and funding type are required."
-            )
-        if (
-            req.course_type == "in_person"
-            and not req.evidence_files.filter(status="uploaded").exists()
-        ):
-            raise BadRequest(
-                "In-person courses require an admission or enrollment letter (PDF)."
-            )
-        if req.course_type == "online" and not (req.course_link or "").strip():
-            raise BadRequest("Online courses require an institution or course link.")
-        if req.course_type == "hybrid" and not (
-            (req.course_link or "").strip()
-            and req.evidence_files.filter(status="uploaded").exists()
-        ):
-            raise BadRequest(
-                "Hybrid courses require both a course link and enrollment evidence."
+                "Attach the conference or training course programme and "
+                "registration forms."
             )
 
         req.total_cost_cents = (req.course_fee_cents or 0) + (
@@ -379,14 +407,13 @@ class PDApprovalRoutingService:
 
             staff_user = StaffProfile.objects.get(id=req.staff_id).user
             remaining = StaffPDService.balances(staff_user, req.fy)["remaining"]
-            over_allocation = req.requested_amount_cents > remaining
-            if over_allocation and not (req.exception_reason or "").strip():
-                raise BadRequest(
-                    f"Requested amount exceeds your remaining PD fund "
-                    f"({req.currency} {remaining / 100:,.0f} available) — provide a funding "
-                    "exception reason to proceed."
-                )
-            req.is_exception = over_allocation
+            # Above the remaining fund it is an exception HR must acknowledge
+            # before approving (hr_approve). The Staff Development Fund form
+            # has no box for a reason (owner, 2026-10-18: build the form
+            # exactly as it is), so the request is flagged rather than refused;
+            # the form's Office Use section shows HR the entitlement and the
+            # balance.
+            req.is_exception = req.requested_amount_cents > remaining
 
         supervisor = PDApprovalRoutingService.supervisor_for(
             StaffProfile.objects.get(id=req.staff_id)
@@ -425,7 +452,9 @@ class PDApprovalRoutingService:
 
     @staticmethod
     @transaction.atomic
-    def supervisor_approve(req_id: str, principal) -> ProfessionalDevelopmentRequest:
+    def supervisor_approve(
+        req_id: str, principal, note: str = ""
+    ) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.select_for_update().get(id=req_id)
         PDApprovalRoutingService._assert_supervisor(req, principal)
         conflict = req.conflict_status
@@ -437,11 +466,15 @@ class PDApprovalRoutingService:
         req.status = PDStatus.SUBMITTED_TO_HR
         req.supervisor_reviewed_by = principal.user_id
         req.supervisor_reviewed_at = timezone.now()
+        # The manager's comment the form prints under "Authorization".
+        if (note or "").strip():
+            req.supervisor_note = note.strip()[:512]
         req.save(
             update_fields=[
                 "status",
                 "supervisor_reviewed_by",
                 "supervisor_reviewed_at",
+                "supervisor_note",
                 "updated_at",
             ]
         )
@@ -538,6 +571,60 @@ class PDApprovalRoutingService:
             raise BadRequest(
                 "This request requires exception approval before HR can approve it."
             )
+        # HR has signed; the Country Director signs next (the form's order).
+        req.status = PDStatus.SUBMITTED_TO_CD
+        req.save()
+        PDApprovalRoutingService._notify_cd_stage(req)
+        _audit_decision(
+            "pd_hr_approve",
+            req,
+            principal,
+            extra={
+                "exception": bool(exception),
+                "independentReviewer": req.hr_is_independent_reviewer,
+            },
+        )
+        return req
+
+    # ── Stage 3: Country Director ────────────────────────────────────────────
+    @staticmethod
+    def _notify_cd_stage(req: ProfessionalDevelopmentRequest) -> None:
+        if _requester_is_director(req):
+            approver = _pick_approver("RegionalVicePresident", req.owner_user_id)
+            recipient = approver.id if approver else None
+        else:
+            director = _directors_by_country({req.country}).get(req.country)
+            recipient = director.user_id if director else None
+        PDApprovalRoutingService._notify(
+            recipient,
+            "PD request awaiting your authorization",
+            f"HR approved {req.staff_name}'s Staff Development Fund request for "
+            f"“{req.course_name}”: it needs the Country Director's signature.",
+            req,
+        )
+
+    @staticmethod
+    def _assert_cd(req: ProfessionalDevelopmentRequest, principal) -> None:
+        if req.status != PDStatus.SUBMITTED_TO_CD:
+            raise BadRequest("This request is not awaiting the Country Director.")
+        if req.staff_id == (principal.staff_profile_id or ""):
+            raise Forbidden("You cannot authorize your own request.")
+        if not _may_review_cd_stage(req, principal):
+            raise Forbidden(
+                "Only the Country Director of this country (the Regional Vice "
+                "President for a Director's own request) may authorize it."
+            )
+
+    @staticmethod
+    @transaction.atomic
+    def cd_approve(
+        req_id: str, principal, note: str = ""
+    ) -> ProfessionalDevelopmentRequest:
+        req = ProfessionalDevelopmentRequest.objects.select_for_update().get(id=req_id)
+        PDApprovalRoutingService._assert_cd(req, principal)
+        req.cd_reviewed_by = principal.user_id
+        req.cd_reviewed_at = timezone.now()
+        req.cd_note = (note or "")[:512] or None
         from apps.professional_development.fund_service import PDFundRequestService
 
         if req.funding_type in FUNDED_TYPES and req.requested_amount_cents > 0:
@@ -555,7 +642,8 @@ class PDApprovalRoutingService:
         PDApprovalRoutingService._notify(
             req.owner_user_id,
             "PD request approved",
-            f"Your request for “{req.course_name}” was approved by HR.",
+            f"Your request for “{req.course_name}” was authorized by the "
+            "Country Director.",
             req,
         )
         PDApprovalRoutingService._message_from_hr(
@@ -565,14 +653,29 @@ class PDApprovalRoutingService:
             f"Good news — “{req.course_name}” has been approved. "
             "Check My Professional Development for the next step.",
         )
-        _audit_decision(
-            "pd_hr_approve",
-            req,
-            principal,
-            extra={
-                "exception": bool(exception),
-                "independentReviewer": req.hr_is_independent_reviewer,
-            },
+        _audit_decision("pd_cd_approve", req, principal, reason=note or None)
+        return req
+
+    @staticmethod
+    def cd_reject(
+        req_id: str, principal, reason: str
+    ) -> ProfessionalDevelopmentRequest:
+        """The form's "Denied, the source of funding is not available"."""
+        if not (reason or "").strip():
+            raise BadRequest("Say why the request is denied.")
+        with transaction.atomic():
+            req = ProfessionalDevelopmentRequest.objects.select_for_update().get(
+                id=req_id
+            )
+            PDApprovalRoutingService._assert_cd(req, principal)
+            req.status = PDStatus.REJECTED
+            req.cd_reviewed_by = principal.user_id
+            req.cd_reviewed_at = timezone.now()
+            req.cd_note = reason[:512]
+            req.save()
+            _audit_decision("pd_cd_reject", req, principal, reason=reason)
+        PDApprovalRoutingService._notify(
+            req.owner_user_id, "PD request denied", reason, req
         )
         return req
 

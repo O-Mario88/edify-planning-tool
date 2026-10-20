@@ -766,6 +766,12 @@ def school_directory_view(request):
             visit_status=visit_by_school.get(s.id),
             training_coverage=training_by_school.get(s.id),
         )
+        # The projects already holding the school (prefetched above), so the
+        # bulk Add to project counts only the ticked schools a project would
+        # gain: the save skips the rest (owner, 2026-10-19).
+        row["project_ids"] = " ".join(
+            pa.project_id for pa in s.project_assignments.all()
+        )
         if group_by_owner:
             # Group headers, drawn where the owner changes.
             from apps.planning.owner_groups import group_label as _group_label
@@ -1781,6 +1787,7 @@ def _core_school_context(school, fy, user) -> dict:
     from apps.core.permissions import RolePermissionService
     from apps.core.scoping import may_write_school, resolve_user_scope
     from apps.core_schools import intelligence
+    from apps.ssa.year_comparison import fy_label
 
     fy = str(fy)
     return {
@@ -1792,6 +1799,10 @@ def _core_school_context(school, fy, user) -> dict:
         "core_may_act": may_write_school(resolve_user_scope(user), school),
         "core_may_review": RolePermissionService.can_view_page(user, "core_schools"),
         "core_fy": fy,
+        # The profiles' own way of naming a year ("FY 2025/26"), so the tab
+        # and the profile name the same two years alike.
+        "core_fy_label": fy_label(fy),
+        "core_previous_label": fy_label(int(fy) - 1),
     }
 
 
@@ -2213,6 +2224,19 @@ def bulk_assign_project_drawer_view(request):
     projects = annotate_allocations(
         annotate_coordinator_names(assignable_projects(request.user)), request.user
     )
+    # The save skips a school already in the project, so it uses no place:
+    # each project's figure is the ticked schools it does not hold yet, the
+    # count the save checks (owner, 2026-10-19: blocked with places left).
+    held = set(
+        ProjectSchoolAssignment.objects.filter(
+            project_id__in=[p.id for p in projects],
+            school_id__in=[school.id for school in schools],
+        ).values_list("project_id", "school_id")
+    )
+    for project in projects:
+        project.ticked_new = sum(
+            (project.id, school.id) not in held for school in schools
+        )
     return render(
         request,
         "partials/schools/bulk_assign_project_drawer.html",
@@ -3322,6 +3346,26 @@ def _closed_archive_scope(user) -> Q:
     return in_scope | Q(owner_at_closure__in=owners) if owners else in_scope
 
 
+def _closure_impact(user, scope) -> dict | None:
+    """The year's closure impact for the readers of School Closures — the CD,
+    the RVP and Admin — as that page reads it (`closure_analytics.
+    country_summary`); None for anyone else (owner, 2026-10-19: "the four
+    closure figures on Closed Schools for CD, RVP and Admin")."""
+    from apps.core.fy import get_fy_date_range, get_operational_fy
+    from apps.core.permissions import RolePermissionService
+    from apps.schools import closure_analytics
+    from apps.ssa.year_comparison import fy_label
+
+    if not RolePermissionService.can_view_page(user, "closure_impact"):
+        return None
+    fy = get_operational_fy()
+    start, end = get_fy_date_range(fy)
+    return {
+        **closure_analytics.country_summary(start.date(), end.date(), scope),
+        "fy_label": fy_label(fy),
+    }
+
+
 @require_page_permission("closed_schools")
 def closed_schools_view(request):
     """The archive. Closed schools stay reachable — just not operationally.
@@ -3368,14 +3412,16 @@ def closed_schools_view(request):
     # deployment's.
     from apps.core.scoping import scoped_school_queryset
 
-    totals = lifecycle_service.active_enrollment(
-        scoped_school_queryset(resolve_user_scope(request.user))
-    )
+    scope = resolve_user_scope(request.user)
+    totals = lifecycle_service.active_enrollment(scoped_school_queryset(scope))
     return render(
         request,
         "pages/schools/closed.html",
         {
-            "rows": rows,
+            # A summary-only reader (the RVP) reads the figures, never a school.
+            "rows": [] if scope.can_view_summary_only else rows,
+            "summary_only": scope.can_view_summary_only,
+            "closure_impact": _closure_impact(request.user, scope),
             "q": query,
             "closed_count": summary["closed"] or 0,
             "active_count": totals["schools_active"],

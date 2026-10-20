@@ -1,0 +1,55 @@
+{% load table_pagination %}{% comment %}
+The requirement by Programme Lead and CCEO (owner, 2026-10-18: "the same as
+above but broken down in details grouped by PL, CCEO"): the type table's
+columns (service.people_rows), a Lead's row opening onto the Lead's own
+portfolio and each CCEO's like a cluster accordion. Every row comes from the
+planning tab's fold, so a Lead's figures are their people's together and the
+country's are the type table's total. The Visits / Trainings tab is the type
+table's, kept apart so each table can be read on its own.
+{% endcomment %}
+{% if people_rows %}
+<section class="cpo-drill cxo-types cxo-people" id="cxo-people" data-live-region aria-labelledby="cxo-people-name"
+         x-data="{ view: window.cxoPeopleView || 'visits' }" x-effect="window.cxoPeopleView = view">
+  <header class="cpo-drill-head" data-no-titlebar data-card-header>
+    <h2 class="cpo-drill-name" id="cxo-people-name">Verified Against the Requirement by Programme Lead and CCEO</h2>
+  </header>
+  <div class="cpo-views" data-edify-tablist aria-label="Programme Lead and CCEO figures">
+    <button type="button" data-edify-tab @click="view = 'visits'" :aria-pressed="view === 'visits' ? 'true' : 'false'" aria-pressed="true">Visits</button>
+    <button type="button" data-edify-tab @click="view = 'trainings'" :aria-pressed="view === 'trainings' ? 'true' : 'false'" aria-pressed="false">Trainings</button>
+  </div>
+  <div class="cpo-tscroll" data-mobile-table="scroll">
+    {% paginate people_rows "people_page" as people_pager %}
+    <table class="cpo-table" data-view="visits" :data-view="view">
+      <thead>
+        <tr>
+          <th scope="col" class="cpo-namecol">Programme Lead / CCEO</th>
+          {% include "partials/country_execution/_requirement_heads.html" %}
+        </tr>
+      </thead>
+      {% for lead in people_pager.rows %}
+      <tbody x-data="{ open: false }" data-lead="{{ lead.key }}">
+        <tr data-level="1" :data-open="open ? 'true' : 'false'">
+          {% with row=lead %}
+          <th scope="row" class="cpo-namecell"{% if not lead.owners %} data-leaf{% endif %}>
+            <span{% if lead.owners %} data-opens-rows @click.self="open = !open"{% endif %}>{% if lead.owners %}<button type="button" class="cpo-toggle" :class="open ? 'is-open' : ''"
+                    @click="open = !open"
+                    :aria-expanded="open ? 'true' : 'false'" aria-label="Show {{ lead.label }}'s people">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>{% endif %}{{ lead.label }}</span>
+          </th>
+          {% include "partials/country_execution/_requirement_cells.html" %}
+          {% endwith %}
+        </tr>
+        {% for row in lead.owners %}
+        <tr data-level="2" x-show="open" x-cloak>
+          <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.label }}</span>{% if row.kind == "pl_personal" %}<span class="cpo-hint"><span>own portfolio</span></span>{% endif %}</th>
+          {% include "partials/country_execution/_requirement_cells.html" %}
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% endfor %}
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=people_pager param="people_page" %}
+</section>
+{% endif %}

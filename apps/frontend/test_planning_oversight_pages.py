@@ -386,28 +386,20 @@ class RosterOpensOnWorkTest(OversightPageFixture):
 
 
 class SpecialProjectsOversightTest(OversightPageFixture):
-    def test_ia_can_view_special_projects_tab_on_planning_oversight(self):
+    def test_ia_reads_special_projects_on_project_monitoring(self):
+        """Special Projects is the Project Monitoring page's, not a second copy
+        on Planning Oversight (owner, 2026-10-19: "take the Special Projects
+        lens off Team Oversight (Project Monitoring has it)")."""
         client = self.as_user(self.ia_user)
-        response = client.get(PL_URL, {"view": "projects"})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Special Projects")
-        self.assertContains(response, "Fiscal year")
-        self.assertContains(response, "Planning stage")
-        self.assertContains(response, "Project status")
-        self.assertContains(response, "All schools")
-        self.assertContains(response, "Project schools")
-        self.assertContains(response, "Assigned to partner")
-        self.assertContains(response, "Activity scheduled")
-        self.assertContains(response, "data-project-status-filter")
 
-        # Lens tabs ordering: Planning Monitor -> Special Projects -> Execution & Completion
-        lens_tabs = response.context["lens_tabs"]
-        keys = [tab["key"] for tab in lens_tabs]
-        self.assertIn("projects", keys)
-        self.assertIn("monitor", keys)
-        self.assertIn("execution", keys)
-        self.assertEqual(keys.index("projects"), keys.index("monitor") + 1)
-        self.assertEqual(keys.index("execution"), keys.index("projects") + 1)
+        page = client.get(PL_URL)
+        keys = [tab["key"] for tab in page.context["lens_tabs"]]
+        self.assertNotIn("projects", keys)
+        self.assertEqual(keys.index("execution"), keys.index("monitor") + 1)
+
+        old = client.get(PL_URL, {"view": "projects"})
+        self.assertRedirects(old, "/projects/monitoring", fetch_redirect_response=False)
+        self.assertEqual(client.get("/projects/monitoring").status_code, 200)
 
     def test_country_oversight_workspace_no_longer_has_cpo_notice(self):
         client = self.as_user(self.cd_user)
@@ -431,15 +423,8 @@ class SpecialProjectsOversightTest(OversightPageFixture):
             assigned_by=self.james.id,
         )
         client = self.as_user(self.ia_user)
-        # Two exports in the page's heading (owner, 2026-10-05): every
-        # project in one file, and the project whose tab is open.
-        response = client.get(PL_URL, {"view": "projects"})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "data-project-export-all")
-        response = client.get(PL_URL, {"view": "projects", "project": project.id})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "data-project-export-all")
-        self.assertContains(response, f'data-project-export="{project.id}"')
+        # The project exports outlive the Special Projects lens (owner,
+        # 2026-10-19): Project Monitoring offers them, and the routes stand.
 
         # Export single project
         export_url = f"/team-planning-oversight/projects/{project.id}/export"

@@ -1,0 +1,115 @@
+{% load frontend_filters %}{% comment %}
+The Staff Development Fund request form, to fill in (owner, 2026-10-18: "Build
+that form exactly the way it is"). The employee writes the Details and the
+Budget and attaches (a) the programme and registration forms and (b) an
+optional abstract; their name, position and manager come from their profile.
+The sign-off half is shown as it stands, empty until each person signs in the
+platform. Posts to pd_request_view, files with it.
+{% endcomment %}
+<form method="post" action="/my-professional-development/request" enctype="multipart/form-data" class="sdf">
+  {% csrf_token %}
+  {% if instance %}<input type="hidden" name="id" value="{{ instance.id }}">{% endif %}
+
+  {% if instance.status == 'returned_by_supervisor' or instance.status == 'returned_by_hr' %}
+  <div class="edify-note" data-tone="danger">
+    <p class="edify-note__title">Returned for correction</p>
+    <p class="edify-note__body">{% firstof instance.supervisor_note instance.hr_note %}</p>
+  </div>
+  {% endif %}
+
+  <header class="sdf-head">
+    <h3 class="sdf-title">STAFF DEVELOPMENT FUND REQUEST FORM</h3>
+    <span class="sdf-logo" role="img" aria-label="Edify"></span>
+  </header>
+  <p class="sdf-policy">Please refer to the Staff Development Fund Policy before completing this form.</p>
+
+  <div class="sdf-who">
+    <div class="space-y-2">
+      <div class="sdf-row"><span class="sdf-label">Full Name</span><div class="sdf-box">{% firstof instance.staff_name staff_info.staff_name %}</div></div>
+      <div class="sdf-row"><span class="sdf-label">Position</span><div class="sdf-box">{% firstof instance.position staff_info.position %}</div></div>
+      <div class="sdf-row"><span class="sdf-label">Manager</span><div class="sdf-box">{% firstof instance.supervisor_name staff_info.supervisor_name "Not configured" %}</div></div>
+    </div>
+    <div class="sdf-attach">
+      <p>Please attach a copy of:</p>
+      <label for="sdf-programme">a) the conference and/or training course programme and registration forms (including dates, location, registration fees etc.)</label>
+      <input id="sdf-programme" type="file" name="programme_file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" class="w-full edify-text-caption">
+      <label for="sdf-abstract">b) your abstract (optional)</label>
+      <input id="sdf-abstract" type="file" name="abstract_file" accept=".pdf,.doc,.docx" class="w-full edify-text-caption">
+      {% for e in evidence %}
+      <a href="/my-professional-development/evidence/{{ e.id }}" target="_blank" rel="noopener" class="font-semibold edify-primary-text-hover">{{ e.original_name }} <span class="font-normal">· {{ e.get_kind_display }}</span></a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <section class="sdf-section" aria-labelledby="sdf-details-edit">
+    <h4 id="sdf-details-edit">Details</h4>
+    <div class="sdf-row">
+      <label for="sdf-purpose" class="sdf-label">Purpose for Which Funding is Sought</label>
+      <input id="sdf-purpose" type="text" name="purpose" required maxlength="255" value="{{ instance.purpose|default:'' }}" placeholder="e.g. Professional Development" class="sdf-box">
+    </div>
+    <div class="sdf-row">
+      <label for="sdf-start" class="sdf-label">Start Date of Proposed Activity</label>
+      <input id="sdf-start" type="date" name="start_date" required value="{{ instance.start_date|date:'Y-m-d' }}" class="sdf-box">
+    </div>
+    <div class="sdf-row">
+      <label for="sdf-end" class="sdf-label">End Date of Proposed Activity</label>
+      <input id="sdf-end" type="date" name="end_date" required value="{{ instance.end_date|date:'Y-m-d' }}" class="sdf-box">
+    </div>
+    <div class="sdf-row">
+      <label for="sdf-duration" class="sdf-label">Duration of Activity</label>
+      <input id="sdf-duration" type="text" name="duration" required maxlength="128" value="{{ instance.duration|default:'' }}" placeholder="e.g. 3 days, 6 weeks, 1 year" class="sdf-box">
+    </div>
+    <div class="sdf-row">
+      <label for="sdf-title" class="sdf-label">Title of Course, Conference, Paper</label>
+      <input id="sdf-title" type="text" name="course_name" required maxlength="255" value="{{ instance.course_name|default:'' }}" class="sdf-box">
+    </div>
+    <div class="sdf-row sdf-row--wide">
+      <label for="sdf-impact" class="sdf-label">How will this course impact your work in Edify?</label>
+      <textarea id="sdf-impact" name="relevance_to_role" required rows="4" class="sdf-box sdf-box--area">{{ instance.relevance_to_role|default:'' }}</textarea>
+    </div>
+  </section>
+
+  <section class="sdf-section" aria-labelledby="sdf-budget-edit">
+    <h4 id="sdf-budget-edit">Budget</h4>
+    <div class="sdf-row">
+      <label for="sdf-cost" class="sdf-label">Approximate cost of Activity <span class="sdf-hint">(USD)</span></label>
+      <input id="sdf-cost" type="number" name="approximate_cost" required min="0" step="0.01" value="{% if instance and instance.total_cost_cents %}{{ instance.total_cost_cents|divide:100 }}{% endif %}" placeholder="$" class="sdf-box">
+    </div>
+    <div class="sdf-row">
+      <label for="sdf-amount" class="sdf-label">Amount Requested</label>
+      <div class="sdf-pair">
+        <select name="requested_currency" aria-label="Currency of the amount requested" class="sdf-box">
+          {% for code in currencies %}<option value="{{ code }}"{% if instance.requested_local_currency == code or not instance.requested_local_currency and code == 'USD' %} selected{% endif %}>{{ code }}</option>{% endfor %}
+        </select>
+        <input id="sdf-amount" type="number" name="requested_amount" min="0" step="0.01" value="{% if instance.requested_local_amount_cents %}{{ instance.requested_local_amount_cents|divide:100 }}{% elif instance and instance.requested_amount_cents %}{{ instance.requested_amount_cents|divide:100 }}{% endif %}" class="sdf-box">
+      </div>
+    </div>
+    <div class="sdf-row">
+      <label for="sdf-fy" class="sdf-label">What Fiscal Year are the Funds budgeted for?</label>
+      <select id="sdf-fy" name="fy" class="sdf-box">
+        {% for year in fy_choices %}<option value="{{ year }}"{% if instance.fy == year or not instance and year == fy %} selected{% endif %}>{{ year }}</option>{% endfor %}
+      </select>
+    </div>
+    {% if balances %}<p class="sdf-hint">Your Staff Development Fund: {{ balances.currency }} {{ balances.remaining|divide:100|currency }} remaining of {{ balances.currency }} {{ balances.annual_allocation|divide:100|currency }} (FY {{ instance.fy|default:fy }}). A request above it goes to HR as an exception.</p>{% endif %}
+  </section>
+
+  {% include "partials/professional_development/_sdf_signoffs.html" %}
+
+  {% if conflict and conflict.status != 'no_conflict' %}
+  <div class="edify-note" data-tone="{% if conflict.status == 'major_conflict' %}danger{% else %}warning{% endif %}">
+    <p class="edify-note__title">Possible schedule conflict</p>
+    <p class="edify-note__body">{{ conflict.detail }}</p>
+  </div>
+  {% endif %}
+
+  {% comment %}Save draft stays the first submit button in this form, so
+  pressing Enter in a field saves the draft rather than submitting it.{% endcomment %}
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" name="intent" value="draft" formnovalidate class="btn btn-secondary h-8">Save draft</button>
+    <button type="submit" name="intent" value="submit" class="btn btn-primary h-8">Submit for approval</button>
+    {% if instance and instance.status == 'draft' %}
+    <button type="submit" formaction="/my-professional-development/request/{{ instance.id }}/action" formnovalidate name="action" value="cancel" class="btn btn-danger h-8">Cancel this draft</button>
+    {% endif %}
+  </div>
+</form>

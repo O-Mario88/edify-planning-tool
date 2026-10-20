@@ -31,6 +31,7 @@ from apps.geography.models import District, Region
 from apps.schools.models import School
 from apps.ssa import change_rules
 from apps.ssa.models import SsaRecord, SsaScore
+from apps.ssa.year_comparison import fy_label
 
 
 class _ClusterCase(TestCase):
@@ -365,9 +366,18 @@ class SsaMovementTest(_ClusterCase):
         body = self._page(tab="ssa").content.decode()
 
         self.assertIn('data-cluster-profile-panel="ssa"', body)
-        self.assertIn(f"SSA Movement, FY {self.last_fy} to FY {self.fy}", body)
+        # The profiles' way of naming a year (ssa.year_comparison.fy_label).
+        self.assertIn(
+            f"SSA Movement, {fy_label(self.last_fy)} to {fy_label(self.fy)}", body
+        )
         self.assertIn("3 of 5 schools compared", body)
         self.assertEqual(body.count("data-ssa-area="), 9)
+        # One place for each SSA figure (owner, 2026-10-19: "ssa [scores] are
+        # duplicated more than 2 times"): the score is the Summary's tile and
+        # the overall movement the table's own row, so no strip repeats them,
+        # and the chart is named as on every profile.
+        self.assertNotIn("Current Score", body)
+        self.assertNotIn("Full Cluster Scorecard", body)
         link = (
             f"/clusters/{self.cluster.id}/profile?tab=ssa&amp;fy={self.fy}"
             "&amp;area=leadership&amp;verdict=declined"

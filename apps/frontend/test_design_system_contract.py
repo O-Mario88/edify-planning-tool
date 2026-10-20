@@ -698,7 +698,6 @@ class DesignSystemContractTest(SimpleTestCase):
             "templates/pages/staff/detail.html",
             "templates/pages/staff/index.html",
             "templates/partials/finance/fund_workspace.html",
-            "templates/partials/analytics/visit_effectiveness_workspace.html",
             "templates/partials/targets/my_body.html",
             "templates/partials/finance/country_budget/root.html",
             "templates/partials/fund_requests/kpis.html",

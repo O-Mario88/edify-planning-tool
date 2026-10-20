@@ -589,10 +589,13 @@ class IaReadsTheMonitorsOnPlanningOversight(PeopleFixture):
             [
                 ("planning", "Team Plan"),
                 ("monitor", "Planning Monitor"),
-                ("projects", "Special Projects"),
+                # Special Projects is the Project Monitoring page's, not a
+                # second copy here (owner, 2026-10-19: "take the Special
+                # Projects lens off Team Oversight (Project Monitoring has
+                # it)").
                 ("execution", "Execution & Completion"),
                 # Owner, 2026-10-06: the training summary sits "under
-                # planning oversight". It follows the three tabs above, which
+                # planning oversight". It follows the tabs above, which
                 # keep the order they were given.
                 ("trainings", "Training Summary"),
                 ("portfolio", "Country Portfolio"),
@@ -602,10 +605,18 @@ class IaReadsTheMonitorsOnPlanningOversight(PeopleFixture):
         )
         body = response.content.decode()
         self.assertIn('href="/team-planning-oversight/?view=monitor"', body)
-        self.assertIn('href="/team-planning-oversight/?view=projects"', body)
+        self.assertNotIn('href="/team-planning-oversight/?view=projects"', body)
         self.assertIn('href="/team-planning-oversight/?view=execution"', body)
         # The page of its own is gone from their sidebar.
         self.assertNotIn('href="/planning-monitor/"', body)
+
+    def test_an_old_special_projects_address_opens_project_monitoring(self):
+        response = self.client.get(
+            "/team-planning-oversight/", {"view": "projects", "fy": "2026"}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/projects/monitoring?fy=2026")
 
     def test_each_tab_opens_its_monitor_in_place(self):
         for view, marker in (

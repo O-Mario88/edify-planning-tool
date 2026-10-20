@@ -19,7 +19,13 @@
   --cpo-ink-3: #5f6b78;
   --cpo-line: #e2e7ec;
   --cpo-line-2: #d3dae2;
-  --cpo-surface: var(--edify-surface-raised, #fff);
+  /* The platform's card contract (design-system.css): an oversight card is
+     the same surface, and its content the same 16px in, as every other card
+     (owner, 2026-10-18: "professional and enterprise grade design
+     consistency across the platform"). In the dark and blue themes the
+     raised step painted these cards lighter than the rest of the platform. */
+  --cpo-surface: var(--edify-card-surface, var(--edify-surface-raised, #fff));
+  --cpo-inset: var(--edify-card-inset, 1rem);
   --cpo-sunk: #f5f7f9;
   --cpo-accent: #0f5a47;
   --cpo-accent-hover: #0b4838;
@@ -206,7 +212,7 @@
   border: 1px solid var(--cpo-line);
   border-radius: var(--cpo-radius);
   box-shadow: var(--cpo-shadow);
-  padding: 0.7rem 1.1rem 0.5rem;
+  padding: 0.75rem var(--cpo-inset);
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -252,7 +258,7 @@
 .cpo-apply,
 .cpo-reset {
   block-size: 2.15rem;
-  padding-inline: 1.1rem;
+  padding-inline: var(--cpo-inset);
   border-radius: var(--edify-radius-xs);
   font-size: var(--edify-text-label-size);
   font-weight: 600;
@@ -295,7 +301,7 @@
 /* ── Notes ─────────────────────────────────────────────────────────────── */
 .cpo-notice {
   margin: 0;
-  padding: 0.55rem 0.8rem;
+  padding: 0.75rem var(--cpo-inset);
   border-radius: var(--edify-radius-sm);
   background: var(--cpo-info-bg);
   border: 1px solid var(--cpo-info-line);
@@ -449,8 +455,12 @@
   gap: 0.9rem;
 }
 .cpo-chart {
+  /* A chart card pads its content itself, so a table inside it has no inset
+     left to pay: its first column starts on the card's content line, not
+     16px past it (the chart data and lists read 32px in, 2026-10-18). */
+  --edify-section-inset: 0px;
   margin: 0;
-  padding: 0.9rem 1.1rem 0.55rem;
+  padding: var(--cpo-inset);
   background: var(--cpo-surface);
   border: 1px solid var(--cpo-line);
   border-radius: var(--cpo-radius);
@@ -487,7 +497,7 @@
    full-width table's, so more of them are on screen before the table has to
    scroll in its box. The platform pads every cell from this variable, so the
    variable is what is set. Headings carry their own line break. */
-:is(.cpo-charts, .cxo-charts) .cpo-mini { --edify-table-cell-padding-inline: 0.4rem; }
+:is(.cpo-charts, .cxo-charts) .cpo-mini { --edify-table-cell-padding-inline: 0.5rem; }
 :is(.cpo-charts, .cxo-charts) .cpo-mini thead th { line-height: 1.25; vertical-align: bottom; }
 
 /* ── Drill-down table and follow-ups ───────────────────────────────────── */
@@ -511,7 +521,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.85rem 1.1rem 0.7rem;
+  padding: var(--cpo-inset) var(--cpo-inset) 0.75rem;
 }
 .cpo-drill-name,
 .cpo-side-name {
@@ -553,7 +563,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
-  margin: 0 1.1rem 0.8rem;
+  margin: 0 var(--cpo-inset) 0.75rem;
   padding: 0;
 }
 .cpo-cap {
@@ -562,7 +572,7 @@
   align-content: start;
   gap: 0.3rem;
   min-inline-size: 0;
-  padding: 0.65rem 0.8rem;
+  padding: 0.75rem var(--cpo-inset);
   border: 1px solid var(--cpo-line);
   border-radius: var(--edify-radius-xs);
   background: var(--cpo-sunk);
@@ -622,16 +632,27 @@
    drawn unless it is hidden that way, so rows fetched later (a Lead's
    people, a person's Partners) follow the tab too. The tabs start on the
    card's content line, as its title and its first column do. */
-.cpo-views { margin: 0 1.1rem 0.7rem; }
+.cpo-views { margin: 0 var(--cpo-inset) 0.75rem; }
+/* On a phone a row of tabs is stretched to fill its line, and the platform's
+   fill rule sets its side margins from --edify-fill-inset (interactions.css,
+   ROWS THAT REACH THE EDGE). An oversight card pays its inset itself, so the
+   rows on its content line name it there too; without it the Visits and
+   Trainings tabs ran from card edge to card edge (2026-10-18). */
+.cpo-views,
+.cxo-pad,
+.cpo-capacity {
+  --edify-fill-inset: var(--cpo-inset);
+}
 
 .cpo-table {
   inline-size: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
-  /* The platform pads every table cell from this token (design-system.css);
-     fourteen columns fit a 1440 px screen at it, with the first column
-     starting under the card's title. */
-  --edify-table-cell-padding-inline: 0.2rem;
+  /* The platform pads every table cell from this token (design-system.css):
+     a dense table takes the compact cell, 8px (.edify-table--compact), with
+     the first column starting under the card's title. At 3px the columns
+     ran together; a wide table scrolls in its region (cpo-tscroll). */
+  --edify-table-cell-padding-inline: 0.5rem;
 }
 .cpo-table :is(th, td) { text-align: center; white-space: nowrap; }
 .cpo-table thead th {
@@ -664,17 +685,22 @@
    before the table scrolls. Indentation is padding on the name cell — the
    only box the platform leaves a table's cells to set. */
 .cpo-root table.cpo-table.cpo-table { width: 100% !important; }
-/* The first column starts where the card's title does (1.1rem in), and each
+/* The first column starts where the card's title does (the card inset in), and each
    level steps in from there; the last column keeps a little room from the
    card's edge. The narrower minimums keep all fourteen planning columns on a
    1440px screen with those margins. */
-.cpo-root .cpo-table.cpo-table tr[data-level] .cpo-namecell { padding-inline-start: 1.1rem !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level] .cpo-namecell { padding-inline-start: var(--cpo-inset) !important; }
 .cpo-root .cpo-table.cpo-table tr[data-level] .cpo-namecell[data-leaf] { padding-inline-start: 2.8rem !important; }
 .cpo-root .cpo-table.cpo-table tr[data-level="2"] .cpo-namecell { padding-inline-start: 2.4rem !important; }
 .cpo-root .cpo-table.cpo-table tr[data-level="2"] .cpo-namecell[data-leaf] { padding-inline-start: 4.1rem !important; }
 .cpo-root .cpo-table.cpo-table tr[data-level="3"] .cpo-namecell[data-leaf] { padding-inline-start: 4.5rem !important; }
+/* A table no row of which opens (the requirement by school type, the CCEO
+   and Partner lists, schools, activities, snapshots) has no chevrons to line
+   its names up with: its names start on the card's content line, under the
+   column's heading, not 2.8rem in (2026-10-18). */
+.cpo-root .cpo-table.cpo-table.cpo-table--flat tr[data-level] .cpo-namecell[data-leaf] { padding-inline-start: var(--cpo-inset) !important; }
 .cpo-root .cpo-table.cpo-table tr.cxo-total .cpo-namecell { padding-inline-start: 2.8rem !important; }
-.cpo-root .cpo-table.cpo-table thead th:first-child { padding-inline-start: 1.1rem !important; }
+.cpo-root .cpo-table.cpo-table thead th:first-child { padding-inline-start: var(--cpo-inset) !important; }
 .cpo-root .cpo-table.cpo-table :is(thead, tbody) tr > :last-child { padding-inline-end: 0.6rem !important; }
 .cpo-table tr[data-level="3"] .cpo-namecell { font-weight: 500; color: var(--cpo-ink-2); }
 .cpo-table tr[data-level="placeholder"] { display: none; }
@@ -821,7 +847,7 @@
   padding: 0.2rem 0;
 }
 .cpo-viewall:hover { text-decoration: underline; }
-.cpo-fu { list-style: none; margin: 0; padding: 0 1.1rem; }
+.cpo-fu { list-style: none; margin: 0; padding: 0 var(--cpo-inset); }
 .cpo-fu-item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
@@ -867,13 +893,13 @@
 .cpo-tag[data-tone="off"] { background: var(--cpo-sunk); color: var(--cpo-ink-3); }
 .cpo-fu-date { font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); white-space: nowrap; }
 .cpo-fu-date.is-late { color: var(--cpo-low); font-weight: 600; }
-.cpo-fu-empty { margin: 0; padding: 0.4rem 1.1rem 0.8rem; font-size: var(--edify-text-label-size); color: var(--cpo-ink-3); }
+.cpo-fu-empty { margin: 0; padding: 0.5rem var(--cpo-inset) var(--cpo-inset); font-size: var(--edify-text-label-size); color: var(--cpo-ink-3); }
 .cpo-info {
   display: flex;
   gap: 0.6rem;
   align-items: flex-start;
-  margin: 0.4rem 1.1rem 1.1rem;
-  padding: 0.75rem 0.85rem;
+  margin: 0.5rem var(--cpo-inset) var(--cpo-inset);
+  padding: 0.75rem var(--cpo-inset);
   border-radius: var(--edify-radius-sm);
   background: var(--cpo-info-bg);
   border: 1px solid var(--cpo-info-line);
@@ -1082,7 +1108,7 @@
 .cpo-opened[data-tone="fair"] .cpo-big strong { color: var(--cpo-fair); }
 .cpo-opened[data-tone="low"] .cpo-big strong { color: var(--cpo-low); }
 .cpo-banner {
-  padding: 0.9rem 1.1rem;
+  padding: var(--cpo-inset);
   border: 1px solid color-mix(in srgb, var(--cpo-accent) 35%, var(--cpo-line));
   border-inline-start: 4px solid var(--cpo-accent);
   border-radius: var(--edify-radius-sm);
@@ -1278,10 +1304,22 @@
   grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.2fr);
   gap: 0.9rem;
 }
-.cxo-reading { padding: 0.9rem 1rem 0.8rem; }
+.cxo-reading { padding: var(--cpo-inset); }
+/* A reading card is as tall as the tallest card in its row. Its chart takes
+   the height left over — the bars fill it, a ring or a gauge keeps its size
+   and sits centred in it, so rings in one row match — so the spare height is
+   the chart's, never an empty band under the card's note (owner, 2026-10-18: "Overdue by Age chart card has a huge
+   space below the chart"). The chart is drawn to the height measured here
+   (country-oversight.js, cpxChart.draw). */
 .cxo-ring,
 .cxo-bars,
-.cxo-gauge { min-block-size: 10.25rem; flex: 0 0 auto; }
+.cxo-gauge {
+  min-block-size: 10.25rem;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 /* "Decision support" under the forecast's name, not beside it. */
 .cxo-reading .cpo-chart-name .cxo-hint { display: block; margin: 0.1rem 0 0; }
 .cxo-legend {
@@ -1337,6 +1375,10 @@
 .cxo-verdict[data-state="at_risk"] { color: var(--cxo-overdue); }
 .cxo-verdict[data-state="on_track"] { color: var(--cxo-closed); }
 .cxo-shortcuts { gap: 0.45rem; }
+/* The shortcuts share the height their row gives the card, as a reading's
+   chart does, so no empty band sits under the last one; capped, so a tall
+   row never makes them look like panels. */
+.cxo-shortcuts > .cxo-shortcut { flex: 1 1 auto; max-block-size: 3.25rem; }
 .cxo-shortcut {
   all: unset;
   box-sizing: border-box;
@@ -1381,7 +1423,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem 1.1rem 0.5rem;
+  padding: 0.75rem var(--cpo-inset) 0.5rem;
 }
 .cxo-outlook {
   display: inline-flex;
@@ -1403,13 +1445,13 @@
   color: var(--cpo-ink);
   background: var(--cpo-sunk);
 }
-.cxo-pad { margin: 0 1.1rem 0.75rem; }
+.cxo-pad { margin: 0 var(--cpo-inset) 0.75rem; }
 .cxo-pager {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
-  padding: 0.6rem 1.1rem 0.8rem;
+  padding: 0.75rem var(--cpo-inset);
   font-size: var(--edify-text-micro-size);
   color: var(--cpo-ink-3);
 }

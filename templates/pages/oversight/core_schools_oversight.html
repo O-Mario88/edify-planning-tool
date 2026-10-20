@@ -46,26 +46,21 @@ rests on, and a dash is a figure the records cannot give, never a zero.
   {% kpi_strip %}
     {% kpi_metric %}{% kpi_label %}Core Schools{% endkpi_label %}{{ summary.schools }}{% kpi_helper %}{% if summary.schools != scope_schools %}of {{ scope_schools }} in your scope{% else %}In your scope{% endif %}{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Current-Year SSA{% endkpi_label %}{{ summary.with_current_ssa }} of {{ summary.schools }}{% kpi_helper %}Confirmed in FY {{ fy }}{% endkpi_helper %}{% endkpi_metric %}
-    {% kpi_metric %}{% kpi_label %}Compared{% endkpi_label %}{{ summary.compared }} of {{ summary.schools }}{% kpi_helper %}Confirmed SSA in both years{% endkpi_helper %}{% endkpi_metric %}
-    {% kpi_metric %}{% kpi_label %}Improved{% endkpi_label %}{{ summary.improved }}{% kpi_helper %}Of {{ summary.compared }} compared{% endkpi_helper %}{% endkpi_metric %}
-    {% kpi_metric %}{% kpi_label %}Declined{% endkpi_label %}{{ summary.declined }}{% kpi_helper %}Of {{ summary.compared }} compared{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Compared{% endkpi_label %}{{ summary.compared }} of {{ summary.schools }}{% kpi_link %}?{{ query }}&trajectory=not_comparable{% endkpi_link %}{% kpi_helper %}Confirmed SSA in both years · {{ summary.not_compared }} not compared{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Improved{% endkpi_label %}{{ summary.improved }}{% kpi_link %}?{{ query }}&trajectory=improved{% endkpi_link %}{% kpi_helper %}Of {{ summary.compared }} compared{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Declined{% endkpi_label %}{{ summary.declined }}{% kpi_link %}?{{ query }}&trajectory=declined{% endkpi_link %}{% kpi_helper %}Of {{ summary.compared }} compared{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Average SSA{% endkpi_label %}{{ summary.avg_latest|default_if_none:"—" }}{% kpi_helper %}{{ summary.with_current_ssa }} schools, FY {{ fy }}{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Average SSA Change{% endkpi_label %}{% if summary.avg_change is None %}—{% else %}{% if summary.avg_change > 0 %}+{% endif %}{{ summary.avg_change }}{% endif %}{% kpi_helper %}Points, {{ summary.compared }} compared{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Package Complete{% endkpi_label %}{{ summary.package_complete }} of {{ summary.with_plan }}{% kpi_helper %}Visits {{ summary.visits_done }}/{{ summary.visits_target }} · Trainings {{ summary.trainings_done }}/{{ summary.trainings_target }}{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Session Attendance{% endkpi_label %}{% if summary.attendance_rate is None %}—{% else %}{{ summary.attendance_rate }}%{% endif %}{% kpi_helper %}{{ summary.attended }} of {{ summary.invited }} invitations{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Teacher Attendances{% endkpi_label %}{{ summary.teacher_attendances }}{% kpi_helper %}Headcounts, not unique people · {{ summary.leader_attendances }} leader attendances{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Enrolment Growth{% endkpi_label %}{% if summary.enrol_growth_pct is None %}—{% else %}{{ summary.enrol_growth_pct }}%{% endif %}{% kpi_helper %}{{ summary.enrol_compared }} schools with both years{% endkpi_helper %}{% endkpi_metric %}
-    {% kpi_metric %}{% kpi_label %}Need Attention{% endkpi_label %}{{ summary.needs_attention }}{% kpi_helper %}{{ summary.readiness|get_item:"Potential Champion" }} Potential Champion{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Need Attention{% endkpi_label %}{{ summary.needs_attention }}{% kpi_link %}?{{ query }}&tab=attention{% endkpi_link %}{% kpi_helper %}{{ summary.readiness|get_item:"Potential Champion" }} Potential Champion{% endkpi_helper %}{% endkpi_metric %}
   {% endkpi_strip %}
 
-  <nav class="flex flex-wrap items-center gap-x-4 gap-y-1 edify-text-caption" aria-label="Open the schools behind the figures" data-core-drilldowns>
-    <span class="text-slate-500">Open the schools:</span>
-    <a href="?{{ query }}&amp;trajectory=improved" class="edify-primary-text font-semibold hover:underline" data-core-drill="improved">Improved ({{ summary.improved }})</a>
-    <a href="?{{ query }}&amp;trajectory=declined" class="edify-primary-text font-semibold hover:underline" data-core-drill="declined">Declined ({{ summary.declined }})</a>
-    <a href="?{{ query }}&amp;trajectory=not_comparable" class="edify-primary-text font-semibold hover:underline" data-core-drill="not_compared">Not compared ({{ summary.not_compared }})</a>
-    <a href="?{{ query }}&amp;tab=attention" class="edify-primary-text font-semibold hover:underline" data-core-drill="attention">Need attention ({{ summary.needs_attention }})</a>
-    <a href="?{{ query }}&amp;tab=champion" class="edify-primary-text font-semibold hover:underline" data-core-drill="champion">Potential Champions ({{ summary.readiness|get_item:"Potential Champion" }})</a>
-  </nav>
+  {% comment %}Each count above opens its schools from its own tile (owner,
+  2026-10-19: no line under the strip repeating its counts); Potential
+  Champions are the Champion Readiness tab.{% endcomment %}
 
   <nav class="oversight-entity-tabs" aria-label="Core School Oversight sections">
     {% for key, label in tabs %}

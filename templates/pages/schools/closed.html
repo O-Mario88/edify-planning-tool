@@ -53,6 +53,19 @@ school's future, not its history.
     {% endkpi_metric %}
   {% endkpi_strip %}
 
+  {% if closure_impact %}
+  {% comment %}The year's closure impact, School Closures' figures (owner,
+  2026-10-19), for the Country Director, the RVP and Admin.{% endcomment %}
+  <div data-closure-impact>
+  {% kpi_strip title="Closure Impact" %}
+    {% kpi_metric %}{% kpi_label %}Districts affected{% endkpi_label %}{{ closure_impact.districts_affected|intcomma }}{% kpi_helper %}{{ closure_impact.schools_lost|intcomma }} schools closed in {{ closure_impact.fy_label }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Budget released{% endkpi_label %}UGX {{ closure_impact.budget_released|intcomma }}{% kpi_helper %}Planned money given back by the closures{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Activities cancelled{% endkpi_label %}{{ closure_impact.activities_cancelled|intcomma }}{% kpi_helper %}Planned work at the closed schools{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Partner work withdrawn{% endkpi_label %}{{ closure_impact.partners_withdrawn|intcomma }}{% kpi_helper %}Hand-overs taken back from Partners{% endkpi_helper %}{% endkpi_metric %}
+  {% endkpi_strip %}
+  </div>
+  {% endif %}
+
   {% if rows %}
   {% comment %}
   One pager for both layouts. The table and the phone list are the same rows
@@ -141,7 +154,9 @@ school's future, not its history.
   schools" to somebody who has just searched for one reads as a claim about
   the data rather than about their query.
   {% endcomment %}
-  {% if q %}
+  {% if summary_only %}
+  {% include "components/empty_state.html" with title="Figures only" message="Your role reads the archive's figures and the year's closure impact above; the closed schools themselves are listed for the country and team roles." compact="true" %}
+  {% elif q %}
   {% include "components/empty_state.html" with title="No closed school matches that search" message="No closed school name contains that text. Clear the search to see the whole archive." %}
   {% else %}
   {% include "components/empty_state.html" with title="No closed schools" message="When a school stops operating and is closed from its profile, it moves here — with its enrolment, history and finance intact." %}

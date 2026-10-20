@@ -29,26 +29,6 @@ from django.shortcuts import render
 WORKSPACE_TEMPLATE = "pages/analytics/workspace.html"
 SCOPE_TEMPLATE = "partials/analytics/scope.html"
 PANEL_TEMPLATE = "partials/analytics/panel.html"
-TILES_TEMPLATE = "partials/analytics/executive_pulse.html"
-
-
-def _scope_tiles(request, context: dict) -> dict:
-    """The workspace tile strip, on every tab.
-
-    The tiles describe the SCOPE the filters ask for, not the tab, so they are
-    the same four signals wherever you are in the workspace — which is what
-    keeps them fixed rather than appearing on one section and vanishing on the
-    next. The overview has already computed them; every other section reads
-    the same cached dataset, so this costs a cache hit rather than a rebuild.
-    """
-    if context.get("executive_kpi_items"):
-        return context
-    try:
-        from apps.frontend.views.analytics_views import analytics_scope_kpis
-
-        return {**context, **analytics_scope_kpis(request)}
-    except Exception:  # noqa: BLE001 — tiles are context, never the page
-        return context
 
 
 def render_analytics_section(
@@ -76,45 +56,6 @@ def render_analytics_section(
         "frame_freshness": frame.get("freshness"),
         "frame_confidence": frame.get("confidence"),
     }
-    context = _scope_tiles(request, context)
-    if section_key == "overview" and request.user.active_role in {
-        "Program Lead",
-        "CountryDirector",
-        "RegionalVicePresident",
-    }:
-        from apps.hr.accountability import leadership_priority_rows
-
-        narrowed = any(
-            request.GET.get(key) not in (None, "", "All")
-            for key in (
-                "region",
-                "sub_region",
-                "district",
-                "sub_county",
-                "cluster",
-                "staff",
-                "cceo",
-                "pl",
-                "partner",
-                "school_type",
-                "activity_type",
-                "q",
-            )
-        )
-        context["distributed_team"] = (
-            []
-            if narrowed
-            else leadership_priority_rows(
-                request.user,
-                request.GET.get("fy"),
-                quarter=request.GET.get("quarter"),
-                month=request.GET.get("month"),
-            )
-        )
-
-    if not context.get("tiles_template") and context.get("executive_kpi_items"):
-        context["tiles_template"] = TILES_TEMPLATE
-
     target = request.headers.get("HX-Target")
     if target == "analytics-panel":
         return render(request, PANEL_TEMPLATE, context)

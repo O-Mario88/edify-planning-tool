@@ -7,7 +7,6 @@ const password = process.env.EDIFY_E2E_PASSWORD || 'edify';
 const formerlyHeavyRoutes = [
   '/core-schools/champion-candidates',
   '/activities/closure/blocked',
-  '/core-school-health',
   '/planning/schedule',
   '/ssa/manual/',
   '/strategic-priorities',
@@ -70,7 +69,8 @@ test('critical workspace style recalculation stays within one frame', async ({ p
   await session.send('Performance.enable');
   const results = [];
 
-  for (const route of ['/analytics', '/schools', '/system-health']) {
+  // /analytics left with the Analytics entry (owner, 2026-10-19).
+  for (const route of ['/schools', '/system-health']) {
     await page.goto(route, { waitUntil: 'networkidle' });
     await page.evaluate(() => {
       const target = document.querySelector('main > *');

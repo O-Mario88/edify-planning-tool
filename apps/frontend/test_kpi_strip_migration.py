@@ -49,8 +49,6 @@ class KpiStripMigrationTests(SimpleTestCase):
 
     def test_data_driven_role_dashboards_use_the_shared_component(self):
         for template in (
-            "templates/partials/analytics/cd/body.html",
-            "templates/partials/analytics/pl/body.html",
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/pl/body.html",
             "templates/partials/dashboards/hr/body.html",
@@ -75,7 +73,6 @@ class KpiStripMigrationTests(SimpleTestCase):
             "templates/pages/staff/detail.html",
             "templates/pages/staff/index.html",
             "templates/pages/todos/index.html",
-            "templates/partials/analytics/visit_effectiveness_workspace.html",
             "templates/partials/finance/country_budget/root.html",
             "templates/partials/fund_requests/kpis.html",
             "templates/partials/targets/my_body.html",
@@ -151,11 +148,9 @@ class KpiStripMigrationTests(SimpleTestCase):
             "templates/pages/dashboards/main.html",
             "templates/pages/hr/module_workspace.html",
             "templates/pages/partners/index.html",
-            "templates/partials/analytics/impact_workspace.html",
             "templates/partials/projects/analytics_workspace.html",
             "templates/partials/projects/my_plan_workspace.html",
             "templates/partials/projects/planning_workspace.html",
-            "templates/partials/ssa/performance_workspace.html",
             "templates/partials/targets/team/body.html",
         )
         legacy_markers = (

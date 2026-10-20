@@ -11,11 +11,10 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.test import Client, SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from apps.accounts.models import (
-    StaffGeographyAssignment,
     StaffProfile,
     StaffSchoolAssignment,
     StaffSupervisorAssignment,
@@ -25,7 +24,6 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.analytics import impact_engine
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy, get_quarter_for_date
-from apps.core.navigation import build_analytics_sections
 from apps.core.rbac import EdifyRole
 from apps.debriefs.models import DailyDebrief, DailyDebriefChallenge
 from apps.fund_requests.finance_models import PartnerPayment
@@ -512,117 +510,6 @@ class ImpactEngineStatsTest(TestCase):
         self.assertEqual(len(result["rows"]), 5)
         self.assertTrue(result["has_previous"])
         self.assertFalse(result["has_next"])
-
-
-class ImpactPageTest(TestCase):
-    """Page permissions, scoping flags, and honest empty state."""
-
-    def setUp(self):
-        self.fy = get_operational_fy()
-        self.region = Region.objects.create(name="Page Region")
-        self.district = District.objects.create(
-            name="Page District", region=self.region
-        )
-        self.cd = _user("impact-cd@edify.test", EdifyRole.COUNTRY_DIRECTOR.value)
-        self.cceo = _user("impact-cceo@edify.test", EdifyRole.CCEO.value)
-        self.accountant = _user(
-            "impact-acc@edify.test", EdifyRole.PROGRAM_ACCOUNTANT.value
-        )
-
-    def test_cd_gets_page_and_htmx_partial(self):
-        client = Client()
-        client.force_login(self.cd)
-        # Impact Analytics is a tab of the one Analytics page (2026-09-05): a
-        # plain GET renders the workspace shell around this section's panel.
-        res = client.get("/impact")
-        self.assertEqual(res.status_code, 200)
-        self.assertIn("dashboard", res.context)
-        self.assertTemplateUsed(res, "pages/analytics/workspace.html")
-        self.assertTemplateUsed(res, "partials/analytics/panels/impact_analytics.html")
-
-        # The section's own filter form names its workspace as the target and
-        # gets just that fragment back.
-        res = client.get(
-            "/impact", HTTP_HX_REQUEST="true", HTTP_HX_TARGET="impact-workspace"
-        )
-        self.assertEqual(res.status_code, 200)
-        self.assertTemplateUsed(res, "partials/analytics/impact_workspace.html")
-        self.assertTemplateNotUsed(res, "pages/analytics/workspace.html")
-
-        # A tab click asks for the scope and gets the tiles, tablist and panel.
-        res = client.get(
-            "/impact", HTTP_HX_REQUEST="true", HTTP_HX_TARGET="analytics-scope"
-        )
-        self.assertEqual(res.status_code, 200)
-        self.assertTemplateUsed(res, "partials/analytics/scope.html")
-        self.assertTemplateUsed(res, "partials/analytics/panels/impact_analytics.html")
-
-    def test_cceo_can_open_portfolio_scoped_analysis(self):
-        client = Client()
-        client.force_login(self.cceo)
-        res = client.get("/impact")
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.context["dashboard"]["coverage"]["schools_in_scope"], 0)
-
-    def test_analytics_section_visibility_follows_permissions(self):
-        """Impact Analytics is a section of the Analytics workspace now.
-
-        The sidebar shows one Analytics entry for everyone who has any analysis
-        access, so permission is expressed in the sections a role is offered —
-        not in whether a link with this label exists.
-        """
-        cd_sections = build_analytics_sections(self.cd, "/impact")
-        self.assertIn("Impact Analytics", [s["label"] for s in cd_sections])
-        self.assertEqual(
-            [s["label"] for s in cd_sections if s["active"]], ["Impact Analytics"]
-        )
-        for included in (self.cceo, self.accountant):
-            labels = [
-                s["label"] for s in build_analytics_sections(included, "/dashboard")
-            ]
-            self.assertIn("Impact Analytics", labels)
-
-    def test_empty_state_is_honest_without_paired_cycles(self):
-        client = Client()
-        client.force_login(self.cd)
-        res = client.get("/impact")
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.context["dashboard"]["coverage"]["schools_paired"], 0)
-        self.assertContains(res, "No paired assessment cycles yet")
-
-    def test_rvp_aggregates_without_school_identity(self):
-        rvp = _user("impact-rvp@edify.test", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
-        staff = StaffProfile.objects.create(user=rvp, title="RVP")
-        StaffGeographyAssignment.objects.create(staff=staff, region_id=self.region.id)
-
-        school = School.objects.create(
-            school_id="IMP-RVP",
-            name="RVP Region School",
-            region=self.region,
-            district=self.district,
-        )
-        _paired_ssa(school, self.fy, {FOCUS: 4.0}, {FOCUS: 5.0})
-        visit = _visit(school, self.fy)
-        _accepted_advance(visit, 40_000)
-
-        dashboard = impact_engine.build_dashboard(rvp, {})
-        self.assertEqual(dashboard["coverage"]["schools_paired"], 1)
-        self.assertFalse(dashboard["scope"]["can_view_school_details"])
-
-        other_region = Region.objects.create(name="RVP Other Region")
-        other_district = District.objects.create(
-            name="RVP Other District", region=other_region
-        )
-        other_school = School.objects.create(
-            school_id="IMP-RVP-COUNTRY",
-            name="RVP Country School",
-            region=other_region,
-            district=other_district,
-        )
-        _paired_ssa(other_school, self.fy, {FOCUS: 4.0}, {FOCUS: 5.0})
-        country_dashboard = impact_engine.build_dashboard(rvp, {})
-        self.assertEqual(country_dashboard["coverage"]["schools_paired"], 2)
-        self.assertEqual(country_dashboard["filters"]["group_by"], "pl")
 
 
 class ImpactPortfolioScopeTest(TestCase):

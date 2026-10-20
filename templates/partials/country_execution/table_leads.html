@@ -1,14 +1,16 @@
 {% load table_pagination %}{% comment %}
 Program Leads, each opening onto their people: the Lead's personal delivery
 (never folded into the team's) and each CCEO, and under an officer the staff
-and Partner delivery channels. The country's total closes the table.
+and Partner delivery channels. A Lead's row is the Lead and the team together,
+marked at risk when its forecast is (owner, 2026-10-18: "PL (PL and the team)
+at risk"). The country's total closes the table.
 {% endcomment %}
 <div class="cpo-tscroll" data-mobile-table="scroll">
   {% paginate lead_rows "leads_page" as leads_pager %}
   <table class="cpo-table cxo-table">
     <thead>
       <tr>
-        <th scope="col" class="cpo-namecol">Program Lead</th>
+        <th scope="col" class="cpo-namecol" title="The Lead's own delivery and the team's together">Program Lead &amp; Team</th>
         {% include "partials/country_execution/_heads.html" %}
         <th scope="col" class="cpo-actcol">Action</th>
       </tr>
@@ -28,7 +30,7 @@ and Partner delivery channels. The country's total closes the table.
                   @click="toggle()"
                   :aria-expanded="open ? 'true' : 'false'" aria-label="Show {{ row.name }}'s people">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>{% endif %}{{ row.name }}</span>{% if row.cells.blocker %}<span class="cpo-hint"><span>{{ row.cells.blocker }}</span></span>{% endif %}
+          </button>{% endif %}{{ row.name }}</span>{% if row.cells.at_risk %}<span class="cpo-flagged"><span>At risk</span></span>{% endif %}{% if row.cells.blocker %}<span class="cpo-hint"><span>{{ row.cells.blocker }}</span></span>{% endif %}
         </th>
         {% include "partials/country_execution/_cells.html" with cells=row.cells %}
         <td class="cpo-actcell">
@@ -48,11 +50,11 @@ and Partner delivery channels. The country's total closes the table.
       {% if row.has_children %}
       <tr x-ref="more" data-level="placeholder" hidden
           hx-get="/country-planning-oversight/execution/rows?level=lead&amp;key={{ row.key }}&amp;{{ query }}"
-          hx-trigger="cxo-load" hx-swap="outerHTML"><td colspan="14"></td></tr>
+          hx-trigger="cxo-load" hx-swap="outerHTML"><td colspan="12"></td></tr>
       {% endif %}
     </tbody>
     {% empty %}
-    <tbody><tr><td colspan="14" class="cpo-empty">No Programme Lead is on record yet.</td></tr></tbody>
+    <tbody><tr><td colspan="12" class="cpo-empty">No Programme Lead is on record yet.</td></tr></tbody>
     {% endfor %}
     <tbody>
       <tr data-level="0" class="cxo-total">

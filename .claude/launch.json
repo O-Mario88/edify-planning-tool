@@ -2,6 +2,19 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "edify-web-local",
+      "runtimeExecutable": ".venv/bin/python",
+      "runtimeArgs": [
+        "manage.py",
+        "runserver",
+        "--noasgi",
+        "--skip-checks",
+        "0.0.0.0:8000"
+      ],
+      "port": 8000,
+      "autoPort": true
+    },
+    {
       "name": "edify-web",
       "runtimeExecutable": ".venv/bin/python",
       "runtimeArgs": [

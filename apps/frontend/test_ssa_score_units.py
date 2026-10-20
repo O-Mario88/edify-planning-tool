@@ -49,8 +49,6 @@ class SsaScorePresentationContractTest(SimpleTestCase):
             "partials/dashboards/cd/body.html",
             "partials/dashboards/pl/ssa_intelligence.html",
             "partials/analytics/cd/district_heatmap.html",
-            "partials/analytics/cd/ssa_interventions.html",
-            "partials/analytics/pl/ssa_interventions.html",
         )
         for path in score_templates:
             source = self._template(path)

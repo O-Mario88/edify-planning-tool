@@ -22,6 +22,7 @@ from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
 from apps.geography.models import District, Region
 from apps.partners.models import Partner, PartnerAssignment
+from apps.projects.models import Project, ProjectCategory, ProjectSchoolAssignment
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.ssa.year_comparison import fy_label
@@ -386,6 +387,50 @@ class DistrictPageTest(ProfileFixture):
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(f'data-profile-tab="{tab}"', response.content.decode())
 
+    # Owner, 2026-10-19: "there is a lot of duplications on the profile pages
+    # and oversights ... ssa [scores] are duplicated more than 2 times". One
+    # place for each SSA figure: the Overview keeps the score and the best and
+    # struggling intervention; the SSA tab the matrix and its chart; the
+    # rail's SSA part sits beside the Overview only.
+    CHART = 'aria-label="SSA score by intervention"'
+    PICKS = 'data-profile-intervention-pick="best"'
+    RAIL_SSA = 'data-rail-part="ssa"'
+
+    def test_the_overview_keeps_the_score_and_the_picks_and_not_the_chart(self):
+        body = self.page().content.decode()
+
+        self.assertEqual(body.count(self.PICKS), 1)
+        self.assertNotIn(self.CHART, body)
+        self.assertEqual(body.count(self.RAIL_SSA), 1)
+
+    def test_the_ssa_tab_draws_the_matrix_and_its_chart_once(self):
+        body = self.page(tab="ssa").content.decode()
+
+        self.assertEqual(body.count("Intervention Matrix"), 1)
+        self.assertEqual(body.count(self.CHART), 1)
+        self.assertNotIn(self.PICKS, body)
+        self.assertNotIn(self.RAIL_SSA, body)
+
+    def test_no_other_tab_repeats_the_ssa_rail(self):
+        for tab in ("clusters", "schools", "activities"):
+            with self.subTest(tab=tab):
+                self.assertNotIn(self.RAIL_SSA, self.page(tab=tab).content.decode())
+
+    def test_the_rail_beside_the_overview_says_only_what_the_overview_does_not(self):
+        """Owner, 2026-10-19: "look at all other duplications apart frm ssa
+        and fix it". The rail's work and schools parts were the Operations
+        strip and its own Needs Attention again; beside any other tab the
+        whole rail was the Overview a second time."""
+        overview = self.page().content.decode()
+
+        self.assertEqual(overview.count('data-rail-part="'), 2)
+        self.assertIn('data-rail-part="attention"', overview)
+        for tab in ("ssa", "clusters", "schools", "activities", "projects"):
+            with self.subTest(tab=tab):
+                self.assertNotIn(
+                    "data-insight-rail", self.page(tab=tab).content.decode()
+                )
+
     def test_it_opens_on_the_running_year_and_says_what_the_numbers_cover(self):
         body = self.page().content.decode()
 
@@ -596,6 +641,34 @@ class EveryScopeTest(ProfileFixture):
         self.assertEqual(profile["execution"]["visits"]["planned"], 1)
         self.assertEqual(profile["execution"]["visits"]["by_partner"], 1)
 
+    def test_a_project_s_profile_is_its_enrolled_schools_and_its_own_work(self):
+        """Owner, 2026-10-18: "make sure the existing analytics are integrated
+        into the profiles ... This should include project profiles"."""
+        project = Project.objects.create(
+            name="SP-PROFILE",
+            category=ProjectCategory.PILOT.value,
+            target_interventions=["leadership"],
+        )
+        for name in ("Alpha", "Bravo"):
+            ProjectSchoolAssignment.objects.create(
+                project=project, school=self.schools[name]
+            )
+        # The project's visit, and an ordinary visit at the same school.
+        visit = self.activity("school_visit", school=self.schools["Bravo"])
+        Activity.objects.filter(id=visit.id).update(project_id=project.id)
+        self.activity("school_visit", school=self.schools["Bravo"])
+
+        scope = engine.project_scope(project)
+        profile = engine.build(scope, self.fy)
+
+        self.assertEqual(scope.covers, "Project schools")
+        self.assertEqual(
+            {row["name"] for row in engine.school_rows(profile)},
+            {"Alpha Primary", "Bravo Primary"},
+        )
+        # The work counted is the project's own.
+        self.assertEqual(profile["execution"]["visits"]["planned"], 1)
+
 
 class ClusterManagementTest(ProfileFixture):
     """Owner, 2026-10-09: "Integrate cluster management into all the profiles
@@ -641,6 +714,28 @@ class EveryProfilePageTest(EveryScopeTest):
         response = self.client_for().get(url, query)
         self.assertEqual(response.status_code, 200, url)
         return response.content.decode()
+
+    def test_the_country_names_its_districts_with_a_low_leadership_score(self):
+        """The Analytics page's Recommended Actions "Districts with low
+        Leadership scores (<5.0/10)", given its home in the Country Profile's
+        Needs Attention (owner, 2026-10-19)."""
+        line = "district&#x27;s Leadership score is below 5.0"
+        self.assertNotIn(line, self.open("/country-profile"))
+
+        weak = District.objects.create(name="Weak", region=self.region)
+        school = School.objects.create(
+            school_id="PROFILE-WEAK",
+            name="Weak Primary",
+            region=self.region,
+            district=weak,
+        )
+        self._ssa(school, self.fy, 3.0)
+
+        body = self.open("/country-profile")
+        self.assertIn(f"1 {line}", body)
+        self.assertIn("tab=districts", body.split(line, 1)[0].rsplit("<a ", 1)[1])
+        # A district's own profile is one district: it names none.
+        self.assertNotIn(line, self.open(f"/districts/{weak.id}"))
 
     def test_the_country_profile_reads_the_country_by_its_parts(self):
         body = self.open("/country-profile")
@@ -717,6 +812,28 @@ class EveryProfilePageTest(EveryScopeTest):
         self.assertIn("Awaiting The Partner&#x27;s Date", body)
         # The tile opens the hand-overs it counts.
         self.assertIn("what=handovers_awaiting", body)
+
+    def test_a_project_profile_gains_the_sections_beside_its_own_page(self):
+        project = Project.objects.create(
+            name="SP-SECTIONS",
+            category=ProjectCategory.PILOT.value,
+            target_interventions=["leadership"],
+        )
+        ProjectSchoolAssignment.objects.create(
+            project=project, school=self.schools["Alpha"]
+        )
+
+        # The project's own page is the first tab, as before.
+        page = self.open(f"/projects/{project.id}")
+        self.assertIn("Delivery overview", page)
+        self.assertIn("tab=overview", page)
+
+        body = self.open(f"/projects/{project.id}", tab="overview")
+        self.assertIn("Project schools", body)
+        self.assertNotIn("Delivery overview", body)
+        self.assertIn(
+            "Alpha Primary", self.open(f"/projects/{project.id}", tab="schools")
+        )
 
     def test_a_cluster_profile_gains_the_sections_beside_its_own_tabs(self):
         url = f"/clusters/{self.north.id}/profile"

@@ -3,7 +3,7 @@ Lead they report to. Supervision is not ownership: a Lead's own work is its
 own row, never the team's total.{% endcomment %}
 <div class="cpo-tscroll" data-mobile-table="scroll">
   {% paginate owner_list "owners_page" as owners_pager %}
-  <table class="cpo-table cxo-table">
+  <table class="cpo-table cpo-table--flat cxo-table">
     <thead>
       <tr>
         <th scope="col" class="cpo-namecol">CCEO</th>
@@ -33,7 +33,7 @@ own row, never the team's total.{% endcomment %}
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="14" class="cpo-empty">No officer has work due in this selection.</td></tr>
+      <tr><td colspan="12" class="cpo-empty">No officer has work due in this selection.</td></tr>
       {% endfor %}
     </tbody>
   </table>

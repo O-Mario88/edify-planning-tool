@@ -25,9 +25,7 @@ def _read(relative_path: str) -> str:
 CONVERTED = {
     "templates/partials/ia/dashboard_body.html": "EdifyChartSystem.lineTrend(2)",
     "templates/partials/targets/team/body.html": "EdifyChartSystem.lineTrend(1)",
-    "templates/partials/ssa/performance_workspace.html": "EdifyChartSystem.formBase(",
     "templates/partials/analytics/panels/reports.html": "EdifyChartSystem.comparisonBar()",
-    "templates/partials/analytics/cd/budget_finance.html": "EdifyChartSystem.gauge(",
     # The Program Lead's funding gauge left the dashboard with Funding &
     # Execution (2026-09-13); its execution chart is the shared mixed trend.
     "templates/partials/dashboards/pl/programmes_view.html": "EdifyChartSystem.mixedTrend(",

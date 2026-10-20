@@ -8,7 +8,9 @@ test('populated oversight and finance remain compact, readable and interactive',
  // The demo seed's work is a fixed April-2026 fixture (FY2026). The oversight
  // page opens on the operational year, which from 1 October 2026 is FY2027 and
  // holds none of it, so the page is asked for the year the seed fills.
- for(const route of ['/team-planning-oversight/?fy=2026','/accounts','/analytics']){
+ // The Decision Log stands in for the retired Analytics page (owner, 2026-10-19):
+ // the same shell and decision frame.
+ for(const route of ['/team-planning-oversight/?fy=2026','/accounts','/decision-log']){
   await page.goto(route);await expect(page.locator('main[data-workspace-design=calm]')).toBeVisible();
   await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
   for(const width of [390,768,1048,1600]){

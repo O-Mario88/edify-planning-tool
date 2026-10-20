@@ -9,13 +9,17 @@
 
   {% if reviewing %}
   {# ══════════════════ REVIEWER MODE — read-only + stage action ══════════════════ #}
-  {% include "partials/professional_development/_request_summary.html" %}
+  {% include "partials/professional_development/_sdf_sheet.html" %}
 
   <div class="border-t border-slate-100 pt-3 space-y-3">
     {% if instance.status == 'submitted_to_supervisor' %}
-      <h4 class="edify-text-caption font-semibold text-slate-600">Supervisor review</h4>
-      <form method="post" action="/my-professional-development/request/{{ instance.id }}/action">
+      <h4 class="edify-text-caption font-semibold text-slate-600">Manager authorization</h4>
+      <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="supervisor_approve">
+        <div class="space-y-1">
+          <label for="pd-supervisor-approve-note" class="block edify-text-caption font-semibold text-slate-600">Comment <span class="font-normal text-slate-400">(printed on the form)</span></label>
+          <textarea id="pd-supervisor-approve-note" name="note" rows="2" placeholder="e.g. Approved for the staff member to proceed with this course" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]"></textarea>
+        </div>
         <button type="submit" class="btn btn-primary h-8 w-full">Approve &amp; send to HR</button>
       </form>
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
@@ -41,7 +45,7 @@
           <span class="edify-note__body">I acknowledge and approve this funding exception (requested amount exceeds the employee's remaining PD fund).</span>
         </label>
         {% endif %}
-        <button type="submit" class="btn btn-primary h-8 w-full">Approve request</button>
+        <button type="submit" class="btn btn-primary h-8 w-full">Approve &amp; send to the Country Director</button>
       </form>
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="hr_return">
@@ -58,6 +62,25 @@
           <textarea id="pd-hr-reject-note" name="note" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]"></textarea>
         </div>
         <button type="submit" class="btn btn-danger h-8 w-full">Reject request</button>
+      </form>
+
+    {% elif instance.status == 'submitted_to_cd' %}
+      <h4 class="edify-text-caption font-semibold text-slate-600">Country Director authorization</h4>
+      <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
+        {% csrf_token %}<input type="hidden" name="action" value="cd_approve">
+        <div class="space-y-1">
+          <label for="pd-cd-approve-note" class="block edify-text-caption font-semibold text-slate-600">Comment <span class="font-normal text-slate-400">(optional)</span></label>
+          <textarea id="pd-cd-approve-note" name="note" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary h-8 w-full">Authorize &amp; send to Accounting</button>
+      </form>
+      <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
+        {% csrf_token %}<input type="hidden" name="action" value="cd_reject">
+        <div class="space-y-1">
+          <label for="pd-cd-reject-note" class="block edify-text-caption font-semibold text-slate-600">Reason for denying <span class="text-rose-500">*</span></label>
+          <textarea id="pd-cd-reject-note" name="note" required rows="2" placeholder="e.g. The source of funding is not available" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]"></textarea>
+        </div>
+        <button type="submit" class="btn btn-danger h-8 w-full">Deny request</button>
       </form>
 
     {% elif instance.status == 'approved_pending_funding' %}
@@ -145,185 +168,15 @@
   </div>
 
   {% elif is_editable %}
-  {# ══════════════════ EDIT MODE — own draft / returned request ══════════════════ #}
-  {% if instance %}
-  {% comment %}
-  The evidence upload is its own multipart form posting to its own endpoint.
-  Its controls sit in the Enrollment evidence section of the request form and
-  join this form through form="pd-evidence-form" (the kind select always did),
-  so the request form can end in the drawer footer. Controls owned by this form
-  are not part of the request form's validation or its default button.
-  {% endcomment %}
-  <form id="pd-evidence-form" method="post" enctype="multipart/form-data" action="/my-professional-development/request/{{ instance.id }}/evidence" hidden>
-    {% csrf_token %}
-  </form>
-  {% endif %}
-  <form method="post" action="/my-professional-development/request" class="space-y-4">
-    {% csrf_token %}
-    {% if instance %}<input type="hidden" name="id" value="{{ instance.id }}">{% endif %}
-    <input type="hidden" name="fy" value="{{ instance.fy|default:fy }}">
-
-    {% if instance.status == 'returned_by_supervisor' or instance.status == 'returned_by_hr' %}
-    <div class="edify-note" data-tone="danger">
-      <p class="edify-note__title">Returned for correction</p>
-      <p class="edify-note__body">{% firstof instance.supervisor_note instance.hr_note %}</p>
-    </div>
-    {% endif %}
-
-    <p class="edify-text-caption text-slate-500">{% firstof instance.staff_name staff_info.staff_name %} · {% firstof instance.position staff_info.position "—" %} · {% firstof instance.department staff_info.department "—" %} · Supervisor: {% firstof instance.supervisor_name staff_info.supervisor_name "Not configured" %}</p>
-
-    <div class="space-y-1">
-      <label for="pd-course-name" class="block edify-text-caption font-semibold text-slate-600">Course name <span class="text-rose-500">*</span></label>
-      <input id="pd-course-name" aria-label="Course name" type="text" name="course_name" required maxlength="255" value="{{ instance.course_name|default:'' }}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-    </div>
-    <div class="space-y-1">
-      <label for="pd-course-category" class="block edify-text-caption font-semibold text-slate-600">Category <span class="text-rose-500">*</span></label>
-      <input id="pd-course-category" type="text" name="course_category" required maxlength="64" value="{{ instance.course_category|default:'' }}" placeholder="e.g. Leadership development" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-    </div>
-    <div class="space-y-1">
-      <label for="pd-course-type" class="block edify-text-caption font-semibold text-slate-600">Delivery type <span class="text-rose-500">*</span></label>
-      <select id="pd-course-type" aria-label="Course type" name="course_type" x-model="courseType" required class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-        <option value="">Select…</option>
-        {% for value, label in course_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="space-y-1">
-      <label for="pd-institution" class="block edify-text-caption font-semibold text-slate-600">Institution <span class="text-rose-500">*</span></label>
-      <input id="pd-institution" aria-label="Institution" type="text" name="institution" required maxlength="255" value="{{ instance.institution|default:'' }}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-    </div>
-    <div x-show="courseType === 'online' || courseType === 'hybrid'" class="space-y-1" style="display:none">
-      <label for="pd-course-link" class="block edify-text-caption font-semibold text-slate-600">Institution or course link <span class="text-rose-500">*</span></label>
-      <input id="pd-course-link" type="url" name="course_link" value="{{ instance.course_link|default:'' }}" placeholder="https://…" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-    </div>
-    <div class="space-y-1">
-      <label for="pd-start-date" class="block edify-text-caption font-semibold text-slate-600">Start date <span class="text-rose-500">*</span></label>
-      <input id="pd-start-date" aria-label="Start date" type="date" name="start_date" required value="{{ instance.start_date|date:'Y-m-d' }}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-    </div>
-    <div class="space-y-1">
-      <label for="pd-end-date" class="block edify-text-caption font-semibold text-slate-600">End date <span class="text-rose-500">*</span></label>
-      <input id="pd-end-date" aria-label="End date" type="date" name="end_date" required value="{{ instance.end_date|date:'Y-m-d' }}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-    </div>
-    <label for="pd-certification-expected" class="flex items-center gap-2 edify-text-caption font-medium text-slate-600">
-      <input id="pd-certification-expected" type="checkbox" name="certification_expected" {% if instance is None or instance.certification_expected %}checked{% endif %}>
-      A certificate is expected on completion
-    </label>
-    <div class="space-y-1">
-      <label for="pd-relevance" class="block edify-text-caption font-semibold text-slate-600">Relevance to role</label>
-      <textarea id="pd-relevance" aria-label="Relevance to role" name="relevance_to_role" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]">{{ instance.relevance_to_role|default:'' }}</textarea>
-    </div>
-    <div class="space-y-1">
-      <label for="pd-skills" class="block edify-text-caption font-semibold text-slate-600">Skills to develop</label>
-      <textarea id="pd-skills" aria-label="Skills to develop" name="skills_to_develop" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]">{{ instance.skills_to_develop|default:'' }}</textarea>
-    </div>
-    <div class="space-y-1">
-      <label for="pd-benefit" class="block edify-text-caption font-semibold text-slate-600">Expected benefit to Edify</label>
-      <textarea id="pd-benefit" aria-label="Expected benefit" name="expected_benefit" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]">{{ instance.expected_benefit|default:'' }}</textarea>
-    </div>
-    <div class="space-y-1">
-      <label for="pd-work-time" class="block edify-text-caption font-semibold text-slate-600">Impact on work time</label>
-      <textarea id="pd-work-time" aria-label="Work time impact" name="work_time_impact" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]">{{ instance.work_time_impact|default:'' }}</textarea>
-    </div>
-
-    {% if instance %}
-    <div class="space-y-2 border-t border-slate-100 pt-4">
-      <h4 class="edify-text-caption font-semibold text-slate-600">Enrollment evidence</h4>
-      <p class="edify-text-caption text-slate-500" x-show="courseType === 'in_person'">In-person courses require an admission or enrollment letter (PDF).</p>
-      <p class="edify-text-caption text-slate-500" x-show="courseType === 'hybrid'">Hybrid courses require both a course link (above) and enrollment evidence.</p>
-      {% for e in evidence %}
-      <a href="/my-professional-development/evidence/{{ e.id }}" target="_blank" class="block edify-text-caption font-semibold text-slate-600 edify-primary-text-hover">
-        {{ e.original_name }} <span class="text-slate-500 font-medium">· {{ e.get_kind_display }}</span>
-      </a>
-      {% endfor %}
-      <div class="space-y-1">
-        <label for="pd-evidence-kind" class="block edify-text-caption font-semibold text-slate-600">Evidence type</label>
-        <select id="pd-evidence-kind" aria-label="Kind" name="kind" form="pd-evidence-form" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-          <option value="admission_letter">Admission / Enrollment Letter</option>
-          <option value="brochure">Course Brochure</option>
-          <option value="invoice">Institution Invoice</option>
-          <option value="fee_structure">Fee Structure</option>
-          <option value="acceptance_email">Acceptance Email (PDF)</option>
-          <option value="enrollment_confirmation">Enrollment Confirmation</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-      <div class="space-y-1">
-        <label for="pd-evidence-file" class="block edify-text-caption font-semibold text-slate-600">File to upload</label>
-        <input id="pd-evidence-file" type="file" name="file" required form="pd-evidence-form" class="w-full edify-text-caption">
-      </div>
-      <button type="submit" form="pd-evidence-form" class="btn btn-secondary h-8">Upload evidence</button>
-    </div>
-    {% else %}
-    <p class="edify-text-caption text-slate-500">Save this as a draft first to attach enrollment evidence.</p>
-    {% endif %}
-
-    <div class="space-y-4 border-t border-slate-100 pt-4">
-      <div class="space-y-1">
-        <h4 class="edify-text-caption font-semibold text-slate-600">Funding</h4>
-        {% if balances %}<p class="edify-text-caption text-slate-500">Remaining PD fund: <span class="font-semibold text-slate-700">{{ balances.currency }} {{ balances.remaining|divide:100|currency }}</span> of {{ balances.currency }} {{ balances.annual_allocation|divide:100|currency }} (FY {{ instance.fy|default:fy }})</p>{% endif %}
-      </div>
-      <div class="space-y-1">
-        <label for="pd-course-fee" class="block edify-text-caption font-semibold text-slate-600">Course fee</label>
-        <input id="pd-course-fee" aria-label="Course fee" type="number" step="0.01" min="0" name="course_fee" value="{% if instance %}{{ instance.course_fee_cents|divide:100 }}{% endif %}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-      </div>
-      <div class="space-y-1">
-        <label for="pd-other-costs" class="block edify-text-caption font-semibold text-slate-600">Other costs</label>
-        <input id="pd-other-costs" aria-label="Other costs" type="number" step="0.01" min="0" name="other_costs" value="{% if instance %}{{ instance.other_costs_cents|divide:100 }}{% endif %}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-      </div>
-      <div class="space-y-1">
-        <label for="pd-employee-contribution" class="block edify-text-caption font-semibold text-slate-600">Employee contribution</label>
-        <input id="pd-employee-contribution" aria-label="Employee contribution" type="number" step="0.01" min="0" name="employee_contribution" value="{% if instance %}{{ instance.employee_contribution_cents|divide:100 }}{% endif %}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-      </div>
-      <div class="space-y-1">
-        <label for="pd-requested-amount" class="block edify-text-caption font-semibold text-slate-600">Requested from Edify</label>
-        <input id="pd-requested-amount" aria-label="Requested amount" type="number" step="0.01" min="0" name="requested_amount" value="{% if instance %}{{ instance.requested_amount_cents|divide:100 }}{% endif %}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-      </div>
-      <div class="space-y-1">
-        <label for="pd-funding-type" class="block edify-text-caption font-semibold text-slate-600">Funding type <span class="text-rose-500">*</span></label>
-        <select id="pd-funding-type" aria-label="Funding type" name="funding_type" x-model="fundingType" required class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-          {% for value, label in funding_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-        </select>
-      </div>
-      <div x-show="fundingType === 'fully_funded' || fundingType === 'partially_funded'" class="space-y-4" style="display:none">
-        <div class="space-y-1">
-          <label for="pd-payment-recipient" class="block edify-text-caption font-semibold text-slate-600">Payment recipient</label>
-          <input id="pd-payment-recipient" type="text" name="payment_recipient" value="{{ instance.payment_recipient|default:'' }}" placeholder="Institution or employee" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-        </div>
-        <div class="space-y-1">
-          <label for="pd-payment-details" class="block edify-text-caption font-semibold text-slate-600">Payment details</label>
-          <input id="pd-payment-details" type="text" name="payment_details" value="{{ instance.payment_details|default:'' }}" placeholder="Bank or mobile money details" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px]">
-        </div>
-      </div>
-      <div class="space-y-1">
-        <label for="pd-exception-reason" class="block edify-text-caption font-semibold text-slate-600">Funding exception reason <span class="font-normal text-slate-400">(if the request exceeds your remaining fund)</span></label>
-        <textarea id="pd-exception-reason" aria-label="Exception reason" name="exception_reason" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]">{{ instance.exception_reason|default:'' }}</textarea>
-      </div>
-    </div>
-
-    {% if conflict and conflict.status != 'no_conflict' %}
-    <div class="edify-note" data-tone="{% if conflict.status == 'major_conflict' %}danger{% else %}warning{% endif %}">
-      <p class="edify-note__title">Possible schedule conflict</p>
-      <p class="edify-note__body">{{ conflict.detail }}</p>
-    </div>
-    {% endif %}
-
-    {% comment %}Save draft stays the first submit button in this form, so
-    pressing Enter in a field saves the draft rather than cancelling it.{% endcomment %}
-    <div class="drawer-footer">
-      <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-      <button type="submit" name="intent" value="draft" class="btn btn-secondary h-8">Save draft</button>
-      <button type="submit" name="intent" value="submit" class="btn btn-primary h-8">Submit for approval</button>
-      {% if instance and instance.status == 'draft' %}
-      <button type="submit" formaction="/my-professional-development/request/{{ instance.id }}/action" name="action" value="cancel" class="btn btn-danger h-8">Cancel this draft</button>
-      {% endif %}
-    </div>
-  </form>
+  {# ══════════════════ EDIT MODE — the Staff Development Fund request form ══════════════════ #}
+  {% include "partials/professional_development/_sdf_form.html" %}
 
   {% else %}
   {# ══════════════════ SELF READ-ONLY MODE — submitted / active / closed ══════════════════ #}
-  {% include "partials/professional_development/_request_summary.html" %}
+  {% include "partials/professional_development/_sdf_sheet.html" %}
 
   <div class="border-t border-slate-100 pt-3">
-    {% if instance.status == 'submitted_to_supervisor' or instance.status == 'submitted_to_hr' or instance.status == 'pending_exception' %}
+    {% if instance.status == 'submitted_to_supervisor' or instance.status == 'submitted_to_hr' or instance.status == 'pending_exception' or instance.status == 'submitted_to_cd' %}
       <p class="edify-text-caption font-medium text-slate-500">Awaiting review — you'll be notified as soon as this moves forward.</p>
 
     {% elif instance.status == 'approved_pending_funding' %}

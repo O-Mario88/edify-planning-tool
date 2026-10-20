@@ -305,6 +305,24 @@ def partner_scope(partner) -> Scope:
     )
 
 
+def project_scope(project) -> Scope:
+    """The project's schools today (its current enrolments at operating
+    schools) and the work filed against the project (owner, 2026-10-18: "make
+    sure the existing analytics are integrated into the profiles ... This
+    should include project profiles")."""
+    from apps.projects.models import current_enrolments
+
+    enrolled = current_enrolments().filter(project=project).values("school_id")
+    return Scope(
+        kind="project",
+        key=project.id,
+        name=project.name,
+        covers="Project schools",
+        schools=_operating().filter(id__in=enrolled),
+        work=Q(project_id=project.id),
+    )
+
+
 # ── Reading the scope ───────────────────────────────────────────────────────
 def _schools(scope: Scope) -> list[dict]:
     rows = list(
@@ -1012,6 +1030,18 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
                 "schools",
                 "awaiting_partner",
             ),
+            # The Analytics page's "Districts with low Leadership scores
+            # (<5.0/10)", given its home in the Country Profile's Needs
+            # Attention (owner, 2026-10-19).
+            scope.kind == "country"
+            and _attention(
+                _low_leadership_districts(scope, fy),
+                "district's Leadership score is below 5.0",
+                "districts' Leadership score is below 5.0",
+                f"in {comparison['label']}",
+                "districts",
+                "",
+            ),
             _attention(
                 execution["meetings"]["overdue"],
                 "cluster meeting is past its date and not held",
@@ -1158,6 +1188,34 @@ def _expected(execution: dict, schools: list[dict], school_work: dict) -> None:
             coverage=round(reached * 100 / due) if due else None,
             plan_coverage=round(in_plan * 100 / due) if due else None,
         )
+
+
+#: The Leadership average below which a district needs attention: the
+#: Country Director Analytics' rule (Recommended Actions), on the 0-10 scale.
+LOW_LEADERSHIP = 5.0
+
+
+def _low_leadership_districts(scope: Scope, fy) -> int:
+    """How many districts' schools average a Leadership score below
+    LOW_LEADERSHIP on their latest confirmed SSA of ``fy``. Two queries."""
+    from apps.core.enums import SsaIntervention
+    from apps.ssa import year_comparison
+
+    scores = year_comparison.school_intervention_scores(
+        scope.schools.values("id"), fy, SsaIntervention.LEADERSHIP.value
+    )
+    by_district: dict[str, list[float]] = defaultdict(list)
+    for school_id, district_id in scope.schools.filter(
+        id__in=list(scores), district_id__isnull=False
+    ).values_list("id", "district_id"):
+        current = scores[school_id]["current"]
+        if current is not None:
+            by_district[district_id].append(current)
+    return sum(
+        1
+        for values in by_district.values()
+        if round(sum(values) / len(values), 6) < LOW_LEADERSHIP
+    )
 
 
 def _attention(count, one, many, when, tab, show, what="") -> dict | None:
@@ -1414,6 +1472,7 @@ LEVELS_OF = {
     "program_lead": ("staff", "districts", "clusters", "schools"),
     "staff": ("districts", "clusters", "schools"),
     "partner": ("districts", "clusters", "schools"),
+    "project": ("districts", "clusters", "schools"),
     "cluster": ("schools",),
     "school": (),
 }

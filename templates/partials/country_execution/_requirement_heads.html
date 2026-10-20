@@ -1,0 +1,19 @@
+{% comment %}The requirement tables' columns (owner, 2026-10-18), Visits and
+Trainings, a tab each. Every figure after the expected one carries its share:
+of the visits or trainings expected, and a side's verified of its own target.
+Verified is My Plan's green: verified, with the Salesforce ID and the form
+both in.{% endcomment %}
+<th scope="col">Schools</th>
+<th scope="col" data-col="visits" x-show="view === 'visits'" title="Four visits at each Core school (two staff, two Partner) and one at every other school">Total Visits Expected</th>
+<th scope="col" data-col="visits" x-show="view === 'visits'" title="Visits planned by staff and dated by a Partner, of the visits expected">Visits Planned</th>
+<th scope="col" data-col="visits" x-show="view === 'visits'" title="Staff visits expected: two at each Core school, and one at each other school the 560 or 280 reaches">Staff Target</th>
+<th scope="col" data-col="visits" x-show="view === 'visits'" title="Staff visits verified and green on My Plan (Salesforce ID and visit form in), of the staff target">Staff Verified</th>
+<th scope="col" data-col="visits" x-show="view === 'visits'" title="Partner visits expected: two at each Core school, and one at each school beyond staff capacity">Partner Target</th>
+<th scope="col" data-col="visits" x-show="view === 'visits'" title="Partner In-school Training and Follow up visits verified and green (never SSA Support), of the Partner target">Partner Verified</th>
+<th scope="col" data-col="visits" x-show="view === 'visits'" title="Staff and Partner visits verified and green, of the visits expected">Total Visits Verified</th>
+<th scope="col" data-col="visits" x-show="view === 'visits'" title="Visits expected and not yet verified by staff or a Partner">Visits Remaining</th>
+<th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Four trainings at each Core school and one at every other school">Total Expected</th>
+<th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Trainings planned by staff and by Partners, of the trainings expected">Total Planned</th>
+<th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Schools assigned to a Partner for an in-school training, dated or not, of the trainings expected">Planned by Partners</th>
+<th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Trainings verified and green on My Plan (Salesforce ID and attendance in), of the trainings expected">Completed &amp; Verified</th>
+<th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Trainings expected and not yet completed and verified">Trainings Remaining</th>

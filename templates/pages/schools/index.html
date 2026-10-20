@@ -6,6 +6,7 @@
 {% block main_attributes %}
 x-data="{
 selectedSchools: [],
+schoolProjects: {},
 assignClusterOpen: false,
 bulkAssignProjectOpen: false,
 matchStaffOpen: false,
@@ -268,17 +269,21 @@ hx-include="#filters-form"
 {% comment %}
 The remaining allocation comes from the server (apps.projects.capacity) on
 each option; the modal only compares it with the selection so the button is
-never live for a selection the service will refuse (brief, 2026-09-29).
+never live for a selection the service will refuse (brief, 2026-09-29). It
+counts the ticked schools the chosen project does not hold yet: the save
+skips the others, which use no place (owner, 2026-10-19). Each row records
+its projects in `schoolProjects` as it renders, so a school ticked on an
+earlier page is still known.
 {% endcomment %}
 <form action="/schools/bulk-assign-project" method="post" class="drawer-body space-y-4"
-x-data="{ capLeft: null, capBlock: '' }">
+x-data="{ capLeft: null, capBlock: '', projectId: '', newCount() { return this.selectedSchools.filter(id => !(this.schoolProjects[id] || []).includes(this.projectId)).length } }">
 {% csrf_token %}
 <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
 <div class="space-y-1">
 <label for="bulk-assign-project" class="block edify-text-caption font-semibold text-slate-600">Project <span class="text-rose-500">*</span></label>
 <select id="bulk-assign-project" aria-label="Project ID" name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required
-@change="const o = $el.selectedOptions[0]; capLeft = o && o.dataset.remaining !== undefined && o.dataset.remaining !== '' ? Number(o.dataset.remaining) : null; capBlock = (o && o.dataset.block) || ''">
+@change="const o = $el.selectedOptions[0]; capLeft = o && o.dataset.remaining !== undefined && o.dataset.remaining !== '' ? Number(o.dataset.remaining) : null; capBlock = (o && o.dataset.block) || ''; projectId = $el.value">
 <option value="">Select a project</option>
 {% for p in projects %}
 <option value="{{ p.id }}" data-remaining="{% if p.capacity_remaining is not None %}{{ p.capacity_remaining }}{% endif %}" data-block="{{ p.capacity_block }}">{{ p.name }}{% if p.coordinator_name %} &middot; {{ p.coordinator_name }}{% endif %}{% if p.allocation %} &middot; {{ p.allocation.remaining }} of {{ p.allocation.maximum }} left{% elif p.capacity_block %} &middot; no allocation{% endif %}</option>
@@ -291,14 +296,14 @@ x-data="{ capLeft: null, capBlock: '' }">
 <p class="edify-note__title">Project capacity reached</p>
 <p class="edify-note__body" x-text="capBlock"></p>
 </div>
-<div x-show="!capBlock && capLeft !== null && selectedSchools.length > capLeft" x-cloak class="edify-note" data-tone="warning" role="alert" data-capacity-exceeded>
+<div x-show="!capBlock && capLeft !== null && newCount() > capLeft" x-cloak class="edify-note" data-tone="warning" role="alert" data-capacity-exceeded>
 <p class="edify-note__title">Capacity exceeded</p>
 <p class="edify-note__body">You can add a maximum of <span x-text="capLeft"></span> more school<span x-show="capLeft !== 1">s</span> to this project.</p>
 </div>
 
 <div class="drawer-footer">
 <button type="button" @click="bulkAssignProjectOpen = false" class="btn btn-secondary h-8">Cancel</button>
-<button type="submit" class="btn btn-primary h-8" :disabled="!!capBlock || (capLeft !== null && selectedSchools.length > capLeft)">Assign project</button>
+<button type="submit" class="btn btn-primary h-8" :disabled="!!capBlock || (capLeft !== null && newCount() > capLeft)">Assign project</button>
 </div>
 </form>
 </div>

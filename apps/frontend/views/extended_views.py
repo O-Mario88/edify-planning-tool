@@ -3558,6 +3558,23 @@ def project_detail_view(request, project_id):
         param="project_acts",
         subject="auto",
     )
+    # The project's schools and work through the shared profile sections
+    # (owner, 2026-10-18: "make sure the existing analytics are integrated
+    # into the profiles ... This should include project profiles"): the
+    # project's own page is the first tab, the analysis the tabs after it.
+    from apps.analytics import profile_intelligence
+    from apps.frontend.views.profile_views import profile_context
+
+    context["pi"] = profile_context(
+        request,
+        profile_intelligence.project_scope(project),
+        f"/projects/{project.id}",
+        # The project's navigation above already has an Overview: here the
+        # page's own content is its delivery, the engine's overview the
+        # summary of its schools, named as the cluster profile names it.
+        lead=(("delivery", "Delivery"),),
+        labels={"overview": "Summary"},
+    )
     return render(request, "pages/projects/detail.html", context)
 
 

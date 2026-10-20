@@ -59,14 +59,12 @@ register (hidden from a role the register is closed to).{% endcomment %}
 {% kpi_strip title="Partner Hand-overs" %}{% kpi_metric %}{% kpi_label %}Assigned{% endkpi_label %}{{ pi.profile.portfolio.handovers.assigned|intcomma }}{% kpi_link %}{{ pi.records }}handovers{% endkpi_link %}{% kpi_helper %}hand-overs the partner holds{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Awaiting The Partner's Date{% endkpi_label %}{{ pi.profile.portfolio.handovers.awaiting|intcomma }}{% kpi_link %}{{ pi.records }}handovers_awaiting{% endkpi_link %}{% kpi_helper %}assigned, not yet scheduled{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Scheduled{% endkpi_label %}{{ pi.profile.portfolio.handovers.scheduled|intcomma }}{% kpi_link %}{{ pi.records }}handovers_dated{% endkpi_link %}{% kpi_helper %}dated by the partner{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Completed{% endkpi_label %}{{ pi.profile.portfolio.handovers.completed|intcomma }}{% kpi_link %}{{ pi.records }}handovers_completed{% endkpi_link %}{% kpi_helper %}delivered{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
 {% endif %}
 
+{% comment %}One place for each SSA figure (owner, 2026-10-19: "there is a lot
+of duplications on the profile pages ... ssa [scores] are duplicated more than
+2 times"): the Overview keeps the score above and the best and struggling
+intervention here; each intervention's two years, as a table and its chart,
+are the SSA tab's alone.{% endcomment %}
 {% include "partials/profiles/_interventions.html" %}
-
-{% comment %}What needs attention, and each intervention's score, are in the
-insight rail beside this (partials/profiles/_rail.html; owner, 2026-10-10);
-the chart of the two years keeps the full width of the column.{% endcomment %}
-{% if pi.profile.ssa.has_any %}
-{% ssa_year_chart pi.profile.ssa "SSA score by intervention" %}
-{% endif %}
 
 {% if pi.summary %}
 {% data_table name="profile-summary" %}
@@ -128,9 +126,11 @@ the chart of the two years keeps the full width of the column.{% endcomment %}
   </tbody>
 {% enddata_table %}
 {% endif %}
+{% if pi.decisions %}{% include "partials/profiles/_decisions.html" with d=pi.decisions %}{% endif %}
 
 {% elif pi.section == "ssa" %}
-{% include "partials/profiles/_interventions.html" %}
+{% comment %}The best and struggling intervention are the Overview's (owner,
+2026-10-19: one place for each SSA figure); here, every intervention.{% endcomment %}
 {% data_table name="profile-ssa-interventions" %}
   {% slot title %}Intervention Matrix{% endslot %}
   {% slot summary %}{{ pi.profile.ssa.previous_schools|intcomma }} school{{ pi.profile.ssa.previous_schools|pluralize }} in {{ pi.profile.previous_label }} · {{ pi.profile.ssa.schools|intcomma }} in {{ pi.profile.fy_label }}{% endslot %}

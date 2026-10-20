@@ -111,7 +111,6 @@ class PlatformAccordionContractTests(SimpleTestCase):
 
     def test_native_disclosure_lists_start_closed_and_are_exclusive(self):
         lists = {
-            "templates/partials/analytics/target_by_district.html": 'name="analytics-priority-groups"',
             "templates/partials/oversight/portfolio_workspace.html": 'name="portfolio-leads"',
             "templates/partials/priorities/setting_view.html": 'name="priority-milestones"',
             "templates/partials/priorities/team_view.html": 'name="team-delivery"',

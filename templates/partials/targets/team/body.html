@@ -58,6 +58,7 @@
                   <button type="button" class="tt-expand" @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'" :aria-expanded="expandedStaff === '{{ member.user_id }}'" aria-controls="tt-desktop-areas-{{ member.user_id }}" aria-label="Show {{ member.name }} performance priorities">
                     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" :class="expandedStaff === '{{ member.user_id }}' && 'is-open'"><path d="m7 5 5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
+                  {% if ranked %}<span class="tt-rank" data-rank="{{ member.rank|default:'' }}" title="{% if member.rank %}Place {{ member.rank }} by full-year achievement{% else %}No target set for the year{% endif %}">{% if member.rank %}{{ member.rank }}{% else %}—{% endif %}</span>{% endif %}
                   <span class="tt-avatar">{{ member.initials }}</span>
                   <span class="tt-person__copy">
                     <strong>{{ member.name }}</strong>

@@ -5194,7 +5194,9 @@ main .edify-empty-state--line.edify-empty-state--line {
 /* THE NOTE. Neutral by default; `data-tone` says what kind of news it is. */
 .edify-note {
   --edify-note-tone: var(--edify-text-muted);
-  padding: 0.6rem 0.75rem;
+  /* A note's inset: 12px by the card's 16px, as every note, info bar and
+     filter bar on the platform (2026-10-18). */
+  padding: 0.75rem var(--edify-card-inset);
   border: 1px solid color-mix(in srgb, var(--edify-note-tone) 28%, transparent);
   border-inline-start: 3px solid color-mix(in srgb, var(--edify-note-tone) 62%, transparent);
   border-radius: var(--edify-radius-sm);
@@ -5438,7 +5440,9 @@ table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }
    is sized by its content — no fixed height holds it open, so a chart with a
    legend and one without sit at their own natural heights. */
 main :has(> .edify-standard-charts) { height: auto !important; min-width: 0; max-width: 100%; }
-.edify-data-chart { padding: .875rem 1rem 0.5rem; min-width: 0; }
+/* The card inset on every side (design-system.css): an 8px bottom left the
+   chart's axis labels against the card's edge. */
+.edify-data-chart { padding: var(--edify-surface-padding-block) var(--edify-card-inset); min-width: 0; }
 .edify-data-chart--bare { padding: 0; }
 .edify-data-chart__header { display: flex; flex-direction: column; gap: .125rem; margin-bottom: .25rem; }
 main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-title-size); font-weight: 600; line-height: 1.35; color: var(--edify-text); background: none; padding: 0; border: 0; text-transform: none; letter-spacing: normal; }
@@ -5455,11 +5459,13 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
    series in the full colour and the second in its tint, the shorter on top. */
 .edify-data-chart__plot, .edify-chart-scroll > div { container-type: inline-size; }
 .edify-cutout { --cutout-name: clamp(4.5rem, 30%, 13rem); padding: .25rem 3.25rem .5rem 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); }
-.edify-cutout__legend { display: flex; gap: 1rem; width: fit-content; margin: 0 0 .625rem auto; padding: .375rem .625rem; list-style: none; border: 1px solid var(--edify-border-strong); }
-.edify-cutout__legend li { display: flex; align-items: center; gap: .375rem; }
+.edify-cutout__legend { display: flex; flex-wrap: wrap; gap: .25rem 1rem; width: fit-content; margin: 0 0 .625rem auto; padding: .375rem .625rem; list-style: none; border: 1px solid var(--edify-border-strong); }
+.edify-cutout__legend li { display: flex; align-items: center; gap: .375rem; white-space: nowrap; }
 .edify-cutout__key { inline-size: .75rem; block-size: .75rem; }
-.edify-cutout__key--first, .edify-cutout__bar--first { background: var(--edify-series-1); }
-.edify-cutout__key--second, .edify-cutout__bar--second { background: color-mix(in srgb, var(--edify-series-1) 36%, var(--edify-surface)); }
+/* Each series' shade is set on its bar by chart-standard.js (SHADES): the
+   first series in the full hue, the next in its tint, and on through steps
+   far enough apart that a bar lying on another always reads against it. */
+.edify-cutout__key, .edify-cutout__bar, .edify-cutcol__bar { background: var(--cutout-fill, var(--edify-series-1)); }
 .edify-cutout__rows { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
 .edify-cutout__row { display: grid; grid-template-columns: var(--cutout-name) minmax(0, 1fr); align-items: center; gap: .625rem; }
 .edify-cutout__name { color: var(--edify-text); text-align: end; overflow-wrap: anywhere; }
@@ -5468,11 +5474,38 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .edify-cutout__bar b { padding-inline: .375rem; color: #fff; font-weight: 600; white-space: nowrap; }
 .edify-cutout__end { position: absolute; inset-block: 0; display: flex; align-items: center; padding-inline: .5rem; white-space: nowrap; }
 .edify-cutout__end--inside { transform: translateX(-100%); color: #fff; font-weight: 600; }
-.edify-cutout__bar--second b, .edify-cutout__end--inside[data-over="second"] { color: var(--edify-text); }
+/* A part of a whole: centred value, a surface hairline between parts. */
+.edify-cutout__bar--part { justify-content: center; box-shadow: inset -1px 0 0 var(--edify-surface); }
+/* A line that opens something (a Lead's row): the pointer, a tint on hover
+   and the platform focus ring on the keyboard. */
+.edify-cutout__row[data-pick], .edify-cutcol__column[data-pick] { cursor: pointer; border-radius: var(--radius-control); }
+/* Such a line is a control, and controls keep their label on one line
+   (responsive-system.css); a category name still wraps between words. */
+.edify-cutout__name, .edify-cutcol__name { white-space: normal; }
+.edify-cutout__row[data-pick]:hover, .edify-cutcol__column[data-pick]:hover { background: color-mix(in srgb, var(--edify-series-1) 6%, transparent); }
+.edify-cutout__row[data-pick]:focus-visible, .edify-cutcol__column[data-pick]:focus-visible { outline: none; box-shadow: var(--edify-focus-ring); }
+.edify-cutout__bar b.edify-cutout__ink, .edify-cutcol__bar b.edify-cutout__ink, .edify-cutout__end--inside[data-over="second"] { color: var(--edify-text); }
 .edify-cutout__axis { position: relative; block-size: 1.375rem; margin: .5rem 0 0 calc(var(--cutout-name) + .625rem); border-top: 1.5px solid var(--edify-text-muted); }
 .edify-cutout__axis span { position: absolute; inset-block-start: .25rem; transform: translateX(-50%); }
 .edify-cutout__axis span:first-child { transform: none; }
 .edify-cutout__unit { margin: .125rem 0 0; padding-inline-start: calc(var(--cutout-name) + .625rem); font-style: italic; font-weight: 600; text-align: center; }
+/* The cut-out stood upright (owner, 2026-10-18: "Apply the same design to the
+   vertical bar graphs"): one column per category from one baseline, the
+   longest at the back and each shorter one in front, the shortest one's
+   value inside its top and the longest one's above it, the value scale one
+   rule beside the plot, the names under the baseline. */
+.edify-cutcol { --cutcol-plot: 12.5rem; padding: .25rem 0 .5rem; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); }
+.edify-cutcol__body { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: .5rem; align-items: start; padding-block-start: 1.25rem; }
+.edify-cutcol__axis { position: relative; block-size: var(--cutcol-plot); min-inline-size: 1.75rem; border-inline-end: 1.5px solid var(--edify-text-muted); }
+.edify-cutcol__axis span { position: absolute; inset-inline-end: .375rem; transform: translateY(50%); white-space: nowrap; }
+.edify-cutcol__columns { display: grid; grid-template-columns: repeat(var(--cutcol-count, 1), minmax(0, 1fr)); gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.edify-cutcol__column { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--cutcol-plot) auto; row-gap: .375rem; min-inline-size: 0; }
+.edify-cutcol__track { position: relative; display: block; block-size: var(--cutcol-plot); border-block-end: 1.5px solid var(--edify-text-muted); }
+.edify-cutcol__bar { position: absolute; inset-block-end: 0; inset-inline: max(14%, calc(50% - 1.5rem)); display: flex; justify-content: center; align-items: flex-start; }
+.edify-cutcol__bar b { padding-block-start: .25rem; color: #fff; font-weight: 600; white-space: nowrap; }
+.edify-cutcol__end { position: absolute; inset-inline: 0; padding-block-end: .25rem; text-align: center; white-space: nowrap; }
+.edify-cutcol__name { color: var(--edify-text); text-align: center; line-height: 1.25; overflow-wrap: break-word; }
+.edify-cutcol .edify-cutout__unit { padding-inline-start: 0; }
 /* A narrow card has no room for names beside the bars: each name sits on its
    own line above its bar, and the axis starts at the card's edge. */
 @container (max-width: 26rem) {
@@ -5576,6 +5609,110 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   max-inline-size: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── Staff Development Fund request form (owner, 2026-10-18) ──────────────────
+   The paper form, on screen: the same title and mark, the same sections in the
+   same order with the same labels, and its boxes, in the platform's face. The
+   PDF of a completed form, set in the paper form's serif,
+   (apps/professional_development/sdf_form.py) draws the same sheet. */
+.sdf {
+  --sdf-ink: var(--edify-text);
+  --sdf-title: var(--edify-primary);
+  --sdf-line: var(--edify-border);
+  display: grid;
+  gap: var(--edify-space-4);
+  color: var(--sdf-ink);
+}
+.sdf-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--edify-space-4);
+  padding-block-end: var(--edify-space-2);
+  border-block-end: 1px solid var(--sdf-line);
+}
+.sdf-title {
+  margin: 0;
+  font-size: var(--edify-text-title-size);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--sdf-title);
+}
+/* The platform's wordmark is white (the sidebar's); its shape is used as a
+   mask and painted in the form's blue, as the PDF does. */
+.sdf-logo {
+  flex: none;
+  inline-size: 5.5rem;
+  aspect-ratio: 300 / 123;
+  background-color: var(--sdf-title);
+  -webkit-mask: url("/static/images/logo.png") center / contain no-repeat;
+  mask: url("/static/images/logo.png") center / contain no-repeat;
+}
+.sdf-policy { margin: 0; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.sdf-who {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--edify-space-4);
+  padding-block-end: var(--edify-space-4);
+  border-block-end: 1px solid var(--sdf-line);
+}
+.sdf-section {
+  display: grid;
+  gap: var(--edify-space-2);
+  padding-block-end: var(--edify-space-4);
+  border-block-end: 1px solid var(--sdf-line);
+}
+.sdf-section:last-child { border-block-end: 0; padding-block-end: 0; }
+.sdf-section > h4 {
+  margin: 0 0 var(--edify-space-1);
+  font-size: var(--edify-text-title-size);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.sdf-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--edify-space-3);
+}
+.sdf-who .sdf-row { grid-template-columns: 6.5rem minmax(0, 1fr); }
+.sdf-row--wide { grid-template-columns: 9rem minmax(0, 1fr); align-items: start; }
+.sdf-label { font-size: var(--edify-text-label-size); color: var(--sdf-ink); }
+.sdf-box {
+  min-block-size: 2.25rem;
+  padding: var(--edify-space-2) var(--edify-space-3);
+  border: 1px solid color-mix(in srgb, var(--sdf-ink) 45%, transparent);
+  border-radius: var(--edify-radius-xs);
+  font-size: var(--edify-text-label-size);
+  background: var(--edify-card-surface);
+  overflow-wrap: anywhere;
+}
+.sdf-box--area { min-block-size: 4.5rem; white-space: pre-line; }
+.sdf-box--empty { color: var(--edify-text-subtle); }
+.sdf-box--sign { font-style: italic; color: var(--edify-primary); }
+.sdf-pair { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--edify-space-2); }
+.sdf-attach { display: grid; gap: var(--edify-space-1); font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.sdf-attach p { margin: 0; }
+.sdf-choice { display: flex; align-items: flex-start; gap: var(--edify-space-2); font-size: var(--edify-text-label-size); }
+.sdf-choice input { margin-block-start: 0.2rem; }
+/* Sign-off rows: name, signature and date, three to a line. */
+.sdf-signoff {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.1fr) minmax(0, 0.7fr);
+  gap: var(--edify-space-3);
+  align-items: end;
+}
+.sdf-signoff > div { display: grid; gap: var(--edify-space-1); }
+.sdf-hint { margin: 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
+@media (max-width: 40rem) {
+  .sdf-who,
+  .sdf-row,
+  .sdf-who .sdf-row,
+  .sdf-row--wide,
+  .sdf-signoff { grid-template-columns: minmax(0, 1fr); }
+  .sdf-row { gap: var(--edify-space-1); }
 }
 
 /* ═══ CONTEXT METRICS — shared compact performance strip ═══════════════ */

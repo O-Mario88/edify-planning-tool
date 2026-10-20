@@ -29,7 +29,6 @@ from django.urls import URLPattern, URLResolver, get_resolver
 
 from apps.core.navigation import (
     ADMIN,
-    ANALYTICS_SECTIONS,
     PAGE_PERMISSIONS,
     ROLE_EXCLUSIVE_PAGES,
     SIDEBAR_ITEMS,
@@ -259,17 +258,6 @@ def _navigation_map() -> dict[str, dict]:
                     "group": section["group_label"],
                     "page_key": item["page_key"],
                 }
-
-    # Analytics sections are reached from the workspace sub-navigation rather
-    # than from their own sidebar link. They are navigable pages — without this
-    # the inventory would report every analysis surface as unreachable.
-    for section in ANALYTICS_SECTIONS:
-        for url in {section["url"], *section.get("role_urls", {}).values()}:
-            result[url.rstrip("/") or "/"] = {
-                "label": section["label"],
-                "group": "ANALYTICS",
-                "page_key": section["page_key"],
-            }
     return result
 
 
@@ -1353,7 +1341,6 @@ def build_page_inventory() -> dict:
             "django.urls.get_resolver",
             "apps.core.navigation.PAGE_PERMISSIONS",
             "apps.core.navigation.SIDEBAR_ITEMS",
-            "apps.core.navigation.ANALYTICS_SECTIONS",
             "view and template source",
         ],
         "quality_score_note": (

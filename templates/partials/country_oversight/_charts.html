@@ -16,7 +16,7 @@ third time.
   <figure class="cpo-chart" x-data="cpoChart('{{ chart.data_id }}')" aria-labelledby="{{ chart.id }}-name">
     <h2 class="cpo-chart-name" id="{{ chart.id }}-name" data-no-titlebar>{{ chart.title }}</h2>
     {{ chart|json_script:chart.data_id }}
-    <div class="cpo-plot" x-ref="plot" role="img" aria-label="{{ chart.title }}: {% for s in chart.series %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}, by Programme Lead. The figures are in the table below."></div>
+    <div class="cpo-plot" x-ref="plot" role="group" aria-label="{{ chart.title }}: {% for s in chart.series %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}, by Programme Lead. The figures are in the table below."></div>
     <details class="cpo-chart-data" open>
       <summary>Chart data</summary>
       <div class="cpo-tscroll">

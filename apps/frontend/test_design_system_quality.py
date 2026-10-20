@@ -269,61 +269,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertNotRegex(project_plan, r"(?m)^\.sp-card:nth-of-type\(n \+ 2\)")
         self.assertIn(".sp-plan-main > .sp-card:nth-of-type(n + 2)", project_plan)
 
-    def test_analytics_dashboard_groups_cards_by_content_scale(self):
-        """Analytics became one page with tabs on 2026-09-05, so the bands are
-        read where they now live: the executive pulse is the workspace's tile
-        strip above the tablist, and the rest is the Overview panel. Same
-        bands, same order, same page — one shell instead of fourteen."""
-        page = _read("templates/pages/analytics/workspace.html")
-        pulse = _read("templates/partials/analytics/executive_pulse.html")
-        cards = _read("templates/partials/analytics/kpi_cards.html")
-        layout = _read("static/css/pages/analytics-dashboard.css")
-
-        self.assertIn("data-analytics-enterprise", page)
-        self.assertIn("css/pages/analytics-dashboard.css", page)
-        self.assertIn("analytics-executive-pulse", pulse)
-        # The geography band left for the home dashboards on 2026-09-05.
-        self.assertNotIn("analytics-row--geography", cards)
-        for band in (
-            "analytics-row--overview",
-            "analytics-row--decision",
-            "analytics-impact-band",
-            "analytics-row--compact",
-            "analytics-evidence-disclosure",
-        ):
-            self.assertIn(band, cards)
-
-        self.assertLess(
-            cards.index("target_by_district.html"),
-            cards.index("recommended_insights.html"),
-        )
-        self.assertIn("items=executive_kpi_items", pulse)
-        self.assertIn("items=additional_kpi_items", pulse)
-        self.assertNotIn("lg:col-span-4 space-y-6", cards)
-        self.assertIn("container: analytics-dashboard / inline-size", layout)
-        self.assertIn("container: analytics-impact / inline-size", layout)
-        self.assertIn("align-items: stretch", layout)
-        self.assertNotIn("grid-auto-flow: dense", layout)
-
-    def test_cd_cceo_snapshot_and_leaderboard_share_one_balanced_row(self):
-        body = _read("templates/partials/analytics/cd/body.html")
-        leaderboard = _read("templates/partials/analytics/cd/cceo_leaderboard.html")
-        snapshot = _read("templates/partials/analytics/cd/cceo_snapshot.html")
-
-        performance_row = body.split("data-cd-cceo-performance-row", 1)[1].split(
-            "CCEO performance row end", 1
-        )[0]
-        self.assertIn("cceo_snapshot.html", performance_row)
-        self.assertIn("cceo_leaderboard.html", performance_row)
-        self.assertIn("lg:grid-cols-2", performance_row)
-        self.assertIn("items-stretch", performance_row)
-        self.assertIn("max-h-[280px]", leaderboard)
-        self.assertIn("sticky top-0 edify-surface", leaderboard)
-        self.assertIn("min-w-[520px]", snapshot)
-        self.assertIn("min-w-[560px]", leaderboard)
-        self.assertIn("min-w-0 w-full edify-surface", snapshot)
-        self.assertIn("min-w-0 w-full edify-surface", leaderboard)
-
     def test_shared_responsive_contract_covers_mobile_and_tablet(self):
         platform = _read("static/css/platform.css")
         self.assertIn("@media (max-width: 63.9375rem)", platform)
@@ -510,7 +455,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-card-shadow:",
             "--edify-card-shadow-hover:",
             "--edify-card-backdrop-filter: none",
-            "--edify-table-canvas: var(--edify-surface)",
+            # A table sits on its card's plane in every theme (2026-10-18).
+            "--edify-table-canvas: var(--edify-card-surface)",
             "--edify-shadow-sm: none",
             "--edify-shadow-md: none",
             "--edify-shadow-lg: none",
@@ -632,7 +578,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
 
         custom_workspaces = (
             "templates/pages/accounts/budget_amendments.html",
-            "templates/pages/analytics/impact.html",
             "templates/pages/calendar/index.html",
             "templates/pages/dashboards/main.html",
             "templates/pages/hr/module_workspace.html",
@@ -645,7 +590,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "templates/pages/projects/analytics.html",
             "templates/pages/projects/my_plan.html",
             "templates/pages/projects/planning.html",
-            "templates/pages/ssa/performance.html",
         )
         for template in custom_workspaces:
             self.assertIn("edify-page-canvas", _read(template), template)
@@ -707,7 +651,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
                     f"Card action must keep intrinsic width: {path.relative_to(ROOT)}",
                 )
 
-        self.assertGreaterEqual(len(card_actions), 8)
+        # A floor so the scan cannot pass on nothing: 7 since the Analytics
+        # cockpits' card actions left with them (owner, 2026-10-19).
+        self.assertGreaterEqual(len(card_actions), 7)
 
     def test_blue_workspace_tables_have_a_complete_visual_hierarchy(self):
         tokens = _read("static/css/design-system.css")
@@ -912,8 +858,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "templates/partials/dashboards/pl/body.html",
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/hr/body.html",
-            "templates/partials/analytics/cd/body.html",
-            "templates/partials/analytics/pl/body.html",
             "templates/partials/debriefs/dashboard_body.html",
             "templates/pages/projects/index.html",
         ):
@@ -1066,7 +1010,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         planning_tabs = _read("templates/partials/planning/tabs.html")
         my_plan_filters = _read("templates/partials/my_plan/filters.html")
         messages = _read("templates/pages/messages/index.html")
-        analytics = _read("templates/partials/analytics/filters.html")
 
         self.assertNotRegex(school_tabs, r'hx-get="/schools\?tab=')
         self.assertIn("filters-tab-input", school_tabs)
@@ -1082,7 +1025,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertNotRegex(my_plan_filters, r'hx-get="/my-plan\?period=')
         self.assertIn("messages-active-tab", messages)
         self.assertNotRegex(messages, r'hx-get="/messages\?tab=')
-        self.assertNotIn('hx-get="/analytics?fy=2026&quarter=Q2"', analytics)
 
     def test_finance_dashboard_does_not_ship_placeholder_tabs_or_actions(self):
         template = _read("templates/pages/accounts/dashboard.html")

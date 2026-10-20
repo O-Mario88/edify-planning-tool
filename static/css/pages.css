@@ -3529,6 +3529,17 @@
   font-weight: 600;
 }
 
+/* A member's place when Target Performance is ranked (owner, 2026-10-18:
+   the CCEO Leaderboard's home). Tabular figures, so 9 and 10 line up. */
+.tt-rank {
+  flex: 0 0 1.5rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
 .tt-person__copy,
 .tt-support-item__copy {
   display: flex;

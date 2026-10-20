@@ -9,9 +9,8 @@ cannot give, never a zero; teacher and leader figures are headcounts.
 <div class="space-y-4" data-core-school-tab="{{ core.code }}">
 
   {% kpi_strip %}
-    {% kpi_metric %}{% kpi_label %}Latest SSA{% endkpi_label %}{{ core.ssa_now|default_if_none:"—" }}{% kpi_helper %}Confirmed, FY {{ core_fy }}{% endkpi_helper %}{% endkpi_metric %}
-    {% kpi_metric %}{% kpi_label %}Previous SSA{% endkpi_label %}{{ core.ssa_before|default_if_none:"—" }}{% kpi_helper %}Confirmed, FY {{ core_areas.previous_fy }}{% endkpi_helper %}{% endkpi_metric %}
-    {% kpi_metric %}{% kpi_label %}SSA Change{% endkpi_label %}{% if core.ssa_change is None %}—{% else %}{% if core.ssa_change > 0 %}+{% endif %}{{ core.ssa_change }}{% endif %}{% kpi_helper %}{{ core.trajectory_label }}{% endkpi_helper %}{% endkpi_metric %}
+    {% comment %}One SSA figure here: the Core trajectory by the IA rule. The scores are the SSA tab's (owner, 2026-10-19: one place for each SSA figure).{% endcomment %}
+    {% kpi_metric %}{% kpi_label %}SSA Trajectory{% endkpi_label %}{{ core.trajectory_label }}{% kpi_link %}{{ pi.href }}{{ pi.param }}={{ pi.at.ssa }}&fy={{ core_fy }}{% endkpi_link %}{% kpi_helper %}{% if core.ssa_change is not None %}{% if core.ssa_change > 0 %}+{% endif %}{{ core.ssa_change }} · {% endif %}scores on the SSA tab{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Package{% endkpi_label %}{{ core.package_label }}{% kpi_helper %}{% if core.has_plan %}Visits {{ core.visits_done }}/{{ core.visits_target }} · Trainings {{ core.trainings_done }}/{{ core.trainings_target }}{% else %}No Core plan this year{% endif %}{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Session Attendance{% endkpi_label %}{% if core.attendance_rate is None %}—{% else %}{{ core.attendance_rate }}%{% endif %}{% kpi_helper %}{{ core.attended }} of {{ core.invited }} invitations{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Teacher Attendances{% endkpi_label %}{{ core.teacher_attendances|default_if_none:"—" }}{% kpi_helper %}Headcounts · {{ core.leader_attendances|default_if_none:"—" }} leader attendances{% endkpi_helper %}{% endkpi_metric %}
@@ -19,42 +18,14 @@ cannot give, never a zero; teacher and leader figures are headcounts.
   {% endkpi_strip %}
 
   <p class="edify-text-caption text-slate-600" data-core-why>
-    {% if core.trajectory_label == "Not Compared" %}No SSA change is reported: the school needs a confirmed SSA in both FY {{ core_areas.previous_fy }} and FY {{ core_fy }}, at least 120 days apart.{% else %}SSA {{ core.trajectory_label|lower }} from FY {{ core_areas.previous_fy }} to FY {{ core_fy }} ({{ core.rule_label }}).{% endif %}
+    {% if core.trajectory_label == "Not Compared" %}No SSA change is reported: the school needs a confirmed SSA in both {{ core_previous_label }} and {{ core_fy_label }}, at least 120 days apart.{% else %}SSA {{ core.trajectory_label|lower }} from {{ core_previous_label }} to {{ core_fy_label }} ({{ core.rule_label }}).{% endif %}
     {% if core.attention %} Needs: {{ core.attention|join:"; " }}.{% endif %}
+    <a href="{{ pi.href }}{{ pi.param }}={{ pi.at.ssa }}&amp;fy={{ core_fy }}" class="edify-primary-text font-semibold hover:underline" data-core-ssa-link>Each intervention's scores are on the SSA tab.</a>
   </p>
 
-  {% data_table name="core-interventions" %}
-    {% slot title %}SSA by Intervention, FY {{ core_areas.previous_fy }} to FY {{ core_fy }}{% endslot %}
-    {% slot summary %}{{ core_areas.improved }} improved · {{ core_areas.declined }} declined · {{ core_areas.steady }} steady · {{ core_areas.not_compared }} not compared{% endslot %}
-    {% slot caption %}Each intervention's score on the latest confirmed SSA of each year, the change where both readings are comparable, and the platform's band. The lowest area is not necessarily the one that fell most.{% endslot %}
-    <thead><tr>
-      <th scope="col" class="px-3 py-2">Intervention</th>
-      <th scope="col" class="px-3 py-2 text-right">FY {{ core_areas.previous_fy }}</th>
-      <th scope="col" class="px-3 py-2 text-right">FY {{ core_fy }}</th>
-      <th scope="col" class="px-3 py-2 text-right">Change</th>
-      <th scope="col" class="px-3 py-2">Verdict</th>
-      <th scope="col" class="px-3 py-2">Band</th>
-    </tr></thead>
-    <tbody>
-      {% for a in core_areas.rows %}
-      <tr data-core-intervention="{{ a.key }}">
-        <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ a.label }}</th>
-        <td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ core_areas.previous_fy }}">{{ a.previous|default_if_none:"—" }}</td>
-        <td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ core_fy }}">{{ a.latest|default_if_none:"—" }}</td>
-        <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% if a.change is None %}—{% else %}{% if a.change > 0 %}+{% endif %}{{ a.change }}{% endif %}</td>
-        <td class="px-3 py-2" data-label="Verdict">{% if a.tone %}<span class="edify-status-text" data-edify-tone="{{ a.tone }}" title="{{ a.rule_label }}">{{ a.verdict_label }}</span>{% else %}{{ a.verdict_label }}{% endif %}</td>
-        <td class="px-3 py-2" data-label="Band">{{ a.band|default:"—" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  {% enddata_table %}
-
-  <p class="edify-text-caption text-slate-600" data-core-highlights>
-    Strongest: {% if core_areas.strongest %}{{ core_areas.strongest.label }} ({{ core_areas.strongest.latest }}){% else %}—{% endif %} ·
-    Weakest: {% if core_areas.weakest %}{{ core_areas.weakest.label }} ({{ core_areas.weakest.latest }}){% else %}—{% endif %} ·
-    Largest gain: {% if core_areas.largest_gain %}{{ core_areas.largest_gain.label }} (+{{ core_areas.largest_gain.change }}){% else %}—{% endif %} ·
-    Largest drop: {% if core_areas.largest_drop %}{{ core_areas.largest_drop.label }} ({{ core_areas.largest_drop.change }}){% else %}—{% endif %}
-  </p>
+  {% comment %}Each intervention's two years are the SSA tab's Intervention
+  Matrix, and the strongest and weakest the Overview's (owner, 2026-10-19: one
+  place for each SSA figure).{% endcomment %}
 
   <div class="grid gap-4 md:grid-cols-3">
     <section class="card p-4 space-y-1" data-core-package>
@@ -62,7 +33,7 @@ cannot give, never a zero; teacher and leader figures are headcounts.
       {% if core.has_plan %}
       <p class="edify-text-caption">Visits {{ core.visits_done }} of {{ core.visits_target }} · Trainings {{ core.trainings_done }} of {{ core.trainings_target }}</p>
       {% if core.staff_visits is not None %}<p class="edify-text-caption">Staff: {{ core.staff_visits }} visits, {{ core.staff_trainings }} trainings · Partner: {{ core.partner_visits }} visits, {{ core.partner_trainings }} trainings</p>{% endif %}
-      {% else %}<p class="edify-text-caption">No Core plan for FY {{ core_fy }}.</p>{% endif %}
+      {% else %}<p class="edify-text-caption">No Core plan for {{ core_fy_label }}.</p>{% endif %}
       <p class="edify-text-caption">Partner hand-overs: {{ core.handovers_assigned }} not yet scheduled · {{ core.handovers_scheduled }} scheduled · {{ core.handovers_completed }} completed</p>
     </section>
     <section class="card p-4 space-y-1" data-core-participation>

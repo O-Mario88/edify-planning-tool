@@ -203,7 +203,7 @@ def _timeout() -> int:
 
 def _key(universe: str, window: Window, today: date) -> str:
     # The day is in the key: overdue and ages are read against today.
-    return f"cpx:data:v2:{universe}:{window.cache_part}:{today.isoformat()}"
+    return f"cpx:data:v3:{universe}:{window.cache_part}:{today.isoformat()}"
 
 
 #: The dataset this worker last read (see country_oversight.service._HELD).
@@ -1107,60 +1107,79 @@ def lead_charts(snapshot: ExecSnapshot) -> list[dict]:
     return out
 
 
+def requirement_row(key: str, label: str, tally, need=None) -> dict:
+    """One row of the requirement tables (owner, 2026-10-18): what is
+    expected, planned and verified, each with its share.
+
+    Visits: Total Visits Expected is four at each Core school and one at every
+    other; Staff Target is staff's two at each Core school and the schools
+    their 560 or 280 reaches; Partner Target the other two and the schools
+    beyond it (``rules.workload``). Verified is My Plan's green
+    (``coverage.verified_q``), each side against its own target; a Partner's
+    SSA Support is no counted visit. Trainings: four at each Core school and
+    one at every other; Total Planned is staff's and the Partners', a
+    Partner's being the schools assigned to it for an in-school training
+    whether it has dated them or not. ``need`` is the type's requirement, or
+    None for a row of every type (a person, a Lead, the country)."""
+    from apps.planning.country_oversight.hierarchy import Tally
+
+    share = Tally.share
+    slots, trainings = tally.visit_slots, tally.training_slots
+    planned = tally.staff + tally.partner_scheduled
+    verified = tally.staff_verified + tally.partner_verified
+    visits_left = max(0, slots - verified)
+    training_planned = tally.training_staff + tally.training_partner_assigned
+    trainings_left = max(0, trainings - tally.training_verified)
+    return {
+        "key": key,
+        "label": label,
+        "needs_visits": bool(need is None or need.visits),
+        "needs_trainings": bool(need is None or need.trainings),
+        "schools": tally.schools,
+        "visit_slots": slots,
+        "visits_planned": planned,
+        "visits_planned_share": share(planned, slots),
+        "staff_target": tally.staff_expected,
+        "staff_target_share": share(tally.staff_expected, slots),
+        "staff_verified": tally.staff_verified,
+        "staff_share": share(tally.staff_verified, tally.staff_expected),
+        "partner_target": tally.partner_expected,
+        "partner_target_share": share(tally.partner_expected, slots),
+        "partner_verified": tally.partner_verified,
+        "partner_share": share(tally.partner_verified, tally.partner_expected),
+        "visits_verified": verified,
+        "visit_share": share(verified, slots),
+        "visits_left": visits_left,
+        "visits_left_share": share(visits_left, slots),
+        "training_slots": trainings,
+        "trainings_planned": training_planned,
+        "trainings_planned_share": share(training_planned, trainings),
+        "trainings_partner": tally.training_partner_assigned,
+        "trainings_partner_share": share(tally.training_partner_assigned, trainings),
+        "trainings_verified": tally.training_verified,
+        "training_share": share(tally.training_verified, trainings),
+        "trainings_left": trainings_left,
+        "trainings_left_share": share(trainings_left, trainings),
+    }
+
+
 def type_rows(snapshot: ExecSnapshot) -> list[dict]:
     """The requirement by school type, and how much of it is verified (owner,
     2026-10-01: "separate ... Core, Clients, Core Trained, Core Graduates",
     for visits and for trainings). Read from the planning tab's own fold for
     the same selection, so a type's requirement and its plan are the ones that
-    tab shows; "verified" is programme completion. A type the requirement
-    asks nothing of shows what it holds and no gap; the last row is every
-    type together."""
+    tab shows (``requirement_row``). A type the requirement asks nothing of
+    shows what it holds and no gap; the last row is every type together."""
     from apps.planning.country_oversight import rules
-    from apps.planning.country_oversight.hierarchy import Tally
 
     plan = snapshot.plan
     if plan is None:
         return []
     by_type = plan.tree.by_type
-
-    def row(key, label, tally, need) -> dict:
-        planned = tally.staff + tally.partner_scheduled
-        verified = tally.staff_verified + tally.partner_verified
-        return {
-            "key": key,
-            "label": label,
-            "needs_visits": bool(need is None or need.visits),
-            "needs_trainings": bool(need is None or need.trainings),
-            "schools": tally.schools,
-            "visit_slots": tally.visit_slots,
-            "visits_planned": planned,
-            "visits_verified": verified,
-            "visits_left": max(0, tally.visit_slots - verified),
-            "visit_share": Tally.share(verified, tally.visit_slots),
-            # Each side's verified visits against its own target (owner,
-            # 2026-10-03): staff's two at a Core school and the schools their
-            # capacity reaches, the Partner's two and the schools beyond it.
-            "staff_target": tally.staff_expected,
-            "staff_verified": tally.staff_verified,
-            "staff_share": Tally.share(tally.staff_verified, tally.staff_expected),
-            "partner_target": tally.partner_expected,
-            "partner_verified": tally.partner_verified,
-            "partner_share": Tally.share(
-                tally.partner_verified, tally.partner_expected
-            ),
-            "training_slots": tally.training_slots,
-            "trainings_planned": tally.training,
-            "trainings_verified": tally.training_verified,
-            "trainings_left": max(0, tally.training_slots - tally.training_verified),
-            "training_share": Tally.share(
-                tally.training_verified, tally.training_slots
-            ),
-        }
-
     order = [t for t in rules.TYPE_ORDER if t in by_type]
     order += sorted(t for t in by_type if t not in rules.TYPE_ORDER)
     rows = [
-        row(
+        requirement_row(
             school_type,
             rules.type_label(school_type),
             by_type[school_type],
@@ -1169,9 +1188,33 @@ def type_rows(snapshot: ExecSnapshot) -> list[dict]:
         for school_type in order
     ]
     if len(rows) > 1:
-        total = row("", "All school types", plan.tree.country, None)
+        total = requirement_row("", "All school types", plan.tree.country)
         total["is_total"] = True
         rows.append(total)
+    return rows
+
+
+def people_rows(snapshot: ExecSnapshot) -> list[dict]:
+    """The same requirement by Programme Lead, each opening onto the Lead's
+    own portfolio and each CCEO's (owner, 2026-10-18: "the same as above but
+    broken down in details grouped by PL, CCEO"). From the planning tab's
+    fold, so a Lead's row is the sum of their people's."""
+    plan = snapshot.plan
+    if plan is None:
+        return []
+    rows = []
+    for lead in plan.tree.leads:
+        row = requirement_row(lead.key, lead.name, lead.tally)
+        row["is_no_lead"] = lead.is_no_lead
+        row["owners"] = [
+            {
+                **requirement_row(owner.key, owner.label, owner.tally),
+                "kind": owner.kind,
+                "role": owner.role,
+            }
+            for owner in lead.owners
+        ]
+        rows.append(row)
     return rows
 
 
@@ -1315,12 +1358,13 @@ def _forecast_text(outlook: dict, window: Window) -> str:
     )
 
 
+#: The execution timeliness columns for a Programme Lead, a CCEO and an
+#: officer's delivery channels (owner, 2026-10-18), shared by the table and
+#: the workbook.
 TABLE_COLUMNS = (
     ("due", "Planned"),
-    ("started", "Started"),
-    ("executed", "Execution Completed"),
-    ("verified", "IA Verified"),
-    ("closed", "Fully Closed"),
+    ("in_progress", "In-Progress"),
+    ("complete", "Completed & PL Verified"),
     ("on_time", "On-Time %"),
     ("overdue", "Overdue"),
     ("carried_forward", "Carried Forward"),
@@ -1358,6 +1402,9 @@ def row_cells(
     outlook = forecast(tally, window, today)
     return {
         "due": tally.due,
+        "in_progress": tally.in_progress,
+        "complete": tally.complete,
+        "at_risk": outlook["status"] == "at_risk",
         "started": tally.started,
         "executed": tally.executed,
         "verified": tally.verified,
@@ -1470,8 +1517,11 @@ def find_lead(snapshot: ExecSnapshot, lead_key: str):
 
 
 def partner_rows(snapshot: ExecSnapshot) -> list[dict]:
-    """Each Partner organisation's delivery (spec §15). IA returns and payment
-    are read from the Partner's own records; nothing waits on a PL here."""
+    """Each Partner organisation's delivery (spec §15), from assignment to
+    payment (owner, 2026-10-18): Assigned is everything in its hands — dated
+    in the period, and handed over and not dated yet — and Verified is My
+    Plan's green. IA returns and payment are read from the Partner's own
+    records; nothing waits on a PL here."""
     dataset = snapshot.dataset
     names = dataset.partner_names
     records_by_partner: dict[str, list] = {}
@@ -1499,11 +1549,13 @@ def partner_rows(snapshot: ExecSnapshot) -> list[dict]:
                 "name": names.get(key, "Unrecorded Partner")
                 if key
                 else "Partner not recorded",
+                "assigned": len(live) + unscheduled.get(key, 0),
                 "due": len(live),
                 "started": sum(1 for r in live if r.started),
                 "executed": sum(1 for r in live if r.executed),
                 "returned": sum(1 for r in live if r.returned),
-                "verified": sum(1 for r in live if r.verified),
+                "verified": sum(1 for r in live if r.complete),
+                "awaiting_verification": sum(1 for r in live if r.stage == "ia_review"),
                 "awaiting_payment": sum(1 for r in live if r.verified and not r.paid),
                 "paid": sum(1 for r in live if r.paid),
                 "closed": sum(1 for r in live if r.closed),
@@ -1969,6 +2021,7 @@ class CountryExecutionOversightService:
     partner_rows = staticmethod(partner_rows)
     lead_charts = staticmethod(lead_charts)
     type_rows = staticmethod(type_rows)
+    people_rows = staticmethod(people_rows)
     activity_rows = staticmethod(activity_rows)
     issues = staticmethod(issues)
     forecast = staticmethod(forecast)

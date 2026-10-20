@@ -104,8 +104,11 @@ def cluster_oversight_view(request, section: str = ""):
             "is_door": bool(s.url),
         }
         for s in workspace.SECTIONS
-        # My Clusters is for someone who holds one.
-        if s.key != "my" or ws.my_ids
+        # My Clusters is for someone who holds one, among more than they hold:
+        # where the Command Center is their own clusters already (a CCEO's),
+        # it would draw the same table twice (owner, 2026-10-19: "there is a
+        # lot of duplications on the profile pages and oversights").
+        if s.key != "my" or (ws.my_ids and ws.my_ids != {c.id for c in ws.clusters})
     ]
     return render(
         request,

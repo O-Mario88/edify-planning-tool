@@ -129,12 +129,6 @@ class CdGeographyBreakdownTest(TestCase):
         south = resolve_cd_scope("2026", filters={"region": self.south.id})
         self.assertEqual(set(south.school_ids), {self.s3.id})
         self.assertEqual(_country_activities(south).count(), 1)
-        self.client.force_login(self.cd)
-        response = self.client.get(
-            f"/analytics/country-director?fy=2026&region={self.south.id}"
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="region"')
 
 
 class OversightDistrictFilterTest(TestCase):

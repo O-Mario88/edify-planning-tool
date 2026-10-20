@@ -66,29 +66,12 @@ sign-off snapshot stay on HR's page, and Sign Off is HR's alone.
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <div class="flex items-center justify-between pb-3 border-b edify-border">
-        <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">Not yet applied</h2>
-        <span class="edify-text-caption text-slate-400 font-semibold">{{ not_applied_count }}</span>
-      </div>
-      {% if not_applied %}
-      <div class="divide-y edify-border">
-        {% for p in not_applied %}
-        <div class="py-2">
-          <span class="block edify-text-caption font-bold edify-text">{{ p.name }}</span>
-          <span class="edify-text-caption text-slate-400">Allocation {{ p.allocation }}</span>
-        </div>
-        {% endfor %}
-        {% if not_applied_count > not_applied|length %}
-        <p class="edify-text-caption text-slate-400 font-semibold pt-2">Showing {{ not_applied|length }} of {{ not_applied_count }}.</p>
-        {% endif %}
-      </div>
-      {% else %}
-      <p class="edify-text-caption text-slate-400 font-semibold py-4 text-center">Everyone on your team has applied for FY {{ fy }} Professional Development.</p>
-      {% endif %}
-    </div>
+  {% comment %}The team's Staff Development Fund, person by person — the same
+  table HR reads (owner, 2026-10-18), so a Programme Lead can follow who has
+  not applied and open each request form and certificate.{% endcomment %}
+  {% include "partials/hr/pd_dashboard/fund_table.html" %}
 
+  <div class="grid grid-cols-1 gap-4">
     <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">Upcoming &amp; overdue courses</h2>
       <div class="space-y-4">

@@ -253,45 +253,6 @@ class CDAnalyticsTest(TestCase):
         self.assertIn("CCEO B1", cceo_names)
         self.assertEqual(d["scope_meta"]["cceo_count"], 2)
 
-    def test_cd_analytics_renders_the_shared_subregion_map(self):
-        data = S.get_dashboard(
-            self.cd,
-            fy=FY,
-            include_regional_map=True,
-        )
-        self.assertIn("subregion_performance", data)
-        self.assertIn("district_insight", data)
-        self.assertIn("subcounty_insight", data)
-        self.assertEqual(data["map_scope"]["label"], "Country-wide system data")
-
-        self.client.force_login(self.cd)
-        response = self.client.get("/analytics/country-director", {"fy": FY})
-
-        self.assertEqual(response.status_code, 200)
-        # The map moved to the Map view of the home dashboard (owner,
-        # 2026-09-05); the analytics tab opens on its decision cards.
-        self.assertNotContains(response, "Performance by Sub-Region")
-        dashboard = self.client.get("/dashboard", {"fy": FY, "view": "map"})
-        self.assertContains(dashboard, "Performance by Sub-Region")
-
-    def test_repeated_country_director_tab_visit_reuses_dashboard_snapshot(self):
-        """Returning to the overview must not rebuild the whole national view."""
-        from unittest.mock import patch
-
-        from django.core.cache import cache
-        from django.test import override_settings
-
-        cache.clear()
-        self.client.force_login(self.cd)
-        with override_settings(ANALYTICS_DASHBOARD_CACHE_SECONDS=60):
-            with patch.object(S, "get_dashboard", wraps=S.get_dashboard) as dashboard:
-                first = self.client.get("/analytics/country-director", {"fy": FY})
-                second = self.client.get("/analytics/country-director", {"fy": FY})
-
-        self.assertEqual(first.status_code, 200)
-        self.assertEqual(second.status_code, 200)
-        self.assertEqual(dashboard.call_count, 1)
-
     # ── 2. KPIs use country data ─────────────────────────────────────────────
     def test_cd_kpis_use_country_data(self):
         d = self._dash()
@@ -408,6 +369,32 @@ class CDAnalyticsTest(TestCase):
         self.assertEqual(bf["requested"], 180_000)  # 100k + 50k + 30k advances
         self.assertEqual(bf["disbursed"], 80_000)  # 50k disbursed + 30k accounted
         self.assertEqual(bf["utilization_pct"], 44)  # 80k / 180k
+
+    def test_the_budget_page_carries_the_country_s_finance_health(self):
+        """Budget and Finance Health's home (owner, 2026-10-18: the Analytics
+        page's sections given homes in the pages they belong to): the Budget
+        page as a country role reads it, from the same advance pipeline."""
+        from django.test import Client
+
+        client = Client()
+        client.force_login(self.cd)
+
+        body = client.get("/budget", {"fy": FY, "month": "4"}).content.decode()
+
+        self.assertIn("data-finance-health", body)
+        self.assertIn("180,000", body)  # requested: 100k + 50k + 30k
+        self.assertIn("80,000", body)  # disbursed: 50k + 30k accounted
+        self.assertIn("44%", body)  # utilisation, 80k of 180k
+
+    def test_a_team_budget_has_no_country_finance_health(self):
+        from django.test import Client
+
+        client = Client()
+        client.force_login(self.pl_a)
+
+        body = client.get("/budget", {"fy": FY, "month": "4"}).content.decode()
+
+        self.assertNotIn("data-finance-health", body)
 
     # ── 10. operational risk counts real workflow gaps ───────────────────────
     def test_cd_operational_risk_counts_real_workflow_gaps(self):

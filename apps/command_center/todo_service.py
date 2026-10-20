@@ -2868,6 +2868,12 @@ _PD_REVIEW_TITLES = {
         "Review",
         "critical",
     ),
+    "submitted_to_cd": (
+        "Authorize PD Request (Country Director)",
+        "Country Director authorization needed for",
+        "Review",
+        "high",
+    ),
     "approved_pending_funding": (
         "Disburse PD Funds",
         "Disbursement is due for",

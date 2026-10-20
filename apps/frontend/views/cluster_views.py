@@ -954,8 +954,9 @@ PROFILE_TABS = (
     ("school_ssa", "Schools"),
     ("work", "Training & Visits"),
     ("attendance", "Meetings & Attendance"),
-    ("students", "Students"),
-    ("learning", "Learning Results"),
+    # Enrolment and learning results on one tab (owner, 2026-10-19: "Merge
+    # Students and Learning Results into one Learners tab").
+    ("learners", "Learners"),
     ("loans", "Loans & BT"),
     ("stories", "MSCS"),
     ("projects", "Projects"),
@@ -964,6 +965,10 @@ PROFILE_TABS = (
     ("history", "Membership History"),
     ("sources", "Sources"),
 )
+
+#: Tabs that became part of another (owner, 2026-10-19), for the addresses
+#: that still name them.
+_MERGED_TABS = {"students": "learners", "learning": "learners"}
 
 #: The sections the profile engine draws (owner, 2026-10-09: every profile
 #: reads the same way): address key → the engine's section and its name on
@@ -1088,16 +1093,11 @@ def _profile_tab_context(request, cluster, tab: str) -> dict:
 
     options = sorted(fy_options(), reverse=True)
     fy = _profile_fy(request, options, operational_fy)
-    if tab == "students":
+    if tab == "learners":
         return {
             "profile_fy": fy,
             "profile_fy_options": options,
             "enrolment": outcomes.cluster_enrolment(cluster, fy=fy),
-        }
-    if tab == "learning":
-        return {
-            "profile_fy": fy,
-            "profile_fy_options": options,
             "learning": outcomes.cluster_learning(cluster, fy=fy),
         }
     if tab == "loans":
@@ -1327,6 +1327,11 @@ def cluster_profile_view(request, cluster_id):
     """
     profile_tabs = _profile_tabs_for(request.user)
     tab = (request.GET.get("tab") or "").strip()
+    if tab in _MERGED_TABS:
+        # An address made before two tabs became one opens the one.
+        tab = _MERGED_TABS[tab]
+        request.GET = request.GET.copy()
+        request.GET["tab"] = tab
     if tab not in dict(profile_tabs):
         # The profile opens on its Summary; the shared sections read the tab
         # from the address, so the address is made to say so.
@@ -1381,22 +1386,9 @@ def cluster_profile_view(request, cluster_id):
         context["profile_tab"] = pi["tab"]
         return render(request, "pages/clusters/profile.html", context)
     context.update(_profile_tab_context(request, _cluster_row, tab))
-    # The insight rail beside the tab (owner, 2026-10-10), read for the year
-    # the tab shows where that is a year the profile engine offers.
-    from apps.analytics import profile_intelligence
-    from apps.frontend.views.profile_views import profile_context, rail_for
-
-    scope = profile_intelligence.cluster_scope(_cluster_row)
-    shell = profile_context(
-        request,
-        scope,
-        base_url,
-        lead=tuple(pair for pair in profile_tabs if pair[0] not in PROFILE_ENGINE_TABS),
-        keys={section: key for key, (section, _l) in PROFILE_ENGINE_TABS.items()},
-        subject=_cluster_row,
-    )
-    shell["at"]["ssa"] = "ssa"
-    context["rail"] = rail_for(shell, profile_intelligence.build(scope, shell["fy"]))
+    # No insight rail beside the cluster's own tabs: the rail is the
+    # Overview's (Summary's) alone (owner, 2026-10-19: "look at all other
+    # duplications apart frm ssa and fix it").
     return render(request, "pages/clusters/profile.html", context)
 
 

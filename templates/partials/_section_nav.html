@@ -1,6 +1,6 @@
 {% comment %}
 Workspace sub-navigation, shared by every multi-page workspace
-(apps/core/navigation.WORKSPACES — Analytics and Leave today).
+(apps/core/navigation.WORKSPACES — Impact Assessment and Leave among them).
 
 Include it on a section page BELOW that page's filters, so the strip belongs to
 the page rather than floating above its header:
@@ -19,7 +19,7 @@ because they are tabs.
 {% endcomment %}
 {% if workspace %}
 <nav class="edify-section-nav" aria-label="{{ workspace.label }} sections">
-{% if workspace.key == "analytics" or workspace.key == "ia" %}
+{% if workspace.key == "ia" %}
 <div class="edify-section-nav__workspace">
   {% if workspace.groups|length > 1 %}
   <div class="edify-section-nav__clusters">

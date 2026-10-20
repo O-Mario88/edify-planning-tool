@@ -71,43 +71,6 @@ class SsaFullYearTest(TestCase):
         self.assertEqual(response.status_code, 200)
         return response
 
-    def test_the_page_opens_on_the_full_year_with_its_latest_record(self):
-        # One live SSA a school a year (owner, 2026-10-14): an earlier
-        # reading of the year was returned and counts nowhere.
-        self._ssa(5.0, quarter="Q1", days_ago=200, status="returned")
-        self._ssa(7.0, quarter="", days_ago=3)  # entered with no quarter
-
-        response = self._dashboard()
-        dashboard = response.context["dashboard"]
-
-        self.assertEqual(dashboard["filters"]["quarter"], "fy")
-        self.assertTrue(dashboard["filters"]["is_full_year"])
-        self.assertEqual(dashboard["kpis"]["assessed"], 1)
-        self.assertEqual(dashboard["kpis"]["average_score"], 7.0)
-        self.assertContains(
-            response, '<option value="fy" selected>Full financial year</option>'
-        )
-
-    def test_a_quarter_still_narrows_to_that_quarter(self):
-        self._ssa(5.0, quarter="Q1", days_ago=200)
-
-        dashboard = self._dashboard(quarter="Q1").context["dashboard"]
-
-        self.assertFalse(dashboard["filters"]["is_full_year"])
-        self.assertEqual(dashboard["kpis"]["average_score"], 5.0)
-
-    def test_a_full_year_is_compared_with_the_year_before(self):
-        self._ssa(7.0, quarter="Q2", days_ago=10)
-        self._ssa(6.0, fy=str(int(self.fy) - 1), quarter="Q4", days_ago=400)
-
-        kpis = self._dashboard().context["dashboard"]["kpis"]
-
-        self.assertEqual(kpis["average_delta"], 1.0)
-        self.assertEqual(
-            kpis["comparison_label"],
-            f"FY {int(self.fy) - 2}/{str(int(self.fy) - 1)[-2:]}",
-        )
-
     def test_the_export_follows_the_period(self):
         self._ssa(7.0, quarter="", days_ago=3)
         admin = self._user("fy-admin@t.test", EdifyRole.ADMIN.value)

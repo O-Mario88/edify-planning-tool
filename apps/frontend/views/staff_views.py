@@ -1381,6 +1381,7 @@ def _team_targets_page_context(request):
         category=category,
         district=district,
         team_member=team_member,
+        order=(request.GET.get("order") or "").strip(),
     )
     return {**data, "fy_options": fy_options()}
 

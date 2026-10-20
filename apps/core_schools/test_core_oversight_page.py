@@ -57,9 +57,14 @@ class CoreOversightPageTest(_CoreCase):
         self.assertEqual(self._rows(body), {"CI-1", "CI-2", "CI-3"})
         # Compared, with the schools it rests on.
         self.assertIn(">2 of 3</strong>", body)
-        self.assertIn('data-core-drill="improved">Improved (1)', body)
-        self.assertIn('data-core-drill="declined">Declined (1)', body)
-        self.assertIn('data-core-drill="not_compared">Not compared (1)', body)
+        # Each count opens its schools from its own tile, not from a second
+        # line repeating the counts under the strip (owner, 2026-10-19:
+        # "there is a lot of duplications on the profile pages and
+        # oversights").
+        self.assertNotIn("data-core-drilldowns", body)
+        for verdict in ("improved", "declined", "not_comparable"):
+            self.assertEqual(body.count(f"trajectory={verdict}"), 1, verdict)
+        self.assertEqual(body.count("tab=attention"), 2)  # the tile and the tab
 
     def test_a_filter_narrows_the_schools(self):
         body = self._page(self.cd, trajectory="declined")

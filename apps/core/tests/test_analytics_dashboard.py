@@ -86,24 +86,6 @@ class AnalyticsDashboardTest(TestCase):
                 ssa_record=self.ssa, intervention=i.value, score=4.5
             )
 
-    def test_dashboard_requires_login(self):
-        response = self.client.get(reverse("frontend:analytics_dashboard"))
-        self.assertRedirects(response, "/login?next=/analytics")
-
-    def test_dashboard_renders_successfully(self):
-        self.client.login(email="cd@edify.org", password="testpassword")
-        response = self.client.get(reverse("frontend:analytics_dashboard"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Analytics")
-        # District still renders; it is a filter the page offers.
-        self.assertContains(response, "Kampala")
-        # Preserve the original map at every breakpoint. The region name is map
-        # content, not a reinstated Region filter.
-        self.assertContains(response, "Central Region")
-        # One Excel export (owner, 2026-09-27: "export in excel not csv").
-        self.assertContains(response, 'aria-label="Export to Excel"')
-        self.assertContains(response, "Send to Inbox")
-
     def test_analytics_export_is_excel_and_csv_on_request(self):
         from apps.core.excel import XLSX_CONTENT_TYPE
 
@@ -127,16 +109,6 @@ class AnalyticsDashboardTest(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("Metric,Value,Context,Generated at", content)
         self.assertIn("Overall Target Achievement", content)
-
-    def test_htmx_partial_render(self):
-        self.client.login(email="cd@edify.org", password="testpassword")
-        response = self.client.get(
-            reverse("frontend:analytics_dashboard"), HTTP_HX_REQUEST="true"
-        )
-        self.assertEqual(response.status_code, 200)
-        # Should render partial template containing the KPI cards, not the full layout shell
-        self.assertNotContains(response, "<!DOCTYPE html>")
-        self.assertContains(response, "Target Achievement")
 
     def test_drilldown_drawer_view(self):
         self.client.login(email="cd@edify.org", password="testpassword")
@@ -227,22 +199,3 @@ class AnalyticsDashboardTest(TestCase):
         body = thread.messages.first().body
         self.assertIn("Filters: fy 2025, district abim", body)
         self.assertIn("/analytics?fy=2025&district=abim", body)
-
-    def test_dashboard_preferences_are_persisted_and_applied(self):
-        from apps.analytics.models import AnalyticsDashboardPreference
-
-        self.client.login(email="cd@edify.org", password="testpassword")
-        response = self.client.post(
-            reverse("frontend:analytics_customize_dashboard"),
-            {"visible_cards": ["targets"], "layout": "compact"},
-            HTTP_HX_REQUEST="true",
-        )
-        self.assertEqual(response.status_code, 200)
-        preference = AnalyticsDashboardPreference.objects.get(user=self.user)
-        self.assertEqual(preference.visible_cards, ["targets"])
-        self.assertEqual(preference.layout, "compact")
-
-        dashboard = self.client.get(reverse("frontend:analytics_dashboard"))
-        self.assertContains(dashboard, 'data-analytics-layout="compact"')
-        self.assertContains(dashboard, "Overall Target Achievement")
-        self.assertNotContains(dashboard, 'kpi-strip__label">Teachers Trained')

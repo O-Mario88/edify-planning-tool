@@ -368,6 +368,37 @@ def completion_columns(pairs) -> dict[str, dict]:
     return out
 
 
+def forms_in_q(prefix: str = ""):
+    """Both halves in, for rows in the database: the Salesforce ID entered and
+    the expected form uploaded and not quarantined (``expected_evidence``).
+    With a verified status this is the green My Plan shows (owner,
+    2026-10-18: "the completed visits are visits verified by PL and are green
+    from My plan table"). ``prefix`` reaches the activity from a related row
+    ("activity__" from a cluster roster)."""
+    from django.db.models import Exists, OuterRef, Q
+
+    from apps.evidence.models import EvidenceRecord
+
+    def uploaded(kind: str) -> Q:
+        return Q(
+            Exists(
+                EvidenceRecord.objects.filter(
+                    activity_id=OuterRef(f"{prefix}id"), kind=kind, quarantined=False
+                )
+            )
+        )
+
+    attendance = Q(**{f"{prefix}activity_type__in": tuple(_ATTENDANCE_TYPES)})
+    return (
+        Q(**{f"{prefix}salesforce_activity_id__isnull": False})
+        & ~Q(**{f"{prefix}salesforce_activity_id": ""})
+        & (
+            (attendance & uploaded("attendance_form"))
+            | (~attendance & uploaded("visit_form"))
+        )
+    )
+
+
 def completion_fields(status, columns: dict) -> dict:
     """The columns plus the verdict for one row: `is_complete`,
     `completion_gap`, `shows_complete` — whether the Actions column may

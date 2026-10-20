@@ -1,0 +1,19 @@
+{% load components frontend_filters %}
+{% comment %}
+Cluster profile, Learners (owner, 2026-10-19: "Merge Students and Learning
+Results into one Learners tab on the cluster profile"): the schools' enrolment
+and their confirmed learning results, read for one year under one filter.
+{% endcomment %}
+<div class="space-y-6" data-cluster-profile-panel="learners">
+{% filter_bar label="Learners year" form_id="cluster-learners-year" extra_class="flex flex-wrap items-end gap-3" %}
+<input type="hidden" name="tab" value="learners">
+<label class="block">
+<span class="edify-filter-label">Fiscal year</span>
+<select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+{% for year in profile_fy_options %}<option value="{{ year }}"{% if year == profile_fy %} selected{% endif %}>{{ year|fy_label }}</option>{% endfor %}
+</select>
+</label>
+{% endfilter_bar %}
+{% include "partials/clusters/profile_students.html" %}
+{% include "partials/clusters/profile_learning.html" %}
+</div>

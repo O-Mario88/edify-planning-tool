@@ -19,18 +19,6 @@
     return read || '#94a3b8';
   }
 
-  /* A Lead's name on lines of at most ten characters, so four names sit
-     under four column groups without colliding ("Basic / Education"). */
-  function wrap(name) {
-    var lines = [];
-    String(name).split(/\s+/).forEach(function (word) {
-      var last = lines[lines.length - 1];
-      if (last && (last + ' ' + word).length <= 10) { lines[lines.length - 1] = last + ' ' + word; }
-      else { lines.push(word); }
-    });
-    return lines.length > 1 ? lines : name;
-  }
-
   /* ── The page's chart forms ─────────────────────────────────────────────
      Standard forms that only Country Oversight draws, built on the platform
      chart system's shared pieces (formBase, donut, gauge, lineTrend) and
@@ -38,11 +26,12 @@
      The chart system itself is frozen, so they live here, not on it. */
   var forms = {
     /* Parts of a whole, one horizontal bar per row (Country Planning
-       Oversight, owner design 2026-09-28). The bar standard draws bars side
-       by side and would unstack these, so this form is standard in its own
-       right: every segment of a bar is a disjoint part of the row's whole,
-       computed on the server, and the bar's length IS the row's total. With
-       `share` the parts are the server's percentages of 100. The legend sits
+       Oversight, owner design 2026-09-28). Every segment of a bar is a
+       disjoint part of the row's whole, computed on the server, and the
+       bar's length IS the row's total. With `share` the parts are the
+       server's percentages of 100. Since 2026-10-18 the bar standard draws
+       it, stacked, in the cut-out form (chart-standard.js, cutOutParts); the
+       options below are what the library would draw if it ever had to. The legend sits
        under the plot, a hairline marks the value axis, and the parts carry no
        printed value: the tooltip and the data table under the chart do.
 
@@ -55,7 +44,6 @@
     stackedBar: function (share, opts) {
       var S = window.EdifyChartSystem;
       return S.formBase({
-        _edifyStandard: true,
         chart: { type: 'bar', stacked: true, toolbar: { show: false }, fontFamily: 'inherit',
                  animations: { enabled: false }, parentHeightOffset: 0 },
         plotOptions: { bar: { horizontal: true, barHeight: '62%', borderRadius: 0 } },
@@ -90,7 +78,6 @@
     groupedColumns: function (opts) {
       var S = window.EdifyChartSystem;
       return S.formBase({
-        _edifyStandard: true,
         chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'inherit',
                  animations: { enabled: false }, parentHeightOffset: 0 },
         plotOptions: { bar: { columnWidth: '62%', borderRadius: 2, borderRadiusApplication: 'end' } },
@@ -142,6 +129,11 @@
     }
   };
 
+  /* "slots" → "Slots", the cut-out's unit line under the axis. */
+  function unitName(unit) {
+    return unit ? unit.charAt(0).toUpperCase() + unit.slice(1) : '';
+  }
+
   function config(payload, root, onPick, width) {
     var S = window.EdifyChartSystem;
     var share = payload.form === 'share';
@@ -192,16 +184,19 @@
     }
     cfg.colors = colours;
     cfg.series = series;
+    cfg._edifyOwnTable = true;
     cfg.xaxis = Object.assign({}, cfg.xaxis, { categories: payload.categories.slice() });
-    if (!stacked) {
-      /* Two-word Lead names wrap under their columns rather than tilting. */
-      cfg.xaxis.categories = payload.categories.map(wrap);
-    }
+    /* The bar standard draws these in the cut-out form (owner, 2026-10-18:
+       "all the horizontal graphs ... look exactly like that"); its unit line
+       under the axis names what a bar counts. */
+    cfg.yaxis = share
+      ? { min: 0, max: 100, title: { text: '% of schools' } }
+      : { min: 0, title: { text: unitName(payload.unit || (stacked ? 'slots' : '')) } };
     return cfg;
   }
 
   /* ── Execution & Completion ─────────────────────────────────────────── */
-  function cpxConfig(form, payload, root, width) {
+  function cpxConfig(form, payload, root, width, room) {
     var S = window.EdifyChartSystem;
     var c = function (name) { return colour('var(--cxo-' + name + ')', root); };
     var cfg;
@@ -210,7 +205,9 @@
       cfg.chart = Object.assign({}, cfg.chart, { height: 250 });
       cfg.colors = [c('total'), c('staff'), c('partner')];
       cfg.series = payload.series.map(function (s) { return { name: s.name, data: s.data.slice() }; });
-      cfg.xaxis = Object.assign({}, cfg.xaxis, { categories: payload.categories.map(wrap) });
+      cfg._edifyOwnTable = true;
+      cfg.xaxis = Object.assign({}, cfg.xaxis, { categories: payload.categories.slice() });
+      cfg.yaxis = { min: 0, title: { text: 'Activities' } };
       cfg.legend = Object.assign({}, cfg.legend, { position: 'top', horizontalAlign: 'right' });
       cfg.dataLabels = {
         enabled: true, offsetY: -18,
@@ -233,13 +230,13 @@
         payload.series.forEach(function (s) { s.data.forEach(function (v) { if (v != null && v > top) { top = v; } }); });
         var step = Math.pow(10, Math.floor(Math.log10(top * 1.2)));
         cfg.xaxis = Object.assign({}, cfg.xaxis, {
-          categories: payload.categories.map(wrap), tickAmount: 4, min: 0,
+          categories: payload.categories.slice(), tickAmount: 4, min: 0,
           max: Math.ceil((top * 1.2) / step) * step,
           labels: { formatter: function (v) { return Number.isInteger(Number(v)) ? Number(v).toLocaleString() : ''; },
                     style: { colors: S.ink.axis, fontSize: '12px' } },
           axisBorder: { show: false }
         });
-        cfg.yaxis = { labels: { maxWidth: 110, style: { colors: S.ink.legend, fontSize: '12px' } } };
+        cfg.yaxis = { min: 0, title: { text: 'Activities' }, labels: { maxWidth: 110, style: { colors: S.ink.legend, fontSize: '12px' } } };
         cfg.grid = Object.assign({}, cfg.grid, { xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } },
                                                 padding: { left: 4, right: 24, top: 0, bottom: 0 } });
         cfg.legend = Object.assign({}, cfg.legend, { horizontalAlign: 'left' });
@@ -267,6 +264,9 @@
     }
     if (form === 'donut') {
       cfg = forms.stageRing(payload.center_caption);
+      /* A ring keeps its size and sits centred in the card's chart area
+         (country-oversight.css, .cxo-ring): two rings side by side in one row
+         stay the same size whichever card is taller. */
       cfg.chart = Object.assign({}, cfg.chart, { height: 170 });
       cfg.series = payload.parts.map(function (p) { return p.value; });
       cfg.labels = payload.parts.map(function (p) { return p.label; });
@@ -287,13 +287,15 @@
     }
     if (form === 'age') {
       cfg = forms.groupedColumns();
-      cfg.chart = Object.assign({}, cfg.chart, { height: 165 });
+      /* The bars fill the card's chart area: the height its row gives the
+         card (country-oversight.css, .cxo-bars), measured by draw(). */
+      cfg.chart = Object.assign({}, cfg.chart, { height: Math.max(165, room || 0) });
       cfg.colors = [c('overdue')];
       cfg.series = [{ name: 'Overdue activities', data: payload.data.slice() }];
+      cfg._edifyOwnTable = true;
       /* "1–2 days" on two lines, so four groups fit a narrow card. */
-      cfg.xaxis = Object.assign({}, cfg.xaxis, {
-        categories: payload.categories.map(function (label) { return String(label).split(' '); })
-      });
+      cfg.xaxis = Object.assign({}, cfg.xaxis, { categories: payload.categories.slice() });
+      cfg.yaxis = { min: 0, title: { text: 'Overdue activities' } };
       cfg.legend = { show: false };
       cfg.dataLabels = {
         enabled: true, offsetY: -18,
@@ -338,8 +340,17 @@
           var payload = JSON.parse(holder.textContent || '{}');
           if (this.chart && this.chart.destroy) { this.chart.destroy(); }
           var root = this.$el.closest('[data-cpo-root]') || document.documentElement;
-          var cfg = cpxConfig(form, payload, root, this.$refs.plot.clientWidth);
+          /* A reading card is as tall as its row; with the old chart gone its
+             chart area holds the height left over, and the chart is drawn to
+             fill it rather than leave it empty under the card. */
+          var cfg = cpxConfig(form, payload, root, this.$refs.plot.clientWidth,
+                              this.$refs.plot.clientHeight);
           if (!cfg) { return; }
+          /* The cut-out's columns stand as tall as the room the card's row
+             leaves them, less their names and unit line under the plot. */
+          if (form === 'age' && this.$refs.plot.clientHeight) {
+            this.$refs.plot.style.setProperty('--cutcol-plot', Math.max(140, this.$refs.plot.clientHeight - 72) + 'px');
+          }
           this.chart = window.EdifyChartSystem.renderDetached(this.$refs.plot, cfg);
         }
       };

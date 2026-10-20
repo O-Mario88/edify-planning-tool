@@ -86,6 +86,7 @@ class TheLensesAreReadAgain(World):
         "cxo-charts",
         "cxo-readings",
         "cxo-types",
+        "cxo-people",
         "cxo-issues",
         "cxo-recent",
     )

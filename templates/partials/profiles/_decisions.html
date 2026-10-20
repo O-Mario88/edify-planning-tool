@@ -1,0 +1,55 @@
+{% comment %}
+The decision review on the Country Profile's Overview (owner, 2026-10-19:
+"Move the Decision Intelligence review ... into the Country Profile's Needs
+Attention for the CD and RVP"). `d` is profile_decisions.for_reader: the
+operational and financial queues, unreviewed and riskiest first, and what the
+reader may record. Needs Attention's lines open this section.
+{% endcomment %}
+<section id="{{ d.anchor }}" class="space-y-3 scroll-mt-20" aria-labelledby="{{ d.anchor }}-title" data-profile-decisions>
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h2 id="{{ d.anchor }}-title" class="text-[15px] font-bold text-slate-800">Decisions Awaiting You</h2>
+      <p class="edify-text-caption edify-text-muted">What the leadership and budget engines recommend for {{ pi.profile.fy_label }}. The engines recommend; recording a decision changes nothing else, and the follow-up stays yours.</p>
+    </div>
+    {% if d.can_review_operational or d.can_review_financial %}
+    <form method="POST" action="{{ d.review_url }}" class="m-0">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="recompute">
+      <input type="hidden" name="fy" value="{{ d.fy }}">
+      <button type="submit" class="btn btn-secondary h-8">Rescan {{ pi.profile.fy_label }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" data-profile-decisions-queue="operational">
+    <div class="px-5 py-3 border-b border-[var(--edify-border)] flex flex-wrap items-center justify-between gap-3">
+      <h3 class="text-[13px] font-extrabold text-slate-800">Operational decisions · {{ d.open_operational }} awaiting</h3>
+      <span class="edify-text-caption text-slate-400 font-semibold">Recruitment · capacity · partners · HR risk · regional investment</span>
+    </div>
+    {% if d.operational %}
+    <ul class="divide-y divide-slate-100">
+      {% for i in d.operational %}
+      {% include "partials/decisions/insight_row.html" with i=i review_action="review_leadership" can_review=d.can_review_operational statuses=d.statuses review_url=d.review_url fy=d.fy %}
+      {% endfor %}
+    </ul>
+    {% else %}
+    {% include "components/empty_state.html" with message="No operational signal crossed a threshold in this year. Rescan to check against current data." compact="true" %}
+    {% endif %}
+  </div>
+
+  <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" data-profile-decisions-queue="financial">
+    <div class="px-5 py-3 border-b border-[var(--edify-border)] flex flex-wrap items-center justify-between gap-3">
+      <h3 class="text-[13px] font-extrabold text-slate-800">Financial decisions · {{ d.open_financial }} awaiting</h3>
+      <span class="edify-text-caption text-slate-400 font-semibold">Aged advances · cash variance · returned cash · oversized advances</span>
+    </div>
+    {% if d.financial %}
+    <ul class="divide-y divide-slate-100">
+      {% for i in d.financial %}
+      {% include "partials/decisions/insight_row.html" with i=i review_action="review_budget" can_review=d.can_review_financial statuses=d.statuses review_url=d.review_url fy=d.fy %}
+      {% endfor %}
+    </ul>
+    {% else %}
+    {% include "components/empty_state.html" with message="No cash variance, aged advance or oversized request crossed its threshold in this year." compact="true" %}
+    {% endif %}
+  </div>
+</section>

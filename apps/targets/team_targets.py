@@ -195,6 +195,36 @@ def team_status_display(status: str, tone: str) -> tuple[str, str]:
     return (status, tone)
 
 
+#: Target Performance's ranked order (owner, 2026-10-18): the CCEO
+#: Leaderboard the Analytics page drew, given a home on the page whose figures
+#: it ranked.
+ORDER_RANKED = "ranked"
+
+
+def _rank(members) -> None:
+    """Order ``members`` by their weighted validated achievement for the full
+    year (the matrix's FY column), the strongest first, and number them. A
+    member with no target for the year is a setup gap, not a poor performer
+    (the Leaderboard's rule): last, by name, with no place."""
+
+    def year(member):
+        return member["matrix_cells"][-1]
+
+    def unset(member):
+        return not year(member)["target"]
+
+    members.sort(
+        key=lambda m: (unset(m), -(year(m)["pct"] or 0), (m["name"] or "").lower())
+    )
+    place = 0
+    for member in members:
+        if unset(member):
+            member["rank"] = None
+        else:
+            place += 1
+            member["rank"] = place
+
+
 class PLTeamTargetsService:
     """Everything the Team Targets dashboard renders, strictly PL-scoped."""
 
@@ -440,6 +470,7 @@ class PLTeamTargetsService:
         category: str | None = None,
         district: str | None = None,
         team_member: str | None = None,
+        order: str | None = None,
     ) -> dict:
         now = Cal.current()
         fy = fy or now["fy"]
@@ -587,6 +618,10 @@ class PLTeamTargetsService:
         # many Leads' teams at once (owner, 2026-09-12). Each officer carries
         # their Lead's name and the table draws a header where it changes.
         group_by_lead = getattr(pl_user, "active_role", "") == "RegionalProgramLead"
+        # Ranked (owner, 2026-10-18: the Analytics page's CCEO Leaderboard,
+        # given a home here): one list, not grouped, so `_rank` orders it.
+        ranked = order == ORDER_RANKED
+        group_by_lead = group_by_lead and not ranked
         if group_by_lead:
             from apps.planning.owner_groups import NO_LEAD, owner_directory
 
@@ -608,6 +643,8 @@ class PLTeamTargetsService:
             m["districts"] = sorted(ds)
             m["district_label"] = ", ".join(sorted(ds)[:2]) or "—"
             m["schools"] = staff_school.get(m["staff_id"], [])
+        if ranked:
+            _rank(members)
 
         # ── team series (sums across members, per area) ──────────────────────
         def team_series(field):
@@ -1394,6 +1431,8 @@ class PLTeamTargetsService:
             "attention": attention,
             "members": members,
             "group_by_lead": group_by_lead,
+            "ranked": ranked,
+            "order": ORDER_RANKED if ranked else "",
             "key_progress": key_progress,
             "distribution": distribution,
             "districts_behind": districts_behind,

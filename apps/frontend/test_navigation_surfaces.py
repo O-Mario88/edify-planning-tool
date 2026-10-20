@@ -1,7 +1,7 @@
 from django.test import Client, TestCase
 
 from apps.accounts.models import StaffProfile, User
-from apps.core.navigation import build_analytics_sections, build_sidebar_for_user
+from apps.core.navigation import build_sidebar_for_user
 
 
 class AdminNavigationSurfaceSmokeTest(TestCase):
@@ -31,10 +31,6 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
             for section in build_sidebar_for_user(self.user, "/")
             for item in section["items"]
         }
-        # Analysis pages are reached from the Analytics workspace's
-        # sub-navigation rather than from their own sidebar links, so they are
-        # smoke-tested through the same door a user walks through.
-        urls |= {section["url"] for section in build_analytics_sections(self.user, "/")}
         # The floor is a guard against the loop below passing on an empty
         # sidebar, not a target. It was 40 when Admin carried every workspace on
         # the platform; Platform Operations deliberately carries far fewer, so
@@ -80,8 +76,8 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
                 {"tab": "unread", "q": "no-match", "sort": "oldest"},
             ),
             (
-                "/analytics/",
-                {"fy": "2026", "quarter": "Q4", "school_type": "core"},
+                "/reports",
+                {"fy": "2026"},
             ),
             (
                 "/projects/planning",
@@ -94,10 +90,6 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
             (
                 "/projects/analytics",
                 {"q": "no-match", "fy": "2026"},
-            ),
-            (
-                "/ssa",
-                {"q": "no-match", "fy": "2026", "quarter": "Q4"},
             ),
             (
                 "/clusters",
@@ -150,7 +142,7 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
             item["url"]
             for section in build_sidebar_for_user(self.user, "/")
             for item in section["items"]
-        } | {section["url"] for section in build_analytics_sections(self.user, "/")}
+        }
 
         offenders = []
         for url in sorted(urls):

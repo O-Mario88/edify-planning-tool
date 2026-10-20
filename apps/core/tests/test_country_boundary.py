@@ -213,7 +213,9 @@ class CountryBoundaryTest(TestCase):
             "/country-planning-oversight/?fy=2026",
             "/country-planning-oversight/?view=execution&period=fy&fy=2026",
             "/country-map/",
-            "/analytics/country-director",
+            # The country's analysis since the Analytics entry was retired
+            # (owner, 2026-10-19).
+            "/country-profile",
         ):
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200, url)

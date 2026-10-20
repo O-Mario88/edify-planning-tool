@@ -236,7 +236,7 @@ METRICS: tuple[Metric, ...] = (
         "schools.SchoolEnrollmentHistory, schools.School.enrollment",
         f"{_MEMBERS}; FY and the year before",
         "Each school's recorded enrolment; growth over schools with both " "years",
-        "tab:students",
+        "tab:learners",
         "School → School profile",
     ),
     Metric(
@@ -246,7 +246,7 @@ METRICS: tuple[Metric, ...] = (
         f"{_MEMBERS}; FY and the year before",
         "Each school's mean score; improved and declined counted over the "
         "schools with both years",
-        "tab:learning",
+        "tab:learners",
         "School → its results",
     ),
     # ── Loans and Business Transformation ────────────────────────────────

@@ -941,3 +941,55 @@ class WithdrawalDecisionIsOfferedOnlyToReviewersTest(PageFixture):
         response = self.client.get("/partner-oversight/")
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('name="decision"', response.content.decode())
+
+
+class PartnersNeedingFollowUpTest(PageFixture):
+    """The Analytics page's Recommended Actions "Partners needing follow-up",
+    given its home on Partner Monitoring (owner, 2026-10-19): a Partner the
+    Country Director Analytics' rule sends to a Quality or Capacity Review is
+    flagged on its tab and named under its heading."""
+
+    def _ssa(self, fy, score):
+        from django.utils import timezone
+
+        from apps.ssa.models import SsaRecord
+
+        SsaRecord.objects.create(
+            school=self.school,
+            fy=str(fy),
+            date_of_ssa=timezone.now(),
+            average_score=score,
+            verification_status="confirmed",
+        )
+
+    def test_a_partner_on_target_whose_schools_barely_moved_is_flagged(self):
+        from datetime import date
+
+        from apps.activities.models import Activity
+
+        self.assign()
+        self.assign(partner=self.other_partner, school=self.rival_school)
+        Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=self.fy,
+            quarter="Q1",
+            planned_date=date.today(),
+            status="closed",
+            delivery_type="partner",
+            assigned_partner_id=self.partner.id,
+        )
+        self._ssa(int(self.fy) - 1, 5.0)
+        self._ssa(self.fy, 5.2)
+        self.sign_in(self.pl_user)
+
+        body = self.client.get(
+            "/partner-oversight/", {"partner": self.partner.id}
+        ).content.decode()
+
+        self.assertEqual(body.count("data-partner-follow-up"), 2)  # tab, heading
+        self.assertIn("Quality Review", body)
+        other = self.client.get(
+            "/partner-oversight/", {"partner": self.other_partner.id}
+        ).content.decode()
+        self.assertEqual(other.count("data-partner-follow-up"), 1)  # X's tab only

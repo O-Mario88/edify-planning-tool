@@ -5,14 +5,12 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from apps.accounts.models import (
-    StaffGeographyAssignment,
     StaffProfile,
     StaffSchoolAssignment,
 )
 from apps.activities.models import Activity, SchoolVisitFeedback
 from apps.activities.services import complete
 from apps.core.rbac import EdifyRole
-from apps.frontend.views.visit_effectiveness_views import _visit_feedback_review
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -150,53 +148,6 @@ class SchoolVisitFeedbackTest(TestCase):
         self.assertContains(response, "Attendance registers were current")
         self.assertContains(response, "Attendance is reviewed weekly")
         self.assertContains(response, "Related to In-school Training")
-
-    def test_ia_cd_pl_and_rvp_receive_role_scoped_review_context(self):
-        self._feedback()
-        ia, _ = self._staff_user("feedback-ia@example.org", EdifyRole.IMPACT_ASSESSMENT)
-        cd, _ = self._staff_user("feedback-cd@example.org", EdifyRole.COUNTRY_DIRECTOR)
-        pl, pl_staff = self._staff_user(
-            "feedback-pl@example.org", EdifyRole.COUNTRY_PROGRAM_LEAD
-        )
-        StaffSchoolAssignment.objects.create(staff=pl_staff, school_id=self.school.id)
-        rvp, rvp_staff = self._staff_user(
-            "feedback-rvp@example.org", EdifyRole.REGIONAL_VICE_PRESIDENT
-        )
-        StaffGeographyAssignment.objects.create(
-            staff=rvp_staff, region_id=self.region.id
-        )
-
-        for reviewer in (ia, cd, pl, rvp):
-            with self.subTest(role=reviewer.active_role):
-                rows = _visit_feedback_review(reviewer)
-                self.assertEqual(len(rows), 1)
-                self.assertEqual(rows[0]["feedback"].finding, self._feedback_text())
-                self.assertEqual(rows[0]["related_activity"], self.training)
-
-        self.assertEqual(
-            _visit_feedback_review(rvp)[0]["school_name"],
-            "School identity protected",
-        )
-        self.assertEqual(_visit_feedback_review(rvp)[0]["school_id"], "")
-        self.assertEqual(_visit_feedback_review(ia)[0]["school_name"], self.school.name)
-
-    def test_rvp_can_read_feedback_in_visit_effectiveness_without_school_identity(self):
-        self._feedback()
-        rvp, rvp_staff = self._staff_user(
-            "feedback-rvp-page@example.org", EdifyRole.REGIONAL_VICE_PRESIDENT
-        )
-        StaffGeographyAssignment.objects.create(
-            staff=rvp_staff, region_id=self.region.id
-        )
-        self.client.force_login(rvp)
-
-        response = self.client.get("/analytics/visit-effectiveness")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Recent school visit feedback")
-        self.assertContains(response, "Attendance registers were current")
-        self.assertContains(response, "School identity protected")
-        self.assertNotContains(response, self.school.name)
 
     @staticmethod
     def _feedback_text():
