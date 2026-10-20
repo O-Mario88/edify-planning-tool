@@ -171,6 +171,18 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         for code, _label in SsaIntervention.choices:
             self.assertContains(response, f'name="score_{code}"')
 
+    def test_the_way_back_opens_the_reader_s_ssa(self):
+        """SSA Performance is retired (owner, 2026-10-19): the page's way back
+        and its Cancel open the reader's SSA, under that page's name."""
+        self.client.force_login(self.ia)
+
+        response = self.client.get("/ssa/manual/")
+
+        self.assertContains(response, 'href="/country-profile?tab=ssa"')
+        self.assertContains(response, "Back to Country Profile")
+        self.assertNotContains(response, 'href="/ssa"')
+        self.assertNotContains(response, "Back to SSA Performance")
+
     def test_manual_ssa_page_does_not_render_the_whole_school_directory(self):
         School.objects.bulk_create(
             [

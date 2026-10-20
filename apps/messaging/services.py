@@ -1275,7 +1275,10 @@ def context_panel(thread: MessageThread, user) -> dict:
                 "linked_record": thread.context_label or thread.subject,
             }
         )
-        actions.append({"label": "Open Analytics", "href": "/analytics"})
+        from apps.frontend.views.analytics_retired import home
+
+        place = home(user)
+        actions.append({"label": f"Open {place['label']}", "href": place["href"]})
     return {"fields": fields, "timeline": timeline, "actions": actions}
 
 
@@ -1771,6 +1774,5 @@ def get_context_target_route(context_type: str | None, context_id: str | None) -
         "fund_request": "/fund-requests/weekly",
         "leave": "/leave/approvals",
         "project": "/projects",
-        "system": "/analytics",
     }
     return mapping.get(context_type, "/dashboard")

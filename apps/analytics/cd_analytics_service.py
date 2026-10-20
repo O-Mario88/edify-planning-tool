@@ -2939,7 +2939,7 @@ class CDAnalyticsService:
                         "priority": "high",
                         "owner": "PL",
                         "action_label": "Review PL",
-                        "action_url": "/analytics/country-director",
+                        "action_url": f"/staff/{r['id']}",
                     }
                 )
 
@@ -2989,7 +2989,7 @@ class CDAnalyticsService:
                     "priority": "medium",
                     "owner": "CD",
                     "action_label": "Review Budget",
-                    "action_url": "/analytics/country-director",
+                    "action_url": "/budget",
                 }
             )
         return todos[:8]
@@ -3020,11 +3020,11 @@ class CDAnalyticsService:
         ],
         "district": [
             {"label": "Flag to Program Lead", "href": "/quality-checks"},
-            {"label": "Review SSA Risk", "href": "/ssa"},
+            {"label": "Country Profile SSA", "href": "/country-profile?tab=ssa"},
             {"label": "Send Message", "href": "/messages"},
         ],
         "region": [
-            {"label": "Review Regional SSA", "href": "/ssa"},
+            {"label": "Country Profile SSA", "href": "/country-profile?tab=ssa"},
             {"label": "Flag to Program Lead", "href": "/quality-checks"},
             {"label": "Escalate to RVP", "href": "/escalations"},
         ],
@@ -3035,7 +3035,7 @@ class CDAnalyticsService:
         ],
         "cluster": [
             {"label": "Flag to Program Lead", "href": "/quality-checks"},
-            {"label": "Review SSA Risk", "href": "/ssa"},
+            {"label": "Country Profile SSA", "href": "/country-profile?tab=ssa"},
         ],
         "risk": [
             {"label": "Flag to Program Lead", "href": "/quality-checks"},
@@ -3049,7 +3049,7 @@ class CDAnalyticsService:
         ],
         "ssa": [
             {"label": "Flag to Program Lead", "href": "/quality-checks"},
-            {"label": "Review SSA Performance", "href": "/ssa"},
+            {"label": "Country Profile SSA", "href": "/country-profile?tab=ssa"},
         ],
     }
 

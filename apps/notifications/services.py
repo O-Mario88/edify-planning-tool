@@ -657,14 +657,13 @@ class NotificationLinkResolver:
                 route = "/planning"
                 label = "Open Planning"
             elif role == "countrydirector":
-                # The CD's Analytics nav points at the national cockpit, not
-                # the generic page; sending the notification elsewhere landed
-                # them on a different surface than the sidebar.
-                route = "/analytics/country-director"
-                label = "Country Insights"
+                # The country's SSA is read on the Country Profile.
+                route = "/country-profile?tab=ssa"
+                label = "Open Country Profile"
             elif role == "regionalvicepresident":
-                route = "/declining-schools"
-                label = "Schools Losing Ground"
+                # The schools losing ground, on the Country Profile.
+                route = "/country-profile?tab=schools&show=declined"
+                label = "Open Country Profile"
             elif role == "impactassessment":
                 route = "/ia/dashboard/"
                 label = "SSA Verification"

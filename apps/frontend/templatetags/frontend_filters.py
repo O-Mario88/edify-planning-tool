@@ -200,6 +200,16 @@ def can_open(user, url):
 
 
 @register.filter
+def analysis_home(user, section="overview"):
+    """`{% with home=request.user|analysis_home:"ssa" %}` — the page a retired
+    Analytics section's reading lives on for this reader, as ``href`` and
+    ``label`` (apps.frontend.views.analytics_retired.home)."""
+    from apps.frontend.views.analytics_retired import home
+
+    return home(user, str(section or "overview"))
+
+
+@register.filter
 def ssa_score_colour(value):
     """The font colour for a 0-10 SSA score, from the canonical band.
 

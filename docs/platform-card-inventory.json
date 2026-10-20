@@ -968,7 +968,7 @@
   },
   {
    "template": "templates/pages/coverage/index.html",
-   "line": 55,
+   "line": 57,
    "title": "Reach by district \u00b7 FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -977,7 +977,7 @@
   },
   {
    "template": "templates/pages/coverage/index.html",
-   "line": 88,
+   "line": 90,
    "title": "Clusters",
    "heading_level": 2,
    "has_card_key": false,
@@ -2919,7 +2919,7 @@
   },
   {
    "template": "templates/pages/ssa/manual_entry.html",
-   "line": 28,
+   "line": 31,
    "title": "Please correct the highlighted fields.",
    "heading_level": 2,
    "has_card_key": false,
@@ -2933,7 +2933,7 @@
   },
   {
    "template": "templates/pages/ssa/manual_entry.html",
-   "line": 43,
+   "line": 46,
    "title": "Assessment details",
    "heading_level": 2,
    "has_card_key": false,
