@@ -191,6 +191,13 @@ class PlanExportTest(TestCase):
             out += [row[rows[0].index("Status")] for row in rows[1:]]
         return out
 
+    def _oversight(self, response, column: str) -> list:
+        """A column of Planning Oversight's one table (owner, 2026-10-20),
+        sorted."""
+        rows = _sheet(response)
+        at = rows[0].index(column)
+        return sorted(row[at] for row in rows[1:])
+
     def test_my_plan_exports_the_plan_as_the_drawer_opens(self):
         client = Client()
         client.force_login(self.cceo_user)
@@ -219,8 +226,8 @@ class PlanExportTest(TestCase):
         response = client.get(
             "/team-planning-oversight/export", self._drawer_query(status="completed")
         )
-        self.assertEqual(self._work(response), [self.VISIT])
-        self.assertEqual(self._statuses(response), ["Completed"])
+        self.assertEqual(self._oversight(response, "Activity type"), ["school_visit"])
+        self.assertEqual(self._oversight(response, "Activity status"), ["completed"])
 
     def test_my_plan_exports_one_kind_when_asked(self):
         client = Client()
@@ -242,11 +249,12 @@ class PlanExportTest(TestCase):
     def test_team_plan_exports_every_kind_the_drawer_names(self):
         client = Client()
         client.force_login(self.pl_user)
+        visit, meeting, training = "school_visit", "cluster_meeting", "cluster_training"
         expected = {
-            export_kinds.PLANNED: [self.VISIT, self.MEETING, self.TRAINING],
-            export_kinds.GROUP_TRAININGS: [self.TRAINING],
-            export_kinds.MEETINGS: [self.MEETING],
-            export_kinds.VISITS: [self.VISIT],
+            export_kinds.PLANNED: [visit, meeting, training],
+            export_kinds.GROUP_TRAININGS: [training],
+            export_kinds.MEETINGS: [meeting],
+            export_kinds.VISITS: [visit],
         }
         for kind, ids in expected.items():
             response = client.get(
@@ -254,7 +262,9 @@ class PlanExportTest(TestCase):
                 self._drawer_query(activity_type=kind),
             )
             self.assertEqual(response.status_code, 200, kind)
-            self.assertEqual(self._work(response), sorted(ids), kind)
+            self.assertEqual(
+                self._oversight(response, "Activity type"), sorted(ids), kind
+            )
 
 
 class GroupTrainingMealRateTest(TestCase):

@@ -1563,11 +1563,7 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
     from apps.activities.models import ClusterActivityAttendance
     from apps.schools.models import School
     from apps.schools.lifecycle_models import OPERATING_STATUSES
-    from apps.core.activity_types import (
-        CLUSTER_MEETING_TYPES,
-        TRAINING_TYPES,
-        VISIT_TYPES,
-    )
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES
 
     if (
         isinstance(owner_groups_or_items, list)
@@ -1605,38 +1601,20 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                 or item_exec_id in (viewer_user_id, viewer_staff_id)
             )
 
-            atype = str(item.activity_type or "").lower()
-            # The canonical groupings first, the ones My Plan and the family
-            # strip above read (owner, 2026-09-28: "a cceo may have 300 visits
-            # planned but the PL is seeing like 100"). Matching on the word
-            # "training" filed every Training Follow Up VISIT under trainings,
-            # so a lead read fewer visits than the officer had planned; and
-            # "core" in the school type made a Core Trained school's visits
-            # core visits, where My Plan (school_type == "core") does not.
-            is_visit = atype in VISIT_TYPES and not item.is_in_school_training
-            is_training = not is_visit and (
-                item.is_in_school_training
-                or atype in TRAINING_TYPES
-                or (atype not in CLUSTER_MEETING_TYPES and "training" in atype)
-                or bool(item.training_name and item.training_name != "—")
-            )
-            if is_training:
+            table = oversight.page_table(item)
+            if table == "planned_trainings":
                 planned_trainings.append(item)
                 if item.cluster_id and (
                     not item.school_id
                     or item.school_name in ("Unknown School", "Unknown", "")
                 ):
                     all_cluster_training_items.append(item)
-            elif not is_visit and (
-                atype in CLUSTER_MEETING_TYPES or "meeting" in atype
-            ):
+            elif table == "cluster_meetings":
                 cluster_meetings.append(item)
+            elif table == "core_school_visits":
+                core_school_visits.append(item)
             else:
-                stype = str(item.school_type or "").lower()
-                if stype == "core" or atype.startswith("core_"):
-                    core_school_visits.append(item)
-                else:
-                    client_school_visits.append(item)
+                client_school_visits.append(item)
 
         group["client_school_visits"] = client_school_visits
         group["core_school_visits"] = core_school_visits
@@ -2799,28 +2777,37 @@ def _whose_choices(selected: str = "") -> list[tuple[str, str, bool]]:
 
 
 def _export_response(items, filename: str, *, request_user, excel: bool = False):
-    """The rows the page is showing, as a workbook or as CSV, in the one
-    layout every plan export uses (`apps.core.plan_export`; owner,
-    2026-10-12): a sheet of school visits, a sheet of trainings and cluster
-    meetings and a sheet of other activities, each with the owner's columns
-    and a District and District Type.
+    """The rows the page is showing, as a workbook or as CSV: one table of the
+    owner's columns, one row per activity, and no Budget sheet (owner,
+    2026-10-20; `oversight.export_rows`). My Plan and Cluster Oversight keep
+    the sheets of `apps.core.plan_export`.
 
     The items are the ones the page's tables are drawn from, one per
     activity: a cluster session is one row with its own participants and
-    cost (its columns carry no School ID), where the page's "Schools with
-    Planned Training" table lists it once per invited school. Both formats
-    come from the same rows.
+    cost, where the page's "Schools with Planned Training" table lists it
+    once per invited school. Both formats come from the same rows.
     """
     from apps.core import plan_export
 
     del request_user  # kept in the signature for the callers
-    rows = oversight.plan_export_rows(items)
+    headers, *rows = oversight.export_rows(items)
 
     if excel:
         from apps.core.excel import workbook_response
 
         return workbook_response(
-            filename.replace(".csv", ".xlsx"), plan_export.sheets(rows)
+            filename.replace(".csv", ".xlsx"),
+            [
+                {
+                    "title": "Planning Oversight",
+                    "headers": headers,
+                    "rows": rows,
+                    "number_formats": {
+                        headers.index("Planned date") + 1: plan_export.DATE,
+                        headers.index("Planned cost (UGX)") + 1: plan_export.MONEY,
+                    },
+                }
+            ],
         )
 
     from django.http import StreamingHttpResponse
@@ -2833,7 +2820,7 @@ def _export_response(items, filename: str, *, request_user, excel: bool = False)
 
     writer = safe_csv_writer(_Echo())
     response = StreamingHttpResponse(
-        (writer.writerow(row) for row in plan_export.csv_rows(rows)),
+        (writer.writerow(row) for row in [headers, *rows]),
         content_type="text/csv",
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
