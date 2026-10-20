@@ -49,6 +49,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -570,6 +571,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -684,6 +686,7 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
+        "apps/ssa/visit_scores.py",
         "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/ledger_sync.py",
@@ -968,6 +971,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activities/training_names.py",
         "apps/activity_catalogue/training_intervention.py",
         "apps/admin_ops/detection.py",
@@ -1493,6 +1497,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/analytics/platform_engine.py",
@@ -1887,6 +1892,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -2659,6 +2665,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -4985,9 +4992,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "ecbb71219674e803f69d02f4c32c1724af141ec9e77c75fb8df3d493962878c6",
-    "sources": "0c8451c49fc10be9f79142b93e40c0cd19b5f482179025457dd65df876628863",
-    "sourceCount": 266,
+    "payload": "8382b95f441d7e4fce7a212a9470597801b8fcd0e2312ec79d3d98e35aa821dd",
+    "sources": "990ebbd0ed720af2843d2cd3dc6c4765e3af6da9c5f700e20bc5cc0265704b30",
+    "sourceCount": 268,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

@@ -764,3 +764,88 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertNotIn('name="feedback_finding"', html)
         self.assertNotIn('name="school_improvements"', html)
         self.assertIn("Submit training + visit", html)
+
+
+class InSchoolTrainingWithSsaCollectionTest(StandardSupportBase):
+    """In-school Training + SSA Collection, its own purpose beside In-school
+    Training (owner, 2026-10-20: "so there is in school training and then
+    inschool training + ssa collection as a seperate option", everywhere but
+    the partner assignment drawer): the same pair, its visit collecting the
+    SSA."""
+
+    payload = InSchoolTrainingPairTest.payload
+
+    def test_staff_are_offered_it_and_partners_are_not(self):
+        from apps.partners.purposes import (
+            PARTNER_VISIT_PURPOSES,
+            STAFF_VISIT_PURPOSES,
+        )
+
+        staff = dict(STAFF_VISIT_PURPOSES)
+        self.assertEqual(
+            staff["in_school_training_ssa"], "In-school Training + SSA Collection"
+        )
+        self.assertIn("in_school_training", staff)
+        self.assertNotIn("in_school_training_ssa", dict(PARTNER_VISIT_PURPOSES))
+
+    def test_the_visit_collects_the_ssa_and_the_training_does_not(self):
+        result = schedule_in_school_training_pair(
+            {**self.payload(), "ssaCollectionExpected": True}, self.user
+        )
+        training = Activity.objects.get(id=result["id"])
+        visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
+        self.assertTrue(visit.ssa_collection_expected)
+        self.assertFalse(training.ssa_collection_expected)
+        self.assertEqual(visit.purpose_type, "in_school_training_delivery_visit")
+        self.assertEqual(training.purpose_type, "in_school_training")
+
+    def test_a_plain_in_school_training_collects_nothing(self):
+        result = schedule_in_school_training_pair(self.payload(), self.user)
+        visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
+        self.assertFalse(visit.ssa_collection_expected)
+
+    def _post(self, purpose, **extra):
+        client = Client()
+        client.force_login(self.user)
+        with patch(
+            "apps.frontend.views.planning_views.schedule_in_school_training_pair",
+            return_value={"id": "training-id", "pairedSchoolVisitId": "visit-id"},
+        ) as schedule_pair:
+            response = client.post(
+                "/planning/schedule-action",
+                {
+                    "school_id": self.school.school_id,
+                    "purpose_of_visit": purpose,
+                    "scheduled_date": str(_schedulable_date()),
+                    "catalogue_item_id": self.item("TAM_I").id,
+                    "require_catalogue": "yes",
+                    "delivery_type": "staff",
+                    "executor_type": "staff",
+                    **extra,
+                },
+                HTTP_HX_REQUEST="true",
+            )
+        return response, schedule_pair
+
+    def test_the_schedule_drawer_plans_the_pair_with_the_collection(self):
+        response, schedule_pair = self._post("in_school_training_ssa")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(schedule_pair.call_count, 1)
+        payload = schedule_pair.call_args.args[0]
+        self.assertTrue(payload["ssaCollectionExpected"])
+        self.assertEqual(payload["purposeType"], "in_school_training")
+
+    def test_the_schedule_drawer_s_plain_training_collects_nothing(self):
+        _response, schedule_pair = self._post("in_school_training")
+        payload = schedule_pair.call_args.args[0]
+        self.assertFalse(payload.get("ssaCollectionExpected"))
+
+    def test_the_schedule_drawer_offers_it(self):
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(
+            f"/planning/schedule-modal?school_id={self.school.school_id}",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertContains(response, 'value="in_school_training_ssa"')
+        self.assertContains(response, "In-school Training + SSA Collection")

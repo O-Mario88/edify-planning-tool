@@ -88,7 +88,13 @@ class DrawerAsksForPurposeTest(TestCase):
         self.assertIn('name="catalogue_item_id"', source)
         self.assertIn("availableTrainingActivities", source)
         self.assertNotIn('id="training_project_id"', source)
-        self.assertIn("purposeOfVisit === 'in_school_training'", source)
+        # Both training purposes show the picker (owner, 2026-10-20: In-school
+        # Training + SSA Collection is a purpose of its own).
+        self.assertIn(
+            "['in_school_training', 'in_school_training_ssa']"
+            ".includes(this.purposeOfVisit)",
+            source,
+        )
 
     def test_the_training_brings_its_own_intervention(self):
         """The training decides its SSA intervention (owner, 2026-10-06).

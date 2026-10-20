@@ -31,6 +31,7 @@ from apps.my_plan.services import get_frontend_context as get_my_plan
 # The single Reschedule door: an in-school Training and its School Visit
 # move together (apps.activities.pairs).
 from apps.activities.pairs import reschedule as reschedule_activity
+from apps.partners.purposes import IN_SCHOOL_TRAINING_PURPOSES
 from apps.activities.services import (
     STARTABLE_STATUSES,
     get_activity,
@@ -1075,11 +1076,58 @@ def complete_drawer_view(request, activity_id):
     from apps.activities.services import is_training_follow_up_visit
 
     context["is_training_follow_up"] = is_training_follow_up_visit(a)
-    if context["is_training_follow_up"]:
+    # What the visit was for, chosen as it is completed (owner, 2026-10-20:
+    # "the activity completion drawer should have all the options for
+    # purpose"). The sections below follow the choice: the SSA scores for SSA
+    # Support, the training followed up for a Training Follow Up, and the
+    # training delivered, its attendance and its ID for an In-school Training.
+    from apps.activities.completion_purpose import (
+        completion_purpose_options,
+        current_purpose,
+    )
+
+    purpose_choices = (
+        [] if paired_school_visit is not None else completion_purpose_options(a)
+    )
+    offered = {value for value, _label in purpose_choices}
+    context["purpose_choices"] = purpose_choices
+    context["current_purpose"] = current_purpose(a) if purpose_choices else ""
+    context["offers_in_school_training"] = bool(offered & IN_SCHOOL_TRAINING_PURPOSES)
+    if context["offers_in_school_training"]:
+        from apps.activity_catalogue.availability import (
+            in_school_training_course_options,
+        )
+
+        context["training_courses"] = in_school_training_course_options(
+            school=a.school, on_date=a.planned_date
+        )
+    context["shows_follow_up"] = (
+        context["is_training_follow_up"] or "training_follow_up" in offered
+    )
+    if context["shows_follow_up"]:
         from apps.activities.training_history import follow_up_options
 
         context["follow_up_options"] = follow_up_options(a.school, fy=a.fy)
         context["follow_up_selected_id"] = a.follow_up_of_activity_id or ""
+    # The SSA scores (owner, 2026-10-20): on every visit that collects the
+    # SSA, whichever way it was planned ("School Visit + SSA Collection"
+    # included), on a visit that may be completed as SSA Support, and on an
+    # In-school Training, whose scores are recorded on its school visit.
+    from apps.ssa.visit_scores import collects_ssa
+
+    context["asks_ssa"] = (
+        paired_school_visit is not None
+        or collects_ssa(a)
+        or bool(offered & {"ssa_support", *IN_SCHOOL_TRAINING_PURPOSES})
+    )
+    # A visit made to collect the SSA opens on "collected"; a training whose
+    # visit was not planned to collect it leaves the choice to the officer.
+    context["pair_collects_ssa"] = paired_school_visit is not None and collects_ssa(
+        paired_school_visit
+    )
+    context["ssa_default"] = (
+        "yes" if paired_school_visit is None or context["pair_collects_ssa"] else ""
+    )
     # Which ID completes this activity: "visit", "training", or None for work
     # Salesforce does not record, which has no ID to enter (owner, 2026-10-13).
     from apps.activities.services import sf_kind_for_activity
@@ -1456,6 +1504,274 @@ def reschedule_activity_action(request, activity_id):
     return local_redirect(f"/my-plan/{activity_id}")
 
 
+class _CompletionRefused(Exception):
+    """A completion refused part-way: the response the drawer shows. Raised
+    inside the completion's transaction, so nothing it had changed stays."""
+
+    def __init__(self, response):
+        super().__init__("completion refused")
+        self.response = response
+
+
+def _completion_refusal(request, activity_id, exc, *, action=None):
+    """The refusal of a completion step, as the drawer or the page shows it."""
+    if request.headers.get("HX-Request") == "true":
+        return _CompletionRefused(error_fragment(exc, action=action, status=400))
+    messages.error(request, f"{action}: {exc}" if action else f"Error: {exc}")
+    return _CompletionRefused(local_redirect(f"/my-plan/{activity_id}"))
+
+
+def _complete_with_purpose(request, a, paired_school_visit):
+    """The purpose the drawer posted, given to the visit before it is
+    completed (apps.activities.completion_purpose). Returns the activity and
+    its paired visit as they are now: a visit completed as an In-school
+    Training is the pair's School Visit, and its new training leads."""
+    from apps.activities.completion_purpose import apply_completion_purpose
+    from apps.core.exceptions import BadRequest
+
+    posted = request.POST.get("purpose_type", "").strip()
+    if paired_school_visit is None and posted not in IN_SCHOOL_TRAINING_PURPOSES:
+        _refuse_a_training_id_on_a_visit(request, a)
+    if paired_school_visit is not None or not posted:
+        return a, paired_school_visit
+    try:
+        changed = apply_completion_purpose(
+            a,
+            posted,
+            request.user,
+            course_id=request.POST.get("training_course_id", ""),
+        )
+    except BadRequest as exc:
+        raise _CompletionRefused(notice_fragment(str(getattr(exc, "detail", exc))))
+    if not changed:
+        return a, paired_school_visit
+    a.refresh_from_db()
+    pair = in_school_training_pair(a.id, request.user)
+    if pair is None:
+        return a, None
+    training, visit = pair
+    if not RolePermissionService.can_upload_evidence(request.user, training):
+        raise _CompletionRefused(
+            HttpResponseForbidden(
+                "Access Denied: You are not authorized to complete this training."
+            )
+        )
+    return training, visit
+
+
+def _refuse_a_training_id_on_a_visit(request, a) -> None:
+    """A TS- training ID entered as a visit's ID, said for what it is.
+
+    Seen live (2026-10-20): officers delivering an In-school Training on a
+    "School Visit + SSA Collection" entered the training's TS- ID as the
+    visit's, and were refused with the visit's ID forms. The drawer now says
+    where a training's ID goes."""
+    from apps.activities.salesforce import normalize_salesforce_id
+    from apps.activities.services import sf_kind_for_activity
+
+    entered = normalize_salesforce_id(request.POST.get("salesforce_id", ""))
+    if not entered.startswith("TS-") or sf_kind_for_activity(a) != "visit":
+        return
+    from apps.activities.completion_purpose import completion_purpose_options
+
+    offered = dict(completion_purpose_options(a))
+    trainings = [
+        offered[p] for p in sorted(IN_SCHOOL_TRAINING_PURPOSES) if p in offered
+    ]
+    if trainings:
+        message = (
+            f"{entered} is a training ID. If a training was delivered on this "
+            f"visit, choose “{'” or “'.join(trainings)}” as the purpose: "
+            "the training's TS- ID goes in Training ID, and the visit's SV- or "
+            "SVE- ID in Visit ID."
+        )
+    else:
+        message = (
+            f"{entered} is a training ID. This visit is completed with its "
+            "visit ID from Salesforce: SV-… or SVE-…."
+        )
+    raise _CompletionRefused(notice_fragment(message))
+
+
+def _record_completion_ssa(request, a, paired_school_visit, completed_on) -> bool:
+    """Keep the SSA scores the drawer carried; returns whether any were.
+
+    The SSA is optional at completion (owner, 2026-10-19: "Adding SSA scores
+    can be optional but Salesforce ID is A MUST"): a blank score sheet, or
+    "not collected" with no reason, completes the visit; a part-filled sheet
+    is refused, since an SSA is all eight scores or none. An In-school
+    Training's scores are the school's SSA taken on its visit, so they are
+    recorded on that School Visit (owner, 2026-10-20)."""
+    from apps.ssa.visit_scores import collects_ssa
+
+    target = paired_school_visit if paired_school_visit is not None else a
+    if paired_school_visit is None and not collects_ssa(a):
+        return False
+    interventions_map = {
+        code: f"score_{code}" for code, _label in SsaIntervention.choices
+    }
+    scores_entered = any(
+        request.POST.get(field_name, "").strip()
+        for field_name in interventions_map.values()
+    )
+    collected = request.POST.get("ssa_collected") == "yes" and scores_entered
+    if collected:
+
+        def _label(code: str) -> str:
+            return code.replace("_", " ").title()
+
+        scores_list = []
+        for enum_val, field_name in interventions_map.items():
+            val = request.POST.get(field_name, "").strip()
+            if not val:
+                raise _CompletionRefused(
+                    notice_fragment(f"Missing score for {_label(enum_val)}")
+                )
+            try:
+                f_val = float(val)
+            except ValueError:
+                raise _CompletionRefused(
+                    notice_fragment(f"Score for {_label(enum_val)} must be numeric")
+                )
+            if f_val < 0 or f_val > 10:
+                raise _CompletionRefused(
+                    notice_fragment(
+                        f"Score for {_label(enum_val)} must be between 0 and 10"
+                    )
+                )
+            scores_list.append({"intervention": enum_val, "score": f_val})
+
+        from apps.core.exceptions import BadRequest
+        from apps.ssa.services import upload as upload_ssa
+
+        # IA review (2026-09-13): dated by the visit, linked to it, and
+        # pending until a different verifier confirms the scores: for a
+        # CCEO's visit, the lead's approval of it; a lead's own are confirmed
+        # now (owner, 2026-10-16). A refusal (a duplicate date, an unverified
+        # prior-year record) is shown in the drawer, not returned as an error
+        # envelope.
+        try:
+            upload_ssa(
+                {
+                    "schoolId": target.school.school_id,
+                    # The day the visit was done, as just entered.
+                    "dateOfSsa": completed_on.isoformat(),
+                    "scores": scores_list,
+                    "collectorType": "partner"
+                    if target.delivery_type == "partner"
+                    else "staff",
+                    "collectedByPartnerId": target.assigned_partner_id,
+                    "sourceActivityId": target.id,
+                },
+                request.user,
+            )
+        except BadRequest as exc:
+            raise _CompletionRefused(notice_fragment(str(getattr(exc, "detail", exc))))
+    if collects_ssa(target):
+        # Why none were taken, said on a visit made to collect them.
+        reason = "" if collected else request.POST.get("ssa_not_collected_reason", "")
+        target.ssa_not_collected_reason = reason.strip() or None
+        target.save(update_fields=["ssa_not_collected_reason", "updated_at"])
+    return collected
+
+
+def _submit_accountability(request, a, activity_id):
+    """The NetSuite ID entered with the completion, submitted for the
+    Accountant's review.
+
+    The responsible user SUBMITS accountability — this is not the closure
+    step. It lands in ACCOUNTABILITY_PENDING; only the Accountant's
+    approve_accountability() can close it to ACCOUNTED (see
+    apps.fund_requests.advance_service). Do not write
+    status/accountability_netsuite_id directly here — that would let staff
+    self-certify their own accountability."""
+    netsuite_id = request.POST.get("netsuite_id", "").strip()
+    if not netsuite_id:
+        return
+    wfr_line = a.schedule_cost_lines.first()
+    if not wfr_line:
+        return
+    adv = wfr_line.advance_requests.first()
+    if not adv or adv.status != "disbursed":
+        return
+    from apps.fund_requests import advance_service
+
+    try:
+        advance_service.submit_accountability(
+            adv.id,
+            {
+                "netsuiteId": netsuite_id,
+                "amountSpent": request.POST.get("amount_spent", 0),
+                "amountReturned": request.POST.get("amount_returned", 0),
+                "varianceNote": request.POST.get("variance_note", ""),
+            },
+            request.user,
+        )
+    except Exception as e:
+        raise _completion_refusal(request, activity_id, e)
+
+
+def _completion_payload(request, completed_on, ssa_collected: bool) -> dict:
+    """What complete() is given from the drawer's post."""
+    salesforce_id = request.POST.get("salesforce_id", "").strip()
+    visit_salesforce_id = request.POST.get("visit_salesforce_id", "").strip()
+    if "training_salesforce_id" in request.POST:
+        # A visit completed as an In-school Training (owner, 2026-10-20): its
+        # own field holds the visit's ID and the training's has its own.
+        visit_salesforce_id = salesforce_id
+        salesforce_id = request.POST.get("training_salesforce_id", "").strip()
+    teachers = request.POST.get("teachers_attended", 0)
+    leaders = request.POST.get("leaders_attended", 0)
+    other = request.POST.get("other_participants", 0)
+    return {
+        # Whether scores were recorded; the SSA is optional.
+        "ssaCollected": ssa_collected,
+        "actualDeliveryDate": completed_on.isoformat(),
+        "salesforceId": salesforce_id,
+        "trainingSalesforceId": salesforce_id,
+        "visitSalesforceId": visit_salesforce_id,
+        "teachersAttended": int(teachers) if teachers else 0,
+        "leadersAttended": int(leaders) if leaders else 0,
+        "otherParticipants": int(other) if other else 0,
+        "attendedSchoolIds": request.POST.getlist("attended_school_ids"),
+        # The register's schools from outside the cluster, present only
+        # when the drawer drew that list (an empty list still means "the
+        # drawer had none"); absent, the recorded guests stay as they are.
+        "visitingSchoolIds": (
+            request.POST.getlist("visiting_school_ids")
+            if request.POST.get("visiting_register") == "1"
+            else None
+        ),
+        # Which training this visit followed up. Required by complete()
+        # for a follow-up visit and ignored for everything else.
+        "followUpOfActivityId": request.POST.get(
+            "follow_up_of_activity_id", ""
+        ).strip(),
+        # What the officer saw -- stored by complete(); absent keys leave
+        # earlier entries alone, so only send what the form carried.
+        **{
+            key: request.POST.get(field, "").strip()
+            for key, field in (
+                ("actualOutcome", "actual_outcome"),
+                ("actualObservations", "actual_observations"),
+                ("followUpNote", "follow_up_note"),
+            )
+            if field in request.POST
+        },
+        **(
+            {
+                "feedbackFinding": request.POST.get("feedback_finding", "").strip(),
+                "schoolImprovements": request.POST.get(
+                    "school_improvements", ""
+                ).splitlines(),
+            }
+            if "feedback_finding" in request.POST
+            or "school_improvements" in request.POST
+            else {}
+        ),
+    }
+
+
 @require_page_permission("my_plan")
 def complete_activity_action(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
@@ -1490,13 +1806,14 @@ def complete_activity_action(request, activity_id):
                 "Access Denied: You are not authorized to complete the paired "
                 "School Visit."
             )
-    act = get_activity(a.id, request.user)
 
     if request.method == "POST":
         # The day the work was done (owner, 2026-10-16): asked of every
         # completion, today or any day before, never a future one. Checked
         # before anything is started or saved. The drawer always sends one
         # (today unless changed); a post without it records today.
+        from django.db import transaction
+
         from apps.activities.completed_day import completion_day
         from apps.core.exceptions import BadRequest as _BadRequest
 
@@ -1508,293 +1825,155 @@ def complete_activity_action(request, activity_id):
         except _BadRequest as exc:
             return notice_fragment(str(getattr(exc, "detail", exc)))
 
-        # Handle start completion if still in scheduled status
-        pair_needs_start = paired_school_visit is not None and (
-            paired_school_visit.status in STARTABLE_STATUSES
-        )
-        if pair_needs_start or act.get("status") in STARTABLE_STATUSES:
-            try:
-                if paired_school_visit is not None:
-                    start_in_school_training_pair(a.id, request.user)
-                else:
-                    start_completion(a.id, principal=request.user)
-            except Exception as e:
-                if request.headers.get("HX-Request") == "true":
-                    return error_fragment(
-                        e, action="Error starting completion", status=400
-                    )
-                messages.error(request, f"Error starting completion: {e}")
-                return local_redirect(f"/my-plan/{a.id}")
-
-        # UPLOAD-OFF (owner, 2026-10-13): completion takes no file. A file
-        # posted here is ignored, not stored.
-        # # Each form may come as several pages — photographed or chosen
-        # # together — merged into one PDF (owner, 2026-09-26).
-        # uploads = []
-        # evidence_files = request.FILES.getlist("evidence_file")
-        # if evidence_files:
-        #     uploads.append(
-        #         (
-        #             a,
-        #             evidence_files,
-        #             request.POST.get("evidence_kind"),
-        #         )
-        #     )
-        # if paired_school_visit is not None:
-        #     training_files = request.FILES.getlist("training_evidence_file")
-        #     visit_files = request.FILES.getlist("visit_evidence_file")
-        #     if training_files:
-        #         uploads.append((a, training_files, EvidenceKind.ATTENDANCE_FORM))
-        #     if visit_files:
-        #         uploads.append(
-        #             (paired_school_visit, visit_files, EvidenceKind.VISIT_FORM)
-        #         )
-        # for target_activity, uploaded_files, asserted_kind in uploads:
-        #     uploaded_file = uploaded_files[0]
-        #     try:
-        #         record_pages_upload(
-        #             principal=request.user,
-        #             activity_id=target_activity.id,
-        #             # What the person selected, else what this activity still
-        #             # needs, else the file's shape. Inference alone can only say
-        #             # "pdf" or "photo", which no requirement asks for -- so
-        #             # completion was unreachable for every activity type that
-        #             # declares one.
-        #             kind=resolve_evidence_kind(
-        #                 uploaded_file,
-        #                 activity=target_activity,
-        #                 asserted=asserted_kind,
-        #             ),
-        #             files=uploaded_files,
-        #         )
-        #     except Exception as e:
-        #         if request.headers.get("HX-Request") == "true":
-        #             return error_fragment(e, action="Upload Error", status=400)
-        #         messages.error(request, f"Upload error: {e}")
-        #         return local_redirect(f"/my-plan/{a.id}")
-
-        salesforce_id = request.POST.get("salesforce_id", "").strip()
-        visit_salesforce_id = request.POST.get("visit_salesforce_id", "").strip()
-        teachers = request.POST.get("teachers_attended", 0)
-        leaders = request.POST.get("leaders_attended", 0)
-        other = request.POST.get("other_participants", 0)
-        attended_school_ids = request.POST.getlist("attended_school_ids")
-
-        netsuite_id = request.POST.get("netsuite_id", "").strip()
-        if netsuite_id:
-            wfr_line = a.schedule_cost_lines.first()
-            if wfr_line:
-                adv = wfr_line.advance_requests.first()
-                if adv and adv.status == "disbursed":
-                    # The responsible user SUBMITS accountability — this is not
-                    # the closure step. It lands in ACCOUNTABILITY_PENDING; only
-                    # the Accountant's approve_accountability() can close it to
-                    # ACCOUNTED (see apps.fund_requests.advance_service). Do not
-                    # write status/accountability_netsuite_id directly here —
-                    # that would let staff self-certify their own accountability.
-                    from apps.fund_requests import advance_service
-
-                    try:
-                        advance_service.submit_accountability(
-                            adv.id,
-                            {
-                                "netsuiteId": netsuite_id,
-                                "amountSpent": request.POST.get("amount_spent", 0),
-                                "amountReturned": request.POST.get(
-                                    "amount_returned", 0
-                                ),
-                                "varianceNote": request.POST.get("variance_note", ""),
-                            },
-                            request.user,
-                        )
-                    except Exception as e:
-                        if request.headers.get("HX-Request") == "true":
-                            return error_fragment(e, status=400)
-                        messages.error(request, f"Error: {e}")
-                        return local_redirect(f"/my-plan/{activity_id}")
-
-        # Handle SSA collection expectations. The SSA is optional at
-        # completion (owner, 2026-10-19: "Adding SSA scores can be optional
-        # but Salesforce ID is A MUST"): a blank score sheet, or "not
-        # collected" with no reason, completes the visit; a part-filled sheet
-        # is still refused, since an SSA is all eight scores or none.
-        interventions_map = {
-            code: f"score_{code}" for code, _label in SsaIntervention.choices
-        }
-        scores_entered = any(
-            request.POST.get(field_name, "").strip()
-            for field_name in interventions_map.values()
-        )
-        if a.ssa_collection_expected:
-            ssa_collected = request.POST.get("ssa_collected")
-            if ssa_collected == "yes" and scores_entered:
-
-                def _label(code: str) -> str:
-                    return code.replace("_", " ").title()
-
-                scores_list = []
-                for enum_val, field_name in interventions_map.items():
-                    val = request.POST.get(field_name, "").strip()
-                    if not val:
-                        return notice_fragment(f"Missing score for {_label(enum_val)}")
-                    try:
-                        f_val = float(val)
-                    except ValueError:
-                        return notice_fragment(
-                            f"Score for {_label(enum_val)} must be numeric"
-                        )
-                    if f_val < 0 or f_val > 10:
-                        return notice_fragment(
-                            f"Score for {_label(enum_val)} must be between 0 and 10"
-                        )
-                    scores_list.append({"intervention": enum_val, "score": f_val})
-
-                from apps.core.exceptions import BadRequest
-                from apps.ssa.services import upload as upload_ssa
-
-                # IA review (2026-09-13): dated by the visit, linked to it, and
-                # pending until a different verifier confirms the scores: for
-                # a CCEO's visit, the lead's approval of it; a lead's own are
-                # confirmed now (owner, 2026-10-16). A refusal (a duplicate
-                # date, an unverified prior-year record) is shown in the
-                # drawer, not returned as an error envelope.
-                try:
-                    upload_ssa(
-                        {
-                            "schoolId": a.school.school_id,
-                            # The day the visit was done, as just entered.
-                            "dateOfSsa": completed_on.isoformat(),
-                            "scores": scores_list,
-                            "collectorType": "partner"
-                            if a.delivery_type == "partner"
-                            else "staff",
-                            "collectedByPartnerId": a.assigned_partner_id,
-                            "sourceActivityId": a.id,
-                        },
-                        request.user,
-                    )
-                except BadRequest as exc:
-                    return notice_fragment(str(getattr(exc, "detail", exc)))
-                a.ssa_not_collected_reason = None
-            else:
-                reason = request.POST.get("ssa_not_collected_reason", "").strip()
-                a.ssa_not_collected_reason = reason or None
-            a.save(update_fields=["ssa_not_collected_reason", "updated_at"])
-
-        payload = {
-            # Whether scores were recorded above; the SSA is optional.
-            "ssaCollected": request.POST.get("ssa_collected") == "yes"
-            and scores_entered,
-            "actualDeliveryDate": completed_on.isoformat(),
-            "salesforceId": salesforce_id,
-            "trainingSalesforceId": salesforce_id,
-            "visitSalesforceId": visit_salesforce_id,
-            "teachersAttended": int(teachers) if teachers else 0,
-            "leadersAttended": int(leaders) if leaders else 0,
-            "otherParticipants": int(other) if other else 0,
-            "attendedSchoolIds": attended_school_ids,
-            # The register's schools from outside the cluster, present only
-            # when the drawer drew that list (an empty list still means "the
-            # drawer had none"); absent, the recorded guests stay as they are.
-            "visitingSchoolIds": (
-                request.POST.getlist("visiting_school_ids")
-                if request.POST.get("visiting_register") == "1"
-                else None
-            ),
-            # Which training this visit followed up. Required by complete()
-            # for a follow-up visit and ignored for everything else.
-            "followUpOfActivityId": request.POST.get(
-                "follow_up_of_activity_id", ""
-            ).strip(),
-            # What the officer saw -- stored by complete(); absent keys leave
-            # earlier entries alone, so only send what the form carried.
-            **{
-                key: request.POST.get(field, "").strip()
-                for key, field in (
-                    ("actualOutcome", "actual_outcome"),
-                    ("actualObservations", "actual_observations"),
-                    ("followUpNote", "follow_up_note"),
-                )
-                if field in request.POST
-            },
-            **(
-                {
-                    "feedbackFinding": request.POST.get("feedback_finding", "").strip(),
-                    "schoolImprovements": request.POST.get(
-                        "school_improvements", ""
-                    ).splitlines(),
-                }
-                if "feedback_finding" in request.POST
-                or "school_improvements" in request.POST
-                else {}
-            ),
-        }
-
+        # One completion, one transaction: the purpose it was given, its
+        # start, the accountability, the SSA scores and the hand-in hold
+        # together, so a refusal anywhere — a Salesforce ID already used, a
+        # missing training — leaves nothing half-done for the retry to trip
+        # over (scores kept on a visit that never completed, a purpose that
+        # moved on a completion that failed).
         try:
-            if paired_school_visit is not None:
-                complete_in_school_training_pair(a.id, payload, request.user)
-            else:
-                complete_activity(a.id, payload, request.user)
-            audit_log(
-                action=(
-                    "complete_in_school_training_pair"
-                    if paired_school_visit is not None
-                    else "complete_activity"
-                ),
-                subject_kind="Activity",
-                subject_id=str(a.id),
-                actor_id=str(request.user.id),
-                actor_role=request.user.active_role,
-                success=True,
-                payload={
-                    **payload,
-                    "paired_school_visit_id": (
-                        paired_school_visit.id if paired_school_visit else None
-                    ),
-                },
-            )
-            # ── IA review · IA-P: OneTest results ──
-            # A delivered OneTest diagnostic visit offers "Record learning
-            # results" at once: the visit page reopens on the results drawer
-            # (apps/frontend/views/ia_school_evidence_views.py), where each
-            # class's results are recorded pending verification and linked to
-            # this visit.
-            import json
-
-            onetest_next = ""
-            if paired_school_visit is None:
-                from apps.impact.evidence_services import (
-                    is_onetest,
-                    may_record_for_activity,
+            with transaction.atomic():
+                a, paired_school_visit = _complete_with_purpose(
+                    request, a, paired_school_visit
                 )
+                act = get_activity(a.id, request.user)
 
-                if is_onetest(a):
-                    a.refresh_from_db(fields=["status", "deleted_at"])
-                    if may_record_for_activity(request.user, a):
-                        onetest_next = f"/my-plan/{a.id}?learning_results=1"
-            # ── end IA-P ──
-            if request.headers.get("HX-Request") == "true":
-                if onetest_next:
-                    response = HttpResponse(
-                        f"<script>window.location.assign({json.dumps(onetest_next)});</script>"
-                    )
-                    response["HX-Trigger"] = "close-drawer"
-                    return response
-                return saved_in_place()
-            messages.success(
-                request,
-                (
-                    "Training and School Visit completion submitted successfully."
-                    if paired_school_visit is not None
-                    else "Activity completion submitted successfully."
-                ),
-            )
-            if onetest_next:
-                return local_redirect(onetest_next)
+                # Handle start completion if still in scheduled status
+                pair_needs_start = paired_school_visit is not None and (
+                    paired_school_visit.status in STARTABLE_STATUSES
+                )
+                if pair_needs_start or act.get("status") in STARTABLE_STATUSES:
+                    try:
+                        if paired_school_visit is not None:
+                            start_in_school_training_pair(a.id, request.user)
+                        else:
+                            start_completion(a.id, principal=request.user)
+                    except Exception as e:
+                        raise _completion_refusal(
+                            request, a.id, e, action="Error starting completion"
+                        )
+
+                # UPLOAD-OFF (owner, 2026-10-13): completion takes no file. A file
+                # posted here is ignored, not stored.
+                # # Each form may come as several pages — photographed or chosen
+                # # together — merged into one PDF (owner, 2026-09-26).
+                # uploads = []
+                # evidence_files = request.FILES.getlist("evidence_file")
+                # if evidence_files:
+                #     uploads.append(
+                #         (
+                #             a,
+                #             evidence_files,
+                #             request.POST.get("evidence_kind"),
+                #         )
+                #     )
+                # if paired_school_visit is not None:
+                #     training_files = request.FILES.getlist("training_evidence_file")
+                #     visit_files = request.FILES.getlist("visit_evidence_file")
+                #     if training_files:
+                #         uploads.append((a, training_files, EvidenceKind.ATTENDANCE_FORM))
+                #     if visit_files:
+                #         uploads.append(
+                #             (paired_school_visit, visit_files, EvidenceKind.VISIT_FORM)
+                #         )
+                # for target_activity, uploaded_files, asserted_kind in uploads:
+                #     uploaded_file = uploaded_files[0]
+                #     try:
+                #         record_pages_upload(
+                #             principal=request.user,
+                #             activity_id=target_activity.id,
+                #             # What the person selected, else what this activity still
+                #             # needs, else the file's shape. Inference alone can only say
+                #             # "pdf" or "photo", which no requirement asks for -- so
+                #             # completion was unreachable for every activity type that
+                #             # declares one.
+                #             kind=resolve_evidence_kind(
+                #                 uploaded_file,
+                #                 activity=target_activity,
+                #                 asserted=asserted_kind,
+                #             ),
+                #             files=uploaded_files,
+                #         )
+                #     except Exception as e:
+                #         if request.headers.get("HX-Request") == "true":
+                #             return error_fragment(e, action="Upload Error", status=400)
+                #         messages.error(request, f"Upload error: {e}")
+                #         return local_redirect(f"/my-plan/{a.id}")
+
+                _submit_accountability(request, a, activity_id)
+                ssa_collected = _record_completion_ssa(
+                    request, a, paired_school_visit, completed_on
+                )
+                payload = _completion_payload(request, completed_on, ssa_collected)
+
+                if paired_school_visit is not None:
+                    complete_in_school_training_pair(a.id, payload, request.user)
+                else:
+                    complete_activity(a.id, payload, request.user)
+                audit_log(
+                    action=(
+                        "complete_in_school_training_pair"
+                        if paired_school_visit is not None
+                        else "complete_activity"
+                    ),
+                    subject_kind="Activity",
+                    subject_id=str(a.id),
+                    actor_id=str(request.user.id),
+                    actor_role=request.user.active_role,
+                    success=True,
+                    payload={
+                        **payload,
+                        "paired_school_visit_id": (
+                            paired_school_visit.id if paired_school_visit else None
+                        ),
+                    },
+                )
+        except _CompletionRefused as refused:
+            return refused.response
         except Exception as e:
             if request.headers.get("HX-Request") == "true":
                 return error_fragment(e, action="Submission Error", status=400)
             messages.error(request, f"Submission error: {e}")
+            return local_redirect(f"/my-plan/{a.id}")
+
+        # ── IA review · IA-P: OneTest results ──
+        # A delivered OneTest diagnostic visit offers "Record learning
+        # results" at once: the visit page reopens on the results drawer
+        # (apps/frontend/views/ia_school_evidence_views.py), where each
+        # class's results are recorded pending verification and linked to
+        # this visit.
+        import json
+
+        onetest_next = ""
+        if paired_school_visit is None:
+            from apps.impact.evidence_services import (
+                is_onetest,
+                may_record_for_activity,
+            )
+
+            if is_onetest(a):
+                a.refresh_from_db(fields=["status", "deleted_at"])
+                if may_record_for_activity(request.user, a):
+                    onetest_next = f"/my-plan/{a.id}?learning_results=1"
+        # ── end IA-P ──
+        if request.headers.get("HX-Request") == "true":
+            if onetest_next:
+                response = HttpResponse(
+                    f"<script>window.location.assign({json.dumps(onetest_next)});</script>"
+                )
+                response["HX-Trigger"] = "close-drawer"
+                return response
+            return saved_in_place()
+        messages.success(
+            request,
+            (
+                "Training and School Visit completion submitted successfully."
+                if paired_school_visit is not None
+                else "Activity completion submitted successfully."
+            ),
+        )
+        if onetest_next:
+            return local_redirect(onetest_next)
 
     return local_redirect(f"/my-plan/{a.id}")
 
@@ -2392,6 +2571,23 @@ def _edit_drawer_context(user, a) -> dict:
     from apps.activities.purpose_change import purpose_options
 
     context["edit_purposes"] = purpose_options(a)
+    # In-school Training names the training delivered (owner, 2026-10-20:
+    # "if it is inschool training, the training name has to be selected").
+    if any(
+        value in IN_SCHOOL_TRAINING_PURPOSES for value, _ in context["edit_purposes"]
+    ):
+        from apps.activity_catalogue.availability import (
+            in_school_training_course_options,
+        )
+
+        context["edit_purpose_trainings"] = in_school_training_course_options(
+            school=a.school, on_date=a.planned_date
+        )
+    # A visit that reads In-school Training + SSA Collection and awaits its
+    # training (apps.activities.ssa_collection_to_training) shows the list.
+    from apps.activities.ssa_collection_to_training import awaits_training
+
+    context["edit_awaits_training"] = awaits_training(a)
     context["edit_purpose_core"] = (a.activity_type or "") == "core_visit"
     return context
 
@@ -2619,6 +2815,7 @@ def edit_activity_action(request, activity_id):
         ("projectId", "project_id"),
         ("trainingCourseId", "training_course_id"),
         ("purposeType", "purpose_type"),
+        ("purposeTrainingCourseId", "purpose_training_course_id"),
     ):
         if name in request.POST:
             data[key] = request.POST.get(name, "").strip()
