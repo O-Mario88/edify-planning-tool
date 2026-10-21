@@ -23,7 +23,7 @@
           {% for heading, cols in summary_groups %}{% for key, label in cols %}<td class="tp-num{% if forloop.first %} tp-start{% endif %}"><span class="tp-pct" data-tone="{{ line.cols|column_tone:key }}">{{ line.cols|column:key }}</span></td>{% endfor %}{% endfor %}
         </tr>
         {% endfor %}
-        {% if not roster.own %}
+        {% if not roster.narrowed %}
         <tr class="tp-total" data-tp-region-total="{{ group.region.label }}">
           <th scope="row" class="tp-sticky">{{ group.region.label }} Total</th>
           {% for heading, cols in summary_groups %}{% for key, label in cols %}<td class="tp-num{% if forloop.first %} tp-start{% endif %}">{{ group.total|column:key }}</td>{% endfor %}{% endfor %}
@@ -31,7 +31,7 @@
         {% endif %}
         {% endfor %}
         <tr class="tp-grand" data-tp-national>
-          <th scope="row" class="tp-sticky">{% if roster.own %}Your portfolio{% else %}National Total{% endif %}</th>
+          <th scope="row" class="tp-sticky">{{ roster.home_label }}</th>
           {% for heading, cols in summary_groups %}{% for key, label in cols %}<td class="tp-num{% if forloop.first %} tp-start{% endif %}">{{ s.national|column:key }}</td>{% endfor %}{% endfor %}
         </tr>
         <tr class="tp-quiet" data-tp-last-month>

@@ -188,7 +188,7 @@ end of the chosen month, read from the records; nothing here is typed.
           {% endwith %}{% endfor %}
           <tr class="tp-grand">
             <td></td>
-            <th scope="row" class="tp-sticky">{% if dash_region %}{{ dash_region }} Total{% elif roster.own %}Your portfolio{% else %}National Total{% endif %}</th>
+            <th scope="row" class="tp-sticky">{% if dash_region %}{{ dash_region }} Total{% else %}{{ roster.home_label }}{% endif %}</th>
             <td class="tp-num tp-start">{{ t.portfolio|num }}</td><td class="tp-num">{{ t.active|num }}</td><td class="tp-num">{{ t.active_pct|pct }}</td>
             <td class="tp-num tp-start">{{ t.recruit|num }}</td><td class="tp-num">{{ t.baseline_ssa|num }}</td><td class="tp-num">{{ t.ssa_cohort|num }}</td><td class="tp-num">{{ t.ssa_client|num }}</td>
             <td class="tp-num tp-start">{{ t.visits_core|num }}</td><td class="tp-num">{{ t.visits_noncore|num }}</td><td class="tp-num">{{ t.visits|num }}</td>

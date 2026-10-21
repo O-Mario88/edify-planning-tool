@@ -83,11 +83,25 @@ class TeamPerformancePageTest(LedgerFixture):
         self.assertNotIn('name="period"', body)
         self.assertIn('name="month"', body)
 
-    def test_a_lead_reads_every_region(self):
-        body = self.page(self.lead)
+    def test_a_lead_reads_their_team_and_the_director_everyone(self):
+        """Owner, 2026-10-21: a PL sees their own team only; "IA, CD and Admin
+        See Everyone grouped by PL"."""
+        lead = self.page(self.lead)
+        self.assertIn('data-tp-team="Northern"', lead)
+        self.assertNotIn('data-tp-team="No Programme Lead"', lead)
+        self.assertIn("Your team", lead)
 
-        self.assertIn('data-tp-team="Northern"', body)
-        self.assertIn('data-tp-team="No Programme Lead"', body)
+        director = self.page(self.director)
+        self.assertIn('data-tp-team="Northern"', director)
+        self.assertIn('data-tp-team="No Programme Lead"', director)
+
+    def test_a_lead_cannot_open_another_teams_officer(self):
+        body = self.page(
+            self.lead, tab="dashboard", view="deep", officer=self.mary.staff_profile.id
+        )
+
+        self.assertIn(f'data-tp-deep="{self.james.staff_profile.id}"', body)
+        self.assertNotIn(self.mary.staff_profile.id, body)
 
     def test_a_cceo_reads_only_their_own_row(self):
         body = self.page(self.mary, tab="month")

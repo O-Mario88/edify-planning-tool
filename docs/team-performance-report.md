@@ -8,9 +8,13 @@ Owner's answers the same day:
 
 - The Performance Reviews, Recovery Plans, Professional Development and Policy
   Compliance workspace keeps its own sidebar entry, **Performance Reviews**.
-- Programme Leads, the Country Director, the RVP, the Regional Programme Lead
-  and Admin read all four regions. A CCEO reads the page narrowed to their own
-  row and portfolio.
+- Who reads what (owner, 2026-10-21): a CCEO their own portfolio and
+  performance; a Programme Lead their own and their team's — themselves and
+  the CCEOs whose direct line is to them — with the team's approved
+  allocations as their targets; Impact Assessment, the Country Director and
+  Admin (and the RVP and Regional Programme Lead) everyone, grouped by
+  Programme Lead. Only the visible schools are read, and a CCEO's team row is
+  their own, so a team's target is never set against one officer's work.
 - Targets are the ones Programme Leads and Project Coordinators already set
   (the Uganda Master Priority Plan allocations). Achievements come from the
   work staff planned and completed. Exam scores, enrolment, MSC stories and

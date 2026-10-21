@@ -20,7 +20,7 @@
         <thead>
           <tr class="tp-band">
             <th scope="col" class="tp-sticky"></th>
-            <th scope="colgroup" colspan="4" class="tp-start">{% if roster.own %}Your portfolio{% else %}National{% endif %}</th>
+            <th scope="colgroup" colspan="4" class="tp-start">{{ roster.home_label }}</th>
             {% for team in summary.regions %}<th scope="colgroup" colspan="3" class="tp-start" data-tp-team="{{ team.label }}">{{ team.label }}{% if team.lead and team.lead not in team.label %} · {{ team.lead }}{% endif %}</th>{% endfor %}
           </tr>
           <tr>

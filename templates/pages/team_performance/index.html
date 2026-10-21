@@ -17,7 +17,7 @@ never a zero. The period filter shows only on the tabs that read a period.
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1600px] mx-auto" data-team-performance="{{ tab }}">
 
   {% page_header eyebrow="Performance & Coaching" title="Team Performance" %}
-    {% slot description %}The FY {{ period.fy }} Weekly Report, read from the platform's records: completed work, school-profile entries and uploads.{% if roster.own %} Your own portfolio.{% endif %}{% endslot %}
+    {% slot description %}The FY {{ period.fy }} Weekly Report, read from the platform's records: completed work, school-profile entries and uploads.{% if roster.own %} Your own portfolio.{% elif roster.narrowed %} Your team: you and the CCEOs you supervise.{% endif %}{% endslot %}
     {% if can_set_targets %}<a href="/team-performance/country-targets/?fy={{ period.fy }}" class="edify-action-button secondary h-9" data-tp-set-targets>Set Country Targets</a>{% endif %}
   {% endpage_header %}
 

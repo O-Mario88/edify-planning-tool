@@ -37,14 +37,35 @@ class ReportFixture(LedgerFixture):
 
 
 class RosterTest(ReportFixture):
-    def test_a_lead_reads_every_region_with_its_officers(self):
-        report = self.report(self.lead)
+    def test_ia_cd_and_admin_read_everyone_grouped_by_programme_lead(self):
+        """Owner, 2026-10-21: "IA, CD and Admin See Everyone grouped by PL"."""
+        for role in ("CountryDirector", "ImpactAssessment", "Admin"):
+            reader = make_officer(f"{role.lower()}@tp-all.test", role)
+            report = self.report(reader)
 
-        labels = [r.label for r in report.roster.regions]
-        self.assertEqual(labels, ["Northern", "No Programme Lead"])
+            labels = [r.label for r in report.roster.regions]
+            self.assertEqual(labels, ["Northern", "No Programme Lead"], role)
+            self.assertEqual(
+                [o.name for o in report.roster.regions[0].officers], [self.james.name]
+            )
+            self.assertEqual(report.ledger.portfolio(None), 3, role)
+
+    def test_a_lead_reads_only_their_own_team(self):
+        """Owner, 2026-10-21: a PL "Sees own and team portfolio and
+        performance only"."""
+        report = self.report(self.lead)
+        lead = str(self.lead.staff_profile.id)
+
+        self.assertEqual([r.label for r in report.roster.regions], ["Northern"])
+        self.assertEqual([o.name for o in report.roster.officers], [self.james.name])
+        # Only the team's schools are read: James's two, not Mary's.
+        self.assertEqual(report.ledger.portfolio(None), 2)
+        self.assertEqual(report.home(), report.scope(f"region:{lead}")[2])
         self.assertEqual(
-            [o.name for o in report.roster.regions[0].officers], [self.james.name]
+            [key for key, *_ in report.scopes()],
+            [f"region:{lead}", str(self.james.staff_profile.id)],
         )
+        self.assertIsNone(report.roster.officer(self.mary.staff_profile.id))
 
     def test_an_oversight_supervisor_does_not_move_a_cceo_out_of_their_region(self):
         """IA and RVP supervisor rows are oversight beside the direct line
@@ -58,6 +79,23 @@ class RosterTest(ReportFixture):
 
         region = report.roster.region_of(self.james.staff_profile.id)
         self.assertEqual(region.key, str(self.lead.staff_profile.id))
+
+    def test_a_cceos_team_row_is_their_own_not_their_teams(self):
+        from apps.team_performance.targets import Target
+
+        report = self.report(self.james)
+        targets = {"region": 350, "officer": 25}
+        report.book.target = lambda m, scope, eligible=None: Target(
+            annual=targets.get(scope.kind), source="Allocation"
+        )
+
+        summary = report.executive_summary()
+
+        self.assertEqual(
+            summary["regions"][0]["figures"]["core_recruitment_target"], 25
+        )
+        recruit = summary["sections"][0][1][0]
+        self.assertEqual([b["target"] for b in recruit["leads"]], [25])
 
     def test_a_cceo_reads_only_their_own_row(self):
         report = self.report(self.mary)

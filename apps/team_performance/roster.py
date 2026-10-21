@@ -41,11 +41,35 @@ class Region:
         return {o.staff_id for o in self.officers}
 
 
+#: What a reader sees (owner, 2026-10-21): a CCEO their own portfolio, a
+#: Programme Lead their own and their team's, IA, CD and Admin (and RVP and
+#: RPL) everyone, grouped by Programme Lead.
+OWN, TEAM, ALL = "own", "team", "all"
+
+
 @dataclass
 class Roster:
     regions: list[Region]
-    #: True when the reader sees only their own row.
-    own: bool = False
+    #: How far the reader sees: OWN, TEAM or ALL.
+    reach: str = ALL
+    #: A Programme Lead reader's staff id: their team's key.
+    lead: str = ""
+
+    @property
+    def own(self) -> bool:
+        """The reader sees only their own row (a CCEO)."""
+        return self.reach == OWN
+
+    @property
+    def narrowed(self) -> bool:
+        """The reader sees part of the country, not all of it."""
+        return self.reach != ALL
+
+    @property
+    def home_label(self) -> str:
+        return {OWN: "Your portfolio", TEAM: "Your team"}.get(
+            self.reach, "National Total"
+        )
 
     @property
     def officers(self) -> list[Officer]:
@@ -61,20 +85,62 @@ class Roster:
         return next((r for r in self.regions if str(staff_id) in r.staff_ids), None)
 
 
-def own_staff_id(user) -> str | None:
-    """The reader's staff id when the page is narrowed to them (a CCEO)."""
-    if getattr(user, "active_role", "") != CCEO:
+def reach_of(user) -> str:
+    role = getattr(user, "active_role", "")
+    return {CCEO: OWN, LEAD: TEAM}.get(role, ALL)
+
+
+def visible_staff(user) -> set[str] | None:
+    """The officers whose schools a reader sees: a CCEO themselves; a
+    Programme Lead themselves and the CCEOs whose direct line is to them;
+    None — everyone — for anyone else who may open the report."""
+    reach = reach_of(user)
+    if reach == ALL:
         return None
     profile = getattr(user, "staff_profile", None)
-    return str(profile.id) if profile else ""
+    if profile is None:
+        return {""}
+    me = str(profile.id)
+    if reach == OWN:
+        return {me}
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    supervised = StaffSupervisorAssignment.objects.filter(supervisor_id=me).values_list(
+        "supervisee_id", flat=True
+    )
+    lines = direct_leads([str(s) for s in supervised])
+    return {me} | {staff for staff, lead in lines.items() if lead == me}
+
+
+def direct_leads(staff_ids) -> dict[str, str]:
+    """Each officer's Programme Lead: the supervisor who is a Programme Lead
+    (IA and RVP rows are oversight beside the direct line,
+    `StaffSupervisorAssignment`); the first one assigned holds a CCEO with
+    two."""
+    from django.db.models import Q
+
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    out: dict[str, str] = {}
+    for supervisee, supervisor in (
+        StaffSupervisorAssignment.objects.filter(supervisee_id__in=list(staff_ids))
+        .filter(
+            Q(supervisor__user__active_role=LEAD)
+            | Q(supervisor__user__roles__contains=[LEAD])
+        )
+        .order_by("created_at", "id")
+        .values_list("supervisee_id", "supervisor_id")
+    ):
+        if str(supervisee) != str(supervisor):
+            out.setdefault(str(supervisee), str(supervisor))
+    return out
 
 
 def build(user, ledger) -> Roster:
-    from django.db.models import Q
+    from apps.accounts.models import User
 
-    from apps.accounts.models import StaffSupervisorAssignment, User
-
-    own = own_staff_id(user)
+    reach = reach_of(user)
+    visible = visible_staff(user)
     people = (
         User.objects.filter(status="active", deleted_at__isnull=True)
         .filter(roles__overlap=[CCEO, LEAD])
@@ -97,25 +163,9 @@ def build(user, ledger) -> Roster:
             officers[staff_id] = Officer(
                 staff_id, person.name or person.email, CCEO if CCEO in roles else LEAD
             )
-    # The direct line is the supervisor who is a Programme Lead; IA and RVP
-    # rows are oversight beside it (`StaffSupervisorAssignment`). The first
-    # one assigned holds a CCEO with two.
-    for supervisee, supervisor in (
-        StaffSupervisorAssignment.objects.filter(supervisee_id__in=list(officers))
-        .filter(
-            Q(supervisor__user__active_role=LEAD)
-            | Q(supervisor__user__roles__contains=[LEAD])
-        )
-        .order_by("created_at", "id")
-        .values_list("supervisee_id", "supervisor_id")
-    ):
-        officer = officers[str(supervisee)]
-        if (
-            officer.role == CCEO
-            and not officer.lead
-            and str(supervisor) != officer.staff_id
-        ):
-            officer.lead = str(supervisor)
+    for staff_id, lead in direct_leads(officers).items():
+        if officers[staff_id].role == CCEO:
+            officers[staff_id].lead = lead
     for staff_id, officer in officers.items():
         if officer.role == LEAD and staff_id in leads:
             officer.lead = staff_id
@@ -127,8 +177,8 @@ def build(user, ledger) -> Roster:
     for lead, members in teams.items():
         # The lead first, then their officers by name, as the workbook lists them.
         members.sort(key=lambda o: (o.staff_id != lead, o.name.lower()))
-        if own is not None:
-            members = [o for o in members if o.staff_id == own]
+        if visible is not None:
+            members = [o for o in members if o.staff_id in visible]
             if not members:
                 continue
         lead_name = leads.get(lead) or (_name_of(lead) if lead else "")
@@ -144,7 +194,10 @@ def build(user, ledger) -> Roster:
         )
     regions.sort(key=_region_order)
     _distinguish(regions)
-    return Roster(regions=regions, own=own is not None)
+    lead_key = ""
+    if reach == TEAM and visible:
+        lead_key = str(getattr(getattr(user, "staff_profile", None), "id", ""))
+    return Roster(regions=regions, reach=reach, lead=lead_key)
 
 
 def _name_of(staff_id: str) -> str:

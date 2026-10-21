@@ -103,8 +103,7 @@ class Report:
     def build(cls, user, period: ReportPeriod) -> Report:
         from . import roster as roster_module
 
-        own = roster_module.own_staff_id(user)
-        ledger = Ledger.load(period.fy, owners=None if own is None else {own})
+        ledger = Ledger.load(period.fy, owners=roster_module.visible_staff(user))
         return cls(
             ledger,
             TargetBook.load(period.fy),
@@ -116,16 +115,27 @@ class Report:
     def owners(self, scope: Scope):
         """The officers whose schools a scope counts; None is everyone."""
         if scope.kind == "country":
-            if self.roster.own:
+            if self.roster.narrowed:
                 return {o.staff_id for o in self.roster.officers}
             return None
         return set(scope.staff)
 
     def home(self) -> Scope:
-        """The reader's widest scope: the country, or a CCEO's own row."""
+        """The reader's widest scope: the country; a Programme Lead's own
+        team, whose targets are its approved allocations; a CCEO's own row."""
         if self.roster.own and self.roster.officers:
             return Scope.officer(self.roster.officers[0].staff_id)
+        if self.roster.lead:
+            team = self.roster.region(self.roster.lead)
+            return Scope.region(self.roster.lead, team.staff_ids if team else set())
         return Scope.country()
+
+    def team_scope(self, region) -> Scope:
+        """A team's row: the team, or, for a CCEO reading their own, just
+        them — so a team's target is never set against one officer's work."""
+        if self.roster.own and region.officers:
+            return Scope.officer(region.officers[0].staff_id)
+        return Scope.region(region.key, region.staff_ids)
 
     def scopes(self) -> list[tuple[str, str, Scope]]:
         """(key, label, scope) for the scope picker: the country, each region,
@@ -135,7 +145,10 @@ class Report:
                 (o.staff_id, o.name, Scope.officer(o.staff_id))
                 for o in self.roster.officers
             ]
-        out = [("country", "Country", Scope.country())]
+        if self.roster.narrowed:
+            out = []
+        else:
+            out = [("country", "Country", Scope.country())]
         for region in self.roster.regions:
             out.append(
                 (
@@ -271,7 +284,7 @@ class Report:
                 "lead": region.lead_name,
                 "region": region,
                 "figures": self.summary_figures(
-                    Scope.region(region.key, region.staff_ids), period.to_date
+                    self.team_scope(region), period.to_date
                 ),
             }
             for region in self.roster.regions
@@ -672,7 +685,7 @@ class Report:
             {
                 "region": r,
                 "officers": len(r.officers),
-                "f": self.officer_figures(Scope.region(r.key, r.staff_ids)),
+                "f": self.officer_figures(self.team_scope(r)),
             }
             for r in regions
         ]
@@ -711,13 +724,11 @@ class Report:
                 }
                 for o in region.officers
             ]
-            total = self.summary_columns(
-                Scope.region(region.key, region.staff_ids), window
-            )
+            total = self.summary_columns(self.team_scope(region), window)
             groups.append({"region": region, "lines": lines, "total": total})
         home = self.home()
         unlisted = None
-        if not self.roster.own:
+        if not self.roster.narrowed:
             listed = {o.staff_id for o in self.roster.officers}
             unlisted = (
                 self.ledger.portfolio(None) - self.ledger.portfolio(listed)

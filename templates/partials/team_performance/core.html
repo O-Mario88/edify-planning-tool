@@ -44,7 +44,7 @@ with visits on the left and training on the right".{% endcomment %}
           </tr>
           {% endfor %}
           <tr class="tp-grand">
-            <th scope="row" class="tp-sticky">{% if roster.own %}Your portfolio{% else %}National Total{% endif %}</th>
+            <th scope="row" class="tp-sticky">{{ roster.home_label }}</th>
             <td></td>
             <td class="tp-num">{{ package.total.core|num }}</td>
             {% for kind, title in core_kinds %}{% with f=package.total|get_item:kind %}

@@ -16017,7 +16017,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4222,
+      "bytes": 4177,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -16043,7 +16043,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16245,
+      "bytes": 16219,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -16093,7 +16093,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3552,
+      "bytes": 3512,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -16116,7 +16116,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7599,
+      "bytes": 7560,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -95301,7 +95301,7 @@
       "permission_key": "team_performance",
       "primary_action": "Review operational workspace",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "The FY Weekly Report, read from the platform's records: completed work, school-profile entries and uploads. Your own portfolio.",
+      "purpose": "The FY Weekly Report, read from the platform's records: completed work, school-profile entries and uploads. Your own portfolio. Your team: you and the CCEOs you supervise.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
