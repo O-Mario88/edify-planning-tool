@@ -16017,7 +16017,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3564,
+      "bytes": 4222,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -16116,7 +16116,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7557,
+      "bytes": 7599,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -16145,7 +16145,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 891,
+      "bytes": 1916,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -16160,9 +16160,11 @@
       "states": [
         "default"
       ],
-      "tables": 0,
+      "tables": 1,
       "template": "partials/team_performance/target_chart.html",
-      "variants": []
+      "variants": [
+        "{{ bar.pct|tone }}"
+      ]
     },
     {
       "accessibility_requirements": [],

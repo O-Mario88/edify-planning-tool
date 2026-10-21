@@ -11,3 +11,21 @@
   {% endfor %}
 </div>
 <div class="tp-chart-legend"><span class="is-target">Target</span><span>Achieved</span></div>
+{% comment %}Owner, 2026-10-21: every Executive Summary chart is accompanied by
+its table.{% endcomment %}
+<div class="tp-scroll tp-chart-table">
+  <table class="tp-table edify-table--compact" data-table-fit="scroll" data-tp-chart-table>
+    <thead><tr>
+      <th scope="col" class="tp-sticky">{{ heading }}</th>
+      <th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">Variance</th><th scope="col" class="tp-num">%</th>
+    </tr></thead>
+    <tbody>
+      {% for bar in bars %}
+      <tr>
+        <th scope="row" class="tp-sticky">{{ bar.label }}{% if bar.place %} <span class="tp-muted">· {{ bar.place }}</span>{% endif %}</th>
+        <td class="tp-num tp-start">{{ bar.target|num }}</td><td class="tp-num">{{ bar.achieved|num }}</td><td class="tp-num">{{ bar.variance|signed }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ bar.pct|tone }}">{{ bar.pct|pct }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

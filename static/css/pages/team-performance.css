@@ -328,6 +328,10 @@
   color: var(--edify-text, #17232b);
 }
 
+.tp-chart-table {
+  padding: 0 0.75rem 0.5rem;
+}
+
 .tp-chart-title {
   padding: 0.5rem 1rem 0;
   font-size: var(--edify-text-label-size);

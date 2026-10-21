@@ -133,6 +133,21 @@ class TeamPerformancePageTest(LedgerFixture):
         self.assertEqual(body.count('data-tp-chart="lead"'), rows)
         self.assertIn("Client Schools Trained by Programme Lead", body)
         self.assertIn("Core Visit 1 by Programme Lead", body)
+        # Each chart has its figures as a table beneath it (owner,
+        # 2026-10-21: "all the graphs in the executive summary is accompanied
+        # by the tables below or above each graph").
+        self.assertEqual(body.count("data-tp-chart-table"), 2 * rows)
+
+    def test_core_visits_and_trainings_are_one_table_visits_first(self):
+        """Owner, 2026-10-21: "merge core visits and training tables into 1
+        with visits on the left and training on the right"."""
+        self.client.force_login(self.lead)
+
+        body = self.client.get(URL, {"tab": "core"}).content.decode()
+
+        self.assertEqual(body.count("<table"), 1)
+        visits = body.index('data-tp-core-kind="visit"')
+        self.assertLess(visits, body.index('data-tp-core-kind="training"'))
 
     def test_a_malformed_link_still_opens_the_report(self):
         self.client.force_login(self.lead)

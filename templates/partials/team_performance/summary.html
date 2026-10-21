@@ -57,11 +57,11 @@
     <div class="tp-area-row">
       <div data-tp-chart="region">
         <h3 class="tp-chart-title">{{ area.label }} by region</h3>
-        {% include "partials/team_performance/target_chart.html" with bars=area.regions area=area.label label="by region" %}
+        {% include "partials/team_performance/target_chart.html" with bars=area.regions area=area.label label="by region" heading="Region" %}
       </div>
       <div data-tp-chart="lead">
         <h3 class="tp-chart-title">{{ area.label }} by Programme Lead</h3>
-        {% include "partials/team_performance/target_chart.html" with bars=area.leads area=area.label label="by Programme Lead" %}
+        {% include "partials/team_performance/target_chart.html" with bars=area.leads area=area.label label="by Programme Lead" heading="Programme Lead" %}
       </div>
     </div>
   </section>

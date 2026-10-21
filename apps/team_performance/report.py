@@ -1038,13 +1038,16 @@ def _spread(total: int, weights: dict[str, int]) -> dict[str, int]:
 
 
 def _bars(rows: list[dict]) -> list[dict]:
-    """A target-vs-achieved bar chart: each bar a share of the tallest."""
+    """A target-vs-achieved bar chart: each bar a share of the tallest, with
+    its variance and share of target for the table beneath it."""
     tallest = max(
         [r["target"] or 0 for r in rows] + [r["achieved"] or 0 for r in rows] + [1]
     )
     return [
         {
             **r,
+            "variance": _var(r["achieved"], r["target"]),
+            "pct": pct(r["achieved"], r["target"]),
             "target_h": round(100 * (r["target"] or 0) / tallest, 1),
             "achieved_h": round(100 * (r["achieved"] or 0) / tallest, 1),
         }

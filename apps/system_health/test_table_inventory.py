@@ -75,20 +75,23 @@ class TableBoundsTest(SimpleTestCase):
     #:   Bounded by the SsaIntervention enum (eight), and read as one table:
     #:   the best and the struggling intervention are found by comparing them.
     #: * `partials/team_performance/` (owner, 2026-10-20: the FY27 Weekly
-    #:   Report as tabs) — six report tables, each bounded by something fixed
-    #:   and read whole, as the workbook is: the Executive Summary's regions
-    #:   (the Programme Leads' teams, four) and its six delivery milestones;
-    #:   the Weekly Report's categories (`team_performance.measures`); the
-    #:   Strategic Milestones sheet's 54 rows (`team_performance.strategic`);
-    #:   and the {Month} {Year} Summary, Core Visits & Training and the CCEO
-    #:   dashboard's master grid, one row per officer (the country's two dozen
-    #:   CCEOs), with their totals.
+    #:   Report as tabs) — seven report tables, each bounded by something
+    #:   fixed and read whole, as the workbook is: the Executive Summary's
+    #:   target areas (the tracked measures with a target,
+    #:   `team_performance.measures`) and its six delivery milestones; the
+    #:   table beneath each of its charts (owner, 2026-10-21: "all the graphs
+    #:   ... accompanied by the tables"), one row per bar — the country's
+    #:   four regions and "Not placed", or the Programme Leads' teams; the
+    #:   Weekly Report's categories; the Strategic Milestones sheet's 54 rows
+    #:   (`team_performance.strategic`); and the {Month} {Year} Summary, Core
+    #:   Visits & Trainings and the CCEO dashboard's master grid, one row per
+    #:   officer (the country's two dozen CCEOs), with their totals.
     #: * `pages/team_performance/country_targets.html` — the form where Impact
     #:   Assessment or Admin set the report's country targets (owner,
     #:   2026-10-20): one row per report row (the measures and the 54 sheet
     #:   milestones), every row a field of one form that is saved whole, which
     #:   a pager would break.
-    UNBOUNDED_CEILING = 18
+    UNBOUNDED_CEILING = 19
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

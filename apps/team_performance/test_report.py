@@ -453,6 +453,13 @@ class AreaChartTest(ReportFixture):
         self.assertEqual(bars["Northern"]["achieved"], 3)
         self.assertEqual(sum(b["target"] for b in bars.values()), 6)
 
+    def test_each_bar_carries_its_variance_and_share(self):
+        bars = self.bars("client_visit_partner")
+
+        self.assertEqual(
+            (bars["Eastern"]["variance"], bars["Eastern"]["pct"]), (-3, 0.0)
+        )
+
     def test_a_country_target_nobody_holds_is_not_placed(self):
         bars = self.bars("msc", {}, country=100)
 
