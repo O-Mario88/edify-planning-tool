@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **658**
+Components and application partials: **659**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -630,11 +630,12 @@ Components and application partials: **658**
 | `partials/targets/team/staff_drawer.html` | application-partial | Reusable staff drawer interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /team-targets/staff-drawer | 0 |
 | `partials/targets/team/validation_drawer.html` | application-partial | Reusable validation drawer interface primitive | {{ tone }}; default | inherits containing page contract | inherits semantic parent contract | /team-targets/validation-backlog | 0 |
 | `partials/targets/team/workspace.html` | application-partial | Reusable workspace interface primitive | {{ row.riskTone }}; default, loading, empty, disabled, open | inherits containing page contract | accessible name and label, announced dynamic state | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
+| `partials/team_performance/area_charts.html` | application-partial | Reusable area charts interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /team-performance/ | 0 |
 | `partials/team_performance/core.html` | application-partial | Reusable core interface primitive | {{ f.pct|tone }}, {{ f.three_pct|tone }}; default | inherits containing page contract | inherits semantic parent contract | /team-performance/ | 0 |
 | `partials/team_performance/dashboard.html` | application-partial | Reusable dashboard interface primitive | {{ f.active_pct|tone }}; default, empty | inherits containing page contract | accessible name and label | /team-performance/ | 0 |
 | `partials/team_performance/milestones.html` | application-partial | Reusable milestones interface primitive | {{ row.period.pct|tone }}, {{ row.to_date.pct|tone }}, {{ row.tone }}, {{ row.year.pct|tone }}; default | inherits containing page contract | inherits semantic parent contract | /team-performance/ | 0 |
 | `partials/team_performance/month.html` | application-partial | Reusable month interface primitive | {{ line.cols|column_tone:key }}; default | inherits containing page contract | inherits semantic parent contract | /team-performance/ | 0 |
-| `partials/team_performance/summary.html` | application-partial | Reusable summary interface primitive | {{ area.pct|tone }}, {{ row.cell.pct|tone }}, {{ row.measure.key }}, {{ row.tone }}, {{ team.pct|tone }}; default | inherits containing page contract | inherits semantic parent contract | /team-performance/ | 0 |
+| `partials/team_performance/summary.html` | application-partial | Reusable summary interface primitive | {{ area.pct|tone }}, {{ row.cell.pct|tone }}, {{ row.measure.key }}, {{ row.tone }}, {{ team.pct|tone }}; default, loading | inherits containing page contract | inherits semantic parent contract | /team-performance/ | 0 |
 | `partials/team_performance/target_chart.html` | application-partial | Reusable target chart interface primitive | {{ bar.pct|tone }}; default | inherits containing page contract | accessible name and label | /team-performance/ | 0 |
 | `partials/team_performance/weekly.html` | application-partial | Reusable weekly interface primitive | {% if row.status == , {{ q.cell.pct|tone }}, {{ row.month.pct|tone }}, {{ row.year.pct|tone }}; default | inherits containing page contract | inherits semantic parent contract | /team-performance/ | 0 |
 | `partials/today/dashboard_loader.html` | application-partial | Reusable dashboard loader interface primitive | canonical; default, loading | explicit responsive contract | announced dynamic state | /dashboard<br>/ia/dashboard/ | 0 |

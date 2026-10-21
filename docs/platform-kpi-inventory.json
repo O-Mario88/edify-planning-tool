@@ -12785,17 +12785,14 @@
    "audit_id": "KPI-SOURCE-699",
    "kind": "other",
    "module": "apps/team_performance/report.py",
-   "line": 305,
+   "line": 344,
    "label": null,
    "keys": [
     "achieved",
-    "change",
     "key",
     "label",
-    "leads",
     "measure",
     "pct",
-    "regions",
     "status",
     "target",
     "teams"
@@ -12811,7 +12808,7 @@
    "audit_id": "KPI-SOURCE-700",
    "kind": "other",
    "module": "apps/team_performance/report.py",
-   "line": 315,
+   "line": 353,
    "label": null,
    "keys": [
     "achieved",
@@ -16742,7 +16739,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/team-performance/",
-   "page_title": "Team Performance \u00b7 Edify",
+   "page_title": "Team Performance",
    "roles": [
     "ADMIN",
     "CCEO",
@@ -16753,7 +16750,7 @@
     "RVP"
    ],
    "page_purpose": "The FY Weekly Report, read from the platform's records: completed work, school-profile entries and uploads. Your own portfolio. Your team: you and the CCEOs you supervise.",
-   "primary_action": "Review operational workspace",
+   "primary_action": "Team Performance",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -16772,7 +16769,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/team-performance/",
-   "page_title": "Team Performance \u00b7 Edify",
+   "page_title": "Team Performance",
    "roles": [
     "ADMIN",
     "CCEO",
@@ -16783,7 +16780,7 @@
     "RVP"
    ],
    "page_purpose": "The FY Weekly Report, read from the platform's records: completed work, school-profile entries and uploads. Your own portfolio. Your team: you and the CCEOs you supervise.",
-   "primary_action": "Review operational workspace",
+   "primary_action": "Team Performance",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -16802,7 +16799,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/team-performance/",
-   "page_title": "Team Performance \u00b7 Edify",
+   "page_title": "Team Performance",
    "roles": [
     "ADMIN",
     "CCEO",
@@ -16813,7 +16810,7 @@
     "RVP"
    ],
    "page_purpose": "The FY Weekly Report, read from the platform's records: completed work, school-profile entries and uploads. Your own portfolio. Your team: you and the CCEOs you supervise.",
-   "primary_action": "Review operational workspace",
+   "primary_action": "Team Performance",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",

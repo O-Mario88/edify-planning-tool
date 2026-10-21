@@ -274,21 +274,15 @@ class Report:
         return figures
 
     def executive_summary(self) -> dict:
+        """The summary's tiles and its table of every target area. The charts
+        load a section at a time (`section_charts`), as the reader reaches
+        them: drawn all at once they would pass the platform's page-size
+        budget."""
         period = self.period
         home = self.home()
         now = self.summary_figures(home, period.to_date)
         before = self.summary_figures(home, period.before)
-        regions = [
-            {
-                "label": region.label,
-                "lead": region.lead_name,
-                "region": region,
-                "figures": self.summary_figures(
-                    self.team_scope(region), period.to_date
-                ),
-            }
-            for region in self.roster.regions
-        ]
+        regions = self._team_figures()
         all_areas = self.areas()
         counted = ["portfolio", "active", "dc_data", "dc"]
         counted += [m.key for m in all_areas]
@@ -299,31 +293,9 @@ class Report:
         }
         sections: dict[str, list[dict]] = {}
         for measure in all_areas:
-            key = measure.key
-            share = now[f"{key}_pct"]
-            sections.setdefault(measure.section, []).append(
-                {
-                    "key": key,
-                    "label": self.area_label(measure, all_areas),
-                    "measure": measure,
-                    "target": now[f"{key}_target"],
-                    "achieved": now[key],
-                    "pct": share,
-                    "change": change.get(key),
-                    "status": status(share, running=True),
-                    "teams": [
-                        {
-                            "label": r["label"],
-                            "target": r["figures"][f"{key}_target"],
-                            "achieved": r["figures"][key],
-                            "pct": r["figures"][f"{key}_pct"],
-                        }
-                        for r in regions
-                    ],
-                    "regions": self.region_bars(key),
-                    "leads": self.lead_bars(regions, key),
-                }
-            )
+            area = self._area(measure, all_areas, now, regions)
+            area["change"] = change.get(measure.key)
+            sections.setdefault(measure.section, []).append(area)
         return {
             "now": now,
             "before": before,
@@ -333,6 +305,59 @@ class Report:
             # The table's columns: the area, the country's four, three a team.
             "width": 5 + 3 * len(regions),
             "milestones": self.delivery_milestones(home),
+        }
+
+    def section_charts(self, section: str) -> list[dict] | None:
+        """One section's target areas, each charted by region and by
+        Programme Lead side by side (owner, 2026-10-21); None for a section
+        the report does not have."""
+        all_areas = self.areas()
+        rows = [m for m in all_areas if m.section == section]
+        if not rows:
+            return None
+        now = self.summary_figures(self.home(), self.period.to_date)
+        regions = self._team_figures()
+        charts = []
+        for measure in rows:
+            area = self._area(measure, all_areas, now, regions)
+            area["regions"] = self.region_bars(measure.key)
+            area["leads"] = self.lead_bars(regions, measure.key)
+            charts.append(area)
+        return charts
+
+    def _team_figures(self) -> list[dict]:
+        return [
+            {
+                "label": region.label,
+                "lead": region.lead_name,
+                "region": region,
+                "figures": self.summary_figures(
+                    self.team_scope(region), self.period.to_date
+                ),
+            }
+            for region in self.roster.regions
+        ]
+
+    def _area(self, measure, all_areas, now: dict, regions: list[dict]) -> dict:
+        key = measure.key
+        share = now[f"{key}_pct"]
+        return {
+            "key": key,
+            "label": self.area_label(measure, all_areas),
+            "measure": measure,
+            "target": now[f"{key}_target"],
+            "achieved": now[key],
+            "pct": share,
+            "status": status(share, running=True),
+            "teams": [
+                {
+                    "label": r["label"],
+                    "target": r["figures"][f"{key}_target"],
+                    "achieved": r["figures"][key],
+                    "pct": r["figures"][f"{key}_pct"],
+                }
+                for r in regions
+            ],
         }
 
     def lead_bars(self, regions: list[dict], key: str) -> list[dict]:

@@ -106,6 +106,18 @@ def team_performance_view(request):
     tab = params.get("tab") if params.get("tab") in keys else "summary"
     reads = next(r for key, _label, r in tabs if key == tab)
     report = Report.build(request.user, period)
+    if tab == "summary" and params.get("charts"):
+        # One section's charts, loaded as the reader reaches it.
+        from django.http import Http404
+
+        charts = report.section_charts(params["charts"])
+        if charts is None:
+            raise Http404("No such section.")
+        return render(
+            request,
+            "partials/team_performance/area_charts.html",
+            {"areas": charts, "period": period, "roster": report.roster},
+        )
     context = {
         "tab": tab,
         "tabs": tabs,

@@ -94,7 +94,7 @@ class RosterTest(ReportFixture):
         self.assertEqual(
             summary["regions"][0]["figures"]["core_recruitment_target"], 25
         )
-        recruit = summary["sections"][0][1][0]
+        recruit = report.section_charts("Program Growth")[0]
         self.assertEqual([b["target"] for b in recruit["leads"]], [25])
 
     def test_a_cceo_reads_only_their_own_row(self):
@@ -394,8 +394,11 @@ class AreaChartTest(ReportFixture):
         self.assertEqual(
             [t["label"] for t in area["teams"]], ["Eastern", "No Programme Lead"]
         )
-        self.assertIn("regions", area)
-        self.assertIn("leads", area)
+        charts = self.report().section_charts("Program Growth")
+        self.assertEqual(charts[0]["key"], "core_recruitment")
+        self.assertIn("regions", charts[0])
+        self.assertIn("leads", charts[0])
+        self.assertIsNone(self.report().section_charts("No such section"))
         # A row label shared by a Core and a client row says which it is.
         labels = [a["label"] for _s, areas in summary["sections"] for a in areas]
         self.assertIn("CC-SEL – Core", labels)
@@ -505,9 +508,12 @@ class AreaChartTest(ReportFixture):
         self.assertEqual(sum(b["target"] for b in bars.values()), 100)
 
     def test_the_programme_lead_charts_are_their_own(self):
-        summary = self.report().executive_summary()
+        report = self.report()
+        sections = [
+            section for section, _areas in report.executive_summary()["sections"]
+        ]
 
-        for area in (a for _s, areas in summary["sections"] for a in areas):
+        for area in (a for section in sections for a in report.section_charts(section)):
             self.assertEqual(
                 [bar["label"] for bar in area["leads"]], ["Lead", "No Programme Lead"]
             )

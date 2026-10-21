@@ -46,26 +46,14 @@
   </section>
 
   {% comment %}Every target area charted by region (every region) and, beside
-  it on the same row, by Programme Lead (owner, 2026-10-21). A region's
-  target is each CCEO's target shared across the regions their eligible
-  schools are in (`Report.region_bars`).{% endcomment %}
+  it on the same row, by Programme Lead (owner, 2026-10-21). Each section's
+  charts load as the reader reaches it (`Report.section_charts`): drawn at
+  once, 54 areas' charts and tables pass the platform's page-size budget.{% endcomment %}
   {% for section, areas in summary.sections %}
   <h2 class="tp-section-title" data-tp-chart-section>{{ section }}</h2>
-  {% for area in areas %}
-  <section class="tp-card" data-tp-area-row="{{ area.key }}">
-    <header class="tp-card__head"><h2>{{ area.label }}: Target vs. Achieved</h2><span class="tp-card__meta">{{ area.achieved|num }} of {{ area.target|num }}{% if area.pct is not None %} · {{ area.pct|pct }}{% endif %}{% if area.status %} · {{ area.status }}{% endif %}{% if area.measure.unit != "schools" %} · {{ area.measure.unit }}{% endif %}</span></header>
-    <div class="tp-area-row">
-      <div data-tp-chart="region">
-        <h3 class="tp-chart-title">{{ area.label }} by region</h3>
-        {% include "partials/team_performance/target_chart.html" with bars=area.regions area=area.label label="by region" heading="Region" %}
-      </div>
-      <div data-tp-chart="lead">
-        <h3 class="tp-chart-title">{{ area.label }} by Programme Lead</h3>
-        {% include "partials/team_performance/target_chart.html" with bars=area.leads area=area.label label="by Programme Lead" heading="Programme Lead" %}
-      </div>
-    </div>
-  </section>
-  {% endfor %}
+  <div class="tp-card tp-charts-pending" data-tp-charts-for="{{ section }}" hx-get="/team-performance/?{{ query }}{% if query %}&amp;{% endif %}tab=summary&amp;charts={{ section|urlencode }}" hx-trigger="intersect once" hx-swap="outerHTML">
+    <p class="tp-note">Loading the {{ section }} charts…</p>
+  </div>
   {% endfor %}
   <p class="tp-note">Each region's figure counts where the school is; a session counts where most of the schools it reached are, and participants are summed. A region's target is each CCEO's target shared across the regions their eligible schools are in (client schools for a client area and for recruitment, Core schools for a Core one, else all their schools); a target nobody in a region holds is "Not placed", so the regions add up to the country's target.</p>
 

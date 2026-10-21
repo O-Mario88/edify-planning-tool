@@ -16017,6 +16017,27 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 1372,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/team-performance/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Area Charts",
+      "purpose": "Reusable area charts interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/team_performance/area_charts.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 4177,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -16116,20 +16137,21 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7560,
+      "bytes": 6858,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Summary",
       "purpose": "Reusable summary interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "loading"
       ],
       "tables": 2,
       "template": "partials/team_performance/summary.html",
@@ -95275,6 +95297,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/team_performance/area_charts.html",
         "template:pages/team_performance/index.html",
         "test:referenced-by-automated-test",
         "permission:team_performance"
@@ -95283,7 +95306,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -95293,14 +95316,14 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-6A9ACC2BF7",
-      "page_title": "Team Performance \u00b7 Edify",
-      "page_type": "operational-queue",
+      "page_title": "Team Performance",
+      "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/team-performance.css"
       ],
       "permission_key": "team_performance",
-      "primary_action": "Review operational workspace",
-      "primary_user_decision": "Which queued record should be handled next?",
+      "primary_action": "Team Performance",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "The FY Weekly Report, read from the platform's records: completed work, school-profile entries and uploads. Your own portfolio. Your team: you and the CCEOs you supervise.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
@@ -95327,7 +95350,7 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
@@ -95336,6 +95359,7 @@
         "type": "none"
       },
       "templates": [
+        "partials/team_performance/area_charts.html",
         "pages/team_performance/index.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -121235,7 +121259,7 @@
     },
     {
       "callback": "apps.frontend.views.team_performance_views.team_performance_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -121244,6 +121268,7 @@
       "route": "/team-performance/",
       "route_name": "team_performance",
       "templates": [
+        "partials/team_performance/area_charts.html",
         "pages/team_performance/index.html"
       ]
     },
@@ -122037,8 +122062,8 @@
     "activity_states": 24,
     "all_routes": 1419,
     "api_routes": 364,
-    "component_templates": 658,
-    "full_pages": 260,
+    "component_templates": 659,
+    "full_pages": 259,
     "mobile_contract_pass": 597,
     "nonvisual_actions": 303,
     "page_types": {
@@ -122046,13 +122071,13 @@
       "analytics": 7,
       "approval-or-verification": 19,
       "dashboard": 0,
-      "interaction-fragment": 637,
-      "operational-queue": 159,
+      "interaction-fragment": 638,
+      "operational-queue": 158,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 49
     },
-    "partials_and_drawers": 334,
+    "partials_and_drawers": 335,
     "permission_gated": 921,
     "permission_keys": 127,
     "roles": 15,

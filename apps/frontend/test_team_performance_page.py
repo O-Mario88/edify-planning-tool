@@ -139,18 +139,39 @@ class TeamPerformancePageTest(LedgerFixture):
 
         body = self.client.get(URL).content.decode()
 
+        # Each section's charts load as the reader reaches them, so the page
+        # stays within the platform's page-size budget (the route audit's
+        # 10,000 elements) however many targets there are.
+        placeholders = body.count("data-tp-charts-for=")
+        self.assertGreater(placeholders, 5)
+        self.assertEqual(body.count('hx-trigger="intersect once"'), placeholders)
+        self.assertNotIn("data-tp-area-row=", body)
+
+        visits = self.client.get(URL, {"tab": "summary", "charts": "Visits"})
+        fragment = visits.content.decode()
         # One row per target area, its region chart and its Programme Lead
         # chart side by side.
-        rows = body.count("data-tp-area-row=")
-        self.assertGreater(rows, 40)
-        self.assertEqual(body.count('data-tp-chart="region"'), rows)
-        self.assertEqual(body.count('data-tp-chart="lead"'), rows)
-        self.assertIn("Client Schools Trained by Programme Lead", body)
-        self.assertIn("Core Visit 1 by Programme Lead", body)
+        rows = fragment.count("data-tp-area-row=")
+        self.assertGreater(rows, 5)
+        self.assertEqual(fragment.count('data-tp-chart="region"'), rows)
+        self.assertEqual(fragment.count('data-tp-chart="lead"'), rows)
+        self.assertIn("Core Visit 1 by Programme Lead", fragment)
+        self.assertNotIn("<html", fragment)
         # Each chart has its figures as a table beneath it (owner,
         # 2026-10-21: "all the graphs in the executive summary is accompanied
         # by the tables below or above each graph").
-        self.assertEqual(body.count("data-tp-chart-table"), 2 * rows)
+        self.assertEqual(fragment.count("data-tp-chart-table"), 2 * rows)
+        trainings = self.client.get(
+            URL, {"tab": "summary", "charts": "Client School Trainings"}
+        ).content.decode()
+        self.assertIn("Client Schools Trained by Programme Lead", trainings)
+
+    def test_an_unknown_chart_section_is_refused(self):
+        self.client.force_login(self.lead)
+
+        response = self.client.get(URL, {"tab": "summary", "charts": "Nope"})
+
+        self.assertEqual(response.status_code, 404)
 
     def test_core_visits_and_trainings_are_one_table_visits_first(self):
         """Owner, 2026-10-21: "merge core visits and training tables into 1

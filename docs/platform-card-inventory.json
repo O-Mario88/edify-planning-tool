@@ -1,13 +1,13 @@
 {
  "summary": {
   "titled_cards": 611,
-  "templates": 226,
+  "templates": 227,
   "distinct_titles": 585,
   "with_card_key": 13,
-  "untitled_surfaces": 560,
+  "untitled_surfaces": 561,
   "untitled_chrome": 153,
   "untitled_nested": 185,
-  "untitled_headless": 222,
+  "untitled_headless": 223,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 19,
   "ambiguous_titles": 1
@@ -6516,6 +6516,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/team_performance/area_charts.html",
+   "line": 7,
+   "title": ": Target vs. Achieved",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/team_performance/core.html",
    "line": 5,
    "title": "Core School Visits &amp; Trainings",
@@ -6648,20 +6657,11 @@
   },
   {
    "template": "templates/partials/team_performance/summary.html",
-   "line": 55,
-   "title": ": Target vs. Achieved",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "tp-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/team_performance/summary.html",
-   "line": 72,
+   "line": 54,
    "title": "Program Delivery &amp; Operational Milestones",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "tp-card",
+   "classes": "tp-card tp-charts-pending",
    "branch_path": []
   },
   {
