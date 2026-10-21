@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **936**
-- All registered routes: **1417**
+- Routed product surfaces: **938**
+- All registered routes: **1419**
 - API routes: **364**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **39**
 - Activity states: **24**
-- Shared component templates: **651**
-- Full pages: **258**
+- Shared component templates: **658**
+- Full pages: **260**
 - Partials and drawers: **334**
-- Permission-gated surfaces: **919**
-- Referenced by automated tests: **845**
+- Permission-gated surfaces: **921**
+- Referenced by automated tests: **847**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -908,6 +908,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-BD89383B5D | /target-distribution/import/template | Target Distribution Import Template | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-A9FF05F38F | /target-distribution/team | Team Priority Distribution · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E96237DE61 | /target-distribution/team/action | Team Target Distribution Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-6A9ACC2BF7 | /team-performance/ | Team Performance · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-E1EA41A3B7 | /team-performance/country-targets/ | Country Targets · Team Performance · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EA89AC9A38 | /team-planning-oversight/ | Planning Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-14E1DA418E | /team-planning-oversight/detail | Team Planning Oversight Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-368D278D44 | /team-planning-oversight/export | Team Planning Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

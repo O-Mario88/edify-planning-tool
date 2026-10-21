@@ -1,0 +1,65 @@
+{% load kpi_metrics team_performance_tags %}
+<div class="tp-stack" data-tp-milestones>
+  {% if not embedded %}
+  {% kpi_strip %}
+    {% kpi_metric %}{% kpi_label %}Total Milestones{% endkpi_label %}{{ milestones.count|num }}{% kpi_helper %}Strategic targets tracked{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Priority Areas{% endkpi_label %}{{ milestones.domain_count|num }}{% kpi_helper %}Edify program domains{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Cumulative Target{% endkpi_label %}{{ milestones.to_date_target|num }}{% kpi_helper %}Planned targets to the end of {{ period.label }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Cumulative Pacing{% endkpi_label %}{{ milestones.pacing|pct }}{% kpi_helper %}Overall completion rate{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Trackers Provisioned{% endkpi_label %}{{ milestones.tracked|num }} of {{ milestones.count|num }}{% kpi_helper %}Milestones the records measure{% endkpi_helper %}{% endkpi_metric %}
+  {% endkpi_strip %}
+  {% endif %}
+
+  <section class="tp-card">
+    <header class="tp-card__head"><h2>Strategic Milestones &amp; Operational Trackers</h2><span class="tp-card__meta">{{ period.label }} · cumulative to its end · the year</span></header>
+    <div class="tp-scroll">
+      <table class="tp-table edify-table--compact" data-table-fit="scroll">
+        <thead>
+          <tr class="tp-band">
+            <th scope="col" class="tp-sticky"></th>
+            <th scope="colgroup" colspan="3" class="tp-start">{{ period.label }}</th>
+            <th scope="colgroup" colspan="3" class="tp-start">Cumulative</th>
+            <th scope="colgroup" colspan="3" class="tp-start">Country Target</th>
+            <th scope="colgroup" colspan="3" class="tp-start"></th>
+          </tr>
+          <tr>
+            <th scope="col" class="tp-sticky">Strategic Milestone &amp; Mode</th>
+            <th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">%</th>
+            <th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">%</th>
+            <th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">% Goal</th>
+            <th scope="col" class="tp-start">Status</th><th scope="col">Responsible Lead</th><th scope="col">Tracker</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for domain, rows in milestones.domains %}
+          <tr class="edify-group-head"><th colspan="13" scope="colgroup"><span class="tp-freeze"><span class="edify-group-head__label">{{ domain }}</span><span class="edify-group-head__count">{{ rows|length }} milestone{{ rows|length|pluralize }}</span></span></th></tr>
+          {% for row in rows %}{% with spec=row.spec %}
+          <tr data-tp-strategic="{{ spec.title|slugify }}-{{ spec.mode|slugify }}">
+            <th scope="row" class="tp-sticky">{{ spec.title }} <span class="tp-muted">· {{ spec.mode }}</span></th>
+            {% if row.kind == "untracked" %}
+            <td class="tp-start tp-muted" colspan="6">Not tracked in the system</td>
+            <td class="tp-num tp-start">{{ row.year.target|num }}</td><td class="tp-num"></td><td class="tp-num"></td>
+            {% elif row.kind == "score" %}
+            <td class="tp-start tp-muted" colspan="6">Average SSA score this year (latest per school)</td>
+            <td class="tp-num tp-start">—</td><td class="tp-num">{{ row.year.achieved|num }}</td><td class="tp-num"></td>
+            {% elif row.kind == "rate" %}
+            <td class="tp-num tp-start">—</td><td class="tp-num">—</td><td class="tp-num"></td>
+            <td class="tp-num tp-start">{{ row.to_date.target|pct }}</td><td class="tp-num">{{ row.to_date.achieved|pct }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ row.to_date.pct|tone }}">{{ row.to_date.pct|pct }}</span></td>
+            <td class="tp-num tp-start">{{ row.year.target|pct }}</td><td class="tp-num">{{ row.year.achieved|pct }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ row.year.pct|tone }}">{{ row.year.pct|pct }}</span></td>
+            {% else %}
+            <td class="tp-num tp-start">{{ row.period.target|num }}</td><td class="tp-num">{{ row.period.achieved|num }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ row.period.pct|tone }}">{{ row.period.pct|pct }}</span></td>
+            <td class="tp-num tp-start">{{ row.to_date.target|num }}</td><td class="tp-num">{{ row.to_date.achieved|num }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ row.to_date.pct|tone }}">{{ row.to_date.pct|pct }}</span></td>
+            <td class="tp-num tp-start"{% if row.target %} title="{{ row.target.source }}"{% endif %}>{{ row.year.target|num }}</td><td class="tp-num">{{ row.year.achieved|num }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ row.year.pct|tone }}">{{ row.year.pct|pct }}</span></td>
+            {% endif %}
+            <td class="tp-start"><span class="tp-chip" data-tone="{{ row.tone }}">{{ row.status }}</span></td>
+            <td>{{ spec.lead }}</td>
+            <td>{% if row.tracker.0 %}<a href="{{ row.tracker.0 }}">↗ {{ row.tracker.1 }}</a>{% else %}<span class="tp-muted">—</span>{% endif %}</td>
+          </tr>
+          {% endwith %}{% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="tp-note">The live sheet's milestones. Achieved is read from the platform's records; the target is the matching Uganda Master Priority Plan milestone, its monthly figures the approved phasing. "Not tracked" is a milestone the platform keeps no record for.</p>
+  </section>
+</div>

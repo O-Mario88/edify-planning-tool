@@ -1,0 +1,51 @@
+{% load team_performance_tags frontend_filters %}
+<div class="tp-stack" data-tp-core>
+  {% for kind, title in core_kinds %}
+  <section class="tp-card" data-tp-core-kind="{{ kind }}">
+    <header class="tp-card__head"><h2>Core School {{ title }}</h2><span class="tp-card__meta">FY {{ period.fy }} to date · each Core school's package {{ title|lower }} done, as on Core School Oversight</span></header>
+    <div class="tp-scroll">
+      <table class="tp-table edify-table--compact" data-table-fit="scroll">
+        <thead>
+          <tr class="tp-band">
+            <th scope="col" class="tp-sticky"></th><th scope="col"></th><th scope="col"></th>
+            <th scope="colgroup" colspan="4" class="tp-start">Core Schools by {{ title }} Done</th>
+            <th scope="colgroup" colspan="3" class="tp-start">All Four {{ title }}</th>
+            <th scope="colgroup" colspan="2" class="tp-start">Three or More</th>
+          </tr>
+          <tr>
+            <th scope="col" class="tp-sticky">CCEO</th>
+            <th scope="col">Region</th>
+            <th scope="col" class="tp-num">Core Schools</th>
+            <th scope="col" class="tp-num tp-start">1</th><th scope="col" class="tp-num">2</th><th scope="col" class="tp-num">3</th><th scope="col" class="tp-num">4</th>
+            <th scope="col" class="tp-num tp-start">Expected</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">Achieved %</th>
+            <th scope="col" class="tp-num tp-start">Schools</th><th scope="col" class="tp-num">% of Core</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in package.lines %}{% with f=line|get_item:kind %}
+          <tr data-tp-core-line="{{ line.officer.staff_id }}">
+            <th scope="row" class="tp-sticky">{{ line.officer.name }}</th>
+            <td>{{ line.region }}</td>
+            <td class="tp-num">{{ line.core|num }}</td>
+            <td class="tp-num tp-start">{{ f.one|num }}</td><td class="tp-num">{{ f.two|num }}</td><td class="tp-num">{{ f.three|num }}</td><td class="tp-num">{{ f.four|num }}</td>
+            <td class="tp-num tp-start">{{ f.expected|num }}</td><td class="tp-num">{{ f.done|num }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ f.pct|tone }}">{{ f.pct|pct }}</span></td>
+            <td class="tp-num tp-start">{{ f.three_plus|num }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ f.three_pct|tone }}">{{ f.three_pct|pct }}</span></td>
+          </tr>
+          {% endwith %}{% endfor %}
+          {% with f=package.total|get_item:kind %}
+          <tr class="tp-grand">
+            <th scope="row" class="tp-sticky">{% if roster.own %}Your portfolio{% else %}National Total{% endif %}</th>
+            <td></td>
+            <td class="tp-num">{{ package.total.core|num }}</td>
+            <td class="tp-num tp-start">{{ f.one|num }}</td><td class="tp-num">{{ f.two|num }}</td><td class="tp-num">{{ f.three|num }}</td><td class="tp-num">{{ f.four|num }}</td>
+            <td class="tp-num tp-start">{{ f.expected|num }}</td><td class="tp-num">{{ f.done|num }}</td><td class="tp-num">{{ f.pct|pct }}</td>
+            <td class="tp-num tp-start">{{ f.three_plus|num }}</td><td class="tp-num">{{ f.three_pct|pct }}</td>
+          </tr>
+          {% endwith %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endfor %}
+  <p class="tp-muted text-xs">Expected is four of each a Core school a year; achieved counts each school's package visits or trainings done, up to four. A Core school counts under the number it has reached.</p>
+</div>

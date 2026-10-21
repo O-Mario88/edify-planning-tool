@@ -68,6 +68,8 @@ EXPECTED_PL_SIDEBAR = [
             ("Weekly Advance Request", "/fund-requests/weekly"),
             ("Team Leave", "/leave/approvals"),
             ("Field Debrief", "/debriefs"),
+            # The weekly report, its own page (owner, 2026-10-20).
+            ("Team Performance", "/team-performance/"),
             ("Coaching", "/team/coaching"),
             ("Escalations", "/escalations"),
             ("Team Assignments", "/actions/sent"),
@@ -93,7 +95,9 @@ EXPECTED_PL_SIDEBAR = [
         [
             ("Priorities", "/priorities/master"),
             ("My Performance Agreement", "/my-performance"),
-            ("Team Performance", "/performance-reviews"),
+            # The review workspace's own entry since Team Performance became
+            # the weekly report (owner, 2026-10-20).
+            ("Performance Reviews", "/performance-reviews"),
             ("My Professional Development", "/my-professional-development"),
         ],
     ),
@@ -178,9 +182,9 @@ class ProgramLeadSidebarTest(SimpleTestCase):
             ("/leave/tracker", "Team Leave"),
             ("/leave/team-availability", "Team Leave"),
             ("/extra-work", "Team Assignments"),
-            ("/recovery-plans", "Team Performance"),
-            ("/cpd-learning", "Team Performance"),
-            ("/policy-compliance", "Team Performance"),
+            ("/recovery-plans", "Performance Reviews"),
+            ("/cpd-learning", "Performance Reviews"),
+            ("/policy-compliance", "Performance Reviews"),
             ("/cce-leadership/coaching", "Regional Lead"),
             ("/strategic-priorities", "Priorities"),
             ("/target-distribution/team", "Priorities"),

@@ -89,6 +89,10 @@ IA_SIDEBAR = [
         "WEEKLY",
         [
             ("Weekly Advance Request", "/fund-requests/weekly"),
+            # IA sets the report's country targets and reads it (owner,
+            # 2026-10-20: "All country target should be set by either IA or
+            # Admin").
+            ("Team Performance", "/team-performance/"),
             ("Field Debrief", "/debriefs"),
             ("Unassigned Schools", "/admin-panel/staff-setup-queue"),
             ("Returned Activities", "/ia/returned/"),

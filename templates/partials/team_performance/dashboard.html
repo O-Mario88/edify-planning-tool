@@ -1,0 +1,204 @@
+{% load kpi_metrics team_performance_tags %}
+{% comment %}
+The live sheet's "CCEO Officer Performance and Milestones Dashboard" (owner,
+2026-10-20): CCEOs, Officer Deep-Dive, Milestones, Regions and Master Grid,
+with region chips and the officer profile. Every figure is the year to the
+end of the chosen month, read from the records; nothing here is typed.
+{% endcomment %}
+{% with t=board.total %}
+<div class="tp-stack" data-tp-dashboard="{{ dash_view }}">
+  <section class="tp-card tp-dash-head">
+    <div>
+      <h2 class="tp-dash-title">CCEO Officer Performance &amp; Strategic Milestones</h2>
+      <p class="tp-card__meta">Regional Field Tracking · School Visits &amp; Trainings · Recruitment · SSA Reviews · year to the end of {{ period.month_label }}</p>
+    </div>
+    <nav class="tp-subnav" aria-label="Dashboard views">
+      {% for key, label in dash_views %}
+      <a class="tp-subnav__link{% if key == dash_view %} is-active{% endif %}" href="?{{ dash_query }}{% if dash_query %}&amp;{% endif %}tab=dashboard&amp;view={{ key }}"{% if key == dash_view %} aria-current="page"{% endif %} data-tp-view="{{ key }}">{{ label }}{% if key == "cceos" %} ({{ board.officers }}){% elif key == "milestones" %} (54){% endif %}</a>
+      {% endfor %}
+    </nav>
+  </section>
+
+  {% if not roster.own %}
+  <nav class="tp-chips" aria-label="Region">
+    <span class="tp-chips__label">Region</span>
+    <a class="tp-chip-link{% if not dash_region %} is-active{% endif %}" href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view={{ dash_view }}&amp;sort={{ dash_sort }}">All <span>{{ roster.officers|length }}</span></a>
+    {% for label, count in board.regions %}
+    <a class="tp-chip-link{% if label == dash_region %} is-active{% endif %}" href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view={{ dash_view }}&amp;sort={{ dash_sort }}&amp;region={{ label|urlencode }}" data-tp-region-chip="{{ label }}">{{ label }} <span>{{ count }}</span></a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+
+  {% kpi_strip %}
+    {% kpi_metric %}{% kpi_label %}Active CCEOs{% endkpi_label %}{{ board.officers|num }}{% kpi_helper %}Across {{ board.rollups|length }} region{{ board.rollups|length|pluralize }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Portfolio Schools{% endkpi_label %}{{ t.portfolio|num }}{% kpi_helper %}{{ t.active_pct|pct }} active{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Core Recruited{% endkpi_label %}{{ t.recruit|num }}{% kpi_helper %}New Core schools{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}School Visits{% endkpi_label %}{{ t.visits|num }}{% kpi_helper %}Core ({{ t.visits_core|num }}) + Non-Core ({{ t.visits_noncore|num }}){% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Trainings Logged{% endkpi_label %}{{ t.trainings|num }}{% kpi_helper %}Core ({{ t.trainings_core|num }}) + Client/Other ({{ t.trainings_other|num }}){% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}SSA Reviews{% endkpi_label %}{{ t.ssa|num }}{% kpi_helper %}Cohort {{ t.ssa_cohort|num }} · Client {{ t.ssa_client|num }}{% endkpi_helper %}{% endkpi_metric %}
+  {% endkpi_strip %}
+
+  {% if dash_view == "cceos" %}
+  <nav class="tp-chips" aria-label="Sort officers by">
+    <span class="tp-chips__label">Sort officers by</span>
+    {% for key, label in dash_sorts.items %}
+    <a class="tp-chip-link{% if key == dash_sort %} is-active{% endif %}" href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view=cceos&amp;sort={{ key }}{% if dash_region %}&amp;region={{ dash_region|urlencode }}{% endif %}">{{ label }}</a>
+    {% endfor %}
+    <span class="tp-chips__count">Showing {{ board.officers }} officer{{ board.officers|pluralize }}</span>
+  </nav>
+  <div class="tp-cards">
+    {% for card in board.cards %}{% with f=card.f %}
+    <article class="tp-card tp-officer" data-tp-officer-card="{{ card.officer.staff_id }}">
+      <header class="tp-officer__head">
+        <h3>{{ card.officer.name }}</h3>
+        <span class="tp-badge">{{ card.region }}</span>
+      </header>
+      <p class="tp-officer__meta">Portfolio: <strong>{{ f.portfolio|num }}</strong> schools ({{ f.active_pct|pct }} active)</p>
+      <div class="tp-stats">
+        <div class="tp-stat"><span class="tp-stat__label">Visits</span><strong>{{ f.visits|num }}</strong><small>Core (1–4): {{ f.visits_core|num }} · Non-Core: {{ f.visits_noncore|num }}</small></div>
+        <div class="tp-stat"><span class="tp-stat__label">Trainings</span><strong>{{ f.trainings|num }}</strong><small>Core: {{ f.trainings_core|num }} · Client/Other: {{ f.trainings_other|num }}</small></div>
+        <div class="tp-stat"><span class="tp-stat__label">Recruitment</span><strong>{{ f.recruit|num }}</strong><small>Target: {% if f.recruit_target is None %}Not set{% else %}{{ f.recruit_target|num }}{% endif %}</small></div>
+        <div class="tp-stat"><span class="tp-stat__label">SSA Reviews</span><strong>{{ f.ssa|num }}</strong><small>Cohort: {{ f.ssa_cohort|num }} · Client: {{ f.ssa_client|num }}</small></div>
+      </div>
+      <footer class="tp-officer__foot">
+        <span>Enrollment: <strong>{{ f.enrol_pct|pct }}</strong></span>
+        <a href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view=deep&amp;officer={{ card.officer.staff_id }}">Deep-Dive Scorecard →</a>
+      </footer>
+    </article>
+    {% endwith %}{% empty %}
+    {% include "components/empty_state.html" with message="No officer in this region." compact="true" %}
+    {% endfor %}
+  </div>
+
+  {% elif dash_view == "deep" %}
+  {% if deep %}{% with f=deep.f %}
+  <section class="tp-card tp-deep" data-tp-deep="{{ deep.officer.staff_id }}">
+    <header class="tp-officer__head">
+      <h3>{{ deep.officer.name }}</h3>
+      <span class="tp-badge">{{ deep.region }}</span>
+    </header>
+    <p class="tp-officer__meta">Total assigned portfolio: <strong>{{ f.portfolio|num }}</strong> schools · Active: <strong>{{ f.active|num }}</strong> · Inactive: {{ f.inactive|num }} ({{ f.active_pct|pct }} active rate)</p>
+    <div class="tp-stats tp-stats--four">
+      <div class="tp-stat"><span class="tp-stat__label">Total School Visits</span><strong>{{ f.visits|num }}</strong><small>Core: {{ f.visits_core|num }} · Non-Core (FY): {{ f.visits_noncore|num }}</small></div>
+      <div class="tp-stat"><span class="tp-stat__label">Trainings Delivered</span><strong>{{ f.trainings|num }}</strong><small>Core: {{ f.trainings_core|num }} · Client: {{ f.trainings_other|num }}</small></div>
+      <div class="tp-stat"><span class="tp-stat__label">Core Recruitment</span><strong>{{ f.recruit|num }}</strong><small>Target: {% if f.recruit_target is None %}Not set{% else %}{{ f.recruit_target|num }} (Var: {{ f.recruit_var|signed }}){% endif %}</small></div>
+      <div class="tp-stat"><span class="tp-stat__label">SSA &amp; Data Reviews</span><strong>{{ f.ssa|num }}</strong><small>Cohort: {{ f.ssa_cohort|num }} · Client: {{ f.ssa_client|num }}</small></div>
+    </div>
+  </section>
+  <div class="tp-deep-grid">
+    <section class="tp-card tp-panel">
+      <header class="tp-panel__head"><h3>School Visits Breakdown</h3><span class="tp-badge">Total: {{ f.visits|num }}</span></header>
+      <h4 class="tp-panel__sub">Core School Visits (Staff &amp; Partner) <span>Subtotal: {{ f.visits_core|num }}</span></h4>
+      <div class="tp-boxes">
+        {% for n in f.core_visit_steps %}<div class="tp-box"><span>{% if forloop.counter == 4 %}4+ Visits{% else %}{{ forloop.counter }} Visit{{ forloop.counter|pluralize }}{% endif %}</span><strong>{{ n|num }}</strong></div>{% endfor %}
+      </div>
+      <h4 class="tp-panel__sub">Non-Core / Client School Visits <span>FY Total: {{ f.visits_noncore|num }}</span></h4>
+      <div class="tp-boxes tp-boxes--three">
+        <div class="tp-box"><span>FY Visited (Staff/Partner)</span><strong>{{ f.visits_noncore|num }}</strong></div>
+        <div class="tp-box"><span>This Month (Staff)</span><strong>{{ f.visits_noncore_month_staff|num }}</strong></div>
+        <div class="tp-box"><span>FY Visited (Partner)</span><strong>{{ f.visits_noncore_partner|num }}</strong></div>
+      </div>
+    </section>
+    <section class="tp-card tp-panel">
+      <header class="tp-panel__head"><h3>Trainings Delivery Matrix</h3><span class="tp-badge">Total: {{ f.trainings|num }}</span></header>
+      <h4 class="tp-panel__sub">Core School Trainings (Modules 1–4) <span>Subtotal: {{ f.trainings_core|num }}</span></h4>
+      <div class="tp-boxes">
+        {% for n in f.core_training_steps %}<div class="tp-box"><span>Training {{ forloop.counter }}</span><strong>{{ n|num }}</strong></div>{% endfor %}
+      </div>
+      <h4 class="tp-panel__sub">Client &amp; Specialized Domains <span>Subtotal: {{ f.trainings_other|num }}</span></h4>
+      <div class="tp-boxes">
+        <div class="tp-box"><span>Client Trainings</span><strong>{{ f.trainings_client|num }}</strong></div>
+        <div class="tp-box"><span>Online Modules</span><strong>{{ f.trainings_online|num }}</strong></div>
+        <div class="tp-box"><span>TAM / Biblical</span><strong>{{ f.trainings_tam|num }}</strong></div>
+        <div class="tp-box"><span>Early Childhood</span><strong>{{ f.trainings_ece|num }}</strong></div>
+      </div>
+    </section>
+    <section class="tp-card tp-panel">
+      <header class="tp-panel__head"><h3>Core Recruitment &amp; Portfolio Health</h3><span class="tp-badge">Achieved: {{ f.recruit|num }}</span></header>
+      <div class="tp-boxes">
+        <div class="tp-box"><span>Annual Target</span><strong>{{ f.recruit_target|num }}</strong></div>
+        <div class="tp-box"><span>Recruited FY</span><strong>{{ f.recruit|num }}</strong></div>
+        <div class="tp-box"><span>Baseline SSA</span><strong>{{ f.baseline_ssa|num }}</strong></div>
+        <div class="tp-box"><span>Variance</span><strong>{{ f.recruit_var|signed }}</strong></div>
+      </div>
+      <h4 class="tp-panel__sub">Discipleship Club (DC) Rollout</h4>
+      <div class="tp-boxes tp-boxes--three">
+        <div class="tp-box"><span>DC Data Collected</span><strong>{{ f.dc_data|num }}</strong></div>
+        <div class="tp-box"><span>With a Club</span><strong>{{ f.dc|num }}</strong></div>
+        <div class="tp-box"><span>% With DC</span><strong>{{ f.dc_pct|pct }}</strong></div>
+      </div>
+    </section>
+    <section class="tp-card tp-panel">
+      <header class="tp-panel__head"><h3>Data &amp; SSA Reviews</h3><span class="tp-badge">Reviews: {{ f.ssa|num }}</span></header>
+      <div class="tp-boxes tp-boxes--two">
+        <div class="tp-box"><span>Cohort SSA (Core, Yr 1–3)</span><strong>{{ f.ssa_cohort|num }}</strong><small>Target: {{ f.ssa_cohort_target|num }} (Var: {{ f.ssa_cohort_var|signed }})</small></div>
+        <div class="tp-box"><span>Client SSA to Date</span><strong>{{ f.ssa_client|num }}</strong><small>Of {{ f.ssa_client_target|num }} client schools</small></div>
+      </div>
+      <h4 class="tp-panel__sub">School Demographics Coverage</h4>
+      <div class="tp-boxes tp-boxes--two">
+        <div class="tp-box"><span>Enrollment Completion</span><strong>{{ f.enrol_pct|pct }}</strong></div>
+        <div class="tp-box"><span>Metrics Tracking Rate</span><strong>{{ f.metrics_pct|pct }}</strong></div>
+      </div>
+    </section>
+  </div>
+  {% endwith %}{% endif %}
+
+  {% elif dash_view == "milestones" %}
+  {% include "partials/team_performance/milestones.html" with embedded=True %}
+
+  {% elif dash_view == "regions" %}
+  <div class="tp-cards">
+    {% for roll in board.rollups %}{% with f=roll.f %}
+    <article class="tp-card tp-officer" data-tp-rollup="{{ roll.region.label }}">
+      <header class="tp-officer__head"><h3>{{ roll.region.label }}</h3><span class="tp-badge">{{ roll.officers }} officer{{ roll.officers|pluralize }}</span></header>
+      <p class="tp-officer__meta">Total portfolio: <strong>{{ f.portfolio|num }}</strong> schools · {{ f.active_pct|pct }} active</p>
+      <div class="tp-stats">
+        <div class="tp-stat"><span class="tp-stat__label">Total Visits</span><strong>{{ f.visits|num }}</strong></div>
+        <div class="tp-stat"><span class="tp-stat__label">Total Trainings</span><strong>{{ f.trainings|num }}</strong></div>
+        <div class="tp-stat"><span class="tp-stat__label">Recruitment</span><strong>{{ f.recruit|num }}</strong></div>
+        <div class="tp-stat"><span class="tp-stat__label">SSA Reviews</span><strong>{{ f.ssa|num }}</strong></div>
+      </div>
+    </article>
+    {% endwith %}{% endfor %}
+  </div>
+
+  {% else %}
+  <section class="tp-card">
+    <header class="tp-card__head"><h2>Officer Performance Master Ledger</h2><span class="tp-card__meta">Year to the end of {{ period.month_label }} · the {{ period.month_label }} Summary's figures · {{ board.officers }} officer{{ board.officers|pluralize }}</span></header>
+    <div class="tp-scroll">
+      <table class="tp-table edify-table--compact" data-table-fit="scroll">
+        <thead><tr>
+          <th scope="col">Region</th>
+          <th scope="col" class="tp-sticky">CCEO</th>
+          <th scope="col" class="tp-num tp-start">Portfolio</th><th scope="col" class="tp-num">Active</th><th scope="col" class="tp-num">Active %</th>
+          <th scope="col" class="tp-num tp-start">Core Recruited</th><th scope="col" class="tp-num">Baseline SSA</th><th scope="col" class="tp-num">Cohort SSA</th><th scope="col" class="tp-num">Client SSA</th>
+          <th scope="col" class="tp-num tp-start">Core (1–4)</th><th scope="col" class="tp-num">Non-Core (FY)</th><th scope="col" class="tp-num">Total Visits</th>
+          <th scope="col" class="tp-num tp-start">Core Trainings</th><th scope="col" class="tp-num">Client/Other</th><th scope="col" class="tp-num">Total Trainings</th>
+        </tr></thead>
+        <tbody>
+          {% for card in board.cards %}{% with f=card.f %}
+          <tr data-tp-grid="{{ card.officer.staff_id }}">
+            <td>{{ card.region }}</td>
+            <th scope="row" class="tp-sticky">{{ card.officer.name }}</th>
+            <td class="tp-num tp-start">{{ f.portfolio|num }}</td><td class="tp-num">{{ f.active|num }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ f.active_pct|tone }}">{{ f.active_pct|pct }}</span></td>
+            <td class="tp-num tp-start">{{ f.recruit|num }}</td><td class="tp-num">{{ f.baseline_ssa|num }}</td><td class="tp-num">{{ f.ssa_cohort|num }}</td><td class="tp-num">{{ f.ssa_client|num }}</td>
+            <td class="tp-num tp-start">{{ f.visits_core|num }}</td><td class="tp-num">{{ f.visits_noncore|num }}</td><td class="tp-num"><strong>{{ f.visits|num }}</strong></td>
+            <td class="tp-num tp-start">{{ f.trainings_core|num }}</td><td class="tp-num">{{ f.trainings_other|num }}</td><td class="tp-num"><strong>{{ f.trainings|num }}</strong></td>
+          </tr>
+          {% endwith %}{% endfor %}
+          <tr class="tp-grand">
+            <td></td>
+            <th scope="row" class="tp-sticky">{% if dash_region %}{{ dash_region }} Total{% elif roster.own %}Your portfolio{% else %}National Total{% endif %}</th>
+            <td class="tp-num tp-start">{{ t.portfolio|num }}</td><td class="tp-num">{{ t.active|num }}</td><td class="tp-num">{{ t.active_pct|pct }}</td>
+            <td class="tp-num tp-start">{{ t.recruit|num }}</td><td class="tp-num">{{ t.baseline_ssa|num }}</td><td class="tp-num">{{ t.ssa_cohort|num }}</td><td class="tp-num">{{ t.ssa_client|num }}</td>
+            <td class="tp-num tp-start">{{ t.visits_core|num }}</td><td class="tp-num">{{ t.visits_noncore|num }}</td><td class="tp-num">{{ t.visits|num }}</td>
+            <td class="tp-num tp-start">{{ t.trainings_core|num }}</td><td class="tp-num">{{ t.trainings_other|num }}</td><td class="tp-num">{{ t.trainings|num }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tp-note">Core (1–4) adds the Core schools at each package step, as the summary's visit columns do; Client/Other trainings add client schools trained, schools trained online, TAM / Biblical Integration online and Early Childhood Education.</p>
+  </section>
+  {% endif %}
+</div>
+{% endwith %}

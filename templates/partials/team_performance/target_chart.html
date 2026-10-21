@@ -1,0 +1,13 @@
+{% load team_performance_tags %}
+<div class="tp-chart" style="--tp-groups: {{ bars|length }}" role="img" aria-label="{{ area }} target and achieved {{ label }}">
+  {% for bar in bars %}
+  <div class="tp-chart__group" data-tp-bar="{{ bar.label }}">
+    <div class="tp-chart__bars">
+      <span class="tp-chart__bar tp-chart__bar--target" style="height: {{ bar.target_h }}%" title="{{ bar.label }} target: {{ bar.target|num }}"></span>
+      <span class="tp-chart__bar" style="height: {{ bar.achieved_h }}%" title="{{ bar.label }} achieved: {{ bar.achieved|num }}"></span>
+    </div>
+    <span class="tp-chart__label">{{ bar.label }}{% if bar.place %}<br><span class="tp-muted">{{ bar.place }}</span>{% endif %}<br>{{ bar.achieved|num }} / {{ bar.target|num }}</span>
+  </div>
+  {% endfor %}
+</div>
+<div class="tp-chart-legend"><span class="is-target">Target</span><span>Achieved</span></div>

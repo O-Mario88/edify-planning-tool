@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 597,
-  "templates": 219,
-  "distinct_titles": 571,
+  "titled_cards": 611,
+  "templates": 226,
+  "distinct_titles": 585,
   "with_card_key": 13,
-  "untitled_surfaces": 557,
+  "untitled_surfaces": 560,
   "untitled_chrome": 153,
-  "untitled_nested": 183,
-  "untitled_headless": 221,
+  "untitled_nested": 185,
+  "untitled_headless": 222,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 19,
   "ambiguous_titles": 1
@@ -3218,6 +3218,15 @@
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-form-dialog__surface edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/team_performance/country_targets.html",
+   "line": 30,
+   "title": "Country Targets, FY",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card tp-error",
    "branch_path": []
   },
   {
@@ -6504,6 +6513,164 @@
    "heading_level": 2,
    "has_card_key": false,
    "classes": "tt-panel",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/team_performance/core.html",
+   "line": 4,
+   "title": "Core School",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/team_performance/dashboard.html",
+   "line": 10,
+   "title": "CCEO Officer Performance &amp; Strategic Milestones",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card tp-dash-head",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/team_performance/dashboard.html",
+   "line": 89,
+   "title": "School Visits Breakdown",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "tp-card tp-panel",
+   "branch_path": [
+    [
+     7,
+     1
+    ],
+    [
+     11,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/team_performance/dashboard.html",
+   "line": 102,
+   "title": "Trainings Delivery Matrix",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "tp-card tp-panel",
+   "branch_path": [
+    [
+     7,
+     1
+    ],
+    [
+     11,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/team_performance/dashboard.html",
+   "line": 116,
+   "title": "Core Recruitment &amp; Portfolio Health",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "tp-card tp-panel",
+   "branch_path": [
+    [
+     7,
+     1
+    ],
+    [
+     11,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/team_performance/dashboard.html",
+   "line": 131,
+   "title": "Data &amp; SSA Reviews",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "tp-card tp-panel",
+   "branch_path": [
+    [
+     7,
+     1
+    ],
+    [
+     11,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/team_performance/dashboard.html",
+   "line": 166,
+   "title": "Officer Performance Master Ledger",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card",
+   "branch_path": [
+    [
+     7,
+     4
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/team_performance/milestones.html",
+   "line": 13,
+   "title": "Strategic Milestones &amp; Operational Trackers",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/team_performance/month.html",
+   "line": 3,
+   "title": "Summary Performance",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/team_performance/summary.html",
+   "line": 16,
+   "title": "Performance Against Target",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/team_performance/summary.html",
+   "line": 55,
+   "title": ": Target vs. Achieved",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/team_performance/summary.html",
+   "line": 72,
+   "title": "Program Delivery &amp; Operational Milestones",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/team_performance/weekly.html",
+   "line": 9,
+   "title": "Detailed Country Report \u2013",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tp-card",
    "branch_path": []
   },
   {
