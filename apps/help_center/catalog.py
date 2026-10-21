@@ -144,7 +144,7 @@ ROLE_GUIDES = [
         [
             "Strategic direction: open Priorities to read Priority Setting, distribute your team target on My Team, and issue Team Guidance your CCEOs acknowledge; the Work Plan is the country plan you contribute to.",
             "Team leadership: My Team shows each CCEO's delivery, targets, SSA coverage, review stage, last coaching, leave and what waits on you; Team Leave, Field Debrief, Escalations and Team Assignments hold the decisions.",
-            "Performance and coaching: record monthly one-to-ones, observations and feedback under Coaching and share them for the CCEO to acknowledge; Team Performance holds each officer's review conversation, recovery plans, development requests and policy acknowledgements.",
+            "Performance and coaching: record monthly one-to-ones, observations and feedback under Coaching and share them for the CCEO to acknowledge; Performance Reviews holds each officer's review conversation, recovery plans, development requests and policy acknowledgements; Team Performance is the weekly report, every figure read from the platform's records.",
             "Programme implementation: confirm completed work in Completion Reviews before IA verifies it, supervise plans in Team Oversight, and track trainings, SSA collection and Christlike Behaviour and Word of God progress in Programme Rollout.",
             "Collaboration: acknowledge the Regional Lead's training feedback and coaching, resolve Country Director quality flags with a note, and record partner engagements that build training partners' capacity.",
         ],

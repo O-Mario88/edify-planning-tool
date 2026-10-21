@@ -54,6 +54,8 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "leave_approvals": (WEEKLY, 20),
     "my_team": (WEEKLY, 40),
     "team_coaching": (WEEKLY, 45),
+    # The weekly report the leads read every week (owner, 2026-10-20).
+    "team_performance": (WEEKLY, 42),
     "partners": (WEEKLY, 60),
     "projects": (WEEKLY, 65),
     # Read-only watching, next to the projects it watches. Weekly, not daily:

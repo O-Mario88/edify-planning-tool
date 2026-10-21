@@ -1,0 +1,67 @@
+{% extends "layouts/shell.html" %}
+{% load static components %}
+
+{% block title %}Country Targets · Team Performance · Edify{% endblock %}
+
+{% comment %}
+Country targets on the Team Performance report (owner, 2026-10-20: "All
+country target should be set by either IA or Admin"). Impact Assessment or
+Admin type each row's annual target and, if they wish, its months, which
+must add up to it. A row left blank takes the Uganda Master Priority Plan
+figure. Every change is audited.
+{% endcomment %}
+
+{% block feature_head_js %}<script src="{% static 'js/country-targets.js' %}?v=20261020ct1" defer></script>{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/team-performance.css' %}?v=20261021tp16">{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1600px] mx-auto" data-tp-country-targets="{{ fy }}">
+  {% page_header eyebrow="Team Performance" title="Country Targets" %}
+    {% slot description %}The country's targets on every Team Performance tab, set by Impact Assessment or Admin. Leave a row blank to use the Uganda Master Priority Plan figure; months are optional and must add up to the annual target.{% endslot %}
+    <a href="/team-performance/?fy={{ fy }}" class="edify-action-button secondary h-9">Back to the report</a>
+  {% endpage_header %}
+
+  {% filter_bar label="Country target year" form_id="country-target-year" extra_class="flex flex-wrap items-end gap-3" %}
+    <label class="block"><span class="edify-filter-label">Fiscal year</span>
+      <select name="fy" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for year in fy_options %}<option value="{{ year }}"{% if year == fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}</select></label>
+    <button type="submit" class="edify-action-button primary h-9">Open</button>
+  {% endfilter_bar %}
+
+  {% if error %}<div class="tp-card tp-error" role="alert" data-tp-error>{{ error }}</div>{% endif %}
+
+  {% comment %}One form, one Save for every row (owner, 2026-10-20: "I want to
+  update all the fields and save at once"). Its ~1,950 boxes exceed Django's
+  DATA_UPLOAD_MAX_NUMBER_FIELDS, so js/country-targets.js sends them as one
+  JSON field (`payload`); the view reads the same names either way.{% endcomment %}
+  <form method="post" class="tp-card" data-tp-targets-form>
+    {% csrf_token %}
+    <input type="hidden" name="fy" value="{{ fy }}">
+    <input type="hidden" name="payload" value="">
+    <header class="tp-card__head"><h2>Country Targets, FY {{ fy }}</h2><button type="submit" class="edify-action-button primary h-9">Save all targets</button></header>
+    <div class="tp-scroll">
+      <table class="tp-table edify-table--compact tp-target-table" data-table-fit="scroll">
+        <thead><tr>
+          <th scope="col" class="tp-sticky">Report Row</th>
+          <th scope="col" class="tp-num tp-start">Annual Target</th>
+          {% for name in month_names %}<th scope="col" class="tp-num{% if forloop.first %} tp-start{% endif %}">{{ name }}</th>{% endfor %}
+          <th scope="col" class="tp-start">Set By</th>
+        </tr></thead>
+        <tbody>
+          {% for section, lines in table %}
+          <tr class="edify-group-head"><th colspan="15" scope="colgroup"><span class="tp-freeze"><span class="edify-group-head__label">{{ section }}</span></span></th></tr>
+          {% for line in lines %}
+          <tr data-tp-target-row="{{ line.key }}">
+            <th scope="row" class="tp-sticky">{{ line.label }}{% if line.unit and line.unit != "schools" %} <span class="tp-muted">({{ line.unit }})</span>{% endif %}</th>
+            <td class="tp-start"><span class="tp-field"><input type="text" inputmode="decimal" name="annual:{{ line.key }}" value="{{ line.annual }}" class="tp-input" data-tp-target aria-label="{{ line.label }} annual target"></span></td>
+            {% for m, value in line.months %}<td{% if forloop.first %} class="tp-start"{% endif %}><span class="tp-field"><input type="text" inputmode="decimal" name="m{{ m }}:{{ line.key }}" value="{{ value }}" class="tp-input tp-input--month" data-tp-target aria-label="{{ line.label }} month {{ m }}"></span></td>{% endfor %}
+            <td class="tp-start tp-muted">{{ line.source|default:"Plan" }}</td>
+          </tr>
+          {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <footer class="tp-note">Counts are schools unless the row names another unit; a "%" row is a percentage. Region and CCEO targets stay the approved allocations PLs and Project Coordinators set. <button type="submit" class="edify-action-button primary h-9">Save all targets</button></footer>
+  </form>
+</div>
+{% endblock %}

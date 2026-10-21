@@ -1,0 +1,31 @@
+{% load team_performance_tags %}
+<div class="tp-chart" style="--tp-groups: {{ bars|length }}" role="img" aria-label="{{ area }} target and achieved {{ label }}">
+  {% for bar in bars %}
+  <div class="tp-chart__group" data-tp-bar="{{ bar.label }}">
+    <div class="tp-chart__bars">
+      <span class="tp-chart__bar tp-chart__bar--target" style="height: {{ bar.target_h }}%" title="{{ bar.label }} target: {{ bar.target|num }}"></span>
+      <span class="tp-chart__bar" style="height: {{ bar.achieved_h }}%" title="{{ bar.label }} achieved: {{ bar.achieved|num }}"></span>
+    </div>
+    <span class="tp-chart__label">{{ bar.label }}{% if bar.place %}<br><span class="tp-muted">{{ bar.place }}</span>{% endif %}<br>{{ bar.achieved|num }} / {{ bar.target|num }}</span>
+  </div>
+  {% endfor %}
+</div>
+<div class="tp-chart-legend"><span class="is-target">Target</span><span>Achieved</span></div>
+{% comment %}Owner, 2026-10-21: every Executive Summary chart is accompanied by
+its table.{% endcomment %}
+<div class="tp-scroll tp-chart-table">
+  <table class="tp-table edify-table--compact" data-table-fit="scroll" data-tp-chart-table>
+    <thead><tr>
+      <th scope="col" class="tp-sticky">{{ heading }}</th>
+      <th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">Variance</th><th scope="col" class="tp-num">%</th>
+    </tr></thead>
+    <tbody>
+      {% for bar in bars %}
+      <tr>
+        <th scope="row" class="tp-sticky">{{ bar.label }}{% if bar.place %} <span class="tp-muted">· {{ bar.place }}</span>{% endif %}</th>
+        <td class="tp-num tp-start">{{ bar.target|num }}</td><td class="tp-num">{{ bar.achieved|num }}</td><td class="tp-num">{{ bar.variance|signed }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ bar.pct|tone }}">{{ bar.pct|pct }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
