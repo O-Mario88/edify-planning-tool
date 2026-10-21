@@ -480,7 +480,11 @@ IN_SCHOOL_SUPPORT_TYPES = ("in_school_training", "in_school_coaching_visit")
 
 # The drawer purposes each pool governs.
 POOL_PURPOSES = {
-    SUPPORT_POOL: ("training_follow_up", "in_school_training"),
+    SUPPORT_POOL: (
+        "training_follow_up",
+        "in_school_training",
+        "in_school_training_ssa",
+    ),
     SSA_POOL: ("ssa_support",),
 }
 # Every purpose the client rule counts.

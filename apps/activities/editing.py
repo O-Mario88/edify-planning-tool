@@ -255,7 +255,9 @@ def edit(activity_id: str, data: dict, principal) -> dict:
     * ``purposeType`` — what a visit to one school is for (owner,
       2026-10-19: a Training Follow Up that was meant as SSA Support). The
       same visit takes the purpose, and what it decides follows
-      (``purpose_change.change_purpose``).
+      (``purpose_change.change_purpose``). In-school Training names the
+      training delivered, ``purposeTrainingCourseId``, created beside the
+      visit as its pair (``planning.services.pair_training_with_visit``).
     * ``activityPurposeText``, ``expectedOutcome``, ``focusIntervention`` —
       ``services.patch_activity``.
 
@@ -390,6 +392,34 @@ def edit(activity_id: str, data: dict, principal) -> dict:
         )
     if purpose_moves and not reason:
         raise BadRequest("Give the reason the purpose of this visit is changing.")
+    # An In-school Training names the training delivered (owner, 2026-10-20:
+    # "if it is inschool training, the training name has to be selected"):
+    # it is created beside this visit, which becomes its school visit.
+    chosen_purpose = str(data.get("purposeType") or "").strip()
+    # A visit that already reads In-school Training + SSA Collection and
+    # awaits its training (apps.activities.ssa_collection_to_training) is
+    # paired when its training is named, though its purpose does not move.
+    from apps.activities.ssa_collection_to_training import awaits_training
+
+    # A date-only edit of such a visit names no training and leaves it.
+    becomes_training = chosen_purpose in purpose_change._PAIRED_PURPOSES and (
+        purpose_moves
+        or (
+            bool(str(data.get("purposeTrainingCourseId") or "").strip())
+            and awaits_training(activity)
+        )
+    )
+    if becomes_training:
+        # A Core visit too (owner, 2026-10-20): its training takes the
+        # package's next open training slot once it is saved
+        # (apps.core_schools.package_credit), and the visit keeps its own.
+        if not purpose_change.may_change_purpose(activity):
+            raise BadRequest(
+                "The purpose is changed on a planned visit to one school. "
+                "Cancel this activity and plan the In-school Training you need."
+            )
+        if not str(data.get("purposeTrainingCourseId") or "").strip():
+            raise BadRequest("Select the training delivered on this visit.")
     if purpose_moves and patch.get("activityPurposeText") == (
         activity.activity_purpose_text or ""
     ):
@@ -421,6 +451,9 @@ def edit(activity_id: str, data: dict, principal) -> dict:
             or invitations_move
             or new_school is not None
             or new_project is not None
+            # A visit that becomes a training's visit is priced as one, a
+            # Core visit as well as a client school's.
+            or becomes_training
             or (purpose_moves and purpose_change.moves_money(activity))
         ):
             # A change that moves money: the week's fund request, where it
@@ -459,7 +492,22 @@ def edit(activity_id: str, data: dict, principal) -> dict:
                 principal=principal,
             )
 
-        if purpose_moves:
+        if becomes_training:
+            from apps.planning.services import pair_training_with_visit
+
+            # Priced as the pair's school visit, the training at UGX 0.
+            pair_training_with_visit(
+                activity,
+                data.get("purposeTrainingCourseId"),
+                principal,
+                reason=reason,
+                purpose=chosen_purpose,
+            )
+            activity.refresh_from_db()
+            # The intervention came with the training, as a planned pair's
+            # does; the focus the drawer opened with was the old purpose's.
+            patch.pop("focusIntervention", None)
+        elif purpose_moves:
             reprice = purpose_change.moves_money(activity)
             purpose_change.change_purpose(
                 activity, data.get("purposeType"), principal, reason=reason

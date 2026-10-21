@@ -36,10 +36,12 @@ from apps.planning.planning_support import PLANNING_SUPPORT_FILTERS
 from apps.partners import services as partner_services
 from apps.partners.services import assignable_partners
 from apps.partners.purposes import (
+    IN_SCHOOL_TRAINING_PURPOSES,
     PARTNER_VISIT_PURPOSES,
     STAFF_VISIT_PURPOSES,
     normalise_visit_purpose,
     purpose_activity_type,
+    split_training_purpose,
     visit_purpose_label,
 )
 from apps.core.enums import (
@@ -507,9 +509,13 @@ def _staff_schedule_plan(request, own=None) -> dict:
     raw = request.POST.get("purpose_of_visit", "").strip()
     if not raw:
         raise BadRequest("Select the purpose of the visit before scheduling.")
+    # In-school Training + SSA Collection: the In-school Training pair, its
+    # school visit collecting the SSA (owner, 2026-10-20).
+    raw, collects_ssa = split_training_purpose(raw)
     purpose = normalise_visit_purpose(raw, for_partner=False)
     plan = {
         "purpose": purpose,
+        "collects_ssa": collects_ssa,
         "activity_type": purpose_activity_type(purpose),
         "pair": False,
         "as_itself": False,
@@ -635,6 +641,7 @@ def special_projects_bulk_schedule_view(request):
                     payload["purposeType"] = plan["purpose"]
                     payload["ssaCollectionExpected"] = (
                         plan["activity_type"] == "school_visit_ssa_collection"
+                        or plan["collects_ssa"]
                     )
                 try:
                     # A savepoint per school: one the scheduling rules refuse
@@ -1665,7 +1672,7 @@ def _schedule_modal(request):
             ):
                 if used:
                     for purpose in POOL_PURPOSES[pool]:
-                        if purpose == "in_school_training" and (
+                        if purpose in IN_SCHOOL_TRAINING_PURPOSES and (
                             drawer_project_id or has_universal_training
                         ):
                             if not drawer_project_id:
@@ -2014,6 +2021,15 @@ def schedule_action_view(request):
     # only passes the planner's choice through.
     executor_type = request.POST.get("executor_type", "").strip()
     partner_id = request.POST.get("assigned_partner_id", "").strip()
+    # In-school Training + SSA Collection is planned as the In-school Training
+    # pair, its school visit collecting the SSA (owner, 2026-10-20). Partners
+    # are not handed it: a partner post keeps the value, which the partner
+    # purposes refuse.
+    training_collects_ssa = False
+    if delivery_type != "partner" and not partner_id:
+        purpose_of_visit, training_collects_ssa = split_training_purpose(
+            purpose_of_visit
+        )
     # A Project id is accepted only as context from a Project-owned entry
     # point. General training drawers no longer ask the planner to choose one.
     project_id = request.POST.get("project_id", "").strip()
@@ -2443,8 +2459,14 @@ def schedule_action_view(request):
             # planning/reporting tool for deliberate bulk schedules, not a
             # set of rules that can prevent a field worker from booking work.
             if purpose_of_visit == "in_school_training":
+                if training_collects_ssa:
+                    payload["ssaCollectionExpected"] = True
                 created = schedule_in_school_training_pair(payload, request.user)
-                noun = "In-school training and school visit"
+                noun = (
+                    "In-school training and school visit with SSA collection"
+                    if training_collects_ssa
+                    else "In-school training and school visit"
+                )
             else:
                 created = schedule_school_visit(payload, request.user)
                 noun = "School visit"
@@ -2590,7 +2612,7 @@ def bulk_schedule_drawer_view(request):
                 (value, label)
                 for value, label in STAFF_VISIT_PURPOSES
                 if not (value == "training_follow_up" and follow_up_named)
-                and not (visits_only and value == "in_school_training")
+                and not (visits_only and value in IN_SCHOOL_TRAINING_PURPOSES)
             ],
             "follow_up_named_per_school": follow_up_named,
             "training_courses_json": json.dumps(in_school_training_course_options()),
@@ -2654,6 +2676,7 @@ def bulk_schedule_action_view(request):
                     "purposeType": plan["purpose"],
                     "ssaCollectionExpected": (
                         plan["activity_type"] == "school_visit_ssa_collection"
+                        or plan["collects_ssa"]
                     ),
                 }
                 focus = _bulk_schedule_focus(plan, school)

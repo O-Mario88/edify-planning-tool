@@ -19,7 +19,7 @@ package slot; a school the scheduling rules refuse is named and left out.
         trainingCourseId: '',
         trainingCourses: {{ training_courses_json|default:'[]' }},
         interventionFree: {{ intervention_free_purposes_json|default:'[]' }},
-        get isTraining() { return this.purposeOfVisit === 'in_school_training'; },
+        get isTraining() { return ['in_school_training', 'in_school_training_ssa'].includes(this.purposeOfVisit); },
         get namesIntervention() { return this.purposeOfVisit && !this.isTraining && !this.interventionFree.includes(this.purposeOfVisit); },
         onPurposeChange() { if (!this.isTraining) { this.trainingCourseId = ''; } }
       }"

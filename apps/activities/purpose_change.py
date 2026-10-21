@@ -25,15 +25,21 @@ its notes are kept. What the purpose decides follows it:
   why none were collected. A visit that stops being a Training Follow Up no
   longer names a training.
 
-Only a plan that is still scheduled is changed (``apps.activities.editing``);
-an In-school Training is planned as its own training-and-visit pair and is
-not reached by changing a visit's purpose. Each change is written to the
-audit trail with the purpose before and after.
+Only a plan that is still scheduled is changed (``apps.activities.editing``).
+Each change is written to the audit trail with the purpose before and after.
+
+In-school Training is offered too (owner, 2026-10-20: "the activity
+completion drawer should have all the options for purpose", and "if it is
+inschool training, the training name has to be selected"). It is not a
+purpose this visit takes alone: the training named is created beside the
+visit as its pair (``planning.services.pair_training_with_visit``), which
+``editing.edit`` does; ``change_purpose`` itself refuses it.
 """
 
 from __future__ import annotations
 
 from apps.core.exceptions import BadRequest
+from apps.partners.purposes import IN_SCHOOL_TRAINING_PURPOSES
 
 __all__ = ["change_purpose", "may_change_purpose", "moves_money", "purpose_options"]
 
@@ -41,8 +47,10 @@ __all__ = ["change_purpose", "may_change_purpose", "moves_money", "purpose_optio
 #: staff visit (apps.core_schools.package_credit.package_kind_for).
 CORE_PACKAGE_VISIT_PURPOSES = ("training_follow_up", "ssa_support")
 
-#: Planned as a training and its companion visit, never by changing a visit.
-_PAIRED_PURPOSES = frozenset({"in_school_training"})
+#: A training and its companion visit, the visit collecting the SSA or not:
+#: reached by pairing a training with the visit
+#: (``planning.services.pair_training_with_visit``), not by ``change_purpose``.
+_PAIRED_PURPOSES = IN_SCHOOL_TRAINING_PURPOSES
 
 
 def _purpose_workflows() -> frozenset:
@@ -74,19 +82,21 @@ def may_change_purpose(activity) -> bool:
 
 
 def purpose_options(activity) -> list[tuple[str, str]]:
-    """The purposes this visit may be changed to."""
+    """The purposes this visit may be changed to. A Core package visit holds
+    one of the package's two; a client school's visit may take any staff
+    purpose, In-school Training (+ SSA Collection) included (the training is
+    then named)."""
     from apps.partners.purposes import STAFF_VISIT_PURPOSES
 
     if not may_change_purpose(activity):
         return []
     if _is_core_slot(activity):
-        allowed = CORE_PACKAGE_VISIT_PURPOSES
+        # A Core visit may also be completed as an In-school Training (owner,
+        # 2026-10-20: "Yes, take a training slot"): the training takes the
+        # package's next open training slot, and the visit keeps its own.
+        allowed = (*CORE_PACKAGE_VISIT_PURPOSES, *sorted(IN_SCHOOL_TRAINING_PURPOSES))
     else:
-        allowed = tuple(
-            value
-            for value, _label in STAFF_VISIT_PURPOSES
-            if value not in _PAIRED_PURPOSES
-        )
+        allowed = tuple(value for value, _label in STAFF_VISIT_PURPOSES)
     labels = dict(STAFF_VISIT_PURPOSES)
     return [(value, labels[value]) for value in allowed]
 
@@ -160,18 +170,19 @@ def change_purpose(activity, purpose, principal, *, reason: str = "") -> bool:
             "activity is planned as something else; cancel it and plan the "
             "visit you need."
         )
+    if purpose in _PAIRED_PURPOSES:
+        raise BadRequest(
+            "An In-school Training is planned with its training and its "
+            "visit together. Choose the training delivered, and the visit "
+            "becomes its school visit."
+        )
     offered = dict(purpose_options(activity))
     if purpose not in offered:
-        if purpose in _PAIRED_PURPOSES:
-            raise BadRequest(
-                "An In-school Training is planned with its training and its "
-                "visit together. Cancel this visit and plan the In-school "
-                "Training from the school."
-            )
         if _is_core_slot(activity):
             raise BadRequest(
-                "A Core package visit is a Training Follow Up or SSA Support. "
-                "A donor, story or other visit is planned from Core Schools."
+                "A Core package visit is a Training Follow Up, SSA Support or "
+                "an In-school Training. A donor, story or other visit is "
+                "planned from Core Schools."
             )
         raise BadRequest("Choose one of the visit purposes offered.")
 

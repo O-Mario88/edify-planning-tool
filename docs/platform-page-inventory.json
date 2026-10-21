@@ -3513,7 +3513,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15383,
+      "bytes": 15417,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -9504,7 +9504,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 30200,
+      "bytes": 35647,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -9520,6 +9520,7 @@
       "states": [
         "default",
         "error",
+        "disabled",
         "open"
       ],
       "tables": 0,
@@ -9659,7 +9660,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23792,
+      "bytes": 25633,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"
@@ -12320,7 +12321,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6207,
+      "bytes": 6241,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/bulk-schedule-drawer"
@@ -12468,7 +12469,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 39873,
+      "bytes": 39907,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -13932,7 +13933,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5323,
+      "bytes": 5357,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-schedule"
@@ -21806,7 +21807,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.complete_activity_drawer_view",
       "card_count": 0,
@@ -21884,7 +21885,7 @@
         "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": true,
         "loading": false
@@ -66700,7 +66701,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.complete_drawer_view",
       "card_count": 0,
@@ -66778,7 +66779,7 @@
         "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": true,
         "loading": false

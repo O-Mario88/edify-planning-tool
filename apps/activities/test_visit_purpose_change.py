@@ -169,10 +169,15 @@ class RefusedChangesLeaveTheVisitAsItWas(_Fixture):
         visit.refresh_from_db()
         self.assertEqual(visit.purpose_type, "training_follow_up")
 
-    def test_in_school_training_is_planned_as_its_own_pair(self):
+    def test_in_school_training_without_the_training_named(self):
+        # It names the training delivered (owner, 2026-10-20), which is
+        # created beside the visit (test_completion_purpose).
         visit = self._follow_up()
         with self.assertRaises(BadRequest):
             self._change(visit, "in_school_training")
+        visit.refresh_from_db()
+        self.assertEqual(visit.purpose_type, "training_follow_up")
+        self.assertFalse(Activity.objects.filter(paired_school_visit=visit).exists())
 
     def test_work_already_carried_out(self):
         visit = self._follow_up()

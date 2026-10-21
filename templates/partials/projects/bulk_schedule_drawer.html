@@ -20,7 +20,7 @@ trainings lead the list.
         purposeOfVisit: '',
         trainingCourseId: '',
         trainingCourses: {{ training_courses_json|default:'[]' }},
-        get isTraining() { return this.purposeOfVisit === 'in_school_training'; },
+        get isTraining() { return ['in_school_training', 'in_school_training_ssa'].includes(this.purposeOfVisit); },
         get projectCourses() { return this.trainingCourses.filter(course => course.projectCourse); },
         get otherCourses() { return this.trainingCourses.filter(course => !course.projectCourse); },
         onPurposeChange() { if (!this.isTraining) { this.trainingCourseId = ''; } }

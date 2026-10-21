@@ -49,6 +49,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -243,7 +244,6 @@
         "school_directory",
         "settings",
         "team_coaching",
-        "team_performance",
         "team_planning_oversight",
         "todos",
         "work_plan"
@@ -571,6 +571,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -685,6 +686,7 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
+        "apps/ssa/visit_scores.py",
         "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/ledger_sync.py",
@@ -778,7 +780,6 @@
         "school_directory",
         "settings",
         "team_coaching",
-        "team_performance",
         "team_planning_oversight",
         "todos",
         "weekly_fund_request_disburse",
@@ -970,6 +971,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activities/training_names.py",
         "apps/activity_catalogue/training_intervention.py",
         "apps/admin_ops/detection.py",
@@ -1112,7 +1114,6 @@
         "school_profile",
         "settings",
         "staff",
-        "team_performance",
         "todos",
         "work_plan"
       ],
@@ -1496,6 +1497,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/analytics/platform_engine.py",
@@ -1713,7 +1715,6 @@
         "staff_activity",
         "staff_directory",
         "target_distribution",
-        "team_performance",
         "team_planning_oversight",
         "todos",
         "uploads",
@@ -1891,6 +1892,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -2573,7 +2575,6 @@
         "settings",
         "team_availability",
         "team_coaching",
-        "team_performance",
         "team_planning_oversight",
         "todos",
         "work_plan"
@@ -2664,6 +2665,7 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
+        "apps/activities/ssa_collection_to_training.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -2849,7 +2851,6 @@
         "report_problem",
         "school_directory",
         "settings",
-        "team_performance",
         "todos",
         "work_plan"
       ],
@@ -3107,7 +3108,6 @@
         "report_problem",
         "school_directory",
         "settings",
-        "team_performance",
         "todos",
         "work_plan"
       ],
@@ -3637,7 +3637,6 @@
         "school_directory",
         "settings",
         "team_coaching",
-        "team_performance",
         "team_planning_oversight",
         "team_targets",
         "todos",
@@ -4870,7 +4869,6 @@
         "report_problem",
         "school_directory",
         "settings",
-        "team_performance",
         "todos",
         "work_plan"
       ],
@@ -4994,9 +4992,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "6eb821d988f44b0de28dd4904bcb738a1e958d5ef5f93042874f085439bc0ac8",
-    "sources": "921cfeb6391d0b8d843dc595da8553c50bd8ec776f9a5c7a0757febcafddd55c",
-    "sourceCount": 266,
+    "payload": "8382b95f441d7e4fce7a212a9470597801b8fcd0e2312ec79d3d98e35aa821dd",
+    "sources": "1c879f22549b638e5d38e4dfbc00024a00975dc1a50456e7dd66255b5157645e",
+    "sourceCount": 268,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }
