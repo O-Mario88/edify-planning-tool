@@ -1,9 +1,11 @@
 {% load kpi_metrics team_performance_tags %}
 {% comment %}
 The live sheet's "CCEO Officer Performance and Milestones Dashboard" (owner,
-2026-10-20): CCEOs, Officer Deep-Dive, Milestones, Regions and Master Grid,
-with region chips and the officer profile. Every figure is the year to the
-end of the chosen month, read from the records; nothing here is typed.
+2026-10-20): CCEOs, Officer Deep-Dive, Milestones, Programme Leads and Master
+Grid, with Programme Lead chips and the officer profile. Owner, 2026-10-23:
+the chips are "program lead pills … the actual name of the PL", and a Region
+reads the officer's own region, never their lead. Every figure is the year to
+the end of the chosen month, read from the records; nothing here is typed.
 {% endcomment %}
 {% with t=board.total %}
 <div class="tp-stack" data-tp-dashboard="{{ dash_view }}">
@@ -20,17 +22,17 @@ end of the chosen month, read from the records; nothing here is typed.
   </section>
 
   {% if not roster.own %}
-  <nav class="tp-chips" aria-label="Region">
-    <span class="tp-chips__label">Region</span>
-    <a class="tp-chip-link{% if not dash_region %} is-active{% endif %}" href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view={{ dash_view }}&amp;sort={{ dash_sort }}">All <span>{{ roster.officers|length }}</span></a>
-    {% for label, count in board.regions %}
-    <a class="tp-chip-link{% if label == dash_region %} is-active{% endif %}" href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view={{ dash_view }}&amp;sort={{ dash_sort }}&amp;region={{ label|urlencode }}" data-tp-region-chip="{{ label }}">{{ label }} <span>{{ count }}</span></a>
+  <nav class="tp-chips" aria-label="Programme Lead">
+    <span class="tp-chips__label">Programme Lead</span>
+    <a class="tp-chip-link{% if not dash_lead %} is-active{% endif %}" href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view={{ dash_view }}&amp;sort={{ dash_sort }}">All <span>{{ roster.officers|length }}</span></a>
+    {% for key, label, count in board.teams %}
+    <a class="tp-chip-link{% if key == dash_lead %} is-active{% endif %}" href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view={{ dash_view }}&amp;sort={{ dash_sort }}&amp;lead={{ key|urlencode }}" data-tp-lead-chip="{{ label }}">{{ label }} <span>{{ count }}</span></a>
     {% endfor %}
   </nav>
   {% endif %}
 
   {% kpi_strip %}
-    {% kpi_metric %}{% kpi_label %}Active CCEOs{% endkpi_label %}{{ board.officers|num }}{% kpi_helper %}Across {{ board.rollups|length }} region{{ board.rollups|length|pluralize }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Active CCEOs{% endkpi_label %}{{ board.officers|num }}{% kpi_helper %}Across {{ board.rollups|length }} Programme Lead team{{ board.rollups|length|pluralize }}{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Portfolio Schools{% endkpi_label %}{{ t.portfolio|num }}{% kpi_helper %}{{ t.active_pct|pct }} active{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Core Recruited{% endkpi_label %}{{ t.recruit|num }}{% kpi_helper %}New Core schools{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}School Visits{% endkpi_label %}{{ t.visits|num }}{% kpi_helper %}Core ({{ t.visits_core|num }}) + Non-Core ({{ t.visits_noncore|num }}){% endkpi_helper %}{% endkpi_metric %}
@@ -42,7 +44,7 @@ end of the chosen month, read from the records; nothing here is typed.
   <nav class="tp-chips" aria-label="Sort officers by">
     <span class="tp-chips__label">Sort officers by</span>
     {% for key, label in dash_sorts.items %}
-    <a class="tp-chip-link{% if key == dash_sort %} is-active{% endif %}" href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view=cceos&amp;sort={{ key }}{% if dash_region %}&amp;region={{ dash_region|urlencode }}{% endif %}">{{ label }}</a>
+    <a class="tp-chip-link{% if key == dash_sort %} is-active{% endif %}" href="?fy={{ period.fy }}&amp;month={{ period.month }}&amp;tab=dashboard&amp;view=cceos&amp;sort={{ key }}{% if dash_lead %}&amp;lead={{ dash_lead|urlencode }}{% endif %}">{{ label }}</a>
     {% endfor %}
     <span class="tp-chips__count">Showing {{ board.officers }} officer{{ board.officers|pluralize }}</span>
   </nav>
@@ -51,7 +53,7 @@ end of the chosen month, read from the records; nothing here is typed.
     <article class="tp-card tp-officer" data-tp-officer-card="{{ card.officer.staff_id }}">
       <header class="tp-officer__head">
         <h3>{{ card.officer.name }}</h3>
-        <span class="tp-badge">{{ card.region }}</span>
+        <span class="tp-badge">{{ card.region|default:"—" }}</span>
       </header>
       <p class="tp-officer__meta">Portfolio: <strong>{{ f.portfolio|num }}</strong> schools ({{ f.active_pct|pct }} active)</p>
       <div class="tp-stats">
@@ -66,7 +68,7 @@ end of the chosen month, read from the records; nothing here is typed.
       </footer>
     </article>
     {% endwith %}{% empty %}
-    {% include "components/empty_state.html" with message="No officer in this region." compact="true" %}
+    {% include "components/empty_state.html" with message="No officer in this team." compact="true" %}
     {% endfor %}
   </div>
 
@@ -75,7 +77,7 @@ end of the chosen month, read from the records; nothing here is typed.
   <section class="tp-card tp-deep" data-tp-deep="{{ deep.officer.staff_id }}">
     <header class="tp-officer__head">
       <h3>{{ deep.officer.name }}</h3>
-      <span class="tp-badge">{{ deep.region }}</span>
+      <span class="tp-badge">{{ deep.region|default:"—" }}</span>{% if deep.team %}<span class="tp-badge">{{ deep.team }}</span>{% endif %}
     </header>
     <p class="tp-officer__meta">Total assigned portfolio: <strong>{{ f.portfolio|num }}</strong> schools · Active: <strong>{{ f.active|num }}</strong> · Inactive: {{ f.inactive|num }} ({{ f.active_pct|pct }} active rate)</p>
     <div class="tp-stats tp-stats--four">
@@ -146,7 +148,7 @@ end of the chosen month, read from the records; nothing here is typed.
   {% elif dash_view == "milestones" %}
   {% include "partials/team_performance/milestones.html" with embedded=True %}
 
-  {% elif dash_view == "regions" %}
+  {% elif dash_view == "leads" %}
   <div class="tp-cards">
     {% for roll in board.rollups %}{% with f=roll.f %}
     <article class="tp-card tp-officer" data-tp-rollup="{{ roll.region.label }}">
@@ -169,6 +171,7 @@ end of the chosen month, read from the records; nothing here is typed.
       <table class="tp-table edify-table--compact" data-table-fit="scroll">
         <thead><tr>
           <th scope="col">Region</th>
+          <th scope="col">Programme Lead</th>
           <th scope="col" class="tp-sticky">CCEO</th>
           <th scope="col" class="tp-num tp-start">Portfolio</th><th scope="col" class="tp-num">Active</th><th scope="col" class="tp-num">Active %</th>
           <th scope="col" class="tp-num tp-start">Core Recruited</th><th scope="col" class="tp-num">Baseline SSA</th><th scope="col" class="tp-num">Cohort SSA</th><th scope="col" class="tp-num">Client SSA</th>
@@ -176,9 +179,10 @@ end of the chosen month, read from the records; nothing here is typed.
           <th scope="col" class="tp-num tp-start">Core Trainings</th><th scope="col" class="tp-num">Client/Other</th><th scope="col" class="tp-num">Total Trainings</th>
         </tr></thead>
         <tbody>
-          {% for card in board.cards %}{% with f=card.f %}
+          {% for card in board.grid %}{% with f=card.f %}
           <tr data-tp-grid="{{ card.officer.staff_id }}">
-            <td>{{ card.region }}</td>
+            <td>{{ card.region|default:"—" }}</td>
+            <td>{{ card.team }}</td>
             <th scope="row" class="tp-sticky">{{ card.officer.name }}</th>
             <td class="tp-num tp-start">{{ f.portfolio|num }}</td><td class="tp-num">{{ f.active|num }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ f.active_pct|tone }}">{{ f.active_pct|pct }}</span></td>
             <td class="tp-num tp-start">{{ f.recruit|num }}</td><td class="tp-num">{{ f.baseline_ssa|num }}</td><td class="tp-num">{{ f.ssa_cohort|num }}</td><td class="tp-num">{{ f.ssa_client|num }}</td>
@@ -187,8 +191,8 @@ end of the chosen month, read from the records; nothing here is typed.
           </tr>
           {% endwith %}{% endfor %}
           <tr class="tp-grand">
-            <td></td>
-            <th scope="row" class="tp-sticky">{% if dash_region %}{{ dash_region }} Total{% else %}{{ roster.home_label }}{% endif %}</th>
+            <td></td><td></td>
+            <th scope="row" class="tp-sticky">{% if dash_lead %}{{ dash_lead_label }} Total{% else %}{{ roster.home_label }}{% endif %}</th>
             <td class="tp-num tp-start">{{ t.portfolio|num }}</td><td class="tp-num">{{ t.active|num }}</td><td class="tp-num">{{ t.active_pct|pct }}</td>
             <td class="tp-num tp-start">{{ t.recruit|num }}</td><td class="tp-num">{{ t.baseline_ssa|num }}</td><td class="tp-num">{{ t.ssa_cohort|num }}</td><td class="tp-num">{{ t.ssa_client|num }}</td>
             <td class="tp-num tp-start">{{ t.visits_core|num }}</td><td class="tp-num">{{ t.visits_noncore|num }}</td><td class="tp-num">{{ t.visits|num }}</td>

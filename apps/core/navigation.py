@@ -239,9 +239,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Core School Oversight is the Core schools analysed; a CCEO reads their
     # own (owner, 2026-10-17, the Core School Intelligence brief, 10.1).
     "core_schools_oversight": {CCEO, PL, IA, CD, RVP, RPL, ADMIN},
-    # The FY27 Weekly Report, read from the database (owner, 2026-10-20):
-    # leads read every region, a CCEO their own row.
-    "team_performance": {CCEO, PL, IA, CD, RVP, RPL, ADMIN},
+    # The FY27 Weekly Report, read from the database (owner, 2026-10-20). A
+    # CCEO reads their own row, a PL their own and their CCEOs'; "Only CD, IA,
+    # HR, RVP Regional Program Leads" (owner, 2026-10-23), and Admin, read
+    # everyone (`apps.team_performance.roster.EVERYONE_READERS`).
+    "team_performance": {CCEO, PL, IA, CD, HR, RVP, RPL, ADMIN},
     # Country targets on that report are set by Impact Assessment or Admin
     # only (owner, 2026-10-20: "All country target should be set by either
     # IA or Admin"; the Country Director reads them).
