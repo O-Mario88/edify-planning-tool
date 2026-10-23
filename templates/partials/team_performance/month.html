@@ -16,7 +16,7 @@
       </thead>
       <tbody>
         {% for group in s.groups %}
-        <tr class="edify-group-head"><th colspan="{{ summary_width|add:1 }}" scope="colgroup"><span class="tp-freeze"><span class="edify-group-head__label">{{ group.region.label }}</span>{% if group.region.lead_name and group.region.lead_name not in group.region.label %} <span class="edify-group-head__count">Programme Lead: {{ group.region.lead_name }} · {{ group.lines|length }} officer{{ group.lines|length|pluralize }}</span>{% endif %}</span></th></tr>
+        <tr class="edify-group-head"><th colspan="{{ summary_width|add:1 }}" scope="colgroup"><span class="tp-freeze"><span class="edify-group-head__label">{{ group.region.label }}</span> <span class="edify-group-head__count">{% if group.region.lead_name %}Programme Lead · {% endif %}{{ group.lines|length }} officer{{ group.lines|length|pluralize }}</span></span></th></tr>
         {% for line in group.lines %}
         <tr data-tp-officer="{{ line.officer.staff_id }}">
           <th scope="row" class="tp-sticky">{{ line.label }}</th>

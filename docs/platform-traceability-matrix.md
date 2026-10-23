@@ -291,7 +291,7 @@ Steps: Concern → Verified context → Manager proposal → HR fairness review 
 | Roles that hold the checked permissions | — |
 | Routes / API | `GET /recovery-plans` |
 | Permissions checked | — |
-| Page gates checked | `acting_leadership`, `calendar`, `candidate_pipeline`, `compensation_benefits`, `compliance_register`, `cpd_learning`, `dashboard`, `decision_log` _+33 more_ |
+| Page gates checked | `acting_leadership`, `calendar`, `candidate_pipeline`, `compensation_benefits`, `compliance_register`, `cpd_learning`, `dashboard`, `decision_log` _+34 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/acting.py`, `apps/core/audit_hash.py` _+38 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `hr.PerformanceImprovementPlan`, `hr.RecoveryMilestone`, `sessions.Session` |

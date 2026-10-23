@@ -37,14 +37,22 @@ class ReportFixture(LedgerFixture):
 
 
 class RosterTest(ReportFixture):
-    def test_ia_cd_and_admin_read_everyone_grouped_by_programme_lead(self):
-        """Owner, 2026-10-21: "IA, CD and Admin See Everyone grouped by PL"."""
-        for role in ("CountryDirector", "ImpactAssessment", "Admin"):
+    def test_cd_ia_hr_rvp_rpl_and_admin_read_everyone_grouped_by_programme_lead(self):
+        """Owner, 2026-10-23: "Only CD, IA, HR, RVP Regional Program Leads
+        can have access to everyone's performance"; Admin keeps it."""
+        for role in (
+            "CountryDirector",
+            "ImpactAssessment",
+            "HumanResources",
+            "RegionalVicePresident",
+            "RegionalProgramLead",
+            "Admin",
+        ):
             reader = make_officer(f"{role.lower()}@tp-all.test", role)
             report = self.report(reader)
 
             labels = [r.label for r in report.roster.regions]
-            self.assertEqual(labels, ["Northern", "No Programme Lead"], role)
+            self.assertEqual(labels, ["Lead", "No Programme Lead"], role)
             self.assertEqual(
                 [o.name for o in report.roster.regions[0].officers], [self.james.name]
             )
@@ -56,7 +64,7 @@ class RosterTest(ReportFixture):
         report = self.report(self.lead)
         lead = str(self.lead.staff_profile.id)
 
-        self.assertEqual([r.label for r in report.roster.regions], ["Northern"])
+        self.assertEqual([r.label for r in report.roster.regions], ["Lead"])
         self.assertEqual([o.name for o in report.roster.officers], [self.james.name])
         # Only the team's schools are read: James's two, not Mary's.
         self.assertEqual(report.ledger.portfolio(None), 2)
@@ -97,6 +105,63 @@ class RosterTest(ReportFixture):
         recruit = report.section_charts("Program Growth")[0]
         self.assertEqual([b["target"] for b in recruit["leads"]], [25])
 
+    def test_teams_are_named_by_their_lead_and_officers_carry_their_region(self):
+        """Owner, 2026-10-23: everyone is "grouped by PL", using "the actual
+        name of the PL"; an officer's region is the region their schools are
+        in, else their primary district's, never their lead."""
+        from apps.accounts.models import StaffProfile
+
+        nell = make_officer("nell@tp-report.test")
+        StaffProfile.objects.filter(user=nell).update(
+            primary_district_id=self.district.id
+        )
+        report = self.report()
+        roster = report.roster
+
+        self.assertEqual(roster.regions[0].label, self.lead.name)
+        self.assertEqual(roster.regions[0].place, "Northern")
+        self.assertEqual(roster.officer(self.james.staff_profile.id).region, "Northern")
+        self.assertEqual(roster.officer(nell.staff_profile.id).region, "Northern")
+        james = roster.officer(self.james.staff_profile.id)
+        self.assertEqual(report.deep_dive(james)["region"], "Northern")
+        board = report.cceo_board()
+        card = board["cards"][0]
+        self.assertEqual(card["region"], card["officer"].region)
+        # The grid keeps each lead's team together: Lead's, then no lead's.
+        self.assertEqual(
+            [c["team"] for c in board["grid"]],
+            [self.lead.name, "No Programme Lead", "No Programme Lead"],
+        )
+        lines = {l["officer"].name: l["region"] for l in report.core_package()["lines"]}
+        self.assertEqual(lines[self.james.name], "Northern")
+
+    def test_any_other_role_reads_only_its_own_row(self):
+        """Everyone is read only by the roles named; a role the owner did not
+        name reads no one else's performance."""
+        from apps.team_performance import roster
+
+        for role in ("Accountant", "ProjectCoordinator", "PartnerAdmin"):
+            reader = make_officer(f"{role.lower()}@tp-own.test", role)
+
+            self.assertEqual(roster.reach_of(reader), roster.OWN, role)
+            self.assertEqual(
+                roster.visible_staff(reader), {str(reader.staff_profile.id)}, role
+            )
+            self.assertEqual(self.report(reader).ledger.portfolio(None), 0, role)
+
+    def test_a_lead_with_no_team_never_reads_the_country(self):
+        """A Programme Lead with no CCEOs and no schools of their own has an
+        empty team, not the country's targets."""
+        alone = make_officer("alone@tp-report.test", "Program Lead")
+        report = self.report(alone)
+
+        self.assertEqual(report.roster.regions, [])
+        self.assertNotEqual(report.home().kind, "country")
+        _key, label, scope = report.scope(None)
+        self.assertNotEqual(scope.kind, "country")
+        self.assertEqual(label, "Your team")
+        self.assertIsNone(report.executive_summary()["now"]["core_recruitment_target"])
+
     def test_a_cceo_reads_only_their_own_row(self):
         report = self.report(self.mary)
 
@@ -123,7 +188,7 @@ class SummaryTest(ReportFixture):
         summary = self.report().executive_summary()
 
         by_region = {r["label"]: r["figures"]["portfolio"] for r in summary["regions"]}
-        self.assertEqual(by_region, {"Northern": 2, "No Programme Lead": 1})
+        self.assertEqual(by_region, {"Lead": 2, "No Programme Lead": 1})
         self.assertEqual(summary["now"]["portfolio"], 3)
 
     def test_the_month_summary_is_titled_by_its_month(self):
@@ -273,7 +338,7 @@ class StatusTest(ReportFixture):
         self.assertEqual((f["portfolio"], f["visits_noncore"], f["visits"]), (2, 1, 1))
         self.assertEqual((f["ssa_client"], f["ssa"]), (1, 1))
 
-        board = report.cceo_board(region="Northern")
+        board = report.cceo_board(lead=str(self.lead.staff_profile.id))
         self.assertEqual([c["officer"].name for c in board["cards"]], [self.james.name])
         self.assertEqual(board["total"]["visits"], 1)
 
@@ -392,7 +457,7 @@ class AreaChartTest(ReportFixture):
         area = summary["sections"][0][1][0]
         self.assertEqual(area["label"], "Core School Recruitment")
         self.assertEqual(
-            [t["label"] for t in area["teams"]], ["Eastern", "No Programme Lead"]
+            [t["label"] for t in area["teams"]], ["Lead", "No Programme Lead"]
         )
         charts = self.report().section_charts("Program Growth")
         self.assertEqual(charts[0]["key"], "core_recruitment")

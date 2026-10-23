@@ -87,12 +87,12 @@ class TeamPerformancePageTest(LedgerFixture):
         """Owner, 2026-10-21: a PL sees their own team only; "IA, CD and Admin
         See Everyone grouped by PL"."""
         lead = self.page(self.lead)
-        self.assertIn('data-tp-team="Northern"', lead)
+        self.assertIn('data-tp-team="Lead"', lead)
         self.assertNotIn('data-tp-team="No Programme Lead"', lead)
         self.assertIn("Your team", lead)
 
         director = self.page(self.director)
-        self.assertIn('data-tp-team="Northern"', director)
+        self.assertIn('data-tp-team="Lead"', director)
         self.assertIn('data-tp-team="No Programme Lead"', director)
 
     def test_a_lead_cannot_open_another_teams_officer(self):
@@ -119,12 +119,14 @@ class TeamPerformancePageTest(LedgerFixture):
         self.assertNotIn(self.james.staff_profile.id, body)
 
     def test_the_dashboard_has_the_live_sheets_five_views(self):
-        for view in ("cceos", "deep", "milestones", "regions", "grid"):
+        for view in ("cceos", "deep", "milestones", "leads", "grid"):
             body = self.page(self.lead, tab="dashboard", view=view)
             self.assertIn(f'data-tp-dashboard="{view}"', body)
         cards = self.page(self.lead, tab="dashboard")
         self.assertIn(f'data-tp-officer-card="{self.james.staff_profile.id}"', cards)
-        northern = self.page(self.lead, tab="dashboard", view="grid", region="Northern")
+        northern = self.page(
+            self.director, tab="dashboard", view="grid", lead=self.lead.staff_profile.id
+        )
         self.assertIn(f'data-tp-grid="{self.james.staff_profile.id}"', northern)
         self.assertNotIn(f'data-tp-grid="{self.mary.staff_profile.id}"', northern)
 
@@ -190,13 +192,120 @@ class TeamPerformancePageTest(LedgerFixture):
             self.assertEqual(self.client.get(URL, query).status_code, 200, query)
 
     def test_roles_outside_the_report_are_refused(self):
-        self.client.force_login(self.hr)
+        accountant = make_officer("acc@tp-page.test", "Accountant")
+        self.client.force_login(accountant)
 
         response = self.client.get(URL)
 
         self.assertNotContains(
             response, "data-team-performance", status_code=response.status_code
         )
+
+    def test_hr_reads_everyone(self):
+        """Owner, 2026-10-23: HR is among the roles that read everyone's
+        performance, on every tab."""
+        for tab in TABS:
+            body = self.page(self.hr, tab=tab)
+            self.assertIn(f'data-team-performance="{tab}"', body)
+        summary = self.page(self.hr)
+        self.assertIn(f'data-tp-team="{self.lead.name}"', summary)
+        self.assertIn('data-tp-team="No Programme Lead"', summary)
+        self.assertIn("National Total", summary)
+        grid = self.page(self.hr, tab="dashboard", view="grid")
+        self.assertIn(f'data-tp-grid="{self.james.staff_profile.id}"', grid)
+        self.assertIn(f'data-tp-grid="{self.mary.staff_profile.id}"', grid)
+
+    def test_a_cceo_never_sees_another_officer_on_any_tab(self):
+        """Owner, 2026-10-23: "CCEO can only see their performance only. The
+        graphs and table … should be role specific"."""
+        james = str(self.james.staff_profile.id)
+        for tab in TABS:
+            body = self.page(self.mary, tab=tab)
+            self.assertNotIn(james, body, tab)
+            self.assertNotIn(self.james.name, body, tab)
+            self.assertNotIn("National Total", body, tab)
+        for view in ("cceos", "deep", "milestones", "leads", "grid"):
+            body = self.page(self.mary, tab="dashboard", view=view, officer=james)
+            self.assertNotIn(james, body, view)
+        fragment = self.page(self.mary, tab="summary", charts="Program Growth")
+        self.assertNotIn(self.james.name, fragment)
+        self.assertNotIn(f'data-tp-bar="{self.lead.name}"', fragment)
+
+    def test_a_lead_never_sees_an_officer_outside_their_team_on_any_tab(self):
+        """Owner, 2026-10-23: a Programme Lead sees "his performance and the
+        performance of his cceo team members"."""
+        mary = str(self.mary.staff_profile.id)
+        for tab in TABS:
+            body = self.page(self.lead, tab=tab)
+            self.assertNotIn(mary, body, tab)
+            self.assertNotIn(self.mary.name, body, tab)
+            self.assertNotIn("No Programme Lead", body, tab)
+        for scope in ("country", "region:none", mary):
+            body = self.page(self.lead, tab="weekly", scope=scope)
+            self.assertNotIn(mary, body, scope)
+        fragment = self.page(self.lead, tab="summary", charts="Program Growth")
+        self.assertNotIn(self.mary.name, fragment)
+        self.assertNotIn("No Programme Lead", fragment)
+
+    def test_the_master_ledger_reads_each_officers_region_not_their_lead(self):
+        """Owner, 2026-10-23: "Officer Performance Master Ledger … Region
+        Column should fetch the actual region not prgram lead"."""
+        grid = self.page(self.director, tab="dashboard", view="grid")
+        row = grid.split(f'data-tp-grid="{self.james.staff_profile.id}"')[1]
+        row = row[: row.index("</tr>")]
+        cells = [c.split("</td>")[0].strip() for c in row.split("<td>")[1:3]]
+        # Region, then Programme Lead: the region is never the lead.
+        self.assertEqual(cells, ["Northern", self.lead.name])
+
+    def test_the_dashboard_filters_by_programme_lead_by_name(self):
+        """Owner, 2026-10-23: "The region pills should be program lead pills.
+        All, PL1, PL2 … And use the actual name of the PL"."""
+        body = self.page(self.director, tab="dashboard")
+        chips = body[body.index('aria-label="Programme Lead"') :]
+        chips = chips[: chips.index("</nav>")]
+        self.assertIn(">All <span>", chips)
+        self.assertIn(f'data-tp-lead-chip="{self.lead.name}"', chips)
+        self.assertIn('data-tp-lead-chip="No Programme Lead"', chips)
+        self.assertNotIn('aria-label="Region"', body)
+        self.assertNotIn("Northern", chips)
+
+    def test_every_region_column_reads_the_officers_region(self):
+        """Owner, 2026-10-23: "Fix all the places where region column has
+        program leads"."""
+        for view in ("cceos", "deep", "grid"):
+            body = self.page(
+                self.director,
+                tab="dashboard",
+                view=view,
+                officer=self.james.staff_profile.id,
+            )
+            self.assertIn("Northern", body, view)
+        core = self.page(self.director, tab="core")
+        line = core.split(f'data-tp-core-line="{self.james.staff_profile.id}"')[1]
+        self.assertIn("<td>Northern</td>", line[: line.index("</tr>")])
+
+    def test_the_month_summary_groups_by_programme_lead_by_name(self):
+        body = self.page(self.director, tab="month")
+        self.assertIn(f'data-tp-region-total="{self.lead.name}"', body)
+        self.assertIn(f"{self.lead.name} Total", body)
+
+    def test_impact_assessment_is_every_milestones_responsible_lead(self):
+        """Owner, 2026-10-23: "Strategic Milestones & Operational Trackers -
+        Responsible Lead is the Impact Assessment"."""
+        from apps.team_performance import strategic
+
+        body = self.page(self.director, tab="milestones")
+        self.assertEqual(body.count("<td>Impact Assessment</td>"), len(strategic.ROWS))
+        for old in ("Quality Assurance", "M&amp;E Team", "Training Team"):
+            self.assertNotIn(old, body)
+
+    def test_hr_has_the_entry(self):
+        labels = [
+            item["label"]
+            for section in build_sidebar_for_user(self.hr, "/dashboard")
+            for item in section["items"]
+        ]
+        self.assertEqual(labels.count("Team Performance"), 1)
 
     def test_the_lead_has_team_performance_and_performance_reviews(self):
         items = {

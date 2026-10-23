@@ -19024,6 +19024,7 @@
     "RegionalVicePresident",
     "RegionalProgramLead",
     "ImpactAssessment",
+    "HumanResources",
     "Admin"
    ],
    "route": "/team-performance/",
@@ -19872,7 +19873,7 @@
   "BusinessTransformationOfficer": 244,
   "CCEO": 595,
   "CountryDirector": 854,
-  "HumanResources": 333,
+  "HumanResources": 334,
   "ImpactAssessment": 723,
   "MfiLoanOfficer": 138,
   "MfiPartnerAdmin": 141,
