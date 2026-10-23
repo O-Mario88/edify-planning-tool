@@ -35,6 +35,17 @@ def _key(todo: dict) -> tuple:
     )
 
 
+def context_line(title: str, linked: str) -> str:
+    """A To-Do's second line without the place when its title already names
+    it: "Schedule V1 Core Visit — Nakifuma School" over "Nakifuma School ·
+    Core Visit" read the school twice, which a phone's narrow row cannot
+    spare (2026-10-21). `linked` is "place · kind" or just the place."""
+    place, _, rest = (linked or "").partition("·")
+    if place.strip() and place.strip() in (title or ""):
+        return rest.strip()
+    return linked or ""
+
+
 def group_identical(todos: list[dict]) -> list[dict]:
     """The To-Dos as entries: {"group": False, "todo": t} for a To-Do on its
     own, {"group": True, "title", "category", "priority", "priority_label",

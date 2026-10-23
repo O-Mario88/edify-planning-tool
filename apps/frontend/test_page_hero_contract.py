@@ -43,6 +43,9 @@ NAMED_HERO_FAMILIES = (".edify-page-header",)
 # A page title that is deliberately not a page header. Each of these is a real
 # exception, not a page waiting to be migrated:
 HEADERLESS_H1_TEMPLATES = {
+    # Home's own blue header (owner's mockup, 2026-10-21): greeting and role
+    # on an inverse surface, the phone's first screen rather than a list page.
+    "templates/pages/home/index.html": "Home's own header",
     # The sign-in split panel: the h1 names the product on a marketing panel,
     # not a page inside the app shell.
     "templates/pages/auth/login.html": "auth card heading",

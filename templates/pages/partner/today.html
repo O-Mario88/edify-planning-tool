@@ -28,8 +28,8 @@
         {% for a in today_activities %}
         <article class="mobile-agenda-card{% if a.status == 'completed' %} mobile-agenda-card--success{% elif a.status == 'scheduled' %} mobile-agenda-card--warning{% endif %}" data-mobile-agenda-card>
           <span class="mobile-agenda-card__rail" aria-hidden="true"></span>
-          <div class="mobile-agenda-card__time"><strong>Today</strong><small>{{ a.status|cut:"_"|title }}</small></div>
-          <div class="mobile-agenda-card__body"><p>{{ a.activity_type|cut:"_"|title }}</p><h3>{% if a.school %}{% school_link a.school.name a.school.id %}{% elif a.cluster %}{% cluster_link a.cluster.name a.cluster.id %}{% else %}Activity{% endif %}</h3>{% if a.focus_intervention %}<small>{{ a.focus_intervention|cut:"_"|title }}</small>{% endif %}</div>
+          <div class="mobile-agenda-card__time"><strong>Today</strong><small>{{ a.status|status_label }}</small></div>
+          <div class="mobile-agenda-card__body"><p>{{ a.get_activity_type_display }}</p><h3>{% if a.school %}{% school_link a.school.name a.school.id %}{% elif a.cluster %}{% cluster_link a.cluster.name a.cluster.id %}{% else %}Activity{% endif %}</h3>{% if a.focus_intervention %}<small>{{ a.get_focus_intervention_display }}</small>{% endif %}</div>
         </article>
         {% empty %}
         <div class="edify-empty-state"><strong>Nothing scheduled today</strong><span>Assigned activities will appear here automatically.</span></div>
@@ -55,10 +55,10 @@
       <div class="py-3 flex items-center justify-between gap-3">
         <div class="min-w-0">
           <p class="text-[13px] font-semibold truncate">{% if a.school %}{% school_link a.school.name a.school.id %}{% elif a.cluster %}{% cluster_link a.cluster.name a.cluster.id %}{% else %}Activity{% endif %}</p>
-          <p class="edify-text-caption text-slate-400 capitalize">{{ a.activity_type|cut:"_" }}{% if a.focus_intervention %} · {{ a.focus_intervention|cut:"_" }}{% endif %}</p>
+          <p class="edify-text-caption text-slate-400">{{ a.get_activity_type_display }}{% if a.focus_intervention %} · {{ a.get_focus_intervention_display }}{% endif %}</p>
         </div>
         <span class="px-2 py-0.5 rounded-pill edify-text-caption font-bold shrink-0
-          {% if a.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif a.status == 'scheduled' %}bg-sky-50 text-sky-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ a.status|cut:"_"|title }}</span>
+          {% if a.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif a.status == 'scheduled' %}bg-sky-50 text-sky-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ a.status|status_label }}</span>
       </div>
       {% endfor %}
     </div>

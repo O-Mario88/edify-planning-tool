@@ -304,3 +304,12 @@ def any_attr(items, name):
         if value:
             return True
     return False
+
+
+@register.filter
+def todo_context(linked, title):
+    """{{ t.linked|todo_context:t.title }}: the To-Do's second line without a
+    place its title already names (apps.command_center.todo_groups)."""
+    from apps.command_center.todo_groups import context_line
+
+    return context_line(str(title or ""), str(linked or ""))

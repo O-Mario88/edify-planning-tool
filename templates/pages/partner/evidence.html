@@ -16,7 +16,7 @@
     <div class="divide-y divide-amber-100">
       {% for a in pending %}
       <div class="py-2 flex items-center justify-between gap-3">
-        <p class="text-[12px] font-semibold truncate">{% if a.school %}{% school_link a.school.name a.school.id %}{% else %}Activity{% endif %} <span class="text-slate-400 font-medium capitalize">· {{ a.activity_type|cut:"_" }}</span></p>
+        <p class="text-[12px] font-semibold truncate">{% if a.school %}{% school_link a.school.name a.school.id %}{% else %}Activity{% endif %} <span class="text-slate-400 font-medium">· {{ a.get_activity_type_display }}</span></p>
         <button type="button"
                 hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
                 class="inline-flex h-8 items-center rounded-control border border-amber-300 bg-amber-100/60 px-3 edify-text-caption font-bold text-amber-800 hover:bg-amber-100 shrink-0 transition-colors">Upload Evidence</button>

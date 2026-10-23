@@ -1,0 +1,29 @@
+{
+  "name": "edify-mobile",
+  "private": true,
+  "description": "Edify for iOS and Android: a Capacitor shell around the Edify web app (edifyplanning.app). The app itself is the Django site; this folder holds only the native projects and their configuration. See docs/mobile-app.md.",
+  "scripts": {
+    "sync": "node scripts/stamp-server.cjs && cap sync",
+    "sync:ios": "node scripts/stamp-server.cjs && cap sync ios",
+    "sync:android": "node scripts/stamp-server.cjs && cap sync android",
+    "open:ios": "cap open ios",
+    "open:android": "cap open android",
+    "doctor": "cap doctor",
+    "test": "node --test test/*.test.cjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2",
+    "@capacitor/keyboard": "8.0.5",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

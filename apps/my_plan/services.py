@@ -15,7 +15,9 @@ from apps.activities.completion_columns import (
 )
 from apps.core.activity_types import (
     COMPLETED_WORK_STATUSES,
+    NOT_STARTED_ACTIVITY_STATUSES,
     PROGRAMME_EVENT_TYPES,
+    UNDER_WAY_ACTIVITY_STATUSES,
     VISIT_TYPES,
     TRAINING_TYPES,
 )
@@ -314,6 +316,53 @@ def staff_my_plan_q(staff_ids, principal=None) -> Q:
         & ~Q(delivery_type="partner")
         & ~Q(status__in=("assigned_to_partner", "partner_scheduled"))
     )
+
+
+def my_plan_activities(principal, fy, scope=None):
+    """Every activity of `fy` on the caller's own My Plan, before the page's
+    status, period and list rules narrow it.
+
+    A delivery partner's plan is the work assigned to its organisation; a
+    staff member's is the work they own and deliver (`staff_my_plan_q`), under
+    both identifier spaces (`owner_ids`). Never the supervisees': My Plan is
+    the lead's personal list, and team work lives on Team Oversight
+    (Programme Lead walk, 2026-09-14). Home's plan figures read this too, so
+    a figure there and the list it opens cannot disagree about whose work it
+    is.
+    """
+    scope = scope or resolve_user_scope(principal)
+    qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    if scope.partner_ids:
+        return qs.filter(assigned_partner_id__in=scope.partner_ids)
+    staff_ids = [s for s in owner_ids(principal) if s]
+    return qs.filter(staff_my_plan_q(staff_ids, principal))
+
+
+def _date_passed_q(today) -> Q:
+    """The activity's day is behind us: its planned date, or its scheduled
+    time when it has no planned date (the past-due list's rule,
+    apps.my_plan.past_due_service)."""
+    return Q(planned_date__lt=today) | Q(
+        planned_date__isnull=True, scheduled_date__date__lt=today
+    )
+
+
+#: Where a live activity stands, for Home's plan figures and the My Plan
+#: status filter they open. Each live activity is in at most one: not started
+#: with its day ahead, under way, or not started with its day passed
+#: (apps.core.activity_types). Done work is in none of them.
+PLAN_STATES = ("upcoming", "under_way", "overdue")
+
+
+def plan_state_q(state: str, today) -> Q:
+    """The filter for one of PLAN_STATES on `today`."""
+    if state == "upcoming":
+        return Q(status__in=NOT_STARTED_ACTIVITY_STATUSES) & ~_date_passed_q(today)
+    if state == "under_way":
+        return Q(status__in=UNDER_WAY_ACTIVITY_STATUSES)
+    if state == "overdue":
+        return Q(status__in=NOT_STARTED_ACTIVITY_STATUSES) & _date_passed_q(today)
+    raise ValueError(f"unknown plan state {state!r}")
 
 
 def get(principal, query: dict) -> dict:
@@ -896,16 +945,7 @@ def get_frontend_context(
     # 3. Base queryset constrained by user scope. Terminal activities leave
     # the active feed and live in Completed Activities — unless the caller
     # explicitly filters for one of those statuses.
-    qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-    if scope.partner_ids:
-        qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
-    else:
-        # Both id spaces for the caller's own work (see owner_ids). Never the
-        # supervisees: My Plan is the lead's personal list, and a CCEO's work
-        # here offered Complete and Reschedule the lead could not use
-        # (Programme Lead walk, 2026-09-14). Team work lives on Team Oversight.
-        staff_ids = [s for s in owner_ids(principal) if s]
-        qs = qs.filter(staff_my_plan_q(staff_ids, principal))
+    qs = my_plan_activities(principal, fy, scope)
     # The plan the tiles count: every live activity of the year, the closed
     # ones included. The list below leaves closed work to Completed
     # Activities, but it was planned and it was delivered, and a Programme
@@ -997,6 +1037,9 @@ def get_frontend_context(
                 rows = rows.filter(
                     status__in=["returned", "returned_by_pl", "returned_by_ia"]
                 )
+            elif status in PLAN_STATES:
+                # Planned, In progress and Overdue, as Home counts them.
+                rows = rows.filter(plan_state_q(status, today))
             else:
                 rows = rows.filter(status=status)
         return rows
@@ -1036,7 +1079,14 @@ def get_frontend_context(
         | Q(planned_date__isnull=True, scheduled_date__date__gte=today)
         | Q(planned_date__isnull=True, scheduled_date__isnull=True)
     )
-    if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
+    if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES and status not in (
+        "under_way",
+        "overdue",
+    ):
+        # Asking for work under way or overdue is asking for it whatever its
+        # date, so those two lists keep their past-dated rows: they are the
+        # ones a Home figure counted.
+        #
         # Work a reviewer sent back stays on the plan whatever its date: it
         # is waiting on this person to fix and resubmit it, and a returned
         # visit dated last week vanished from My Plan along with the reason it

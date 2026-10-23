@@ -402,6 +402,62 @@
    At compact widths the search collapses to one icon; the lead stops
    stretching so the freed middle belongs to the date chip, centred, with
    the action icons holding the right edge. */
+/* The top bar's date and week (layouts/shell.html; owner, 2026-10-21: "more
+   premium"). A fact, not a control: no border or shadow. The date leads in
+   strong ink with the weekday set small and quiet beside it, and the week
+   sits in a soft Edify-blue capsule. Tokens only, so the dark theme follows. */
+.edify-topbar__when {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.edify-topbar__when-mark {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--brand-primary);
+}
+
+.edify-topbar__when-day {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+}
+
+.edify-topbar__when-weekday {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.edify-topbar__when-week {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--edify-radius-pill);
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* A phone keeps "Oct 21 · Wk 43" (the owner's top-bar spec); the weekday is
+   the first thing to go when the row needs the room. */
+@media (max-width: 40rem) {
+  .edify-topbar__when-weekday {
+    display: none;
+  }
+}
+
 @media (max-width: 64rem) {
   .edify-topbar__lead {
     flex: 0 0 auto;

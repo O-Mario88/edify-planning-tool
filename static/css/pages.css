@@ -4564,6 +4564,12 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 
 .ad-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 
+/* On a phone the activity's actions (Complete, Edit, Reschedule, Cancel) come
+   before its details, rather than two screens down (2026-10-21). */
+@media (max-width: 63.999rem) {
+  .ad-card--lead { order: -1; }
+}
+
 @media (min-width: 64rem) {
   .ad-grid { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; }
 }
@@ -5604,7 +5610,10 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   text-align: end;
 }
 
-.rpl-table__empty {
+/* As specific as `.rpl-table :is(th, td)` above, which kept the empty
+   state's sentence on one line: the table grew wider than a phone, offered
+   "swipe for more columns" over an empty list, and cut the sentence off. */
+.rpl-table .rpl-table__empty {
   white-space: normal;
 }
 

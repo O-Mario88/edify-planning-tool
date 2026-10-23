@@ -246,23 +246,28 @@ class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-non
 </search>
 </div>
 
-<!-- Today's date + ISO week (shown on every page). Plain text beside its
-icon: it is a fact, not a control, and a bordered chip among the top bar's
-buttons read as one more thing to press (2026-10-01). -->
-<div class="edify-topbar__date flex shrink-0 items-center gap-1.5 text-[12px] font-semibold text-slate-600" title="Today's date" aria-label="Today is {{ shell_today|date:'F j, Y' }}, week {{ current_week_number }}">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
-<span class="edify-topbar__date-short xl:hidden whitespace-nowrap">{{ shell_today|date:"M j" }} &middot; Wk {{ current_week_number }}</span>
-<span class="edify-topbar__date-long hidden xl:inline whitespace-nowrap">{{ shell_today|date:"D, N j, Y" }} &middot; Week {{ current_week_number }}</span>
+<!-- Today's date + ISO week (shown on every page). A fact, not a control
+(2026-10-01): no border or shadow that would read as one more button. The
+date leads in strong ink, the week sits in a soft Edify-blue capsule
+(owner, 2026-10-21: "more premium"). shell_today/shell_week come from
+apps.core.context_processors._shell_date. -->
+<div class="edify-topbar__date edify-topbar__when" title="Today's date">
+<span class="sr-only">Today is {{ shell_today|date:'l, F j, Y' }}, week {{ shell_week }}</span>
+<svg class="edify-topbar__when-mark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path stroke-linecap="round" d="M16 3v4M8 3v4M3 10h18"/></svg>
+<span class="edify-topbar__when-day" aria-hidden="true"><span class="edify-topbar__when-weekday">{{ shell_today|date:"D" }}</span> <span class="edify-topbar__date-short xl:hidden">{{ shell_today|date:"M j" }}</span><span class="edify-topbar__date-long hidden xl:inline">{{ shell_today|date:"M j, Y" }}</span></span>
+<span class="edify-topbar__when-week" aria-hidden="true"><span class="xl:hidden">Wk</span><span class="hidden xl:inline">Week</span> {{ shell_week }}</span>
 </div>
 <!-- Header Right Utilities -->
 <div class="edify-topbar__utilities flex items-center gap-2 shrink-0">
-<!-- Messages drawer — recent threads, each linking to the full thread page. -->
+<!-- Messages drawer — recent threads, each linking to the full thread page.
+Shown on phones too, beside the bell, where it always sat on the top bar
+(owner, 2026-10-21), as well as being a bottom-bar tab. -->
 <button
 hx-get="/messages/drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 data-drawer-anchor
-class="edify-topbar__icon-control edify-topbar__utility edify-topbar__utility--messages{% if mobile_nav %} edify-topbar__utility--mobile-redundant{% endif %} flex items-center justify-center relative focus:outline-none"
+class="edify-topbar__icon-control edify-topbar__utility edify-topbar__utility--messages flex items-center justify-center relative focus:outline-none"
 title="Messages"
 aria-label="Messages"
 >

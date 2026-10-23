@@ -353,7 +353,14 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: the columns, the shades past two series, a stacked bar's parts and a
     #: line that opens a row, all in chart-standard.js (+1.4 KB). Measured
     #: 152.15 KB.
-    JS_GZIP_KB = 152.75
+    #:
+    #: Raised to 154.0 on 2026-10-21 for the iOS and Android app (mobile/,
+    #: docs/mobile-app.md): static/js/native-shell.js, the back button,
+    #: deep links and the iOS field zoom (+1.9 KB). base.html sends it only to
+    #: the app, which names itself in its user agent, so a browser downloads
+    #: none of it; this scan reads base.html and counts it all the same.
+    #: Measured 153.89 KB.
+    JS_GZIP_KB = 154.0
     INLINE_SCRIPT_KB = 40
 
     @classmethod

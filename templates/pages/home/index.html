@@ -1,0 +1,125 @@
+{% extends "layouts/shell.html" %}
+{% load static frontend_filters %}
+
+{% block title %}Home — Edify{% endblock %}
+
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v=20261021home3">{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Home (owner, 2026-10-21, from the approved mockup in Edify's colours): what
+needs you now, what is coming up and where to go. Every figure and row is
+built by apps.command_center.home_service from the service that owns it; the
+links open pages that run their own permission checks.
+{% endcomment %}
+<div class="edify-home" data-mobile-family="home">
+
+  <header class="edify-home__hero edify-inverse-surface">
+    <div class="edify-home__brand-row">
+      <img class="edify-home__logo" src="{% static 'images/logo.png' %}" alt="Edify" width="88" height="36">
+    </div>
+    <h1 class="edify-page-title edify-home__greeting">{{ greeting }}{% if first_name %}, {{ first_name }}{% endif %}</h1>
+    <p class="edify-home__subtitle">Here’s what needs you today{% if role_title %}<span class="edify-home__role">{{ role_title }}</span>{% endif %}</p>
+  </header>
+
+  <section class="edify-home__card edify-home__overview" aria-labelledby="home-summary-title">
+    <div class="edify-home__card-head">
+      <h2 id="home-summary-title" class="edify-home__card-title">Today’s overview</h2>
+      <time class="edify-home__date" datetime="{{ today|date:'Y-m-d' }}">{{ today|date:"D, M j" }} · FY{{ fy }}</time>
+    </div>
+    <ul class="edify-home__figures" role="list" data-count="{{ figures|length }}">
+      {% for f in figures %}
+      <li>{% include "partials/home/figure.html" with f=f %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="edify-home__card" aria-labelledby="home-priority-title" aria-live="polite">
+    <div class="edify-home__card-head">
+      <h2 id="home-priority-title" class="edify-home__card-title">
+        <span class="edify-home__head-glyph">{% include "partials/home/icon.html" with name="bolt" %}</span>Priority actions
+      </h2>
+      <span id="home-priority-more"></span>
+    </div>
+    {% comment %}The To-Do queue loads once the page is drawn (partials/home/queue.html).
+    If the request fails the global notice says so (static/js/platform-status.js)
+    and this card offers to try again; nothing is claimed in the meantime.{% endcomment %}
+    <div id="home-priority-body"
+         hx-get="/home/queue"
+         hx-trigger="load, edify-home-retry"
+         hx-swap="outerHTML"
+         x-data="{ failed: false }"
+         @htmx:before-request="failed = false"
+         @htmx:response-error="failed = true"
+         @htmx:send-error="failed = true"
+         @htmx:timeout="failed = true"
+         aria-busy="true"
+         data-home-priority-loading>
+      <div x-show="!failed">
+        <div class="edify-home__item edify-home__item--skeleton" aria-hidden="true"><span class="edify-home__skeleton edify-home__skeleton--disc"></span><span class="edify-home__skeleton edify-home__skeleton--line"></span></div>
+        <div class="edify-home__item edify-home__item--skeleton" aria-hidden="true"><span class="edify-home__skeleton edify-home__skeleton--disc"></span><span class="edify-home__skeleton edify-home__skeleton--line"></span></div>
+        <p class="sr-only">Loading your priority actions</p>
+      </div>
+      <div class="edify-home__empty" x-show="failed" x-cloak role="alert">
+        <p class="edify-home__empty-title">Your priority actions did not load</p>
+        <p class="edify-home__empty-copy">Check your connection, then try again.</p>
+        <button type="button" class="edify-home__empty-cta" @click="$dispatch('edify-home-retry')">Try again</button>
+      </div>
+    </div>
+  </section>
+
+  {% if shortcuts %}
+  <section class="edify-home__card" aria-labelledby="home-shortcuts-title">
+    <div class="edify-home__card-head">
+      <h2 id="home-shortcuts-title" class="edify-home__card-title">
+        <span class="edify-home__head-glyph">{% include "partials/home/icon.html" with name="grid" %}</span>Quick access
+      </h2>
+    </div>
+    <ul class="edify-home__shortcuts" role="list">
+      {% for s in shortcuts %}
+      <li>
+        <a href="{{ s.url }}" class="edify-home__shortcut">
+          <span class="edify-home__shortcut-glyph" aria-hidden="true">{{ s.icon|safe }}</span>
+          <span class="edify-home__shortcut-label">{{ s.label }}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if has_plan %}
+  <section class="edify-home__card" aria-labelledby="home-upcoming-title">
+    <div class="edify-home__card-head">
+      <h2 id="home-upcoming-title" class="edify-home__card-title">
+        <span class="edify-home__head-glyph">{% include "partials/home/icon.html" with name="calendar" %}</span>Upcoming activities
+      </h2>
+      {% if upcoming %}<a href="/my-plan?status=upcoming" class="edify-home__see-all">View all{% include "partials/home/icon.html" with name="arrow" %}</a>{% endif %}
+    </div>
+    {% if upcoming %}
+    <ul class="edify-home__list" role="list">
+      {% for a in upcoming %}
+      <li>
+        <a href="{{ a.url }}" class="edify-home__item edify-home__item--upcoming" data-home-upcoming>
+          <span class="edify-home__datebox{% if a.is_today %} edify-home__datebox--today{% endif %}"><span>{% if a.is_today %}TODAY{% else %}{{ a.month }}{% endif %}</span><strong>{{ a.day }}</strong></span>
+          <span class="edify-home__item-body">
+            <span class="edify-home__item-name">{{ a.title }}{% if a.where %} — {{ a.where }}{% endif %}</span>
+            <span class="edify-home__item-sub">{% if a.time %}{{ a.time }} · {% endif %}{{ a.type_label }} · {{ a.status_label }}</span>
+          </span>
+          <span class="edify-home__item-go edify-home__item-go--quiet">{% include "partials/home/icon.html" with name="chevron" %}<span class="sr-only">Open</span></span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="edify-home__empty" data-home-empty="upcoming">
+      <p class="edify-home__empty-title">No activities coming up</p>
+      <p class="edify-home__empty-copy">Plan your next visit or training and it will show here.</p>
+      <a href="/my-plan" class="edify-home__empty-cta">Open My Plan</a>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

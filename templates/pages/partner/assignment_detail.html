@@ -45,7 +45,7 @@
       <div class="edify-data-row"><span class="edify-data-row__label">Cluster</span><span class="edify-data-row__value"><a href="/clusters/{{ a.cluster.id }}" class="hover:underline">{{ a.cluster.name }}</a></span></div>
       {% endif %}
       {% if a.focus_intervention %}
-      <div class="edify-data-row"><span class="edify-data-row__label">Focus intervention</span><span class="edify-data-row__value">{{ a.focus_intervention|cut:"_"|title }}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Focus intervention</span><span class="edify-data-row__value">{{ a.focus_intervention|status_label }}</span></div>
       {% endif %}
       {% if a.recommendation_reason %}
       <div class="edify-data-row"><span class="edify-data-row__label">Why this school</span><span class="edify-data-row__value">{{ a.recommendation_reason }}</span></div>
@@ -54,7 +54,7 @@
       <div class="edify-data-row"><span class="edify-data-row__label">Implementation notes</span><span class="edify-data-row__value">{{ a.notes }}</span></div>
       {% endif %}
       {% if a.return_reason %}
-      <div class="edify-data-row"><span class="edify-data-row__label">Previous return</span><span class="edify-data-row__value edify-danger-text">{{ a.return_reason_category|cut:"_"|title }} — {{ a.return_reason }}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Previous return</span><span class="edify-data-row__value edify-danger-text">{{ a.return_reason_category|status_label }} — {{ a.return_reason }}</span></div>
       {% endif %}
     </div>
   </div>

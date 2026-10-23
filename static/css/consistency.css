@@ -142,7 +142,11 @@ html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-vi
      td > a` compensation two rules below). */
   main a.edify-primary-text:not(:is(td, th) *),
   main a[class*="edify-chart-blue"][href]:not(:is(td, th) *),
-  main a[class*="edify-text-caption"][href]:not(:is(td, th) *),
+  /* Not a caption-styled link that already sizes itself as a control (a
+     32px tab, `h-8`): its -13px margins pulled a wrapped second line of
+     tabs over the first, so My Actions' "All" sat on top of "Overdue"
+     (2026-10-21). The 16-18px text links this rule is for keep it. */
+  main a[class*="edify-text-caption"][href]:not(:is(td, th) *):not(:is([class~="h-7"], [class~="h-8"], [class~="h-9"], [class~="h-10"], [class~="h-11"])),
   .hcos-breadcrumbs a,
   .admin-command__breadcrumbs a,
   .admin-panel__header > a,
@@ -2943,6 +2947,30 @@ main :is(.apexcharts-datalabel-value) {
   text-wrap: wrap !important;
   white-space: normal !important;
 }
+
+/* Nor is a group label on a phone: a cell spanning several rows names the
+   group they belong to (a priority over its milestones). Held to one line
+   and pinned, "Program Growth and Expansion · 5 milestones" was wider than
+   the screen, so a phone showed the label and none of the rows it labels
+   (2026-10-21). It wraps within a capped width instead. */
+@media (max-width: 47.999rem) {
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only, .edify-visually-hidden) :is(td, th):is([rowspan]:not([rowspan="1"])) {
+    inline-size: 9rem !important;
+    min-inline-size: 9rem !important;
+    max-inline-size: 9rem !important;
+  }
+
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only, .edify-visually-hidden) :is(td, th):is([rowspan]:not([rowspan="1"])),
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only, .edify-visually-hidden) :is(td, th):is([rowspan]:not([rowspan="1"]))
+    :not(.sr-only, .edify-visually-hidden) {
+    text-wrap: wrap !important;
+    white-space: normal !important;
+  }
+}
+
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   .edify-record-table [data-record-title] > :first-child {

@@ -1,0 +1,557 @@
+/*
+ * Home (templates/pages/home/index.html) — the phone's first tab and the
+ * native app's start page. The approved mockup, in Edify's own colours: the
+ * brand blue header, white cards on the page surface, compact figures, then
+ * the rows that need the reader.
+ *
+ * Every colour, radius and shadow is a design-system token
+ * (static/css/design-system.css); nothing here introduces a second palette.
+ * Loaded by Home alone through {% block feature_css %}.
+ */
+
+.edify-home {
+  --home-gutter: 1rem;
+  --home-touch: 2.75rem;
+  display: grid;
+  gap: 0.875rem;
+  max-width: 44rem;
+  margin-inline: auto;
+  padding: 0 0 1.25rem;
+  color: var(--edify-text);
+}
+
+.edify-home-glyph {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.edify-home__hero {
+  background: var(--brand-primary-hover);
+  color: var(--brand-primary-on-solid);
+  padding: 0.75rem var(--home-gutter) 2.25rem;
+  margin-bottom: -1.5rem;
+}
+
+.edify-home__brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.edify-home__logo {
+  height: 1.875rem;
+  width: auto;
+}
+
+/* White on the blue header through the design system's inverse surface
+   (consistency.css, .edify-inverse-surface); size and weight are the shared
+   page title's (.edify-page-title). */
+.edify-home__greeting {
+  margin: 1rem 0 0;
+}
+
+.edify-home__subtitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  font-size: var(--edify-text-lead-size);
+  opacity: 0.92;
+}
+
+.edify-home__role {
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--edify-radius-pill);
+  background: rgb(255 255 255 / 0.16);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.edify-home__card {
+  margin-inline: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--edify-divider);
+  border-radius: var(--edify-radius-lg);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.edify-home__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.625rem;
+}
+
+.edify-home__card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: var(--edify-text-title-size);
+  font-weight: 700;
+}
+
+.edify-home__head-glyph {
+  display: inline-flex;
+  color: var(--brand-primary);
+}
+
+.edify-home__date {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  white-space: nowrap;
+}
+
+.edify-home__see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: var(--home-touch);
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.edify-home__see-all .edify-home-glyph {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ── Figures ─────────────────────────────────────────────────────────────── */
+.edify-home__figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Every tile is as tall as the tallest, whichever label wraps. */
+.edify-home__figures > li {
+  display: flex;
+}
+
+.edify-home__figures > li > .edify-home__figure {
+  flex: 1;
+}
+
+/* Three figures (a role with no plan of its own) share the row evenly. The
+   count is stamped by the template, not asked of the list with :has(). */
+.edify-home__figures[data-count="3"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.edify-home__figure {
+  --tone-ink: var(--brand-primary);
+  --tone-wash: var(--brand-primary-soft);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  min-height: 5.5rem;
+  padding: 0.625rem 0.25rem;
+  border: 1px solid var(--edify-divider);
+  border-radius: var(--edify-radius-md);
+  background: var(--tone-wash);
+  color: var(--edify-text);
+  text-align: center;
+}
+
+.edify-home__figure--info {
+  --tone-ink: var(--edify-info);
+  --tone-wash: var(--edify-info-light);
+}
+
+.edify-home__figure--caution {
+  --tone-ink: var(--edify-warning-text);
+  --tone-wash: var(--edify-warning-light);
+}
+
+.edify-home__figure--alert {
+  --tone-ink: var(--edify-danger-text);
+  --tone-wash: var(--edify-danger-light);
+}
+
+.edify-home__figure--plain {
+  --tone-ink: var(--edify-text-muted);
+  --tone-wash: var(--edify-surface);
+}
+
+.edify-home__figure-glyph {
+  display: inline-flex;
+  color: var(--tone-ink);
+}
+
+.edify-home__figure-value {
+  font-size: var(--edify-text-tile-value-size);
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.edify-home__figure-label {
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.2;
+  color: var(--edify-text-muted);
+}
+
+/* ── Rows ────────────────────────────────────────────────────────────────── */
+.edify-home__list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.edify-home__item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.75rem;
+  padding: 0.625rem 0.625rem 0.625rem 0.75rem;
+  border: 1px solid var(--edify-divider);
+  border-radius: var(--edify-radius-md);
+  color: inherit;
+  background: var(--edify-surface-raised);
+}
+
+.edify-home__item:hover {
+  background: var(--edify-surface);
+}
+
+.edify-home__item-mark {
+  --tone-ink: var(--brand-primary);
+  --tone-wash: var(--brand-primary-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: var(--edify-radius-circle);
+  background: var(--tone-wash);
+  color: var(--tone-ink);
+}
+
+.edify-home__item-mark--alert {
+  --tone-ink: var(--edify-danger-text);
+  --tone-wash: var(--edify-danger-light);
+}
+
+.edify-home__item-mark--caution {
+  --tone-ink: var(--edify-warning-text);
+  --tone-wash: var(--edify-warning-light);
+}
+
+.edify-home__item-mark--info {
+  --tone-ink: var(--edify-info);
+  --tone-wash: var(--edify-info-light);
+}
+
+.edify-home__item-body {
+  display: grid;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.edify-home__item-name {
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.edify-home__item-sub {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edify-home__item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.125rem;
+}
+
+.edify-home__tag {
+  --tone-ink: var(--brand-primary-text);
+  --tone-wash: var(--brand-primary-soft);
+  padding: 0.0625rem 0.5rem;
+  border-radius: var(--edify-radius-pill);
+  background: var(--tone-wash);
+  color: var(--tone-ink);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.edify-home__tag--alert {
+  --tone-ink: var(--edify-danger-text);
+  --tone-wash: var(--edify-danger-light);
+}
+
+.edify-home__tag--caution {
+  --tone-ink: var(--edify-warning-text);
+  --tone-wash: var(--edify-warning-light);
+}
+
+.edify-home__tag--info {
+  --tone-ink: var(--edify-info-text);
+  --tone-wash: var(--edify-info-light);
+}
+
+.edify-home__tag--good {
+  --tone-ink: var(--edify-success-text);
+  --tone-wash: var(--edify-success-light);
+}
+
+.edify-home__tag--plain {
+  --tone-ink: var(--edify-text-muted);
+  --tone-wash: var(--edify-surface-muted);
+}
+
+.edify-home__due {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.edify-home__due .edify-home-glyph {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.edify-home__due--alert {
+  color: var(--edify-danger-text);
+}
+
+.edify-home__due--caution {
+  color: var(--edify-warning-text);
+}
+
+.edify-home__item-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex: none;
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+}
+
+.edify-home__item-go--quiet {
+  color: var(--edify-text-disabled);
+}
+
+.edify-home__datebox {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  flex: none;
+  padding: 0.375rem 0;
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface);
+  color: var(--brand-primary-text);
+  line-height: 1.1;
+}
+
+.edify-home__datebox span {
+  font-size: var(--edify-text-floor);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.edify-home__datebox strong {
+  font-size: var(--edify-text-title-size);
+}
+
+.edify-home__datebox--today {
+  background: var(--brand-primary);
+  color: var(--brand-primary-on-solid);
+}
+
+/* ── Quick access ────────────────────────────────────────────────────────── */
+.edify-home__shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.edify-home__shortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 4.75rem;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid var(--edify-divider);
+  border-radius: var(--edify-radius-md);
+  color: var(--edify-text);
+  text-align: center;
+}
+
+.edify-home__shortcut:hover {
+  background: var(--brand-primary-soft);
+}
+
+.edify-home__shortcut-glyph {
+  display: inline-flex;
+  color: var(--brand-primary);
+}
+
+.edify-home__shortcut-glyph svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.edify-home__shortcut-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* ── Empty states ────────────────────────────────────────────────────────── */
+.edify-home__empty {
+  padding: 1rem 0.5rem 0.5rem;
+  text-align: center;
+}
+
+.edify-home__empty-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.edify-home__empty-copy {
+  margin: 0.25rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+}
+
+.edify-home__empty-cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--home-touch);
+  margin-top: 0.5rem;
+  padding: 0 1rem;
+  border-radius: var(--edify-radius-pill);
+  background: var(--brand-primary);
+  color: var(--brand-primary-on-solid);
+  font-weight: 600;
+}
+
+button.edify-home__empty-cta {
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Loading: the To-Do queue arrives after the page is drawn ─────────────── */
+.edify-home__skeleton {
+  display: inline-block;
+  width: 1.75rem;
+  height: 1.25rem;
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-muted);
+}
+
+.edify-home__skeleton--disc {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: var(--edify-radius-circle);
+}
+
+.edify-home__skeleton--line {
+  flex: 1;
+  height: 0.875rem;
+}
+
+.edify-home__item--skeleton {
+  margin-bottom: 0.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .edify-home__skeleton {
+    animation: edify-home-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes edify-home-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* The workspace makes every text link an inline-flex touch target below lg
+   (mobile-micro-ux.css, `.edify-workspace a[href]…`). These links are whole
+   cards and lay out their own content, so they say so with a selector that
+   outranks it. */
+.edify-workspace .edify-home .edify-home__figure,
+.edify-workspace .edify-home .edify-home__item,
+.edify-workspace .edify-home .edify-home__shortcut {
+  display: flex;
+}
+
+/* Home's few controls are thumb-sized: the shell's compact control height
+   (mobile-micro-ux.css, --edify-action-button-block-size) is read here as
+   the 44px touch target rather than overridden. */
+.edify-home__see-all,
+.edify-home__empty-cta {
+  --edify-action-button-block-size: var(--home-touch);
+}
+
+/* ── Focus ───────────────────────────────────────────────────────────────── */
+.edify-home a:focus-visible {
+  outline: none;
+  box-shadow: var(--edify-focus-ring);
+}
+
+/* ── Small phones (≤ 360px): two figures and two shortcuts a row ─────────── */
+@media (max-width: 22.5rem) {
+  .edify-home__figures,
+  .edify-home__figures[data-count="3"],
+  .edify-home__shortcuts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ── Wide screens: the shell's top bar and sidebar are back, so the header is
+   a card among the others rather than a full-bleed band. ──────────────────── */
+@media (min-width: 64rem) {
+  .edify-home {
+    padding-top: 1.25rem;
+  }
+
+  .edify-home__hero {
+    margin-inline: 0.75rem;
+    padding-top: 1rem;
+    border-radius: var(--edify-radius-lg);
+  }
+}

@@ -1426,6 +1426,11 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
     block-size: 2rem !important;
     min-block-size: 2rem !important;
     padding-inline: 0.5rem 1.5rem !important;
+    /* The 2rem field holds its text whatever its size: the 8px padding and
+       24px line a page's own form styles gave it cut 16px text in half
+       (Field Debrief's filters, 2026-10-21). */
+    padding-block: 0 !important;
+    line-height: 1.25 !important;
     background-position: right 0.35rem center !important;
     font-size: var(--edify-text-micro-size) !important;
     text-overflow: ellipsis;
@@ -2009,7 +2014,10 @@ main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):
      under the title, from the left, when they do not. The grid gave the
      actions all the width they asked for and slid long labels ("Distribute
      to my team", "Record an observation") over the title (2026-09-27 sweep). */
-  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) {
+  /* Not a header the page hides on a phone (.mobile-home-hide): this rule
+     outranked that one, so pages showed their phone header and their desktop
+     header one above the other (PL dashboard, 2026-10-21). */
+  main .edify-page-header.edify-page-header:not(.mobile-home-hide):has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) {
     display: flex !important;
     flex-flow: row wrap !important;
     align-items: center !important;

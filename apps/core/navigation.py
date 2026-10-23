@@ -474,6 +474,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "system_health": {ADMIN},
     "messages": ALL_ROLES,
     "notifications": ALL_ROLES,
+    # Home: the phone's first tab and the native app's start page (owner,
+    # 2026-10-21). Every figure and row on it is scoped to the reader by the
+    # services it reads, so every signed-in role may open it.
+    "home": ALL_ROLES,
     # Global search — the topbar search box renders for every authenticated
     # role, so every role may open the page; each results section is
     # scope-constrained inside the view (apps/core/scoping.py).
@@ -910,6 +914,12 @@ ICONS.update(
         "business_transformation": ICONS["partners"],
         "loans": ICONS["disbursements"],
     }
+)
+
+ICONS["home"] = (
+    '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" '
+    'stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" '
+    'd="M3 10.5 12 3l9 7.5M5 9v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V9" /></svg>'
 )
 
 DEFAULT_SIDEBAR_ICON = ICONS["dashboard"]
@@ -3449,9 +3459,11 @@ MOBILE_NAV_MAX_PRIMARY = 4
 # effect, which is not the intent. Authorization still comes from
 # PAGE_PERMISSIONS, so these can advertise a page but never grant it.
 #
+#   home — the task-first Home screen; desktop keeps its Dashboard.
 #   messages — on desktop this is a topbar drawer, so it is a sidebar item
 #     nowhere, yet it is a primary destination for every role on a phone.
 _MOBILE_NAV_STANDALONE = {
+    "home": {"label": "Home", "url": "/home", "match": "exact"},
     "messages": {"label": "Messages", "url": "/messages", "match": "prefix"},
 }
 
@@ -3460,43 +3472,68 @@ _MOBILE_NAV_STANDALONE = {
 # grant access, and §7's "no bottom navigation item for a page the role cannot
 # access" holds by construction. Anything unavailable is skipped and the slot
 # is backfilled from the role's own sidebar order.
+#
+# Every bar is Home, the role's two key pages, then Messages. Home is the
+# approved mockup's first tab (owner, 2026-10-21); the notification bell stays
+# in the top bar and Messages in the bar, where they were (owner, same day).
+# The role's own home — its Dashboard, IA's dashboard, Country Oversight, a
+# Partner's Assigned Schools — is the first shortcut on Home rather than a tab
+# (HOME_SHORTCUTS_BY_ROLE).
 MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
-    # Field execution — the phone IS the field device, so the Dashboard, which
-    # opens on the Today workbench (roadmap Phase 5; one page since the owner
-    # merged Today and Dashboard, 2026-09-14), leads; the plan and schools follow.
-    CCEO: ("dashboard", "my_plan", "schools", "messages"),
-    # A Partner is not authorized for the school directory at all. Their
-    # phone opens on the Assigned Schools intake — the same place their
-    # sidebar home points.
-    PARTNER: ("partner_schools", "my_plan", "calendar", "messages"),
+    # Field execution — the phone IS the field device.
+    CCEO: ("home", "my_plan", "schools", "messages"),
+    # A Partner is not authorized for the school directory at all; their
+    # schools are the Assigned Schools intake.
+    PARTNER: ("home", "my_plan", "partner_schools", "messages"),
     # A PL's second surface is the team, not their own plan alone.
-    PL: ("dashboard", "my_plan", "team_planning_oversight", "messages"),
+    PL: ("home", "my_plan", "team_planning_oversight", "messages"),
     # Projects lead for the coordinator; their planning is project-scoped.
-    PROJECT_COORDINATOR: ("dashboard", "projects", "my_plan", "messages"),
+    PROJECT_COORDINATOR: ("home", "projects", "my_plan", "messages"),
     # The day's queue, then the verification queue that is most of it on a
-    # phone; SSA Verification and Partner Evidence are one tap away in the
-    # workspace strip (IA review, 2026-09-13).
-    IA: ("dashboard", "todos", "ia_verification_queue", "messages"),
+    # phone (IA review, 2026-09-13).
+    IA: ("home", "todos", "ia_verification_queue", "messages"),
     # Finance operates queues, not dashboards.
     ACCOUNTANT: (
-        "dashboard",
+        "home",
         "weekly_fund_request",
         "finance_partner_payments",
         "messages",
     ),
     # People work: the directory and the approvals that block others.
-    HR: ("dashboard", "staff", "leave_approvals", "messages"),
-    # Leadership decides on budget and reads the reports (the Analytics
-    # entry that held them is retired, owner, 2026-10-19).
-    CD: ("dashboard", "monthly_budget", "reports", "messages"),
-    RVP: ("dashboard", "monthly_budget", "reports", "messages"),
+    HR: ("home", "staff", "leave_approvals", "messages"),
+    # Leadership decides on budget and reads the reports.
+    CD: ("home", "monthly_budget", "reports", "messages"),
+    RVP: ("home", "monthly_budget", "reports", "messages"),
     # Platform operations: the incoming queue and the health of the system.
-    ADMIN: ("dashboard", "admin_support_queue", "system_health", "messages"),
+    ADMIN: ("home", "admin_support_queue", "system_health", "messages"),
+    # The MFI portal and the Business Transformation workspace are those
+    # roles' dashboards; they follow Home.
+    MFI_ADMIN: ("home", "dashboard", "todos", "messages"),
+    MFI_OFFICER: ("home", "dashboard", "todos", "messages"),
+    BUSINESS_TRANSFORMATION: ("home", "dashboard", "todos", "messages"),
 }
 
 # Used for a role with no entry above, and to fill any slot a role's preferred
 # key could not supply.
-_MOBILE_NAV_FALLBACK = ("dashboard", "my_plan", "todos", "messages")
+_MOBILE_NAV_FALLBACK = ("home", "my_plan", "todos", "messages")
+
+# Home's Quick access row: up to four more of the role's own pages, never one
+# already in the bar. Like the bar these are requests resolved against the
+# role's sidebar, so a shortcut can only ever be a page the role may open.
+HOME_SHORTCUTS_MAX = 4
+HOME_SHORTCUTS_BY_ROLE: dict[str, tuple[str, ...]] = {
+    CCEO: ("dashboard", "clusters", "calendar", "todos"),
+    PARTNER: ("partner_schools", "partner_assignments", "partner_evidence", "todos"),
+    PL: ("dashboard", "schools", "clusters", "todos"),
+    PROJECT_COORDINATOR: ("dashboard", "calendar", "todos", "schools"),
+    IA: ("dashboard", "ssa", "ia_partner_evidence", "schools"),
+    ACCOUNTANT: ("dashboard", "todos", "monthly_budget", "schools"),
+    HR: ("dashboard", "hr_today", "todos", "calendar"),
+    CD: ("dashboard", "team_planning_oversight", "todos", "schools"),
+    RVP: ("dashboard", "todos", "calendar", "schools"),
+    ADMIN: ("dashboard", "todos", "users", "schools"),
+}
+_HOME_SHORTCUTS_FALLBACK = ("dashboard", "todos", "calendar", "my_plan", "schools")
 
 # Sidebar labels are written for a 240px column and truncate to nonsense in a
 # 78px tab — "Disbursement Dashboard" renders as "Disburseme…". These are the
@@ -3509,6 +3546,7 @@ MOBILE_NAV_SHORT_LABELS = {
     "finance_partner_payments": "Payments",
     "ia_verification_queue": "Verify",
     "leave_approvals": "Leave",
+    "partner_schools": "Schools",
     "my_professional_development": "PD",
     # One line in a phone's tab (owner, 2026-09-27): "School Directory" either
     # ended "School Dir…" or took two lines, and a navigation label never wraps.
@@ -3520,32 +3558,15 @@ MOBILE_NAV_SHORT_LABELS = {
 }
 
 
-def build_mobile_nav_for_user(
-    user, current_path: str, sections: list[dict] | None = None
-) -> list[dict]:
-    """Primary phone destinations for this user, in order.
+def _mobile_catalogue(
+    role: str, current_path: str, sections: list[dict]
+) -> tuple[dict[str, dict], list[str]]:
+    """Every destination this role's sidebar offers, by page key, plus the
+    phone-only standalone pages the role may open, and the sidebar's order.
 
-    Derived from ``build_sidebar_for_user`` rather than from a parallel table,
-    so a role can never be offered a destination its sidebar would not show it.
-    Route authorization still runs on the request; this only decides what to
-    advertise.
-
-    Pass ``sections`` when the caller has already built the sidebar for this
-    request — the context processor has — so the registry is not walked twice
-    on every page load. Omit it and the sections are built here, which is what
-    tests and any standalone caller want.
-
-    Returns up to ``MOBILE_NAV_MAX_PRIMARY`` items. The More control that opens
-    the full navigation drawer is part of the template, not this list — it is
-    always present and never role-dependent.
+    The one source both the bottom bar and Home's shortcuts choose from, so
+    neither can offer a page the role's sidebar would not.
     """
-    role = get_user_role_slug(user)
-    if not role:
-        return []
-
-    if sections is None:
-        sections = build_sidebar_for_user(user, current_path)
-
     catalogue: dict[str, dict] = {}
     order: list[str] = []
     for section in sections:
@@ -3574,31 +3595,108 @@ def build_mobile_nav_for_user(
                 "page_key": key,
             },
         )
+    return catalogue, order
 
+
+def _pick(
+    catalogue: dict[str, dict],
+    preferences: tuple[tuple[str, ...] | list[str], ...],
+    limit: int,
+    exclude_urls: frozenset[str] = frozenset(),
+) -> list[dict]:
+    """Up to `limit` distinct catalogue items, taking each preference list in
+    turn and skipping any key the catalogue lacks or a URL already taken."""
     chosen: list[dict] = []
     seen: set[str] = set()
+    taken_urls = set(exclude_urls)
+    for keys in preferences:
+        for key in keys:
+            if len(chosen) >= limit:
+                return chosen
+            item = catalogue.get(key)
+            if key in seen or item is None:
+                continue
+            if any(picked is item for picked in chosen) or item["url"] in taken_urls:
+                continue
+            seen.add(key)
+            taken_urls.add(item["url"])
+            chosen.append(item)
+    return chosen
 
-    def take(key: str) -> None:
-        if len(chosen) >= MOBILE_NAV_MAX_PRIMARY or key in seen:
-            return
-        item = catalogue.get(key)
-        if item is None or any(picked is item for picked in chosen):
-            return
-        seen.add(key)
-        chosen.append(item)
 
-    for key in MOBILE_NAV_BY_ROLE.get(role, _MOBILE_NAV_FALLBACK):
-        take(key)
-    for key in _MOBILE_NAV_FALLBACK:
-        take(key)
-    # Still short only when the role sees very few pages at all; fill from
-    # whatever its sidebar does offer so the bar never renders half-empty.
-    for key in order:
-        take(key)
+def build_mobile_nav_for_user(
+    user, current_path: str, sections: list[dict] | None = None
+) -> list[dict]:
+    """Primary phone destinations for this user, in order.
+
+    Derived from ``build_sidebar_for_user`` rather than from a parallel table,
+    so a role can never be offered a destination its sidebar would not show it.
+    Route authorization still runs on the request; this only decides what to
+    advertise.
+
+    Pass ``sections`` when the caller has already built the sidebar for this
+    request — the context processor has — so the registry is not walked twice
+    on every page load. Omit it and the sections are built here, which is what
+    tests and any standalone caller want.
+
+    Returns up to ``MOBILE_NAV_MAX_PRIMARY`` items. The More control that opens
+    the full navigation drawer is part of the template, not this list — it is
+    always present and never role-dependent.
+    """
+    role = get_user_role_slug(user)
+    if not role:
+        return []
+
+    if sections is None:
+        sections = build_sidebar_for_user(user, current_path)
+
+    catalogue, order = _mobile_catalogue(role, current_path, sections)
+    # Still short only when the role sees very few pages at all; the sidebar's
+    # own order fills it so the bar never renders half-empty.
+    chosen = _pick(
+        catalogue,
+        (
+            MOBILE_NAV_BY_ROLE.get(role, _MOBILE_NAV_FALLBACK),
+            _MOBILE_NAV_FALLBACK,
+            order,
+        ),
+        MOBILE_NAV_MAX_PRIMARY,
+    )
 
     # Copied, never mutated in place: these dicts are the same objects the
     # sidebar is rendering from, and renaming them here would rename the
     # sidebar entry too.
+    return [
+        {**item, "label": MOBILE_NAV_SHORT_LABELS.get(item["page_key"], item["label"])}
+        for item in chosen
+    ]
+
+
+def build_home_shortcuts_for_user(
+    user, current_path: str, sections: list[dict] | None = None
+) -> list[dict]:
+    """Home's Quick access: up to ``HOME_SHORTCUTS_MAX`` of the role's own
+    pages that are not already tabs in its bottom bar.
+
+    Chosen from the same catalogue as the bar, so every shortcut is a page the
+    role's sidebar offers; the page's own permission check still runs when it
+    is opened.
+    """
+    role = get_user_role_slug(user)
+    if not role:
+        return []
+    if sections is None:
+        sections = build_sidebar_for_user(user, current_path)
+    catalogue, order = _mobile_catalogue(role, current_path, sections)
+    in_bar = frozenset(
+        item["url"] for item in build_mobile_nav_for_user(user, current_path, sections)
+    )
+    chosen = _pick(
+        catalogue,
+        (HOME_SHORTCUTS_BY_ROLE.get(role, ()), _HOME_SHORTCUTS_FALLBACK, order),
+        HOME_SHORTCUTS_MAX,
+        exclude_urls=in_bar,
+    )
     return [
         {**item, "label": MOBILE_NAV_SHORT_LABELS.get(item["page_key"], item["label"])}
         for item in chosen

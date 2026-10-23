@@ -629,6 +629,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             {
                 "templates/pages/hr/conversation_document.html",
                 "templates/pages/ia/review_workspace.html",
+                # Home's blue header runs edge to edge on a phone (owner's
+                # mockup, 2026-10-21); its cards carry their own inset.
+                "templates/pages/home/index.html",
             },
             "Every shell page needs the shared gutter; only purpose-built "
             "full-bleed or print workspaces are exempt.",

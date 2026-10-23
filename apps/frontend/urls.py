@@ -60,6 +60,7 @@ from .views import (
     staff_activity_views,
     training_ceiling_views,
     acting_views,
+    home_views,
 )
 
 app_name = "frontend"
@@ -344,6 +345,10 @@ urlpatterns = [
         "change-password", auth_views.force_change_password_view, name="change_password"
     ),
     # Dashboards
+    # Home: what needs you now, what is coming up and where to go — the
+    # phone's first tab and the native app's start page (owner, 2026-10-21).
+    path("home", home_views.home_view, name="home"),
+    path("home/queue", home_views.home_queue_view, name="home_queue"),
     path("dashboard", dashboard_views.dashboard_view, name="dashboard"),
     path(
         "dashboard/pl",

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-server="https://edifyplanning.app/home">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Edify — offline</title>
+<style>
+  :root { color-scheme: light; --blue: #0a4d86; --ink: #17232b; --muted: #233844; --surface: #f8fafb; }
+  html, body { height: 100%; margin: 0; }
+  body { display: grid; place-items: center; padding: 1.5rem; box-sizing: border-box;
+         background: var(--surface); color: var(--ink);
+         font: 400 1rem/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 22rem; text-align: center; }
+  h1 { margin: 0 0 .5rem; font-size: 1.25rem; }
+  p { margin: 0 0 1.25rem; color: var(--muted); }
+  button { min-height: 2.75rem; padding: 0 1.5rem; border: 0; border-radius: 999px;
+           background: var(--blue); color: #fff; font: inherit; font-weight: 600; }
+  button:focus-visible { outline: 3px solid rgba(14, 93, 163, .45); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<!-- The app's error page (capacitor.config.js, server.errorPath): the site
+     could not be reached. It claims nothing was saved; work already sent is on
+     the server, and field work waiting offline stays in the site's own outbox. -->
+<main>
+  <h1>Edify can’t reach the server</h1>
+  <p>Check your connection, then try again. Nothing you had already sent is lost.</p>
+  <button type="button" id="retry">Try again</button>
+</main>
+<script>
+  document.getElementById("retry").addEventListener("click", function () {
+    // The server the app opens, stamped in at sync (scripts/stamp-server.cjs).
+    window.location.replace(document.documentElement.getAttribute("data-server"));
+  });
+</script>
+</body>
+</html>

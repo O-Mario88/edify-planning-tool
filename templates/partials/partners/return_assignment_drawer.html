@@ -1,4 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
 
 {% block drawer_title %}Return {% if assignment.school %}{{ assignment.school.name }}{% elif assignment.cluster %}{{ assignment.cluster.name }}{% else %}this assignment{% endif %}{% endblock %}
 {% block drawer_subtitle %}{% endblock %}
@@ -14,7 +15,7 @@
   <div id="partner-return-errors" aria-live="polite"></div>
 
   <p class="font-medium text-slate-600">
-    <span class="font-semibold text-slate-800">{% if assignment.training_course %}{{ assignment.training_course.display_name }}{% elif assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Approved Activity choice{% endif %}</span>{% if assignment.focus_intervention %} · {{ assignment.focus_intervention|cut:"_"|title }}{% endif %}
+    <span class="font-semibold text-slate-800">{% if assignment.training_course %}{{ assignment.training_course.display_name }}{% elif assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Approved Activity choice{% endif %}</span>{% if assignment.focus_intervention %} · {{ assignment.focus_intervention|status_label }}{% endif %}
     goes back to the staff member who assigned it. No activity or cost is created.
   </p>
 

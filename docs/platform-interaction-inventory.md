@@ -6,8 +6,8 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Measure | Count |
 |---|---:|
-| Templates with controls | 678 |
-| Control declarations | 4044 |
+| Templates with controls | 681 |
+| Control declarations | 4053 |
 | State-changing | 473 |
 | High-consequence (state-changing) | 208 |
 | No automated evidence | 245 |
@@ -16,18 +16,18 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Kind | Count |
 |---|---:|
-| button | 1409 |
+| button | 1410 |
 | disclosure | 62 |
 | field | 1341 |
-| link | 1174 |
+| link | 1182 |
 | tab | 58 |
 
 | Evidence | Count |
 |---|---:|
-| browser-rendered | 853 |
+| browser-rendered | 857 |
 | none | 245 |
-| page-tested | 1560 |
-| request-tested | 1386 |
+| page-tested | 1561 |
+| request-tested | 1390 |
 
 ## State-changing controls with no automated evidence
 
@@ -51,4 +51,4 @@ Static scan of every template control (button, link, input, select, textarea, su
 | INT-4DAF16CA3708 | partials/ia/reports_view.html | 82 | Download annex (CSV) | `POST                                               ` |
 | INT-3144923BE448 | partials/leave/request_leave_drawer.html | 254 | Submit request | `POST                                          ` |
 | INT-17331EDF385C | partials/my_plan/pl_review_drawer.html | 100 | {{ form_submit }} | `POST {{ form_action }}` |
-| INT-50E0D15180C8 | partials/partners/return_assignment_drawer.html | 55 | Return to staff | `POST /partner/assignments/{{ assignment.id }}/return-action` |
+| INT-50E0D15180C8 | partials/partners/return_assignment_drawer.html | 56 | Return to staff | `POST /partner/assignments/{{ assignment.id }}/return-action` |

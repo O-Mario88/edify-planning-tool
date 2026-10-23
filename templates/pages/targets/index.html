@@ -27,15 +27,20 @@
 
   <form hx-get="/my-targets" hx-target="#my-targets-body" hx-swap="innerHTML" hx-trigger="change" hx-push-url="true"
         class="edify-filter-bar" aria-label="Target filters">
-    <span class="uppercase tracking-wider edify-text-caption">FY</span>
-    <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
-      {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
-    </select>
-    <span class="h-4 w-px bg-slate-200"></span>
-    <span class="uppercase tracking-wider edify-text-caption">Month</span>
-    <select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
-      {% for m in month_options %}<option value="{{ m.value }}" {% if month_of_fy == m.value %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
-    </select>
+    {# Each name travels with its field, so on a phone a pair wraps whole instead of the names and fields drifting apart. #}
+    <span class="inline-flex items-center gap-2 min-w-0">
+      <span class="uppercase tracking-wider edify-text-caption">FY</span>
+      <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+        {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
+      </select>
+    </span>
+    <span class="hidden sm:inline-block h-4 w-px bg-slate-200"></span>
+    <span class="inline-flex items-center gap-2 min-w-0">
+      <span class="uppercase tracking-wider edify-text-caption">Month</span>
+      <select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+        {% for m in month_options %}<option value="{{ m.value }}" {% if month_of_fy == m.value %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+      </select>
+    </span>
   </form>
 
   <div id="my-targets-body">
