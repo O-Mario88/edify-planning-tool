@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-server="https://edifyplanning.app/home">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -28,9 +28,11 @@
   <button type="button" id="retry">Try again</button>
 </main>
 <script>
+  // The server the app opens, written here at sync (scripts/stamp-server.cjs).
+  // A constant in the script, not text read back from the page.
+  var EDIFY_SERVER = "https://edifyplanning.app/home";
   document.getElementById("retry").addEventListener("click", function () {
-    // The server the app opens, stamped in at sync (scripts/stamp-server.cjs).
-    window.location.replace(document.documentElement.getAttribute("data-server"));
+    window.location.replace(EDIFY_SERVER);
   });
 </script>
 </body>

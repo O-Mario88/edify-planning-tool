@@ -19,3 +19,10 @@ test("plain http is allowed only for a local or private address", () => {
   assert.throws(() => resolveServer("http://evil.example"));
   assert.throws(() => resolveServer("ftp://edifyplanning.app"));
 });
+
+test("the offline page retries a stamped constant, never text read from its own markup", () => {
+  const html = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "www", "offline.html"), "utf8");
+  assert.match(html, /var EDIFY_SERVER = "https:\/\/edifyplanning\.app\/home";/);
+  assert.doesNotMatch(html, /getAttribute|data-server|innerHTML|dataset/);
+  assert.match(html, /window\.location\.replace\(EDIFY_SERVER\)/);
+});
