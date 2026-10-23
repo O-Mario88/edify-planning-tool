@@ -39,12 +39,14 @@ def _query(params, keep=KEPT) -> str:
     return query.urlencode()
 
 
-#: The dashboard's own views, as the live sheet's dashboard tabs them.
+#: The dashboard's own views, as the live sheet's dashboard tabs them; its
+#: roll-ups are by Programme Lead (owner, 2026-10-23: everyone "grouped by
+#: PL").
 DASHBOARD_VIEWS = (
     ("cceos", "CCEOs"),
     ("deep", "Officer Deep-Dive"),
     ("milestones", "Milestones"),
-    ("regions", "Regions"),
+    ("leads", "Programme Leads"),
     ("grid", "Master Grid"),
 )
 
@@ -52,23 +54,25 @@ DASHBOARD_VIEWS = (
 def _dashboard(report: Report, params) -> dict:
     views = dict(DASHBOARD_VIEWS)
     view = params.get("view") if params.get("view") in views else "cceos"
-    labels = {r.label for r in report.roster.regions}
-    region = params.get("region") if params.get("region") in labels else ""
+    # A lead chip names a team the reader may see; any other is ignored.
+    teams = {r.key for r in report.roster.regions}
+    lead = params.get("lead") if params.get("lead") in teams else ""
     sort = params.get("sort") if params.get("sort") in report.SORTS else "name"
     officers = report.roster.officers
     officer = report.roster.officer(params.get("officer") or "")
     if officer is None and officers:
         officer = officers[0]
-    board = report.cceo_board(region=region, sort=sort)
+    board = report.cceo_board(lead=lead, sort=sort)
     context = {
         "dash_view": view,
         "dash_views": DASHBOARD_VIEWS,
-        "dash_region": region,
+        "dash_lead": lead,
+        "dash_lead_label": report.roster.region(lead).label if lead else "",
         "dash_sort": sort,
         "dash_sorts": report.SORTS,
         "board": board,
         "officer": officer,
-        "dash_query": _dash_query(params, region, sort, officer),
+        "dash_query": _dash_query(params, lead, sort, officer),
     }
     if view == "deep" and officer is not None:
         context["deep"] = report.deep_dive(officer)
@@ -77,12 +81,12 @@ def _dashboard(report: Report, params) -> dict:
     return context
 
 
-def _dash_query(params, region, sort, officer) -> str:
+def _dash_query(params, lead, sort, officer) -> str:
     """The dashboard's links carry the resolved filters only: an officer the
     reader may not see is never echoed back."""
     query = QueryDict(_query(params), mutable=True)
     for key, value in (
-        ("region", region),
+        ("lead", lead),
         ("sort", sort),
         ("officer", officer.staff_id if officer else ""),
     ):

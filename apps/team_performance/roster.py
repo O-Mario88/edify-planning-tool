@@ -1,10 +1,12 @@
-"""Who the report lists: the officers, under the regions their leads run.
+"""Who the report lists: the officers, grouped by their Programme Lead.
 
-The workbook lists every CCEO under a region, with the region's Programme
-Lead first when they hold schools of their own. A region here is a lead's
-team (`StaffSupervisorAssignment`), named after the region most of its schools
-are in. Owner, 2026-10-20: leads read all four regions; a CCEO reads the page
-narrowed to their own row.
+Every CCEO is listed under their Programme Lead's team
+(`StaffSupervisorAssignment`), the lead first when they hold schools of their
+own. Owner, 2026-10-23: everyone is "grouped by PL" under "the actual name of
+the PL", and a Region column reads "the actual region not prgram lead" — the
+region an officer's schools are in. A team (`Region`, for the workbook's
+word) is named by its lead; its `place` is the region most of its schools are
+in, which only orders the teams.
 """
 
 from __future__ import annotations
@@ -27,24 +29,43 @@ class Officer:
     name: str
     role: str
     lead: str = ""
+    #: The region most of their schools are in, else their primary
+    #: district's; "" when neither is known.
+    region: str = ""
 
 
 @dataclass
 class Region:
+    """A Programme Lead's team, named by the lead."""
+
     key: str
     label: str
     lead_name: str
     officers: list[Officer] = field(default_factory=list)
+    #: The region most of the team's schools are in; it orders the teams.
+    place: str = ""
 
     @property
     def staff_ids(self) -> set[str]:
         return {o.staff_id for o in self.officers}
 
 
-#: What a reader sees (owner, 2026-10-21): a CCEO their own portfolio, a
-#: Programme Lead their own and their team's, IA, CD and Admin (and RVP and
-#: RPL) everyone, grouped by Programme Lead.
+#: What a reader sees (owner, 2026-10-21 and 2026-10-23): a CCEO their own
+#: portfolio, a Programme Lead their own and their CCEOs', and "Only CD, IA,
+#: HR, RVP Regional Program Leads" — with Admin — everyone, grouped by
+#: Programme Lead. Any other role reads only its own row.
 OWN, TEAM, ALL = "own", "team", "all"
+EVERYONE_READERS = frozenset(
+    role.value
+    for role in (
+        EdifyRole.COUNTRY_DIRECTOR,
+        EdifyRole.IMPACT_ASSESSMENT,
+        EdifyRole.HUMAN_RESOURCES,
+        EdifyRole.REGIONAL_VICE_PRESIDENT,
+        EdifyRole.REGIONAL_PROGRAM_LEAD,
+        EdifyRole.ADMIN,
+    )
+)
 
 
 @dataclass
@@ -86,14 +107,19 @@ class Roster:
 
 
 def reach_of(user) -> str:
+    """How far a reader sees. Everyone only for the roles named; a role not
+    named reads its own row, so a role later given the page sees no one
+    else's performance by default."""
     role = getattr(user, "active_role", "")
-    return {CCEO: OWN, LEAD: TEAM}.get(role, ALL)
+    if role in EVERYONE_READERS:
+        return ALL
+    return TEAM if role == LEAD else OWN
 
 
 def visible_staff(user) -> set[str] | None:
-    """The officers whose schools a reader sees: a CCEO themselves; a
-    Programme Lead themselves and the CCEOs whose direct line is to them;
-    None — everyone — for anyone else who may open the report."""
+    """The officers whose schools a reader sees: a Programme Lead themselves
+    and the CCEOs whose direct line is to them; None — everyone — for the
+    roles that read everyone; anyone else only themselves."""
     reach = reach_of(user)
     if reach == ALL:
         return None
@@ -150,6 +176,7 @@ def build(user, ledger) -> Roster:
     holders = ledger.holders()
     officers: dict[str, Officer] = {}
     leads: dict[str, str] = {}
+    home_districts: dict[str, str] = {}
     for person in people:
         profile = getattr(person, "staff_profile", None)
         if profile is None:
@@ -163,6 +190,9 @@ def build(user, ledger) -> Roster:
             officers[staff_id] = Officer(
                 staff_id, person.name or person.email, CCEO if CCEO in roles else LEAD
             )
+            if profile.primary_district_id:
+                home_districts[staff_id] = str(profile.primary_district_id)
+    _place_officers(officers, ledger, home_districts)
     for staff_id, lead in direct_leads(officers).items():
         if officers[staff_id].role == CCEO:
             officers[staff_id].lead = lead
@@ -183,13 +213,14 @@ def build(user, ledger) -> Roster:
                 continue
         lead_name = leads.get(lead) or (_name_of(lead) if lead else "")
         tally = ledger.regions_of({o.staff_id for o in teams[lead]})
-        place = max(tally, key=tally.get) if tally else ""
-        label = place or lead_name or NO_LEAD
-        if not lead:
-            label = NO_LEAD
+        place = max(tally, key=lambda r: (tally[r], r)) if tally else ""
         regions.append(
             Region(
-                key=lead or "none", label=label, lead_name=lead_name, officers=members
+                key=lead or "none",
+                label=(lead_name or NO_LEAD) if lead else NO_LEAD,
+                lead_name=lead_name,
+                officers=members,
+                place=place,
             )
         )
     regions.sort(key=_region_order)
@@ -207,19 +238,46 @@ def _name_of(staff_id: str) -> str:
     return (profile.user.name or profile.user.email) if profile else ""
 
 
+def _place_officers(officers: dict[str, Officer], ledger, home_districts) -> None:
+    """Each officer's region: where most of their schools are (by name on a
+    tie), else their primary district's region."""
+    from apps.geography.models import District
+
+    district_regions = {
+        str(pk): _region_name(name)
+        for pk, name in District.objects.filter(
+            id__in=set(home_districts.values())
+        ).values_list("id", "region__name")
+        if name
+    }
+    for staff_id, officer in officers.items():
+        tally = ledger.regions_of({staff_id})
+        if tally:
+            officer.region = max(tally, key=lambda r: (tally[r], r))
+        else:
+            officer.region = district_regions.get(home_districts.get(staff_id), "")
+
+
+def _region_name(name: str) -> str:
+    """A region as the ledger names it: "Northern Region" reads "Northern"."""
+    return name.replace(" Region", "").strip()
+
+
 def _region_order(region: Region):
-    if region.label == NO_LEAD:
+    """Teams in the workbook's region order, then by their lead's name; the
+    officers with no lead last."""
+    if region.key == "none":
         return (2, 0, "")
-    if region.label in REGION_ORDER:
-        return (0, REGION_ORDER.index(region.label), region.lead_name)
-    return (1, 0, region.label)
+    if region.place in REGION_ORDER:
+        return (0, REGION_ORDER.index(region.place), region.label.lower())
+    return (1, 0, region.label.lower())
 
 
 def _distinguish(regions: list[Region]) -> None:
-    """Two leads whose teams sit in the same region are told apart by name."""
+    """Two leads of the same name are told apart by their team's region."""
     seen = defaultdict(int)
     for region in regions:
         seen[region.label] += 1
     for region in regions:
-        if seen[region.label] > 1 and region.lead_name:
-            region.label = f"{region.label} ({region.lead_name})"
+        if seen[region.label] > 1 and region.place:
+            region.label = f"{region.label} ({region.place})"

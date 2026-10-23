@@ -128,6 +128,10 @@ class Report:
         if self.roster.lead:
             team = self.roster.region(self.roster.lead)
             return Scope.region(self.roster.lead, team.staff_ids if team else set())
+        if self.roster.narrowed:
+            # A narrowed reader with no one listed reads an empty team, never
+            # the country's targets.
+            return Scope.region("", set())
         return Scope.country()
 
     def team_scope(self, region) -> Scope:
@@ -153,7 +157,7 @@ class Report:
             out.append(
                 (
                     f"region:{region.key}",
-                    f"{region.label} region",
+                    f"Team · {region.label}",
                     Scope.region(region.key, region.staff_ids),
                 )
             )
@@ -166,7 +170,7 @@ class Report:
     def scope(self, key: str | None) -> tuple[str, str, Scope]:
         options = self.scopes()
         if not options:
-            return ("country", "Country", Scope.country())
+            return ("home", self.roster.home_label, self.home())
         return next((o for o in options if o[0] == key), options[0])
 
     # ── One figure ──────────────────────────────────────────────────────────
@@ -330,6 +334,7 @@ class Report:
             {
                 "label": region.label,
                 "lead": region.lead_name,
+                "place": region.place,
                 "region": region,
                 "figures": self.summary_figures(
                     self.team_scope(region), self.period.to_date
@@ -367,9 +372,8 @@ class Report:
         return _bars(
             [
                 {
-                    "label": r["lead"] or r["label"],
-                    # Its region beneath, when the team is named by one.
-                    "place": r["label"] if r["lead"] not in ("", r["label"]) else "",
+                    "label": r["label"],
+                    "place": "",
                     "target": r["figures"][f"{key}_target"],
                     "achieved": r["figures"][key],
                 }
@@ -682,17 +686,20 @@ class Report:
         f["metrics_pct"] = pct(count("schools_with_metrics"), f["portfolio"])
         return f
 
-    def cceo_board(self, *, region: str = "", sort: str = "name") -> dict:
-        """The dashboard's officer cards, regional roll-ups and master grid,
-        narrowed to one region when a region chip is chosen."""
-        regions = [r for r in self.roster.regions if not region or r.label == region]
+    def cceo_board(self, *, lead: str = "", sort: str = "name") -> dict:
+        """The dashboard's officer cards, Programme Lead roll-ups and master
+        grid, narrowed to one lead's team when a lead chip is chosen (owner,
+        2026-10-23: "The region pills should be program lead pills"). Each
+        officer's region is their own, never their lead."""
+        regions = [r for r in self.roster.regions if not lead or r.key == lead]
         cards = []
         for r in regions:
             for officer in r.officers:
                 cards.append(
                     {
                         "officer": officer,
-                        "region": r.label,
+                        "region": officer.region,
+                        "team": r.label,
                         "f": self.officer_figures(Scope.officer(officer.staff_id)),
                     }
                 )
@@ -714,24 +721,37 @@ class Report:
             }
             for r in regions
         ]
-        if region:
+        if lead:
             ids = {c["officer"].staff_id for c in cards}
             total = self.officer_figures(Scope("region", "", frozenset(ids)))
         else:
             total = self.officer_figures(self.home())
+        # The master grid lists every lead's team together (owner, 2026-10-23:
+        # everyone "grouped by PL"), in the roster's order, officers by name.
+        order = {r.key: n for n, r in enumerate(self.roster.regions)}
+        team_of = {o.staff_id: r.key for r in regions for o in r.officers}
+        grid = sorted(
+            cards,
+            key=lambda c: (
+                order[team_of[c["officer"].staff_id]],
+                c["officer"].name.lower(),
+            ),
+        )
         return {
             "cards": cards,
+            "grid": grid,
             "rollups": rollups,
             "total": total,
             "officers": len(cards),
-            "regions": [(r.label, len(r.officers)) for r in self.roster.regions],
+            "teams": [(r.key, r.label, len(r.officers)) for r in self.roster.regions],
         }
 
     def deep_dive(self, officer) -> dict:
-        region = self.roster.region_of(officer.staff_id)
+        team = self.roster.region_of(officer.staff_id)
         return {
             "officer": officer,
-            "region": region.label if region else "",
+            "region": officer.region,
+            "team": team.label if team else "",
             "f": self.officer_figures(Scope.officer(officer.staff_id)),
         }
 
@@ -977,17 +997,18 @@ class Report:
 
     # ── Core Visits & Training ──────────────────────────────────────────────
     def core_package(self) -> dict:
+        # Grouped by Programme Lead, in the roster's order, officers by name.
         lines = []
         for region in self.roster.regions:
-            for officer in region.officers:
+            for officer in sorted(region.officers, key=lambda o: o.name.lower()):
                 lines.append(
                     {
                         "officer": officer,
-                        "region": region.label,
+                        "region": officer.region,
+                        "team": region.label,
                         **self.package_figures(Scope.officer(officer.staff_id)),
                     }
                 )
-        lines.sort(key=lambda r: r["officer"].name.lower())
         return {"lines": lines, "total": self.package_figures(self.home())}
 
     def package_figures(self, scope: Scope) -> dict:

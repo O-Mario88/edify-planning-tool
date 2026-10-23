@@ -8,13 +8,17 @@ Owner's answers the same day:
 
 - The Performance Reviews, Recovery Plans, Professional Development and Policy
   Compliance workspace keeps its own sidebar entry, **Performance Reviews**.
-- Who reads what (owner, 2026-10-21): a CCEO their own portfolio and
-  performance; a Programme Lead their own and their team's — themselves and
-  the CCEOs whose direct line is to them — with the team's approved
-  allocations as their targets; Impact Assessment, the Country Director and
-  Admin (and the RVP and Regional Programme Lead) everyone, grouped by
-  Programme Lead. Only the visible schools are read, and a CCEO's team row is
-  their own, so a team's target is never set against one officer's work.
+- Who reads what (owner, 2026-10-21 and 2026-10-23): a CCEO their own
+  portfolio and performance; a Programme Lead their own and their team's —
+  themselves and the CCEOs whose direct line is to them — with the team's
+  approved allocations as their targets. "Only CD, IA, HR, RVP Regional
+  Program Leads can have access to everyone's performance": the Country
+  Director, Impact Assessment, HR, the RVP and the Regional Programme Lead,
+  and Admin, read everyone, grouped by Programme Lead. Any other role reads
+  only its own row. Every tab, chart and table reads only the visible schools,
+  a reader who sees part of the country never gets the country's targets, and
+  a CCEO's team row is their own, so a team's target is never set against one
+  officer's work.
 - Targets are the ones Programme Leads and Project Coordinators already set
   (the Uganda Master Priority Plan allocations). Achievements come from the
   work staff planned and completed. Exam scores, enrolment, MSC stories and
@@ -30,22 +34,26 @@ rule since 2026-10-14: pages update on refresh, not by streaming).
 | Tab | Workbook sheet | What it shows |
 | --- | --- | --- |
 | Executive Summary | Executive Summary | Five headline tiles, the four regions and the national total against the end of the previous week, every tracked target area (owner, 2026-10-21: "all targets that are tracked" — each tracked row with a plan milestone or an eligible-schools target, data collected aside, by section): a table of each area's national target, achieved, % and change since the previous period and every Programme Lead team's target, achieved and %; then, one row per area, two charts of it side by side — by region (every region) and by Programme Lead; and the programme delivery milestones with a status. |
-| Detailed Country Report | Weekly Report - Country (and its copy) | Every category in the workbook's columns: Monthly Performance for the chosen month, Q1–Q4 Cumulative Performance and Annual Performance against Annual Target (owner, 2026-10-20). Country, one region or one CCEO. |
-| Strategic Milestones | Strategic Milestones & Trackers | The live sheet's 54 milestones in its 7 domains, achieved from the records and targeted by the matching Uganda Master Priority Plan milestone (owner, 2026-10-20); rows the platform keeps no record for read "Not tracked". |
-| CCEO Officer Performance & Milestones | CCEO Officer Performance and Milestones Dashboard | The live sheet's dashboard: CCEO cards, an Officer Deep-Dive, the milestones, regional roll-ups and the master grid, with region chips, the officer profile and sorting. The year to the end of the chosen month. |
-| {Month} {Year} Summary | August 26 Summary | One row per CCEO, grouped by region, with every summary column and the region and national totals. Titled by the chosen month. |
-| Core Visits & Training | Core Visit & Training | Each CCEO's Core schools with 2, 3 and 4+ visits and trainings, expected against achieved. |
+| Detailed Country Report | Weekly Report - Country (and its copy) | Every category in the workbook's columns: Monthly Performance for the chosen month, Q1–Q4 Cumulative Performance and Annual Performance against Annual Target (owner, 2026-10-20). Country, one Programme Lead's team or one CCEO. |
+| Strategic Milestones | Strategic Milestones & Trackers | The live sheet's 54 milestones in its 7 domains, achieved from the records and targeted by the matching Uganda Master Priority Plan milestone (owner, 2026-10-20); rows the platform keeps no record for read "Not tracked". Impact Assessment is every row's Responsible Lead (owner, 2026-10-23). |
+| CCEO Officer Performance & Milestones | CCEO Officer Performance and Milestones Dashboard | The live sheet's dashboard: CCEO cards, an Officer Deep-Dive, the milestones, Programme Lead roll-ups and the master grid, with Programme Lead chips named by each lead (owner, 2026-10-23: "All, PL1, PL2 … the actual name of the PL"), the officer profile and sorting. The master grid's Region column is each officer's own region, beside their Programme Lead. The year to the end of the chosen month. |
+| {Month} {Year} Summary | August 26 Summary | One row per CCEO the reader may see, grouped by Programme Lead, with every summary column and each lead's and the reader's totals. Titled by the chosen month. |
+| Core Visits & Training | Core Visit & Training | Each CCEO the reader may see, grouped by Programme Lead, with their region: Core schools with 2, 3 and 4+ visits and trainings, expected against achieved. |
 
 ## Who is counted, and where
 
 - **A CCEO's portfolio** is the schools whose account owner they are
   (`School.account_owner_id`, a staff profile id or its user id, as
   `core.scoping.owner_ids` writes it). Deleted schools are never counted.
-- **A region** is a Programme Lead's team: the lead and the CCEOs whose direct
-  line is to them (`StaffSupervisorAssignment` rows whose supervisor is a
+- **A team** is a Programme Lead's: the lead and the CCEOs whose direct line
+  is to them (`StaffSupervisorAssignment` rows whose supervisor is a
   Programme Lead; IA and RVP rows are oversight beside it and never move a
-  CCEO). It is named after the region most of its schools are in. Officers
-  with no lead are listed under "No Programme Lead".
+  CCEO). It is named by its lead (owner, 2026-10-23); officers with no lead
+  are listed under "No Programme Lead".
+- **An officer's region** is the region most of their schools are in, else
+  their primary district's region — never their Programme Lead (owner,
+  2026-10-23: "Region Column should fetch the actual region not prgram
+  lead").
 - **Core** is the platform's Core family (`core`, `champion`,
   `hr.target_distribution.CORE_FAMILY`, the family a Core target reaches);
   **client** is every other type, as the workbook's "not Core".

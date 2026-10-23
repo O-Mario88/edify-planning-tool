@@ -20,7 +20,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | RegionalProgramLead | 358 |
 | ImpactAssessment | 725 |
 | Accountant | 468 |
-| HumanResources | 335 |
+| HumanResources | 336 |
 | ProjectCoordinator | 497 |
 | PartnerAdmin | 243 |
 | PartnerFieldOfficer | 243 |
@@ -1201,7 +1201,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/target-distribution/import/template` | target_distribution |  |  | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/target-distribution/team` | team_target_distribution |  | Y |  |  |  |  |  |  |  |  |  |  |  |  | Y |
 | `/target-distribution/team/action` | team_target_distribution |  | Y |  |  |  |  |  |  |  |  |  |  |  |  | Y |
-| `/team-performance/` | team_performance | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  |  | Y |
+| `/team-performance/` | team_performance | Y | Y | Y | Y | Y | Y |  | Y |  |  |  |  |  |  | Y |
 | `/team-performance/country-targets/` | team_performance_targets |  |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/team-planning-oversight/` | team_planning_oversight |  | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
 | `/team-planning-oversight/detail` | team_planning_oversight |  | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |

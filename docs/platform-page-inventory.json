@@ -16105,7 +16105,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4177,
+      "bytes": 4327,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -16131,7 +16131,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16219,
+      "bytes": 16602,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -16181,7 +16181,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3512,
+      "bytes": 3429,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -95574,6 +95574,7 @@
         "ADMIN",
         "CCEO",
         "CD",
+        "HR",
         "IA",
         "PL",
         "RPL",

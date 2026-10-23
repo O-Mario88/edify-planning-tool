@@ -3380,6 +3380,7 @@
         "school_directory",
         "settings",
         "staff_directory",
+        "team_performance",
         "todos",
         "uploads",
         "workforce_planning"
@@ -5015,8 +5016,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "95b4f5f86e88e195e3c40f5268c1cb8364bfcf0457044ea1d6bec9b73f8e2977",
-    "sources": "fd74b8e1eeff4849ded6b3bdd09f89032606cd731fd3de36a9949509184a11af",
+    "payload": "68dd99b8a40694fab9f286eb4bb2a85775ce303264d89826cb7e9104af55df10",
+    "sources": "75e3606433bdb18a0132e78e0f6d3f7480bccdbdd29aa26ce29ad9b6c24ad30d",
     "sourceCount": 268,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

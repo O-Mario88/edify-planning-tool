@@ -1,10 +1,11 @@
 """The Strategic Milestones & Trackers sheet's 54 rows, read from the records.
 
 Owner, 2026-10-20: the tab shows the live sheet's own milestones — its rows,
-domains, delivery modes and leads — with the achieved figure computed from
-the database and the target taken from the matching Uganda Master Priority
-Plan milestone (the figures PLs and Project Coordinators allocate), "Not set"
-where the plan has none. A row the platform keeps no record for (SSA cohort
+domains and delivery modes, with Impact Assessment the responsible lead of
+every row — with the achieved figure computed from the database and the
+target taken from the matching Uganda Master Priority Plan milestone (the
+figures PLs and Project Coordinators allocate), "Not set" where the plan has
+none. A row the platform keeps no record for (SSA cohort
 years, ELP, BPV, the Alumni programme, HR usage) says "Not tracked".
 
 Row kinds:
@@ -20,6 +21,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 COUNT, RATE, SCORE, UNTRACKED = "count", "rate", "score", "untracked"
+#: Who answers for every row of the sheet (owner, 2026-10-23).
+RESPONSIBLE_LEAD = "Impact Assessment"
 
 
 @dataclass(frozen=True)
@@ -34,7 +37,12 @@ class StrategicRow:
     slice: str = ""
     #: The eligible schools a percentage target, or a rate row, is a share of.
     basis: str = ""
-    lead: str = ""
+
+    @property
+    def lead(self) -> str:
+        """Owner, 2026-10-23: "Strategic Milestones & Operational Trackers -
+        Responsible Lead is the Impact Assessment" — every row."""
+        return RESPONSIBLE_LEAD
 
     @property
     def key(self) -> str:
@@ -61,7 +69,6 @@ def _cohort(n: int, year: int) -> StrategicRow:
         f"Core schools score improvement Cohort {n}",
         f"Cohort {n} ({year})",
         UNTRACKED,
-        lead="Quality Assurance",
     )
 
 
@@ -75,7 +82,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Client schools score improvement",
         "Client Schools",
         SCORE,
-        lead="Quality Assurance",
     ),
     StrategicRow(
         Q,
@@ -83,14 +89,12 @@ ROWS: tuple[StrategicRow, ...] = (
         "Qualitative Impact Case Stories",
         measures=("msc",),
         plan="MSC_STORIES",
-        lead="M&E Team",
     ),
     StrategicRow(
         Q,
         "Engaging Champion and Core Graduate Schools",
         "Champion & Graduate Network",
         UNTRACKED,
-        lead="Partnership Team",
     ),
     StrategicRow(
         Q,
@@ -100,7 +104,6 @@ ROWS: tuple[StrategicRow, ...] = (
         ("dc_clubs_core",),
         "SCHOOLS_WITH_DCS",
         basis="core",
-        lead="DC Lead",
     ),
     StrategicRow(
         Q,
@@ -110,7 +113,6 @@ ROWS: tuple[StrategicRow, ...] = (
         ("dc_clubs_client",),
         "SCHOOLS_WITH_DCS",
         basis="client",
-        lead="M&E / QA",
     ),
     StrategicRow(
         Q,
@@ -118,7 +120,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Core School Orientation",
         measures=("core_recruitment",),
         plan="NEW_CORE_SCHOOLS",
-        lead="Recruitment Lead",
     ),
     StrategicRow(
         Q,
@@ -126,7 +127,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "School Scouting & Ingestion",
         measures=("new_schools",),
         plan="NEW_SCHOOLS",
-        lead="Recruitment Lead",
     ),
     StrategicRow(
         V,
@@ -134,7 +134,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "In-Person Monitoring Visits",
         measures=("client_visits_staff_n",),
         plan="CLIENT_VISITS_STAFF",
-        lead="Field Staff",
     ),
     StrategicRow(
         V,
@@ -142,7 +141,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Partner Joint Monitoring",
         measures=("client_visits_partner_n",),
         plan="CLIENT_VISITS_PARTNER",
-        lead="Partner Reps",
     ),
     StrategicRow(
         V,
@@ -150,7 +148,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "In-Person Staff Coaching",
         measures=("core_visits_staff_n",),
         plan="CORE_VISITS_STAFF",
-        lead="Field Staff",
     ),
     StrategicRow(
         V,
@@ -158,7 +155,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Partner Coaching & Mentoring",
         measures=("core_visits_partner_n",),
         plan="CORE_VISITS_PARTNER",
-        lead="Partner Reps",
     ),
     StrategicRow(
         T,
@@ -167,42 +163,36 @@ ROWS: tuple[StrategicRow, ...] = (
         measures=("client_trained",),
         plan="CLIENT_TRAINING_COMPLIANCE",
         basis="client",
-        lead="Training Team",
     ),
     StrategicRow(
         T,
         "Cluster meeting target",
         "Peer Learning Clusters",
         measures=("cluster_meetings",),
-        lead="Training Team",
     ),
     StrategicRow(
         T,
         "Core school trainings",
         "Dedicated Core School Training",
         measures=("core_trained",),
-        lead="Training Team",
     ),
     StrategicRow(
         T,
         "Online Training Target (No of schools)",
         "Digital Modules & Webinars",
         measures=("online_schools",),
-        lead="EdTech Team",
     ),
     StrategicRow(
         T,
         "EdTech Foundations Training",
         "Online",
         measures=("edtech_foundations_online",),
-        lead="EdTech Team",
     ),
     StrategicRow(
         T,
         "EdTech Foundations Training",
         "In-School",
         measures=("edtech_foundations_in_school",),
-        lead="EdTech Team",
     ),
     StrategicRow(
         T,
@@ -210,7 +200,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "In-School",
         measures=("course_edtech_integration",),
         plan="EDTECH_INTEGRATION",
-        lead="EdTech Team",
     ),
     StrategicRow(
         T,
@@ -218,17 +207,15 @@ ROWS: tuple[StrategicRow, ...] = (
         "In-School",
         measures=("course_tech_skills_employable_future",),
         plan="EDTECH_SKILLING",
-        lead="EdTech Team",
     ),
-    StrategicRow(T, "ELP", "In-School", UNTRACKED, lead="Leadership Lead"),
-    StrategicRow(T, "BPV", "In-School", UNTRACKED, lead="Spiritual Lead"),
+    StrategicRow(T, "ELP", "In-School", UNTRACKED),
+    StrategicRow(T, "BPV", "In-School", UNTRACKED),
     StrategicRow(
         T,
         "Leadership",
         "Cluster (leaders trained)",
         measures=("sip_leaders",),
         plan="SIP_LEADERS",
-        lead="Leadership Lead",
     ),
     StrategicRow(
         T,
@@ -236,7 +223,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "In-School",
         measures=("cc_sel_core", "cc_sel_client"),
         plan="SEL_TRAINING",
-        lead="Transformation Lead",
     ),
     StrategicRow(
         T,
@@ -245,7 +231,6 @@ ROWS: tuple[StrategicRow, ...] = (
         # The orientation trainings; New Schools now counts schools added.
         measures=("course_new_school_orientation",),
         plan="NEW_SCHOOLS",
-        lead="Recruitment Lead",
     ),
     StrategicRow(
         T,
@@ -253,7 +238,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "In-school",
         measures=("onetest",),
         plan="ONE_TEST_DATA",
-        lead="M&E Team",
     ),
     StrategicRow(
         T,
@@ -261,7 +245,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Cluster",
         measures=("course_teacher_pedagogy_professionalism",),
         plan="TEACHER_PEDAGOGY",
-        lead="Academic Lead",
     ),
     StrategicRow(
         T,
@@ -269,7 +252,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "In-School, Online",
         measures=("biblical_integration",),
         plan="BIBLICAL_INTEGRATION",
-        lead="Spiritual Lead",
     ),
     StrategicRow(
         T,
@@ -277,7 +259,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Online, In-School",
         measures=("course_tam_i",),
         plan="TAM_TRAINING",
-        lead="Spiritual Lead",
     ),
     StrategicRow(
         T,
@@ -285,7 +266,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Cluster, Online",
         measures=("course_discipleship_dynamics",),
         plan="DC_TRAINING",
-        lead="Spiritual Lead",
     ),
     StrategicRow(
         T,
@@ -293,7 +273,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "In-School, Online",
         measures=("course_cla_character_development",),
         plan="CLA_TRAINING",
-        lead="Transformation Lead",
     ),
     StrategicRow(
         T,
@@ -301,7 +280,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Cluster, Group",
         measures=("course_literacy_numeracy_project",),
         plan="LITERACY_TRAINING",
-        lead="Academic Lead",
     ),
     StrategicRow(
         T,
@@ -309,17 +287,13 @@ ROWS: tuple[StrategicRow, ...] = (
         "Online (teachers trained)",
         measures=("ece_teachers",),
         plan="ECD_TEACHERS",
-        lead="Academic Lead",
     ),
-    StrategicRow(
-        T, "Certificate Training (IDE)", "Online", UNTRACKED, lead="EdTech Lead"
-    ),
+    StrategicRow(T, "Certificate Training (IDE)", "Online", UNTRACKED),
     StrategicRow(
         D,
         "Data Gathering – ASA/SSA",
         "In-School",
         measures=("ssa_all",),
-        lead="M&E Team",
     ),
     StrategicRow(
         D,
@@ -327,10 +301,9 @@ ROWS: tuple[StrategicRow, ...] = (
         "In-School",
         measures=("ssa_core_baseline",),
         plan="NEW_CORE_SCHOOLS",
-        lead="M&E Team",
     ),
-    StrategicRow(D, "SSA – Core Cohort 4 & 5", "In-School", UNTRACKED, lead="M&E Team"),
-    StrategicRow(D, "SSA – Core Cohort 3", "In-School", UNTRACKED, lead="M&E Team"),
+    StrategicRow(D, "SSA – Core Cohort 4 & 5", "In-School", UNTRACKED),
+    StrategicRow(D, "SSA – Core Cohort 3", "In-School", UNTRACKED),
     StrategicRow(
         D,
         "SSA – Client",
@@ -338,7 +311,6 @@ ROWS: tuple[StrategicRow, ...] = (
         measures=("ssa_client",),
         plan="CLIENT_SSA_COVERAGE",
         basis="client",
-        lead="M&E Team",
     ),
     StrategicRow(
         D,
@@ -346,7 +318,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Client Schools",
         measures=("ssa_review_client",),
         basis="ssa_client",
-        lead="M&E Team",
     ),
     StrategicRow(
         D,
@@ -354,7 +325,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Core Schools",
         measures=("ssa_review_core",),
         basis="ssa_core",
-        lead="M&E Team",
     ),
     StrategicRow(
         D,
@@ -363,7 +333,6 @@ ROWS: tuple[StrategicRow, ...] = (
         measures=("schools_with_metrics",),
         plan="DATA_METRICS",
         basis="portfolio",
-        lead="M&E Team",
     ),
     StrategicRow(
         D,
@@ -371,7 +340,6 @@ ROWS: tuple[StrategicRow, ...] = (
         "Core Schools",
         measures=("core_exam_scores",),
         basis="core",
-        lead="Exams Officer",
     ),
     StrategicRow(
         S,
@@ -379,46 +347,38 @@ ROWS: tuple[StrategicRow, ...] = (
         "Strategic Partner Dialogues",
         measures=("partner_review_meetings",),
         plan="PARTNER_REVIEW_MEETINGS",
-        lead="Partnership Lead",
     ),
     StrategicRow(
         S,
         "District MOUs and engagement Meetings",
         "District Engagements",
         measures=("district_meetings",),
-        lead="Partnership Lead",
     ),
-    StrategicRow(
-        S, "Church engagement", "Church Forums", UNTRACKED, lead="Spiritual Lead"
-    ),
+    StrategicRow(S, "Church engagement", "Church Forums", UNTRACKED),
     StrategicRow(
         A,
         "Schools trained on Alumni program",
         "Alumni Program",
         UNTRACKED,
-        lead="Alumni Officer",
     ),
     StrategicRow(
         A,
         "Schools with active Alumni programs",
         "Active Chapters",
         UNTRACKED,
-        lead="Alumni Officer",
     ),
     StrategicRow(
         A,
         "Alumni Program initiative Target",
         "CCEO Direct Target",
         UNTRACKED,
-        lead="Alumni Officer",
     ),
-    StrategicRow(H, "PDF", "Internal Staff", UNTRACKED, lead="HR Department"),
+    StrategicRow(H, "PDF", "Internal Staff", UNTRACKED),
     StrategicRow(
         H,
         "PTO & Personal spiritual retreat day",
         "Staff Retreats",
         UNTRACKED,
-        lead="HR Department",
     ),
 )
 
