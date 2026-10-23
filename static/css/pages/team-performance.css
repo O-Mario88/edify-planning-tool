@@ -1,0 +1,657 @@
+/* Team Performance — the FY27 Weekly Report as tabs (owner, 2026-10-20).
+ *
+ * "every table should be compact 32px or smaller with grid not too
+ * pronounced, neat and colors better than the colors in that attachment."
+ * Rows are the platform's denser variant, `.edify-table--compact` (28px,
+ * consistency.css), on its plain-table grid; a report table scrolls rather
+ * than squeezing its names (`data-table-fit="scroll"`). Sizes and radii are
+ * the design tokens; colour is kept for meaning (the 100% / 75% bands) and
+ * drawn from the theme's tokens, so the page follows light and dark modes.
+ */
+
+.tp-card {
+  background: var(--edify-surface-raised, #fff);
+  border: 1px solid var(--edify-divider, #d7dee2);
+  border-radius: var(--edify-radius-md);
+  overflow: hidden;
+}
+
+.tp-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid var(--edify-divider, #d7dee2);
+}
+
+.tp-card__head h2,
+.tp-card__head h3 {
+  margin: 0;
+  font-size: var(--edify-text-title-size);
+  font-weight: 600;
+  color: var(--edify-text, #17232b);
+}
+
+.tp-card__meta,
+.tp-note {
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-disabled, #6b7b84);
+}
+
+.tp-note {
+  margin: 0;
+  padding: 0.5rem 0.875rem;
+  border-top: 1px solid var(--edify-divider, #d7dee2);
+}
+
+.tp-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── The compact table ─────────────────────────────────────────────────── */
+.tp-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--edify-text, #17232b);
+}
+
+.tp-table th,
+.tp-table td {
+  white-space: nowrap;
+  vertical-align: middle;
+  text-align: left;
+}
+
+.tp-table thead th {
+  background: var(--edify-surface, #f8fafb);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  color: var(--edify-text-muted, #233844);
+}
+
+.tp-table thead .tp-band th {
+  text-align: center;
+  color: var(--brand-primary, #0e5da3);
+  background: color-mix(in srgb, var(--brand-primary-soft, #eaf3fb) 70%, var(--edify-surface, #f8fafb));
+}
+
+/* Detailed Country Report: each band of columns keeps its own colour down
+ * the whole column (owner, 2026-10-20: "Different colors for month, Q1, Q2,
+ * Q3, Q4, Annual"). A tint of the band's ink over its soft surface: strong on
+ * the band header, light on the column headers, faint on the figures. */
+.tp-table [data-tp-band="m"] { --tp-band-ink: var(--brand-primary, #0e5da3); --tp-band-tint: var(--brand-primary-soft, #e4f2fb); }
+.tp-table [data-tp-band="q1"] { --tp-band-ink: color-mix(in srgb, var(--edify-teal, #14b8a6) 70%, var(--edify-text, #17232b)); --tp-band-tint: var(--edify-teal-light, #f0fdfa); }
+.tp-table [data-tp-band="q2"] { --tp-band-ink: var(--edify-purple-text, #6d28d9); --tp-band-tint: var(--edify-purple-light, #f5f3ff); }
+.tp-table [data-tp-band="q3"] { --tp-band-ink: var(--edify-warning-text, #92400e); --tp-band-tint: var(--edify-warning-light, #fffbeb); }
+.tp-table [data-tp-band="q4"] { --tp-band-ink: var(--edify-brand-secondary-text, #ac3d36); --tp-band-tint: var(--edify-brand-secondary-soft, #fdeae9); }
+.tp-table [data-tp-band="y"] { --tp-band-ink: var(--edify-success-text, #065f46); --tp-band-tint: var(--edify-success-light, #ecfdf5); }
+
+/* The platform paints each cell from `--edify-table-row-tint` (a header
+ * cell from `--edify-table-header`) and clears any other paint, so a band
+ * sets those — its own colour, no rule to outrank. */
+.tp-table tbody td[data-tp-band] {
+  --edify-table-row-tint: color-mix(in srgb, var(--tp-band-ink) 4%, var(--tp-band-tint));
+}
+
+.tp-table tbody tr:hover td[data-tp-band] {
+  --edify-table-row-tint: color-mix(in srgb, var(--tp-band-ink) 9%, var(--tp-band-tint));
+}
+
+.tp-table thead th[data-tp-band] {
+  --edify-table-header: color-mix(in srgb, var(--tp-band-ink) 10%, var(--tp-band-tint));
+  color: var(--tp-band-ink);
+}
+
+.tp-table thead .tp-band th[data-tp-band] {
+  --edify-table-header: color-mix(in srgb, var(--tp-band-ink) 18%, var(--tp-band-tint));
+  position: relative;
+}
+
+.tp-table thead .tp-band th[data-tp-band]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: color-mix(in srgb, var(--tp-band-ink) 45%, transparent);
+}
+
+.tp-table td[data-tp-planned] {
+  color: var(--edify-text-muted, #233844);
+}
+
+/* A period's first column: a divider. The platform clears cell borders, so
+ * it is drawn beside the cell's content instead. */
+.tp-table .tp-start:not(.tp-sticky) {
+  position: relative;
+}
+
+.tp-table .tp-start:not(.tp-sticky)::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: color-mix(in srgb, var(--edify-divider, #d7dee2) 70%, transparent);
+}
+
+.tp-table .tp-num {
+  text-align: right;
+}
+
+.tp-table tbody th {
+  font-weight: 500;
+}
+
+.tp-table .tp-sticky {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 13rem;
+  background: var(--edify-surface-raised, #fff);
+}
+
+.tp-table thead .tp-sticky {
+  z-index: 2;
+  background: var(--edify-surface, #f8fafb);
+}
+
+.tp-table .tp-total th,
+.tp-table .tp-total td {
+  font-weight: 600;
+  background: var(--edify-surface, #f8fafb);
+}
+
+.tp-table .tp-grand th,
+.tp-table .tp-grand td {
+  font-weight: 700;
+  background: color-mix(in srgb, var(--brand-primary-soft, #eaf3fb) 80%, var(--edify-surface-raised, #fff));
+  box-shadow: inset 0 1px 0 var(--brand-primary-border, #b9d4ec);
+}
+
+.tp-table .tp-quiet th,
+.tp-table .tp-quiet td {
+  color: var(--edify-text-disabled, #6b7b84);
+  font-style: italic;
+}
+
+.tp-muted {
+  color: var(--edify-text-disabled, #6b7b84);
+}
+
+.tp-table a {
+  color: var(--brand-primary, #0e5da3);
+  text-decoration: none;
+}
+
+.tp-table a:hover {
+  text-decoration: underline;
+}
+
+.tp-stack > * + * {
+  margin-top: 1rem;
+}
+
+/* ── Percentages and status, by the workbook's 100% / 75% bands ─────────── */
+.tp-pct[data-tone="good"] { color: var(--edify-success-text, #065f46); font-weight: 600; }
+.tp-pct[data-tone="fair"] { color: var(--edify-info-text, #1d4ed8); font-weight: 600; }
+.tp-pct[data-tone="low"] { color: var(--edify-warning-text, #92400e); font-weight: 600; }
+
+.tp-chip,
+.tp-badge {
+  display: inline-block;
+  padding: 0.0625rem 0.5rem;
+  border-radius: var(--edify-radius-pill);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  background: var(--edify-surface, #f8fafb);
+  color: var(--edify-text-muted, #233844);
+  white-space: nowrap;
+}
+
+.tp-badge {
+  background: var(--brand-primary-soft, #eaf3fb);
+  border-color: var(--brand-primary-border, #b9d4ec);
+  color: var(--brand-primary, #0e5da3);
+}
+
+.tp-chip[data-tone="success"] {
+  background: var(--edify-success-light, #ecfdf5);
+  border-color: var(--edify-success-border, #a7f3d0);
+  color: var(--edify-success-text, #065f46);
+}
+
+.tp-chip[data-tone="info"] {
+  background: var(--edify-info-light, #eef7fd);
+  border-color: var(--edify-info-border, #bfdcf1);
+  color: var(--edify-info-text, #1d4ed8);
+}
+
+.tp-chip[data-tone="warning"] {
+  background: var(--edify-warning-light, #fffbeb);
+  border-color: var(--edify-warning-border, #fde68a);
+  color: var(--edify-warning-text, #92400e);
+}
+
+/* ── Executive Summary: Regional Core Recruitment, target vs achieved ──── */
+.tp-chart {
+  display: grid;
+  grid-template-columns: repeat(var(--tp-groups, 4), minmax(4.5rem, 1fr));
+  align-items: end;
+  gap: 1rem;
+  height: 12rem;
+  padding: 1rem 1rem 0;
+}
+
+.tp-chart__group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.tp-chart__bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.25rem;
+  width: 100%;
+  flex: 1;
+}
+
+.tp-chart__bar {
+  width: min(2.25rem, 40%);
+  border-radius: var(--edify-radius-2xs) var(--edify-radius-2xs) 0 0;
+  background: var(--brand-primary, #0e5da3);
+  min-height: 2px;
+}
+
+.tp-chart__bar--target {
+  background: color-mix(in srgb, var(--brand-primary, #0e5da3) 35%, var(--edify-surface-raised, #fff));
+}
+
+.tp-chart__label {
+  padding: 0.375rem 0;
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-muted, #233844);
+  text-align: center;
+}
+
+.tp-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.25rem 1rem 0.75rem;
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-muted, #233844);
+}
+
+.tp-chart-legend span::before {
+  content: "";
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin-right: 0.375rem;
+  border-radius: var(--edify-radius-2xs);
+  background: var(--brand-primary, #0e5da3);
+  vertical-align: -1px;
+}
+
+.tp-chart-legend .is-target::before {
+  background: color-mix(in srgb, var(--brand-primary, #0e5da3) 35%, var(--edify-surface-raised, #fff));
+}
+
+/* One target area per row: by region and by Programme Lead side by side
+ * (owner, 2026-10-21: "graphs of the same target should be on the same row
+ * in 2 columns"), stacked on a narrow screen. */
+.tp-area-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 0.25rem 0.75rem 0.5rem;
+}
+
+.tp-area-row > div {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.tp-section-title {
+  padding: 0.5rem 0.25rem 0;
+  font-size: var(--edify-text-card-heading-size);
+  font-weight: 700;
+  color: var(--edify-text, #17232b);
+}
+
+.tp-chart-table {
+  padding: 0 0.75rem 0.5rem;
+}
+
+.tp-chart-title {
+  padding: 0.5rem 1rem 0;
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  color: var(--edify-text-muted, #233844);
+}
+
+@media (max-width: 900px) {
+  .tp-area-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── CCEO Officer Performance & Milestones dashboard ────────────────────── */
+.tp-dash-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding: 0.875rem 1rem;
+}
+
+.tp-dash-title {
+  margin: 0;
+  font-size: var(--edify-text-title-size);
+  font-weight: 700;
+  color: var(--edify-text, #17232b);
+}
+
+.tp-subnav {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface, #f8fafb);
+  border: 1px solid var(--edify-divider, #d7dee2);
+}
+
+.tp-subnav__link,
+.tp-chip-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--edify-radius-sm);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  color: var(--edify-text-muted, #233844);
+  text-decoration: none;
+}
+
+.tp-subnav__link.is-active {
+  background: var(--edify-surface-raised, #fff);
+  color: var(--brand-primary, #0e5da3);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--edify-text, #17232b) 12%, transparent);
+}
+
+.tp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.tp-chips__label {
+  margin-right: 0.25rem;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--edify-text-disabled, #6b7b84);
+}
+
+.tp-chips__count {
+  margin-left: auto;
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-disabled, #6b7b84);
+}
+
+.tp-chip-link {
+  border-radius: var(--edify-radius-pill);
+  border: 1px solid var(--edify-divider, #d7dee2);
+  background: var(--edify-surface-raised, #fff);
+}
+
+.tp-chip-link span {
+  color: var(--edify-text-disabled, #6b7b84);
+}
+
+.tp-chip-link.is-active {
+  background: var(--brand-primary, #0e5da3);
+  border-color: var(--brand-primary, #0e5da3);
+  color: var(--edify-surface-raised, #fff);
+}
+
+.tp-chip-link.is-active span {
+  color: inherit;
+}
+
+.tp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+
+.tp-officer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+}
+
+.tp-officer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tp-officer__head h3 {
+  margin: 0;
+  font-size: var(--edify-text-title-size);
+  font-weight: 700;
+  color: var(--edify-text, #17232b);
+}
+
+.tp-officer__meta {
+  margin: 0;
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-muted, #233844);
+}
+
+.tp-officer__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--edify-divider, #d7dee2);
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-muted, #233844);
+}
+
+.tp-officer__foot a {
+  color: var(--brand-primary, #0e5da3);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tp-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.tp-stats--four {
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.tp-stat,
+.tp-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface, #f8fafb);
+  border: 1px solid color-mix(in srgb, var(--edify-divider, #d7dee2) 70%, transparent);
+}
+
+.tp-stat__label,
+.tp-box span {
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-muted, #233844);
+}
+
+.tp-stat strong,
+.tp-box strong {
+  font-size: var(--edify-text-title-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--edify-text, #17232b);
+}
+
+.tp-stat small,
+.tp-box small {
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-disabled, #6b7b84);
+}
+
+.tp-deep {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem;
+}
+
+.tp-deep-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(26rem, 1fr));
+  gap: 1rem;
+}
+
+.tp-panel {
+  padding: 0.875rem 1rem;
+}
+
+.tp-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tp-panel__head h3 {
+  margin: 0;
+  font-size: var(--edify-text-title-size);
+  font-weight: 700;
+  color: var(--edify-text, #17232b);
+}
+
+.tp-panel__sub {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.75rem 0 0.375rem;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  color: var(--edify-text-muted, #233844);
+}
+
+.tp-panel__sub span {
+  color: var(--brand-primary, #0e5da3);
+}
+
+.tp-boxes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.tp-boxes--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tp-boxes--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  text-align: left;
+}
+
+@media (max-width: 40rem) {
+  .tp-boxes,
+  .tp-boxes--three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tp-deep-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* A section band spans the whole row; its name stays at the left edge with
+   the frozen Category column while the figures scroll (owner, 2026-10-20:
+   "make sure the category dont scroll just like the items in it"). */
+.tp-table .edify-group-head > th {
+  overflow: visible;
+}
+
+.tp-table .tp-freeze {
+  position: sticky;
+  left: 0.75rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+/* ── Country targets editor (IA or Admin) ───────────────────────────────── */
+/* The platform's table script marks everything in a cell plain content and
+   clears its border, paint and outline (consistency.css, components.css), so
+   each box's edge is drawn by its `.tp-field`, which no table rule reaches. */
+.tp-field {
+  position: relative;
+  display: inline-flex;
+}
+
+.tp-field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--edify-divider, #d7dee2);
+  border-radius: var(--edify-radius-sm);
+  pointer-events: none;
+}
+
+.tp-field:focus-within::after {
+  border: 2px solid var(--brand-primary, #0e5da3);
+}
+
+.tp-input {
+  width: 6.5rem;
+  height: 1.5rem;
+  padding: 0 0.375rem;
+  color: var(--edify-text, #17232b);
+  font: inherit;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tp-input--month {
+  width: 4.25rem;
+}
+
+.tp-error {
+  padding: 0.625rem 0.875rem;
+  border-color: var(--edify-danger-border, #fca5a5);
+  background: var(--edify-danger-light, #fef2f2);
+  color: var(--edify-danger-text, #be123c);
+}

@@ -245,6 +245,7 @@
         "school_directory",
         "settings",
         "team_coaching",
+        "team_performance",
         "team_planning_oversight",
         "todos",
         "work_plan"
@@ -782,6 +783,7 @@
         "school_directory",
         "settings",
         "team_coaching",
+        "team_performance",
         "team_planning_oversight",
         "todos",
         "weekly_fund_request_disburse",
@@ -1117,6 +1119,7 @@
         "school_profile",
         "settings",
         "staff",
+        "team_performance",
         "todos",
         "work_plan"
       ],
@@ -1719,6 +1722,7 @@
         "staff_activity",
         "staff_directory",
         "target_distribution",
+        "team_performance",
         "team_planning_oversight",
         "todos",
         "uploads",
@@ -2580,6 +2584,7 @@
         "settings",
         "team_availability",
         "team_coaching",
+        "team_performance",
         "team_planning_oversight",
         "todos",
         "work_plan"
@@ -2857,6 +2862,7 @@
         "report_problem",
         "school_directory",
         "settings",
+        "team_performance",
         "todos",
         "work_plan"
       ],
@@ -3115,6 +3121,7 @@
         "report_problem",
         "school_directory",
         "settings",
+        "team_performance",
         "todos",
         "work_plan"
       ],
@@ -3646,6 +3653,7 @@
         "school_directory",
         "settings",
         "team_coaching",
+        "team_performance",
         "team_planning_oversight",
         "team_targets",
         "todos",
@@ -4883,6 +4891,7 @@
         "report_problem",
         "school_directory",
         "settings",
+        "team_performance",
         "todos",
         "work_plan"
       ],
@@ -5006,8 +5015,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "52eec09c399ca2877aca1e6f907a417dbd02f1be3ad739c7d2d64eae804c37ff",
-    "sources": "02d983cadaf23f0e292456f3709812f863553352afb89bf1293ae4f364ce79a7",
+    "payload": "95b4f5f86e88e195e3c40f5268c1cb8364bfcf0457044ea1d6bec9b73f8e2977",
+    "sources": "fd74b8e1eeff4849ded6b3bdd09f89032606cd731fd3de36a9949509184a11af",
     "sourceCount": 268,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

@@ -1,0 +1,70 @@
+{% load team_performance_tags %}
+{% comment %}
+Detailed Country Report (owner, 2026-10-20): the workbook's Weekly Report –
+Country columns — Monthly Performance for the chosen month, Q1–Q4 Cumulative
+Performance and Annual Performance against Annual Target — every figure read
+from the records when the page opens. Each band has its own column colour
+(owner, 2026-10-20), and each shows Planned beside Target and Achieved.
+{% endcomment %}
+<section class="tp-card" data-tp-weekly="{{ scope_key }}">
+  <header class="tp-card__head"><h2>Detailed Country Report – {{ scope_label }}</h2><span class="tp-card__meta">FY {{ period.fy }} · monthly performance for {{ period.month_label }}</span></header>
+  <div class="tp-scroll">
+    <table class="tp-table edify-table--compact" data-table-fit="scroll">
+      <thead>
+        <tr class="tp-band">
+          <th scope="col" class="tp-sticky"></th>
+          <th scope="colgroup" colspan="5" class="tp-start" data-tp-band="m">Monthly Performance · {{ period.month_label }}</th>
+          {% for q in "1234" %}<th scope="colgroup" colspan="5" class="tp-start" data-tp-band="q{{ q }}">Q{{ q }} Cumulative Performance</th>{% endfor %}
+          <th scope="colgroup" colspan="5" class="tp-start" data-tp-band="y">Annual Performance against Annual Target</th>
+          <th scope="col" class="tp-start"></th>
+        </tr>
+        <tr>
+          <th scope="col" class="tp-sticky">Category</th>
+          <th scope="col" class="tp-num tp-start" data-tp-band="m">Target</th><th scope="col" class="tp-num" data-tp-band="m">Planned</th><th scope="col" class="tp-num" data-tp-band="m">Achieved</th><th scope="col" class="tp-num" data-tp-band="m">Variance</th><th scope="col" class="tp-num" data-tp-band="m">%</th>
+          {% for q in "1234" %}<th scope="col" class="tp-num tp-start" data-tp-band="q{{ q }}">Target</th><th scope="col" class="tp-num" data-tp-band="q{{ q }}">Planned</th><th scope="col" class="tp-num" data-tp-band="q{{ q }}">Achieved</th><th scope="col" class="tp-num" data-tp-band="q{{ q }}">Variance</th><th scope="col" class="tp-num" data-tp-band="q{{ q }}">%</th>{% endfor %}
+          <th scope="col" class="tp-num tp-start" data-tp-band="y">Annual Target</th><th scope="col" class="tp-num" data-tp-band="y">Planned</th><th scope="col" class="tp-num" data-tp-band="y">Cumulative Achieved</th><th scope="col" class="tp-num" data-tp-band="y">Variance</th><th scope="col" class="tp-num" data-tp-band="y">% of Annual</th>
+          <th scope="col" class="tp-start">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for section, rows in sections %}
+        <tr class="edify-group-head"><th colspan="32" scope="colgroup"><span class="tp-freeze"><span class="edify-group-head__label">{{ section }}</span></span></th></tr>
+        {% for row in rows %}{% with m=row.measure %}
+        <tr data-tp-row="{{ m.key }}">
+          <th scope="row" class="tp-sticky"{% if m.note %} title="{{ m.note }}"{% endif %}>{{ m.label }}{% if m.unit != "schools" %} <span class="tp-muted">({{ m.unit }})</span>{% endif %}</th>
+          {% if not m.tracked %}
+          <td class="tp-start tp-muted" colspan="25">Not tracked in the system</td>
+          <td class="tp-num tp-start" data-tp-band="y" title="{{ row.target.source }}">{{ row.year.target|num }}</td><td class="tp-num" data-tp-band="y"></td><td class="tp-num" data-tp-band="y"></td><td class="tp-num" data-tp-band="y"></td><td class="tp-num" data-tp-band="y"></td>
+          <td class="tp-start"></td>
+          {% else %}
+          <td class="tp-num tp-start" data-tp-band="m" title="{% if row.phased %}Approved monthly phasing{% else %}{{ row.target.source }}{% endif %}">{{ row.month.target|num }}</td>
+          <td class="tp-num" data-tp-band="m" data-tp-planned>{{ row.month.planned|num }}</td>
+          <td class="tp-num" data-tp-band="m">{{ row.month.achieved|num }}</td>
+          <td class="tp-num" data-tp-band="m">{{ row.month.variance|signed }}</td>
+          <td class="tp-num" data-tp-band="m"><span class="tp-pct" data-tone="{{ row.month.pct|tone }}">{{ row.month.pct|pct }}</span></td>
+          {% for q in row.quarters %}
+          {% if q.future %}
+          <td class="tp-num tp-start tp-muted" data-tp-band="q{{ q.q }}" title="Q{{ q.q }} has not started">—</td><td class="tp-num" data-tp-band="q{{ q.q }}" data-tp-planned title="Work already booked for Q{{ q.q }}">{{ q.planned|num }}</td><td class="tp-num tp-muted" data-tp-band="q{{ q.q }}">—</td><td class="tp-num tp-muted" data-tp-band="q{{ q.q }}">—</td><td class="tp-num tp-muted" data-tp-band="q{{ q.q }}">—</td>
+          {% else %}
+          <td class="tp-num tp-start" data-tp-band="q{{ q.q }}">{{ q.cell.target|num }}</td>
+          <td class="tp-num" data-tp-band="q{{ q.q }}" data-tp-planned>{{ q.cell.planned|num }}</td>
+          <td class="tp-num" data-tp-band="q{{ q.q }}">{{ q.cell.achieved|num }}</td>
+          <td class="tp-num" data-tp-band="q{{ q.q }}">{{ q.cell.variance|signed }}</td>
+          <td class="tp-num" data-tp-band="q{{ q.q }}"><span class="tp-pct" data-tone="{{ q.cell.pct|tone }}">{{ q.cell.pct|pct }}</span></td>
+          {% endif %}
+          {% endfor %}
+          <td class="tp-num tp-start" data-tp-band="y" title="{{ row.target.source }}">{{ row.year.target|num }}</td>
+          <td class="tp-num" data-tp-band="y" data-tp-planned title="The year's plan">{{ row.year.planned|num }}</td>
+          <td class="tp-num" data-tp-band="y">{{ row.year.achieved|num }}</td>
+          <td class="tp-num" data-tp-band="y">{{ row.year.variance|signed }}</td>
+          <td class="tp-num" data-tp-band="y"><span class="tp-pct" data-tone="{{ row.year.pct|tone }}">{{ row.year.pct|pct }}</span></td>
+          <td class="tp-start">{% if row.status %}<span class="tp-chip" data-tone="{% if row.status == 'Needs Attention' %}warning{% elif row.status == 'Progressing' %}info{% else %}success{% endif %}">{{ row.status }}</span>{% endif %}</td>
+          {% endif %}
+        </tr>
+        {% endwith %}{% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="tp-note">Achieved counts distinct schools unless the row says otherwise: work once the officer completes and submits it, and records once uploaded, read each time the page opens. Planned is the work in the training and visit plans for the same window (the annual band: the whole year); a row nobody plans, such as an SSA or an upload, has none. A quarter is cumulative from October to its end; the annual figure is the year to date. Targets are the approved Uganda Master Priority Plan allocations and their monthly phasing; a coverage row with no milestone takes its eligible schools. A dash is a figure with no target or no record, never a zero.</p>
+</section>

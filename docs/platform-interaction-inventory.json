@@ -3,22 +3,22 @@
  "schema_version": 1,
  "summary": {
   "by_evidence": {
-   "browser-rendered": 857,
+   "browser-rendered": 863,
    "none": 245,
-   "page-tested": 1561,
-   "request-tested": 1390
+   "page-tested": 1577,
+   "request-tested": 1392
   },
   "by_kind": {
-   "button": 1410,
+   "button": 1414,
    "disclosure": 62,
-   "field": 1341,
-   "link": 1182,
+   "field": 1352,
+   "link": 1191,
    "tab": 58
   },
-  "controls": 4053,
+  "controls": 4077,
   "high_consequence": 208,
-  "state_changing": 473,
-  "templates_scanned": 681,
+  "state_changing": 475,
+  "templates_scanned": 685,
   "unresolved_destinations": 0,
   "untested": 245,
   "untested_state_changing": 19
@@ -316,6 +316,8 @@
     "/system-health",
     "/target-distribution",
     "/target-distribution/team",
+    "/team-performance/",
+    "/team-performance/country-targets/",
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
@@ -940,6 +942,7 @@
     "/sub-regions/<str:sub_region_id>",
     "/target-distribution",
     "/target-distribution/team",
+    "/team-performance/",
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
@@ -1278,6 +1281,8 @@
     "/system-health",
     "/target-distribution",
     "/target-distribution/team",
+    "/team-performance/",
+    "/team-performance/country-targets/",
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
@@ -1653,6 +1658,8 @@
     "/system-health",
     "/target-distribution",
     "/target-distribution/team",
+    "/team-performance/",
+    "/team-performance/country-targets/",
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
@@ -2219,6 +2226,8 @@
     "/system-health",
     "/target-distribution",
     "/target-distribution/team",
+    "/team-performance/",
+    "/team-performance/country-targets/",
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
@@ -4718,6 +4727,29 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR"
+   ]
+  },
+  "pages/team_performance/country_targets.html": {
+   "pages": [
+    "/team-performance/country-targets/"
+   ],
+   "roles": [
+    "ADMIN",
+    "IA"
+   ]
+  },
+  "pages/team_performance/index.html": {
+   "pages": [
+    "/team-performance/"
+   ],
+   "roles": [
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "IA",
+    "PL",
+    "RPL",
+    "RVP"
    ]
   },
   "pages/todos/index.html": {
@@ -11361,6 +11393,34 @@
     "RVP"
    ]
   },
+  "partials/team_performance/dashboard.html": {
+   "pages": [
+    "/team-performance/"
+   ],
+   "roles": [
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "IA",
+    "PL",
+    "RPL",
+    "RVP"
+   ]
+  },
+  "partials/team_performance/milestones.html": {
+   "pages": [
+    "/team-performance/"
+   ],
+   "roles": [
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "IA",
+    "PL",
+    "RPL",
+    "RVP"
+   ]
+  },
   "partials/today/queue_item.html": {
    "pages": [
     "/today",
@@ -11699,6 +11759,7 @@
   {"accessible_name": "My profile", "destination": "/profile", "destination_route": "/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-49B4DAF26DB4", "kind": "link", "line": 117, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/sidebar.html"},
   {"accessible_name": "Change password", "destination": "/change-password", "destination_route": "/change-password", "evidence": "request-tested", "high_consequence": false, "id": "INT-2B062591480F", "kind": "link", "line": 121, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/sidebar.html"},
   {"accessible_name": "Notification centre", "destination": "/notifications", "destination_route": "/notifications", "evidence": "request-tested", "high_consequence": false, "id": "INT-36C782091193", "kind": "link", "line": 122, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/sidebar.html"},
+  {"accessible_name": "Help for this page", "destination": "/help/context?for={{ request.path|urlencode }}", "destination_route": "/help/context", "evidence": "request-tested", "high_consequence": false, "id": "INT-E7F88B09AC29", "kind": "link", "line": 126, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/sidebar.html"},
   {"accessible_name": "Previous page", "destination": "?{{ base }}{{ param }}={{ pager.previous_page }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-31AAA39251BE", "kind": "link", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/table_pager.html"},
   {"accessible_name": "Page {{ p }}", "destination": "?{{ base }}{{ param }}={{ p }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-5DEB0FC4AF21", "kind": "link", "line": 34, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/table_pager.html"},
   {"accessible_name": "Next page", "destination": "?{{ base }}{{ param }}={{ pager.next_page }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-CFB1487997BA", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/table_pager.html"},
@@ -11719,18 +11780,17 @@
   {"accessible_name": "Search", "destination": "/search", "destination_route": "/search", "evidence": "request-tested", "high_consequence": false, "id": "INT-B2EAB06E1908", "kind": "button", "line": 241, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "layouts/shell.html"},
   {"accessible_name": "Messages", "destination": "/messages/drawer", "destination_route": "/messages/drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-445A8F783146", "kind": "button", "line": 265, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "layouts/shell.html"},
   {"accessible_name": "Notifications", "destination": "/notifications/drawer", "destination_route": "/notifications/drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-496F77CCC70F", "kind": "button", "line": 282, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "layouts/shell.html"},
-  {"accessible_name": "Help for this page", "destination": "/help/context?for={{ request.path|urlencode }}", "destination_route": "/help/context", "evidence": "request-tested", "high_consequence": false, "id": "INT-4C6B61E55FC0", "kind": "link", "line": 312, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
-  {"accessible_name": "Report a problem with this page", "destination": "/support?route={{ request.path|urlencode }}", "destination_route": "/support", "evidence": "request-tested", "high_consequence": false, "id": "INT-AF6654E5232B", "kind": "link", "line": 329, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
-  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0AB34CFD3AB3", "kind": "button", "line": 341, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "layouts/shell.html"},
-  {"accessible_name": "You are {{ acting.permanent_role }}, working as {{ acting.label }} for {{ acting.period }}", "destination": "/acting-leadership", "destination_route": "/acting-leadership", "evidence": "request-tested", "high_consequence": false, "id": "INT-94948E24F177", "kind": "link", "line": 365, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
-  {"accessible_name": "Account menu", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-FDE8E51458DE", "kind": "button", "line": 370, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "layouts/shell.html"},
-  {"accessible_name": "{{ acting.label }} · {{ acting.period }}", "destination": "/auth/switch-role", "destination_route": "/auth/switch-role", "evidence": "request-tested", "high_consequence": false, "id": "INT-79A522245A28", "kind": "button", "line": 406, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "layouts/shell.html"},
-  {"accessible_name": "{{ r.value }}", "destination": "/auth/switch-role", "destination_route": "/auth/switch-role", "evidence": "request-tested", "high_consequence": false, "id": "INT-3F2A9C73BB43", "kind": "button", "line": 420, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "layouts/shell.html"},
-  {"accessible_name": "Help for this page", "destination": "/help/context?for={{ request.path|urlencode }}", "destination_route": "/help/context", "evidence": "request-tested", "high_consequence": false, "id": "INT-4AE7C338021E", "kind": "link", "line": 432, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
-  {"accessible_name": "Report a problem", "destination": "/support?route={{ request.path|urlencode }}", "destination_route": "/support", "evidence": "request-tested", "high_consequence": false, "id": "INT-51C7813298DF", "kind": "link", "line": 433, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
-  {"accessible_name": "My Profile", "destination": "/profile", "destination_route": "/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-F0AD54691E4F", "kind": "link", "line": 435, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
-  {"accessible_name": "Install app", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-77471E85339E", "kind": "button", "line": 451, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "layouts/shell.html"},
-  {"accessible_name": "Log out", "destination": "/logout", "destination_route": "/logout", "evidence": "request-tested", "high_consequence": false, "id": "INT-D0A41298B202", "kind": "button", "line": 469, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "layouts/shell.html"},
+  {"accessible_name": "Report a problem with this page", "destination": "/support?route={{ request.path|urlencode }}", "destination_route": "/support", "evidence": "request-tested", "high_consequence": false, "id": "INT-AF6654E5232B", "kind": "link", "line": 320, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0AB34CFD3AB3", "kind": "button", "line": 332, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "layouts/shell.html"},
+  {"accessible_name": "You are {{ acting.permanent_role }}, working as {{ acting.label }} for {{ acting.period }}", "destination": "/acting-leadership", "destination_route": "/acting-leadership", "evidence": "request-tested", "high_consequence": false, "id": "INT-94948E24F177", "kind": "link", "line": 356, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
+  {"accessible_name": "Account menu", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-FDE8E51458DE", "kind": "button", "line": 361, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "layouts/shell.html"},
+  {"accessible_name": "{{ acting.label }} · {{ acting.period }}", "destination": "/auth/switch-role", "destination_route": "/auth/switch-role", "evidence": "request-tested", "high_consequence": false, "id": "INT-79A522245A28", "kind": "button", "line": 397, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "layouts/shell.html"},
+  {"accessible_name": "{{ r.value }}", "destination": "/auth/switch-role", "destination_route": "/auth/switch-role", "evidence": "request-tested", "high_consequence": false, "id": "INT-3F2A9C73BB43", "kind": "button", "line": 411, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "layouts/shell.html"},
+  {"accessible_name": "Help for this page", "destination": "/help/context?for={{ request.path|urlencode }}", "destination_route": "/help/context", "evidence": "request-tested", "high_consequence": false, "id": "INT-4C6B61E55FC0", "kind": "link", "line": 423, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
+  {"accessible_name": "Report a problem", "destination": "/support?route={{ request.path|urlencode }}", "destination_route": "/support", "evidence": "request-tested", "high_consequence": false, "id": "INT-51C7813298DF", "kind": "link", "line": 424, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
+  {"accessible_name": "My Profile", "destination": "/profile", "destination_route": "/profile", "evidence": "request-tested", "high_consequence": false, "id": "INT-F0AD54691E4F", "kind": "link", "line": 426, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "layouts/shell.html"},
+  {"accessible_name": "Install app", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-77471E85339E", "kind": "button", "line": 442, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "layouts/shell.html"},
+  {"accessible_name": "Log out", "destination": "/logout", "destination_route": "/logout", "evidence": "request-tested", "high_consequence": false, "id": "INT-D0A41298B202", "kind": "button", "line": 460, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "layouts/shell.html"},
   {"accessible_name": "Enter NetSuite ID", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-6A5FC4B41DFF", "kind": "button", "line": 105, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/accounts/accountability.html"},
   {"accessible_name": "View activity finance detail", "destination": "/accounts/activities/{{ rec.activity.id }}/", "destination_route": "/accounts/activities/<str:activity_id>/", "evidence": "request-tested", "high_consequence": false, "id": "INT-9E2B95EBF450", "kind": "link", "line": 106, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/accounts/accountability.html"},
   {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-4A3A9DC019C3", "kind": "button", "line": 138, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/accounts/accountability.html"},
@@ -12334,11 +12394,11 @@
   {"accessible_name": "Knowledge Center", "destination": "/help", "destination_route": "/help", "evidence": "request-tested", "high_consequence": false, "id": "INT-77DFF0C00203", "kind": "link", "line": 5, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/help/release_notes.html"},
   {"accessible_name": "Knowledge Center", "destination": "/help", "destination_route": "/help", "evidence": "request-tested", "high_consequence": false, "id": "INT-6B5E600A76C9", "kind": "link", "line": 7, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/help/search.html"},
   {"accessible_name": "{{ result.article.title }}", "destination": "/help/articles/{{ result.article.slug }}", "destination_route": "/help/articles/<slug:slug>", "evidence": "request-tested", "high_consequence": false, "id": "INT-427827E64706", "kind": "link", "line": 17, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/help/search.html"},
-  {"accessible_name": "Try again", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-BC30EF0ECB45", "kind": "button", "line": 66, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/home/index.html"},
-  {"accessible_name": "{{ s.icon|safe }} {{ s.label }}", "destination": "{{ s.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-DC415D3BBB78", "kind": "link", "line": 81, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/home/index.html"},
-  {"accessible_name": "View all", "destination": "/my-plan?status=upcoming", "destination_route": "/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-5DA10D13A9B3", "kind": "link", "line": 97, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/home/index.html"},
-  {"accessible_name": "TODAY {{ a.month }} {{ a.day }} {{ a.title }} — {{ a.where }} {{ a.time }} · {{ a.type_label }} · {{ a.status_label }} Open", "destination": "{{ a.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A8D3C1C1BC08", "kind": "link", "line": 103, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/home/index.html"},
-  {"accessible_name": "Open My Plan", "destination": "/my-plan", "destination_route": "/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-31A2B9AC32DA", "kind": "link", "line": 118, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/home/index.html"},
+  {"accessible_name": "Try again", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-BC30EF0ECB45", "kind": "button", "line": 75, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/home/index.html"},
+  {"accessible_name": "{{ s.icon|safe }} {{ s.label }}", "destination": "{{ s.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-DC415D3BBB78", "kind": "link", "line": 93, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/home/index.html"},
+  {"accessible_name": "View all", "destination": "/my-plan?status=upcoming", "destination_route": "/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-5DA10D13A9B3", "kind": "link", "line": 109, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/home/index.html"},
+  {"accessible_name": "TODAY {{ a.month }} {{ a.day }} {{ a.title }} — {{ a.where }} {{ a.time }} · {{ a.type_label }} · {{ a.status_label }} Open", "destination": "{{ a.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A8D3C1C1BC08", "kind": "link", "line": 115, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/home/index.html"},
+  {"accessible_name": "Open My Plan", "destination": "/my-plan", "destination_route": "/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-31A2B9AC32DA", "kind": "link", "line": 130, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/home/index.html"},
   {"accessible_name": "Print / Save as PDF", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-325F2ABD79B1", "kind": "button", "line": 13, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/hr/conversation_document.html"},
   {"accessible_name": "Assign Extra Work", "destination": "/extra-work/assign-drawer?fy={{ fy }}", "destination_route": "/extra-work/assign-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-9CFBE0D2E5BD", "kind": "button", "line": 12, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/hr/extra_work.html"},
   {"accessible_name": "Start", "destination": "/extra-work/{{ a.id }}/start", "destination_route": "/extra-work/<str:assignment_id>/<str:action>", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-90240E03EA7E", "kind": "button", "line": 61, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/hr/extra_work.html"},
@@ -13060,6 +13120,24 @@
   {"accessible_name": "optional", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C436A9963F72", "kind": "field", "line": 96, "method": "", "selector": "input[name=school_id]", "state_changing": false, "tag": "input", "template": "pages/targets/index.html"},
   {"accessible_name": "What changed, for whom, and why it matters…", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E90403BC1177", "kind": "field", "line": 101, "method": "", "selector": "textarea[name=narrative]", "state_changing": false, "tag": "textarea", "template": "pages/targets/index.html"},
   {"accessible_name": "Submit for Review", "destination": "/my-targets/mscs", "destination_route": "/my-targets/mscs", "evidence": "request-tested", "high_consequence": true, "id": "INT-F9C424254BD2", "kind": "button", "line": 103, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/targets/index.html"},
+  {"accessible_name": "Back to the report", "destination": "/team-performance/?fy={{ fy }}", "destination_route": "/team-performance/", "evidence": "request-tested", "high_consequence": false, "id": "INT-2C1FADC47FF9", "kind": "link", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/team_performance/country_targets.html"},
+  {"accessible_name": "FY {{ year }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F4774DFE1F60", "kind": "field", "line": 26, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "pages/team_performance/country_targets.html"},
+  {"accessible_name": "Open", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-17DE28F93FEE", "kind": "button", "line": 27, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/team_performance/country_targets.html"},
+  {"accessible_name": "Save all targets", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-4D94CFEA12F4", "kind": "button", "line": 40, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/team_performance/country_targets.html"},
+  {"accessible_name": "{{ line.label }} annual target", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-D4552FBDF675", "kind": "field", "line": 55, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "pages/team_performance/country_targets.html"},
+  {"accessible_name": "{{ line.label }} month {{ m }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-C9640C0CF7EB", "kind": "field", "line": 56, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "pages/team_performance/country_targets.html"},
+  {"accessible_name": "Save all targets", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-D4FB48BC79F1", "kind": "button", "line": 64, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/team_performance/country_targets.html"},
+  {"accessible_name": "Set Country Targets", "destination": "/team-performance/country-targets/?fy={{ period.fy }}", "destination_route": "/team-performance/country-targets/", "evidence": "request-tested", "high_consequence": false, "id": "INT-33864F4391BE", "kind": "link", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "FY {{ year }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D4481CF3FED3", "kind": "field", "line": 27, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C295AEEA1508", "kind": "field", "line": 30, "method": "", "selector": "select[name=period]", "state_changing": false, "tag": "select", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2C9B3404DFB0", "kind": "field", "line": 33, "method": "", "selector": "select[name=week]", "state_changing": false, "tag": "select", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D24E7BF8FA16", "kind": "field", "line": 36, "method": "", "selector": "select[name=quarter]", "state_changing": false, "tag": "select", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-06506E9E300E", "kind": "field", "line": 39, "method": "", "selector": "select[name=month]", "state_changing": false, "tag": "select", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-EA0D5D4788B4", "kind": "field", "line": 43, "method": "", "selector": "select[name=month]", "state_changing": false, "tag": "select", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8357F724F869", "kind": "field", "line": 47, "method": "", "selector": "select[name=scope]", "state_changing": false, "tag": "select", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "All CCEOs, ranked {{ o.name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8F29D79F42B7", "kind": "field", "line": 50, "method": "", "selector": "select[name=officer]", "state_changing": false, "tag": "select", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "Apply", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E988B1FB98EB", "kind": "button", "line": 52, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/team_performance/index.html"},
+  {"accessible_name": "{{ label }}", "destination": "?{{ query }}              &           tab={{ key }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8BA8CD8BFFCA", "kind": "link", "line": 57, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/team_performance/index.html"},
   {"accessible_name": "{{ todos.0.action_label }}→", "destination": "{{ todos.0.action_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0A1186273A88", "kind": "link", "line": 14, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/todos/index.html"},
   {"accessible_name": "All Categories", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-3E4ABC768C21", "kind": "button", "line": 49, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/todos/index.html"},
   {"accessible_name": "{{ name }} {{ count }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-228C3603BDF2", "kind": "button", "line": 51, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/todos/index.html"},
@@ -15601,6 +15679,12 @@
   {"accessible_name": "Describe the recovery outcome and support required.", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3CB92D6053CB", "kind": "field", "line": 221, "method": "", "selector": "textarea[name=note]", "state_changing": false, "tag": "textarea", "template": "partials/targets/team/workspace.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-926077775A27", "kind": "button", "line": 224, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/targets/team/workspace.html"},
   {"accessible_name": "Submit catch-up plan", "destination": "/team-targets/catchup", "destination_route": "/team-targets/catchup", "evidence": "request-tested", "high_consequence": true, "id": "INT-14B66C6238DE", "kind": "button", "line": 225, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/targets/team/workspace.html"},
+  {"accessible_name": "{{ label }} ({{ board.officers }}) (54)", "destination": "?{{ dash_query }}                   &           tab=dashboard&view={{ key }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0C0520C34429", "kind": "link", "line": 17, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/team_performance/dashboard.html"},
+  {"accessible_name": "All {{ roster.officers|length }}", "destination": "?fy={{ period.fy }}&month={{ period.month }}&tab=dashboard&view={{ dash_view }}&sort={{ dash_sort }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-869147487525", "kind": "link", "line": 25, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/team_performance/dashboard.html"},
+  {"accessible_name": "{{ label }} {{ count }}", "destination": "?fy={{ period.fy }}&month={{ period.month }}&tab=dashboard&view={{ dash_view }}&sort={{ dash_sort }}&region={{ label|urlencode }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-35DAB5278DF7", "kind": "link", "line": 27, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/team_performance/dashboard.html"},
+  {"accessible_name": "{{ label }}", "destination": "?fy={{ period.fy }}&month={{ period.month }}&tab=dashboard&view=cceos&sort={{ key }}                    &region={{ dash_region|urlencode }}           ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-09EFBB4CB1C3", "kind": "link", "line": 45, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/team_performance/dashboard.html"},
+  {"accessible_name": "Deep-Dive Scorecard →", "destination": "?fy={{ period.fy }}&month={{ period.month }}&tab=dashboard&view=deep&officer={{ card.officer.staff_id }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AFAC53C2C29B", "kind": "link", "line": 65, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/team_performance/dashboard.html"},
+  {"accessible_name": "↗ {{ row.tracker.1 }}", "destination": "{{ row.tracker.0 }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B82093345CE7", "kind": "link", "line": 56, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/team_performance/milestones.html"},
   {"accessible_name": "{{ op.label }}", "destination": "{{ op.drawer_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-AFC92CDAB928", "kind": "button", "line": 31, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/today/queue_item.html"},
   {"accessible_name": "{{ op.label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-380986425791", "kind": "button", "line": 33, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/today/queue_item.html"},
   {"accessible_name": "{{ op.label }}", "destination": "/today/act", "destination_route": "/today/act", "evidence": "request-tested", "high_consequence": false, "id": "INT-D9C80099EDEB", "kind": "button", "line": 37, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/today/queue_item.html"},

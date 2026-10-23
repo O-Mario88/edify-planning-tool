@@ -372,3 +372,37 @@ class CatchUpPlan(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"CatchUp {self.area_id} {self.fy} m{self.month_of_fy} ({self.status})"
+
+
+class CountryReportTarget(TimeStampedModel):
+    """A country target on the Team Performance report, set by Impact
+    Assessment or Admin (owner, 2026-10-20: "All country target should be set
+    by either IA or Admin"; the Country Director reads them). One per year and
+    report row: a Detailed Country Report measure or a Strategic Milestones
+    row. The months, when given, add up to the annual figure; a row with no
+    record falls back to the Uganda Master Priority Plan."""
+
+    id = CuidField()
+    fy = models.CharField(max_length=16)
+    #: The report row: a measure key, or "strategic:<row>".
+    key = models.CharField(max_length=160)
+    annual_target = models.DecimalField(max_digits=14, decimal_places=2)
+    #: {"1": "60", …, "12": "0"} — month of the FY (1 = October) to target.
+    monthly_targets = models.JSONField(null=True, blank=True)
+    set_by_user_id = models.CharField(max_length=30)
+    set_by_role = models.CharField(max_length=64)
+
+    class Meta:
+        db_table = "country_report_target"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["fy", "key"], name="uniq_country_report_target"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(annual_target__gte=0),
+                name="country_report_target_non_negative",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.fy} {self.key}: {self.annual_target}"
