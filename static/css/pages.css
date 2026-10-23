@@ -3478,7 +3478,7 @@
   cursor: pointer;
 }
 
-.tt-expand:hover { background: var(--edify-surface-muted); color: var(--edify-accent-text); }
+.tt-expand:hover { background: var(--edify-surface-hover); color: var(--edify-accent-text); }
 .tt-expand svg { width: 1rem; height: 1rem; transition: transform var(--edify-transition-fast); }
 .tt-expand svg.is-open { transform: rotate(90deg); }
 
@@ -3858,7 +3858,7 @@ html.theme-blue .tt-member-row > td {
   background: rgba(4, 43, 78, 0.35);
 }
 
-html.theme-blue .tt-member-row:hover > td { background: rgba(52, 126, 177, 0.22); }
+html.theme-blue .tt-member-row:hover > td { background: var(--edify-surface-hover); }
 html.theme-blue .tt-button--primary { color: var(--edify-on-accent); }
 
 html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-kpi) {
@@ -4023,7 +4023,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   cursor: pointer;
 }
 
-.row-menu__item:hover { background: var(--edify-surface-muted); }
+.row-menu__item:hover { background: var(--edify-surface-hover); }
 
 /* A destructive item reads as destructive before it is clicked. Uses the
    semantic --edify-danger-text ramp rather than the solid fill: this is ink
@@ -4988,7 +4988,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 .priority-record-summary:hover,
 .priority-record-summary:focus-visible,
 .priority-record-row[open] > .priority-record-summary {
-  background: color-mix(in srgb, var(--edify-accent, #1670c5) 5%, var(--edify-surface, #fff));
+  background: var(--edify-surface-hover);
 }
 
 .priority-record-summary:focus-visible {

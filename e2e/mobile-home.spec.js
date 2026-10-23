@@ -18,6 +18,10 @@ const password = process.env.EDIFY_E2E_PASSWORD || 'edify';
 
 test.skip(({ baseURL }) => !isDisposableTarget(baseURL), 'Signs in to seeded local accounts.');
 
+// The phone layout is asserted in the phone projects; the desktop test below
+// sets its own desktop width in any project.
+const phoneOnly = ({ isMobile }) => !isMobile;
+
 async function openHome(page, email) {
   await signIn(page, email, password, { acceptRequiredAgreements: false });
   await page.goto('/home');
@@ -26,6 +30,7 @@ async function openHome(page, email) {
 }
 
 test('a field officer starts the day on Home', async ({ page }) => {
+  test.skip(phoneOnly({ isMobile: test.info().project.use.isMobile }), 'Phone layout.');
   const errors = watchPageErrors(page);
   await openHome(page, 'cceo@edify.org');
 
@@ -55,6 +60,7 @@ test('a field officer starts the day on Home', async ({ page }) => {
 });
 
 test('a plan figure opens the list of exactly what it counts', async ({ page }) => {
+  test.skip(phoneOnly({ isMobile: test.info().project.use.isMobile }), 'Phone layout.');
   await openHome(page, 'cceo@edify.org');
   await page.locator('[data-home-figure="upcoming"]').click();
   await expect(page).toHaveURL(/\/my-plan\?status=upcoming$/);
@@ -62,6 +68,7 @@ test('a plan figure opens the list of exactly what it counts', async ({ page }) 
 });
 
 test('a partner sees its own Home and never the school directory', async ({ page }) => {
+  test.skip(phoneOnly({ isMobile: test.info().project.use.isMobile }), 'Phone layout.');
   await openHome(page, 'partner@edify.org');
   await expect(page.locator('.edify-home__role')).toHaveText('Partner');
   await expect(page.locator('[data-home-figure]')).toHaveCount(4);
@@ -69,7 +76,23 @@ test('a partner sees its own Home and never the school directory', async ({ page
   await expect(page.locator('.edify-bottom-nav a[href="/schools"]')).toHaveCount(0);
 });
 
+test('on a desktop Home is a desktop page, not the phone layout made wider', async ({ page }) => {
+  // Owner, 2026-10-23: "don't extend the mobile or tablet screen view to desktop".
+  test.skip(Boolean(test.info().project.use.isMobile), 'Desktop layout.');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openHome(page, 'cceo@edify.org');
+  await expect(page.locator('.edify-home__hero')).toBeHidden();
+  await expect(page.locator('.edify-bottom-nav')).toBeHidden();
+  await expect(page.locator('.edify-home__desk-head h1')).toContainText(/Good (morning|afternoon|evening)/);
+  const queue = await page.locator('.edify-home__card--queue').boundingBox();
+  const side = await page.locator('.edify-home__card--side').first().boundingBox();
+  expect(side.x, 'Quick access sits beside the queue').toBeGreaterThan(queue.x + queue.width);
+  const overview = await page.locator('.edify-home__overview').boundingBox();
+  expect(overview.width, 'the overview runs across the page').toBeGreaterThan(900);
+});
+
 test('a role with no plan gets its queue, not plan zeros', async ({ page }) => {
+  test.skip(phoneOnly({ isMobile: test.info().project.use.isMobile }), 'Phone layout.');
   await openHome(page, 'hr@edify.org');
   await expect(page.locator('[data-home-figure]')).toHaveCount(3);
   await expect(page.locator('#home-summary-title')).toBeVisible();

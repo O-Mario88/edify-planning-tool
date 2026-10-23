@@ -3,7 +3,7 @@
 
 {% block title %}Home — Edify{% endblock %}
 
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v=20261021home3">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v=20261023hover1">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
@@ -14,12 +14,21 @@ links open pages that run their own permission checks.
 {% endcomment %}
 <div class="edify-home" data-mobile-family="home">
 
+  {# The phone's header: the approved mockup's blue band. A desktop has the shell's sidebar and top bar, so it gets the platform's own page header below instead (owner, 2026-10-23: "don't extend the mobile or tablet screen view to desktop"). #}
   <header class="edify-home__hero edify-inverse-surface">
     <div class="edify-home__brand-row">
       <img class="edify-home__logo" src="{% static 'images/logo.png' %}" alt="Edify" width="88" height="36">
     </div>
     <h1 class="edify-page-title edify-home__greeting">{{ greeting }}{% if first_name %}, {{ first_name }}{% endif %}</h1>
     <p class="edify-home__subtitle">Here’s what needs you today{% if role_title %}<span class="edify-home__role">{{ role_title }}</span>{% endif %}</p>
+  </header>
+
+  <header class="edify-page-header edify-home__desk-head mobile-home-hide">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Home{% if role_title %} · {{ role_title }}{% endif %}</p>
+      <h1 class="edify-page-title edify-page-header__title">{{ greeting }}{% if first_name %}, {{ first_name }}{% endif %}</h1>
+      <p class="edify-page-header__description">What needs you now, what is coming up, and where to go next.</p>
+    </div>
   </header>
 
   <section class="edify-home__card edify-home__overview" aria-labelledby="home-summary-title">
@@ -34,7 +43,7 @@ links open pages that run their own permission checks.
     </ul>
   </section>
 
-  <section class="edify-home__card" aria-labelledby="home-priority-title" aria-live="polite">
+  <section class="edify-home__card edify-home__card--queue" aria-labelledby="home-priority-title" aria-live="polite">
     <div class="edify-home__card-head">
       <h2 id="home-priority-title" class="edify-home__card-title">
         <span class="edify-home__head-glyph">{% include "partials/home/icon.html" with name="bolt" %}</span>Priority actions
@@ -68,8 +77,11 @@ links open pages that run their own permission checks.
     </div>
   </section>
 
+  {# One column beside the queue on a desktop: its last card stretches so the column ends level with Priority actions, whatever either holds. On a phone the wrapper takes no part in the layout. #}
+  {% if shortcuts or has_plan %}
+  <div class="edify-home__side">
   {% if shortcuts %}
-  <section class="edify-home__card" aria-labelledby="home-shortcuts-title">
+  <section class="edify-home__card edify-home__card--side" aria-labelledby="home-shortcuts-title">
     <div class="edify-home__card-head">
       <h2 id="home-shortcuts-title" class="edify-home__card-title">
         <span class="edify-home__head-glyph">{% include "partials/home/icon.html" with name="grid" %}</span>Quick access
@@ -89,7 +101,7 @@ links open pages that run their own permission checks.
   {% endif %}
 
   {% if has_plan %}
-  <section class="edify-home__card" aria-labelledby="home-upcoming-title">
+  <section class="edify-home__card edify-home__card--side" aria-labelledby="home-upcoming-title">
     <div class="edify-home__card-head">
       <h2 id="home-upcoming-title" class="edify-home__card-title">
         <span class="edify-home__head-glyph">{% include "partials/home/icon.html" with name="calendar" %}</span>Upcoming activities
@@ -119,6 +131,8 @@ links open pages that run their own permission checks.
     </div>
     {% endif %}
   </section>
+  {% endif %}
+  </div>
   {% endif %}
 
 </div>

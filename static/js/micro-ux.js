@@ -273,7 +273,9 @@
     elementsWithin(root, 'main :is(h1, h2, h3, h4, h5, p[class*="font-bold"], p[class*="font-semibold"])').forEach(function (heading) {
       for (var title = heading, i = 0; i < 3 && title.parentElement; i++, title = title.parentElement) {
         var row = title.parentElement, kids = Array.from(row.children);
-        if (row.childElementCount > 6 || row.matches('main, section, article, form, ul, ol, td, th') || row.closest('table, nav, [role="tablist"], .edify-page-header, svg')) return;
+        // An agenda card stacks its day, title and place as lines; it is not
+        // a heading with a count beside it (mobile-patterns.css).
+        if (row.childElementCount > 6 || row.matches('main, section, article, form, ul, ol, td, th') || row.closest('table, nav, [role="tablist"], .edify-page-header, svg, [data-mobile-agenda-card]')) return;
         var mates = kids.filter(function (child) { return child !== title && child.matches(HEAD_ACTION + ', p, span, div') && child.textContent.trim(); });
         if (!mates.length) continue;
         row.classList.add('edify-head-row');

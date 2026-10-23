@@ -1130,7 +1130,7 @@ main .edify-rail-more__menu > .edify-rail-more__item {
 }
 main .edify-rail-more__menu > .edify-rail-more__item:hover,
 main .edify-rail-more__menu > .edify-rail-more__item:focus-visible {
-  background: var(--edify-surface-muted) !important;
+  background: var(--edify-surface-hover) !important;
   color: var(--edify-primary) !important;
   outline: none;
 }

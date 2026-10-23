@@ -158,7 +158,10 @@ function measureLayout() {
     )),
     navigation: wrapped('.edify-bottom-nav a, .app-sidebar nav a', { inlineOnly: true }),
     tableHeaders: wrapped(within('th')),
-    tableCells: wrapped(within('td')),
+    // A data cell holds its line. An empty table's message — the row's one
+    // cell spanning the columns, or the shared empty state — is a sentence
+    // and wraps to fit its card (owner, 2026-10-21 phone pass).
+    tableCells: wrapped(within('td:not(:only-child[colspan]):not(:has(> .edify-empty-state))')),
     silentTruncation: { count: silentTruncation.length, examples: silentTruncation.slice(0, EXAMPLES) },
     tinyText: { count: tinyText.size, examples: [...tinyText].slice(0, EXAMPLES).map(e => `${label(e)} <${e.tagName.toLowerCase()}.${[...e.classList].slice(0, 2).join('.')}>`) },
     tinyChartText: { count: tinyChartText.size, examples: [...tinyChartText].slice(0, EXAMPLES).map(label) },

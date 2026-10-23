@@ -298,7 +298,7 @@ main #priority-workspace-view[data-pointer-focus]:focus-visible { outline: none 
   scrollbar-width: thin;
 }
 .ia-tabs a { display: inline-flex; min-height: 2.25rem; align-items: center; justify-content: center; flex: 0 0 auto; border: 1px solid transparent; border-radius: var(--edify-radius-sm); padding: .45rem .7rem; color: #526679; font-size: var(--edify-text-micro-size); font-weight: 700; text-decoration: none; white-space: nowrap; }
-.ia-tabs a:hover { background: #edf4fb; color: #284b6a; }
+.ia-tabs a:hover { background: var(--edify-surface-hover); color: #284b6a; }
 .ia-tabs a[aria-current="page"] { border-color: #bed7ee; background: #eaf4fe; color: var(--ia-blue-800); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .7); }
 
 .ia-active-filters { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; padding: .65rem 1rem; border-bottom: 1px solid var(--ia-line); background: #fbfdff; color: #657789; font-size: var(--edify-text-micro-size); }

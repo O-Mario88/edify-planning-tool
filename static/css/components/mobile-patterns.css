@@ -397,11 +397,17 @@
 }
 
 /* ── Agenda and record cards ───────────────────────────────────────────── */
+/* The day reads first, on its own line above the activity (owner,
+   2026-10-23: "Oct 6, 2026 (Tue)" on top of "Training Follow-up Visit");
+   the open arrow stands beside both. */
 .mobile-agenda-card {
   position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "time action"
+    "body action";
+  gap: 0.25rem 0.75rem;
   align-items: center;
   min-block-size: 5.25rem;
   padding: 0.8rem 0.75rem 0.8rem 1rem;
@@ -425,15 +431,18 @@
 
 .mobile-agenda-card__time {
   display: flex;
-  min-inline-size: 3.25rem;
-  flex-direction: column;
+  grid-area: time;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.375rem;
+  min-inline-size: 0;
   color: var(--edify-text);
   font-variant-numeric: tabular-nums;
 }
 
 .mobile-agenda-card__time strong { font-size: var(--edify-text-label-size); }
-.mobile-agenda-card__time small { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
-.mobile-agenda-card__body { min-inline-size: 0; }
+.mobile-agenda-card__time small { color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 600; }
+.mobile-agenda-card__body { grid-area: body; min-inline-size: 0; }
 .mobile-agenda-card__body p { margin: 0 0 0.15rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 700; }
 .mobile-agenda-card__body h3 { margin: 0; overflow: hidden; color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .mobile-agenda-card__body small { display: block; margin-block-start: 0.15rem; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); text-overflow: ellipsis; white-space: nowrap; }
@@ -452,6 +461,7 @@
 }
 
 .mobile-agenda-card__action {
+  grid-area: action;
   display: grid;
   min-inline-size: 2.75rem;
   min-block-size: 2.75rem;

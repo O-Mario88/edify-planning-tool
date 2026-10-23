@@ -1781,6 +1781,23 @@ main .edify-card-action {
   border-color: var(--edify-card-border) !important;
 }
 
+/* Tailwind's light hover utilities take the same soft Edify blue as every
+   other hover (owner, 2026-10-23: Home's Quick access hover, platform-wide).
+   Every theme, the blue one included, where a slate-50 hover flashed
+   near-white. Tailwind keeps hover to pointer devices, so this does too. */
+@media (hover: hover) {
+  :root :is(
+    .hover\:bg-slate-50, .hover\:bg-slate-50\/20,
+    .hover\:bg-slate-50\/30, .hover\:bg-slate-50\/40, .hover\:bg-slate-50\/50,
+    .hover\:bg-slate-50\/60, .hover\:bg-slate-50\/70, .hover\:bg-slate-100,
+    .hover\:bg-slate-100\/50, .hover\:bg-slate-100\/60, .hover\:bg-slate-100\/70,
+    .hover\:bg-slate-200, .hover\:bg-slate-200\/60, .hover\:bg-slate-500\/10,
+    .hover\:bg-gray-50, .hover\:bg-gray-100
+  ):hover {
+    background-color: var(--edify-surface-hover);
+  }
+}
+
 /* Interactive cards strengthen their elevation and surface on hover/focus;
    they do not bring the removed outline back. */
 main :is(
@@ -4259,6 +4276,18 @@ main textarea,
   box-shadow: none !important;
   background-color: var(--edify-table-row-tint, var(--edify-table-canvas)) !important;
   background-image: none !important;
+}
+/* A row answers the pointer with the platform's hover blue, the tint of
+   Home's Quick access (owner, 2026-10-23), through the same hook. A row that
+   carries its own tint (a day off, a completed activity) keeps it, as do a
+   Team Performance band and an empty table's lone message cell. Pointer
+   devices only: a tapped row on a phone does not stay lit. */
+@media (hover: hover) {
+  :root :is(main, .drawer-body, [role="dialog"])
+    table.edify-plain-table tbody tr:not(.edify-group-head, .budget-ledger-band, .budget-ledger-subtotal, .mp-dayoff-row, [data-done]):hover
+    > :is(td, th):not(:only-child, [data-tp-band]) {
+    --edify-table-row-tint: var(--edify-table-row-hover);
+  }
 }
 /* A row's heading cell reads from the start, under its column's heading.
    Browsers centre a <th> by default and nothing here said otherwise for the

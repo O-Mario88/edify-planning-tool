@@ -194,7 +194,21 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: that. Apply the same design to the vertical bar graphs ... apply
     #: platform wide"): the upright columns, the parts of a stacked bar and
     #: the line a click opens, in components.css. Measured 247.74 KB.
-    CSS_GZIP_KB = 248.0
+    #:
+    #: Raised to 248.5 on 2026-10-23 for the phone pass the owner asked for
+    #: ("fix the rest of the mobile UI to have the quality you have put on
+    #: the homepage") and the premium week chip on the top bar: empty tables
+    #: that read whole, row-spanning group labels that wrap, links in a
+    #: sentence kept inline, one header a phone page, filter fields that hold
+    #: their text (consistency.css, components/mobile-micro-ux.css,
+    #: components/interactions.css, components/mobile-shell.css). Home's own
+    #: styles load on Home alone. Measured 248.40 KB.
+    #: Raised to 248.7 the same day for Home's Quick access hover,
+    #: platform-wide (owner: "apply the hover effect of quick access hovers
+    #: to the platform wide"): table rows answer the pointer again and
+    #: Tailwind's light hover utilities take the shared hover token
+    #: (consistency.css). Measured 248.62 KB.
+    CSS_GZIP_KB = 248.7
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:

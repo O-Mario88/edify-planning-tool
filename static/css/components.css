@@ -297,8 +297,8 @@
 .dark .placeholder-slate-400 { color: var(--edify-text-subtle) !important; }
 
 /* Hover backgrounds */
-.dark .hover\:bg-slate-50:hover { background-color: var(--edify-surface-muted) !important; }
-.dark .hover\:bg-slate-100:hover { background-color: var(--edify-surface-muted) !important; }
+.dark .hover\:bg-slate-50:hover { background-color: var(--edify-surface-hover) !important; }
+.dark .hover\:bg-slate-100:hover { background-color: var(--edify-surface-hover) !important; }
 
 /* Shadow — reduce in dark mode (shadows are already dark) */
 .dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,.2) !important; }
@@ -579,7 +579,7 @@ main table tbody tr:nth-child(even) {
   background: var(--edify-surface-muted) !important;
 }
 main table tbody tr:hover {
-  background: rgba(37,99,235,.06) !important;
+  background: var(--edify-surface-hover) !important;
 }
 .dark main table tbody tr:nth-child(even) {
   background: rgba(255,255,255,.025) !important;
@@ -1022,7 +1022,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 
 .edify-data-row:hover {
-  background: var(--edify-surface-muted) !important;
+  background: var(--edify-surface-hover) !important;
 }
 
 /* KPI Card semantic component styling */
@@ -1104,7 +1104,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   line-height: 1.5;
 }
 .edify-data-table tr:hover, .data-table tr:hover {
-  background-color: rgba(46, 80, 95, 0.02);
+  background-color: var(--edify-surface-hover);
 }
 
 .edify-row-overflow > summary {
@@ -1880,7 +1880,7 @@ select:not([multiple]):not(.select-native) {
 
 .kpi-strip--band .kpi-strip__item:hover {
   box-shadow: none !important;
-  background-color: var(--edify-surface-muted) !important;
+  background-color: var(--edify-surface-hover) !important;
 }
 
 .kpi-strip--band .kpi-strip__item-body {
@@ -2516,7 +2516,7 @@ select:not([multiple]):not(.select-native) {
 
 .budget-period-rail__option:hover {
   border-color: var(--edify-border);
-  background: var(--edify-surface);
+  background: var(--edify-surface-hover);
 }
 
 .budget-period-rail__option > span {
@@ -2875,7 +2875,7 @@ select:not([multiple]):not(.select-native) {
 
 .edify-section-nav__cluster:hover {
   color: var(--edify-text);
-  background: var(--edify-surface-muted);
+  background: var(--edify-surface-hover);
 }
 
 .edify-section-nav__cluster.is-active {
@@ -6148,7 +6148,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .school-plan-table__details > td { background: var(--edify-surface-muted, var(--edify-surface)); white-space: normal; }
 .school-plan-table__details .school-record-row__metadata { margin: 0 0 .75rem; }
 .school-plan-table__group th { background: var(--edify-surface-muted, var(--edify-surface)); }
-.school-plan-table tbody > tr:not(.school-plan-table__details):hover { background: var(--edify-hover); }
+.school-plan-table tbody > tr:not(.school-plan-table__details):hover { background: var(--edify-surface-hover); }
 
 /* ── Pinned actions ─────────────────────────────────────────────────────
    A planned activities table carries every column its page needs, plus the

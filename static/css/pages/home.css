@@ -9,6 +9,12 @@
  * Loaded by Home alone through {% block feature_css %}.
  */
 
+/* On a phone the side column's wrapper takes no part in the layout: its
+   cards stack in the page's own grid, as before. */
+.edify-home__side {
+  display: contents;
+}
+
 .edify-home {
   --home-gutter: 1rem;
   --home-touch: 2.75rem;
@@ -226,7 +232,7 @@
 }
 
 .edify-home__item:hover {
-  background: var(--edify-surface);
+  background: var(--edify-surface-hover);
 }
 
 .edify-home__item-mark {
@@ -542,16 +548,103 @@ button.edify-home__empty-cta {
   }
 }
 
-/* ── Wide screens: the shell's top bar and sidebar are back, so the header is
-   a card among the others rather than a full-bleed band. ──────────────────── */
+/* ── Desktop (lg and up): a normal desktop page, not the phone's layout made
+   wider (owner, 2026-10-23). The shell's sidebar and top bar are back, so the
+   blue phone band gives way to the platform's own page header; the page
+   takes the shared gutter and width; the overview runs across the top, the
+   priority queue holds the wide left column and Quick access and Upcoming
+   activities sit beside it. ──────────────────────────────────────────────── */
+@media (max-width: 63.999rem) {
+  .edify-home__desk-head {
+    display: none;
+  }
+}
+
 @media (min-width: 64rem) {
   .edify-home {
-    padding-top: 1.25rem;
+    grid-template-columns: minmax(0, 1.7fr) minmax(19rem, 1fr);
+    align-items: start;
+    gap: 1.25rem 1.5rem;
+    max-width: var(--edify-page-max-size);
+    padding: 1rem var(--edify-page-gutter) 2rem;
   }
 
   .edify-home__hero {
-    margin-inline: 0.75rem;
-    padding-top: 1rem;
-    border-radius: var(--edify-radius-lg);
+    display: none;
+  }
+
+  .edify-home > .edify-home__desk-head,
+  .edify-home > .edify-home__overview {
+    grid-column: 1 / -1;
+  }
+
+  /* The queue and the side column share one row and stretch to its height,
+     so their bottom edges are level; the side column's last card takes the
+     slack, and a short queue grows to meet a long side column. */
+  .edify-home > .edify-home__card--queue {
+    grid-column: 1;
+    align-self: stretch;
+  }
+
+  .edify-home > .edify-home__side {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    grid-column: 2;
+    align-self: stretch;
+  }
+
+  .edify-home__side > .edify-home__card:last-child {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  /* An empty Upcoming list sits in the middle of the space it is given. */
+  .edify-home__side > .edify-home__card:last-child > .edify-home__empty {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .edify-home__card {
+    margin-inline: 0;
+    padding: 1.125rem 1.25rem;
+  }
+
+  /* The overview reads across the page: each figure a row of icon, value
+     and label rather than a phone's stacked tile. */
+  .edify-home__figure {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    min-height: 4.25rem;
+    padding: 0.75rem 1rem;
+    text-align: start;
+  }
+
+  .edify-home__figure-glyph {
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--edify-radius-md);
+    background: var(--edify-surface-raised);
+  }
+
+  .edify-home__figure-label {
+    font-size: var(--edify-text-label-size);
+  }
+
+  .edify-home__figure-value {
+    min-inline-size: 2ch;
+  }
+
+  /* Quick access in the side column: two to a row. */
+  .edify-home__shortcuts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

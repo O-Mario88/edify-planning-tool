@@ -357,7 +357,7 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
   transition: background-color 0.15s ease;
 }
 .cd-lead-row:hover {
-  background-color: var(--edify-surface-subtle, #f8fafc);
+  background-color: var(--edify-surface-hover);
 }
 .cd-lead-row.is-expanded {
   background-color: color-mix(in srgb, var(--color-edify-primary, #1e40af) 6%, transparent);
@@ -435,7 +435,7 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
 .cd-officer-summary::-webkit-details-marker { display: none; }
 .cd-officer-summary::after { content: none !important; }
 .cd-officer-summary:hover {
-  background: var(--edify-surface-subtle, #f8fafc);
+  background: var(--edify-surface-hover);
 }
 .cd-officer-card[open] > .cd-officer-summary {
   border-bottom-color: var(--edify-border, #e2e8f0);
@@ -694,7 +694,7 @@ main [data-oversight-workspace] .partner-plan-toolbar > form.oversight-period-fi
 }
 
 [data-oversight-workspace] .cluster-session-action:hover {
-  background-color: var(--edify-surface-muted, var(--edify-surface));
+  background-color: var(--edify-surface-hover);
 }
 
 [data-oversight-workspace] .cluster-session-action--verify {
