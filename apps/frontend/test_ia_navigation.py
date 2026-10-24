@@ -296,14 +296,14 @@ class IaMobileNavTest(SimpleTestCase):
     def test_the_phone_leads_with_the_days_queue(self):
         self.assertEqual(
             MOBILE_NAV_BY_ROLE[IA],
-            ("dashboard", "todos", "ia_verification_queue", "messages"),
+            ("home", "todos", "ia_verification_queue", "messages"),
         )
-        nav = build_mobile_nav_for_user(_user(IA), "/ia/dashboard/")
+        nav = build_mobile_nav_for_user(_user(IA), "/ia/verification/")
         self.assertEqual(
             [i["url"] for i in nav],
-            ["/ia/dashboard/", "/todos", "/ia/verification/", "/messages"],
+            ["/home", "/todos", "/ia/verification/", "/messages"],
         )
-        self.assertTrue(nav[0]["active"])
+        self.assertTrue(nav[2]["active"])
 
 
 class IaWorkspaceRegistryTest(SimpleTestCase):

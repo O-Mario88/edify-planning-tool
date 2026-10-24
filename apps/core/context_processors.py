@@ -2,6 +2,7 @@ from datetime import date
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils import timezone
 
 from apps.notifications.models import Notification
 from apps.core.navigation import (
@@ -19,6 +20,7 @@ def sidebar_counts(request):
             "pd_action_required_count": 0,
             "today": date.today(),
             "current_week_number": date.today().isocalendar()[1],
+            **_shell_date(),
         }
 
     today = date.today()
@@ -33,6 +35,7 @@ def sidebar_counts(request):
                 **cached,
                 "today": today,
                 "current_week_number": today.isocalendar()[1],
+                **_shell_date(),
             }
     try:
         # The badge must count what the drawer shows. A resolved notification
@@ -75,7 +78,17 @@ def sidebar_counts(request):
         **counts,
         "today": today,
         "current_week_number": today.isocalendar()[1],
+        **_shell_date(),
     }
+
+
+def _shell_date() -> dict:
+    """The top bar's date and ISO week, on the project's calendar (Africa/
+    Nairobi), under names of the shell's own: a page's `today` is the page's
+    to set and must not move the bar. It went missing on 2026-10-02 with the
+    sidebar revert, and the bar read "· Wk 43" with no date (2026-10-21)."""
+    shell_today = timezone.localdate()
+    return {"shell_today": shell_today, "shell_week": shell_today.isocalendar()[1]}
 
 
 def sidebar_context(request):

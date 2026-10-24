@@ -1,0 +1,36 @@
+{% comment %}
+/home/queue: Home's Priority actions, from the To-Do queue
+(apps.command_center.home_service.build_home_queue). It replaces the loading
+body on Home, and its To-Do figures and "View all" replace their loading
+copies out of band, so the page never moves.
+{% endcomment %}
+<div id="home-priority-body" data-home-priority-body>
+  {% if priority_rows %}
+  <ul class="edify-home__list" role="list">
+    {% for row in priority_rows %}
+    <li>
+      <a href="{{ row.url }}" class="edify-home__item" data-home-priority>
+        <span class="edify-home__item-mark edify-home__item-mark--{{ row.status_tone }}">{% include "partials/home/icon.html" with name=row.icon %}</span>
+        <span class="edify-home__item-body">
+          <span class="edify-home__item-name">{{ row.title }}</span>
+          {% if row.context %}<span class="edify-home__item-sub">{{ row.context }}</span>{% endif %}
+          <span class="edify-home__item-tags">
+            {% if row.status_label %}<span class="edify-home__tag edify-home__tag--{{ row.status_tone }}">{{ row.status_label }}</span>{% endif %}
+            {% if row.due_label %}<span class="edify-home__due edify-home__due--{{ row.due_tone }}">{% include "partials/home/icon.html" with name="clock" %}{{ row.due_label }}</span>{% endif %}
+          </span>
+        </span>
+        <span class="edify-home__item-go">{{ row.action_label }}{% include "partials/home/icon.html" with name="chevron" %}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="edify-home__empty" data-home-empty="priority">
+    <p class="edify-home__empty-title">Nothing needs you right now</p>
+    <p class="edify-home__empty-copy">New work appears here as soon as it is yours to do.</p>
+    {% if has_plan %}<a href="/my-plan" class="edify-home__empty-cta">Open My Plan</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+<span id="home-priority-more" hx-swap-oob="true">{% if priority_total %}<a href="/todos" class="edify-home__see-all">View all {{ priority_total }}{% include "partials/home/icon.html" with name="arrow" %}</a>{% endif %}</span>
+{% for f in queue_figures %}{% include "partials/home/figure.html" with f=f oob=True %}{% endfor %}

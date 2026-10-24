@@ -219,8 +219,12 @@ table[data-mobile-table="fit"] {
      below 1024px a card-shaped link laid its stacked label, value and helper
      out in a single horizontal run ("Waiting on HR0HR is the actor"). A link
      containing block content is a card, not a text link: it keeps the 44px
-     touch target and keeps its own layout. */
-  .edify-workspace a[href]:not(:is(td, th) *):not(:has(p, div, h1, h2, h3, h4, table, ul, ol)) {
+     touch target and keeps its own layout.
+
+     Nor a link inside a sentence (2026-10-21): made a 44px inline-flex box,
+     the count in "You have scheduled… 1 Client school…" broke the line and
+     stood apart from its words. A link in running text stays a word in it. */
+  .edify-workspace a[href]:not(:is(td, th) *):not(:is(p, dd, small, label) *):not(:has(p, div, h1, h2, h3, h4, table, ul, ol)) {
     display: inline-flex;
     min-block-size: 2.75rem;
     align-items: center;
@@ -1244,4 +1248,59 @@ main #filters-form .school-filter-grid > * {
   max-block-size: var(--edify-check-size) !important;
   flex: 0 0 auto !important;
   align-self: center;
+}
+
+/* ── Empty tables (moved here from consistency.css, whose contract keeps
+   `:has()` out of the bridge; this sheet loads after it, so the order these
+   rules win on is unchanged) ─────────────────────────────────────────────── */
+
+/* An empty table on a phone: its only row is one cell spanning every column
+   ("Nothing awaiting your decision — new assignments appear here."). The
+   table keeps its headings and scrolls like any other (tables stay tables),
+   but a 1080px row showed the start of the sentence and hid the rest past
+   the edge (Assigned Activities, 2026-10-21). The sentence holds still at the
+   left of what can be seen and wraps within it. */
+@media (max-width: 47.999rem) {
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only, .edify-visually-hidden) > tbody > tr:only-child > td:only-child[colspan] > * {
+    position: sticky;
+    inset-inline-start: 0.75rem;
+    display: block;
+    /* Over the scroll region's own `max-inline-size: none` for cell text. */
+    max-inline-size: calc(100vw - 4.5rem) !important;
+    margin-inline: 0;
+    text-align: center;
+  }
+
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only, .edify-visually-hidden) > tbody > tr:only-child > td:only-child[colspan] > *,
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only, .edify-visually-hidden) > tbody > tr:only-child > td:only-child[colspan] > *
+    :not(.sr-only, .edify-visually-hidden) {
+    text-wrap: wrap !important;
+    white-space: normal !important;
+  }
+}
+
+/* Nor is a table's empty state (2026-10-21). "No quality flags raised —
+   Flags the Country Director raises…" held to one line made the table wider
+   than a phone, put "swipe for more columns" over an empty list and cut the
+   sentence off. A table whose row is an empty state fits its card, and the
+   message wraps inside it. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden):has(> tbody > tr > :is(td, th) > .edify-empty-state) {
+  /* Important-weighted: the phone table enhancer's `.edify-mobile-table--scroll`
+     (mobile-micro-ux.css) sizes every table to its content. */
+  inline-size: 100% !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) :is(td, th):has(> .edify-empty-state),
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) :is(td, th) .edify-empty-state,
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) :is(td, th) .edify-empty-state
+  :not(.sr-only, .edify-visually-hidden) {
+  text-wrap: wrap !important;
+  white-space: normal !important;
 }

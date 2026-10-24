@@ -30,3 +30,7 @@ docker-compose*.yml
 *.sqlite3
 db.sqlite3
 backups/
+
+# The iOS and Android projects (docs/mobile-app.md) are built on a developer
+# machine, never into the server image.
+mobile/

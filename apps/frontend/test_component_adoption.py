@@ -70,7 +70,18 @@ HAND_WIRED_FILTER_FORM_CEILING = 12
 #: the shell stamps any card with a heading as a title band and hands its
 #: type to everything inside with `!important`, so the rail has to state its
 #: own. Four more were written and cut. No headroom.
-IMPORTANT_CEILING = 3980
+#:
+#: Raised to 3992 on 2026-10-21 for the phone pass the owner asked for ("fix
+#: the rest of the mobile UI to have the quality you have put on the
+#: homepage"): thirteen declarations, each over a rule that is itself
+#: `!important`. An empty table's message wraps and its table fits the card
+#: (six, in components/mobile-micro-ux.css, over the two "no cell wraps"
+#: rules and the phone table enhancer's max-content width); a cell spanning
+#: several rows is a capped, wrapping group label on a phone (five, in
+#: consistency.css, over the same two); a compact filter field holds its text
+#: (two, in components/interactions.css, over a page's own form padding).
+#: Home itself has none.
+IMPORTANT_CEILING = 3992
 CLASS_SUBSTRING_SELECTOR_CEILING = 577
 
 _COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)

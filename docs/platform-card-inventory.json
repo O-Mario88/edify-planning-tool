@@ -2134,16 +2134,16 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 135,
+   "line": 136,
    "title": "Execution Actions",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "ad-card",
+   "classes": "ad-card ad-card--lead",
    "branch_path": []
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 249,
+   "line": 250,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2157,7 +2157,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 291,
+   "line": 292,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -2202,7 +2202,7 @@
   },
   {
    "template": "templates/pages/notifications/index.html",
-   "line": 271,
+   "line": 274,
    "title": "How you are told",
    "heading_level": 2,
    "has_card_key": false,
@@ -3258,7 +3258,7 @@
   },
   {
    "template": "templates/pages/targets/index.html",
-   "line": 49,
+   "line": 54,
    "title": "How roll-up works",
    "heading_level": 3,
    "has_card_key": false,
@@ -3267,7 +3267,7 @@
   },
   {
    "template": "templates/pages/targets/index.html",
-   "line": 70,
+   "line": 75,
    "title": "Submit MSCS",
    "heading_level": 3,
    "has_card_key": false,

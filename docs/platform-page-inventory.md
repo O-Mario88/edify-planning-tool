@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **941**
-- All registered routes: **1425**
+- Routed product surfaces: **943**
+- All registered routes: **1427**
 - API routes: **367**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **39**
 - Activity states: **24**
-- Shared component templates: **659**
-- Full pages: **260**
-- Partials and drawers: **335**
-- Permission-gated surfaces: **924**
-- Referenced by automated tests: **850**
+- Shared component templates: **662**
+- Full pages: **261**
+- Partials and drawers: **336**
+- Permission-gated surfaces: **926**
+- Referenced by automated tests: **852**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -415,6 +415,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-7391847B33 | /help/search | Search Help · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-02807FDE97 | /help/troubleshooting | · Knowledge Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-67E692F75E | /help/workflows/<slug:workflow_slug> | · Knowledge Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D6F37AB14D | /home | Home | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D16601F9C0 | /home/queue | Home Queue | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-ED5EC9B584 | /hr-analytics | · Edify | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6B6E47BEE7 | /hr-audit-log | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9F67B3997A | /hr-today | HR Today · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

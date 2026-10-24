@@ -522,7 +522,7 @@
   text-decoration: none;
 }
 
-.help-toc__link:hover { background: var(--edify-surface-muted); color: var(--edify-text); }
+.help-toc__link:hover { background: var(--edify-surface-hover); color: var(--edify-text); }
 
 .help-toc__link:focus-visible {
   outline: 2px solid var(--edify-primary);

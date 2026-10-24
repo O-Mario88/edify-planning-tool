@@ -142,7 +142,11 @@ html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-vi
      td > a` compensation two rules below). */
   main a.edify-primary-text:not(:is(td, th) *),
   main a[class*="edify-chart-blue"][href]:not(:is(td, th) *),
-  main a[class*="edify-text-caption"][href]:not(:is(td, th) *),
+  /* Not a caption-styled link that already sizes itself as a control (a
+     32px tab, `h-8`): its -13px margins pulled a wrapped second line of
+     tabs over the first, so My Actions' "All" sat on top of "Overdue"
+     (2026-10-21). The 16-18px text links this rule is for keep it. */
+  main a[class*="edify-text-caption"][href]:not(:is(td, th) *):not(:is([class~="h-7"], [class~="h-8"], [class~="h-9"], [class~="h-10"], [class~="h-11"])),
   .hcos-breadcrumbs a,
   .admin-command__breadcrumbs a,
   .admin-panel__header > a,
@@ -1777,6 +1781,23 @@ main .edify-card-action {
   border-color: var(--edify-card-border) !important;
 }
 
+/* Tailwind's light hover utilities take the same soft Edify blue as every
+   other hover (owner, 2026-10-23: Home's Quick access hover, platform-wide).
+   Every theme, the blue one included, where a slate-50 hover flashed
+   near-white. Tailwind keeps hover to pointer devices, so this does too. */
+@media (hover: hover) {
+  :root :is(
+    .hover\:bg-slate-50, .hover\:bg-slate-50\/20,
+    .hover\:bg-slate-50\/30, .hover\:bg-slate-50\/40, .hover\:bg-slate-50\/50,
+    .hover\:bg-slate-50\/60, .hover\:bg-slate-50\/70, .hover\:bg-slate-100,
+    .hover\:bg-slate-100\/50, .hover\:bg-slate-100\/60, .hover\:bg-slate-100\/70,
+    .hover\:bg-slate-200, .hover\:bg-slate-200\/60, .hover\:bg-slate-500\/10,
+    .hover\:bg-gray-50, .hover\:bg-gray-100
+  ):hover {
+    background-color: var(--edify-surface-hover);
+  }
+}
+
 /* Interactive cards strengthen their elevation and surface on hover/focus;
    they do not bring the removed outline back. */
 main :is(
@@ -2943,6 +2964,30 @@ main :is(.apexcharts-datalabel-value) {
   text-wrap: wrap !important;
   white-space: normal !important;
 }
+
+/* Nor is a group label on a phone: a cell spanning several rows names the
+   group they belong to (a priority over its milestones). Held to one line
+   and pinned, "Program Growth and Expansion · 5 milestones" was wider than
+   the screen, so a phone showed the label and none of the rows it labels
+   (2026-10-21). It wraps within a capped width instead. */
+@media (max-width: 47.999rem) {
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only, .edify-visually-hidden) :is(td, th):is([rowspan]:not([rowspan="1"])) {
+    inline-size: 9rem !important;
+    min-inline-size: 9rem !important;
+    max-inline-size: 9rem !important;
+  }
+
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only, .edify-visually-hidden) :is(td, th):is([rowspan]:not([rowspan="1"])),
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only, .edify-visually-hidden) :is(td, th):is([rowspan]:not([rowspan="1"]))
+    :not(.sr-only, .edify-visually-hidden) {
+    text-wrap: wrap !important;
+    white-space: normal !important;
+  }
+}
+
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   .edify-record-table [data-record-title] > :first-child {
@@ -4231,6 +4276,18 @@ main textarea,
   box-shadow: none !important;
   background-color: var(--edify-table-row-tint, var(--edify-table-canvas)) !important;
   background-image: none !important;
+}
+/* A row answers the pointer with the platform's hover blue, the tint of
+   Home's Quick access (owner, 2026-10-23), through the same hook. A row that
+   carries its own tint (a day off, a completed activity) keeps it, as do a
+   Team Performance band and an empty table's lone message cell. Pointer
+   devices only: a tapped row on a phone does not stay lit. */
+@media (hover: hover) {
+  :root :is(main, .drawer-body, [role="dialog"])
+    table.edify-plain-table tbody tr:not(.edify-group-head, .budget-ledger-band, .budget-ledger-subtotal, .mp-dayoff-row, [data-done]):hover
+    > :is(td, th):not(:only-child, [data-tp-band]) {
+    --edify-table-row-tint: var(--edify-table-row-hover);
+  }
 }
 /* A row's heading cell reads from the start, under its column's heading.
    Browsers centre a <th> by default and nothing here said otherwise for the

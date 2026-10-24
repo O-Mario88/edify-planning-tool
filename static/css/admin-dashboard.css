@@ -437,7 +437,7 @@
 .admin-attention-list { display: grid; }
 .admin-attention-list > a { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.65rem; padding: 0.68rem 0.9rem; border-bottom: 1px solid var(--edify-border); transition: background-color var(--edify-transition-fast); }
 .admin-attention-list > a:last-child { border-bottom: 0; }
-.admin-attention-list > a:hover { background: var(--edify-surface-muted); }
+.admin-attention-list > a:hover { background: var(--edify-surface-hover); }
 .admin-attention-list strong { display: block; overflow: hidden; color: var(--edify-text); font-size: var(--edify-text-micro-size); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .admin-attention-list small { display: block; margin-block-start: 0.14rem; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .admin-attention-list > a > span:last-child { color: var(--edify-text-subtle); font-size: var(--edify-text-title-size); }

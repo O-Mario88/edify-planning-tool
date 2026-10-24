@@ -146,6 +146,9 @@ says how many of them are set.{% endcomment %}
 <select name="status" aria-label="Filter by status" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="all" {% if not selected_status or selected_status == 'all' %}selected{% endif %}>All statuses</option>
 <option value="scheduled" {% if selected_status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+<option value="upcoming" {% if selected_status == 'upcoming' %}selected{% endif %}>Planned (not started)</option>
+<option value="under_way" {% if selected_status == 'under_way' %}selected{% endif %}>In progress</option>
+<option value="overdue" {% if selected_status == 'overdue' %}selected{% endif %}>Overdue (not started)</option>
 <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
 <option value="submitted" {% if selected_status == 'submitted' %}selected{% endif %}>Submitted</option>
 <option value="returned_for_correction" {% if selected_status == 'returned_for_correction' %}selected{% endif %}>Returned</option>

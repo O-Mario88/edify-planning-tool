@@ -34,7 +34,7 @@
         <div class="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p class="font-bold text-slate-800">{% if assignment.training_course %}{{ assignment.training_course.display_name }}{% elif assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Approved Activity choice{% endif %}</p>
-            <p class="mt-1 edify-text-caption text-slate-500">{% if assignment.school %}{% school_link assignment.school.name assignment.school.id %}{% else %}{% cluster_link assignment.cluster.name assignment.cluster.id %}{% endif %}{% if assignment.focus_intervention %} · {{ assignment.focus_intervention|cut:"_"|title }}{% endif %}</p>
+            <p class="mt-1 edify-text-caption text-slate-500">{% if assignment.school %}{% school_link assignment.school.name assignment.school.id %}{% else %}{% cluster_link assignment.cluster.name assignment.cluster.id %}{% endif %}{% if assignment.focus_intervention %} · {{ assignment.focus_intervention|status_label }}{% endif %}</p>
             <p class="mt-1 edify-text-caption font-bold text-amber-700">Yet to Schedule</p>
           </div>
           {% comment %}
@@ -71,7 +71,7 @@
           <tr>
             <td class="text-left py-2.5 pl-1 whitespace-nowrap tabular-nums" data-label="School ID">{% if a.school.id %}{% school_code a.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
             <td class="text-left font-semibold py-2.5 pl-1">{% if a.school %}<a href="/schools/{{ a.school.id }}" class="font-semibold hover:underline">{{ a.school.name }}</a>{% elif a.cluster %}<a href="/clusters/{{ a.cluster.id }}" class="font-semibold hover:underline">{{ a.cluster.name }}</a>{% else %}—{% endif %}</td>
-            <td class="text-left text-slate-500 py-2.5 capitalize">{{ a.activity_type|cut:"_" }}</td>
+            <td class="text-left text-slate-500 py-2.5">{{ a.get_activity_type_display }}</td>
             <td class="text-left tabular-nums text-slate-500 py-2.5">{{ a.planned_date|date:"d M Y" }}</td>
             <td class="text-right py-2.5 pr-1">
               <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
@@ -79,7 +79,7 @@
                 {% elif a.status == 'ia_verified' %}edify-primary-soft edify-primary-text
                 {% elif a.status == 'scheduled' %}bg-sky-50 text-sky-700
                 {% elif 'returned' in a.status %}bg-rose-50 text-rose-700
-                {% else %}bg-slate-100 text-slate-600{% endif %}">{{ a.status|cut:"_"|title }}</span>
+                {% else %}bg-slate-100 text-slate-600{% endif %}">{{ a.status|status_label }}</span>
             </td>
           </tr>
           {% endfor %}

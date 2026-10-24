@@ -37,7 +37,7 @@
             <td class="text-right tabular-nums text-slate-500 py-2.5">{{ s.enrollment|default:0|intcomma }}</td>
             <td class="text-right py-2.5 pr-1">
               <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if s.current_fy_ssa_status == 'done' %}bg-emerald-50 text-emerald-700{% else %}bg-amber-50 text-amber-700{% endif %}">
-                {{ s.current_fy_ssa_status|cut:"_"|title }}
+                {{ s.current_fy_ssa_status|status_label }}
               </span>
             </td>
           </tr>

@@ -149,7 +149,7 @@
 .hcos-table td { padding: 0.82rem 0.9rem; border-bottom: 1px solid var(--edify-border); color: var(--edify-text-muted); line-height: 1.35; vertical-align: middle; }
 .hcos-table tbody tr:last-child td { border-bottom: 0; }
 .hcos-table tbody tr { transition: background-color var(--edify-transition-fast); }
-.hcos-table tbody tr:hover { background: var(--edify-surface-muted); }
+.hcos-table tbody tr:hover { background: var(--edify-surface-hover); }
 .hcos-table__primary { color: var(--edify-heading) !important; font-weight: 600; }
 .hcos-status { display: inline-block; padding: 0.22rem 0.45rem; border: 0; border-radius: var(--edify-radius-xs); font-size: var(--edify-text-micro-size); font-weight: 600; white-space: nowrap; }
 .hcos-status[data-tone="success"] { color: var(--edify-success); background: var(--edify-success-light); }

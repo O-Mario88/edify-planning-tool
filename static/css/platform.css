@@ -787,7 +787,7 @@ main table tbody tr {
 }
 
 main table tbody tr:hover > :where(td, th):not(.edify-primary-solid, .edify-primary-soft) {
-  background-color: color-mix(in oklab, var(--edify-accent-light) 54%, var(--edify-surface)) !important;
+  background-color: var(--edify-surface-hover) !important;
 }
 
 /* ── One table format, everywhere. ───────────────────────────────────────
@@ -1551,7 +1551,7 @@ main .platform-hero__eyebrow {
   border-radius: var(--edify-radius-pill);
   background: linear-gradient(90deg,
     var(--edify-surface-muted) 20%,
-    var(--edify-surface-hover) 50%,
+    var(--edify-surface-raised) 50%,
     var(--edify-surface-muted) 80%);
   background-size: 220% 100%;
   animation: edify-skeleton 1.25s ease-in-out infinite;
@@ -2296,7 +2296,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 }
 
 .school-directory-row:hover {
-  background: color-mix(in oklab, var(--edify-accent-light) 38%, var(--edify-surface));
+  background: var(--edify-surface-hover);
 }
 
 .school-directory-row:focus-within {
@@ -2750,7 +2750,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .planning-school-row:hover,
 .planning-school-row.is-expanded {
-  background: color-mix(in oklab, var(--edify-accent-light) 34%, var(--edify-surface));
+  background: var(--edify-surface-hover);
 }
 
 .planning-school-row:focus-within {
@@ -3208,7 +3208,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .school-record-row:hover,
 .school-record-row.is-expanded {
-  background: color-mix(in oklab, var(--edify-accent-light) 24%, var(--edify-surface));
+  background: var(--edify-surface-hover);
 }
 
 .school-record-row:focus-within {
@@ -3730,7 +3730,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 }
 
 .cluster-card__toggle:hover {
-  background: var(--edify-surface-muted);
+  background: var(--edify-surface-hover);
   color: var(--edify-text);
 }
 
@@ -5263,7 +5263,7 @@ main table thead .edify-frozen-cell { z-index: 2; }
 .period-matrix__overall td { background: var(--edify-surface-muted); font-weight: 700; border-block-start: 1px solid var(--edify-border); }
 
 :is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable { cursor: pointer; }
-:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > td { background: color-mix(in oklab, var(--edify-accent) 6%, var(--edify-surface)); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > td { background: var(--edify-surface-hover); }
 :is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > .period-matrix__label { background: linear-gradient(var(--edify-accent-light), var(--edify-accent-light)), var(--edify-frozen-surface); }
 
 /* Inside a Team Target row the shell scrolls the wide matrix instead of
