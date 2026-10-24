@@ -43,11 +43,12 @@ function fakeWindow({ native = true, platform = 'android', path = '/schools', dr
     documentElement: { setAttribute: (k, v) => { attrs[k] = v; } },
     getElementById: id => (id === 'drawer-container' ? { children: drawer ? [{}] : [] } : null),
     querySelectorAll: () => [],
-    dispatchEvent: event => calls.push(['key', event.key]),
+    dispatchEvent: event => calls.push(event.key ? ['key', event.key] : ['event', event.type]),
   };
   const win = {
     document,
     KeyboardEvent: function (type, init) { this.type = type; this.key = init.key; },
+    CustomEvent: function (type) { this.type = type; },
     location: { origin: ORIGIN, pathname: path, assign: to => calls.push(['assign', to]) },
     history: { back: () => calls.push(['back']) },
     Capacitor: {
@@ -109,4 +110,11 @@ test('back goes back a page, and on Home leaves the app in the background', () =
   start(home.win);
   home.listeners.backButton({ canGoBack: true });
   assert.deepEqual(home.calls, [['minimize']]);
+});
+
+test('coming back to the app tells the page, so Home can bring itself up to date', () => {
+  const { win, listeners, calls } = fakeWindow({ path: '/home' });
+  start(win);
+  listeners.resume();
+  assert.deepEqual(calls, [['event', 'edify-app-resume']]);
 });

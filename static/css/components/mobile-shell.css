@@ -595,3 +595,81 @@
 /* A tab's label is one line: a long page name has a short tab label
    (MOBILE_NAV_SHORT_LABELS in apps/core/navigation.py — School Directory is
    "Schools"), never a second line (owner, 2026-09-27). */
+
+/* ── App feel (2026-10-24) ── No grey tap flash: controls have their own
+   pressed state (components/interactions.css). */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* In the app (native-shell.js marks <html>) a long press on a control is
+   not text: no callout or selection. Text and fields stay selectable. */
+[data-native-app]
+  :is(
+    button,
+    [role="button"],
+    [role="tab"],
+    summary,
+    .edify-topbar,
+    .edify-bottom-nav,
+    .app-sidebar,
+    .edify-home__item,
+    .edify-home__shortcut,
+    .edify-home__figure
+  ) {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Phones and tablets: pages cross-fade, the bars stay put. Desktop, less
+   motion and browsers without view transitions change page as before. */
+@media (max-width: 1023.98px) and (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  .edify-topbar {
+    view-transition-name: edify-topbar;
+  }
+
+  .edify-bottom-nav {
+    view-transition-name: edify-bottom-nav;
+  }
+
+  ::view-transition-old(root) {
+    animation: 110ms ease-out both edify-page-out;
+  }
+
+  ::view-transition-new(root) {
+    animation: 170ms cubic-bezier(0.2, 0, 0, 1) both edify-page-in;
+  }
+}
+
+@keyframes edify-page-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes edify-page-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+/* A school name in a list's phone cards was a 17px target: its hit area
+   grows, cancelled by a negative margin, so nothing moves. */
+@media (pointer: coarse) {
+  main :is(.school-record-row__link, .school-link):not(:is(td, th) *) {
+    display: inline-block;
+    padding-block: 0.75rem;
+    margin-block: -0.75rem;
+  }
+}
+
+/* Hidden until the session is confirmed (static/js/restore-guard.js). */
+html[data-restore-check] body {
+  visibility: hidden;
+}

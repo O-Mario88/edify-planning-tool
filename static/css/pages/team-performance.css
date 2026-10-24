@@ -321,6 +321,52 @@
   overflow-x: auto;
 }
 
+/* A Lead's team by CCEO, a CCEO's portfolio by district, everyone at the
+   bottom level: one chart, the whole row. */
+.tp-area-row--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* The summary's breakdown (owner, 2026-10-24): By Region, Programme Lead,
+   CCEO, the way back to the top, and the column headers that open the level
+   under them. */
+.tp-by {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0 0.75rem 0.625rem;
+}
+
+.tp-by__hint {
+  margin: 0;
+}
+
+.tp-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  font-size: var(--edify-text-label-size);
+  color: var(--edify-text-muted, #233844);
+}
+
+.tp-trail a,
+.tp-open {
+  color: var(--brand-primary, #0e5da3);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.tp-open:hover,
+.tp-trail a:hover {
+  text-decoration-thickness: 2px;
+}
+
 .tp-section-title {
   padding: 0.5rem 0.25rem 0;
   font-size: var(--edify-text-card-heading-size);

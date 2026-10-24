@@ -207,7 +207,6 @@ def _allocation_priorities(
     for allocation in allocations:
         groups[str(allocation.milestone_id)].append(allocation)
     from .milestone_progress import (
-        _aggregate_credits,
         MilestoneProgressCredit,
         RATE_MEASUREMENT_TYPES,
         counting_basis_families,
@@ -226,7 +225,46 @@ def _allocation_priorities(
                 "user_id", flat=True
             )
         )
-    rows = []
+    # Country targets are the master figure; team roots partition that
+    # figure and must not multiply a rate by the number of holders.
+    country_scope = country is not None or role in {
+        "CountryDirector",
+        "RegionalVicePresident",
+        "Admin",
+    }
+    from .contribution_scope import scope_activities
+
+    def scoped_activities(country_id):
+        """The activities that count toward a milestone of this country: the
+        reader's (or the country's) delivery in the window, never another
+        country's work."""
+        activities = Activity.objects.filter(
+            fy=fy,
+            deleted_at__isnull=True,
+            planned_date__gte=start,
+            planned_date__lte=end,
+        )
+        if country_scope:
+            activities = scope_activities(activities, country=country_id)
+        elif recipient_ids is not None:
+            from django.db.models import Q
+
+            ids = recipient_owner_ids
+            activities = activities.filter(
+                Q(responsible_staff_id__in=ids)
+                | Q(delivery_type="partner", monitored_by_staff_id__in=ids)
+            ).distinct()
+        else:
+            activities = scope_activities(
+                activities, staff=staff, include_team=role == "Program Lead"
+            )
+        activities = scope_activities(activities, country=country_id)
+        if activity_ids is not None:
+            activities = activities.filter(id__in=activity_ids)
+        return activities
+
+    # First every milestone's target, as before.
+    entries = []
     for group in groups.values():
         milestone = group[0].milestone
         target = Decimal(0)
@@ -248,64 +286,52 @@ def _allocation_priorities(
             rate_numerator += allocation.allocated_target * (
                 allocation.denominator or Decimal(0)
             )
-        # Country targets are the master figure; team roots partition that
-        # figure and must not multiply a rate by the number of holders.
-        country_scope = country is not None or role in {
-            "CountryDirector",
-            "RegionalVicePresident",
-            "Admin",
-        }
         if milestone.measurement_type in RATE_MEASUREMENT_TYPES:
             if country_scope:
                 target = milestone.target_value
             elif denominator:
                 target = rate_numerator / denominator
-        activities = Activity.objects.filter(
-            fy=fy,
-            deleted_at__isnull=True,
-            planned_date__gte=start,
-            planned_date__lte=end,
-        )
-        from .contribution_scope import scope_activities
-
-        if country_scope:
-            activities = scope_activities(
-                activities, country=milestone.priority.country_id
-            )
-        elif recipient_ids is not None:
-            from django.db.models import Q
-
-            ids = recipient_owner_ids
-            activities = activities.filter(
-                Q(responsible_staff_id__in=ids)
-                | Q(delivery_type="partner", monitored_by_staff_id__in=ids)
-            ).distinct()
-        else:
-            activities = scope_activities(
-                activities, staff=staff, include_team=role == "Program Lead"
-            )
-        # Ownership never lets work from another country satisfy this milestone.
-        activities = scope_activities(activities, country=milestone.priority.country_id)
-        if activity_ids is not None:
-            activities = activities.filter(id__in=activity_ids)
-        progress = (
-            milestone_plan_progress(
-                [milestone],
-                fy=fy,
-                activity_ids=activities.values("id"),
-                targets={str(milestone.id): target},
-            ).get(str(milestone.id))
-            if include_plans
-            else None
-        )
-        credits = MilestoneProgressCredit.objects.filter(
-            rule__milestone=milestone,
-            rule__active=True,
-            reversed_at__isnull=True,
-            activity_id__in=activities.values("id"),
-        )
         bases = {r.counting_basis for r in milestone.activity_rules.all() if r.active}
-        actual = Decimal(_aggregate_credits(credits, bases) or 0)
+        entries.append((group, milestone, target, denominator, bases))
+
+    # Then the plan and the verified credits of all of a country's milestones
+    # in one read each (2026-10-24): every milestone of a country counts the
+    # same activities, and they were read once per milestone, per period.
+    from .milestone_progress import aggregate_credits_by_milestone
+
+    by_country: dict = defaultdict(list)
+    for entry in entries:
+        by_country[entry[1].priority.country_id].append(entry)
+    progress_of: dict = {}
+    verified_of: dict = {}
+    for country_id, members in by_country.items():
+        activities = scoped_activities(country_id)
+        if include_plans:
+            progress_of.update(
+                milestone_plan_progress(
+                    [m for _g, m, _t, _d, _b in members],
+                    fy=fy,
+                    activity_ids=activities.values("id"),
+                    targets={str(m.id): t for _g, m, t, _d, _b in members},
+                )
+            )
+        verified_of.update(
+            aggregate_credits_by_milestone(
+                MilestoneProgressCredit.objects.filter(
+                    rule__milestone_id__in=[m.id for _g, m, _t, _d, _b in members],
+                    rule__active=True,
+                    reversed_at__isnull=True,
+                    activity_id__in=activities.values("id"),
+                ),
+                {str(m.id): b for _g, m, _t, _d, b in members},
+            )
+        )
+
+    # And each row, in the allocations' order, as before.
+    rows = []
+    for group, milestone, target, denominator, bases in entries:
+        progress = progress_of.get(str(milestone.id)) if include_plans else None
+        actual = Decimal(verified_of.get(str(milestone.id)) or 0)
         verified_units = actual
         configured = bool(bases) and len(counting_basis_families(bases)) == 1
         if milestone.measurement_type in RATE_MEASUREMENT_TYPES:

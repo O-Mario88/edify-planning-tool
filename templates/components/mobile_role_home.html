@@ -1,7 +1,8 @@
 {% load frontend_filters %}
 {% comment %}
 Opening anatomy for a task-first role home. Page templates provide headline,
-description, primary action and optional period/status. The operational queue
+description, primary action and optional period/status; a status that is a
+bare count passes `status_caption`, what it counts. The operational queue
 remains page-owned and follows this component in DOM/focus order.
 The primary action only renders for someone its page lets in (2026-09-14: an
 MFI admin's home offered Business Transformation, a page that refuses the role).
@@ -15,10 +16,11 @@ which holds the action's space until the data arrives, and `role_home_id` /
     <h1>{{ headline }}</h1>
     {% if description %}<span>{{ description }}</span>{% endif %}
   </div>
-  {% if period_label or status_label %}
+  {% if period_label or status_label or status_caption %}
   <div class="mobile-role-home__context">
     {% if period_label %}<span>{{ period_label }}</span>{% endif %}
-    {% if status_label %}<strong>{{ status_label }}</strong>{% endif %}
+    {# A figure says what it counts (2026-10-24: "Sat, 24 Oct 3" read as nothing): `status_caption` names it, and a zero is shown once it is named. #}
+    {% if status_caption %}<span class="mobile-role-home__figure"><strong>{{ status_label|default:"0" }}</strong> {{ status_caption }}</span>{% elif status_label %}<strong>{{ status_label }}</strong>{% endif %}
   </div>
   {% endif %}
   {% if primary_action and request.user|can_open:primary_action.url %}

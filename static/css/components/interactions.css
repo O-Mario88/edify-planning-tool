@@ -1787,9 +1787,11 @@ main .edify-filter-row > label.edify-filter-row__field {
    "Reduce the button sizes to fit perfectly." A page's actions are one row
    of compact buttons at their own width, wrapping as whole buttons and
    starting at the left edge, instead of half-width pairs and full-width bars
-   of mixed heights. Filters that live in a header keep their own layout. */
+   of mixed heights. Filters that live in a header keep their own layout,
+   and so does a phone role home's copy (components/mobile_role_home.html):
+   made a row, its label sat beside a short title (2026-10-24). */
 @media (max-width: 47.999rem) {
-  main .edify-page-header > :not(.edify-page-header__lead):not(form):not(nav):not(details) {
+  main .edify-page-header > :not(.edify-page-header__lead):not(.mobile-role-home__copy):not(form):not(nav):not(details) {
     display: flex !important;
     flex-flow: row wrap !important;
     align-items: center !important;
@@ -1799,7 +1801,7 @@ main .edify-filter-row > label.edify-filter-row__field {
     margin: 0 !important;
   }
 
-  main .edify-page-header > :not(.edify-page-header__lead):not(form):not(nav):not(details) > :is(#edify-header-action, a, button, .btn, .edify-action-button, details > summary),
+  main .edify-page-header > :not(.edify-page-header__lead):not(.mobile-role-home__copy):not(form):not(nav):not(details) > :is(#edify-header-action, a, button, .btn, .edify-action-button, details > summary),
   main .edify-page-header > :is(#edify-header-action, a.btn, a.edify-action-button, button) {
     flex: 0 0 auto !important;
     inline-size: auto !important;

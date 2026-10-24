@@ -1499,7 +1499,32 @@ def milestone_plan_progress(
         if verified_measures
         else {}
     )
-    from .milestone_progress import _aggregate_credits
+    # Attendance and occurrence bases credit each event once across
+    # overlapping rules (a max per activity, then a sum), which one
+    # conditional aggregate cannot express. They are read together, grouped
+    # by milestone, each credit kept only if its activity matches its own
+    # milestone's rules (2026-10-24: they were one read per milestone).
+    from .milestone_progress import aggregate_credits_by_milestone
+
+    pending = {
+        mid: entry
+        for mid, entry in plan.items()
+        if f"v{entry['index']}" not in verified_totals
+    }
+    pending_verified: dict = {}
+    if pending:
+        each_own = Q()
+        for mid, entry in pending.items():
+            each_own |= Q(
+                rule__milestone_id=mid,
+                activity_id__in=base.filter(entry["match"]).values("id"),
+            )
+        pending_verified = aggregate_credits_by_milestone(
+            MilestoneProgressCredit.objects.filter(
+                rule__active=True, reversed_at__isnull=True
+            ).filter(each_own),
+            {mid: entry["bases"] for mid, entry in pending.items()},
+        )
 
     out: dict[str, dict] = {}
     for mid, entry in plan.items():
@@ -1515,21 +1540,7 @@ def milestone_plan_progress(
         if f"v{index}" in verified_totals:
             verified = Decimal(verified_totals[f"v{index}"] or 0)
         else:
-            # Attendance and occurrence bases credit each event once across
-            # overlapping rules (a max per activity, then a sum), which one
-            # conditional aggregate cannot express; read those per milestone.
-            verified = Decimal(
-                _aggregate_credits(
-                    MilestoneProgressCredit.objects.filter(
-                        rule__milestone_id=mid,
-                        rule__active=True,
-                        reversed_at__isnull=True,
-                        activity_id__in=base.filter(entry["match"]).values("id"),
-                    ),
-                    bases,
-                )
-                or 0
-            )
+            verified = Decimal(pending_verified.get(mid) or 0)
         target = (targets or {}).get(str(milestone.id), milestone.target_value)
         target_f = float(target) if target is not None else None
 

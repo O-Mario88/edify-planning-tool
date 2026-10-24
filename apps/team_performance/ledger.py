@@ -114,6 +114,10 @@ def _day(value) -> date | None:
     return value
 
 
+#: Where a figure can be read: a school's region, or its district.
+PLACE_LEVELS = ("region", "district")
+
+
 class _School:
     __slots__ = (
         "pk",
@@ -125,9 +129,22 @@ class _School:
         "closed",
         "clustered",
         "region",
+        "district",
     )
 
-    def __init__(self, pk, code, owner, core, active, start, closed, clustered, region):
+    def __init__(
+        self,
+        pk,
+        code,
+        owner,
+        core,
+        active,
+        start,
+        closed,
+        clustered,
+        region,
+        district="",
+    ):
         self.pk = pk
         self.code = code
         self.owner = owner
@@ -137,6 +154,7 @@ class _School:
         self.closed = closed
         self.clustered = clustered
         self.region = region
+        self.district = district
 
 
 class Ledger:
@@ -167,8 +185,11 @@ class Ledger:
         #: Every region of the country, in the workbook's order.
         self.regions: list[str] = []
         #: A counted record that is not a school (a session, a story) -> how
-        #: many of the schools it reached are in each region.
-        self._unit_regions: dict = defaultdict(Counter)
+        #: many of the schools it reached are in each region, and in each
+        #: district.
+        self._unit_places: dict[str, dict] = {
+            level: defaultdict(Counter) for level in PLACE_LEVELS
+        }
         #: Narrowed to some officers' schools: reads ask for those schools only.
         self.narrowed = False
 
@@ -236,6 +257,7 @@ class Ledger:
             "closed_at",
             "cluster_id",
             "region__name",
+            "district__name",
         ):
             (
                 pk,
@@ -248,6 +270,7 @@ class Ledger:
                 closed_at,
                 cluster,
                 region,
+                district,
             ) = row
             school = _School(
                 pk=str(pk),
@@ -261,6 +284,7 @@ class Ledger:
                 else (closes or _day(closed_at)),
                 clustered=bool(cluster),
                 region=(region or "").replace(" Region", "").strip(),
+                district=(district or "").strip(),
             )
             self.schools[school.pk] = school
             if school.code:
@@ -381,7 +405,7 @@ class Ledger:
         facts, done_on, planned_for, headcount = self._facts(row, school)
         activity_id = row[0]
         if school is not None:
-            self._unit_regions[activity_id][school.region] += 1
+            self._reached(activity_id, school)
         for key in self._keys_for(facts):
             measure = measures.BY_KEY[key]
             unit = measure.unit
@@ -685,7 +709,7 @@ class Ledger:
                 self._add("msc", None, day, story_id, owner=author_officer)
             else:
                 self._add("msc", school, day, story_id)
-                self._unit_regions[story_id][school.region] += 1
+                self._reached(story_id, school)
 
     def _load_loans(self) -> None:
         from apps.business_transformation.models import MfiLoan
@@ -724,17 +748,26 @@ class Ledger:
             return None
         return self._tally(self._planned, measure, owners, start, end)
 
+    def _reached(self, unit, school: _School) -> None:
+        """A session or a story reached this school: where it is counts
+        toward where the record is placed."""
+        for level in PLACE_LEVELS:
+            self._unit_places[level][unit][getattr(school, level)] += 1
+
     def region_of(self, unit) -> str:
-        """The region a counted school is in; for a session or a story, the
-        region most of the schools it reached are in (by name on a tie), so
-        each counts once. "" for work that reached no school."""
+        return self.place_of(unit, "region")
+
+    def place_of(self, unit, level: str = "region") -> str:
+        """The region (or district) a counted school is in; for a session or
+        a story, the one most of the schools it reached are in (by name on a
+        tie), so each counts once. "" for work that reached no school."""
         school = self.schools.get(str(unit))
         if school is not None:
-            return school.region
-        reached = self._unit_regions.get(unit)
+            return getattr(school, level)
+        reached = self._unit_places[level].get(unit)
         if not reached:
             return ""
-        return min(reached, key=lambda region: (-reached[region], region))
+        return min(reached, key=lambda place: (-reached[place], place))
 
     def units(self, key: str, owners, start: date, end: date) -> dict:
         """What a measure counted over [start, end): each school, session or
@@ -825,10 +858,16 @@ class Ledger:
 
     def regions_of(self, owners) -> dict[str, int]:
         """How many of these officers' schools are in each region."""
+        return self.places_of(owners, "region")
+
+    def places_of(self, owners, level: str = "region") -> dict[str, int]:
+        """How many of these officers' schools are in each region (or
+        district)."""
         tally: dict[str, int] = defaultdict(int)
         for school in self._held(owners, None):
-            if school.region:
-                tally[school.region] += 1
+            place = getattr(school, level)
+            if place:
+                tally[place] += 1
         return dict(tally)
 
     def holders(self) -> set[str]:

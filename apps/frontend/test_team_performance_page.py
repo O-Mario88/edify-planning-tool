@@ -85,15 +85,19 @@ class TeamPerformancePageTest(LedgerFixture):
 
     def test_a_lead_reads_their_team_and_the_director_everyone(self):
         """Owner, 2026-10-21: a PL sees their own team only; "IA, CD and Admin
-        See Everyone grouped by PL"."""
+        See Everyone grouped by PL". Owner, 2026-10-24: a PL's summary is
+        their team member by member, the director's starts by region."""
         lead = self.page(self.lead)
-        self.assertIn('data-tp-team="Lead"', lead)
-        self.assertNotIn('data-tp-team="No Programme Lead"', lead)
+        self.assertIn(f'data-tp-team="{self.james.name}"', lead)
+        self.assertNotIn(f'data-tp-team="{self.mary.name}"', lead)
+        self.assertNotIn('data-tp-team="Northern"', lead)
         self.assertIn("Your team", lead)
 
         director = self.page(self.director)
-        self.assertIn('data-tp-team="Lead"', director)
-        self.assertIn('data-tp-team="No Programme Lead"', director)
+        self.assertIn('data-tp-team="Northern"', director)
+        leads = self.page(self.director, by="lead")
+        self.assertIn('data-tp-team="Lead"', leads)
+        self.assertIn('data-tp-team="No Programme Lead"', leads)
 
     def test_a_lead_cannot_open_another_teams_officer(self):
         body = self.page(
@@ -151,17 +155,26 @@ class TeamPerformancePageTest(LedgerFixture):
 
         visits = self.client.get(URL, {"tab": "summary", "charts": "Visits"})
         fragment = visits.content.decode()
-        # One row per target area, its region chart and its Programme Lead
-        # chart side by side.
+        # One row per target area: a Lead's team by CCEO (owner, 2026-10-24).
         rows = fragment.count("data-tp-area-row=")
         self.assertGreater(rows, 5)
-        self.assertEqual(fragment.count('data-tp-chart="region"'), rows)
-        self.assertEqual(fragment.count('data-tp-chart="lead"'), rows)
-        self.assertIn("Core Visit 1 by Programme Lead", fragment)
+        self.assertEqual(fragment.count('data-tp-chart="cceo"'), rows)
+        self.assertNotIn('data-tp-chart="region"', fragment)
+        self.assertIn("Core Visit 1 by CCEO", fragment)
         self.assertNotIn("<html", fragment)
         # Each chart has its figures as a table beneath it (owner,
         # 2026-10-21: "all the graphs in the executive summary is accompanied
         # by the tables below or above each graph").
+        self.assertEqual(fragment.count("data-tp-chart-table"), rows)
+
+        # Leadership: each area by region and, beside it, by Programme Lead.
+        self.client.force_login(self.director)
+        fragment = self.client.get(
+            URL, {"tab": "summary", "charts": "Visits"}
+        ).content.decode()
+        rows = fragment.count("data-tp-area-row=")
+        self.assertEqual(fragment.count('data-tp-chart="region"'), rows)
+        self.assertEqual(fragment.count('data-tp-chart="lead"'), rows)
         self.assertEqual(fragment.count("data-tp-chart-table"), 2 * rows)
         trainings = self.client.get(
             URL, {"tab": "summary", "charts": "Client School Trainings"}
@@ -208,12 +221,36 @@ class TeamPerformancePageTest(LedgerFixture):
             body = self.page(self.hr, tab=tab)
             self.assertIn(f'data-team-performance="{tab}"', body)
         summary = self.page(self.hr)
-        self.assertIn(f'data-tp-team="{self.lead.name}"', summary)
-        self.assertIn('data-tp-team="No Programme Lead"', summary)
+        self.assertIn('data-tp-team="Northern"', summary)
         self.assertIn("National Total", summary)
+        leads = self.page(self.hr, by="lead")
+        self.assertIn(f'data-tp-team="{self.lead.name}"', leads)
+        self.assertIn('data-tp-team="No Programme Lead"', leads)
         grid = self.page(self.hr, tab="dashboard", view="grid")
         self.assertIn(f'data-tp-grid="{self.james.staff_profile.id}"', grid)
         self.assertIn(f'data-tp-grid="{self.mary.staff_profile.id}"', grid)
+
+    def test_a_cceos_page_and_sidebar_entry_are_my_performance(self):
+        """Owner, 2026-10-24: "the performance page on cceo sidebar should
+        not be team performance. it should be My performance"."""
+        body = self.page(self.mary)
+        self.assertIn("<title>My Performance · Edify</title>", body)
+        labels = [
+            item["label"]
+            for section in build_sidebar_for_user(self.mary, URL)
+            for item in section["items"]
+            if item.get("page_key") == "team_performance"
+        ]
+        self.assertEqual(labels, ["My Performance"])
+        # Everyone who reads a team keeps the name.
+        self.assertIn("<title>Team Performance · Edify</title>", self.page(self.lead))
+        lead_labels = [
+            item["label"]
+            for section in build_sidebar_for_user(self.lead, URL)
+            for item in section["items"]
+            if item.get("page_key") == "team_performance"
+        ]
+        self.assertEqual(lead_labels, ["Team Performance"])
 
     def test_a_cceo_never_sees_another_officer_on_any_tab(self):
         """Owner, 2026-10-23: "CCEO can only see their performance only. The
@@ -318,10 +355,14 @@ class TeamPerformancePageTest(LedgerFixture):
         self.assertEqual(items["Performance Reviews"], "/performance-reviews")
 
     def test_the_country_director_and_a_cceo_have_the_entry(self):
-        for user in (self.director, self.mary):
+        # A CCEO's entry is "My Performance" (owner, 2026-10-24).
+        for user, label in (
+            (self.director, "Team Performance"),
+            (self.mary, "My Performance"),
+        ):
             labels = [
                 item["label"]
                 for section in build_sidebar_for_user(user, "/dashboard")
                 for item in section["items"]
             ]
-            self.assertEqual(labels.count("Team Performance"), 1, user.email)
+            self.assertEqual(labels.count(label), 1, user.email)

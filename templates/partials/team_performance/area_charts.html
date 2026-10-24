@@ -1,20 +1,18 @@
 {% load team_performance_tags %}
 {% comment %}One section of the Executive Summary's charts (`Report.section_charts`),
-loaded as the reader reaches it: each target area on one row, by region and
-by Programme Lead, each chart with its table beneath.{% endcomment %}
+loaded as the reader reaches it: each target area on one row, at the
+summary's level and the level under it, each chart with its table beneath.{% endcomment %}
 <div class="tp-stack" data-tp-charts-loaded>
   {% for area in areas %}
   <section class="tp-card" data-tp-area-row="{{ area.key }}">
     <header class="tp-card__head"><h2>{{ area.label }}: Target vs. Achieved</h2><span class="tp-card__meta">{{ area.achieved|num }} of {{ area.target|num }}{% if area.pct is not None %} · {{ area.pct|pct }}{% endif %}{% if area.status %} · {{ area.status }}{% endif %}{% if area.measure.unit != "schools" %} · {{ area.measure.unit }}{% endif %}</span></header>
-    <div class="tp-area-row">
-      <div data-tp-chart="region">
-        <h3 class="tp-chart-title">{{ area.label }} by region</h3>
-        {% include "partials/team_performance/target_chart.html" with bars=area.regions area=area.label label="by region" heading="Region" %}
+    <div class="tp-area-row{% if area.charts|length == 1 %} tp-area-row--single{% endif %}">
+      {% for chart in area.charts %}
+      <div data-tp-chart="{{ chart.level }}">
+        <h3 class="tp-chart-title">{{ area.label }} by {{ chart.label }}</h3>
+        {% include "partials/team_performance/target_chart.html" with bars=chart.bars area=area.label label="by "|add:chart.label heading=chart.label %}
       </div>
-      <div data-tp-chart="lead">
-        <h3 class="tp-chart-title">{{ area.label }} by Programme Lead</h3>
-        {% include "partials/team_performance/target_chart.html" with bars=area.leads area=area.label label="by Programme Lead" heading="Programme Lead" %}
-      </div>
+      {% endfor %}
     </div>
   </section>
   {% endfor %}

@@ -65,6 +65,15 @@ logger = logging.getLogger(__name__)
 # links remain valid. Both the default and the option set are server-side: an
 # unrecognised `per_page` falls back rather than becoming an unbounded query.
 CORE_PAGE_SIZES = (10, 15, 20, 50)
+
+#: The tabs drawn when they are first opened (2026-10-24), and their
+#: templates. The page drew all of them and hid three: 8,500 elements and
+#: 765 KB for a CCEO's 103 Core schools, and their data built every time.
+CORE_PANELS = {
+    "queue": "partials/core_schools/planning_queue.html",
+    "impact": "partials/core_schools/intervention_impact.html",
+    "performance": "partials/core_schools/performance_insights.html",
+}
 CORE_PAGE_SIZE_DEFAULT = 50
 
 
@@ -193,6 +202,9 @@ def core_schools_view(request):
     # (Programme Lead alignment, 2026-09-13): "2026" was a literal default.
     requested_fy = (request.GET.get("fy") or "").strip()
     fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
+    # One tab asked for on its own (CORE_PANELS), or the page.
+    panel = (request.GET.get("panel") or "").strip()
+    panel = panel if panel in CORE_PANELS else ""
 
     # 1. Filters
     filters = {
@@ -254,25 +266,39 @@ def core_schools_view(request):
         if lens == "oversight"
         else None
     )
-    planning_queue = CorePlanningService.get_planning_queue(page_obj.object_list, fy)
-    intervention_impact = CoreInterventionImpactService.get_intervention_impact(
-        core_schools_qs, fy
+    # Each tab's data only when that tab is asked for. Staff vs Partner is
+    # read on the page as well: its delta is a KPI tile.
+    planning_queue = (
+        CorePlanningService.get_planning_queue(page_obj.object_list, fy)
+        if panel == "queue"
+        else []
+    )
+    intervention_impact = (
+        CoreInterventionImpactService.get_intervention_impact(core_schools_qs, fy)
+        if panel == "impact"
+        else []
     )
     perf_insights = CoreStaffPartnerPerformanceService.get_staff_vs_partner_performance(
         core_schools_qs, fy
     )
-    perf_insights["intervention_comparison"] = (
-        CoreStaffPartnerPerformanceService.get_intervention_comparison_rows(
-            core_schools_qs, fy
+    if panel == "performance":
+        perf_insights["intervention_comparison"] = (
+            CoreStaffPartnerPerformanceService.get_intervention_comparison_rows(
+                core_schools_qs, fy
+            )
         )
-    )
     reco_data = CoreRecommendationService.get_recommendation_card(core_schools_qs)
 
     # 4. KPI Strip Metrics
     total_core = core_schools_qs.count()
     ready_core = core_schools_qs.filter(current_fy_ssa_status="done").count()
     avg_score = CoreAssessmentService.get_average_score(core_schools_qs)
-    overall_trend = CoreAssessmentService.get_monthly_trend(core_schools_qs)
+    # The trend is the Performance tab's alone.
+    overall_trend = (
+        CoreAssessmentService.get_monthly_trend(core_schools_qs)
+        if panel == "performance"
+        else []
+    )
     trend_values = [t["avg"] for t in overall_trend]
     perf_insights["overall_trend"] = overall_trend
     perf_insights["overall_trend_path"] = (
@@ -510,6 +536,16 @@ def core_schools_view(request):
         or context["can_bulk_schedule"]
         or context["can_assign_project"]
     )
+
+    if panel:
+        context["panel"] = panel
+        context["panel_template"] = CORE_PANELS[panel]
+        return render(request, "partials/core_schools/panel.html", context)
+    # Each lazy tab asks for itself with the filters and page in view.
+    panel_query = request.GET.copy()
+    for key in ("panel", "tab"):
+        panel_query.pop(key, None)
+    context["panel_query"] = panel_query.urlencode()
 
     if (
         request.headers.get("HX-Target") == "core-schools-table-container"

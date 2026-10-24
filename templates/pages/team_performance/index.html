@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load static components %}
 
-{% block title %}Team Performance · Edify{% endblock %}
+{% block title %}{{ page_title|default:"Team Performance" }} · Edify{% endblock %}
 
 {% comment %}
 Team Performance (owner, 2026-10-20): the FY27 Weekly Report workbook, its
@@ -11,12 +11,12 @@ docs/team-performance-report.md); a dash is a figure the records cannot give,
 never a zero. The period filter shows only on the tabs that read a period.
 {% endcomment %}
 
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/team-performance.css' %}?v=20261021tp16">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/team-performance.css' %}?v=20261024tp17">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1600px] mx-auto" data-team-performance="{{ tab }}">
 
-  {% page_header eyebrow="Performance & Coaching" title="Team Performance" %}
+  {% page_header eyebrow="Performance & Coaching" title=page_title %}
     {% slot description %}The FY {{ period.fy }} Weekly Report, read from the platform's records: completed work, school-profile entries and uploads.{% if roster.own %} Your own portfolio.{% elif roster.narrowed %} Your team: you and the CCEOs you supervise.{% endif %}{% endslot %}
     {% if can_set_targets %}<a href="/team-performance/country-targets/?fy={{ period.fy }}" class="edify-action-button secondary h-9" data-tp-set-targets>Set Country Targets</a>{% endif %}
   {% endpage_header %}

@@ -510,7 +510,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1893,
+      "bytes": 2272,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -3274,9 +3274,7 @@
       ],
       "bytes": 4064,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -3338,14 +3336,33 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 243,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Panel",
+      "purpose": "Reusable panel interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/core_schools/panel.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 19870,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -3368,9 +3385,7 @@
       ],
       "bytes": 14088,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/core-schools"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 9,
@@ -5410,7 +5425,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 688,
+      "bytes": 713,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -8041,7 +8056,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/home",
-        "/home/queue"
+        "/home/queue",
+        "/home/todo-figures"
       ],
       "findings": [],
       "forms": 0,
@@ -8064,7 +8080,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/home",
-        "/home/queue"
+        "/home/queue",
+        "/home/todo-figures"
       ],
       "findings": [],
       "forms": 0,
@@ -8082,14 +8099,14 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2190,
+      "bytes": 2625,
       "deprecated_alternatives": [],
       "example_pages": [
         "/home/queue"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": "Queue",
       "purpose": "Reusable queue interface primitive",
@@ -8100,6 +8117,28 @@
       ],
       "tables": 0,
       "template": "partials/home/queue.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 594,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/home/queue",
+        "/home/todo-figures"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Todo Figures",
+      "purpose": "Reusable todo figures interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/home/todo_figures.html",
       "variants": []
     },
     {
@@ -14578,7 +14617,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12050,
+      "bytes": 12517,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>"
@@ -14971,7 +15010,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 11907,
+      "bytes": 14555,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/edit-drawer"
@@ -14986,7 +15025,8 @@
       "states": [
         "default",
         "error",
-        "disabled"
+        "disabled",
+        "open"
       ],
       "tables": 0,
       "template": "partials/schools/edit_drawer.html",
@@ -16084,7 +16124,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1372,
+      "bytes": 1261,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -16203,8 +16243,10 @@
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 6858,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 8842,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-performance/"
@@ -35766,13 +35808,14 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.core_schools_views",
       "backend_view": "apps.frontend.views.core_schools_views.core_schools_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/core_schools/panel.html",
         "template:partials/core_schools/matrix_response.html",
         "template:pages/core_schools/index.html",
         "test:referenced-by-automated-test",
@@ -35783,7 +35826,11 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /core-schools?{% if panel_query %}{{ panel_query }}&amp;{% endif %}panel=queue",
+        "GET /core-schools?{% if panel_query %}{{ panel_query }}&amp;{% endif %}panel=impact",
+        "GET /core-schools?{% if panel_query %}{{ panel_query }}&amp;{% endif %}panel=performance"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -35839,7 +35886,7 @@
         "disabled": false,
         "empty": false,
         "error": false,
-        "loading": false
+        "loading": true
       },
       "surface_kind": "partial",
       "table_pattern": "none",
@@ -35850,6 +35897,7 @@
         "type": "in-page-tabs"
       },
       "templates": [
+        "partials/core_schools/panel.html",
         "partials/core_schools/matrix_response.html",
         "pages/core_schools/index.html"
       ],
@@ -51794,7 +51842,10 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /home/queue",
+        "GET /home/todo-figures"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -51852,6 +51903,92 @@
       },
       "templates": [
         "partials/home/queue.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": true,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.home_views",
+      "backend_view": "apps.frontend.views.home_views.home_todo_figures_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/home/todo_figures.html",
+        "test:referenced-by-automated-test",
+        "permission:home"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-FBBC948EFD",
+      "page_title": "Home Todo Figures",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "home",
+      "primary_action": "Home Todo Figures",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The To-Do figures and count, for a role whose Priority actions are its own list (build_home_queue).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/home/todo-figures",
+      "route_name": "home_todo_figures",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/home/todo_figures.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -112220,6 +112357,7 @@
       "route": "/core-schools",
       "route_name": "core_schools",
       "templates": [
+        "partials/core_schools/panel.html",
         "partials/core_schools/matrix_response.html",
         "pages/core_schools/index.html"
       ]
@@ -114701,6 +114839,20 @@
       "route_name": "home_queue",
       "templates": [
         "partials/home/queue.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.home_views.home_todo_figures_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "home",
+      "required_permissions": [],
+      "route": "/home/todo-figures",
+      "route_name": "home_todo_figures",
+      "templates": [
+        "partials/home/todo_figures.html"
       ]
     },
     {
@@ -122330,30 +122482,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 599,
+    "accessibility_contract_pass": 600,
     "activity_states": 24,
-    "all_routes": 1421,
+    "all_routes": 1422,
     "api_routes": 364,
-    "component_templates": 662,
+    "component_templates": 664,
     "full_pages": 260,
-    "mobile_contract_pass": 599,
+    "mobile_contract_pass": 600,
     "nonvisual_actions": 303,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 7,
       "approval-or-verification": 19,
       "dashboard": 0,
-      "interaction-fragment": 639,
+      "interaction-fragment": 640,
       "operational-queue": 159,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 49
     },
-    "partials_and_drawers": 336,
-    "permission_gated": 923,
+    "partials_and_drawers": 337,
+    "permission_gated": 924,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 940,
+    "routed_surfaces": 941,
     "scheduled_jobs": 39,
     "severity_counts": {
       "critical": 0,
@@ -122361,8 +122513,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 599,
-    "test_referenced": 849,
-    "theme_contract_pass": 599
+    "tablet_contract_pass": 600,
+    "test_referenced": 850,
+    "theme_contract_pass": 600
   }
 }

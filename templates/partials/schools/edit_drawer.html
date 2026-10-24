@@ -49,11 +49,18 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 >
 </div>
 
+{% comment %}The partner type, and a Core school's cohort beneath it (owner,
+2026-10-24): choosing Core asks for the cohort number and year; once saved
+the cohort is locked and shown, and only an Admin corrects it
+(apps.schools.cohort). Hidden, the boxes are disabled, so they are neither
+required nor sent.{% endcomment %}
+<div class="space-y-4" x-data="{ type: '{{ school.school_type|escapejs }}', locked: {{ cohort_locked|yesno:'true,false' }} }">
 <div class="space-y-1">
 <label for="school_type" class="block edify-text-caption font-semibold text-slate-600">Current partner type</label>
 <select
 name="school_type"
 id="school_type"
+x-model="type"
 aria-describedby="school-type-help"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
@@ -62,6 +69,54 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 {% endfor %}
 </select>
 <p id="school-type-help" class="edify-text-caption text-slate-500">Changing this moves the school to that partner category across the app.</p>
+</div>
+
+{% if cohort_locked and not cohort_correctable %}
+<div class="space-y-1" data-cohort-locked>
+<p class="block edify-text-caption font-semibold text-slate-600">Core cohort</p>
+<p class="h-10 px-3 flex items-center rounded-control border border-slate-200 text-[12px] font-semibold edify-surface-muted">{{ cohort_label }}</p>
+<p class="edify-text-caption text-slate-500">Set once and locked. Ask an Admin to correct it.</p>
+</div>
+{% else %}
+<fieldset class="space-y-2" x-show="type === 'core' || locked"{% if not cohort_locked and school.school_type != "core" %} x-cloak{% endif %} data-cohort-fields>
+<legend class="block edify-text-caption font-semibold text-slate-600">Core cohort <span class="text-rose-500" x-show="type === 'core'">*</span></legend>
+<div class="grid grid-cols-2 gap-3">
+<div class="space-y-1">
+<label for="core_cohort_number" class="block edify-text-caption text-slate-500">Cohort number</label>
+<input
+type="number"
+name="core_cohort_number"
+id="core_cohort_number"
+value="{{ school.core_cohort_number|default_if_none:'' }}"
+min="1"
+max="{{ cohort_max_number }}"
+step="1"
+inputmode="numeric"
+:required="type === 'core'"
+:disabled="!(type === 'core' || locked)"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
+>
+</div>
+<div class="space-y-1">
+<label for="core_cohort_year" class="block edify-text-caption text-slate-500">Cohort year</label>
+<input
+type="number"
+name="core_cohort_year"
+id="core_cohort_year"
+value="{{ school.core_cohort_year|default_if_none:'' }}"
+min="{{ cohort_first_year }}"
+max="{{ cohort_latest_year }}"
+step="1"
+inputmode="numeric"
+:required="type === 'core'"
+:disabled="!(type === 'core' || locked)"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
+>
+</div>
+</div>
+<p class="edify-text-caption text-slate-500">{% if cohort_locked %}Locked as {{ cohort_label }}. As Admin you can correct it; the change is logged.{% else %}Set once: after saving, only an Admin can change it.{% endif %}</p>
+</fieldset>
+{% endif %}
 </div>
 
 <div class="space-y-1">

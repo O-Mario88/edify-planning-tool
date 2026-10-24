@@ -69,6 +69,17 @@
   font-size: var(--edify-text-label-size);
 }
 
+/* A count with what it counts ("3 planned this week", 2026-10-24). */
+.mobile-role-home__figure {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.mobile-role-home__figure strong {
+  font-weight: 700;
+}
+
 .mobile-role-home__action {
   grid-column: 1 / -1;
   display: flex;

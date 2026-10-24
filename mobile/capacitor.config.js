@@ -49,7 +49,9 @@ module.exports = {
   // Identifies the app to the server's logs without changing the browser
   // the site sees.
   appendUserAgent: "EdifyApp",
-  backgroundColor: "#0a4d86",
+  // Behind the page while the next one loads: the page's own background, so
+  // moving between pages never flashes a colour of its own (2026-10-24).
+  backgroundColor: "#dbe4eb",
   ios: {
     // The page handles the notch and home indicator itself (viewport-fit=cover
     // and env(safe-area-inset-*) in the site's styles).
@@ -63,13 +65,16 @@ module.exports = {
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 600,
-      backgroundColor: "#0a4d86",
+      // The sidebar's navy, as the launch screen is drawn (scripts/make-assets.py).
+      backgroundColor: "#001d39",
       showSpinner: false,
     },
     StatusBar: {
-      // Light text on Edify blue, the colour of Home's header.
-      style: "DARK",
-      backgroundColor: "#0a4d86",
+      // The light page canvas with dark icons, so the first frame matches the
+      // page; from there the site sets both from its canvas, theme included
+      // (static/js/system-chrome.js).
+      style: "LIGHT",
+      backgroundColor: "#dbe4eb",
       overlaysWebView: false,
     },
     Keyboard: {

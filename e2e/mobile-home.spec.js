@@ -41,6 +41,20 @@ test('a field officer starts the day on Home', async ({ page }) => {
   }
   await expect(page.locator('[data-home-priority], [data-home-empty="priority"]').first()).toBeVisible();
 
+  // A CCEO's Priority actions are their role's own six, each linked to its
+  // list (owner, 2026-10-24), and Quick access is the four the owner named.
+  await expect(page.locator('[data-home-priority]')).toHaveCount(6);
+  await expect(page.locator('[data-home-priority="my_overdue"]')).toHaveAttribute('href', '/my-plan?status=overdue');
+  await expect(page.locator('[data-home-priority="no_ssa"]')).toHaveAttribute('href', '/schools?gap=no_ssa');
+  await expect(page.locator('[data-home-priority="my_performance"]')).toHaveAttribute('href', '/team-performance/');
+  await expect(page.locator('.edify-home__shortcut-label')).toHaveText(['Dashboard', 'Clusters', 'My Plan', 'Calendar']);
+  // The sidebar's lockup heads the band, centred.
+  await expect(page.locator('.edify-home__wordmark-product')).toHaveText(/Planning &\s*Monitoring/);
+  const band = await page.locator('.edify-home__hero').boundingBox();
+  const mark = await page.locator('.edify-home__wordmark').boundingBox();
+  const offCentre = Math.abs(mark.x + mark.width / 2 - (band.x + band.width / 2));
+  expect(offCentre, 'the lockup sits on the band’s centre line').toBeLessThanOrEqual(2);
+
   const sideways = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(sideways, 'Home scrolls sideways').toBeLessThanOrEqual(1);
 

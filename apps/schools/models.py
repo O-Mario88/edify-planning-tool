@@ -103,6 +103,16 @@ class School(SoftDeleteModel):
         max_length=32, choices=SchoolType.choices, default=SchoolType.CLIENT
     )
 
+    # The Core cohort: the year and the cohort number a Core school joined
+    # in (owner, 2026-10-24: "categorize core schools into cohort. Using the
+    # Year and the cohort number"). Set once in the Edit school drawer, then
+    # locked; only an Admin corrects it (apps.schools.cohort). Kept when the
+    # school later becomes Core Graduate or Core Trained.
+    core_cohort_year = models.PositiveSmallIntegerField(null=True, blank=True)
+    core_cohort_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    core_cohort_set_at = models.DateTimeField(null=True, blank=True)
+    core_cohort_set_by_id = models.CharField(max_length=30, null=True, blank=True)
+
     # Account owner — plain ref to StaffProfile (accounts app).
     account_owner_id = models.CharField(max_length=30, null=True, blank=True)
     account_owner_name_raw = models.CharField(max_length=255, null=True, blank=True)

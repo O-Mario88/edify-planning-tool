@@ -42,7 +42,9 @@ addresses, so a release build cannot be pointed at an unencrypted server.
 | Display name | Edify |
 | Start page | `/home` |
 | Link scheme | `edify://open/<path>`, e.g. `edify://open/my-plan/<id>` |
-| Status bar / launch colour | `#0a4d86` (Edify blue, Home's header) |
+| Launch screen | the sidebar's navy gradient (`#001d39` → `#062847` → `#0a4d86`), white wordmark (`scripts/make-assets.py`) |
+| Status bar | the page canvas (`--edify-bg`, `#dbe4eb` light): dark icons on a light canvas, light ones on a dark theme, set by the site (`static/js/system-chrome.js`) |
+| Web view background | `#dbe4eb`, the page's own, so moving between pages never flashes another colour |
 | App icon | the PWA icon artwork (`static/images/app-icon-source.png`) on `#2d4862` |
 
 ## Build it

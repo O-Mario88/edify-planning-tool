@@ -43,6 +43,13 @@ Not specified
 <p class="edify-profile-field__label">Current Partner Type</p>
 <p class="edify-profile-field__value mt-0.5">{{ school.get_school_type_display }}</p>
 </div>
+{% if school.core_cohort_year or school.school_type == "core" %}
+{# A Core school's cohort, set once in Edit school (apps.schools.cohort, owner 2026-10-24). #}
+<div data-school-cohort>
+<p class="edify-profile-field__label">Core Cohort</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.core_cohort_year %}Cohort {{ school.core_cohort_number }} · {{ school.core_cohort_year }}{% else %}Not set yet. Add it in Edit school.{% endif %}</p>
+</div>
+{% endif %}
 <div>
 <p class="edify-profile-field__label">Assigned Staff</p>
 <p class="edify-profile-field__value mt-0.5">{% if school.account_owner_id %}<a href="/staff/{{ school.account_owner_id }}" class="hover:underline">{{ school.assigned_staff }}</a>{% elif school.account_owner %}<a href="/staff/{{ school.account_owner.id }}" class="hover:underline">{{ school.assigned_staff }}</a>{% else %}{{ school.assigned_staff }}{% endif %}</p>

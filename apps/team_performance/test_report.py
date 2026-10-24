@@ -96,14 +96,21 @@ class RosterTest(ReportFixture):
         report.book.target = lambda m, scope, eligible=None: Target(
             annual=targets.get(scope.kind), source="Allocation"
         )
+        # The allocation is James's, as the book lists who holds it.
+        report.book.holders = lambda code: [str(self.james.staff_profile.id)]
 
         summary = report.executive_summary()
 
-        self.assertEqual(
-            summary["regions"][0]["figures"]["core_recruitment_target"], 25
-        )
+        # A CCEO reads their own portfolio by district (owner, 2026-10-24):
+        # their own target, placed where their schools are.
+        self.assertEqual(summary["now"]["core_recruitment_target"], 25)
+        district = summary["breakdown"].columns[0]
+        self.assertEqual(district.label, "Gulu")
+        self.assertEqual(district.cell("core_recruitment")["target"], 25)
         recruit = report.section_charts("Program Growth")[0]
-        self.assertEqual([b["target"] for b in recruit["leads"]], [25])
+        (chart,) = recruit["charts"]
+        self.assertEqual(chart["level"], "district")
+        self.assertEqual([b["target"] for b in chart["bars"]], [25])
 
     def test_teams_are_named_by_their_lead_and_officers_carry_their_region(self):
         """Owner, 2026-10-23: everyone is "grouped by PL", using "the actual
@@ -184,11 +191,17 @@ class SummaryTest(ReportFixture):
         self.assertEqual(summary["now"]["client_visit_total"], 2)
         self.assertEqual(summary["change"]["client_visit_total"], 1)
 
-    def test_each_region_and_the_country_carry_the_portfolio(self):
-        summary = self.report().executive_summary()
+    def test_each_team_and_the_country_carry_the_portfolio(self):
+        report = self.report()
+        summary = report.executive_summary()
 
-        by_region = {r["label"]: r["figures"]["portfolio"] for r in summary["regions"]}
-        self.assertEqual(by_region, {"Lead": 2, "No Programme Lead": 1})
+        by_team = {
+            r.label: report.summary_figures(
+                report.team_scope(r), report.period.to_date
+            )["portfolio"]
+            for r in report.roster.regions
+        }
+        self.assertEqual(by_team, {"Lead": 2, "No Programme Lead": 1})
         self.assertEqual(summary["now"]["portfolio"], 3)
 
     def test_the_month_summary_is_titled_by_its_month(self):
@@ -456,13 +469,15 @@ class AreaChartTest(ReportFixture):
         )
         area = summary["sections"][0][1][0]
         self.assertEqual(area["label"], "Core School Recruitment")
+        # Leadership starts by region (owner, 2026-10-24).
         self.assertEqual(
-            [t["label"] for t in area["teams"]], ["Lead", "No Programme Lead"]
+            [t["label"] for t in area["teams"]][:3], ["Eastern", "Northern", "Western"]
         )
         charts = self.report().section_charts("Program Growth")
         self.assertEqual(charts[0]["key"], "core_recruitment")
-        self.assertIn("regions", charts[0])
-        self.assertIn("leads", charts[0])
+        self.assertEqual(
+            [chart["level"] for chart in charts[0]["charts"]], ["region", "lead"]
+        )
         self.assertIsNone(self.report().section_charts("No such section"))
         # A row label shared by a Core and a client row says which it is.
         labels = [a["label"] for _s, areas in summary["sections"] for a in areas]
@@ -579,8 +594,9 @@ class AreaChartTest(ReportFixture):
         ]
 
         for area in (a for section in sections for a in report.section_charts(section)):
+            leads = next(c for c in area["charts"] if c["level"] == "lead")
             self.assertEqual(
-                [bar["label"] for bar in area["leads"]], ["Lead", "No Programme Lead"]
+                [bar["label"] for bar in leads["bars"]], ["Lead", "No Programme Lead"]
             )
 
 

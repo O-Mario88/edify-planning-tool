@@ -1,0 +1,5 @@
+{% comment %}The To-Do figures and the To-Do count, swapped into Home out of band:
+with the To-Do rows (/home/queue), or on their own (/home/todo-figures) for a
+role whose Priority actions are its own list.{% endcomment %}
+<span id="home-priority-more" hx-swap-oob="true">{% if priority_total %}<a href="/todos" class="edify-home__see-all">{% if role_rows %}To-Dos{% else %}View all{% endif %} {{ priority_total }}{% include "partials/home/icon.html" with name="arrow" %}</a>{% endif %}</span>
+{% for f in queue_figures %}{% include "partials/home/figure.html" with f=f oob=True %}{% endfor %}

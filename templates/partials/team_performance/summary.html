@@ -11,22 +11,42 @@
 
   {% comment %}Owner, 2026-10-21: every tracked target area ("Add training
   target, core school visits, School visits, ....all targets that are
-  tracked"), one row each, the country and each Programme Lead's team as
-  columns.{% endcomment %}
-  <section class="tp-card" data-tp-regions>
-    <header class="tp-card__head"><h2>Performance Against Target</h2><span class="tp-card__meta">Year to the end of {{ period.label }} · change since the end of {{ period.previous_label }}</span></header>
+  tracked"), one row each. Owner, 2026-10-24: the reader's total beside its
+  breakdown — a CCEO by District, a Programme Lead by CCEO, everyone else by
+  Region, whose header opens its Programme Leads, whose header opens their
+  CCEOs (apps.team_performance.breakdown).{% endcomment %}
+  {% with bd=summary.breakdown %}
+  <section class="tp-card" data-tp-regions data-tp-breakdown="{{ bd.level }}">
+    <header class="tp-card__head"><h2>Performance Against Target · By {{ bd.label }}</h2><span class="tp-card__meta">Year to the end of {{ period.label }} · change since the end of {{ period.previous_label }}</span></header>
+    {% if by_links|length > 1 %}
+    <div class="tp-by">
+      <nav class="tp-subnav" aria-label="View by">
+        {% for level, label, href in by_links %}
+        <a class="tp-subnav__link{% if level == bd.level and not bd.narrowed_to %} is-active{% endif %}" href="?{{ href }}"{% if level == bd.level and not bd.narrowed_to %} aria-current="page"{% endif %} data-tp-by="{{ level }}">By {{ label }}</a>
+        {% endfor %}
+      </nav>
+      {% if bd.narrowed_to %}
+      <p class="tp-trail" data-tp-trail><a href="?{{ top_link }}">All regions</a><span aria-hidden="true">›</span>{% if bd.in_lead %}<span>{{ bd.in_lead_label }}’s CCEOs</span>{% else %}<span>{{ bd.in_region }} · {% if bd.level == "lead" %}Programme Leads{% else %}CCEOs{% endif %}</span>{% endif %}</p>
+      {% elif bd.below %}
+      <p class="tp-note tp-by__hint">Open a {{ bd.label|lower }} to see its {% if bd.level == "region" %}Programme Leads{% else %}CCEOs{% endif %}.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% if not bd.columns %}
+    <p class="tp-note tp-by__empty" data-tp-breakdown-empty>{% if bd.in_region %}No {% if bd.level == "lead" %}Programme Lead team{% else %}CCEO{% endif %} works in {{ bd.in_region }} yet.{% elif bd.in_lead %}{{ bd.in_lead_label }} has no CCEOs listed yet.{% else %}Nothing to break down by {{ bd.label|lower }} yet.{% endif %}</p>
+    {% endif %}
     <div class="tp-scroll">
       <table class="tp-table edify-table--compact" data-table-fit="scroll">
         <thead>
           <tr class="tp-band">
             <th scope="col" class="tp-sticky"></th>
             <th scope="colgroup" colspan="4" class="tp-start">{{ roster.home_label }}</th>
-            {% for team in summary.regions %}<th scope="colgroup" colspan="3" class="tp-start" data-tp-team="{{ team.label }}">{{ team.label }}{% if team.lead and team.lead not in team.label %} · {{ team.lead }}{% endif %}</th>{% endfor %}
+            {% for column, href in column_links %}<th scope="colgroup" colspan="3" class="tp-start" data-tp-team="{{ column.label }}">{% if href %}<a class="tp-open" href="?{{ href }}" title="Open {{ column.label }}">{{ column.label }}</a>{% else %}{{ column.label }}{% endif %}{% if column.sub %} <span class="tp-muted">· {{ column.sub }}</span>{% endif %}</th>{% endfor %}
           </tr>
           <tr>
             <th scope="col" class="tp-sticky">Target Area</th>
             <th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">%</th><th scope="col" class="tp-num">Change</th>
-            {% for team in summary.regions %}<th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">%</th>{% endfor %}
+            {% for column in bd.columns %}<th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">%</th>{% endfor %}
           </tr>
         </thead>
         <tbody>
@@ -44,18 +64,21 @@
       </table>
     </div>
   </section>
+  {% endwith %}
 
-  {% comment %}Every target area charted by region (every region) and, beside
-  it on the same row, by Programme Lead (owner, 2026-10-21). Each section's
-  charts load as the reader reaches it (`Report.section_charts`): drawn at
-  once, 54 areas' charts and tables pass the platform's page-size budget.{% endcomment %}
+  {% comment %}Every target area charted at the summary's level and, beside it
+  on the same row, the level under it: by region and by Programme Lead, by
+  Programme Lead and by CCEO; a Lead's team by CCEO, a CCEO's portfolio by
+  district (owner, 2026-10-21 and 2026-10-24). Each section's charts load as
+  the reader reaches it (`Report.section_charts`): drawn at once, 54 areas'
+  charts and tables pass the platform's page-size budget.{% endcomment %}
   {% for section, areas in summary.sections %}
   <h2 class="tp-section-title" data-tp-chart-section>{{ section }}</h2>
-  <div class="tp-card tp-charts-pending" data-tp-charts-for="{{ section }}" hx-get="/team-performance/?{{ query }}{% if query %}&amp;{% endif %}tab=summary&amp;charts={{ section|urlencode }}" hx-trigger="intersect once" hx-swap="outerHTML">
+  <div class="tp-card tp-charts-pending" data-tp-charts-for="{{ section }}" hx-get="/team-performance/?{{ summary_query }}&amp;charts={{ section|urlencode }}" hx-trigger="intersect once" hx-swap="outerHTML">
     <p class="tp-note">Loading the {{ section }} charts…</p>
   </div>
   {% endfor %}
-  <p class="tp-note">Each region's figure counts where the school is; a session counts where most of the schools it reached are, and participants are summed. A region's target is each CCEO's target shared across the regions their eligible schools are in (client schools for a client area and for recruitment, Core schools for a Core one, else all their schools); a target nobody in a region holds is "Not placed", so the regions add up to the country's target.</p>
+  <p class="tp-note">Each region's and district's figure counts where the school is; a session counts where most of the schools it reached are, and participants are summed. A region's (or district's) target is each CCEO's target shared across the places their eligible schools are in (client schools for a client area and for recruitment, Core schools for a Core one, else all their schools); a target nobody there holds is "Not placed", so the places add up to the total's target. A Programme Lead's and a CCEO's figures are their own.</p>
 
   <section class="tp-card" data-tp-delivery>
     <header class="tp-card__head"><h2>Program Delivery &amp; Operational Milestones</h2><span class="tp-card__meta">Year to the end of {{ period.label }}</span></header>
