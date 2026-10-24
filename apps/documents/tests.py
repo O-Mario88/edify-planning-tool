@@ -666,12 +666,12 @@ class NoAccessGateTests(DocumentTestBase):
         )
         self.assertEqual(self.client.get("/policy-agreement").status_code, 200)
 
-    def test_agreeing_returns_the_user_to_the_dashboard(self):
+    def test_agreeing_returns_the_user_to_home(self):
         ack = DocumentAcknowledgement.objects.get(version=self.version)
         response = self.client.post(
             f"/api/documents/acknowledge/{ack.id}", {"choice": "agree"}
         )
-        self.assertEqual(response["Location"], "/dashboard")
+        self.assertEqual(response["Location"], "/home")
         ack.refresh_from_db()
         self.assertEqual(ack.state, AcknowledgementState.AGREED)
 
@@ -821,7 +821,7 @@ class CanonicalAgreementSequenceTests(DocumentTestBase):
             f"/api/documents/acknowledge/{creed_ack.id}",
             {"choice": "agree"},
         )
-        self.assertEqual(final["Location"], "/dashboard")
+        self.assertEqual(final["Location"], "/home")
 
     def test_declining_safeguarding_never_advances_to_creed(self):
         safeguarding_ack = DocumentAcknowledgement.objects.get(

@@ -11,7 +11,7 @@ officer filter stays inside the tab.
 {% endcomment %}
 {% paginate rows "review_page" as pager %}
 {# On its own page it reads itself again when an officer sends in a completion or one is decided (static/js/live-regions.js): the number in the heading and the rows. #}
-<section id="completion-reviews"{% if not reviews_embedded %} data-live-region{% endif %} class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="completion-reviews-title" data-review-register>
+<section id="completion-reviews"{% if not reviews_embedded %} data-live-region{% endif %} class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card scroll-mt-20" aria-labelledby="completion-reviews-title" data-review-register>
   <header class="rpl-card__header">
     <div class="rpl-card__heading">
       <h2 id="completion-reviews-title" class="rpl-card__title">{% if reviews_embedded %}Completion Reviews{% else %}Waiting on you{% endif %}</h2>

@@ -80,17 +80,28 @@ def _user_owner_ids(user) -> list[str]:
     return [i for i in ids if i]
 
 
-def get_past_due_dashboard_context(user) -> dict[str, Any]:
+#: Whose plans a Programme Lead's table opens on: everyone's, their own, or
+#: their team's (the table's All, My Plans and Team Plans).
+PAST_DUE_SCOPES = ("all", "own", "team")
+
+
+def get_past_due_dashboard_context(user, scope: str = "") -> dict[str, Any]:
     """Build the 'What needs you now' dataset for the dashboard.
 
     For CCEO:
       Returns their own past-due plans.
     For Program Lead:
       Returns their own past-due plans and those of their line-managed team.
+      ``scope`` "own" or "team" narrows the three tables to those plans, on
+      the server, so every page of a table holds only them (Home's "My
+      Overdue Plans" and "Follow up with CCEOs Overdue Plans", owner
+      2026-10-24); the whose-plans counts still cover all of them. Any named
+      scope, "all" included, opens the table where the dashboard folds it.
     """
     today = timezone.localdate()
     role = getattr(user, "active_role", "")
     is_pl = role == "Program Lead"
+    scope = scope if is_pl and scope in PAST_DUE_SCOPES else ""
 
     own_ids = _user_owner_ids(user)
 
@@ -115,7 +126,7 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
     # Query all active, past-due activities for this user (or team if PL)
     all_scoped_ids = list(set(own_ids + team_member_ids))
     if not all_scoped_ids:
-        return _empty_past_due_context(is_pl)
+        return _empty_past_due_context(is_pl, scope)
 
     qs = (
         Activity.objects.filter(deleted_at__isnull=True)
@@ -154,7 +165,7 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
         # than on a separate "Waiting on you" list.
         light += _incomplete_past_work(own_ids, user, today)
     if not light:
-        return _empty_past_due_context(is_pl)
+        return _empty_past_due_context(is_pl, scope)
 
     own_count = 0
     team_count = 0
@@ -163,11 +174,14 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
     training_ids: list[str] = []
     meeting_ids: list[str] = []
     for activity_id, activity_type, responsible, monitored in light:
-        if responsible in own_ids or (not responsible and monitored in own_ids):
+        is_own = responsible in own_ids or (not responsible and monitored in own_ids)
+        if is_own:
             own_count += 1
         else:
             team_count += 1
             team_ids.append(activity_id)
+        if (scope == "own" and not is_own) or (scope == "team" and is_own):
+            continue
         if activity_type in VISIT_TYPES:
             visit_ids.append(activity_id)
         elif activity_type in TRAINING_TYPES:
@@ -202,8 +216,19 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
         "past_due_visits_count": len(past_due_school_visits),
         "past_due_trainings_count": len(past_due_cluster_trainings),
         "past_due_meetings_count": len(past_due_cluster_meetings),
+        "past_due_scope": scope,
+        "past_due_scope_tabs": _scope_tabs(len(light), own_count, team_count),
         "is_pl": is_pl,
     }
+
+
+def _scope_tabs(total: int, own: int, team: int) -> list[tuple[str, str, int]]:
+    """The whose-plans tabs of a Lead's table: (scope, label, count)."""
+    return [
+        ("all", "All", total),
+        ("own", "My Plans", own),
+        ("team", "Team Plans", team),
+    ]
 
 
 def _incomplete_past_work(own_ids, user, today) -> list[tuple]:
@@ -542,8 +567,10 @@ def team_past_due_activity(user, activity_id: str):
     )
 
 
-def _empty_past_due_context(is_pl: bool) -> dict[str, Any]:
+def _empty_past_due_context(is_pl: bool, scope: str = "") -> dict[str, Any]:
     return {
+        "past_due_scope": scope,
+        "past_due_scope_tabs": _scope_tabs(0, 0, 0),
         "past_due_team": [],
         "pl_team_past_due_unsent": 0,
         "past_due_total_count": 0,

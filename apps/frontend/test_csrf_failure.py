@@ -61,7 +61,7 @@ class StaleSignInTabTest(TestCase):
         _user()
         self.browser = Client(enforce_csrf_checks=True)
 
-    def test_second_tab_lands_on_the_dashboard_when_already_signed_in(self):
+    def test_second_tab_lands_on_home_when_already_signed_in(self):
         second_tab = _sign_in_form(self.browser)
         first_tab = _sign_in_form(self.browser)
         self.assertEqual(self.browser.post("/login", first_tab).status_code, 302)
@@ -70,7 +70,7 @@ class StaleSignInTabTest(TestCase):
 
         self.assertNotContains(response, DJANGO_PAGE)
         self.assertEqual(response.redirect_chain[0][0], "/login")
-        self.assertEqual(response.redirect_chain[-1][0], "/dashboard")
+        self.assertEqual(response.redirect_chain[-1][0], "/home")
 
     def test_second_tab_is_asked_to_sign_in_again_after_a_sign_out(self):
         second_tab = _sign_in_form(self.browser)

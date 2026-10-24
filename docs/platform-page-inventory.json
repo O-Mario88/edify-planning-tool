@@ -6290,7 +6290,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5282,
+      "bytes": 5427,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6795,7 +6795,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 41189,
+      "bytes": 41291,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -9640,7 +9640,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6488,
+      "bytes": 6501,
       "deprecated_alternatives": [],
       "example_pages": [
         "/pl/review-queue",

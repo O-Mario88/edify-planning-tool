@@ -35,8 +35,9 @@
 
   {% comment %}Every overdue plan, of any age — the backlog. Last week's share
   of it is each person's Overdue from last week, above; this is the whole list,
-  folded so the week reads first.{% endcomment %}
-  <details class="plwk-backlog edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" data-pl-backlog{% if not past_due_total_count %} hidden{% endif %}>
+  folded so the week reads first. A link that names whose plans (?plans=,
+  Home's overdue rows) opens it on them.{% endcomment %}
+  <details class="plwk-backlog edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" data-pl-backlog{% if not past_due_total_count %} hidden{% endif %}{% if past_due_scope %} open{% endif %}>
     <summary class="plwk-backlog__summary">
       <span class="plwk-backlog__name">All overdue plans, any age</span>
       <span class="plwk-backlog__count">{{ past_due_total_count }}</span>
@@ -71,7 +72,7 @@
   browser session per day and per count, so switching tabs does not reopen it
   and a newly past-due plan does. The list itself is the same live read as
   "What needs you now": a plan leaves it when its officer acts.{% endcomment %}
-  {% if is_pl and pl_team_past_due_unsent %}
+  {% if is_pl and pl_team_past_due_unsent and not opened_for_table %}
   <script>
     window.edifyPastDuePopupDue = function (key) {
       try {

@@ -146,7 +146,7 @@ class StolenPasswordTest(MfaTestCase):
     def test_the_code_finishes_the_job(self):
         self.sign_in(self.client, self.user)
         response = self.client.post("/login/verify", {"code": self.captured.code})
-        self.assertEqual(response["Location"], "/dashboard")
+        self.assertEqual(response["Location"], "/home")
         self.assertIn("_auth_user_id", self.client.session)
 
     def test_a_wrong_password_never_sends_a_code(self):
@@ -430,7 +430,7 @@ class WhoIsAskedTest(MfaTestCase):
         user = _user("plain@edify.test", enabled=False)
         client = Client()
         response = self.sign_in(client, user)
-        self.assertEqual(response["Location"], "/dashboard")
+        self.assertEqual(response["Location"], "/home")
         self.assertIn("_auth_user_id", client.session)
         self.assertEqual(self.captured.messages, [])
 
@@ -463,7 +463,7 @@ class WhoIsAskedTest(MfaTestCase):
         user.save(update_fields=["roles", "active_role"])
         client = Client()
         response = self.sign_in(client, user)
-        self.assertEqual(response["Location"], "/dashboard")
+        self.assertEqual(response["Location"], "/home")
 
     @override_settings(MFA_REQUIRED_ROLES=set())
     def test_an_empty_role_list_turns_the_role_rule_off(self):
@@ -473,7 +473,7 @@ class WhoIsAskedTest(MfaTestCase):
         user.save(update_fields=["roles", "active_role"])
         client = Client()
         response = self.sign_in(client, user)
-        self.assertEqual(response["Location"], "/dashboard")
+        self.assertEqual(response["Location"], "/home")
 
 
 class EnrolmentTest(MfaTestCase):
@@ -882,7 +882,7 @@ class AuthenticatorAppTest(MfaTestCase):
         self.assertEqual(bad.status_code, 200)
         self.assertNotIn("_auth_user_id", client.session)
         good = client.post("/login/verify", {"code": mfa_service.totp_code(secret)})
-        self.assertEqual(good["Location"], "/dashboard")
+        self.assertEqual(good["Location"], "/home")
         self.assertIn("_auth_user_id", client.session)
 
     @override_settings(MFA_REQUIRED_ROLES={"Admin"})
@@ -897,7 +897,7 @@ class AuthenticatorAppTest(MfaTestCase):
         self.sign_in(client, self.user)
         self.assertEqual(self.captured.messages, [])
         good = client.post("/login/verify", {"code": mfa_service.totp_code(secret)})
-        self.assertEqual(good["Location"], "/dashboard")
+        self.assertEqual(good["Location"], "/home")
 
     def test_removing_the_app_falls_back_to_email(self):
         from apps.accounts import mfa_service

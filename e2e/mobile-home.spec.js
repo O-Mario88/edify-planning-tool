@@ -44,7 +44,7 @@ test('a field officer starts the day on Home', async ({ page }) => {
   // A CCEO's Priority actions are their role's own six, each linked to its
   // list (owner, 2026-10-24), and Quick access is the four the owner named.
   await expect(page.locator('[data-home-priority]')).toHaveCount(6);
-  await expect(page.locator('[data-home-priority="my_overdue"]')).toHaveAttribute('href', '/my-plan?status=overdue');
+  await expect(page.locator('[data-home-priority="my_overdue"]')).toHaveAttribute('href', '/dashboard?view=week#what-needs-you-now');
   await expect(page.locator('[data-home-priority="no_ssa"]')).toHaveAttribute('href', '/schools?gap=no_ssa');
   await expect(page.locator('[data-home-priority="my_performance"]')).toHaveAttribute('href', '/team-performance/');
   await expect(page.locator('.edify-home__shortcut-label')).toHaveText(['Dashboard', 'Clusters', 'My Plan', 'Calendar']);
@@ -111,4 +111,45 @@ test('a role with no plan gets its queue, not plan zeros', async ({ page }) => {
   await expect(page.locator('[data-home-figure]')).toHaveCount(3);
   await expect(page.locator('#home-summary-title')).toBeVisible();
   await expect(page.getByText('Upcoming activities')).toHaveCount(0);
+});
+
+test('signing in opens Home', async ({ page }) => {
+  // Owner, 2026-10-24: "on logging in, the new home page is loaded by default".
+  await signIn(page, 'pl1@edify.org', password, { acceptRequiredAgreements: false });
+  await expect(page).toHaveURL(/\/home$/);
+});
+
+async function inView(page, selector) {
+  const place = page.locator(selector);
+  await expect(place).toBeVisible({ timeout: 30_000 });
+  // Brought into view once the dashboard's monitor has loaded above it.
+  await expect.poll(async () => {
+    const box = await place.boundingBox();
+    const height = page.viewportSize().height;
+    return Boolean(box) && box.y < height * 0.5 && box.y + box.height > 0;
+  }, { timeout: 30_000 }).toBe(true);
+}
+
+test('a Lead’s Priority action opens the dashboard table it names', async ({ page }) => {
+  // Owner, 2026-10-24: overdue rows open the dashboard's overdue plans, the
+  // Lead's own or their CCEOs'; Verify opens the completed activities table.
+  await openHome(page, 'pl1@edify.org');
+
+  await page.locator('[data-home-priority="team_overdue"]').click();
+  await expect(page).toHaveURL(/\/dashboard\?view=week&plans=team#what-needs-you-now$/);
+  await expect(page.locator('details[data-pl-backlog]')).toHaveAttribute('open', '');
+  await expect(page.locator('#what-needs-you-now [data-edify-tab][aria-current="true"]')).toHaveText(/^Team Plans/);
+
+  await page.goto('/home');
+  await expect(page.locator('[data-home-priority-loading]')).toHaveCount(0, { timeout: 30_000 });
+  await page.locator('[data-home-priority="verify"]').click();
+  await expect(page).toHaveURL(/#completion-reviews$/);
+  await inView(page, '#completion-reviews');
+
+  await page.goto('/home');
+  await expect(page.locator('[data-home-priority-loading]')).toHaveCount(0, { timeout: 30_000 });
+  await page.locator('[data-home-priority="not_clustered"]').click();
+  await expect(page).toHaveURL(/#monitor-list$/);
+  await inView(page, '#monitor-list');
+  await expect(page.locator('#monitor-list-title')).toHaveText(/Not clustered/);
 });

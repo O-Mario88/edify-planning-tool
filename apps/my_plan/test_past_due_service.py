@@ -125,6 +125,70 @@ class PastDueServiceTest(TestCase):
             ctx["past_due_school_visits"][0]["owner_first_name"], "Charles"
         )
 
+    def test_a_lead_can_open_only_their_own_past_due_plans(self):
+        """Home's "My Overdue Plans" opens the table on the Lead's own plans
+        alone (owner, 2026-10-24), read on the server so every page of the
+        table holds only theirs."""
+        ctx = past_due_service.get_past_due_dashboard_context(self.pl_user, scope="own")
+        self.assertEqual(ctx["past_due_scope"], "own")
+        rows = [
+            *ctx["past_due_school_visits"],
+            *ctx["past_due_cluster_trainings"],
+            *ctx["past_due_cluster_meetings"],
+        ]
+        self.assertEqual([r["id"] for r in rows], [self.pl_past_due_meeting.id])
+        self.assertEqual(ctx["past_due_visits_count"], 0)
+        self.assertEqual(ctx["past_due_meetings_count"], 1)
+        # The whose-plans tabs still say how many each holds.
+        self.assertEqual(ctx["past_due_total_count"], 2)
+        self.assertEqual(ctx["pl_own_past_due_count"], 1)
+        self.assertEqual(ctx["pl_team_past_due_count"], 1)
+
+    def test_a_lead_can_open_only_their_cceos_past_due_plans(self):
+        ctx = past_due_service.get_past_due_dashboard_context(
+            self.pl_user, scope="team"
+        )
+        self.assertEqual(ctx["past_due_scope"], "team")
+        rows = [
+            *ctx["past_due_school_visits"],
+            *ctx["past_due_cluster_trainings"],
+            *ctx["past_due_cluster_meetings"],
+        ]
+        self.assertEqual([r["id"] for r in rows], [self.cceo_past_due_visit.id])
+        self.assertEqual(ctx["past_due_meetings_count"], 0)
+
+    def test_an_unknown_scope_or_a_cceo_reads_every_plan(self):
+        ctx = past_due_service.get_past_due_dashboard_context(
+            self.pl_user, scope="everyone-else"
+        )
+        self.assertEqual(ctx["past_due_scope"], "")
+        self.assertEqual(len(ctx["past_due_school_visits"]), 1)
+        self.assertEqual(len(ctx["past_due_cluster_meetings"]), 1)
+        # A CCEO's plans are all their own: there is no team to narrow away.
+        own = past_due_service.get_past_due_dashboard_context(
+            self.cceo_user, scope="team"
+        )
+        self.assertEqual(own["past_due_scope"], "")
+        self.assertEqual(len(own["past_due_school_visits"]), 1)
+
+    def test_the_leads_dashboard_opens_the_narrowed_table(self):
+        client = Client()
+        client.force_login(self.pl_user)
+        html = client.get("/dashboard?view=week&plans=own").content.decode()
+        # The folded "All overdue plans" opens, on My Plans, and the team's
+        # past-due popup does not cover it.
+        self.assertRegex(html, r"<details[^>]*data-pl-backlog[^>]*\bopen\b")
+        self.assertIn("activeScope: 'own'", html)
+        self.assertNotIn("edifyPastDuePopupDue", html)
+        table = html[html.index('id="what-needs-you-now"') :]
+        table = table[: table.index("</details>")]
+        self.assertNotIn("Send to Charles", table)
+
+        plain = client.get("/dashboard?view=week").content.decode()
+        self.assertIn("Send to Charles", plain)
+        self.assertNotRegex(plain, r"<details[^>]*data-pl-backlog[^>]*\bopen\b")
+        self.assertIn("activeScope: 'all'", plain)
+
     def test_my_plan_excludes_past_due_and_shows_upcoming(self):
         # When CCEO views My Plan for the FY, only upcoming visit should be present in category tables
         ctx = my_plan_services.get_frontend_context(

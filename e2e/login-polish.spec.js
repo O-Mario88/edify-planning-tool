@@ -29,5 +29,5 @@ test('polished form retains successful sign-in',async({page})=>{
  await page.goto('/login?next=/projects/planning');
  await page.getByLabel('Email address').fill('admin@edify.org');await page.locator('#current-password').fill('edify');
  await page.getByRole('button',{name:'Access workspace',exact:true}).click();
- await expect(page).toHaveURL(/\/dashboard/);await expect(page.locator('main')).toBeVisible();
+ await expect(page).toHaveURL(/\/home$/);await expect(page.locator('main')).toBeVisible();
 });

@@ -5,23 +5,31 @@ role, each row linked to its page.
 
   Programme Lead: My Overdue Plans, Follow up with CCEOs Overdue Plans,
   Schools Not Clustered, Verify CCEO Completed Activities, Schools With No
-  Visits, Schools With No Trainings, My Team Performance.
+  Visits, Schools With No Trainings, Schools With No SSA, My Team
+  Performance.
 
   CCEO: My Overdue Plans, Schools Not Clustered, Schools With No Visits,
   Schools With No Trainings, Schools With No SSA, My Performance.
 
-Every count is read from the service behind the page its row opens, so the
-number and the list cannot disagree:
+Each row opens the table that lists what it counts (owner, later that day),
+and every count is read from the service behind that table, so the number
+and the list cannot disagree:
 
-  • overdue plans — My Plan's own "overdue" filter (`plan_state_q`);
-  • a CCEO's school gaps — their own Planning Monitor row (`own_monitor`),
-    the same schools My Plan lists under ?list=<gap>;
-  • a Lead's school gaps — the Lead's team on the Planning Monitor
-    (`planning_monitor`), the schools its ?gap=<gap> list holds;
-  • the CCEOs' overdue plans — the Execution Monitor's overdue, for the
-    Lead's CCEOs only (the Lead's own are on My Overdue Plans);
-  • completions to verify — the Lead's Completion Reviews register;
-  • no SSA — the School Directory's "No Confirmed SSA" gap.
+  • overdue plans — the dashboard's overdue table, "What needs you now"
+    (`past_due_service`): a CCEO's own; a Lead's opened on My Plans for
+    their own and on Team Plans for their CCEOs';
+  • a CCEO's school rows — their own Planning Monitor row (`own_monitor`),
+    the same schools My Plan lists under ?list=<list>;
+  • a Lead's school rows — the Lead's team on the Planning Monitor
+    (`planning_monitor`), the table its ?gap=<list> opens on their
+    dashboard, where the monitor lives;
+  • completions to verify — the Lead's Completion Reviews register, on the
+    same dashboard;
+  • a CCEO's no SSA — the School Directory's "No Confirmed SSA" gap.
+
+A school is "with no visits", "no trainings" or "no SSA" until one is
+completed (owner: "ONLY schools with completed visits or training or ssa are
+not fetched"): a planned one does not take it off the list.
 
 A figure that cannot be read shows no number, never a zero. Every other role
 keeps the To-Do queue (`home_service.build_home_queue`).
@@ -30,6 +38,7 @@ keeps the To-Do queue (`home_service.build_home_queue`).
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.utils import timezone
@@ -47,6 +56,7 @@ ROLE_ROWS: dict[str, tuple[str, ...]] = {
         "verify",
         "no_visit",
         "no_training",
+        "no_ssa",
         "team_performance",
     ),
     CCEO: (
@@ -59,8 +69,15 @@ ROLE_ROWS: dict[str, tuple[str, ...]] = {
     ),
 }
 
-#: The Planning Monitor gaps a school row counts (planning_monitor.GAPS).
-SCHOOL_GAPS = ("not_clustered", "no_visit", "no_training")
+#: Each school row → the Planning Monitor list that holds its schools
+#: (planning_monitor.GAPS and LISTS). A CCEO's no SSA is the School
+#: Directory's instead (`_ssa_gap_count`).
+SCHOOL_LISTS = {
+    "not_clustered": "not_clustered",
+    "no_visit": "not_visited",
+    "no_training": "not_trained",
+    "no_ssa": "no_ssa",
+}
 
 #: key → (title, title for one, icon, action label, what it counts). A row
 #: whose "title for one" is set carries its count in its title ("12 Schools
@@ -72,14 +89,14 @@ SPECS: dict[str, tuple[str, str, str, str, str | None]] = {
         "",
         "warning",
         "Open",
-        "past their date, not started",
+        "past their date, not completed",
     ),
     "team_overdue": (
         "Follow up with CCEOs Overdue Plans",
         "",
         "bell",
         "Follow up",
-        "past their date, not delivered",
+        "past their date, not completed",
     ),
     "not_clustered": (
         "Schools Not Clustered",
@@ -100,14 +117,14 @@ SPECS: dict[str, tuple[str, str, str, str, str | None]] = {
         "School With No Visits",
         "calendar",
         "Plan",
-        "No visit planned this year",
+        "No visit completed this year",
     ),
     "no_training": (
         "Schools With No Trainings",
         "School With No Trainings",
         "calendar",
         "Plan",
-        "No training planned this year",
+        "No training completed this year",
     ),
     "no_ssa": (
         "Schools With No SSA",
@@ -130,32 +147,59 @@ PAGE_LINES = {
 UNREAD_LINE = "Could not be counted just now. Open the list to see it."
 
 
+def _on_dashboard(query: str, anchor: str, fy) -> str:
+    """A table of the Planning Monitor where a Lead reads it: carried on
+    their dashboard (apps.frontend.views.dashboard_embed), opened at the
+    table itself (static/js/dashboard-embed.js scrolls to it once the
+    monitor is in)."""
+    from apps.frontend.views.dashboard_embed import PLANNING_MONITOR
+
+    params = urlencode({"fy": fy, PLANNING_MONITOR.param: query})
+    return f"/dashboard?{params}#{anchor}"
+
+
 def _url(key: str, role: str, fy) -> str:
     if key == "my_overdue":
-        return "/my-plan?status=overdue"
-    if key in SCHOOL_GAPS:
         if role == PL:
-            return f"/planning-monitor/?view=planning&fy={fy}&gap={key}#monitor-list"
-        return f"/my-plan?list={key}#plan-list"
+            return "/dashboard?view=week&plans=own#what-needs-you-now"
+        return "/dashboard?view=week#what-needs-you-now"
+    if key == "team_overdue":
+        return "/dashboard?view=week&plans=team#what-needs-you-now"
+    if key == "verify":
+        return _on_dashboard(f"view=execution&fy={fy}", "completion-reviews", fy)
+    if key == "no_ssa" and role != PL:
+        return "/schools?gap=no_ssa"
+    if key in SCHOOL_LISTS:
+        listed = SCHOOL_LISTS[key]
+        if role == PL:
+            return _on_dashboard(
+                f"view=planning&fy={fy}&gap={listed}", "monitor-list", fy
+            )
+        return f"/my-plan?list={listed}#plan-list"
     return {
-        "team_overdue": f"/planning-monitor/?view=execution&fy={fy}&list=overdue",
-        "verify": "/pl/review-queue",
-        "no_ssa": "/schools?gap=no_ssa",
         "my_performance": "/team-performance/",
         "team_performance": "/team-performance/",
     }[key]
 
 
 # ── The figures ─────────────────────────────────────────────────────────────
-def _own_overdue(user, today, fy) -> int:
-    from apps.my_plan.services import my_plan_activities, plan_state_q
+def _overdue(user, role) -> dict[str, int]:
+    """The dashboard overdue table's counts: a CCEO's own; a Lead's own and
+    their team's, its My Plans and Team Plans."""
+    from apps.my_plan.past_due_service import get_past_due_dashboard_context
 
-    return my_plan_activities(user, fy).filter(plan_state_q("overdue", today)).count()
+    table = get_past_due_dashboard_context(user)
+    if role == PL:
+        return {
+            "my_overdue": table["pl_own_past_due_count"],
+            "team_overdue": table["pl_team_past_due_count"],
+        }
+    return {"my_overdue": table["past_due_total_count"]}
 
 
-def _school_gap_counts(user, role, fy) -> dict[str, int]:
-    """Each school gap on the reader's monitor: their own row for a CCEO,
-    their team for a Lead."""
+def _school_counts(user, role, fy) -> dict[str, int]:
+    """Each school row's count on the reader's monitor: their own row for a
+    CCEO, their team for a Lead."""
     from apps.planning.planning_monitor import (
         list_schools,
         own_monitor,
@@ -167,21 +211,10 @@ def _school_gap_counts(user, role, fy) -> dict[str, int]:
     else:
         officer = own_monitor(user, str(fy))
         officers = [officer] if officer is not None else []
-    return {key: len(list_schools(officers, key)) for key in SCHOOL_GAPS}
-
-
-def _team_overdue(user, today, fy) -> int:
-    """The Execution Monitor's overdue for the Lead's CCEOs, not the Lead."""
-    from apps.planning.execution_monitor import execution_monitor
-    from apps.planning.monitor_roster import ROLE_CCEO
-
-    monitor = execution_monitor(user, fy=str(fy), today=today)
-    return sum(
-        person.overdue
-        for team in monitor["teams"]
-        for person in team.people
-        if person.role == ROLE_CCEO
-    )
+    keys = [key for key in SCHOOL_LISTS if key in ROLE_ROWS[role]]
+    if role != PL:
+        keys = [key for key in keys if key != "no_ssa"]
+    return {key: len(list_schools(officers, SCHOOL_LISTS[key])) for key in keys}
 
 
 def _waiting_review(user) -> int:
@@ -210,21 +243,15 @@ def _read(name, compute):
         return None
 
 
-def _counts(user, role, today, fy) -> dict[str, int | None]:
+def _counts(user, role, fy) -> dict[str, int | None]:
     keys = ROLE_ROWS[role]
-    counts: dict[str, int | None] = {
-        "my_overdue": _read("my_overdue", lambda: _own_overdue(user, today, fy))
-    }
-    gaps = _read("school_gaps", lambda: _school_gap_counts(user, role, fy)) or {}
-    for key in SCHOOL_GAPS:
-        counts[key] = gaps.get(key)
-    if "team_overdue" in keys:
-        counts["team_overdue"] = _read(
-            "team_overdue", lambda: _team_overdue(user, today, fy)
-        )
+    overdue = _read("overdue", lambda: _overdue(user, role)) or {}
+    schools = _read("school_rows", lambda: _school_counts(user, role, fy)) or {}
+    # A figure missing from here was not read: its row shows no number.
+    counts: dict[str, int | None] = {**overdue, **schools}
     if "verify" in keys:
         counts["verify"] = _read("verify", lambda: _waiting_review(user))
-    if "no_ssa" in keys:
+    if "no_ssa" in keys and role != PL:
         counts["no_ssa"] = _read("no_ssa", lambda: _ssa_gap_count(user, fy))
     return counts
 
@@ -263,9 +290,8 @@ def _row(key: str, count: int | None, *, role: str, fy) -> dict:
 def _build(user, role: str) -> list[dict]:
     from apps.core.fy import get_operational_fy
 
-    today = timezone.localdate()
     fy = get_operational_fy()
-    counts = _counts(user, role, today, fy)
+    counts = _counts(user, role, fy)
     return [_row(key, counts.get(key), role=role, fy=fy) for key in ROLE_ROWS[role]]
 
 
@@ -281,7 +307,7 @@ def role_priorities(user) -> list[dict] | None:
     if role not in ROLE_ROWS:
         return None
     return stampede_safe_get_or_compute(
-        f"home-priorities:v1:{user.id}:{role}:{timezone.localdate().isoformat()}",
+        f"home-priorities:v2:{user.id}:{role}:{timezone.localdate().isoformat()}",
         lambda: _build(user, role),
         timeout=settings.TODO_SNAPSHOT_CACHE_SECONDS,
     )
