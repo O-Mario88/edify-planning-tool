@@ -56,6 +56,11 @@ bcrypt==5.0.0
 
 # ASGI server for streaming SSE + the in-process scheduler.
 daphne==4.2.3
+# Twisted is daphne's reactor. Pinned to the 26.10.0 release candidate
+# (owner, 2026-10-24): it is the only release that closes CVE-2026-115774,
+# -115775, -115776, -115778 and -115877; 26.4.0, the newest stable, has them
+# all. Move to the stable Twisted==26.10.0 as soon as it ships.
+Twisted==26.10.0rc1
 uvicorn==0.51.0
 gunicorn==26.0.0
 # Transitive via autobahn (daphne's WebSocket layer) and CacheControl. Pinned
@@ -100,4 +105,4 @@ scipy==1.18.0
 fpdf2==2.8.7
 # Merges the pages of a multi-page evidence upload (several photos or PDFs
 # of one attendance form) into one PDF — apps.evidence.pages.
-pypdf==6.21.1
+pypdf==6.21.2
