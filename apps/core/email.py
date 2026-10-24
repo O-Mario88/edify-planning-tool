@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 
@@ -35,6 +36,26 @@ class MailMessage:
     # transport DTO lets scheduled analytics reports use the same audited,
     # timeout-bounded provider as authentication mail.
     attachments: list[dict[str, str]] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class MailResult:
+    """What the provider said about one message.
+
+    ``accepted`` is the provider taking it, which is not the same as the
+    recipient receiving it (that arrives later, as a provider event).
+    ``retryable`` separates "try again later" (no network, rate limited, the
+    provider's own fault) from "this message will be refused again".
+    """
+
+    accepted: bool
+    provider_id: str = ""
+    retryable: bool = False
+    error: str = ""
+
+
+#: Provider answers worth trying again: rate limited, or the provider's fault.
+_RETRYABLE_STATUS = frozenset({408, 409, 425, 429, 500, 502, 503, 504})
 
 
 class MailerService:
@@ -87,7 +108,22 @@ class MailerService:
             )
         return {"delivered": False, "devPreview": msg.text}
 
-    def _send_via_resend(self, msg: MailMessage) -> dict:
+    def deliver(self, msg: MailMessage, *, idempotency_key: str = "") -> MailResult:
+        """Send one message and say exactly what happened.
+
+        With no provider set up nothing is sent and nothing is claimed: the
+        result is not accepted and not retryable. ``idempotency_key`` is
+        passed to the provider, which then sends a repeat of the same key
+        once — so a retry after a lost answer cannot email twice.
+        """
+        refuse_inside_transaction(f"Email to {msg.to}")
+        if self.provider != "resend":
+            return MailResult(accepted=False, error="not_configured")
+        return self._resend_request(msg, idempotency_key=idempotency_key)
+
+    def _resend_request(
+        self, msg: MailMessage, *, idempotency_key: str = ""
+    ) -> MailResult:
         payload = {
             "from": os.environ.get("EMAIL_FROM")
             or "Edify Planning <noreply@edify.org>",
@@ -100,27 +136,50 @@ class MailerService:
         if msg.attachments:
             payload["attachments"] = msg.attachments
         body = json.dumps(payload).encode("utf-8")
+        headers = {
+            "Authorization": f"Bearer {os.environ.get('RESEND_API_KEY', '')}",
+            "Content-Type": "application/json",
+        }
+        if idempotency_key:
+            headers["Idempotency-Key"] = idempotency_key[:256]
         req = urllib.request.Request(
             "https://api.resend.com/emails",
             data=body,
             method="POST",
-            headers={
-                "Authorization": f"Bearer {os.environ.get('RESEND_API_KEY', '')}",
-                "Content-Type": "application/json",
-            },
+            headers=headers,
         )
         try:
             # nosec B310 - the URL is the api.resend.com constant above,
             # not a value that any caller or record can influence.
             with urllib.request.urlopen(req, timeout=15) as res:  # nosec B310
+                answer = res.read().decode("utf-8", "ignore")
                 if 200 <= res.status < 300:
-                    return {"delivered": True}
-                detail = res.read().decode("utf-8", "ignore")
-                logger.error("Resend delivery failed (%s): %s", res.status, detail)
-                return {"delivered": False}
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Resend delivery error: %s", exc)
-            return {"delivered": False}
+                    try:
+                        provider_id = str(json.loads(answer or "{}").get("id") or "")
+                    except ValueError:
+                        provider_id = ""
+                    return MailResult(accepted=True, provider_id=provider_id[:128])
+                logger.error("Resend delivery failed (%s)", res.status)
+                return MailResult(
+                    accepted=False,
+                    retryable=res.status in _RETRYABLE_STATUS,
+                    error=f"HTTP {res.status}",
+                )
+        except urllib.error.HTTPError as exc:
+            # The provider's answer body can echo the message; only the
+            # status is kept.
+            logger.error("Resend delivery refused (%s)", exc.code)
+            return MailResult(
+                accepted=False,
+                retryable=exc.code in _RETRYABLE_STATUS,
+                error=f"HTTP {exc.code}",
+            )
+        except Exception as exc:  # noqa: BLE001 — network, DNS, timeout
+            logger.error("Resend delivery error: %s", type(exc).__name__)
+            return MailResult(accepted=False, retryable=True, error=type(exc).__name__)
+
+    def _send_via_resend(self, msg: MailMessage) -> dict:
+        return {"delivered": self._resend_request(msg).accepted}
 
     # ── Templates ────────────────────────────────────────────────────────
     def send_invitation(
@@ -213,4 +272,4 @@ class MailerService:
 
 mailer = MailerService()
 
-__all__ = ["MailerService", "mailer", "MailMessage"]
+__all__ = ["MailerService", "mailer", "MailMessage", "MailResult"]

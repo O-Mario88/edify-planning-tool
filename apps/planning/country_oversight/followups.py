@@ -395,10 +395,24 @@ def team_oversight_link(followup) -> str:
     return f"{TEAM_OVERSIGHT_PATH}?{urlencode(params)}"
 
 
-def _notify_lead(followup, *, title: str, body: str, event: str) -> None:
+def _write_notice(sender, *, source_event_type: str, **kwargs) -> None:
+    """A person's notice is sent as one (it names them, and sending it again
+    reminds); the platform's own, as before. Either way it names the event
+    it came from, so it can be resolved and deduplicated."""
     from apps.notifications.models import Notification
+    from apps.notifications.services import notify_from_person
 
-    Notification.objects.update_or_create(
+    if sender is not None:
+        notify_from_person(sender, source_event_type=source_event_type, **kwargs)
+    else:
+        Notification.objects.update_or_create(
+            source_event_type=source_event_type, **kwargs
+        )
+
+
+def _notify_lead(followup, *, title: str, body: str, event: str, sender=None) -> None:
+    _write_notice(
+        sender,
         recipient_id=followup.program_lead_user_id,
         context_type="PlanningOversightFollowUp",
         context_id=followup.id,
@@ -423,13 +437,19 @@ def _notify_lead(followup, *, title: str, body: str, event: str) -> None:
 
 
 def _notify(
-    recipient_id: str, followup, *, title: str, body: str, event: str, route: str
+    recipient_id: str,
+    followup,
+    *,
+    title: str,
+    body: str,
+    event: str,
+    route: str,
+    sender=None,
 ) -> None:
-    from apps.notifications.models import Notification
-
     if not recipient_id:
         return
-    Notification.objects.update_or_create(
+    _write_notice(
+        sender,
         recipient_id=recipient_id,
         context_type="PlanningOversightFollowUp",
         context_id=followup.id,
@@ -550,6 +570,7 @@ def send_follow_up(
                 title=f"Reminder: {issue.label}",
                 body=_lead_body(existing, issue, reminder=True),
                 event="planning_followup_assigned",
+                sender=sender,
             )
             _audit("reminded", existing, sender, reminder_count=existing.reminder_count)
             return existing, False
@@ -618,6 +639,7 @@ def send_follow_up(
             title=f"Follow up: {issue.label}",
             body=_lead_body(followup, issue),
             event="planning_followup_assigned",
+            sender=sender,
         )
         _audit(
             "sent",
@@ -701,6 +723,7 @@ def return_for_clarification(followup, actor, reason: str):
         body=f"{followup.program_lead_name} returned it for clarification: {reason}",
         event="planning_followup_returned",
         route="/country-planning-oversight/",
+        sender=actor,
     )
     _audit("returned", followup, actor, reason=reason)
     return followup
@@ -843,6 +866,7 @@ def escalate(followup, actor, note: str):
             f"follow-up, due {followup.due_date:%-d %b}: “{note}”"
         ),
         event="planning_followup_assigned",
+        sender=actor,
     )
     _audit("escalated", followup, actor, note=note)
     return followup

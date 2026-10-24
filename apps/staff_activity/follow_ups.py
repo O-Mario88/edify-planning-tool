@@ -357,6 +357,7 @@ def _after_transition(follow_up: StaffUsageFollowUp, action: str) -> None:
             title="Follow-up returned for clarification",
             body=f"{_name(follow_up.assignee)} asked for clarification about "
             f"{_trigger(follow_up)}.",
+            sender=follow_up.assignee,
         )
 
 
@@ -565,6 +566,7 @@ def _notify(
     body: str,
     event: str = NOTIFY_EVENT,
     priority: str = "normal",
+    sender=None,
 ) -> None:
     try:
         from apps.notifications.services import WorkflowNotificationService
@@ -578,6 +580,7 @@ def _notify(
             context_type=CONTEXT_TYPE,
             context_id=follow_up.pk,
             recipients=[r for r in recipient_ids if r],
+            sender=sender,
         )
     except Exception:  # pragma: no cover - a notice never breaks the workflow
         logger.exception("staff activity: follow-up notification failed")
@@ -603,6 +606,7 @@ def _notify_assignee(follow_up: StaffUsageFollowUp) -> None:
         title=title,
         body=body,
         priority="high" if follow_up.priority == FollowUpPriority.HIGH else "normal",
+        sender=follow_up.created_by,
     )
 
 

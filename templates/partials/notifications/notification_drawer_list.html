@@ -52,6 +52,7 @@ class="py-2.5 flex items-start gap-3 {% if n.status == 'unread' %}edify-primary-
 </p>
 <span class="edify-text-caption text-slate-400 font-semibold whitespace-nowrap shrink-0">{{ n.created_at|date:"j M H:i" }}</span>
 </div>
+{% if n.sender_name %}<p class="edify-text-caption text-slate-500 font-semibold mt-0.5">From {{ n.sender_name }}</p>{% endif %}
 {% if n.body %}
 {% comment %}Body text, not a caption: the caption class pins a 16px line under
 type the paragraph rule sizes at 15px, which set a five-line notification

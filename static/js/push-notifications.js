@@ -15,6 +15,10 @@
  *  - clearing from the tray what was read somewhere else, and everything on
  *    sign-out, when the device also stops being sent the user's notices.
  *
+ * Inside the Edify app on a phone, where a web view has no Web Push, the
+ * same controls drive the phone's own push instead (native-push.js, which
+ * sets window.EdifyAppPush).
+ *
  * Controls are plain attributes, so any page or drawer can carry them:
  *   [data-push-toggle]   a button: "Turn on phone notifications" / "Turn off"
  *   [data-push-status]   the sentence beside it
@@ -26,6 +30,9 @@
   var API = '/api/notifications/push/';
   var OFF_KEY = 'edify-push-off', SYNCED_KEY = 'edify-push-synced';
   var config = null, busy = false, lastCount = null;
+
+  // The Edify app's own push, when this page is inside the app.
+  function app() { return window.EdifyAppPush || null; }
 
   function supported() {
     return 'serviceWorker' in nav && 'PushManager' in window && 'Notification' in window;
@@ -81,6 +88,7 @@
 
   // What this device can do, in one word (the status sentence is made of it).
   function state() {
+    if (app()) return app().state();
     if (!supported()) return Promise.resolve(needsInstall() ? 'install' : 'unsupported');
     if (needsInstall()) return Promise.resolve('install');
     return loadConfig().then(function (data) {
@@ -97,6 +105,8 @@
     install: ['', 'On an iPhone or iPad, add Edify to the Home Screen (Share, then Add to Home Screen) and open it from there to get notifications.'],
     unsupported: ['', 'This browser cannot show phone notifications. The bell still holds every notification.'],
     unavailable: ['', 'Phone notifications are not set up on this server yet. The bell still holds every notification.'],
+    'app-blocked': ['Open phone settings', 'Turned off in the phone\'s settings. Allow notifications for Edify there, then come back.'],
+    'app-error': ['Try again', 'This phone could not be set up for notifications just now.'],
     offline: ['', 'Phone notifications could not be checked just now. Try again when you are back online.'],
   };
 
@@ -129,6 +139,7 @@
   function enable() {
     if (busy) return Promise.resolve();
     busy = true; paint();
+    if (app()) return app().enable().then(function () { busy = false; paint(); });
     return Notification.requestPermission().then(function (permission) {
       if (permission !== 'granted') return null;
       return loadConfig().then(function (data) {
@@ -146,6 +157,7 @@
   }
 
   function disable(reason) {
+    if (app()) return app().disable(reason);
     return current().then(function (sub) {
       if (!sub) return null;
       var endpoint = sub.endpoint;
@@ -158,6 +170,7 @@
   // The browser may hand out a new subscription at any time; the server's
   // copy is refreshed once a day, and at once when the worker says so.
   function sync(force) {
+    if (app()) return;
     if (!supported() || needsInstall() || Notification.permission !== 'granted') return;
     var off = false;
     try { off = localStorage.getItem(OFF_KEY) === '1'; } catch (_) { /* private mode */ }
@@ -206,6 +219,13 @@
   }
 
   // One line in the page's own message area, with the way to the record.
+  // A notification that arrived while the app is in front: the bell moves
+  // and one line says what arrived (from the worker, or from the phone app).
+  function foreground(data) {
+    recount();
+    if (!doc.hidden) announce(data.title + (data.body ? ': ' + data.body : ''), data.url);
+  }
+
   function announce(text, url) {
     var host = doc.getElementById('toast-container');
     if (!host) return;
@@ -232,9 +252,8 @@
       var data = event.data || {};
       if (data.type === 'edify-push-resubscribe') { sync(true); return; }
       if (data.type !== 'edify-notification') return;
-      recount();
       // The tray said it already unless this page was the one in front.
-      if (!data.shown && !doc.hidden) announce(data.title + (data.body ? ': ' + data.body : ''), data.url);
+      if (data.shown) recount(); else foreground(data);
     });
   }
 
@@ -242,6 +261,10 @@
     var button = event.target.closest && event.target.closest('[data-push-toggle]');
     if (!button) return;
     event.preventDefault();
+    if (button.getAttribute('data-push-state') === 'app-blocked' && app()) {
+      app().openSettings();
+      return;
+    }
     if (button.getAttribute('data-push-state') === 'on') {
       busy = true; paint();
       try { localStorage.setItem(OFF_KEY, '1'); } catch (_) { /* private mode */ }
@@ -268,13 +291,18 @@
   doc.addEventListener('submit', function (event) {
     var form = event.target;
     if (!form || !form.matches || !form.matches('form[action="/logout"]') || form.dataset.pushCleared) return;
-    if (!supported() || Notification.permission !== 'granted') return;
+    var phone = app();
+    if (!phone && (!supported() || Notification.permission !== 'granted')) return;
     event.preventDefault();
     form.dataset.pushCleared = '1';
-    tidy([], true);
     var done = false;
     function go() { if (!done) { done = true; form.submit(); } }
-    disable('signed_out').then(go, go);
+    if (phone) {
+      phone.disable('signed_out').then(go, go);
+    } else {
+      tidy([], true);
+      disable('signed_out').then(go, go);
+    }
     setTimeout(go, 1500);
   }, true);
 
@@ -284,5 +312,7 @@
   function start() { paint(); sync(false); }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start); else start();
 
-  window.EdifyPush = Object.freeze({ state: state, enable: enable, disable: disable, sync: sync });
+  window.EdifyPush = Object.freeze({
+    state: state, enable: enable, disable: disable, sync: sync, paint: paint, foreground: foreground,
+  });
 })();

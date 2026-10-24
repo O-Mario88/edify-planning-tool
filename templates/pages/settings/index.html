@@ -162,8 +162,17 @@
   grid of cards as one surface of tiles.{% endcomment %}
     <section class="card p-5 space-y-2" aria-labelledby="settings-notifications-title">
       <h2 id="settings-notifications-title" class="text-sm font-semibold">Notifications</h2>
-      <p class="text-slate-500">In-app notifications are generated automatically by workflow events — approvals, returns, escalations and To-Dos.</p>
-      <a href="/notifications" class="font-bold edify-primary-text edify-primary-text-hover inline-block pt-1">Open notifications →</a>
+      <p class="text-slate-500">Approvals, returns, escalations and To-Dos are always in the bell. They can also reach this phone or computer when Edify is closed, and your email.</p>
+      {% comment %}This device's switch (static/js/push-notifications.js; in the
+      phone app, native-push.js): on, off, or why it cannot be, in words.{% endcomment %}
+      <div class="flex flex-wrap items-center justify-between gap-3" data-push-control>
+        <p class="text-slate-500" data-push-status>Checking notifications on this device…</p>
+        <button type="button" class="btn btn-secondary h-8 shrink-0" data-push-toggle hidden></button>
+      </div>
+      <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+        <a href="/notifications/#delivery-settings" class="font-bold edify-primary-text edify-primary-text-hover">Push and email settings →</a>
+        <a href="/notifications" class="font-bold edify-primary-text edify-primary-text-hover">Open notifications →</a>
+      </div>
     </section>
     <section class="card p-5 space-y-2" aria-labelledby="settings-session-title">
       <h2 id="settings-session-title" class="text-sm font-semibold">Session</h2>

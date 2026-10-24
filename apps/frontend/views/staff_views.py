@@ -1050,7 +1050,7 @@ def notifications_page_view(request):
     # LIMIT/OFFSET). It was cut at the latest hundred: older notifications
     # could not be reached at all, and a hundred cards were ~550 KB of HTML
     # on every visit. The id keeps page boundaries stable within one second.
-    notifications = qs.order_by("-created_at", "-id")
+    notifications = _with_sender_names(qs).order_by("-created_at", "-id")
 
     # Get distinct categories
     categories = list(
@@ -1060,8 +1060,22 @@ def notifications_page_view(request):
     )
     categories = [c for c in categories if c]
 
+    from apps.core.email import mailer
+    from apps.notifications.models import NotificationPreference
+
+    preference = NotificationPreference.objects.filter(user_id=user.id).first()
+    muted = list(preference.email_muted_categories or []) if preference else []
     context = {
         "notifications": notifications,
+        "delivery": {
+            "email_enabled": preference.email_enabled if preference else True,
+            "push_enabled": preference.push_enabled if preference else True,
+            "muted": muted,
+            "categories": sorted(set(categories) | set(muted)),
+            "email_configured": mailer.is_configured,
+            "address": user.email,
+            "saved": request.GET.get("settings") == "saved",
+        },
         "kpis": kpis,
         "selected_priority": selected_priority,
         "selected_category": selected_category,
@@ -1081,6 +1095,47 @@ def notifications_page_view(request):
     return render(request, "pages/notifications/index.html", context)
 
 
+def _with_sender_names(qs):
+    """Each notification with ``sender_name``: who asked, when a person did
+    (a Send to, a Follow Up, a reminder), read in the same query."""
+    from django.db.models import OuterRef, Subquery
+
+    return qs.annotate(
+        sender_name=Subquery(
+            User.objects.filter(id=OuterRef("sender_id")).values("name")[:1]
+        )
+    )
+
+
+#: The most categories one person can mute: more than the platform has.
+_MAX_MUTED_CATEGORIES = 40
+
+
+@require_page_permission("dashboard")
+def notification_settings_view(request):
+    """Save how the signed-in person wants to be told beyond the bell: push
+    to their devices, and email. Only ever their own: nothing in the request
+    names whose settings these are."""
+    from apps.notifications.models import NotificationPreference
+
+    if request.method != "POST":
+        return redirect("/notifications/#delivery-settings")
+    muted = []
+    for value in request.POST.getlist("muted")[:_MAX_MUTED_CATEGORIES]:
+        value = (value or "").strip()[:64]
+        if value and value not in muted:
+            muted.append(value)
+    NotificationPreference.objects.update_or_create(
+        user_id=request.user.id,
+        defaults={
+            "email_enabled": request.POST.get("email_enabled") == "on",
+            "email_muted_categories": muted,
+            "push_enabled": request.POST.get("push_enabled") == "on",
+        },
+    )
+    return redirect("/notifications/?settings=saved#delivery-settings")
+
+
 def _get_sorted_drawer_notifications(user) -> list[Notification]:
     """The drawer's list: what still waits to be read, action-required and
     urgent first, then the newest.
@@ -1090,9 +1145,11 @@ def _get_sorted_drawer_notifications(user) -> list[Notification]:
     handling"). It used to stay under the unread ones; the history is the
     notification centre's ("View all notifications"), which keeps every one.
     """
-    notifs_qs = Notification.objects.filter(
-        recipient_id=user.id, status="unread"
-    ).exclude(resolved_at__isnull=False)
+    notifs_qs = _with_sender_names(
+        Notification.objects.filter(recipient_id=user.id, status="unread").exclude(
+            resolved_at__isnull=False
+        )
+    )
     notifs = list(notifs_qs)
 
     def sort_key(n):

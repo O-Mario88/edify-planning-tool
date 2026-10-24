@@ -429,6 +429,13 @@ def _dependencies(module_name: str) -> list[str]:
 # is available; its small inline fallback is covered by the offline browser test.
 _PRE_STYLESHEET_TEMPLATES = ("partials/pwa_launch.html", "pages/offline.html")
 _PRE_STYLESHEET_EXEMPT = frozenset({"template-style-block", "raw-hex"})
+# An email (templates/emails/) is never rendered with the platform's
+# stylesheet at all: the reader's mail client draws it, and mail clients drop
+# linked stylesheets and custom properties. Inline literal colours are the
+# only styling an email has (apps.notifications.email_delivery). Limited to
+# those two keys; every other rule still applies to an email.
+_EMAIL_TEMPLATES = "emails/"
+_EMAIL_EXEMPT = frozenset({"raw-hex", "inline-style"})
 
 
 def _template_findings(source: str, name: str = "") -> list[Finding]:
@@ -595,11 +602,12 @@ def _template_findings(source: str, name: str = "") -> list[Finding]:
             "Use minmax, fluid sizing, or a size-aware container rule.",
         ),
     ]
-    exempt = (
-        _PRE_STYLESHEET_EXEMPT
-        if any(t in name for t in _PRE_STYLESHEET_TEMPLATES)
-        else frozenset()
-    )
+    if any(t in name for t in _PRE_STYLESHEET_TEMPLATES):
+        exempt = _PRE_STYLESHEET_EXEMPT
+    elif name.startswith(_EMAIL_TEMPLATES):
+        exempt = _EMAIL_EXEMPT
+    else:
+        exempt = frozenset()
     for key, severity, match, evidence, action in checks:
         if match and key not in exempt:
             findings.append(Finding(key, severity, evidence, action))

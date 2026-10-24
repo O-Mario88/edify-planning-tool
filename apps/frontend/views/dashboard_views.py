@@ -2076,10 +2076,10 @@ def notify_past_due_activity(request, activity_id: str):
             "Only the officer's Programme Lead can send a past-due plan, and "
             "only while it is still past due."
         )
-    return _send_lead_reminder(activity, due=False)
+    return _send_lead_reminder(activity, due=False, sender=request.user)
 
 
-def _send_lead_reminder(activity, *, due: bool):
+def _send_lead_reminder(activity, *, due: bool, sender=None):
     """Send an officer the Lead's reminder for one activity, and answer with
     the "Sent to <officer>" button that replaces the one pressed.
 
@@ -2153,6 +2153,7 @@ def _send_lead_reminder(activity, *, due: bool):
             context_type="activity",
             context_id=activity.id,
             recipients=[recipient_id],
+            sender=sender,
         )
 
     btn_html = (
@@ -2191,4 +2192,6 @@ def pl_week_send_reminder(request, activity_id: str):
             "this week."
         )
     day = activity_day(activity)
-    return _send_lead_reminder(activity, due=not (day and day < tz.localdate()))
+    return _send_lead_reminder(
+        activity, due=not (day and day < tz.localdate()), sender=request.user
+    )

@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **941**
-- All registered routes: **1422**
-- API routes: **364**
+- Routed product surfaces: **944**
+- All registered routes: **1428**
+- API routes: **367**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **39**
 - Activity states: **24**
 - Shared component templates: **664**
-- Full pages: **260**
+- Full pages: **261**
 - Partials and drawers: **337**
-- Permission-gated surfaces: **924**
-- Referenced by automated tests: **850**
+- Permission-gated surfaces: **927**
+- Referenced by automated tests: **853**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -634,6 +634,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-E788473911 | /notifications/<str:notif_id>/read | Mark Notif Read | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0D3E8983C0 | /notifications/drawer | Notifications Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-45CD52E6FC | /notifications/mark-all-read | Mark All Notifications Read | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-20EF4A95F4 | /notifications/settings | Notification Settings | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-CA1DBB98A4 | /offboarding | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-28D0D15834 | /offboarding/<str:plan_id> | Offboarding Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DC627E0456 | /offboarding/<str:plan_id>/close | Offboarding Close | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -903,6 +904,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-FCFA103796 | /support | Report a Problem | report | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-BE2BCC13AA | /support/client-defect | Client Defect Beacon | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-79D481D180 | /system-health | System Health & Integrity - Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-00B795CCAB | /system-health/notifications | Notification delivery health | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-09C5FE208E | /system-health/notifications/test | Notification Delivery Test | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8F0C3311A9 | /target-distribution | Priorities | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C07C292D78 | /target-distribution/action | Target Distribution Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-50DEAE07D8 | /target-distribution/form | Target Distribution Form | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

@@ -30,13 +30,18 @@ CLAIM_SECONDS = 300
 _HANDLERS: dict[str, dict] = {}
 
 
-def register(event_type: str, *, idempotency_note: str):
+def register(event_type: str, *, idempotency_note: str, atomic: bool = True):
     """Register the handler for an event type.
 
     ``idempotency_note`` is mandatory documentation of WHY replaying this
     handler is safe — the same discipline the scheduled-job registry
     enforces. A handler that cannot write that sentence is not ready for
     at-least-once delivery.
+
+    ``atomic=False`` runs the handler outside a transaction, for one that
+    calls a provider over the network and so must not hold a transaction
+    open while it waits (apps.core.blocking_io_guard). Such a handler opens
+    its own short transactions for what it writes.
     """
 
     if not (idempotency_note or "").strip():
@@ -48,6 +53,7 @@ def register(event_type: str, *, idempotency_note: str):
         _HANDLERS[event_type] = {
             "func": func,
             "idempotency_note": idempotency_note,
+            "atomic": atomic,
         }
         return func
 
@@ -213,6 +219,52 @@ def _finish(event_id: str, *, error: str | None) -> None:
         )
 
 
+def run_handler(handler: dict, payload: dict) -> None:
+    """Run one handler as it registered: in a transaction of its own, or —
+    for one that talks to a provider — outside any."""
+    if handler.get("atomic", True):
+        with transaction.atomic():
+            handler["func"](payload)
+    else:
+        handler["func"](payload)
+
+
+def run_now(keys: list[str], *, worker_id: str) -> dict:
+    """Run the queued events of ``keys`` now, as the drain would: claimed
+    with SKIP LOCKED so the drain and this never run the same one, a failure
+    left pending for the drain's next attempt."""
+    now = timezone.now()
+    with transaction.atomic():
+        claimed = list(
+            OutboxEvent.objects.select_for_update(skip_locked=True)
+            .filter(
+                idempotency_key__in=keys,
+                status=OutboxStatus.PENDING,
+                next_attempt_at__lte=now,
+            )
+            .values_list("id", "event_type", "payload")
+        )
+        OutboxEvent.objects.filter(id__in=[row[0] for row in claimed]).update(
+            status=OutboxStatus.PROCESSING,
+            locked_by=worker_id,
+            locked_until=now + timedelta(seconds=CLAIM_SECONDS),
+        )
+    succeeded = failed = 0
+    for event_id, event_type, payload in claimed:
+        handler = _HANDLERS.get(event_type)
+        try:
+            if handler is None:
+                raise LookupError(f"No handler registered for {event_type!r}.")
+            run_handler(handler, payload)
+        except Exception as exc:  # noqa: BLE001 — recorded; the drain retries
+            _finish(event_id, error=f"{type(exc).__name__}: {exc}")
+            failed += 1
+        else:
+            _finish(event_id, error=None)
+            succeeded += 1
+    return {"succeeded": succeeded, "failed": failed}
+
+
 def drain(
     *, batch_size: int = 50, time_budget_seconds: int = 45, worker_id: str = ""
 ) -> dict:
@@ -242,8 +294,7 @@ def drain(
                 failed += 1
                 continue
             try:
-                with transaction.atomic():
-                    handler["func"](event.payload)
+                run_handler(handler, event.payload)
             except Exception as exc:  # noqa: BLE001 — recorded, retried, DLQ'd
                 logger.warning(
                     "Outbox handler %s failed (attempt %s): %s",
