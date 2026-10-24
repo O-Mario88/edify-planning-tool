@@ -14,6 +14,7 @@
  *     runs its own sign-in and permission checks.
  *   • <html> carries data-native-app="ios|android" for styles that need it.
  *   • On iOS the page keeps its scale when a field is tapped (holdScale).
+ *   • Coming back to the app fires `edify-app-resume` on the document.
  *
  * No credentials or tokens pass through here; the session stays the site's
  * own cookie.
@@ -101,6 +102,12 @@
         return;
       }
       if (typeof App.minimizeApp === "function") App.minimizeApp();
+    });
+
+    // Back in front after a while away: the page brings itself up to date
+    // (Home's Priority actions reload on this; templates/partials/home/queue.html).
+    App.addListener("resume", function () {
+      doc.dispatchEvent(new win.CustomEvent("edify-app-resume"));
     });
 
     App.addListener("appUrlOpen", function (event) {

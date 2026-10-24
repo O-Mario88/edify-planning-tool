@@ -799,7 +799,13 @@ class CoreSchoolsPlanningTest(TestCase):
         from apps.core.enums import SsaIntervention
 
         self.assertEqual(len(SsaIntervention.choices), 8)
-        html = self._client(self.cceo).get("/core-schools").content.decode()
+        # The Intervention Impact tab, which loads when it is opened
+        # (core_schools_views.CORE_PANELS, 2026-10-24).
+        html = (
+            self._client(self.cceo)
+            .get("/core-schools", {"panel": "impact"})
+            .content.decode()
+        )
         for _code, label in SsaIntervention.choices:
             # Django auto-escapes template output (e.g. "Teacher's
             # Environment" -> "Teacher&#x27;s Environment") — compare against

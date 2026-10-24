@@ -3004,8 +3004,11 @@ SIDEBAR_ITEMS = [
             # it also held have entries of their own, each shown to whoever
             # may open its page.
             {
-                # The Programme Lead opens it under PERFORMANCE & COACHING.
+                # The Programme Lead opens it under PERFORMANCE & COACHING. A
+                # CCEO reads only their own figures there, so it is theirs
+                # (owner, 2026-10-24: "it should be My performance").
                 "label": "Team Performance",
+                "role_labels": {CCEO: "My Performance"},
                 "url": "/team-performance/",
                 "page_key": "team_performance",
                 "visible_to": PAGE_PERMISSIONS["team_performance"] - {PL},
@@ -3545,13 +3548,16 @@ MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
 _MOBILE_NAV_FALLBACK = ("home", "my_plan", "todos", "messages")
 
 # Home's Quick access row: up to four more of the role's own pages, never one
-# already in the bar. Like the bar these are requests resolved against the
-# role's sidebar, so a shortcut can only ever be a page the role may open.
+# already in the bar unless the owner named it (HOME_SHORTCUTS_AS_SET). Like
+# the bar these are requests resolved against the role's sidebar, so a
+# shortcut can only ever be a page the role may open.
 HOME_SHORTCUTS_MAX = 4
 HOME_SHORTCUTS_BY_ROLE: dict[str, tuple[str, ...]] = {
-    CCEO: ("dashboard", "clusters", "calendar", "todos"),
+    # Owner, 2026-10-24: "Quick Access should be Dashboard, Cluster, My Plan,
+    # Calendar" for the CCEO and the Programme Lead.
+    CCEO: ("dashboard", "clusters", "my_plan", "calendar"),
     PARTNER: ("partner_schools", "partner_assignments", "partner_evidence", "todos"),
-    PL: ("dashboard", "schools", "clusters", "todos"),
+    PL: ("dashboard", "clusters", "my_plan", "calendar"),
     PROJECT_COORDINATOR: ("dashboard", "calendar", "todos", "schools"),
     IA: ("dashboard", "ssa", "ia_partner_evidence", "schools"),
     ACCOUNTANT: ("dashboard", "todos", "monthly_budget", "schools"),
@@ -3561,6 +3567,10 @@ HOME_SHORTCUTS_BY_ROLE: dict[str, tuple[str, ...]] = {
     ADMIN: ("dashboard", "todos", "users", "schools"),
 }
 _HOME_SHORTCUTS_FALLBACK = ("dashboard", "todos", "calendar", "my_plan", "schools")
+#: Roles whose four shortcuts the owner named: shown as named, a page that is
+#: also a tab in the bar included (My Plan). Still only pages the role's
+#: sidebar offers.
+HOME_SHORTCUTS_AS_SET = frozenset({CCEO, PL})
 
 # Sidebar labels are written for a 240px column and truncate to nonsense in a
 # 78px tab — "Disbursement Dashboard" renders as "Disburseme…". These are the
@@ -3703,7 +3713,8 @@ def build_home_shortcuts_for_user(
     user, current_path: str, sections: list[dict] | None = None
 ) -> list[dict]:
     """Home's Quick access: up to ``HOME_SHORTCUTS_MAX`` of the role's own
-    pages that are not already tabs in its bottom bar.
+    pages that are not already tabs in its bottom bar — or, for a role in
+    ``HOME_SHORTCUTS_AS_SET``, the four the owner named, as named.
 
     Chosen from the same catalogue as the bar, so every shortcut is a page the
     role's sidebar offers; the page's own permission check still runs when it
@@ -3715,8 +3726,13 @@ def build_home_shortcuts_for_user(
     if sections is None:
         sections = build_sidebar_for_user(user, current_path)
     catalogue, order = _mobile_catalogue(role, current_path, sections)
-    in_bar = frozenset(
-        item["url"] for item in build_mobile_nav_for_user(user, current_path, sections)
+    in_bar = (
+        frozenset()
+        if role in HOME_SHORTCUTS_AS_SET
+        else frozenset(
+            item["url"]
+            for item in build_mobile_nav_for_user(user, current_path, sections)
+        )
     )
     chosen = _pick(
         catalogue,

@@ -281,6 +281,12 @@ def _queue_queryset(principal):
     return qs.filter(waiting)
 
 
+def waiting_count(principal) -> int:
+    """How many completions wait on THIS reviewer: the rows of their
+    Completion Reviews register (`review_register`), counted in one query."""
+    return _queue_queryset(principal).count()
+
+
 def _people(owner_ids) -> tuple[dict[str, str], dict[str, str]]:
     """Names and StaffProfile ids for people filed under either id space.
 

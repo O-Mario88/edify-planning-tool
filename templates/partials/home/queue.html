@@ -1,16 +1,19 @@
 {% comment %}
-/home/queue: Home's Priority actions, from the To-Do queue
-(apps.command_center.home_service.build_home_queue). It replaces the loading
+/home/queue: Home's Priority actions
+(apps.command_center.home_service.build_home_queue): a CCEO's and a
+Programme Lead's are their role's own list (home_priorities), everyone
+else's the first To-Dos. It replaces the loading
 body on Home, and its To-Do figures and "View all" replace their loading
 copies out of band, so the page never moves.
 {% endcomment %}
-<div id="home-priority-body" data-home-priority-body>
+{# Coming back to the app (static/js/native-shell.js), or to a Home restored from the back/forward cache, brings the rows up to date. #}
+<div id="home-priority-body" data-home-priority-body hx-get="/home/queue" hx-trigger="edify-app-resume from:document, pageshow[persisted] from:window" hx-swap="outerHTML">
   {% if priority_rows %}
   <ul class="edify-home__list" role="list">
     {% for row in priority_rows %}
     <li>
-      <a href="{{ row.url }}" class="edify-home__item" data-home-priority>
-        <span class="edify-home__item-mark edify-home__item-mark--{{ row.status_tone }}">{% include "partials/home/icon.html" with name=row.icon %}</span>
+      <a href="{{ row.url }}" class="edify-home__item" data-home-priority{% if row.key %}="{{ row.key }}"{% endif %}>
+        <span class="edify-home__item-mark edify-home__item-mark--{% firstof row.mark_tone row.status_tone %}">{% include "partials/home/icon.html" with name=row.icon %}</span>
         <span class="edify-home__item-body">
           <span class="edify-home__item-name">{{ row.title }}</span>
           {% if row.context %}<span class="edify-home__item-sub">{{ row.context }}</span>{% endif %}
@@ -32,5 +35,9 @@ copies out of band, so the page never moves.
   </div>
   {% endif %}
 </div>
-<span id="home-priority-more" hx-swap-oob="true">{% if priority_total %}<a href="/todos" class="edify-home__see-all">View all {{ priority_total }}{% include "partials/home/icon.html" with name="arrow" %}</a>{% endif %}</span>
-{% for f in queue_figures %}{% include "partials/home/figure.html" with f=f oob=True %}{% endfor %}
+{% if todo_figures_later %}
+{# The To-Do figures and count follow in their own request, so these rows never wait for the queue (home_service.build_home_queue). #}
+<span id="home-priority-more" hx-swap-oob="true" hx-get="/home/todo-figures" hx-trigger="load" hx-swap="none"></span>
+{% else %}
+{% include "partials/home/todo_figures.html" %}
+{% endif %}

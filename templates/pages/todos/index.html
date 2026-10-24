@@ -10,8 +10,9 @@
 
   <header class="mobile-role-home edify-page-header" data-mobile-role-home>
     <div class="mobile-role-home__copy"><p>My work</p><h1 class="edify-page-title">Action queue</h1><span>Start with the highest-priority task; workflow state closes it automatically.</span></div>
-    <div class="mobile-role-home__context"><span>Open</span><strong>{{ counts.total }}</strong></div>
-    {% if todos.0 %}<a href="{{ todos.0.action_url }}" class="mobile-role-home__action" data-mobile-primary-action><span>{{ todos.0.action_label }}</span><span aria-hidden="true">→</span></a>{% endif %}
+    {# "48 open", and the button names the task it opens (2026-10-24: it read "Open 48" beside "Open"). #}
+    <div class="mobile-role-home__context"><span class="mobile-role-home__figure"><strong>{{ counts.total }}</strong> open</span></div>
+    {% if todos.0 %}<a href="{{ todos.0.action_url }}" class="mobile-role-home__action" data-mobile-primary-action><span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">Do next: {{ todos.0.title }}</span><span aria-hidden="true">→</span></a>{% endif %}
   </header>
 
   {% if total %}

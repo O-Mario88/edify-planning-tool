@@ -249,13 +249,30 @@ class MobileNavDestinationTests(SimpleTestCase):
         self.assertEqual(urls, ["/home", "/todos", "/ia/verification/", "/messages"])
 
     def test_shortcuts_never_repeat_a_tab(self):
+        from apps.core.navigation import HOME_SHORTCUTS_AS_SET
+
         for role in ROLE_LABELS:
+            if role in HOME_SHORTCUTS_AS_SET:
+                continue
             with self.subTest(role=role):
                 user = _User(ROLE_LABELS[role])
                 bar = {i["url"] for i in nav_for(role)}
                 shortcuts = build_home_shortcuts_for_user(user, "/home")
                 self.assertTrue(shortcuts)
                 self.assertFalse(bar & {i["url"] for i in shortcuts})
+
+    def test_the_owner_named_a_cceos_and_a_leads_four_shortcuts(self):
+        # Owner, 2026-10-24: "Quick Access should be Dashboard, Cluster, My
+        # Plan, Calendar", My Plan although it is also a tab.
+        for role in (CCEO, PL):
+            with self.subTest(role=role):
+                shortcuts = build_home_shortcuts_for_user(
+                    _User(ROLE_LABELS[role]), "/home"
+                )
+                self.assertEqual(
+                    [i["page_key"] for i in shortcuts],
+                    ["dashboard", "clusters", "my_plan", "calendar"],
+                )
 
 
 class MobileNavActiveStateTests(SimpleTestCase):

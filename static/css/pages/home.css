@@ -33,48 +33,102 @@
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
+/* The sidebar's own band (owner, 2026-10-24: "the same sidebar background
+   blue"), theme-aware through --edify-sidebar-bg, and everything in it on
+   one centre line: the lockup, then the greeting, then the role. */
 .edify-home__hero {
-  background: var(--brand-primary-hover);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--edify-sidebar-bg);
   color: var(--brand-primary-on-solid);
-  padding: 0.75rem var(--home-gutter) 2.25rem;
+  padding: 1.25rem var(--home-gutter) 2.5rem;
   margin-bottom: -1.5rem;
 }
 
-.edify-home__brand-row {
-  display: flex;
+/* The sidebar's lockup (components/sidebar.css, .app-sidebar__wordmark):
+   the white wordmark, a hairline, then the product name on two lines, in
+   the sidebar's proportions at a phone's size. */
+/* Centred on themselves: the platform stretches a phone page header's
+   children (platform.css, `main > div > :where(header, div):has(h1)`,
+   !important), which would pin the lockup and the role to the left edge. */
+.edify-home__wordmark,
+.edify-home__role {
+  align-self: center;
+}
+
+.edify-home__wordmark {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
 
-.edify-home__logo {
-  height: 1.875rem;
-  width: auto;
+/* A signature above the greeting, not the headline (owner, 2026-10-24:
+   "the logo seems too big ... make it smaller and the greetings bigger"). */
+.edify-home__wordmark-logo {
+  display: block;
+  width: 4.5rem;
+  height: auto;
 }
 
-/* White on the blue header through the design system's inverse surface
+.edify-home__wordmark-rule {
+  width: 1px;
+  height: 1.75rem;
+  background: rgb(189 216 233 / 0.72);
+}
+
+.edify-home__wordmark-product {
+  color: rgb(215 230 239 / 0.88);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* White on the band through the design system's inverse surface
    (consistency.css, .edify-inverse-surface); size and weight are the shared
    page title's (.edify-page-title). */
 .edify-home__greeting {
-  margin: 1rem 0 0;
+  margin: 1.125rem 0 0;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* The greeting is Home's one headline, larger than a page title (owner,
+   2026-10-24: "make … the greetings bigger"): the display step scaled, so it
+   moves with the scale. Set on its own words: consistency.css holds every
+   h1 itself at the one title size. */
+.edify-home__greeting-words {
+  font-size: calc(var(--edify-text-display-size) * 1.45);
 }
 
 .edify-home__subtitle {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
   margin: 0.25rem 0 0;
   font-size: var(--edify-text-lead-size);
   opacity: 0.92;
 }
 
 .edify-home__role {
-  padding: 0.125rem 0.5rem;
+  margin: 0.625rem 0 0;
+  padding: 0.1875rem 0.625rem;
+  border: 1px solid rgb(255 255 255 / 0.18);
   border-radius: var(--edify-radius-pill);
-  background: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.1);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.theme-dark .edify-home__wordmark-rule {
+  background: var(--edify-border);
+}
+
+.theme-dark .edify-home__wordmark-product {
+  color: var(--edify-text-muted);
 }
 
 /* ── Cards ───────────────────────────────────────────────────────────────── */

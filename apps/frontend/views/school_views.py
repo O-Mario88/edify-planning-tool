@@ -2592,6 +2592,8 @@ def school_edit_drawer_view(request, school_id):
         .order_by("sub_county__name", "name")
     )
 
+    from apps.schools import cohort
+
     def drawer_context(validation_error=None):
         return {
             "school": school,
@@ -2601,6 +2603,14 @@ def school_edit_drawer_view(request, school_id):
             "sub_counties": sub_counties,
             "parishes": parishes,
             "validation_error": validation_error,
+            # A Core school's cohort (owner, 2026-10-24): set once, then
+            # locked; an Admin may correct it (apps.schools.cohort).
+            "cohort_label": cohort.label(school),
+            "cohort_locked": cohort.is_locked(school),
+            "cohort_correctable": cohort.may_correct(request.user),
+            "cohort_first_year": cohort.FIRST_YEAR,
+            "cohort_latest_year": cohort.latest_year(),
+            "cohort_max_number": cohort.MAX_NUMBER,
         }
 
     def optional_float(field, label, low, high):
@@ -2650,6 +2660,7 @@ def school_edit_drawer_view(request, school_id):
             school_type = (request.POST.get("school_type") or "").strip()
             if school_type not in {value for value, _label in SchoolType.choices}:
                 raise BadRequest("Select a valid current partner type.")
+            chosen_cohort = cohort.read(request.POST, school, request.user, school_type)
 
             district_id = (request.POST.get("district_id") or "").strip()
             district = (
@@ -2812,9 +2823,12 @@ def school_edit_drawer_view(request, school_id):
         school.account_owner_id = owner_id
         school.account_owner_name_raw = staff_owner.user.name
         school.account_owner_status = "matched"
+        cohort_change = cohort.apply(school, chosen_cohort, request.user)
 
         with transaction.atomic():
             school.save()
+            if cohort_change:
+                cohort.log(school, cohort_change, request.user)
             StaffSchoolAssignment.objects.filter(school_id=school.id).exclude(
                 staff_id=owner_id
             ).delete()

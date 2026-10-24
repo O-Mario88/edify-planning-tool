@@ -17,7 +17,10 @@ REPO = MOBILE.parent
 ARTWORK = REPO / "static" / "images" / "app-icon-source.png"  # disc on black
 LOGO = REPO / "static" / "images" / "logo.png"  # white wordmark
 ICON_NAVY = (45, 72, 98)  # the PWA icon's background (#2d4862)
-SPLASH_BLUE = (10, 77, 134)  # --brand-primary-hover (#0a4d86), Home's header
+# The launch screen is the sidebar's own band (owner, 2026-10-24: Home's header
+# takes "the same sidebar background blue"): --edify-sidebar-bg's stops, top
+# to bottom — navy-950 (#001d39), #062847 at 56%, navy-800 (#0a4d86).
+SPLASH_STOPS = ((0.0, (0, 29, 57)), (0.56, (6, 40, 71)), (1.0, (10, 77, 134)))
 DISC_SHARE = 0.71  # the disc's share of the PWA maskable icon's width
 FOREGROUND_DISC_SHARE = 0.6  # inside Android's adaptive-icon safe zone
 
@@ -52,8 +55,24 @@ def icon(size: int, *, background=ICON_NAVY, share=DISC_SHARE, round_mask=False)
     return canvas
 
 
+def band(width: int, height: int) -> Image.Image:
+    """The sidebar's gradient, top to bottom."""
+    column = Image.new("RGB", (1, height))
+    for y in range(height):
+        at = y / max(height - 1, 1)
+        for (start, low), (end, high) in zip(SPLASH_STOPS, SPLASH_STOPS[1:]):
+            if start <= at <= end:
+                share = (at - start) / (end - start)
+                column.putpixel(
+                    (0, y),
+                    tuple(round(a + (b - a) * share) for a, b in zip(low, high)),
+                )
+                break
+    return column.resize((width, height), Image.NEAREST)
+
+
 def splash(width: int, height: int) -> Image.Image:
-    canvas = Image.new("RGB", (width, height), SPLASH_BLUE)
+    canvas = band(width, height)
     logo = Image.open(LOGO).convert("RGBA")
     target = round(min(width, height) * 0.32)
     logo = logo.resize(

@@ -277,16 +277,22 @@ class Report:
         figures["dc_pct"] = pct(figures["dc"], figures["dc_data"])
         return figures
 
-    def executive_summary(self) -> dict:
-        """The summary's tiles and its table of every target area. The charts
-        load a section at a time (`section_charts`), as the reader reaches
-        them: drawn all at once they would pass the platform's page-size
-        budget."""
+    def executive_summary(
+        self, by: str | None = None, *, in_region: str = "", in_lead: str = ""
+    ) -> dict:
+        """The summary's tiles and its table of every target area, the
+        reader's total beside its breakdown (`breakdown`, owner, 2026-10-24:
+        a CCEO by district, a Lead by CCEO, everyone else by region, then
+        Programme Lead, then CCEO). The charts load a section at a time
+        (`section_charts`), as the reader reaches them: drawn all at once
+        they would pass the platform's page-size budget."""
+        from . import breakdown
+
         period = self.period
         home = self.home()
         now = self.summary_figures(home, period.to_date)
         before = self.summary_figures(home, period.before)
-        regions = self._team_figures()
+        bd = breakdown.resolve(self, by, in_region=in_region, in_lead=in_lead)
         all_areas = self.areas()
         counted = ["portfolio", "active", "dc_data", "dc"]
         counted += [m.key for m in all_areas]
@@ -297,53 +303,51 @@ class Report:
         }
         sections: dict[str, list[dict]] = {}
         for measure in all_areas:
-            area = self._area(measure, all_areas, now, regions)
+            area = self._area(measure, all_areas, now, bd)
             area["change"] = change.get(measure.key)
             sections.setdefault(measure.section, []).append(area)
         return {
             "now": now,
             "before": before,
             "change": change,
-            "regions": regions,
+            "breakdown": bd,
             "sections": list(sections.items()),
-            # The table's columns: the area, the country's four, three a team.
-            "width": 5 + 3 * len(regions),
+            # The table's columns: the area, the total's four, three a column.
+            "width": 5 + 3 * len(bd.columns),
             "milestones": self.delivery_milestones(home),
         }
 
-    def section_charts(self, section: str) -> list[dict] | None:
-        """One section's target areas, each charted by region and by
-        Programme Lead side by side (owner, 2026-10-21); None for a section
-        the report does not have."""
+    def section_charts(
+        self,
+        section: str,
+        by: str | None = None,
+        *,
+        in_region: str = "",
+        in_lead: str = "",
+    ) -> list[dict] | None:
+        """One section's target areas, each charted at the summary's level
+        and, beside it, the level under it (a region's Leads, a Lead's
+        CCEOs); None for a section the report does not have."""
+        from . import breakdown
+
         all_areas = self.areas()
         rows = [m for m in all_areas if m.section == section]
         if not rows:
             return None
         now = self.summary_figures(self.home(), self.period.to_date)
-        regions = self._team_figures()
+        bd = breakdown.resolve(self, by, in_region=in_region, in_lead=in_lead)
+        shown = [b for b in (bd, breakdown.under(self, bd)) if b is not None]
         charts = []
         for measure in rows:
-            area = self._area(measure, all_areas, now, regions)
-            area["regions"] = self.region_bars(measure.key)
-            area["leads"] = self.lead_bars(regions, measure.key)
+            area = self._area(measure, all_areas, now, bd)
+            area["charts"] = [
+                {"level": b.level, "label": b.label, "bars": b.bars(measure.key)}
+                for b in shown
+            ]
             charts.append(area)
         return charts
 
-    def _team_figures(self) -> list[dict]:
-        return [
-            {
-                "label": region.label,
-                "lead": region.lead_name,
-                "place": region.place,
-                "region": region,
-                "figures": self.summary_figures(
-                    self.team_scope(region), self.period.to_date
-                ),
-            }
-            for region in self.roster.regions
-        ]
-
-    def _area(self, measure, all_areas, now: dict, regions: list[dict]) -> dict:
+    def _area(self, measure, all_areas, now: dict, bd) -> dict:
         key = measure.key
         share = now[f"{key}_pct"]
         return {
@@ -354,48 +358,46 @@ class Report:
             "achieved": now[key],
             "pct": share,
             "status": status(share, running=True),
-            "teams": [
-                {
-                    "label": r["label"],
-                    "target": r["figures"][f"{key}_target"],
-                    "achieved": r["figures"][key],
-                    "pct": r["figures"][f"{key}_pct"],
-                }
-                for r in regions
-            ],
+            "teams": [column.cell(key) for column in bd.columns],
         }
-
-    def lead_bars(self, regions: list[dict], key: str) -> list[dict]:
-        """An area by Programme Lead, a chart of its own (owner, 2026-10-21:
-        "the pl graph should be seperate"): each team's target against what
-        it achieved."""
-        return _bars(
-            [
-                {
-                    "label": r["label"],
-                    "place": "",
-                    "target": r["figures"][f"{key}_target"],
-                    "achieved": r["figures"][key],
-                }
-                for r in regions
-            ]
-        )
 
     def region_bars(self, measure_key: str) -> list[dict]:
         """An area by region, every region listed (owner, 2026-10-21: "needs
-        to have all regions", "use region in stead"). What was achieved counts
-        where its school is — a session where most of the schools it reached
-        are, participants summed. Targets are set per CCEO, not per region, so
-        each CCEO's target is shared across the regions their eligible schools
-        are in, in whole numbers ("Split each CCEO's target"); a target whose
-        holder holds no school, or a country target nobody holds, is "Not
-        placed", so the bars add up to the country's target."""
+        to have all regions", "use region in stead")."""
+        places, target, achieved = self.place_split(measure_key, "region")
+        return _bars(
+            [
+                {
+                    "label": place,
+                    "place": "",
+                    "target": target.get(place, 0),
+                    "achieved": achieved.get(place, 0),
+                }
+                for place in places
+            ]
+        )
+
+    def place_split(self, measure_key: str, level: str = "region"):
+        """An area split by region or by district: (places, target, achieved).
+
+        What was achieved counts where its school is — a session where most
+        of the schools it reached are, participants summed. Targets are set
+        per CCEO, not per place, so each CCEO's target is shared across the
+        places their eligible schools are in, in whole numbers ("Split each
+        CCEO's target"); a target whose holder holds no school, or a country
+        target nobody holds, is "Not placed", so the places add up to the
+        reader's target. Every region is listed; districts are those the
+        reader's schools are in."""
         measure = measures.get(measure_key)
         led = self.ledger
         home = self.home()
         owners = self.owners(home)
-        target = dict.fromkeys(led.regions, 0)
-        achieved = dict.fromkeys(led.regions, 0)
+        if level == "region":
+            every = list(led.regions)
+        else:
+            every = sorted(led.places_of(owners, level))
+        target = dict.fromkeys(every, 0)
+        achieved = dict.fromkeys(every, 0)
         participants = measure.key in measures.PARTICIPANT_KEYS
         window = self.period.to_date
         if measure.source in PORTFOLIO_SOURCES:
@@ -408,7 +410,7 @@ class Report:
         else:
             counted = led.units(measure.key, owners, *window)
         for unit, qty in counted.items():
-            place = led.region_of(unit) or NOT_PLACED
+            place = led.place_of(unit, level) or NOT_PLACED
             achieved[place] = achieved.get(place, 0) + (qty if participants else 1)
         placed = 0
         family = _family(measure)
@@ -418,25 +420,17 @@ class Report:
                 continue
             share = round(annual)
             placed += share
-            for place, part in _spread(share, self._where(staff, family)).items():
+            for place, part in _spread(
+                share, self._where(staff, family, level)
+            ).items():
                 target[place] = target.get(place, 0) + part
-        country = self.target(measure, home).annual
-        if country and round(country) > placed:
-            target[NOT_PLACED] = target.get(NOT_PLACED, 0) + round(country) - placed
-        places = list(led.regions)
+        whole = self.target(measure, home).annual
+        if whole and round(whole) > placed:
+            target[NOT_PLACED] = target.get(NOT_PLACED, 0) + round(whole) - placed
+        places = list(every)
         if target.get(NOT_PLACED) or achieved.get(NOT_PLACED):
             places.append(NOT_PLACED)
-        return _bars(
-            [
-                {
-                    "label": place,
-                    "place": "",
-                    "target": target.get(place, 0),
-                    "achieved": achieved.get(place, 0),
-                }
-                for place in places
-            ]
-        )
+        return places, target, achieved
 
     def _holders(self, measure, owners) -> list[str]:
         """Who holds a target for this area: the CCEOs and leads allocated its
@@ -450,20 +444,21 @@ class Report:
             holders = [h for h in holders if h in owners]
         return holders
 
-    def _where(self, staff_id: str, family: str) -> dict[str, int]:
-        """The regions an officer's schools of a family (client, Core or all)
-        are in, by how many — all their schools when they hold none of it.
-        Read once a page for every officer."""
-        spreads = getattr(self, "_spreads", None)
+    def _where(self, staff_id: str, family: str, level: str = "region") -> dict:
+        """The regions (or districts) an officer's schools of a family
+        (client, Core or all) are in, by how many — all their schools when
+        they hold none of it. Read once a page for every officer."""
+        cache = self.__dict__.setdefault("_spreads", {})
+        spreads = cache.get(level)
         if spreads is None:
             spreads = defaultdict(lambda: defaultdict(Counter))
             for school in self.ledger.schools.values():
                 if school.owner is None:
                     continue
-                place = school.region or NOT_PLACED
+                place = getattr(school, level) or NOT_PLACED
                 spreads[school.owner]["all"][place] += 1
                 spreads[school.owner]["core" if school.core else "client"][place] += 1
-            self._spreads = spreads
+            cache[level] = spreads
         held = spreads.get(staff_id, {})
         return dict(held.get(family) or held.get("all") or {})
 

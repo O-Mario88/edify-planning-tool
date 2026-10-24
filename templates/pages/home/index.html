@@ -3,7 +3,9 @@
 
 {% block title %}Home — Edify{% endblock %}
 
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v=20261023hover1">{% endblock %}
+{% comment %}The greeting's component is loaded here, ahead of Alpine in the head, as the CCEO dashboard loads it: a deferred script in feature_head_js runs after Alpine has started and read every x-data.{% endcomment %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v=20261024brand6">
+<script src="{% static 'js/dashboard-greeting.js' %}?v=20261024clock1" defer></script>{% endblock %}
 
 {% block shell_content %}
 {% comment %}
@@ -15,18 +17,22 @@ links open pages that run their own permission checks.
 <div class="edify-home" data-mobile-family="home">
 
   {# The phone's header: the approved mockup's blue band. A desktop has the shell's sidebar and top bar, so it gets the platform's own page header below instead (owner, 2026-10-23: "don't extend the mobile or tablet screen view to desktop"). #}
+  {# The sidebar's own band and lockup (owner, 2026-10-24: the "edify | Planning & Monitoring" logo, "professionally placed", on "the same sidebar background blue"), centred. The greeting is the server's, worded again from the device's clock whenever Home is shown (static/js/dashboard-greeting.js). #}
   <header class="edify-home__hero edify-inverse-surface">
-    <div class="edify-home__brand-row">
-      <img class="edify-home__logo" src="{% static 'images/logo.png' %}" alt="Edify" width="88" height="36">
+    <div class="edify-home__wordmark">
+      <img class="edify-home__wordmark-logo" src="{% static 'images/logo.png' %}" alt="Edify" width="72" height="30">
+      <span class="edify-home__wordmark-rule" aria-hidden="true"></span>
+      <span class="edify-home__wordmark-product">Planning &amp;<br>Monitoring</span>
     </div>
-    <h1 class="edify-page-title edify-home__greeting">{{ greeting }}{% if first_name %}, {{ first_name }}{% endif %}</h1>
-    <p class="edify-home__subtitle">Here’s what needs you today{% if role_title %}<span class="edify-home__role">{{ role_title }}</span>{% endif %}</p>
+    <h1 class="edify-page-title edify-home__greeting"><span class="edify-home__greeting-words"><span x-data="edifyGreeting({ reloadOnNewDay: true })" x-text="text" data-home-greeting>{{ greeting }}</span>{% if first_name %}, {{ first_name }}{% endif %}</span></h1>
+    <p class="edify-home__subtitle">Here’s what needs you today</p>
+    {% if role_title %}<p class="edify-home__role">{{ role_title }}</p>{% endif %}
   </header>
 
   <header class="edify-page-header edify-home__desk-head mobile-home-hide">
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Home{% if role_title %} · {{ role_title }}{% endif %}</p>
-      <h1 class="edify-page-title edify-page-header__title">{{ greeting }}{% if first_name %}, {{ first_name }}{% endif %}</h1>
+      <h1 class="edify-page-title edify-page-header__title"><span x-data="edifyGreeting()" x-text="text" data-home-greeting>{{ greeting }}</span>{% if first_name %}, {{ first_name }}{% endif %}</h1>
       <p class="edify-page-header__description">What needs you now, what is coming up, and where to go next.</p>
     </div>
   </header>

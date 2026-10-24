@@ -351,6 +351,11 @@ urlpatterns = [
     # phone's first tab and the native app's start page (owner, 2026-10-21).
     path("home", home_views.home_view, name="home"),
     path("home/queue", home_views.home_queue_view, name="home_queue"),
+    path(
+        "home/todo-figures",
+        home_views.home_todo_figures_view,
+        name="home_todo_figures",
+    ),
     path("dashboard", dashboard_views.dashboard_view, name="dashboard"),
     path(
         "dashboard/pl",

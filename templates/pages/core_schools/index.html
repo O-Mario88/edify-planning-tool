@@ -136,17 +136,26 @@ selection. The container is the Select-all box's scope (group-select.js).
 
 <!-- Tab: Queue -->
 <div x-show="activeTab === 'queue'" id="core-panel-queue" role="tabpanel" class="core-panel-body card p-6" style="display: none;">
-{% include "partials/core_schools/planning_queue.html" %}
+{# Drawn the first time the tab is shown, for the filters and page in view (core_schools_views.CORE_PANELS). #}
+<div hx-get="/core-schools?{% if panel_query %}{{ panel_query }}&amp;{% endif %}panel=queue" hx-trigger="intersect once" hx-swap="outerHTML" data-core-panel-loader="queue">
+<p class="edify-text-label edify-text-muted py-6 text-center" role="status">Loading the planning queue…</p>
+</div>
 </div>
 
 <!-- Tab: Impact -->
 <div x-show="activeTab === 'impact'" id="core-panel-impact" role="tabpanel" class="core-panel-body card p-6" style="display: none;">
-{% include "partials/core_schools/intervention_impact.html" %}
+{# Drawn the first time the tab is shown, for the filters and page in view (core_schools_views.CORE_PANELS). #}
+<div hx-get="/core-schools?{% if panel_query %}{{ panel_query }}&amp;{% endif %}panel=impact" hx-trigger="intersect once" hx-swap="outerHTML" data-core-panel-loader="impact">
+<p class="edify-text-label edify-text-muted py-6 text-center" role="status">Loading intervention impact…</p>
+</div>
 </div>
 
 <!-- Tab: Performance -->
 <div x-show="activeTab === 'performance'" id="core-panel-performance" role="tabpanel" class="core-panel-body" style="display: none;">
-{% include "partials/core_schools/performance_insights.html" %}
+{# Drawn the first time the tab is shown, for the filters and page in view (core_schools_views.CORE_PANELS). #}
+<div hx-get="/core-schools?{% if panel_query %}{{ panel_query }}&amp;{% endif %}panel=performance" hx-trigger="intersect once" hx-swap="outerHTML" data-core-panel-loader="performance">
+<p class="edify-text-label edify-text-muted py-6 text-center" role="status">Loading performance insights…</p>
+</div>
 </div>
 
 </div>

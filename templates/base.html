@@ -13,7 +13,8 @@ inset themselves — see components/mobile-shell.css.
 {% endcomment %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color">
+{# The phone's address bar and the app's status bar: the page canvas (--edify-bg), set again once the styles exist (static/js/system-chrome.js). #}
+<meta name="theme-color" content="#dbe4eb">
 <meta name="csrf-token" content="{{ csrf_token }}">
 <title>{% block title %}Edify School Improvement Planning{% endblock %}</title>
 {% include "partials/pwa_head.html" %}
@@ -96,8 +97,8 @@ live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261023blue2">
 <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20261023hover2">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20261002tokens2">
-<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20261021when1">
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20261023donext1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20261024feel5">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20261024figure1">
 <link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20261023blue1">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
@@ -131,7 +132,7 @@ other page was relying on them.
      After every layout layer, so none of them can re-open what it closes;
      only the pointer-response layer below comes later. -->
 <link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20261002hint2">
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20261023hover1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20261024rolehome1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -279,8 +280,12 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/drawer-submit.js' %}?v=20260920perf2"></script>
 <script defer src="{% static 'js/form-refusal.js' %}?v=20260911refusal1"></script>
 <script src="{% static 'js/history-controls.js' %}?v=20260912history1" defer></script>
+{# The phone's address bar and the app's status bar take the top bar's colour. #}
+<script defer src="{% static 'js/system-chrome.js' %}?v=20261024chrome1"></script>
+{# A signed-in page restored by "Back" shows only once the session is confirmed (the back/forward cache). #}
+{% if request.user.is_authenticated %}<script defer src="{% static 'js/restore-guard.js' %}?v=20261024restore1"></script>{% endif %}
 {# The iOS and Android app's back button and deep links (mobile/, docs/mobile-app.md). Sent only to the app, which names itself in its user agent (capacitor.config.js, appendUserAgent), so a browser downloads nothing for it. #}
-{% if "EdifyApp" in request.META.HTTP_USER_AGENT %}<script async src="{% static 'js/native-shell.js' %}?v=20261021native2"></script>{% endif %}
+{% if "EdifyApp" in request.META.HTTP_USER_AGENT %}<script async src="{% static 'js/native-shell.js' %}?v=20261024native3"></script>{% endif %}
 <!-- Responsive SVGs use viewBox units internally. Counter their outer scale
      once so chart and map labels render at the same semantic type sizes as
      surrounding HTML, including content inserted by HTMX. -->

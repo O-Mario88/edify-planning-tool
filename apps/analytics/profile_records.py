@@ -1440,6 +1440,10 @@ def identity(
     if kind == "school" and subject is not None:
         fact("School ID", subject.school_id)
         fact("Type", dict(SchoolType.choices).get(subject.school_type, ""))
+        # A Core school's cohort, set once in Edit school (owner, 2026-10-24).
+        from apps.schools.cohort import label as cohort_label
+
+        fact("Cohort", cohort_label(subject))
         place(subject)
         if subject.sub_county_id:
             fact("Sub-county", subject.sub_county.name)

@@ -316,14 +316,50 @@ def build_home(user, current_path: str = "/home") -> dict:
 
 
 def build_home_queue(user) -> dict:
-    """Home's To-Do figures and Priority actions, from the reader's queue."""
+    """Home's Priority actions, and the To-Do figures where they come with them.
+
+    A CCEO's and a Programme Lead's Priority actions are the list the owner
+    set for their role (apps.command_center.home_priorities, 2026-10-24): they
+    are drawn without the To-Do queue, whose figures follow in a request of
+    their own (`build_home_todo_figures`, /home/todo-figures) — a Lead's
+    queue reads the team's whole target page, seven seconds on a seeded
+    database, and the rows waited for it. Every other role's Priority actions
+    are the first entries of their To-Do queue, figures alongside."""
+    from apps.command_center.home_priorities import role_priorities
+
+    role_rows = role_priorities(user)
+    has_plan = get_user_role_slug(user) in PLAN_ROLES
+    if role_rows is not None:
+        return {
+            "queue_figures": [],
+            "role_rows": role_rows,
+            "priority_rows": role_rows,
+            "priority_total": None,
+            "has_plan": has_plan,
+            "todo_figures_later": True,
+        }
+    from apps.command_center.todo_service import get_cached_todos
+
+    queue = get_cached_todos(user)
+    return {
+        "queue_figures": todo_figures(queue.get("counts") or {}, with_plan=has_plan),
+        "role_rows": None,
+        "priority_rows": priority_actions(queue.get("todos") or []),
+        "priority_total": queue.get("total", 0),
+        "has_plan": has_plan,
+        "todo_figures_later": False,
+    }
+
+
+def build_home_todo_figures(user) -> dict:
+    """The To-Do figures and the To-Do count, from the reader's queue, for a
+    role whose Priority actions do not come from it."""
     from apps.command_center.todo_service import get_cached_todos
 
     queue = get_cached_todos(user)
     has_plan = get_user_role_slug(user) in PLAN_ROLES
     return {
         "queue_figures": todo_figures(queue.get("counts") or {}, with_plan=has_plan),
-        "priority_rows": priority_actions(queue.get("todos") or []),
         "priority_total": queue.get("total", 0),
-        "has_plan": has_plan,
+        "role_rows": True,
     }

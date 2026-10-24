@@ -208,7 +208,15 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: to the platform wide"): table rows answer the pointer again and
     #: Tailwind's light hover utilities take the shared hover token
     #: (consistency.css). Measured 248.62 KB.
-    CSS_GZIP_KB = 248.7
+    #: Raised to 249.3 on 2026-10-24 for the iOS and Android polish the owner
+    #: asked for ("polish the android and ios experience … smoothly, faster
+    #: and the premium look and feel"): pages cross-fade with the bars held,
+    #: no tap flash or long-press callout in the app, a restored page hidden
+    #: until its session is confirmed (components/mobile-shell.css), a phone
+    #: role home's label kept above its title (components/interactions.css)
+    #: and its count captioned (components/mobile-patterns.css), comments
+    #: cut to the bone. Measured 249.22 KB with main's notification styles.
+    CSS_GZIP_KB = 249.3
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
@@ -374,7 +382,14 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: the app, which names itself in its user agent, so a browser downloads
     #: none of it; this scan reads base.html and counts it all the same.
     #: Measured 153.89 KB.
-    JS_GZIP_KB = 154.0
+    #:
+    #: Raised to 156.0 on 2026-10-24 for the same polish: the address bar and
+    #: the app's status bar take the page canvas (static/js/system-chrome.js,
+    #: +1.2 KB), a page restored by "Back" shows only once its session is
+    #: confirmed (static/js/restore-guard.js, +0.7 KB), and the app tells a
+    #: page it is back in front (native-shell.js, sent to the app alone).
+    #: Comments cut to a few lines each. Measured 155.90 KB.
+    JS_GZIP_KB = 156.0
     INLINE_SCRIPT_KB = 40
 
     @classmethod

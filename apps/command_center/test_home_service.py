@@ -20,6 +20,7 @@ from apps.command_center import home_service
 from apps.command_center.home_service import (
     build_home,
     build_home_queue,
+    build_home_todo_figures,
     greeting_for,
     priority_actions,
 )
@@ -179,7 +180,7 @@ class HomeRolesTest(TestCase):
 
     def test_a_planner_with_no_work_sees_zeros_not_a_missing_figure(self):
         figures = build_home(self.cceo)["figures"][:3]
-        figures += build_home_queue(self.cceo)["queue_figures"]
+        figures += build_home_todo_figures(self.cceo)["queue_figures"]
         keys_values = {f["key"]: f["value"] for f in figures}
         self.assertEqual(
             keys_values,
@@ -189,12 +190,22 @@ class HomeRolesTest(TestCase):
     def test_shortcuts_are_never_tabs_already_in_the_bar(self):
         from apps.core.navigation import build_mobile_nav_for_user
 
-        for user in (self.hr, self.cceo):
+        user = self.hr
+        bar = {i["url"] for i in build_mobile_nav_for_user(user, "/home")}
+        shortcuts = {i["url"] for i in build_home(user)["shortcuts"]}
+        self.assertTrue(shortcuts)
+        self.assertFalse(bar & shortcuts)
+
+    def test_a_cceo_and_a_lead_get_the_owners_four_shortcuts(self):
+        # Owner, 2026-10-24: "Quick Access should be Dashboard, Cluster, My
+        # Plan, Calendar" — My Plan too, although it is also a tab.
+        lead, _ = _staff("home-pl@t.org", "Lena Lead", "Program Lead")
+        for user in (self.cceo, lead):
             with self.subTest(role=user.active_role):
-                bar = {i["url"] for i in build_mobile_nav_for_user(user, "/home")}
-                shortcuts = {i["url"] for i in build_home(user)["shortcuts"]}
-                self.assertTrue(shortcuts)
-                self.assertFalse(bar & shortcuts)
+                self.assertEqual(
+                    [s["page_key"] for s in build_home(user)["shortcuts"]],
+                    ["dashboard", "clusters", "my_plan", "calendar"],
+                )
 
     def test_home_page_renders_the_readers_sections(self):
         self.client.force_login(self.cceo)
@@ -207,13 +218,15 @@ class HomeRolesTest(TestCase):
         self.assertIn('hx-get="/home/queue"', html)
 
     def test_queue_fragment_fills_priority_actions_and_the_todo_tile(self):
-        self.client.force_login(self.cceo)
+        # A role whose Priority actions are its To-Dos; a CCEO's are their
+        # role's own list (test_home_priorities).
+        self.client.force_login(self.hr)
         response = self.client.get("/home/queue")
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn('id="home-priority-body"', html)
         self.assertIn('data-home-empty="priority"', html)
-        self.assertIn('id="home-figure-waiting_me"', html)
+        self.assertIn('id="home-figure-critical"', html)
         self.assertIn('hx-swap-oob="true"', html)
         self.assertNotIn("aria-busy", html)
 
@@ -254,6 +267,20 @@ class HomeRolesTest(TestCase):
                     html = self.client.get("/todos").content.decode()
                     self.assertIn(expected, html)
                     self.assertIn('class="edify-topbar__when-week"', html)
+
+    def test_home_can_be_restored_from_the_back_forward_cache(self):
+        """Back to Home in the phone app restores it at once (2026-10-24):
+        `no-store` kept it out of the back/forward cache, so every back
+        rebuilt it. It is still never served from a cache without asking;
+        a restored Home brings its rows up to date (partials/home/queue.html)."""
+        self.client.force_login(self.cceo)
+        header = self.client.get("/home")["Cache-Control"]
+        self.assertIn("no-cache", header)
+        self.assertIn("private", header)
+        self.assertNotIn("no-store", header)
+        queue = self.client.get("/home/queue")
+        self.assertIn("no-store", queue["Cache-Control"])
+        self.assertIn("pageshow[persisted] from:window", queue.content.decode())
 
     def test_signed_out_visitor_is_sent_to_sign_in(self):
         for url in ("/home", "/home/queue"):

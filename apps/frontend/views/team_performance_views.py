@@ -81,6 +81,49 @@ def _dashboard(report: Report, params) -> dict:
     return context
 
 
+#: The Executive Summary's breakdown filters (apps.team_performance.breakdown).
+SUMMARY_KEPT = ("by", "in_region", "in_lead")
+
+
+def _picked(params) -> dict:
+    """The breakdown the reader asked for, as `Report.executive_summary`
+    reads it; the report ignores anything the reader may not ask for."""
+    return {
+        "by": params.get("by") or None,
+        "in_region": params.get("in_region") or "",
+        "in_lead": params.get("in_lead") or "",
+    }
+
+
+def _summary(report: Report, params) -> dict:
+    """The summary, and the links that move through its breakdown: each
+    level, each column's opening (a region's Leads, a Lead's CCEOs) and the
+    way back to the top. Every link carries the resolved breakdown only."""
+    summary = report.executive_summary(**_picked(params))
+    bd = summary["breakdown"]
+    base = _query(params)
+
+    def link(**picked) -> str:
+        query = QueryDict(base, mutable=True)
+        query["tab"] = "summary"
+        for key in SUMMARY_KEPT:
+            if picked.get(key):
+                query[key] = picked[key]
+        return query.urlencode()
+
+    resolved = {"by": bd.level, "in_region": bd.in_region, "in_lead": bd.in_lead}
+    return {
+        "summary": summary,
+        "by_links": [(level, label, link(by=level)) for level, label in bd.choices],
+        "column_links": [
+            (column, link(**column.drill) if column.drill else "")
+            for column in bd.columns
+        ],
+        "top_link": link(by=bd.levels[0]),
+        "summary_query": link(**resolved),
+    }
+
+
 def _dash_query(params, lead, sort, officer) -> str:
     """The dashboard's links carry the resolved filters only: an officer the
     reader may not see is never echoed back."""
@@ -114,7 +157,7 @@ def team_performance_view(request):
         # One section's charts, loaded as the reader reaches it.
         from django.http import Http404
 
-        charts = report.section_charts(params["charts"])
+        charts = report.section_charts(params["charts"], **_picked(params))
         if charts is None:
             raise Http404("No such section.")
         return render(
@@ -130,11 +173,14 @@ def team_performance_view(request):
         "kinds": KINDS,
         "fy_options": sorted(fy_options(), reverse=True),
         "roster": report.roster,
+        # A CCEO reads only their own figures: the page is theirs (owner,
+        # 2026-10-24: "it should be My performance").
+        "page_title": "My Performance" if report.roster.own else "Team Performance",
         "query": _query(params),
         "can_set_targets": country_targets.may_set(request.user),
     }
     if tab == "summary":
-        context["summary"] = report.executive_summary()
+        context.update(_summary(report, params))
     elif tab == "weekly":
         key, label, scope = report.scope(params.get("scope"))
         context.update(

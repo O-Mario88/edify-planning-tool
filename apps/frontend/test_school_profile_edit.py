@@ -374,6 +374,9 @@ class SchoolProfileEditTest(TestCase):
             self.edit_url,
             self._valid_payload(
                 school_type="core",
+                # A Core school carries its cohort (apps.schools.cohort).
+                core_cohort_year="2025",
+                core_cohort_number="2",
                 school_phone="+256 700 111222",
                 primary_contact_name="Grace Akello",
                 primary_contact_phone="+256 700 333444",
@@ -387,6 +390,9 @@ class SchoolProfileEditTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.school.refresh_from_db()
         self.assertEqual(self.school.school_type, "core")
+        self.assertEqual(
+            (self.school.core_cohort_year, self.school.core_cohort_number), (2025, 2)
+        )
         self.assertEqual(self.school.school_phone, "+256 700 111222")
         self.assertEqual(self.school.primary_contact_name, "Grace Akello")
         self.assertEqual(self.school.primary_contact_phone, "+256 700 333444")

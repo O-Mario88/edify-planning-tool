@@ -286,6 +286,71 @@ def _aggregate_credits(credits, bases):
     return per_activity.aggregate(total=Sum("event_value"))["total"]
 
 
+def aggregate_credits_by_milestone(credits, bases_by_milestone: dict) -> dict:
+    """`_aggregate_credits` for many milestones in two reads, not one each.
+
+    `credits` may hold several milestones' credits (each credit belongs to one
+    milestone through its rule); `bases_by_milestone` maps each milestone id to
+    its active rules' counting bases. Each figure is exactly the one-by-one
+    reading's: distinct schools for a school basis (0 when there are none);
+    otherwise the largest teachers, leaders or credited value per activity,
+    summed (None when there is nothing to add, as a SQL SUM gives). My Targets
+    and a Programme Lead's To-Do queue asked one query per milestone, per
+    period (844 for one Lead, 2026-10-24).
+    """
+    from collections import defaultdict
+
+    from django.db.models import Max
+
+    out: dict = {str(m): None for m in bases_by_milestone}
+    school = [m for m, bases in bases_by_milestone.items() if bases & SCHOOL_BASES]
+    other = [m for m in bases_by_milestone if m not in set(school)]
+    if school:
+        for m in school:
+            out[str(m)] = 0
+        rows = (
+            credits.filter(rule__milestone_id__in=school)
+            .exclude(activity__school__isnull=True)
+            .order_by()
+            .values("rule__milestone_id")
+            .annotate(value=Count("activity__school", distinct=True))
+        )
+        for row in rows:
+            out[str(row["rule__milestone_id"])] = row["value"]
+    if other:
+        field_of = {}
+        for m in other:
+            bases = bases_by_milestone[m]
+            field_of[str(m)] = (
+                "teachers"
+                if bases & TEACHER_BASES
+                else "leaders"
+                if bases & LEADER_BASES
+                else "credited"
+            )
+        totals: dict = defaultdict(lambda: None)
+        rows = (
+            credits.filter(rule__milestone_id__in=other)
+            .order_by()
+            .values("rule__milestone_id", "activity_id")
+            .annotate(
+                teachers=Max("activity__teachers_attended"),
+                leaders=Max("activity__leaders_attended"),
+                credited=Max("credited_value"),
+            )
+        )
+        for row in rows:
+            milestone_id = str(row["rule__milestone_id"])
+            value = row[field_of[milestone_id]]
+            if value is None:
+                continue
+            total = totals[milestone_id]
+            totals[milestone_id] = value if total is None else total + value
+        for m in other:
+            out[str(m)] = totals[str(m)]
+    return out
+
+
 def counts_distinct_entities(milestone) -> bool:
     """Whether this milestone's figure counts entities, not occurrences."""
     return bool(
