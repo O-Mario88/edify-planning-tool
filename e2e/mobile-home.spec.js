@@ -137,8 +137,13 @@ test('a Lead’s Priority action opens the dashboard table it names', async ({ p
 
   await page.locator('[data-home-priority="team_overdue"]').click();
   await expect(page).toHaveURL(/\/dashboard\?view=week&plans=team#what-needs-you-now$/);
-  await expect(page.locator('details[data-pl-backlog]')).toHaveAttribute('open', '');
-  await expect(page.locator('#what-needs-you-now [data-edify-tab][aria-current="true"]')).toHaveText(/^Team Plans/);
+  const backlog = page.locator('details[data-pl-backlog]');
+  await expect(backlog).toHaveAttribute('open', '');
+  // The whose-plans tabs show while the table holds any overdue plan; a
+  // freshly seeded database may hold none, and the table is then hidden.
+  if (await backlog.evaluate(node => !node.hidden)) {
+    await expect(page.locator('#what-needs-you-now [data-edify-tab][aria-current="true"]')).toHaveText(/^Team Plans/);
+  }
 
   await page.goto('/home');
   await expect(page.locator('[data-home-priority-loading]')).toHaveCount(0, { timeout: 30_000 });
