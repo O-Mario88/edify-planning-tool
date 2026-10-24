@@ -100,9 +100,10 @@
 
 /* The greeting is Home's one headline, larger than a page title (owner,
    2026-10-24: "make … the greetings bigger"): the display step scaled, so it
-   moves with the scale, over consistency.css's single title size. */
-.edify-home .edify-home__hero h1.edify-home__greeting {
-  font-size: calc(var(--edify-text-display-size) * 1.45) !important;
+   moves with the scale. Set on its own words: consistency.css holds every
+   h1 itself at the one title size. */
+.edify-home__greeting-words {
+  font-size: calc(var(--edify-text-display-size) * 1.45);
 }
 
 .edify-home__subtitle {

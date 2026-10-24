@@ -4,7 +4,7 @@
 {% block title %}Home — Edify{% endblock %}
 
 {% comment %}The greeting's component is loaded here, ahead of Alpine in the head, as the CCEO dashboard loads it: a deferred script in feature_head_js runs after Alpine has started and read every x-data.{% endcomment %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v=20261024brand5">
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v=20261024brand6">
 <script src="{% static 'js/dashboard-greeting.js' %}?v=20261024clock1" defer></script>{% endblock %}
 
 {% block shell_content %}
@@ -24,7 +24,7 @@ links open pages that run their own permission checks.
       <span class="edify-home__wordmark-rule" aria-hidden="true"></span>
       <span class="edify-home__wordmark-product">Planning &amp;<br>Monitoring</span>
     </div>
-    <h1 class="edify-page-title edify-home__greeting"><span x-data="edifyGreeting({ reloadOnNewDay: true })" x-text="text" data-home-greeting>{{ greeting }}</span>{% if first_name %}, {{ first_name }}{% endif %}</h1>
+    <h1 class="edify-page-title edify-home__greeting"><span class="edify-home__greeting-words"><span x-data="edifyGreeting({ reloadOnNewDay: true })" x-text="text" data-home-greeting>{{ greeting }}</span>{% if first_name %}, {{ first_name }}{% endif %}</span></h1>
     <p class="edify-home__subtitle">Here’s what needs you today</p>
     {% if role_title %}<p class="edify-home__role">{{ role_title }}</p>{% endif %}
   </header>
