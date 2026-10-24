@@ -259,7 +259,10 @@ class PageInventoryTest(SimpleTestCase):
     def test_an_email_answers_to_every_rule_but_its_inline_colours(self):
         """A mail client never loads the stylesheet, so an email's inline hex
         colours and styles are allowed; nothing else is."""
-        source = '<p style="color:#1f2933">x</p><div class="bg-white text-[9px]">'
+        # The tiny-text class is spelt in two pieces so Tailwind, which scans
+        # this file, does not compile it into the shipped stylesheet.
+        tiny = "text-[" + "9px]"
+        source = f'<p style="color:#1f2933">x</p><div class="bg-white {tiny}">'
 
         email = {f.key for f in _template_findings(source, "emails/notice.html")}
         page = {f.key for f in _template_findings(source, "pages/notice.html")}
