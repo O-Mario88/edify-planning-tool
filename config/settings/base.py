@@ -950,11 +950,31 @@ WEBPUSH_SUBJECT = os.environ.get("WEBPUSH_SUBJECT", "mailto:admin@edifyplanning.
 # than waiting for the minute's outbox drain. The drain is the backstop either
 # way. Off where a thread would outlive its transaction (the test runner).
 WEBPUSH_EAGER = _truthy(os.environ.get("WEBPUSH_EAGER"), fallback=True)
+# Push to the Edify app on Android and iPhone (apps.notifications.fcm), through
+# Firebase Cloud Messaging, which hands an iPhone's messages on to Apple. The
+# server needs one credential: the Firebase project's service-account key, as
+# the JSON file's contents or that JSON base64-encoded on one line
+# (FCM_SERVICE_ACCOUNT_JSON), or the path of the file on the server
+# (FCM_SERVICE_ACCOUNT_FILE). Without it the app is not offered push.
+# docs/push-notifications.md says where each credential comes from.
+FCM_SERVICE_ACCOUNT_JSON = os.environ.get("FCM_SERVICE_ACCOUNT_JSON", "").strip()
+FCM_SERVICE_ACCOUNT_FILE = os.environ.get("FCM_SERVICE_ACCOUNT_FILE", "").strip()
+# Email copies of notifications (apps.notifications.email_delivery) are sent
+# as soon as the notification commits, the outbox drain being the backstop.
+NOTIFICATION_EMAIL_EAGER = _truthy(
+    os.environ.get("NOTIFICATION_EMAIL_EAGER"), fallback=True
+)
+# The signing secret of the Resend webhook endpoint (whsec_…), from the
+# Resend dashboard. Delivery, bounce and complaint events are refused until
+# it is set; without it a sent email reads "accepted by provider" and no more.
+RESEND_WEBHOOK_SECRET = os.environ.get("RESEND_WEBHOOK_SECRET", "").strip()
 if IS_TESTING:
     # A developer's own key pair must not make the suite talk to a push
     # service; a test that exercises push sets its own (override_settings).
     WEBPUSH_VAPID_PUBLIC_KEY = WEBPUSH_VAPID_PRIVATE_KEY = ""
+    FCM_SERVICE_ACCOUNT_JSON = FCM_SERVICE_ACCOUNT_FILE = ""
     WEBPUSH_EAGER = False
+    NOTIFICATION_EMAIL_EAGER = False
 
 # Two-factor authentication. Enrolment is per user (User.mfa_enabled, set from
 # the settings page); this turns it on for every account at once, for an

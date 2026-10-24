@@ -949,10 +949,15 @@ class WorkflowNotificationService:
         context_type: str | None = None,
         context_id: str | None = None,
         recipients=None,
+        sender=None,
     ) -> list[Notification]:
         """
         Triggers a workflow event. For each recipient, it verifies access,
         resolves the role-specific route and action label, and saves the Notification.
+
+        ``sender`` is the person who asked, when one did (a follow-up, a
+        reminder): it is recorded on the notification, shown beside it and
+        makes it an emailed one (apps.notifications.email_delivery).
         """
         from apps.accounts.models import User
         from apps.notifications.models import Notification
@@ -970,6 +975,7 @@ class WorkflowNotificationService:
         else:
             recipient_list = [recipients]
 
+        sender_id = (getattr(sender, "id", None) or None) if sender else None
         seen_recipient_ids: set[str] = set()
         sms_targets: list[tuple[User, Notification]] = []
         for r in recipient_list:
@@ -1041,8 +1047,12 @@ class WorkflowNotificationService:
                 # A re-fire is new information; surface it again.
                 existing.status = "unread"
                 existing.read_at = None
+                if sender_id:
+                    existing.sender_id = sender_id
+                    existing._sent_by_person = True
                 existing.save(
                     update_fields=[
+                        "sender_id",
                         "title",
                         "body",
                         "target_route",
@@ -1074,6 +1084,7 @@ class WorkflowNotificationService:
                 source_event_type=event_type,
                 source_event_id=context_id or "",
                 action_required=priority in ("high", "urgent"),
+                sender_id=sender_id,
             )
             created_notifications.append(notif)
             sms_targets.append((user_obj, notif))
@@ -1119,6 +1130,86 @@ class WorkflowNotificationService:
             transaction.on_commit(_publish_notifications)
 
         return created_notifications
+
+
+#: What a person's notification may set, besides who it is for and what it
+#: is about (the lookup).
+_PERSON_FIELDS = frozenset(
+    {
+        "recipient_role",
+        "title",
+        "body",
+        "category",
+        "target_route",
+        "action_label",
+        "action_required",
+        "priority",
+        "status",
+        "source_event_id",
+        "read_at",
+        "resolved_at",
+    }
+)
+
+
+def notify_from_person(
+    sender,
+    *,
+    recipient_id: str,
+    context_type: str,
+    context_id: str,
+    source_event_type: str,
+    defaults: dict,
+) -> tuple[Notification, bool]:
+    """A notification one person sends another — a Send to, a Follow Up, a
+    reminder, a return — as ``update_or_create`` would write it, with two
+    differences: it records who sent it, and sending it again about the same
+    thing is a reminder, which bumps ``reminder_count`` so the recipient's
+    phone and inbox are told again (once per reminder) rather than the bell
+    quietly turning unread. Returns ``(notification, created)``.
+    """
+    unknown = set(defaults) - _PERSON_FIELDS
+    if unknown:
+        raise ValueError(f"notify_from_person cannot set {sorted(unknown)}")
+    sender_id = getattr(sender, "id", None) or None
+    lookup = {
+        "recipient_id": recipient_id,
+        "context_type": context_type,
+        "context_id": context_id,
+        "source_event_type": source_event_type,
+    }
+    with transaction.atomic():
+        existing = (
+            Notification.objects.select_for_update()
+            .filter(**lookup)
+            .order_by("-created_at")
+            .first()
+        )
+        if existing is None:
+            notification = Notification(**lookup, **defaults, sender_id=sender_id)
+            notification.save()
+            return notification, True
+        for field, value in defaults.items():
+            setattr(existing, field, value)
+        fields = [*defaults, "updated_at"]
+        if sender_id:
+            existing.sender_id = sender_id
+            existing.reminder_count = (existing.reminder_count or 0) + 1
+            existing.last_reminded_at = timezone.now()
+            existing._sent_by_person = True
+            fields += ["sender_id", "reminder_count", "last_reminded_at"]
+        existing.save(update_fields=fields)
+        return existing, False
+
+
+def sender_names(notifications) -> dict[str, str]:
+    """Who sent each of ``notifications``, by sender id, in one query."""
+    from apps.accounts.models import User
+
+    ids = {n.sender_id for n in notifications if getattr(n, "sender_id", None)}
+    if not ids:
+        return {}
+    return dict(User.objects.filter(id__in=ids).values_list("id", "name"))
 
 
 def role_recipients(
@@ -1291,5 +1382,6 @@ def _serialize(n: Notification) -> dict:
         "targetRoute": n.target_route,
         "status": n.status,
         "sourceEventType": n.source_event_type,
+        "senderId": n.sender_id,
         "createdAt": n.created_at.isoformat(),
     }

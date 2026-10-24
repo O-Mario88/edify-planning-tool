@@ -91,6 +91,12 @@ class TableBoundsTest(SimpleTestCase):
     #:   2026-10-20): one row per report row (the measures and the 54 sheet
     #:   milestones), every row a field of one form that is saved whole, which
     #:   a pager would break.
+    #: * `pages/system_health/notifications.html` — "Email copies this week"
+    #:   (2026-10-23): one row per delivery status, counted. Bounded by the
+    #:   DeliveryStatus enum (eleven), and read as one table: the statuses
+    #:   beside each other are the point. (The scanner currently credits it
+    #:   with the pager of the problem-copies table just below it, which is
+    #:   records and does page.)
     UNBOUNDED_CEILING = 19
 
     def test_no_new_unbounded_tables(self):

@@ -1,0 +1,17 @@
+{% autoescape off %}Hello {{ recipient_name }},
+
+{% if sender_name %}{{ sender_name }} sent you this on Edify{% else %}Edify has {% if urgent %}an urgent notice{% else %}a notification{% endif %} for you{% endif %}:
+
+{{ title }}
+{% if body %}
+{{ body }}
+{% endif %}
+{{ action_label }}: {{ open_url }}
+You will be asked to sign in first if you are not already.
+
+Sent {{ sent_at|date:"j M Y, H:i" }}.
+
+{% if urgent %}Urgent notices are always emailed.{% else %}Choose what Edify emails you: {{ settings_url }}{% endif %}
+
+— Edify Planning and Monitoring Tool
+{% endautoescape %}

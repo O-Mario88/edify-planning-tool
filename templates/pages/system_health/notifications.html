@@ -1,0 +1,102 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+{% comment %}
+Notification delivery health (administrators): whether each channel is set
+up and working. Credentials are shown as set or not set, never their values.
+{% endcomment %}
+{% block title %}Notification delivery health — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1200px] mx-auto">
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow"><a href="/system-health" class="hover:underline">System Health</a></p>
+      <h1 class="edify-page-title edify-page-header__title">Delivery health</h1>
+      <p class="edify-page-header__description">How notifications reach people: in the app, on their devices and by email. The last 7 days.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <form method="post" action="/system-health/notifications/test">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary h-8">Send me a test notification</button>
+      </form>
+    </div>
+  </div>
+
+  {% if test_sent %}
+  <p role="status" class="rounded-control border border-emerald-200 bg-emerald-50 px-3 py-2 text-[13px] font-semibold text-emerald-800">A test notification is on its way to your bell{% if push.configured %}, your devices{% endif %}{% if email.configured %} and your inbox{% endif %}. Its email copy appears in the table below.</p>
+  {% endif %}
+
+  <section aria-labelledby="channels-heading" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <h2 id="channels-heading" class="sr-only">Channels</h2>
+    <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 space-y-1">
+      <h3 class="text-[14px] font-bold">In the app</h3>
+      <p class="text-[13px]"><span class="font-semibold text-emerald-700">On</span> for everyone. Always the full record.</p>
+      <p class="edify-text-caption edify-text-muted">{{ in_app_week }} notification{{ in_app_week|pluralize }} this week.</p>
+    </div>
+    <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 space-y-1">
+      <h3 class="text-[14px] font-bold">Phone and desktop</h3>
+      {% if push.configured %}
+      <p class="text-[13px]"><span class="font-semibold text-emerald-700">Set up.</span> {{ push.devices }} device{{ push.devices|pluralize }} for {{ push.people }} {{ push.people|pluralize:"person,people" }}.</p>
+      <p class="edify-text-caption edify-text-muted">{{ push.failing }} failing · {{ push.gone }} removed this week (permission withdrawn or app removed){% if push.last_success %} · last delivered {{ push.last_success|date:"j M H:i" }}{% endif %}.</p>
+      <p class="edify-text-caption edify-text-muted">Browsers: {% if push.browsers %}set up{% else %}not set up (WEBPUSH_VAPID_PUBLIC_KEY, WEBPUSH_VAPID_PRIVATE_KEY){% endif %}. Edify app: {% if push.app %}set up, {{ push.app_devices }} phone{{ push.app_devices|pluralize }}{% else %}not set up (FCM_SERVICE_ACCOUNT_JSON){% endif %}.</p>
+      {% else %}
+      <p class="text-[13px]"><span class="font-semibold text-rose-700">Not set up.</span> Set WEBPUSH_VAPID_PUBLIC_KEY and WEBPUSH_VAPID_PRIVATE_KEY (<code>manage.py generate_vapid_keys</code>) for browsers, and FCM_SERVICE_ACCOUNT_JSON for the Edify app (docs/push-notifications.md).</p>
+      {% endif %}
+    </div>
+    <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 space-y-1">
+      <h3 class="text-[14px] font-bold">Email</h3>
+      {% if email.configured %}
+      <p class="text-[13px]"><span class="font-semibold text-emerald-700">Set up</span> with {{ email.provider }}.</p>
+      {% else %}
+      <p class="text-[13px]"><span class="font-semibold text-rose-700">Not set up.</span> Emails are recorded as “Email not set up” and nothing is sent.</p>
+      {% endif %}
+      <dl class="edify-text-caption edify-text-muted space-y-1">
+        <div class="flex flex-wrap gap-x-3"><dt class="font-semibold">Sender</dt><dd>{{ email.sender|default:"Not set" }}</dd></div>
+        <div class="flex flex-wrap gap-x-3"><dt class="font-semibold">API key</dt><dd>{% if email.api_key_set %}Set{% else %}Not set{% endif %}</dd></div>
+        <div class="flex flex-wrap gap-x-3"><dt class="font-semibold">Delivery events</dt><dd>{% if email.webhook_set %}Signed events accepted{% else %}Not set — sent emails stop at “Accepted by provider”{% endif %}</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section aria-labelledby="email-heading" class="edify-surface rounded-surface border border-[var(--edify-border)]">
+    <h2 id="email-heading" class="px-4 pt-3 text-[14px] font-bold">Email copies this week</h2>
+    <div class="overflow-x-auto edify-table-scroll-region">
+      <table class="edify-record-table w-full text-[13px]">
+        <thead><tr><th scope="col" class="text-left">Status</th><th scope="col" class="text-right">Emails</th></tr></thead>
+        <tbody>
+        {% for row in email_counts %}
+          <tr><td>{{ row.label }}</td><td class="text-right tabular-nums">{{ row.count }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="px-4 pb-3 edify-text-caption edify-text-muted">Queue: {{ queue.pending }} waiting to be sent · {{ queue.dead }} given up after every retry.</p>
+  </section>
+
+  <section aria-labelledby="problems-heading" class="edify-surface rounded-surface border border-[var(--edify-border)]">
+    <h2 id="problems-heading" class="px-4 pt-3 text-[14px] font-bold">Recent email problems</h2>
+    {% paginate problems "problems_page" as problems_pager %}
+    {% if problems_pager.total %}
+    <div class="overflow-x-auto edify-table-scroll-region">
+      <table class="edify-record-table w-full text-[13px]">
+        <thead><tr><th scope="col" class="text-left">When</th><th scope="col" class="text-left">Recipient</th><th scope="col" class="text-left">Status</th><th scope="col" class="text-right">Tries</th><th scope="col" class="text-left">Reason</th></tr></thead>
+        <tbody>
+        {% for row in problems_pager.rows %}
+          <tr>
+            <td class="whitespace-nowrap">{{ row.updated_at|date:"j M H:i" }}</td>
+            <td>{{ row.recipient_name|default:"Unknown" }}</td>
+            <td>{{ row.get_status_display }}</td>
+            <td class="text-right tabular-nums">{{ row.attempts }}</td>
+            <td>{{ row.last_error|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=problems_pager param="problems_page" pagination_label="Email problem pages" %}
+    {% else %}
+    <p class="px-4 pb-3 text-[13px] edify-text-muted">None.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
