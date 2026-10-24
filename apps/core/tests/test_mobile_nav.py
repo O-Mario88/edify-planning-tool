@@ -26,6 +26,7 @@ from apps.core.navigation import (
     PL,
     PROJECT_COORDINATOR,
     RVP,
+    build_home_shortcuts_for_user,
     build_mobile_nav_for_user,
     build_sidebar_for_user,
 )
@@ -129,7 +130,7 @@ class MobileNavAuthorizationTests(SimpleTestCase):
             }
             # Standalone destinations are authorized through PAGE_PERMISSIONS
             # rather than the sidebar, so they are allowed to sit outside it.
-            standalone = {"/messages"}
+            standalone = {"/home", "/messages"}
             for item in nav_for(role):
                 with self.subTest(role=role, url=item["url"]):
                     self.assertIn(item["url"], sidebar_urls | standalone)
@@ -174,39 +175,60 @@ class MobileNavDestinationTests(SimpleTestCase):
         self.assertNotIn("Team Targets", {item["label"] for item in items})
         self.assertNotIn("Team Target Oversight", {item["label"] for item in items})
 
-    def test_messages_is_present_for_every_role(self):
-        # PAGE_PERMISSIONS["messages"] is ALL_ROLES, and it is the one shared
-        # destination the mandate names for every persona.
+    def test_every_bar_is_home_two_role_pages_and_messages(self):
+        # Home leads (owner, 2026-10-21, the approved mockup); Messages keeps
+        # its tab and the notification bell its place in the top bar (owner,
+        # same day: "where they were").
+        self.assertEqual(PAGE_PERMISSIONS["home"], ALL_ROLES)
         self.assertEqual(PAGE_PERMISSIONS["messages"], ALL_ROLES)
         for role in ROLE_LABELS:
             with self.subTest(role=role):
-                self.assertIn("/messages", {i["url"] for i in nav_for(role)})
+                urls = [i["url"] for i in nav_for(role)]
+                self.assertEqual(urls[0], "/home")
+                self.assertEqual(urls[-1], "/messages")
+                self.assertNotIn("/notifications", urls)
 
-    def test_lead_destination_for_every_role(self):
-        # Every staff role's phone opens on its dashboard — for the field
-        # roles that is the Today workbench, since Today and Dashboard are one
-        # page (owner, 2026-09-14); a partner's phone opens on their Assigned
-        # Schools intake.
+    def test_the_field_officers_bar_is_the_mockups(self):
+        self.assertEqual(
+            [(i["label"], i["url"]) for i in nav_for(CCEO)],
+            [
+                ("Home", "/home"),
+                ("My Plan", "/my-plan"),
+                ("Schools", "/schools"),
+                ("Messages", "/messages"),
+            ],
+        )
+
+    def test_each_roles_own_home_is_homes_first_shortcut(self):
+        # The page each role's phone used to open on — its dashboard, IA's
+        # own dashboard, Country Oversight, a partner's Assigned Schools
+        # intake — is one tap from Home rather than a tab.
         for role in ROLE_LABELS:
             with self.subTest(role=role):
                 if role == PARTNER:
                     expected = "/partner/assigned-schools"
                 elif role == IA:
-                    # Impact Assessment's home is its own dashboard, not a
-                    # redirect to it (IA review, 2026-09-13).
                     expected = "/ia/dashboard/"
                 elif role == CD:
-                    # Country Oversight is the Country Director's dashboard
-                    # (owner, 2026-09-28).
                     expected = "/country-planning-oversight/"
                 else:
                     expected = "/dashboard"
-                self.assertEqual(nav_for(role)[0]["url"], expected)
+                bar = [i["url"] for i in nav_for(role)]
+                shortcuts = [
+                    i["url"]
+                    for i in build_home_shortcuts_for_user(
+                        _User(ROLE_LABELS[role]), "/home"
+                    )
+                ]
+                if expected in bar:
+                    # A partner's intake is a tab of its own.
+                    self.assertNotIn(expected, shortcuts)
+                else:
+                    self.assertEqual(shortcuts[0], expected)
 
-    def test_portal_roles_lead_with_their_own_home(self):
+    def test_portal_roles_keep_their_own_home_beside_home(self):
         # The MFI portal and the Business Transformation workspace are those
-        # roles' homes, so the phone opens on them rather than on /dashboard,
-        # which only redirects there.
+        # roles' homes, so they are the tab after Home.
         for role, expected in (
             ("MFI_ADMIN", "/mfi-portal/dashboard"),
             ("MFI_OFFICER", "/mfi-portal/dashboard"),
@@ -214,19 +236,26 @@ class MobileNavDestinationTests(SimpleTestCase):
         ):
             with self.subTest(role=role):
                 nav = build_mobile_nav_for_user(_User(role), expected)
-                self.assertEqual(nav[0]["url"], expected)
-                self.assertTrue(nav[0]["active"])
+                self.assertEqual(nav[0]["url"], "/home")
+                self.assertEqual(nav[1]["url"], expected)
+                self.assertTrue(nav[1]["active"])
                 urls = [item["url"] for item in nav]
                 self.assertEqual(len(urls), len(set(urls)))
 
     def test_ia_phone_leads_with_the_days_queue(self):
-        # IA review (2026-09-13): Dashboard, To-Do, the verification queue and
-        # Messages. SSA Verification and Partner Evidence are one tap away in
-        # the Impact Assessment workspace strip.
+        # IA review (2026-09-13): To-Do and the verification queue. SSA
+        # Verification and Partner Evidence are Home shortcuts.
         urls = [item["url"] for item in nav_for(IA)]
-        self.assertEqual(
-            urls, ["/ia/dashboard/", "/todos", "/ia/verification/", "/messages"]
-        )
+        self.assertEqual(urls, ["/home", "/todos", "/ia/verification/", "/messages"])
+
+    def test_shortcuts_never_repeat_a_tab(self):
+        for role in ROLE_LABELS:
+            with self.subTest(role=role):
+                user = _User(ROLE_LABELS[role])
+                bar = {i["url"] for i in nav_for(role)}
+                shortcuts = build_home_shortcuts_for_user(user, "/home")
+                self.assertTrue(shortcuts)
+                self.assertFalse(bar & {i["url"] for i in shortcuts})
 
 
 class MobileNavActiveStateTests(SimpleTestCase):
@@ -235,33 +264,27 @@ class MobileNavActiveStateTests(SimpleTestCase):
         active = [item for item in nav if item["active"]]
         self.assertEqual([i["url"] for i in active], ["/my-plan"])
 
-    def test_dashboard_is_active_on_root(self):
-        # A field role's bar leads with Today, which the root path does not
-        # highlight — the root-active contract belongs to a role whose bar
-        # still carries the dashboard first.
-        # Impact Assessment's bar leads with its own dashboard since the IA
-        # review (2026-09-13), and the Country Director's with Country
-        # Oversight since 2026-09-28, so the Regional VP carries the contract.
-        nav = nav_for(RVP, path="/")
-        self.assertEqual(nav[0]["url"], "/dashboard")
+    def test_home_is_active_on_home_and_only_there(self):
+        nav = nav_for(RVP, path="/home")
+        self.assertEqual(nav[0]["url"], "/home")
         self.assertTrue(nav[0]["active"])
+        self.assertFalse(nav_for(RVP, path="/home/else")[0]["active"])
+        self.assertFalse(nav_for(RVP, path="/dashboard")[0]["active"])
 
-    def test_the_field_bar_leads_with_the_dashboard_that_holds_today(self):
-        # Today and Dashboard are one page (owner, 2026-09-14): no Today slot.
+    def test_the_field_bar_has_no_today_or_dashboard_tab(self):
+        # Today and Dashboard are one page (owner, 2026-09-14), and it is a
+        # Home shortcut now.
         for role in (CCEO, PL, PROJECT_COORDINATOR):
             with self.subTest(role=role):
                 urls = [item["url"] for item in nav_for(role, path="/dashboard")]
-                self.assertEqual(urls[0], "/dashboard")
                 self.assertNotIn("/today", urls)
-                self.assertTrue(nav_for(role, path="/dashboard")[0]["active"])
+                self.assertNotIn("/dashboard", urls)
 
     def test_messages_is_active_on_a_thread_page(self):
         nav = nav_for(CCEO, path="/messages/42")
         messages = [i for i in nav if i["url"] == "/messages"][0]
         self.assertTrue(messages["active"])
 
-
-class MobileNavLabelTests(SimpleTestCase):
     def test_long_sidebar_labels_are_shortened(self):
         nav = nav_for(ACCOUNTANT)
         labels = {i["page_key"]: i["label"] for i in nav}

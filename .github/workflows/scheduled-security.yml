@@ -42,14 +42,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements/dev.txt
 
-      # One advisory is set aside, by its ID alone: CVE-2026-106454
-      # (GHSA-8pqf-f4m5-798g), a ReDoS in Twisted's IMAP server
-      # (twisted/mail/imap4.py wildcardToRegexp). Every Twisted up to 26.4.0,
-      # the newest, is affected and no fix is released. Twisted is here only as
-      # daphne's ASGI reactor; nothing imports twisted.mail and no IMAP server
-      # runs. Drop the flag once a fixed Twisted ships (dependabot will offer it).
+      # No advisory is set aside. CVE-2026-106454, the Twisted IMAP ReDoS this
+      # scan used to skip, is fixed in Twisted 26.10.0rc1, which
+      # requirements/base.txt pins (owner, 2026-10-24).
       - name: Dependency CVE scan
-        run: pip-audit --strict --progress-spinner off --ignore-vuln CVE-2026-106454
+        run: pip-audit --strict --progress-spinner off
 
       - name: Static security analysis
         run: bandit -r apps config -ll -ii

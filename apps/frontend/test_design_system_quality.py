@@ -383,7 +383,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-surface-muted: #121c25",
             "--edify-surface: #151f29",
             "--edify-surface-raised: #1a2732",
-            "--edify-surface-hover: #1e2e3a",
+            # Every hover is Home's Quick access tint over the night card
+            # surface (owner, 2026-10-23: that hover, platform-wide).
+            "--edify-surface-hover: #243a4c",
             "--edify-border: #31404d",
             "--edify-border-strong: #566d7d",
             "--edify-control-border: var(--edify-border-strong)",
@@ -394,7 +396,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-card-border: var(--edify-border)",
             "--edify-table-header: #1a2833",
             "--edify-table-row-alt: #14212b",
-            "--edify-table-row-hover: #1b3446",
+            "--edify-table-row-hover: var(--edify-surface-hover)",
             "--edify-card-shadow:",
             "--edify-card-shadow-hover:",
             "--edify-shadow-sm: none",
@@ -629,6 +631,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             {
                 "templates/pages/hr/conversation_document.html",
                 "templates/pages/ia/review_workspace.html",
+                # Home's blue header runs edge to edge on a phone (owner's
+                # mockup, 2026-10-21); its cards carry their own inset.
+                "templates/pages/home/index.html",
             },
             "Every shell page needs the shared gutter; only purpose-built "
             "full-bleed or print workspaces are exempt.",

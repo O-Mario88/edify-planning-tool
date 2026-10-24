@@ -58,7 +58,10 @@ class MobileFoundationContractTest(SimpleTestCase):
         shell = _read("templates/layouts/shell.html")
         styles = _read("static/css/components/mobile-shell.css")
 
-        self.assertIn("edify-topbar__utility--mobile-redundant", shell)
+        # Messages sits on the top bar on a phone as well as being a bottom-bar
+        # tab, beside the bell, where it always was (owner, 2026-10-21).
+        self.assertIn("edify-topbar__utility--messages", shell)
+        self.assertNotIn("edify-topbar__utility--mobile-redundant", shell)
         self.assertIn("edify-topbar__utility--theme", shell)
         self.assertIn("edify-topbar__date", shell)
         self.assertIn("edify-topbar__utilities", shell)

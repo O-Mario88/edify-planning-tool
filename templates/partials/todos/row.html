@@ -1,4 +1,4 @@
-{% comment %}A single system-generated To-Do row. Param: t (todo dict){% endcomment %}
+{% load frontend_filters %}{% comment %}A single system-generated To-Do row. Param: t (todo dict){% endcomment %}
 <div class="flex items-center gap-2.5 py-2.5 px-1 group">
   <div class="h-8 w-8 rounded-surface flex items-center justify-center shrink-0 text-[15px]
     {% if t.category == 'Evidence' %}edify-primary-soft{% elif t.category == 'Finance' or t.category == 'Budget Approval' %}bg-emerald-50{% elif t.category == 'IA Verification' %}bg-violet-50{% elif t.category == 'SSA' %}bg-amber-50{% elif t.category == 'Leave' %}bg-teal-50{% elif t.category == 'Approval' %}bg-emerald-50{% elif t.category == 'Data Quality' %}bg-slate-100{% elif t.category == 'Planning' %}edify-primary-soft{% else %}bg-slate-50{% endif %}">
@@ -6,7 +6,7 @@
   </div>
   <div class="min-w-0 flex-1">
     <p class="text-[13px] font-bold text-slate-800 truncate leading-tight">{{ t.title }}</p>
-    <p class="edify-text-caption font-semibold text-slate-400 truncate">{{ t.linked }}</p>
+    {% with sub=t.linked|todo_context:t.title %}{% if sub %}<p class="edify-text-caption font-semibold text-slate-400 truncate">{{ sub }}</p>{% endif %}{% endwith %}
   </div>
   <span class="hidden sm:inline-flex items-center px-2 h-5 rounded-pill edify-text-caption font-bold tracking-wide shrink-0
     {% if t.priority == 'critical' %}bg-rose-50 text-rose-600{% elif t.priority == 'high' %}bg-amber-50 text-amber-700{% elif t.priority == 'medium' %}edify-primary-soft edify-primary-text{% else %}bg-slate-100 text-slate-500{% endif %}">{{ t.priority_label }}</span>

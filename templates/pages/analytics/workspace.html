@@ -36,8 +36,9 @@ Context a section view supplies:
 </div>
 
 <div class="border-t border-slate-100 pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between edify-text-caption text-slate-400">
-  <p>All data is provisional and subject to verification. Figures based on activities recorded as of {{ as_of_date }}.</p>
-  <p class="mt-1 sm:mt-0">CCEO Target Scope: active operational assignments.</p>
+  {# The date and the target scope describe the analytics figures; a page built on this workspace without them (the Decision Log) read "recorded as of ." and a CCEO scope to a partner (2026-10-21). #}
+  <p>All data is provisional and subject to verification.{% if as_of_date %} Figures based on activities recorded as of {{ as_of_date }}.{% endif %}</p>
+  {% if as_of_date %}<p class="mt-1 sm:mt-0">CCEO Target Scope: active operational assignments.</p>{% endif %}
 </div>
 
 </div>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Edify</string>
+    <string name="title_activity_main">Edify</string>
+    <string name="package_name">app.edifyplanning.mobile</string>
+    <string name="custom_url_scheme">app.edifyplanning.mobile</string>
+</resources>

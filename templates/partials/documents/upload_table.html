@@ -1,4 +1,4 @@
-{% comment %}
+{% load frontend_filters %}{% comment %}
   The Upload Center table. Rendered by the page and by the HTMX tab/filter
   swap, so both go through one template and cannot drift apart.
 
@@ -28,7 +28,7 @@
       {% for row in rows %}
       <tr class="text-[12px] font-medium text-slate-600">
         <td class="px-3 py-2.5 font-semibold text-slate-700"><a href="{{ row.detail_route }}" class="edify-primary-text">{{ row.title|truncatechars:60 }}</a></td>
-        <td class="px-3 py-2.5">{{ row.record_type|cut:"_"|title }}</td>
+        <td class="px-3 py-2.5">{{ row.record_type|status_label }}</td>
         <td class="px-3 py-2.5">{{ row.workflow_owner }}</td>
         <td class="px-3 py-2.5">{{ row.context|truncatechars:48 }}</td>
         <td class="px-3 py-2.5 tabular-nums">{{ row.version|default:"—" }}</td>

@@ -194,7 +194,21 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: that. Apply the same design to the vertical bar graphs ... apply
     #: platform wide"): the upright columns, the parts of a stacked bar and
     #: the line a click opens, in components.css. Measured 247.74 KB.
-    CSS_GZIP_KB = 248.0
+    #:
+    #: Raised to 248.5 on 2026-10-23 for the phone pass the owner asked for
+    #: ("fix the rest of the mobile UI to have the quality you have put on
+    #: the homepage") and the premium week chip on the top bar: empty tables
+    #: that read whole, row-spanning group labels that wrap, links in a
+    #: sentence kept inline, one header a phone page, filter fields that hold
+    #: their text (consistency.css, components/mobile-micro-ux.css,
+    #: components/interactions.css, components/mobile-shell.css). Home's own
+    #: styles load on Home alone. Measured 248.40 KB.
+    #: Raised to 248.7 the same day for Home's Quick access hover,
+    #: platform-wide (owner: "apply the hover effect of quick access hovers
+    #: to the platform wide"): table rows answer the pointer again and
+    #: Tailwind's light hover utilities take the shared hover token
+    #: (consistency.css). Measured 248.62 KB.
+    CSS_GZIP_KB = 248.7
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
@@ -353,7 +367,14 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: the columns, the shades past two series, a stacked bar's parts and a
     #: line that opens a row, all in chart-standard.js (+1.4 KB). Measured
     #: 152.15 KB.
-    JS_GZIP_KB = 152.75
+    #:
+    #: Raised to 154.0 on 2026-10-21 for the iOS and Android app (mobile/,
+    #: docs/mobile-app.md): static/js/native-shell.js, the back button,
+    #: deep links and the iOS field zoom (+1.9 KB). base.html sends it only to
+    #: the app, which names itself in its user agent, so a browser downloads
+    #: none of it; this scan reads base.html and counts it all the same.
+    #: Measured 153.89 KB.
+    JS_GZIP_KB = 154.0
     INLINE_SCRIPT_KB = 40
 
     @classmethod

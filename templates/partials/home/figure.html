@@ -1,0 +1,8 @@
+{% comment %}One Home figure tile (a registered metric, apps.core.metrics). A figure marked `loading` is still loading
+(the To-Do figures, until /home/queue answers). `oob` marks the copy
+/home/queue sends to replace the loading tile in place.{% endcomment %}<a href="{{ f.url }}" id="home-figure-{{ f.key }}" class="edify-home__figure edify-home__figure--{{ f.tone }}{% if f.loading %} edify-home__figure--loading{% endif %}" data-home-figure="{{ f.key }}"{% if f.loading %} aria-busy="true"{% endif %}{% if oob %} hx-swap-oob="true"{% endif %}>
+  <span class="edify-home__figure-glyph">{% include "partials/home/icon.html" with name=f.icon %}</span>
+  <span class="edify-home__figure-value">{% if f.loading %}<span class="edify-home__skeleton" aria-hidden="true"></span><span class="sr-only">Loading</span>{% else %}{{ f.value }}{% endif %}</span>
+  <span class="edify-home__figure-label">{{ f.label }}</span>
+  <span class="sr-only">: {% firstof f.definition f.helper %}</span>
+</a>

@@ -79,7 +79,7 @@
 .spp-table { width: 100%; min-width: 1110px; border-collapse: collapse; }
 .spp-table th, .spp-summary th { padding: 9px 8px; background: var(--edify-surface-muted); color: var(--edify-text-muted); text-align: left; font-size: var(--edify-text-table-heading-size); line-height: 1.2; font-weight: 700; letter-spacing: .015em; text-transform: uppercase; white-space: nowrap; }
 .spp-table td { padding: 9px 8px; border-top: 1px solid var(--edify-border); color: var(--edify-text-muted); font-size: var(--edify-text-table-size); line-height: 1.35; vertical-align: middle; }
-.spp-table tr:hover td, .spp-table tr.is-selected td { background: color-mix(in srgb, var(--edify-accent) 4.5%, var(--edify-surface)); }
+.spp-table tr:hover td, .spp-table tr.is-selected td { background: var(--edify-surface-hover); }
 .spp-table td:nth-child(2) { min-width: 155px; } .spp-table td:nth-child(3) { min-width: 145px; } .spp-table td:nth-child(4), .spp-table td:nth-child(5) { min-width: 140px; } .spp-table td:nth-child(6) { min-width: 125px; } .spp-table td:nth-child(7) { min-width: 130px; }
 .spp-check { width: 34px; text-align: center !important; }
 .spp-check input { width: 15px; height: 15px; accent-color: var(--edify-accent); }

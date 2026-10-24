@@ -1091,7 +1091,7 @@ a.calendar-event__copy:focus-visible strong {
 
   .calendar-mobile__day:not(:disabled):hover,
   .calendar-mobile__day:not(:disabled):focus-visible {
-    background: var(--edify-surface-muted);
+    background: var(--edify-surface-hover);
     outline: none;
   }
 
