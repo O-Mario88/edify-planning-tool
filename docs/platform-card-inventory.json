@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 597,
-  "templates": 219,
-  "distinct_titles": 571,
+  "titled_cards": 603,
+  "templates": 221,
+  "distinct_titles": 577,
   "with_card_key": 13,
   "untitled_surfaces": 557,
   "untitled_chrome": 153,
@@ -2201,6 +2201,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/pages/notifications/index.html",
+   "line": 271,
+   "title": "How you are told",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-slate-200 rounded-surface p-4 space-y-4 shadow-xs",
+   "branch_path": []
+  },
+  {
    "template": "templates/pages/offline.html",
    "line": 48,
    "title": "Pending uploads ( 0 )",
@@ -2896,7 +2905,7 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 168,
+   "line": 177,
    "title": "Session",
    "heading_level": 2,
    "has_card_key": false,
@@ -3200,6 +3209,51 @@
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-5",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/notifications.html",
+   "line": 31,
+   "title": "In the app",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4 space-y-1",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/notifications.html",
+   "line": 36,
+   "title": "Phone and desktop",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4 space-y-1",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/notifications.html",
+   "line": 46,
+   "title": "Email",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4 space-y-1",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/notifications.html",
+   "line": 61,
+   "title": "Email copies this week",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)]",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/notifications.html",
+   "line": 76,
+   "title": "Recent email problems",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)]",
    "branch_path": []
   },
   {

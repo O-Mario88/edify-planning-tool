@@ -11,7 +11,12 @@ phone that the bell does not hold.
   same unresolved condition (`WorkflowNotificationService.trigger` and every
   other place that creates one: the hook is the model's own ``post_save``).
 * **To whom** — each device the recipient subscribed on and has not turned
-  off (`PushSubscription`).
+  off (`PushSubscription`): a browser (Web Push, `webpush`) or the Edify app
+  on Android or iPhone (Firebase, `fcm`; brief of 2026-10-23).
+* **Whether** — the recipient's push setting (`NotificationPreference`;
+  urgent notices are sent regardless, as for email), an active account, and
+  a role that can still open what the notification is about. Each copy is a
+  `NotificationDelivery` row that says what became of it.
 * **How** — one durable outbox event per notification and device
   (apps.outbox): it commits with the notification or not at all, is retried
   with backoff while the push service or the network is down, and is tried
@@ -42,8 +47,16 @@ from django.utils import timezone
 
 from apps.outbox.services import register
 
-from . import webpush
-from .models import Notification, PushSubscription
+from . import fcm, webpush
+from .models import (
+    DeliveryChannel,
+    DeliveryStatus,
+    Notification,
+    NotificationDelivery,
+    NotificationPreference,
+    PushKind,
+    PushSubscription,
+)
 
 logger = logging.getLogger("edify.notifications.push")
 
@@ -53,6 +66,16 @@ EVENT = "notification.push"
 FRESH_FOR = timedelta(hours=24)
 #: What a phone shows of the body.
 BODY_CHARS = 240
+#: Tries before a copy is given up as failed. The outbox allows more, so the
+#: copy always ends in a state of its own rather than a dead letter.
+MAX_ATTEMPTS = 6
+#: States a queued copy can still be sent from (``sending``: a worker died
+#: mid-send; the tag and topic make a repeat replace the first).
+_SENDABLE = (
+    DeliveryStatus.QUEUED,
+    DeliveryStatus.RETRY_SCHEDULED,
+    DeliveryStatus.SENDING,
+)
 
 
 # ── Subscriptions ───────────────────────────────────────────────────────────
@@ -144,8 +167,83 @@ def unsubscribe(user, endpoint: str, reason: str = "turned_off") -> int:
     ).update(revoked_at=timezone.now(), revoked_reason=reason[:64])
 
 
+#: The phone systems the Edify app runs on, as the app names them.
+APP_PLATFORMS = {"android": PushKind.ANDROID, "ios": PushKind.IOS}
+_APP_DEVICE = {PushKind.ANDROID: "Android", PushKind.IOS: "iPhone"}
+
+
+def register_app(user, token: str, platform: str, user_agent: str = ""):
+    """Record that ``user`` wants notifications in the Edify app on this
+    phone, by the FCM token the app was given. One phone is one row, as for
+    a browser. Returns ``(subscription, created)``."""
+    token = (token or "").strip()
+    kind = APP_PLATFORMS.get((platform or "").strip().lower())
+    if kind is None:
+        raise InvalidSubscription("That is not a phone the Edify app runs on.")
+    if not fcm.valid_token(token):
+        raise InvalidSubscription("That is not a device token for the Edify app.")
+    return PushSubscription.objects.update_or_create(
+        endpoint_hash=endpoint_hash(token),
+        defaults={
+            "user_id": user.id,
+            "kind": kind,
+            "endpoint": token,
+            "p256dh": "",
+            "auth": "",
+            "user_agent": (user_agent or "")[:255],
+            "device_label": f"{_APP_DEVICE[kind]} · Edify app",
+            "last_seen_at": timezone.now(),
+            "revoked_at": None,
+            "revoked_reason": "",
+            "failure_count": 0,
+            "last_error": "",
+        },
+    )
+
+
 def live_subscriptions(user_id):
     return PushSubscription.objects.filter(user_id=user_id, revoked_at__isnull=True)
+
+
+def ready_kinds() -> tuple[str, ...]:
+    """The kinds of device this deployment can send to now."""
+    kinds = (PushKind.WEB,) if webpush.configured() else ()
+    if fcm.configured():
+        kinds += (PushKind.ANDROID, PushKind.IOS)
+    return kinds
+
+
+# ── Who may be sent one ─────────────────────────────────────────────────────
+def is_mandatory(notification: Notification) -> bool:
+    """An urgent notice is pushed whatever the recipient's setting says."""
+    return notification.priority == "urgent"
+
+
+def turned_off(notification: Notification) -> bool:
+    if is_mandatory(notification):
+        return False
+    return NotificationPreference.objects.filter(
+        user_id=notification.recipient_id, push_enabled=False
+    ).exists()
+
+
+def active_recipient(user_id: str):
+    """The recipient, or None when the account is gone or deactivated."""
+    from apps.accounts.models import User
+
+    user = User.objects.filter(id=user_id).first()
+    if user is None or not user.is_active or getattr(user, "deleted_at", None):
+        return None
+    return user
+
+
+def can_open(user, notification: Notification) -> bool:
+    """Can ``user``'s role open what the notification leads to? A role
+    changed since it was raised may no longer reach the page."""
+    from apps.core.permissions import can_open_url
+
+    route = notification.target_route or ""
+    return not route or can_open_url(user, route)
 
 
 # ── What a phone is sent ────────────────────────────────────────────────────
@@ -176,27 +274,51 @@ def payload_for(notification: Notification) -> dict:
 
 # ── Queueing ────────────────────────────────────────────────────────────────
 def enqueue(notification: Notification) -> list[str]:
-    """One durable event for each of the recipient's devices; the keys of
-    those written. Inside the caller's transaction: no notification, no
-    push."""
-    if not webpush.configured():
+    """One delivery row and one durable event for each of the recipient's
+    devices this deployment can reach; the keys of the events written.
+    Inside the caller's transaction: no notification, no push.
+
+    A copy the recipient turned off is recorded as ``suppressed`` and not
+    queued; a deactivated account is sent nothing at all."""
+    kinds = ready_kinds()
+    if not kinds or active_recipient(notification.recipient_id) is None:
         return []
     from apps.outbox.services import enqueue_many
 
     subscriptions = list(
-        live_subscriptions(notification.recipient_id).values_list("id", flat=True)
+        live_subscriptions(notification.recipient_id)
+        .filter(kind__in=kinds)
+        .values_list("id", flat=True)
     )
     if not subscriptions:
         return []
     round_ = notification.reminder_count or 0
-    items = [
-        (
-            {"notificationId": notification.id, "subscriptionId": subscription_id},
-            f"push:{notification.id}:{round_}:{subscription_id}",
+    off = turned_off(notification)
+    items = []
+    for subscription_id in subscriptions:
+        _delivery, created = NotificationDelivery.objects.get_or_create(
+            notification_id=notification.id,
+            channel=DeliveryChannel.PUSH,
+            round=round_,
+            target=subscription_id,
+            defaults={
+                "recipient_id": notification.recipient_id,
+                "status": DeliveryStatus.SUPPRESSED if off else DeliveryStatus.QUEUED,
+            },
         )
-        for subscription_id in subscriptions
-    ]
-    enqueue_many(EVENT, items)
+        if created and not off:
+            items.append(
+                (
+                    {
+                        "notificationId": notification.id,
+                        "subscriptionId": subscription_id,
+                        "round": round_,
+                    },
+                    f"push:{notification.id}:{round_}:{subscription_id}",
+                )
+            )
+    if items:
+        enqueue_many(EVENT, items)
     return [key for _payload, key in items]
 
 
@@ -210,7 +332,10 @@ def _push_on_save(sender, instance, created, update_fields=None, **_kwargs):
     if instance.status != "unread" or instance.resolved_at:
         return
     try:
-        keys = enqueue(instance)
+        # A savepoint of its own: a failure here never poisons the
+        # transaction that raised the notification.
+        with transaction.atomic():
+            keys = enqueue(instance)
     except Exception:  # noqa: BLE001 — a phone copy never undoes the notice
         logger.exception("push could not be queued for %s", instance.id)
         return
@@ -219,97 +344,149 @@ def _push_on_save(sender, instance, created, update_fields=None, **_kwargs):
 
 
 # ── Delivery ────────────────────────────────────────────────────────────────
+def _record(delivery, status: str, **fields) -> None:
+    """Move a copy on; nothing for an event queued before copies were kept."""
+    if delivery is None:
+        return
+    now = timezone.now()
+    if status == DeliveryStatus.FAILED:
+        fields.setdefault("failed_at", now)
+    if "last_error" in fields:
+        fields["last_error"] = (fields["last_error"] or "")[:255]
+    NotificationDelivery.objects.filter(id=delivery.id).update(
+        status=status, updated_at=now, **fields
+    )
+
+
+def _why_not(notification: Notification, subscription) -> tuple[str, str] | None:
+    """Why this copy must not be sent now, as ``(status, sentence)``; None
+    when it may be."""
+    skipped = DeliveryStatus.SKIPPED
+    if subscription.revoked_at:
+        return skipped, "The device was turned off before it was sent."
+    if subscription.user_id != notification.recipient_id:
+        return skipped, "Someone else has since signed in on the device."
+    if notification.status != "unread" or notification.resolved_at:
+        return skipped, "Read in the app, or the work was done, before it was sent."
+    told = notification.last_reminded_at or notification.created_at
+    if told < timezone.now() - FRESH_FOR:
+        return skipped, "More than a day old by the time it could be sent."
+    if subscription.kind not in ready_kinds():
+        return skipped, "Push to this kind of device is not set up here."
+    user = active_recipient(notification.recipient_id)
+    if user is None:
+        return skipped, "The recipient's account is no longer active."
+    if not can_open(user, notification):
+        return skipped, "The recipient's role cannot open what it is about."
+    if turned_off(notification):
+        return DeliveryStatus.SUPPRESSED, "Turned off by the recipient."
+    return None
+
+
+def _send(subscription, notification: Notification) -> str:
+    """One message to one device; the provider's message id, if it gives
+    one."""
+    urgent = notification.priority in ("high", "urgent")
+    ttl = int(FRESH_FOR.total_seconds())
+    if subscription.kind == PushKind.WEB:
+        webpush.send(
+            webpush.Target(
+                subscription.endpoint, subscription.p256dh, subscription.auth
+            ),
+            payload_for(notification),
+            ttl=ttl,
+            urgency="high" if urgent else "normal",
+            topic=notification.id,
+        )
+        return ""
+    return fcm.send(
+        subscription.endpoint,
+        payload_for(notification),
+        ttl=ttl,
+        urgent=urgent,
+        collapse=notification.id,
+    )
+
+
 @register(
     EVENT,
     idempotency_note=(
-        "A replay sends the same notification to the same device with the "
-        "same tag and topic: the push service replaces a copy still waiting "
-        "and the device replaces the one it shows, so the user sees one. A "
-        "notification already read, resolved or a day old is not sent at all."
+        "A replay of a copy already accepted, failed or skipped does nothing "
+        "(its delivery row says so). A replay of one still sending sends the "
+        "same notification to the same device with the same tag and topic "
+        "(collapse id on a phone app): the push service replaces a copy "
+        "still waiting and the device replaces the one it shows."
     ),
+    # It waits on a push service: outside any transaction, so a copy's
+    # "retry scheduled" survives the retry it asks for.
+    atomic=False,
 )
 def handle_push(payload: dict) -> None:
     notification = Notification.objects.filter(id=payload.get("notificationId")).first()
     subscription = PushSubscription.objects.filter(
         id=payload.get("subscriptionId")
     ).first()
-    if notification is None or subscription is None or subscription.revoked_at:
+    if notification is None or subscription is None:
         return
-    if subscription.user_id != notification.recipient_id:
-        # The device was signed in to by someone else since.
+    delivery = NotificationDelivery.objects.filter(
+        notification_id=notification.id,
+        channel=DeliveryChannel.PUSH,
+        round=payload.get("round", notification.reminder_count or 0),
+        target=subscription.id,
+    ).first()
+    if delivery is not None and delivery.status not in _SENDABLE:
         return
-    if notification.status != "unread" or notification.resolved_at:
-        # Read in the app, or the work was done, before the phone was told.
+    refusal = _why_not(notification, subscription)
+    if refusal is not None:
+        _record(delivery, refusal[0], last_error=refusal[1])
         return
-    told = notification.last_reminded_at or notification.created_at
-    if told < timezone.now() - FRESH_FOR:
-        return
+
+    attempts = (delivery.attempts if delivery else 0) + 1
+    _record(delivery, DeliveryStatus.SENDING, attempts=attempts)
     try:
-        webpush.send(
-            webpush.Target(
-                subscription.endpoint, subscription.p256dh, subscription.auth
-            ),
-            payload_for(notification),
-            ttl=int(FRESH_FOR.total_seconds()),
-            urgency="high" if notification.priority in ("high", "urgent") else "normal",
-            topic=notification.id,
-        )
+        message_id = _send(subscription, notification)
     except webpush.PushGone as exc:
-        # Permission withdrawn, app removed or subscription expired.
+        # Permission withdrawn, app removed, or token or subscription
+        # expired: never tried again.
         PushSubscription.objects.filter(id=subscription.id).update(
             revoked_at=timezone.now(),
             revoked_reason="gone",
             last_error=str(exc)[:255],
         )
+        _record(delivery, DeliveryStatus.FAILED, last_error=f"Device gone: {exc}")
     except webpush.PushRejected as exc:
         # The same request will be refused again: recorded, not retried.
         logger.warning("push refused for %s: %s", subscription.id, exc)
         PushSubscription.objects.filter(id=subscription.id).update(
             failure_count=subscription.failure_count + 1, last_error=str(exc)[:255]
         )
+        _record(delivery, DeliveryStatus.FAILED, last_error=str(exc))
+    except webpush.PushUnavailable as exc:
+        if attempts < MAX_ATTEMPTS:
+            _record(delivery, DeliveryStatus.RETRY_SCHEDULED, last_error=str(exc))
+            raise  # the outbox tries again with backoff
+        _record(delivery, DeliveryStatus.FAILED, last_error=str(exc))
     else:
         PushSubscription.objects.filter(id=subscription.id).update(
             last_success_at=timezone.now(), failure_count=0, last_error=""
         )
-    # `PushUnavailable` is not caught: the outbox retries it with backoff.
+        _record(
+            delivery,
+            DeliveryStatus.ACCEPTED,
+            provider_message_id=(message_id or "")[:128],
+            sent_at=timezone.now(),
+            last_error="",
+        )
 
 
 def deliver(keys: list[str]) -> dict:
-    """Run the queued events of ``keys`` now, as the outbox's drain would:
-    claimed with SKIP LOCKED so the scheduler's drain and this never send the
-    same one, each in its own transaction, a failure left pending for the
-    drain's next attempt."""
-    from apps.outbox.models import OutboxEvent, OutboxStatus
-    from apps.outbox.services import CLAIM_SECONDS, _finish
+    """Run the queued events of ``keys`` now, as the outbox's drain would
+    (claimed with SKIP LOCKED, so the drain and this never send the same
+    one; a failure is left pending for the drain's next attempt)."""
+    from apps.outbox.services import run_now
 
-    now = timezone.now()
-    with transaction.atomic():
-        claimed = list(
-            OutboxEvent.objects.select_for_update(skip_locked=True)
-            .filter(
-                idempotency_key__in=keys,
-                status=OutboxStatus.PENDING,
-                next_attempt_at__lte=now,
-            )
-            .values_list("id", "payload")
-        )
-        OutboxEvent.objects.filter(id__in=[pk for pk, _p in claimed]).update(
-            status=OutboxStatus.PROCESSING,
-            locked_by="push-eager",
-            locked_until=now + timedelta(seconds=CLAIM_SECONDS),
-        )
-    sent = failed = 0
-    for event_id, payload in claimed:
-        try:
-            with transaction.atomic():
-                handle_push(payload)
-        except Exception as exc:  # noqa: BLE001 — recorded; the drain retries
-            _finish(event_id, error=f"{type(exc).__name__}: {exc}")
-            failed += 1
-        else:
-            _finish(event_id, error=None)
-            sent += 1
-    return {"sent": sent, "failed": failed}
+    result = run_now(keys, worker_id="push-eager")
+    return {"sent": result["succeeded"], "failed": result["failed"]}
 
 
 def deliver_soon(keys: list[str]) -> None:

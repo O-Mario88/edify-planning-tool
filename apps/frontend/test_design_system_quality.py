@@ -1098,7 +1098,13 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
 
         pattern = re.compile(r'style="[^"]*border-radius', re.IGNORECASE)
         offenders = []
+        # An email is drawn by the reader's mail client, which never loads the
+        # token scale: an inline radius is the only radius it can have
+        # (apps.system_health.page_inventory, _EMAIL_TEMPLATES).
+        emails = ROOT / "templates" / "emails"
         for path in self._templates():
+            if emails in path.parents:
+                continue
             with open(path, encoding="utf-8", errors="ignore") as handle:
                 for lineno, line in enumerate(handle, 1):
                     if pattern.search(line):

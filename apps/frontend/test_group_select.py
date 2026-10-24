@@ -162,6 +162,8 @@ class SelectAllContract(SimpleTestCase):
         "partials/today/queue_row.html": "one attestation in each item's own form",
         "partials/activities/pick_cell.html": "one box; its table's header "
         "carries the Select all (pick_head.html)",
+        "pages/notifications/index.html": "the email categories a person "
+        "mutes; muting every one is the 'Email me' switch just above them",
     }
     MARKERS = (
         "data-select-all",

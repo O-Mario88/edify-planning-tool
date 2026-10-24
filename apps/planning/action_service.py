@@ -571,7 +571,7 @@ def _announce(action: TeamAction, *, sender, school, issue, playbook) -> None:
     """
     from apps.audit.services import log
     from apps.messaging.services import workflow_message
-    from apps.notifications.models import Notification
+    from apps.notifications.services import notify_from_person
 
     sender_name = getattr(sender, "name", None) or "A colleague"
     why = issue.get("detail") or playbook["why"]
@@ -583,7 +583,8 @@ def _announce(action: TeamAction, *, sender, school, issue, playbook) -> None:
         f"{school.name}. {why} Due {due}."
     )
 
-    Notification.objects.update_or_create(
+    notify_from_person(
+        sender,
         recipient_id=action.recipient_id,
         context_type="TeamAction",
         context_id=action.id,
@@ -694,7 +695,7 @@ def notify_role_queue(
     from apps.accounts.models import User
     from apps.audit.services import log
     from apps.messaging.services import workflow_message
-    from apps.notifications.models import Notification
+    from apps.notifications.services import notify_from_person
 
     holders = User.objects.filter(
         roles__contains=[role], status="active", deleted_at__isnull=True
@@ -720,7 +721,8 @@ def notify_role_queue(
         # update_or_create per recipient: a second nudge about the same record
         # refreshes the one notification rather than stacking, which is what
         # keeps the queue's unread count meaningful.
-        Notification.objects.update_or_create(
+        notify_from_person(
+            sender,
             recipient_id=recipient_id,
             context_type=context_type,
             context_id=context_id,

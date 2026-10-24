@@ -372,6 +372,7 @@ def send_follow_up(
                 title=f"Reminder: {issue.label}",
                 body=_lead_body(existing, issue, reminder=True),
                 event="planning_followup_assigned",
+                sender=sender,
             )
             planning_fu._audit(
                 "reminded",
@@ -456,6 +457,7 @@ def send_follow_up(
             title=f"Follow up: {issue.label}",
             body=_lead_body(followup, issue),
             event="planning_followup_assigned",
+            sender=sender,
         )
         planning_fu._audit(
             "sent",

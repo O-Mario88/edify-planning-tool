@@ -14654,6 +14654,31 @@
    "view": "apps.frontend.views.staff_views.mark_all_notifications_read"
   },
   {
+   "page_permission": "dashboard",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/notifications/settings",
+   "route_name": "notification_settings",
+   "view": "apps.frontend.views.staff_views.notification_settings_view"
+  },
+  {
    "page_permission": "offboarding",
    "required_permissions": [],
    "role_exclusive": false,
@@ -18912,6 +18937,28 @@
    "view": "apps.frontend.views.analytics_views.system_health_view"
   },
   {
+   "page_permission": "system_health",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Admin"
+   ],
+   "route": "/system-health/notifications",
+   "route_name": "notification_delivery_health",
+   "view": "apps.frontend.views.notification_health_views.delivery_health_view"
+  },
+  {
+   "page_permission": "system_health",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Admin"
+   ],
+   "route": "/system-health/notifications/test",
+   "route_name": "notification_delivery_test",
+   "view": "apps.frontend.views.notification_health_views.send_test_notification_view"
+  },
+  {
    "page_permission": "target_distribution",
    "required_permissions": [],
    "role_exclusive": false,
@@ -19838,28 +19885,28 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 466,
-  "Admin": 1117,
-  "BusinessTransformationOfficer": 244,
-  "CCEO": 594,
-  "CountryDirector": 853,
-  "HumanResources": 333,
-  "ImpactAssessment": 721,
-  "MfiLoanOfficer": 138,
-  "MfiPartnerAdmin": 141,
-  "PartnerAdmin": 241,
-  "PartnerFieldOfficer": 241,
-  "Program Lead": 700,
-  "ProjectCoordinator": 495,
-  "RegionalProgramLead": 355,
-  "RegionalVicePresident": 431
+  "Accountant": 467,
+  "Admin": 1120,
+  "BusinessTransformationOfficer": 245,
+  "CCEO": 595,
+  "CountryDirector": 854,
+  "HumanResources": 334,
+  "ImpactAssessment": 722,
+  "MfiLoanOfficer": 139,
+  "MfiPartnerAdmin": 142,
+  "PartnerAdmin": 242,
+  "PartnerFieldOfficer": 242,
+  "Program Lead": 701,
+  "ProjectCoordinator": 496,
+  "RegionalProgramLead": 356,
+  "RegionalVicePresident": 432
  },
  "summary": {
   "page_keys_declared": 185,
   "page_keys_in_navigation": 202,
-  "routes_guarded": 1214,
-  "routes_total": 1417,
-  "routes_unguarded": 203,
+  "routes_guarded": 1217,
+  "routes_total": 1423,
+  "routes_unguarded": 206,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -20867,8 +20914,29 @@
   {
    "page_permission": "",
    "required_permissions": [],
+   "route": "/api/notifications(?:/|)email/events",
+   "route_name": "email-provider-events",
+   "view": "apps.notifications.views.email_provider_events"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
    "route": "/api/notifications(?:/|)mark-all-read",
    "route_name": "mark-all-read",
+   "view": "apps.notifications.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/notifications(?:/|)push/app/register",
+   "route_name": "push-app-register",
+   "view": "apps.notifications.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/notifications(?:/|)push/app/unregister",
+   "route_name": "push-app-unregister",
    "view": "apps.notifications.views.view"
   },
   {

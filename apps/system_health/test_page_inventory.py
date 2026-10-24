@@ -256,6 +256,20 @@ class PageInventoryTest(SimpleTestCase):
                 outstanding.append((name, finding.key))
         self.assertEqual(outstanding, [])
 
+    def test_an_email_answers_to_every_rule_but_its_inline_colours(self):
+        """A mail client never loads the stylesheet, so an email's inline hex
+        colours and styles are allowed; nothing else is."""
+        source = '<p style="color:#1f2933">x</p><div class="bg-white text-[9px]">'
+
+        email = {f.key for f in _template_findings(source, "emails/notice.html")}
+        page = {f.key for f in _template_findings(source, "pages/notice.html")}
+
+        self.assertNotIn("raw-hex", email)
+        self.assertNotIn("inline-style", email)
+        self.assertIn("legacy-white-surface", email)
+        self.assertIn("tiny-text", email)
+        self.assertIn("raw-hex", page)
+
     def test_a_delegating_view_is_credited_with_the_page_its_renderer_serves(self):
         """The scanner follows one hop of delegation and leads with the page.
 

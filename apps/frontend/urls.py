@@ -31,6 +31,7 @@ from .views import (
     analytics_retired,
     profile_decisions,
     analytics_views,
+    notification_health_views,
     staff_views,
     finance_views,
     partner_views,
@@ -1660,6 +1661,16 @@ urlpatterns = [
         name="analytics_customize_dashboard",
     ),
     path("system-health", analytics_views.system_health_view, name="system_health"),
+    path(
+        "system-health/notifications",
+        notification_health_views.delivery_health_view,
+        name="notification_delivery_health",
+    ),
+    path(
+        "system-health/notifications/test",
+        notification_health_views.send_test_notification_view,
+        name="notification_delivery_test",
+    ),
     # ── GROUP 1: Core Operations ──────────────────────────────────────────────
     # Staff Directory & Profiles
     path("staff", staff_views.staff_directory_view, name="staff_directory"),
@@ -2009,6 +2020,11 @@ urlpatterns = [
         name="notifications",
     ),
     path("notifications/", staff_views.notifications_page_view),
+    path(
+        "notifications/settings",
+        staff_views.notification_settings_view,
+        name="notification_settings",
+    ),
     path(
         "notifications/drawer",
         staff_views.notification_drawer_view,

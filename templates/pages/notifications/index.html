@@ -202,6 +202,7 @@
               <!-- Linked Record Meta info -->
               <div class="flex items-center gap-4 edify-text-caption text-slate-400 font-semibold pt-1">
                 <span>{{ n.created_at|date:"M j, Y H:i" }}</span>
+                {% if n.sender_name %}<span class="text-slate-500">From {{ n.sender_name }}</span>{% endif %}
                 {% if n.context_type %}
                   <span class="flex items-center gap-1 select-none">
                     <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg> Link: <strong class="text-slate-500 font-bold uppercase">{{ n.context_type }} ({{ n.context_id }})</strong>
@@ -264,5 +265,62 @@
       </div>
     {% endif %}
   </div>
+
+  {% comment %}How this person is told beyond the bell (apps.notifications.email_delivery).
+  The bell always holds everything; these settings cover the phone and email copies.{% endcomment %}
+  <section id="delivery-settings" aria-labelledby="delivery-settings-heading" class="edify-surface border border-slate-200 rounded-surface p-4 space-y-4 shadow-xs">
+    <div>
+      <h2 id="delivery-settings-heading" class="text-[15px] font-bold text-slate-800">How you are told</h2>
+      <p class="text-[13px] text-slate-500">Everything is always here in Edify. Choose where else it reaches you.</p>
+    </div>
+
+    <div class="space-y-1" data-push-control>
+      <h3 class="text-[13px] font-bold text-slate-700">This phone or computer</h3>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <p class="text-[13px] text-slate-500" data-push-status>Checking notifications on this device…</p>
+        <button type="button" class="btn btn-secondary h-8 shrink-0" data-push-toggle hidden></button>
+      </div>
+    </div>
+
+    <form method="post" action="/notifications/settings" class="space-y-4 border-t border-slate-100 pt-3">
+      {% csrf_token %}
+      <div class="space-y-2">
+      <h3 class="text-[13px] font-bold text-slate-700">All your phones and computers</h3>
+      <p class="text-[13px] text-slate-500">Every notification, on each device you turned on above. Urgent notices still reach them.</p>
+      <label class="flex items-center gap-2 text-[13px] font-semibold text-slate-800 min-h-11">
+        <input type="checkbox" name="push_enabled" {% if delivery.push_enabled %}checked{% endif %} class="h-4 w-4">
+        Send push notifications
+      </label>
+      </div>
+      <div class="space-y-2 border-t border-slate-100 pt-3">
+      <h3 class="text-[13px] font-bold text-slate-700">Email to {{ delivery.address }}</h3>
+      {% if not delivery.email_configured %}
+      <p class="text-[13px] text-amber-700">Email is not set up on this server yet, so nothing is emailed for now. Your choice is kept for when it is.</p>
+      {% endif %}
+      <p class="text-[13px] text-slate-500">Only what someone sends you (a Send to, a Follow Up, a reminder) and urgent notices are emailed. Urgent notices are always emailed.</p>
+      <label class="flex items-center gap-2 text-[13px] font-semibold text-slate-800 min-h-11">
+        <input type="checkbox" name="email_enabled" {% if delivery.email_enabled %}checked{% endif %} class="h-4 w-4">
+        Email me
+      </label>
+      {% if delivery.categories %}
+      <fieldset class="space-y-1">
+        <legend class="text-[13px] text-slate-500">Don't email me about:</legend>
+        <div class="flex flex-wrap gap-x-4 gap-y-1">
+        {% for cat in delivery.categories %}
+          <label class="flex items-center gap-2 text-[13px] text-slate-700 min-h-11">
+            <input type="checkbox" name="muted" value="{{ cat }}" {% if cat in delivery.muted %}checked{% endif %} class="h-4 w-4">
+            {{ cat|title }}
+          </label>
+        {% endfor %}
+        </div>
+      </fieldset>
+      {% endif %}
+      </div>
+      <div class="flex items-center gap-3">
+        <button type="submit" class="btn btn-primary h-8">Save</button>
+        {% if delivery.saved %}<span role="status" class="text-[13px] font-semibold text-emerald-700">Saved.</span>{% endif %}
+      </div>
+    </form>
+  </section>
 </div>
 {% endblock %}
