@@ -68,4 +68,36 @@
     },
     true
   );
+
+  /*
+   * A link that names a place on the dashboard (Home's Priority actions,
+   * owner 2026-10-24: "#monitor-list", "#completion-reviews",
+   * "#what-needs-you-now") is brought into view once each section has loaded:
+   * the place may only arrive with a section, or be pushed down by one that
+   * arrives above it. The reader's own first scroll, tap or key ends this, so
+   * the page never pulls them back.
+   */
+  var wanted = "";
+  try {
+    wanted = decodeURIComponent((window.location.hash || "").slice(1));
+  } catch (error) {
+    wanted = "";
+  }
+  if (!wanted) return;
+  var moved = false;
+  ["wheel", "touchstart", "pointerdown", "keydown"].forEach(function (name) {
+    window.addEventListener(
+      name,
+      function () {
+        moved = true;
+      },
+      { passive: true, capture: true }
+    );
+  });
+  document.addEventListener("htmx:afterSettle", function (event) {
+    if (moved || !event.target || !event.target.closest) return;
+    if (!event.target.closest("[data-dashboard-embed]")) return;
+    var place = document.getElementById(wanted);
+    if (place) place.scrollIntoView({ block: "start" });
+  });
 })();

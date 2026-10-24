@@ -356,7 +356,7 @@ class MailOutageDuringSignInTest(TestCase):
         codes = re.findall(r"\b(\d{6})\b", "\n".join(sent))
         self.assertTrue(codes, "no code went out after the provider recovered")
         response = client.post("/login/verify", {"code": codes[-1]})
-        self.assertEqual(response["Location"], "/dashboard")
+        self.assertEqual(response["Location"], "/home")
         self.assertIn("_auth_user_id", client.session)
 
 

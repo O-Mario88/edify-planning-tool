@@ -11,7 +11,7 @@ class RootRouteTest(TestCase):
         self.assertContains(response, "Access workspace")
         self.assertNotContains(response, "Preparing your workspace")
 
-    def test_root_sends_authenticated_users_to_dashboard(self):
+    def test_root_sends_authenticated_users_to_home(self):
         user = get_user_model().objects.create_user(
             email="root-route@example.com",
             password="Strong-password-123!",
@@ -21,4 +21,4 @@ class RootRouteTest(TestCase):
 
         response = self.client.get("/")
 
-        self.assertRedirects(response, "/dashboard", fetch_redirect_response=False)
+        self.assertRedirects(response, "/home", fetch_redirect_response=False)

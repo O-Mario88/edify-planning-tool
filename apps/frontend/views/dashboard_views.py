@@ -362,9 +362,13 @@ def _program_lead_dashboard(request, avatar_initials: str):
     )
     attention = data.get("leadership_attention") or []
     first = attention[0] if attention else None
+    from apps.frontend.views.dashboard_embed import PLANNING_MONITOR
     from apps.my_plan.past_due_service import get_past_due_dashboard_context
 
-    past_due_data = get_past_due_dashboard_context(user)
+    # ?plans=own|team opens the overdue table on whose plans Home's row named.
+    past_due_data = get_past_due_dashboard_context(
+        user, scope=(request.GET.get("plans") or "").strip()
+    )
     context = {
         **data,
         **past_due_data,
@@ -375,6 +379,12 @@ def _program_lead_dashboard(request, avatar_initials: str):
         "fy_options": fy_options(),
         "dashboard_view": view,
         "week": week,
+        # Opened for one table (Home's Priority actions: ?plans= or a carried
+        # monitor table): the team's past-due popup does not cover it.
+        "opened_for_table": bool(
+            past_due_data.get("past_due_scope")
+            or request.GET.get(PLANNING_MONITOR.param)
+        ),
         "mobile_status_label": f"Needs attention: {len(attention)}",
         # The phone opens on the most pressing thing the lead has to do; with
         # nothing waiting, on the team's plans.

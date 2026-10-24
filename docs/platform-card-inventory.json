@@ -4465,56 +4465,56 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 100,
+   "line": 98,
    "title": "No past due plans",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised p-6 text-center shadow-xs",
    "branch_path": [
     [
-     2,
+     4,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 111,
+   "line": 109,
    "title": "School Visits (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs",
    "branch_path": [
     [
-     2,
+     4,
      1
     ]
    ]
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 284,
+   "line": 282,
    "title": "Trainings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs",
    "branch_path": [
     [
-     2,
+     4,
      1
     ]
    ]
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 455,
+   "line": 453,
    "title": "Cluster Meetings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs",
    "branch_path": [
     [
-     2,
+     4,
      1
     ]
    ]
@@ -5474,7 +5474,7 @@
    "title": "Completion ReviewsWaiting on you",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card scroll-mt-20",
    "branch_path": []
   },
   {

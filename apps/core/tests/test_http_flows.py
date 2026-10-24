@@ -112,11 +112,19 @@ class AnonymousAccessFlowTest(BaseFlowTest):
         r = self.client.get("/login")
         self.assertEqual(r.status_code, 200)
 
-    def test_login_with_valid_credentials_succeeds(self):
+    def test_login_with_valid_credentials_lands_on_home(self):
+        # Signing in opens Home, the task-first page (owner, 2026-10-24).
         u = self._cceo(password="Secret-1!")
         r = self.client.post("/login", {"email": u.email, "password": "Secret-1!"})
         self.assertEqual(r.status_code, 302)
-        self.assertEqual(r["Location"], "/dashboard")
+        self.assertEqual(r["Location"], "/home")
+
+    def test_a_signed_in_visit_to_the_sign_in_page_opens_home(self):
+        u = self._cceo(password="Secret-1!")
+        self.client.force_login(u)
+        for path in ("/", "/login"):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path)["Location"], "/home")
 
     def test_login_with_wrong_password_fails(self):
         u = self._cceo(password="Secret-1!")

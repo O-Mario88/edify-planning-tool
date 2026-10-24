@@ -535,7 +535,7 @@ class AdminUserOperationsTest(TestCase):
             },
         )
         self.assertEqual(res.status_code, 302)
-        self.assertIn("/dashboard", res.url)
+        self.assertIn("/home", res.url)
 
         target.refresh_from_db()
         self.assertFalse(target.must_change_password)

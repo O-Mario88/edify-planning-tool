@@ -172,8 +172,18 @@ LISTS = (
     ("not_yet_planned", "Not yet planned"),
     ("duplicates", "Booked more than once"),
     ("core_no_partner_half", "Core schools without their Partner half"),
+    # Home's school rows (owner, 2026-10-24: "Schools with no training and no
+    # visits should include the planned and not completed activities. ONLY
+    # schools with completed visits or training or ssa are not fetched"). Done
+    # is approved, as the monitor counts it everywhere (`_delivered_statuses`).
+    ("not_visited", "No visit completed this year"),
+    ("not_trained", "No training completed this year"),
+    ("no_ssa", "No confirmed SSA this year"),
 )
 LIST_KEYS = frozenset(key for key, _label in LISTS)
+#: Lists of the schools a visit, a training and an SSA are asked of: the
+#: monitored types only, never the outreach-only schools a person holds.
+MONITORED_LISTS = frozenset(("not_visited", "not_trained", "no_ssa"))
 GAP_LABELS = {**dict(GAPS), **dict(LISTS)}
 
 
@@ -263,6 +273,12 @@ def in_list(school, key: str) -> bool:
         return readiness.is_duplicate(school)
     if key == "core_no_partner_half":
         return readiness.core_missing_partner_half(school)
+    if key == "not_visited":
+        return not school.visit_done
+    if key == "not_trained":
+        return school.needs_training and not school.training_done
+    if key == "no_ssa":
+        return not school.ssa_done
     return False
 
 
@@ -273,7 +289,7 @@ def list_schools(officers, key: str, *, school_type: str = "") -> list:
     found = []
     for officer in officers:
         held = officer.schools
-        if key in LIST_KEYS:
+        if key in LIST_KEYS and key not in MONITORED_LISTS:
             held = [*officer.schools, *officer.outreach_schools]
         for school in held:
             if school_type and (school.school_type or "") != school_type:
@@ -326,6 +342,8 @@ class SchoolState:
     staff_ssa_visits: int = 0
     staff_visits_done: int = 0
     partner_visits: int = 0
+    # Of those, the Partner's visits delivered and approved.
+    partner_visits_done: int = 0
     # Counted visits in a Partner's hands that the Partner has not dated.
     partner_visits_undated: int = 0
     partner_pending: int = 0
@@ -343,6 +361,8 @@ class SchoolState:
     core_partner_trainings: int = 0
     # The staff half's trainings, to the two it takes (owner, 2026-10-03).
     core_staff_trainings: int = 0
+    # A confirmed SSA of the year (apps.ssa.current_year).
+    ssa_done: bool = False
 
     @property
     def is_core(self) -> bool:
@@ -355,6 +375,12 @@ class SchoolState:
     @property
     def has_partner(self) -> bool:
         return bool(self.partner_visits or self.partner_pending)
+
+    @property
+    def visit_done(self) -> bool:
+        """A counted visit here was delivered and approved, by staff or by a
+        Partner."""
+        return bool(self.staff_visits_done or self.partner_visits_done)
 
     @property
     def awaiting_partner(self) -> bool:
@@ -1058,9 +1084,30 @@ def _school_states(base, fy: str) -> tuple[dict, dict]:
         _count_cluster_sessions(schools, school_ids, fy)
         _mark_projects(schools, school_ids)
         _count_core_packages(schools, fy)
+        _mark_ssa(schools, school_ids, fy)
     if outreach:
         _mark_projects(outreach, list(outreach))
     return schools, outreach
+
+
+def _mark_ssa(schools: dict, school_ids, fy: str) -> None:
+    """The schools with a confirmed SSA of ``fy``: the School Directory's
+    "No Confirmed SSA" read from the same records (apps.schools.data_gaps)."""
+    from apps.ssa.current_year import CURRENT_SSA_STATUSES
+    from apps.ssa.models import SsaRecord
+
+    for school_id in (
+        SsaRecord.objects.filter(
+            school_id__in=school_ids,
+            fy=str(fy),
+            deleted_at__isnull=True,
+            verification_status__in=CURRENT_SSA_STATUSES,
+        )
+        .values_list("school_id", flat=True)
+        .distinct()
+    ):
+        if school_id in schools:
+            schools[school_id].ssa_done = True
 
 
 def training_reach(principal, fy: str) -> dict[str, tuple[int, int]]:
@@ -1381,6 +1428,8 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
             continue
         if delivery_type == "partner":
             school.partner_visits += n
+            if status in delivered:
+                school.partner_visits_done += n
         else:
             school.staff_visits += n
             school.staff_ssa_visits += ssa

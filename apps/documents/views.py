@@ -482,10 +482,11 @@ def agreement_center_view(request):
 
 
 def _next_blocking_destination(user) -> str:
-    """The next required document, or the workspace when onboarding is done."""
+    """The next required document, or Home when onboarding is done: the end
+    of signing in lands there as signing in does (owner, 2026-10-24)."""
     pending = PolicyGateService.blocking_acknowledgements(user)
     if not pending:
-        return "/dashboard"
+        return "/home"
     priority = {"edify-safeguarding-policy": 0, "edify-apostles-creed": 1}
     canonical_pending = sorted(
         (ack for ack in pending if ack.document.slug in priority),
