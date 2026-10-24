@@ -215,7 +215,7 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: until its session is confirmed (components/mobile-shell.css), a phone
     #: role home's label kept above its title (components/interactions.css)
     #: and its count captioned (components/mobile-patterns.css), comments
-    #: cut to the bone. Measured 249.21 KB.
+    #: cut to the bone. Measured 249.22 KB with main's notification styles.
     CSS_GZIP_KB = 249.3
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through

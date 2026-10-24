@@ -596,14 +596,12 @@
    (MOBILE_NAV_SHORT_LABELS in apps/core/navigation.py — School Directory is
    "Schools"), never a second line (owner, 2026-09-27). */
 
-/* ── App feel (2026-10-24) ── No grey tap flash: controls have their own
-   pressed state (components/interactions.css). */
+/* App feel (2026-10-24): no tap flash; controls have a pressed state. */
 html {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* In the app (native-shell.js marks <html>) a long press on a control is
-   not text: no callout or selection. Text and fields stay selectable. */
+/* In the app a long-pressed control shows no callout or selection. */
 [data-native-app]
   :is(
     button,
@@ -622,8 +620,7 @@ html {
   user-select: none;
 }
 
-/* Phones and tablets: pages cross-fade, the bars stay put. Desktop, less
-   motion and browsers without view transitions change page as before. */
+/* Phones and tablets: pages cross-fade, the bars stay put. */
 @media (max-width: 1023.98px) and (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;
@@ -659,8 +656,7 @@ html {
   }
 }
 
-/* A school name in a list's phone cards was a 17px target: its hit area
-   grows, cancelled by a negative margin, so nothing moves. */
+/* A list card's school name: a larger hit area that moves nothing. */
 @media (pointer: coarse) {
   main :is(.school-record-row__link, .school-link):not(:is(td, th) *) {
     display: inline-block;
