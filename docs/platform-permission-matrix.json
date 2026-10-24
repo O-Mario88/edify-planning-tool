@@ -19061,6 +19061,36 @@
    "view": "apps.frontend.views.target_distribution_views.team_distribution_action"
   },
   {
+   "page_permission": "team_performance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/team-performance/",
+   "route_name": "team_performance",
+   "view": "apps.frontend.views.team_performance_views.team_performance_view"
+  },
+  {
+   "page_permission": "team_performance_targets",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/team-performance/country-targets/",
+   "route_name": "team_performance_country_targets",
+   "view": "apps.frontend.views.team_performance_views.country_targets_view"
+  },
+  {
    "page_permission": "team_planning_oversight",
    "required_permissions": [],
    "role_exclusive": false,
@@ -19886,26 +19916,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 467,
-  "Admin": 1120,
+  "Admin": 1122,
   "BusinessTransformationOfficer": 245,
-  "CCEO": 595,
-  "CountryDirector": 854,
-  "HumanResources": 334,
-  "ImpactAssessment": 722,
+  "CCEO": 596,
+  "CountryDirector": 855,
+  "HumanResources": 335,
+  "ImpactAssessment": 724,
   "MfiLoanOfficer": 139,
   "MfiPartnerAdmin": 142,
   "PartnerAdmin": 242,
   "PartnerFieldOfficer": 242,
-  "Program Lead": 701,
+  "Program Lead": 702,
   "ProjectCoordinator": 496,
-  "RegionalProgramLead": 356,
-  "RegionalVicePresident": 432
+  "RegionalProgramLead": 357,
+  "RegionalVicePresident": 433
  },
  "summary": {
-  "page_keys_declared": 185,
-  "page_keys_in_navigation": 202,
-  "routes_guarded": 1217,
-  "routes_total": 1423,
+  "page_keys_declared": 187,
+  "page_keys_in_navigation": 204,
+  "routes_guarded": 1219,
+  "routes_total": 1425,
   "routes_unguarded": 206,
   "surfaces_no_role_can_reach": 0
  },

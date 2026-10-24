@@ -17,6 +17,7 @@ from .views import (
     cluster_views,
     cluster_management_views,
     core_oversight_views,
+    team_performance_views,
     planning_views,
     fy_planning_views,
     ownership_views,
@@ -989,6 +990,17 @@ urlpatterns = [
         "core-schools-oversight/",
         core_oversight_views.core_schools_oversight_view,
         name="core_schools_oversight",
+    ),
+    # The FY27 Weekly Report, its sheets as tabs (owner, 2026-10-20).
+    path(
+        "team-performance/",
+        team_performance_views.team_performance_view,
+        name="team_performance",
+    ),
+    path(
+        "team-performance/country-targets/",
+        team_performance_views.country_targets_view,
+        name="team_performance_country_targets",
     ),
     # Partner oversight — the same read-only posture, organised by partner
     # rather than by staff member.

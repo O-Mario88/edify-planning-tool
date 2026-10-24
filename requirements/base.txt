@@ -6,7 +6,7 @@ Django==5.2.17
 # require 0.6.0. Pin it explicitly so a reused environment cannot retain the
 # vulnerable transitive version.
 sqlparse==0.6.0
-djangorestframework==3.17.2
+djangorestframework==3.18.2
 django-filter==26.1
 django-cors-headers==4.9.0
 django-environ==0.14.0
@@ -17,8 +17,8 @@ whitenoise==6.12.0
 # waits for before its first paint is a third smaller than the gzip copy
 # (127 KB against 190 KB), about 0.2-0.4 s off a cold first paint on a
 # 1.6 Mbps link (2026-09-25 A+ audit, P-3). The files a browser decodes are
-# unchanged. 1.2.0 closes CVE-2025-6176.
-Brotli==1.2.0
+# unchanged. 1.2.0 closes CVE-2025-6176; 1.2.1 closes PYSEC-2026-4322.
+Brotli==1.2.1
 django-storages[s3]==1.14.6
 boto3==1.43.57
 drf-spectacular==0.30.0
@@ -78,7 +78,7 @@ cryptography==50.0.0
 pyopenssl==26.4.0
 
 # Image / file validation for evidence uploads.
-Pillow==12.3.0
+Pillow==13.0.0
 
 # ClamAV daemon client for evidence malware scanning (apps.evidence.services).
 # Pure-Python socket client, no compiled deps -- inert unless CLAMAV_HOST is
@@ -100,4 +100,4 @@ scipy==1.18.0
 fpdf2==2.8.7
 # Merges the pages of a multi-page evidence upload (several photos or PDFs
 # of one attendance form) into one PDF — apps.evidence.pages.
-pypdf==6.19.0
+pypdf==6.21.1

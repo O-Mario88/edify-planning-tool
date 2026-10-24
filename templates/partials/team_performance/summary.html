@@ -1,0 +1,90 @@
+{% load kpi_metrics team_performance_tags %}
+{% with now=summary.now before=summary.before change=summary.change %}
+<div class="tp-stack" data-tp-summary>
+  {% kpi_strip %}
+    {% kpi_metric %}{% kpi_label %}Total Portfolio{% endkpi_label %}{{ now.portfolio|num }}{% kpi_helper %}Active {{ now.active|num }} · Inactive {{ now.inactive|num }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Active School Rate{% endkpi_label %}{{ now.active_pct|pct }}{% kpi_helper %}{{ now.active|num }} of {{ now.portfolio|num }} schools operating{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Core Recruitment{% endkpi_label %}{{ now.core_recruitment_pct|pct }}{% kpi_helper %}Achieved {{ now.core_recruitment|num }} / {{ now.core_recruitment_target|num }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Client SSA Completion{% endkpi_label %}{{ now.ssa_client_pct|pct }}{% kpi_helper %}Achieved {{ now.ssa_client|num }} / {{ now.ssa_client_target|num }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Discipleship Clubs{% endkpi_label %}{{ now.dc_pct|pct }}{% kpi_helper %}Active DC {{ now.dc|num }} / {{ now.dc_data|num }} with DC data{% endkpi_helper %}{% endkpi_metric %}
+  {% endkpi_strip %}
+
+  {% comment %}Owner, 2026-10-21: every tracked target area ("Add training
+  target, core school visits, School visits, ....all targets that are
+  tracked"), one row each, the country and each Programme Lead's team as
+  columns.{% endcomment %}
+  <section class="tp-card" data-tp-regions>
+    <header class="tp-card__head"><h2>Performance Against Target</h2><span class="tp-card__meta">Year to the end of {{ period.label }} · change since the end of {{ period.previous_label }}</span></header>
+    <div class="tp-scroll">
+      <table class="tp-table edify-table--compact" data-table-fit="scroll">
+        <thead>
+          <tr class="tp-band">
+            <th scope="col" class="tp-sticky"></th>
+            <th scope="colgroup" colspan="4" class="tp-start">{{ roster.home_label }}</th>
+            {% for team in summary.regions %}<th scope="colgroup" colspan="3" class="tp-start" data-tp-team="{{ team.label }}">{{ team.label }}{% if team.lead and team.lead not in team.label %} · {{ team.lead }}{% endif %}</th>{% endfor %}
+          </tr>
+          <tr>
+            <th scope="col" class="tp-sticky">Target Area</th>
+            <th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">%</th><th scope="col" class="tp-num">Change</th>
+            {% for team in summary.regions %}<th scope="col" class="tp-num tp-start">Target</th><th scope="col" class="tp-num">Achieved</th><th scope="col" class="tp-num">%</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for section, areas in summary.sections %}
+          <tr class="edify-group-head"><th colspan="{{ summary.width }}" scope="colgroup"><span class="tp-freeze"><span class="edify-group-head__label">{{ section }}</span><span class="edify-group-head__count">{{ areas|length }} target{{ areas|length|pluralize }}</span></span></th></tr>
+          {% for area in areas %}
+          <tr data-tp-area="{{ area.key }}">
+            <th scope="row" class="tp-sticky">{{ area.label }}{% if area.measure.unit != "schools" %} <span class="tp-muted">({{ area.measure.unit }})</span>{% endif %}</th>
+            <td class="tp-num tp-start">{{ area.target|num }}</td><td class="tp-num">{{ area.achieved|num }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ area.pct|tone }}">{{ area.pct|pct }}</span></td><td class="tp-num">{{ area.change|signed }}</td>
+            {% for team in area.teams %}<td class="tp-num tp-start">{{ team.target|num }}</td><td class="tp-num">{{ team.achieved|num }}</td><td class="tp-num"><span class="tp-pct" data-tone="{{ team.pct|tone }}">{{ team.pct|pct }}</span></td>{% endfor %}
+          </tr>
+          {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% comment %}Every target area charted by region (every region) and, beside
+  it on the same row, by Programme Lead (owner, 2026-10-21). Each section's
+  charts load as the reader reaches it (`Report.section_charts`): drawn at
+  once, 54 areas' charts and tables pass the platform's page-size budget.{% endcomment %}
+  {% for section, areas in summary.sections %}
+  <h2 class="tp-section-title" data-tp-chart-section>{{ section }}</h2>
+  <div class="tp-card tp-charts-pending" data-tp-charts-for="{{ section }}" hx-get="/team-performance/?{{ query }}{% if query %}&amp;{% endif %}tab=summary&amp;charts={{ section|urlencode }}" hx-trigger="intersect once" hx-swap="outerHTML">
+    <p class="tp-note">Loading the {{ section }} charts…</p>
+  </div>
+  {% endfor %}
+  <p class="tp-note">Each region's figure counts where the school is; a session counts where most of the schools it reached are, and participants are summed. A region's target is each CCEO's target shared across the regions their eligible schools are in (client schools for a client area and for recruitment, Core schools for a Core one, else all their schools); a target nobody in a region holds is "Not placed", so the regions add up to the country's target.</p>
+
+  <section class="tp-card" data-tp-delivery>
+    <header class="tp-card__head"><h2>Program Delivery &amp; Operational Milestones</h2><span class="tp-card__meta">Year to the end of {{ period.label }}</span></header>
+    <div class="tp-scroll">
+      <table class="tp-table edify-table--compact" data-table-fit="scroll">
+        <thead><tr>
+          <th scope="col">Milestone / Workstream</th>
+          <th scope="col" class="tp-num">Target</th>
+          <th scope="col" class="tp-num">Achieved</th>
+          <th scope="col" class="tp-num">Variance</th>
+          <th scope="col" class="tp-num">% Attained</th>
+          <th scope="col">Status</th>
+          <th scope="col">Target Source</th>
+        </tr></thead>
+        <tbody>
+          {% for row in summary.milestones %}
+          <tr data-tp-milestone="{{ row.measure.key }}">
+            <th scope="row">{{ row.label }}</th>
+            <td class="tp-num">{{ row.cell.target|num }}</td>
+            <td class="tp-num">{{ row.cell.achieved|num }}</td>
+            <td class="tp-num">{{ row.cell.variance|signed }}</td>
+            <td class="tp-num"><span class="tp-pct" data-tone="{{ row.cell.pct|tone }}">{{ row.cell.pct|pct }}</span></td>
+            <td>{% if row.status %}<span class="tp-chip" data-tone="{{ row.tone }}">{{ row.status }}</span>{% else %}<span class="tp-muted">No target</span>{% endif %}</td>
+            <td class="tp-muted">{{ row.target.source }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endwith %}

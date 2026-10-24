@@ -1,0 +1,46 @@
+{% load team_performance_tags %}
+{% with s=month_summary %}
+<section class="tp-card" data-tp-month="{{ s.label }}">
+  <header class="tp-card__head"><h2>{{ s.label }} Summary Performance</h2><span class="tp-card__meta">Year to the end of {{ s.label }}; "this month" columns read {{ s.label }} alone</span></header>
+  <div class="tp-scroll">
+    <table class="tp-table edify-table--compact" data-table-fit="scroll">
+      <thead>
+        <tr class="tp-band">
+          <th scope="col" class="tp-sticky"></th>
+          {% for heading, cols in summary_groups %}<th scope="colgroup" colspan="{{ cols|length }}" class="tp-start">{{ heading }}</th>{% endfor %}
+        </tr>
+        <tr>
+          <th scope="col" class="tp-sticky">CCEO</th>
+          {% for heading, cols in summary_groups %}{% for key, label in cols %}<th scope="col" class="tp-num{% if forloop.first %} tp-start{% endif %}">{{ label }}</th>{% endfor %}{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for group in s.groups %}
+        <tr class="edify-group-head"><th colspan="{{ summary_width|add:1 }}" scope="colgroup"><span class="tp-freeze"><span class="edify-group-head__label">{{ group.region.label }}</span> <span class="edify-group-head__count">{% if group.region.lead_name %}Programme Lead · {% endif %}{{ group.lines|length }} officer{{ group.lines|length|pluralize }}</span></span></th></tr>
+        {% for line in group.lines %}
+        <tr data-tp-officer="{{ line.officer.staff_id }}">
+          <th scope="row" class="tp-sticky">{{ line.label }}</th>
+          {% for heading, cols in summary_groups %}{% for key, label in cols %}<td class="tp-num{% if forloop.first %} tp-start{% endif %}"><span class="tp-pct" data-tone="{{ line.cols|column_tone:key }}">{{ line.cols|column:key }}</span></td>{% endfor %}{% endfor %}
+        </tr>
+        {% endfor %}
+        {% if not roster.narrowed %}
+        <tr class="tp-total" data-tp-region-total="{{ group.region.label }}">
+          <th scope="row" class="tp-sticky">{{ group.region.label }} Total</th>
+          {% for heading, cols in summary_groups %}{% for key, label in cols %}<td class="tp-num{% if forloop.first %} tp-start{% endif %}">{{ group.total|column:key }}</td>{% endfor %}{% endfor %}
+        </tr>
+        {% endif %}
+        {% endfor %}
+        <tr class="tp-grand" data-tp-national>
+          <th scope="row" class="tp-sticky">{{ roster.home_label }}</th>
+          {% for heading, cols in summary_groups %}{% for key, label in cols %}<td class="tp-num{% if forloop.first %} tp-start{% endif %}">{{ s.national|column:key }}</td>{% endfor %}{% endfor %}
+        </tr>
+        <tr class="tp-quiet" data-tp-last-month>
+          <th scope="row" class="tp-sticky">End of the month before</th>
+          {% for heading, cols in summary_groups %}{% for key, label in cols %}<td class="tp-num{% if forloop.first %} tp-start{% endif %}">{{ s.last_month|column:key }}</td>{% endfor %}{% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tp-note">Targets are the approved allocations; a coverage group with no milestone takes the schools it covers (the Core schools for the Core visit and training groups, the non-core schools for non-core visits).{% if s.unlisted %} The national total also holds {{ s.unlisted|num }} school{{ s.unlisted|pluralize }} whose account owner is not an active CCEO or Programme Lead.{% endif %}</p>
+</section>
+{% endwith %}

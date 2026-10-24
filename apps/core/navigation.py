@@ -239,6 +239,15 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Core School Oversight is the Core schools analysed; a CCEO reads their
     # own (owner, 2026-10-17, the Core School Intelligence brief, 10.1).
     "core_schools_oversight": {CCEO, PL, IA, CD, RVP, RPL, ADMIN},
+    # The FY27 Weekly Report, read from the database (owner, 2026-10-20). A
+    # CCEO reads their own row, a PL their own and their CCEOs'; "Only CD, IA,
+    # HR, RVP Regional Program Leads" (owner, 2026-10-23), and Admin, read
+    # everyone (`apps.team_performance.roster.EVERYONE_READERS`).
+    "team_performance": {CCEO, PL, IA, CD, HR, RVP, RPL, ADMIN},
+    # Country targets on that report are set by Impact Assessment or Admin
+    # only (owner, 2026-10-20: "All country target should be set by either
+    # IA or Admin"; the Country Director reads them).
+    "team_performance_targets": {IA, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
     # the same records through the school they manage, so they do not need a
@@ -868,6 +877,7 @@ ICONS.update(
         "planning_monitor": ICONS["team_targets"],
         "cluster_oversight": ICONS["clusters"],
         "core_schools_oversight": ICONS["core_schools"],
+        "team_performance": ICONS["team_targets"],
         "partner_oversight": ICONS["partners"],
         "my_actions": ICONS["todos"],
         "actions_sent": ICONS["escalations"],
@@ -2893,9 +2903,19 @@ SIDEBAR_ITEMS = [
                 "visible_to": {PL},
             },
             {
-                # Performance Reviews, Recovery Plans, Professional Development
-                # and Policy Compliance, one workspace strip.
+                # The FY27 Weekly Report, its sheets as tabs (owner,
+                # 2026-10-20: "Team performance page, replace everything
+                # there with" the workbook).
                 "label": "Team Performance",
+                "url": "/team-performance/",
+                "page_key": "team_performance",
+                "visible_to": {PL},
+            },
+            {
+                # Performance Reviews, Recovery Plans, Professional Development
+                # and Policy Compliance, one workspace strip: their own entry
+                # since Team Performance became the report (owner, 2026-10-20).
+                "label": "Performance Reviews",
                 "url": "/performance-reviews",
                 "page_key": "performance_reviews",
                 "visible_to": {PL},
@@ -2973,6 +2993,13 @@ SIDEBAR_ITEMS = [
             # are the profiles' and the oversight pages', and the three tools
             # it also held have entries of their own, each shown to whoever
             # may open its page.
+            {
+                # The Programme Lead opens it under PERFORMANCE & COACHING.
+                "label": "Team Performance",
+                "url": "/team-performance/",
+                "page_key": "team_performance",
+                "visible_to": PAGE_PERMISSIONS["team_performance"] - {PL},
+            },
             {
                 "label": "Reports",
                 "url": "/reports",

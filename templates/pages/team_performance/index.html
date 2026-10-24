@@ -1,0 +1,70 @@
+{% extends "layouts/shell.html" %}
+{% load static components %}
+
+{% block title %}Team Performance · Edify{% endblock %}
+
+{% comment %}
+Team Performance (owner, 2026-10-20): the FY27 Weekly Report workbook, its
+sheets as tabs, Executive Summary first and the default. Every figure is read
+from the records when the page opens (apps.team_performance,
+docs/team-performance-report.md); a dash is a figure the records cannot give,
+never a zero. The period filter shows only on the tabs that read a period.
+{% endcomment %}
+
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/team-performance.css' %}?v=20261021tp16">{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1600px] mx-auto" data-team-performance="{{ tab }}">
+
+  {% page_header eyebrow="Performance & Coaching" title="Team Performance" %}
+    {% slot description %}The FY {{ period.fy }} Weekly Report, read from the platform's records: completed work, school-profile entries and uploads.{% if roster.own %} Your own portfolio.{% elif roster.narrowed %} Your team: you and the CCEOs you supervise.{% endif %}{% endslot %}
+    {% if can_set_targets %}<a href="/team-performance/country-targets/?fy={{ period.fy }}" class="edify-action-button secondary h-9" data-tp-set-targets>Set Country Targets</a>{% endif %}
+  {% endpage_header %}
+
+  {% filter_bar label="Team Performance filters" form_id="team-performance-filters" extra_class="flex flex-wrap items-end gap-3" %}
+    <input type="hidden" name="tab" value="{{ tab }}">
+    <label class="block"><span class="edify-filter-label">Fiscal year</span>
+      <select name="fy" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for year in fy_options %}<option value="{{ year }}"{% if year == period.fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}</select></label>
+    {% if reads == "period" %}
+    <label class="block"><span class="edify-filter-label">Period</span>
+      <select name="period" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700" data-tp-period>{% for key, label in kinds %}<option value="{{ key }}"{% if key == period.kind %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    {% if period.kind == "week" %}
+    <label class="block"><span class="edify-filter-label">Week</span>
+      <select name="week" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for value, label in period.week_options %}<option value="{{ value }}"{% if value == period.week.isoformat %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    {% elif period.kind == "quarter" %}
+    <label class="block"><span class="edify-filter-label">Quarter</span>
+      <select name="quarter" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for value, label in period.quarter_options %}<option value="{{ value }}"{% if value == period.quarter %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    {% elif period.kind == "month" %}
+    <label class="block"><span class="edify-filter-label">Month</span>
+      <select name="month" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for value, label in period.month_options %}<option value="{{ value }}"{% if value == period.month %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    {% endif %}
+    {% elif reads == "month" %}
+    <label class="block"><span class="edify-filter-label">Month</span>
+      <select name="month" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for value, label in period.month_options %}<option value="{{ value }}"{% if value == period.month %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    {% endif %}
+    {% if tab == "weekly" and scopes|length > 1 %}
+    <label class="block"><span class="edify-filter-label">Report for</span>
+      <select name="scope" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">{% for key, label in scopes %}<option value="{{ key }}"{% if key == scope_key %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    {% elif tab == "dashboard" and not roster.own %}
+    <label class="block"><span class="edify-filter-label">CCEO</span>
+      <select name="officer" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700"><option value="">All CCEOs, ranked</option>{% for region in roster.regions %}<optgroup label="{{ region.label }}">{% for o in region.officers %}<option value="{{ o.staff_id }}"{% if officer and o.staff_id == officer.staff_id %} selected{% endif %}>{{ o.name }}</option>{% endfor %}</optgroup>{% endfor %}</select></label>
+    {% endif %}
+    <button type="submit" class="edify-action-button primary h-9">Apply</button>
+  {% endfilter_bar %}
+
+  <nav class="oversight-entity-tabs" aria-label="Team Performance sections">
+    {% for key, label, _reads in tabs %}
+    <a class="oversight-entity-tabs__link{% if key == tab %} is-active{% endif %}" href="?{{ query }}{% if query %}&amp;{% endif %}tab={{ key }}"{% if key == tab %} aria-current="page"{% endif %} data-tp-tab="{{ key }}"><span>{{ label }}</span></a>
+    {% endfor %}
+  </nav>
+
+  {% if not roster.officers %}
+    {% include "components/empty_state.html" with message="No officer holds schools in your scope yet." compact="true" %}
+  {% elif tab == "summary" %}{% include "partials/team_performance/summary.html" %}
+  {% elif tab == "weekly" %}{% include "partials/team_performance/weekly.html" %}
+  {% elif tab == "milestones" %}{% include "partials/team_performance/milestones.html" %}
+  {% elif tab == "dashboard" %}{% include "partials/team_performance/dashboard.html" %}
+  {% elif tab == "month" %}{% include "partials/team_performance/month.html" %}
+  {% else %}{% include "partials/team_performance/core.html" %}{% endif %}
+</div>
+{% endblock %}
