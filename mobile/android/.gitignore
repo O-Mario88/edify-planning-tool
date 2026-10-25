@@ -61,8 +61,9 @@ captures/
 .externalNativeBuild
 .cxx/
 
-# Google Services (e.g. APIs or Firebase)
-# google-services.json
+# Google Services (e.g. APIs or Firebase): each environment's own Firebase
+# config, kept out of the repository (docs/push-notifications.md).
+google-services.json
 
 # Freeline
 freeline.py

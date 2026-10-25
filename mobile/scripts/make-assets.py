@@ -23,6 +23,17 @@ ICON_NAVY = (45, 72, 98)  # the PWA icon's background (#2d4862)
 SPLASH_STOPS = ((0.0, (0, 29, 57)), (0.56, (6, 40, 71)), (1.0, (10, 77, 134)))
 DISC_SHARE = 0.71  # the disc's share of the PWA maskable icon's width
 FOREGROUND_DISC_SHARE = 0.6  # inside Android's adaptive-icon safe zone
+# Android's notification icon is a one-colour silhouette in a 24dp square with
+# 2dp of padding, so it is the wordmark's "e" alone: the whole word would be
+# too small to read in the status bar. The "e" ends before x=68 in logo.png.
+LETTER_E = (0, 0, 68, 123)
+NOTIFICATION_ICON_SIZES = {
+    "mdpi": 24,
+    "hdpi": 36,
+    "xhdpi": 48,
+    "xxhdpi": 72,
+    "xxxhdpi": 96,
+}
 
 
 def disc(size: int) -> Image.Image:
@@ -82,6 +93,33 @@ def splash(width: int, height: int) -> Image.Image:
     return canvas
 
 
+def notification_icon(size: int) -> Image.Image:
+    """The wordmark's white "e" on transparency, `size` px square. Android
+    draws it as a silhouette in the status bar and tints it in the shade."""
+    letter = Image.open(LOGO).convert("RGBA").crop(LETTER_E)
+    letter = letter.crop(letter.getchannel("A").getbbox())
+    inner = round(size * 20 / 24)
+    scale = inner / max(letter.size)
+    letter = letter.resize(
+        (round(letter.width * scale), round(letter.height * scale)), Image.LANCZOS
+    )
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    canvas.alpha_composite(
+        letter, ((size - letter.width) // 2, (size - letter.height) // 2)
+    )
+    return canvas
+
+
+def notification_icons(res: Path) -> None:
+    """res/drawable-<density>/ic_stat_edify.png, named in AndroidManifest.xml
+    as Firebase's default notification icon."""
+    for density, size in NOTIFICATION_ICON_SIZES.items():
+        path = res / f"drawable-{density}" / "ic_stat_edify.png"
+        path.parent.mkdir(exist_ok=True)
+        notification_icon(size).save(path)
+        print(f"{path.relative_to(MOBILE)} {size}x{size}")
+
+
 def replace(path: Path, make) -> None:
     with Image.open(path) as current:
         size = current.size
@@ -110,6 +148,7 @@ def main() -> None:
         )
     for path in sorted(res.glob("drawable*/splash.png")):
         replace(path, lambda s: splash(*s))
+    notification_icons(res)
     background = res / "values" / "ic_launcher_background.xml"
     background.write_text(
         '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'

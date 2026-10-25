@@ -18,5 +18,11 @@
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <!-- Android 12 and later draw a launch screen of their own first:
+             the same navy and Edify's badge, not a white page. -->
+        <item name="windowSplashScreenBackground">@color/edify_launch</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="android:statusBarColor">@color/edify_launch</item>
+        <item name="android:navigationBarColor">@color/edify_launch</item>
     </style>
 </resources>

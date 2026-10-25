@@ -30,7 +30,7 @@ test('a link anywhere else is refused', () => {
   }
 });
 
-function fakeWindow({ native = true, platform = 'android', path = '/schools', drawer = false } = {}) {
+function fakeWindow({ native = true, platform = 'android', path = '/schools', drawer = false, modals = [] } = {}) {
   const listeners = {};
   const calls = [];
   const attrs = {};
@@ -42,7 +42,7 @@ function fakeWindow({ native = true, platform = 'android', path = '/schools', dr
       : null),
     documentElement: { setAttribute: (k, v) => { attrs[k] = v; } },
     getElementById: id => (id === 'drawer-container' ? { children: drawer ? [{}] : [] } : null),
-    querySelectorAll: () => [],
+    querySelectorAll: () => modals,
     dispatchEvent: event => calls.push(event.key ? ['key', event.key] : ['event', event.type]),
   };
   const win = {
@@ -81,16 +81,16 @@ test('the app marks its platform and follows only links into this site', () => {
   assert.deepEqual(calls, [['assign', '/activities/a1/complete']]);
 });
 
-test('on iOS a tapped field no longer zooms the page; Android is left alone', () => {
-  const ios = fakeWindow({ platform: 'ios' });
-  start(ios.win);
-  assert.match(ios.win.document.viewport.content, /maximum-scale=1$/);
-  start(ios.win);
-  assert.equal((ios.win.document.viewport.content.match(/maximum-scale/g) || []).length, 1);
-
-  const android = fakeWindow({ platform: 'android' });
-  start(android.win);
-  assert.doesNotMatch(android.win.document.viewport.content, /maximum-scale/);
+test('a tapped field never zooms the page, on either phone', () => {
+  // The server writes the hold into the app's viewport (templates/base.html);
+  // this keeps it for a page that was not, on both phones alike (2026-10-25).
+  for (const platform of ['ios', 'android']) {
+    const phone = fakeWindow({ platform });
+    start(phone.win);
+    assert.match(phone.win.document.viewport.content, /maximum-scale=1$/, platform);
+    start(phone.win);
+    assert.equal((phone.win.document.viewport.content.match(/maximum-scale/g) || []).length, 1, platform);
+  }
 });
 
 test('back closes an open drawer before it leaves the page', () => {
@@ -98,6 +98,24 @@ test('back closes an open drawer before it leaves the page', () => {
   start(win);
   listeners.backButton({ canGoBack: true });
   assert.deepEqual(calls, [['key', 'Escape']]);
+});
+
+test('back closes the open More menu (a fixed-position dialog) before it leaves the page', () => {
+  // The phone's sidebar is a fixed dialog, which has no offsetParent even
+  // when it is open: back went back a page with the menu still open.
+  const menu = { tagName: 'DIV', offsetParent: null, getClientRects: () => [{}] };
+  const { win, listeners, calls } = fakeWindow({ modals: [menu] });
+  start(win);
+  listeners.backButton({ canGoBack: true });
+  assert.deepEqual(calls, [['key', 'Escape']]);
+});
+
+test('a closed dialog left in the page does not hold back', () => {
+  const closed = { tagName: 'DIV', offsetParent: null, getClientRects: () => [] };
+  const { win, listeners, calls } = fakeWindow({ modals: [closed] });
+  start(win);
+  listeners.backButton({ canGoBack: true });
+  assert.deepEqual(calls, [['back']]);
 });
 
 test('back goes back a page, and on Home leaves the app in the background', () => {

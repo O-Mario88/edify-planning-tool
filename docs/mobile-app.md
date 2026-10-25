@@ -20,7 +20,11 @@ static/js/native-shell.js   the site's side of the bridge; inert in a browser
 
 ## What the app opens
 
-`capacitor.config.js` sets `server.url` to `https://edifyplanning.app/home`.
+`capacitor.config.js` sets `server.url` to `https://edifyplanning.app/home`
+and `server.allowNavigation` to the site's own host. On iOS a page stays in the
+app only when its address starts with `server.url` or its host is listed in
+`allowNavigation`, so without the host, sign-in and every other page would
+open in Safari.
 `/home` is the phone's first tab (Home): what needs you now, what is coming up
 and where to go. A signed-out person is sent to the normal sign-in page and
 back to Home afterwards. The session is the site's own cookie inside the web
@@ -43,7 +47,8 @@ addresses, so a release build cannot be pointed at an unencrypted server.
 | Start page | `/home` |
 | Link scheme | `edify://open/<path>`, e.g. `edify://open/my-plan/<id>` |
 | Launch screen | the sidebar's navy gradient (`#001d39` → `#062847` → `#0a4d86`), white wordmark (`scripts/make-assets.py`) |
-| Status bar | the page canvas (`--edify-bg`, `#dbe4eb` light): dark icons on a light canvas, light ones on a dark theme, set by the site (`static/js/system-chrome.js`) |
+| Status bar and gesture bar | the page beside them, on both phones: an iPhone runs the page under both bars and its status icons follow the top of the page; on Android the strips take the colours actually at the page's top and bottom (the top bar, the bottom navigation, the navy More menu, dark mode), through the app's `EdifyChrome` plugin (`static/js/system-chrome.js`, `EdifyChromePlugin.java`) |
+| Notification icon (Android) | the wordmark's white "e" (`res/drawable-*/ic_stat_edify.png`, `scripts/make-assets.py`), tinted Edify blue (`#0a4d86`) in the shade |
 | Web view background | `#dbe4eb`, the page's own, so moving between pages never flashes another colour |
 | App icon | the PWA icon artwork (`static/images/app-icon-source.png`) on `#2d4862` |
 
@@ -101,36 +106,22 @@ the computer at `http://10.0.2.2:8000`.
 
 | Behaviour | Where | Notes |
 |---|---|---|
-| Android back button | `static/js/native-shell.js` | Closes an open drawer or dialog first, then goes back a page; on Home it puts the app in the background. |
+| Android back button | `static/js/native-shell.js` | Closes an open drawer, dialog or the More menu first, then goes back a page; on Home it puts the app in the background. |
+| Page scale | `templates/base.html`, `layouts/login.html`, `native-shell.js` | In the app the viewport says `maximum-scale=1` from the first frame, so a tapped field under 16px never zooms an iPhone's page and leaves it zoomed. A browser keeps pinch zoom. |
 | Links that open the app | `native-shell.js`, iOS `CFBundleURLTypes`, Android intent filter | Only paths of the site the app opened are followed; any other host is refused. The page still runs its own sign-in and permission checks. |
 | Offline | `www/offline.html` (`server.errorPath`) | Shown when the site cannot be reached. Says nothing was lost; "Try again" reopens Home. Field actions saved offline stay in the site's own outbox (`static/js/field-outbox.js`). |
 | Camera and photos | iOS `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`; Android `CAMERA` | Asked only when someone chooses to photograph or pick evidence in an upload field. |
 | Keyboard | `Keyboard.resize: native` | The page shrinks above the keyboard; the bottom bar steps aside while typing. |
-| Safe areas | site CSS (`viewport-fit=cover`, `env(safe-area-inset-*)`) | Notch and home indicator handled by the pages themselves. |
+| Safe areas | site CSS (`viewport-fit=cover`, `env(safe-area-inset-*)`) | Notch and home indicator handled by the pages themselves. On Android a web view older than Capacitor's safe-area fix (Chrome 140) is fitted between the bars instead, and the strips take the page's colours (above). |
 | Backups | Android `allowBackup=false`, `data_extraction_rules.xml` | The sign-in cookie never leaves the phone in a backup or device transfer. |
 
-## Push notifications (next stage, needs credentials)
+## Push notifications
 
-The site already has in-app notifications (read state, unread count, links)
-and Web Push for browsers (`apps.notifications.push`,
-`static/js/push-notifications.js`). Web Push does not reach an app's web view,
-so native push needs:
-
-1. `@capacitor/push-notifications` added to `mobile/`.
-2. A device-token model and an endpoint beside `PushSubscription`
-   (register on sign-in, refresh, revoke on sign-out or account change).
-3. A sender for FCM (Android) and APNs (iOS) in `apps.notifications.push`,
-   honouring each person's notification preferences, recording the
-   provider's answer, and never putting school, staff or finance detail in
-   lock-screen text.
-4. Asking permission after explaining it, not on first launch.
-
-Credentials it needs, none of which belong in the repository:
-
-- Firebase project, `google-services.json` (Android) and a service-account key
-  on the server.
-- APNs key (`.p8`), key id and team id, on the server; the Push Notifications
-  capability on the app id.
+The app's push is built: `@capacitor/push-notifications` in `mobile/`,
+`static/js/native-push.js` in the page, and the server's senders in
+`apps.notifications` (Firebase for Android, Apple's push service directly for
+iPhone). The phone's own notification setting for Edify is the one switch.
+`docs/push-notifications.md` has how it works and the credentials it needs.
 
 ## Universal links and App Links (next stage)
 
@@ -162,8 +153,9 @@ Internal testing: TestFlight (iOS) and an internal testing track (Play).
 
 Apple's guideline 4.2 turns down apps that are only a website. Edify's case
 for review rests on what the app adds: the task-first Home, native back and
-link handling, camera evidence capture, the offline screen, and (next stage)
-native push. Ship push before the first App Store submission.
+link handling, camera evidence capture, the offline screen, and native push
+governed by the phone's own notification setting. Set the APNs key on the
+server before the first App Store submission, so review sees push working.
 
 ## What has and has not been verified
 
@@ -173,5 +165,6 @@ native push. Ship push before the first App Store submission.
 | `node --test tests/js/native-shell.test.cjs` (bridge) | passes |
 | iOS simulator build (Xcode 27, `CODE_SIGNING_ALLOWED=NO`) | **BUILD SUCCEEDED** |
 | Running on an iOS simulator | not run: no simulator runtime installed (Xcode → Settings → Components) |
-| Android build | not run: no JDK or Android SDK on the build machine |
+| Android build (2026-10-25, JDK 21, SDK 36) | `./gradlew assembleDebug` succeeds |
+| Running on the Android emulator (Pixel 9, Android 16, web view 133) | sign-in and sign-out stay in the app; no zoom on a tapped field; Home, My Plan, Schools, Messages and More; bars match the page in light and dark and with the More menu open; back closes drawers and the More menu; "Open phone settings" lands on Edify's notification settings; a build without `google-services.json` says it cannot receive notifications instead of closing |
 | Physical devices, push | not run |

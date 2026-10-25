@@ -1382,3 +1382,18 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
   .login-card__inner { padding-block: 1.75rem; }
   .login-brand__content { padding-block: 2rem 1.25rem; }
 }
+
+/* The single-column sign-in (phones, tablets upright) clears the status bar
+   and the home indicator itself: in the app an iPhone runs the page under
+   both (static/js/system-chrome.js), and the phone rules above re-set the
+   sign-in area's padding without them, which left the card behind the clock
+   (2026-10-25). In a browser without those bars every inset is 0. */
+@media (max-width: 70rem) {
+  .login-shell {
+    padding:
+      env(safe-area-inset-top, 0px)
+      env(safe-area-inset-right, 0px)
+      env(safe-area-inset-bottom, 0px)
+      env(safe-area-inset-left, 0px);
+  }
+}

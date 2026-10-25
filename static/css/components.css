@@ -597,7 +597,9 @@ main .divide-y > * + * {
 main input[type="text"], main input[type="email"], main input[type="password"],
 main input[type="number"], main input[type="date"], main select, main textarea {
   border: 1px solid var(--edify-control-border, var(--edify-border)) !important;
-  background: var(--edify-surface) !important;
+  /* The colour only: the `background` shorthand also reset the image, and
+     took every select's chevron (the platform select rule) with it. */
+  background-color: var(--edify-surface) !important;
   border-radius: var(--edify-radius-md) !important;
   color: var(--edify-text) !important;
   font-size: var(--edify-text-body-size) !important;
@@ -618,7 +620,7 @@ main label { color: var(--edify-text-muted) !important; }
 /* Dark mode inputs */
 .dark main input[type="text"], .dark main input[type="email"], .dark main input[type="password"],
 .dark main input[type="number"], .dark main input[type="date"], .dark main select, .dark main textarea {
-  background: var(--edify-surface-muted) !important;
+  background-color: var(--edify-surface-muted) !important;
 }
 
 /* ═══ GOLD STANDARD SECTION HEADINGS ══════════════════════════════════════
@@ -3138,7 +3140,9 @@ select:not([multiple]):not(.select-native) {
      width and refuses to shrink inside the band above. */
   min-width: 0 !important;
   height: 39px !important;
-  background: var(--edify-surface) !important;
+  /* The colour only: the shorthand also took the select's chevron, leaving
+     the arrow's lane (below) empty. */
+  background-color: var(--edify-surface) !important;
   border: 1px solid var(--edify-control-border, var(--edify-border)) !important;
   border-radius: var(--radius-control, 8px);
   font-size: var(--edify-text-label-size);

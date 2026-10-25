@@ -138,6 +138,12 @@ _APPROVER_ROLES = {
 }
 
 
+def _opening(page: str, record_id: str | None) -> str:
+    """`page` with the record's drawer open (?open=<id>), the page's own way
+    of opening one record from a link; the bare page without a record."""
+    return f"{page}?open={record_id}" if record_id else page
+
+
 class NotificationLinkResolver:
     @staticmethod
     def resolve(
@@ -214,14 +220,21 @@ class NotificationLinkResolver:
         # Coaching handoffs: the Programme Lead shares coaching with an officer,
         # who acknowledges it; the Regional Lead shares a coaching conversation
         # with a Programme Lead, who does the same.
+        # Each opens the coaching record itself (owner, 2026-10-25).
         if event_type == "cceo_coaching_shared":
-            return "/my-coaching", "Acknowledge Coaching"
+            return _opening("/my-coaching", context_id), "Acknowledge Coaching"
         if event_type == "cceo_coaching_acknowledged":
-            return "/team/coaching", "Open Coaching Log"
+            return _opening("/team/coaching", context_id), "Open Coaching Log"
         if event_type == "cce_pl_coaching_shared":
-            return "/cce-leadership/coaching", "Acknowledge Coaching"
+            return (
+                _opening("/cce-leadership/coaching", context_id),
+                "Acknowledge Coaching",
+            )
         if event_type == "cce_pl_coaching_acknowledged":
-            return "/cce-leadership/engagements", "Open Engagement Log"
+            return (
+                _opening("/cce-leadership/engagements", context_id),
+                "Open Engagement Log",
+            )
         # ── end C1 ──
         # ── PL alignment · C2 ──
         # HR opened a conversation window: the reviewer lands on the page that
@@ -621,17 +634,27 @@ class NotificationLinkResolver:
         # The CCE Regional Lead's handoffs (2026-09-13): training feedback goes
         # to the Programme Lead and comes back to the lead; the monthly report
         # goes to the RVP and comes back to the lead.
+        # Each opens the engagement or report itself (owner, 2026-10-25).
         if event_type == "cce_training_feedback_shared":
-            return "/cce-leadership/feedback", "Acknowledge Feedback"
+            return (
+                _opening("/cce-leadership/feedback", context_id),
+                "Acknowledge Feedback",
+            )
 
         if event_type == "cce_training_feedback_acknowledged":
-            return "/cce-leadership/engagements", "Open Engagement Log"
+            return (
+                _opening("/cce-leadership/engagements", context_id),
+                "Open Engagement Log",
+            )
 
         if event_type == "cce_report_submitted":
-            return "/cce-leadership/reports", "Review Report"
+            return _opening("/cce-leadership/reports", context_id), "Review Report"
 
         if event_type == "cce_report_reviewed":
-            return "/cce-leadership/reports", "Open Monthly Reports"
+            return (
+                _opening("/cce-leadership/reports", context_id),
+                "Open Monthly Report",
+            )
 
         if event_type == "fiscal_year_priority_setting":
             if role in ("humanresources", "admin"):
@@ -688,7 +711,8 @@ class NotificationLinkResolver:
 
         elif event_type == "evidence_returned":
             if role in ("cceo", "partnerfieldofficer"):
-                route = "/my-plan"
+                # The activity whose evidence came back (owner, 2026-10-25).
+                route = f"/my-plan/{context_id}" if context_id else "/my-plan"
                 label = "Fix Evidence"
             elif role in ("program lead", "projectcoordinator", "projectleader"):
                 # The returned-evidence tab both roles can open (2026-09-13).
@@ -778,7 +802,13 @@ class NotificationLinkResolver:
                 route = "/ia/dashboard/"
                 label = "Verify Activity"
             else:
-                route = "/pl/review-queue"
+                # That completion's review drawer (owner, 2026-10-25); the
+                # queue opens it only for a row in the reader's own queue.
+                route = (
+                    _opening("/pl/review-queue", context_id)
+                    if (context_type or "").lower() == "activity"
+                    else "/pl/review-queue"
+                )
                 label = "Review Completion"
 
         elif event_type == "activity_returned_by_pl":

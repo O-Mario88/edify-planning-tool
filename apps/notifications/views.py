@@ -77,13 +77,17 @@ class PushConfigView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request) -> Response:
-        from . import fcm, push, webpush
+        from . import push, webpush
 
         return Response(
             {
                 "enabled": webpush.configured(),
-                # The Edify app on a phone is told through Firebase instead.
-                "app": fcm.configured(),
+                # The Edify app on a phone is told through Firebase, or an
+                # iPhone straight through Apple.
+                "app": push.app_ready(),
+                # Per phone: an Android phone is not told push is on where
+                # only Apple's key is set.
+                "apps": push.app_platforms(),
                 "key": webpush.application_server_key(),
                 "devices": push.live_subscriptions(request.user.id).count(),
                 "unread": services.unread_ids(request.user),
@@ -143,9 +147,11 @@ class AppRegisterView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request) -> Response:
-        from . import fcm, push
+        from . import push
 
-        if not fcm.configured():
+        # Asked for this kind of phone: a device nothing here could reach is
+        # not kept (an Android phone where only Apple's key is set).
+        if not push.app_ready(str(request.data.get("platform", ""))):
             return Response({"ok": False, "reason": "not_configured"}, status=409)
         try:
             device, created = push.register_app(

@@ -931,7 +931,7 @@ main :is(
   min-block-size: var(--edify-action-button-block-size) !important;
   border: 1px solid var(--edify-control-border, var(--edify-border)) !important;
   border-radius: var(--edify-radius-sm) !important;
-  background: var(--edify-surface-raised) !important;
+  background-color: var(--edify-surface-raised) !important;
   color: var(--edify-text) !important;
   box-shadow: none !important;
 }

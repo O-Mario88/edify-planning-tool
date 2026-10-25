@@ -49,6 +49,11 @@ redis==7.1.0
 # JWT auth — access tokens signed with JWT_SECRET + rotating refresh tokens.
 # We use PyJWT directly (custom issuance) for parity with NestJS @nestjs/jwt.
 PyJWT==2.15.0
+# Phone notifications in the iOS app sent straight to Apple
+# (apps.notifications.apns): Apple's push service speaks HTTP/2 only, which
+# requests does not.
+httpx==0.28.1
+h2==4.4.1
 
 # Password hashing parity with NestJS bcryptjs (cost 12). Django's bcrypt
 # hasher verifies those hashes natively.

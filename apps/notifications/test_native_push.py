@@ -453,6 +453,8 @@ class AppDeviceApiTest(TestCase):
         config = self.client.get("/api/notifications/push/config").json()
 
         self.assertEqual((config["enabled"], config["app"]), (False, True))
+        # Firebase reaches both phones.
+        self.assertEqual(config["apps"], {"android": True, "ios": True})
 
     def test_none_of_it_is_open_to_a_visitor(self):
         visitor = Client()
@@ -703,6 +705,22 @@ class AppScriptTest(TestCase):
         ):
             self.assertIn(needed, script)
 
+    def test_firebase_is_asked_only_by_a_build_that_has_it(self):
+        # An Android build without google-services.json has no Firebase, and
+        # asking it for a token, or to forget one, closes the app (after
+        # Allow, on every launch, and on signing out). Every such call waits
+        # on the build's answer (EdifySettingsPlugin.pushReady).
+        import re
+
+        script = self.read("native-push.js")
+
+        calls = re.findall(r"(.{0,12})PushNotifications\.(?:un)?register\(\)", script)
+        self.assertEqual(len(calls), 2)
+        for before in calls:
+            self.assertIn("ready ?", before)
+        self.assertIn("EdifySettings", script)
+        self.assertIn("pushReady", script)
+
     def test_it_explains_before_the_phone_asks_and_keeps_the_lock_screen_quiet(self):
         script = self.read("native-push.js")
 
@@ -742,3 +760,16 @@ class AppScriptTest(TestCase):
     def test_the_device_switch_in_the_page_drives_the_app(self):
         self.assertIn("window.EdifyAppPush", self.read("push-notifications.js"))
         self.assertIn("window.EdifyAppPush =", self.read("native-push.js"))
+
+    def test_the_phone_s_own_setting_is_the_only_switch_in_the_app(self):
+        """Owner, 2026-10-25: phone notifications follow the phone's
+        notification setting, not a setting in the app. Allowed there, they
+        are on; the page offers the way to that setting, never an off switch
+        of its own that the phone would not know about."""
+        script = self.read("native-push.js")
+        page = self.read("push-notifications.js")
+
+        self.assertNotIn("edify-app-push-off", script)
+        self.assertIn("'app-on'", script)
+        self.assertRegex(page, r"'app-on': \['Open phone settings'")
+        self.assertIn("'app-on'", page.split("app().openSettings()")[0][-400:])

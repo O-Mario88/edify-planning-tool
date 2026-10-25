@@ -389,7 +389,14 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: confirmed (static/js/restore-guard.js, +0.7 KB), and the app tells a
     #: page it is back in front (native-shell.js, sent to the app alone).
     #: Comments cut to a few lines each. Measured 155.90 KB.
-    JS_GZIP_KB = 156.0
+    #:
+    #: Raised to 157.6 on 2026-10-25 for the iOS and Android app looking the
+    #: same: the phone's bars take the colours actually at the page's edges,
+    #: an iPhone runs the page under its status bar, and Android's bars are
+    #: painted through the app (static/js/system-chrome.js, +1.5 KB); back
+    #: closes the More menu (native-shell.js, sent to the app alone).
+    #: Comments cut back. Measured 157.52 KB.
+    JS_GZIP_KB = 157.6
     INLINE_SCRIPT_KB = 40
 
     @classmethod

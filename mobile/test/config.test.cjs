@@ -26,3 +26,26 @@ test("the offline page retries a stamped constant, never text read from its own 
   assert.doesNotMatch(html, /getAttribute|data-server|innerHTML|dataset/);
   assert.match(html, /window\.location\.replace\(EDIFY_SERVER\)/);
 });
+
+// The iOS shell keeps a page inside the app when its host is in
+// server.allowNavigation or its address starts with server.url; anything else
+// opens in Safari (Capacitor's WebViewDelegationHandler). server.url ends in
+// /home, so without the site's host listed, sign-in would leave the app.
+function staysInIosApp(address) {
+  const { host } = new URL(address);
+  return (config.server.allowNavigation || []).includes(host) || address.startsWith(config.server.url);
+}
+
+test("every page of the site stays inside the app, and no other site does", () => {
+  for (const path of ["/home", "/login?next=/home", "/my-plan", "/"]) {
+    assert.ok(staysInIosApp(`https://edifyplanning.app${path}`), path);
+  }
+  assert.deepEqual(config.server.allowNavigation, ["edifyplanning.app"]);
+  assert.equal(staysInIosApp("https://evil.example/home"), false);
+});
+
+test("a notification that arrives while the app is open is the page's to show", () => {
+  // No banner over the page being used: the bell count moves and one line
+  // says what arrived (static/js/native-push.js), as on the web.
+  assert.deepEqual(config.plugins.PushNotifications.presentationOptions, []);
+});

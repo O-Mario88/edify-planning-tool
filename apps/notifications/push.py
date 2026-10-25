@@ -47,7 +47,7 @@ from django.utils import timezone
 
 from apps.outbox.services import register
 
-from . import fcm, webpush
+from . import apns, fcm, webpush
 from .models import (
     DeliveryChannel,
     DeliveryStatus,
@@ -174,13 +174,18 @@ _APP_DEVICE = {PushKind.ANDROID: "Android", PushKind.IOS: "iPhone"}
 
 def register_app(user, token: str, platform: str, user_agent: str = ""):
     """Record that ``user`` wants notifications in the Edify app on this
-    phone, by the FCM token the app was given. One phone is one row, as for
-    a browser. Returns ``(subscription, created)``."""
+    phone, by the token the app was given: Firebase's, or on an iPhone built
+    without Firebase, Apple's own (sent straight to Apple, `apns`, where the
+    deployment has its key). One phone is one row, as for a browser. Returns
+    ``(subscription, created)``."""
     token = (token or "").strip()
     kind = APP_PLATFORMS.get((platform or "").strip().lower())
     if kind is None:
         raise InvalidSubscription("That is not a phone the Edify app runs on.")
-    if not fcm.valid_token(token):
+    apple = kind == PushKind.IOS and apns.valid_token(token)
+    if apple and not apns.configured():
+        raise InvalidSubscription("Apple's own token needs this server's APNs key.")
+    if not apple and not fcm.valid_token(token):
         raise InvalidSubscription("That is not a device token for the Edify app.")
     return PushSubscription.objects.update_or_create(
         endpoint_hash=endpoint_hash(token),
@@ -209,8 +214,41 @@ def ready_kinds() -> tuple[str, ...]:
     """The kinds of device this deployment can send to now."""
     kinds = (PushKind.WEB,) if webpush.configured() else ()
     if fcm.configured():
-        kinds += (PushKind.ANDROID, PushKind.IOS)
+        kinds += (PushKind.ANDROID,)
+    if fcm.configured() or apns.configured():
+        kinds += (PushKind.IOS,)
     return kinds
+
+
+def app_ready(platform: str = "") -> bool:
+    """Whether the Edify app can be told here: on that kind of phone
+    ("android", "ios"), or with none named, on some phone. Apple's key reaches
+    iPhones only; Firebase reaches both."""
+    kind = APP_PLATFORMS.get((platform or "").strip().lower())
+    if kind is None:
+        return fcm.configured() or apns.configured()
+    return kind in ready_kinds()
+
+
+def app_platforms() -> dict[str, bool]:
+    """Which phones the Edify app can be told on here, for the page."""
+    kinds = ready_kinds()
+    return {name: kind in kinds for name, kind in APP_PLATFORMS.items()}
+
+
+def _through_apple(subscription) -> bool:
+    """An iPhone that gave Apple's own token is sent to Apple directly."""
+    return subscription.kind == PushKind.IOS and apns.valid_token(subscription.endpoint)
+
+
+def ready(subscription) -> bool:
+    """Whether this one device can be sent to now: its kind, and for an
+    iPhone, the service its token belongs to."""
+    if subscription.kind not in ready_kinds():
+        return False
+    if subscription.kind == PushKind.IOS:
+        return apns.configured() if _through_apple(subscription) else fcm.configured()
+    return True
 
 
 # ── Who may be sent one ─────────────────────────────────────────────────────
@@ -285,11 +323,15 @@ def enqueue(notification: Notification) -> list[str]:
         return []
     from apps.outbox.services import enqueue_many
 
-    subscriptions = list(
-        live_subscriptions(notification.recipient_id)
+    subscriptions = [
+        device.id
+        for device in live_subscriptions(notification.recipient_id)
         .filter(kind__in=kinds)
-        .values_list("id", flat=True)
-    )
+        .only("id", "kind", "endpoint")
+        # An iPhone's token belongs to Firebase or to Apple: queued only
+        # where that one is set up.
+        if ready(device)
+    ]
     if not subscriptions:
         return []
     round_ = notification.reminder_count or 0
@@ -371,7 +413,7 @@ def _why_not(notification: Notification, subscription) -> tuple[str, str] | None
     told = notification.last_reminded_at or notification.created_at
     if told < timezone.now() - FRESH_FOR:
         return skipped, "More than a day old by the time it could be sent."
-    if subscription.kind not in ready_kinds():
+    if not ready(subscription):
         return skipped, "Push to this kind of device is not set up here."
     user = active_recipient(notification.recipient_id)
     if user is None:
@@ -397,6 +439,15 @@ def _send(subscription, notification: Notification) -> str:
             ttl=ttl,
             urgency="high" if urgent else "normal",
             topic=notification.id,
+        )
+        return ""
+    if _through_apple(subscription):
+        apns.send(
+            subscription.endpoint,
+            payload_for(notification),
+            priority=notification.priority,
+            collapse_id=notification.id,
+            expires_in=ttl,
         )
         return ""
     return fcm.send(

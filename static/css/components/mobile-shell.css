@@ -198,6 +198,10 @@
 
   /* The count says it; four buttons need the room. */
   [data-activity-bar] [data-activity-noun] { display: none; }
+
+  body:has(.edify-bottom-nav:not(.edify-bottom-nav--hidden)) #toast-container {
+    bottom: calc(4.25rem + 0.5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* Yield to the software keyboard. A fixed bottom bar and an Android keyboard

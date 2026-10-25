@@ -13,7 +13,7 @@
  *     send the web view somewhere that is not Edify. The page it opens still
  *     runs its own sign-in and permission checks.
  *   • <html> carries data-native-app="ios|android" for styles that need it.
- *   • On iOS the page keeps its scale when a field is tapped (holdScale).
+ *   • The page keeps its scale when a field is tapped (holdScale).
  *   • Coming back to the app fires `edify-app-resume` on the document.
  *
  * No credentials or tokens pass through here; the session stays the site's
@@ -57,8 +57,11 @@
   /**
    * iOS zooms the whole page into any field whose text is under 16px, and the
    * site's compact filters are 12px: in the app every filter tap zoomed the
-   * page and left it zoomed. Inside the app only, the page keeps its scale.
-   * A browser is never sent this script, so its pinch zoom is untouched.
+   * page and left it zoomed. Inside the app only, the page keeps its scale, on
+   * both phones alike. The server already writes this into the app's viewport
+   * (templates/base.html, layouts/login.html); this keeps it for any page that
+   * was not. A browser is never sent this script, so its pinch zoom is
+   * untouched.
    */
   function holdScale(doc) {
     var meta = doc.querySelector('meta[name="viewport"]');
@@ -73,7 +76,11 @@
     if (drawers && drawers.children.length) return true;
     var modals = doc.querySelectorAll('dialog[open], [aria-modal="true"]');
     for (var i = 0; i < modals.length; i += 1) {
-      if (modals[i].offsetParent !== null || modals[i].tagName === "DIALOG") return true;
+      // Laid out at all: offsetParent alone is null for a fixed dialog even
+      // when it is open, such as the phone's More menu (layouts/shell.html).
+      var shown = modals[i].offsetParent !== null ||
+        (typeof modals[i].getClientRects === "function" && modals[i].getClientRects().length > 0);
+      if (shown || modals[i].tagName === "DIALOG") return true;
     }
     return false;
   }
@@ -86,7 +93,7 @@
     var doc = win.document;
     var platform = cap.getPlatform();
     doc.documentElement.setAttribute("data-native-app", platform);
-    if (platform === "ios") holdScale(doc);
+    holdScale(doc);
 
     var App = cap.Plugins && cap.Plugins.App;
     if (!App || typeof App.addListener !== "function") return true;

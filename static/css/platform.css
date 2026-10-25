@@ -1629,6 +1629,10 @@ main .platform-responsive-table [data-priority="low"] {
 .theme-dark main :where(.bg-slate-50, .bg-slate-100,
   [class*="bg-slate-50/"], [class*="bg-slate-100/"]) {
   background-color: var(--edify-surface-muted) !important;
+}
+
+.theme-dark main :where(.bg-slate-50, .bg-slate-100,
+  [class*="bg-slate-50/"], [class*="bg-slate-100/"]):not(select) {
   background-image: none !important;
 }
 
@@ -1685,10 +1689,16 @@ main .platform-responsive-table [data-priority="low"] {
   input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
   input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
   background-color: var(--edify-surface) !important;
-  background-image: none !important;
   border-color: var(--edify-border-strong) !important;
   color: var(--edify-text) !important;
   box-shadow: none;
+}
+
+/* A select keeps its chevron (the platform select rule) in dark mode too. */
+.theme-dark main :where(input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
+  input[type="date"], input[type="datetime-local"], input[type="time"], textarea) {
+  background-image: none !important;
 }
 
 .theme-dark main :where(input, select, textarea):hover:not(:disabled) {

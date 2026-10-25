@@ -959,6 +959,18 @@ WEBPUSH_EAGER = _truthy(os.environ.get("WEBPUSH_EAGER"), fallback=True)
 # docs/push-notifications.md says where each credential comes from.
 FCM_SERVICE_ACCOUNT_JSON = os.environ.get("FCM_SERVICE_ACCOUNT_JSON", "").strip()
 FCM_SERVICE_ACCOUNT_FILE = os.environ.get("FCM_SERVICE_ACCOUNT_FILE", "").strip()
+# Push to the iPhone app straight through Apple (apps.notifications.apns), for
+# an app built without Firebase, which hands over Apple's own device token: the
+# team's APNs key from the Apple Developer account (Keys, with Apple Push
+# Notifications service), as its key id, the team id and the .p8 file's text
+# (line breaks may be written as "\n"). The same key Firebase is given for
+# iPhones. APNS_ENVIRONMENT is "development" for a build run from Xcode and
+# "production" for TestFlight and the App Store.
+APNS_KEY_ID = os.environ.get("APNS_KEY_ID", "").strip()
+APNS_TEAM_ID = os.environ.get("APNS_TEAM_ID", "").strip()
+APNS_PRIVATE_KEY = os.environ.get("APNS_PRIVATE_KEY", "").strip()
+APNS_TOPIC = os.environ.get("APNS_TOPIC", "app.edifyplanning.mobile").strip()
+APNS_ENVIRONMENT = os.environ.get("APNS_ENVIRONMENT", "production").strip()
 # Email copies of notifications (apps.notifications.email_delivery) are sent
 # as soon as the notification commits, the outbox drain being the backstop.
 NOTIFICATION_EMAIL_EAGER = _truthy(
@@ -973,6 +985,7 @@ if IS_TESTING:
     # service; a test that exercises push sets its own (override_settings).
     WEBPUSH_VAPID_PUBLIC_KEY = WEBPUSH_VAPID_PRIVATE_KEY = ""
     FCM_SERVICE_ACCOUNT_JSON = FCM_SERVICE_ACCOUNT_FILE = ""
+    APNS_PRIVATE_KEY = ""
     WEBPUSH_EAGER = False
     NOTIFICATION_EMAIL_EAGER = False
 

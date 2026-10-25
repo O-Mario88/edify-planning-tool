@@ -242,7 +242,9 @@ class FeedbackHandoffTest(CceFixture):
         )
         self.assertFalse(services.feedback_visible_to(self.kenya_pl).exists())
         notice = Notification.objects.get(recipient_id=self.pl.id)
-        self.assertEqual(notice.target_route, "/cce-leadership/feedback")
+        self.assertEqual(
+            notice.target_route, f"/cce-leadership/feedback?open={observation.id}"
+        )
 
         with self.assertRaisesMessage(Forbidden, "can no longer be changed"):
             services.update_engagement(
