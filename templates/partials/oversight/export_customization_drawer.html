@@ -116,11 +116,12 @@
 
   {% if whose_choices %}
   {% comment %}The Country Director and Impact Assessment export everyone at
-  once (owner, 2026-10-12); one Program Lead's team is the narrower choice.{% endcomment %}
+  once (owner, 2026-10-12); one Program Lead's team (or, on the Weekly
+  Advance Request, one officer) is the narrower choice.{% endcomment %}
   <div class="space-y-1">
-    <label for="export_whose" class="block edify-text-caption font-semibold text-slate-700">Whose Plans</label>
+    <label for="export_whose" class="block edify-text-caption font-semibold text-slate-700">{{ whose_label|default:"Whose Plans" }}</label>
     <select
-      name="program_lead"
+      name="{{ whose_name|default:'program_lead' }}"
       id="export_whose"
       class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
     >
@@ -128,6 +129,19 @@
     </select>
   </div>
   {% endif %}
+
+  {% for field in extra_selects %}
+  <div class="space-y-1">
+    <label for="export_{{ field.name }}" class="block edify-text-caption font-semibold text-slate-700">{{ field.label }}</label>
+    <select
+      name="{{ field.name }}"
+      id="export_{{ field.name }}"
+      class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+    >
+      {% for value, text, chosen in field.choices %}<option value="{{ value }}"{% if chosen %} selected{% endif %}>{{ text }}</option>{% endfor %}
+    </select>
+  </div>
+  {% endfor %}
 
   <!-- Plan Status Filter -->
   {% if show_status_filter|default:True %}
