@@ -155,16 +155,19 @@ def _remember(response, email: str | None):
     return response
 
 
-#: Where signing in lands: Home, the task-first page every role has (owner,
-#: 2026-10-24: "on logging in, the new home page is loaded by default").
-HOME_URL = "/home"
+def _landing(request):
+    """Where signing in lands for this person: Home, or Country Oversight for
+    the country readers (apps.core.landing)."""
+    from apps.core.landing import landing_url
+
+    return redirect(landing_url(request.user))
 
 
 def login_view(request):
     if request.user.is_authenticated:
         if getattr(request.user, "must_change_password", False):
             return redirect("/change-password")
-        return redirect(HOME_URL)
+        return _landing(request)
 
     if request.method == "POST":
         from apps.accounts.models import User
@@ -308,7 +311,7 @@ def login_view(request):
             )
 
         messages.success(request, f"Welcome back, {user.name}!")
-        return _remember(redirect(HOME_URL), email if remember_me else None)
+        return _remember(_landing(request), email if remember_me else None)
 
     # "Remember me" prefills the address it was ticked with. It deliberately
     # does not extend the session — see the login POST branch.
@@ -485,7 +488,7 @@ MFA_MESSAGES = {
 def mfa_verify_view(request):
     """Answer the second factor and, on success, actually sign in."""
     if request.user.is_authenticated:
-        return redirect(HOME_URL)
+        return _landing(request)
 
     challenge = _pending_login(request)
     if challenge is None:
@@ -543,7 +546,7 @@ def mfa_verify_view(request):
             redirect("/change-password"), user.email if remember_me else None
         )
     messages.success(request, f"Welcome back, {user.name}!")
-    return _remember(redirect(HOME_URL), user.email if remember_me else None)
+    return _remember(_landing(request), user.email if remember_me else None)
 
 
 @require_POST
@@ -801,7 +804,7 @@ def force_change_password_view(request):
 
     # If the user doesn't need to change password, they are already in.
     if not user.must_change_password:
-        return redirect(HOME_URL)
+        return _landing(request)
 
     if request.method == "POST":
         new_password = request.POST.get("new_password", "")
@@ -835,6 +838,6 @@ def force_change_password_view(request):
         messages.success(
             request, "Your password has been updated successfully. Welcome!"
         )
-        return redirect(HOME_URL)
+        return _landing(request)
 
     return render(request, "pages/auth/change_password.html")
