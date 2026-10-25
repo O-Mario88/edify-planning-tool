@@ -42,6 +42,10 @@ from apps.accounts.hr_dashboard_service import ROLE_LABELS as _ROLE_LABELS  # no
 
 logger = logging.getLogger(__name__)
 
+#: The ``staff`` value of the Export options drawer's "Whose Requests":
+#: every officer's requests, for a reader whose scope is the country.
+EVERYONE_STAFF = "all"
+
 
 def parse_date(d_str: str) -> date:
     if isinstance(d_str, (date, datetime)):
@@ -263,6 +267,11 @@ def _scoped_base_querysets(request, fy):
     scope = resolve_user_scope(user)
     district_id = request.GET.get("district", "").strip()
     staff_id = request.GET.get("staff", "").strip()
+    # The Export options drawer's "Everyone" (EVERYONE_STAFF): a country
+    # reader's whole country at once; anyone else's own reach, as before.
+    everyone = staff_id == EVERYONE_STAFF
+    if everyone:
+        staff_id = ""
     status_filter = request.GET.get("status", "").strip()
 
     wfr_qs = WeeklyFundRequest.objects.filter(fy=fy).order_by("-week_start_date")
@@ -324,7 +333,11 @@ def _scoped_base_querysets(request, fy):
     # each member an explicit selection, with the manager's own requests as
     # the opening tab. An unselected page therefore pins to the viewer rather
     # than blending the whole team behind one arbitrary `.first()` pick.
-    if not staff_id and supervised_user_ids:
+    # A country reader who asks for everyone is not pinned: Impact
+    # Assessment plans no trainings or meetings of its own, so its pinned
+    # export held headings alone (owner, 2026-10-25: "the IA cannot export
+    # everything ... it is limiting the IA").
+    if not staff_id and supervised_user_ids and not (everyone and scope.country_scope):
         staff_id = user.user_id or ""
 
     # Apply dropdown filters. NOTE: StaffProfile has no `district_id` field —
@@ -2125,6 +2138,19 @@ def _export_weekly_fund_requests_xlsx(request, wfr_qs, fy):
     )
 
 
+def _whose_request_choices() -> list[tuple[str, str, bool]]:
+    """Everyone, chosen, then each officer the page's Staff filter lists."""
+    staff = (
+        StaffProfile.objects.filter(deleted_at__isnull=True)
+        .order_by("user__name")
+        .values_list("user_id", "user__name")
+    )
+    return [
+        (EVERYONE_STAFF, "Everyone", True),
+        *((user_id, name, False) for user_id, name in staff),
+    ]
+
+
 @require_page_permission("fund_requests")
 def fund_requests_export_drawer_view(request):
     """The Export options drawer of the Weekly Advance Request page."""
@@ -2149,6 +2175,16 @@ def fund_requests_export_drawer_view(request):
         status_choices=FUND_REQUEST_STATUS_CHOICES,
         drawer_size="sm",
     )
+    if resolve_user_scope(request.user).country_scope:
+        # A country reader chooses whose requests, Everyone first and
+        # chosen, as Planning Oversight's drawer chooses whose plans. The
+        # officer the page pinned them to no longer narrows the export.
+        context["hidden_params"].pop("staff", None)
+        context.update(
+            whose_choices=_whose_request_choices(),
+            whose_name="staff",
+            whose_label="Whose Requests",
+        )
     return render(
         request, "partials/oversight/export_customization_drawer.html", context
     )

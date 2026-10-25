@@ -1505,8 +1505,70 @@ EXPORT_HEADER = (
 )
 
 
-def export_rows(items):
-    """The header, then one row per item — the same items the page lists.
+#: The Support Type of a group training or cluster meeting a Partner
+#: facilitates for an officer: staff work, listed on the page's "Trainings
+#: and meetings facilitated" table (owner, 2026-09-26) and exported with it.
+FACILITATED_SUPPORT_TYPE = "Facilitated by partner"
+
+
+def narrow_trainings(trainings, *, partner_id=None, program_lead_id=None) -> list:
+    """The facilitated trainings of one Partner and one Programme Lead's team,
+    by the rules ``build_items`` narrows the Partner's own work by."""
+    from apps.planning.oversight_service import _both_id_spaces
+
+    wanted = _both_id_spaces({program_lead_id}) if program_lead_id else set()
+    return [
+        t
+        for t in trainings
+        if (not partner_id or t.partner_id == partner_id)
+        and (
+            not program_lead_id
+            or (
+                not t.supervising_pl_id
+                if program_lead_id == "unassigned"
+                else t.supervising_pl_id in wanted
+            )
+        )
+    ]
+
+
+def _facilitated_export_row(training, district_type: str) -> tuple:
+    """A facilitated training or meeting in the export's columns: the page
+    table's facts (cluster, district, training, intervention, date,
+    Salesforce ID, status, the fee as its cost); a hand-over's own columns
+    stay empty."""
+    return (
+        training.partner_name,
+        "",
+        "",
+        training.district,
+        district_type,
+        training.cluster_name,
+        training.responsible_cceo_name,
+        training.supervising_pl_name,
+        FACILITATED_SUPPORT_TYPE,
+        training.training_name,
+        "",
+        training.intervention_label,
+        training.status_label,
+        "",
+        training.training_date.isoformat() if training.training_date else "",
+        training.activity_status,
+        training.evidence_label,
+        training.salesforce_id,
+        "",
+        training.fee,
+        "",
+        "",
+        "",
+    )
+
+
+def export_rows(items, trainings=()):
+    """The header, then one row per item — the same items the page lists —
+    then the trainings and meetings Partners facilitate, which the page lists
+    beside them (owner, 2026-10-25: "the IA cannot export everything (The
+    trainings and cluster meeting specifically)").
 
     Unscheduled work leaves the cost cell EMPTY rather than writing 0. A
     spreadsheet sums a column without asking what the zeros meant, and a
@@ -1514,10 +1576,13 @@ def export_rows(items):
     priced yet.
     """
     from apps.daily_visit_batches.district_marks import district_type_labels
+    from apps.planning.oversight_service import _intervention_label
 
     items = list(items)
+    trainings = list(trainings)
     district_types = district_type_labels(
-        item.partner_activity_id for item in items if item.partner_activity_id
+        [item.partner_activity_id for item in items if item.partner_activity_id]
+        + [training.activity_id for training in trainings]
     )
     yield EXPORT_HEADER
     for item in items:
@@ -1533,7 +1598,8 @@ def export_rows(items):
             item.support_slot,
             item.training_name or "",
             item.purpose_label or "",
-            item.target_intervention,
+            # Its label, as the page and Planning Oversight's export write it.
+            _intervention_label(item.target_intervention),
             item.stage,
             item.assignment_date.isoformat() if item.assignment_date else "",
             item.scheduled_date.isoformat() if item.scheduled_date else "",
@@ -1545,6 +1611,10 @@ def export_rows(items):
             item.next_action_owner,
             item.next_action,
             "; ".join(r["reason"] for r in item.risks),
+        )
+    for training in trainings:
+        yield _facilitated_export_row(
+            training, district_types.get(training.activity_id, "")
         )
 
 

@@ -2776,6 +2776,16 @@ def _whose_choices(selected: str = "") -> list[tuple[str, str, bool]]:
     ]
 
 
+def _partner_choices() -> list[tuple[str, str, bool]]:
+    """All partners first and chosen, then each partner by name."""
+    from apps.partners.models import Partner
+
+    partners = Partner.objects.order_by("name").values_list("id", "name")
+    return [(EVERYONE, "All partners", True)] + [
+        (key, name, False) for key, name in partners
+    ]
+
+
 def _export_response(items, filename: str, *, request_user, excel: bool = False):
     """The rows the page is showing, as a workbook or as CSV: one table of the
     owner's columns, one row per activity, and no Budget sheet (owner,
@@ -3964,7 +3974,7 @@ def partner_oversight_export_view(request):
     items = partner_oversight.build_items(
         request.user,
         partner_id=partner_id,
-        program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
+        program_lead_id=_export_program_lead(request),
         fys=fys,
         **_service_period(period),
     )
@@ -3984,6 +3994,19 @@ def partner_oversight_export_view(request):
         activity_type=ws_act,
         status=ws_status,
     )
+    # The trainings and meetings Partners facilitate, listed on the page
+    # beside the Partner's own work (owner, 2026-10-25: "the IA cannot export
+    # everything (The trainings and cluster meeting specifically)").
+    trainings = partner_oversight.filter_trainings(
+        partner_oversight.narrow_trainings(
+            partner_oversight.facilitated_trainings(request.user, fys=fys),
+            partner_id=partner_id,
+            program_lead_id=_export_program_lead(request),
+        ),
+        member=request.GET.get("member", ""),
+        activity_type=ws_act,
+        status=ws_status,
+    )
 
     if (
         period.get("period") == "custom"
@@ -3998,6 +4021,11 @@ def partner_oversight_export_view(request):
             if (it.scheduled_date or it.assignment_date)
             and d_start <= (it.scheduled_date or it.assignment_date) <= inclusive_end
         ]
+        trainings = [
+            t
+            for t in trainings
+            if t.training_date and d_start <= t.training_date <= inclusive_end
+        ]
 
     req_status = (request.GET.get("status") or "").strip().lower()
     if req_status == "completed":
@@ -4009,15 +4037,24 @@ def partner_oversight_export_view(request):
             if it.delivery_phase == "completed"
             or it.activity_status in _COMPLETE_STATUSES
         ]
+        trainings = [t for t in trainings if t.delivery_phase == "completed"]
     elif req_status in export_kinds.LIVE_STATUSES:
         # The page's own phase: a moved activity is still scheduled there.
         items = [it for it in items if it.delivery_phase == req_status]
+        trainings = [t for t in trainings if t.delivery_phase == req_status]
 
+    kind = export_kinds.read_kind(request)
     items = export_kinds.filter_items(
         items,
-        export_kinds.read_kind(request),
+        kind,
         type_of=lambda it: it.activity_type,
         id_of=lambda it: getattr(it, "partner_activity_id", None),
+    )
+    trainings = export_kinds.filter_items(
+        trainings,
+        kind,
+        type_of=lambda t: t.activity_type,
+        id_of=lambda t: t.activity_id,
     )
 
     # The page's Export button asks for the workbook (owner, 2026-09-27: "It
@@ -4025,7 +4062,7 @@ def partner_oversight_export_view(request):
     if _wants_excel(request):
         from apps.core.excel import workbook_response
 
-        header, *rows = partner_oversight.export_rows(items)
+        header, *rows = partner_oversight.export_rows(items, trainings)
         return workbook_response(
             f"partner-oversight-{period['fy']}.xlsx",
             [{"title": "Partner monitoring", "headers": list(header), "rows": rows}],
@@ -4039,7 +4076,10 @@ def partner_oversight_export_view(request):
 
     writer = safe_csv_writer(_Echo())
     response = StreamingHttpResponse(
-        (writer.writerow(row) for row in partner_oversight.export_rows(items)),
+        (
+            writer.writerow(row)
+            for row in partner_oversight.export_rows(items, trainings)
+        ),
         content_type="text/csv",
     )
     response["Content-Disposition"] = (
@@ -4756,8 +4796,22 @@ def partner_oversight_export_drawer_view(request):
 
     hidden_keys = ("member", "partner", "program_lead")
     hidden_params = {k: request.GET.get(k) for k in hidden_keys if request.GET.get(k)}
+    # A country reader chooses the partner and whose plans, all partners and
+    # everyone by default (owner, 2026-10-25: "the IA cannot export
+    # everything ... it is limiting the IA"): the page's partner and
+    # Programme Lead tabs no longer pin the export to one partner in one team.
+    whose_choices, extra_selects = [], []
+    if _partner_scope(request.user)["is_country"]:
+        for key in hidden_keys:
+            hidden_params.pop(key, None)
+        whose_choices = _whose_choices()
+        extra_selects = [
+            {"name": "partner", "label": "Partner", "choices": _partner_choices()}
+        ]
 
     context = {
+        "whose_choices": whose_choices,
+        "extra_selects": extra_selects,
         "title": "Export Partner Oversight",
         "subtitle": (
             "Customize period from (Month) to (Month) and extract partner work"

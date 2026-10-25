@@ -2644,7 +2644,7 @@
    "audit_id": "KPI-SOURCE-133",
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 1074,
+   "line": 1087,
    "label": null,
    "keys": [
     "label",
@@ -8956,7 +8956,7 @@
    "audit_id": "KPI-SOURCE-494",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3362,
+   "line": 3372,
    "label": null,
    "keys": [
     "count",
@@ -9031,7 +9031,7 @@
    "audit_id": "KPI-SOURCE-498",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3400,
+   "line": 3410,
    "label": "All team members",
    "keys": [
     "count",
@@ -9049,7 +9049,7 @@
    "audit_id": "KPI-SOURCE-499",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3406,
+   "line": 3416,
    "label": null,
    "keys": [
     "count",
@@ -11359,7 +11359,7 @@
    "audit_id": "KPI-SOURCE-625",
    "kind": "breakdown-row",
    "module": "apps/planning/partner_oversight_service.py",
-   "line": 1898,
+   "line": 1968,
    "label": null,
    "keys": [
     "count",
@@ -42063,7 +42063,7 @@
   {
    "audit_id": "KPI-PAYLOAD-009",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 770,
+   "line": 783,
    "function": "_build_fund_requests_context",
    "target": "kpi_strip_items",
    "source_item_count": 6,
