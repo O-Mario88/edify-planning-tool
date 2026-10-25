@@ -320,6 +320,10 @@ def engagements_view(request):
             ]
         },
         rhythm=rhythm,
+        # A notification or To-Do link (?open=<id>) opens that engagement.
+        autoload_drawer=_autoload(
+            request, services.engagements_visible_to(request.user), ENGAGEMENTS_URL
+        ),
     )
 
 
@@ -1407,6 +1411,10 @@ def reports_view(request):
         if is_lead
         else [],
         notice=notice,
+        # A notification link (?open=<id>) opens that report.
+        autoload_drawer=_autoload(
+            request, services.reports_visible_to(request.user), REPORTS_URL
+        ),
     )
 
 

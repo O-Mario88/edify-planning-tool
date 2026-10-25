@@ -272,7 +272,7 @@ class CoachingHandoffTest(CoachingFixture):
         notice = Notification.objects.get(
             recipient_id=self.cceo.id, source_event_type="cceo_coaching_shared"
         )
-        self.assertEqual(notice.target_route, "/my-coaching")
+        self.assertEqual(notice.target_route, f"/my-coaching?open={record.id}")
         with self.assertRaisesMessage(BadRequest, "already shared"):
             coaching.share_coaching(self.pl, record.id)
 
@@ -289,7 +289,7 @@ class CoachingHandoffTest(CoachingFixture):
         back = Notification.objects.get(
             recipient_id=self.pl.id, source_event_type="cceo_coaching_acknowledged"
         )
-        self.assertEqual(back.target_route, "/team/coaching")
+        self.assertEqual(back.target_route, f"/team/coaching?open={record.id}")
         notice.refresh_from_db()
         self.assertIsNotNone(notice.resolved_at, "the ask is closed once answered")
 
@@ -584,7 +584,9 @@ class RegionalLeadCoachingTest(CoachingFixture):
         notice = Notification.objects.get(
             recipient_id=self.pl.id, source_event_type="cce_pl_coaching_shared"
         )
-        self.assertEqual(notice.target_route, "/cce-leadership/coaching")
+        self.assertEqual(
+            notice.target_route, f"/cce-leadership/coaching?open={conversation.id}"
+        )
         self.assertTrue(
             services.regional_coaching_visible_to(self.pl)
             .filter(id=conversation.id)
@@ -611,7 +613,9 @@ class RegionalLeadCoachingTest(CoachingFixture):
         back = Notification.objects.get(
             recipient_id=self.lead.id, source_event_type="cce_pl_coaching_acknowledged"
         )
-        self.assertEqual(back.target_route, "/cce-leadership/engagements")
+        self.assertEqual(
+            back.target_route, f"/cce-leadership/engagements?open={conversation.id}"
+        )
         notice.refresh_from_db()
         self.assertIsNotNone(notice.resolved_at)
         with self.assertRaisesMessage(BadRequest, "already acknowledged"):
@@ -980,13 +984,18 @@ class CoachingNotificationRoutesTest(SimpleTestCase):
         from apps.notifications.services import NotificationLinkResolver
 
         for event, role, route in (
-            ("cceo_coaching_shared", "CCEO", "/my-coaching"),
-            ("cceo_coaching_acknowledged", "Program Lead", "/team/coaching"),
-            ("cce_pl_coaching_shared", "Program Lead", "/cce-leadership/coaching"),
+            # Each opens the record itself, its drawer on the page (?open=).
+            ("cceo_coaching_shared", "CCEO", "/my-coaching?open=x"),
+            ("cceo_coaching_acknowledged", "Program Lead", "/team/coaching?open=x"),
+            (
+                "cce_pl_coaching_shared",
+                "Program Lead",
+                "/cce-leadership/coaching?open=x",
+            ),
             (
                 "cce_pl_coaching_acknowledged",
                 "RegionalProgramLead",
-                "/cce-leadership/engagements",
+                "/cce-leadership/engagements?open=x",
             ),
         ):
             with self.subTest(event=event):

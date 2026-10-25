@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The launch screen: the sidebar's navy (#001d39), as the iPhone's
+         launch screen and scripts/make-assets.py draw it. -->
+    <color name="edify_launch">#001D39</color>
+    <!-- The notification icon's tint in the shade: Edify blue (#0a4d86). -->
+    <color name="edify_notification">#0A4D86</color>
+</resources>

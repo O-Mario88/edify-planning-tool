@@ -31720,7 +31720,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:cce_reports"
       ],
       "filters": "none",
@@ -31777,7 +31777,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -122854,7 +122854,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 601,
-    "test_referenced": 853,
+    "test_referenced": 854,
     "theme_contract_pass": 601
   }
 }

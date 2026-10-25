@@ -105,8 +105,12 @@
     install: ['', 'On an iPhone or iPad, add Edify to the Home Screen (Share, then Add to Home Screen) and open it from there to get notifications.'],
     unsupported: ['', 'This browser cannot show phone notifications. The bell still holds every notification.'],
     unavailable: ['', 'Phone notifications are not set up on this server yet. The bell still holds every notification.'],
+    // In the app the phone's own setting is the switch: the page offers the
+    // way to it, on or off (owner, 2026-10-25).
+    'app-on': ['Open phone settings', 'On for this phone. To turn them off, or choose how they show, use the phone\'s Settings for Edify.'],
     'app-blocked': ['Open phone settings', 'Turned off in the phone\'s settings. Allow notifications for Edify there, then come back.'],
     'app-error': ['Try again', 'This phone could not be set up for notifications just now.'],
+    'app-unavailable': ['', 'This copy of the Edify app cannot receive phone notifications yet. The bell still holds every notification.'],
     offline: ['', 'Phone notifications could not be checked just now. Try again when you are back online.'],
   };
 
@@ -261,7 +265,8 @@
     var button = event.target.closest && event.target.closest('[data-push-toggle]');
     if (!button) return;
     event.preventDefault();
-    if (button.getAttribute('data-push-state') === 'app-blocked' && app()) {
+    var shown = button.getAttribute('data-push-state');
+    if ((shown === 'app-on' || shown === 'app-blocked') && app()) {
       app().openSettings();
       return;
     }

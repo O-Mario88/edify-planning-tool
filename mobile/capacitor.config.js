@@ -42,6 +42,10 @@ module.exports = {
   webDir: "www",
   server: {
     url: `${server.origin}${START_PATH}`,
+    // The site's own host. On iOS a page stays in the app only when its
+    // address starts with `url` (…/home) or its host is listed here, so
+    // without it sign-in and every other page would open in Safari.
+    allowNavigation: [new URL(server.origin).hostname],
     cleartext: server.cleartext,
     // Shown when the site cannot be reached at all (no network, server down).
     errorPath: "offline.html",
@@ -70,12 +74,20 @@ module.exports = {
       showSpinner: false,
     },
     StatusBar: {
-      // The light page canvas with dark icons, so the first frame matches the
-      // page; from there the site sets both from its canvas, theme included
-      // (static/js/system-chrome.js).
-      style: "LIGHT",
-      backgroundColor: "#dbe4eb",
+      // The launch screen's navy with light icons, so the first frame is one
+      // colour. From there the site takes over (static/js/system-chrome.js):
+      // an iPhone runs the page under the bar and its icons follow the top of
+      // the page; Android's bars take the page's own top and bottom colours
+      // (EdifyChromePlugin). overlaysWebView stays false because the setting
+      // is shared, and Android lays the page out between its bars.
+      style: "DARK",
+      backgroundColor: "#001d39",
       overlaysWebView: false,
+    },
+    PushNotifications: {
+      // A notification that arrives while Edify is open is the page's to
+      // show (static/js/native-push.js); the tray is for when it is not.
+      presentationOptions: [],
     },
     Keyboard: {
       // The page shrinks above the keyboard, so a field being typed into and

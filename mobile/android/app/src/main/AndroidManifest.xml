@@ -44,6 +44,22 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- Phone notifications (docs/push-notifications.md). The status-bar
+             icon is the wordmark's "e" (scripts/make-assets.py), tinted Edify
+             blue in the shade; a notification without a channel of its own
+             goes to "Edify notifications" (MainActivity). Each notification
+             is marked private by the server, so a locked phone shows only
+             that Edify has something. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_edify" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/edify_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="edify" />
     </application>
 
     <!-- Permissions -->

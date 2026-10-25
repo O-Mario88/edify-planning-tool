@@ -2662,7 +2662,7 @@
    "audit_id": "KPI-SOURCE-134",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 606,
+   "line": 610,
    "label": "Kind",
    "keys": [
     "label",
@@ -2679,7 +2679,7 @@
    "audit_id": "KPI-SOURCE-135",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 607,
+   "line": 611,
    "label": "Held on",
    "keys": [
     "label",
@@ -2696,7 +2696,7 @@
    "audit_id": "KPI-SOURCE-136",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 608,
+   "line": 612,
    "label": "Country",
    "keys": [
     "label",
@@ -2713,7 +2713,7 @@
    "audit_id": "KPI-SOURCE-137",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 609,
+   "line": 613,
    "label": "Programme Leads",
    "keys": [
     "label",
@@ -2730,7 +2730,7 @@
    "audit_id": "KPI-SOURCE-138",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 963,
+   "line": 967,
    "label": "Regional Lead",
    "keys": [
     "label",
@@ -2747,7 +2747,7 @@
    "audit_id": "KPI-SOURCE-139",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1250,
+   "line": 1254,
    "label": "Regional Lead",
    "keys": [
     "label",
@@ -2764,7 +2764,7 @@
    "audit_id": "KPI-SOURCE-140",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1477,
+   "line": 1485,
    "label": "Trainings delivered",
    "keys": [
     "label",
@@ -2781,7 +2781,7 @@
    "audit_id": "KPI-SOURCE-141",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1485,
+   "line": 1493,
    "label": "Trainings by country",
    "keys": [
     "label",
@@ -2798,7 +2798,7 @@
    "audit_id": "KPI-SOURCE-142",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1489,
+   "line": 1497,
    "label": "Coaching and follow-up visits",
    "keys": [
     "label",
@@ -2815,7 +2815,7 @@
    "audit_id": "KPI-SOURCE-143",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1493,
+   "line": 1501,
    "label": "SSA assessments confirmed",
    "keys": [
     "label",
@@ -2832,7 +2832,7 @@
    "audit_id": "KPI-SOURCE-144",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1497,
+   "line": 1505,
    "label": "Plans informed by the SSA",
    "keys": [
     "label",
@@ -2849,7 +2849,7 @@
    "audit_id": "KPI-SOURCE-145",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1501,
+   "line": 1509,
    "label": "Coaching conversations",
    "keys": [
     "label",
@@ -2866,7 +2866,7 @@
    "audit_id": "KPI-SOURCE-146",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1505,
+   "line": 1513,
    "label": "Trainings observed",
    "keys": [
     "label",
@@ -2883,7 +2883,7 @@
    "audit_id": "KPI-SOURCE-147",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1510,
+   "line": 1518,
    "label": "Country Director reviews",
    "keys": [
     "label",
@@ -2900,7 +2900,7 @@
    "audit_id": "KPI-SOURCE-148",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1530,
+   "line": 1538,
    "label": "Status",
    "keys": [
     "label",
@@ -2917,7 +2917,7 @@
    "audit_id": "KPI-SOURCE-149",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1531,
+   "line": 1539,
    "label": "Countries",
    "keys": [
     "label",
@@ -2934,7 +2934,7 @@
    "audit_id": "KPI-SOURCE-150",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1532,
+   "line": 1540,
    "label": "Submitted",
    "keys": [
     "label",
@@ -2951,7 +2951,7 @@
    "audit_id": "KPI-SOURCE-151",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1579,
+   "line": 1587,
    "label": null,
    "keys": [
     "label",
@@ -2968,7 +2968,7 @@
    "audit_id": "KPI-SOURCE-152",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 618,
+   "line": 622,
    "label": "Training",
    "keys": [
     "label",
@@ -2985,7 +2985,7 @@
    "audit_id": "KPI-SOURCE-153",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 633,
+   "line": 637,
    "label": "Average rating",
    "keys": [
     "label",
@@ -3002,7 +3002,7 @@
    "audit_id": "KPI-SOURCE-154",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 639,
+   "line": 643,
    "label": "Recommendation",
    "keys": [
     "label",
@@ -3019,7 +3019,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 643,
+   "line": 647,
    "label": "Feedback",
    "keys": [
     "label",
@@ -3036,7 +3036,7 @@
    "audit_id": "KPI-SOURCE-156",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 644,
+   "line": 648,
    "label": "Shared",
    "keys": [
     "label",
@@ -3053,7 +3053,7 @@
    "audit_id": "KPI-SOURCE-157",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 645,
+   "line": 649,
    "label": "Acknowledged",
    "keys": [
     "label",
@@ -3070,7 +3070,7 @@
    "audit_id": "KPI-SOURCE-158",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 646,
+   "line": 650,
    "label": "Programme Lead's response",
    "keys": [
     "label",
@@ -3087,7 +3087,7 @@
    "audit_id": "KPI-SOURCE-159",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 650,
+   "line": 654,
    "label": "Subject",
    "keys": [
     "label",
@@ -3104,7 +3104,7 @@
    "audit_id": "KPI-SOURCE-160",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 651,
+   "line": 655,
    "label": "What was discussed",
    "keys": [
     "label",
@@ -3121,7 +3121,7 @@
    "audit_id": "KPI-SOURCE-161",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 652,
+   "line": 656,
    "label": "Agreed actions",
    "keys": [
     "label",
@@ -3138,7 +3138,7 @@
    "audit_id": "KPI-SOURCE-162",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 653,
+   "line": 657,
    "label": "Follow up by",
    "keys": [
     "label",
@@ -3155,7 +3155,7 @@
    "audit_id": "KPI-SOURCE-163",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 976,
+   "line": 980,
    "label": "Delivered by",
    "keys": [
     "label",
@@ -3172,7 +3172,7 @@
    "audit_id": "KPI-SOURCE-164",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 1535,
+   "line": 1543,
    "label": "RVP's note",
    "keys": [
     "label",
@@ -3189,7 +3189,7 @@
    "audit_id": "KPI-SOURCE-165",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 627,
+   "line": 631,
    "label": null,
    "keys": [
     "label",
@@ -3206,7 +3206,7 @@
    "audit_id": "KPI-SOURCE-166",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 657,
+   "line": 661,
    "label": "Shared",
    "keys": [
     "label",
@@ -3223,7 +3223,7 @@
    "audit_id": "KPI-SOURCE-167",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 658,
+   "line": 662,
    "label": "Acknowledged",
    "keys": [
     "label",
@@ -3240,7 +3240,7 @@
    "audit_id": "KPI-SOURCE-168",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cce_leadership_views.py",
-   "line": 659,
+   "line": 663,
    "label": "Programme Lead's response",
    "keys": [
     "label",
@@ -12846,7 +12846,7 @@
   {
    "audit_id": "KPI-SURFACE-001",
    "template": "templates/layouts/login.html",
-   "line": 173,
+   "line": 178,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",

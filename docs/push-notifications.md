@@ -9,7 +9,7 @@ closed:
 | Desktop and laptop browsers (Chrome, Edge, Firefox, Safari on macOS) | Web Push (`apps/notifications/webpush.py`, service worker at `/sw.js`) | Works once the VAPID keys are set |
 | Android phone browser, iPhone/iPad web app added to the Home Screen | Web Push | Same keys |
 | Edify app on Android | Firebase Cloud Messaging (`apps/notifications/fcm.py`) | Works once Firebase is set up |
-| Edify app on iPhone | Firebase, which hands it to Apple's push service (APNs) | Works once Firebase and the APNs key are set up |
+| Edify app on iPhone | Apple's push service (APNs) directly (`apps/notifications/apns.py`) | Works once the APNs key is set on the server |
 
 On an iPhone, a Safari tab cannot receive web notifications. The page says so
 and tells the person to add Edify to the Home Screen or use the app.
@@ -44,16 +44,16 @@ that Edify has something. iPhones hide previews while locked by default.
 
 ## Where people turn it on and off
 
-- **This device:** the switch under the bell, in Settings → Notifications, and
-  in "How you are told" on the notification centre. In the app, after sign-in
-  the page explains notifications once and offers Turn on. Only then does the
-  phone ask.
-- **The phone's own settings:** in the app, Edify is an app in the phone's
-  notification settings like any other (iPhone: Settings → Notifications →
-  Edify, for banners, sounds, the lock screen and Focus; Android: App info →
-  Notifications → "Edify notifications"). If notifications are off there, the
-  switch reads "Open phone settings" and goes straight to that page. Coming
-  back with them allowed turns push on without another step.
+- **A browser:** the switch under the bell, in Settings → Notifications, and
+  in "How you are told" on the notification centre.
+- **The Edify app: the phone's own setting is the switch** (owner,
+  2026-10-25). After sign-in the page explains notifications once and offers
+  Turn on; only then does the phone ask. From there Edify is an app in the
+  phone's notification settings like any other (iPhone: Settings → Edify →
+  Notifications, for banners, sounds, the lock screen and Focus; Android: App
+  info → Notifications → "Edify notifications"). The page has no off switch
+  of its own: on or off, its control reads "Open phone settings" and goes
+  straight to that page, and coming back picks up the new answer.
 - **All devices at once:** "Send push notifications" in "How you are told"
   (`/notifications/#delivery-settings`), beside the email switch.
 - Signing out on a device ends that device's notifications and clears its tray.
@@ -104,24 +104,35 @@ the outbox drain also sends.
    service (APNs)**, then Continue and Register.
 2. Download the **`.p8`** file (Apple lets you download it only once), and
    note the **Key ID** and your **Team ID** (top right of the developer site).
-3. In Firebase: Project settings → Cloud Messaging → Apple app configuration →
-   APNs Authentication Key → Upload: the `.p8`, Key ID and Team ID. The `.p8`
-   goes only to Firebase, never to the Edify server or the repository.
-4. In Xcode, App target → Signing & Capabilities → + Capability → **Push
-   Notifications**. Xcode adds the `aps-environment` entitlement.
+3. On the Edify server, as secrets (never in the repository):
+   `APNS_KEY_ID` (the Key ID), `APNS_TEAM_ID` (the Team ID) and
+   `APNS_PRIVATE_KEY` (the whole text of the `.p8`; line breaks may be
+   written as `\n`). `APNS_ENVIRONMENT` is `production` for TestFlight and
+   the App Store, `development` for a build run from Xcode. The iPhone app
+   hands over Apple's own device token and the server sends to Apple
+   directly: no Firebase package or `GoogleService-Info.plist` in the iPhone
+   build.
+4. The app's Push Notifications capability is in the project
+   (`mobile/ios/App/App/App.entitlements`); turn it on for the app id in the
+   Apple Developer account (Identifiers → app.edifyplanning.mobile → Push
+   Notifications), and the provisioning profile carries it.
 
 ### 4. Build the app with push
 
-With the `mobile/` changes from `feat/mobile-app-home` applied, in `mobile/`:
-
-1. Run `npm install` (adds `@capacitor/push-notifications` 8.1.3 and updates
-   the lock file), then `npm run sync`.
-2. iPhone only, in Xcode: File → Add Package Dependencies →
-   `https://github.com/firebase/firebase-ios-sdk`, and add the
-   **FirebaseMessaging** product to the App target. `AppDelegate.swift` turns
-   Firebase on only when this package and `GoogleService-Info.plist` are
-   present. An iPhone build without them runs normally, and the server
-   refuses its Apple-only token with a reason.
+`@capacitor/push-notifications` 8.1.3 is in `mobile/package.json`, and
+`AppDelegate.swift` hands iOS's device token to it. On Android the app creates
+the "Edify notifications" channel at launch (`MainActivity.java`), Firebase's
+default icon is the wordmark's "e", and an Android build made without
+`google-services.json` never asks Firebase for anything (asking would close
+the app): the page asks the build first (`EdifySettings.pushReady`) and says
+"This copy of the Edify app cannot receive phone notifications yet". The
+server answers per phone too: `/api/notifications/push/config` gives
+`apps: {"android": …, "ios": …}`, and an Android phone is refused as
+`not_configured` where only Apple's key is set. In `mobile/`, run
+`npm install` then `npm run sync`. An iPhone build reaches the server by
+Apple's token (above); an Android build needs `google-services.json`
+(section 2). A server with Firebase but no APNs key refuses an iPhone's
+Apple token with a reason, and says so in System health.
 
 ## Checking it
 

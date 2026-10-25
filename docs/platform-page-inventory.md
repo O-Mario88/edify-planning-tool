@@ -15,7 +15,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Full pages: **261**
 - Partials and drawers: **337**
 - Permission-gated surfaces: **927**
-- Referenced by automated tests: **853**
+- Referenced by automated tests: **854**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -191,7 +191,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-1C27B68A55 | /cce-leadership/feedback/<str:engagement_id>/pass | Cce Feedback Pass | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-39F66F81DE | /cce-leadership/reports | · Edify | report | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B963DCB361 | /cce-leadership/reports/<str:report_id> | Cce Report Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-82FE3278FB | /cce-leadership/reports/<str:report_id>/review | Cce Report Review | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-82FE3278FB | /cce-leadership/reports/<str:report_id>/review | Cce Report Review | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-04A4E954F7 | /cce-leadership/reports/<str:report_id>/save | Cce Report Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-01E1012D38 | /cce-leadership/reports/new | Cce Report New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-86BCA6686D | /cce-leadership/reports/start | Cce Report Start | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |

@@ -14,12 +14,13 @@
  *  - While the app is open, an arriving notification moves the bell and says
  *    what arrived in the page (push-notifications.js), not in the tray.
  *  - Signing out ends this phone's notifications for that person.
- *  - Edify is an app in the phone's own notification settings like any
- *    other; turned off there, the page offers the way to it, and coming
- *    back picks up the new answer.
+ *  - The phone's own notification setting for Edify is the one switch
+ *    (owner, 2026-10-25): allowed there, notifications are on; the page
+ *    offers the way to that setting and has no off switch of its own, and
+ *    coming back from it picks up the new answer.
  *
- * The page's device switch ([data-push-toggle], push-notifications.js) drives
- * this through window.EdifyAppPush.
+ * The page's device control ([data-push-toggle], push-notifications.js)
+ * drives this through window.EdifyAppPush.
  */
 (function () {
   'use strict';
@@ -31,12 +32,24 @@
   var doc = document;
   var REGISTER = '/api/notifications/push/app/register';
   var UNREGISTER = '/api/notifications/push/app/unregister';
-  var OFF_KEY = 'edify-app-push-off', ASKED_KEY = 'edify-app-push-asked', TOKEN_KEY = 'edify-app-push-token';
+  var ASKED_KEY = 'edify-app-push-asked', TOKEN_KEY = 'edify-app-push-token';
   var DAY = 86400000;
   var platform = typeof cap.getPlatform === 'function' ? cap.getPlatform() : '';
   var script = doc.currentScript;
   var user = (script && script.getAttribute('data-user')) || '';
   var failed = false, configured = null;
+
+  // Whether this build of the app can receive notifications at all. An
+  // Android build reaches Firebase only when it was built with
+  // google-services.json, and without it asking Firebase for a token closes
+  // the app, so Android asks its native plugin first (EdifySettingsPlugin's
+  // pushReady). An iPhone build always can: it hands over Apple's own token.
+  var buildReady = (function () {
+    if (platform !== 'android') return Promise.resolve(true);
+    var settings = (cap.Plugins || {}).EdifySettings;
+    if (!settings || typeof settings.pushReady !== 'function') return Promise.resolve(false);
+    return settings.pushReady().then(function (r) { return !!(r && r.ready); }, function () { return false; });
+  })();
 
   function read(key) { try { return localStorage.getItem(key) || ''; } catch (_) { return ''; } }
   function write(key, value) { try { localStorage.setItem(key, value); } catch (_) { /* private mode */ } }
@@ -92,34 +105,44 @@
   }
 
   function register() {
-    return PushNotifications.register().catch(function () { failed = true; repaint(); });
+    return buildReady.then(function (ready) {
+      return ready ? PushNotifications.register() : null;
+    }).catch(function () { failed = true; repaint(); });
   }
 
   // ── What the page's switch asks ──────────────────────────────────────────
   function state() {
     if (configured === false) return Promise.resolve('unavailable');
-    return permission().then(function (receive) {
+    return buildReady.then(function (ready) {
+      return ready ? permission() : 'app-unavailable';
+    }).then(function (receive) {
+      if (receive === 'app-unavailable') return receive;
       if (receive === 'denied') return 'app-blocked';
-      if (receive !== 'granted' || read(OFF_KEY) === '1') return 'off';
-      return failed ? 'app-error' : 'on';
+      if (receive !== 'granted') return 'off';
+      return failed ? 'app-error' : 'app-on';
     }).catch(function () { return 'app-error'; });
   }
 
   function enable() {
-    forget(OFF_KEY);
     failed = false;
-    return PushNotifications.requestPermissions().then(function (p) {
-      return p.receive === 'granted' ? register() : null;
+    return buildReady.then(function (ready) {
+      // The phone is not asked for notifications this build cannot receive.
+      return ready ? PushNotifications.requestPermissions() : null;
+    }).then(function (p) {
+      return p && p.receive === 'granted' ? register() : null;
     }).catch(noop);
   }
 
-  // The phone's own notification settings for Edify: on an iPhone the app's
-  // page in Settings; on Android its notification settings, through the
-  // app's small native plugin (MainActivity registers EdifySettings).
+  // Edify's own notification settings on the phone, through the app's small
+  // native plugin (iPhone: EdifyBridgeViewController.swift; Android:
+  // MainActivity), which lands on Edify's page itself. An iPhone build from
+  // before the plugin falls back to the app's page in Settings.
   function openSettings() {
     var plugins = cap.Plugins || {};
-    if (platform === 'android' && plugins.EdifySettings) {
-      return plugins.EdifySettings.openNotificationSettings().catch(noop);
+    if (plugins.EdifySettings) {
+      return plugins.EdifySettings.openNotificationSettings().catch(function () {
+        if (platform === 'ios') window.location.href = 'app-settings:';
+      });
     }
     if (platform === 'ios') window.location.href = 'app-settings:';
     return Promise.resolve(null);
@@ -128,15 +151,16 @@
   function disable(reason) {
     var token = remembered().token;
     forget(TOKEN_KEY);
-    if (reason !== 'signed_out') write(OFF_KEY, '1');
     return Promise.all([
       token ? call(UNREGISTER, { token: token, reason: reason || '' }, reason === 'signed_out').catch(noop) : null,
       // Nothing of this person's stays in the tray.
       PushNotifications.removeAllDeliveredNotifications().catch(noop),
     ]).then(function () {
-      // A fresh token for whoever signs in next.
-      return PushNotifications.unregister().catch(noop);
-    });
+      return buildReady;
+    }).then(function (ready) {
+      // A fresh token for whoever signs in next, from a build that has one.
+      return ready ? PushNotifications.unregister() : null;
+    }).catch(noop);
   }
 
   // Said before the phone asks, once: what notifications are for, and that
@@ -199,8 +223,10 @@
         importance: 4, visibility: 0,
       }).catch(noop);
     }
-    listen().then(permission).then(function (receive) {
-      if (read(OFF_KEY) === '1') return null;
+    buildReady.then(function (ready) {
+      // A build that cannot receive them is never offered them.
+      return ready ? listen().then(permission) : null;
+    }).then(function (receive) {
       if (receive === 'granted') return register();
       // Offered once, after sign-in; the switch stays in Settings and under
       // the bell for anyone who said not now.
@@ -214,7 +240,7 @@
   doc.addEventListener('visibilitychange', function () {
     if (doc.hidden) return;
     permission().then(function (receive) {
-      if (receive === 'granted' && read(OFF_KEY) !== '1') { failed = false; return register(); }
+      if (receive === 'granted') { failed = false; return register(); }
       return null;
     }).then(repaint, repaint);
   });

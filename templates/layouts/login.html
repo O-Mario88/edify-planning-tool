@@ -11,7 +11,8 @@
   resolving to 1.5rem flat on every notched iPhone. Sign-in is the first screen
   a field user sees, so it is the last place that should be wrong.
   {% endcomment %}
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  {# In the app the page holds its scale from the first frame: an iPhone zoomed into a tapped field under 16px (these are 13px) and left the page filling the screen. A browser keeps its pinch zoom. #}
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover{% if "EdifyApp" in request.META.HTTP_USER_AGENT %}, maximum-scale=1{% endif %}">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#2d4862">
   <title>{% block title %}Sign in | Edify Planning &amp; Monitoring{% endblock %}</title>
@@ -80,7 +81,7 @@
   <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261023blue2">
   <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20261023hover2">
   <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
-  <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260912focus1">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20261025safe1">
   <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20261009signin1">
   {% comment %}
     The same synchronizer the application shell loads. Django replaces the
@@ -93,6 +94,10 @@
   <script defer src="{% static 'js/csrf-sync.js' %}?v=20261005focus1"></script>
   <script defer src="{% static 'js/login.js' %}?v=20261005back1"></script>
   <script defer src="{% static 'js/platform-status.js' %}?v=20261009signin1"></script>
+  {# The app's shell on the sign-in page too, which this layout does not inherit from base.html: without it a tapped field zoomed the page in the iOS app (static/js/native-shell.js). Sent only to the app. #}
+  {% if "EdifyApp" in request.META.HTTP_USER_AGENT %}<script async src="{% static 'js/native-shell.js' %}?v=20261025native5"></script>
+  {# The phone's bars take sign-in's colours, as on every other page (static/js/system-chrome.js). #}
+  <script defer src="{% static 'js/system-chrome.js' %}?v=20261025chrome5"></script>{% endif %}
 </head>
 <body class="login-page">
 {% include "partials/pwa_launch.html" %}

@@ -305,11 +305,11 @@ what arrived (static/js/push-notifications.js; apps.notifications.push).
 `async`, not `defer`: nothing it does belongs to the first frame, and the
 deferred scripts in the head are the ones that hold it
 (e2e/performance-budgets.spec.js, "the first frame is the finished page").{% endcomment %}
-<script async src="{% static 'js/push-notifications.js' %}?v=20261023push2"></script>
+<script async src="{% static 'js/push-notifications.js' %}?v=20261025push4"></script>
 {% comment %}Inside the Edify app on a phone, the phone's own push instead of Web
 Push (static/js/native-push.js; apps.notifications.fcm): signed-in pages only,
 and only in the app, which says EdifyApp in its user agent.{% endcomment %}
-{% if "EdifyApp" in request.META.HTTP_USER_AGENT %}<script async src="{% static 'js/native-push.js' %}?v=20261023app1" data-user="{{ request.user.id }}"></script>{% endif %}
+{% if "EdifyApp" in request.META.HTTP_USER_AGENT %}<script async src="{% static 'js/native-push.js' %}?v=20261025app4" data-user="{{ request.user.id }}"></script>{% endif %}
 
 {% comment %}Contextual Help (the full Knowledge Center article for this page)
 lives in the sidebar's Settings menu (owner, 2026-10-23: "move the help icon

@@ -1425,13 +1425,16 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
     max-inline-size: none !important;
     block-size: 2rem !important;
     min-block-size: 2rem !important;
-    padding-inline: 0.5rem 1.5rem !important;
+    /* A 12px chevron in an 18px lane: three fields share a phone's row, and
+       the 24px lane a 16px chevron needs cut "FY 2027" to "FY 202". */
+    padding-inline: 0.5rem 1.125rem !important;
     /* The 2rem field holds its text whatever its size: the 8px padding and
        24px line a page's own form styles gave it cut 16px text in half
        (Field Debrief's filters, 2026-10-21). */
     padding-block: 0 !important;
     line-height: 1.25 !important;
-    background-position: right 0.35rem center !important;
+    background-position: right 0.25rem center !important;
+    background-size: 0.75rem 0.75rem;
     font-size: var(--edify-text-micro-size) !important;
     text-overflow: ellipsis;
   }
