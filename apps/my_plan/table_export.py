@@ -332,7 +332,20 @@ MEETING_SCHOOLS_TITLE = "Schools in Cluster Meetings"
 #: the name the page gives the table itself.
 PROGRAMME_TITLE = "{label} School Plans"
 
-#: "All": every table, a sheet each, in the page's order.
+#: Work My Plan draws on no table, a sheet a kind, in the School Visits
+#: table's columns (owner, 2026-10-26, asked: "All" holds every activity).
+#: A kind's sheet is there when it has work.
+UNLISTED_SHEETS = (
+    ("partner_activity", "Partner Activities"),
+    ("ssa_activity", "SSA Activities"),
+    ("project_activity", "Project Activities"),
+    ("field_event", "Field Events"),
+)
+#: Whatever else falls outside every table.
+OTHER_WORK_TITLE = "Other Work"
+
+#: "All": every table, a sheet each, in the page's order, then the work on
+#: no table.
 ALL_SHEETS = (
     "school_visits",
     "cluster_trainings",
@@ -343,6 +356,7 @@ ALL_SHEETS = (
     "core_school_trainings",
     "programme_school_work",
     "programme_activities",
+    "unlisted_work",
 )
 _TITLES = {table.key: table.title for table in TABLES}
 _TITLES["meeting_schools"] = MEETING_SCHOOLS_TITLE
@@ -561,6 +575,30 @@ def _session_figures(rows: list[dict], kind: str) -> list[dict]:
     ]
 
 
+def _unlisted_sheets(rows: list[dict]) -> list[dict]:
+    """The work on no table, a sheet a kind that has some."""
+    titles = dict(UNLISTED_SHEETS)
+    by_title: dict[str, list] = {}
+    for row in rows:
+        title = titles.get(row.get("activity_type"), OTHER_WORK_TITLE)
+        by_title.setdefault(title, []).append(row)
+    order = [title for _key, title in UNLISTED_SHEETS] + [OTHER_WORK_TITLE]
+    return [
+        _sheet(title, SCHOOL_VISITS.columns, by_title[title])
+        for title in order
+        if by_title.get(title)
+    ]
+
+
+def listed_ids(context: dict) -> set:
+    """Every activity the export's sheets hold."""
+    keys = [table.key for table in TABLES] + ["unlisted_work"]
+    found = {row.get("id") for key in keys for row in context.get(key) or []}
+    for section in context.get("programme_school_work") or []:
+        found |= {row.get("id") for row in section["rows"]}
+    return found
+
+
 def sheets(context: dict, kind: str = export_kinds.ALL) -> list[dict]:
     """The sheets ``kind`` gives, from My Plan's ``context``, in the page's
     order. "All" holds every table, an empty one too, so a reader sees the
@@ -569,7 +607,9 @@ def sheets(context: dict, kind: str = export_kinds.ALL) -> list[dict]:
     by_key = {table.key: table for table in TABLES}
     out = []
     for key in KIND_TABLES.get(kind, ALL_SHEETS):
-        if key == "programme_school_work":
+        if key == "unlisted_work":
+            out.extend(_unlisted_sheets(context.get("unlisted_work") or []))
+        elif key == "programme_school_work":
             out.extend(
                 _sheet(
                     PROGRAMME_TITLE.format(label=section["label"]),

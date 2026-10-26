@@ -531,3 +531,58 @@ class EveryPlanStatusExports(MyPlanTablesFixture):
                     continue  # a page this role does not open
                 with self.subTest(page=path, status=status):
                     self.assertEqual(response.status_code, 200)
+
+
+class AllHoldsEveryActivity(MyPlanTablesFixture):
+    """Owner, 2026-10-26, asked: work My Plan draws on no table (a Partner
+    activity, an SSA activity, a project activity, a field event) is still
+    the plan, and "All" holds it, a sheet a kind, in the School Visits
+    table's columns."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        soon = date.today() + timedelta(days=4)
+        cls.partner_activity = Activity.objects.create(
+            activity_type="partner_activity",
+            school=cls.school,
+            fy=cls.fy,
+            quarter="Q1",
+            planned_date=soon,
+            planned_month=soon.month,
+            status="completed",
+            delivery_type="partner",
+            assigned_partner_id=cls.partner.id,
+            monitored_by_staff_id=cls.james.id,
+        )
+        cls.ssa_activity = Activity.objects.create(
+            activity_type="ssa_activity",
+            school=cls.school,
+            fy=cls.fy,
+            quarter="Q1",
+            planned_date=soon,
+            planned_month=soon.month,
+            status="scheduled",
+            delivery_type="staff",
+            responsible_staff_id=cls.james.id,
+        )
+
+    def test_each_kind_has_its_sheet_in_the_school_visits_columns(self):
+        sheets = self.export(activity_type="all")
+        for title, executor in (
+            ("Partner Activities", "Partner X"),
+            ("SSA Activities", "James"),
+        ):
+            with self.subTest(sheet=title):
+                self.assertEqual(sheets[title][0], template_headings("school_visits"))
+                rows = records(sheets[title])
+                self.assertEqual([r["School ID"] for r in rows], ["s1"])
+                self.assertEqual(rows[0]["Executor"], executor)
+
+    def test_every_activity_the_page_lists_is_on_a_sheet(self):
+        from apps.planning import oversight_service as oversight
+
+        items = oversight.build_items(self.ia_user, program_lead_id=None, fy=self.fy)
+        ids = {item.activity_id for item in items if item.activity_id}
+        context = table_export.context_for(self.ia_user, ids, self.fy)
+        self.assertEqual(ids - table_export.listed_ids(context), set())

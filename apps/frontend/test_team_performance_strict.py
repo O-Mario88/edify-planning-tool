@@ -13,12 +13,23 @@ no id, no country total, and no figure counted from anyone else's schools.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from apps.accounts.models import StaffSupervisorAssignment
 from apps.team_performance.periods import ReportPeriod
 from apps.team_performance.report import Report
 from apps.team_performance.test_ledger import FY, LedgerFixture, make_officer
+
+#: A page's security tokens (CSRF): 64 random letters and digits, so one in
+#: many reads "Zed" or "Mary" — main's CI failed on "…soZedGwo" (2026-10-25).
+#: A staff id is 25, so an id that leaks is still found.
+_TOKEN = re.compile(r"[A-Za-z0-9]{40,}")
+
+
+def _without_tokens(body: str) -> str:
+    return _TOKEN.sub("", body)
+
 
 URL = "/team-performance/"
 TABS = ("summary", "weekly", "milestones", "dashboard", "month", "core")
@@ -82,7 +93,7 @@ class RoleStrictTest(LedgerFixture):
         for query in self.links(reader):
             response = self.client.get(URL, {"fy": FY, **query})
             self.assertEqual(response.status_code, 200, query)
-            body = response.content.decode()
+            body = _without_tokens(response.content.decode())
             for text in forbidden:
                 self.assertNotIn(text, body, f"{query}: {text}")
 
