@@ -29,14 +29,6 @@ from apps.schools.models import School
 User = get_user_model()
 
 
-def _workbook_rows(response):
-    from openpyxl import load_workbook
-
-    book = load_workbook(io.BytesIO(response.content))
-    sheet = book[book.sheetnames[0]]
-    return [list(row) for row in sheet.iter_rows(values_only=True)]
-
-
 def _weekday_ahead(days: int) -> date:
     day = timezone.localdate() + timedelta(days=days)
     while day.weekday() == 6:
@@ -104,23 +96,30 @@ class MyPlanExportTest(_ExportFixture):
         self._visit(self.core_school, on=day)
         self.client.force_login(self.user)
 
-        rows = _workbook_rows(
-            self.client.get(
-                f"/my-plan?export=xlsx&period=fy&fy={get_operational_fy(day)}"
-            )
-        )
+        from openpyxl import load_workbook
 
-        # The School Visits sheet, in the owner's columns (2026-10-12).
+        response = self.client.get(
+            f"/my-plan?export=xlsx&period=fy&fy={get_operational_fy(day)}"
+        )
+        book = load_workbook(io.BytesIO(response.content), read_only=True)
+
+        def sheet(title):
+            return [list(r) for r in book[title].iter_rows(values_only=True)]
+
+        # My Plan's School Visits and Core School Visits tables (owner,
+        # 2026-10-26), each opening on the School ID.
+        visits, core = sheet("School Visits"), sheet("Core School Visits")
         self.assertEqual(
-            rows[0][:5],
+            visits[0][:5],
             ["School ID", "School Name", "District", "District Type", "Activity"],
         )
-        by_school = {row[0]: row for row in rows[1:]}
+        by_school = {row[0]: row for row in visits[1:]}
         self.assertIn("EXP-CLIENT-7", by_school)
-        # The Core School card used to be left out of the file altogether.
-        self.assertIn("EXP-CORE-3", by_school)
-        self.assertIn("(V1)", by_school["EXP-CORE-3"][4])
         self.assertEqual(by_school["EXP-CLIENT-7"][2], "Export District")
+        # The Core School card used to be left out of the file altogether.
+        core_rows = {row[0]: row for row in core[1:]}
+        self.assertIn("EXP-CORE-3", core_rows)
+        self.assertIn("V1", core_rows["EXP-CORE-3"][4])
 
     def test_the_csv_carries_it_too(self):
         visit = self._visit(self.client_school)

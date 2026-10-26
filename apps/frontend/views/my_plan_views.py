@@ -280,181 +280,7 @@ def my_plan_view(request):
     # oversight pages. CSV stays, so existing links keep working.
     export = _export_format(request)
     if export:
-        # One layout for every plan export (apps.core.plan_export; owner,
-        # 2026-10-12): the school visits, the trainings and cluster meetings,
-        # and the other activities, each a sheet with the columns of its own
-        # My Plan table plus the District Type. Every table the page shows
-        # feeds it, the Core School and Programme School cards included.
-        from apps.core import plan_export
-
-        # A cluster session is one row (its columns open on the Cluster Name
-        # and carry no School ID): the Group Trainings table's rows, not the
-        # per-school rows of "Schools with Planned Training". What is left
-        # of that table is the in-school trainings, which are school work.
-        trainings = list(context.get("group_trainings", []))
-        meetings = list(context.get("cluster_meetings", []))
-        session_ids = {row["id"] for row in (*trainings, *meetings)}
-
-        def _kind(row, kind):
-            # Work handed to a partner is a partner schedule whatever its
-            # kind (owner, 2026-10-12: "partner schedules on its sheet").
-            if row.get("execution_role") == "Partner" or row.get("partner_name"):
-                kind = plan_export.PARTNER
-            return {**row, "export_kind": kind}
-
-        feed = [
-            *(
-                _kind(row, plan_export.VISIT)
-                for row in (
-                    *context.get("core_school_visits", []),
-                    *context.get("core_school_trainings", []),
-                    *context.get("school_visits", []),
-                    *context.get("cluster_trainings", []),
-                    *(
-                        row
-                        for group in context.get("programme_school_work", [])
-                        for row in group["rows"]
-                    ),
-                )
-                if row["id"] not in session_ids
-            ),
-            *(_kind(row, plan_export.TRAINING) for row in trainings),
-            *(_kind(row, plan_export.MEETING) for row in meetings),
-            *(
-                _kind(row, plan_export.OTHER)
-                for row in context.get("programme_activities", [])
-            ),
-        ]
-
-        from datetime import date
-
-        from apps.frontend.views.oversight_views import (
-            _period_filters,
-            export_period_bounds,
-        )
-        from apps.planning.oversight_service import COMPLETED_WORK_STATUSES
-
-        # The period the Export options drawer chose, read by the one rule
-        # every export reads it by (oversight_views._period_filters; owner,
-        # 2026-10-15: "make sure it only picks the plan for the selected
-        # period not everything"). This page kept its own copy, which read the
-        # hidden month pair before the custom dates.
-        period = _period_filters(request)
-        filter_start_date = filter_end_date = None
-        if period.get("period") == "custom" and period.get("date_start"):
-            filter_start_date, filter_end_date = export_period_bounds(period)
-
-        if filter_start_date is not None and filter_end_date is not None:
-
-            def _item_date(a) -> date | None:
-                p_d = a.get("planned_date")
-                if isinstance(p_d, date):
-                    return p_d
-                if isinstance(p_d, str) and p_d:
-                    try:
-                        return date.fromisoformat(p_d)
-                    except ValueError:
-                        pass
-                return None
-
-            feed = [
-                a
-                for a in feed
-                if (d_val := _item_date(a)) is not None
-                and filter_start_date <= d_val <= filter_end_date
-            ]
-
-        req_status = (request.GET.get("status") or "").strip().lower()
-        if req_status == "completed":
-            # By the work's status, never by the label's letters: "Not
-            # Complete" contains "complet", and matched (2026-10-12).
-            feed = [
-                a
-                for a in feed
-                if a.get("is_completed") or a.get("status") in COMPLETED_WORK_STATUSES
-            ]
-        elif req_status == "scheduled":
-            feed = [
-                a
-                for a in feed
-                if "schedul" in str(a.get("status", "")).lower()
-                or "schedul" in str(a.get("status_label", "")).lower()
-            ]
-        elif req_status == "in_progress":
-            feed = [
-                a
-                for a in feed
-                if "progress" in str(a.get("status", "")).lower()
-                or "progress" in str(a.get("status_label", "")).lower()
-            ]
-
-        from apps.core import export_kinds
-
-        feed = export_kinds.filter_items(
-            feed,
-            export_kinds.read_kind(request),
-            type_of=lambda a: a.get("activity_type"),
-            id_of=lambda a: a.get("id"),
-        )
-        rows = []
-        seen = set()
-        for a in feed:
-            kind = a["export_kind"]
-            key = (a["id"], a.get("school_id") if kind == plan_export.VISIT else "")
-            if key in seen:
-                continue
-            seen.add(key)
-            sequence = a.get("visit_number") or a.get("training_number") or ""
-            activity = (
-                f"{a['activity_type_label']} ({sequence})"
-                if sequence
-                else a["activity_type_label"]
-            )
-            school_work = kind in (plan_export.VISIT, plan_export.PARTNER)
-            rows.append(
-                plan_export.row(
-                    kind,
-                    activity_id=a["id"],
-                    partner=a.get("partner_name"),
-                    school_id=a.get("school_id") if school_work else "",
-                    school_name=a.get("school_name"),
-                    cluster_name=a.get("cluster_name"),
-                    venue=a.get("school_name") or a.get("cluster_name"),
-                    district=a.get("district"),
-                    district_type=a.get("district_type"),
-                    activity=activity,
-                    planned_date=a.get("planned_date"),
-                    executor=a.get("owner") or "Staff",
-                    purpose=a.get("purpose"),
-                    intervention=a.get("focus_intervention"),
-                    training=a.get("training_name")
-                    or a.get("meeting_training")
-                    or a.get("activity_name")
-                    or a.get("purpose")
-                    or a["activity_type_label"],
-                    participants=a.get("expected_participants"),
-                    cost=a.get("budget_total"),
-                    budget_status=a.get("budget_status"),
-                    verification=a.get("verification_status"),
-                    salesforce_id=a.get("salesforce_id"),
-                    evidence=a.get("evidence_label"),
-                    status=a.get("status_label"),
-                )
-            )
-
-        if export in {"xlsx", "excel"}:
-            from apps.core.excel import workbook_response
-
-            return workbook_response("my_plan_export.xlsx", plan_export.sheets(rows))
-
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="my_plan_export.csv"'
-        from apps.core.excel import safe_csv_writer
-
-        writer = safe_csv_writer(response)
-        for row in plan_export.csv_rows(rows):
-            writer.writerow(row)
-        return response
+        return _my_plan_export(request, export)
 
     # Partners get their own My Plan — the accepted implementation schedule
     # (§8): five sections, one Actions menu, the Send Invoice button and the
@@ -4136,9 +3962,85 @@ def my_plan_export_drawer_view(request):
         "show_status_filter": True,
         "show_activity_type_filter": True,
         "kind_choices": export_kinds.KIND_CHOICES,
+        "status_choices": export_kinds.STATUS_CHOICES,
     }
     return render(
         request,
         "partials/oversight/export_customization_drawer.html",
         context,
     )
+
+
+def _my_plan_export(request, export: str):
+    """The reader's own plan as My Plan's tables, a sheet each, then the
+    Budget of exactly those activities (owner, 2026-10-26: "tables are
+    exported exactly the way they are in My Plan tables"; the Budget sheet is
+    2026-10-12's). The Export options drawer chose the period, the Plan Status
+    and the Activity Type; the plan is every activity of the reader's year
+    that is planned, the closed ones included, and none the page has set
+    aside (cancelled, rejected, deferred, not planned, awaiting approval).
+    """
+    from apps.activities.online_training import ONLINE
+    from apps.core import export_kinds, plan_export
+    from apps.core.fy import get_operational_fy
+    from apps.frontend.views.oversight_views import (
+        _period_filters,
+        export_period_bounds,
+    )
+    from apps.my_plan import table_export
+    from apps.my_plan.services import (
+        ACTIVE_MY_PLAN_EXCLUDED_STATUSES,
+        my_plan_activities,
+    )
+
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    period = _period_filters(request)
+    start, end = export_period_bounds(period)
+    status = (request.GET.get("status") or "").strip().lower()
+    kind = export_kinds.read_kind(request)
+    chosen = []
+    for activity in (
+        my_plan_activities(request.user, fy)
+        .exclude(
+            status__in=[s for s in ACTIVE_MY_PLAN_EXCLUDED_STATUSES if s != "closed"]
+        )
+        .only(
+            "id",
+            "status",
+            "activity_type",
+            "programme_delivery_mode",
+            "planned_date",
+            "scheduled_date",
+        )
+    ):
+        day = activity.planned_date or (
+            activity.scheduled_date.date() if activity.scheduled_date else None
+        )
+        if day is not None and not (start <= day <= end):
+            continue
+        if not export_kinds.keeps_status(status, activity.status):
+            continue
+        if not export_kinds.keeps(
+            kind,
+            activity.activity_type,
+            online=(activity.programme_delivery_mode or "") == ONLINE,
+        ):
+            continue
+        chosen.append((activity.id, day))
+    sheets = table_export.workbook(request.user, [pk for pk, _day in chosen], fy, kind)
+    budget = plan_export.budget_sheet(
+        [{"activity_id": pk, "planned_date": day} for pk, day in chosen]
+    )
+    if export in {"xlsx", "excel"}:
+        from apps.core.excel import workbook_response
+
+        return workbook_response("my_plan_export.xlsx", [*sheets, budget])
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="my_plan_export.csv"'
+    from apps.core.excel import safe_csv_writer
+
+    writer = safe_csv_writer(response)
+    for row in table_export.csv_rows(sheets):
+        writer.writerow(row)
+    return response

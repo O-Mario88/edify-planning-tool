@@ -42,13 +42,6 @@ from apps.planning import oversight_service as oversight
 from apps.schools.models import School
 
 
-def _sheet(response) -> list[list]:
-    from openpyxl import load_workbook
-
-    book = load_workbook(io.BytesIO(response.content), read_only=True)
-    return [list(row) for row in book.worksheets[0].iter_rows(values_only=True)]
-
-
 class ExportVocabularyTest(SimpleTestCase):
     def test_the_plan_is_visits_trainings_and_cluster_meetings(self):
         self.assertEqual(export_kinds.KIND_CHOICES[0][0], export_kinds.PLANNED)
@@ -158,14 +151,16 @@ class PlanExportTest(TestCase):
             **extra,
         }
 
-    #: What each fixture activity reads as in the export's sheets
-    #: (apps.core.plan_export): the sheet it is on and how it is named there.
-    VISIT = ("School Visits", "School Visit")
-    MEETING = ("Cluster Meetings", "Cluster Meeting")
-    TRAINING = ("Group Trainings", "Cluster Training")
+    #: Where each fixture activity is in the export: My Plan's tables, a
+    #: sheet each (owner, 2026-10-26). The cluster training is on Group
+    #: Trainings once, and on Trainings under its cluster, which has no
+    #: member school to list it under.
+    VISIT = ["School Visits"]
+    MEETING = ["Cluster Meetings"]
+    TRAINING = ["Group Trainings", "Trainings"]
 
     def _work(self, response) -> list:
-        """The exported work, a (sheet, name) per row, sorted."""
+        """The exported work, the sheet of each row, sorted."""
         from openpyxl import load_workbook
 
         book = load_workbook(io.BytesIO(response.content), read_only=True)
@@ -173,10 +168,8 @@ class PlanExportTest(TestCase):
         for sheet in book.worksheets:
             if sheet.title == "Budget":
                 continue
-            rows = [list(row) for row in sheet.iter_rows(values_only=True)]
-            header = rows[0]
-            named = header.index("Activity" if "Activity" in header else "Training")
-            found += [(sheet.title, row[named]) for row in rows[1:]]
+            rows = list(sheet.iter_rows(values_only=True))
+            found += [sheet.title] * (len(rows) - 1)
         return sorted(found)
 
     def _statuses(self, response) -> list:
@@ -191,20 +184,13 @@ class PlanExportTest(TestCase):
             out += [row[rows[0].index("Status")] for row in rows[1:]]
         return out
 
-    def _oversight(self, response, column: str) -> list:
-        """A column of Planning Oversight's one table (owner, 2026-10-20),
-        sorted."""
-        rows = _sheet(response)
-        at = rows[0].index(column)
-        return sorted(row[at] for row in rows[1:])
-
     def test_my_plan_exports_the_plan_as_the_drawer_opens(self):
         client = Client()
         client.force_login(self.cceo_user)
         response = client.get("/my-plan/", {**self._drawer_query(), "export": "xlsx"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            self._work(response), sorted([self.VISIT, self.MEETING, self.TRAINING])
+            self._work(response), sorted([*self.VISIT, *self.MEETING, *self.TRAINING])
         )
 
     def test_completed_only_is_completed_work_not_a_label_with_the_word(self):
@@ -220,14 +206,13 @@ class PlanExportTest(TestCase):
             {**self._drawer_query(status="completed"), "export": "xlsx"},
         )
         # One row of the three visits: the completed one.
-        self.assertEqual(self._work(response), [self.VISIT])
+        self.assertEqual(self._work(response), self.VISIT)
         self.assertEqual(len(self._statuses(response)), 1)
         client.force_login(self.pl_user)
         response = client.get(
             "/team-planning-oversight/export", self._drawer_query(status="completed")
         )
-        self.assertEqual(self._oversight(response, "Activity type"), ["school_visit"])
-        self.assertEqual(self._oversight(response, "Activity status"), ["completed"])
+        self.assertEqual(self._work(response), self.VISIT)
 
     def test_my_plan_exports_one_kind_when_asked(self):
         client = Client()
@@ -236,35 +221,33 @@ class PlanExportTest(TestCase):
             "/my-plan/",
             {**self._drawer_query(activity_type="group_trainings"), "export": "xlsx"},
         )
-        self.assertEqual(self._work(response), [self.TRAINING])
+        self.assertEqual(self._work(response), sorted(self.TRAINING))
 
     def test_my_plan_drawer_offers_the_kinds_and_opens_on_the_plan(self):
         client = Client()
         client.force_login(self.cceo_user)
         html = client.get("/my-plan/export-drawer").content.decode()
         self.assertIn("Group trainings only", html)
-        self.assertIn('<option value="all" selected>', html)
+        # "All scheduled plans" opens selected (owner, 2026-10-26).
+        self.assertIn('<option value="scheduled" selected>', html)
         self.assertNotIn('value="completed" selected', html)
 
     def test_team_plan_exports_every_kind_the_drawer_names(self):
         client = Client()
         client.force_login(self.pl_user)
-        visit, meeting, training = "school_visit", "cluster_meeting", "cluster_training"
         expected = {
-            export_kinds.PLANNED: [visit, meeting, training],
-            export_kinds.GROUP_TRAININGS: [training],
-            export_kinds.MEETINGS: [meeting],
-            export_kinds.VISITS: [visit],
+            export_kinds.PLANNED: [*self.VISIT, *self.MEETING, *self.TRAINING],
+            export_kinds.GROUP_TRAININGS: self.TRAINING,
+            export_kinds.MEETINGS: self.MEETING,
+            export_kinds.VISITS: self.VISIT,
         }
-        for kind, ids in expected.items():
+        for kind, sheets in expected.items():
             response = client.get(
                 "/team-planning-oversight/export",
                 self._drawer_query(activity_type=kind),
             )
             self.assertEqual(response.status_code, 200, kind)
-            self.assertEqual(
-                self._oversight(response, "Activity type"), sorted(ids), kind
-            )
+            self.assertEqual(self._work(response), sorted(sheets), kind)
 
 
 class GroupTrainingMealRateTest(TestCase):

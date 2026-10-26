@@ -2108,6 +2108,18 @@ def _export_weekly_fund_requests_xlsx(request, wfr_qs, fy):
         if counted.get(r.id)
     ]
     stamp = f"{start.isoformat()}-to-{end.isoformat()}"
+    if kind in export_kinds.SCHOOL_LISTS:
+        # One of the five lists of schools (owner, 2026-10-26): My Plan's
+        # table of the activities these requests carry.
+        from apps.my_plan import table_export
+
+        return table_download(
+            request,
+            f"weekly-advance-requests-{fy}-{stamp}",
+            table_export.workbook(
+                request.user, [row[4] for row in line_rows], fy, kind
+            ),
+        )
     return table_download(
         request,
         f"weekly-advance-requests-{fy}-{stamp}",
@@ -2245,6 +2257,22 @@ def budget_export_view(request):
         "plan_only": True,
     }
     stem = f"budget-{start.isoformat()}-to-{end.isoformat()}"
+    if kind in export_kinds.SCHOOL_LISTS:
+        # One of the five lists of schools (owner, 2026-10-26): My Plan's
+        # table of the Budget's planned activities.
+        from apps.budget.services import export_lines
+        from apps.my_plan import table_export
+
+        lines = export_lines(
+            request.user, query, start=start, end=end, kind=kind, status=status
+        )
+        return table_download(
+            request,
+            f"{stem}-{kind.replace('_', '-')}",
+            table_export.workbook(
+                request.user, [line.activity.id for line in lines], period["fy"], kind
+            ),
+        )
     if kind != export_kinds.ALL:
         stem += f"-{kind.replace('_', '-')}"
     if status and status != "all":

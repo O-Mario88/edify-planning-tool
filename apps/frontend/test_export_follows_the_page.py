@@ -24,19 +24,26 @@ from apps.frontend.test_oversight_filters_export import (
 )
 
 DRAWER = "/team-planning-oversight/export-drawer"
-VISITS_COST = 40_000 + 25_000  # James's visit and the partner's visit
-EVERY_COST = VISITS_COST + 60_000  # and James's training
+# James's visit and the partner's visit.
+VISITS = [("School Visits", "James"), ("School Visits", "Partner X")]
+# And James's training.
+EVERY = sorted([*VISITS, ("Trainings", "James")])
 
 
-def _grand_total(response) -> int:
-    """The planned cost of every row in the workbook's one table (owner,
-    2026-10-20: Planning Oversight exports no Budget sheet)."""
+def _rows(response) -> list[tuple[str, str]]:
+    """Every row of the workbook as (its sheet, who delivers it): the export
+    is My Plan's tables, a sheet each (owner, 2026-10-26)."""
     from openpyxl import load_workbook
 
     book = load_workbook(io.BytesIO(response.content), read_only=True)
-    header, *rows = book.worksheets[0].iter_rows(values_only=True)
-    at = header.index("Planned cost (UGX)")
-    return sum(row[at] or 0 for row in rows)
+    found = []
+    for sheet in book.worksheets:
+        header, *rows = sheet.iter_rows(values_only=True)
+        if "Executor" not in header:
+            continue
+        at = header.index("Executor")
+        found.extend((sheet.title, row[at]) for row in rows)
+    return sorted(found)
 
 
 def _selected_kind(html: str) -> str:
@@ -76,7 +83,7 @@ class TheExportFollowsThePagesTab(FilterExportFixture):
             PL_EXPORT,
             {"owner": self.james.id, "activity": "visits", "format": "xlsx"},
         )
-        self.assertEqual(_grand_total(response), VISITS_COST)
+        self.assertEqual(_rows(response), VISITS)
 
     def test_the_drawers_choice_wins_over_the_tab(self):
         response = self.as_pl().get(
@@ -88,7 +95,7 @@ class TheExportFollowsThePagesTab(FilterExportFixture):
                 "format": "xlsx",
             },
         )
-        self.assertEqual(_grand_total(response), EVERY_COST)
+        self.assertEqual(_rows(response), EVERY)
 
     def test_visits_only_from_the_drawer_holds_visits_alone(self):
         response = self.as_pl().get(
@@ -102,7 +109,7 @@ class TheExportFollowsThePagesTab(FilterExportFixture):
                 "format": "xlsx",
             },
         )
-        self.assertEqual(_grand_total(response), VISITS_COST)
+        self.assertEqual(_rows(response), VISITS)
 
 
 class TheDrawerKeepsThePagesFilters(FilterExportFixture):
@@ -137,4 +144,4 @@ class TheDrawerKeepsThePagesFilters(FilterExportFixture):
                 "format": "xlsx",
             },
         )
-        self.assertEqual(_grand_total(response), 25_000)
+        self.assertEqual(_rows(response), [("School Visits", "Partner X")])

@@ -123,32 +123,44 @@ class SessionFixture(FilterExportFixture):
             )
 
     def my_plan_tables(self, **params):
+        """My Plan's export: its tables, a sheet each (owner, 2026-10-26)."""
         import csv
 
-        from apps.core import plan_export
+        from apps.my_plan import table_export
 
         client = Client()
         client.force_login(self.james_user)
         response = client.get("/my-plan/", {"export": "csv", **params})
         self.assertEqual(response.status_code, 200)
         lines = list(csv.reader(io.StringIO(response.content.decode())))
-        return plan_export.tables_from_csv(lines)
+        return table_export.tables_from_csv(lines)
 
     def oversight_dates(self, **params):
         return {
-            row["Planned date"]
+            _iso(row["Planned Date"])
             for row in self.export_records(**params)
-            if row["Planned date"]
+            if _iso(row.get("Planned Date"))
         }
 
     @staticmethod
     def dates(tables):
         return {
-            row["Planned Date"]
+            _iso(row["Planned Date"])
             for rows in tables.values()
             for row in rows
-            if row.get("Planned Date")
+            if _iso(row.get("Planned Date"))
         }
+
+
+def _iso(text) -> str:
+    """A date as the export writes it ("5 Oct 2026"), in ISO; "" for a cell
+    that holds none ("Unscheduled")."""
+    from datetime import datetime
+
+    try:
+        return datetime.strptime(text or "", "%d %b %Y").date().isoformat()
+    except ValueError:
+        return ""
 
 
 class AGroupTrainingReadsItsPeopleAndItsOwnCost(SessionFixture):
@@ -162,22 +174,21 @@ class AGroupTrainingReadsItsPeopleAndItsOwnCost(SessionFixture):
         return rows[0]
 
     def test_planning_oversight(self):
-        # One table (owner, 2026-10-20): the cluster training is one row.
+        # My Plan's Group Trainings table (owner, 2026-10-26): the session
+        # once, its own people and its own cost.
         rows = [
             row
             for row in self.export_records(fy=self.fy)
-            if row["Cluster"] == "Kasangati Cluster"
+            if row["Sheet"] == "Group Trainings"
         ]
         self.assertEqual(len(rows), 1, rows)
         self.assertEqual(rows[0]["Participants"], "12")
-        self.assertEqual(
-            rows[0]["Planned cost (UGX)"], str(MEALS + VENUE + FACILITATION)
-        )
+        self.assertEqual(rows[0]["Cost"], str(MEALS + VENUE + FACILITATION))
 
     def test_my_plan(self):
         row = self._row(self.my_plan_tables(fy=self.fy))
         self.assertEqual(row["Participants"], "12")
-        self.assertEqual(row["Cost (UGX)"], str(MEALS + VENUE + FACILITATION))
+        self.assertEqual(row["Cost"], str(MEALS + VENUE + FACILITATION))
 
     def test_the_officers_day_stays_on_the_budget_sheet(self):
         from apps.core import plan_export
@@ -243,9 +254,13 @@ class TheChosenPeriodIsTheOneExported(SessionFixture):
             PL_EXPORT, {**self._custom(), "format": "xlsx", "owner": self.james.id}
         )
         book = load_workbook(io.BytesIO(response.content), read_only=True)
-        header, *rows = book.worksheets[0].iter_rows(values_only=True)
-        at = header.index("Planned date")
-        self.assertEqual({row[at].date() for row in rows}, {self.day})
+        days = set()
+        for sheet in book.worksheets:
+            header, *rows = sheet.iter_rows(values_only=True)
+            if "Planned Date" in header:
+                at = header.index("Planned Date")
+                days |= {row[at].date() for row in rows}
+        self.assertEqual(days, {self.day})
 
 
 class TheDrawerOpensOnThePagesPeriod(SessionFixture):

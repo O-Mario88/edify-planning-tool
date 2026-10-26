@@ -732,22 +732,25 @@ class TrainingsCarryTheirIntervention(PeopleFixture):
             )
         self.client.force_login(self.cd_user)
         response = self.client.get(f"/country-planning-oversight/export?fy={FY}")
-        header, *rows = csv.reader(
-            b"".join(response.streaming_content).decode().splitlines()
+        from apps.my_plan import table_export
+
+        tables = table_export.tables_from_csv(
+            csv.reader(b"".join(response.streaming_content).decode().splitlines())
         )
-        # One row a session (owner, 2026-10-20: "One row per cluster
-        # training"), with no School ID, its training and its SSA
-        # intervention by name. The page still lists it once per invited
-        # school.
-        trainings = [
-            dict(zip(header, row))
-            for row in rows
-            if row[header.index("Activity type")] == "cluster_training"
-        ]
-        self.assertEqual(len(trainings), 1)
-        self.assertEqual(trainings[0]["Cluster"], self.cluster.name)
-        self.assertEqual(trainings[0]["School ID"], "")
-        self.assertEqual(trainings[0]["Training name"], "Discipleship Dynamics")
-        self.assertEqual(
-            trainings[0]["SSA intervention"], "Exposure to the Word of God"
+        # My Plan's tables (owner, 2026-10-26): the session once on Group
+        # Trainings, with its training and its SSA intervention by name, and
+        # once an invited school on Trainings.
+        (session,) = tables["Group Trainings"]
+        self.assertEqual(session["Cluster Name"], self.cluster.name)
+        self.assertEqual(session["Training"], "Discipleship Dynamics")
+        self.assertEqual(session["SSA Intervention"], "Exposure to the Word of God")
+        # The client school sits on Trainings, the Core school on Core School
+        # Trainings, as My Plan lists them.
+        self.assertIn(
+            self.client_school.school_id,
+            {r["School ID"] for r in tables["Trainings"]},
+        )
+        self.assertIn(
+            self.core.school_id,
+            {r["School ID"] for r in tables["Core School Trainings"]},
         )

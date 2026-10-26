@@ -1,11 +1,8 @@
-"""The plan export's sheets (owner, 2026-10-12): "put visits on its sheet,
-group training on its sheet, cluster meetings on its sheet, partner
-schedules on its sheet and the budget for those selected activities in the
-last sheet and the budget should be fetched direct from those planned
-activities."
-
-My Plan keeps them; Planning Oversight exports one table of its own since
-2026-10-20 (apps.frontend.test_planning_oversight_table_export).
+"""My Plan's export: its tables, a sheet each (owner, 2026-10-26: "tables
+are exported exactly the way they are in My Plan tables"), and the budget for
+those activities in the last sheet (owner, 2026-10-12: "the budget for those
+selected activities in the last sheet and the budget should be fetched direct
+from those planned activities").
 """
 
 from __future__ import annotations
@@ -18,6 +15,7 @@ from django.test import Client
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core import plan_export
 from apps.frontend.test_oversight_filters_export import FilterExportFixture
+from apps.my_plan import table_export
 
 
 def _workbook(response):
@@ -43,34 +41,22 @@ class PlanExportSheetsTest(FilterExportFixture):
         body = self.my_plan("csv").content.decode()
         return list(csv.reader(io.StringIO(body)))
 
-    def test_the_sheets_are_the_owners_five_and_the_budget_last(self):
+    def test_the_sheets_are_my_plans_tables_and_the_budget_last(self):
         book = _workbook(self.my_plan("xlsx"))
-        self.assertEqual(book.sheetnames, list(plan_export.SHEET_ORDER))
-        self.assertEqual(
-            book.sheetnames,
-            [
-                "School Visits",
-                "Group Trainings",
-                "Cluster Meetings",
-                "Partner Schedules",
-                "Other Activities",
-                "Budget",
-            ],
-        )
+        self.assertEqual(book.sheetnames, [*table_export.FIXED_TITLES, "Budget"])
 
     def test_each_kind_of_work_is_on_its_own_sheet(self):
-        tables = plan_export.tables_from_csv(self.my_plan_lines())
-        # A training at the school is school work and sits with the visits.
+        tables = table_export.tables_from_csv(self.my_plan_lines())
         self.assertEqual(
             [(row["School ID"], row["Activity"]) for row in tables["School Visits"]],
-            [("s1", "School Visit"), ("s1", "Training")],
+            [("s1", "School Visit")],
         )
+        self.assertEqual([row["School ID"] for row in tables["Trainings"]], ["s1"])
         self.assertEqual(tables["Group Trainings"], [])
         self.assertEqual(len(tables["Cluster Meetings"]), 1)
-        self.assertEqual(tables["Cluster Meetings"][0]["Training"], "Cluster Meeting")
         # The partner's work is not the officer's plan.
-        self.assertEqual(tables["Partner Schedules"], [])
-        self.assertEqual(tables["Other Activities"], [])
+        names = {row.get("Executor") for rows in tables.values() for row in rows}
+        self.assertNotIn("Partner X", names)
 
     def test_the_budget_sheet_is_those_activities_own_cost_lines(self):
         book = _workbook(self.my_plan("xlsx"))
@@ -134,16 +120,9 @@ class PlanExportSheetsTest(FilterExportFixture):
 
     def test_the_csv_carries_the_same_sheets_and_no_budget_table(self):
         lines = self.my_plan_lines()
-        self.assertEqual(
-            [
-                line[0]
-                for line in lines
-                if len(line) == 1 and line[0] in plan_export.SHEET_ORDER
-            ],
-            list(plan_export.SHEET_ORDER),
-        )
-        tables = plan_export.tables_from_csv(lines)
+        tables = table_export.tables_from_csv(lines)
+        self.assertEqual(list(tables), list(table_export.FIXED_TITLES))
         self.assertNotIn("Budget", tables)
         for rows in tables.values():
             for row in rows:
-                self.assertIn("Cost (UGX)", row)
+                self.assertIn("Status", row)

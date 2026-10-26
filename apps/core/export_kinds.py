@@ -15,6 +15,14 @@ group training is a cluster training, in person or online
 group training whose ``programme_delivery_mode`` is online
 (``apps.activities.online_training``) — the one kind that is not an activity
 type, so a reader hands over the ids of the online activities among its rows.
+
+Owner, 2026-10-26: five more, each one of My Plan's tables
+(``apps.my_plan.table_export``): Schools with Planned Training, Schools with
+Planned Cluster Meeting, Core School Visits, Client School Visits and Core
+Schools with Planned Trainings. Their activity types pick the work as any kind
+does; the table then lists it exactly as My Plan does. And the Plan Status is
+two choices: "All scheduled plans" (the work not yet completed) or "Scheduled
+and completed plans".
 """
 
 from __future__ import annotations
@@ -34,6 +42,22 @@ GROUP_TRAININGS = "group_trainings"
 TRAININGS = "trainings"
 MEETINGS = "meetings"
 ONLINE = "online"
+TRAINING_SCHOOLS = "training_schools"
+MEETING_SCHOOLS = "meeting_schools"
+CORE_VISITS = "core_visits"
+CLIENT_VISITS = "client_visits"
+CORE_TRAININGS = "core_trainings"
+
+#: The five lists of schools (owner, 2026-10-26), each one of My Plan's
+#: tables (``apps.my_plan.table_export.KIND_TABLES``).
+SCHOOL_LIST_CHOICES = (
+    (TRAINING_SCHOOLS, "Schools with Planned Training"),
+    (MEETING_SCHOOLS, "Schools with Planned Cluster Meeting"),
+    (CORE_VISITS, "Core School Visits"),
+    (CLIENT_VISITS, "Client School Visits"),
+    (CORE_TRAININGS, "Core Schools with Planned Trainings"),
+)
+SCHOOL_LISTS = frozenset(key for key, _ in SCHOOL_LIST_CHOICES)
 
 #: The drawer's choices, in its order. ``planned`` opens selected: the plan
 #: is "only planned activities (visits and trainings and cluster meetings)
@@ -48,20 +72,43 @@ KIND_CHOICES = (
     (GROUP_TRAININGS, "Group trainings only"),
     (MEETINGS, "Cluster meetings only"),
     (ONLINE, "Online trainings only"),
+    *SCHOOL_LIST_CHOICES,
     (ALL, "All activities (meetings and events included)"),
 )
 
-#: The drawer's plan statuses, by their key. They are the export's own
-#: vocabulary (``scheduled`` is live work, moved or not, read through each
-#: page's own phase), never an activity's status.
+#: The drawer's Plan Status, in its order (owner, 2026-10-26: "All Scheduled
+#: Plans, scheduled and completed plans"); the first opens selected. They are
+#: the export's own vocabulary, never an activity's status: ``scheduled`` is
+#: the work not yet completed, ``all`` adds the completed work.
+SCHEDULED = "scheduled"
+STATUS_CHOICES = (
+    (SCHEDULED, "All scheduled plans"),
+    ("all", "Scheduled and completed plans"),
+)
+#: Every status an export still reads: the two the drawer offers, and the two
+#: links sent before 2026-10-26 can still carry.
 STATUS_LABELS = {
-    "all": "All planned activities",
+    **dict(STATUS_CHOICES),
     "completed": "Completed only",
-    "scheduled": "Scheduled / live only",
     "in_progress": "In progress only",
 }
 #: The statuses that name a phase of live work.
 LIVE_STATUSES = frozenset(k for k in STATUS_LABELS if k not in ("all", "completed"))
+
+
+def keeps_status(choice: str, activity_status: str) -> bool:
+    """Whether an activity in ``activity_status`` belongs to the drawer's
+    Plan Status ``choice``: ``scheduled`` keeps the work not yet completed,
+    ``completed`` the completed work, anything else everything."""
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+
+    done = (activity_status or "") in COMPLETED_WORK_STATUSES
+    if choice == "completed":
+        return done
+    if choice in (SCHEDULED, "in_progress"):
+        return not done
+    return True
+
 
 _TYPES = {
     PLANNED: frozenset(VISIT_TYPES)
@@ -73,6 +120,13 @@ _TYPES = {
     TRAININGS: frozenset(TRAINING_TYPES),
     MEETINGS: frozenset(CLUSTER_MEETING_TYPES),
     ONLINE: frozenset(CLUSTER_TRAINING_TYPES),
+    # A list of schools picks the work its My Plan table is drawn from; the
+    # table then decides each row (``apps.my_plan.table_export``).
+    TRAINING_SCHOOLS: frozenset(TRAINING_TYPES),
+    MEETING_SCHOOLS: frozenset(CLUSTER_MEETING_TYPES),
+    CORE_VISITS: frozenset(VISIT_TYPES) | frozenset(TRAINING_TYPES),
+    CLIENT_VISITS: frozenset(VISIT_TYPES),
+    CORE_TRAININGS: frozenset(TRAINING_TYPES) | frozenset(VISIT_TYPES),
 }
 KINDS = frozenset(_TYPES) | {ALL}
 
