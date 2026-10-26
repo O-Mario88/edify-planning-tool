@@ -110,6 +110,10 @@ class OnlyExportsArePrepared(ExportJobFixture):
                 with self.assertRaises(export_jobs.NotAnExport):
                     export_jobs.queue(self.pl_user, url)
 
+    def test_an_address_longer_than_a_job_holds_is_refused(self):
+        with self.assertRaises(export_jobs.NotAnExport):
+            export_jobs.queue(self.pl_user, _export_url(self, q="x" * 5000))
+
     def test_my_plan_is_prepared_when_it_asks_for_its_export(self):
         job = export_jobs.queue(self.james_user, f"/my-plan/?fy={self.fy}&export=xlsx")
 

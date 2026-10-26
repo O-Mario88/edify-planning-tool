@@ -5,20 +5,20 @@
   "by_evidence": {
    "browser-rendered": 868,
    "none": 247,
-   "page-tested": 1582,
-   "request-tested": 1397
+   "page-tested": 1584,
+   "request-tested": 1399
   },
   "by_kind": {
-   "button": 1416,
+   "button": 1419,
    "disclosure": 62,
    "field": 1358,
-   "link": 1200,
+   "link": 1201,
    "tab": 58
   },
-  "controls": 4094,
+  "controls": 4098,
   "high_consequence": 209,
-  "state_changing": 477,
-  "templates_scanned": 689,
+  "state_changing": 478,
+  "templates_scanned": 690,
   "unresolved_destinations": 0,
   "untested": 247,
   "untested_state_changing": 19
@@ -7357,6 +7357,13 @@
    "pages": [],
    "roles": []
   },
+  "partials/exports/status.html": {
+   "pages": [
+    "/exports/<str:job_id>",
+    "/exports/prepare"
+   ],
+   "roles": []
+  },
   "partials/finance/accountant_actions.html": {
    "pages": [],
    "roles": []
@@ -14102,6 +14109,10 @@
   {"accessible_name": "{{ row.action.label }}", "destination": "{{ row.action.url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-720577244799", "kind": "link", "line": 60, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/evidence/workspace.html"},
   {"accessible_name": "Previous page", "destination": "?tab={{ active_tab }}&page={{ page_obj.previous_page_number }}                     &q={{ search_query|urlencode }}           ", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-A797D6DED7C8", "kind": "link", "line": 87, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/evidence/workspace.html"},
   {"accessible_name": "Next page", "destination": "?tab={{ active_tab }}&page={{ page_obj.next_page_number }}                     &q={{ search_query|urlencode }}           ", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-7A61F3D258AB", "kind": "link", "line": 93, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/evidence/workspace.html"},
+  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-9EC67B2BD608", "kind": "button", "line": 13, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/exports/status.html"},
+  {"accessible_name": "Download {{ job.filename }}", "destination": "/exports/{{ job.id }}/download", "destination_route": "/exports/<str:job_id>/download", "evidence": "request-tested", "high_consequence": false, "id": "INT-22BB3CB57F69", "kind": "link", "line": 14, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/exports/status.html"},
+  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-76867681A8D7", "kind": "button", "line": 27, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/exports/status.html"},
+  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-CC29DC9048D9", "kind": "button", "line": 39, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/exports/status.html"},
   {"accessible_name": "View Weekly Requests", "destination": "/accounts/weekly-requests", "destination_route": "/accounts/weekly-requests", "evidence": "none", "high_consequence": false, "id": "INT-F047748A93DC", "kind": "link", "line": 3, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/finance/accountant_actions.html"},
   {"accessible_name": "Disburse in the Consolidated Queue", "destination": "/disbursements", "destination_route": "/disbursements", "evidence": "request-tested", "high_consequence": false, "id": "INT-288D3ADEAC70", "kind": "link", "line": 7, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/finance/accountant_actions.html"},
   {"accessible_name": "Returned Items", "destination": "/accounts/returned", "destination_route": "/accounts/returned", "evidence": "none", "high_consequence": false, "id": "INT-C9ACE7F9A6A8", "kind": "link", "line": 14, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/finance/accountant_actions.html"},
@@ -14835,20 +14846,20 @@
   {"accessible_name": "Open the full activity record", "destination": "/activities/{{ item.activity_id }}", "destination_route": "/activities/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-9B7F385AD9F1", "kind": "link", "line": 179, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/detail_drawer.html"},
   {"accessible_name": "{{ work.place }}", "destination": "/schools/{{ work.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-6F14DC2808AD", "kind": "link", "line": 102, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/execution_workspace.html"},
   {"accessible_name": "{{ work.activity_type|status_label }}", "destination": "/activities/{{ work.id }}", "destination_route": "/activities/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-333896063253", "kind": "link", "line": 103, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/execution_workspace.html"},
-  {"accessible_name": "month_range", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C540D4767B7B", "kind": "field", "line": 32, "method": "", "selector": "input[name=period_type]", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "custom_dates", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-445AC410E2D5", "kind": "field", "line": 36, "method": "", "selector": "input[name=period_type]", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "fy", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-99922C78CAB8", "kind": "field", "line": 40, "method": "", "selector": "input[name=period_type]", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "{{ m_name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7A87B5B90D44", "kind": "field", "line": 51, "method": "", "selector": "#export_from_month", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "{{ m_name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FEA298D2764E", "kind": "field", "line": 64, "method": "", "selector": "#export_to_month", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "{{ default_start_date }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E1529E1CA19F", "kind": "field", "line": 82, "method": "", "selector": "#export_start_date", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "{{ default_end_date }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-82235CF65ECA", "kind": "field", "line": 92, "method": "", "selector": "#export_end_date", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "FY {{ option }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B2E1589ACF1E", "kind": "field", "line": 105, "method": "", "selector": "#export_fy", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "{{ text }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-90E7B61B39F3", "kind": "field", "line": 123, "method": "", "selector": "#export_whose", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "{{ text }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8E34ADBFB81F", "kind": "field", "line": 136, "method": "", "selector": "", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "{{ text }} All scheduled plans Scheduled and completed plans", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-39705FD4AD00", "kind": "field", "line": 150, "method": "", "selector": "#export_status", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "{{ text }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-31A0F856AE48", "kind": "field", "line": 171, "method": "", "selector": "#export_activity_type", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C006D1F4BF4A", "kind": "button", "line": 197, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/export_customization_drawer.html"},
-  {"accessible_name": "Download Excel", "destination": "{{ export_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3854C89BD3C4", "kind": "button", "line": 198, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "month_range", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C540D4767B7B", "kind": "field", "line": 41, "method": "", "selector": "input[name=period_type]", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "custom_dates", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-445AC410E2D5", "kind": "field", "line": 45, "method": "", "selector": "input[name=period_type]", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "fy", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-99922C78CAB8", "kind": "field", "line": 49, "method": "", "selector": "input[name=period_type]", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "{{ m_name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7A87B5B90D44", "kind": "field", "line": 60, "method": "", "selector": "#export_from_month", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "{{ m_name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FEA298D2764E", "kind": "field", "line": 73, "method": "", "selector": "#export_to_month", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "{{ default_start_date }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E1529E1CA19F", "kind": "field", "line": 91, "method": "", "selector": "#export_start_date", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "{{ default_end_date }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-82235CF65ECA", "kind": "field", "line": 101, "method": "", "selector": "#export_end_date", "state_changing": false, "tag": "input", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "FY {{ option }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B2E1589ACF1E", "kind": "field", "line": 114, "method": "", "selector": "#export_fy", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "{{ text }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-90E7B61B39F3", "kind": "field", "line": 132, "method": "", "selector": "#export_whose", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "{{ text }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8E34ADBFB81F", "kind": "field", "line": 145, "method": "", "selector": "", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "{{ text }} All scheduled plans Scheduled and completed plans", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-39705FD4AD00", "kind": "field", "line": 159, "method": "", "selector": "#export_status", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "{{ text }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-31A0F856AE48", "kind": "field", "line": 180, "method": "", "selector": "#export_activity_type", "state_changing": false, "tag": "select", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C006D1F4BF4A", "kind": "button", "line": 206, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/export_customization_drawer.html"},
+  {"accessible_name": "Download Excel", "destination": "/exports/prepare", "destination_route": "/exports/prepare", "evidence": "request-tested", "high_consequence": false, "id": "INT-5FC45EE40EAA", "kind": "button", "line": 207, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/export_customization_drawer.html"},
   {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-05D9BC20E45A", "kind": "button", "line": 31, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/monitor_workspace.html"},
   {"accessible_name": "Select all your schools on this page", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-25DE1133A75F", "kind": "field", "line": 111, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "partials/oversight/monitor_workspace.html"},
   {"accessible_name": "{{ school.name }}", "destination": "{{ school.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-46DC02F49E9F", "kind": "link", "line": 130, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/monitor_workspace.html"},

@@ -69,7 +69,8 @@ def _view_name(func) -> str:
 def _export_match(url: str):
     """The resolved export view for ``url``, or ``NotAnExport``."""
     parts = urlsplit(url or "")
-    if parts.scheme or parts.netloc or not parts.path.startswith("/"):
+    too_long = len(url or "") > ExportJob._meta.get_field("path").max_length
+    if too_long or parts.scheme or parts.netloc or not parts.path.startswith("/"):
         raise NotAnExport(url)
     try:
         match = resolve(parts.path)

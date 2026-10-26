@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **944**
-- All registered routes: **1428**
+- Routed product surfaces: **946**
+- All registered routes: **1431**
 - API routes: **367**
 - Roles: **15**
 - Permission keys: **127**
-- Scheduled jobs: **39**
+- Scheduled jobs: **40**
 - Activity states: **24**
-- Shared component templates: **664**
+- Shared component templates: **666**
 - Full pages: **261**
-- Partials and drawers: **337**
+- Partials and drawers: **339**
 - Permission-gated surfaces: **927**
-- Referenced by automated tests: **854**
+- Referenced by automated tests: **855**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -350,6 +350,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-0FD663DD8D | /evidence | Evidence Gallery | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8AAED4C95E | /evidence/ | Evidence Center | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-EAF2C08253 | /evidence/returned | Returned Evidence | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-4D54136F01 | /exports/<str:job_id> | Export Status | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-A495D711C9 | /exports/prepare | Export Prepare | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CF53BB543B | /extra-work | Extra Work · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-27E90C9600 | /extra-work/<str:assignment_id>/<str:action> | Extra Work Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B8315198A8 | /extra-work/<str:assignment_id>/submit-drawer | Extra Work Submit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
