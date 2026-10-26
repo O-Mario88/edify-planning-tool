@@ -1119,16 +1119,10 @@ def cost_line_rows(lines, line_fields, activity_fields) -> list:
 def _activity_choice_label(field_name: str, value) -> str:
     """Activity.get_<field_name>_display() for a bare value, computed exactly
     as Model._get_FIELD_display does, so plain rows get the same label."""
-    from django.utils.encoding import force_str
-    from django.utils.hashable import make_hashable
-
     from apps.activities.models import Activity
+    from apps.core.choice_labels import label_for
 
-    field = Activity._meta.get_field(field_name)
-    return force_str(
-        dict(make_hashable(field.flatchoices)).get(make_hashable(value), value),
-        strings_only=True,
-    )
+    return label_for(Activity, field_name, value)
 
 
 def budget_groups(

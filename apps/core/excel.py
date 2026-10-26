@@ -417,12 +417,21 @@ def _streamed_workbook(sheets: list[dict]):
             fill = PatternFill("solid", fgColor=HEADER_FILL)
             alignment = Alignment(vertical="center")
             border = Border(bottom=Side(style="medium", color=HEADER_RULE))
+            header_align = spec.get("align") or {}
             sheet.append(
                 [
                     styled(
-                        value, fill=fill, font=font, alignment=alignment, border=border
+                        value,
+                        fill=fill,
+                        font=font,
+                        # Each heading takes its column's alignment, as
+                        # `style_ledger_rows` gives a held sheet's.
+                        alignment=_aligned(alignment, header_align[column])
+                        if column in header_align
+                        else alignment,
+                        border=border,
                     )
-                    for value in headers
+                    for column, value in enumerate(headers, start=1)
                 ]
             )
             if rows and spec.get("filter", True):
@@ -458,26 +467,47 @@ def _streamed_workbook(sheets: list[dict]):
             for banded in (False, True)
         }
 
+        # A ledger row's cells copy the style of a probe built once per row
+        # style and column: building and registering fonts, fills and
+        # alignments cell by cell was 90% of the budget export's time
+        # (2026-10-26, 870,000 cells). A value's own number format (a date)
+        # stays, as it does when the styles are set on the cell itself.
+        ledger_templates: dict = {}
+
+        def ledger_cell(value, name, banded, column):
+            key = (name, None if name else banded, column)
+            template = ledger_templates.get(key)
+            if template is None:
+                probe = styled(None, **(ledger[name] if name else plain[banded]))
+                if column in formats:
+                    probe.number_format = formats[column]
+                if column in align and name not in _LEDGER_RUNNING_TEXT:
+                    probe.alignment = _aligned(probe.alignment, align[column])
+                template = ledger_templates[key] = probe._style
+            cell = _keep_as_text(WriteOnlyCell(sheet, value))
+            own = cell._style
+            style = StyleArray(template)
+            if column not in formats:
+                style.numFmtId = own.numFmtId if own is not None else 0
+            cell._style = style
+            return cell
+
         # The body starts on row 2; without a heading, row 1 is a body row
         # left unstyled, as style_body leaves it.
         for row_index, row in enumerate(rows, start=2 if headers else 1):
             values = list(row)
             values += [None] * (width - len(values))
             if row_index in row_styles or (align and row_index >= 2):
-                # A ledger sheet is small: each cell takes its styles whole,
-                # a named row its own look, every row its columns' formats
-                # and alignment.
+                # A ledger sheet: a named row its own look, every row its
+                # columns' formats and alignment.
                 name = row_styles.get(row_index)
-                style = ledger[name] if name else plain[row_index % 2 == 0]
-                cells = []
-                for column, value in enumerate(values, start=1):
-                    cell = styled(value, **style)
-                    if column in formats:
-                        cell.number_format = formats[column]
-                    if column in align and name not in _LEDGER_RUNNING_TEXT:
-                        cell.alignment = _aligned(cell.alignment, align[column])
-                    cells.append(cell)
-                sheet.append(cells)
+                banded = row_index % 2 == 0
+                sheet.append(
+                    [
+                        ledger_cell(value, name, banded, column)
+                        for column, value in enumerate(values, start=1)
+                    ]
+                )
                 continue
             if row_index < 2:
                 sheet.append(

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from apps.core.choice_labels import choice_label
+
 from apps.activities.completion_columns import (
     APPROVED_STATUSES,
     EMPTY as EMPTY_COLUMNS,
@@ -519,8 +521,13 @@ _WORKED_STATUSES = (
 _DATED_AND_OPEN = ("scheduled", "rescheduled", "in_progress")
 
 
-def compute_next_action(a, today) -> dict:
-    """Computes the single primary action and its properties for a given activity."""
+def compute_next_action(a, today, advances=None) -> dict:
+    """Computes the single primary action and its properties for a given activity.
+
+    ``advances`` are the activity's advance requests, cost line by cost line,
+    when the caller read them in bulk (``money_chain``); otherwise they are
+    read from the prefetched ``schedule_cost_lines__advance_requests``.
+    """
     # 0. Asked, not yet granted. Nothing to do here but wait; the request
     # page shows who was asked and what they said.
     if a.status == "awaiting_owner_approval":
@@ -746,11 +753,8 @@ def compute_next_action(a, today) -> dict:
     # Every cost line, not just the first: reading `next(iter(...))` alone meant
     # a multi-line activity showed no accountability action once line 1 was
     # settled, even with money outstanding on lines 2+.
-    advances = [
-        adv
-        for line in a.schedule_cost_lines.all()
-        for adv in line.advance_requests.all()
-    ]
+    if advances is None:
+        advances = _advances_of(a)
     # Money owed back to the employee outranks everything — they are out of
     # pocket. This branch did not exist, so the drawer and route for it were
     # unreachable and the loop stalled here.
@@ -832,7 +836,47 @@ _MONEY_AWAITING_STATUSES = frozenset(
 )
 
 
-def awaits_approval(a, next_act) -> bool:
+def _advances_of(a) -> list:
+    """The activity's advance requests from the prefetched cost lines."""
+    return [
+        adv
+        for line in a.schedule_cost_lines.all()
+        for adv in line.advance_requests.all()
+    ]
+
+
+def money_chain(activities) -> tuple[dict, dict]:
+    """Each cost line's advance requests, and the weekly request its first
+    weekly request line belongs to, read in two statements.
+
+    The same facts the nested prefetches ``schedule_cost_lines__advance_requests``
+    and ``schedule_cost_lines__weekly_request_lines__weekly_fund_request`` gave,
+    in the same order (each model's own ordering). Those prefetches built one
+    query object per cost line for each relation: 90,000 of them for a
+    country's plan, about half of an export's time (2026-10-26, the Planning
+    Oversight export timing out). The activities must have
+    ``schedule_cost_lines`` prefetched.
+    """
+    from apps.core.scoping import id_list
+    from apps.fund_requests.models import AdvanceRequest, WeeklyFundRequestLine
+
+    line_ids = [line.id for a in activities for line in a.schedule_cost_lines.all()]
+    if not line_ids:
+        return {}, {}
+    advances_by_line: dict = {}
+    for adv in AdvanceRequest.objects.filter(budget_line_id__in=id_list(line_ids)):
+        advances_by_line.setdefault(adv.budget_line_id, []).append(adv)
+    first_request_by_line: dict = {}
+    for line in WeeklyFundRequestLine.objects.filter(
+        activity_budget_line_id__in=id_list(line_ids)
+    ).select_related("weekly_fund_request"):
+        first_request_by_line.setdefault(
+            line.activity_budget_line_id, line.weekly_fund_request
+        )
+    return advances_by_line, first_request_by_line
+
+
+def awaits_approval(a, next_act, advances=None) -> bool:
     """Whether a My Plan row belongs on "Waiting on Approval".
 
     Handed-in work waits for its approval, and so does work whose money waits
@@ -848,11 +892,10 @@ def awaits_approval(a, next_act) -> bool:
         return False
     if a.status not in APPROVED_STATUSES:
         return True
-    # .all() reads the prefetch compute_next_action reads.
+    if advances is None:
+        advances = _advances_of(a)
     return a.payment_status != "none" or any(
-        adv.status in _MONEY_AWAITING_STATUSES
-        for line in a.schedule_cost_lines.all()
-        for adv in line.advance_requests.all()
+        adv.status in _MONEY_AWAITING_STATUSES for adv in advances
     )
 
 
@@ -1408,18 +1451,13 @@ def get_frontend_context(
             "training_course",
             "catalogue_item",
         )
-        .prefetch_related(
-            "schedule_cost_lines",
-            # The badge block walks cost line -> weekly request line -> weekly
-            # fund request for every row, so prefetch the whole chain rather
-            # than paying two queries per activity to rediscover it.
-            "schedule_cost_lines__weekly_request_lines__weekly_fund_request",
-            # advance_requests hangs off the cost line, not the activity --
-            # compute_next_action walks it for every row.
-            "schedule_cost_lines__advance_requests",
-        )
+        # The badge block and compute_next_action read each cost line's
+        # weekly request and advances: `money_chain` reads those in bulk
+        # below, rather than a nested prefetch per cost line.
+        .prefetch_related("schedule_cost_lines")
         .order_by("planned_date", "created_at")
     )
+    advances_by_line, first_request_by_line = money_chain(activities)
 
     from apps.budget.costing_service import planned_minimum_amounts
 
@@ -1544,7 +1582,12 @@ def get_frontend_context(
         status_label, status_class = get_activity_status_label_and_class(
             a, today, lead_ids
         )
-        next_act = compute_next_action(a, today)
+        row_advances = [
+            adv
+            for line in a.schedule_cost_lines.all()
+            for adv in advances_by_line.get(line.id, ())
+        ]
+        next_act = compute_next_action(a, today, advances=row_advances)
         if a.id in awaiting_ssa:
             status_label = visit_scores.AWAITING_SSA_LABEL
             status_class = visit_scores.AWAITING_SSA_CLASS
@@ -1567,9 +1610,8 @@ def get_frontend_context(
             budget_status = "Cost Setup Required"
             budget_status_color = "amber"
         elif first_line:
-            wfr_line = next(iter(first_line.weekly_request_lines.all()), None)
-            if wfr_line and getattr(wfr_line, "weekly_fund_request", None):
-                wfr = wfr_line.weekly_fund_request
+            wfr = first_request_by_line.get(first_line.id)
+            if wfr is not None:
                 if wfr.status == "pending_responsible_confirmation":
                     badges.append(("In Weekly Request", "amber"))
                     budget_status = "In Weekly Request"
@@ -1720,7 +1762,7 @@ def get_frontend_context(
         activity_data = {
             "id": a.id,
             "activity_type": a.activity_type,
-            "activity_type_label": a.get_activity_type_display(),
+            "activity_type_label": choice_label(a, "activity_type"),
             # The governed course or item planned — the Group Trainings card
             # names the training by it.
             "activity_name": a.activity_name_snapshot or "",
@@ -1735,7 +1777,7 @@ def get_frontend_context(
             # What a cluster meeting is for (owner, 2026-10-06): a training
             # delivered at it, a meeting only, or a cluster leaders' meeting;
             # blank on a meeting planned before the types existed.
-            "meeting_kind": a.get_meeting_kind_display() if a.meeting_kind else "",
+            "meeting_kind": choice_label(a, "meeting_kind") if a.meeting_kind else "",
             "meeting_training": (
                 (a.recommendation_source or {}).get("trainingCourseName", "")
                 if a.meeting_kind == "training"
@@ -1788,7 +1830,7 @@ def get_frontend_context(
                 if a.school
                 else ""
             ),
-            "school_ssa_status": a.school.get_current_fy_ssa_status_display()
+            "school_ssa_status": choice_label(a.school, "current_fy_ssa_status")
             if a.school
             else "No SSA",
             # Cluster details
@@ -1846,9 +1888,9 @@ def get_frontend_context(
                     if a.purpose_type
                     else ""
                 )
-                or a.get_activity_type_display()
+                or choice_label(a, "activity_type")
             ),
-            "focus_intervention": a.get_focus_intervention_display()
+            "focus_intervention": choice_label(a, "focus_intervention")
             if a.focus_intervention
             else "General",
             # Who delivers it: the Partner for a Partner's work, by the rule
@@ -1981,7 +2023,7 @@ def get_frontend_context(
             and a.status in _DATED_AND_OPEN
         ):
             this_week_list.append(activity_data)
-        elif awaits_approval(a, next_act):
+        elif awaits_approval(a, next_act, advances=row_advances):
             waiting_on_approval_list.append(activity_data)
         else:
             upcoming_list.append(activity_data)
@@ -2278,7 +2320,7 @@ def get_frontend_context(
                             if a.purpose_type
                             else ""
                         )
-                        or a.get_activity_type_display()
+                        or choice_label(a, "activity_type")
                     ),
                     "district": (
                         a.school.district.name if a.school.district_id else "Unknown"

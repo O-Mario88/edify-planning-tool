@@ -396,10 +396,14 @@ KIND_TABLES = {
 def context_for(principal, activity_ids, fy) -> dict:
     """My Plan's tables for exactly these activities."""
     from apps.activities.models import Activity
+    from apps.core.scoping import id_list
     from apps.my_plan.services import get_frontend_context
 
+    # One array parameter, not a placeholder per id: a country's export
+    # chose 23,000 activities, and every statement My Plan reads through
+    # this queryset carried all of them.
     chosen = Activity.objects.filter(
-        id__in=[i for i in set(activity_ids) if i], deleted_at__isnull=True
+        id__in=id_list(i for i in set(activity_ids) if i), deleted_at__isnull=True
     )
     return get_frontend_context(
         principal,
