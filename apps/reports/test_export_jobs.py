@@ -250,3 +250,6 @@ class TheDrawerPreparesTheFile(ExportJobFixture):
                     body = self.as_pl().get(drawer, {"fy": self.fy}).content.decode()
                     self.assertIn('hx-post="/exports/prepare"', body)
                     self.assertIn('name="export_url"', body)
+                    # The drawer stays open to show the file's progress
+                    # (drawer-submit.js closes a drawer after a save).
+                    self.assertIn("data-drawer-stay-open", body)

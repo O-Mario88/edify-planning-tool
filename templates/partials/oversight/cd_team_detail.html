@@ -68,6 +68,22 @@ and level 3 (4 distinct tables per staff member:
        class="space-y-6">
     {% include "partials/oversight/_officer_panel_body.html" %}
   </div>
+  {% elif lazy_panels %}
+  {% comment %}Every other officer's panel is fetched when its tab is picked
+  (owner, 2026-10-26: "draw only the officer being viewed"): drawing seven
+  officers' tables to show one was 3.8 MB and ten seconds on production. The
+  panel is that officer's own work, read on its own (`officer_panel`).{% endcomment %}
+  <template x-if="activeOfficer === '{{ group.id }}'">
+    <div id="officer-panel-{{ forloop.counter }}"
+         role="tabpanel"
+         class="space-y-6"
+         hx-get="{{ request.path }}?officer={{ group.id }}&amp;officer_panel=1&amp;officer_index={{ forloop.counter }}{% carry_query 'officer' 'officer_panel' 'officer_index' %}"
+         hx-trigger="load"
+         hx-swap="innerHTML"
+         x-init="window.htmx && htmx.process($el)">
+      <p class="p-6 text-center edify-text-caption edify-text-muted" role="status">Loading {{ group.name }}&rsquo;s work…</p>
+    </div>
+  </template>
   {% else %}
   {% comment %}Every other officer's panel stays inert until chosen (P-5,
   owner-approved 2026-09-25): a `<template>` holds its markup outside the

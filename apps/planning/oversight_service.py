@@ -341,6 +341,7 @@ def build_items(
     activity_types: tuple[str, ...] | None = None,
     cluster_work_only: bool = False,
     core_work_only: bool = False,
+    owner_ids=None,
 ) -> list[PlanningOversightItem]:
     """Every oversight item this principal may see for the period.
 
@@ -360,6 +361,12 @@ def build_items(
     no school — a superset of what Core School Oversight lists, which built
     every item in the country over two fiscal years to keep them (2026-09-24
     A+ audit).
+
+    ``owner_ids`` keeps one officer's work, both their ids: what the full
+    list holds with one of them as its owner, read from that officer's own
+    rows rather than built for the whole country and thrown away (2026-10-26,
+    an officer's panel fetched on its own). The owner is the responsible or
+    the monitoring officer, a hand-over's monitoring or assigning one.
     """
     scope = resolve_oversight_scope(principal)
     if scope.kind == "pl" and not scope.team_ids:
@@ -377,7 +384,18 @@ def build_items(
         cluster_work_only=cluster_work_only,
         core_work_only=core_work_only,
     )
-    activities = _activity_records_of(activity_qs)
+    from apps.core.request_timing import phase
+
+    wanted_owners = None if owner_ids is None else {str(i) for i in owner_ids if i}
+    if wanted_owners is not None and activity_qs is not None:
+        from apps.core.scoping import id_list
+
+        owners = id_list(wanted_owners)
+        activity_qs = activity_qs.filter(
+            Q(responsible_staff_id__in=owners) | Q(monitored_by_staff_id__in=owners)
+        )
+    with phase("build-records"):
+        activities = _activity_records_of(activity_qs)
     assignments = _unscheduled_assignments_in_scope(
         scope,
         fy=years,
@@ -390,6 +408,13 @@ def build_items(
         core_work_only=core_work_only,
     )
 
+    if wanted_owners is not None:
+        assignments = [
+            pa
+            for pa in assignments
+            if str(pa.monitoring_staff_id or pa.assigning_staff_id or "")
+            in wanted_owners
+        ]
     directory = _StaffDirectory(activities, assignments)
     # The cost totals read the same activities through the same filter as a
     # subquery, rather than binding every id just read as one literal array:
@@ -416,11 +441,14 @@ def build_items(
     from apps.activities.pair_costing import live_companions
 
     live = live_companions(activities)
-    items = [
-        _activity_item(a, directory, costs, partner_names, live) for a in activities
-    ]
-    items += [_assignment_item(pa, directory) for pa in assignments]
+    with phase("build-items"):
+        items = [
+            _activity_item(a, directory, costs, partner_names, live) for a in activities
+        ]
+        items += [_assignment_item(pa, directory) for pa in assignments]
 
+    if wanted_owners is not None:
+        items = [i for i in items if str(i.operational_owner_id or "") in wanted_owners]
     if staff_id:
         wanted = _both_id_spaces({staff_id})
         items = [
@@ -438,7 +466,8 @@ def build_items(
     # rather than the database, so a country page stays a fixed query cost.
     from apps.planning import risk_service
 
-    risk_service.annotate(items)
+    with phase("build-risks"):
+        risk_service.annotate(items)
 
     items.sort(key=lambda i: (i.planned_date or date.max, i.context_label))
     return items

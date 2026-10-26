@@ -64,7 +64,7 @@
   <h2 class="sr-only">{% for entry in tabs %}{% if entry.is_active %}{{ entry.label }}{% endif %}{% endfor %}</h2>
   {% endif %}
 
-  {% include "partials/oversight/cd_team_detail.html" with owner_groups=groups %}
+  {% include "partials/oversight/cd_team_detail.html" with owner_groups=groups lazy_panels=True %}
   {% else %}
     {% include "components/empty_state.html" with title="No Programme Lead work in this period" message="Choose another period when teams have planned work." %}
   {% endif %}
