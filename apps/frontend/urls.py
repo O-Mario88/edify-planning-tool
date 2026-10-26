@@ -27,6 +27,7 @@ from .views import (
     country_oversight_views,
     partner_review_views,
     budget_views,
+    export_job_views,
     my_plan_panel_views,
     my_plan_views,
     analytics_retired,
@@ -1197,6 +1198,20 @@ urlpatterns = [
     # options drawer as the plans (owner, 2026-10-12): a period, what work,
     # which status; the budget is the planned activities' own cost lines.
     path("budget/export", budget_views.budget_export_view, name="budget_export"),
+    # The export drawer's file, prepared in the background (owner, 2026-10-26).
+    path(
+        "exports/prepare", export_job_views.export_prepare_view, name="export_prepare"
+    ),
+    path(
+        "exports/<str:job_id>",
+        export_job_views.export_status_view,
+        name="export_status",
+    ),
+    path(
+        "exports/<str:job_id>/download",
+        export_job_views.export_download_view,
+        name="export_download",
+    ),
     path(
         "budget/export-drawer",
         budget_views.budget_export_drawer_view,

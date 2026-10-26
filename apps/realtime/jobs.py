@@ -1257,6 +1257,20 @@ def outbox_drain_job():
     run_tracked_job("outbox_drain", _do_outbox_drain)
 
 
+# ── Exports prepared in the background ───────────────────────────────────────
+def _do_export_jobs() -> int:
+    """Build queued exports for most of a minute (apps.reports.export_jobs)."""
+    from apps.reports.export_jobs import work
+
+    return work(seconds=50)
+
+
+def export_jobs_job():
+    if not _enabled():
+        return
+    run_tracked_job("export_jobs", _do_export_jobs)
+
+
 def _do_audit_chain_seal() -> int:
     from apps.audit.services import seal_pending
 

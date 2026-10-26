@@ -171,6 +171,10 @@ class NotificationLinkResolver:
         # (apps.notifications.push): the notice opens the notification centre.
         if event_type == "push_enabled":
             return "/notifications", "Open Notifications"
+        # A file prepared in the background (apps.reports.export_jobs): the
+        # notice downloads it.
+        if event_type == "export.ready" and context_id:
+            return f"/exports/{context_id}/download", "Download"
         if event_type.startswith("staff_activity.follow_up"):
             return (
                 f"/staff-activity/follow-ups/{context_id}"

@@ -1,0 +1,42 @@
+{% comment %}
+The export drawer's file while it is prepared in the background (owner,
+2026-10-26). Waiting: it asks again every three seconds. Ready: the file
+downloads by itself, with a link to download it again. Failed: why, in plain
+words. Closing the drawer is fine: a notification links to the file when it is
+ready.
+{% endcomment %}
+{% if job.status == job.READY %}
+<div class="export-status space-y-3 text-[13px] text-slate-700" role="status" data-export-status="ready">
+  <p class="font-semibold text-slate-800">Your file is ready.</p>
+  <p class="edify-text-caption edify-text-muted">If the download did not start, use the button below.</p>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+    <a href="/exports/{{ job.id }}/download" download hx-boost="false"
+       x-data x-init="$nextTick(() => $el.click())"
+       class="btn btn-primary h-8 inline-flex items-center gap-1.5" data-export-download>
+      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      <span>Download {{ job.filename }}</span>
+    </a>
+  </div>
+</div>
+{% elif job.status == job.FAILED %}
+<div class="export-status space-y-3 text-[13px] text-slate-700" role="alert" data-export-status="failed">
+  <p class="font-semibold text-slate-800">The file could not be prepared.</p>
+  <p class="edify-text-caption edify-text-muted">{{ job.error|default:"Please try again." }}</p>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+  </div>
+</div>
+{% else %}
+<div class="export-status space-y-3 text-[13px] text-slate-700" role="status" aria-live="polite" data-export-status="waiting"
+     hx-get="/exports/{{ job.id }}" hx-trigger="every 3s" hx-swap="outerHTML">
+  <p class="font-semibold text-slate-800 inline-flex items-center gap-2">
+    <svg class="h-4 w-4 animate-spin edify-primary-text" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+    <span>Preparing your file…</span>
+  </p>
+  <p class="edify-text-caption edify-text-muted">A large export takes a minute or two. You can close this: a notification will link to the file when it is ready.</p>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+  </div>
+</div>
+{% endif %}

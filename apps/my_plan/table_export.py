@@ -414,6 +414,15 @@ def context_for(principal, activity_ids, fy) -> dict:
 
 
 def _sheet(title: str, columns, rows, *, short_days: bool = False) -> dict:
+    return _framed(title, columns, [_values(columns, row) for row in rows], short_days)
+
+
+def _values(columns, row: dict) -> list:
+    return [cell(row) for _heading, cell in columns]
+
+
+def _framed(title: str, columns, values: list, short_days: bool = False) -> dict:
+    """A sheet of ``columns`` holding rows already turned into values."""
     day = SHORT_DAY if short_days else DAY
     formats = {}
     for index, (heading, _cell) in enumerate(columns, start=1):
@@ -424,7 +433,7 @@ def _sheet(title: str, columns, rows, *, short_days: bool = False) -> dict:
     return {
         "title": title,
         "headers": [heading for heading, _cell in columns],
-        "rows": [[cell(row) for _heading, cell in columns] for row in rows],
+        "rows": values,
         "number_formats": formats,
     }
 
@@ -565,47 +574,146 @@ def _session_figures(rows: list[dict], kind: str) -> list[dict]:
     ]
 
 
-def sheets(context: dict, kind: str = export_kinds.ALL) -> list[dict]:
-    """The sheets ``kind`` gives, from My Plan's ``context``, in the page's
-    order. "All" holds every table, an empty one too, so a reader sees the
-    whole plan's shape; a programme card is there only when it has rows, as
-    on the page."""
+def _sheet_sources(context: dict, kind: str = export_kinds.ALL) -> list[tuple]:
+    """(title, columns, rows, short_days) of each sheet ``kind`` gives, from
+    My Plan's ``context``, in the page's order. "All" holds every table, an
+    empty one too, so a reader sees the whole plan's shape; a programme card
+    is there only when it has rows, as on the page."""
+    from apps.core import plan_export
+
     by_key = {table.key: table for table in TABLES}
     out = []
     for key in KIND_TABLES.get(kind, ALL_SHEETS):
         if key == "programme_school_work":
             out.extend(
-                _sheet(
+                (
                     PROGRAMME_TITLE.format(label=section["label"]),
                     PROGRAMME_COLUMNS,
                     section["rows"],
+                    False,
                 )
                 for section in context.get("programme_school_work") or []
             )
         elif key == "meeting_schools":
             out.append(
-                _sheet(
+                (
                     MEETING_SCHOOLS_TITLE,
                     TRAININGS_COLUMNS,
                     meeting_school_rows(context.get("cluster_meetings") or []),
+                    False,
                 )
             )
         else:
-            from apps.core import plan_export
-
             table = by_key[key]
             rows = context.get(table.key) or []
             if key == "group_trainings":
                 rows = _session_figures(rows, plan_export.TRAINING)
-            out.append(
-                _sheet(table.title, table.columns, rows, short_days=table.short_days)
-            )
+            out.append((table.title, table.columns, rows, table.short_days))
     return out
 
 
+def sheets(context: dict, kind: str = export_kinds.ALL) -> list[dict]:
+    """The sheets ``kind`` gives, from My Plan's ``context``, in the page's
+    order (``_sheet_sources``)."""
+    return [
+        _sheet(title, columns, rows, short_days=short_days)
+        for title, columns, rows, short_days in _sheet_sources(context, kind)
+    ]
+
+
+#: Activities read into My Plan's tables at a time. One pass over a
+#: country's 23,000 held 1 GB of rows and records (2026-10-26), more than the
+#: worker that prepares an export has; a batch holds a fraction of that.
+EXPORT_BATCH = 1500
+
+
+def _export_order(activity_ids) -> list:
+    """The activities in My Plan's own order: planned date, then created."""
+    from apps.activities.models import Activity
+    from apps.core.scoping import id_list
+
+    return list(
+        Activity.objects.filter(
+            id__in=id_list(i for i in set(activity_ids) if i),
+            deleted_at__isnull=True,
+        )
+        .order_by("planned_date", "created_at", "id")
+        .values_list("id", flat=True)
+    )
+
+
+def _row_key(row: dict) -> tuple:
+    from apps.activities.completion_columns import completed_last_key
+
+    return completed_last_key(row.get("is_complete"), row.get("planned_date"))
+
+
 def workbook(principal, activity_ids, fy, kind: str = export_kinds.ALL) -> list[dict]:
-    """The sheets of My Plan's tables for these activities."""
-    return sheets(context_for(principal, activity_ids, fy), kind)
+    """The sheets of My Plan's tables for these activities, built a batch of
+    ``EXPORT_BATCH`` activities at a time.
+
+    Each batch's tables become finished sheet rows at once, so only the
+    rows' values outlive a batch, never its records. My Plan sorts each
+    table open work first by planned date, completed work last; the batches
+    follow its order and are merged by that same key (a stable merge), so
+    every row lands where one pass over all the activities puts it.
+    """
+    import heapq
+
+    ordered = _export_order(activity_ids)
+    frames: dict[str, tuple] = {}
+    parts: dict[str, list] = {}
+    for start in range(0, len(ordered), EXPORT_BATCH):
+        part = context_for(principal, ordered[start : start + EXPORT_BATCH], fy)
+        for title, columns, rows, short_days in _sheet_sources(part, kind):
+            frames.setdefault(title, (columns, short_days))
+            parts.setdefault(title, []).append(
+                [(_row_key(row), _values(columns, row)) for row in rows]
+            )
+        del part
+    if not ordered:
+        return sheets({}, kind)
+    return [
+        _framed(
+            title,
+            frames[title][0],
+            [
+                values
+                for _key, values in heapq.merge(
+                    *parts[title], key=lambda keyed: keyed[0]
+                )
+            ],
+            frames[title][1],
+        )
+        for title in _sheet_order(frames, kind)
+    ]
+
+
+def _sheet_order(frames: dict, kind: str) -> list[str]:
+    """The sheets' titles in the order one pass gives them: the kind's
+    tables in the page's order, the programme cards in their school types'
+    order wherever a batch had rows for them."""
+    from apps.planning.visit_gate import PROGRAMME_SCHOOL_TYPES
+    from apps.schools.models import SchoolType
+
+    by_key = {table.key: table.title for table in TABLES}
+    labels = dict(SchoolType.choices)
+    order = []
+    for key in KIND_TABLES.get(kind, ALL_SHEETS):
+        if key == "programme_school_work":
+            order += [
+                title
+                for title in (
+                    PROGRAMME_TITLE.format(label=labels[school_type])
+                    for school_type in PROGRAMME_SCHOOL_TYPES
+                )
+                if title in frames
+            ]
+        elif key == "meeting_schools":
+            order.append(MEETING_SCHOOLS_TITLE)
+        else:
+            order.append(by_key[key])
+    return [title for title in order if title in frames]
 
 
 def csv_rows(sheet_list: list[dict]):

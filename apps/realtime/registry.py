@@ -665,6 +665,26 @@ JOB_REGISTRY: list[JobSpec] = [
         retryable=True,
         max_retries=2,
     ),
+    JobSpec(
+        name="export_jobs",
+        description=(
+            "Builds the exports people queued from the export drawer, one at "
+            "a time, as the person who asked (apps.reports.export_jobs); "
+            "looks for new ones every few seconds while its run lasts."
+        ),
+        cron="every minute Africa/Nairobi",
+        cron_kwargs={"minute": "*"},
+        expected_runtime_seconds=55,
+        max_interval_minutes=10,
+        idempotent=True,
+        idempotency_note=(
+            "Jobs are claimed with SELECT FOR UPDATE SKIP LOCKED and a built "
+            "job is never built again; a job whose worker died is retried "
+            "once, then failed."
+        ),
+        retryable=True,
+        max_retries=1,
+    ),
 ]
 
 JOB_NAMES = {spec.name for spec in JOB_REGISTRY}

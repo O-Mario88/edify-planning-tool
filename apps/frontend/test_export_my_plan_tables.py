@@ -531,3 +531,36 @@ class EveryPlanStatusExports(MyPlanTablesFixture):
                     continue  # a page this role does not open
                 with self.subTest(page=path, status=status):
                     self.assertEqual(response.status_code, 200)
+
+
+class TheTablesAreBuiltInBatches(MyPlanTablesFixture):
+    """A country's export builds My Plan's tables a batch of activities at a
+    time (2026-10-26: one pass over 23,000 activities held 1 GB, more than
+    the worker that prepares an export has). Batches change nothing: every
+    sheet holds the same rows in the same order as one pass."""
+
+    def test_batches_of_one_export_the_same_sheets_as_one_pass(self):
+        from unittest import mock
+
+        one_pass = self.export(activity_type="all")
+        with mock.patch.object(table_export, "EXPORT_BATCH", 1):
+            batched = self.export(activity_type="all")
+
+        self.assertEqual(batched, one_pass)
+
+    def test_no_batch_reads_more_activities_than_its_size(self):
+        from unittest import mock
+
+        seen = []
+        real = table_export.context_for
+
+        def recording(principal, activity_ids, fy):
+            seen.append(len(list(activity_ids)))
+            return real(principal, activity_ids, fy)
+
+        with mock.patch.object(table_export, "EXPORT_BATCH", 2):
+            with mock.patch.object(table_export, "context_for", recording):
+                self.export(activity_type="all")
+
+        self.assertGreater(len(seen), 1)
+        self.assertLessEqual(max(seen), 2)
