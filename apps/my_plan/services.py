@@ -1381,6 +1381,10 @@ def get_frontend_context(
     programme_school_work = {kind: [] for kind in PROGRAMME_SCHOOL_TYPES}
     core_school_visits_list = []
     core_school_trainings_list = []
+    # Work the page draws on no table (a Partner activity, an SSA activity, a
+    # project activity, a field event): kept for an export, which holds every
+    # activity it was given (owner, 2026-10-26).
+    unlisted_work_list = []
     # Dated non-school programme work (conferences, camps, exhibitions) has no
     # school or cluster, so it matched none of the three category tables above
     # and was invisible on the page even though the urgency buckets held it.
@@ -1948,6 +1952,8 @@ def get_frontend_context(
             cluster_trainings_list.append(activity_data)
         elif a.activity_type in ["cluster_meeting", "cluster_meeting_ssa_review"]:
             cluster_meetings_list.append(activity_data)
+        else:
+            unlisted_work_list.append(activity_data)
 
         # Finance / Accountability pending — advance disbursed but accountability
         # (NetSuite expense ID) still outstanding, or payment mid-flight.
@@ -2561,6 +2567,7 @@ def get_frontend_context(
             if row["status"] in COMPLETED_WORK_STATUSES
         ),
         "core_school_trainings": core_school_trainings_list,
+        "unlisted_work": unlisted_work_list,
         "core_school_trainings_all": core_school_trainings_list,
         "core_school_trainings_completed": sum(
             1
