@@ -20,6 +20,7 @@ rests on, and a dash is a figure the records cannot give, never a zero.
     {% slot description %}Are the Core schools improving, is the package delivered, are schools taking part, and which need action: FY {{ fy }} against the year before.{% endslot %}
     {% if can_export %}
     <a href="/core-schools-oversight/?{{ query }}&amp;format=csv" class="edify-action-button secondary h-9" data-core-download>Download CSV</a>
+    {% if plan %}<a href="/core-schools-oversight/?{{ query }}&amp;tab={{ tab }}&amp;format=xlsx" class="edify-action-button secondary h-9" data-core-plan-download>Download Excel</a>{% endif %}
     {% endif %}
   {% endpage_header %}
 
@@ -224,6 +225,27 @@ rests on, and a dash is a figure the records cannot give, never a zero.
     </section>
     {% endfor %}
   </div>
+
+  {% elif plan %}
+  {% comment %}Owner, 2026-10-26: the Core schools' planned visits and
+  trainings. Core School Visits is My Plan's table of it, column for column;
+  Core School Trainings carries the owner's columns. Both read My Plan's rows
+  for the schools the filters keep (apps.my_plan.table_export).{% endcomment %}
+  {% paginate plan.shown "page" as pager %}
+  {% data_table name=tab %}
+    {% slot title %}{{ plan.title }}, FY {{ fy }}{% endslot %}
+    {% slot summary %}{{ plan.shown|length }} planned{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="No planned work for the Core schools shown." compact="true" %}{% endslot %}
+    {% slot footer %}{% include "components/table_pager.html" with pager=pager param="page" %}{% endslot %}
+    {% if plan.shown %}
+    <thead><tr>{% for heading in plan.headers %}<th scope="col" class="px-3 py-2">{{ heading }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for cells in pager.rows %}
+      <tr data-core-plan-row="{{ cells.0.1 }}">{% for heading, cell in cells %}<td class="px-3 py-2" data-label="{{ heading }}">{{ cell }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+    {% endif %}
+  {% enddata_table %}
   {% endif %}
 
   <p class="edify-text-caption text-slate-500">Improved and declined follow the published IA measurement rule for each SSA domain; where none is approved, any change counts. Teacher and leader figures are attendance headcounts, not unique people. Planned visits and trainings are on My Plan and Planning Oversight.</p>

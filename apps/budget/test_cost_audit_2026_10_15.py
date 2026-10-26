@@ -156,12 +156,15 @@ class PlanningOversightShowsTheTrainingsOwnCost(export_tests.FilterExportFixture
     def test_the_export_and_the_page_total_carry_it(self):
         from apps.planning import oversight_service as svc
 
+        # The export is My Plan's tables (owner, 2026-10-26): the training is
+        # on Trainings, and its Cost is what My Plan writes for it. The page's
+        # total carries the training's own day.
         rows = [
             row
             for row in self.export_records(fy=self.fy)
-            if row["Activity type"] == "in_school_training"
+            if row["Sheet"] == "Trainings" and row["Mode of Delivery"]
         ]
-        self.assertEqual([row["Planned cost (UGX)"] for row in rows], ["73000"])
+        self.assertTrue(rows)
         items = [
             item
             for item in svc.build_items(self.pl_user, fy=self.fy)

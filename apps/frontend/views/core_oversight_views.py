@@ -26,7 +26,13 @@ TABS = (
     ("attention", "Attention"),
     ("recommendations", "Recommendations"),
     ("champion", "Champion Readiness"),
+    # Owner, 2026-10-26: "Core schools oversight should have Core school
+    # Visits plans, Core schools with trainings planned" — My Plan's rows of
+    # the schools shown (apps.my_plan.table_export.core_school_plans).
+    ("core_visits", "Core School Visits"),
+    ("core_trainings", "Core School Trainings"),
 )
+PLAN_TABS = ("core_visits", "core_trainings")
 TRAJECTORY_FILTERS = {
     "improved": "Improved",
     "declined": "Declined",
@@ -186,9 +192,34 @@ def core_schools_oversight_view(request):
             )
         return _csv(rows, fy)
 
+    tab = _choice(request, "tab", dict(TABS), "schools")
+    plan = None
+    if tab in PLAN_TABS:
+        from apps.my_plan import table_export
+
+        visits, trainings = table_export.core_school_plans(request.user, rows, fy)
+        plan = visits if tab == "core_visits" else trainings
+        if request.GET.get("format") == "xlsx":
+            if not can_export:
+                from apps.core.permissions import render_access_denied
+
+                return render_access_denied(
+                    request, "Your role does not include data export."
+                )
+            from apps.core.excel import table_download
+
+            return table_download(
+                request, f"core-school-oversight-{tab.replace('_', '-')}-fy{fy}", [plan]
+            )
+        plan = {
+            **plan,
+            "shown": [
+                list(zip(plan["headers"], cells)) for cells in table_export.shown(plan)
+            ],
+        }
+
     sort = _choice(request, "sort", SORTS, "name")
     rows = sorted(rows, key=SORTS[sort][1])
-    tab = _choice(request, "tab", dict(TABS), "schools")
     group = _choice(request, "group", intelligence.GROUPINGS, "cceo")
     query = request.GET.copy()
     for key in ("tab", "page", "format"):
@@ -204,6 +235,7 @@ def core_schools_oversight_view(request):
             "scope_schools": len(every),
             "tab": tab,
             "tabs": TABS,
+            "plan": plan,
             "group": group,
             "groupings": intelligence.GROUPINGS,
             "grouped": intelligence.groups(rows, group) if tab == "groups" else [],

@@ -99,9 +99,9 @@ class MyPlanPagesItsTablesAtFiftyTest(TestCase):
         import csv
         import io
 
-        from apps.core import plan_export
+        from apps.my_plan import table_export
 
-        tables = plan_export.tables_from_csv(
+        tables = table_export.tables_from_csv(
             csv.reader(io.StringIO(response.content.decode()))
         )
-        self.assertEqual(len(tables[plan_export.VISIT_SHEET]), VISITS)
+        self.assertEqual(len(tables["School Visits"]), VISITS)

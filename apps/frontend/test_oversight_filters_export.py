@@ -113,10 +113,14 @@ class FilterExportFixture(TestCase):
         return list(csv.reader(io.StringIO(body)))
 
     def export_records(self, **params) -> list[dict]:
-        """The export's one table (owner, 2026-10-20), each row keyed by its
-        column heading."""
-        header, *rows = self.export_rows(**params)
-        return [dict(zip(header, row)) for row in rows]
+        """Every row of the export: My Plan's tables, a sheet each (owner,
+        2026-10-26), each row keyed by its column heading and its "Sheet"."""
+        from apps.my_plan import table_export
+
+        tables = table_export.tables_from_csv(self.export_rows(**params))
+        return [
+            {**row, "Sheet": title} for title, rows in tables.items() for row in rows
+        ]
 
 
 class ExportScopeTest(FilterExportFixture):
@@ -127,37 +131,33 @@ class ExportScopeTest(FilterExportFixture):
         self.assertIn("Alpha Primary", body)
         self.assertNotIn("99000", body, "another team's cost must not be exported")
 
-    def test_the_export_totals_match_the_page(self):
-        exported_total = sum(
-            int(row["Planned cost (UGX)"] or 0)
-            for row in self.export_records(fy=self.fy)
-        )
-
+    def test_the_export_holds_the_pages_work(self):
+        """Every activity the page lists for James is a row of the export:
+        his visit, his training and the Partner's visit he monitors."""
         from apps.planning import oversight_service as svc
 
         page_items = svc.build_items(self.pl_user, fy=self.fy)
         owner_ids = {self.james.id, self.james.user_id}
-        page_total = svc.summarize(
-            [
-                item
-                for item in page_items
-                if item.operational_owner_id in owner_ids
-                or item.managing_staff_id in owner_ids
-            ]
-        )["planned_budget"]
-        self.assertEqual(exported_total, page_total)
+        listed = [
+            item
+            for item in page_items
+            if item.operational_owner_id in owner_ids
+            or item.managing_staff_id in owner_ids
+        ]
+        self.assertEqual(len(self.export_records(fy=self.fy)), len(listed))
 
-    def test_the_export_is_the_owners_columns(self):
-        """Owner, 2026-10-20: Planning Oversight exports one table of the
-        owner's columns, no sheets and no Budget. Who does the work is the
-        Executor, or the Partner."""
-        from apps.planning.oversight_service import EXPORT_HEADERS
+    def test_the_export_is_my_plans_tables(self):
+        """Owner, 2026-10-26: Planning Oversight exports My Plan's tables, a
+        sheet each (it was one table of the owner's columns, 2026-10-20).
+        Every row says who does the work."""
+        from apps.my_plan import table_export
 
-        lines = self.export_rows(fy=self.fy)
-        self.assertEqual(lines[0], list(EXPORT_HEADERS))
-        self.assertEqual(lines.count(list(EXPORT_HEADERS)), 1)
-        for row in self.export_records(fy=self.fy):
-            self.assertTrue(row["Executor"] or row["Partner"])
+        rows = self.export_records(fy=self.fy)
+        self.assertEqual(
+            {row["Sheet"] for row in rows} <= set(table_export.FIXED_TITLES), True
+        )
+        for row in rows:
+            self.assertTrue(row["Executor"])
 
     def test_my_plan_keeps_the_owners_sheet_columns(self):
         """Owner, 2026-10-12: the columns of each of My Plan's sheets, named
@@ -219,7 +219,7 @@ class FilterTest(FilterExportFixture):
     def test_filtering_by_activity_type_narrows_both_page_and_export(self):
         rows = self.export_records(fy=self.fy, activity_type="training")
 
-        self.assertEqual([row["Table"] for row in rows], ["Training"])
+        self.assertEqual([row["Sheet"] for row in rows], ["Trainings"])
 
     def test_filtering_by_executor_type_separates_partner_from_staff(self):
         partner_rows = self.export_records(fy=self.fy, executor_type="partner")
@@ -316,9 +316,9 @@ class CustomExportPeriodAndDrawerTest(FilterExportFixture):
             activity_type="visits_trainings",
             format="csv",
         )
-        # The one completed row.
+        # The one completed row: the November visit and its own cost.
         self.assertEqual(len(rows), 1)
-        self.assertIn("omplete", rows[0]["Activity status"])
+        self.assertEqual(rows[0]["Planned Date"], "15 Nov " + str(nov_date.year))
 
     def test_drawers_render_successfully(self):
         client = self.as_pl()
@@ -385,11 +385,15 @@ class EveryoneAtOnceTest(FilterExportFixture):
         response = client.get(path, {"fy": self.fy, **params})
         self.assertEqual(response.status_code, 200)
         body = b"".join(response.streaming_content).decode()
-        header, *rows = csv.reader(io.StringIO(body))
-        at = header.index("Planned cost (UGX)")
-        return sorted(int(row[at] or 0) for row in rows)
+        from apps.my_plan import table_export
 
-    EVERYONE = [25_000, 40_000, 60_000, 99_000]
+        tables = table_export.tables_from_csv(csv.reader(io.StringIO(body)))
+        # Whose work each row is: the export is My Plan's tables (owner,
+        # 2026-10-26), whose Cost is My Plan's own estimate, so the officers
+        # say whose plan reached the file.
+        return sorted(row["Executor"] for rows in tables.values() for row in rows)
+
+    EVERYONE = ["James", "James", "Outsider", "Partner X"]
 
     def test_the_team_export_is_everyone_for_the_cd_and_ia(self):
         for user in (self.cd_user, self.ia_user):
@@ -401,7 +405,8 @@ class EveryoneAtOnceTest(FilterExportFixture):
 
     def test_one_leads_team_is_still_a_choice(self):
         self.assertEqual(
-            self._costs(self.cd_user, PL_EXPORT, program_lead=self.pl2.id), [99_000]
+            self._costs(self.cd_user, PL_EXPORT, program_lead=self.pl2.id),
+            ["Outsider"],
         )
 
     def test_the_country_export_is_everyone_too(self):

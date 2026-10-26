@@ -252,7 +252,7 @@ class DistrictTypeColumnTest(DailyVisitBatchTestCase):
         import csv
         import io
 
-        from apps.core import plan_export
+        from apps.my_plan import table_export
 
         self._schedule(["BATCH-P-1", "BATCH-SEC-A"], date(2026, 8, 5), "two")
         self.client.force_login(self.staff_user)
@@ -264,10 +264,10 @@ class DistrictTypeColumnTest(DailyVisitBatchTestCase):
         response = self.client.get(
             "/my-plan/", {"fy": "2026", "period": "fy", "export": "csv"}
         )
-        tables = plan_export.tables_from_csv(
+        tables = table_export.tables_from_csv(
             csv.reader(io.StringIO(response.content.decode()))
         )
-        visits = tables[plan_export.VISIT_SHEET]
+        visits = tables["School Visits"]
         self.assertEqual(len(visits), 2)
         self.assertEqual({row["District Type"] for row in visits}, {"Mixed"})
         self.assertTrue(all(row["District"] for row in visits))

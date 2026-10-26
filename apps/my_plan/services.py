@@ -873,13 +873,20 @@ def _own_readiness(principal, fy):
 
 
 def get_frontend_context(
-    principal, query: dict, *, with_readiness: bool = True
+    principal, query: dict, *, with_readiness: bool = True, activities=None
 ) -> dict:
     """Consolidated planning dashboard feed resolver for the HTML frontend.
 
     `with_readiness=False` leaves the person's Planned and remaining out:
     the page asks for it once it has been drawn (the My Plan readiness
-    panel), and an export never shows it."""
+    panel), and an export never shows it.
+
+    `activities`, a queryset, is the work an export chose (owner, 2026-10-26:
+    "tables are exported exactly the way they are in My Plan tables"): its
+    tables are drawn from exactly those activities, every one of them, by the
+    rules the page draws the reader's own plan by. The export has already
+    applied its period and status, so nothing here narrows them further: no
+    closed or past-dated work is left to another page."""
     today = date.today()
 
     # 1. Resolve User Scope
@@ -945,7 +952,8 @@ def get_frontend_context(
     # 3. Base queryset constrained by user scope. Terminal activities leave
     # the active feed and live in Completed Activities — unless the caller
     # explicitly filters for one of those statuses.
-    qs = my_plan_activities(principal, fy, scope)
+    chosen = activities is not None
+    qs = activities if chosen else my_plan_activities(principal, fy, scope)
     # The plan the tiles count: every live activity of the year, the closed
     # ones included. The list below leaves closed work to Completed
     # Activities, but it was planned and it was delivered, and a Programme
@@ -954,7 +962,9 @@ def get_frontend_context(
     plan_qs = qs.exclude(
         status__in=[s for s in ACTIVE_MY_PLAN_EXCLUDED_STATUSES if s != "closed"]
     )
-    if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
+    if chosen:
+        plan_qs = qs
+    elif status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
         qs = qs.exclude(status__in=ACTIVE_MY_PLAN_EXCLUDED_STATUSES)
     else:
         plan_qs = qs
@@ -1079,9 +1089,14 @@ def get_frontend_context(
         | Q(planned_date__isnull=True, scheduled_date__date__gte=today)
         | Q(planned_date__isnull=True, scheduled_date__isnull=True)
     )
-    if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES and status not in (
-        "under_way",
-        "overdue",
+    if (
+        not chosen
+        and status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES
+        and status
+        not in (
+            "under_way",
+            "overdue",
+        )
     ):
         # Asking for work under way or overdue is asking for it whatever its
         # date, so those two lists keep their past-dated rows: they are the
@@ -1836,7 +1851,16 @@ def get_frontend_context(
             "focus_intervention": a.get_focus_intervention_display()
             if a.focus_intervention
             else "General",
-            "owner": users_map.get(a.responsible_staff_id, "Staff"),
+            # Who delivers it: the Partner for a Partner's work, by the rule
+            # Planning Oversight reads (owner, 2026-10-26: "Executor (Staff
+            # Name or Partner Name)"); an export of a team's plan lists it.
+            "owner": partners_map.get(a.assigned_partner_id, "Partner")
+            if (
+                a.delivery_type == "partner"
+                or a.assigned_partner_id
+                or a.status in ("assigned_to_partner", "partner_scheduled")
+            )
+            else users_map.get(a.responsible_staff_id, "Staff"),
             "execution_role": "Staff" if a.delivery_type == "staff" else "Partner",
             # "Facilitated by" (owner, 2026-09-29): Staff, or the partner.
             "facilitated_by": (

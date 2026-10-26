@@ -2711,19 +2711,16 @@ def _filter_export_items(items, request, period: dict) -> list:
             or getattr(it, "delivery_phase", "") == "completed"
         ]
     elif status == "scheduled":
+        # "All scheduled plans" (owner, 2026-10-26): every plan not yet
+        # completed, moved, under way or waiting on its paperwork alike.
         filtered = [
             it
             for it in filtered
-            if getattr(it, "activity_status", "")
-            in {
-                "scheduled",
-                # A moved activity is still a scheduled one.
-                "rescheduled",
-                "partner_scheduled",
-                "in_progress",
-                "staff_scheduled",
-            }
-            or getattr(it, "delivery_phase", "") == "scheduled"
+            if not (
+                getattr(it, "is_completed", False)
+                or getattr(it, "activity_status", "") in COMPLETED_WORK_STATUSES
+                or getattr(it, "delivery_phase", "") == "completed"
+            )
         ]
     elif status == "in_progress":
         filtered = [
@@ -2786,39 +2783,33 @@ def _partner_choices() -> list[tuple[str, str, bool]]:
     ]
 
 
-def _export_response(items, filename: str, *, request_user, excel: bool = False):
-    """The rows the page is showing, as a workbook or as CSV: one table of the
-    owner's columns, one row per activity, and no Budget sheet (owner,
-    2026-10-20; `oversight.export_rows`). My Plan and Cluster Oversight keep
-    the sheets of `apps.core.plan_export`.
+def _export_response(items, filename: str, *, request, fy, excel: bool = False):
+    """The rows the page is showing, as My Plan's tables, a sheet each (owner,
+    2026-10-26: "If the IA select all then it should group those activities
+    in different sheets ... tables are exported exactly the way they are in My
+    Plan tables"). The drawer's Activity Type picks the tables
+    (``apps.my_plan.table_export.KIND_TABLES``); "All" is every one. This
+    replaces the one table of 2026-10-20.
 
-    The items are the ones the page's tables are drawn from, one per
-    activity: a cluster session is one row with its own participants and
-    cost, where the page's "Schools with Planned Training" table lists it
-    once per invited school. Both formats come from the same rows.
+    The items chose the work: the page's scope, filters, period and status.
+    Each table then lists that work as My Plan lists it, so a cluster session
+    is a row a school on Trainings and once on Group Trainings. A Partner's
+    hand-over the Partner has not dated yet is no activity, and no My Plan
+    table lists it. The CSV is the same sheets one after another.
     """
-    from apps.core import plan_export
+    from apps.core import export_kinds
+    from apps.my_plan import table_export
 
-    del request_user  # kept in the signature for the callers
-    headers, *rows = oversight.export_rows(items)
-
+    sheets = table_export.workbook(
+        request.user,
+        [getattr(item, "activity_id", None) for item in items],
+        fy,
+        export_kinds.read_kind_or_tab(request),
+    )
     if excel:
         from apps.core.excel import workbook_response
 
-        return workbook_response(
-            filename.replace(".csv", ".xlsx"),
-            [
-                {
-                    "title": "Planning Oversight",
-                    "headers": headers,
-                    "rows": rows,
-                    "number_formats": {
-                        headers.index("Planned date") + 1: plan_export.DATE,
-                        headers.index("Planned cost (UGX)") + 1: plan_export.MONEY,
-                    },
-                }
-            ],
-        )
+        return workbook_response(filename.replace(".csv", ".xlsx"), sheets)
 
     from django.http import StreamingHttpResponse
 
@@ -2830,11 +2821,23 @@ def _export_response(items, filename: str, *, request_user, excel: bool = False)
 
     writer = safe_csv_writer(_Echo())
     response = StreamingHttpResponse(
-        (writer.writerow(row) for row in [headers, *rows]),
+        (writer.writerow(row) for row in table_export.csv_rows(sheets)),
         content_type="text/csv",
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
+
+def _school_list_download(request, stem: str, activity_ids, fy, kind: str):
+    """One of the five lists of schools (owner, 2026-10-26) as My Plan's
+    table of it, for a page that otherwise keeps its own layout: the page
+    chose the work, My Plan's table lists it."""
+    from apps.core.excel import table_download
+    from apps.my_plan import table_export
+
+    return table_download(
+        request, stem, table_export.workbook(request.user, activity_ids, fy, kind)
+    )
 
 
 @require_page_permission("team_planning_oversight")
@@ -2878,7 +2881,8 @@ def team_planning_export_view(request):
     return _export_response(
         visible,
         f"team-planning-oversight-{period['fy']}.csv",
-        request_user=request.user,
+        request=request,
+        fy=period["fy"],
         excel=_wants_excel(request),
     )
 
@@ -2898,7 +2902,8 @@ def country_planning_export_view(request):
     return _export_response(
         items,
         f"country-planning-oversight-{period['fy']}.csv",
-        request_user=request.user,
+        request=request,
+        fy=period["fy"],
         excel=_wants_excel(request),
     )
 
@@ -2994,12 +2999,34 @@ def special_project_export_view(request, project_id: str = "all"):
                 if getattr(s, "activity_state_label", "").lower() == "completed"
                 or getattr(s, "status_key", "") == monitoring.STATUS_COMPLETED
             ]
+    elif req_status == export_kinds.SCHEDULED:
+        # "All scheduled plans" (owner, 2026-10-26): what is not yet completed.
+        for proj in projects:
+            proj.school_rows = [
+                s
+                for s in proj.school_rows
+                if getattr(s, "activity_state_label", "").lower() != "completed"
+                and getattr(s, "status_key", "") != monitoring.STATUS_COMPLETED
+            ]
     # A project school's row names its training, or none for a visit; cluster
     # meetings and online trainings are not project work, so those kinds
     # leave the sheet empty rather than guess.
-    from apps.core import export_kinds
-
     kind = export_kinds.read_kind(request)
+    if kind in export_kinds.SCHOOL_LISTS:
+        # One of the five lists (owner, 2026-10-26): My Plan's table of the
+        # projects' work.
+        return _school_list_download(
+            request,
+            school_table.filename_stem(projects, fy, single=single),
+            [
+                pk
+                for proj in projects
+                for row in proj.school_rows
+                for pk in (row.cost_activity_ids or ())
+            ],
+            fy,
+            kind,
+        )
     if kind != export_kinds.ALL:
         wants_training = kind in (export_kinds.GROUP_TRAININGS, export_kinds.TRAININGS)
         for proj in projects:
@@ -4038,6 +4065,17 @@ def partner_oversight_export_view(request):
             or it.activity_status in _COMPLETE_STATUSES
         ]
         trainings = [t for t in trainings if t.delivery_phase == "completed"]
+    elif req_status == export_kinds.SCHEDULED:
+        # "All scheduled plans" (owner, 2026-10-26): what is not yet completed.
+        from apps.planning.partner_oversight_service import _COMPLETE_STATUSES
+
+        items = [
+            it
+            for it in items
+            if it.delivery_phase != "completed"
+            and it.activity_status not in _COMPLETE_STATUSES
+        ]
+        trainings = [t for t in trainings if t.delivery_phase != "completed"]
     elif req_status in export_kinds.LIVE_STATUSES:
         # The page's own phase: a moved activity is still scheduled there.
         items = [it for it in items if it.delivery_phase == req_status]
@@ -4056,6 +4094,16 @@ def partner_oversight_export_view(request):
         type_of=lambda t: t.activity_type,
         id_of=lambda t: t.activity_id,
     )
+    if kind in export_kinds.SCHOOL_LISTS:
+        # One of the five lists (owner, 2026-10-26): My Plan's table of it.
+        return _school_list_download(
+            request,
+            f"partner-oversight-{period['fy']}",
+            [getattr(it, "partner_activity_id", None) for it in items]
+            + [t.activity_id for t in trainings],
+            period["fy"],
+            kind,
+        )
 
     # The page's Export button asks for the workbook (owner, 2026-09-27: "It
     # should be export in excel not csv"); CSV stays the default for links.
@@ -4670,6 +4718,7 @@ def export_drawer_context(
         "show_status_filter": True,
         "show_activity_type_filter": True,
         "kind_choices": export_kinds.KIND_CHOICES,
+        "status_choices": export_kinds.STATUS_CHOICES,
     }
 
 
@@ -4765,6 +4814,7 @@ def planning_export_drawer_view(request):
         "show_status_filter": True,
         "show_activity_type_filter": True,
         "kind_choices": export_kinds.choices_for(selected_kind),
+        "status_choices": export_kinds.STATUS_CHOICES,
         "selected_kind": selected_kind,
     }
     return render(
@@ -4829,6 +4879,7 @@ def partner_oversight_export_drawer_view(request):
         "show_status_filter": True,
         "show_activity_type_filter": True,
         "kind_choices": export_kinds.KIND_CHOICES,
+        "status_choices": export_kinds.STATUS_CHOICES,
     }
     return render(
         request,
@@ -4890,6 +4941,7 @@ def project_export_drawer_view(request):
         "show_status_filter": True,
         "show_activity_type_filter": True,
         "kind_choices": export_kinds.KIND_CHOICES,
+        "status_choices": export_kinds.STATUS_CHOICES,
     }
     return render(
         request,

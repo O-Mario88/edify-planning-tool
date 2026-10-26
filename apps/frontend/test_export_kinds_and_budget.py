@@ -387,6 +387,14 @@ class BudgetExportTest(TestCase):
         client.force_login(self.cceo_user)
         response = client.get("/my-plan", {"export": "xlsx", "fy": self.fy})
         self.assertEqual(response.status_code, 200)
-        sheets = _sheets(response)
-        header = next(iter(sheets.values()))[0]
-        self.assertTrue(any("(UGX)" in str(h) for h in header), header)
+        # My Plan's School Visits table (owner, 2026-10-26): its Cost column,
+        # written in UGX as the page writes it.
+        from openpyxl import load_workbook
+
+        from apps.my_plan import table_export
+
+        sheet = load_workbook(io.BytesIO(response.content))["School Visits"]
+        header = [cell.value for cell in sheet[1]]
+        self.assertIn("Cost", header)
+        at = header.index("Cost") + 1
+        self.assertEqual(sheet.cell(2, at).number_format, table_export.MONEY)

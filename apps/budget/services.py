@@ -2432,8 +2432,23 @@ def budget_export_sheets(
     yet completed, or everything.
     """
     from apps.accounts.models import User
+
+    lines = export_lines(
+        principal, query, start=start, end=end, kind=kind, status=status
+    )
+    return _budget_export_book(
+        lines, start=start, end=end, kind=kind, status=status, User=User
+    )
+
+
+def export_lines(
+    principal, query: dict, *, start: date, end: date, kind: str = "all", status=""
+) -> list:
+    """The cost lines a Budget export holds: the planned activities of
+    [start, end] the page's scope reads, of the drawer's kind and Plan
+    Status. The workbook is laid out from them, and one of the five lists of
+    schools (owner, 2026-10-26) lists their activities as My Plan does."""
     from apps.core import export_kinds
-    from apps.core.activity_types import COMPLETED_WORK_STATUSES
 
     years = sorted({str(get_operational_fy(start)), str(get_operational_fy(end))})
     scoped = scoped_budget_lines(
@@ -2457,14 +2472,19 @@ def budget_export_sheets(
             return False
         # The drawer's status: completed work, everything, or (any other
         # choice) the work not yet completed.
-        done = (activity.status or "") in COMPLETED_WORK_STATUSES
-        if status == "completed":
-            return done
-        if status in ("", "all"):
-            return True
-        return not done
+        return status in ("", "all") or export_kinds.keeps_status(
+            status, activity.status
+        )
 
-    lines = [line for line in lines if wanted(line)]
+    return [line for line in lines if wanted(line)]
+
+
+def _budget_export_book(
+    lines, *, start: date, end: date, kind: str, status: str, User
+) -> list:
+    """The Budget workbook laid out from ``export_lines``."""
+    from apps.core import export_kinds
+
     names = dict(
         User.objects.filter(
             id__in={line.responsible_user for line in lines if line.responsible_user}
@@ -2554,7 +2574,7 @@ def budget_export_sheets(
     if kind != export_kinds.ALL:
         period_label += f" · {dict(export_kinds.KIND_CHOICES).get(kind, kind)}"
     if status and status != "all":
-        period_label += f" · {status.replace('_', ' ').title()}"
+        period_label += f" · {export_kinds.STATUS_LABELS.get(status, status)}"
     return [
         cost_plan_sheet(budget_groups(lines, names), period_label=period_label),
         {
