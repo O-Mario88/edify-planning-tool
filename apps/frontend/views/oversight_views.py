@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
+from apps.core.request_timing import phase
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.htmx_saved import saved_in_place
 from apps.core.rbac import Permission
@@ -2117,8 +2118,16 @@ def team_planning_oversight_view(request):
 
     advanced = oversight.read_filters(request)
     scope = oversight.resolve_oversight_scope(request.user)
-    available_items = oversight.build_items(request.user, **_plan_period(period))
-    items = oversight.apply_filters(available_items, advanced)
+    if (
+        active_view == "planning"
+        and scope.groups_by_lead
+        and request.headers.get("HX-Request") == "true"
+        and request.GET.get("officer_panel")
+    ):
+        return _officer_panel_response(request, period, advanced)
+    with phase("build"):
+        available_items = oversight.build_items(request.user, **_plan_period(period))
+        items = oversight.apply_filters(available_items, advanced)
     if active_view == "coverage":
         # The school lens: which schools have planned work in the period, which
         # have a cluster training or meeting, and which have neither (owner,
@@ -2182,13 +2191,14 @@ def team_planning_oversight_view(request):
         if country_lens
         else (request.GET.get("owner") or WHOLE_TEAM_TAB).strip()
     )
-    if country_lens:
-        sys_pls = oversight.system_program_leads()
-        tabs, selected, visible = _program_lead_tabs(
-            items, selected, program_leads=sys_pls
-        )
-    else:
-        tabs, selected, visible = _team_owner_tabs(scope, items, selected)
+    with phase("tabs"):
+        if country_lens:
+            sys_pls = oversight.system_program_leads()
+            tabs, selected, visible = _program_lead_tabs(
+                items, selected, program_leads=sys_pls
+            )
+        else:
+            tabs, selected, visible = _team_owner_tabs(scope, items, selected)
 
     # A school visit, a cluster convening and a group training are read for
     # different questions, so they get a table each rather than one mixed list
@@ -2200,23 +2210,34 @@ def team_planning_oversight_view(request):
     visible = oversight.in_family(visible, activity_family)
 
     summary = oversight.summarize(visible)
-    owner_groups = oversight.group_by_owner(
-        visible,
-        owners=(
-            oversight.program_lead_members(selected)
-            if country_lens
-            else _team_roster(request.user, selected)
-        ),
-    )
-    if country_lens:
-        _partition_owner_groups_by_stream(owner_groups, request.user)
-        panel_groups = owner_groups
-    else:
-        # The team lens's own tabs choose the person, so the rows for the
-        # chosen tab are one panel rather than a second strip of the same
-        # people (owner, 2026-09-25). `groups` keeps the per-person filing.
-        panel_groups = _partition_owner_groups_by_stream(
-            [_tab_panel_group(tabs, owner_groups, visible, summary)], request.user
+    with phase("streams"):
+        owner_groups = oversight.group_by_owner(
+            visible,
+            owners=(
+                oversight.program_lead_members(selected)
+                if country_lens
+                else _team_roster(request.user, selected)
+            ),
+        )
+        if country_lens:
+            # Only the officer on screen is drawn; each other officer's panel
+            # is fetched when their tab is picked (_officer_panel_response).
+            shown = _shown_officer(request, owner_groups)
+            _partition_owner_groups_by_stream(
+                [group for group in owner_groups if str(group["id"]) == shown],
+                request.user,
+            )
+            panel_groups = owner_groups
+        else:
+            # The team lens's own tabs choose the person, so the rows for the
+            # chosen tab are one panel rather than a second strip of the same
+            # people (owner, 2026-09-25). `groups` keeps the per-person filing.
+            panel_groups = _partition_owner_groups_by_stream(
+                [_tab_panel_group(tabs, owner_groups, visible, summary)], request.user
+            )
+    with phase("flagged"):
+        flagged_schools = team_flagged_schools(
+            request.user, fy=period["fy"], month=period.get("month")
         )
     context = {
         **period,
@@ -2263,9 +2284,7 @@ def team_planning_oversight_view(request):
             request.user, country=scope.is_country, region=scope.is_region
         ),
         # Keep flagged schools alongside the team plan.
-        "flagged_schools": team_flagged_schools(
-            request.user, fy=period["fy"], month=period.get("month")
-        ),
+        "flagged_schools": flagged_schools,
         "active_oversight_view": "planning",
         "lens_tabs": lens_tabs,
         "lens_base_url": TEAM_OVERSIGHT_PATH,
@@ -2281,14 +2300,82 @@ def team_planning_oversight_view(request):
         ),
     }
 
-    if request.headers.get("HX-Request") == "true":
-        template = (
-            "partials/oversight/team_country_workspace.html"
-            if country_lens
-            else "partials/oversight/pl_workspace.html"
+    with phase("render"):
+        if request.headers.get("HX-Request") == "true":
+            template = (
+                "partials/oversight/team_country_workspace.html"
+                if country_lens
+                else "partials/oversight/pl_workspace.html"
+            )
+            return render(request, template, context)
+        return render(request, "pages/oversight/team_planning.html", context)
+
+
+def _shown_officer(request, owner_groups) -> str:
+    """The officer tab the page opens on, by the strip's own rule
+    (`tab_initial`): the one the address names, else the first with work."""
+    values = [str(group["id"]) for group in owner_groups]
+    if not values:
+        return ""
+    default = _default_officer(owner_groups)
+    first = default if default in values else values[0]
+    requested = request.GET.get("officer")
+    return requested if requested in values else first
+
+
+def _officer_panel_response(request, period, advanced):
+    """One officer's panel, fetched when their tab is picked on the country
+    lens (owner, 2026-10-26: "draw only the officer being viewed").
+
+    Built from that officer's own work (`build_items(owner_ids=...)`) by the
+    page's own rules: the same filters, the same Programme Lead tab, the same
+    activity family, the same position in the strip; so it is the panel the
+    page draws when the address names the officer.
+    """
+    officer = (request.GET.get("officer") or "").strip()
+    try:
+        index = max(1, int(request.GET.get("officer_index") or 1))
+    except ValueError:
+        index = 1
+    with phase("build"):
+        items = oversight.build_items(
+            request.user,
+            owner_ids=oversight._both_id_spaces({officer}) if officer else set(),
+            **_plan_period(period),
         )
-        return render(request, template, context)
-    return render(request, "pages/oversight/team_planning.html", context)
+        items = oversight.apply_filters(items, advanced)
+    items = [i for i in items if not i.is_partner_work]
+    requested_lead = (request.GET.get("program_lead") or "").strip()
+    _, selected, visible = _program_lead_tabs(
+        items, requested_lead, program_leads=oversight.system_program_leads()
+    )
+    activity_family = (request.GET.get("activity") or "all").strip()
+    visible = oversight.in_family(visible, activity_family)
+    groups = oversight.group_by_owner(
+        visible, owners=oversight.program_lead_members(selected or requested_lead)
+    )
+    group = next((g for g in groups if str(g["id"]) == officer), None)
+    if group is None:
+        group = {
+            "id": officer,
+            "name": "",
+            "items": [],
+            "summary": oversight.summarize([]),
+        }
+    group["page_param"] = f"g{index}_page"
+    with phase("streams"):
+        _partition_owner_groups_by_stream([group], request.user)
+    with phase("render"):
+        return render(
+            request,
+            "partials/oversight/_officer_panel_on_demand.html",
+            {
+                **period,
+                "period_label": _plan_period_label(period),
+                "group": group,
+                "forloop": {"counter": index},
+            },
+        )
 
 
 def _tab_panel_group(tabs, owner_groups, items, summary) -> dict:

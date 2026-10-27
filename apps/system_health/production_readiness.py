@@ -281,6 +281,14 @@ _EXEMPT_VIEW_NAMES = {
     "document_preview_view",
     "document_download_view",
     "document_print_view",
+    # The export drawer's file, prepared in the background (2026-10-26):
+    # login_required, each job its owner's alone (another person's job is a
+    # 404), and the export itself is answered by the export's own view, with
+    # its own page and export permissions, as the person who asked
+    # (apps.reports.export_jobs). No page a role could be granted or refused.
+    "export_prepare_view",
+    "export_status_view",
+    "export_download_view",
 }
 
 

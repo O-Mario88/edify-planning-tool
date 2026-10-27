@@ -7168,6 +7168,31 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 2670,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/exports/<str:job_id>",
+        "/exports/prepare"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Status",
+      "purpose": "Reusable status interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/exports/status.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 1414,
       "deprecated_alternatives": [],
@@ -10924,6 +10949,25 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 417,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Officer Panel On Demand",
+      "purpose": "Reusable  officer panel on demand interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_officer_panel_on_demand.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 894,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -11145,9 +11189,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 5121,
+      "bytes": 6059,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -11157,13 +11202,14 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Cd Team Detail",
       "purpose": "Reusable cd team detail interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
+        "loading",
         "selected",
         "open"
       ],
@@ -11285,7 +11331,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10340,
+      "bytes": 10704,
       "deprecated_alternatives": [],
       "example_pages": [
         "/budget/export-drawer",
@@ -11298,7 +11344,7 @@
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Export Customization Drawer",
       "purpose": "Reusable export customization drawer interface primitive",
@@ -11768,7 +11814,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4124,
+      "bytes": 4141,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -28930,7 +28976,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST /exports/prepare"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -28943,7 +28991,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "monthly_budget",
-      "primary_action": "Budget Export Drawer",
+      "primary_action": "Download Excel",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "The Export options drawer of the Budget page.",
       "remediation": "No automated remediation outstanding",
@@ -28962,7 +29010,7 @@
       "route_name": "budget_export_drawer",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "{{ export_url }}"
+        "/exports/prepare"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -40053,7 +40101,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST /exports/prepare"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -40066,7 +40116,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "team_planning_oversight",
-      "primary_action": "Country Planning Oversight Export Drawer",
+      "primary_action": "Download Excel",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Drawer to customize period from (Month) to (Month) and export plans to Excel.",
       "remediation": "No automated remediation outstanding",
@@ -40084,7 +40134,7 @@
       "route_name": "country_planning_oversight_export_drawer",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "{{ export_url }}"
+        "/exports/prepare"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -40870,7 +40920,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.country_planning_team_view",
       "card_count": 0,
@@ -40886,7 +40936,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ request.path }}?officer={{ group.id }}&amp;officer_panel=1&amp;officer_index={{ forloop.counter }}{% carry_query "
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -40933,7 +40985,7 @@
         "disabled": false,
         "empty": false,
         "error": false,
-        "loading": false
+        "loading": true
       },
       "surface_kind": "partial",
       "table_pattern": "none",
@@ -45833,6 +45885,156 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.export_job_views",
+      "backend_view": "apps.frontend.views.export_job_views.export_status_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/exports/status.html",
+        "test:coverage-review-required",
+        "permission:unmapped"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /exports/{{ job.id }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": true,
+      "page_id": "UI-PAGE-4D54136F01",
+      "page_title": "Export Status",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "",
+      "primary_action": "Export Status",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate export status within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [],
+      "route": "/exports/<str:job_id>",
+      "route_name": "export_status",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/exports/status.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.export_job_views",
+      "backend_view": "apps.frontend.views.export_job_views.export_prepare_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/exports/status.html",
+        "test:referenced-by-automated-test",
+        "permission:unmapped"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /exports/{{ job.id }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": true,
+      "page_id": "UI-PAGE-A495D711C9",
+      "page_title": "Export Prepare",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "",
+      "primary_action": "Export Prepare",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate export prepare within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [],
+      "route": "/exports/prepare",
+      "route_name": "export_prepare",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/exports/status.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extra_work_views",
       "backend_view": "apps.frontend.views.extra_work_views.extra_work_page",
@@ -49246,7 +49448,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST /exports/prepare"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -49259,7 +49463,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "fund_requests",
-      "primary_action": "Fund Requests Export Drawer",
+      "primary_action": "Download Excel",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "The Export options drawer of the Weekly Advance Request page.",
       "remediation": "No automated remediation outstanding",
@@ -49277,7 +49481,7 @@
       "route_name": "fund_requests_export_drawer",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "{{ export_url }}"
+        "/exports/prepare"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -68202,7 +68406,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST /exports/prepare"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -68215,7 +68421,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "My Plan Export Drawer",
+      "primary_action": "Download Excel",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Drawer to customize period from (Month) to (Month) and export My Plan to Excel.",
       "remediation": "No automated remediation outstanding",
@@ -68234,7 +68440,7 @@
       "route_name": "my_plan_export_drawer",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "{{ export_url }}"
+        "/exports/prepare"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -73225,7 +73431,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST /exports/prepare"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -73238,7 +73446,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "partner_oversight",
-      "primary_action": "Partner Oversight Export Drawer",
+      "primary_action": "Download Excel",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Drawer to customize period and export partner plans to Excel.",
       "remediation": "No automated remediation outstanding",
@@ -73257,7 +73465,7 @@
       "route_name": "partner_oversight_export_drawer",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "{{ export_url }}"
+        "/exports/prepare"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -96394,7 +96602,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST /exports/prepare"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -96407,7 +96617,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "team_planning_oversight",
-      "primary_action": "Team Planning Oversight Export Drawer",
+      "primary_action": "Download Excel",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Drawer to customize period from (Month) to (Month) and export plans to Excel.",
       "remediation": "No automated remediation outstanding",
@@ -96425,7 +96635,7 @@
       "route_name": "team_planning_oversight_export_drawer",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "{{ export_url }}"
+        "/exports/prepare"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -96663,7 +96873,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST /exports/prepare"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -96676,7 +96888,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "team_planning_oversight",
-      "primary_action": "Special Projects Export Drawer",
+      "primary_action": "Download Excel",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Drawer to customize period and export special projects to Excel.",
       "remediation": "No automated remediation outstanding",
@@ -96694,7 +96906,7 @@
       "route_name": "special_projects_export_drawer",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "{{ export_url }}"
+        "/exports/prepare"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -101713,6 +101925,20 @@
         "max_interval_minutes": 11520,
         "max_retries": 2,
         "name": "verification_sampling",
+        "retryable": true
+      },
+      {
+        "cron": "every minute Africa/Nairobi",
+        "cron_kwargs": {
+          "minute": "*"
+        },
+        "description": "Builds the exports people queued from the export drawer, one at a time, as the person who asked (apps.reports.export_jobs); looks for new ones every few seconds while its run lasts.",
+        "expected_runtime_seconds": 55,
+        "idempotency_note": "Jobs are claimed with SELECT FOR UPDATE SKIP LOCKED and a built job is never built again; a job whose worker died is retried once, then failed.",
+        "idempotent": true,
+        "max_interval_minutes": 10,
+        "max_retries": 1,
+        "name": "export_jobs",
         "retryable": true
       }
     ]
@@ -114219,6 +114445,46 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.export_job_views.export_status_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/exports/<str:job_id>",
+      "route_name": "export_status",
+      "templates": [
+        "partials/exports/status.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.export_job_views.export_download_view",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/exports/<str:job_id>/download",
+      "route_name": "export_download",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.export_job_views.export_prepare_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/exports/prepare",
+      "route_name": "export_prepare",
+      "templates": [
+        "partials/exports/status.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.extra_work_views.extra_work_page",
       "kind": "page",
       "methods": [
@@ -122822,39 +123088,39 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 601,
+    "accessibility_contract_pass": 603,
     "activity_states": 24,
-    "all_routes": 1428,
+    "all_routes": 1431,
     "api_routes": 367,
-    "component_templates": 664,
+    "component_templates": 666,
     "full_pages": 261,
-    "mobile_contract_pass": 601,
+    "mobile_contract_pass": 603,
     "nonvisual_actions": 305,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 7,
       "approval-or-verification": 19,
       "dashboard": 0,
-      "interaction-fragment": 642,
+      "interaction-fragment": 644,
       "operational-queue": 160,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 49
     },
-    "partials_and_drawers": 337,
+    "partials_and_drawers": 339,
     "permission_gated": 927,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 944,
-    "scheduled_jobs": 39,
+    "routed_surfaces": 946,
+    "scheduled_jobs": 40,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 601,
-    "test_referenced": 854,
-    "theme_contract_pass": 601
+    "tablet_contract_pass": 603,
+    "test_referenced": 855,
+    "theme_contract_pass": 603
   }
 }

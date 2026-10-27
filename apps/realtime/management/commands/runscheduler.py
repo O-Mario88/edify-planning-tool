@@ -57,6 +57,7 @@ class Command(BaseCommand):
 
         job_funcs = {
             "weekly_fund_request": jobs.weekly_fund_request_job,
+            "export_jobs": jobs.export_jobs_job,
             "monthly_work_plan": jobs.monthly_work_plan_job,
             "notification_escalation": jobs.notification_escalation_job,
             "daily_digest": jobs.daily_digest_job,

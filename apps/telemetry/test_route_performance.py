@@ -65,6 +65,53 @@ class RequestTimingTests(TestCase):
         self.assertNotIn(str(self.user.id), line)
         self.assertNotIn(self.user.email, line)
 
+    def test_named_steps_are_timed_in_the_breakdown(self):
+        """A heavy page names its steps (2026-10-26: Planning Oversight was
+        ten times slower on production than on a copy of its data, and the
+        totals could not say which step)."""
+        from django.http import HttpResponse
+
+        from apps.core.request_timing import phase
+
+        def view(request):
+            with phase("build"):
+                User.objects.count()
+            with phase("build"):
+                User.objects.count()
+            return HttpResponse("ok")
+
+        request = RequestFactory().get("/somewhere")
+        request.user = self.user
+        response = RequestTimingMiddleware(view)(request)
+
+        header = response["Server-Timing"]
+        self.assertRegex(header, r'build;dur=\d+;desc="db \d+ms, 2 queries"')
+
+    @override_settings(SLOW_REQUEST_MS=0)
+    def test_the_slow_request_log_carries_the_named_steps(self):
+        from django.http import HttpResponse
+
+        from apps.core.request_timing import phase
+
+        def view(request):
+            with phase("render"):
+                pass
+            return HttpResponse("ok")
+
+        request = RequestFactory().get("/somewhere")
+        request.user = self.user
+        with self.assertLogs("edify.perf", level="WARNING") as captured:
+            RequestTimingMiddleware(view)(request)
+        payload = json.loads(captured.output[-1].split("slow_request ", 1)[1])
+        self.assertIn("render", payload["phases"])
+
+    def test_a_step_outside_a_request_is_harmless(self):
+        from apps.core.request_timing import phase
+
+        with phase("anything"):
+            value = 1
+        self.assertEqual(value, 1)
+
     def test_fast_requests_are_not_logged(self):
         self.client.force_login(self.user)
         with self.assertNoLogs("edify.perf", level="WARNING"):

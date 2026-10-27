@@ -334,3 +334,79 @@ class StreamedWorkbookTest(SimpleTestCase):
                 response = workbook_response("plan.xlsx", self.SHEETS)
         streamed.assert_called_once()
         self.assertEqual(self._read(response), held)
+
+
+class StreamedLedgerTest(SimpleTestCase):
+    """A ledger sheet (named rows and aligned columns, as the budget export's
+    cost plan) is streamed too: it reads back as the held one, and its cells
+    copy styles registered once rather than building them cell by cell
+    (2026-10-26: the budget export spent 90% of its time styling 870,000
+    cells one by one)."""
+
+    def _ledger(self, body_rows: int) -> list[dict]:
+        rows = [["Cost plan", None, None], ["Band", None, None]]
+        rows += [[f"Line {n}", "2026-01-02", n * 1000] for n in range(body_rows)]
+        rows += [["Total", None, body_rows * 1000]]
+        last = len(rows) + 1
+        return [
+            {
+                "title": "Ledger",
+                "headers": ["Item", "Date", "Cost"],
+                "rows": rows,
+                "number_formats": {3: "#,##0"},
+                "row_styles": {2: "title", 3: "band", last: "total"},
+                "align": {3: "right", 2: "center"},
+            }
+        ]
+
+    def _read(self, response):
+        from openpyxl import load_workbook
+
+        sheet = load_workbook(io.BytesIO(response.content))["Ledger"]
+        return [
+            [
+                (
+                    cell.value,
+                    cell.fill.fgColor.rgb,
+                    cell.font.b,
+                    cell.font.i,
+                    cell.font.sz,
+                    cell.font.color.rgb if cell.font.color else None,
+                    cell.border.bottom.style if cell.border.bottom else None,
+                    cell.alignment.horizontal,
+                    cell.alignment.vertical,
+                    cell.alignment.wrap_text,
+                    cell.number_format,
+                )
+                for cell in row
+            ]
+            for row in sheet.iter_rows()
+        ]
+
+    def _streamed(self, sheets):
+        from unittest import mock
+
+        from apps.core import excel
+
+        with mock.patch.object(excel, "STREAM_ROWS", 2):
+            return workbook_response("ledger.xlsx", sheets)
+
+    def test_a_streamed_ledger_reads_back_as_the_held_one(self):
+        sheets = self._ledger(4)
+
+        held = self._read(workbook_response("ledger.xlsx", sheets))
+
+        self.assertEqual(self._read(self._streamed(sheets)), held)
+
+    def test_styling_a_longer_ledger_builds_no_more_styles(self):
+        from unittest import mock
+
+        from apps.core import excel
+
+        built = []
+        for body_rows in (4, 40):
+            with mock.patch.object(excel, "_aligned", wraps=excel._aligned) as made:
+                self._streamed(self._ledger(body_rows))
+            built.append(made.call_count)
+
+        self.assertEqual(built[1], built[0])

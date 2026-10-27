@@ -28,7 +28,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 import time
+from contextlib import contextmanager
 
 from django.conf import settings
 from django.db import connection
@@ -58,6 +60,40 @@ class QueryProbe:
         return self.seconds * 1000
 
 
+_current = threading.local()
+
+
+@contextmanager
+def phase(name: str):
+    """Time one named step of the request: its wall time and the SQL inside
+    it, reported beside the totals (``build;dur=…;desc="db …ms, N queries"``)
+    and in the slow-request log. Outside a request it does nothing.
+
+    For a heavy page whose totals cannot say which step is slow on real data
+    (2026-10-26: Planning Oversight ran ten times slower on production than
+    on a copy of its data)."""
+    state = getattr(_current, "state", None)
+    if state is None:
+        yield
+        return
+    probe = state["probe"]
+    started, db_before, count_before = time.perf_counter(), probe.seconds, probe.count
+    try:
+        yield
+    finally:
+        totals = state["phases"].setdefault(name, [0.0, 0.0, 0])
+        totals[0] += (time.perf_counter() - started) * 1000
+        totals[1] += (probe.seconds - db_before) * 1000
+        totals[2] += probe.count - count_before
+
+
+def _phase_header(phases: dict) -> str:
+    return "".join(
+        f', {name};dur={ms:.0f};desc="db {db_ms:.0f}ms, {count} queries"'
+        for name, (ms, db_ms, count) in phases.items()
+    )
+
+
 def _release() -> str:
     return (os.environ.get("RELEASE") or os.environ.get("GIT_COMMIT") or "")[:12]
 
@@ -73,8 +109,13 @@ class RequestTimingMiddleware:
         started = time.perf_counter()
         probe = QueryProbe()
         request.edify_query_probe = probe
-        with connection.execute_wrapper(probe):
-            response = self.get_response(request)
+        _current.state = {"probe": probe, "phases": {}}
+        try:
+            with connection.execute_wrapper(probe):
+                response = self.get_response(request)
+            phases = _current.state["phases"]
+        finally:
+            _current.state = None
         total_ms = (time.perf_counter() - started) * 1000
         queue_ms = float(getattr(request, "edify_queue_wait_ms", 0.0) or 0.0)
         db_ms = probe.ms
@@ -88,7 +129,7 @@ class RequestTimingMiddleware:
                 f"app;dur={app_ms:.0f}, "
                 f'db;dur={db_ms:.0f};desc="{probe.count} queries", '
                 f"queue;dur={queue_ms:.0f}, total;dur={total_ms:.0f}"
-            )
+            ) + _phase_header(phases)
 
         if total_ms >= self.slow_ms or probe.count >= self.slow_queries:
             resolver_match = getattr(request, "resolver_match", None)
@@ -113,6 +154,14 @@ class RequestTimingMiddleware:
                         else len(response.content),
                         "release": self.release,
                         "cid": getattr(request, "correlation_id", ""),
+                        "phases": {
+                            name: {
+                                "ms": round(ms),
+                                "db_ms": round(db_ms),
+                                "queries": count,
+                            }
+                            for name, (ms, db_ms, count) in phases.items()
+                        },
                     },
                     sort_keys=True,
                 ),

@@ -1,0 +1,7 @@
+{% load frontend_filters %}
+{% comment %}One officer's panel, fetched when their tab is picked on Planning
+Oversight's country lens (cd_team_detail.html, `lazy_panels`): the body the
+page draws for the open officer, with the same position in the strip.{% endcomment %}
+{% with can_open_activity_record=request.user|can_open:"/activities/0" %}
+{% include "partials/oversight/_officer_panel_body.html" %}
+{% endwith %}
