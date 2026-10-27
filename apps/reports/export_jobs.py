@@ -167,7 +167,8 @@ def run(job_id: str) -> None:
             f"exports/{job.id}/{filename}", ContentFile(content)
         )
     except Exception:  # noqa: BLE001 - the drawer says so; the log says why
-        logger.exception("export_job failed id=%s path=%s", job.id, job.path[:200])
+        # The id only: the address is the person's own text (kept on the job).
+        logger.exception("export_job failed id=%s", job.id)
         _fail(job, FAILED_MESSAGE)
         return
     ExportJob.objects.filter(id=job.id).update(
