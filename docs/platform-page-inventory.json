@@ -9791,18 +9791,18 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 25633,
+      "bytes": 31695,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 1,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Edit Activity Drawer",
       "purpose": "Reusable edit activity drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "empty",
@@ -10036,6 +10036,31 @@
       ],
       "tables": 1,
       "template": "partials/my_plan/group_trainings.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 1684,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan/<str:activity_id>/invite-school-search"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Invite School Results",
+      "purpose": "Reusable invite school results interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/invite_school_results.html",
       "variants": []
     },
     {
@@ -14692,7 +14717,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8767,
+      "bytes": 8936,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/create-drawer"
@@ -15171,7 +15196,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 764,
+      "bytes": 1007,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/create-drawer"
@@ -67638,7 +67663,9 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /my-plan/{{ act.id }}/edit"
+        "POST /my-plan/{{ act.id }}/edit",
+        "GET /my-plan/{{ act.id }}/invite-school-search",
+        "GET /schools/create-drawer?embed=1&amp;invite=1&amp;activity_id={{ act.id }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -67669,7 +67696,7 @@
       ],
       "route": "/my-plan/<str:activity_id>/edit-drawer",
       "route_name": "edit_activity_drawer",
-      "search": "shared topbar search or none",
+      "search": "server-backed contextual selection search",
       "secondary_actions": [
         "/my-plan/{{ act.id }}/edit"
       ],
@@ -67719,6 +67746,206 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.invite_school_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-D3459E294E",
+      "page_title": "Invite School",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Invite School",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Add a school found in Edify to a scheduled cluster session at once: it joins the session's cluster and is invited (owner, 2026-10-27). The drawer lists it, ticked, from the event; the body is empty.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/<str:activity_id>/invite-school",
+      "route_name": "invite_school",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.invite_school_search_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/my_plan/invite_school_results.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /my-plan/{{ act.id }}/invite-school"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-CF21DE1A40",
+      "page_title": "Invite School Search",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Invite School Search",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Schools already in Edify that a scheduled cluster session can take, for the Edit drawer's \"+ Add School\" (owner, 2026-10-27).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/<str:activity_id>/invite-school-search",
+      "route_name": "invite_school_search",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/invite_school_results.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
         "text-[13px]"
       ]
     },
@@ -117905,6 +118132,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.my_plan_views.invite_school_action",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/<str:activity_id>/invite-school",
+      "route_name": "invite_school",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_views.invite_school_search_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/<str:activity_id>/invite-school-search",
+      "route_name": "invite_school_search",
+      "templates": [
+        "partials/my_plan/invite_school_results.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.ia_school_evidence_views.onetest_results_drawer",
       "kind": "drawer",
       "methods": [
@@ -123088,30 +123341,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 603,
+    "accessibility_contract_pass": 604,
     "activity_states": 24,
-    "all_routes": 1431,
+    "all_routes": 1433,
     "api_routes": 367,
-    "component_templates": 666,
+    "component_templates": 667,
     "full_pages": 261,
-    "mobile_contract_pass": 603,
-    "nonvisual_actions": 305,
+    "mobile_contract_pass": 604,
+    "nonvisual_actions": 306,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 7,
       "approval-or-verification": 19,
       "dashboard": 0,
-      "interaction-fragment": 644,
+      "interaction-fragment": 646,
       "operational-queue": 160,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 49
     },
-    "partials_and_drawers": 339,
-    "permission_gated": 927,
+    "partials_and_drawers": 340,
+    "permission_gated": 929,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 946,
+    "routed_surfaces": 948,
     "scheduled_jobs": 40,
     "severity_counts": {
       "critical": 0,
@@ -123119,8 +123372,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 603,
-    "test_referenced": 855,
-    "theme_contract_pass": 603
+    "tablet_contract_pass": 604,
+    "test_referenced": 857,
+    "theme_contract_pass": 604
   }
 }

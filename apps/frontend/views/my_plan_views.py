@@ -2380,6 +2380,11 @@ def _edit_drawer_context(user, a) -> dict:
             for school in active_schools(a.cluster_id)
         ]
         context["schools_invited"] = len(invited)
+        # "+ Add School" (owner, 2026-10-27): a school already in Edify is
+        # found and added; a new one is typed in by whoever may add schools.
+        context["can_add_school"] = has_permission(
+            user, Permission.SCHOOL_CREATE_SINGLE.value
+        )
     elif context["may_move_school"]:
         context["movable_schools"] = list(
             editing.movable_schools(a, user).values("id", "school_id", "name")
@@ -3397,6 +3402,53 @@ def register_school_search_view(request, activity_id):
             "schools": schools,
         },
     )
+
+
+@require_page_permission("my_plan")
+def invite_school_search_view(request, activity_id):
+    """Schools already in Edify that a scheduled cluster session can take, for
+    the Edit drawer's "+ Add School" (owner, 2026-10-27)."""
+    from apps.activities import invite_school
+
+    try:
+        activity = invite_school.open_session(activity_id, request.user)
+    except Exception as exc:  # noqa: BLE001 — the refusal is the answer
+        return error_fragment(exc, action="Schools not searched")
+    query = (request.GET.get("q") or "").strip()[:80]
+    return render(
+        request,
+        "partials/my_plan/invite_school_results.html",
+        {
+            "act": activity,
+            "query": query,
+            "too_short": 0 < len(query) < invite_school.SEARCH_MIN,
+            "schools": invite_school.addable_schools(activity, request.user, query),
+        },
+    )
+
+
+@require_page_permission("my_plan")
+def invite_school_action(request, activity_id):
+    """Add a school found in Edify to a scheduled cluster session at once: it
+    joins the session's cluster and is invited (owner, 2026-10-27). The drawer
+    lists it, ticked, from the event; the body is empty."""
+    import json
+
+    from apps.activities import invite_school
+
+    if request.method != "POST":
+        return HttpResponse(status=405)
+    try:
+        school = invite_school.add_school_to_session(
+            activity_id, request.POST.get("invite_school_id", "").strip(), request.user
+        )
+    except Exception as exc:  # noqa: BLE001 — shown in the drawer
+        return error_fragment(exc, action="School not added", status=400)
+    response = HttpResponse("")
+    response["HX-Trigger"] = json.dumps(
+        {"edify-school-invited": invite_school.school_row(school, invited=True)}
+    )
+    return response
 
 
 @require_page_permission("my_plan")

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **666**
+Components and application partials: **667**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -393,7 +393,7 @@ Components and application partials: **666**
 | `partials/my_plan/core_school_trainings.html` | application-partial | Reusable core school trainings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/core_school_visits.html` | application-partial | Reusable core school visits interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/day_off_flag.html` | application-partial | Reusable day off flag interface primitive | danger; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
-| `partials/my_plan/edit_activity_drawer.html` | application-partial | Reusable edit activity drawer interface primitive | danger, info, warning; default, empty, error, disabled, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /my-plan/<str:activity_id>/edit-drawer | 0 |
+| `partials/my_plan/edit_activity_drawer.html` | application-partial | Reusable edit activity drawer interface primitive | danger, info, warning; default, empty, error, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /my-plan/<str:activity_id>/edit-drawer | 0 |
 | `partials/my_plan/evidence_drawer.html` | application-partial | Reusable evidence drawer interface primitive | success, warning; default, empty, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/evidence | 0 |
 | `partials/my_plan/facilitated_clusters.html` | application-partial | Reusable facilitated clusters interface primitive | canonical; default | inherits containing page contract | accessible name and label | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/facilitator_drawer.html` | application-partial | Reusable facilitator drawer interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /activities/<str:activity_id>/facilitator | 0 |
@@ -403,6 +403,7 @@ Components and application partials: **666**
 | `partials/my_plan/group_picks.html` | application-partial | Reusable group picks interface primitive | canonical; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
 | `partials/my_plan/group_reschedule_drawer.html` | application-partial | Reusable group reschedule drawer interface primitive | warning; default, error | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | dynamic / parent-owned | 0 |
 | `partials/my_plan/group_trainings.html` | application-partial | Reusable group trainings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
+| `partials/my_plan/invite_school_results.html` | application-partial | Reusable invite school results interface primitive | canonical; default, disabled | inherits containing page contract | accessible name and label, announced dynamic state | /my-plan/<str:activity_id>/invite-school-search | 0 |
 | `partials/my_plan/kpi_cards.html` | application-partial | Reusable kpi cards interface primitive | executive, warning; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/offline_evidence_drawer.html` | application-partial | Reusable offline evidence drawer interface primitive | warning; default, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /offline/evidence-drawer | 0 |
 | `partials/my_plan/partner_ssa_completion_drawer.html` | application-partial | Reusable partner ssa completion drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/partner-ssa-complete | 0 |

@@ -3087,6 +3087,23 @@ def _onboard_activity(request):
     return activity
 
 
+def _onboard_invite_session(request):
+    """The scheduled cluster session a school is being added to from its Edit
+    drawer, when the actor may still change it; otherwise None (the school is
+    still added, uninvited)."""
+    from apps.activities.invite_school import open_session
+
+    activity_id = (
+        request.POST.get("activity_id") or request.GET.get("activity_id") or ""
+    ).strip()
+    if not activity_id:
+        return None
+    try:
+        return open_session(activity_id, request.user)
+    except (BadRequest, Forbidden):
+        return None
+
+
 @require_page_permission("school_directory")
 def school_onboard_cluster_options_view(request):
     """The Add School form's cluster options, for the owner and place chosen."""
@@ -3117,7 +3134,15 @@ def school_onboard_drawer_view(request):
     # still there when the school is saved, and the saved school handed back
     # to it rather than the page reloading.
     embedded = (request.POST.get("embed") or request.GET.get("embed")) == "1"
-    activity = _onboard_activity(request) if embedded else None
+    # Opened from a scheduled session's Edit drawer (owner, 2026-10-27): the
+    # saved school joins that session's cluster and is invited to it at once.
+    invite = (
+        embedded and (request.POST.get("invite") or request.GET.get("invite")) == "1"
+    )
+    if invite:
+        activity = _onboard_invite_session(request)
+    else:
+        activity = _onboard_activity(request) if embedded else None
 
     if request.method == "POST":
         try:
@@ -3145,9 +3170,17 @@ def school_onboard_drawer_view(request):
                 "partials/schools/onboard_registered.html",
                 {"school": school},
             )
-            response["HX-Trigger"] = json.dumps(
-                {"edify-school-registered": _registered_school_row(school)}
-            )
+            if invite and activity is not None:
+                from apps.activities.invite_school import invite_new_school
+
+                event = {
+                    "edify-school-invited": invite_new_school(
+                        school, activity, request.user
+                    )
+                }
+            else:
+                event = {"edify-school-registered": _registered_school_row(school)}
+            response["HX-Trigger"] = json.dumps(event)
             return response
 
         messages.success(
@@ -3161,6 +3194,8 @@ def school_onboard_drawer_view(request):
             return response
 
         return HttpResponse("<script>window.location.reload();</script>")
+
+    from apps.activities.facilitation import session_noun
 
     staff = _school_owner_queryset()
     # The person adding the school owns it unless they say otherwise, where
@@ -3178,6 +3213,10 @@ def school_onboard_drawer_view(request):
         "school_types": SchoolType.choices,
         "can_add_ssa": _may_upload_ssa(request) and not embedded,
         "embedded": embedded,
+        "invite": invite and activity is not None,
+        "session_noun": (
+            session_noun(activity.activity_type) if activity is not None else ""
+        ),
         "activity": activity,
         "first_cluster_id": first_cluster_id,
         **_onboard_cluster_choices(

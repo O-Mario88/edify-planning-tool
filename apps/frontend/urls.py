@@ -1355,6 +1355,16 @@ urlpatterns = [
         name="register_school_search",
     ),
     path(
+        "my-plan/<str:activity_id>/invite-school-search",
+        my_plan_views.invite_school_search_view,
+        name="invite_school_search",
+    ),
+    path(
+        "my-plan/<str:activity_id>/invite-school",
+        my_plan_views.invite_school_action,
+        name="invite_school",
+    ),
+    path(
         "my-plan/<str:activity_id>/reschedule-drawer",
         my_plan_views.reschedule_drawer_view,
         name="reschedule_drawer",
