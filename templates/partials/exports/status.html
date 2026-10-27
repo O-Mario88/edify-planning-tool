@@ -6,7 +6,7 @@ words. Closing the drawer is fine: a notification links to the file when it is
 ready.
 {% endcomment %}
 {% if job.status == job.READY %}
-<div class="export-status space-y-3 text-[13px] text-slate-700" role="status" data-export-status="ready">
+<div class="space-y-3 text-[13px] text-slate-700" role="status" data-export-state="ready">
   <p class="font-semibold text-slate-800">Your file is ready.</p>
   <p class="edify-text-caption edify-text-muted">If the download did not start, use the button below.</p>
   <div class="drawer-footer">
@@ -20,7 +20,7 @@ ready.
   </div>
 </div>
 {% elif job.status == job.FAILED %}
-<div class="export-status space-y-3 text-[13px] text-slate-700" role="alert" data-export-status="failed">
+<div class="space-y-3 text-[13px] text-slate-700" role="alert" data-export-state="failed">
   <p class="font-semibold text-slate-800">The file could not be prepared.</p>
   <p class="edify-text-caption edify-text-muted">{{ job.error|default:"Please try again." }}</p>
   <div class="drawer-footer">
@@ -28,7 +28,7 @@ ready.
   </div>
 </div>
 {% else %}
-<div class="export-status space-y-3 text-[13px] text-slate-700" role="status" aria-live="polite" data-export-status="waiting"
+<div class="space-y-3 text-[13px] text-slate-700" role="status" aria-live="polite" data-export-state="waiting"
      hx-get="/exports/{{ job.id }}" hx-trigger="every 3s" hx-swap="outerHTML">
   <p class="font-semibold text-slate-800 inline-flex items-center gap-2">
     <svg class="h-4 w-4 animate-spin edify-primary-text" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
