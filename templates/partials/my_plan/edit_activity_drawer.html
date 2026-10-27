@@ -26,12 +26,14 @@ run that is still scheduled.
 {% block drawer_subtitle %}{% if act.cluster %}{{ act.cluster.name }}{% elif act.school %}{{ act.school.name }}{% endif %}{% if edit_day %} · {{ edit_day|date:"j M Y" }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
-<form
-  hx-post="/my-plan/{{ act.id }}/edit"
-  hx-target="#edit-activity-errors"
-  hx-disabled-elt="find button[type=submit]"
-  class="space-y-4 text-[12px] font-medium text-slate-600"
-  data-edit-activity
+{% comment %}The drawer's state sits on this wrapper, not on the form, because
+"+ Add School" draws the Add New School form beside the Edit form (a form
+cannot hold another). While a school is typed in, the Edit form is only
+hidden, so nothing already changed in it is lost (owner, 2026-10-27).{% endcomment %}
+<div
+  @edify-school-invited="schoolInvited($event.detail)"
+  @edify-school-chosen="chooseExisting($event.detail)"
+  @edify-school-register-cancel="registering = false"
   x-data="{
     planDay: '{{ edit_day|date:'Y-m-d' }}',
     firstDay: '{{ edit_day|date:'Y-m-d' }}',
@@ -109,8 +111,57 @@ run that is still scheduled.
       }
       this.invitedCount = ticked;
       this.placesTaken = taken;
+    },
+    {% comment %}"+ Add School" (owner, 2026-10-27): a school is put in this
+    cluster and invited on the server the moment it is added, so it is listed
+    here ticked, and the places it takes are the session's own from then on.{% endcomment %}
+    registering: false,
+    adding: false,
+    notice: '',
+    memberCount: {{ member_schools|length|default:0 }},
+    schoolInvited(school) {
+      this.registering = false;
+      if (!school || !school.id) return;
+      this.notice = school.notice || '';
+      if (!school.invited || !this.$refs.invitedList) return;
+      const list = this.$refs.invitedList;
+      let box = list.querySelector(`input[name=invited_school_ids][value='${CSS.escape(school.id)}']`);
+      if (!box) {
+        list.querySelector('[data-no-members]')?.remove();
+        const row = this.$refs.invitedRow.content.firstElementChild.cloneNode(true);
+        box = row.querySelector('input');
+        box.value = school.id;
+        row.querySelector('[data-row-name]').textContent = school.name;
+        row.querySelector('[data-row-code]').textContent = school.schoolId || '';
+        list.prepend(row);
+        this.memberCount += 1;
+      }
+      box.checked = true;
+      this.firstTaken = null;
+      this.syncInvited();
+      if (this.$refs.addSearch) { this.$refs.addSearch.value = ''; }
+      const found = document.getElementById('invite-search-results-{{ act.id|escapejs }}');
+      if (found) { found.replaceChildren(); }
+    },
+    chooseExisting(school) {
+      this.registering = false;
+      if (!school || !school.id) return;
+      htmx.ajax('POST', '/my-plan/{{ act.id|escapejs }}/invite-school', {
+        target: '#invite-school-errors-{{ act.id|escapejs }}',
+        swap: 'innerHTML',
+        values: { invite_school_id: school.id },
+      });
     }
   }"
+>
+<form
+  x-show="!registering"
+  hx-post="/my-plan/{{ act.id }}/edit"
+  hx-target="#edit-activity-errors"
+  hx-disabled-elt="find button[type=submit]"
+  hx-disinherit="hx-disabled-elt"
+  class="space-y-4 text-[12px] font-medium text-slate-600"
+  data-edit-activity
 >
   {% csrf_token %}
   <div id="edit-activity-errors" aria-live="polite"></div>
@@ -191,7 +242,7 @@ run that is still scheduled.
     <input type="hidden" name="invited_schools_shown" value="1">
     <div class="flex items-baseline justify-between gap-2">
       <span id="edit-schools-invited-title" class="edify-text-caption font-semibold text-slate-600">Schools invited <span class="text-rose-500">*</span></span>
-      <span class="edify-text-caption text-slate-500" aria-live="polite"><span x-text="invitedCount"></span> of {{ member_schools|length }}</span>
+      <span class="edify-text-caption text-slate-500" aria-live="polite"><span x-text="invitedCount"></span> of <span x-text="memberCount">{{ member_schools|length }}</span></span>
     </div>
     {% if edit_ceiling_json %}
     <p class="mt-1 edify-text-caption text-slate-500" aria-live="polite" data-training-ceiling-counter>
@@ -218,10 +269,67 @@ run that is still scheduled.
         </span>
       </label>
       {% empty %}
-      <p class="px-3 py-4 text-[13px] font-semibold text-slate-500">This cluster has no active schools to invite.</p>
+      <p class="px-3 py-4 text-[13px] font-semibold text-slate-500" data-no-members>This cluster has no active schools to invite.</p>
       {% endfor %}
     </div>
     <p class="mt-1 edify-text-caption text-slate-500">Tick a school to add it and untick one to remove it. The head count and the cost follow the schools invited.</p>
+    <template x-ref="invitedRow">
+      <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100/50"
+             :class="isHeld($el.querySelector('input')) ? 'opacity-50 cursor-not-allowed' : ''">
+        <input type="checkbox" name="invited_school_ids" value=""
+               @change="syncInvited($event)"
+               :disabled="isHeld($el)"
+               class="h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus disabled:cursor-not-allowed">
+        <span class="min-w-0 flex-1">
+          <span class="block text-[13px] font-semibold text-slate-700 truncate" data-row-name></span>
+          <span class="block edify-text-caption font-medium text-slate-400" data-row-code></span>
+        </span>
+      </label>
+    </template>
+
+    {% comment %}"+ Add School" (owner, 2026-10-27): find one of the officer's
+    schools already in Edify, or type a new one in. Either is put in this
+    cluster and invited at once. The search box names a form that does not
+    exist, so it is never posted with the Edit form.{% endcomment %}
+    <div class="mt-2 space-y-2" data-edit-add-school>
+      <div class="flex items-center justify-between gap-3">
+        <p x-show="notice" x-cloak x-text="notice" role="status" class="edify-text-caption font-semibold text-slate-600"></p>
+        <button type="button"
+                @click="adding = !adding; if (adding) $nextTick(() => $refs.addSearch?.focus())"
+                :aria-expanded="adding"
+                aria-controls="invite-add-school-{{ act.id }}"
+                class="ml-auto shrink-0 edify-text-caption font-semibold edify-primary-text edify-primary-text-hover hover:underline">
+          <span x-text="adding ? 'Close' : '+ Add School'">+ Add School</span>
+        </button>
+      </div>
+      <div id="invite-school-errors-{{ act.id }}" aria-live="polite"></div>
+      <div x-show="adding" x-cloak id="invite-add-school-{{ act.id }}" class="space-y-2">
+        <label for="invite-search-{{ act.id }}" class="block edify-text-caption font-semibold text-slate-600">Find a school already in Edify</label>
+        <input type="search"
+               id="invite-search-{{ act.id }}"
+               x-ref="addSearch"
+               name="q"
+               form="invite-search-form-{{ act.id }}"
+               autocomplete="off"
+               placeholder="School name or ID"
+               hx-get="/my-plan/{{ act.id }}/invite-school-search"
+               hx-trigger="input changed delay:300ms, search"
+               hx-target="#invite-search-results-{{ act.id }}"
+               hx-sync="this:replace"
+               class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">
+        <div id="invite-search-results-{{ act.id }}" aria-live="polite"></div>
+        {% if can_add_school %}
+        <p class="edify-text-caption text-slate-500">Not in Edify? Add it in Salesforce first, then
+          <button type="button"
+                  hx-get="/schools/create-drawer?embed=1&amp;invite=1&amp;activity_id={{ act.id }}"
+                  hx-target="#invite-school-panel-{{ act.id }}"
+                  hx-swap="innerHTML"
+                  @click="registering = true"
+                  data-drawer-stay-open
+                  class="font-semibold edify-primary-text edify-primary-text-hover hover:underline">enter a new school</button>.</p>
+        {% endif %}
+      </div>
+    </div>
   </div>
   {% elif may_move_school %}
   <div class="space-y-1" data-edit-school>
@@ -342,4 +450,8 @@ run that is still scheduled.
     <button type="submit" class="btn btn-primary h-8">Save changes</button>
   </div>
 </form>
+{% if is_cluster_session and can_add_school %}
+<div x-show="registering" x-cloak id="invite-school-panel-{{ act.id }}" aria-live="polite"></div>
+{% endif %}
+</div>
 {% endblock %}

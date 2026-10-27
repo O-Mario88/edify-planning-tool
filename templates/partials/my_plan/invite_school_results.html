@@ -1,0 +1,32 @@
+{% comment %}
+"+ Add School" results in a scheduled cluster session's Edit drawer
+(invite_school_search_view, owner 2026-10-27). Add puts the school in this
+session's cluster and invites it at once; the drawer then lists it ticked.
+Only the officer's own schools are found: they are the ones this cluster may
+take. `hx-params` keeps the Edit form's own fields out of the request.
+{% endcomment %}
+{% if too_short %}
+<p class="edify-text-caption text-slate-500 px-1">Type at least two letters of the name, or the school ID.</p>
+{% elif query and not schools %}
+<p class="edify-text-caption text-slate-500 px-1" role="status">None of your schools outside this cluster matches &ldquo;{{ query }}&rdquo;.</p>
+{% elif schools %}
+<ul class="rounded-control border border-slate-200 divide-y divide-slate-100" aria-label="Schools found">
+{% for s in schools %}
+<li class="flex items-center gap-3 px-3 py-2">
+<span class="min-w-0 flex-1">
+<span class="block text-[13px] font-semibold text-slate-800 truncate">{{ s.name }}</span>
+<span class="block edify-text-caption font-semibold text-slate-500 truncate">{{ s.school_id }}{% if s.district %} &middot; {{ s.district.name }}{% endif %} &middot; {% if s.cluster_name %}moves from {{ s.cluster_name }}{% else %}no cluster{% endif %}</span>
+</span>
+<button type="button" class="btn btn-secondary h-8 shrink-0"
+hx-post="/my-plan/{{ act.id }}/invite-school"
+hx-vals='{"invite_school_id": "{{ s.id|escapejs }}"}'
+hx-params="invite_school_id"
+hx-target="#invite-school-errors-{{ act.id }}"
+hx-swap="innerHTML"
+hx-disabled-elt="this"
+data-drawer-stay-open
+aria-label="Add {{ s.name }} to this session">Add</button>
+</li>
+{% endfor %}
+</ul>
+{% endif %}

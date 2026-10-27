@@ -21,6 +21,7 @@ class="space-y-4 text-[12px] text-slate-600"
 {% if embedded %}
 <input type="hidden" name="embed" value="1">
 {% if activity %}<input type="hidden" name="activity_id" value="{{ activity.id }}">{% endif %}
+{% if invite %}<input type="hidden" name="invite" value="1">{% endif %}
 {% endif %}
 <div id="onboard-school-errors" aria-live="polite"></div>
 
@@ -174,7 +175,7 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 {% include "partials/schools/onboard_cluster_options.html" %}
 </select>
 <input type="hidden" id="onboard-cluster-touched" name="cluster_touched" value="">
-<p id="onboard-cluster-help" class="edify-text-caption text-slate-500">{% if embedded %}This session's cluster is chosen. Choose No cluster if the school only came to this session as a visitor. {% endif %}The district and sub-county bring the cluster the sub-county belongs to. A school near a district border may join a cluster across it; it stays in its own district.</p>
+<p id="onboard-cluster-help" class="edify-text-caption text-slate-500">{% if invite %}This session's cluster is chosen: keep it to invite the school to this session. {% elif embedded %}This session's cluster is chosen. Choose No cluster if the school only came to this session as a visitor. {% endif %}The district and sub-county bring the cluster the sub-county belongs to. A school near a district border may join a cluster across it; it stays in its own district.</p>
 </div>
 
 <div class="drawer-footer">

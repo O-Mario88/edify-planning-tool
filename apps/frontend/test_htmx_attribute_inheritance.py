@@ -43,34 +43,51 @@ def _attr(attrs: str, name: str) -> str | None:
     return match.group(1) if match else None
 
 
+def _disinherits(attrs: str, attribute: str) -> bool:
+    """Whether the element keeps `attribute` to itself: htmx's
+    `hx-disinherit` names attributes (or `*`) its descendants do not inherit."""
+    names = (_attr(attrs, "hx-disinherit") or "").split()
+    return "*" in names or attribute in names
+
+
+def _offenders_in(text: str, label: str, attribute: str, only_relative: bool):
+    """Descendants in one template that issue their own request under an
+    ancestor declaring `attribute`, without restating it."""
+    found: list[str] = []
+    if attribute not in text:
+        return found
+    for opener in ELEMENT.finditer(text):
+        tag, attrs = opener.group(1), opener.group(2)
+        value = _attr(attrs, attribute)
+        if value is None or _disinherits(attrs, attribute):
+            continue
+        if only_relative and not value.strip().startswith(RELATIVE_PREFIXES):
+            continue
+        closing = text.find(f"</{tag}>", opener.end())
+        body = text[opener.end() : closing if closing != -1 else len(text)]
+        for child in ELEMENT.finditer(body):
+            child_attrs = child.group(2)
+            if not REQUEST_ATTRIBUTE.search(child_attrs):
+                continue
+            if f"{attribute}=" in child_attrs:
+                continue
+            line = text[: opener.end() + child.start()].count("\n") + 1
+            found.append(
+                f'{label}:{line} <{child.group(1)}> inherits {attribute}="{value}"'
+            )
+    return found
+
+
 def _offenders(attribute: str, only_relative: bool) -> list[str]:
-    """Descendants that issue their own request under an ancestor declaring
-    `attribute`, without restating it."""
+    """Every template's offenders (see `_offenders_in`)."""
     found: list[str] = []
     for path in sorted(TEMPLATES.rglob("*.html")):
-        text = path.read_text(errors="replace")
-        if attribute not in text:
-            continue
-        for opener in ELEMENT.finditer(text):
-            tag, attrs = opener.group(1), opener.group(2)
-            value = _attr(attrs, attribute)
-            if value is None:
-                continue
-            if only_relative and not value.strip().startswith(RELATIVE_PREFIXES):
-                continue
-            closing = text.find(f"</{tag}>", opener.end())
-            body = text[opener.end() : closing if closing != -1 else len(text)]
-            for child in ELEMENT.finditer(body):
-                child_attrs = child.group(2)
-                if not REQUEST_ATTRIBUTE.search(child_attrs):
-                    continue
-                if f"{attribute}=" in child_attrs:
-                    continue
-                line = text[: opener.end() + child.start()].count("\n") + 1
-                found.append(
-                    f"{path.relative_to(TEMPLATES.parent)}:{line} "
-                    f'<{child.group(1)}> inherits {attribute}="{value}"'
-                )
+        found += _offenders_in(
+            path.read_text(errors="replace"),
+            str(path.relative_to(TEMPLATES.parent)),
+            attribute,
+            only_relative,
+        )
     return found
 
 
@@ -85,6 +102,23 @@ class HtmxInheritedAttributeTests(SimpleTestCase):
             'so htmx throws on null before sending. Add hx-disabled-elt="this" '
             "to each:\n  " + "\n  ".join(offenders),
         )
+
+    def test_a_form_that_disinherits_the_attribute_passes_its_children(self):
+        """`hx-disinherit` keeps the form's value to the form (2026-10-28: the
+        Edit drawer's search box, which `hx-disabled-elt="this"` would blur
+        on every search). Without it the same markup is still caught."""
+        child = '<input hx-get="/x" name="q">'
+        kept = (
+            '<form hx-post="/s" hx-disabled-elt="find button[type=submit]" '
+            f'hx-disinherit="hx-disabled-elt">{child}</form>'
+        )
+        inherited = (
+            '<form hx-post="/s" hx-disabled-elt="find button[type=submit]">'
+            f"{child}</form>"
+        )
+
+        self.assertEqual(_offenders_in(kept, "t", "hx-disabled-elt", True), [])
+        self.assertEqual(len(_offenders_in(inherited, "t", "hx-disabled-elt", True)), 1)
 
     def test_no_child_request_inherits_a_form_hx_target(self):
         """A form posting to one target must not silently retarget the

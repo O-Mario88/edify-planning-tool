@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **946**
-- All registered routes: **1431**
+- Routed product surfaces: **948**
+- All registered routes: **1433**
 - API routes: **367**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **40**
 - Activity states: **24**
-- Shared component templates: **666**
+- Shared component templates: **667**
 - Full pages: **261**
-- Partials and drawers: **339**
-- Permission-gated surfaces: **927**
-- Referenced by automated tests: **855**
+- Partials and drawers: **340**
+- Permission-gated surfaces: **929**
+- Referenced by automated tests: **857**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -603,6 +603,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-EC0BDB34F5 | /my-plan/<str:activity_id>/confirm-reimbursement-receipt | Confirm Reimbursement Receipt Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CE1AEC7009 | /my-plan/<str:activity_id>/edit | Edit Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8C2F91AF4E | /my-plan/<str:activity_id>/edit-drawer | Edit Activity Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D3459E294E | /my-plan/<str:activity_id>/invite-school | Invite School | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-CF21DE1A40 | /my-plan/<str:activity_id>/invite-school-search | Invite School Search | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C0BD71EBE9 | /my-plan/<str:activity_id>/learning-results | Onetest Results Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DEC93D9806 | /my-plan/<str:activity_id>/learning-results/save | Onetest Results Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-355261508C | /my-plan/<str:activity_id>/register-school-search | Register School Search | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

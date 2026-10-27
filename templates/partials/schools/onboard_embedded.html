@@ -1,5 +1,6 @@
 {% comment %}
-The Add School form inside an activity's completion drawer (2026-10-14). Drawn
+The Add School form inside an activity's completion drawer (2026-10-14), and
+inside a scheduled session's Edit drawer with `invite` (2026-10-27). Drawn
 in that drawer rather than in place of it, so the attendance already ticked
 and the counts already typed survive while the school is added. Same form,
 same endpoint, same checks as the directory's drawer.
@@ -7,7 +8,7 @@ same endpoint, same checks as the directory's drawer.
 <div class="space-y-4" data-onboard-panel>
 <div class="space-y-1">
 <h4 class="text-[13px] font-semibold text-slate-800">Add New School</h4>
-<p class="edify-text-caption text-slate-500">Add the school in Salesforce first, then record it here with its Salesforce ID. Once saved it is attached to this activity as attending, in whichever cluster you choose, and you come back here.</p>
+<p class="edify-text-caption text-slate-500">Add the school in Salesforce first, then record it here with its Salesforce ID. {% if invite %}Once saved it joins this {{ session_noun }}'s cluster and is invited to this {{ session_noun }} straight away, and you come back here.{% else %}Once saved it is attached to this activity as attending, in whichever cluster you choose, and you come back here.{% endif %}</p>
 </div>
 {% include "partials/schools/_onboard_form.html" %}
 </div>
