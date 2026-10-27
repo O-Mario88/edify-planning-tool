@@ -70,9 +70,10 @@ uvicorn==0.51.0
 gunicorn==26.0.0
 # Transitive via autobahn (daphne's WebSocket layer) and CacheControl. Pinned
 # forward explicitly because the resolver otherwise settles on 1.1.2, which
-# carries GHSA-6v7p-g79w-8964 (out-of-bounds read on malformed input) — the
+# carries GHSA-6v7p-g79w-8964 (out-of-bounds read on malformed input), and 1.2.1
+# carries CVE-2026-114613 (fixed in 1.2.3) — the
 # container scan fails the build on it.
-msgpack==1.2.1
+msgpack==1.2.3
 
 # AES-256-GCM field-level encryption (port of field-crypto.ts).
 #
@@ -107,7 +108,7 @@ python-dateutil==2.9.0.post0
 numpy==2.5.1
 pandas==3.0.5
 scipy==1.18.0
-fpdf2==2.8.7
+fpdf2==2.8.8
 # Merges the pages of a multi-page evidence upload (several photos or PDFs
 # of one attendance form) into one PDF — apps.evidence.pages.
 pypdf==6.21.2
