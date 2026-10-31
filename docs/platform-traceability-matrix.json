@@ -952,16 +952,12 @@
       ],
       "untracedBecause": "",
       "roles": [
-        "Accountant",
         "Admin",
-        "BusinessTransformationOfficer",
         "CCEO",
         "CountryDirector",
         "ImpactAssessment",
         "Program Lead",
-        "ProjectCoordinator",
-        "RegionalProgramLead",
-        "RegionalVicePresident"
+        "ProjectCoordinator"
       ],
       "routes": [
         "GET /clusters/{id}"
@@ -1085,7 +1081,6 @@
       ],
       "permissions": [
         "cluster.catchmentManage",
-        "data.export",
         "project.assignSchool"
       ],
       "pages": [
@@ -5067,8 +5062,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "2b849d61ae30057cfa82e167bab096de07c790a0ab71989517b8602783bbb5ff",
-    "sources": "4b915a1044a0c97030be62b6be2b10dfdfacf61b87256fd56cc77ab8da21ece7",
+    "payload": "1d42a3dbbeac08331ff189d49f8eb500523bc09747b80bec08e9e15434b65c58",
+    "sources": "01c57547279e57cc73e662185a1a64af64c7d7b30e6dc73a8b10b4afe0e6589e",
     "sourceCount": 271,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
