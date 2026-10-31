@@ -1,7 +1,7 @@
 # Core runtime dependencies for the Edify API (Django + DRF).
 # Pin to known-good versions for reproducible builds.
 
-Django==5.2.17
+Django==6.1
 # Django accepts older sqlparse releases, but PYSEC-2026-3696 through 3699
 # require 0.6.0. Pin it explicitly so a reused environment cannot retain the
 # vulnerable transitive version.
