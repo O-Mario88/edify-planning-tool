@@ -18,7 +18,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-01` | Priority to verified performance | ✓ | 2 | 132 | 31 | 2 | 2 | 6 | 19 | 80 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 53 | 10 | 1 | 11 | 0 | 0 | 29 |
 | `journey-03` | Standard staff school visit | ✓ | 12 | 140 | 34 | 3 | 8 | 10 | 29 | 80 |
-| `journey-04` | Cluster training | ✓ | 1 | 96 | 17 | 3 | 10 | 0 | 1 | 76 |
+| `journey-04` | Cluster training | ✓ | 1 | 96 | 17 | 2 | 6 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 77 | 27 | 2 | 2 | 1 | 4 | 91 |
 | `journey-06` | Special Project | ✓ | 1 | 145 | 29 | 4 | 9 | 6 | 19 | 80 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 111 | 27 | 4 | 10 | 9 | 23 | 80 |
@@ -108,9 +108,9 @@ Steps: Eligible schools → Scheduling → Cost → Attendance → Evidence → 
 
 | Dimension | Traced to |
 | --- | --- |
-| Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CCEO`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
+| Roles that hold the checked permissions | `Admin`, `CCEO`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator` |
 | Routes / API | `GET /clusters/{id}` |
-| Permissions checked | `cluster.catchmentManage`, `data.export`, `project.assignSchool` |
+| Permissions checked | `cluster.catchmentManage`, `project.assignSchool` |
 | Page gates checked | `calendar`, `closed_schools`, `cluster_detail`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight`, `dashboard` _+31 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/completed_day.py`, `apps/activities/editing.py`, `apps/activities/live.py`, `apps/activities/models.py` _+86 more_ |

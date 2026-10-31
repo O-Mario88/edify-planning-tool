@@ -23,8 +23,6 @@
   position: fixed;
   inset: 0;
   background-color: var(--drawer-backdrop-color);
-  backdrop-filter: blur(var(--drawer-backdrop-blur));
-  -webkit-backdrop-filter: blur(var(--drawer-backdrop-blur));
   z-index: var(--drawer-z-index);
   opacity: 0;
   transition: opacity var(--drawer-animation-duration) var(--drawer-ease);
@@ -107,8 +105,6 @@
   inset: 0;
   z-index: -1;
   background: var(--drawer-backdrop-color);
-  backdrop-filter: blur(var(--drawer-backdrop-blur));
-  -webkit-backdrop-filter: blur(var(--drawer-backdrop-blur));
 }
 
 .edify-popup-dialog__surface {
@@ -280,8 +276,6 @@
 .drawer-backdrop,
 .edify-popup-dialog__backdrop {
   background: var(--drawer-backdrop-color);
-  backdrop-filter: blur(var(--drawer-backdrop-blur));
-  -webkit-backdrop-filter: blur(var(--drawer-backdrop-blur));
 }
 
 .drawer-surface {
@@ -487,8 +481,6 @@
   border-top: 1px solid var(--edify-border);
   border-radius: 0 0 calc(var(--drawer-radius) - 1px) calc(var(--drawer-radius) - 1px);
   background: color-mix(in srgb, var(--edify-surface-raised) 94%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 .drawer-footer :where(button, a) {
@@ -1458,8 +1450,6 @@
   gap: 0.65rem;
   border-top-color: color-mix(in srgb, var(--edify-border) 78%, transparent);
   background: color-mix(in srgb, var(--edify-surface-raised) 94%, transparent);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .drawer-footer :where(button, a),
@@ -1872,8 +1862,6 @@
   border-top: 1px solid var(--edify-border);
   border-radius: 0 0 calc(var(--drawer-radius) - 1px) calc(var(--drawer-radius) - 1px);
   background: color-mix(in srgb, var(--edify-surface-raised) 94%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 @media (max-width: 47.99rem) {
@@ -1937,54 +1925,57 @@
   /* The gap between the card and the viewport. It is what makes the drawer
      read as laid ON the page rather than as a second screen. */
   --edify-drawer-inset: clamp(1rem, 4vh, 3rem);
-  --edify-drawer-radius: 1.5rem;
-  /* Two shadows, not one: a wide soft cast that separates the card from the
-     dimmed page, and a tight one under the edge that keeps it crisp. */
+  /* The owner's second reference (2026-10-31), measured from the image: 12px
+     corners, 22px around the content, a bold navy title over a slate line,
+     hairline dividers, and a navy tint over a page that stays sharp. */
+  --edify-drawer-radius: 0.75rem;
+  --edify-drawer-pad: 1.375rem;
+  --edify-drawer-title: #0b1533;
+  --edify-drawer-subtitle: #3b465e;
+  --edify-drawer-line: #e4e8f1;
+  /* No drawn edge in light: the shadow and the tint make it. */
+  --edify-drawer-edge: transparent;
   --edify-drawer-shadow:
-    0 2.5rem 5rem -1.5rem rgb(15 23 42 / 0.30),
-    0 1rem 2rem -1rem rgb(15 23 42 / 0.18),
-    0 0 0 1px rgb(15 23 42 / 0.06);
-  --edify-drawer-scrim: rgb(15 23 42 / 0.32);
+    0 1.75rem 3.5rem -1rem rgb(15 23 42 / 0.32),
+    0 0.5rem 1.25rem -0.5rem rgb(15 23 42 / 0.16);
+  --edify-drawer-scrim: rgb(28 44 68 / 0.58);
 }
 
-/* ── The page behind steps back ──────────────────────────────────────────
-   The reference does not simply darken the page — it drains its colour and
-   pushes it away, so the eye has one place to be. The scrim alone reads as a
-   grey sheet over a still-busy page; the scale and the desaturation are what
-   make it read as depth.
-
-   Applied to the nodes drawer-background.js already takes out of play, which
-   are the siblings of #drawer-container — so the drawer itself is never
-   inside the transformed subtree. That matters: `filter` and `transform`
-   make an element the containing block for its fixed descendants, and a
-   drawer caught in one would be positioned against the shell instead of the
-   viewport and would inherit the dimming meant for the page. */
-.edify-drawer-recede {
-  transform: scale(0.988);
-  transform-origin: 50% 42%;
-  filter: saturate(0.45) brightness(0.97);
-  transition:
-    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    filter 420ms cubic-bezier(0.16, 1, 0.3, 1);
+/* The blue and dark themes keep the shape and the tint on their own text and
+   line colours; a navy title on a dark card would vanish. */
+:root:is(.theme-blue, .theme-dark) {
+  --edify-drawer-title: var(--edify-text);
+  --edify-drawer-subtitle: var(--edify-text-muted);
+  --edify-drawer-line: color-mix(in srgb, var(--edify-border) 70%, transparent);
+  --edify-drawer-edge: var(--edify-drawer-line);
+  --edify-drawer-scrim: rgb(2 8 18 / 0.66);
 }
 
-/* Every backdrop, including the typed variants. `type-right_top` used to opt
-   out of the scrim entirely (`background-color: transparent !important`) so it
-   could read as a light popover — but there is one drawer now, so there is one
-   backdrop. The longhands are deliberate: `background-color` to outrank that
-   rule's own longhand, and `background-image: none` to clear the accent
-   radial-gradient an earlier pass painted into the shorthand. */
+/* ── The page behind stays sharp ─────────────────────────────────────────
+   Owner, 2026-10-31: "remove blury background". The reference dims the page
+   with a navy tint and nothing else — no blur, no scale, no drained colour —
+   so the page reads clearly behind the card. drawer-background.js still puts
+   `edify-drawer-recede` on the page's nodes (it is how top-layer.js knows the
+   page is behind a drawer); the class no longer changes how they look.
+
+   Every backdrop, including the typed variants, takes the same tint. The
+   longhands are deliberate: `background-color` to outrank `type-right_top`'s
+   own transparent longhand, `background-image: none` to clear the accent
+   gradient an earlier pass painted into the shorthand. Older stylesheets
+   (components.css) still blur through `--drawer-backdrop-blur`, so it is
+   zeroed here too. */
 .drawer-backdrop,
 .drawer-backdrop.type-center,
 .drawer-backdrop.type-right_top,
 .edify-popup-dialog__backdrop {
+  --drawer-backdrop-blur: 0px;
   background-color: var(--edify-drawer-scrim) !important;
   background-image: none !important;
-  /* A light blur only. The page is already desaturated and scaled back, and
-     blurring it hard as well turns the backdrop into fog and costs a
-     full-viewport filter pass on every frame of the transition. */
-  backdrop-filter: blur(3px) !important;
-  -webkit-backdrop-filter: blur(3px) !important;
+  /* The build keeps only the LAST of these two spellings and Chrome reads the
+     unprefixed one, so the unprefixed line comes last. With it first, the
+     build kept the -webkit- copy and an older 10px blur won in Chrome. */
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* ── The card ──────────────────────────────────────────────────────────────
@@ -2022,7 +2013,7 @@
      seen nor pressed: the Group Training drawer's schools, 2026-10-08. The
      padding is the shelf's and the title's height with a little air. */
   scroll-padding-block: 5rem 5.75rem;
-  border: 1px solid color-mix(in srgb, var(--edify-border) 70%, transparent) !important;
+  border: 1px solid var(--edify-drawer-edge) !important;
   border-radius: var(--edify-drawer-radius) !important;
   background: var(--edify-surface-raised) !important;
   box-shadow: var(--edify-drawer-shadow) !important;
@@ -2056,7 +2047,7 @@
 
 .edify-popup-dialog__surface {
   max-block-size: calc(100dvh - (var(--edify-drawer-inset) * 2)) !important;
-  border: 1px solid color-mix(in srgb, var(--edify-border) 70%, transparent) !important;
+  border: 1px solid var(--edify-drawer-edge) !important;
   border-radius: var(--edify-drawer-radius) !important;
   box-shadow: var(--edify-drawer-shadow) !important;
 }
@@ -2120,16 +2111,9 @@
     transform: none !important;
     opacity: 1 !important;
   }
-
-  /* The page behind barely moves on a small screen — at this size the scale
-     reads as a glitch rather than as depth. */
-  .edify-drawer-recede {
-    transform: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .edify-drawer-recede,
   .drawer-surface,
   .drawer-surface.type-center,
   .drawer-surface.type-right_top {
@@ -2142,9 +2126,6 @@
     transform: none !important;
   }
 
-  .edify-drawer-recede {
-    transform: none;
-  }
 }
 
 /* ── The card's own furniture ──────────────────────────────────────────────
@@ -2169,7 +2150,7 @@
   align-items: flex-start !important;
   justify-content: flex-start !important;
   gap: 0 !important;
-  padding: 1.6rem 4rem 0.9rem 1.75rem !important;
+  padding: var(--edify-drawer-pad) 3.75rem 0.875rem var(--edify-drawer-pad) !important;
   /* Opaque, because it is sticky: transparent chrome over a scrolling body
      lets the content run through the title. The hairline appears only once
      there is something scrolled under it. */
@@ -2197,20 +2178,25 @@
 
 .drawer-surface .drawer-header__title-row h3,
 .drawer-surface .drawer-header h2 {
-  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.6rem) !important;
+  font-size: var(--edify-text-display-size) !important;
   font-weight: 700 !important;
-  letter-spacing: -0.02em !important;
-  line-height: 1.2 !important;
-  color: var(--edify-text) !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.25 !important;
+  color: var(--edify-drawer-title) !important;
 }
 
 .drawer-surface .drawer-header__subtitle {
-  margin-block-start: 0.4rem !important;
-  color: var(--edify-text-muted) !important;
-  font-size: var(--edify-text-label-size) !important;
+  margin-block-start: 0.375rem !important;
+  color: var(--edify-drawer-subtitle) !important;
+  font-size: var(--edify-text-lead-size) !important;
   font-weight: 500 !important;
 }
 
+/* The light theme paints every quiet button as a ringed white circle with a
+   rule of eight classes. The reference's close is a plain ×, so these rules
+   are written once more under the drawer's host id, which outranks it
+   without another `!important`. */
+#drawer-container .drawer-surface .drawer-close-btn,
 .drawer-surface .drawer-close-btn {
   position: absolute !important;
   inset-block-start: 1.25rem !important;
@@ -2223,7 +2209,7 @@
   inline-size: 2.25rem !important;
   block-size: 2.25rem !important;
   padding: 0 !important;
-  color: var(--edify-text-muted) !important;
+  color: var(--edify-drawer-subtitle) !important;
   border: 0 !important;
   border-radius: var(--edify-radius-pill) !important;
   background: transparent !important;
@@ -2232,6 +2218,7 @@
   transition: background-color 140ms ease, color 140ms ease;
 }
 
+#drawer-container .drawer-surface .drawer-close-btn:hover,
 .drawer-surface .drawer-close-btn:hover {
   color: var(--edify-text) !important;
   background: var(--edify-surface-muted) !important;
@@ -2246,7 +2233,7 @@
   /* No bottom padding: the footer below supplies it, and a footer that has to
      clear the body's own padding cannot sit on the card's edge. A drawer
      without a footer gets that space back on the next rule. */
-  padding: 0.25rem 1.75rem 0 !important;
+  padding: 0.25rem var(--edify-drawer-pad) 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
   overflow: visible !important;
@@ -2254,7 +2241,7 @@
 }
 
 .drawer-surface .drawer-body:not(:has(.drawer-footer)) {
-  padding-block-end: 1.75rem !important;
+  padding-block-end: var(--edify-drawer-pad) !important;
 }
 
 /* The action shelf.
@@ -2269,13 +2256,15 @@
   position: sticky !important;
   inset-block-end: 0 !important;
   z-index: 1;
-  margin: 1.25rem -1.75rem 0 !important;
-  padding: 1rem 1.75rem !important;
-  border-top: 1px solid color-mix(in srgb, var(--edify-border) 70%, transparent) !important;
-  /* Opaque: content scrolling beneath it must not show through. */
-  background: var(--edify-surface-muted) !important;
-  backdrop-filter: none !important;
+  margin: 1.25rem calc(var(--edify-drawer-pad) * -1) 0 !important;
+  padding: 1rem var(--edify-drawer-pad) !important;
+  border-top: 1px solid var(--edify-drawer-line) !important;
+  /* The card's own white, not a grey band (owner's reference, 2026-10-31):
+     one surface, a hairline above the actions. Opaque, because content
+     scrolls beneath it. */
+  background: var(--edify-surface-raised) !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 @media (max-width: 47.99rem) {
@@ -2283,6 +2272,7 @@
     padding: 1.125rem 3.25rem 0.75rem 1.125rem !important;
   }
 
+  #drawer-container .drawer-surface .drawer-close-btn,
   .drawer-surface .drawer-close-btn {
     inset-block-start: 0.875rem !important;
     inset-inline-end: 0.875rem !important;
