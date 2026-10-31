@@ -1231,10 +1231,6 @@ def _cluster_page_base(request, cluster_id):
         # Ticked schools go to a project too (owner, 2026-10-06), through
         # the directory's bulk Add to project and its gate.
         "can_assign_project": has_permission(request.user, "project.assignSchool"),
-        # The profile's Export schools: the gate its endpoint enforces.
-        "can_export_schools": RolePermissionService.can_export(
-            request.user, f"/clusters/{cluster_id}/schools/export"
-        ),
         # Responsible (Staff or Partner), Visit and Training / Cluster columns
         # (owner, 2026-09-23), from the rows cluster_schools() already carries.
         "support_rule": support_visibility_enabled(request.user),
@@ -1393,11 +1389,15 @@ def cluster_profile_view(request, cluster_id):
 
 
 @require_page_permission("cluster_detail")
-@require_export_permission
 def cluster_schools_export_view(request, cluster_id):
     """The Cluster Profile's Export schools (owner, 2026-10-17): each school
     the Cluster Page lists, with its ID, name, phone, primary contact and
-    shipping address, as one Excel file named after the cluster."""
+    shipping address, as one Excel file named after the cluster.
+
+    Open to whoever may open the cluster (owner, 2026-10-31: everyone who
+    opens the profile, CCEOs included), without `data.export`: it copies a
+    list the reader already sees, and `cluster_school_contacts` refuses a
+    cluster outside their scope."""
     import re
 
     from django.http import Http404

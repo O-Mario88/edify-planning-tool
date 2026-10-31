@@ -87,12 +87,32 @@ class FloatingDrawerShapeTest(SimpleTestCase):
             self.final,
         )
 
-    def test_the_page_behind_steps_back(self):
-        """The scrim alone reads as a grey sheet; the scale and the drained
-        colour are what make it read as depth."""
-        self.assertIn(".edify-drawer-recede", self.final)
-        self.assertIn("filter: saturate(", self.final)
-        self.assertIn("transform: scale(", self.final)
+    def test_the_page_behind_stays_sharp(self):
+        """Owner, 2026-10-31, from a reference screenshot: "remove blury
+        background". The page behind is dimmed by a navy tint and nothing
+        else: it is not blurred, scaled down or drained of colour."""
+        code = _without_comments(self.final)
+        self.assertNotIn("blur(", code)
+        self.assertNotIn("saturate(", code)
+        self.assertNotIn("transform: scale(", code)
+        backdrop = _rule(code, ".edify-popup-dialog__backdrop")
+        self.assertIn("--drawer-backdrop-blur: 0px;", backdrop)
+        # lightningcss keeps only the LAST of the two spellings, and Chrome
+        # reads the unprefixed one, so the unprefixed `none` must come last.
+        self.assertLess(
+            backdrop.index("-webkit-backdrop-filter: none !important;"),
+            backdrop.index("\n  backdrop-filter: none !important;"),
+        )
+
+    def test_the_scrim_is_the_reference_navy_tint(self):
+        self.assertIn("--edify-drawer-scrim: rgb(28 44 68 / 0.58);", self.final)
+
+    def test_the_built_backdrop_has_no_blur(self):
+        """What the browser loads is the build, not the source."""
+        built = _read("static/build/css/drawers.css")
+        final = built[built.rindex("--edify-drawer-scrim") :]
+        self.assertNotIn("blur(3px)", final)
+        self.assertIn("backdrop-filter:none!important", final)
 
     def test_the_recede_is_driven_by_the_one_background_owner(self):
         js = _read("static/js/drawer-background.js")
@@ -156,7 +176,28 @@ class DrawerFurnitureTest(SimpleTestCase):
         footer = _rule(self.desktop, ".drawer-surface .drawer-footer")
         self.assertIn("position: sticky !important;", footer)
         self.assertIn("inset-block-end: 0 !important;", footer)
-        self.assertIn("margin: 1.25rem -1.75rem 0 !important;", footer)
+        self.assertIn(
+            "margin: 1.25rem calc(var(--edify-drawer-pad) * -1) 0 !important;",
+            footer,
+        )
+
+    def test_the_card_is_one_white_surface(self):
+        """The reference (owner, 2026-10-31) is one white card: no grey band
+        under the actions, a hairline above them, 12px corners and 22px of
+        padding around the content."""
+        footer = _rule(self.desktop, ".drawer-surface .drawer-footer")
+        self.assertIn("background: var(--edify-surface-raised) !important;", footer)
+        self.assertIn("var(--edify-drawer-line)", footer)
+        self.assertIn("--edify-drawer-radius: 0.75rem;", self.final)
+        self.assertIn("--edify-drawer-pad: 1.375rem;", self.final)
+
+    def test_the_title_reads_like_the_reference(self):
+        """A bold navy title over a quiet slate line, in light; the blue and
+        dark themes keep their own text colours."""
+        title = _rule(self.desktop, ".drawer-surface .drawer-header h2")
+        self.assertIn("color: var(--edify-drawer-title) !important;", title)
+        self.assertIn("--edify-drawer-title: #0b1533;", self.final)
+        self.assertIn(":root:is(.theme-blue, .theme-dark) {", self.final)
 
 
 class DrawerMotionTest(SimpleTestCase):

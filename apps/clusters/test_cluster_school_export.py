@@ -164,11 +164,24 @@ class ClusterSchoolExportTest(EligibilityFixture):
         self.assertContains(response, f'href="{self.url}"')
         self.assertContains(response, "Export schools")
 
-    def test_a_role_without_data_export_is_neither_offered_nor_served_it(self):
+    def test_whoever_opens_the_profile_is_offered_and_served_it(self):
+        """Owner, 2026-10-31: everyone who can open a cluster's profile exports
+        its schools, CCEOs included, though the role holds no `data.export`.
+        It is a copy of a list they already read on the cluster's own page,
+        so the page's scope is the control (apps/core/tests/
+        test_export_authorization.py: extraction of what you already see)."""
         self.client.force_login(self.james)
 
         profile = self.client.get(f"/clusters/{self.chegere_north.id}/profile")
+
+        self.assertContains(profile, f'href="{self.url}"')
+        self.assertContains(profile, "Export schools")
+        ids = [row[0] for row in self._export(self.james)[1:]]
+        self.assertEqual(ids, ["ST-MARY", "ST-PAUL"])
+
+    def test_a_cceo_who_does_not_hold_the_cluster_is_not_served_it(self):
+        self.client.force_login(self.mary)
+
         response = self.client.get(self.url)
 
-        self.assertNotContains(profile, "Export schools")
         self.assertNotIn("spreadsheetml", response.get("Content-Type", ""))
