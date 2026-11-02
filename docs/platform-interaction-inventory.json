@@ -5,8 +5,8 @@
   "by_evidence": {
    "browser-rendered": 867,
    "none": 247,
-   "page-tested": 1589,
-   "request-tested": 1408
+   "page-tested": 1588,
+   "request-tested": 1409
   },
   "by_kind": {
    "button": 1425,
@@ -12114,7 +12114,7 @@
   {"accessible_name": "Submit {{ country_workflow.month_label }} budget to RVP", "destination": "/country-budget/action", "destination_route": "/country-budget/action", "evidence": "request-tested", "high_consequence": true, "id": "INT-2D196B35E53C", "kind": "button", "line": 226, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/budgets/monthly.html"},
   {"accessible_name": "Approve", "destination": "/country-budget/action", "destination_route": "/country-budget/action", "evidence": "request-tested", "high_consequence": true, "id": "INT-BE4D0013DD0A", "kind": "button", "line": 238, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/budgets/monthly.html"},
   {"accessible_name": "Return", "destination": "/country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}", "destination_route": "/country-budget/return", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-96A90DEDD508", "kind": "button", "line": 240, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/budgets/monthly.html"},
-  {"accessible_name": "Cancel Upload", "destination": "/uploads/bulk-completion/batch/{{ batch.id }}/cancel", "destination_route": "/uploads/bulk-completion/batch/<str:batch_id>/cancel", "evidence": "page-tested", "high_consequence": true, "id": "INT-6CDA893C155A", "kind": "button", "line": 16, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/bulk_completion/batch.html"},
+  {"accessible_name": "Cancel Upload", "destination": "/uploads/bulk-completion/batch/{{ batch.id }}/cancel", "destination_route": "/uploads/bulk-completion/batch/<str:batch_id>/cancel", "evidence": "request-tested", "high_consequence": true, "id": "INT-6CDA893C155A", "kind": "button", "line": 16, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/bulk_completion/batch.html"},
   {"accessible_name": "Confirm Bulk Completion ({{ summary.ready }})", "destination": "/uploads/bulk-completion/batch/{{ batch.id }}/confirm", "destination_route": "/uploads/bulk-completion/batch/<str:batch_id>/confirm", "evidence": "request-tested", "high_consequence": true, "id": "INT-C48D1CC05EF7", "kind": "button", "line": 20, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/bulk_completion/batch.html"},
   {"accessible_name": "Download error report", "destination": "/uploads/bulk-completion/batch/{{ batch.id }}/report", "destination_route": "/uploads/bulk-completion/batch/<str:batch_id>/report", "evidence": "request-tested", "high_consequence": false, "id": "INT-11F6C4AB92A4", "kind": "link", "line": 26, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/bulk_completion/batch.html"},
   {"accessible_name": "{{ row.activity_id }}", "destination": "/my-plan/{{ row.activity_id }}", "destination_route": "/my-plan/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-A433F372168E", "kind": "link", "line": 88, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/bulk_completion/batch.html"},

@@ -173,6 +173,17 @@ class CompletedVisitsAreNeverRecounted(BulkFixture):
         )
         self.assertEqual(self._statuses(batch), [RowStatus.READY, RowStatus.REVIEW])
 
+    def test_a_cancelled_upload_completes_nothing(self):
+        visit = self._visit()
+        batch = self._stage(self._line(visit, "SVE-50015"))
+        client = self.as_user(self.ia_user)
+        client.post(f"/uploads/bulk-completion/batch/{batch.id}/cancel")
+        batch.refresh_from_db()
+        self.assertEqual(batch.status, BatchStatus.CANCELLED)
+        client.post(f"/uploads/bulk-completion/batch/{batch.id}/confirm")
+        visit.refresh_from_db()
+        self.assertEqual(visit.status, "scheduled")
+
     def test_confirming_twice_processes_the_file_once(self):
         visit = self._visit()
         batch = self._stage(self._line(visit, "SVE-50014"))

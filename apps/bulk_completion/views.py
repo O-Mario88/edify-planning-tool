@@ -18,7 +18,7 @@ from .apply import apply_batch
 from .columns import COLUMNS, TEMPLATE_NOTES
 from .models import BatchStatus, BulkKind
 from .rules import may_bulk_complete
-from .staging import MAX_ROWS, stage_upload
+from .staging import MAX_ROWS, cancel_batch, stage_upload
 from .template_file import FILE_STEMS, template_sheets
 
 DENIED = (
@@ -165,9 +165,7 @@ def cancel_view(request, batch_id):
     if denied:
         return denied
     batch = _batch(request, batch_id)
-    if batch.status == BatchStatus.STAGED:
-        batch.status = BatchStatus.CANCELLED
-        batch.save(update_fields=["status", "updated_at"])
+    if cancel_batch(batch, request.user):
         messages.success(request, "Upload cancelled. Nothing was completed.")
     return local_redirect(f"/uploads/bulk-completion/{batch.kind}")
 

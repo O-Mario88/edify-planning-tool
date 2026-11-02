@@ -330,6 +330,21 @@ def stage_upload(file, kind: str, principal) -> BulkCompletionBatch:
     return batch
 
 
+def cancel_batch(batch: BulkCompletionBatch, principal) -> bool:
+    """Withdraw a staged upload before it is confirmed: nothing was, or will
+    be, completed from it. False when it had already been confirmed."""
+    cancelled = BulkCompletionBatch.objects.filter(
+        pk=batch.pk, status=BatchStatus.STAGED
+    ).update(status=BatchStatus.CANCELLED)
+    if cancelled:
+        _log(
+            batch,
+            "bulk_completion.cancelled",
+            {"by": str(getattr(principal, "user_id", "") or principal.id)},
+        )
+    return bool(cancelled)
+
+
 def _log(batch, action: str, payload: dict | None = None) -> None:
     from apps.audit.services import log as audit_log
 
