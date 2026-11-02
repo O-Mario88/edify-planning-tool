@@ -1271,6 +1271,19 @@ def export_jobs_job():
     run_tracked_job("export_jobs", _do_export_jobs)
 
 
+# ── Bulk completion uploads (apps.bulk_completion.worker) ───────────────────
+def _do_bulk_completion() -> int:
+    from apps.bulk_completion.worker import work
+
+    return work(seconds=50)
+
+
+def bulk_completion_job():
+    if not _enabled():
+        return
+    run_tracked_job("bulk_completion", _do_bulk_completion)
+
+
 def _do_audit_chain_seal() -> int:
     from apps.audit.services import seal_pending
 

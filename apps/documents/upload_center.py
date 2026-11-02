@@ -271,6 +271,37 @@ class UploadCenterService:
                     "tone": "primary",
                 }
             )
+        if Permission.ACTIVITY_BULK_COMPLETE.value in held:
+            # Bulk completion from the Salesforce export (owner, 2026-11-02).
+            # The batch and its rows live in apps.bulk_completion; completing
+            # an activity is still the activity workflow's, as from a drawer.
+            actions.extend(
+                {
+                    "key": f"bulk_{kind}",
+                    "category": "Bulk completion",
+                    "title": title,
+                    "description": description,
+                    "href": f"/uploads/bulk-completion/{kind}",
+                    "action_label": title,
+                    "template_href": f"/uploads/bulk-completion/{kind}/template",
+                    "template_label": "Download template",
+                    "tone": "primary",
+                }
+                for kind, title, description in (
+                    (
+                        "visit",
+                        "Bulk Upload — School Visits",
+                        "Complete many school visits at once with their School "
+                        "Visit IDs and completion dates.",
+                    ),
+                    (
+                        "training",
+                        "Bulk Upload — Trainings",
+                        "Complete in-school, cluster, group and online trainings "
+                        "with their Training IDs, attendance and schools.",
+                    ),
+                )
+            )
         if has_permission(principal, "documents.create"):
             actions.append(
                 {

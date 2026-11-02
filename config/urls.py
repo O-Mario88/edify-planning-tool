@@ -322,6 +322,7 @@ urlpatterns = [
     # frontend pattern.
     path("", include("apps.admin_ops.urls")),
     path("", include("apps.documents.urls")),
+    path("", include("apps.bulk_completion.urls")),
     path("", include("apps.business_transformation.frontend_urls")),
     # /lander never belonged to this application. It was GoDaddy's parked-domain
     # page, reached because the apex A record pointed at GoDaddy Forwarding

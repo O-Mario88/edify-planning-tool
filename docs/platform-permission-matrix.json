@@ -5,6 +5,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -17,6 +18,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -29,6 +31,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -41,6 +44,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -53,6 +57,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -65,6 +70,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -77,6 +83,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -89,6 +96,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -101,6 +109,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -113,6 +122,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -125,6 +135,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -137,6 +148,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -149,6 +161,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -161,6 +174,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -173,6 +187,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -185,6 +200,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -197,6 +213,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -209,6 +226,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -221,6 +239,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -233,6 +252,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -245,6 +265,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -257,6 +278,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -269,6 +291,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -329,6 +352,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -341,6 +365,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -353,6 +378,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -365,6 +391,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -377,6 +404,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -389,6 +417,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -401,6 +430,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -413,6 +443,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -425,6 +456,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -437,6 +469,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -449,6 +482,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -461,6 +495,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -473,6 +508,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -485,6 +521,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -497,6 +534,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -512,6 +550,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -527,6 +566,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -542,6 +582,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -557,6 +598,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -572,6 +614,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -1115,6 +1158,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/activities/<str:activity_id>/timeline/",
@@ -1320,6 +1364,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/admin-ops/team-plans",
@@ -1397,6 +1442,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/admin-panel/audit-log",
@@ -1576,6 +1622,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/analytics/country-director",
@@ -1588,6 +1635,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/analytics/country-director/drilldown",
@@ -1600,6 +1648,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/analytics/country-director/export",
@@ -1612,6 +1661,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/analytics/country-director/ssa-heatmap",
@@ -1685,6 +1735,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -1698,6 +1749,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/analytics/program-lead",
@@ -1710,6 +1762,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/analytics/program-lead/drilldown",
@@ -1722,6 +1775,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/analytics/program-lead/export",
@@ -1781,6 +1835,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/analytics/school-closures",
@@ -1826,6 +1881,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -1855,6 +1911,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -1872,6 +1929,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -1901,6 +1959,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -1917,6 +1976,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -1933,6 +1993,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -1963,6 +2024,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -1979,6 +2041,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -1995,6 +2058,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -2067,6 +2131,7 @@
    ],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -2108,6 +2173,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -2486,6 +2552,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/api/analytics(?:/|)recruitment-recommendation",
@@ -2773,6 +2840,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -2793,6 +2861,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -2811,6 +2880,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -2846,6 +2916,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -2883,6 +2954,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -2904,6 +2976,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -2925,6 +2998,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "ProjectCoordinator",
     "Admin"
@@ -3011,6 +3085,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -3031,6 +3106,7 @@
     "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -3048,6 +3124,7 @@
     "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -3065,6 +3142,7 @@
     "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -3082,6 +3160,7 @@
     "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -3097,6 +3176,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -3112,6 +3192,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -3129,6 +3210,7 @@
     "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -3147,6 +3229,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -3897,6 +3980,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -4041,6 +4125,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/api/clusters(?:/|)assign",
@@ -4075,6 +4160,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/api/clusters(?:/|)from-school",
@@ -4146,6 +4232,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4165,6 +4252,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -4181,6 +4269,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -4213,6 +4302,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4234,6 +4324,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4269,6 +4360,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4290,6 +4382,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4309,6 +4402,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -4327,6 +4421,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4349,6 +4444,7 @@
     "CountryDirector",
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -4368,6 +4464,7 @@
     "CountryDirector",
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -4387,6 +4484,7 @@
     "CountryDirector",
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -4406,6 +4504,7 @@
     "CountryDirector",
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -4565,6 +4664,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -4653,6 +4753,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4674,6 +4775,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4748,6 +4850,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4783,6 +4886,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4818,6 +4922,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4852,6 +4957,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4886,6 +4992,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4920,6 +5027,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -4982,6 +5090,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5003,6 +5112,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5052,6 +5162,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5073,6 +5184,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5094,6 +5206,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5128,6 +5241,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5149,6 +5263,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5170,6 +5285,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5191,6 +5307,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5208,6 +5325,7 @@
    ],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -5222,6 +5340,7 @@
    ],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -5236,6 +5355,7 @@
    ],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -5250,6 +5370,7 @@
    ],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -5268,6 +5389,7 @@
     "CountryDirector",
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -5284,6 +5406,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5301,6 +5424,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5318,6 +5442,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5335,6 +5460,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5352,6 +5478,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -5368,6 +5495,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -5384,6 +5512,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5403,6 +5532,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5424,6 +5554,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5525,6 +5656,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5546,6 +5678,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5599,6 +5732,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5620,6 +5754,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5641,6 +5776,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5662,6 +5798,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5683,6 +5820,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5704,6 +5842,7 @@
     "CountryDirector",
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -5722,6 +5861,7 @@
     "CountryDirector",
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -5740,6 +5880,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5761,6 +5902,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5782,6 +5924,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5803,6 +5946,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5824,6 +5968,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5843,6 +5988,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -5861,6 +6007,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5882,6 +6029,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5903,6 +6051,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -5922,6 +6071,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -5966,6 +6116,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -5996,6 +6147,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6012,6 +6164,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6028,6 +6181,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6046,6 +6200,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -6113,6 +6268,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -6178,6 +6334,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6194,6 +6351,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6210,6 +6368,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6347,6 +6506,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/api/schools(?:/|)<str:school_id>/cluster",
@@ -6566,6 +6726,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -6631,6 +6792,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6647,6 +6809,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6663,6 +6826,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6811,6 +6975,7 @@
     "CountryDirector",
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -6826,6 +6991,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -6923,6 +7089,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -6944,6 +7111,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -7298,6 +7466,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -7310,6 +7479,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -7322,6 +7492,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -7334,6 +7505,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -7346,6 +7518,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -7358,6 +7531,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -7373,6 +7547,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/coaching",
@@ -7387,6 +7562,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/coaching/<str:engagement_id>",
@@ -7401,6 +7577,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/coaching/<str:engagement_id>/acknowledge",
@@ -7413,6 +7590,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/engagements",
@@ -7425,6 +7603,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/engagements/<str:engagement_id>",
@@ -7437,6 +7616,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/engagements/<str:engagement_id>/share",
@@ -7449,6 +7629,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/engagements/<str:engagement_id>/share/save",
@@ -7461,6 +7642,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/engagements/<str:engagement_id>/update",
@@ -7473,6 +7655,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/engagements/new",
@@ -7485,6 +7668,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/engagements/record",
@@ -7499,6 +7683,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/feedback",
@@ -7513,6 +7698,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/feedback/<str:engagement_id>",
@@ -7527,6 +7713,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/feedback/<str:engagement_id>/acknowledge",
@@ -7541,6 +7728,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/feedback/<str:engagement_id>/pass",
@@ -7554,6 +7742,7 @@
    "roles": [
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/reports",
@@ -7567,6 +7756,7 @@
    "roles": [
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/reports/<str:report_id>",
@@ -7580,6 +7770,7 @@
    "roles": [
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/reports/<str:report_id>/review",
@@ -7593,6 +7784,7 @@
    "roles": [
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/reports/<str:report_id>/save",
@@ -7606,6 +7798,7 @@
    "roles": [
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/reports/new",
@@ -7619,6 +7812,7 @@
    "roles": [
     "RegionalVicePresident",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cce-leadership/reports/start",
@@ -8090,6 +8284,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8102,6 +8297,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8114,6 +8310,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8126,6 +8323,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8189,6 +8387,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8201,6 +8400,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8213,6 +8413,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8225,6 +8426,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8237,6 +8439,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8249,6 +8452,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -8583,6 +8787,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -8596,6 +8801,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cost-settings",
@@ -8608,6 +8814,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cost-settings/add",
@@ -8620,6 +8827,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cost-settings/carry-forward",
@@ -8632,6 +8840,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cost-settings/initialize-default",
@@ -8644,6 +8853,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/cost-settings/row/<str:key>",
@@ -9143,6 +9353,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -9175,6 +9386,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9190,6 +9402,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9205,6 +9418,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9220,6 +9434,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9232,6 +9447,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9270,6 +9486,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/dashboard/cd-approve",
@@ -9282,6 +9499,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/dashboard/cd-return",
@@ -9756,6 +9974,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -9786,6 +10005,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -9798,6 +10018,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -9810,6 +10031,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -9822,6 +10044,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -9913,6 +10136,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9925,6 +10149,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9937,6 +10162,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9949,6 +10175,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9961,6 +10188,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -9977,6 +10205,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -10045,6 +10274,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/extra-work",
@@ -10059,6 +10289,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/extra-work/<str:assignment_id>/<str:action>",
@@ -10073,6 +10304,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/extra-work/<str:assignment_id>/submit-drawer",
@@ -10087,6 +10319,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/extra-work/assign",
@@ -10101,6 +10334,7 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/extra-work/assign-drawer",
@@ -10112,6 +10346,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -10124,6 +10359,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -10136,6 +10372,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -10148,6 +10385,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -10160,6 +10398,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -10172,6 +10411,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -10261,6 +10501,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/fund-approvals",
@@ -10274,6 +10515,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/fund-approvals/action",
@@ -10287,6 +10529,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/fund-approvals/detail",
@@ -10300,6 +10543,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/fund-approvals/invoices/<str:invoice_id>/action",
@@ -10313,6 +10557,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/fund-approvals/invoices/<str:invoice_id>/download",
@@ -10326,6 +10571,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/fund-approvals/return",
@@ -10507,6 +10753,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "Admin"
    ],
@@ -10621,6 +10868,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -10633,6 +10881,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -10645,6 +10894,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -10657,6 +10907,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -10669,6 +10920,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -11283,6 +11535,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -11295,6 +11548,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -11309,6 +11563,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -11321,6 +11576,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -11333,6 +11589,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -12778,6 +13035,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -12793,6 +13051,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -12808,6 +13067,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -12823,6 +13083,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -12838,6 +13099,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -12853,6 +13115,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -12868,6 +13131,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -12883,6 +13147,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -12898,6 +13163,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -13085,6 +13351,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -13097,6 +13364,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -13112,6 +13380,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -13127,6 +13396,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -13142,6 +13412,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -13157,6 +13428,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -13765,6 +14037,7 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/my-coaching",
@@ -13777,6 +14050,7 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/my-coaching/<str:record_id>",
@@ -13789,6 +14063,7 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/my-coaching/<str:record_id>/acknowledge",
@@ -14610,6 +14885,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/my-team",
@@ -14796,6 +15072,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -14808,6 +15085,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -14820,6 +15098,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -14832,6 +15111,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -14844,6 +15124,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -14856,6 +15137,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -14868,6 +15150,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -14880,6 +15163,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -14892,6 +15176,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -15497,6 +15782,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15510,6 +15796,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15523,6 +15810,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15536,6 +15824,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15549,6 +15838,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15562,6 +15852,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15575,6 +15866,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15588,6 +15880,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15601,6 +15894,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15614,6 +15908,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15627,6 +15922,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15640,6 +15936,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15653,6 +15950,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15666,6 +15964,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15679,6 +15978,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15692,6 +15992,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15705,6 +16006,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15718,6 +16020,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15731,6 +16034,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -15744,6 +16048,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "PartnerAdmin",
     "PartnerFieldOfficer",
     "Admin"
@@ -16007,6 +16312,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -16155,6 +16461,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -16283,6 +16590,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/pl/review-queue",
@@ -16295,6 +16603,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/pl/review-queue/<str:activity_id>/confirm",
@@ -16307,6 +16616,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/pl/review-queue/<str:activity_id>/drawer",
@@ -16319,6 +16629,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/pl/review-queue/<str:activity_id>/return",
@@ -16331,6 +16642,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/pl/review-queue/<str:activity_id>/return-drawer",
@@ -16528,6 +16840,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/planning/fiscal-years",
@@ -16709,6 +17022,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -16724,6 +17038,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -16739,6 +17054,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -16771,6 +17087,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance",
@@ -16783,6 +17100,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/<str:guidance_id>",
@@ -16833,6 +17151,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/<str:guidance_id>/edit",
@@ -16845,6 +17164,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/<str:guidance_id>/issue",
@@ -16857,6 +17177,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/<str:guidance_id>/issue/save",
@@ -16869,6 +17190,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/<str:guidance_id>/review",
@@ -16881,6 +17203,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/<str:guidance_id>/review/save",
@@ -16893,6 +17216,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/<str:guidance_id>/update",
@@ -16905,6 +17229,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/<str:guidance_id>/withdraw",
@@ -16917,6 +17242,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/<str:guidance_id>/withdraw/save",
@@ -16948,6 +17274,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/new",
@@ -16960,6 +17287,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/priorities/guidance/record",
@@ -17131,6 +17459,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/programme-rollout",
@@ -17143,6 +17472,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/programme-rollout/schools",
@@ -17330,6 +17660,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -17342,6 +17673,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -17354,6 +17686,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -17673,6 +18006,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17685,6 +18019,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17697,6 +18032,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17709,6 +18045,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17721,6 +18058,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17768,6 +18106,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17780,6 +18119,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17792,6 +18132,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17805,6 +18146,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17818,6 +18160,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17831,6 +18174,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17844,6 +18188,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17857,6 +18202,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17870,6 +18216,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17883,6 +18230,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17896,6 +18244,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17909,6 +18258,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17922,6 +18272,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17935,6 +18286,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17948,6 +18300,7 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17976,6 +18329,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/rvp/annual/<str:budget_id>/action",
@@ -17988,6 +18342,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/rvp/approvals",
@@ -18000,6 +18355,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/rvp/project/<str:project_id>/decision",
@@ -18012,6 +18368,7 @@
    "role_exclusive": false,
    "roles": [
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/rvp/strategy-note",
@@ -18750,6 +19107,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -18764,6 +19122,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/staff-activity",
@@ -18802,6 +19161,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/staff-activity/export",
@@ -18815,6 +19175,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/staff-activity/follow-ups",
@@ -18878,6 +19239,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/staff-activity/people/<str:person_id>",
@@ -18891,6 +19253,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/staff-activity/people/<str:person_id>/follow-up",
@@ -18904,6 +19267,7 @@
    "roles": [
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/staff-activity/people/<str:person_id>/follow-up/send",
@@ -18918,6 +19282,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -18981,6 +19346,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -19155,6 +19521,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/target-distribution/team",
@@ -19167,6 +19534,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/target-distribution/team/action",
@@ -19523,6 +19891,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/team/coaching",
@@ -19537,6 +19906,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/team/coaching/<str:record_id>",
@@ -19551,6 +19921,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/team/coaching/<str:record_id>/follow-up",
@@ -19565,6 +19936,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/team/coaching/<str:record_id>/follow-up/save",
@@ -19579,6 +19951,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/team/coaching/<str:record_id>/share",
@@ -19593,6 +19966,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/team/coaching/<str:record_id>/share/save",
@@ -19607,6 +19981,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/team/coaching/<str:record_id>/update",
@@ -19621,6 +19996,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/team/coaching/new",
@@ -19635,6 +20011,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalProgramLead",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/team/coaching/record",
@@ -19912,6 +20289,78 @@
    "view": "apps.documents.views.upload_center_view"
   },
   {
+   "page_permission": "bulk_completion",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/uploads/bulk-completion/<str:kind>",
+   "route_name": "bulk_completion_upload",
+   "view": "apps.bulk_completion.views.upload_view"
+  },
+  {
+   "page_permission": "bulk_completion",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/uploads/bulk-completion/<str:kind>/template",
+   "route_name": "bulk_completion_template",
+   "view": "apps.bulk_completion.views.template_view"
+  },
+  {
+   "page_permission": "bulk_completion",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/uploads/bulk-completion/batch/<str:batch_id>",
+   "route_name": "bulk_completion_batch",
+   "view": "apps.bulk_completion.views.batch_view"
+  },
+  {
+   "page_permission": "bulk_completion",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/uploads/bulk-completion/batch/<str:batch_id>/cancel",
+   "route_name": "bulk_completion_cancel",
+   "view": "apps.bulk_completion.views.cancel_view"
+  },
+  {
+   "page_permission": "bulk_completion",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/uploads/bulk-completion/batch/<str:batch_id>/confirm",
+   "route_name": "bulk_completion_confirm",
+   "view": "apps.bulk_completion.views.confirm_view"
+  },
+  {
+   "page_permission": "bulk_completion",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/uploads/bulk-completion/batch/<str:batch_id>/report",
+   "route_name": "bulk_completion_report",
+   "view": "apps.bulk_completion.views.error_report_view"
+  },
+  {
    "page_permission": "uploads",
    "required_permissions": [],
    "role_exclusive": false,
@@ -19950,6 +20399,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -20002,6 +20452,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -20029,12 +20480,12 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 472,
-  "Admin": 1127,
+  "Admin": 1133,
   "BusinessTransformationOfficer": 248,
   "CCEO": 601,
   "CountryDirector": 860,
   "HumanResources": 338,
-  "ImpactAssessment": 729,
+  "ImpactAssessment": 1114,
   "MfiLoanOfficer": 142,
   "MfiPartnerAdmin": 145,
   "PartnerAdmin": 247,
@@ -20045,10 +20496,10 @@
   "RegionalVicePresident": 436
  },
  "summary": {
-  "page_keys_declared": 188,
-  "page_keys_in_navigation": 205,
-  "routes_guarded": 1224,
-  "routes_total": 1433,
+  "page_keys_declared": 189,
+  "page_keys_in_navigation": 206,
+  "routes_guarded": 1230,
+  "routes_total": 1439,
   "routes_unguarded": 209,
   "surfaces_no_role_can_reach": 0
  },

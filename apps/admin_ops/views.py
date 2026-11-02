@@ -50,9 +50,14 @@ def _admin_only(request):
 
 @require_page_permission("admin_team_plans")
 def team_plans_view(request):
-    denied = _admin_only(request)
-    if denied:
-        return denied
+    # Team Plans reads everyone's planned work: operational, so Impact
+    # Assessment opens it too (owner, 2026-11-02). The rest of Platform
+    # Operations keeps the platform running and stays the Admin's.
+    if getattr(request.user, "active_role", None) not in (
+        "Admin",
+        "ImpactAssessment",
+    ):
+        return HttpResponseForbidden("Team Plans is for Admin and Impact Assessment.")
     query = {
         k: request.GET.get(k, "")
         for k in (

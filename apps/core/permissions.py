@@ -21,7 +21,12 @@ from django.utils.html import escape
 from rest_framework.permissions import BasePermission
 
 from apps.accounts.jwt import AuthPrincipal
-from apps.core.rbac import Permission, permissions_for_role, EdifyRole
+from apps.core.rbac import (
+    EdifyRole,
+    Permission,
+    holds_operational_admin,
+    permissions_for_role,
+)
 
 
 def _user_permissions(principal: AuthPrincipal | object) -> set[str]:
@@ -184,6 +189,12 @@ class RolePermissionService:
         # Admin bypass
         if role_slug == "ADMIN":
             return True
+        # Impact Assessment opens what the Admin opens, less user management
+        # and system settings (owner, 2026-11-02; IA_ADMIN_ONLY_PAGES).
+        if role_slug == "IA":
+            from apps.core.navigation import IA_ADMIN_ONLY_PAGES
+
+            return page not in IA_ADMIN_ONLY_PAGES
 
         # Check against centralized PAGE_PERMISSIONS map
         if page in PAGE_PERMISSIONS:
@@ -208,6 +219,13 @@ class RolePermissionService:
     def can_view_record(user, obj) -> bool:
         role = getattr(user, "active_role", None)
         if role == "Admin":
+            return True
+        # Impact Assessment reads what the Admin reads, inside its country:
+        # the country lens below answers schools, clusters and activities,
+        # and the money records are read here (owner, 2026-11-02).
+        if role == EdifyRole.IMPACT_ASSESSMENT.value and obj.__class__.__name__ in (
+            "FundRequest",
+        ):
             return True
 
         obj_type = obj.__class__.__name__
@@ -360,6 +378,9 @@ class RolePermissionService:
         role = getattr(user, "active_role", None)
         if role == "Admin":
             return True
+        # Everything the Admin creates except accounts (owner, 2026-11-02).
+        if role == EdifyRole.IMPACT_ASSESSMENT.value and object_type != "user":
+            return True
         if role == "CountryDirector" and object_type in ["activity", "cluster"]:
             return False
         if role == "CountryDirector":
@@ -392,7 +413,7 @@ class RolePermissionService:
         while `may_write_school` grants them the whole programme by design.
         """
         role = getattr(user, "active_role", None)
-        if role == EdifyRole.ADMIN.value:
+        if holds_operational_admin(user) and obj.__class__.__name__ != "User":
             return True
         obj_type = obj.__class__.__name__
         if obj_type == "School":
@@ -446,6 +467,7 @@ class RolePermissionService:
             return False
         if role == "CountryDirector" and obj_type in ["School", "Cluster"]:
             return False
+        # Permanent deletion stays the Admin's: it cannot be undone.
         return role in ["Admin"]
 
     @staticmethod
@@ -534,14 +556,18 @@ class RolePermissionService:
         # Mirrors can_schedule_activity's allowed set: assigning to a partner
         # is the alternative to scheduling yourself (spec §5), so whoever can
         # schedule for their portfolio can also hand it off to a partner.
-        return role in ["CCEO", "Program Lead", "ProjectCoordinator", "Admin"]
+        return role in ["CCEO", "Program Lead", "ProjectCoordinator", "Admin"] or (
+            holds_operational_admin(user)
+        )
 
     @staticmethod
     def can_assign_to_staff(user, school) -> bool:
         role = getattr(user, "active_role", None)
         if role == "CountryDirector":
             return False
-        return role in ["Program Lead", "ProjectCoordinator", "Admin"]
+        return role in ["Program Lead", "ProjectCoordinator"] or (
+            holds_operational_admin(user)
+        )
 
     @staticmethod
     def can_assign_to_project(user, school) -> bool:
@@ -720,6 +746,7 @@ class RolePermissionService:
         if withholds(user, GOVERNANCE):
             return False
         role = getattr(user, "active_role", None)
+        # The rate card is a settings page: not Impact Assessment's (2026-11-02).
         return role in ["CountryDirector", "Admin"]
 
     @staticmethod

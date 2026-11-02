@@ -2372,6 +2372,7 @@ def schedule_action_view(request):
         if chosen_staff and getattr(request.user, "active_role", "") in (
             EdifyRole.COUNTRY_PROGRAM_LEAD.value,
             EdifyRole.ADMIN.value,
+            EdifyRole.IMPACT_ASSESSMENT.value,
         ):
             payload["responsibleStaffId"] = chosen_staff
     if focus_intervention:

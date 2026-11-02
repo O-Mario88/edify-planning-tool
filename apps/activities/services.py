@@ -311,6 +311,11 @@ def _notify_completion_routed(a, next_status, principal) -> None:
     who = getattr(principal, "name", None) or "A staff member"
     what = a.get_activity_type_display()
     if next_status == "submitted_to_pl":
+        from apps.activities.notice_digest import collect
+
+        # A bulk upload sends each reviewer one summary instead.
+        if collect("review", _supervisor_user_ids(a)):
+            return
         _notify_chain(
             a,
             "activity_submitted_for_review",
@@ -5116,6 +5121,11 @@ def _notify_ia_submitted(a) -> None:
                 country=country,
             )
         if not recipients:
+            return
+        from apps.activities.notice_digest import collect
+
+        # A bulk upload sends each verifier one summary instead.
+        if collect("verification", recipients):
             return
         where = (
             a.school.name

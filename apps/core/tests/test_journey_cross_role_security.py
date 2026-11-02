@@ -221,7 +221,8 @@ class CrossRoleSecurityJourneyTest(TestCase):
                 # A Programme Lead is deliberately absent — they see a CCEO's
                 # school on oversight and ask about it (SEC-01).
                 "school write",
-                {"CCEO", "CountryDirector", "Admin"},
+                # Impact Assessment writes school data (owner, 2026-11-02).
+                {"CCEO", "CountryDirector", "Admin", "ImpactAssessment"},
                 write_someone_elses_school,
             ),
             ("IA certification", {"ImpactAssessment"}, certify_activity),
@@ -262,7 +263,7 @@ class CrossRoleSecurityJourneyTest(TestCase):
                 # anyone shows up in the ownership assertion below as the
                 # takeover SEC-01 actually allowed.
                 "school edit drawer",
-                {"CCEO", "CountryDirector", "Admin"},
+                {"CCEO", "CountryDirector", "Admin", "ImpactAssessment"},
                 "post",
                 f"/schools/{self.school.id}/edit-drawer",
                 {
@@ -295,7 +296,9 @@ class CrossRoleSecurityJourneyTest(TestCase):
                 # shapes are correct; stating them separately is what stops
                 # this table quietly agreeing with whatever the code does.
                 "weekly fund disbursement action",
-                {"Accountant", "Admin"},
+                # Impact Assessment reaches the door as the Admin does, and
+                # the act refuses it for want of payment.act.
+                {"Accountant", "Admin", "ImpactAssessment"},
                 "post",
                 "/fund-requests/weekly/xr-no-such-request/disburse",
                 {},

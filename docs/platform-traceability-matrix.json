@@ -44,6 +44,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/notice_digest.py",
         "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/salesforce.py",
@@ -571,6 +572,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/notice_digest.py",
         "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/salesforce.py",
@@ -593,6 +595,7 @@
         "apps/core/audit_hash.py",
         "apps/core/bulk.py",
         "apps/core/calendar_policy.py",
+        "apps/core/choice_labels.py",
         "apps/core/client_ip.py",
         "apps/core/clock.py",
         "apps/core/concurrency.py",
@@ -973,6 +976,7 @@
         "apps/activities/editing.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/notice_digest.py",
         "apps/activities/profile_activities.py",
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
@@ -1501,6 +1505,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/notice_digest.py",
         "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/profile_activities.py",
@@ -1876,6 +1881,7 @@
         "BusinessTransformationOfficer",
         "CCEO",
         "CountryDirector",
+        "ImpactAssessment",
         "PartnerAdmin",
         "PartnerFieldOfficer",
         "Program Lead",
@@ -1902,6 +1908,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/notice_digest.py",
         "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/salesforce.py",
@@ -2182,6 +2189,7 @@
         "Admin",
         "CCEO",
         "CountryDirector",
+        "ImpactAssessment",
         "Program Lead",
         "ProjectCoordinator"
       ],
@@ -2686,6 +2694,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/notice_digest.py",
         "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/salesforce.py",
@@ -4601,7 +4610,9 @@
         "apps/documents/services.py",
         "apps/documents/signals.py",
         "apps/frontend/views/finance_operating_views.py",
+        "apps/frontend/views/finance_views.py",
         "apps/frontend/views/school_views.py",
+        "apps/fund_requests/disbursement_dashboard_service.py",
         "apps/fund_requests/finance_services.py",
         "apps/fund_requests/weekly_service.py",
         "apps/hr/accountability_cache.py",
@@ -4648,7 +4659,14 @@
       "auditActions": [
         "unauthorized_page_access"
       ],
-      "metricsComputed": [],
+      "metricsComputed": [
+        "fund_requests_disbursement_dashboard_service_awaiting_approval_completion",
+        "fund_requests_disbursement_dashboard_service_disbursed_today",
+        "fund_requests_disbursement_dashboard_service_held",
+        "fund_requests_disbursement_dashboard_service_pending_disbursement",
+        "fund_requests_disbursement_dashboard_service_special_projects_funds",
+        "fund_requests_disbursement_dashboard_service_total_funds_this_month"
+      ],
       "metricsAffected": [
         "bt_schools_financed",
         "cluster_performance_budget",
@@ -5062,9 +5080,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "1d42a3dbbeac08331ff189d49f8eb500523bc09747b80bec08e9e15434b65c58",
-    "sources": "01c57547279e57cc73e662185a1a64af64c7d7b30e6dc73a8b10b4afe0e6589e",
-    "sourceCount": 271,
+    "payload": "23a41befd8b27b0f355546a583a295ba8e555ac62e45f7e1a8fd0856af9834f8",
+    "sources": "8a3e210938f2aec2b26eda66e32388f2cdcd5f2e29f4e347ea8c950285359776",
+    "sourceCount": 273,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

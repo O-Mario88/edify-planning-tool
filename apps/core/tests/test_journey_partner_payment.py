@@ -419,24 +419,24 @@ class PartnerAssignmentToPaymentJourneyTest(TestCase):
             is_active=True,
         )
 
-        # Layer 1 — the page gate. It is a navigation rule, so read it from
-        # navigation: it must keep IA and the partner off the screen entirely,
-        # and must NOT be what stops the Admin (or layers 2 and 3 would never
-        # be reached and the separation of duties would be untested).
-        for actor, allowed in ((admin, True), (self.ia, False)):
-            self.assertEqual(
+        # Layer 1 — the page gate. It must NOT be what stops the Admin, or
+        # Impact Assessment, which reads what the Admin reads (owner,
+        # 2026-11-02): both see the disbursements, so layers 2 and 3 are what
+        # keep the money with the Accountant, and they are tested below.
+        for actor in (admin, self.ia):
+            self.assertTrue(
                 RolePermissionService.can_view_page(actor, "disbursements"),
-                allowed,
                 f"{actor.active_role} page access to disbursements changed",
             )
 
         # Layer 2 — the view body.
-        request = RequestFactory().post("/accounts/partner-payments/x/pay")
-        request.user = admin
-        self.assertIsNotNone(
-            _lacks_payment_authority(request),
-            "the view stopped asserting payment.act on a page-holder",
-        )
+        for actor in (admin, self.ia):
+            request = RequestFactory().post("/accounts/partner-payments/x/pay")
+            request.user = actor
+            self.assertIsNotNone(
+                _lacks_payment_authority(request),
+                f"the view stopped asserting payment.act on {actor.active_role}",
+            )
 
         # Layer 3 — the service, at the money, before the row lock.
         with self.assertRaises(Forbidden):

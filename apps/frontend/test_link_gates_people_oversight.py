@@ -318,7 +318,6 @@ class PeoplePageLinkTest(TestCase):
         full_report = 'class="pto-text-link">Full report'
         for role in (
             CCEO,
-            IA,
             ACCOUNTANT,
             REGIONAL_LEAD,
             COORDINATOR,
@@ -331,6 +330,9 @@ class PeoplePageLinkTest(TestCase):
                 self.assertNotIn(full_report, html)
                 self.assertNotIn('href="/leave/team-availability"', html)
         self.assertIn(full_report, self._page(PL, "/personal-time-off/"))
+        # Impact Assessment opens Team Availability with the Admin's
+        # operational reach (owner, 2026-11-02), so it is offered the link.
+        self.assertIn(full_report, self._page(IA, "/personal-time-off/"))
 
     def test_the_data_quality_center_offers_the_setup_queue_where_it_opens(self):
         """Both readers of this page can now follow the link.

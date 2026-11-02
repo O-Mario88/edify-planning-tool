@@ -315,8 +315,10 @@ class CatchmentRuleTests(CatchmentFixture):
             ).exists()
         )
 
-    def test_only_cd_and_admin_manage_catchments(self):
-        for principal in (self.cceo, self.ia):
+    def test_field_staff_do_not_manage_catchments(self):
+        # Impact Assessment manages them with the Admin's operational reach
+        # (owner, 2026-11-02); a field officer still does not.
+        for principal in (self.cceo,):
             with self.subTest(role=principal.active_role):
                 with self.assertRaises(Forbidden):
                     approve_neighbouring_district(

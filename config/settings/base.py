@@ -110,6 +110,7 @@ INSTALLED_APPS = [
     "apps.reports",
     "apps.flags",
     "apps.pl_review",
+    "apps.bulk_completion",
     "apps.command_center",
     "apps.admin_users",
     "apps.admin_ops",

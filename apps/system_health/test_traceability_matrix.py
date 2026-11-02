@@ -938,6 +938,11 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
                 # country and team families it already computed.
                 "journey-14": 12,
                 "journey-18": 13,
+                # Six since 2026-11-02: the cross-role sweep's Impact
+                # Assessment reaches the disbursement dashboard as a reader
+                # (it reads what the Admin reads) and is refused at the act,
+                # so the page's six figures are computed on the way.
+                "journey-19": 6,
             },
             "display-metric journey coverage changed; rebuild the matrix and "
             "update the release evidence in the same commit",

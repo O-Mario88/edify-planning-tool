@@ -808,7 +808,11 @@ def calendar_view(request):
         # somebody else's tab the form would read as an entry in theirs.
         "can_add_calendar_event": shown_person is None
         and user.active_role
-        in {EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value},
+        in {
+            EdifyRole.COUNTRY_DIRECTOR.value,
+            EdifyRole.ADMIN.value,
+            EdifyRole.IMPACT_ASSESSMENT.value,
+        },
         "filters_active": bool(
             selected_type or selected_status or selected_event_kind != "all"
         ),
@@ -913,6 +917,7 @@ def calendar_event_create_view(request):
     if request.user.active_role not in {
         EdifyRole.COUNTRY_DIRECTOR.value,
         EdifyRole.ADMIN.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
     }:
         return HttpResponseForbidden(
             "Only the Country Director can add calendar events."

@@ -53,7 +53,7 @@ from apps.core.enums import ActivityStatus, ActivityType, DeliveryType, SupportR
 from apps.core.fy import fy_options, get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.permissions import has_permission
-from apps.core.rbac import EdifyRole, Permission
+from apps.core.rbac import EdifyRole, Permission, holds_operational_admin
 from apps.projects.models import is_outside_ssa
 from apps.my_plan.services import (
     compute_next_action,
@@ -692,7 +692,7 @@ def build_work_plan_context(user, params) -> dict:
         owned = a.responsible_staff_id in viewer_ids or (
             a.delivery_type == "partner" and a.monitored_by_staff_id in viewer_ids
         )
-        if actions_enabled and (owned or user.active_role == EdifyRole.ADMIN.value):
+        if actions_enabled and (owned or holds_operational_admin(user)):
             action = compute_next_action(a, today)
         else:
             action = {

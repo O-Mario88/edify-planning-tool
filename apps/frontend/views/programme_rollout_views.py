@@ -230,7 +230,7 @@ def _notice(scope: dict) -> dict | None:
 def programme_rollout_view(request):
     """The team's rollout of trainings, SSAs and spiritual transformation."""
     user = request.user
-    is_admin = user.active_role == rollout.ADMIN
+    is_admin = user.active_role in rollout.LEAD_CHOOSERS
     view = rollout.clean_view(request.GET.get("view"))
     fy = rollout.clean_fy(request.GET.get("fy"))
     requested_lead = (request.GET.get("lead") or "").strip() if is_admin else ""

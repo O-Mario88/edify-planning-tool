@@ -908,8 +908,12 @@ class WithdrawalDecisionIsOfferedOnlyToReviewersTest(PageFixture):
         self.assertIn('name="decision" value="approve"', body)
 
     def test_a_country_reader_without_review_authority_sees_no_decision(self):
-        ia = self._staff("ia-queue@p.test", "IA", EdifyRole.IMPACT_ASSESSMENT)[0]
-        self.sign_in(ia)
+        # The Accountant reads the country's partner work and decides no
+        # withdrawal. (Impact Assessment reviews them since 2026-11-02.)
+        reader = self._staff("acct-queue@p.test", "Acct", EdifyRole.PROGRAM_ACCOUNTANT)[
+            0
+        ]
+        self.sign_in(reader)
 
         body = self.client.get("/partner-oversight/").content.decode()
 

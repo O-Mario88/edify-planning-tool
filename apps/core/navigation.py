@@ -50,6 +50,34 @@ ROLE_EXCLUSIVE_PAGES = {
     "business_transformation_government",
 }
 
+# Impact Assessment opens every page the Admin opens (owner, 2026-11-02:
+# "the same operational visibility and functionality as an administrator"),
+# except these: User Management, and the System Settings and platform
+# operations that keep the platform itself running — access and security,
+# platform configuration, health, support desk, maintenance and data repair.
+# A page added later is open to IA unless it is named here.
+IA_ADMIN_ONLY_PAGES = frozenset(
+    {
+        # User management.
+        "users",
+        "admin_dashboard",
+        # Access, security and platform configuration.
+        "roles_permissions",
+        "page_access_matrix",
+        "workflow_rules",
+        "region_district_setup",
+        "notifications_mgmt",
+        # Platform operations.
+        "system_health",
+        "admin_planning",
+        "admin_my_plan",
+        "admin_support_queue",
+        "admin_incidents",
+        "admin_maintenance",
+        "data_repair",
+    }
+)
+
 # The Loans destination is advertised only to roles that operate or validate
 # the record-level portfolio. Impact-only and executive roles use their scoped
 # reporting surfaces instead.
@@ -505,6 +533,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # and PD proof stay on their owning workflow pages and do not grant access
     # here.
     "uploads": {ADMIN, IA, HR, CD, RVP},
+    # Bulk completion of visits and trainings from a spreadsheet (owner,
+    # 2026-11-02; apps.bulk_completion). The drawers stay every officer's way
+    # to complete their own work the moment it is done.
+    "bulk_completion": {IA, ADMIN},
     "policy_compliance": {HR, CD, PL, RVP, ADMIN},
     # Reporting a problem is every role's right, so intake is universal.
     "report_problem": ALL_ROLES,
