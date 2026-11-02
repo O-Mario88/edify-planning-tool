@@ -396,11 +396,10 @@ class IaWorkspaceRegistryTest(SimpleTestCase):
 class IaGrantsTest(SimpleTestCase):
     def test_grants_unrelated_to_the_role_are_withdrawn(self):
         grants = ROLE_PERMISSIONS[EdifyRole.IMPACT_ASSESSMENT]
-        for permission in (
-            Permission.RECRUITMENT_INTELLIGENCE_VIEW,
-            Permission.PLANNING_RECALC,
-            Permission.LEADERSHIP_ENGINE_VIEW,
-        ):
+        # Recruitment and leadership boards came back with the Admin's
+        # operational reach (owner, 2026-11-02); the planning recompute did
+        # not — it also opens the platform-health report, a system setting.
+        for permission in (Permission.PLANNING_RECALC,):
             with self.subTest(permission=permission.value):
                 self.assertNotIn(permission, grants)
         self.assertEqual(len(grants), len(set(grants)), "no grant listed twice")
@@ -410,6 +409,8 @@ class IaGrantsTest(SimpleTestCase):
             Permission.SSA_ACTIVITY_MAPPING_MANAGE,
             Permission.ACTIVITY_CATALOGUE_VIEW,
             Permission.EXPORT,
+            Permission.RECRUITMENT_INTELLIGENCE_VIEW,
+            Permission.LEADERSHIP_ENGINE_VIEW,
         ):
             with self.subTest(kept=permission.value):
                 self.assertIn(permission, grants)

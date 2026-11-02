@@ -175,16 +175,20 @@ class NoDuplicationTests(DocumentTestBase):
                 action["key"] for action in UploadCenterService.launch_actions(user)
             }
 
-        self.assertEqual(
-            keys(self.ia),
-            {"schools", "ssa", "training"},
-        )
+        # Impact Assessment launches what the Admin launches (owner,
+        # 2026-11-02), bulk completion of visits and trainings among it.
+        everything = {
+            "schools",
+            "ssa",
+            "bulk_visit",
+            "bulk_training",
+            "policies",
+            "training",
+        }
+        self.assertEqual(keys(self.ia), everything)
         self.assertEqual(keys(self.hr), {"policies"})
         self.assertEqual(keys(self.cceo), set())
-        self.assertEqual(
-            keys(self.admin),
-            {"schools", "ssa", "policies", "training"},
-        )
+        self.assertEqual(keys(self.admin), everything)
 
     def test_authorised_import_tab_exists_before_the_first_batch(self):
         from apps.documents.upload_center import UploadCenterService
@@ -429,7 +433,9 @@ class LifecycleTests(DocumentTestBase):
                 },
             )
 
-    def test_ia_publishes_training_resources_but_not_policy(self):
+    def test_ia_publishes_training_resources_and_policy(self):
+        # Policy authorship came with the Admin's operational reach (owner,
+        # 2026-11-02); it used to be refused to Impact Assessment.
         training = DocumentService.create(
             self.ia,
             {
@@ -439,15 +445,15 @@ class LifecycleTests(DocumentTestBase):
             },
         )
         self.assertEqual(training.document_type, DocumentType.TRAINING_MANUAL)
-        with self.assertRaises(Forbidden):
-            DocumentService.create(
-                self.ia,
-                {
-                    "title": "IA Policy",
-                    "description": "x",
-                    "document_type": DocumentType.POLICY,
-                },
-            )
+        policy = DocumentService.create(
+            self.ia,
+            {
+                "title": "IA Policy",
+                "description": "x",
+                "document_type": DocumentType.POLICY,
+            },
+        )
+        self.assertEqual(policy.document_type, DocumentType.POLICY)
 
     def test_a_new_version_never_overwrites_the_published_one(self):
         document, version = self._policy()
@@ -1109,8 +1115,8 @@ class DocumentPageTests(DocumentTestBase):
         self.assertIn('href="/ssa/upload/"', body)
         self.assertIn("Upload school data", body)
         self.assertIn("Upload SSA scores", body)
-        self.assertNotIn("Upload policy or manual", body)
-        self.assertNotIn('id="admin-upload-drawer"', body)
+        self.assertIn("Bulk Upload — School Visits", body)
+        self.assertIn("Bulk Upload — Trainings", body)
 
     def test_admin_upload_center_has_one_menu_for_every_admin_upload_action(self):
         from apps.documents.upload_center import UploadCenterService
@@ -1158,13 +1164,15 @@ class DocumentPageTests(DocumentTestBase):
         from apps.documents.upload_center import UploadCenterService
 
         rows = UploadCenterService.rows(self.ia)
-        # The policy is aimed at CCEOs, and IA does not administer documents.
-        self.assertNotIn(self.document.id, [r.record_id for r in rows])
+        # The policy is aimed at CCEOs; Impact Assessment administers
+        # documents now (owner, 2026-11-02), so it sees the record.
+        self.assertIn(self.document.id, [r.record_id for r in rows])
 
     def test_a_reader_outside_the_audience_gets_a_404_not_a_403(self):
         """Whether a confidential policy exists is itself information."""
+        outsider = _user("acct", "Accountant", country="Uganda")
         client = Client()
-        client.force_login(self.ia)
+        client.force_login(outsider)
         self.assertEqual(
             client.get(f"/documents/{self.document.slug}/").status_code, 404
         )

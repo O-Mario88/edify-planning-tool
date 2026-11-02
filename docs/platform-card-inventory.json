@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 617,
-  "templates": 229,
-  "distinct_titles": 591,
+  "titled_cards": 620,
+  "templates": 231,
+  "distinct_titles": 594,
   "with_card_key": 13,
-  "untitled_surfaces": 561,
+  "untitled_surfaces": 566,
   "untitled_chrome": 153,
-  "untitled_nested": 185,
-  "untitled_headless": 223,
+  "untitled_nested": 186,
+  "untitled_headless": 227,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 19,
   "ambiguous_titles": 1
@@ -627,6 +627,33 @@
      0
     ]
    ]
+  },
+  {
+   "template": "templates/pages/bulk_completion/batch.html",
+   "line": 45,
+   "title": "Validation summaryOutcome",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "p-3.5 bg-amber-50 text-amber-800 rounded-surface text-[12px] font-medium",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/bulk_completion/upload.html",
+   "line": 18,
+   "title": "1. Download the template",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "p-3.5 {% if message.tags == 'error' %}bg-rose-50 text-rose-800{% else %}bg-emerald-50 text-emerald-800{% endif %} rounded-surface text-[12px] font-medium",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/bulk_completion/upload.html",
+   "line": 39,
+   "title": "2. Upload the completed file",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface shadow-sm p-6",
+   "branch_path": []
   },
   {
    "template": "templates/pages/business_transformation/financial_health.html",

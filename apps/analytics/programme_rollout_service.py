@@ -72,6 +72,9 @@ from apps.core.interventions import INTERVENTION_LABELS, intervention_abbr
 
 PROGRAM_LEAD = "Program Lead"
 ADMIN = "Admin"
+#: Roles that read any lead's team, choosing the lead: the Admin, and Impact
+#: Assessment with the Admin's operational reach (owner, 2026-11-02).
+LEAD_CHOOSERS = (ADMIN, "ImpactAssessment")
 
 PAGE_URL = "/programme-rollout"
 VIEWS = ("trainings", "ssa", "spiritual")
@@ -341,7 +344,7 @@ def resolve_rollout_scope(principal, *, lead: str | None = None) -> RolloutScope
     options: list = []
     if role == PROGRAM_LEAD:
         lead_user = principal
-    elif role == ADMIN:
+    elif role in LEAD_CHOOSERS:
         lead_user, options = _admin_lead(lead)
     else:
         raise Forbidden(
@@ -353,7 +356,7 @@ def resolve_rollout_scope(principal, *, lead: str | None = None) -> RolloutScope
             lead_staff_id=None,
             lead_user_id=None,
             lead_name="",
-            support_view=role == ADMIN,
+            support_view=role in LEAD_CHOOSERS,
             officers=[],
             lead=None,
             schools={},
@@ -409,7 +412,7 @@ def resolve_rollout_scope(principal, *, lead: str | None = None) -> RolloutScope
         lead_staff_id=lead_staff_id,
         lead_user_id=lead_user.id,
         lead_name=own.name,
-        support_view=role == ADMIN,
+        support_view=role in LEAD_CHOOSERS,
         officers=officers,
         lead=own if own.staff_id else None,
         schools=schools,
@@ -1730,9 +1733,11 @@ def get_rollout(principal, *, view=None, fy=None, lead=None, today=None) -> dict
     fy = clean_fy(fy)
     today = today or timezone.localdate()
     lead = (
-        (lead or "").strip() if getattr(principal, "active_role", "") == ADMIN else ""
+        (lead or "").strip()
+        if getattr(principal, "active_role", "") in LEAD_CHOOSERS
+        else ""
     )
-    if getattr(principal, "active_role", "") not in (PROGRAM_LEAD, ADMIN):
+    if getattr(principal, "active_role", "") not in (PROGRAM_LEAD, *LEAD_CHOOSERS):
         raise Forbidden("Programme Rollout shows a Programme Lead's team.")
     return cached_role_dashboard(
         "programme_rollout",
@@ -1755,7 +1760,7 @@ def school_list(
     if kind not in LIST_KINDS:
         raise BadRequest("Choose which schools to list.")
     fy = clean_fy(fy)
-    lead = lead if getattr(principal, "active_role", "") == ADMIN else None
+    lead = lead if getattr(principal, "active_role", "") in LEAD_CHOOSERS else None
     scope = resolve_rollout_scope(principal, lead=lead)
     member = (member or "").strip()
     cluster = (cluster or "").strip()

@@ -735,6 +735,45 @@ def approve_on_hand_in(activity) -> bool:
     return True
 
 
+def approve_uploaded_completion(activity, uploader_id: str, batch_id: str) -> bool:
+    """Staff work completed by a bulk upload is approved as it lands.
+
+    Owner, 2026-11-02: "everything uploaded do not need PL verification
+    because they are already exported from Saleforce so no need for the PL to
+    verify. PL only verify what the is entered manually". So a completion
+    from the Upload Center's bulk upload is approved by the same writer a
+    lead's Verified uses, recorded against the uploader; work handed in from
+    a drawer still waits for its lead. True when it was approved.
+    """
+    if activity.status not in LEAD_REVIEWABLE_STATUSES:
+        return False
+    if activity.delivery_type == "partner":
+        return False  # partner work is confirmed by Impact Assessment's own step
+    with transaction.atomic():
+        a = Activity.objects.select_for_update().get(pk=activity.pk)
+        if a.status not in LEAD_REVIEWABLE_STATUSES:
+            return False
+        _approve(a, uploader_id)
+        audit_log(
+            action="bulk_completion_auto_approve",
+            subject_kind="Activity",
+            subject_id=a.id,
+            actor_id=uploader_id,
+            reason=(
+                "Completed by a bulk upload of the Salesforce export: approved "
+                "without Programme Lead verification."
+            ),
+            payload={
+                "batchId": batch_id,
+                "schoolId": a.school_id,
+                "activityType": a.activity_type,
+                "responsibleStaffId": a.responsible_staff_id,
+                "salesforceId": a.salesforce_activity_id,
+            },
+        )
+    return True
+
+
 def return_activity(activity_id: str, data: dict, principal) -> dict:
     """PL returns a completion to the CCEO for correction."""
     from apps.activities.services import _serialize

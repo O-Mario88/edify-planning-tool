@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **948**
-- All registered routes: **1433**
+- Routed product surfaces: **954**
+- All registered routes: **1439**
 - API routes: **367**
 - Roles: **15**
-- Permission keys: **127**
-- Scheduled jobs: **40**
+- Permission keys: **128**
+- Scheduled jobs: **41**
 - Activity states: **24**
 - Shared component templates: **667**
-- Full pages: **261**
+- Full pages: **263**
 - Partials and drawers: **340**
-- Permission-gated surfaces: **929**
-- Referenced by automated tests: **857**
+- Permission-gated surfaces: **935**
+- Referenced by automated tests: **863**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -964,6 +964,12 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-9C9EA8284F | /training-summary/schools | Training Summary Schools | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-AB418DCFC9 | /trainings | Trainings Log | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0612DD46E0 | /uploads | Upload Center | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-58DC1B1C99 | /uploads/bulk-completion/<str:kind> | Edify | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-8AC9A4624E | /uploads/bulk-completion/<str:kind>/template | Bulk Completion Template | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-E4F6A0DFC1 | /uploads/bulk-completion/batch/<str:batch_id> | Edify | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-AFF7A16CEC | /uploads/bulk-completion/batch/<str:batch_id>/cancel | Bulk Completion Cancel | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-354E4CF647 | /uploads/bulk-completion/batch/<str:batch_id>/confirm | Bulk Completion Confirm | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-1843748C95 | /uploads/bulk-completion/batch/<str:batch_id>/report | Bulk Completion Report | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-FC00D85DDC | /uploads/new | New Training Resource New Policy or Manual | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-21DD7E92CF | /visits | Visits Log | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8078749C9E | /wellness | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

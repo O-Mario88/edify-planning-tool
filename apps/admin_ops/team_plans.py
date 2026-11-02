@@ -48,8 +48,18 @@ GROUP_BY_CHOICES = [
 
 
 def _require_admin(principal):
-    if getattr(principal, "active_role", None) != "Admin":
+    # Impact Assessment reads it too, inside its country (owner, 2026-11-02).
+    if getattr(principal, "active_role", None) not in ("Admin", "ImpactAssessment"):
         raise Forbidden("Team Plans is an Admin observability surface.")
+
+
+def _in_reach(qs, principal):
+    """The Admin reads the deployment; Impact Assessment its own country."""
+    if getattr(principal, "active_role", None) == "Admin":
+        return qs
+    from apps.core.scoping import activity_country_q, resolve_user_scope
+
+    return qs.filter(activity_country_q(resolve_user_scope(principal)))
 
 
 def _base_queryset(fy: str):
@@ -130,7 +140,7 @@ class AdminTeamPlansService:
         today = timezone.localdate()
         fy = query.get("fy") or get_operational_fy()
 
-        qs = _base_queryset(fy)
+        qs = _in_reach(_base_queryset(fy), principal)
 
         # ── Filters ──────────────────────────────────────────────────────────
         month = (query.get("month") or "").strip()

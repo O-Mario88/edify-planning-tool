@@ -114,6 +114,9 @@ class Permission(str, Enum):
     MANUAL_ACTIVITY_CREATE = "planning.manualActivity.create"
     ACTIVITY_ASSIGN = "activity.assign"
     ACTIVITY_COMPLETE = "activity.complete"
+    # Complete many visits or trainings from one spreadsheet in the Upload
+    # Center (owner, 2026-11-02; apps.bulk_completion).
+    ACTIVITY_BULK_COMPLETE = "activity.bulkComplete"
     ACTIVITY_CATALOGUE_VIEW = "activityCatalogue.view"
     ACTIVITY_CATALOGUE_MANAGE = "activityCatalogue.manage"
     ACTIVITY_CATALOGUE_MAP_INTERVENTIONS = "activityCatalogue.mapInterventions"
@@ -705,6 +708,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # leadership boards and snapshot, which are not bounded to a country.
         P.SSA_VIEW,
         P.SSA_UPLOAD,
+        # Bulk completion of visits and trainings (owner, 2026-11-02).
+        P.ACTIVITY_BULK_COMPLETE,
         P.EVIDENCE_REVIEW,
         P.IA_VERIFY,
         P.ACTIVITY_CATALOGUE_VIEW,
@@ -975,6 +980,66 @@ for _role, _grants in _PARTNER_SUPPORT_GRANTS.items():
     ]
 
 
+# ── Impact Assessment works with Admin's operational reach ──────────────────
+# Owner, 2026-11-02: Impact Assessment "should have the same operational
+# visibility and functionality as an administrator ... with only two
+# exceptions": System Settings and User Management. So IA holds every key the
+# Admin holds — today's and any added later, since this is derived rather than
+# listed — less the ones below, on top of its own authorities (IA_VERIFY and
+# the target and priority keys the Admin is denied). Admin's own exclusions
+# (money approvals, disbursement) are not added by this: they were never the
+# Admin's, so they do not pass through it.
+IA_EXCLUDED_ADMIN_PERMISSIONS: frozenset[Permission] = frozenset(
+    {
+        # User management: the Users page, accounts, partner logins.
+        Permission.USER_MANAGE,
+        Permission.PARTNER_USER_MANAGE,
+        # System settings: the security and platform-health endpoints.
+        # PLANNING_RECALC gates the deployment-wide /api/system-health report
+        # as well as the recompute (apps.system_health), which is why the IA
+        # review of 2026-09-13 took it off this role.
+        Permission.SYSTEM_ADMIN,
+        Permission.PLANNING_RECALC,
+        # Settings pages that set money and the activity master: Cost Settings
+        # (/cost-settings, the rate card) and the Activity Catalogue
+        # (/settings/activity-catalogue). IA reads both; it does not edit
+        # them — "no field role may invent costs", and the verifier must not
+        # set what the work it verifies is priced at.
+        Permission.COST_SETTINGS_MANAGE,
+        Permission.ACTIVITY_CATALOGUE_MANAGE,
+    }
+)
+ROLE_PERMISSIONS[EdifyRole.IMPACT_ASSESSMENT] = [
+    *ROLE_PERMISSIONS[EdifyRole.IMPACT_ASSESSMENT],
+    *(
+        p
+        for p in ROLE_PERMISSIONS[EdifyRole.ADMIN]
+        if p not in IA_EXCLUDED_ADMIN_PERMISSIONS
+        and p not in ROLE_PERMISSIONS[EdifyRole.IMPACT_ASSESSMENT]
+    ),
+]
+
+#: Roles that hold the platform's operational administration: the Admin, and
+#: Impact Assessment outside user management and system settings. A check
+#: that used to ask "is this the Admin?" for an operational power asks this.
+OPERATIONAL_ADMIN_ROLES = frozenset(
+    {EdifyRole.ADMIN.value, EdifyRole.IMPACT_ASSESSMENT.value}
+)
+
+
+def holds_operational_admin(principal_or_role) -> bool:
+    """True for the Admin and for Impact Assessment (owner, 2026-11-02).
+
+    For an operational power only: whether someone may manage users or
+    system settings is still asked of the Admin role alone."""
+    role = (
+        principal_or_role
+        if isinstance(principal_or_role, str)
+        else getattr(principal_or_role, "active_role", None)
+    )
+    return role in OPERATIONAL_ADMIN_ROLES
+
+
 def admin_is_also_cceo(roles, active_role: str | None = None) -> bool:
     """An Admin account is never a CCEO (owner, 2026-10-02: "remove admin from
     being a cceo. Admin should never be a CCEO").
@@ -1007,6 +1072,8 @@ def all_permission_keys() -> list[str]:
 
 __all__ = [
     "EdifyRole",
+    "OPERATIONAL_ADMIN_ROLES",
+    "holds_operational_admin",
     "Permission",
     "ROLE_PERMISSIONS",
     "permissions_for_role",

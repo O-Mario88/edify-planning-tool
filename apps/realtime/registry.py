@@ -685,6 +685,26 @@ JOB_REGISTRY: list[JobSpec] = [
         retryable=True,
         max_retries=1,
     ),
+    JobSpec(
+        name="bulk_completion",
+        description=(
+            "Completes the large bulk-completion uploads people confirmed in "
+            "the Upload Center, as the person who confirmed them "
+            "(apps.bulk_completion.worker); a stretch at a time, every minute."
+        ),
+        cron="every minute Africa/Nairobi",
+        cron_kwargs={"minute": "*"},
+        expected_runtime_seconds=55,
+        max_interval_minutes=10,
+        idempotent=True,
+        idempotency_note=(
+            "A batch is claimed before its lines run, and each line asks again "
+            "whether its activity is still open: a completed line is never "
+            "completed twice, and a stopped run carries on from the next line."
+        ),
+        retryable=True,
+        max_retries=1,
+    ),
 ]
 
 JOB_NAMES = {spec.name for spec in JOB_REGISTRY}

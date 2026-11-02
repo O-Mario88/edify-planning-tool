@@ -45,6 +45,9 @@ COUNTRY_ROLES = {
 COUNTRY_WRITE_ROLES = {
     EdifyRole.COUNTRY_DIRECTOR.value,
     EdifyRole.ADMIN.value,
+    # Owner, 2026-11-02: Impact Assessment has the Admin's operational reach,
+    # the School Directory and school data among it.
+    EdifyRole.IMPACT_ASSESSMENT.value,
 }
 # Who may place field work anywhere in the country. Impact Assessment does its
 # own field work — school visits and assessment training — so it schedules; the

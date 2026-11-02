@@ -150,7 +150,11 @@ ALL_DECISION_ACTIONS = [a for group in DECISION_ACTIONS.values() for a in group]
 
 # Who may read whose decisions.
 GLOBAL_READERS = {EdifyRole.ADMIN.value, EdifyRole.REGIONAL_VICE_PRESIDENT.value}
-COUNTRY_READERS = {EdifyRole.COUNTRY_DIRECTOR.value}
+COUNTRY_READERS = {
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    # Audit records are within Impact Assessment's reach (owner, 2026-11-02).
+    EdifyRole.IMPACT_ASSESSMENT.value,
+}
 
 
 def decision_log(principal, query: dict | None = None) -> dict:

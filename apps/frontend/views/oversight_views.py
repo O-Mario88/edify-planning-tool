@@ -20,7 +20,7 @@ from django.views.decorators.http import require_POST
 from apps.core.request_timing import phase
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.htmx_saved import saved_in_place
-from apps.core.rbac import Permission
+from apps.core.rbac import Permission, holds_operational_admin
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
 from apps.core import export_kinds
 from apps.core.permissions import (
@@ -3672,9 +3672,8 @@ def partner_oversight_view(request):
     # partner delivery here, not the partnership log.
     from apps.partners import engagement_services
 
-    if (
-        engagement_services.can_record(request.user)
-        or request.user.active_role == "Admin"
+    if engagement_services.can_record(request.user) or holds_operational_admin(
+        request.user
     ):
         from apps.frontend.views import partner_engagement_views
 

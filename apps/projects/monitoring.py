@@ -807,7 +807,8 @@ def project_monitoring(
     # added, which are the only ones they see. IA and the Country Director
     # watch. One pair of queries decides every row (capacity.withdrawal_blocks).
     may_withdraw = controls or (
-        getattr(principal, "active_role", "") == "Admin" or not whole
+        getattr(principal, "active_role", "") in ("Admin", "ImpactAssessment")
+        or not whole
     )
     blocks = (
         project_capacity.withdrawal_blocks(

@@ -41,6 +41,8 @@ def _is_admin(principal) -> bool:
     return bool(
         getattr(principal, "is_superuser", False)
         or getattr(principal, "active_role", "") == EdifyRole.ADMIN.value
+        # Impact Assessment has the Admin's operational reach (2026-11-02).
+        or getattr(principal, "active_role", "") == EdifyRole.IMPACT_ASSESSMENT.value
     )
 
 

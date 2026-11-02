@@ -37,8 +37,9 @@ def is_locked(school) -> bool:
 
 
 def may_correct(principal) -> bool:
-    """Only an Admin corrects a cohort once it is set."""
-    return getattr(principal, "active_role", "") == "Admin"
+    """Only an Admin, or Impact Assessment with the Admin's operational
+    reach (owner, 2026-11-02), corrects a cohort once it is set."""
+    return getattr(principal, "active_role", "") in ("Admin", "ImpactAssessment")
 
 
 def latest_year() -> int:

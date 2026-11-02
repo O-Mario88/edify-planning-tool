@@ -760,7 +760,10 @@ class PagesTest(RolloutFixture):
         self.assertEqual((junk.context["fy"], junk.context["view"]), (FY, "trainings"))
 
     def test_who_opens_the_page(self):
-        for user in (self.pl, self.admin):
+        # Impact Assessment reads it as the Admin does, choosing the lead
+        # (owner, 2026-11-02).
+        _ia, _ = _person("roll-ia-user", "Rollout IA", "ImpactAssessment")
+        for user in (self.pl, self.admin, _ia):
             with self.subTest(role=user.active_role):
                 self.client.force_login(user)
                 response = self.client.get("/programme-rollout?view=ssa")
@@ -768,8 +771,7 @@ class PagesTest(RolloutFixture):
                 self.assertNotContains(response, "Access Denied")
         _cd, _ = _person("roll-cd", "Rollout Director", "CountryDirector")
         _hr, _ = _person("roll-hr", "Rollout HR", "HumanResources")
-        _ia, _ = _person("roll-ia-user", "Rollout IA", "ImpactAssessment")
-        for user in (self.alice, self.rpl, _cd, _hr, _ia):
+        for user in (self.alice, self.rpl, _cd, _hr):
             for url in (
                 "/programme-rollout",
                 f"/programme-rollout/schools?kind=ssa_not_planned&member={self.alice_sp.id}",

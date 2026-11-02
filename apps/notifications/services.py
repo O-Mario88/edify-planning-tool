@@ -538,6 +538,14 @@ class NotificationLinkResolver:
         if event_type == "outbox.dead_letter":
             return "/system-health", "Open System Health"
 
+        # A bulk completion upload the scheduler worker finished
+        # (apps.bulk_completion.worker) opens its outcome page.
+        if context_type == "bulk_completion_batch" and context_id:
+            return (
+                f"/uploads/bulk-completion/batch/{context_id}",
+                "Open the upload",
+            )
+
         # A staff pulse survey opens the page the person answers it on.
         if context_type == "pulse_survey" and context_id:
             return f"/pulse/{context_id}", "Answer the survey"

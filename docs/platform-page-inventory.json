@@ -100493,6 +100493,447 @@
     {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
+      "app": "bulk_completion",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.bulk_completion.views",
+      "backend_view": "apps.bulk_completion.views.upload_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:pages/bulk_completion/upload.html",
+        "test:referenced-by-automated-test",
+        "permission:bulk_completion"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "shared-page-header-component",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "bulk_completion",
+      "notifications": false,
+      "page_id": "UI-PAGE-58DC1B1C99",
+      "page_title": "Edify",
+      "page_type": "planning-or-creation",
+      "per_page_css": [],
+      "permission_key": "bulk_completion",
+      "primary_action": "Download Template",
+      "primary_user_decision": "What should be created, scheduled, or allocated?",
+      "purpose": "Complete many at once from the Salesforce export. Every line is matched and checked first, and nothing is completed until you confirm the preview. Uploaded work is approved as it lands; work completed from its drawer still goes to the Programme Lead.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "IA"
+      ],
+      "route": "/uploads/bulk-completion/<str:kind>",
+      "route_name": "bulk_completion_upload",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/bulk_completion/upload.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[14px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "bulk_completion",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.bulk_completion.views",
+      "backend_view": "apps.bulk_completion.views.template_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:bulk_completion"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "bulk_completion",
+      "notifications": false,
+      "page_id": "UI-PAGE-8AC9A4624E",
+      "page_title": "Bulk Completion Template",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "bulk_completion",
+      "primary_action": "Bulk Completion Template",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate bulk completion template within the bulk completion workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "IA"
+      ],
+      "route": "/uploads/bulk-completion/<str:kind>/template",
+      "route_name": "bulk_completion_template",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "bulk_completion",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.bulk_completion.views",
+      "backend_view": "apps.bulk_completion.views.batch_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:pages/bulk_completion/batch.html",
+        "test:referenced-by-automated-test",
+        "permission:bulk_completion"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "shared-page-header-component",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "bulk_completion",
+      "notifications": false,
+      "page_id": "UI-PAGE-E4F6A0DFC1",
+      "page_title": "Edify",
+      "page_type": "planning-or-creation",
+      "per_page_css": [],
+      "permission_key": "bulk_completion",
+      "primary_action": "Confirm Bulk Completion ( )",
+      "primary_user_decision": "What should be created, scheduled, or allocated?",
+      "purpose": "\u00b7 uploaded \u00b7 on",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "IA"
+      ],
+      "route": "/uploads/bulk-completion/batch/<str:batch_id>",
+      "route_name": "bulk_completion_batch",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/uploads/bulk-completion/batch/{{ batch.id }}/cancel",
+        "/uploads/bulk-completion/batch/{{ batch.id }}/confirm"
+      ],
+      "services_and_models": [],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/bulk_completion/batch.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[14px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "bulk_completion",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.bulk_completion.views",
+      "backend_view": "apps.bulk_completion.views.cancel_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:bulk_completion"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "bulk_completion",
+      "notifications": false,
+      "page_id": "UI-PAGE-AFF7A16CEC",
+      "page_title": "Bulk Completion Cancel",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "bulk_completion",
+      "primary_action": "Bulk Completion Cancel",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate bulk completion cancel within the bulk completion workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "IA"
+      ],
+      "route": "/uploads/bulk-completion/batch/<str:batch_id>/cancel",
+      "route_name": "bulk_completion_cancel",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "bulk_completion",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.bulk_completion.views",
+      "backend_view": "apps.bulk_completion.views.confirm_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:bulk_completion"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "bulk_completion",
+      "notifications": false,
+      "page_id": "UI-PAGE-354E4CF647",
+      "page_title": "Bulk Completion Confirm",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "bulk_completion",
+      "primary_action": "Bulk Completion Confirm",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate bulk completion confirm within the bulk completion workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "IA"
+      ],
+      "route": "/uploads/bulk-completion/batch/<str:batch_id>/confirm",
+      "route_name": "bulk_completion_confirm",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "bulk_completion",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.bulk_completion.views",
+      "backend_view": "apps.bulk_completion.views.error_report_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:bulk_completion"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "bulk_completion",
+      "notifications": false,
+      "page_id": "UI-PAGE-1843748C95",
+      "page_title": "Bulk Completion Report",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "bulk_completion",
+      "primary_action": "Bulk Completion Report",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate bulk completion report within the bulk completion workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "IA"
+      ],
+      "route": "/uploads/bulk-completion/batch/<str:batch_id>/report",
+      "route_name": "bulk_completion_report",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
       "app": "documents",
       "audit_events": true,
       "automated_quality_score": 9.4,
@@ -101390,6 +101831,7 @@
       "apps.autopilot",
       "apps.budget",
       "apps.budget_intelligence",
+      "apps.bulk_completion",
       "apps.business_transformation",
       "apps.cce_leadership",
       "apps.clusters",
@@ -101460,6 +101902,7 @@
       "planning.manualActivity.create",
       "activity.assign",
       "activity.complete",
+      "activity.bulkComplete",
       "activityCatalogue.view",
       "activityCatalogue.manage",
       "activityCatalogue.mapInterventions",
@@ -102166,6 +102609,20 @@
         "max_interval_minutes": 10,
         "max_retries": 1,
         "name": "export_jobs",
+        "retryable": true
+      },
+      {
+        "cron": "every minute Africa/Nairobi",
+        "cron_kwargs": {
+          "minute": "*"
+        },
+        "description": "Completes the large bulk-completion uploads people confirmed in the Upload Center, as the person who confirmed them (apps.bulk_completion.worker); a stretch at a time, every minute.",
+        "expected_runtime_seconds": 55,
+        "idempotency_note": "A batch is claimed before its lines run, and each line asks again whether its activity is still open: a completed line is never completed twice, and a stopped run carries on from the next line.",
+        "idempotent": true,
+        "max_interval_minutes": 10,
+        "max_retries": 1,
+        "name": "bulk_completion",
         "retryable": true
       }
     ]
@@ -123173,6 +123630,83 @@
       ]
     },
     {
+      "callback": "apps.bulk_completion.views.upload_view",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "bulk_completion",
+      "required_permissions": [],
+      "route": "/uploads/bulk-completion/<str:kind>",
+      "route_name": "bulk_completion_upload",
+      "templates": [
+        "pages/bulk_completion/upload.html"
+      ]
+    },
+    {
+      "callback": "apps.bulk_completion.views.template_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "bulk_completion",
+      "required_permissions": [],
+      "route": "/uploads/bulk-completion/<str:kind>/template",
+      "route_name": "bulk_completion_template",
+      "templates": []
+    },
+    {
+      "callback": "apps.bulk_completion.views.batch_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "bulk_completion",
+      "required_permissions": [],
+      "route": "/uploads/bulk-completion/batch/<str:batch_id>",
+      "route_name": "bulk_completion_batch",
+      "templates": [
+        "pages/bulk_completion/batch.html"
+      ]
+    },
+    {
+      "callback": "apps.bulk_completion.views.cancel_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "bulk_completion",
+      "required_permissions": [],
+      "route": "/uploads/bulk-completion/batch/<str:batch_id>/cancel",
+      "route_name": "bulk_completion_cancel",
+      "templates": []
+    },
+    {
+      "callback": "apps.bulk_completion.views.confirm_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "bulk_completion",
+      "required_permissions": [],
+      "route": "/uploads/bulk-completion/batch/<str:batch_id>/confirm",
+      "route_name": "bulk_completion_confirm",
+      "templates": []
+    },
+    {
+      "callback": "apps.bulk_completion.views.error_report_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "bulk_completion",
+      "required_permissions": [],
+      "route": "/uploads/bulk-completion/batch/<str:batch_id>/report",
+      "route_name": "bulk_completion_report",
+      "templates": []
+    },
+    {
       "callback": "apps.documents.views.new_document_view",
       "kind": "page",
       "methods": [
@@ -123341,39 +123875,39 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 604,
+    "accessibility_contract_pass": 606,
     "activity_states": 24,
-    "all_routes": 1433,
+    "all_routes": 1439,
     "api_routes": 367,
     "component_templates": 667,
-    "full_pages": 261,
-    "mobile_contract_pass": 604,
-    "nonvisual_actions": 306,
+    "full_pages": 263,
+    "mobile_contract_pass": 606,
+    "nonvisual_actions": 310,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 7,
       "approval-or-verification": 19,
       "dashboard": 0,
-      "interaction-fragment": 646,
+      "interaction-fragment": 650,
       "operational-queue": 160,
-      "planning-or-creation": 14,
+      "planning-or-creation": 16,
       "record-detail": 30,
       "report": 49
     },
     "partials_and_drawers": 340,
-    "permission_gated": 929,
-    "permission_keys": 127,
+    "permission_gated": 935,
+    "permission_keys": 128,
     "roles": 15,
-    "routed_surfaces": 948,
-    "scheduled_jobs": 40,
+    "routed_surfaces": 954,
+    "scheduled_jobs": 41,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 604,
-    "test_referenced": 857,
-    "theme_contract_pass": 604
+    "tablet_contract_pass": 606,
+    "test_referenced": 863,
+    "theme_contract_pass": 606
   }
 }

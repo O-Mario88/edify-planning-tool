@@ -59,13 +59,12 @@ class PartnerOrganisationPermissionTests(TestCase):
         self.assertTrue(has_permission(self.admin, users))
         # Logins are the Admin's alone since 2026-10-09.
         self.assertFalse(has_permission(self.cd, users))
-        for permission in (
-            users,
-            Permission.USER_MANAGE.value,
-            Permission.PARTNER_MANAGE.value,
-        ):
+        # Logins stay the Admin's; managing organisations came to Impact
+        # Assessment with the Admin's operational reach (owner, 2026-11-02).
+        for permission in (users, Permission.USER_MANAGE.value):
             with self.subTest(permission=permission):
                 self.assertFalse(has_permission(self.ia, permission))
+        self.assertTrue(has_permission(self.ia, Permission.PARTNER_MANAGE.value))
 
     # ── Creating an organisation ─────────────────────────────────────────
     def test_admin_cd_and_ia_each_add_an_organisation(self):

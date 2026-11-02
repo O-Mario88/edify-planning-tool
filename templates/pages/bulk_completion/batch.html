@@ -1,0 +1,103 @@
+{% extends "layouts/shell.html" %}
+{% load components %}
+{% load table_pagination %}
+
+{% block title %}{{ text.title }} — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="upload">
+
+{% page_header eyebrow="Upload Center" element="div" %}
+  {% slot title %}{% if staged %}Preview: {% endif %}{{ batch.file_name }}{% endslot %}
+  {% slot description %}{{ text.title }} · uploaded {{ batch.created_at|date:"d M Y H:i" }} · {{ batch.get_status_display }}{% if batch.applied_at %} on {{ batch.applied_at|date:"d M Y H:i" }}{% endif %}{% endslot %}
+  {% if staged %}
+  <form method="post" action="/uploads/bulk-completion/batch/{{ batch.id }}/cancel">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary h-8">Cancel Upload</button>
+  </form>
+  <form method="post" action="/uploads/bulk-completion/batch/{{ batch.id }}/confirm" x-data="{ submitting: false }" @submit="submitting = true">
+    {% csrf_token %}
+    <button type="submit" :disabled="submitting" {% if not summary.ready %}disabled{% endif %} class="min-h-11 px-4 edify-primary-solid edify-primary-hover text-white font-medium text-[12px] rounded-control transition-colors disabled:cursor-wait disabled:opacity-70" x-text="submitting ? 'Completing…' : 'Confirm Bulk Completion ({{ summary.ready }})'">
+      Confirm Bulk Completion ({{ summary.ready }})
+    </button>
+  </form>
+  {% endif %}
+  {% if summary.review or summary.invalid or summary.failed or summary.skipped or summary.duplicates %}
+  <a href="/uploads/bulk-completion/batch/{{ batch.id }}/report" class="btn btn-secondary h-8">Download error report</a>
+  {% endif %}
+  {% include "partials/_back_link.html" with back_href=back_href back_label=text.title %}
+{% endpage_header %}
+
+{% if messages %}
+<div class="space-y-2">
+  {% for message in messages %}
+  <div class="p-3.5 {% if message.tags == 'error' %}bg-rose-50 text-rose-800{% else %}bg-emerald-50 text-emerald-800{% endif %} rounded-surface text-[12px] font-medium" role="status">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if earlier %}
+<div class="p-3.5 bg-amber-50 text-amber-800 rounded-surface text-[12px] font-medium" role="status">
+  This file was uploaded before, on {{ earlier.created_at|date:"d M Y H:i" }}. Its lines were checked again: work that upload completed is skipped as already completed, so nothing is counted twice.
+</div>
+{% endif %}
+{% if applying %}
+<div class="p-3.5 bg-amber-50 text-amber-800 rounded-surface text-[12px] font-medium" role="status" aria-live="polite">
+  Completing in the background: {{ summary.completed }} done, {{ summary.ready }} still to go. This page refreshes itself, and you will be notified when it is finished.
+</div>
+<script>setTimeout(() => window.location.reload(), 10000);</script>
+{% endif %}
+
+<div class="edify-surface rounded-surface shadow-sm p-5">
+  <h3 class="text-[14px] font-semibold text-slate-800">{% if staged %}Validation summary{% else %}Outcome{% endif %}</h3>
+  <ul role="list" class="mt-3 flex flex-wrap gap-2 text-[12px] font-semibold">
+    <li class="px-2 py-0.5 rounded-pill bg-slate-50 text-slate-700">{{ summary.total }} lines uploaded</li>
+    {% if staged %}<li class="px-2 py-0.5 rounded-pill bg-emerald-50 text-emerald-700">{{ summary.ready }} ready to complete</li>{% endif %}
+    {% if not staged %}<li class="px-2 py-0.5 rounded-pill bg-emerald-50 text-emerald-700">{{ summary.completed }} completed</li>{% endif %}
+    <li class="px-2 py-0.5 rounded-pill bg-slate-50 text-slate-700">{{ summary.skipped }} already completed, skipped</li>
+    <li class="px-2 py-0.5 rounded-pill bg-slate-50 text-slate-700">{{ summary.duplicates }} duplicates in the file</li>
+    <li class="px-2 py-0.5 rounded-pill bg-amber-50 text-amber-700">{{ summary.review }} need review</li>
+    <li class="px-2 py-0.5 rounded-pill bg-rose-50 text-rose-700">{{ summary.invalid }} invalid or unmatched IDs</li>
+    {% if not staged %}<li class="px-2 py-0.5 rounded-pill bg-rose-50 text-rose-700">{{ summary.failed }} failed</li>{% endif %}
+  </ul>
+  {% if staged %}<p class="mt-3 edify-text-caption text-slate-400">Only the ready lines are completed when you confirm. The others stay as they are; put them right and upload them again, or complete them from their drawers.</p>{% endif %}
+</div>
+
+{% for section in sections %}
+{% paginate section.rows section.param as pager %}
+{% data_table name="bulk-"|add:section.key %}
+  {% slot title %}{{ section.label }}{% endslot %}
+  {% slot summary %}{{ pager.total }} lines{% endslot %}
+  {% slot caption %}{{ section.label }}: each uploaded line, the activity it matched and why.{% endslot %}
+  {% slot footer %}{% include "components/table_pager.html" with pager=pager param=section.param %}{% endslot %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2 text-right">Row</th>
+      <th scope="col" class="px-3 py-2">School ID</th>
+      <th scope="col" class="px-3 py-2">Edify Activity ID</th>
+      <th scope="col" class="px-3 py-2">{{ text.id_label }}</th>
+      <th scope="col" class="px-3 py-2">Completion Date</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in pager.rows %}{% with row=item.row %}
+    <tr>
+      <th scope="row" class="px-3 py-2 text-right tabular-nums" data-record-title>{{ row.row_number }}</th>
+      <td class="px-3 py-2" data-label="School ID">{{ row.school_code|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Edify Activity ID">{% if row.activity_id %}<a href="/my-plan/{{ row.activity_id }}" class="edify-primary-text font-semibold hover:underline">{{ row.activity_id }}</a>{% else %}—{% endif %}</td>
+      <td class="px-3 py-2" data-label="{{ text.id_label }}">{{ row.salesforce_id|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Completion Date">{{ row.completed_on|date:"Y-m-d"|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Status">
+        <span class="px-2 py-0.5 rounded-pill border font-bold {{ item.status_class }}">{{ item.status_label }}</span>
+        {% if item.note %}<span class="block mt-1 edify-text-caption text-slate-500 whitespace-normal">{{ item.note }}</span>{% endif %}
+      </td>
+    </tr>
+    {% endwith %}
+    {% endfor %}
+  </tbody>
+{% enddata_table %}
+{% endfor %}
+
+</div>
+{% endblock %}

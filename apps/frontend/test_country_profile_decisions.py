@@ -114,12 +114,13 @@ class TheReviewIsOnTheOverviewTest(DecisionFixture):
         self.assertIn('value="review_leadership"', body)
         self.assertNotIn('value="review_budget"', body)
 
-    def test_a_reader_without_the_review_sees_no_queue(self):
+    def test_impact_assessment_reviews_with_the_admins_reach(self):
+        # Every reader of this page holds the review now: Impact Assessment
+        # gained it with the Admin's operational reach (owner, 2026-11-02).
         body = self.overview(self.ia)
 
-        self.assertNotIn('id="profile-decisions"', body)
-        self.assertNotIn(OPERATIONAL, body)
-        self.assertNotIn("decision awaits you", body)
+        self.assertIn('id="profile-decisions"', body)
+        self.assertIn(OPERATIONAL, body)
 
     def test_the_queue_is_on_the_overview_alone(self):
         self.client.force_login(self.cd)

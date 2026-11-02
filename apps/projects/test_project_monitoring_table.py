@@ -533,12 +533,18 @@ class OnlyTheCoordinatorLinksPartnersTest(_TableFixture):
         ProjectPartnerAssignment.objects.create(
             project=self.project, partner=self.partner
         )
-        for user in (self.lead_user, self.ia_user, self.stranger_user):
+        # Impact Assessment changes project work with the Admin's operational
+        # reach (owner, 2026-11-02), so it is not among the refused.
+        for user in (self.lead_user, self.stranger_user):
             with self.subTest(role=user.email):
                 self.assertEqual(self.link(user).status_code, 403)
                 self.assertEqual(self.unlink(user).status_code, 403)
         self.assertFalse(self.linked(self.other_partner))
         self.assertTrue(self.linked(self.partner))
+
+    def test_impact_assessment_links_and_unlinks(self):
+        self.assertEqual(self.link(self.ia_user).status_code, 201)
+        self.assertTrue(self.linked(self.other_partner))
 
     def test_the_projects_coordinator_links_and_unlinks(self):
         from apps.projects.models import ProjectPartnerAssignment

@@ -370,7 +370,7 @@ class OnlyTheCoordinatorActsTest(_Fixture):
                 self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_everyone_else_reads(self):
-        for user in (self.lead_user, self.ia_user):
+        for user in (self.lead_user,):
             with self.subTest(role=user.active_role):
                 self.client.force_login(user)
                 response = self.client.get("/projects/monitoring", {"fy": self.fy})
@@ -383,16 +383,15 @@ class OnlyTheCoordinatorActsTest(_Fixture):
                 self.assertIn("Read only", html)
         # The officer who added a school may withdraw it before its work
         # begins (brief, 2026-09-29), so their row carries a menu with View
-        # and Withdraw from project; Impact Assessment watches, and View alone
-        # is its own button, not a menu.
-        self.client.force_login(self.lead_user)
-        html = self.client.get("/projects/monitoring", {"fy": self.fy}).content
-        self.assertIn(b'aria-label="Actions for Unplanned Primary"', html)
-        self.assertIn(b'data-enrolment-withdraw="open"', html)
-        self.client.force_login(self.ia_user)
-        html = self.client.get("/projects/monitoring", {"fy": self.fy}).content
-        self.assertNotIn(b'aria-label="Actions for Unplanned Primary"', html)
-        self.assertNotIn(b"data-enrolment-withdraw", html)
+        # and Withdraw from project. Impact Assessment acts on project work
+        # with the Admin's operational reach (owner, 2026-11-02), so its row
+        # carries the same menu.
+        for user in (self.lead_user, self.ia_user):
+            with self.subTest(menu=user.active_role):
+                self.client.force_login(user)
+                html = self.client.get("/projects/monitoring", {"fy": self.fy}).content
+                self.assertIn(b'aria-label="Actions for Unplanned Primary"', html)
+                self.assertIn(b'data-enrolment-withdraw="open"', html)
 
     def test_a_paused_project_offers_the_coordinator_no_new_work(self):
         Project.objects.filter(id=self.project.id).update(status="paused")

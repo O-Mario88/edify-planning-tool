@@ -103,6 +103,12 @@ class ChampionGraduationFollowsOwnershipTest(TestCase):
         )
         self.assertEqual(self._status(), ("Champion", "champion"))
 
+    def test_impact_assessment_may_graduate_any_school(self):
+        self.assertTrue(
+            ChampionEligibilityService.approve(self.school.school_id, self.ia)
+        )
+        self.assertEqual(self._status(), ("Champion", "champion"))
+
     def test_another_cceo_may_not_graduate_it(self):
         """The hole: the school reference came from the URL and was trusted."""
         with self.assertRaises(Forbidden):
@@ -124,7 +130,9 @@ class ChampionGraduationFollowsOwnershipTest(TestCase):
         visibility as authority and hand both of them the Country Director's
         programme decisions — which is why the rule reads COUNTRY_WRITE_ROLES.
         """
-        for verifier in (self.ia, self.accountant):
+        # Impact Assessment writes school data with the Admin's operational
+        # reach (owner, 2026-11-02); the Accountant still only reads.
+        for verifier in (self.accountant,):
             with self.subTest(role=verifier.active_role):
                 with self.assertRaises(Forbidden):
                     ChampionEligibilityService.approve(self.school.school_id, verifier)
