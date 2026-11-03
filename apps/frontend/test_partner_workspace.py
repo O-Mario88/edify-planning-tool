@@ -312,6 +312,36 @@ class PartnerWorkspaceTests(TestCase):
         self.assertNotIn('name="project_id"', html)
         self.assertNotIn("Cost calculation happens", html)
 
+    # Partner audit, 2026-11-03: the calendar offered days before today, which
+    # the save then refused ("... has passed").
+    def test_partner_schedule_drawer_offers_no_day_before_today(self):
+        assignment = PartnerAssignment.objects.filter(
+            school=self.school, status="pending_scheduling"
+        ).first()
+        self.client.force_login(self._partner_user())
+        html = self.client.get(
+            f"/partner/assignments/{assignment.id}/schedule-drawer",
+            HTTP_HX_REQUEST="true",
+        ).content.decode()
+        self.assertRegex(
+            html,
+            rf'name="scheduled_date"[^>]*min="{timezone.localdate().isoformat()}"',
+        )
+
+    # Partner audit, 2026-11-03: after Schedule saved, the page still said
+    # "Awaiting Your Decision" and offered Schedule and Return until Refresh.
+    # It reads nothing (owner, 2026-10-14) but hears the save's event.
+    def test_the_assignment_page_shows_the_decision_made_once_it_saves(self):
+        assignment = PartnerAssignment.objects.filter(
+            school=self.school, status="pending_scheduling"
+        ).first()
+        self.client.force_login(self._partner_user())
+        html = self.client.get(f"/partner/assignments/{assignment.id}").content.decode()
+        self.assertIn("Awaiting Your Decision", html)
+        self.assertEqual(html.count('@planning-saved.window="scheduled = true"'), 2)
+        self.assertIn('x-show="scheduled" x-cloak', html)
+        self.assertIn("Scheduled — on My Plan", html)
+
     def test_partner_scheduling_stamps_ssa_support_as_score_collection(self):
         school = School.objects.create(
             school_id="PARTNER-SSA-SCHEDULE-004",

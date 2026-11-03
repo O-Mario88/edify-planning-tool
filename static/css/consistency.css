@@ -1559,7 +1559,9 @@ main .settings-detail-tile {
 }
 
 /* Blue primary actions stay unmistakable through white-on-Edify-blue contrast,
-   not gradients or elevation. Secondary actions use the card/filter surface. */
+   not gradients or elevation. Secondary actions use the card/filter surface.
+   A disabled one is left to the disabled mute (partner audit, 2026-11-03):
+   this fill outranked it, so a Submit that could not be pressed looked live. */
 :is(.theme-blue, .theme-dark) :is(
   .btn-primary,
   .btn-premium-primary,
@@ -1586,7 +1588,7 @@ main .settings-detail-tile {
   a.bg-sky-700,
   button.bg-cyan-600,
   a.bg-cyan-600
-) {
+):not(:disabled) {
   color: var(--edify-on-accent, #ffffff) !important;
   background-color: var(--edify-accent) !important;
   background-image: none !important;
@@ -1662,7 +1664,7 @@ main .settings-detail-tile {
   a.bg-sky-700,
   button.bg-cyan-600,
   a.bg-cyan-600
-) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
+):not(:disabled) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
   color: var(--edify-on-accent, #ffffff) !important;
   fill: currentColor;
 }

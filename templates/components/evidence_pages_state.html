@@ -62,6 +62,8 @@ The text below sits inside a double-quoted attribute: no double quotes.
     const picked = Array.from(input.files || []);
     if (!picked.length) return;
     this.notice = '';
+    // The last Submit's refusal no longer applies once a page is added.
+    document.getElementById('evidence-errors')?.replaceChildren();
     if (!this.canMerge()) {
       this.pages = [this.page(picked[picked.length - 1])];
       if (input !== this.$refs.mainInput) this.$refs.mainInput.files = input.files;
@@ -112,7 +114,11 @@ The text below sits inside a double-quoted attribute: no double quotes.
   },
   async shrink(file) {
     const LONG_EDGE = 2000;
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 1024 * 1024) return file;
+    // HEIC (an iPhone photo picked as a file) is redrawn as JPEG whatever
+    // its size where the browser can read it (Safari); elsewhere it is sent
+    // as it is and the server says what to do.
+    const heic = /^image\/hei[cf]$/.test(file.type);
+    if (!heic && (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 1024 * 1024)) return file;
     const url = URL.createObjectURL(file);
     try {
       const img = new Image();
@@ -130,7 +136,7 @@ The text below sits inside a double-quoted attribute: no double quotes.
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
-      if (!blob || blob.size >= file.size) return file;
+      if (!blob || (!heic && blob.size >= file.size)) return file;
       const stem = (file.name || 'photo').replace(/\.[^.]+$/, '');
       return new File([blob], stem + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
     } catch (err) {

@@ -320,7 +320,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5405,
+      "bytes": 5820,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence",
@@ -12322,7 +12322,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4751,
+      "bytes": 4776,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/schedule-drawer"
