@@ -46,7 +46,7 @@
 
   <div class="space-y-1">
     <label for="partner-scheduled-date" class="block edify-text-caption font-semibold text-slate-600">Delivery date <span class="text-rose-500">*</span></label>
-    <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    <input id="partner-scheduled-date" name="scheduled_date" type="date" required min="{{ earliest_day }}" class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
   {% comment %}Chosen from the organisation's team (owner, 2026-10-08: the

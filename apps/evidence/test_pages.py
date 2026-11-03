@@ -173,6 +173,31 @@ class RecordPagesUploadTest(TestCase):
             self._upload([photo(), sheet])
         self.assertFalse(EvidenceRecord.objects.filter(activity=self.activity).exists())
 
+    # Partner audit, 2026-11-03: the drawer offers WebP, and a WebP photo was
+    # refused as "content does not match its declared type".
+    def test_a_webp_photo_is_a_page(self):
+        webp = photo("p1.webp", fmt="WEBP", content_type="image/webp")
+        result = self._upload([webp, photo("p2.jpg")])
+        record = EvidenceRecord.objects.get(id=result["id"])
+        with open_file(services.EVIDENCE_NAMESPACE, record.uri) as stored:
+            self.assertEqual(len(PdfReader(io.BytesIO(stored.read())).pages), 2)
+
+    def test_one_webp_photo_alone_is_stored(self):
+        result = self._upload(
+            [photo("scan.webp", fmt="WEBP", content_type="image/webp")]
+        )
+        self.assertTrue(EvidenceRecord.objects.filter(id=result["id"]).exists())
+
+    def test_a_heic_photo_is_refused_with_what_to_do(self):
+        heic = SimpleUploadedFile(
+            "IMG_0001.HEIC",
+            b"\x00\x00\x00\x18ftypheic\x00\x00\x00\x00mif1heic" + b"\x00" * 64,
+            content_type="image/heic",
+        )
+        with self.assertRaisesMessage(BadRequest, "JPEG"):
+            self._upload([heic])
+        self.assertFalse(EvidenceRecord.objects.filter(activity=self.activity).exists())
+
     def test_an_infected_page_rejects_the_whole_upload_before_anything_is_stored(self):
         verdicts = iter([("clean", None), ("infected", "Eicar-Test-Signature")])
         with patch.object(

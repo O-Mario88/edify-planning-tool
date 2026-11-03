@@ -729,7 +729,9 @@ def session_state_view(request):
 def logout_view(request):
     record_logout(request, request.user)
     django_logout(request)
-    messages.success(request, "Logged out successfully.")
+    # The sign-in page's own notice: a message would wait, unseen, and show
+    # after the next sign-in (partner audit, 2026-11-03).
+    _flash(request, "Logged out successfully.", ok=True)
     return redirect("/login")
 
 

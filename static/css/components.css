@@ -3417,10 +3417,9 @@ svg[data-edify-svg-typography] text {
   justify-content: center;
   padding: 20px;
   border-radius: inherit;
-  /* The same frosted treatment the drawer backdrop uses, so the two read as
-     one system rather than two. */
-  background: color-mix(in srgb, var(--edify-surface) 72%, transparent);
-  backdrop-filter: blur(6px);
+  /* The drawer scrim's navy tint, with no blur (owner, 2026-10-31: "remove
+     blury background"), so the two read as one system. */
+  background: var(--edify-drawer-scrim);
 }
 
 .drawer-discard__panel {

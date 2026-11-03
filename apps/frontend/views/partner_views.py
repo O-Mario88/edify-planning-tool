@@ -1571,6 +1571,9 @@ def partner_schedule_assignment_drawer(request, assignment_id):
                 assignment.partner, assignment.school_id
             )
             or request.user.name,
+            # Work is scheduled today onwards (fy_policy.assert_date_plannable),
+            # so the calendar offers no day before it.
+            "earliest_day": timezone.localdate().isoformat(),
             "drawer_size": "md",
         },
     )

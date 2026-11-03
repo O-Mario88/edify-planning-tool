@@ -4,23 +4,23 @@
  "summary": {
   "by_evidence": {
    "browser-rendered": 867,
-   "none": 247,
-   "page-tested": 1588,
-   "request-tested": 1409
+   "none": 245,
+   "page-tested": 1590,
+   "request-tested": 1410
   },
   "by_kind": {
    "button": 1425,
    "disclosure": 62,
    "field": 1361,
-   "link": 1205,
+   "link": 1206,
    "tab": 58
   },
-  "controls": 4111,
+  "controls": 4112,
   "high_consequence": 211,
   "state_changing": 482,
   "templates_scanned": 693,
   "unresolved_destinations": 0,
-  "untested": 247,
+  "untested": 245,
   "untested_state_changing": 19
  },
  "templates": {
@@ -12865,11 +12865,12 @@
   {"accessible_name": "Return", "destination": "/partner/assignments/{{ a.id }}/return-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/return-drawer", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-04649C920F1E", "kind": "button", "line": 77, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assigned_list.html"},
   {"accessible_name": "Schedule", "destination": "/partner/assignments/{{ a.id }}/schedule-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/schedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-91F194B21A4E", "kind": "button", "line": 81, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assigned_list.html"},
   {"accessible_name": "Schedule unavailable: {{ a.schedule_blocked_reason }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-05628E37030F", "kind": "button", "line": 85, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assigned_list.html"},
-  {"accessible_name": "{{ a.cluster.name }}", "destination": "/clusters/{{ a.cluster.id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-6EE2E2EFFEDB", "kind": "link", "line": 45, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partner/assignment_detail.html"},
-  {"accessible_name": "Return", "destination": "/partner/assignments/{{ a.id }}/return-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/return-drawer", "evidence": "none", "high_consequence": false, "id": "INT-9DB1D47553C3", "kind": "button", "line": 64, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assignment_detail.html"},
-  {"accessible_name": "Schedule", "destination": "/partner/assignments/{{ a.id }}/schedule-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/schedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-D7755D5B69B3", "kind": "button", "line": 70, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assignment_detail.html"},
-  {"accessible_name": "Schedule unavailable: {{ a.schedule_blocked_reason }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-FC55ECF836AA", "kind": "button", "line": 76, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assignment_detail.html"},
-  {"accessible_name": "My Plan", "destination": "/partner/my-plan", "destination_route": "/partner/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-8B794D23F497", "kind": "link", "line": 87, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partner/assignment_detail.html"},
+  {"accessible_name": "{{ a.cluster.name }}", "destination": "/clusters/{{ a.cluster.id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-6EE2E2EFFEDB", "kind": "link", "line": 47, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partner/assignment_detail.html"},
+  {"accessible_name": "Return", "destination": "/partner/assignments/{{ a.id }}/return-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/return-drawer", "evidence": "page-tested", "high_consequence": false, "id": "INT-9DB1D47553C3", "kind": "button", "line": 68, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assignment_detail.html"},
+  {"accessible_name": "Schedule", "destination": "/partner/assignments/{{ a.id }}/schedule-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/schedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-D7755D5B69B3", "kind": "button", "line": 74, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assignment_detail.html"},
+  {"accessible_name": "Schedule unavailable: {{ a.schedule_blocked_reason }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FC55ECF836AA", "kind": "button", "line": 80, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assignment_detail.html"},
+  {"accessible_name": "My Plan", "destination": "/partner/my-plan", "destination_route": "/partner/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-8B794D23F497", "kind": "link", "line": 91, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partner/assignment_detail.html"},
+  {"accessible_name": "My Plan", "destination": "/partner/my-plan", "destination_route": "/partner/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-1656D797DF48", "kind": "link", "line": 94, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partner/assignment_detail.html"},
   {"accessible_name": "Schedule", "destination": "/partner/assignments/{{ a.id }}/schedule-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/schedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-6ED06BFFCC58", "kind": "button", "line": 26, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/assignments.html"},
   {"accessible_name": "My Plan", "destination": "/partner/my-plan", "destination_route": "/partner/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-2372381AC7EF", "kind": "link", "line": 51, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partner/assignments.html"},
   {"accessible_name": "Schools", "destination": "?tab=schools", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-B40623285244", "kind": "link", "line": 15, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partner/completed_payments.html"},

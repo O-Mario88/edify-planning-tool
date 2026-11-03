@@ -1499,12 +1499,6 @@
   transform: none;
 }
 
-.drawer-discard {
-  background: color-mix(in srgb, #071f34 62%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
 .drawer-discard__panel {
   border-color: var(--edify-border-strong);
   border-radius: var(--edify-radius-lg);

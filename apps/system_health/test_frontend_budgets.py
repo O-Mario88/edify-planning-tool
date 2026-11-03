@@ -216,7 +216,13 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: role home's label kept above its title (components/interactions.css)
     #: and its count captioned (components/mobile-patterns.css), comments
     #: cut to the bone. Measured 249.22 KB with main's notification styles.
-    CSS_GZIP_KB = 249.3
+    #: Raised to 249.4 on 2026-11-03 for the partner audit the owner asked to
+    #: fix ("Yes, fix them"): a disabled primary button looks disabled in the
+    #: blue and dark themes, whose fill outranked the mute (`:not(:disabled)`
+    #: on consistency.css's two primary rules, repeated per selector by the
+    #: build). Paid down by the duplicate blurred discard cover deleted from
+    #: drawers.css. Measured 249.375 KB.
+    CSS_GZIP_KB = 249.4
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:

@@ -21,7 +21,6 @@ ALLOWED_MIME_TYPES = {
     "image/jpeg",
     "image/png",
     "image/webp",
-    "image/heic",
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -39,7 +38,6 @@ EXTENSION_FAMILY = {
     ".jpeg": ["jpeg"],
     ".png": ["png"],
     ".webp": ["webp"],
-    ".heic": ["heic"],
     ".pdf": ["pdf"],
     ".doc": ["ole"],
     ".docx": ["zip"],
@@ -72,6 +70,15 @@ BLOCKED_EXTENSIONS = {
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
+#: The iPhone's own photo format. It was listed as allowed, but no signature
+#: ever matched it and nothing here can open it (partner audit, 2026-11-03),
+#: so it is refused up front with what to do instead.
+HEIC_EXTENSIONS = {".heic", ".heif"}
+HEIC_REFUSAL = (
+    "HEIC photos (the iPhone's own format) cannot be opened here. Save the "
+    "photo as JPEG, or take it again with the camera, and upload that."
+)
+
 
 # Magic-byte signatures (offset, bytes).
 _SIGNATURES = {
@@ -83,6 +90,11 @@ _SIGNATURES = {
 }
 
 
+def _is_webp(head: bytes) -> bool:
+    """A WebP file is a RIFF container whose form type is WEBP."""
+    return head[:4] == b"RIFF" and head[8:12] == b"WEBP"
+
+
 def _detect_families(head: bytes) -> list[str]:
     found = []
     for family, sigs in _SIGNATURES.items():
@@ -90,6 +102,8 @@ def _detect_families(head: bytes) -> list[str]:
             if head[offset : offset + len(sig)] == sig:
                 found.append(family)
                 break
+    if _is_webp(head):
+        found.append("webp")
     # Heuristic text detection.
     if not found and head[:64].strip(b"\x00") and not head[:1].isdigit():
         try:
@@ -129,6 +143,8 @@ def assert_safe_upload(
     ext = os.path.splitext(original_name or "")[1].lower()
     if ext in BLOCKED_EXTENSIONS:
         raise BadRequest(f"File type '{ext}' is not allowed.")
+    if ext in HEIC_EXTENSIONS and ext not in families:
+        raise BadRequest(HEIC_REFUSAL)
     if ext not in families:
         raise BadRequest(f"File extension '{ext or '(none)'}' is not allowed.")
     if mime_type and mime_type not in allowed_mime:
@@ -163,7 +179,6 @@ _MIME_TO_EXTS = {
     "image/jpeg": {".jpg", ".jpeg"},
     "image/png": {".png"},
     "image/webp": {".webp"},
-    "image/heic": {".heic"},
     "application/pdf": {".pdf"},
     "application/msword": {".doc"},
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
