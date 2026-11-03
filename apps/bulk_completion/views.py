@@ -30,12 +30,12 @@ PAGE_TEXT = {
     BulkKind.VISIT: {
         "title": "Bulk Upload — School Visits",
         "noun": "school visits",
-        "id_label": "School Visit ID",
+        "id_label": "Visit SF ID",
     },
     BulkKind.TRAINING: {
         "title": "Bulk Upload — Trainings",
         "noun": "trainings",
-        "id_label": "Training ID",
+        "id_label": "Training SF ID",
     },
 }
 

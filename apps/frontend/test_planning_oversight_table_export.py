@@ -75,9 +75,30 @@ class PlanningOversightExportsMyPlansTables(SessionFixture):
             list(self.tables()),
         )
 
+    def test_visit_and_training_sheets_carry_each_planned_activity_id(self):
+        # Owner, 2026-11-03: the bulk completion upload's planned_activity_id
+        # comes from this export, one line per school on a training.
+        tables = self.tables()
+        visits = tables["School Visits"]
+        self.assertIn(self.visit.id, {r["Planned Activity ID"] for r in visits})
+        members = [r for r in tables["Trainings"] if r["School ID"].startswith("gt")]
+        self.assertEqual({r["Planned Activity ID"] for r in members}, {self.session.id})
+        (session,) = tables["Group Trainings"]
+        self.assertEqual(session["Planned Activity ID"], self.session.id)
+
+    def test_meetings_are_not_uploaded_and_keep_my_plans_columns(self):
+        for title in ("Cluster Meetings", table_export.MEETING_SCHOOLS_TITLE):
+            for row in self.tables()[title]:
+                self.assertNotIn("Planned Activity ID", row)
+
 
 class MyPlanKeepsItsSheets(SessionFixture):
     def test_my_plan_still_exports_its_sheets(self):
         tables = self.my_plan_tables(fy=self.fy)
         self.assertIn("School Visits", tables)
         self.assertIn("Group Trainings", tables)
+
+    def test_my_plans_own_export_adds_no_planned_activity_id(self):
+        for rows in self.my_plan_tables(fy=self.fy).values():
+            for row in rows:
+                self.assertNotIn("Planned Activity ID", row)

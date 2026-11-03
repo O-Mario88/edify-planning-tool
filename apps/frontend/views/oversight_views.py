@@ -2892,6 +2892,9 @@ def _export_response(items, filename: str, *, request, fy, excel: bool = False):
         [getattr(item, "activity_id", None) for item in items],
         fy,
         export_kinds.read_kind_or_tab(request),
+        # Each visit and training row carries its Planned Activity ID, which
+        # the bulk completion upload reads (owner, 2026-11-03).
+        planned_ids=True,
     )
     if excel:
         from apps.core.excel import workbook_response

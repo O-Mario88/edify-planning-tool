@@ -22,9 +22,6 @@ KIND_TYPES: dict[str, tuple[str, ...]] = {
     BulkKind.TRAINING: tuple(TRAINING_TYPES),
 }
 
-#: The Salesforce side each upload's ID belongs to (apps.activities.salesforce).
-SALESFORCE_KIND = {BulkKind.VISIT: "visit", BulkKind.TRAINING: "training"}
-
 #: Staff work handed in with its ID is marked completed at once and counted
 #: once its reviewer approves it (owner, 2026-10-15). Partner work waiting for
 #: Impact Assessment is the exception: the partner has uploaded its form, and

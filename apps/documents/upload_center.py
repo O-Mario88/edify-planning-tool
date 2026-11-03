@@ -291,14 +291,15 @@ class UploadCenterService:
                     (
                         "visit",
                         "Bulk Upload — School Visits",
-                        "Complete many school visits at once with their School "
-                        "Visit IDs and completion dates.",
+                        "Complete many school visits at once: planned_activity_id, "
+                        "school_id, visit_sf_id and completed_date.",
                     ),
                     (
                         "training",
                         "Bulk Upload — Trainings",
-                        "Complete in-school, cluster, group and online trainings "
-                        "with their Training IDs, attendance and schools.",
+                        "Complete trainings one line per school: their "
+                        "training_sf_id, completed_date, teachers_trained and "
+                        "school_leaders_trained.",
                     ),
                 )
             )

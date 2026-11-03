@@ -241,11 +241,17 @@ class AllIsEveryMyPlanTableOnItsOwnSheet(MyPlanTablesFixture):
         )
 
     def test_each_sheet_has_exactly_my_plans_columns(self):
+        # Planning Oversight leads each visit and training sheet with the
+        # Planned Activity ID the bulk completion upload reads (owner,
+        # 2026-11-03); after it, My Plan's columns exactly.
         sheets = self.export(activity_type="all")
+        lead = [table_export.PLANNED_ACTIVITY_ID[0]]
         for table in table_export.TABLES:
+            uploadable = table.key in table_export.UPLOADABLE_SHEETS
             with self.subTest(table=table.key):
                 self.assertEqual(
-                    sheets[table.title][0], template_headings(table.template)
+                    sheets[table.title][0],
+                    (lead if uploadable else []) + template_headings(table.template),
                 )
         self.assertEqual(
             sheets[table_export.MEETING_SCHOOLS_TITLE][0],

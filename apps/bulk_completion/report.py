@@ -85,6 +85,8 @@ def _decorated(rows) -> list[dict]:
         out.append(
             {
                 "row": row,
+                # The uploaded ID names an activity Edify holds: it links.
+                "found": row.activity_id in statuses,
                 "status_label": label,
                 "status_class": tone,
                 # Why a line was not completed; a completed one needs no note.
@@ -123,8 +125,45 @@ def earlier_upload(batch: BulkCompletionBatch):
     )
 
 
+#: The ID columns whose values must already be in Edify, in report order.
+ID_COLUMNS = ("planned_activity_id", "school_id")
+
+
+def missing_ids(batch: BulkCompletionBatch) -> list[tuple[str, str, str]]:
+    """(column, ID, rows) for each ID the file gives that Edify does not
+    hold: every planned_activity_id first, then every school_id, each once."""
+    rows_of: dict[tuple[str, str], list[str]] = {}
+    noted = (
+        batch.rows.exclude(missing_ids={})
+        .order_by("row_number")
+        .values_list("row_number", "missing_ids")
+    )
+    for column in ID_COLUMNS:
+        for number, missing in noted:
+            if missing.get(column):
+                rows_of.setdefault((column, missing[column]), []).append(str(number))
+    return [
+        (column, value, ", ".join(rows)) for (column, value), rows in rows_of.items()
+    ]
+
+
 def error_report_sheets(batch: BulkCompletionBatch) -> list[dict]:
-    """The lines that were not completed, as uploaded, with the reason."""
+    """The lines that were not completed, as uploaded, with the reason; and
+    the IDs Edify does not hold, on a sheet of their own."""
+    sheets = [_not_completed_sheet(batch)]
+    missing = missing_ids(batch)
+    if missing:
+        sheets.append(
+            {
+                "title": "Missing IDs",
+                "headers": ["Column", "ID", "Rows"],
+                "rows": [list(item) for item in missing],
+            }
+        )
+    return sheets
+
+
+def _not_completed_sheet(batch: BulkCompletionBatch) -> dict:
     rows = batch.rows.filter(
         status__in=(*PROBLEM_STATUSES, *SKIPPED_STATUSES)
     ).order_by("row_number")
@@ -134,19 +173,17 @@ def error_report_sheets(batch: BulkCompletionBatch) -> list[dict]:
             if heading not in headings:
                 headings.append(heading)
     statuses = activity_statuses(row.activity_id for row in rows)
-    return [
-        {
-            "title": "Not completed",
-            "headers": ["Row", "Outcome", "Status", "Reason", *headings],
-            "rows": [
-                [
-                    row.row_number,
-                    row.get_status_display(),
-                    statuses.get(row.activity_id, ("Not matched", ""))[0],
-                    row.message,
-                    *[(row.raw or {}).get(h, "") for h in headings],
-                ]
-                for row in rows
-            ],
-        }
-    ]
+    return {
+        "title": "Not completed",
+        "headers": ["Row", "Outcome", "Status", "Reason", *headings],
+        "rows": [
+            [
+                row.row_number,
+                row.get_status_display(),
+                statuses.get(row.activity_id, ("Not matched", ""))[0],
+                row.message,
+                *[(row.raw or {}).get(h, "") for h in headings],
+            ]
+            for row in rows
+        ],
+    }
