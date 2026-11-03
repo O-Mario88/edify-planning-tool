@@ -1,4 +1,11 @@
-"""The downloadable template: the uploader's open work, ready to be filled in."""
+"""The downloadable template: the upload's columns and nothing else, with
+the uploader's open work already filled in by ID.
+
+Each open activity gives a line with its planned_activity_id and school_id;
+a cluster or group training gives one line per school invited to it, since
+the upload takes one line per participating school. The uploader types the
+Salesforce ID, the completed date and, for a training, the counts.
+"""
 
 from __future__ import annotations
 
@@ -19,6 +26,9 @@ FILE_STEMS = {
     BulkKind.TRAINING: "bulk-training-completion",
 }
 
+#: Where an activity's saved Salesforce ID is offered back, by upload.
+SALESFORCE_FIELD = {BulkKind.VISIT: "visit_sf_id", BulkKind.TRAINING: "training_sf_id"}
+
 
 def open_work(principal, kind: str):
     """Open activities of this kind in the uploader's reach, this FY or
@@ -33,77 +43,59 @@ def open_work(principal, kind: str):
         activities_in_reach(principal)
         .filter(activity_type__in=KIND_TYPES[kind], fy__lte=get_operational_fy())
         .filter(staff_open | partner_waiting)
-        .select_related("school", "cluster", "training_course")
+        .select_related("school")
         .order_by("planned_date", "scheduled_date", "id")
     )
 
 
-def _day(activity):
-    if activity.planned_date:
-        return activity.planned_date
-    if activity.scheduled_date:
-        from apps.core.clock import local_day
+def _invited_schools(activities) -> dict[str, list[str]]:
+    """{activity id: School IDs invited} for the trainings with no school."""
+    from apps.activities.models import ClusterActivityAttendance
 
-        return local_day(activity.scheduled_date)
-    return None
+    ids = [a.pk for a in activities if not a.school_id]
+    invited: dict[str, list[str]] = {}
+    if not ids:
+        return invited
+    for activity_id, code in (
+        ClusterActivityAttendance.objects.filter(activity_id__in=ids)
+        .order_by("school__name")
+        .values_list("activity_id", "school__school_id")
+    ):
+        if code:
+            invited.setdefault(activity_id, []).append(code)
+    return invited
 
 
-def _cells(activity, kind: str, names: dict[str, str]) -> dict[str, object]:
-    school = activity.school
-    who = activity.responsible_staff_id or activity.monitored_by_staff_id
-    responsible = names.get(str(who or ""), "")
-    if activity.delivery_type == "partner":
-        responsible = names.get(f"partner:{activity.assigned_partner_id}", "Partner")
+def _lines(activity, kind: str, invited: dict) -> list[dict]:
     cells = {
         "activity_id": activity.id,
-        "school_code": school.school_id if school else "",
-        "school_name": school.name if school else "",
-        "activity_type": activity.get_activity_type_display(),
-        "scheduled_on": _day(activity),
-        "responsible": responsible,
         # The ID already saved on the activity is offered back, so a line for
         # work whose ID was entered but never handed in completes as it is.
-        "salesforce_id": activity.salesforce_activity_id or "",
-        "completed_on": "",
+        SALESFORCE_FIELD[kind]: activity.salesforce_activity_id or "",
     }
     if kind == BulkKind.TRAINING:
         cells.update(
             {
-                "title": (
-                    activity.training_course.display_name
-                    if activity.training_course_id
-                    else ""
-                ),
-                "cluster": activity.cluster.name if activity.cluster_id else "",
                 "teachers": activity.teachers_attended or "",
                 "leaders": activity.leaders_attended or "",
-                "participants": "",
             }
         )
-    return cells
+    if activity.school_id:
+        return [{**cells, "school_code": activity.school.school_id}]
+    schools = invited.get(activity.id) or [""]
+    return [{**cells, "school_code": code} for code in schools]
 
 
 def template_sheets(principal, kind: str) -> list[dict]:
-    from apps.activities.profile_activities import _partner_names, _staff_names
-
     activities = [a for a in open_work(principal, kind)[:TEMPLATE_ROW_LIMIT]]
     activities = [a for a in activities if is_open(a)]
-    names = _staff_names(
-        {a.responsible_staff_id or a.monitored_by_staff_id for a in activities}
-    )
-    names.update(
-        {
-            f"partner:{pid}": name
-            for pid, name in _partner_names(
-                {a.assigned_partner_id for a in activities}
-            ).items()
-        }
-    )
+    invited = _invited_schools(activities) if kind == BulkKind.TRAINING else {}
     columns = COLUMNS[kind]
-    rows = []
-    for activity in activities:
-        cells = _cells(activity, kind, names)
-        rows.append([cells.get(column.field, "") for column in columns])
+    rows = [
+        [line.get(column.field, "") for column in columns]
+        for activity in activities
+        for line in _lines(activity, kind, invited)
+    ]
     return [
         {
             "title": "Completions",

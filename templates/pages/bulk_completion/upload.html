@@ -23,17 +23,17 @@
 {% endif %}
 
 <div class="edify-surface rounded-surface shadow-sm p-5 space-y-4">
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between gap-4">
     <div>
       <h3 class="text-[14px] font-semibold text-slate-800">1. Download the template</h3>
-      <p class="text-[12px] text-slate-400 font-normal mt-0.5">It lists your open {{ text.noun }}, one per line, each with its Edify Activity ID. {{ note }}</p>
+      <p class="text-[12px] text-slate-400 font-normal mt-0.5">It lists your open {{ text.noun }} with their planned_activity_id and school_id filled in. {{ note }}</p>
     </div>
-    <a href="/uploads/bulk-completion/{{ kind }}/template" class="h-8 px-3 inline-flex items-center gap-1.5 edify-primary-solid edify-primary-hover edify-primary-on-solid text-[12px] font-medium rounded-control transition-colors">
+    <a href="/uploads/bulk-completion/{{ kind }}/template" class="h-8 px-3 shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 edify-primary-solid edify-primary-hover edify-primary-on-solid text-[12px] font-medium rounded-control transition-colors">
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
       Download Template
     </a>
   </div>
-  <p class="edify-text-caption text-slate-400">Columns: {% for column in columns %}{{ column.heading }}{% if not forloop.last %} · {% endif %}{% endfor %}. A line without its Edify Activity ID is matched from the School ID, the type and the scheduled date, and is sent for review when that does not pick out one activity.</p>
+  <p class="edify-text-caption text-slate-400">Required columns: {% for column in columns %}{{ column.heading }}{% if not forloop.last %} · {% endif %}{% endfor %}. Headings may be in any case or order, and every other column is ignored. The Planning Oversight export carries each activity's Planned Activity ID.</p>
 </div>
 
 <div class="edify-surface rounded-surface shadow-sm p-6">

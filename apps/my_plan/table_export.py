@@ -392,6 +392,29 @@ KIND_TABLES = {
 }
 
 
+#: Planning Oversight's export leads each visit and training sheet with the
+#: activity's own ID: the ``planned_activity_id`` the Upload Center's bulk
+#: completion reads (owner, 2026-11-03). My Plan's and the Budget's exports
+#: keep My Plan's columns exactly (owner, 2026-10-26).
+PLANNED_ACTIVITY_ID = ("Planned Activity ID", lambda r: _plain(r.get("id")))
+UPLOADABLE_SHEETS = frozenset(
+    {
+        "school_visits",
+        "cluster_trainings",
+        "group_trainings",
+        "core_school_visits",
+        "core_school_trainings",
+        "programme_school_work",
+    }
+)
+
+
+def _with_ids(key: str, columns: tuple, planned_ids: bool) -> tuple:
+    if planned_ids and key in UPLOADABLE_SHEETS:
+        return (PLANNED_ACTIVITY_ID, *columns)
+    return columns
+
+
 # ── The rows ──────────────────────────────────────────────────────────────────
 def context_for(principal, activity_ids, fy) -> dict:
     """My Plan's tables for exactly these activities."""
@@ -574,7 +597,9 @@ def _session_figures(rows: list[dict], kind: str) -> list[dict]:
     ]
 
 
-def _sheet_sources(context: dict, kind: str = export_kinds.ALL) -> list[tuple]:
+def _sheet_sources(
+    context: dict, kind: str = export_kinds.ALL, *, planned_ids: bool = False
+) -> list[tuple]:
     """(title, columns, rows, short_days) of each sheet ``kind`` gives, from
     My Plan's ``context``, in the page's order. "All" holds every table, an
     empty one too, so a reader sees the whole plan's shape; a programme card
@@ -588,7 +613,7 @@ def _sheet_sources(context: dict, kind: str = export_kinds.ALL) -> list[tuple]:
             out.extend(
                 (
                     PROGRAMME_TITLE.format(label=section["label"]),
-                    PROGRAMME_COLUMNS,
+                    _with_ids(key, PROGRAMME_COLUMNS, planned_ids),
                     section["rows"],
                     False,
                 )
@@ -608,16 +633,21 @@ def _sheet_sources(context: dict, kind: str = export_kinds.ALL) -> list[tuple]:
             rows = context.get(table.key) or []
             if key == "group_trainings":
                 rows = _session_figures(rows, plan_export.TRAINING)
-            out.append((table.title, table.columns, rows, table.short_days))
+            columns = _with_ids(key, table.columns, planned_ids)
+            out.append((table.title, columns, rows, table.short_days))
     return out
 
 
-def sheets(context: dict, kind: str = export_kinds.ALL) -> list[dict]:
+def sheets(
+    context: dict, kind: str = export_kinds.ALL, *, planned_ids: bool = False
+) -> list[dict]:
     """The sheets ``kind`` gives, from My Plan's ``context``, in the page's
     order (``_sheet_sources``)."""
     return [
         _sheet(title, columns, rows, short_days=short_days)
-        for title, columns, rows, short_days in _sheet_sources(context, kind)
+        for title, columns, rows, short_days in _sheet_sources(
+            context, kind, planned_ids=planned_ids
+        )
     ]
 
 
@@ -648,7 +678,14 @@ def _row_key(row: dict) -> tuple:
     return completed_last_key(row.get("is_complete"), row.get("planned_date"))
 
 
-def workbook(principal, activity_ids, fy, kind: str = export_kinds.ALL) -> list[dict]:
+def workbook(
+    principal,
+    activity_ids,
+    fy,
+    kind: str = export_kinds.ALL,
+    *,
+    planned_ids: bool = False,
+) -> list[dict]:
     """The sheets of My Plan's tables for these activities, built a batch of
     ``EXPORT_BATCH`` activities at a time.
 
@@ -657,6 +694,9 @@ def workbook(principal, activity_ids, fy, kind: str = export_kinds.ALL) -> list[
     table open work first by planned date, completed work last; the batches
     follow its order and are merged by that same key (a stable merge), so
     every row lands where one pass over all the activities puts it.
+
+    ``planned_ids`` leads the visit and training sheets with each activity's
+    ID (``PLANNED_ACTIVITY_ID``); Planning Oversight's export asks for it.
     """
     import heapq
 
@@ -665,14 +705,16 @@ def workbook(principal, activity_ids, fy, kind: str = export_kinds.ALL) -> list[
     parts: dict[str, list] = {}
     for start in range(0, len(ordered), EXPORT_BATCH):
         part = context_for(principal, ordered[start : start + EXPORT_BATCH], fy)
-        for title, columns, rows, short_days in _sheet_sources(part, kind):
+        for title, columns, rows, short_days in _sheet_sources(
+            part, kind, planned_ids=planned_ids
+        ):
             frames.setdefault(title, (columns, short_days))
             parts.setdefault(title, []).append(
                 [(_row_key(row), _values(columns, row)) for row in rows]
             )
         del part
     if not ordered:
-        return sheets({}, kind)
+        return sheets({}, kind, planned_ids=planned_ids)
     return [
         _framed(
             title,
