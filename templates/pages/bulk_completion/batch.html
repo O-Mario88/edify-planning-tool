@@ -74,9 +74,9 @@
     <tr>
       <th scope="col" class="px-3 py-2 text-right">Row</th>
       <th scope="col" class="px-3 py-2">School ID</th>
-      <th scope="col" class="px-3 py-2">Edify Activity ID</th>
+      <th scope="col" class="px-3 py-2">Planned Activity ID</th>
       <th scope="col" class="px-3 py-2">{{ text.id_label }}</th>
-      <th scope="col" class="px-3 py-2">Completion Date</th>
+      <th scope="col" class="px-3 py-2">Completed Date</th>
       <th scope="col" class="px-3 py-2">Status</th>
     </tr>
   </thead>
@@ -85,9 +85,9 @@
     <tr>
       <th scope="row" class="px-3 py-2 text-right tabular-nums" data-record-title>{{ row.row_number }}</th>
       <td class="px-3 py-2" data-label="School ID">{{ row.school_code|default:"—" }}</td>
-      <td class="px-3 py-2" data-label="Edify Activity ID">{% if row.activity_id %}<a href="/my-plan/{{ row.activity_id }}" class="edify-primary-text font-semibold hover:underline">{{ row.activity_id }}</a>{% else %}—{% endif %}</td>
+      <td class="px-3 py-2" data-label="Planned Activity ID">{% if item.found %}<a href="/my-plan/{{ row.activity_id }}" class="edify-primary-text font-semibold hover:underline">{{ row.activity_id }}</a>{% else %}{{ row.activity_id|default:"—" }}{% endif %}</td>
       <td class="px-3 py-2" data-label="{{ text.id_label }}">{{ row.salesforce_id|default:"—" }}</td>
-      <td class="px-3 py-2" data-label="Completion Date">{{ row.completed_on|date:"Y-m-d"|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Completed Date">{{ row.completed_on|date:"Y-m-d"|default:"—" }}</td>
       <td class="px-3 py-2" data-label="Status">
         <span class="px-2 py-0.5 rounded-pill border font-bold {{ item.status_class }}">{{ item.status_label }}</span>
         {% if item.note %}<span class="block mt-1 edify-text-caption text-slate-500 whitespace-normal">{{ item.note }}</span>{% endif %}

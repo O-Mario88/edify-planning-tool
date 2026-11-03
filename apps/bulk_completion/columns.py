@@ -1,12 +1,21 @@
-"""The two upload files: their columns, the headings accepted for each, and
-the downloadable templates.
+"""The two upload files' columns, and how a heading row is read.
 
-A template is filled in advance with the uploader's open work — one line per
-scheduled visit or training, carrying its Edify Activity ID — so a line is
-matched to its activity exactly and the uploader only types the Salesforce ID
-and the date it was done. A line typed by hand without the Activity ID is
-still matched, from the School ID, the type and the scheduled date, and is
-sent for review when that does not pick out one activity.
+Owner, 2026-11-03: a file links the Salesforce export to the planned work by
+IDs alone. Both uploads read the same five columns —
+
+    planned_activity_id   the activity, from the Planning Oversight export
+    school_id             the school, from the Salesforce export
+    visit_sf_id           the Salesforce visit ID (empty on a training line)
+    training_sf_id        the Salesforce training ID (empty on a visit line)
+    completed_date        the day the work was done
+
+— and the training upload two more, ``teachers_trained`` and
+``school_leaders_trained`` ("count columns should be required as well").
+
+Headings are compared with case, spacing and underscores ignored, so
+"Planned Activity ID" is ``planned_activity_id``. Every other column is
+ignored, so a raw Salesforce or Planning Oversight export is uploaded as it
+is, without deleting columns first.
 """
 
 from __future__ import annotations
@@ -22,103 +31,79 @@ from .models import BulkKind
 class Column:
     field: str
     heading: str
-    aliases: tuple[str, ...] = ()
-    #: Written into the template from the activity; read only to match.
-    prefilled: bool = False
 
 
-VISIT_COLUMNS: tuple[Column, ...] = (
-    Column("activity_id", "Edify Activity ID", ("activity id", "edify id"), True),
-    Column("school_code", "School ID", ("school code",), True),
-    Column("school_name", "School Name", ("school",), True),
-    Column("activity_type", "Visit Type", ("activity type", "type"), True),
-    Column("scheduled_on", "Scheduled Date", ("planned date", "visit date"), True),
-    Column("responsible", "Responsible", ("staff", "owner"), True),
-    Column(
-        "salesforce_id",
-        "School Visit ID",
-        ("visit id", "salesforce visit id", "sf visit id", "salesforce id"),
-    ),
-    Column(
-        "completed_on",
-        "Completion Date",
-        ("completed date", "date completed", "completed on"),
-    ),
+SHARED_COLUMNS: tuple[Column, ...] = (
+    Column("activity_id", "planned_activity_id"),
+    Column("school_code", "school_id"),
+    Column("visit_sf_id", "visit_sf_id"),
+    Column("training_sf_id", "training_sf_id"),
+    Column("completed_on", "completed_date"),
+)
+COUNT_COLUMNS: tuple[Column, ...] = (
+    Column("teachers", "teachers_trained"),
+    Column("leaders", "school_leaders_trained"),
 )
 
-TRAINING_COLUMNS: tuple[Column, ...] = (
-    Column("activity_id", "Edify Activity ID", ("activity id", "edify id"), True),
-    Column("activity_type", "Training Type", ("activity type", "type"), True),
-    Column("title", "Training", ("training name", "course"), True),
-    Column("cluster", "Cluster", (), True),
-    Column("school_code", "School ID", ("school code",), True),
-    Column("scheduled_on", "Scheduled Date", ("planned date", "training date"), True),
-    Column("responsible", "Responsible", ("staff", "owner"), True),
-    Column(
-        "salesforce_id",
-        "Training ID",
-        ("salesforce training id", "sf training id", "salesforce id"),
-    ),
-    Column(
-        "completed_on",
-        "Completion Date",
-        ("completed date", "date completed", "completed on"),
-    ),
-    Column("teachers", "Teachers Attended", ("teachers",)),
-    Column("leaders", "School Leaders Attended", ("leaders", "leaders attended")),
-    Column(
-        "participants",
-        "Participating School IDs",
-        ("participating schools", "schools attended", "attending school ids"),
-    ),
-)
+COLUMNS = {
+    BulkKind.VISIT: SHARED_COLUMNS,
+    BulkKind.TRAINING: (*SHARED_COLUMNS, *COUNT_COLUMNS),
+}
 
-COLUMNS = {BulkKind.VISIT: VISIT_COLUMNS, BulkKind.TRAINING: TRAINING_COLUMNS}
-
-#: A file must carry these columns (a cell may still be empty, and is then
-#: reported on its own line).
-REQUIRED_FIELDS = ("salesforce_id", "completed_on")
-#: ...and one of these, to say which activity a line completes.
-IDENTIFYING_FIELDS = ("activity_id", "school_code")
+#: What a spreadsheet writes for "nothing here": the Planning Oversight
+#: export fills an open activity's Completed Date with a dash.
+BLANK_CELLS = frozenset({"", "—", "–", "-"})
 
 TEMPLATE_NOTES = {
     BulkKind.VISIT: (
-        "Type each visit's Salesforce School Visit ID and the date it was done "
-        "(YYYY-MM-DD, today or earlier). Leave the other columns as they are. "
-        "Lines you leave without a Visit ID are reported, not completed."
+        "One line per visit. Give visit_sf_id (Salesforce) and completed_date "
+        "(YYYY-MM-DD, today or earlier); leave training_sf_id empty. Any other "
+        "column is ignored, so you can paste these columns beside a Salesforce "
+        "or Planning Oversight export."
     ),
     BulkKind.TRAINING: (
-        "Type each training's Salesforce Training ID, the date it was done "
-        "(YYYY-MM-DD), and how many teachers and school leaders attended. For a "
-        "cluster or group training list the School IDs that attended, "
-        "separated by commas, or give one line per school with the same "
-        "Activity ID."
+        "One line per school that took part. Give training_sf_id (Salesforce), "
+        "completed_date (YYYY-MM-DD), and that school's teachers_trained and "
+        "school_leaders_trained; leave visit_sf_id empty. Lines with the same "
+        "planned_activity_id are one training: its schools are linked to it "
+        "and their counts added up. Any other column is ignored."
     ),
 }
 
 
-def field_index(kind: str, headers: list[str]) -> dict[str, int]:
-    """{field: column position} for the headings this file carries."""
-    wanted: dict[str, str] = {}
-    for column in COLUMNS[kind]:
-        wanted[normalize_header(column.heading)] = column.field
-        for alias in column.aliases:
-            wanted.setdefault(normalize_header(alias), column.field)
-    index: dict[str, int] = {}
+def headings(kind: str) -> list[str]:
+    return [column.heading for column in COLUMNS[kind]]
+
+
+def heading_of(kind: str, field: str) -> str:
+    return next(c.heading for c in COLUMNS[kind] if c.field == field)
+
+
+def field_positions(kind: str, headers: list[str]) -> dict[str, tuple[int, ...]]:
+    """{field: every column position carrying its heading}."""
+    wanted = {normalize_header(c.heading): c.field for c in COLUMNS[kind]}
+    found: dict[str, list[int]] = {}
     for position, heading in enumerate(headers):
         field = wanted.get(normalize_header(heading))
-        if field and field not in index:
-            index[field] = position
-    return index
+        if field:
+            found.setdefault(field, []).append(position)
+    return {field: tuple(positions) for field, positions in found.items()}
 
 
-def missing_columns(kind: str, index: dict[str, int]) -> list[str]:
-    headings = {column.field: column.heading for column in COLUMNS[kind]}
-    missing = [headings[field] for field in REQUIRED_FIELDS if field not in index]
-    if not any(field in index for field in IDENTIFYING_FIELDS):
-        missing.append(f"{headings['activity_id']} or {headings['school_code']}")
-    return missing
+def missing_columns(kind: str, positions: dict) -> list[str]:
+    return [c.heading for c in COLUMNS[kind] if c.field not in positions]
 
 
-def expected_headings(kind: str) -> list[str]:
-    return [column.heading for column in COLUMNS[kind]]
+def cell_values(row: list, positions: dict[str, tuple[int, ...]]) -> dict[str, str]:
+    """{field: value} for one line. A heading given twice (an export's own
+    "Completed Date" beside the Salesforce one) reads the first cell that
+    holds something."""
+    values: dict[str, str] = {}
+    for field, places in positions.items():
+        values[field] = ""
+        for position in places:
+            text = str((row[position] if position < len(row) else "") or "").strip()
+            if text not in BLANK_CELLS:
+                values[field] = text
+                break
+    return values

@@ -100,6 +100,9 @@ class BulkCompletionRow(TimeStampedModel):
     # School IDs (the directory's codes) that attended a cluster or group
     # training, after the rows naming the same training were joined.
     participating_school_codes = models.JSONField(default=list, blank=True)
+    # {column heading: ID} for the IDs on this line Edify does not hold
+    # (planned_activity_id, school_id), listed on the error report.
+    missing_ids = models.JSONField(default=dict, blank=True)
     # The row as uploaded, column heading -> cell, for the error report.
     raw = models.JSONField(default=dict, blank=True)
 

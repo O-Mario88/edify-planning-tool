@@ -1,17 +1,24 @@
 """One uploaded line: its parsed cells, its verdict, and the rules for lines
-that name the same activity twice."""
+that name the same activity twice.
+
+A line is a visit when it carries ``visit_sf_id`` and a training when it
+carries ``training_sf_id``; both, or neither, is refused. A training is given
+one line per participating school, so lines naming one training are joined:
+its schools are linked to it and their counts added up.
+"""
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from datetime import date
 
 from django.utils import timezone
 
-from apps.schools.upload_mapping import normalize_header
-
+from .columns import heading_of
 from .models import BulkCompletionRow, BulkKind, RowStatus
+
+#: The upload a line of each kind belongs in, as the Upload Center names it.
+UPLOAD_NAMES = {BulkKind.VISIT: "School Visits", BulkKind.TRAINING: "Trainings"}
 
 
 def scheduled_day(activity) -> date | None:
@@ -30,29 +37,20 @@ class Line:
     raw: dict
     activity_id: str = ""
     school_code: str = ""
-    activity_type: str = ""
-    scheduled_on: date | None = None
     salesforce_id: str = ""  # normalized
     completed_on: date | None = None
     teachers: int | None = None
     leaders: int | None = None
+    #: The school this line links to a training (one line a school).
     participants: list[str] = field(default_factory=list)
     #: (status, message) when the line itself is unusable.
     problem: tuple[str, str] | None = None
+    #: {column heading: ID} for IDs Edify does not hold, for the error report.
+    missing_ids: dict = field(default_factory=dict)
 
     def refuse(self, message: str) -> None:
         if self.problem is None:
             self.problem = (RowStatus.INVALID, message)
-
-
-def _type_index() -> dict[str, str]:
-    from apps.core.enums import ActivityType
-
-    index: dict[str, str] = {}
-    for value, label in ActivityType.choices:
-        index[normalize_header(value)] = value
-        index[normalize_header(label)] = value
-    return index
 
 
 def _date(text: str):
@@ -63,78 +61,102 @@ def _date(text: str):
 
 def _count(line: Line, text: str, heading: str) -> int | None:
     if not text:
+        line.refuse(f"{heading} is missing.")
         return None
     try:
-        value = int(float(text))
+        value = float(text)
     except ValueError:
+        line.refuse(f"{heading} must be a whole number.")
+        return None
+    if value != int(value):
         line.refuse(f"{heading} must be a whole number.")
         return None
     if value < 0:
         line.refuse(f"{heading} cannot be negative.")
         return None
-    return value
+    return int(value)
 
 
-def _parse(line: Line, values: dict, salesforce_kind: str, types: dict) -> None:
+def _salesforce_id(line: Line, values: dict, kind: str) -> None:
+    """Which Salesforce ID the line carries, and whether it belongs here."""
     from apps.activities.salesforce import (
         accepted_forms,
         is_valid_new_entry,
         normalize_salesforce_id,
     )
 
+    visit_id = values.get("visit_sf_id", "")
+    training_id = values.get("training_sf_id", "")
+    if visit_id and training_id:
+        line.refuse("Give visit_sf_id or training_sf_id, not both.")
+        return
+    if not visit_id and not training_id:
+        line.refuse("Give visit_sf_id or training_sf_id: both are empty.")
+        return
+    line_kind = BulkKind.VISIT if visit_id else BulkKind.TRAINING
+    if line_kind != kind:
+        given = "visit_sf_id" if visit_id else "training_sf_id"
+        line.refuse(
+            f"This line is a {'visit' if visit_id else 'training'} ({given}). "
+            f"Upload it with the {UPLOAD_NAMES[line_kind]} upload."
+        )
+        return
+    line.salesforce_id = normalize_salesforce_id(visit_id or training_id)
+    if not is_valid_new_entry(line.salesforce_id, line_kind):
+        column = "visit_sf_id" if visit_id else "training_sf_id"
+        line.refuse(
+            f"{column}: enter the Salesforce ID as {accepted_forms(line_kind)}."
+        )
+
+
+def _completed_on(line: Line, text: str) -> None:
+    if not text:
+        line.refuse("completed_date is missing.")
+        return
+    try:
+        line.completed_on = _date(text)
+    except ValueError:
+        line.refuse("completed_date is not a date (use YYYY-MM-DD).")
+        return
+    if line.completed_on > timezone.localdate():
+        line.refuse("completed_date is in the future: give the day the work was done.")
+
+
+def _parse(line: Line, values: dict, kind: str) -> None:
     line.activity_id = values.get("activity_id", "")
     line.school_code = values.get("school_code", "")
-    typed = values.get("activity_type", "")
-    if typed:
-        line.activity_type = types.get(normalize_header(typed), "")
-        if not line.activity_type:
-            line.refuse(f"Unknown type '{typed}'.")
-    try:
-        line.scheduled_on = _date(values.get("scheduled_on", ""))
-    except ValueError:
-        line.refuse("Scheduled Date is not a date (use YYYY-MM-DD).")
-    raw_id = values.get("salesforce_id", "")
-    line.salesforce_id = normalize_salesforce_id(raw_id)
-    if line.salesforce_id and not is_valid_new_entry(
-        line.salesforce_id, salesforce_kind
-    ):
-        line.refuse(f"Enter the Salesforce ID as {accepted_forms(salesforce_kind)}.")
-    done = values.get("completed_on", "")
-    if not done:
-        line.refuse("Completion Date is missing.")
-    else:
-        try:
-            line.completed_on = _date(done)
-        except ValueError:
-            line.refuse("Completion Date is not a date (use YYYY-MM-DD).")
-        if line.completed_on and line.completed_on > timezone.localdate():
-            line.refuse(
-                "Completion Date is in the future: give the day the work was done."
-            )
-    line.teachers = _count(line, values.get("teachers", ""), "Teachers Attended")
-    line.leaders = _count(line, values.get("leaders", ""), "School Leaders Attended")
-    codes = re.split(r"[,;\s]+", values.get("participants", ""))
-    line.participants = list(dict.fromkeys(code for code in codes if code))
+    if not line.activity_id:
+        line.refuse("planned_activity_id is missing.")
+    if not line.school_code:
+        line.refuse("school_id is missing.")
+    _salesforce_id(line, values, kind)
+    _completed_on(line, values.get("completed_on", ""))
+    if kind == BulkKind.TRAINING:
+        line.teachers = _count(
+            line, values.get("teachers", ""), heading_of(kind, "teachers")
+        )
+        line.leaders = _count(
+            line, values.get("leaders", ""), heading_of(kind, "leaders")
+        )
+        if line.school_code:
+            line.participants = [line.school_code]
 
 
-def read_lines(kind, headers, index, cells, salesforce_kind) -> list[Line]:
+def read_lines(kind: str, headers: list, positions: dict, cells) -> list[Line]:
     """Every line that carries anything; blank lines are dropped."""
-    types = _type_index()
+    from .columns import cell_values
+
     lines: list[Line] = []
     for row_number, row in cells:
-        if not any((cell or "").strip() for cell in row):
+        if not any(str(cell or "").strip() for cell in row):
             continue
         raw = {
             heading: row[position] if position < len(row) else ""
             for position, heading in enumerate(headers)
             if heading
         }
-        values = {
-            name: (row[position] if position < len(row) else "").strip()
-            for name, position in index.items()
-        }
         line = Line(row_number=row_number, raw=raw)
-        _parse(line, values, salesforce_kind, types)
+        _parse(line, cell_values(row, positions), kind)
         lines.append(line)
     return lines
 
@@ -157,6 +179,8 @@ class Verdict:
             line=line,
             status=status,
             message=message,
+            # The ID as uploaded, so the preview shows what to put right.
+            activity_id=line.activity_id,
             school_code=line.school_code,
             salesforce_id=line.salesforce_id,
         )
@@ -166,9 +190,7 @@ class Verdict:
         return cls(
             line=line,
             activity_id=activity.pk,
-            school_code=(
-                activity.school.school_id if activity.school_id else line.school_code
-            ),
+            school_code=line.school_code,
             salesforce_id=line.salesforce_id,
             teachers=line.teachers,
             leaders=line.leaders,
@@ -192,6 +214,7 @@ class Verdict:
             teachers_attended=self.teachers,
             leaders_attended=self.leaders,
             participating_school_codes=self.participants,
+            missing_ids=self.line.missing_ids,
             raw=self.line.raw,
         )
 
@@ -220,11 +243,7 @@ def _second_mention(verdict: Verdict, earlier: Verdict, kind: str) -> None:
     if earlier.status == RowStatus.ALREADY_COMPLETED:
         verdict.mark(RowStatus.DUPLICATE, f"Same activity as row {row}.")
         return
-    if (
-        verdict.salesforce_id
-        and earlier.salesforce_id
-        and verdict.salesforce_id != earlier.salesforce_id
-    ):
+    if verdict.salesforce_id != earlier.salesforce_id:
         verdict.mark(
             RowStatus.REVIEW,
             f"Row {row} gives this activity Salesforce ID {earlier.salesforce_id}; "
@@ -233,7 +252,7 @@ def _second_mention(verdict: Verdict, earlier: Verdict, kind: str) -> None:
         return
     new_schools = [s for s in verdict.participants if s not in earlier.participants]
     if kind == BulkKind.TRAINING and new_schools:
-        # One line per attending school: joined into the first line's register.
+        # One line per participating school: joined into the first line.
         earlier.participants.extend(new_schools)
         earlier.teachers = (earlier.teachers or 0) + (verdict.teachers or 0)
         earlier.leaders = (earlier.leaders or 0) + (verdict.leaders or 0)
@@ -242,43 +261,24 @@ def _second_mention(verdict: Verdict, earlier: Verdict, kind: str) -> None:
     if verdict.participants:
         verdict.mark(
             RowStatus.DUPLICATE,
-            f"The schools on this line are already listed for row {row}'s training.",
+            f"This school is already listed for row {row}'s training.",
         )
         return
     verdict.mark(RowStatus.DUPLICATE, f"Same activity as row {row}.")
 
 
-def _training_register(verdict: Verdict, activity, schools: dict) -> str:
-    """Why a staff training's attendance cannot complete it, or ""."""
-    if verdict.teachers is None and verdict.leaders is None:
-        verdict.teachers = activity.teachers_attended
-        verdict.leaders = activity.leaders_attended
+def _training_register(verdict: Verdict) -> str:
+    """Why a staff training's lines cannot complete it, or ""."""
     if (verdict.teachers or 0) + (verdict.leaders or 0) <= 0:
-        return "Give the number of teachers or school leaders who attended."
-    unknown = [code for code in verdict.participants if code not in schools]
-    if unknown:
-        return "Participating School IDs not found in your country: " + ", ".join(
-            unknown
+        return (
+            "teachers_trained and school_leaders_trained add up to 0: a "
+            "training is completed with who attended."
         )
-    if activity.cluster_id:
-        if not verdict.participants and not activity.attended_school_ids:
-            return (
-                "List the School IDs that attended this cluster or group "
-                "training in Participating School IDs."
-            )
-        return ""
-    if activity.school_id and verdict.participants:
-        others = set(verdict.participants) - {activity.school.school_id}
-        if others:
-            return (
-                "An in-school training is at one school; complete the other "
-                "schools' trainings on their own lines."
-            )
     return ""
 
 
-def merge_lines(verdicts: list[Verdict], kind: str, activity_of, schools: dict):
-    """Apply the in-file duplicate rules, then the training register checks."""
+def merge_lines(verdicts: list[Verdict], kind: str, activity_of) -> list[Verdict]:
+    """Apply the in-file duplicate rules, then the training count check."""
     _same_salesforce_twice(verdicts)
     first: dict[str, Verdict] = {}
     for verdict in verdicts:
@@ -295,7 +295,7 @@ def merge_lines(verdicts: list[Verdict], kind: str, activity_of, schools: dict):
         activity = activity_of(verdict.activity_id)
         if activity is None or activity.delivery_type == "partner":
             continue
-        problem = _training_register(verdict, activity, schools)
+        problem = _training_register(verdict)
         if problem:
             verdict.mark(RowStatus.REVIEW, problem)
         elif activity.paired_school_visit_id:
