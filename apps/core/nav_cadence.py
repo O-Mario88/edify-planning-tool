@@ -238,6 +238,8 @@ ROLE_RANK: dict[str, dict[str, tuple[int, int]]] = {
         "partner_assignments": (DAILY, 15),
         "partner_evidence": (DAILY, 18),
         "daily_debrief": (DAILY, 50),
+        # The Partner Admin's team and its logins (owner, 2026-11-06).
+        "partner_users": (WEEKLY, 20),
     },
     "BUSINESS_TRANSFORMATION": {
         "business_transformation": (DAILY, 5),

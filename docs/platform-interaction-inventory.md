@@ -6,28 +6,28 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Measure | Count |
 |---|---:|
-| Templates with controls | 693 |
-| Control declarations | 4112 |
-| State-changing | 482 |
+| Templates with controls | 695 |
+| Control declarations | 4116 |
+| State-changing | 483 |
 | High-consequence (state-changing) | 211 |
-| No automated evidence | 245 |
-| State-changing with no automated evidence | 19 |
+| No automated evidence | 235 |
+| State-changing with no automated evidence | 18 |
 | Destination path that resolves to no route | 0 |
 
 | Kind | Count |
 |---|---:|
-| button | 1425 |
+| button | 1428 |
 | disclosure | 62 |
 | field | 1361 |
-| link | 1206 |
+| link | 1207 |
 | tab | 58 |
 
 | Evidence | Count |
 |---|---:|
-| browser-rendered | 867 |
-| none | 245 |
-| page-tested | 1590 |
-| request-tested | 1410 |
+| browser-rendered | 865 |
+| none | 235 |
+| page-tested | 1596 |
+| request-tested | 1420 |
 
 ## State-changing controls with no automated evidence
 
@@ -51,4 +51,3 @@ Static scan of every template control (button, link, input, select, textarea, su
 | INT-4DAF16CA3708 | partials/ia/reports_view.html | 82 | Download annex (CSV) | `POST                                               ` |
 | INT-3144923BE448 | partials/leave/request_leave_drawer.html | 254 | Submit request | `POST                                          ` |
 | INT-17331EDF385C | partials/my_plan/pl_review_drawer.html | 100 | {{ form_submit }} | `POST {{ form_action }}` |
-| INT-50E0D15180C8 | partials/partners/return_assignment_drawer.html | 56 | Return to staff | `POST /partner/assignments/{{ assignment.id }}/return-action` |

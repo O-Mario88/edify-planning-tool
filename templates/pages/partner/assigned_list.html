@@ -74,9 +74,12 @@
             {% endif %}
             <td class="px-4 py-3.5 text-right whitespace-nowrap">
               <div class="inline-flex items-center gap-1.5">
+                {# A team member's only work is to schedule (owner, 2026-11-06). #}
+                {% if can_return %}
                 <button type="button"
                         hx-get="/partner/assignments/{{ a.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
                         class="inline-flex h-8 items-center rounded-control border border-rose-200 edify-surface px-2.5 text-[12px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors">Return</button>
+                {% endif %}
                 {% if a.can_schedule %}
                 <button type="button"
                         hx-get="/partner/assignments/{{ a.id }}/schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML"

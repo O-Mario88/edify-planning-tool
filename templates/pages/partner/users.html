@@ -1,0 +1,36 @@
+{% extends "layouts/shell.html" %}
+{% load components %}
+
+{% block title %}Users · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+The Partner Admin's team (owner, 2026-11-06: "the partner admin should be
+assigned by platform admin becomes partner admin and they can add new team
+members. Add the button for add new member of the partner portal under
+users"). The same table the organisation's profile draws, with Add member as
+the page's one primary button. A team member's own login schedules the
+schools given to them here (Assign schools) and sees no money
+(apps.partners.member_scope).
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 max-w-[1400px] mx-auto space-y-5">
+
+  {% page_header eyebrow="Field Work" title="Users" element="div" %}
+    {% slot description %}{{ partner.name }}'s team: add a member, give them a login, and choose the schools they schedule.{% endslot %}
+    {% if can_manage_roster %}
+    <button type="button"
+            hx-get="/partners/{{ partner.id }}/members/drawer"
+            hx-target="#drawer-container" hx-swap="innerHTML"
+            class="btn btn-primary h-8">Add member</button>
+    {% endif %}
+  {% endpage_header %}
+
+  <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" data-partner-users>
+    <div class="px-6 py-4 border-b border-[var(--edify-border)]">
+      <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Team members</h2>
+      <p class="edify-text-caption text-slate-400 font-medium mt-0.5">{{ members|length }} on the roster. A member with a login sees only the schools assigned to them, and schedules them.</p>
+    </div>
+    {% include "partials/partners/team_table.html" %}
+  </div>
+</div>
+{% endblock %}

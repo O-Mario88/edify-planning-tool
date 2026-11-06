@@ -31,7 +31,12 @@ COUNTRY_OVERSIGHT_ROLES = frozenset(
 def landing_url(user) -> str:
     """The page this person opens on signing in."""
     from apps.core.permissions import RolePermissionService
+    from apps.partners.member_scope import MEMBER_HOME_URL, is_team_member
 
+    # A partner's team member starts on the schools they schedule (owner,
+    # 2026-11-06; apps.partners.member_scope).
+    if is_team_member(user):
+        return MEMBER_HOME_URL
     if getattr(
         user, "active_role", None
     ) in COUNTRY_OVERSIGHT_ROLES and RolePermissionService.can_view_page(

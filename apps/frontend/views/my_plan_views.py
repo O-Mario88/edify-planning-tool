@@ -293,6 +293,15 @@ def my_plan_view(request):
 
         context = partner_plan_context(request.user)
         context["is_partner_viewer"] = True
+        # A team member's My Plan is their own schools' work and no money:
+        # no invoices, payments or facilitation fees (owner, 2026-11-06:
+        # "Partner admin is the only who should be shown cost";
+        # apps.partners.member_scope).
+        from apps.partners.member_scope import sees_money
+
+        context["shows_money"] = sees_money(request.user)
+        if not context["shows_money"]:
+            return render(request, "pages/partner/my_plan.html", context)
         context["partner_invoice_tracker"] = partner_payment_tracker(request.user)
         # The trainings it facilitates, each with its fee and invoice (owner,
         # 2026-09-29; partner_oversight_service.partner_facilitations).
@@ -2704,6 +2713,9 @@ def cancel_activity_drawer_view(request, activity_id):
     worse than cancelling: leave dead work in the plan for ever, complete a
     visit that never happened, or ask someone to edit the database.
     """
+    refused = _member_may_not_cancel(request)
+    if refused is not None:
+        return refused
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
@@ -2754,13 +2766,39 @@ def cancel_activity_drawer_view(request, activity_id):
             "partner_name": (
                 partner_name_for(a.assigned_partner_id) if partner_keeps_school else ""
             ),
+            # The partner cancelling its own work is not told it is notified.
+            "cancelled_by_partner": _cancelled_by_its_partner(request, a),
             "drawer_size": "sm",
         },
     )
 
 
+def _cancelled_by_its_partner(request, activity) -> bool:
+    from apps.core.scoping import resolve_partner_ids
+
+    return bool(
+        activity.assigned_partner_id
+        and activity.assigned_partner_id in resolve_partner_ids(request.user)
+    )
+
+
+def _member_may_not_cancel(request):
+    """A partner's team member schedules and reschedules; cancelling is the
+    Partner Admin's (owner, 2026-11-06; apps.partners.member_scope)."""
+    from apps.partners.member_scope import is_team_member
+
+    if is_team_member(request.user):
+        return HttpResponseForbidden(
+            "Only your organisation's Partner Admin cancels its work."
+        )
+    return None
+
+
 @require_page_permission("my_plan")
 def cancel_activity_action(request, activity_id):
+    refused = _member_may_not_cancel(request)
+    if refused is not None:
+        return refused
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):
         audit_log(

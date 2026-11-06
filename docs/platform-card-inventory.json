@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 620,
-  "templates": 231,
-  "distinct_titles": 594,
+  "titled_cards": 621,
+  "templates": 232,
+  "distinct_titles": 595,
   "with_card_key": 13,
   "untitled_surfaces": 566,
   "untitled_chrome": 153,
@@ -374,7 +374,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 213,
+   "line": 219,
    "title": "People Managed",
    "heading_level": 2,
    "has_card_key": false,
@@ -388,7 +388,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 292,
+   "line": 298,
    "title": "Account Lifecycle",
    "heading_level": 3,
    "has_card_key": false,
@@ -397,7 +397,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 369,
+   "line": 375,
    "title": "Password Management",
    "heading_level": 3,
    "has_card_key": false,
@@ -406,7 +406,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 416,
+   "line": 425,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
@@ -2320,14 +2320,14 @@
   },
   {
    "template": "templates/pages/partner/my_plan.html",
-   "line": 118,
+   "line": 140,
    "title": "Invoices &amp; Payments",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm px-5 py-12 text-center",
    "branch_path": [
     [
-     16,
+     21,
      0
     ]
    ]
@@ -2372,6 +2372,15 @@
      0
     ]
    ]
+  },
+  {
+   "template": "templates/pages/partner/users.html",
+   "line": 28,
+   "title": "Team members",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": []
   },
   {
    "template": "templates/pages/partners/detail.html",

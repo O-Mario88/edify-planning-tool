@@ -41,7 +41,7 @@ The school stays assigned to {% partner_link partner_name partner_id empty="the 
 
 <p class="edify-text-caption text-slate-500">
 It stays on the record as Cancelled, leaves your plan and is no longer counted
-anywhere. Its cost and any undisbursed advance are withdrawn.{% if act.assigned_partner_id %} The assigned
+anywhere. Its cost and any undisbursed advance are withdrawn.{% if act.assigned_partner_id and not cancelled_by_partner %} The assigned
 partner is notified.{% endif %}
 </p>
 
