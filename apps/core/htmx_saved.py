@@ -27,13 +27,14 @@ from django.template.loader import render_to_string
 SAVED_MESSAGE = "Saved. Press Refresh to see it on the page."
 
 
-def saved_in_place(trigger: str = "close-drawer") -> HttpResponse:
+def saved_in_place(
+    trigger: str = "close-drawer", message: str = SAVED_MESSAGE
+) -> HttpResponse:
     """Close the drawer and say it is saved; the page is read again only when
-    the reader presses Refresh."""
+    the reader presses Refresh. ``message`` says what was saved when the
+    page would not show it anyway (a password reset, 2026-11-06)."""
     response = HttpResponse(
-        render_to_string(
-            "partials/planning/saved_toast.html", {"message": SAVED_MESSAGE}
-        )
+        render_to_string("partials/planning/saved_toast.html", {"message": message})
     )
     response["HX-Trigger"] = trigger
     return response

@@ -15890,7 +15890,7 @@
    "view": "apps.frontend.views.partner_views.partner_assignments_view"
   },
   {
-   "page_permission": "partner_assignments",
+   "page_permission": "partner_schools",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
@@ -15932,7 +15932,7 @@
    "view": "apps.frontend.views.partner_views.partner_return_assignment_drawer"
   },
   {
-   "page_permission": "partner_activities",
+   "page_permission": "partner_schools",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
@@ -15946,7 +15946,7 @@
    "view": "apps.frontend.views.partner_views.partner_schedule_assignment_action"
   },
   {
-   "page_permission": "partner_activities",
+   "page_permission": "partner_schools",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
@@ -16056,6 +16056,20 @@
    "route": "/partner/today",
    "route_name": "partner_today",
    "view": "apps.frontend.views.partner_views.partner_today_view"
+  },
+  {
+   "page_permission": "partner_users",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/partner/users",
+   "route_name": "partner_users",
+   "view": "apps.frontend.views.partner_views.partner_users_view"
   },
   {
    "page_permission": "partners",
@@ -20480,26 +20494,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 472,
-  "Admin": 1133,
+  "Admin": 1134,
   "BusinessTransformationOfficer": 248,
   "CCEO": 601,
   "CountryDirector": 860,
   "HumanResources": 338,
-  "ImpactAssessment": 1114,
+  "ImpactAssessment": 1115,
   "MfiLoanOfficer": 142,
   "MfiPartnerAdmin": 145,
-  "PartnerAdmin": 247,
-  "PartnerFieldOfficer": 247,
+  "PartnerAdmin": 248,
+  "PartnerFieldOfficer": 248,
   "Program Lead": 707,
   "ProjectCoordinator": 501,
   "RegionalProgramLead": 360,
   "RegionalVicePresident": 436
  },
  "summary": {
-  "page_keys_declared": 189,
-  "page_keys_in_navigation": 206,
-  "routes_guarded": 1230,
-  "routes_total": 1439,
+  "page_keys_declared": 190,
+  "page_keys_in_navigation": 207,
+  "routes_guarded": 1231,
+  "routes_total": 1440,
   "routes_unguarded": 209,
   "surfaces_no_role_can_reach": 0
  },

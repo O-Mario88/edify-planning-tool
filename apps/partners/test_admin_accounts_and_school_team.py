@@ -669,13 +669,17 @@ class TeamMemberLoginTests(TestCase):
         # Past the forced change of the password the Partner Admin set.
         User.objects.filter(id=account.id).update(must_change_password=False)
         self.client.force_login(account)
+        # Owner, 2026-11-06: a team member has only the schools assigned to
+        # them and schedules them; the organisation's profile and its team
+        # are the Partner Admin's (apps.partners.member_scope). The member
+        # used to read the roster without its controls.
         page = self.client.get(f"/partners/{self.partner.id}")
-        self.assertEqual(page.status_code, 200)
+        self.assertNotEqual(page.status_code, 200)
         body = page.content.decode()
         self.assertNotIn("Set up a login for", body)
         self.assertNotIn("Assign schools to", body)
         self.assertNotIn("/members/drawer", body)
-        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertNotEqual(self.client.get(self.url).status_code, 200)
 
     def test_the_admin_configures_a_members_login_like_any_account(self):
         account = self._login_for(self.peter)

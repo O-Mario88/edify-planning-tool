@@ -9,12 +9,15 @@
 
   {% page_header eyebrow="My Work" title="My Plan" element="div" %}
     {% slot description %}Your accepted implementation schedule — {{ plan_total }} activit{{ plan_total|pluralize:"y,ies" }} on the plan.{% endslot %}
+      {# Invoices are the Partner Admin's; a team member sees no money (owner, 2026-11-06). #}
+      {% if shows_money %}
       <button type="button"
               hx-get="/partner/invoices/new" hx-target="#drawer-container" hx-swap="innerHTML"
               class="inline-flex h-8 items-center gap-1.5 rounded-control edify-primary-solid edify-primary-hover px-3.5 text-[12px] font-semibold text-white transition-colors shadow-sm">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Send Invoice
       </button>
+      {% endif %}
   {% endpage_header %}
 
   {# Read again when the plan changes: work handed over, withdrawn, moved or cancelled by staff (owner, 2026-10-05; static/js/live-regions.js). #}
@@ -51,7 +54,7 @@
           <tr class="hover:bg-slate-50/60 transition-colors max-xl:block max-xl:p-4">
             <td class="px-5 py-3 text-slate-600 whitespace-nowrap tabular-nums max-xl:px-0" data-label="School ID">{% if row.a.school_id %}{% school_code row.a.school_id %}{% else %}—{% endif %}</td>
             <td class="px-5 py-3 max-xl:px-0" data-record-title>
-              <a href="/partner/activities/{{ row.a.id }}/evidence" class="font-bold text-slate-800 hover:edify-primary-text">{{ row.where }}</a>
+              {% if row.opens_workroom %}<a href="/partner/activities/{{ row.a.id }}/evidence" class="font-bold text-slate-800 hover:edify-primary-text">{{ row.where }}</a>{% else %}<span class="font-bold text-slate-800">{{ row.where }}</span>{% endif %}
               {% if row.return_reason %}<p class="edify-text-caption text-rose-600 mt-0.5">{{ row.return_reason }}</p>{% endif %}
             </td>
             <td class="px-5 py-3 text-slate-600 max-xl:px-0" data-label="Type">{{ row.a.get_activity_type_display }}</td>
@@ -76,6 +79,20 @@
                   <button type="button" class="row-menu__item" role="menuitem"
                           hx-get="/activities/{{ row.a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML">Continue Evidence</button>
                   {% endif %}
+                  {% if "complete" in row.actions %}
+                  {% comment %} Complete (owner, 2026-11-06): partner work is
+                  completed by uploading its form and submitting it to IA, on
+                  the work's own page. Work not yet started is started on the
+                  way there, as Start Activity does. {% endcomment %}
+                  {% if "start" in row.actions %}
+                  <form role="none" method="post" action="/partner/activities/{{ row.a.id }}/start-action">
+                    {% csrf_token %}
+                    <button type="submit" class="row-menu__item" role="menuitem">Complete</button>
+                  </form>
+                  {% else %}
+                  <a class="row-menu__item" role="menuitem" href="/partner/activities/{{ row.a.id }}/evidence">Complete</a>
+                  {% endif %}
+                  {% endif %}
                   {% if "correct" in row.actions %}
                   <a class="row-menu__item" role="menuitem" href="/partner/activities/{{ row.a.id }}/evidence">Correct Returned Evidence</a>
                   {% endif %}
@@ -89,6 +106,11 @@
                   {# The team member who delivers it (owner, 2026-10-08; apps.partners.delivery_team). #}
                   <button type="button" class="row-menu__item" role="menuitem"
                           hx-get="/partner/activities/{{ row.a.id }}/delivered-by" hx-target="#drawer-container" hx-swap="innerHTML">{% if row.a.delivery_contact_name %}Change team member{% else %}Name team member{% endif %}</button>
+                  {% endif %}
+                  {% if "cancel" in row.actions %}
+                  {# The platform's one cancel drawer, with its reason (owner, 2026-11-06). #}
+                  <button type="button" class="row-menu__item row-menu__item--danger" role="menuitem"
+                          hx-get="/my-plan/{{ row.a.id }}/cancel-drawer" hx-target="#drawer-container" hx-swap="innerHTML">Cancel</button>
                   {% endif %}
               {% endrow_actions %}
             </td>

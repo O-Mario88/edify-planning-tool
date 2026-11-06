@@ -1253,22 +1253,25 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility"
+        "keyboard focus visibility",
+        "announced dynamic state"
       ],
-      "bytes": 1848,
+      "bytes": 2561,
       "deprecated_alternatives": [],
       "example_pages": [
         "/admin-panel/users/<str:user_id>"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Reset Password Drawer",
       "purpose": "Reusable reset password drawer interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default"
+        "default",
+        "loading",
+        "disabled"
       ],
       "tables": 0,
       "template": "partials/admin/reset_password_drawer.html",
@@ -9536,7 +9539,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 2800,
+      "bytes": 2829,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/cancel-drawer"
@@ -12348,11 +12351,38 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6082,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partner/users",
+        "/partners/<str:partner_id>"
+      ],
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 4,
+      "kind": "application-partial",
+      "name": "Team Table",
+      "purpose": "Reusable team table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/partners/team_table.html",
+      "variants": [
+        "warning",
+        "{% if m.role == "
+      ]
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4404,
+      "bytes": 4702,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/user-setup"
@@ -26654,7 +26684,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.admin_user_detail_view",
       "card_count": 0,
@@ -26671,7 +26701,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST {% url "
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -26735,7 +26767,7 @@
         "disabled": true,
         "empty": false,
         "error": true,
-        "loading": false
+        "loading": true
       },
       "surface_kind": "drawer",
       "table_pattern": "none",
@@ -66600,6 +66632,7 @@
         "GET /activities/{{ row.a.id }}/evidence",
         "GET /my-plan/{{ row.a.id }}/reschedule-drawer",
         "GET /partner/activities/{{ row.a.id }}/delivered-by",
+        "GET /my-plan/{{ row.a.id }}/cancel-drawer",
         "GET /my-plan/export-drawer{% querystring %}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -66718,6 +66751,7 @@
         "GET /activities/{{ row.a.id }}/evidence",
         "GET /my-plan/{{ row.a.id }}/reschedule-drawer",
         "GET /partner/activities/{{ row.a.id }}/delivered-by",
+        "GET /my-plan/{{ row.a.id }}/cancel-drawer",
         "GET /my-plan/export-drawer{% querystring %}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -75470,7 +75504,7 @@
       "evidence": [
         "template:pages/partner/assignment_detail.html",
         "test:referenced-by-automated-test",
-        "permission:partner_assignments"
+        "permission:partner_schools"
       ],
       "filters": "none",
       "findings": [],
@@ -75492,10 +75526,10 @@
       "page_title": "Assignment \u00b7 \u00b7 Edify",
       "page_type": "record-detail",
       "per_page_css": [],
-      "permission_key": "partner_assignments",
+      "permission_key": "partner_schools",
       "primary_action": "Schedule",
       "primary_user_decision": "What is the correct next action for this record?",
-      "purpose": "\u00a75 the assignment-acceptance surface: read-only brief with exactly two decisions \u2014 Schedule (primary) and Return (secondary).",
+      "purpose": "\u00a75 the assignment-acceptance surface: read-only brief with exactly two decisions \u2014 Schedule (primary) and Return (secondary). A team member is shown Schedule alone: their only work is to schedule (owner, 2026-11-06).",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -75747,7 +75781,7 @@
       "drawers": false,
       "evidence": [
         "test:referenced-by-automated-test",
-        "permission:partner_activities"
+        "permission:partner_schools"
       ],
       "filters": "none",
       "findings": [],
@@ -75766,7 +75800,7 @@
       "page_title": "Partner Schedule Assignment Action",
       "page_type": "interaction-fragment",
       "per_page_css": [],
-      "permission_key": "partner_activities",
+      "permission_key": "partner_schools",
       "primary_action": "Partner Schedule Assignment Action",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate partner schedule assignment action within the frontend workflow.",
@@ -75835,7 +75869,7 @@
         "template:partials/schools/drawer_error.html",
         "template:partials/partners/schedule_assignment_drawer.html",
         "test:referenced-by-automated-test",
-        "permission:partner_activities"
+        "permission:partner_schools"
       ],
       "filters": "none",
       "findings": [],
@@ -75856,7 +75890,7 @@
       "page_title": "Partner Schedule Assignment Drawer",
       "page_type": "interaction-fragment",
       "per_page_css": [],
-      "permission_key": "partner_activities",
+      "permission_key": "partner_schools",
       "primary_action": "Schedule delivery",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate partner schedule assignment drawer within the frontend workflow.",
@@ -76555,6 +76589,99 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_users_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:pages/partner/users.html",
+        "test:referenced-by-automated-test",
+        "permission:partner_users"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "shared-page-header-component",
+      "htmx_endpoints": [
+        "GET /partners/{{ partner.id }}/members/drawer"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-3F63451AC7",
+      "page_title": "Users \u00b7 Edify",
+      "page_type": "operational-queue",
+      "per_page_css": [],
+      "permission_key": "partner_users",
+      "primary_action": "Add member",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "The Partner Admin's Users page: the team, its logins and schools, and Add member (owner, 2026-11-06: \"the partner admin ... can add new team members. Add the button for add new member of the partner portal under users\"). A team member does not reach it (apps.partners.member_scope).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "PARTNER"
+      ],
+      "route": "/partner/users",
+      "route_name": "partner_users",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/partner/users.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[15px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partners_list_view",
@@ -76677,10 +76804,7 @@
       "htmx_endpoints": [
         "GET /partners/{{ partner.id }}/user-setup",
         "GET /partners/{{ partner.id }}/edit-drawer",
-        "GET /partners/{{ partner.id }}/members/drawer",
-        "GET /partners/{{ partner.id }}/members/{{ m.id }}/schools",
-        "GET /partners/{{ partner.id }}/members/{{ m.id }}/login",
-        "GET /partners/{{ partner.id }}/members/drawer?name={{ row.name|urlencode }}"
+        "GET /partners/{{ partner.id }}/members/drawer"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -76721,9 +76845,7 @@
       "route_name": "partner_detail",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/partners/{{ partner.id }}/status",
-        "/partners/{{ partner.id }}/members/{{ m.id }}/login",
-        "/partners/{{ partner.id }}/members"
+        "/partners/{{ partner.id }}/status"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -119725,7 +119847,7 @@
       "methods": [
         "GET"
       ],
-      "page_permission": "partner_assignments",
+      "page_permission": "partner_schools",
       "required_permissions": [],
       "route": "/partner/assignments/<str:assignment_id>",
       "route_name": "partner_assignment_detail",
@@ -119765,7 +119887,7 @@
       "methods": [
         "GET"
       ],
-      "page_permission": "partner_activities",
+      "page_permission": "partner_schools",
       "required_permissions": [],
       "route": "/partner/assignments/<str:assignment_id>/schedule-action",
       "route_name": "partner_schedule_assignment_action",
@@ -119777,7 +119899,7 @@
       "methods": [
         "GET"
       ],
-      "page_permission": "partner_activities",
+      "page_permission": "partner_schools",
       "required_permissions": [],
       "route": "/partner/assignments/<str:assignment_id>/schedule-drawer",
       "route_name": "partner_schedule_assignment_drawer",
@@ -119877,6 +119999,20 @@
       "route": "/partner/today",
       "route_name": "partner_today",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.partner_views.partner_users_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_users",
+      "required_permissions": [],
+      "route": "/partner/users",
+      "route_name": "partner_users",
+      "templates": [
+        "pages/partner/users.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.partner_views.partners_list_view",
@@ -123875,13 +124011,13 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 606,
+    "accessibility_contract_pass": 607,
     "activity_states": 24,
-    "all_routes": 1439,
+    "all_routes": 1440,
     "api_routes": 367,
-    "component_templates": 667,
-    "full_pages": 263,
-    "mobile_contract_pass": 606,
+    "component_templates": 668,
+    "full_pages": 264,
+    "mobile_contract_pass": 607,
     "nonvisual_actions": 310,
     "page_types": {
       "administration-or-configuration": 23,
@@ -123889,16 +124025,16 @@
       "approval-or-verification": 19,
       "dashboard": 0,
       "interaction-fragment": 650,
-      "operational-queue": 160,
+      "operational-queue": 161,
       "planning-or-creation": 16,
       "record-detail": 30,
       "report": 49
     },
     "partials_and_drawers": 340,
-    "permission_gated": 935,
+    "permission_gated": 936,
     "permission_keys": 128,
     "roles": 15,
-    "routed_surfaces": 954,
+    "routed_surfaces": 955,
     "scheduled_jobs": 41,
     "severity_counts": {
       "critical": 0,
@@ -123906,8 +124042,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 606,
-    "test_referenced": 863,
-    "theme_contract_pass": 606
+    "tablet_contract_pass": 607,
+    "test_referenced": 864,
+    "theme_contract_pass": 607
   }
 }

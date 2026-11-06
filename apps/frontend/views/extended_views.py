@@ -2175,25 +2175,47 @@ def admin_user_detail_view(request, user_id):
             )
 
         elif action == "reset_password":
+            from django.utils.html import format_html
+
             from apps.admin_users.services import set_temporary_password
             from apps.core.exceptions import BadRequest
 
+            # The row's Reset password drawer saves in place (owner,
+            # 2026-11-06: "too slow not saving", "no response"). It posted a
+            # whole page and waited for the Users page to load again with
+            # nothing on screen saying so, and one reset was sent about twelve
+            # times in fifteen seconds. A refused password is said in the
+            # drawer, where the Admin is looking, not at the top of a page.
+            in_drawer = request.headers.get("HX-Request") == "true"
+
+            def refused(reason: str):
+                if in_drawer:
+                    return HttpResponse(
+                        format_html(
+                            '<p role="alert" class="edify-note" data-tone="danger">{}</p>',
+                            reason,
+                        )
+                    )
+                messages.error(request, reason)
+                return redirect("frontend:admin_user_detail", user_id=user_id)
+
             new_password = request.POST.get("new_password", "").strip()
             if not new_password:
-                messages.error(request, "Password cannot be empty.")
-                return redirect("frontend:admin_user_detail", user_id=user_id)
+                return refused("Password cannot be empty.")
 
             try:
                 set_temporary_password(member.id, new_password, request.user)
             except BadRequest as exc:
-                messages.error(
-                    request, str(exc.detail if hasattr(exc, "detail") else exc)
-                )
-                return redirect("frontend:admin_user_detail", user_id=user_id)
-            messages.success(
-                request,
-                f"Password reset for '{member.name}'. They will be required to change it on next login.",
+                return refused(str(exc.detail if hasattr(exc, "detail") else exc))
+            said = (
+                f"Password reset for {member.name}. They will be required to "
+                "change it on next login."
             )
+            if in_drawer:
+                from apps.core.htmx_saved import saved_in_place
+
+                return saved_in_place(message=said)
+            messages.success(request, said)
 
         elif action == "unlock":
             from apps.accounts.lockout_service import AuthenticationLockoutService

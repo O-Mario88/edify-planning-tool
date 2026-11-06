@@ -65,11 +65,14 @@
   <div x-data="{ scheduled: false }" @planning-saved.window="scheduled = true">
   <div x-show="!scheduled" class="space-y-3">
   <div class="flex flex-wrap items-center justify-end gap-2.5">
+    {# A team member's only work is to schedule (owner, 2026-11-06). #}
+    {% if can_return %}
     <button type="button"
             hx-get="/partner/assignments/{{ a.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
             class="inline-flex h-8 items-center rounded-control border border-rose-200 edify-surface px-4 text-[13px] font-bold text-rose-600 hover:bg-rose-50 transition-colors">
       Return
     </button>
+    {% endif %}
     {% if a.can_schedule %}
     <button type="button"
             hx-get="/partner/assignments/{{ a.id }}/schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML"

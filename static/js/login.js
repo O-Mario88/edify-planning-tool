@@ -106,9 +106,13 @@
     });
   }
 
-  function initResetPassword() {
-    var form = document.querySelector("[data-reset-password-form]");
-    var submit = form ? form.querySelector("[data-reset-password-submit]") : null;
+  // A password form shows it is saving and cannot be sent twice: the reset
+  // link's page, and the change asked for at first sign-in (owner,
+  // 2026-11-06: a partner's new password looked as if it had not saved).
+  // pageshow gives the button back when the browser returns to the page.
+  function initBusySubmit(formSelector, submitSelector) {
+    var form = document.querySelector(formSelector);
+    var submit = form ? form.querySelector(submitSelector) : null;
     if (!form || !submit) return;
     form.addEventListener("submit", function () {
       if (!form.checkValidity()) return;
@@ -116,6 +120,16 @@
       submit.classList.add("is-submitting");
       submit.setAttribute("aria-busy", "true");
     });
+    window.addEventListener("pageshow", function () {
+      submit.disabled = false;
+      submit.classList.remove("is-submitting");
+      submit.removeAttribute("aria-busy");
+    });
+  }
+
+  function initResetPassword() {
+    initBusySubmit("[data-reset-password-form]", "[data-reset-password-submit]");
+    initBusySubmit("[data-change-password-form]", "[data-change-password-submit]");
   }
 
   // "That was not sent" (pages/auth/request_not_sent.html). Going back through

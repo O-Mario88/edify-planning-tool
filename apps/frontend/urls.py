@@ -2504,6 +2504,8 @@ urlpatterns = [
         name="partner_activity_submit",
     ),
     path("partner/my-plan", partner_views.partner_my_plan_view, name="partner_my_plan"),
+    # The Partner Admin's team (owner, 2026-11-06).
+    path("partner/users", partner_views.partner_users_view, name="partner_users"),
     # The team member who delivers one of the organisation's activities.
     path(
         "partner/activities/<str:activity_id>/delivered-by",
