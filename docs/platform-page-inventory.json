@@ -12052,11 +12052,35 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 980,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partners/<str:partner_id>/edit-drawer",
+        "/partners/create"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Role Picker",
+      "purpose": "Reusable  role picker interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/partners/_role_picker.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4515,
+      "bytes": 4570,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/create"
@@ -12110,7 +12134,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4662,
+      "bytes": 4716,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer"
@@ -124015,7 +124039,7 @@
     "activity_states": 24,
     "all_routes": 1440,
     "api_routes": 367,
-    "component_templates": 668,
+    "component_templates": 669,
     "full_pages": 264,
     "mobile_contract_pass": 607,
     "nonvisual_actions": 310,
