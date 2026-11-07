@@ -25,6 +25,7 @@ submit re-renders with the reason, a saved one reloads the profile.
     <label for="partner-name" class="block edify-text-caption font-semibold text-slate-600">Organisation name <span class="text-rose-500">*</span></label>
     <input id="partner-name" type="text" name="name" required value="{{ partner.name }}" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium">
   </div>
+  {% include "partials/partners/_role_picker.html" %}
   {% include "partials/partners/_region_picker.html" %}
   {% include "partials/partners/_capability_picker.html" %}
   {% else %}

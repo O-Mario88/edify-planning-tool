@@ -73,6 +73,20 @@ def scoped_projects(principal, base=None):
             staff_assignments__staff_id=staff_id,
             staff_assignments__is_active=True,
         )
+        # The coordinator gave them places to fill (owner, 2026-11-06: Add to
+        # Project refused with the allocation untouched). Before a first school
+        # of theirs joined, the project was nobody's to them, and its Add
+        # schools drawer answered "You do not manage this project".
+        project_filter |= Q(staff_capacities__staff_id=staff_id)
+        # And their team's places, which a lead fills for them
+        # (`capacity.place_holders`).
+        from apps.accounts.models import StaffSupervisorAssignment
+
+        project_filter |= Q(
+            staff_capacities__staff_id__in=StaffSupervisorAssignment.objects.filter(
+                supervisor_id=staff_id
+            ).values("supervisee_id")
+        )
     if school_ids:
         project_filter |= Q(school_assignments__school_id__in=school_ids)
     if not project_filter:

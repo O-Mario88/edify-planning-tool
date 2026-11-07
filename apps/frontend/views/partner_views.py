@@ -31,7 +31,7 @@ from apps.core.metrics import MetricValue, render_kpi_item
 from apps.clusters.models import Cluster
 from apps.geography.models import Region
 from apps.partners import capabilities as partner_capabilities
-from apps.partners.models import Partner, PartnerAssignment
+from apps.partners.models import Partner, PartnerAssignment, PartnerRole
 from apps.partners.purposes import visit_purpose_label
 from apps.activities.models import Activity
 from apps.evidence.models import EvidenceRecord
@@ -626,6 +626,8 @@ def create_partner_view(request):
             "ssaIntervention": chosen["ssa_intervention"],
             "ssaInterventions": chosen["ssa_interventions"],
             "activityCodes": chosen["activity_codes"],
+            # Delivery Partner or Loan Partner (owner, 2026-11-06).
+            "partnerRole": request.POST.get("partner_role", ""),
         }
         try:
             created = onboard_partner_service(payload, request.user)
@@ -662,6 +664,8 @@ def create_partner_view(request):
         "capability_groups": partner_capabilities.intervention_activity_options(),
         "selected_interventions": [],
         "selected_activities": [],
+        "partner_roles": PartnerRole.choices,
+        "selected_role": PartnerRole.DELIVERY,
         "can_manage_partner_users": may_manage_partner_users(request.user),
         "drawer_size": "md",
     }
@@ -1155,6 +1159,8 @@ def partner_edit_drawer_view(request, partner_id):
             "selected_activities": chosen.get(
                 "activity_codes", list(partner.activity_codes or [])
             ),
+            "partner_roles": PartnerRole.choices,
+            "selected_role": chosen.get("partner_role", partner.partner_role),
             "validation_error": validation_error,
         }
 
@@ -1189,6 +1195,10 @@ def partner_edit_drawer_view(request, partner_id):
             payload["name"] = name
             # Every ticked region; none ticked clears them, which is an answer.
             payload["regionNames"] = request.POST.getlist("region_names")
+            # Delivery Partner or Loan Partner — Edify's call (owner,
+            # 2026-11-06); `update()` links a Loan Partner to its lender.
+            if request.POST.get("partner_role"):
+                payload["partnerRole"] = request.POST["partner_role"]
             chosen = partner_capabilities.selected_capabilities(
                 request.POST.getlist("ssa_interventions"),
                 request.POST.getlist("activity_codes"),

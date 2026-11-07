@@ -342,12 +342,14 @@ def assign_school(project_id: str, data: dict, principal=None) -> dict:
 
     # The adder's allocation (brief, 2026-09-29). Locked and counted inside
     # this transaction, so concurrent additions cannot overfill it; a school
-    # already in the cohort uses no second place.
-    from apps.projects.capacity import consuming_staff_id, reserve_place
+    # already in the cohort uses no second place. A team member's school
+    # takes its officer's place when they hold one here (owner, 2026-11-06;
+    # `capacity.place_holder`).
+    from apps.projects.capacity import place_holder, reserve_place
 
     already = ProjectSchoolAssignment.objects.filter(project=p, school=school).exists()
     assigned_staff_id = (
-        None if already else reserve_place(p, consuming_staff_id(principal))
+        None if already else reserve_place(p, place_holder(p, principal, school))
     )
 
     assignment, _created = ProjectSchoolAssignment.objects.get_or_create(

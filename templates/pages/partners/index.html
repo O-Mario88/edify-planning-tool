@@ -74,6 +74,7 @@
               {% comment %}All of them, because a partner may do several
               (owner, 2026-09-22). The pill above the name keeps the first, so
               the card still reads at a glance.{% endcomment %}
+              <div><dt>Partner role</dt><dd class="font-semibold">{{ card.partner.get_partner_role_display }}</dd></div>
               <div><dt>Linked SSA Interventions</dt><dd class="font-semibold text-sky-700">{% for item in card.partner.capabilities.interventions %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% empty %}{{ card.partner.ssa_intervention_label }}{% endfor %}{% with activities=card.partner.capabilities.activities %}{% if activities %}<small>{{ activities|length }} activit{{ activities|length|pluralize:"y,ies" }}</small>{% endif %}{% endwith %}</dd></div>
             </dl>
           </header>

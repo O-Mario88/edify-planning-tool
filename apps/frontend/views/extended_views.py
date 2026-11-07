@@ -3685,17 +3685,17 @@ def project_bulk_assign_drawer_view(request, project_id):
         schools = writable.filter(id__in=request.POST.getlist("school_ids"))
         # A selection larger than the caller's allocation has left is refused
         # whole, not filled in list order (brief, 2026-09-29).
-        from apps.projects.capacity import assert_batch_fits, consuming_staff_id
+        from apps.projects.capacity import assert_selection_fits
 
         try:
-            assert_batch_fits(
+            assert_selection_fits(
                 project,
-                consuming_staff_id(request.user),
+                request.user,
                 schools.exclude(
                     id__in=ProjectSchoolAssignment.objects.filter(
                         project=project
                     ).values("school_id")
-                ).count(),
+                ),
             )
         except BadRequest as exc:
             return render(

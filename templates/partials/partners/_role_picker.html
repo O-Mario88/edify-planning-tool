@@ -1,0 +1,15 @@
+{% comment %}
+Which kind of partner an organisation is (owner, 2026-11-06): a Delivery
+Partner takes school visits and trainings; a Loan Partner lends through the
+loan workflow and is never handed school work (`apps.partners.loan_partner`).
+
+Expects `partner_roles` (choices) and `selected_role`.
+{% endcomment %}
+<div class="space-y-1">
+  <label for="partner-role" class="block edify-text-caption font-semibold text-slate-600">Partner role <span class="text-rose-500">*</span></label>
+  <select id="partner-role" name="partner_role" required
+          class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium">
+    {% for value, label in partner_roles %}<option value="{{ value }}" {% if value == selected_role %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <p class="edify-text-caption text-slate-500">A Loan Partner lends through the loan workflow and is not handed school visits or trainings.</p>
+</div>

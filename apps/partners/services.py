@@ -12,7 +12,7 @@ from django.utils import timezone
 from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
 from apps.core.scoping import resolve_partner_ids, resolve_user_scope
 
-from .models import Partner, PartnerAssignment, PartnerUserSetupStatus
+from .models import Partner, PartnerAssignment, PartnerRole, PartnerUserSetupStatus
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +133,9 @@ def _serialize(p: Partner) -> dict:
     return {
         "id": p.id,
         "name": p.name,
+        "partnerRole": p.partner_role,
+        "partnerRoleLabel": p.get_partner_role_display(),
+        "loanLenderId": p.loan_lender_id,
         "regionName": p.region_name,
         "regionNames": p.regions,
         "trainsOn": p.trains_on,
@@ -254,11 +257,17 @@ def onboard(data: dict, principal) -> dict:
     if Partner.objects.filter(name__iexact=name).exists():
         raise ConflictError(f"A partner organisation named '{name}' already exists.")
 
+    from .loan_partner import link_loan_lender, partner_role_from
+
+    role = partner_role_from(data.get("partnerRole"), default=PartnerRole.DELIVERY)
     email = (data.get("email") or "").strip().lower()
     regions = region_list(data) or []
     actor_id = getattr(principal, "user_id", None) or str(getattr(principal, "id", ""))
     p = Partner.objects.create(
         name=name,
+        # Delivery Partner (visits, trainings) or Loan Partner (the loan
+        # workflow) — owner, 2026-11-06.
+        partner_role=role,
         # Inactive until someone activates it (owner, 2026-09-07: "when it has
         # just been added, the button should be activate"). An organisation
         # that has just been typed in is not yet somebody a CCEO can assign a
@@ -289,6 +298,7 @@ def onboard(data: dict, principal) -> dict:
         onboarded_by_user_id=actor_id,
         onboarded_at=timezone.now(),
     )
+    link_loan_lender(p, actor_id)
     from apps.audit.services import log as audit_log
 
     audit_log(
@@ -742,6 +752,7 @@ def update(partner_id: str, data: dict, principal) -> dict:
         "phone": p.phone,
         "regionName": p.region_name,
         "regionNames": p.regions,
+        "partnerRole": p.partner_role,
     }
     for field_name in (
         "name",
@@ -772,7 +783,29 @@ def update(partner_id: str, data: dict, principal) -> dict:
         # a field any editor of the record may flip.
         _assert_partner_directory_manager(principal)
         p.active_status = bool(data["activeStatus"])
+    role = None
+    if "partnerRole" in data:
+        from .loan_partner import partner_role_from
+
+        role = partner_role_from(data["partnerRole"])
+    if role and role != p.partner_role:
+        # Which kind of partner it is is Edify's call, as its interventions
+        # are: an organisation's own login cannot make itself a lender.
+        if own_login:
+            from apps.core.rbac import Permission
+
+            _assert_permission(
+                principal,
+                Permission.PARTNER_ORGANISATION_EDIT,
+                "Only Edify can change whether an organisation is a Delivery "
+                "Partner or a Loan Partner.",
+            )
+        p.partner_role = role
     p.save()
+    if role:
+        from .loan_partner import link_loan_lender
+
+        link_loan_lender(p, getattr(principal, "id", None))
     from apps.audit.services import log as audit_log
 
     audit_log(
@@ -790,6 +823,7 @@ def update(partner_id: str, data: dict, principal) -> dict:
                 "phone": p.phone,
                 "regionName": p.region_name,
                 "regionNames": p.regions,
+                "partnerRole": p.partner_role,
             },
         },
     )
@@ -1177,8 +1211,11 @@ def assignable_partners():
     held = PartnerHold.objects.filter(lifted_at__isnull=True).values_list(
         "partner_id", flat=True
     )
+    # A Loan Partner's work is the loan workflow, never a school visit or a
+    # training (owner, 2026-11-06), so no hand-over picker offers it.
     return (
         Partner.objects.filter(deleted_at__isnull=True, active_status=True)
+        .exclude(partner_role=PartnerRole.LOAN)
         .exclude(id__in=held)
         .order_by("name")
     )
@@ -1295,10 +1332,16 @@ def create_assignment(**fields):
 
     from .handover_policy import past_school_rules
 
+    from .loan_partner import assert_takes_school_work
+
     fields.pop("status", None)
     fields.pop("scheduled_date", None)
     school = fields.get("school")
     assert_operating(school)
+    partner = fields.get("partner")
+    if partner is None and fields.get("partner_id"):
+        partner = Partner.objects.filter(id=fields["partner_id"]).first()
+    assert_takes_school_work(partner)
     # A project's hand-over goes past the school rules below for now (owner,
     # 2026-10-05; `handover_policy`). A closed school takes no new work either
     # way.
