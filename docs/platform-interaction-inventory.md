@@ -7,7 +7,7 @@ Static scan of every template control (button, link, input, select, textarea, su
 | Measure | Count |
 |---|---:|
 | Templates with controls | 696 |
-| Control declarations | 4117 |
+| Control declarations | 4118 |
 | State-changing | 483 |
 | High-consequence (state-changing) | 211 |
 | No automated evidence | 235 |
@@ -19,7 +19,7 @@ Static scan of every template control (button, link, input, select, textarea, su
 | button | 1428 |
 | disclosure | 62 |
 | field | 1362 |
-| link | 1207 |
+| link | 1208 |
 | tab | 58 |
 
 | Evidence | Count |
@@ -27,7 +27,7 @@ Static scan of every template control (button, link, input, select, textarea, su
 | browser-rendered | 865 |
 | none | 235 |
 | page-tested | 1597 |
-| request-tested | 1420 |
+| request-tested | 1421 |
 
 ## State-changing controls with no automated evidence
 

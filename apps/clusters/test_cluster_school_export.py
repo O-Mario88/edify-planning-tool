@@ -185,3 +185,41 @@ class ClusterSchoolExportTest(EligibilityFixture):
         response = self.client.get(self.url)
 
         self.assertNotIn("spreadsheetml", response.get("Content-Type", ""))
+
+    # Owner, 2026-11-07: "make sure it is placed next to 'add schools' to
+    # this cluster button". The Cluster Page's schools card offers Export
+    # schools right after Add Schools to Cluster, and to every reader of the
+    # page, since the export needs only that the reader may open the cluster.
+
+    def _cluster_page(self, user):
+        self.client.force_login(user)
+        return self.client.get(f"/clusters/{self.chegere_north.id}")
+
+    def test_export_sits_right_after_add_schools(self):
+        html = self._cluster_page(self.admin).content.decode()
+
+        add = html.index("Add Schools to Cluster")
+        export = html.index(f'href="{self.url}"', add)
+        count = html.index("Schools</span>", add)
+        self.assertLess(export, count)
+
+    def test_a_reader_who_cannot_add_schools_is_still_offered_it(self):
+        lead = User.objects.create(
+            email="export-reader-lead@edify.test",
+            name="Reader Lead",
+            roles=[EdifyRole.COUNTRY_PROGRAM_LEAD.value],
+            active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            is_active=True,
+        )
+        from apps.accounts.models import StaffProfile
+
+        profile = StaffProfile.objects.create(user=lead, title="Lead")
+        StaffSupervisorAssignment.objects.create(
+            supervisee=self.james_profile, supervisor=profile
+        )
+
+        response = self._cluster_page(lead)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Add Schools to Cluster")
+        self.assertContains(response, f'href="{self.url}"')
