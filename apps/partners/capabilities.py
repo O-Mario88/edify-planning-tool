@@ -50,6 +50,13 @@ from apps.core.enums import SsaIntervention
 ANY_INTERVENTION_KEY = "group:any"
 UNMAPPED_KEY = "group:unmapped"
 
+#: Lending to schools (owner, 2026-11-06: "add loan to the list of
+#: intervention"). Not an SSA intervention and never the single
+#: ``ssa_intervention`` column; the work itself follows the loan workflow, so
+#: no catalogue activity sits under it (`apps.partners.loan_partner`).
+LOAN_KEY = "loan"
+LOAN_LABEL = "Loan"
+
 
 def _intervention_labels() -> dict[str, str]:
     return {value: label for value, label in SsaIntervention.choices}
@@ -126,6 +133,9 @@ def _groups(by_intervention: dict[str, list[str]], items: dict):
         }
         for value, label in labels.items()
     ]
+    groups.append(
+        {"key": LOAN_KEY, "label": LOAN_LABEL, "kind": "loan", "activities": []}
+    )
     for key, label, kind in (
         (ANY_INTERVENTION_KEY, "Any SSA intervention", "any"),
         (UNMAPPED_KEY, "Not mapped to an intervention", "unmapped"),
@@ -226,6 +236,7 @@ def describe(partner) -> dict:
         **labels,
         ANY_INTERVENTION_KEY: "Any SSA intervention",
         UNMAPPED_KEY: "Not mapped to an intervention",
+        LOAN_KEY: LOAN_LABEL,
     }
     stored = list(getattr(partner, "ssa_interventions", None) or [])
     # A partner saved before the tick-list has one intervention and no array.

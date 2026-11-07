@@ -46,12 +46,15 @@ __all__ = [
     "annotate_allocations",
     "attach_visit_load",
     "assert_batch_fits",
+    "assert_selection_fits",
     "capacity_refusal",
     "consuming_staff_id",
     "eligible_staff",
     "is_capacity_managed",
     "may_withdraw",
     "partner_held_schools",
+    "place_holder",
+    "place_holders",
     "project_summary",
     "reserve_place",
     "school_stages",
@@ -306,6 +309,80 @@ def reserve_place(project, staff_id: str | None) -> str | None:
             )
         )
     return staff_id
+
+
+def _school_officers(school_ids) -> dict[str, set[str]]:
+    """The staff holding each school: its portfolio rows and its owner."""
+    from apps.accounts.models import StaffSchoolAssignment
+    from apps.schools.models import School
+
+    officers: dict[str, set[str]] = {str(s): set() for s in school_ids}
+    for school_id, staff_id in StaffSchoolAssignment.objects.filter(
+        school_id__in=list(officers)
+    ).values_list("school_id", "staff_id"):
+        officers[str(school_id)].add(str(staff_id))
+    for school_id, owner_id in School.objects.filter(
+        id__in=list(officers), account_owner_id__isnull=False
+    ).values_list("id", "account_owner_id"):
+        officers[str(school_id)].add(str(owner_id))
+    return officers
+
+
+def place_holders(project, principal, school_ids) -> dict[str, str | None]:
+    """Whose allocation each school would take a place from.
+
+    The adder's own, as it always was — except when the adder enrols a team
+    member's school (a Programme Lead adding a supervised CCEO's school) and
+    that school's officer holds an allocation on this project: then the place
+    is the officer's (owner, 2026-11-06: refused "even when the ceiling is not
+    yet met", because the PL's own allocation, which a PL rarely has, was
+    charged instead). ``None`` means nobody's places, as for the coordinator
+    and country roles.
+    """
+    adder = consuming_staff_id(principal)
+    school_ids = [str(s) for s in school_ids]
+    if adder is None:
+        return {school_id: None for school_id in school_ids}
+    officers = _school_officers(school_ids)
+    allocated = set(
+        ProjectStaffCapacity.objects.filter(
+            project_id=project.id,
+            staff_id__in={s for staff in officers.values() for s in staff},
+        ).values_list("staff_id", flat=True)
+    )
+    holders: dict[str, str | None] = {}
+    for school_id in school_ids:
+        held_by = officers.get(school_id, set())
+        if adder in held_by:
+            holders[school_id] = adder
+            continue
+        theirs = sorted(held_by & allocated)
+        holders[school_id] = theirs[0] if theirs else adder
+    return holders
+
+
+def place_holder(project, principal, school) -> str | None:
+    return place_holders(project, principal, [school.id])[str(school.id)]
+
+
+def assert_selection_fits(project, principal, schools) -> None:
+    """Refuse a selection larger than what remains, before adding any of it.
+
+    Counted per allocation the schools would use, so a lead adding schools
+    from two officers is held to each officer's places.
+    """
+    from collections import Counter
+
+    school_ids = [s.id for s in schools]
+    if not school_ids:
+        return
+    counts = Counter(
+        holder
+        for holder in place_holders(project, principal, school_ids).values()
+        if holder
+    )
+    for staff_id, count in counts.items():
+        assert_batch_fits(project, staff_id, count)
 
 
 def assert_batch_fits(project, staff_id: str | None, count: int) -> None:
@@ -598,6 +675,23 @@ def withdrawal_reason_text(code: str, other: str = "") -> str:
     return labels[code]
 
 
+def _team_allocated_projects(staff_id: str | None, project_ids) -> set[str]:
+    """Of ``project_ids``, those where a supervisee of ``staff_id`` holds an
+    allocation."""
+    if not staff_id or not project_ids:
+        return set()
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    team = StaffSupervisorAssignment.objects.filter(supervisor_id=staff_id).values(
+        "supervisee_id"
+    )
+    return set(
+        ProjectStaffCapacity.objects.filter(
+            project_id__in=list(project_ids), staff_id__in=team
+        ).values_list("project_id", flat=True)
+    )
+
+
 def annotate_allocations(projects, principal):
     """Attach this principal's allocation state to each project, for pages
     offering Add to Project: ``allocation`` (None when it uses nobody's
@@ -616,12 +710,18 @@ def annotate_allocations(projects, principal):
         if staff_id and ids
         else set()
     )
+    # Projects where somebody this principal supervises holds places: a lead
+    # adding their team's schools uses those (`place_holders`), so their own
+    # missing allocation blocks nothing. Each school is still counted on save.
+    team_held = _team_allocated_projects(staff_id, managed)
     for project in projects:
         allocation = mine.get(project.id)
         project.allocation = allocation
         project.capacity_remaining = allocation.remaining if allocation else None
         if allocation is not None and allocation.remaining == 0:
             project.capacity_block = capacity_refusal(allocation, titled=False)
+        elif allocation is None and project.id in team_held:
+            project.capacity_block = ""
         elif allocation is None and project.id in managed:
             project.capacity_block = (
                 f"You have no school allocation for {project.name}. Ask its "
@@ -682,17 +782,18 @@ def allocations_by_project(project_ids) -> dict[str, list[Allocation]]:
 
 def may_withdraw(principal, assignment) -> bool:
     """Whether this principal may take this enrolment out of its project: the
-    staff member whose allocation it uses (or, for an older row, who added
-    it), or the project's coordinator (and Admin)."""
+    staff member whose allocation it uses, the staff member who added it, or
+    the project's coordinator (and Admin).
+
+    Whose allocation it uses and who added it differ when a Programme Lead
+    adds a team member's school on that officer's places (2026-11-06,
+    `place_holders`); either of them may take it out."""
     from apps.projects.authority import directs_project_work
 
     own = getattr(principal, "staff_profile_id", None)
     if own and (
         assignment.assigned_staff_id == own
-        or (
-            assignment.assigned_staff_id is None
-            and assignment.assigned_by in {own, getattr(principal, "user_id", None)}
-        )
+        or assignment.assigned_by in {own, getattr(principal, "user_id", None)}
     ):
         return True
     return directs_project_work(principal, assignment.project_id)

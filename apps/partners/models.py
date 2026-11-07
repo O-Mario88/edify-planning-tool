@@ -23,11 +23,37 @@ class PartnerUserSetupStatus(models.TextChoices):
     CONFIGURED = "configured", "Partner login configured"
 
 
+class PartnerRole(models.TextChoices):
+    """What kind of partner an organisation is (owner, 2026-11-06).
+
+    A Delivery Partner takes school visits and trainings. A Loan Partner lends
+    to schools through the loan workflow — "the loan feature is different from
+    the school visits and training" — so it is a lender there
+    (``Partner.loan_lender``) and is never handed school work.
+    """
+
+    DELIVERY = "delivery", "Delivery Partner"
+    LOAN = "loan", "Loan Partner"
+
+
 class Partner(SoftDeleteModel):
     """A partner organization (trains/supports schools on Edify's behalf)."""
 
     id = CuidField()
     name = models.CharField(max_length=255)
+    partner_role = models.CharField(
+        max_length=16, choices=PartnerRole.choices, default=PartnerRole.DELIVERY
+    )
+    # A Loan Partner's place in the loan workflow: the lender referrals and
+    # loan applications go to. Linked (or created) when the organisation is
+    # saved as a Loan Partner; `apps.partners.loan_partner` keeps it.
+    loan_lender = models.OneToOneField(
+        "business_transformation.MfiOrganization",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="partner",
+    )
     # One region, kept because the register, the oversight grouping, the
     # targets table and the profile have always read it. It holds the FIRST of
     # the ticked regions below, so a partner saved either way reads the same.

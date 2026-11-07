@@ -65,6 +65,7 @@ brief, 2026-10-09): the page's own content is the first tab.
 <div><p class="edify-profile-field__label">Contact person</p><p class="edify-profile-field__value mt-0.5">{{ partner.contact_person|default:"Not specified" }}</p></div>
 <div><p class="edify-profile-field__label">Phone</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ partner.phone|default:"Not specified" }}</p></div>
 <div><p class="edify-profile-field__label">Email</p><p class="edify-profile-field__value mt-0.5">{% if partner.email %}<a href="mailto:{{ partner.email }}" class="hover:underline">{{ partner.email }}</a>{% else %}Not specified{% endif %}</p></div>
+<div><p class="edify-profile-field__label">Partner role</p><p class="edify-profile-field__value mt-0.5">{{ partner.get_partner_role_display }}</p></div>
 <div><p class="edify-profile-field__label">Regions</p><p class="edify-profile-field__value mt-0.5">{{ partner.region_label|default:"Not specified" }}</p></div>
 {% comment %}All of them, not the first (owner, 2026-09-22): an organisation
 running three kinds of work was described here by one.{% endcomment %}

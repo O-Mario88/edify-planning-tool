@@ -2295,20 +2295,22 @@ def bulk_assign_project_view(request):
                 deleted_at__isnull=True,
             )
 
-            from apps.projects.capacity import assert_batch_fits, consuming_staff_id
+            from apps.projects.capacity import assert_selection_fits
             from apps.projects.services import assign_school as assign_project_school
 
             # More schools than the caller's allocation has left: refuse the
             # whole selection rather than fill it in list order (brief,
             # 2026-09-29). Each school is still counted again inside
             # assign_school, under the allocation's lock.
-            new_count = schools.exclude(
+            # Counted per allocation the schools use: a lead adding their
+            # team's schools is held to each officer's places (2026-11-06).
+            new_schools = schools.exclude(
                 id__in=ProjectSchoolAssignment.objects.filter(project=project).values(
                     "school_id"
                 )
-            ).count()
+            )
             try:
-                assert_batch_fits(project, consuming_staff_id(request.user), new_count)
+                assert_selection_fits(project, request.user, new_schools)
             except BadRequest as exc:
                 messages.error(request, str(exc))
                 return redirect(return_url)

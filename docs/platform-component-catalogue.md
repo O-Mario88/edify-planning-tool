@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **668**
+Components and application partials: **669**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -481,6 +481,7 @@ Components and application partials: **668**
 | `partials/partners/_capability_picker.html` | application-partial | Reusable  capability picker interface primitive | info; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility | /partners/<str:partner_id>/edit-drawer<br>/partners/create | 0 |
 | `partials/partners/_project_handover_routes.html` | application-partial | Reusable  project handover routes interface primitive | canonical; default | inherits containing page contract | accessible name and label | /core-schools/assign-partner<br>/planning/assign-partner-modal | 0 |
 | `partials/partners/_region_picker.html` | application-partial | Reusable  region picker interface primitive | info; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility | /partners/<str:partner_id>/edit-drawer<br>/partners/create | 0 |
+| `partials/partners/_role_picker.html` | application-partial | Reusable  role picker interface primitive | canonical; default | explicit responsive contract | accessible name and label | /partners/<str:partner_id>/edit-drawer<br>/partners/create | 0 |
 | `partials/partners/create_partner_drawer.html` | application-partial | Reusable create partner drawer interface primitive | danger, info; default, error, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /partners/create | 0 |
 | `partials/partners/delivery_member_drawer.html` | application-partial | Reusable delivery member drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partner/activities/<str:activity_id>/delivered-by | 0 |
 | `partials/partners/edit_drawer.html` | application-partial | Reusable edit drawer interface primitive | danger; default, empty, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partners/<str:partner_id>/edit-drawer | 0 |
