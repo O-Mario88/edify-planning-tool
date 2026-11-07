@@ -643,6 +643,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "partner_activities": {PARTNER, ADMIN},
     "partner_evidence": {PARTNER, ADMIN},
     "partner_my_plan": {PARTNER, ADMIN},
+    # The Partner Admin's team: add members, their logins and schools (owner,
+    # 2026-11-06). Withheld from a team member (apps.partners.member_scope).
+    "partner_users": {PARTNER, ADMIN},
     # Feature pages that previously had no key of their own
     "projects": {PROJECT_COORDINATOR, CD, PL, CCEO, IA, ADMIN},
     # Following a Special Project school by school (owner, 2026-09-21 and
@@ -1664,6 +1667,8 @@ def build_sections(registry, user, current_path: str = "") -> list[dict]:
             continue
         if page_withheld(user, section["page_key"]):
             continue
+        if role == PARTNER and _withheld_from_team_member(user, section["page_key"]):
+            continue
         url = section.get("role_urls", {}).get(role, section["url"])
         match = section.get("match", "prefix")
         # A role_urls override adds a destination, it does not close the
@@ -2129,6 +2134,18 @@ SIDEBAR_ITEMS = [
                 "url": "/partner/completed",
                 "page_key": "partner_activities",
                 "icon_key": "disbursements",
+            },
+            {
+                # The Partner Admin adds team members here (owner,
+                # 2026-11-06: "Add the button for add new member of the
+                # partner portal under users"). The platform Admin has its
+                # own Users entry, so it is not offered this one as well.
+                "label": "Users",
+                "url": "/partner/users",
+                "page_key": "partner_users",
+                "icon_key": "users",
+                "visible_to": {PARTNER},
+                "admin_override": False,
             },
         ],
     },
@@ -3246,6 +3263,14 @@ ADMIN_NAV_PAGE_KEYS: set[str] = {
 }
 
 
+def _withheld_from_team_member(user, page_key) -> bool:
+    """A partner page the Partner Admin keeps and a team member is not
+    offered (apps.partners.member_scope)."""
+    from apps.partners.member_scope import page_withheld
+
+    return bool(page_key) and page_withheld(user, page_key)
+
+
 def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     """Generates the grouped list of visible sidebar links for the given user."""
     from apps.core.acting import page_withheld
@@ -3300,6 +3325,12 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
             # is not offered to the acting capacity (apps.core.acting).
             if page_withheld(user, item.get("page_key")):
                 continue
+            # A partner's team member is offered Assigned Schools and My Plan
+            # (owner, 2026-11-06; apps.partners.member_scope).
+            if role == PARTNER and _withheld_from_team_member(
+                user, item.get("page_key")
+            ):
+                continue
             # Staff have one direct Partner Oversight entry; the Partners
             # directory remains available to its other audiences.
             if (
@@ -3322,6 +3353,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
             overridden = (
                 role == ADMIN
                 and not in_audience
+                and item.get("admin_override", True)
                 and item.get("page_key") not in BT_SPECIALIST_NAV_PAGES
                 and not (
                     explicitly_scoped

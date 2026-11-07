@@ -10,7 +10,9 @@
       hx-target="#drawer-container"
       hx-disabled-elt="find button[type=submit]"
       class="space-y-4 text-[12px] font-semibold text-slate-600"
-      x-data="{ mode: '{% if login %}link{% else %}invite{% endif %}' }">
+      x-data="{ mode: '{% if login %}link{% else %}invite{% endif %}', busy: false }"
+      @htmx:before-request="busy = true"
+      @htmx:after-request="busy = false">
   {% csrf_token %}
   {% if validation_error %}<p role="alert" class="edify-note" data-tone="danger">{{ validation_error }}</p>{% endif %}
 
@@ -53,7 +55,9 @@
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-    <button type="submit" class="btn btn-primary h-8">Save login setup</button>
+    {% comment %}Says it is saving and cannot be pressed twice (owner,
+    2026-11-06: "no response").{% endcomment %}
+    <button type="submit" class="btn btn-primary h-8" :disabled="busy" :aria-busy="busy" x-text="busy ? 'Saving…' : 'Save login setup'">Save login setup</button>
   </div>
 </form>
 {% endblock %}

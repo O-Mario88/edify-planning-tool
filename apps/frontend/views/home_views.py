@@ -19,6 +19,14 @@ from apps.core.permissions import require_page_permission
 @require_page_permission("home")
 def home_view(request):
     from apps.command_center.home_service import build_home
+    from apps.partners.member_scope import MEMBER_HOME_URL, is_team_member
+
+    # Home reads the whole organisation's queue. A partner's team member
+    # schedules their own schools, so they start there (owner, 2026-11-06).
+    if is_team_member(request.user):
+        from django.shortcuts import redirect
+
+        return redirect(MEMBER_HOME_URL)
 
     return render(
         request, "pages/home/index.html", build_home(request.user, request.path)
@@ -30,6 +38,12 @@ def home_view(request):
 def home_queue_view(request):
     """Priority actions, plus the To-Do figures swapped into their tiles."""
     from apps.command_center.home_service import build_home_queue
+    from apps.partners.member_scope import is_team_member
+
+    if is_team_member(request.user):
+        from django.http import HttpResponse
+
+        return HttpResponse(status=204)
 
     return render(request, "partials/home/queue.html", build_home_queue(request.user))
 
@@ -40,6 +54,12 @@ def home_todo_figures_view(request):
     """The To-Do figures and count, for a role whose Priority actions are its
     own list (build_home_queue)."""
     from apps.command_center.home_service import build_home_todo_figures
+    from apps.partners.member_scope import is_team_member
+
+    if is_team_member(request.user):
+        from django.http import HttpResponse
+
+        return HttpResponse(status=204)
 
     return render(
         request,

@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **954**
-- All registered routes: **1439**
+- Routed product surfaces: **955**
+- All registered routes: **1440**
 - API routes: **367**
 - Roles: **15**
 - Permission keys: **128**
 - Scheduled jobs: **41**
 - Activity states: **24**
 - Shared component templates: **668**
-- Full pages: **263**
+- Full pages: **264**
 - Partials and drawers: **340**
-- Permission-gated surfaces: **935**
-- Referenced by automated tests: **863**
+- Permission-gated surfaces: **936**
+- Referenced by automated tests: **864**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -700,6 +700,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-A65A183218 | /partner/my-plan | Partner My Plan | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E201A7C900 | /partner/schools | Assigned Schools · Partner Portal · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6891C1794D | /partner/today | Partner Today | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-3F63451AC7 | /partner/users | Users · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-17F9B66823 | /partners | Partner Activities | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-68972438CC | /partners/<str:partner_id> | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E3651EDE84 | /partners/<str:partner_id>/edit-drawer | Partner Edit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

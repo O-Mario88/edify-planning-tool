@@ -179,6 +179,15 @@ class RolePermissionService:
 
         if page_withheld(user, page):
             return False
+        # A partner's team member schedules their own schools and has My
+        # Plan; the rest of the partner portal is the Partner Admin's (owner,
+        # 2026-11-06; apps.partners.member_scope). Both partner roles share
+        # one page map, so this is asked per person, and only of them.
+        if role_slug == "PARTNER":
+            from apps.partners.member_scope import page_withheld as member_withheld
+
+            if member_withheld(user, page):
+                return False
 
         # Specialist operational pages can explicitly opt out of the Admin
         # observation bypass. This is checked first so "role-exclusive" means
@@ -229,6 +238,17 @@ class RolePermissionService:
             return True
 
         obj_type = obj.__class__.__name__
+
+        # A partner's team member opens only the work at the schools given to
+        # them (owner, 2026-11-06; apps.partners.member_scope).
+        if role in ("PartnerAdmin", "PartnerFieldOfficer") and obj_type in (
+            "Activity",
+            "PartnerAssignment",
+        ):
+            from apps.partners.member_scope import may_touch_school
+
+            if not may_touch_school(user, getattr(obj, "school_id", None)):
+                return False
 
         # CountryDirector and RegionalVicePresident cannot view raw field/planning records directly
         if role == "CountryDirector":

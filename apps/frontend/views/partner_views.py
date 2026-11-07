@@ -17,6 +17,7 @@ from django.urls import reverse
 from urllib.parse import urlencode
 from apps.core.permissions import (
     RolePermissionService,
+    render_access_denied,
     require_export_permission,
     require_page_permission,
 )
@@ -1015,29 +1016,8 @@ def partner_detail_view(request, partner_id):
         )
         or partner.id in scope.partner_ids
     )
-    from apps.partners.services import manages_roster
-
-    can_manage_roster = manages_roster(request.user, partner)
     can_manage_status = request.user.is_superuser or role_slug in {"ADMIN", "CD"}
-
-    # How the organisation has split its schools among its team (owner,
-    # 2026-10-09; apps.partners.school_team).
-    from apps.partners import school_team
-
-    from apps.partners import member_logins
-
-    # Whoever leads the team splits its schools and gives its people logins
-    # (owner, 2026-10-09; apps.partners.member_logins).
-    can_split_schools = school_team.may_split_schools(request.user, partner)
-    member_school_counts = school_team.school_counts(partner)
-    for member in members:
-        member.school_count = member_school_counts.get(member.id, 0)
-        member.login = member_logins.member_login(member)
-
-    roster_rows = [{"kind": "member", "member": member} for member in members] + [
-        {"kind": "delivery", "name": name, "deliveries": count}
-        for name, count in sorted(named_on_deliveries.items(), key=lambda kv: -kv[1])
-    ]
+    team = _team_roster(request, partner, members, named_on_deliveries)
 
     context = {
         "partner": partner,
@@ -1049,14 +1029,11 @@ def partner_detail_view(request, partner_id):
         "named_on_deliveries": sorted(
             named_on_deliveries.items(), key=lambda kv: -kv[1]
         ),
-        "roster_rows": roster_rows,
+        **team,
         "school_count": partner_schools.count(),
         "partner_progress": partner_progress,
         "supported_schools": supported_schools,
         "can_edit": can_edit,
-        "can_manage_roster": can_manage_roster,
-        "can_split_schools": can_split_schools,
-        "can_configure_member_logins": can_split_schools,
         "can_manage_status": can_manage_status,
         # Partner logins are user administration (owner, 2026-09-15).
         "can_manage_partner_users": may_manage_partner_users(request.user),
@@ -1108,6 +1085,81 @@ def partner_detail_view(request, partner_id):
         lead=(("profile", "Profile"),),
     )
     return render(request, "pages/partners/detail.html", context)
+
+
+def _team_roster(request, partner, members=None, named_on_deliveries=None) -> dict:
+    """The organisation's team as its table draws it: each person with their
+    login and how many schools they look after, then the names on deliveries
+    who are not on the roster. Shared by the profile and the Partner Admin's
+    Users page (owner, 2026-11-06)."""
+    from apps.partners import member_logins, school_team
+    from apps.partners.services import manages_roster
+
+    if members is None:
+        members = list(partner.members.filter(active=True))
+    named_on_deliveries = named_on_deliveries or {}
+    # Whoever leads the team splits its schools and gives its people logins
+    # (owner, 2026-10-09; apps.partners.member_logins).
+    can_split_schools = school_team.may_split_schools(request.user, partner)
+    member_school_counts = school_team.school_counts(partner)
+    for member in members:
+        member.school_count = member_school_counts.get(member.id, 0)
+        member.login = member_logins.member_login(member)
+    return {
+        "roster_rows": [{"kind": "member", "member": m} for m in members]
+        + [
+            {"kind": "delivery", "name": name, "deliveries": count}
+            for name, count in sorted(
+                named_on_deliveries.items(), key=lambda kv: -kv[1]
+            )
+        ],
+        "can_manage_roster": manages_roster(request.user, partner),
+        "can_split_schools": can_split_schools,
+        "can_configure_member_logins": can_split_schools,
+    }
+
+
+def _team_page_url(request, partner_id) -> str:
+    """Where a change to the team returns: the Users page it was made from,
+    or the organisation's profile."""
+    from urllib.parse import urlparse
+
+    came_from = urlparse(request.headers.get("HX-Current-URL") or "").path
+    if request.POST.get("next") == "users" or came_from == "/partner/users":
+        return reverse("frontend:partner_users")
+    return reverse("frontend:partner_detail", kwargs={"partner_id": partner_id})
+
+
+@require_page_permission("partner_users")
+def partner_users_view(request):
+    """The Partner Admin's Users page: the team, its logins and schools, and
+    Add member (owner, 2026-11-06: "the partner admin ... can add new team
+    members. Add the button for add new member of the partner portal under
+    users"). A team member does not reach it (apps.partners.member_scope)."""
+    from apps.partners.member_logins import leads_team
+
+    partner = (
+        Partner.objects.filter(
+            id__in=resolve_partner_ids(request.user), deleted_at__isnull=True
+        )
+        .order_by("name")
+        .first()
+    )
+    if partner is None or not leads_team(request.user, partner):
+        return render_access_denied(
+            request, "Only the organisation's Partner Admin runs its team."
+        )
+    team = _team_roster(request, partner)
+    return render(
+        request,
+        "pages/partner/users.html",
+        {
+            "partner": partner,
+            "members": [r["member"] for r in team["roster_rows"]],
+            **team,
+            "team_next": "users",
+        },
+    )
 
 
 @require_page_permission("partner_detail")
@@ -1296,13 +1348,12 @@ def partner_member_action(request, partner_id):
 
             return error_fragment(exc, status=400)
         messages.error(request, str(getattr(exc, "detail", exc)))
+    back = _team_page_url(request, partner_id)
     if request.headers.get("HX-Request") == "true":
         response = HttpResponse(status=204)
-        response["HX-Redirect"] = reverse(
-            "frontend:partner_detail", kwargs={"partner_id": partner_id}
-        )
+        response["HX-Redirect"] = back
         return response
-    return redirect("frontend:partner_detail", partner_id=partner_id)
+    return redirect(back)
 
 
 @require_page_permission("partner_detail")
@@ -1380,15 +1431,14 @@ def partner_member_login_view(request, partner_id, member_id):
             if request.headers.get("HX-Request") == "true":
                 return drawer(str(getattr(exc, "detail", exc)))
             messages.error(request, str(getattr(exc, "detail", exc)))
-            return redirect("frontend:partner_detail", partner_id=partner.id)
+            return redirect(_team_page_url(request, partner.id))
         messages.success(request, said)
+        back = _team_page_url(request, partner.id)
         if request.headers.get("HX-Request") == "true":
             response = HttpResponse(status=204)
-            response["HX-Redirect"] = reverse(
-                "frontend:partner_detail", kwargs={"partner_id": partner.id}
-            )
+            response["HX-Redirect"] = back
             return response
-        return redirect("frontend:partner_detail", partner_id=partner.id)
+        return redirect(back)
     return drawer()
 
 
@@ -1449,9 +1499,7 @@ def partner_member_schools_view(request, partner_id, member_id):
             f"school{'' if result['schools'] == 1 else 's'}.",
         )
         response = HttpResponse(status=204)
-        response["HX-Redirect"] = reverse(
-            "frontend:partner_detail", kwargs={"partner_id": partner.id}
-        )
+        response["HX-Redirect"] = _team_page_url(request, partner.id)
         return response
     return drawer()
 
@@ -1536,13 +1584,20 @@ def partner_activities_view(request):
     return render(request, "pages/partner/activities.html", context)
 
 
-@require_page_permission("partner_activities")
+# Scheduling is reached from Assigned Schools, the page a team member keeps
+# (owner, 2026-11-06), so it is that page's, not Completed & Payments'.
+@require_page_permission("partner_schools")
 def partner_schedule_assignment_drawer(request, assignment_id):
+    from apps.partners.member_scope import narrow_to_member, sees_money
+
     partner_ids = resolve_partner_ids(request.user)
     assignment = get_object_or_404(
-        PartnerAssignment.objects.select_related(
-            "school", "cluster", "catalogue_item", "training_course", "source_ssa"
-        ).prefetch_related("allowed_catalogue_items"),
+        narrow_to_member(
+            PartnerAssignment.objects.select_related(
+                "school", "cluster", "catalogue_item", "training_course", "source_ssa"
+            ).prefetch_related("allowed_catalogue_items"),
+            request.user,
+        ),
         id=assignment_id,
         partner_id__in=partner_ids,
         status__in=["assigned", "pending_scheduling"],
@@ -1571,7 +1626,12 @@ def partner_schedule_assignment_drawer(request, assignment_id):
         {
             "assignment": assignment,
             "approved_item": assignment.catalogue_item,
-            "cost_preview": _partner_cost_preview(assignment),
+            # The Partner Admin is the only one shown what the work pays
+            # (owner, 2026-11-06: "the scheduling drawer should not have the
+            # cost (40000) labels" for a team member).
+            "cost_preview": _partner_cost_preview(assignment)
+            if sees_money(request.user)
+            else None,
             # Who goes is chosen from the organisation's team (owner,
             # 2026-10-08), the person signed in among them.
             "team": delivery_team.team_names(assignment.partner, request.user),
@@ -1622,13 +1682,15 @@ def _partner_cost_preview(assignment) -> dict | None:
     }
 
 
-@require_page_permission("partner_activities")
+@require_page_permission("partner_schools")
 def partner_schedule_assignment_action(request, assignment_id):
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
+    from apps.partners.member_scope import narrow_to_member
+
     partner_ids = resolve_partner_ids(request.user)
     assignment = get_object_or_404(
-        PartnerAssignment,
+        narrow_to_member(PartnerAssignment.objects.all(), request.user),
         id=assignment_id,
         partner_id__in=partner_ids,
         status__in=["assigned", "pending_scheduling"],
@@ -2029,15 +2091,22 @@ def _assignment_is_school_scoped(assignment) -> bool:
 
 
 def _assigned_intake(request, *, school_scoped: bool):
+    from apps.partners.member_scope import narrow_to_member
+
     partner_ids = resolve_partner_ids(request.user)
-    assignments = [
-        a
-        for a in PartnerAssignment.objects.filter(
+    # A team member reads only the schools given to them (owner, 2026-11-06).
+    queue = narrow_to_member(
+        PartnerAssignment.objects.filter(
             partner_id__in=partner_ids,
             status__in=["assigned", "pending_scheduling", "returned"],
-        )
-        .select_related("school", "school__district", "cluster", "catalogue_item")
-        .order_by("-created_at")[:300]
+        ),
+        request.user,
+    )
+    assignments = [
+        a
+        for a in queue.select_related(
+            "school", "school__district", "cluster", "catalogue_item"
+        ).order_by("-created_at")[:300]
         if _assignment_is_school_scoped(a) is school_scoped
     ]
     from apps.accounts.models import User as _User
@@ -2118,6 +2187,8 @@ def _annotate_schedule_gate(assignment, gate_map) -> None:
 def partner_assigned_schools_view(request):
     """§3 Assigned Schools — school-based work awaiting the partner's
     Schedule-or-Return decision. One click opens the assignment detail."""
+    from apps.partners.member_scope import is_team_member
+
     return render(
         request,
         "pages/partner/assigned_list.html",
@@ -2129,6 +2200,7 @@ def partner_assigned_schools_view(request):
                 "review the brief, then Schedule it or Return it."
             ),
             "school_scoped": True,
+            "can_return": not is_team_member(request.user),
         },
     )
 
@@ -2136,6 +2208,8 @@ def partner_assigned_schools_view(request):
 @require_page_permission("partner_assignments")
 def partner_assigned_activities_view(request):
     """§4 Assigned Activities — cluster/group work awaiting the decision."""
+    from apps.partners.member_scope import is_team_member
+
     return render(
         request,
         "pages/partner/assigned_list.html",
@@ -2147,18 +2221,28 @@ def partner_assigned_activities_view(request):
                 "your organisation."
             ),
             "school_scoped": False,
+            "can_return": not is_team_member(request.user),
         },
     )
 
 
-@require_page_permission("partner_assignments")
+# Opened from Assigned Schools as well as Assigned Activities, so it is the
+# page a team member keeps (owner, 2026-11-06).
+@require_page_permission("partner_schools")
 def partner_assignment_detail_view(request, assignment_id):
     """§5 the assignment-acceptance surface: read-only brief with exactly two
-    decisions — Schedule (primary) and Return (secondary)."""
+    decisions — Schedule (primary) and Return (secondary). A team member is
+    shown Schedule alone: their only work is to schedule (owner,
+    2026-11-06)."""
+    from apps.partners.member_scope import is_team_member, narrow_to_member
+
     partner_ids = resolve_partner_ids(request.user)
     assignment = get_object_or_404(
-        PartnerAssignment.objects.select_related(
-            "school", "school__district", "cluster", "catalogue_item", "source_ssa"
+        narrow_to_member(
+            PartnerAssignment.objects.select_related(
+                "school", "school__district", "cluster", "catalogue_item", "source_ssa"
+            ),
+            request.user,
         ),
         id=assignment_id,
         partner_id__in=partner_ids,
@@ -2189,6 +2273,7 @@ def partner_assignment_detail_view(request, assignment_id):
         {
             "a": assignment,
             "can_decide": can_decide,
+            "can_return": not is_team_member(request.user),
             "back_url": "/partner/assigned-schools"
             if school_scoped
             else "/partner/assigned-activities",
@@ -2503,15 +2588,25 @@ def partner_plan_context(user):
     partner_ids = resolve_partner_ids(user)
     from apps.partners.member_logins import leads_team
 
+    from apps.partners.member_scope import is_team_member, narrow_to_member
+
     leads_the_team = any(
         leads_team(user, org) for org in Partner.objects.filter(id__in=partner_ids)
     )
+    # A team member's plan is the work at their own schools, and their only
+    # work on it is to reschedule (owner, 2026-11-06: "Team members only
+    # have access to schools assigned to them and their only work is to
+    # schedule"; asked, "Schedule and My plan").
+    member = is_team_member(user)
     acts = list(
-        Activity.objects.filter(
-            assigned_partner_id__in=partner_ids,
-            delivery_type="partner",
-            deleted_at__isnull=True,
-            status__in=_PLAN_SCHEDULED + _PLAN_IN_PROGRESS + _PLAN_RETURNED,
+        narrow_to_member(
+            Activity.objects.filter(
+                assigned_partner_id__in=partner_ids,
+                delivery_type="partner",
+                deleted_at__isnull=True,
+                status__in=_PLAN_SCHEDULED + _PLAN_IN_PROGRESS + _PLAN_RETURNED,
+            ),
+            user,
         )
         .select_related("school", "school__district", "cluster")
         .order_by("planned_date", "created_at")[:200]
@@ -2538,19 +2633,24 @@ def partner_plan_context(user):
         else:
             evidence_summary = f"{len(have)} file(s)" if have else "No evidence yet"
 
+        # Complete and Cancel on every row still to be delivered (owner,
+        # 2026-11-06: "On the action, can you add complete, cancel"). Complete
+        # opens the work's upload and Submit to IA, the partner's completion.
         if a.status in _PLAN_RETURNED:
             bucket, actions = "needs_attention", ["correct"]
         elif a.status in _PLAN_IN_PROGRESS:
-            bucket, actions = "in_progress", ["continue", "reschedule"]
+            bucket, actions = "in_progress", ["continue", "complete", "reschedule"]
         elif a.planned_date == today:
-            bucket, actions = "due_today", ["start", "reschedule"]
+            bucket, actions = "due_today", ["start", "complete", "reschedule"]
         elif a.planned_date and a.planned_date < today:
             # Scheduled but the date passed unstarted — that IS attention.
-            bucket, actions = "needs_attention", ["start", "reschedule"]
+            bucket, actions = "needs_attention", ["start", "complete", "reschedule"]
         elif a.planned_date and a.planned_date <= week_end:
-            bucket, actions = "this_week", ["start", "reschedule"]
+            bucket, actions = "this_week", ["start", "complete", "reschedule"]
         else:
-            bucket, actions = "later", ["start", "reschedule"]
+            bucket, actions = "later", ["start", "complete", "reschedule"]
+        if a.status not in _PLAN_RETURNED:
+            actions = [*actions, "cancel"]
 
         sections[bucket].append(
             {
@@ -2570,7 +2670,16 @@ def partner_plan_context(user):
                 # Any row here is unfinished work, so its team member may
                 # still be named or changed (apps.partners.delivery_team),
                 # by whoever leads the team (owner, 2026-10-09).
-                "actions": [*actions, "team"] if leads_the_team else actions,
+                "actions": (
+                    [a for a in actions if a == "reschedule"]
+                    if member
+                    else [*actions, "team"]
+                    if leads_the_team
+                    else actions
+                ),
+                # The delivery workroom is the organisation's, not a team
+                # member's.
+                "opens_workroom": not member,
             }
         )
     section_list = [

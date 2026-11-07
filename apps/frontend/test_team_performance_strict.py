@@ -13,6 +13,7 @@ no id, no country total, and no figure counted from anyone else's schools.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from apps.accounts.models import StaffSupervisorAssignment
@@ -82,7 +83,12 @@ class RoleStrictTest(LedgerFixture):
         for query in self.links(reader):
             response = self.client.get(URL, {"fy": FY, **query})
             self.assertEqual(response.status_code, 200, query)
-            body = response.content.decode()
+            # A page carries freshly masked 64-character CSRF tokens, and a
+            # short name ("Zed") turns up inside one by chance now and then
+            # (PR #313's CI, 2026-11-06). No name or record id looked for
+            # here is 40 characters of letters and digits, so dropping such
+            # runs keeps the check as strict and takes the chance out.
+            body = re.sub(r"[A-Za-z0-9]{40,}", "", response.content.decode())
             for text in forbidden:
                 self.assertNotIn(text, body, f"{query}: {text}")
 
