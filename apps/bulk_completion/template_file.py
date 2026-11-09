@@ -5,12 +5,12 @@ scheduled (owner, 2026-11-09).
 already scheduled in the Planning module", for a chosen period, so a file
 completes exactly the activities staff planned and never names one by guess.
 
-Each line carries the activity's own ``planned_activity_id`` and its
-``school_id`` — the two columns the upload matches on — then the columns that
-help the uploader find the work (school, district, activity, scheduled date,
-responsible staff, Programme Lead, status), then the cells they fill in. A
-cluster or group training gives one line per school invited to it, since the
-upload takes one line per participating school.
+Each line is the activity's Activity ID and School ID — the two the upload
+matches on — and its Planned Date, then the cells the uploader fills in: the
+School Visit ID or Training ID and the Completed Date, and a training's
+Teachers Trained and School Leaders Trained (owner, 2026-11-09). A cluster or
+group training gives one line per school invited to it, since the upload
+takes one line per participating school.
 
 Open work only by default; ``completed=1`` adds the work already completed so
 a file can be reconciled (uploaded again, those lines are skipped as already
@@ -51,26 +51,10 @@ FILE_STEMS = {
 
 DAY_FORMAT = "d mmm yyyy"
 
-#: The columns after the Activity ID and before the cells to fill in. The
-#: School ID is the upload's; the rest are not upload headings, so the upload
-#: ignores them. A visit is named by its Activity ID and School ID and dated
-#: by its Planned Date, and nothing more (owner, 2026-11-09); a training line
-#: also says which training it is and how it is delivered.
-DESCRIBING = {
-    BulkKind.VISIT: ("School ID", "Planned Date"),
-    BulkKind.TRAINING: (
-        "School ID",
-        "School Name",
-        "Training Name",
-        "Delivery Mode",
-        "Cluster",
-        "District",
-        "Planned Date",
-        "Responsible Staff",
-        "Programme Lead",
-        "Status",
-    ),
-}
+#: The columns between the Activity ID and the cells to fill in, for both
+#: uploads. The School ID is the upload's; the Planned Date is there to find
+#: the work by, and the upload ignores it.
+DESCRIBING = ("School ID", "Planned Date")
 
 
 def _fill_in(kind: str) -> tuple[Column, ...]:
@@ -81,7 +65,7 @@ def _fill_in(kind: str) -> tuple[Column, ...]:
 def export_headings(kind: str) -> list[str]:
     return [
         ACTIVITY_ID.heading,
-        *DESCRIBING[kind],
+        *DESCRIBING,
         *(column.heading for column in _fill_in(kind)),
     ]
 
@@ -304,109 +288,22 @@ def filter_choices(principal, kind: str, period: Period) -> dict:
 
 
 # ── The lines ────────────────────────────────────────────────────────────────
-def _invited_schools(activities) -> dict[str, list[tuple[str, str]]]:
-    """{activity id: [(School ID, name)]} for the trainings with no school."""
+def _invited_schools(activities) -> dict[str, list[str]]:
+    """{activity id: [School ID]} for the trainings with no school."""
     from apps.activities.models import ClusterActivityAttendance
 
     ids = [a.pk for a in activities if not a.school_id]
-    invited: dict[str, list[tuple[str, str]]] = {}
+    invited: dict[str, list[str]] = {}
     if not ids:
         return invited
-    for activity_id, code, name in (
+    for activity_id, code in (
         ClusterActivityAttendance.objects.filter(activity_id__in=ids)
         .order_by("school__name")
-        .values_list("activity_id", "school__school_id", "school__name")
+        .values_list("activity_id", "school__school_id")
     ):
         if code:
-            invited.setdefault(activity_id, []).append((code, name or ""))
+            invited.setdefault(activity_id, []).append(code)
     return invited
-
-
-def _leads_of(owner_ids) -> dict[str, str]:
-    """{owner id in either space: their Programme Lead's name}."""
-    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
-    from apps.core.rbac import EdifyRole
-    from apps.core.role_holding import holds_role_q
-
-    wanted = {str(i) for i in owner_ids if i}
-    if not wanted:
-        return {}
-    profiles = dict(
-        StaffProfile.objects.filter(
-            Q(id__in=wanted) | Q(user_id__in=wanted)
-        ).values_list("id", "user_id")
-    )
-    lead_of: dict[str, str] = {}
-    for supervisee_id, name in (
-        StaffSupervisorAssignment.objects.filter(supervisee_id__in=profiles)
-        .filter(holds_role_q(EdifyRole.COUNTRY_PROGRAM_LEAD, prefix="supervisor__user"))
-        .order_by("supervisor__user__name")
-        .values_list("supervisee_id", "supervisor__user__name")
-    ):
-        for key in (supervisee_id, profiles.get(supervisee_id)):
-            if key:
-                lead_of.setdefault(str(key), name or "")
-    return lead_of
-
-
-def _delivery_mode(activity) -> str:
-    if activity.programme_delivery_mode:
-        return activity.get_programme_delivery_mode_display()
-    if activity.school_id:
-        return "In-school"
-    return "Cluster" if activity.cluster_id else "Group"
-
-
-def _training_name(activity) -> str:
-    course = activity.training_course
-    if course is not None and course.display_name:
-        return course.display_name
-    return activity.activity_name_snapshot or activity.get_activity_type_display()
-
-
-def _district(activity) -> str:
-    if activity.school_id and activity.school.district_id:
-        return activity.school.district.name
-    if activity.cluster_id and activity.cluster.district_id:
-        return activity.cluster.district.name
-    if activity.event_district_id:
-        return activity.event_district.name
-    return ""
-
-
-@dataclass(frozen=True)
-class _Names:
-    staff: dict
-    leads: dict
-    invited: dict
-
-
-def _described(activity, kind: str, names: _Names, school_name: str) -> list:
-    from django.utils import timezone
-
-    from apps.my_plan.services import get_activity_status_label_and_class
-
-    from .lines import scheduled_day
-
-    if kind == BulkKind.VISIT:
-        return [scheduled_day(activity)]
-    owner = str(activity.responsible_staff_id or "")
-    status, _ = get_activity_status_label_and_class(activity, timezone.localdate())
-    when_who = [
-        scheduled_day(activity),
-        names.staff.get(owner, ""),
-        names.leads.get(owner, ""),
-        status,
-    ]
-    cluster = activity.cluster.name if activity.cluster_id else ""
-    return [
-        school_name,
-        _training_name(activity),
-        _delivery_mode(activity),
-        cluster,
-        _district(activity),
-        *when_who,
-    ]
 
 
 def _filled_in(activity, kind: str) -> list:
@@ -422,38 +319,28 @@ def _filled_in(activity, kind: str) -> list:
     return cells
 
 
-def _lines(activity, kind: str, names: _Names) -> list[list]:
+def _lines(activity, kind: str, invited: dict) -> list[list]:
+    from .lines import scheduled_day
+
     if activity.school_id:
-        schools = [(activity.school.school_id, activity.school.name)]
+        schools = [activity.school.school_id]
     else:
-        schools = names.invited.get(activity.id) or [("", "")]
+        schools = invited.get(activity.id) or [""]
+    planned = scheduled_day(activity)
     filled = _filled_in(activity, kind)
-    return [
-        [activity.id, code, *_described(activity, kind, names, name), *filled]
-        for code, name in schools
-    ]
+    return [[activity.id, code, planned, *filled] for code in schools]
 
 
 def export_sheets(principal, kind: str, period: Period, filters: ExportFilters):
     """The workbook: the planned activities, then how to fill them in."""
     activities = list(
-        planned_activities(principal, kind, period, filters).select_related(
-            "school__district",
-            "cluster__district",
-            "event_district",
-            "training_course",
-        )[:TEMPLATE_ROW_LIMIT]
+        planned_activities(principal, kind, period, filters).select_related("school")[
+            :TEMPLATE_ROW_LIMIT
+        ]
     )
-    names = _Names(staff={}, leads={}, invited={})
-    if kind == BulkKind.TRAINING:
-        owners = {a.responsible_staff_id for a in activities if a.responsible_staff_id}
-        names = _Names(
-            staff=_people(owners),
-            leads=_leads_of(owners),
-            invited=_invited_schools(activities),
-        )
+    invited = _invited_schools(activities) if kind == BulkKind.TRAINING else {}
     headings = export_headings(kind)
-    rows = [line for activity in activities for line in _lines(activity, kind, names)]
+    rows = [line for activity in activities for line in _lines(activity, kind, invited)]
     day_columns = (
         headings.index("Planned Date") + 1,
         headings.index(COMPLETED_DATE.heading) + 1,

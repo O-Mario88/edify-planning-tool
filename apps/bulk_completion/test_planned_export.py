@@ -5,7 +5,8 @@ Pinned here:
   1. Each upload has its own columns. The School Visits file is five
      (owner, 2026-11-09): Activity ID, School ID and Planned Date as
      exported, then School Visit ID and Completed Date to fill in. The
-     Trainings file carries no School Visit ID, the visit file no Training ID.
+     Trainings file is the same three, one line per invited school, then
+     Training ID, Completed Date, Teachers Trained and School Leaders Trained.
   2. "Export Planned Activities" writes the activities already scheduled in
      the chosen period — a month, a date range, a quarter or a financial year
      (1 October to 30 September) — each with its own Planned Activity ID,
@@ -15,8 +16,8 @@ Pinned here:
      and the page says how many activities match before the download.
   4. The exported file, filled in and uploaded, completes exactly the
      activities it lists: two visits to one school stay two visits, and a
-     line left blank is skipped, not refused. A completed visit reads
-     Complete, in green, and leaves the calendar.
+     line left blank is skipped, not refused. A completed visit or training
+     reads Complete, in green, and leaves the calendar.
 """
 
 from __future__ import annotations
@@ -95,21 +96,20 @@ class EachUploadCarriesOnlyItsOwnIds(ExportFixture):
             ),
         )
 
-    def test_the_training_export_has_no_visit_id_column(self):
+    def test_the_training_export_is_the_three_ids_then_the_four_to_fill_in(self):
         headings = self._export("training", period="fy", fy=_fy())[0]
-        self.assertNotIn("School Visit ID", headings)
-        for wanted in (
-            "Activity ID",
-            "School ID",
-            "Training Name",
-            "Delivery Mode",
-            "Planned Date",
-            "Training ID",
-            "Completed Date",
-            "Teachers Trained",
-            "School Leaders Trained",
-        ):
-            self.assertIn(wanted, headings)
+        self.assertEqual(
+            headings,
+            (
+                "Activity ID",
+                "School ID",
+                "Planned Date",
+                "Training ID",
+                "Completed Date",
+                "Teachers Trained",
+                "School Leaders Trained",
+            ),
+        )
 
     def test_a_file_with_the_earlier_headings_still_uploads(self):
         visit = self._planned(_october())
@@ -298,7 +298,7 @@ class TheFilledExportCompletesExactlyItsActivities(ExportFixture):
         drawn = off_calendar_done(Activity.objects.filter(pk__in=[first.pk, second.pk]))
         self.assertEqual(list(drawn.values_list("pk", flat=True)), [second.pk])
 
-    def test_a_training_export_lists_each_invited_school_once(self):
+    def test_a_training_completes_with_the_schools_filled_in(self):
         training = self._visit(
             activity_type="cluster_training",
             school=None,
@@ -317,8 +317,59 @@ class TheFilledExportCompletesExactlyItsActivities(ExportFixture):
             ClusterActivityAttendance.objects.create(
                 activity=training, school=school, attended=False
             )
-        lines = _by_heading(self._export("training", period="fy", fy=_fy()))
-        mine = [line for line in lines if line["Activity ID"] == training.id]
+        rows = self._export("training", period="fy", fy=_fy())
+        mine = [
+            line for line in _by_heading(rows) if line["Activity ID"] == training.id
+        ]
         self.assertEqual({line["School ID"] for line in mine}, {"INV-A", "INV-B"})
-        self.assertEqual({line["Delivery Mode"] for line in mine}, {"Cluster"})
-        self.assertEqual({line["Cluster"] for line in mine}, {"Mukono North"})
+        self.assertEqual({line["Planned Date"].date() for line in mine}, {_october()})
+
+        done = min(self.done_on, _october() + timedelta(days=1))
+        filled = {
+            "Training ID": "TS-61020",
+            "Completed Date": done,
+            "Teachers Trained": 6,
+            "School Leaders Trained": 2,
+        }
+        sheet = [rows[0]] + [
+            row for row in rows[1:] if row[0] == training.id and row[1] == "INV-A"
+        ]
+        sheet += [
+            row for row in rows[1:] if row[0] == training.id and row[1] != "INV-A"
+        ]
+        batch = stage_upload(
+            self._filled_lines(sheet, {"INV-A": filled}), "training", self.ia_user
+        )
+        outcome = dict(batch.rows.values_list("school_code", "status"))
+        self.assertEqual(outcome["INV-A"], RowStatus.READY)
+        self.assertEqual(outcome["INV-B"], RowStatus.NOT_FILLED)
+
+        apply_batch(batch, self.ia_user)
+
+        training.refresh_from_db()
+        self.assertEqual(training.status, "ia_verified")
+        self.assertEqual(training.salesforce_activity_id, "TS-61020")
+        attended = set(
+            ClusterActivityAttendance.objects.filter(
+                activity=training, attended=True
+            ).values_list("school__school_id", flat=True)
+        )
+        self.assertEqual(attended, {"INV-A"})
+        label, colour = get_activity_status_label_and_class(training, date.today())
+        self.assertEqual((label, colour), (COMPLETE_LABEL, COMPLETE_CLASS))
+        self.assertFalse(off_calendar_done(Activity.objects.filter(pk=training.pk)))
+
+    def _filled_lines(self, rows, by_school: dict) -> SimpleUploadedFile:
+        """The exported training lines, the named schools' cells filled in."""
+        book = openpyxl.Workbook()
+        sheet = book.active
+        headings = list(rows[0])
+        sheet.append(headings)
+        for row in rows[1:]:
+            values = list(row)
+            for heading, value in by_school.get(row[1], {}).items():
+                values[headings.index(heading)] = value
+            sheet.append(values)
+        buffer = BytesIO()
+        book.save(buffer)
+        return SimpleUploadedFile("trainings.xlsx", buffer.getvalue())
