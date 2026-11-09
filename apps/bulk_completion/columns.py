@@ -80,7 +80,7 @@ TEMPLATE_NOTES = {
         "One line per planned visit, exported with its planned_activity_id. "
         "Fill in visit_sf_id (Salesforce) and completed_date (YYYY-MM-DD, "
         "today or earlier) for each visit that was done. Leave a line blank "
-        "to skip it. Do not change planned_activity_id or school_id; every "
+        "to skip it. Do not change planned_activity_id or School ID; every "
         "other column is there to help you find the visit and is ignored."
     ),
     BulkKind.TRAINING: (
@@ -91,7 +91,7 @@ TEMPLATE_NOTES = {
         "same planned_activity_id are one training: its schools are linked to "
         "it and their counts added up. Leave a school's line blank if it did "
         "not attend, or a whole training's lines blank to skip it. Do not "
-        "change planned_activity_id or school_id; every other column is "
+        "change planned_activity_id or School ID; every other column is "
         "ignored."
     ),
 }

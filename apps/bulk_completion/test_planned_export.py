@@ -78,7 +78,7 @@ class EachUploadCarriesOnlyItsOwnIds(ExportFixture):
         self.assertNotIn("training_sf_id", headings)
         for wanted in (
             "planned_activity_id",
-            "school_id",
+            "School ID",
             "School Name",
             "Planned Activity",
             "Scheduled Date",
@@ -94,7 +94,7 @@ class EachUploadCarriesOnlyItsOwnIds(ExportFixture):
         self.assertNotIn("visit_sf_id", headings)
         for wanted in (
             "planned_activity_id",
-            "school_id",
+            "School ID",
             "Training Name",
             "Delivery Mode",
             "training_sf_id",
@@ -141,7 +141,7 @@ class TheExportFollowsThePeriod(ExportFixture):
         rows = self._export(period="month", fy=_fy(), month="10")
         self.assertEqual(self._ids(rows), {self.october.id})
         line = _by_heading(rows)[0]
-        self.assertEqual(line["school_id"], "REV-1")
+        self.assertEqual(line["School ID"], "REV-1")
         self.assertEqual(line["School Name"], "Alpha Primary")
         self.assertEqual(line["Responsible Staff"], "James")
         self.assertEqual(line["Programme Lead"], "Lead Lydia")
@@ -307,6 +307,6 @@ class TheFilledExportCompletesExactlyItsActivities(ExportFixture):
             )
         lines = _by_heading(self._export("training", period="fy", fy=_fy()))
         mine = [line for line in lines if line["planned_activity_id"] == training.id]
-        self.assertEqual({line["school_id"] for line in mine}, {"INV-A", "INV-B"})
+        self.assertEqual({line["School ID"] for line in mine}, {"INV-A", "INV-B"})
         self.assertEqual({line["Delivery Mode"] for line in mine}, {"Cluster"})
         self.assertEqual({line["Cluster"] for line in mine}, {"Mukono North"})

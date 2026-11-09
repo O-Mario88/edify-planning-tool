@@ -44,10 +44,13 @@ FILE_STEMS = {
 
 DAY_FORMAT = "d mmm yyyy"
 
-#: The columns that describe the work, in order, after the two ID columns.
-#: Their headings are not upload headings, so the upload ignores them.
+#: The School ID, then the columns that describe the work, in order, after
+#: planned_activity_id. "School ID" is the upload's school_id column (headings
+#: are matched without case or underscores); the rest are not upload headings,
+#: so the upload ignores them.
 DESCRIBING = {
     BulkKind.VISIT: (
+        "School ID",
         "School Name",
         "District",
         "Planned Activity",
@@ -57,6 +60,7 @@ DESCRIBING = {
         "Status",
     ),
     BulkKind.TRAINING: (
+        "School ID",
         "School Name",
         "Training Name",
         "Delivery Mode",
@@ -78,7 +82,6 @@ def _fill_in(kind: str) -> tuple[Column, ...]:
 def export_headings(kind: str) -> list[str]:
     return [
         "planned_activity_id",
-        "school_id",
         *DESCRIBING[kind],
         *(column.heading for column in _fill_in(kind)),
     ]

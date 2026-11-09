@@ -425,7 +425,7 @@ class OnlyImpactAssessmentAndAdminRunIt(BulkFixture):
         )
         sheet = openpyxl.load_workbook(BytesIO(response.content)).worksheets[0]
         rows = list(sheet.iter_rows(values_only=True))
-        self.assertEqual(list(rows[0][:2]), ["planned_activity_id", "school_id"])
+        self.assertEqual(list(rows[0][:2]), ["planned_activity_id", "School ID"])
         self.assertIn("visit_sf_id", rows[0])
         self.assertNotIn("training_sf_id", rows[0])
         self.assertIn((visit.id, "REV-1"), [tuple(row[:2]) for row in rows[1:]])
