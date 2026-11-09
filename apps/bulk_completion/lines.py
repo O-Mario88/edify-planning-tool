@@ -1,10 +1,12 @@
 """One uploaded line: its parsed cells, its verdict, and the rules for lines
 that name the same activity twice.
 
-A line is a visit when it carries ``visit_sf_id`` and a training when it
-carries ``training_sf_id``; both, or neither, is refused. A training is given
+A School Visits line carries the School Visit ID and a Trainings line the
+Training ID (owner, 2026-11-09: each file only its own ID); a line
+carrying the other upload's ID is sent to that upload. A training is given
 one line per participating school, so lines naming one training are joined:
-its schools are linked to it and their counts added up.
+its schools are linked to it and their counts added up. A line whose fill-in
+cells are all empty was left for later and is skipped.
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ from datetime import date
 
 from django.utils import timezone
 
-from .columns import heading_of
+from .columns import ACTIVITY_ID, COMPLETED_DATE, COUNT_COLUMNS, SCHOOL_ID, heading_of
 from .models import BulkCompletionRow, BulkKind, RowStatus
 
 #: The upload a line of each kind belongs in, as the Upload Center names it.
@@ -78,57 +80,71 @@ def _count(line: Line, text: str, heading: str) -> int | None:
 
 
 def _salesforce_id(line: Line, values: dict, kind: str) -> None:
-    """Which Salesforce ID the line carries, and whether it belongs here."""
+    """The line's Salesforce ID, and whether it belongs in this upload."""
     from apps.activities.salesforce import (
         accepted_forms,
         is_valid_new_entry,
         normalize_salesforce_id,
     )
 
-    visit_id = values.get("visit_sf_id", "")
-    training_id = values.get("training_sf_id", "")
-    if visit_id and training_id:
-        line.refuse("Give visit_sf_id or training_sf_id, not both.")
-        return
-    if not visit_id and not training_id:
-        line.refuse("Give visit_sf_id or training_sf_id: both are empty.")
-        return
-    line_kind = BulkKind.VISIT if visit_id else BulkKind.TRAINING
-    if line_kind != kind:
-        given = "visit_sf_id" if visit_id else "training_sf_id"
+    from .columns import OTHER_ID, OWN_ID
+
+    own, other = OWN_ID[kind], OTHER_ID[kind]
+    given = values.get(own.field, "")
+    misplaced = values.get(other.field, "")
+    if misplaced:
+        other_kind = BulkKind.TRAINING if kind == BulkKind.VISIT else BulkKind.VISIT
+        noun = "training" if other_kind == BulkKind.TRAINING else "visit"
         line.refuse(
-            f"This line is a {'visit' if visit_id else 'training'} ({given}). "
-            f"Upload it with the {UPLOAD_NAMES[line_kind]} upload."
+            f"This line is a {noun} ({other.heading}). Upload it with the "
+            f"{UPLOAD_NAMES[other_kind]} upload."
         )
         return
-    line.salesforce_id = normalize_salesforce_id(visit_id or training_id)
-    if not is_valid_new_entry(line.salesforce_id, line_kind):
-        column = "visit_sf_id" if visit_id else "training_sf_id"
+    if not given:
+        line.refuse(f"{own.heading} is missing.")
+        return
+    line.salesforce_id = normalize_salesforce_id(given)
+    if not is_valid_new_entry(line.salesforce_id, kind):
         line.refuse(
-            f"{column}: enter the Salesforce ID as {accepted_forms(line_kind)}."
+            f"{own.heading}: enter the Salesforce ID as {accepted_forms(kind)}."
         )
+
+
+def left_blank(values: dict, kind: str) -> bool:
+    """None of the cells the uploader fills in holds anything: an exported
+    activity that was not done yet, or a school that did not attend."""
+    from .columns import FILL_IN_FIELDS, OTHER_ID
+
+    fields = (*FILL_IN_FIELDS[kind], OTHER_ID[kind].field)
+    return not any(values.get(name, "") for name in fields)
 
 
 def _completed_on(line: Line, text: str) -> None:
     if not text:
-        line.refuse("completed_date is missing.")
+        line.refuse(f"{COMPLETED_DATE.heading} is missing.")
         return
     try:
         line.completed_on = _date(text)
     except ValueError:
-        line.refuse("completed_date is not a date (use YYYY-MM-DD).")
+        line.refuse(f"{COMPLETED_DATE.heading} is not a date (use YYYY-MM-DD).")
         return
     if line.completed_on > timezone.localdate():
-        line.refuse("completed_date is in the future: give the day the work was done.")
+        line.refuse(
+            f"{COMPLETED_DATE.heading} is in the future: give the day the work "
+            "was done."
+        )
 
 
 def _parse(line: Line, values: dict, kind: str) -> None:
     line.activity_id = values.get("activity_id", "")
     line.school_code = values.get("school_code", "")
+    if line.activity_id and left_blank(values, kind):
+        line.problem = (RowStatus.NOT_FILLED, "Left blank — skipped.")
+        return
     if not line.activity_id:
-        line.refuse("planned_activity_id is missing.")
+        line.refuse(f"{ACTIVITY_ID.heading} is missing.")
     if not line.school_code:
-        line.refuse("school_id is missing.")
+        line.refuse(f"{SCHOOL_ID.heading} is missing.")
     _salesforce_id(line, values, kind)
     _completed_on(line, values.get("completed_on", ""))
     if kind == BulkKind.TRAINING:
@@ -270,9 +286,10 @@ def _second_mention(verdict: Verdict, earlier: Verdict, kind: str) -> None:
 def _training_register(verdict: Verdict) -> str:
     """Why a staff training's lines cannot complete it, or ""."""
     if (verdict.teachers or 0) + (verdict.leaders or 0) <= 0:
+        teachers, leaders = (column.heading for column in COUNT_COLUMNS)
         return (
-            "teachers_trained and school_leaders_trained add up to 0: a "
-            "training is completed with who attended."
+            f"{teachers} and {leaders} add up to 0: a training is completed "
+            "with who attended."
         )
     return ""
 

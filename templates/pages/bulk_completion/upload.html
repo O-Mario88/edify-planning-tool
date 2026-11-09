@@ -8,7 +8,7 @@
 
 {% page_header eyebrow="Upload Center" element="div" %}
   {% slot title %}{{ text.title }}{% endslot %}
-  {% slot description %}Complete many {{ text.noun }} at once from the Salesforce export. Every line is matched and checked first, and nothing is completed until you confirm the preview. Uploaded work is approved as it lands; work completed from its drawer still goes to the Programme Lead.{% endslot %}
+  {% slot description %}Export the {{ text.noun }} already planned for a period, fill in what was done, and upload the file back. Each line completes the exact activity it names by its Activity ID and School ID, through the same completion as its drawer. Nothing is completed until you confirm the preview.{% endslot %}
   {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
 {% endpage_header %}
 
@@ -22,22 +22,124 @@
 </div>
 {% endif %}
 
-<div class="edify-surface rounded-surface shadow-sm p-5 space-y-4">
-  <div class="flex items-center justify-between gap-4">
-    <div>
-      <h3 class="text-[14px] font-semibold text-slate-800">1. Download the template</h3>
-      <p class="text-[12px] text-slate-400 font-normal mt-0.5">It lists your open {{ text.noun }} with their planned_activity_id and school_id filled in. {{ note }}</p>
-    </div>
-    <a href="/uploads/bulk-completion/{{ kind }}/template" class="h-8 px-3 shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 edify-primary-solid edify-primary-hover edify-primary-on-solid text-[12px] font-medium rounded-control transition-colors">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-      Download Template
-    </a>
+<nav class="edify-section-nav" aria-label="Activity type" data-bulk-kind-tabs>
+  <div class="edify-section-nav__inner">
+    {% for value, label in kinds %}
+    <a href="/uploads/bulk-completion/{{ value }}" class="edify-section-nav__link{% if value == kind %} is-active{% endif %}"{% if value == kind %} aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
   </div>
-  <p class="edify-text-caption text-slate-400">Required columns: {% for column in columns %}{{ column.heading }}{% if not forloop.last %} · {% endif %}{% endfor %}. Headings may be in any case or order, and every other column is ignored. The Planning Oversight export carries each activity's Planned Activity ID.</p>
-</div>
+</nav>
+
+<section class="edify-surface rounded-surface shadow-sm p-5 space-y-4" aria-labelledby="bulk-export-title" data-bulk-export>
+  <div>
+    <h3 id="bulk-export-title" class="text-[14px] font-semibold text-slate-800">1. Choose the planned {{ text.noun }}</h3>
+    <p class="text-[12px] text-slate-400 font-normal mt-0.5">Pick the period they were scheduled in, on the financial calendar (1 October – 30 September; Q1 is October – December), and narrow it if you need to. Open work is listed unless you include completed work to reconcile.</p>
+  </div>
+
+  {% if period_error %}
+  <div class="p-3.5 bg-rose-50 text-rose-800 rounded-surface text-[12px] font-medium" role="alert">{{ period_error }} Showing {{ period.label }} instead.</div>
+  {% endif %}
+
+  {% filter_bar label="Planned activities to export" %}
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">Period</span>
+      <select name="period" class="cce-filter__select">
+        <option value="month"{% if period.kind == "month" %} selected{% endif %}>Month</option>
+        <option value="range"{% if period.kind == "range" %} selected{% endif %}>Date Range</option>
+        <option value="quarter"{% if period.kind == "quarter" %} selected{% endif %}>Quarter</option>
+        <option value="fy"{% if period.kind == "fy" %} selected{% endif %}>Financial Year</option>
+      </select>
+    </label>
+    {% if period.kind == "range" %}
+    <input type="hidden" name="fy" value="{{ period.fy }}">
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">From</span>
+      <input type="date" name="start" value="{{ period.start|date:'Y-m-d' }}" class="cce-filter__select" required>
+    </label>
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">To</span>
+      <input type="date" name="end" value="{{ period.end|date:'Y-m-d' }}" class="cce-filter__select" required>
+    </label>
+    {% else %}
+    <input type="hidden" name="start" value="{{ period.start|date:'Y-m-d' }}">
+    <input type="hidden" name="end" value="{{ period.end|date:'Y-m-d' }}">
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">Financial Year</span>
+      <select name="fy" class="cce-filter__select">
+        {% for fy in fy_choices %}<option value="{{ fy }}"{% if fy == period.fy %} selected{% endif %}>FY {{ fy }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% if period.kind == "month" %}
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">Month</span>
+      <select name="month" class="cce-filter__select">
+        {% for number, name in months %}<option value="{{ number }}"{% if number == period.month %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </label>
+    {% elif period.kind == "quarter" %}
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">Quarter</span>
+      <select name="quarter" class="cce-filter__select">
+        {% for quarter in quarters %}<option value="{{ quarter }}"{% if quarter == period.quarter %} selected{% endif %}>{{ quarter }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">Staff Member</span>
+      <select name="staff" class="cce-filter__select">
+        <option value="">All staff</option>
+        {% for person in choices.staff %}<option value="{{ person.id }}"{% if person.id == filters.staff %} selected{% endif %}>{{ person.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">Programme Lead</span>
+      <select name="lead" class="cce-filter__select">
+        <option value="">All Programme Leads</option>
+        {% for person in choices.leads %}<option value="{{ person.id }}"{% if person.id == filters.lead %} selected{% endif %}>{{ person.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">District</span>
+      <select name="district" class="cce-filter__select">
+        <option value="">All districts</option>
+        {% for district in choices.districts %}<option value="{{ district.id }}"{% if district.id == filters.district %} selected{% endif %}>{{ district.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="cce-filter platform-filter-compact">
+      <span class="cce-filter__label">Activity Type</span>
+      <select name="type" class="cce-filter__select">
+        <option value="">All {{ text.noun }}</option>
+        {% for option in choices.types %}<option value="{{ option.id }}"{% if option.id == filters.activity_type %} selected{% endif %}>{{ option.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex items-center gap-1.5 h-8">
+      <input type="checkbox" name="completed" value="1"{% if filters.include_completed %} checked{% endif %} class="rounded">
+      <span class="text-[12px] font-semibold text-slate-600">Include completed</span>
+    </label>
+  {% endfilter_bar %}
+
+  <div class="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-4">
+    <div>
+      <h3 class="text-[14px] font-semibold text-slate-800">2. Export Planned Activities</h3>
+      <p class="text-[12px] text-slate-500 font-normal mt-0.5" data-bulk-matches="{{ matches }}" aria-live="polite"><span class="font-semibold text-slate-800 tabular-nums">{{ matches }}</span> planned {{ text.noun }} in {{ period.label }}{% if filters.include_completed %}, completed included{% endif %}.</p>
+      {% if matches > row_limit %}<p class="edify-text-caption text-amber-700 mt-0.5">The file holds the first {{ row_limit }}; choose a shorter period or a filter to export the rest.</p>{% endif %}
+    </div>
+    {% if matches %}
+    <a href="{{ export_href }}" class="h-8 px-3 shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 edify-primary-solid edify-primary-hover edify-primary-on-solid text-[12px] font-medium rounded-control transition-colors" data-bulk-export-link>
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Export Planned Activities
+    </a>
+    {% else %}
+    <span class="h-8 px-3 shrink-0 whitespace-nowrap inline-flex items-center text-[12px] font-medium rounded-control bg-slate-50 text-slate-400" aria-disabled="true">Nothing to export</span>
+    {% endif %}
+  </div>
+  <p class="edify-text-caption text-slate-400">{{ note }}</p>
+</section>
 
 <div class="edify-surface rounded-surface shadow-sm p-6">
-  <h3 class="text-[14px] font-semibold text-slate-800">2. Upload the completed file</h3>
+  <h3 class="text-[14px] font-semibold text-slate-800">3. Upload the completed file</h3>
+  <p class="text-[12px] text-slate-400 font-normal mt-0.5">Required columns: {% for column in columns %}{{ column.heading }}{% if not forloop.last %} · {% endif %}{% endfor %}. Headings may be in any case or order and every other column is ignored. Next you will see a preview of the lines that will complete, those already completed, those left blank, and any missing IDs or invalid dates; confirm it to complete the valid lines.</p>
   <form method="post" enctype="multipart/form-data" class="space-y-4 mt-3" x-data="{ submitting: false, fileName: '' }" @submit="if ($el.checkValidity()) submitting = true">
   {% csrf_token %}
   <div class="border-2 border-dashed rounded-surface p-10 text-center transition-colors flex flex-col items-center justify-center min-h-[200px] border-slate-200 bg-slate-50/50 hover:bg-slate-50">
@@ -73,7 +175,7 @@
 {% data_table name="bulk-recent" %}
   {% slot title %}Recent uploads{% endslot %}
   {% slot summary %}{{ recent|length }} shown{% endslot %}
-  {% slot caption %}The latest {{ text.noun }} uploads you can open.{% endslot %}
+  {% slot caption %}The latest {{ text.noun }} uploads you can open, with who sent them and when.{% endslot %}
   {% slot empty %}{% include "components/empty_state.html" with message="No uploads yet." compact="true" %}{% endslot %}
   {% if recent %}
   <thead>

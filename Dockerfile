@@ -51,10 +51,13 @@ ENV NODE_ENV=production \
 # (CVE-2026-11822, -11824) and perl-base (CVE-2026-13221 and six more) while
 # the base tag still froze the vulnerable versions, so those four packages are
 # named for the same reason the OpenSSL ones are.
+#
+# And again on 2026-11-09 (CI run for 765eda24): zlib (CVE-2026-76844,
+# -85091), fixed in 1:1.3.dfsg+really1.3.1-1+deb13u1, so zlib1g is named too.
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     libpq5 libexpat1 curl \
     libssl3t64 openssl openssl-provider-legacy \
-    gzip libpcre2-8-0 libsqlite3-0 perl-base \
+    gzip libpcre2-8-0 libsqlite3-0 perl-base zlib1g \
     libreoffice --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 # Site-packages from the build stage.

@@ -25,7 +25,13 @@ from django.db import transaction
 
 from apps.core.exceptions import BadRequest
 
-from .columns import field_positions, headings, missing_columns
+from .columns import (
+    ACTIVITY_ID,
+    SCHOOL_ID,
+    field_positions,
+    headings,
+    missing_columns,
+)
 from .lines import Line, Verdict, merge_lines, read_lines, scheduled_day
 from .models import BatchStatus, BulkCompletionBatch, BulkCompletionRow, RowStatus
 from .rules import (
@@ -95,7 +101,7 @@ def _missing(line: Line, found: _Lookups) -> str:
     if line.activity_id and line.activity_id not in found.by_id:
         line.missing_ids["planned_activity_id"] = line.activity_id
         problems.append(
-            f"planned_activity_id {line.activity_id} is not a planned activity "
+            f"{ACTIVITY_ID.heading} {line.activity_id} is not a planned activity "
             "in your country."
         )
     if line.school_code and line.school_code not in found.schools:
@@ -105,7 +111,7 @@ def _missing(line: Line, found: _Lookups) -> str:
             if line.school_code in found.schools_outside
             else "is not in the School Directory"
         )
-        problems.append(f"school_id {line.school_code} {where}.")
+        problems.append(f"{SCHOOL_ID.heading} {line.school_code} {where}.")
     return " ".join(problems)
 
 
@@ -191,7 +197,7 @@ def _judge(line: Line, activity, kind: str, principal) -> Verdict:
     if activity.school_id and activity.school.school_id != line.school_code:
         return verdict.mark(
             RowStatus.REVIEW,
-            f"school_id {line.school_code} is not this activity's school "
+            f"{SCHOOL_ID.heading} {line.school_code} is not this activity's school "
             f"({activity.school.school_id}).",
         )
     standing = _standing(activity, kind)
@@ -208,6 +214,9 @@ def classify(lines: list[Line], kind: str, principal) -> list[Verdict]:
     found = _lookups(principal, lines)
     verdicts: list[Verdict] = []
     for line in lines:
+        if line.problem and line.problem[0] == RowStatus.NOT_FILLED:
+            verdicts.append(Verdict.unmatched(line, *line.problem))
+            continue
         if line.problem:
             _missing(line, found)  # its unknown IDs still reach the report
             verdicts.append(Verdict.unmatched(line, *line.problem))
@@ -240,6 +249,21 @@ def _read_file(raw: bytes, name: str):
         ) from exc
 
 
+def _refuse_other_uploads_file(kind: str, positions: dict, missing: list) -> None:
+    """A file carrying the other upload's ID column and not this one's was
+    sent to the wrong upload: say which one it belongs to."""
+    from .columns import OTHER_ID, OWN_ID
+    from .lines import UPLOAD_NAMES
+
+    if OWN_ID[kind].heading in missing and OTHER_ID[kind].field in positions:
+        other = next(k for k in UPLOAD_NAMES if k != kind)
+        raise BadRequest(
+            f"This file has {OTHER_ID[kind].heading} and no "
+            f"{OWN_ID[kind].heading}: it belongs in the {UPLOAD_NAMES[other]} "
+            "upload."
+        )
+
+
 def stage_upload(file, kind: str, principal) -> BulkCompletionBatch:
     """Read, match and classify the file; store it as a staged batch."""
     name = getattr(file, "name", "") or f"bulk-{kind}.xlsx"
@@ -251,6 +275,7 @@ def stage_upload(file, kind: str, principal) -> BulkCompletionBatch:
         raise BadRequest("The file is empty — no heading row was found.")
     positions = field_positions(kind, headers)
     missing = missing_columns(kind, positions)
+    _refuse_other_uploads_file(kind, positions, missing)
     if missing:
         raise BadRequest(
             "Missing column(s): "

@@ -1,21 +1,31 @@
 """The two upload files' columns, and how a heading row is read.
 
 Owner, 2026-11-03: a file links the Salesforce export to the planned work by
-IDs alone. Both uploads read the same five columns —
+IDs alone —
 
-    planned_activity_id   the activity, from the Planning Oversight export
-    school_id             the school, from the Salesforce export
-    visit_sf_id           the Salesforce visit ID (empty on a training line)
-    training_sf_id        the Salesforce training ID (empty on a visit line)
+    planned_activity_id   the activity, as Edify exported it
+    school_id             the school
+    visit_sf_id           the Salesforce visit ID (School Visits only)
+    training_sf_id        the Salesforce training ID (Trainings only)
     completed_date        the day the work was done
 
 — and the training upload two more, ``teachers_trained`` and
 ``school_leaders_trained`` ("count columns should be required as well").
 
+Owner, 2026-11-09: each file carries only its own ID. The School Visits file
+has no training_sf_id column and the Trainings file no visit_sf_id column. The
+other upload's ID is still recognised when a file carries it, so a training
+line sent to the visit upload is told where it belongs.
+
+Owner, 2026-11-09, later: the School Visits file is Activity ID, School ID
+and Planned Date, as exported, then School Visit ID and Completed Date, which
+the uploader fills in. The headings are those words now; the earlier ones
+(``planned_activity_id``, ``visit_sf_id`` …) are still read, so a file made
+before keeps uploading.
+
 Headings are compared with case, spacing and underscores ignored, so
-"Planned Activity ID" is ``planned_activity_id``. Every other column is
-ignored, so a raw Salesforce or Planning Oversight export is uploaded as it
-is, without deleting columns first.
+"completed_date" is "Completed Date". Every other column is ignored, so an
+export is uploaded back as it is.
 """
 
 from __future__ import annotations
@@ -31,23 +41,46 @@ from .models import BulkKind
 class Column:
     field: str
     heading: str
+    #: Earlier headings for the same column, still read.
+    also: tuple[str, ...] = ()
+
+    def reads(self) -> tuple[str, ...]:
+        return (self.heading, *self.also)
 
 
-SHARED_COLUMNS: tuple[Column, ...] = (
-    Column("activity_id", "planned_activity_id"),
-    Column("school_code", "school_id"),
-    Column("visit_sf_id", "visit_sf_id"),
-    Column("training_sf_id", "training_sf_id"),
-    Column("completed_on", "completed_date"),
+ACTIVITY_ID = Column(
+    "activity_id", "Activity ID", ("planned_activity_id", "Planned Activity ID")
 )
+SCHOOL_ID = Column("school_code", "School ID")
+VISIT_ID = Column("visit_sf_id", "School Visit ID", ("visit_sf_id",))
+TRAINING_ID = Column("training_sf_id", "Training ID", ("training_sf_id",))
+COMPLETED_DATE = Column("completed_on", "Completed Date")
 COUNT_COLUMNS: tuple[Column, ...] = (
-    Column("teachers", "teachers_trained"),
-    Column("leaders", "school_leaders_trained"),
+    Column("teachers", "Teachers Trained"),
+    Column("leaders", "School Leaders Trained"),
 )
 
 COLUMNS = {
-    BulkKind.VISIT: SHARED_COLUMNS,
-    BulkKind.TRAINING: (*SHARED_COLUMNS, *COUNT_COLUMNS),
+    BulkKind.VISIT: (ACTIVITY_ID, SCHOOL_ID, VISIT_ID, COMPLETED_DATE),
+    BulkKind.TRAINING: (
+        ACTIVITY_ID,
+        SCHOOL_ID,
+        TRAINING_ID,
+        COMPLETED_DATE,
+        *COUNT_COLUMNS,
+    ),
+}
+
+#: Each upload's own Salesforce ID column, and the other upload's, which is
+#: read only to tell a misplaced line where it belongs.
+OWN_ID = {BulkKind.VISIT: VISIT_ID, BulkKind.TRAINING: TRAINING_ID}
+OTHER_ID = {BulkKind.VISIT: TRAINING_ID, BulkKind.TRAINING: VISIT_ID}
+
+#: The cells an uploader fills in. A line with none of them filled is one the
+#: uploader left for later: it is skipped, not refused.
+FILL_IN_FIELDS = {
+    BulkKind.VISIT: ("visit_sf_id", "completed_on"),
+    BulkKind.TRAINING: ("training_sf_id", "completed_on", "teachers", "leaders"),
 }
 
 #: What a spreadsheet writes for "nothing here": the Planning Oversight
@@ -56,17 +89,21 @@ BLANK_CELLS = frozenset({"", "—", "–", "-"})
 
 TEMPLATE_NOTES = {
     BulkKind.VISIT: (
-        "One line per visit. Give visit_sf_id (Salesforce) and completed_date "
-        "(YYYY-MM-DD, today or earlier); leave training_sf_id empty. Any other "
-        "column is ignored, so you can paste these columns beside a Salesforce "
-        "or Planning Oversight export."
+        "One line per planned visit: its Activity ID, School ID and Planned "
+        "Date. For each visit that was done, fill in the School Visit ID "
+        "(Salesforce) and the Completed Date (YYYY-MM-DD, today or earlier). "
+        "Leave a line blank to skip it. Do not change the Activity ID or the "
+        "School ID: together they name the visit to complete."
     ),
     BulkKind.TRAINING: (
-        "One line per school that took part. Give training_sf_id (Salesforce), "
-        "completed_date (YYYY-MM-DD), and that school's teachers_trained and "
-        "school_leaders_trained; leave visit_sf_id empty. Lines with the same "
-        "planned_activity_id are one training: its schools are linked to it "
-        "and their counts added up. Any other column is ignored."
+        "One line per school invited to each planned training, with the "
+        "training's Activity ID. For each school that took part fill in the "
+        "Training ID (Salesforce), the Completed Date (YYYY-MM-DD) and that "
+        "school's Teachers Trained and School Leaders Trained. Lines with the "
+        "same Activity ID are one training: its schools are linked to it and "
+        "their counts added up. Leave a school's line blank if it did not "
+        "attend, or a whole training's lines blank to skip it. Do not change "
+        "the Activity ID or the School ID; every other column is ignored."
     ),
 }
 
@@ -80,8 +117,13 @@ def heading_of(kind: str, field: str) -> str:
 
 
 def field_positions(kind: str, headers: list[str]) -> dict[str, tuple[int, ...]]:
-    """{field: every column position carrying its heading}."""
-    wanted = {normalize_header(c.heading): c.field for c in COLUMNS[kind]}
+    """{field: every column position carrying its heading}, the other
+    upload's ID column included when the file has one."""
+    wanted = {
+        normalize_header(heading): c.field
+        for c in (*COLUMNS[kind], OTHER_ID[kind])
+        for heading in c.reads()
+    }
     found: dict[str, list[int]] = {}
     for position, heading in enumerate(headers):
         field = wanted.get(normalize_header(heading))

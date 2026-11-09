@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.db.models import Count, Q
 
+from .columns import ACTIVITY_ID, SCHOOL_ID
 from .models import (
     PROBLEM_STATUSES,
     SKIPPED_STATUSES,
@@ -17,6 +18,7 @@ SECTIONS = (
     ("completed", "Completed", (RowStatus.COMPLETED,)),
     ("skipped", "Already completed", (RowStatus.ALREADY_COMPLETED,)),
     ("duplicates", "Duplicates in this file", (RowStatus.DUPLICATE,)),
+    ("not_filled", "Left blank", (RowStatus.NOT_FILLED,)),
     ("review", "Needs review", (RowStatus.REVIEW,)),
     ("invalid", "Invalid or unmatched", (RowStatus.INVALID,)),
     ("failed", "Not completed", (RowStatus.FAILED,)),
@@ -53,6 +55,7 @@ def summary(batch: BulkCompletionBatch) -> dict:
         "completed": counts.get(RowStatus.COMPLETED, 0),
         "skipped": counts.get(RowStatus.ALREADY_COMPLETED, 0),
         "duplicates": counts.get(RowStatus.DUPLICATE, 0),
+        "not_filled": counts.get(RowStatus.NOT_FILLED, 0),
         "review": counts.get(RowStatus.REVIEW, 0),
         "invalid": counts.get(RowStatus.INVALID, 0),
         "failed": counts.get(RowStatus.FAILED, 0),
@@ -127,6 +130,11 @@ def earlier_upload(batch: BulkCompletionBatch):
 
 #: The ID columns whose values must already be in Edify, in report order.
 ID_COLUMNS = ("planned_activity_id", "school_id")
+#: How the error report names them: as the upload file does.
+ID_HEADINGS = {
+    "planned_activity_id": ACTIVITY_ID.heading,
+    "school_id": SCHOOL_ID.heading,
+}
 
 
 def missing_ids(batch: BulkCompletionBatch) -> list[tuple[str, str, str]]:
@@ -157,7 +165,10 @@ def error_report_sheets(batch: BulkCompletionBatch) -> list[dict]:
             {
                 "title": "Missing IDs",
                 "headers": ["Column", "ID", "Rows"],
-                "rows": [list(item) for item in missing],
+                "rows": [
+                    [ID_HEADINGS.get(column, column), value, rows]
+                    for column, value, rows in missing
+                ],
             }
         )
     return sheets
