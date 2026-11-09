@@ -36,6 +36,9 @@ class RowStatus(models.TextChoices):
     ALREADY_COMPLETED = "already_completed", "Already completed — skipped"
     DUPLICATE = "duplicate", "Duplicate in this file — skipped"
     MERGED = "merged", "Joined to an earlier row of the same training"
+    # An exported activity whose fill-in cells were left empty: not done yet,
+    # or (on a training's line) a school that did not attend. Not an error.
+    NOT_FILLED = "not_filled", "Left blank — skipped"
     REVIEW = "review", "Needs review"
     INVALID = "invalid", "Invalid"
     # Written when the batch is applied.

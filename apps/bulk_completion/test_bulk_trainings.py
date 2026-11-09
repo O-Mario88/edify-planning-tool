@@ -2,9 +2,10 @@
 
 Pinned here:
 
-  1. The training file has the visit file's five columns plus
-     teachers_trained and school_leaders_trained (owner, 2026-11-03: "count
-     columns should be required as well"). One line per participating school.
+  1. The training file has planned_activity_id, school_id, training_sf_id,
+     completed_date, teachers_trained and school_leaders_trained (owner,
+     2026-11-03: "count columns should be required as well"); no visit_sf_id
+     column is needed (2026-11-09). One line per participating school.
   2. Lines with the same planned_activity_id and training_sf_id are one
      training: it completes once, every school named is on its register, and
      the counts are the schools' counts added up.

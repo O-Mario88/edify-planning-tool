@@ -1,8 +1,11 @@
-"""Upload Center pages for bulk completion: upload, preview, confirm, result
-and the error report. Each one asks the bulk-completion permission, and a
-batch is opened only by a reader it is visible to (report.visible_batches)."""
+"""Upload Center pages for bulk completion: choose the planned work and
+export it, upload it back, preview, confirm, result and the error report.
+Each one asks the bulk-completion permission, and a batch is opened only by a
+reader it is visible to (report.visible_batches)."""
 
 from __future__ import annotations
+
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.http import Http404
@@ -19,7 +22,15 @@ from .columns import COLUMNS, TEMPLATE_NOTES
 from .models import BatchStatus, BulkKind
 from .rules import may_bulk_complete
 from .staging import MAX_ROWS, cancel_batch, stage_upload
-from .template_file import FILE_STEMS, template_sheets
+from .periods import QUARTERS, default_period, read_period
+from .template_file import (
+    FILE_STEMS,
+    TEMPLATE_ROW_LIMIT,
+    ExportFilters,
+    export_sheets,
+    filter_choices,
+    planned_activities,
+)
 
 DENIED = (
     "Bulk completion is run by Impact Assessment and administrators. Complete "
@@ -29,11 +40,13 @@ DENIED = (
 PAGE_TEXT = {
     BulkKind.VISIT: {
         "title": "Bulk Upload — School Visits",
+        "tab": "School Visits",
         "noun": "school visits",
         "id_label": "Visit SF ID",
     },
     BulkKind.TRAINING: {
         "title": "Bulk Upload — Trainings",
+        "tab": "Trainings",
         "noun": "trainings",
         "id_label": "Training SF ID",
     },
@@ -69,19 +82,46 @@ def upload_view(request, kind):
             messages.error(request, str(exc.detail))
             return local_redirect(f"/uploads/bulk-completion/{kind}")
         return local_redirect(f"/uploads/bulk-completion/batch/{batch.id}")
-    recent = report.visible_batches(request.user).filter(kind=kind)[:10]
     return render(
         request,
         "pages/bulk_completion/upload.html",
-        {
-            "kind": kind,
-            "text": PAGE_TEXT[kind],
-            "columns": COLUMNS[kind],
-            "note": TEMPLATE_NOTES[kind],
-            "max_rows": MAX_ROWS,
-            "recent": recent,
-        },
+        _upload_context(request, kind),
     )
+
+
+def _upload_context(request, kind: str) -> dict:
+    """The page's steps: which period and filters, how many activities they
+    hold, the export link that writes them, and the upload."""
+    from apps.core.fy import FY_MONTHS, fy_options
+
+    period_error = ""
+    try:
+        period = read_period(request.GET)
+    except BadRequest as exc:
+        period_error = str(exc.detail)
+        period = default_period()
+    filters = ExportFilters.from_query(request.GET, kind)
+    query = {**period.query(), **filters.query()}
+    matches = planned_activities(request.user, kind, period, filters).count()
+    return {
+        "kind": kind,
+        "kinds": [(value, PAGE_TEXT[value]["tab"]) for value in BulkKind.values],
+        "text": PAGE_TEXT[kind],
+        "columns": COLUMNS[kind],
+        "note": TEMPLATE_NOTES[kind],
+        "max_rows": MAX_ROWS,
+        "recent": report.visible_batches(request.user).filter(kind=kind)[:10],
+        "period": period,
+        "period_error": period_error,
+        "filters": filters,
+        "choices": filter_choices(request.user, kind, period),
+        "fy_choices": fy_options(),
+        "months": FY_MONTHS,
+        "quarters": QUARTERS,
+        "matches": matches,
+        "row_limit": TEMPLATE_ROW_LIMIT,
+        "export_href": f"/uploads/bulk-completion/{kind}/template?{urlencode(query)}",
+    }
 
 
 @require_page_permission("bulk_completion")
@@ -92,8 +132,15 @@ def template_view(request, kind):
     denied = _denied(request)
     if denied:
         return denied
+    try:
+        period = read_period(request.GET)
+    except BadRequest as exc:
+        messages.error(request, str(exc.detail))
+        return local_redirect(f"/uploads/bulk-completion/{kind}")
+    filters = ExportFilters.from_query(request.GET, kind)
+    stem = f"{FILE_STEMS[kind]}-{period.start:%Y-%m-%d}-to-{period.end:%Y-%m-%d}"
     return workbook_response(
-        f"{FILE_STEMS[kind]}.xlsx", template_sheets(request.user, kind)
+        f"{stem}.xlsx", export_sheets(request.user, kind, period, filters)
     )
 
 

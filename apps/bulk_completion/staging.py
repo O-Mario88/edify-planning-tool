@@ -208,6 +208,9 @@ def classify(lines: list[Line], kind: str, principal) -> list[Verdict]:
     found = _lookups(principal, lines)
     verdicts: list[Verdict] = []
     for line in lines:
+        if line.problem and line.problem[0] == RowStatus.NOT_FILLED:
+            verdicts.append(Verdict.unmatched(line, *line.problem))
+            continue
         if line.problem:
             _missing(line, found)  # its unknown IDs still reach the report
             verdicts.append(Verdict.unmatched(line, *line.problem))
@@ -240,6 +243,21 @@ def _read_file(raw: bytes, name: str):
         ) from exc
 
 
+def _refuse_other_uploads_file(kind: str, positions: dict, missing: list) -> None:
+    """A file carrying the other upload's ID column and not this one's was
+    sent to the wrong upload: say which one it belongs to."""
+    from .columns import OTHER_ID, OWN_ID
+    from .lines import UPLOAD_NAMES
+
+    if OWN_ID[kind].heading in missing and OTHER_ID[kind].field in positions:
+        other = next(k for k in UPLOAD_NAMES if k != kind)
+        raise BadRequest(
+            f"This file has {OTHER_ID[kind].heading} and no "
+            f"{OWN_ID[kind].heading}: it belongs in the {UPLOAD_NAMES[other]} "
+            "upload."
+        )
+
+
 def stage_upload(file, kind: str, principal) -> BulkCompletionBatch:
     """Read, match and classify the file; store it as a staged batch."""
     name = getattr(file, "name", "") or f"bulk-{kind}.xlsx"
@@ -251,6 +269,7 @@ def stage_upload(file, kind: str, principal) -> BulkCompletionBatch:
         raise BadRequest("The file is empty — no heading row was found.")
     positions = field_positions(kind, headers)
     missing = missing_columns(kind, positions)
+    _refuse_other_uploads_file(kind, positions, missing)
     if missing:
         raise BadRequest(
             "Missing column(s): "

@@ -2,10 +2,11 @@
 
 Pinned here:
 
-  1. A file needs five columns — planned_activity_id, school_id, visit_sf_id,
-     training_sf_id, completed_date — read whatever their case, spacing or
-     order; any other column is ignored, so a raw Salesforce / Planning
-     Oversight export uploads as it is.
+  1. A file needs four columns — planned_activity_id, school_id, visit_sf_id,
+     completed_date — read whatever their case, spacing or order; any other
+     column is ignored, so a raw Salesforce / Planning Oversight export
+     uploads as it is. A training_sf_id column is not needed (owner,
+     2026-11-09); a line that fills one in is sent to the Trainings upload.
   2. A line names its visit by planned_activity_id alone; its school_id must
      be that visit's school. Nothing is matched by guessing.
   3. Confirming completes each ready line through the visit's own workflow:
@@ -190,10 +191,10 @@ class ExtraColumnsAreIgnored(BulkFixture):
     def test_a_missing_required_column_is_named(self):
         with self.assertRaises(BadRequest) as refused:
             self._stage(
-                "x,REV-1,SVE-1," + self.done_on.isoformat(),
-                headings="planned_activity_id,school_id,visit_sf_id,completed_date",
+                "x,REV-1," + self.done_on.isoformat(),
+                headings="planned_activity_id,school_id,completed_date",
             )
-        self.assertIn("training_sf_id", str(refused.exception.detail))
+        self.assertIn("visit_sf_id", str(refused.exception.detail))
 
 
 class CompletedVisitsAreNeverRecounted(BulkFixture):
@@ -275,8 +276,11 @@ class MalformedLinesAreReportedNeverGuessed(BulkFixture):
         cases = [
             (self._line(None, "SVE-50030", school="REV-1"), "planned_activity_id"),
             (self._line(visit, "SVE-50031", school=""), "school_id is missing"),
-            (self._line(visit, "SVE-50032", training_sf="TS-50032"), "not both"),
-            (self._line(visit, ""), "visit_sf_id or training_sf_id"),
+            (
+                self._line(visit, "SVE-50032", training_sf="TS-50032"),
+                "Trainings upload",
+            ),
+            (self._line(visit, ""), "visit_sf_id is missing"),
             (self._line(visit, "SVE-50033", day=""), "completed_date is missing"),
             (self._line(visit, "SVE-50034", day="31/31/2026"), "not a date"),
             (self._line(visit, "SVE-50035", day=future), "future"),
@@ -372,8 +376,9 @@ class OnlyImpactAssessmentAndAdminRunIt(BulkFixture):
         client = self.as_user(self.ia_user)
         self.assertContains(client.get("/uploads"), "Bulk Upload — School Visits")
         page = client.get("/uploads/bulk-completion/visit")
-        for heading in HEADINGS.split(","):
+        for heading in ("planned_activity_id", "school_id", "visit_sf_id"):
             self.assertContains(page, heading)
+        self.assertNotContains(page, "training_sf_id")
         response = client.post(
             "/uploads/bulk-completion/visit",
             {"file": visit_file(self._line(visit, "SVE-50050"))},
@@ -413,14 +418,16 @@ class OnlyImpactAssessmentAndAdminRunIt(BulkFixture):
         self.assertNotEqual(before, after)
         self.assertContains(client.get(url), f">{after}</span>")
 
-    def test_the_template_has_the_five_columns_prefilled_with_open_visits(self):
+    def test_the_export_lists_this_months_open_visits_by_their_ids(self):
         visit = self._visit()
         response = self.as_user(self.ia_user).get(
             "/uploads/bulk-completion/visit/template"
         )
         sheet = openpyxl.load_workbook(BytesIO(response.content)).worksheets[0]
         rows = list(sheet.iter_rows(values_only=True))
-        self.assertEqual(list(rows[0]), HEADINGS.split(","))
+        self.assertEqual(list(rows[0][:2]), ["planned_activity_id", "school_id"])
+        self.assertIn("visit_sf_id", rows[0])
+        self.assertNotIn("training_sf_id", rows[0])
         self.assertIn((visit.id, "REV-1"), [tuple(row[:2]) for row in rows[1:]])
 
     def test_the_error_report_lists_the_lines_not_completed(self):

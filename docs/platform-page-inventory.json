@@ -100652,7 +100652,7 @@
         "test:referenced-by-automated-test",
         "permission:bulk_completion"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -100670,9 +100670,9 @@
       "page_type": "planning-or-creation",
       "per_page_css": [],
       "permission_key": "bulk_completion",
-      "primary_action": "Download Template",
+      "primary_action": "Export Planned Activities",
       "primary_user_decision": "What should be created, scheduled, or allocated?",
-      "purpose": "Complete many at once from the Salesforce export. Every line is matched and checked first, and nothing is completed until you confirm the preview. Uploaded work is approved as it lands; work completed from its drawer still goes to the Programme Lead.",
+      "purpose": "Export the already planned for a period, fill in what was done, and upload the file back. Each line completes the exact activity it names by its Planned Activity ID, through the same completion as its drawer. Nothing is completed until you confirm the preview.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -100698,8 +100698,8 @@
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "route-navigation"
       },
       "templates": [
         "pages/bulk_completion/upload.html"

@@ -275,6 +275,8 @@ class UploadCenterService:
             # Bulk completion from the Salesforce export (owner, 2026-11-02).
             # The batch and its rows live in apps.bulk_completion; completing
             # an activity is still the activity workflow's, as from a drawer.
+            # No direct template link: the file is exported from the planned
+            # work of a period chosen on the page (owner, 2026-11-09).
             actions.extend(
                 {
                     "key": f"bulk_{kind}",
@@ -283,23 +285,24 @@ class UploadCenterService:
                     "description": description,
                     "href": f"/uploads/bulk-completion/{kind}",
                     "action_label": title,
-                    "template_href": f"/uploads/bulk-completion/{kind}/template",
-                    "template_label": "Download template",
                     "tone": "primary",
                 }
                 for kind, title, description in (
                     (
                         "visit",
                         "Bulk Upload — School Visits",
-                        "Complete many school visits at once: planned_activity_id, "
-                        "school_id, visit_sf_id and completed_date.",
+                        "Export the school visits planned for a month, quarter, "
+                        "date range or year with their Planned Activity IDs, "
+                        "fill in visit_sf_id and completed_date, and upload "
+                        "them back.",
                     ),
                     (
                         "training",
                         "Bulk Upload — Trainings",
-                        "Complete trainings one line per school: their "
-                        "training_sf_id, completed_date, teachers_trained and "
-                        "school_leaders_trained.",
+                        "Export the trainings planned for a period, one line "
+                        "per invited school, fill in training_sf_id, "
+                        "completed_date and each school's counts, and upload "
+                        "them back.",
                     ),
                 )
             )

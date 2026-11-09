@@ -1,10 +1,12 @@
 """One uploaded line: its parsed cells, its verdict, and the rules for lines
 that name the same activity twice.
 
-A line is a visit when it carries ``visit_sf_id`` and a training when it
-carries ``training_sf_id``; both, or neither, is refused. A training is given
+A School Visits line carries ``visit_sf_id`` and a Trainings line
+``training_sf_id`` (owner, 2026-11-09: each file only its own ID); a line
+carrying the other upload's ID is sent to that upload. A training is given
 one line per participating school, so lines naming one training are joined:
-its schools are linked to it and their counts added up.
+its schools are linked to it and their counts added up. A line whose fill-in
+cells are all empty was left for later and is skipped.
 """
 
 from __future__ import annotations
@@ -78,35 +80,43 @@ def _count(line: Line, text: str, heading: str) -> int | None:
 
 
 def _salesforce_id(line: Line, values: dict, kind: str) -> None:
-    """Which Salesforce ID the line carries, and whether it belongs here."""
+    """The line's Salesforce ID, and whether it belongs in this upload."""
     from apps.activities.salesforce import (
         accepted_forms,
         is_valid_new_entry,
         normalize_salesforce_id,
     )
 
-    visit_id = values.get("visit_sf_id", "")
-    training_id = values.get("training_sf_id", "")
-    if visit_id and training_id:
-        line.refuse("Give visit_sf_id or training_sf_id, not both.")
-        return
-    if not visit_id and not training_id:
-        line.refuse("Give visit_sf_id or training_sf_id: both are empty.")
-        return
-    line_kind = BulkKind.VISIT if visit_id else BulkKind.TRAINING
-    if line_kind != kind:
-        given = "visit_sf_id" if visit_id else "training_sf_id"
+    from .columns import OTHER_ID, OWN_ID
+
+    own, other = OWN_ID[kind], OTHER_ID[kind]
+    given = values.get(own.field, "")
+    misplaced = values.get(other.field, "")
+    if misplaced:
+        other_kind = BulkKind.TRAINING if kind == BulkKind.VISIT else BulkKind.VISIT
+        noun = "training" if other_kind == BulkKind.TRAINING else "visit"
         line.refuse(
-            f"This line is a {'visit' if visit_id else 'training'} ({given}). "
-            f"Upload it with the {UPLOAD_NAMES[line_kind]} upload."
+            f"This line is a {noun} ({other.heading}). Upload it with the "
+            f"{UPLOAD_NAMES[other_kind]} upload."
         )
         return
-    line.salesforce_id = normalize_salesforce_id(visit_id or training_id)
-    if not is_valid_new_entry(line.salesforce_id, line_kind):
-        column = "visit_sf_id" if visit_id else "training_sf_id"
+    if not given:
+        line.refuse(f"{own.heading} is missing.")
+        return
+    line.salesforce_id = normalize_salesforce_id(given)
+    if not is_valid_new_entry(line.salesforce_id, kind):
         line.refuse(
-            f"{column}: enter the Salesforce ID as {accepted_forms(line_kind)}."
+            f"{own.heading}: enter the Salesforce ID as {accepted_forms(kind)}."
         )
+
+
+def left_blank(values: dict, kind: str) -> bool:
+    """None of the cells the uploader fills in holds anything: an exported
+    activity that was not done yet, or a school that did not attend."""
+    from .columns import FILL_IN_FIELDS, OTHER_ID
+
+    fields = (*FILL_IN_FIELDS[kind], OTHER_ID[kind].field)
+    return not any(values.get(name, "") for name in fields)
 
 
 def _completed_on(line: Line, text: str) -> None:
@@ -125,6 +135,9 @@ def _completed_on(line: Line, text: str) -> None:
 def _parse(line: Line, values: dict, kind: str) -> None:
     line.activity_id = values.get("activity_id", "")
     line.school_code = values.get("school_code", "")
+    if line.activity_id and left_blank(values, kind):
+        line.problem = (RowStatus.NOT_FILLED, "Left blank — skipped.")
+        return
     if not line.activity_id:
         line.refuse("planned_activity_id is missing.")
     if not line.school_code:
