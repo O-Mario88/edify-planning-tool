@@ -2,8 +2,10 @@
 
 Pinned here:
 
-  1. Each upload has its own columns: the School Visits file carries no
-     training_sf_id, the Trainings file no visit_sf_id.
+  1. Each upload has its own columns. The School Visits file is five
+     (owner, 2026-11-09): Activity ID, School ID and Planned Date as
+     exported, then School Visit ID and Completed Date to fill in. The
+     Trainings file carries no School Visit ID, the visit file no Training ID.
   2. "Export Planned Activities" writes the activities already scheduled in
      the chosen period — a month, a date range, a quarter or a financial year
      (1 October to 30 September) — each with its own Planned Activity ID,
@@ -13,7 +15,8 @@ Pinned here:
      and the page says how many activities match before the download.
   4. The exported file, filled in and uploaded, completes exactly the
      activities it lists: two visits to one school stay two visits, and a
-     line left blank is skipped, not refused.
+     line left blank is skipped, not refused. A completed visit reads
+     Complete, in green, and leaves the calendar.
 """
 
 from __future__ import annotations
@@ -24,13 +27,19 @@ from io import BytesIO
 import openpyxl
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from apps.activities.models import ClusterActivityAttendance
+from apps.activities.models import Activity, ClusterActivityAttendance
 from apps.bulk_completion.apply import apply_batch
 from apps.bulk_completion.models import RowStatus
 from apps.bulk_completion.staging import stage_upload
 from apps.bulk_completion.test_bulk_visits import BulkFixture
 from apps.core.fy import get_operational_fy
+from apps.frontend.views.extended_views import off_calendar_done
 from apps.geography.models import District
+from apps.my_plan.services import (
+    COMPLETE_CLASS,
+    COMPLETE_LABEL,
+    get_activity_status_label_and_class,
+)
 from apps.schools.models import School
 
 EXPORT = "/uploads/bulk-completion/{kind}/template"
@@ -69,42 +78,40 @@ class ExportFixture(BulkFixture):
         return _rows(response)
 
     def _ids(self, rows) -> set:
-        return {row["planned_activity_id"] for row in _by_heading(rows)}
+        return {row["Activity ID"] for row in _by_heading(rows)}
 
 
 class EachUploadCarriesOnlyItsOwnIds(ExportFixture):
-    def test_the_visit_export_has_no_training_id_column(self):
+    def test_the_visit_export_is_the_three_ids_then_the_two_to_fill_in(self):
         headings = self._export(period="fy", fy=_fy())[0]
-        self.assertNotIn("training_sf_id", headings)
-        for wanted in (
-            "planned_activity_id",
-            "School ID",
-            "School Name",
-            "Planned Activity",
-            "Scheduled Date",
-            "Responsible Staff",
-            "Programme Lead",
-            "visit_sf_id",
-            "completed_date",
-        ):
-            self.assertIn(wanted, headings)
+        self.assertEqual(
+            headings,
+            (
+                "Activity ID",
+                "School ID",
+                "Planned Date",
+                "School Visit ID",
+                "Completed Date",
+            ),
+        )
 
     def test_the_training_export_has_no_visit_id_column(self):
         headings = self._export("training", period="fy", fy=_fy())[0]
-        self.assertNotIn("visit_sf_id", headings)
+        self.assertNotIn("School Visit ID", headings)
         for wanted in (
-            "planned_activity_id",
+            "Activity ID",
             "School ID",
             "Training Name",
             "Delivery Mode",
-            "training_sf_id",
-            "completed_date",
-            "teachers_trained",
-            "school_leaders_trained",
+            "Planned Date",
+            "Training ID",
+            "Completed Date",
+            "Teachers Trained",
+            "School Leaders Trained",
         ):
             self.assertIn(wanted, headings)
 
-    def test_a_visit_file_without_a_training_id_column_uploads(self):
+    def test_a_file_with_the_earlier_headings_still_uploads(self):
         visit = self._planned(_october())
         body = "planned_activity_id,school_id,visit_sf_id,completed_date\n"
         body += f"{visit.id},REV-1,SVE-61001,{self.done_on.isoformat()}\n"
@@ -141,11 +148,11 @@ class TheExportFollowsThePeriod(ExportFixture):
         rows = self._export(period="month", fy=_fy(), month="10")
         self.assertEqual(self._ids(rows), {self.october.id})
         line = _by_heading(rows)[0]
+        self.assertEqual(line["Activity ID"], self.october.id)
         self.assertEqual(line["School ID"], "REV-1")
-        self.assertEqual(line["School Name"], "Alpha Primary")
-        self.assertEqual(line["Responsible Staff"], "James")
-        self.assertEqual(line["Programme Lead"], "Lead Lydia")
-        self.assertEqual(line["Scheduled Date"].date(), _october())
+        self.assertEqual(line["Planned Date"].date(), _october())
+        self.assertIsNone(line["School Visit ID"])
+        self.assertIsNone(line["Completed Date"])
 
     def test_a_quarter_follows_the_financial_calendar(self):
         self.assertEqual(
@@ -268,7 +275,7 @@ class TheFilledExportCompletesExactlyItsActivities(ExportFixture):
         batch = stage_upload(
             self._filled(
                 rows,
-                {first.id: {"visit_sf_id": "SVE-61010", "completed_date": done}},
+                {first.id: {"School Visit ID": "SVE-61010", "Completed Date": done}},
             ),
             "visit",
             self.ia_user,
@@ -285,6 +292,11 @@ class TheFilledExportCompletesExactlyItsActivities(ExportFixture):
         self.assertEqual(first.status, "ia_verified")
         self.assertEqual(second.status, "scheduled", "the other visit is untouched")
         self.assertFalse(second.salesforce_activity_id)
+
+        label, colour = get_activity_status_label_and_class(first, date.today())
+        self.assertEqual((label, colour), (COMPLETE_LABEL, COMPLETE_CLASS))
+        drawn = off_calendar_done(Activity.objects.filter(pk__in=[first.pk, second.pk]))
+        self.assertEqual(list(drawn.values_list("pk", flat=True)), [second.pk])
 
     def test_a_training_export_lists_each_invited_school_once(self):
         training = self._visit(
@@ -306,7 +318,7 @@ class TheFilledExportCompletesExactlyItsActivities(ExportFixture):
                 activity=training, school=school, attended=False
             )
         lines = _by_heading(self._export("training", period="fy", fy=_fy()))
-        mine = [line for line in lines if line["planned_activity_id"] == training.id]
+        mine = [line for line in lines if line["Activity ID"] == training.id]
         self.assertEqual({line["School ID"] for line in mine}, {"INV-A", "INV-B"})
         self.assertEqual({line["Delivery Mode"] for line in mine}, {"Cluster"})
         self.assertEqual({line["Cluster"] for line in mine}, {"Mukono North"})

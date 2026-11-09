@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.db.models import Count, Q
 
+from .columns import ACTIVITY_ID, SCHOOL_ID
 from .models import (
     PROBLEM_STATUSES,
     SKIPPED_STATUSES,
@@ -129,6 +130,11 @@ def earlier_upload(batch: BulkCompletionBatch):
 
 #: The ID columns whose values must already be in Edify, in report order.
 ID_COLUMNS = ("planned_activity_id", "school_id")
+#: How the error report names them: as the upload file does.
+ID_HEADINGS = {
+    "planned_activity_id": ACTIVITY_ID.heading,
+    "school_id": SCHOOL_ID.heading,
+}
 
 
 def missing_ids(batch: BulkCompletionBatch) -> list[tuple[str, str, str]]:
@@ -159,7 +165,10 @@ def error_report_sheets(batch: BulkCompletionBatch) -> list[dict]:
             {
                 "title": "Missing IDs",
                 "headers": ["Column", "ID", "Rows"],
-                "rows": [list(item) for item in missing],
+                "rows": [
+                    [ID_HEADINGS.get(column, column), value, rows]
+                    for column, value, rows in missing
+                ],
             }
         )
     return sheets

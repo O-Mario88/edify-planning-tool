@@ -292,16 +292,16 @@ class UploadCenterService:
                         "visit",
                         "Bulk Upload — School Visits",
                         "Export the school visits planned for a month, quarter, "
-                        "date range or year with their Planned Activity IDs, "
-                        "fill in visit_sf_id and completed_date, and upload "
-                        "them back.",
+                        "date range or year — Activity ID, School ID and "
+                        "Planned Date — fill in the School Visit ID and "
+                        "Completed Date, and upload them back.",
                     ),
                     (
                         "training",
                         "Bulk Upload — Trainings",
                         "Export the trainings planned for a period, one line "
-                        "per invited school, fill in training_sf_id, "
-                        "completed_date and each school's counts, and upload "
+                        "per invited school, fill in the Training ID, "
+                        "Completed Date and each school's counts, and upload "
                         "them back.",
                     ),
                 )

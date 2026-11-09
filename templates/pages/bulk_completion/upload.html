@@ -8,7 +8,7 @@
 
 {% page_header eyebrow="Upload Center" element="div" %}
   {% slot title %}{{ text.title }}{% endslot %}
-  {% slot description %}Export the {{ text.noun }} already planned for a period, fill in what was done, and upload the file back. Each line completes the exact activity it names by its Planned Activity ID, through the same completion as its drawer. Nothing is completed until you confirm the preview.{% endslot %}
+  {% slot description %}Export the {{ text.noun }} already planned for a period, fill in what was done, and upload the file back. Each line completes the exact activity it names by its Activity ID and School ID, through the same completion as its drawer. Nothing is completed until you confirm the preview.{% endslot %}
   {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
 {% endpage_header %}
 
@@ -134,7 +134,7 @@
     <span class="h-8 px-3 shrink-0 whitespace-nowrap inline-flex items-center text-[12px] font-medium rounded-control bg-slate-50 text-slate-400" aria-disabled="true">Nothing to export</span>
     {% endif %}
   </div>
-  <p class="edify-text-caption text-slate-400">Each line carries its planned_activity_id and School ID, then the school name, district, activity, scheduled date, responsible staff, Programme Lead and status. {{ note }}</p>
+  <p class="edify-text-caption text-slate-400">{{ note }}</p>
 </section>
 
 <div class="edify-surface rounded-surface shadow-sm p-6">

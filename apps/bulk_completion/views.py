@@ -42,13 +42,13 @@ PAGE_TEXT = {
         "title": "Bulk Upload — School Visits",
         "tab": "School Visits",
         "noun": "school visits",
-        "id_label": "Visit SF ID",
+        "id_label": "School Visit ID",
     },
     BulkKind.TRAINING: {
         "title": "Bulk Upload — Trainings",
         "tab": "Trainings",
         "noun": "trainings",
-        "id_label": "Training SF ID",
+        "id_label": "Training ID",
     },
 }
 

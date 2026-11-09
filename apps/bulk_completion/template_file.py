@@ -23,7 +23,14 @@ from dataclasses import dataclass
 
 from django.db.models import Q
 
-from .columns import COMPLETED_DATE, COUNT_COLUMNS, OWN_ID, TEMPLATE_NOTES, Column
+from .columns import (
+    ACTIVITY_ID,
+    COMPLETED_DATE,
+    COUNT_COLUMNS,
+    OWN_ID,
+    TEMPLATE_NOTES,
+    Column,
+)
 from .models import BulkKind
 from .periods import Period
 from .rules import (
@@ -44,21 +51,13 @@ FILE_STEMS = {
 
 DAY_FORMAT = "d mmm yyyy"
 
-#: The School ID, then the columns that describe the work, in order, after
-#: planned_activity_id. "School ID" is the upload's school_id column (headings
-#: are matched without case or underscores); the rest are not upload headings,
-#: so the upload ignores them.
+#: The columns after the Activity ID and before the cells to fill in. The
+#: School ID is the upload's; the rest are not upload headings, so the upload
+#: ignores them. A visit is named by its Activity ID and School ID and dated
+#: by its Planned Date, and nothing more (owner, 2026-11-09); a training line
+#: also says which training it is and how it is delivered.
 DESCRIBING = {
-    BulkKind.VISIT: (
-        "School ID",
-        "School Name",
-        "District",
-        "Planned Activity",
-        "Scheduled Date",
-        "Responsible Staff",
-        "Programme Lead",
-        "Status",
-    ),
+    BulkKind.VISIT: ("School ID", "Planned Date"),
     BulkKind.TRAINING: (
         "School ID",
         "School Name",
@@ -66,7 +65,7 @@ DESCRIBING = {
         "Delivery Mode",
         "Cluster",
         "District",
-        "Scheduled Date",
+        "Planned Date",
         "Responsible Staff",
         "Programme Lead",
         "Status",
@@ -81,7 +80,7 @@ def _fill_in(kind: str) -> tuple[Column, ...]:
 
 def export_headings(kind: str) -> list[str]:
     return [
-        "planned_activity_id",
+        ACTIVITY_ID.heading,
         *DESCRIBING[kind],
         *(column.heading for column in _fill_in(kind)),
     ]
@@ -389,6 +388,8 @@ def _described(activity, kind: str, names: _Names, school_name: str) -> list:
 
     from .lines import scheduled_day
 
+    if kind == BulkKind.VISIT:
+        return [scheduled_day(activity)]
     owner = str(activity.responsible_staff_id or "")
     status, _ = get_activity_status_label_and_class(activity, timezone.localdate())
     when_who = [
@@ -397,11 +398,6 @@ def _described(activity, kind: str, names: _Names, school_name: str) -> list:
         names.leads.get(owner, ""),
         status,
     ]
-    if kind == BulkKind.VISIT:
-        planned = (
-            activity.activity_name_snapshot or activity.get_activity_type_display()
-        )
-        return [school_name, _district(activity), planned, *when_who]
     cluster = activity.cluster.name if activity.cluster_id else ""
     return [
         school_name,
@@ -448,16 +444,18 @@ def export_sheets(principal, kind: str, period: Period, filters: ExportFilters):
             "training_course",
         )[:TEMPLATE_ROW_LIMIT]
     )
-    owners = {a.responsible_staff_id for a in activities if a.responsible_staff_id}
-    names = _Names(
-        staff=_people(owners),
-        leads=_leads_of(owners),
-        invited=_invited_schools(activities) if kind == BulkKind.TRAINING else {},
-    )
+    names = _Names(staff={}, leads={}, invited={})
+    if kind == BulkKind.TRAINING:
+        owners = {a.responsible_staff_id for a in activities if a.responsible_staff_id}
+        names = _Names(
+            staff=_people(owners),
+            leads=_leads_of(owners),
+            invited=_invited_schools(activities),
+        )
     headings = export_headings(kind)
     rows = [line for activity in activities for line in _lines(activity, kind, names)]
     day_columns = (
-        headings.index("Scheduled Date") + 1,
+        headings.index("Planned Date") + 1,
         headings.index(COMPLETED_DATE.heading) + 1,
     )
     return [

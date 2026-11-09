@@ -74,8 +74,8 @@
   <thead>
     <tr>
       <th scope="col" class="px-3 py-2 text-right">Row</th>
+      <th scope="col" class="px-3 py-2">Activity ID</th>
       <th scope="col" class="px-3 py-2">School ID</th>
-      <th scope="col" class="px-3 py-2">Planned Activity ID</th>
       <th scope="col" class="px-3 py-2">{{ text.id_label }}</th>
       <th scope="col" class="px-3 py-2">Completed Date</th>
       <th scope="col" class="px-3 py-2">Status</th>
@@ -85,8 +85,8 @@
     {% for item in pager.rows %}{% with row=item.row %}
     <tr>
       <th scope="row" class="px-3 py-2 text-right tabular-nums" data-record-title>{{ row.row_number }}</th>
+      <td class="px-3 py-2" data-label="Activity ID">{% if item.found %}<a href="/my-plan/{{ row.activity_id }}" class="edify-primary-text font-semibold hover:underline">{{ row.activity_id }}</a>{% else %}{{ row.activity_id|default:"—" }}{% endif %}</td>
       <td class="px-3 py-2" data-label="School ID">{{ row.school_code|default:"—" }}</td>
-      <td class="px-3 py-2" data-label="Planned Activity ID">{% if item.found %}<a href="/my-plan/{{ row.activity_id }}" class="edify-primary-text font-semibold hover:underline">{{ row.activity_id }}</a>{% else %}{{ row.activity_id|default:"—" }}{% endif %}</td>
       <td class="px-3 py-2" data-label="{{ text.id_label }}">{{ row.salesforce_id|default:"—" }}</td>
       <td class="px-3 py-2" data-label="Completed Date">{{ row.completed_on|date:"Y-m-d"|default:"—" }}</td>
       <td class="px-3 py-2" data-label="Status">

@@ -2,11 +2,12 @@
 
 Pinned here:
 
-  1. The training file has planned_activity_id, school_id, training_sf_id,
-     completed_date, teachers_trained and school_leaders_trained (owner,
-     2026-11-03: "count columns should be required as well"); no visit_sf_id
-     column is needed (2026-11-09). One line per participating school.
-  2. Lines with the same planned_activity_id and training_sf_id are one
+  1. The training file has Activity ID, School ID, Training ID, Completed
+     Date, Teachers Trained and School Leaders Trained (owner, 2026-11-03:
+     "count columns should be required as well"; named so 2026-11-09, the
+     earlier snake_case headings still read); no School Visit ID column is
+     needed. One line per participating school.
+  2. Lines with the same Activity ID and Training ID are one
      training: it completes once, every school named is on its register, and
      the counts are the schools' counts added up.
   3. A school named twice is on the register once; uploading the file again
@@ -164,13 +165,16 @@ class TrainingLinesNeedTheirCounts(TrainingFixture):
                 ),
             )
         detail = str(refused.exception.detail)
-        self.assertIn("teachers_trained", detail)
-        self.assertIn("school_leaders_trained", detail)
+        self.assertIn("Teachers Trained", detail)
+        self.assertIn("School Leaders Trained", detail)
 
     def test_a_blank_or_bad_count_is_invalid(self):
         training = self._training()
         cases = [
-            (self._line(training, "TS-90011", "CLU-A", teachers=""), "teachers"),
+            (
+                self._line(training, "TS-90011", "CLU-A", teachers=""),
+                "Teachers Trained",
+            ),
             (self._line(training, "TS-90011", "CLU-A", leaders="x"), "whole number"),
             (self._line(training, "TS-90011", "CLU-A", teachers="-2"), "negative"),
         ]

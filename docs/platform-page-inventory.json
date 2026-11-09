@@ -100672,7 +100672,7 @@
       "permission_key": "bulk_completion",
       "primary_action": "Export Planned Activities",
       "primary_user_decision": "What should be created, scheduled, or allocated?",
-      "purpose": "Export the already planned for a period, fill in what was done, and upload the file back. Each line completes the exact activity it names by its Planned Activity ID, through the same completion as its drawer. Nothing is completed until you confirm the preview.",
+      "purpose": "Export the already planned for a period, fill in what was done, and upload the file back. Each line completes the exact activity it names by its Activity ID and School ID, through the same completion as its drawer. Nothing is completed until you confirm the preview.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [

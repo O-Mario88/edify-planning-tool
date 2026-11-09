@@ -25,7 +25,13 @@ from django.db import transaction
 
 from apps.core.exceptions import BadRequest
 
-from .columns import field_positions, headings, missing_columns
+from .columns import (
+    ACTIVITY_ID,
+    SCHOOL_ID,
+    field_positions,
+    headings,
+    missing_columns,
+)
 from .lines import Line, Verdict, merge_lines, read_lines, scheduled_day
 from .models import BatchStatus, BulkCompletionBatch, BulkCompletionRow, RowStatus
 from .rules import (
@@ -95,7 +101,7 @@ def _missing(line: Line, found: _Lookups) -> str:
     if line.activity_id and line.activity_id not in found.by_id:
         line.missing_ids["planned_activity_id"] = line.activity_id
         problems.append(
-            f"planned_activity_id {line.activity_id} is not a planned activity "
+            f"{ACTIVITY_ID.heading} {line.activity_id} is not a planned activity "
             "in your country."
         )
     if line.school_code and line.school_code not in found.schools:
@@ -105,7 +111,7 @@ def _missing(line: Line, found: _Lookups) -> str:
             if line.school_code in found.schools_outside
             else "is not in the School Directory"
         )
-        problems.append(f"school_id {line.school_code} {where}.")
+        problems.append(f"{SCHOOL_ID.heading} {line.school_code} {where}.")
     return " ".join(problems)
 
 
@@ -191,7 +197,7 @@ def _judge(line: Line, activity, kind: str, principal) -> Verdict:
     if activity.school_id and activity.school.school_id != line.school_code:
         return verdict.mark(
             RowStatus.REVIEW,
-            f"school_id {line.school_code} is not this activity's school "
+            f"{SCHOOL_ID.heading} {line.school_code} is not this activity's school "
             f"({activity.school.school_id}).",
         )
     standing = _standing(activity, kind)

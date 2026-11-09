@@ -17,10 +17,15 @@ has no training_sf_id column and the Trainings file no visit_sf_id column. The
 other upload's ID is still recognised when a file carries it, so a training
 line sent to the visit upload is told where it belongs.
 
+Owner, 2026-11-09, later: the School Visits file is Activity ID, School ID
+and Planned Date, as exported, then School Visit ID and Completed Date, which
+the uploader fills in. The headings are those words now; the earlier ones
+(``planned_activity_id``, ``visit_sf_id`` …) are still read, so a file made
+before keeps uploading.
+
 Headings are compared with case, spacing and underscores ignored, so
-"Planned Activity ID" is ``planned_activity_id``. Every other column is
-ignored, so the exported planned activities — with their school, staff and
-date columns — are uploaded back as they are.
+"completed_date" is "Completed Date". Every other column is ignored, so an
+export is uploaded back as it is.
 """
 
 from __future__ import annotations
@@ -36,16 +41,23 @@ from .models import BulkKind
 class Column:
     field: str
     heading: str
+    #: Earlier headings for the same column, still read.
+    also: tuple[str, ...] = ()
+
+    def reads(self) -> tuple[str, ...]:
+        return (self.heading, *self.also)
 
 
-ACTIVITY_ID = Column("activity_id", "planned_activity_id")
-SCHOOL_ID = Column("school_code", "school_id")
-VISIT_ID = Column("visit_sf_id", "visit_sf_id")
-TRAINING_ID = Column("training_sf_id", "training_sf_id")
-COMPLETED_DATE = Column("completed_on", "completed_date")
+ACTIVITY_ID = Column(
+    "activity_id", "Activity ID", ("planned_activity_id", "Planned Activity ID")
+)
+SCHOOL_ID = Column("school_code", "School ID")
+VISIT_ID = Column("visit_sf_id", "School Visit ID", ("visit_sf_id",))
+TRAINING_ID = Column("training_sf_id", "Training ID", ("training_sf_id",))
+COMPLETED_DATE = Column("completed_on", "Completed Date")
 COUNT_COLUMNS: tuple[Column, ...] = (
-    Column("teachers", "teachers_trained"),
-    Column("leaders", "school_leaders_trained"),
+    Column("teachers", "Teachers Trained"),
+    Column("leaders", "School Leaders Trained"),
 )
 
 COLUMNS = {
@@ -77,22 +89,21 @@ BLANK_CELLS = frozenset({"", "—", "–", "-"})
 
 TEMPLATE_NOTES = {
     BulkKind.VISIT: (
-        "One line per planned visit, exported with its planned_activity_id. "
-        "Fill in visit_sf_id (Salesforce) and completed_date (YYYY-MM-DD, "
-        "today or earlier) for each visit that was done. Leave a line blank "
-        "to skip it. Do not change planned_activity_id or School ID; every "
-        "other column is there to help you find the visit and is ignored."
+        "One line per planned visit: its Activity ID, School ID and Planned "
+        "Date. For each visit that was done, fill in the School Visit ID "
+        "(Salesforce) and the Completed Date (YYYY-MM-DD, today or earlier). "
+        "Leave a line blank to skip it. Do not change the Activity ID or the "
+        "School ID: together they name the visit to complete."
     ),
     BulkKind.TRAINING: (
-        "One line per school invited to each planned training, exported with "
-        "its planned_activity_id. For each school that took part fill in "
-        "training_sf_id (Salesforce), completed_date (YYYY-MM-DD) and that "
-        "school's teachers_trained and school_leaders_trained. Lines with the "
-        "same planned_activity_id are one training: its schools are linked to "
-        "it and their counts added up. Leave a school's line blank if it did "
-        "not attend, or a whole training's lines blank to skip it. Do not "
-        "change planned_activity_id or School ID; every other column is "
-        "ignored."
+        "One line per school invited to each planned training, with the "
+        "training's Activity ID. For each school that took part fill in the "
+        "Training ID (Salesforce), the Completed Date (YYYY-MM-DD) and that "
+        "school's Teachers Trained and School Leaders Trained. Lines with the "
+        "same Activity ID are one training: its schools are linked to it and "
+        "their counts added up. Leave a school's line blank if it did not "
+        "attend, or a whole training's lines blank to skip it. Do not change "
+        "the Activity ID or the School ID; every other column is ignored."
     ),
 }
 
@@ -109,7 +120,9 @@ def field_positions(kind: str, headers: list[str]) -> dict[str, tuple[int, ...]]
     """{field: every column position carrying its heading}, the other
     upload's ID column included when the file has one."""
     wanted = {
-        normalize_header(c.heading): c.field for c in (*COLUMNS[kind], OTHER_ID[kind])
+        normalize_header(heading): c.field
+        for c in (*COLUMNS[kind], OTHER_ID[kind])
+        for heading in c.reads()
     }
     found: dict[str, list[int]] = {}
     for position, heading in enumerate(headers):

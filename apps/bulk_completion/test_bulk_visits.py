@@ -2,12 +2,13 @@
 
 Pinned here:
 
-  1. A file needs four columns — planned_activity_id, school_id, visit_sf_id,
-     completed_date — read whatever their case, spacing or order; any other
-     column is ignored, so a raw Salesforce / Planning Oversight export
-     uploads as it is. A training_sf_id column is not needed (owner,
-     2026-11-09); a line that fills one in is sent to the Trainings upload.
-  2. A line names its visit by planned_activity_id alone; its school_id must
+  1. A file needs four columns — Activity ID, School ID, School Visit ID,
+     Completed Date (owner, 2026-11-09; the earlier planned_activity_id and
+     visit_sf_id headings still read) — whatever their case, spacing or
+     order; any other column is ignored, so a raw Salesforce / Planning
+     Oversight export uploads as it is. No Training ID column is needed; a
+     line that fills one in is sent to the Trainings upload.
+  2. A line names its visit by Activity ID alone; its School ID must
      be that visit's school. Nothing is matched by guessing.
   3. Confirming completes each ready line through the visit's own workflow:
      its visit_sf_id and completed_date are recorded and, being from the
@@ -194,7 +195,7 @@ class ExtraColumnsAreIgnored(BulkFixture):
                 "x,REV-1," + self.done_on.isoformat(),
                 headings="planned_activity_id,school_id,completed_date",
             )
-        self.assertIn("visit_sf_id", str(refused.exception.detail))
+        self.assertIn("School Visit ID", str(refused.exception.detail))
 
 
 class CompletedVisitsAreNeverRecounted(BulkFixture):
@@ -274,14 +275,14 @@ class MalformedLinesAreReportedNeverGuessed(BulkFixture):
         visit = self._visit()
         future = date.today() + timedelta(days=2)
         cases = [
-            (self._line(None, "SVE-50030", school="REV-1"), "planned_activity_id"),
-            (self._line(visit, "SVE-50031", school=""), "school_id is missing"),
+            (self._line(None, "SVE-50030", school="REV-1"), "Activity ID"),
+            (self._line(visit, "SVE-50031", school=""), "School ID is missing"),
             (
                 self._line(visit, "SVE-50032", training_sf="TS-50032"),
                 "Trainings upload",
             ),
-            (self._line(visit, ""), "visit_sf_id is missing"),
-            (self._line(visit, "SVE-50033", day=""), "completed_date is missing"),
+            (self._line(visit, ""), "School Visit ID is missing"),
+            (self._line(visit, "SVE-50033", day=""), "Completed Date is missing"),
             (self._line(visit, "SVE-50034", day="31/31/2026"), "not a date"),
             (self._line(visit, "SVE-50035", day=future), "future"),
             (self._line(visit, "BAD ID"), "Salesforce ID"),
@@ -308,8 +309,8 @@ class MalformedLinesAreReportedNeverGuessed(BulkFixture):
         workbook = openpyxl.load_workbook(BytesIO(response.content))
         self.assertIn("Missing IDs", workbook.sheetnames)
         missing = list(workbook["Missing IDs"].iter_rows(values_only=True))[1:]
-        self.assertIn(("planned_activity_id", "ck-not-a-real-id", "2"), missing)
-        self.assertIn(("school_id", "NOPE-9", "3"), missing)
+        self.assertIn(("Activity ID", "ck-not-a-real-id", "2"), missing)
+        self.assertIn(("School ID", "NOPE-9", "3"), missing)
 
     def test_an_unknown_id_on_a_line_with_another_problem_is_still_listed(self):
         line = ",".join(["ck-gone", "REV-1", "SVE-50046", "", "not a date"])
@@ -376,9 +377,9 @@ class OnlyImpactAssessmentAndAdminRunIt(BulkFixture):
         client = self.as_user(self.ia_user)
         self.assertContains(client.get("/uploads"), "Bulk Upload — School Visits")
         page = client.get("/uploads/bulk-completion/visit")
-        for heading in ("planned_activity_id", "school_id", "visit_sf_id"):
+        for heading in ("Activity ID", "School ID", "School Visit ID"):
             self.assertContains(page, heading)
-        self.assertNotContains(page, "training_sf_id")
+        self.assertNotContains(page, "Training ID")
         response = client.post(
             "/uploads/bulk-completion/visit",
             {"file": visit_file(self._line(visit, "SVE-50050"))},
@@ -425,9 +426,9 @@ class OnlyImpactAssessmentAndAdminRunIt(BulkFixture):
         )
         sheet = openpyxl.load_workbook(BytesIO(response.content)).worksheets[0]
         rows = list(sheet.iter_rows(values_only=True))
-        self.assertEqual(list(rows[0][:2]), ["planned_activity_id", "School ID"])
-        self.assertIn("visit_sf_id", rows[0])
-        self.assertNotIn("training_sf_id", rows[0])
+        self.assertEqual(list(rows[0][:2]), ["Activity ID", "School ID"])
+        self.assertIn("School Visit ID", rows[0])
+        self.assertNotIn("Training ID", rows[0])
         self.assertIn((visit.id, "REV-1"), [tuple(row[:2]) for row in rows[1:]])
 
     def test_the_error_report_lists_the_lines_not_completed(self):
