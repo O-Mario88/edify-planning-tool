@@ -15,8 +15,9 @@ import { PageListView } from './PageListView';
 import { PageChipsView } from './PageChipsView';
 import { PagePanelView } from './PagePanelView';
 import { PageRailView } from './PageRailView';
+import { PageRecordView } from './PageRecordView';
 import { PageStripView } from './PageStripView';
-import { EmptyState, PageTableView } from './PageTableView';
+import { EmptyState, PageTableView, Pager } from './PageTableView';
 import { ChipContext, cardStyles, usePageLink } from './shared';
 
 interface PageBlocksViewProps {
@@ -92,6 +93,14 @@ function Block({ block, onFilter, isRaised = true }: BlockProps) {
       return <PagePanelView panel={kind.value} />;
     case 'segments':
       return <SegmentsCard segments={kind.value} onFilter={onFilter} />;
+    case 'record':
+      return <PageRecordView record={kind.value} />;
+    case 'pager':
+      return (
+        <View style={[cardStyles.card, styles.clip, { backgroundColor: colors.raised, borderColor: colors.border }]}>
+          <Pager pager={kind.value} isAlone />
+        </View>
+      );
     case 'empty':
       return <EmptyState message={kind.value} />;
     default:

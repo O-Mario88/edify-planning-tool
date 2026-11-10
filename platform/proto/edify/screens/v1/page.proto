@@ -53,6 +53,8 @@ message PageFact {
   string label = 1;
   string value = 2;
   string href = 3;
+  // The colour the value is drawn in: good, caution, alert, or '' for plain.
+  string tone = 4;
 }
 
 message PageFacts {
@@ -126,6 +128,10 @@ message PageRow {
   // and what the tick box says; empty when the row cannot be ticked.
   string pick_id = 3;
   string pick_label = 4;
+  // What opening the row shows under it (the school's details), and the
+  // link to the record's own page there.
+  repeated PageFact details = 5;
+  string details_href = 6;
 }
 
 message PagePagerPage {
@@ -349,5 +355,24 @@ message PageBlock {
     PageLinkTabs link_tabs = 11;
     PageList list = 12;
     PageChips chips = 13;
+    PageRecord record = 14;
+    // A list's own pager, outside a table card (Clusters, Planning).
+    PagePager pager = 15;
   }
+}
+
+// A record card that opens in place (a cluster, a school, a project): its
+// name, pills, Actions menu and facts, and what opening it shows.
+message PageRecord {
+  string title = 1;
+  // The record's own page (its profile), or ''.
+  string href = 2;
+  string subtitle = 3;
+  repeated PageBadge badges = 4;
+  repeated PageAction actions = 5;
+  repeated PageFact facts = 6;
+  // What the open card shows, read with the card.
+  repeated PageBlock details = 7;
+  // The list the card loads once opened (its schools), as a page path.
+  string details_path = 8;
 }

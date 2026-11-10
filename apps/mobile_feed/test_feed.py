@@ -823,6 +823,25 @@ class PageFeedTest(SchoolActionFeedTest):
         self.assertEqual(self.page("/users").status_code, 404)
         self.assertEqual(self.page("/no-such-page").status_code, 404)
 
+    def test_a_cluster_card_opens_onto_its_schools(self):
+        from apps.schools.models import School
+
+        School.objects.filter(pk=self.school.pk).update(cluster_id=self.cluster.id)
+        clusters = self.page("/clusters").json()
+        card = next(
+            b["record"]
+            for b in clusters["blocks"]
+            if "record" in b and b["record"]["title"] == "Feed Cluster"
+        )
+
+        schools = self.page(card["detailsPath"])
+
+        self.assertEqual(
+            card["detailsPath"], f"/partials/clusters/{self.cluster.id}/schools"
+        )
+        self.assertEqual(schools.status_code, 200)
+        self.assertIn("Feed School", repr(schools.json()["blocks"]))
+
     def test_a_page_the_readers_role_cannot_open_is_refused(self):
         from apps.mobile_feed.views import NATIVE_PAGES
 

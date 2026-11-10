@@ -448,6 +448,39 @@ def _pager(holder: Node) -> dict | None:
     return {"summary": summary.text() if summary else "", "pages": pages}
 
 
+#: A pager's arrow buttons, by what they say to a screen reader.
+PAGER_ARROWS = {"previous page": "Prev", "next page": "Next"}
+
+
+def _scoped_pager(scope: Node) -> dict:
+    """A page's own pager (edify-pagination-scope): "Showing 1 to 5 of 15
+    clusters" and its page buttons, each loading that page of the list."""
+    summary = scope.find(lambda n: n.tag == "span" and n.text().startswith("Showing"))
+    pages = []
+    for node in scope.find_all(lambda n: n.tag in ("a", "button", "span")):
+        if node is summary or (
+            node.tag == "span" and node.find(lambda n: n.tag == "span")
+        ):
+            continue
+        href = node.get("hx-get") or (node.get("href") if node.tag == "a" else "")
+        arrow = PAGER_ARROWS.get(node.get("aria-label").lower())
+        label = (
+            arrow or node.text() or ("…" if node.get("aria-hidden") == "true" else "")
+        )
+        if not label or (
+            node.tag == "span" and summary is not None and _inside(node, summary)
+        ):
+            continue
+        pages.append(
+            {
+                "label": label,
+                "href": href,
+                "current": node.get("aria-current") == "page",
+            }
+        )
+    return {"summary": summary.text() if summary else "", "pages": pages}
+
+
 def _inside(node: Node | None, ancestor: Node) -> bool:
     while node is not None:
         if node is ancestor:
@@ -532,21 +565,28 @@ def _table(holder: Node, table: Node) -> dict:
         if not th.has(PICK_CELL)
     ]
     body = table.find(lambda n: n.tag == "tbody") or table
-    rows = [
-        {
-            "cells": [
-                _cell(cell)
-                for cell in row.children
-                if isinstance(cell, Node)
-                and cell.tag in ("td", "th")
-                and not cell.has(PICK_CELL)
-            ],
-            "tone": _row_tone(row),
-            **_pick(row),
-        }
-        for row in body.find_all(lambda n: n.tag == "tr")
-        if not (head and _inside(row, head))
-    ]
+    rows: list[dict] = []
+    for row in body.find_all(lambda n: n.tag == "tr"):
+        if head and _inside(row, head):
+            continue
+        if _is_detail_row(row):
+            # What opening the row above shows: under that row, not a row.
+            if rows:
+                rows[-1] = {**rows[-1], **_row_details(row)}
+            continue
+        rows.append(
+            {
+                "cells": [
+                    _cell(cell)
+                    for cell in row.children
+                    if isinstance(cell, Node)
+                    and cell.tag in ("td", "th")
+                    and not cell.has(PICK_CELL)
+                ],
+                "tone": _row_tone(row),
+                **_pick(row),
+            }
+        )
     result = {
         "title": title.text() if title else "",
         "subtitle": subtitle.text() if subtitle else summary,
@@ -567,6 +607,27 @@ def _table(holder: Node, table: Node) -> dict:
     if pager:
         result["pager"] = pager
     return result
+
+
+def _is_detail_row(row: Node) -> bool:
+    """A row the web opens under the row above it (the school's details)."""
+    if row.has("school-plan-table__details"):
+        return True
+    cells = [c for c in row.children if isinstance(c, Node) and c.tag == "td"]
+    return bool(row.get("x-show")) and len(cells) == 1 and bool(cells[0].get("colspan"))
+
+
+def _row_details(row: Node) -> dict:
+    """An opened row's facts and the link to the record's own page."""
+    from apps.mobile_feed import records
+
+    facts = [
+        fact
+        for holder in row.find_all(lambda n: n.tag == "dl")
+        for fact in records.facts(holder)
+    ]
+    link = row.find(lambda n: n.tag == "a" and bool(n.get("href")))
+    return {"details": facts, "detailsHref": link.get("href") if link else ""}
 
 
 def _meter(item: Node) -> dict:
@@ -1349,6 +1410,12 @@ def _is_filter_form(node: Node) -> bool:
 
 def _block(node: Node) -> dict | None:
     """The block ``node`` is, or None to look inside it."""
+    from apps.mobile_feed import records
+
+    if records.is_record(node):
+        return {"record": records.read(node)}
+    if node.has("edify-pagination-scope"):
+        return {"pager": _scoped_pager(node)}
     if (section := _home_section(node)) is not None:
         return {"list": section}
     if (chips := _chips(node)) is not None:
@@ -1454,6 +1521,30 @@ def _fallback(node: Node) -> dict | None:
     return {"panel": panel}
 
 
+#: ``x-show="selectedSchools.length > 0"``: shown once a list holds something.
+SHOWN_WHEN_FILLED = re.compile(r"^\s*(\w+)\.length(\s*>\s*0)?\s*$")
+
+
+def _hidden_on_opening(node: Node) -> bool:
+    """A part the page shows only once a list fills (the selection bar, once a
+    school is ticked) while that list starts empty: not drawn on opening."""
+    from apps.mobile_feed import checklists
+
+    # Every part of an "a && b" must hold, so one empty list hides it.
+    for part in node.get("x-show").split("&&"):
+        shown = SHOWN_WHEN_FILLED.match(part)
+        if shown is None:
+            continue
+        holder = node
+        while holder is not None and not holder.get("x-data"):
+            holder = holder.parent
+        if holder is not None:
+            value = checklists.data_value(holder.get("x-data"), shown.group(1))
+            if value == []:
+                return True
+    return False
+
+
 def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
     taken: set[int] = set()
     for child in node.children:
@@ -1489,6 +1580,7 @@ def _holds_known(node: Node) -> bool:
     return (
         node.find(
             lambda n: "data-edify-tablist" in n.attrs
+            or "data-row-disclosure-summary" in n.attrs
             or _is_filter_form(n)
             or n.has("edify-filter-bar")
             or n.has("edify-empty-state")
@@ -1523,11 +1615,13 @@ def phone_hidden(node: Node) -> bool:
 
 
 def _for_phone(node: Node) -> Node:
-    """``node`` with what a phone does not draw left out."""
+    """``node`` with what a phone does not draw left out, and what the page
+    shows only once a list fills (its selection bar)."""
     node.children = [
         child
         for child in node.children
-        if isinstance(child, str) or not phone_hidden(child)
+        if isinstance(child, str)
+        or not (phone_hidden(child) or _hidden_on_opening(child))
     ]
     for child in node.children:
         if isinstance(child, Node):

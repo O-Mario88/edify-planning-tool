@@ -109,8 +109,13 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
       }
       const own = url.pathname.replace(/\/+$/, '') === path.replace(/\/+$/, '');
       if (own) {
-        // The page's own tabs, filters and pagers: their link is the whole query.
-        setQuery(Object.fromEntries(url.searchParams.entries()));
+        // The page's own tabs, filters and pagers: their link is the whole
+        // query — but a link to a page number alone keeps the filters, as the
+        // web's pager sends its filter form with it (hx-include).
+        const next = Object.fromEntries(url.searchParams.entries());
+        const keys = Object.keys(next);
+        const isPageOnly = keys.length > 0 && keys.every((key) => key === 'page' || key.endsWith('_page'));
+        setQuery((current) => (isPageOnly ? { ...current, ...next } : next));
         scroller.current?.scrollTo({ y: 0, animated: false });
         return;
       }

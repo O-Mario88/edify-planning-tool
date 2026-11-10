@@ -1139,6 +1139,7 @@ LATER_PARTS = frozenset(
         "planning_monitor",
         "cpo_schools",
         "cluster_schools_partial",
+        "project_schools_partial",
         "team_guidance_inbox",
     }
 )
@@ -1203,7 +1204,9 @@ def read_page(user, path: str, query) -> tuple[int, dict]:
     from apps.mobile_feed import page_blocks
 
     try:
-        page = _run_page(user, path, _page_params(query), NATIVE_PAGES)
+        # A part a page loads later (a cluster card's schools) is opened on
+        # its own too, when the app's card opens; the page's gate still holds.
+        page = _run_page(user, path, _page_params(query), NATIVE_PAGES | LATER_PARTS)
     except Http404:
         return 404, {"error": "This page is not available."}
     if page is None:

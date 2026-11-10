@@ -621,3 +621,173 @@ class BesideLinkTest(SimpleTestCase):
         self.assertFalse(
             any("panel" in b and "Open Calendar" in repr(b) for b in blocks), blocks[:3]
         )
+
+
+CLUSTER_CARDS = """
+<main><div class="space-y-3">
+<div class="cluster-card edify-surface rounded-surface" x-data="{ cardExpanded: false }">
+ <div class="cluster-card__summary" data-row-disclosure-summary>
+  <div class="cluster-card__header-row">
+   <div class="cluster-card__title-row">
+    <h3 class="cluster-card__title" data-list-title>
+     <button type="button" class="cluster-card__name-toggle">Cluster A</button></h3>
+    <span class="edify-status-badge danger">Critical</span>
+   </div>
+   <div class="cluster-card__actions"><div class="row-menu">
+    <button type="button" class="row-menu__trigger">Actions</button>
+    <div class="row-menu__panel" role="menu">
+     <button type="button" class="row-menu__item" role="menuitem"
+      hx-get="/planning/schedule-modal?cluster_id=c1&action=training"
+      hx-target="#drawer-container">Schedule Group Training</button>
+     <button type="button" class="row-menu__item" role="menuitem"
+      hx-get="/clusters/c1/bulk-assign-drawer" hx-target="#drawer-container">Add Schools</button>
+    </div></div></div>
+  </div>
+  <dl class="school-record-row__metadata cluster-card__metadata">
+   <div><dt>Location:</dt><dd>Mukono, Goma</dd></div>
+   <div><dt>Schools:</dt><dd>7</dd></div>
+   <div class="school-record-row__ssa is-danger"><dt>Avg SSA:</dt><dd>4.6/10</dd></div>
+   <div class="cluster-card__metadata-warning"><dt>Without SSA:</dt><dd>2 schools</dd></div>
+   <div><dt>Owner:</dt><dd><a href="/staff/p1">Paul N.</a></dd></div>
+  </dl>
+ </div>
+ <div id="cluster-details-c1" x-show="cardExpanded" x-cloak class="cluster-card__details">
+  <a href="/clusters/c1" class="edify-text-caption">Open Cluster A cluster profile</a>
+  <div class="edify-surface rounded-surface" x-ref="schoolsContainer"
+   hx-get="/partials/clusters/c1/schools" hx-trigger="load-schools, cluster-schools-updated-c1 from:body">
+   <div>Loading schools list...</div>
+  </div>
+ </div>
+</div>
+</div></main>
+"""
+
+
+class RecordCardTest(SimpleTestCase):
+    def test_a_record_card_is_one_block_with_its_parts(self):
+        blocks = page_blocks.read(CLUSTER_CARDS)["blocks"]
+
+        self.assertEqual(len(blocks), 1, blocks)
+        record = blocks[0]["record"]
+        self.assertEqual(record["title"], "Cluster A")
+        self.assertEqual(
+            record["badges"], [{"text": "Critical", "tone": "alert", "title": ""}]
+        )
+        self.assertEqual(
+            [(a["label"], a["drawer"]) for a in record["actions"]],
+            [("Schedule Group Training", True), ("Add Schools", True)],
+        )
+        self.assertEqual(
+            [(f["label"], f["value"], f["tone"], f["href"]) for f in record["facts"]],
+            [
+                ("Location", "Mukono, Goma", "", ""),
+                ("Schools", "7", "", ""),
+                ("Avg SSA", "4.6/10", "alert", ""),
+                ("Without SSA", "2 schools", "caution", ""),
+                ("Owner", "Paul N.", "", "/staff/p1"),
+            ],
+        )
+
+    def test_what_opening_the_card_shows_is_read_with_it(self):
+        record = page_blocks.read(CLUSTER_CARDS)["blocks"][0]["record"]
+
+        # The profile link is the card's own; the schools list loads on opening.
+        self.assertEqual(record["href"], "/clusters/c1")
+        self.assertEqual(record["detailsPath"], "/partials/clusters/c1/schools")
+        self.assertFalse(any("Loading schools" in repr(b) for b in record["details"]))
+
+
+ROWS_WITH_DETAILS = """
+<main><table class="school-plan-table" x-data="{ openSchoolId: null }">
+<thead><tr><th>School ID</th><th>School Name</th></tr></thead>
+<tbody>
+<tr class="cluster-school-row"><td>1546</td><td>Central Primary</td></tr>
+<tr id="d-1" class="school-plan-table__details" x-show="openSchoolId === 's1'" x-cloak>
+ <td colspan="2"><a href="/schools/s1">Open Central Primary school profile</a>
+ <dl class="school-record-row__metadata">
+  <div><dt>District:</dt><dd>Mukono</dd></div>
+  <div><dt>Last Visit:</dt><dd class="edify-status-text" data-edify-tone="danger">Never</dd></div>
+ </dl></td></tr>
+<tr class="cluster-school-row"><td>1598</td><td>Goma Primary</td></tr>
+</tbody></table></main>
+"""
+
+
+class RowDetailsTest(SimpleTestCase):
+    def test_a_rows_hidden_details_open_under_it_not_as_a_row(self):
+        table = page_blocks.read(ROWS_WITH_DETAILS)["blocks"][0]["table"]
+
+        self.assertEqual(
+            [r["cells"][0]["text"] for r in table["rows"]], ["1546", "1598"]
+        )
+        first = table["rows"][0]
+        self.assertEqual(first["detailsHref"], "/schools/s1")
+        self.assertEqual(
+            [(f["label"], f["value"], f["tone"]) for f in first["details"]],
+            [("District", "Mukono", ""), ("Last Visit", "Never", "alert")],
+        )
+        self.assertNotIn("details", table["rows"][1])
+
+
+SELECTION_BAR = """
+<main><div x-data="{ selectedSchools: [] }">
+<div class="school-directory-listbar" x-cloak x-show="selectedSchools.length > 0">
+ <span x-text="selectedSchools.length"></span> schools selected
+ <button type="button" @click="selectedSchools = []">Clear</button>
+</div>
+<p>Click a school to see its scores.</p>
+<div x-show="selectedSchools.length > 0 && activeView === 'list'" style="display: none;">
+ <span>schools selected</span></div>
+</div></main>
+"""
+
+
+class HiddenOnOpeningTest(SimpleTestCase):
+    def test_a_bar_shown_only_once_something_is_ticked_is_not_drawn(self):
+        blocks = page_blocks.read(SELECTION_BAR)["blocks"]
+
+        self.assertNotIn("Clear", repr(blocks))
+        self.assertNotIn("schools selected", repr(blocks))
+        self.assertIn("Click a school", repr(blocks))
+
+
+SCOPED_PAGER = """
+<main><div class="edify-pagination-scope flex">
+<span>Showing 1 to 5 of 15 clusters</span>
+<div class="flex">
+<span aria-current="page" class="h-8 w-8">1</span>
+<button hx-get="/clusters?page=2" hx-include="#filters-form">2</button>
+<span aria-hidden="true">…</span>
+<button aria-label="Next page" hx-get="/clusters?page=2"><svg></svg></button>
+</div></div></main>
+"""
+
+
+class ScopedPagerTest(SimpleTestCase):
+    def test_a_pager_outside_a_table_card_is_a_pager(self):
+        blocks = page_blocks.read(SCOPED_PAGER)["blocks"]
+
+        self.assertEqual(
+            blocks,
+            [
+                {
+                    "pager": {
+                        "summary": "Showing 1 to 5 of 15 clusters",
+                        "pages": [
+                            {"label": "1", "href": "", "current": True},
+                            {
+                                "label": "2",
+                                "href": "/clusters?page=2",
+                                "current": False,
+                            },
+                            {"label": "…", "href": "", "current": False},
+                            {
+                                "label": "Next",
+                                "href": "/clusters?page=2",
+                                "current": False,
+                            },
+                        ],
+                    }
+                }
+            ],
+        )
