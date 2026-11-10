@@ -74,3 +74,46 @@ export function valuesToSend(drawer: PageDrawer, values: Values): Record<string,
   }
   return sent;
 }
+
+/** A checklist's ticked choices, from its value (their values joined by commas). */
+export function ticked(value: string): string[] {
+  return value.split(',').filter((part) => part !== '');
+}
+
+/** A checklist's value once `picked` are ticked (or unticked): the ticked
+ * choices in the order the list shows them, any ticked elsewhere kept after. */
+export function withTicked(
+  value: string,
+  choices: readonly DrawerOption[],
+  picked: readonly string[],
+  isOn: boolean,
+): string {
+  const current = new Set(ticked(value));
+  for (const choice of picked) {
+    if (isOn) {
+      current.add(choice);
+    } else {
+      current.delete(choice);
+    }
+  }
+  const order = choices.map((choice) => choice.value);
+  const shown = order.filter((choice) => current.has(choice));
+  const elsewhere = [...current].filter((choice) => !order.includes(choice));
+  return [...shown, ...elsewhere].join(',');
+}
+
+/** The first shown, required field left empty — by its label — as the
+ * browser stops a save on it; '' when the save may go. */
+export function missingField(drawer: PageDrawer, values: Values): string {
+  for (const item of drawer.items) {
+    if (item.kind.case !== 'field') {
+      continue;
+    }
+    const field = item.kind.value;
+    const isAsked = field.required && !field.readOnly && isShown(item.showWhen, values) && isShown(field.showWhen, values);
+    if (isAsked && (values[field.name] ?? '').trim() === '') {
+      return field.label || field.name;
+    }
+  }
+  return '';
+}

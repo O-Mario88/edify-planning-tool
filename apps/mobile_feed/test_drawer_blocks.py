@@ -273,3 +273,132 @@ class FormDataTest(SimpleTestCase):
 
         # The drawer's hidden value stands; a field it does not have is dropped.
         self.assertEqual(data, {"school_id": "FEED-1", "name": "New"})
+
+
+SCRIPTED_CHECKLIST = """
+<div data-edify-drawer><div class="drawer-body">
+<div x-data='{
+  selectedDistrictId: "",
+  subCounties: [{"id": "s1", "name": "Goma", "district_id": "d1"},
+                {"id": "s2", "name": "Nama", "district_id": "d1", "covered_by": "Goma Cluster"},
+                {"id": "s3", "name": "Kira", "district_id": "d2"}],
+  selectedSubCounties: ["s2"],
+  get visibleSubCounties() {
+    return this.subCounties.filter(sc => String(sc.district_id) === String(this.selectedDistrictId));
+  }
+}'>
+<form action="/clusters/create" method="post">
+<div><label for="d">District <span aria-hidden="true">*</span></label>
+<select id="d" name="district_id" x-model="selectedDistrictId" required>
+<option value="">Select a district</option><option value="d1">Mukono</option>
+<option value="d2">Wakiso</option></select></div>
+<fieldset aria-required="true">
+<legend>Sub-counties <span aria-hidden="true">*</span>
+<span>(<span x-text="selectedSubCounties.length">0</span> selected)</span></legend>
+<label data-select-all-label><input type="checkbox" data-select-all="x"><span>Select all</span></label>
+<div>
+<template x-for="subCounty in visibleSubCounties" :key="subCounty.id">
+<label><input type="checkbox" name="sub_county_ids" :value="subCounty.id"
+ x-model="selectedSubCounties"><span><span x-text="subCounty.name"></span><span x-show="subCounty.covered_by" x-text="`Also in ${subCounty.covered_by}`"></span></span></label>
+</template>
+<div x-show="!selectedDistrictId"><span>Choose a district to see its sub-counties.</span></div>
+</div>
+<p x-show="subCountyError" role="alert">Select at least one sub-county for this cluster.</p>
+</fieldset>
+<button type="submit">Create cluster</button>
+</form></div></div></div>
+"""
+
+RENDERED_CHECKLIST = """
+<div data-edify-drawer><div class="drawer-body"><form hx-post="/x">
+<fieldset>
+<legend>Schools in this cluster (<span x-text="kept">2</span> of 2 kept)</legend>
+<p>Untick a school added by mistake.</p>
+<label data-select-all-label><input type="checkbox" data-select-all><span>Select all</span></label>
+<div role="group">
+<label><input type="checkbox" name="member_school_ids" value="a" checked>
+<span><span class="block">Alpha Primary</span><span class="block">SCH-1</span></span></label>
+<label><input type="checkbox" name="member_school_ids" value="b">
+<span><span class="block">Beta Primary</span><span class="block">SCH-2</span></span></label>
+</div></fieldset>
+<button type="submit">Save</button></form></div></div>
+"""
+
+
+class ChecklistTest(SimpleTestCase):
+    def _fields(self, html):
+        return [
+            item["field"]
+            for item in drawer_blocks.read(html)["items"]
+            if "field" in item
+        ]
+
+    def test_boxes_a_script_draws_are_one_field_with_the_scripts_choices(self):
+        fields = self._fields(SCRIPTED_CHECKLIST)
+
+        checklist = next(f for f in fields if f["name"] == "sub_county_ids")
+        self.assertEqual(checklist["kind"], "checklist")
+        self.assertEqual(checklist["label"], "Sub-counties")
+        self.assertTrue(checklist["required"])
+        self.assertEqual(checklist["value"], "s2")
+        self.assertEqual(checklist["groupBy"], "district_id")
+        self.assertEqual(
+            [(o["value"], o["label"], o["group"]) for o in checklist["options"]],
+            [("s1", "Goma", "d1"), ("s2", "Nama", "d1"), ("s3", "Kira", "d2")],
+        )
+        # The line the script prints under a sub-county another cluster covers.
+        self.assertEqual(
+            [o["detail"] for o in checklist["options"]],
+            ["", "Also in Goma Cluster", ""],
+        )
+        # The Select all box is the checklist's own, not a field of its own.
+        self.assertEqual([f["name"] for f in fields], ["district_id", "sub_county_ids"])
+
+    def test_boxes_the_web_drew_are_one_field_with_their_ticks(self):
+        items = drawer_blocks.read(RENDERED_CHECKLIST)["items"]
+
+        checklist = items[0]["field"]
+        self.assertEqual(checklist["kind"], "checklist")
+        self.assertEqual(checklist["label"], "Schools in this cluster")
+        self.assertEqual(checklist["help"], "Untick a school added by mistake.")
+        self.assertEqual(checklist["value"], "a")
+        self.assertEqual(
+            [(o["value"], o["label"], o["detail"]) for o in checklist["options"]],
+            [("a", "Alpha Primary", "SCH-1"), ("b", "Beta Primary", "SCH-2")],
+        )
+        self.assertEqual(len(items), 1)
+
+    def test_a_save_sends_each_ticked_box(self):
+        data = drawer_blocks.form_data(
+            SCRIPTED_CHECKLIST, {"district_id": "d1", "sub_county_ids": "s1,s2"}
+        )
+
+        self.assertEqual(data, {"district_id": "d1", "sub_county_ids": ["s1", "s2"]})
+
+    def test_a_save_with_nothing_ticked_sends_no_box(self):
+        data = drawer_blocks.form_data(RENDERED_CHECKLIST, {"member_school_ids": ""})
+
+        self.assertEqual(data, {"member_school_ids": []})
+
+
+class BoundValueTest(SimpleTestCase):
+    def test_a_field_bound_to_the_drawers_data_opens_with_its_value(self):
+        drawer = """
+        <div data-edify-drawer><div class="drawer-body">
+        <div x-data='{ clusterName: "Cluster A", teachers: 3, open: true }'>
+        <form hx-post="/x">
+        <div><label for="n">Cluster name</label>
+        <input id="n" name="name" x-model="clusterName"></div>
+        <div><label for="t">Teachers</label>
+        <input id="t" type="number" name="teachers" x-model.number="teachers"></div>
+        <div><label for="o">Typed</label>
+        <input id="o" name="typed" value="kept" x-model="clusterName"></div>
+        </form></div></div></div>
+        """
+
+        fields = [i["field"] for i in drawer_blocks.read(drawer)["items"]]
+
+        self.assertEqual(
+            [(f["name"], f["value"]) for f in fields],
+            [("name", "Cluster A"), ("teachers", "3"), ("typed", "kept")],
+        )

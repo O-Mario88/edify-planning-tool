@@ -29,7 +29,8 @@ import {
 } from './drawerParts';
 import { Select } from './Select';
 import { PageBlockView } from './page/PageBlocksView';
-import { choicesFor, clearedBy, initialValues, isShown, valuesToSend } from './drawerLogic';
+import { Checklist } from './Checklist';
+import { choicesFor, clearedBy, initialValues, isShown, missingField, valuesToSend } from './drawerLogic';
 import type { Reloaded, Values } from './drawerLogic';
 
 /** Which drawer: one of a school's (edit, close, ssa-entry), or any drawer a
@@ -115,6 +116,13 @@ export function WebDrawer({ source, onClose, onSaved, onUnavailable }: WebDrawer
 
   async function save() {
     if (!drawer) {
+      return;
+    }
+    // As the browser does, a required field left empty stops the save here.
+    const missing = missingField(drawer, values);
+    if (missing) {
+      setError(`${missing} is required.`);
+      setRefusals((count) => count + 1);
       return;
     }
     setIsBusy(true);
@@ -249,6 +257,17 @@ interface FieldProps {
 function Field({ field, values, reloaded, onChange }: FieldProps) {
   const { colors } = useTheme();
   const value = values[field.name] ?? '';
+  if (field.kind === 'checklist') {
+    return (
+      <Checklist
+        field={field}
+        choices={choicesFor(field, values, reloaded)}
+        value={value}
+        isPicked={field.groupBy === '' || Boolean(values[field.groupBy])}
+        onChange={(next) => onChange(field, next)}
+      />
+    );
+  }
   let control;
   if (field.kind === 'select') {
     const [first, ...rest] = choicesFor(field, values, reloaded);

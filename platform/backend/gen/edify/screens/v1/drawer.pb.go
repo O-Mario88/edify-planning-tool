@@ -257,8 +257,10 @@ type DrawerOption struct {
 	Value string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	Label string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
 	// The value of the field this choice belongs to (a parish's sub-county).
-	Group         string `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
-	Disabled      bool   `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	Group    string `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
+	Disabled bool   `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	// A second line under the choice's words ("SCH-1", "Also in Goma Cluster").
+	Detail        string `protobuf:"bytes,5,opt,name=detail,proto3" json:"detail,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -321,6 +323,13 @@ func (x *DrawerOption) GetDisabled() bool {
 	return false
 }
 
+func (x *DrawerOption) GetDetail() string {
+	if x != nil {
+		return x.Detail
+	}
+	return ""
+}
+
 // "Shown while `field` holds one of `values`."
 type DrawerCondition struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -379,8 +388,9 @@ type DrawerField struct {
 	// The form field's name, as the save sends it.
 	Name  string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Label string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
-	// text, number, date, tel, email, select, textarea, checkbox.
-	Kind     string `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	// text, number, date, tel, email, select, textarea, checkbox, checklist.
+	Kind string `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	// A checklist's value is its ticked choices' values, joined by commas.
 	Value    string `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
 	Required bool   `protobuf:"varint,5,opt,name=required,proto3" json:"required,omitempty"`
 	Help     string `protobuf:"bytes,6,opt,name=help,proto3" json:"help,omitempty"`
@@ -1251,12 +1261,13 @@ const file_edify_screens_v1_drawer_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1a\n" +
 	"\bredirect\x18\x03 \x01(\tR\bredirect\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x124\n" +
-	"\x06drawer\x18\x05 \x01(\v2\x1c.edify.screens.v1.PageDrawerR\x06drawer\"l\n" +
+	"\x06drawer\x18\x05 \x01(\v2\x1c.edify.screens.v1.PageDrawerR\x06drawer\"\x84\x01\n" +
 	"\fDrawerOption\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x14\n" +
 	"\x05group\x18\x03 \x01(\tR\x05group\x12\x1a\n" +
-	"\bdisabled\x18\x04 \x01(\bR\bdisabled\"?\n" +
+	"\bdisabled\x18\x04 \x01(\bR\bdisabled\x12\x16\n" +
+	"\x06detail\x18\x05 \x01(\tR\x06detail\"?\n" +
 	"\x0fDrawerCondition\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12\x16\n" +
 	"\x06values\x18\x02 \x03(\tR\x06values\"\xd8\x04\n" +

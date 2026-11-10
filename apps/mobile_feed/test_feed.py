@@ -914,6 +914,45 @@ class PageDrawerFeedTest(SchoolActionFeedTest):
         self.visit.refresh_from_db()
         self.assertEqual(self.visit.status, "cancelled")
 
+    def test_create_cluster_saves_each_ticked_sub_county(self):
+        from apps.clusters.models import Cluster, ClusterSubCounty
+        from apps.geography.models import SubCounty
+
+        second = SubCounty.objects.create(name="Feed Hill", district=self.district)
+        path = "/clusters/create-drawer"
+        drawer = self.drawer(path).json()["drawer"]
+        fields = {
+            i["field"]["name"]: i["field"] for i in drawer["items"] if "field" in i
+        }
+        checklist = fields["sub_county_ids"]
+        mine = [
+            o["value"] for o in checklist["options"] if o["group"] == self.district.id
+        ]
+
+        body = self.save(
+            path,
+            {
+                "district_id": self.district.id,
+                "sub_county_ids": ",".join(mine),
+                "name": "Feed Hill Cluster",
+            },
+        ).json()
+
+        self.assertEqual(checklist["kind"], "checklist")
+        self.assertEqual(checklist["groupBy"], "district_id")
+        self.assertIn(second.id, mine)
+        self.assertTrue(body["saved"], body)
+        cluster = Cluster.objects.get(name="Feed Hill Cluster")
+        self.assertEqual(
+            set(
+                ClusterSubCounty.objects.filter(cluster=cluster).values_list(
+                    "sub_county_id", flat=True
+                )
+            ),
+            set(mine),
+        )
+        self.assertEqual(len(mine), 2)
+
     def test_a_drawer_not_named_is_not_reachable(self):
         # The evidence upload drawer exists but the app does not draw it yet.
         self.assertEqual(

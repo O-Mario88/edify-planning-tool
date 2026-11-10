@@ -60,6 +60,8 @@ message DrawerOption {
   // The value of the field this choice belongs to (a parish's sub-county).
   string group = 3;
   bool disabled = 4;
+  // A second line under the choice's words ("SCH-1", "Also in Goma Cluster").
+  string detail = 5;
 }
 
 // "Shown while `field` holds one of `values`."
@@ -72,8 +74,9 @@ message DrawerField {
   // The form field's name, as the save sends it.
   string name = 1;
   string label = 2;
-  // text, number, date, tel, email, select, textarea, checkbox.
+  // text, number, date, tel, email, select, textarea, checkbox, checklist.
   string kind = 3;
+  // A checklist's value is its ticked choices' values, joined by commas.
   string value = 4;
   bool required = 5;
   string help = 6;

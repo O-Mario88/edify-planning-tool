@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import re
 
+from apps.mobile_feed import checklists
 from apps.mobile_feed.page_blocks import SILENT, Node, parse
 
 CONTROLS = ("input", "select", "textarea")
@@ -116,16 +117,41 @@ def _option_group(option: Node) -> tuple[str, str]:
 
 def _value(control: Node) -> str:
     if control.tag == "textarea":
-        return "".join(c for c in control.children if isinstance(c, str)).strip()
+        written = "".join(c for c in control.children if isinstance(c, str)).strip()
+        return written or _bound_value(control)
     if control.tag == "select":
         options = control.find_all(lambda n: n.tag == "option")
         chosen = next((o for o in options if "selected" in o.attrs), None)
+        if chosen is None and (bound := _bound_value(control)):
+            return bound
         chosen = chosen or (options[0] if options else None)
         return chosen.get("value") if chosen else ""
     kind = control.get("type").lower()
     if kind in ("checkbox", "radio"):
         return (control.get("value") or "on") if "checked" in control.attrs else ""
-    return control.get("value")
+    return control.get("value") or _bound_value(control)
+
+
+def _bound_value(control: Node) -> str:
+    """The value a field bound with ``x-model`` opens with: what its
+    ``x-data`` holds for it ("clusterName": "Cluster A")."""
+    model = next(
+        (
+            value
+            for key, value in control.attrs.items()
+            if key.split(".")[0] == "x-model"
+        ),
+        "",
+    )
+    holder = control.parent
+    while model and holder is not None and not holder.get("x-data"):
+        holder = holder.parent
+    if not model or holder is None:
+        return ""
+    value = checklists.data_value(holder.get("x-data"), model)
+    if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+        return ""
+    return str(value)
 
 
 def _messages(holder: Node) -> tuple[list[str], list[str]]:
@@ -291,6 +317,9 @@ def _items(node: Node, root: Node, out: list[dict]) -> list[dict]:
             _add(out, {"block": {"segments": beside[0]}}, child, root)
             taken |= beside[1]
             continue
+        if (checklist := _checklist(child, root)) is not None:
+            out.append({"field": checklist})
+            continue
         control = _holds_one_field(child)
         if "edify-note" in child.get("class"):
             _add(
@@ -325,6 +354,18 @@ def _items(node: Node, root: Node, out: list[dict]) -> list[dict]:
         else:
             _items(child, root, out)
     return out
+
+
+def _checklist(node: Node, root: Node) -> dict | None:
+    """A list of tick boxes sharing one name, as one field; None for anything
+    else, or for a list in a part that is never shown."""
+    if node.tag not in ("div", "fieldset", "ul", "section"):
+        return None
+    field = checklists.read(node, node.find_all(_is_control), root)
+    when = _show_when(node, root) if field is not None else None
+    if field is None or when is None:
+        return None
+    return {**field, "showWhen": when} if when else field
 
 
 def _page_block(node: Node) -> dict | None:
@@ -413,19 +454,27 @@ def hidden_values(html: str) -> dict[str, str]:
     }
 
 
-def form_data(html: str, values: dict) -> dict[str, str]:
+def form_data(html: str, values: dict) -> dict[str, str | list[str]]:
     """What a save posts: the drawer's hidden values as the web rendered them,
-    and the person's values for the drawer's own fields only."""
+    and the person's values for the drawer's own fields only — a checklist's
+    as one value per ticked box."""
     names = field_names(html)
     hidden = hidden_values(html)
+    form = _form(html)
+    lists = checklists.group_names(form) if form is not None else set()
     return {
         **{
-            name: str(value)
+            name: _ticked(value) if name in lists else str(value)
             for name, value in values.items()
             if name in names and name not in hidden
         },
         **hidden,
     }
+
+
+def _ticked(value) -> list[str]:
+    """A checklist's value as the boxes the web would send, one per tick."""
+    return [part for part in str(value).split(",") if part]
 
 
 def options(html: str) -> list[dict]:

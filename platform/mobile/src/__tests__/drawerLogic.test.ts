@@ -7,7 +7,16 @@ import {
   DrawerOptionSchema,
   PageDrawerSchema,
 } from '../gen/edify/screens/v1/drawer_pb';
-import { choicesFor, clearedBy, initialValues, isShown, valuesToSend } from '../ui/drawerLogic';
+import {
+  choicesFor,
+  clearedBy,
+  initialValues,
+  isShown,
+  missingField,
+  ticked,
+  withTicked,
+  valuesToSend,
+} from '../ui/drawerLogic';
 
 const option = (value: string, label: string, group = '') => create(DrawerOptionSchema, { value, label, group });
 const when = (field: string, ...values: string[]) => create(DrawerConditionSchema, { field, values });
@@ -97,5 +106,66 @@ describe('valuesToSend', () => {
       parish_id: 'p1',
     });
     expect(valuesToSend(DRAWER, { ...values, school_type: 'core' })).toHaveProperty('core_cohort_number', '3');
+  });
+});
+
+const SUB_COUNTIES = create(DrawerFieldSchema, {
+  name: 'sub_county_ids',
+  label: 'Sub-counties',
+  kind: 'checklist',
+  value: '',
+  required: true,
+  groupBy: 'district_id',
+  options: [option('s1', 'Goma', 'd1'), option('s2', 'Nama', 'd1'), option('s3', 'Kira', 'd2')],
+});
+const CLUSTER = create(PageDrawerSchema, {
+  items: [DISTRICT, SUB_COUNTIES].map((field) => create(DrawerItemSchema, { kind: { case: 'field', value: field } })),
+});
+
+describe('checklists', () => {
+  test('reads the ticked choices from the joined value', () => {
+    expect(ticked('s1,s2')).toEqual(['s1', 's2']);
+    expect(ticked('')).toEqual([]);
+  });
+
+  test('ticks and unticks one choice, keeping the order of the choices', () => {
+    const choices = SUB_COUNTIES.options;
+    expect(withTicked('s2', choices, ['s1'], true)).toBe('s1,s2');
+    expect(withTicked('s1,s2', choices, ['s1'], false)).toBe('s2');
+  });
+
+  test('Select all ticks every choice that applies, and clears them', () => {
+    const shown = choicesFor(SUB_COUNTIES, { district_id: 'd1' }, {});
+    expect(withTicked('', shown, shown.map((choice) => choice.value), true)).toBe('s1,s2');
+    expect(withTicked('s1,s2', shown, shown.map((choice) => choice.value), false)).toBe('');
+  });
+
+  test("a district's change clears its sub-counties", () => {
+    expect(clearedBy(CLUSTER, 'district_id')).toContain('sub_county_ids');
+  });
+});
+
+describe('missingField', () => {
+  test('names a shown required field left empty, as the browser stops the save', () => {
+    expect(missingField(CLUSTER, { district_id: 'd1', sub_county_ids: '' })).toBe('Sub-counties');
+  });
+
+  test('lets the save through once every required field holds a value', () => {
+    expect(missingField(CLUSTER, { district_id: 'd1', sub_county_ids: 's1' })).toBe('');
+  });
+
+  test('does not ask for a required field that is hidden', () => {
+    const hidden = create(DrawerFieldSchema, {
+      name: 'core_cohort_number',
+      label: 'Core cohort',
+      kind: 'number',
+      required: true,
+      showWhen: [when('school_type', 'core')],
+    });
+    const drawer = create(PageDrawerSchema, {
+      items: [TYPE, hidden].map((field) => create(DrawerItemSchema, { kind: { case: 'field', value: field } })),
+    });
+    expect(missingField(drawer, { school_type: 'client', core_cohort_number: '' })).toBe('');
+    expect(missingField(drawer, { school_type: 'core', core_cohort_number: '' })).toBe('Core cohort');
   });
 });
