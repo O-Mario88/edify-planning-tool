@@ -402,3 +402,18 @@ class BoundValueTest(SimpleTestCase):
             [(f["name"], f["value"]) for f in fields],
             [("name", "Cluster A"), ("teachers", "3"), ("typed", "kept")],
         )
+
+
+class RepeatedHiddenValuesTest(SimpleTestCase):
+    def test_every_hidden_value_of_a_repeated_name_is_sent(self):
+        drawer = """
+        <div data-edify-drawer><div class="drawer-body"><form hx-post="/activity-selection/cancel">
+        <input type="hidden" name="activity_ids" value="a1">
+        <input type="hidden" name="activity_ids" value="a2">
+        <div><label for="r">Reason</label><textarea id="r" name="reason"></textarea></div>
+        <button type="submit">Cancel them</button></form></div></div>
+        """
+
+        data = drawer_blocks.form_data(drawer, {"reason": "Exams", "activity_ids": "x"})
+
+        self.assertEqual(data, {"reason": "Exams", "activity_ids": ["a1", "a2"]})

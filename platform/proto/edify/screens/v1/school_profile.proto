@@ -29,4 +29,6 @@ message GetSchoolProfileResponse {
   string web_path = 4;
   // The dialogs the profile opens itself, by "#dialog=<key>".
   repeated PageDialog dialogs = 5;
+  // The bar for the profile's ticked rows, when it has one.
+  PageSelection selection = 6;
 }

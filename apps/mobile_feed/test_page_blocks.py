@@ -950,3 +950,82 @@ class FoldedFiltersTest(SimpleTestCase):
         blocks = page_blocks.read(FOLDED_FILTERS)["blocks"]
 
         self.assertEqual([list(b)[0] for b in blocks], ["filters"])
+
+
+ACTIVITY_BAR = """
+<main>
+<div data-activity-bar hidden role="region" aria-label="Selected activities">
+ <span data-activity-count>0</span><span data-activity-noun>activities selected</span>
+ <form hx-get="/activity-selection/reschedule" hx-target="#drawer-container" data-needs-activities>
+  <input type="hidden" name="ids" value=""><button type="submit">Reschedule</button></form>
+ <form hx-get="/activity-selection/cancel" hx-target="#drawer-container" data-needs-activities>
+  <input type="hidden" name="ids" value=""><button type="submit"><svg></svg> Cancel</button></form>
+ <button type="button" data-activity-clear>Clear</button>
+</div>
+<p>My plan.</p>
+</main>
+"""
+
+SCHOOL_BAR = """
+<main><div x-data="{ selectedSchools: [] }">
+<p>Planning.</p>
+<div x-show="selectedSchools.length > 0 && activeView === 'list'" style="display: none;">
+ <span x-text="selectedSchools.length"></span><span>schools selected</span>
+ <form hx-get="/planning/bulk-assign-partner-drawer" hx-target="#drawer-container">
+  <template x-for="sid in selectedSchools" :key="sid"><input type="hidden" name="school_ids" :value="sid"></template>
+  <button type="submit">Assign to partner</button></form>
+ <form hx-post="/planning/bulk-action"><template x-for="sid in selectedSchools">
+  <input type="hidden" name="school_ids" :value="sid"></template>
+  <button type="submit" name="action" value="export">Export Selected</button></form>
+</div>
+</div></main>
+"""
+
+
+class SelectionBarTest(SimpleTestCase):
+    def test_the_bar_for_ticked_activities_names_its_drawers(self):
+        page = page_blocks.read(ACTIVITY_BAR)
+
+        self.assertEqual(
+            page["selection"],
+            {
+                "noun": "activities selected",
+                "actions": [
+                    {
+                        "label": "Reschedule",
+                        "href": "/activity-selection/reschedule",
+                        "param": "ids",
+                        "joined": True,
+                    },
+                    {
+                        "label": "Cancel",
+                        "href": "/activity-selection/cancel",
+                        "param": "ids",
+                        "joined": True,
+                    },
+                ],
+            },
+        )
+        self.assertNotIn("Reschedule", repr(page["blocks"]))
+
+    def test_the_bar_for_ticked_schools_sends_each_school(self):
+        page = page_blocks.read(SCHOOL_BAR)
+
+        self.assertEqual(page["selection"]["noun"], "schools selected")
+        # A file the web downloads stays on the web.
+        self.assertEqual(
+            page["selection"]["actions"],
+            [
+                {
+                    "label": "Assign to partner",
+                    "href": "/planning/bulk-assign-partner-drawer",
+                    "param": "school_ids",
+                    "joined": False,
+                }
+            ],
+        )
+
+    def test_a_page_without_a_bar_has_no_selection(self):
+        self.assertNotIn(
+            "selection", page_blocks.read("<main><p>Nothing to tick.</p></main>")
+        )

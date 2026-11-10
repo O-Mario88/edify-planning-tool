@@ -1,7 +1,7 @@
 import { create } from '@bufbuild/protobuf';
 
 import { PageLinkTabSchema } from '../gen/edify/screens/v1/page_pb';
-import { isShownFor, railTabs, webPageFor } from '../ui/page/pageLinks';
+import { isShownFor, railTabs, selectionPath, webPageFor } from '../ui/page/pageLinks';
 
 const tab = (label: string, active = false) => create(PageLinkTabSchema, { label, href: `?period=${label}`, active });
 
@@ -47,5 +47,17 @@ describe('isShownFor', () => {
 
   test('a row with no key for a chip is not hidden by it', () => {
     expect(isShownFor({}, { cat: 'SSA' })).toBe(true);
+  });
+});
+
+describe('selectionPath', () => {
+  test("opens the bar's drawer with every ticked row in one value", () => {
+    const cancel = { href: '/activity-selection/cancel', param: 'ids' };
+    expect(selectionPath(cancel, ['a1', 'a2'])).toBe('/activity-selection/cancel?ids=a1,a2');
+  });
+
+  test('sends a list of schools the same way, for the feed to send one per school', () => {
+    const assign = { href: '/planning/bulk-assign-partner-drawer', param: 'school_ids' };
+    expect(selectionPath(assign, ['1693'])).toBe('/planning/bulk-assign-partner-drawer?school_ids=1693');
   });
 });

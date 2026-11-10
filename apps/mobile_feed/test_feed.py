@@ -1032,6 +1032,50 @@ class PageDrawerFeedTest(SchoolActionFeedTest):
         self.assertFalse(body["saved"])
         self.assertEqual(body["error"], "This form is not available.")
 
+    def test_ticked_activities_are_cancelled_together(self):
+        from apps.activities.models import Activity
+
+        second = Activity.objects.create(
+            activity_type="school_visit",
+            status="scheduled",
+            school=self.school,
+            responsible_staff_id=self.profile.id,
+            delivery_type="staff",
+            planned_date=self.visit.planned_date,
+            fy=self.visit.fy,
+            quarter=self.visit.quarter,
+        )
+        path = f"/activity-selection/cancel?ids={self.visit.id},{second.id}"
+        drawer = self.drawer(path).json()["drawer"]
+        fields = {
+            i["field"]["name"]: i["field"] for i in drawer["items"] if "field" in i
+        }
+        values = {name: field["value"] for name, field in fields.items()}
+        for name, field in fields.items():
+            if field["kind"] == "select" and not values[name]:
+                values[name] = next(o["value"] for o in field["options"] if o["value"])
+            elif field["kind"] in ("text", "textarea") and not values[name]:
+                values[name] = "The school is closed for exams this week."
+
+        body = self.save(path, values).json()
+
+        self.assertTrue(body["saved"], body)
+        statuses = set(
+            Activity.objects.filter(id__in=[self.visit.id, second.id]).values_list(
+                "status", flat=True
+            )
+        )
+        self.assertEqual(statuses, {"cancelled"})
+
+    def test_a_drawer_opens_with_every_ticked_school(self):
+        from apps.mobile_feed.views import _page_params
+
+        many = ",".join(f"school{n:03d}" for n in range(150))
+
+        self.assertEqual(_page_params({"school_ids": many})["school_ids"], many)
+        self.assertEqual(_page_params({"school_ids": "a,<b>"}), {})
+        self.assertEqual(_page_params({"note": "x" * 200}), {})
+
     def test_a_drawer_not_named_is_not_reachable(self):
         # The evidence upload drawer exists but the app does not draw it yet.
         self.assertEqual(

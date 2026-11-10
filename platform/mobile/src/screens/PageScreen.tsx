@@ -23,8 +23,9 @@ import { fonts, radius, useTheme } from '../theme';
 import { MakeRoomContext } from '../ui/Dropdown';
 import { PageBlocksView } from '../ui/page/PageBlocksView';
 import { ActionButton, Badge, Description, TabRail } from '../ui/page/PageHeaderParts';
-import { webPageFor } from '../ui/page/pageLinks';
-import { PageFormContext, PageLinkContext } from '../ui/page/shared';
+import { selectionPath, webPageFor } from '../ui/page/pageLinks';
+import { PageFormContext, PageLinkContext, PickContext } from '../ui/page/shared';
+import { SelectionBar } from '../ui/page/SelectionBar';
 import { Drawer } from '../ui/Drawer';
 import { WebDrawer } from '../ui/WebDrawer';
 import { PlanningDrawer } from '../ui/planning/PlanningDrawer';
@@ -65,6 +66,8 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
   const [planning, setPlanning] = useState<{ readonly schoolId: string; readonly kind: 'schedule' | 'assign' } | null>(null);
   /** The page's own dialog open as a sheet, by its key. */
   const [dialogKey, setDialogKey] = useState<string | null>(null);
+  /** The rows ticked for the page's bar (PageSelection). */
+  const [picked, setPicked] = useState<readonly string[]>([]);
   const [toast, setToast] = useState('');
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
   const offset = useRef(0);
@@ -79,6 +82,7 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
         return;
       }
       setData(answer);
+      setPicked([]);
     } catch (cause) {
       if (cause instanceof ApiError && cause.code === 'unauthenticated') {
         await signOut();
@@ -181,6 +185,15 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
     },
     [load],
   );
+  const picks = useMemo(
+    () => ({
+      isOn: Boolean(data?.selection),
+      picked,
+      set: (ids: readonly string[], isTicked: boolean) =>
+        setPicked((now) => (isTicked ? [...new Set([...now, ...ids])] : now.filter((id) => !ids.includes(id)))),
+    }),
+    [data, picked],
+  );
   // A form the page shows itself saves with the page's path, then the page reloads.
   const formHost = useMemo(
     () => ({ path, onSaved: saved, onOpenWeb: () => openWeb(webPageFor(path)) }),
@@ -195,97 +208,107 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
   return (
     <PageLinkContext.Provider value={openLink}>
       <PageFormContext.Provider value={formHost}>
-        <MakeRoomContext.Provider value={makeRoom}>
-          <ScrollView
-            ref={scroller}
-            onScroll={trackScroll}
-            scrollEventThrottle={16}
-            contentContainerStyle={styles.page}
-            keyboardShouldPersistTaps="handled"
-            refreshControl={<RefreshControl refreshing={isBusy && data !== null} onRefresh={() => void load()} />}
-          >
-            {header?.backLabel ? (
-              <Pressable onPress={() => openLink(header.backHref)} accessibilityRole="link" hitSlop={8} style={styles.back}>
-                <ChevronLeft size={14} color={colors.link} />
-                <Text style={[styles.backText, { color: colors.link }]}>{header.backLabel}</Text>
-              </Pressable>
-            ) : null}
-            {header?.eyebrow ? <Text style={[styles.eyebrow, { color: colors.eyebrow }]}>{header.eyebrow}</Text> : null}
-            <View style={styles.titleRow}>
-              <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-                {header?.title ?? ''}
-              </Text>
-              {exportAction ? <ExportButton action={exportAction} onPress={() => openLink(exportAction.href, exportAction.drawer)} /> : null}
-            </View>
-            {header?.description ? <Description text={header.description} /> : null}
-            {header && (header.badges.length > 0 || buttons.length > 0) ? (
-              <View style={styles.controls}>
-                {header.badges.map((badge, index) => (
-                  <Badge key={badge.text} badge={badge} isWide={index === 0 && header.badges.length > 1} />
-                ))}
-                {buttons.map((action) => (
-                  <ActionButton key={action.key + action.href} action={action} onPress={() => openLink(action.href, action.drawer)} />
-                ))}
+        <PickContext.Provider value={picks}>
+          <MakeRoomContext.Provider value={makeRoom}>
+            <ScrollView
+              ref={scroller}
+              onScroll={trackScroll}
+              scrollEventThrottle={16}
+              contentContainerStyle={styles.page}
+              keyboardShouldPersistTaps="handled"
+              refreshControl={<RefreshControl refreshing={isBusy && data !== null} onRefresh={() => void load()} />}
+            >
+              {header?.backLabel ? (
+                <Pressable onPress={() => openLink(header.backHref)} accessibilityRole="link" hitSlop={8} style={styles.back}>
+                  <ChevronLeft size={14} color={colors.link} />
+                  <Text style={[styles.backText, { color: colors.link }]}>{header.backLabel}</Text>
+                </Pressable>
+              ) : null}
+              {header?.eyebrow ? <Text style={[styles.eyebrow, { color: colors.eyebrow }]}>{header.eyebrow}</Text> : null}
+              <View style={styles.titleRow}>
+                <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+                  {header?.title ?? ''}
+                </Text>
+                {exportAction ? <ExportButton action={exportAction} onPress={() => openLink(exportAction.href, exportAction.drawer)} /> : null}
               </View>
-            ) : null}
-            {data && data.tabs.length > 0 ? (
-              <TabRail
-                tabs={data.tabs.map((tab) => ({ key: tab.key, label: tab.label, active: tab.active }))}
-                onPick={(tab) => setQuery((current) => ({ ...current, tab }))}
+              {header?.description ? <Description text={header.description} /> : null}
+              {header && (header.badges.length > 0 || buttons.length > 0) ? (
+                <View style={styles.controls}>
+                  {header.badges.map((badge, index) => (
+                    <Badge key={badge.text} badge={badge} isWide={index === 0 && header.badges.length > 1} />
+                  ))}
+                  {buttons.map((action) => (
+                    <ActionButton key={action.key + action.href} action={action} onPress={() => openLink(action.href, action.drawer)} />
+                  ))}
+                </View>
+              ) : null}
+              {data && data.tabs.length > 0 ? (
+                <TabRail
+                  tabs={data.tabs.map((tab) => ({ key: tab.key, label: tab.label, active: tab.active }))}
+                  onPick={(tab) => setQuery((current) => ({ ...current, tab }))}
+                />
+              ) : null}
+              {error ? (
+                <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">
+                  {error}
+                </Text>
+              ) : null}
+              {data ? (
+                <View style={{ opacity: isBusy ? 0.6 : 1 }}>
+                  <PageBlocksView blocks={data.blocks} onFilter={filter} isRaised={false} />
+                </View>
+              ) : error ? null : (
+                <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />
+              )}
+            </ScrollView>
+            {drawer ? (
+              <WebDrawer
+                source={{ path: drawer }}
+                onClose={() => setDrawer(null)}
+                onSaved={(message) => saved(message)}
+                onUnavailable={() => {
+                  // A drawer the app does not draw yet opens on the web.
+                  setDrawer(null);
+                  openWeb(webPageFor(drawer));
+                }}
               />
             ) : null}
-            {error ? (
-              <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">
-                {error}
-              </Text>
+            {openDialog ? (
+              <Drawer title={openDialog.title} onClose={() => setDialogKey(null)}>
+                <PageBlocksView blocks={openDialog.blocks} onFilter={filter} />
+              </Drawer>
             ) : null}
-            {data ? (
-              <View style={{ opacity: isBusy ? 0.6 : 1 }}>
-                <PageBlocksView blocks={data.blocks} onFilter={filter} isRaised={false} />
+            {planning ? (
+              <PlanningDrawer
+                schoolId={planning.schoolId}
+                kind={planning.kind}
+                onClose={() => setPlanning(null)}
+                onSaved={saved}
+                onOpenWeb={(webPath) => {
+                  setPlanning(null);
+                  openWeb(webPath);
+                }}
+              />
+            ) : null}
+            {data?.selection && picked.length > 0 && !drawer ? (
+              <SelectionBar
+                selection={data.selection}
+                count={picked.length}
+                onAction={(action) => setDrawer(selectionPath(action, picked))}
+                onClear={() => setPicked([])}
+              />
+            ) : null}
+            {toast ? (
+              <View
+                style={[styles.toast, { backgroundColor: colors.successSoft, borderColor: colors.success }]}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="polite"
+              >
+                <Text style={[styles.toastText, { color: colors.success }]}>{toast}</Text>
               </View>
-            ) : error ? null : (
-              <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />
-            )}
-          </ScrollView>
-          {drawer ? (
-            <WebDrawer
-              source={{ path: drawer }}
-              onClose={() => setDrawer(null)}
-              onSaved={(message) => saved(message)}
-              onUnavailable={() => {
-                // A drawer the app does not draw yet opens on the web.
-                setDrawer(null);
-                openWeb(webPageFor(drawer));
-              }}
-            />
-          ) : null}
-          {openDialog ? (
-            <Drawer title={openDialog.title} onClose={() => setDialogKey(null)}>
-              <PageBlocksView blocks={openDialog.blocks} onFilter={filter} />
-            </Drawer>
-          ) : null}
-          {planning ? (
-            <PlanningDrawer
-              schoolId={planning.schoolId}
-              kind={planning.kind}
-              onClose={() => setPlanning(null)}
-              onSaved={saved}
-              onOpenWeb={(webPath) => {
-                setPlanning(null);
-                openWeb(webPath);
-              }}
-            />
-          ) : null}
-          {toast ? (
-            <View
-              style={[styles.toast, { backgroundColor: colors.successSoft, borderColor: colors.success }]}
-              accessibilityRole="alert"
-              accessibilityLiveRegion="polite"
-            >
-              <Text style={[styles.toastText, { color: colors.success }]}>{toast}</Text>
-            </View>
-          ) : null}
-        </MakeRoomContext.Provider>
+            ) : null}
+          </MakeRoomContext.Provider>
+        </PickContext.Provider>
       </PageFormContext.Provider>
     </PageLinkContext.Provider>
   );

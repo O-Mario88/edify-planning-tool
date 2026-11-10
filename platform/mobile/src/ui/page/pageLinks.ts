@@ -38,3 +38,9 @@ export function webPageFor(href: string): string {
 export function isShownFor(keys: Readonly<Record<string, string>>, chosen: Readonly<Record<string, string>>): boolean {
   return Object.entries(chosen).every(([name, value]) => value === 'all' || value === '' || keys[name] === undefined || keys[name] === value);
 }
+
+/** A path to one of the bar's drawers with the ticked rows, as one
+ * comma-joined value (the feed sends a "…_ids" list on as one per row). */
+export function selectionPath(action: { readonly href: string; readonly param: string }, picked: readonly string[]): string {
+  return `${action.href}?${action.param}=${picked.map(encodeURIComponent).join(',')}`;
+}

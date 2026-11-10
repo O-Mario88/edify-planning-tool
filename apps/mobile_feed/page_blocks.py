@@ -1726,6 +1726,13 @@ def phone_hidden(node: Node) -> bool:
     return "hidden" in classes and not any(PHONE_SHOWN.match(c) for c in classes)
 
 
+def _is_tick_bar(node: Node) -> bool:
+    """The bar a page shows once rows are ticked: the app draws its own."""
+    from apps.mobile_feed import selection
+
+    return selection.is_bar(node)
+
+
 def _for_phone(node: Node) -> Node:
     """``node`` with what a phone does not draw left out, and what the page
     shows only once a list fills (its selection bar)."""
@@ -1733,7 +1740,7 @@ def _for_phone(node: Node) -> Node:
         child
         for child in node.children
         if isinstance(child, str)
-        or not (phone_hidden(child) or _hidden_on_opening(child))
+        or not (phone_hidden(child) or _hidden_on_opening(child) or _is_tick_bar(child))
     ]
     for child in node.children:
         if isinstance(child, Node):
@@ -1747,14 +1754,21 @@ def read(html: str, later=None) -> dict:
     leave it out."""
     from apps.mobile_feed import dialogs
 
+    from apps.mobile_feed import selection
+
     root = parse(html)
-    # The page's closed dialogs, read before they are left out of its blocks.
+    # The page's closed dialogs and its bar for ticked rows, read before they
+    # are left out of its blocks.
     closed = dialogs.read_all(root)
+    ticks = selection.read(root)
     root = _for_phone(root)
     main = root.find(lambda n: n.tag == "main") or root
-    return {
+    page = {
         "header": _header(main),
         "tabs": _tabs(main),
         "dialogs": closed,
         "blocks": _blocks(main, [], later),
     }
+    if ticks is not None:
+        page["selection"] = ticks
+    return page

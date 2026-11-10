@@ -471,13 +471,17 @@ def _names(form: Node) -> set[str]:
     return {node.get("name") for node in form.find_all(_is_control) if node.get("name")}
 
 
-def _hidden(form: Node) -> dict[str, str]:
+def _hidden(form: Node) -> dict[str, str | list[str]]:
+    """The hidden values a form sends; a name the form repeats (one
+    activity_ids per ticked activity) sends every value."""
+    values: dict[str, list[str]] = {}
+    for node in form.find_all(
+        lambda n: n.tag == "input" and n.get("type").lower() == "hidden"
+    ):
+        if node.get("name") and node.get("name") != "csrfmiddlewaretoken":
+            values.setdefault(node.get("name"), []).append(node.get("value"))
     return {
-        node.get("name"): node.get("value")
-        for node in form.find_all(
-            lambda n: n.tag == "input" and n.get("type").lower() == "hidden"
-        )
-        if node.get("name") and node.get("name") != "csrfmiddlewaretoken"
+        name: found[0] if len(found) == 1 else found for name, found in values.items()
     }
 
 

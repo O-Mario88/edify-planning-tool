@@ -8,19 +8,21 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { ChevronDown, ChevronRight, Inbox } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronRight, Inbox, Minus } from 'lucide-react-native';
 
 import type { PageAction, PageCell, PageColumn, PagePager, PageRow, PageTable } from '../../gen/edify/screens/v1/page_pb';
 import type { Palette } from '../../theme';
 import { fonts, useTheme } from '../../theme';
 import { PageBlockView } from './PageBlocksView';
 import { RowActions } from './RowActions';
-import { cardStyles, toneColor, usePageLink } from './shared';
+import { cardStyles, toneColor, usePageLink, usePicks } from './shared';
 
 /** The Actions column: the menu button, and a row's own button beside it. */
 const ACTIONS_WIDTH = 104;
 /** The column of a row's open/close chevron (the web's school-plan-table__expander). */
 const EXPANDER_WIDTH = 32;
+/** The tick-box column of rows the page's bar acts on (school-plan-table__select). */
+const PICK_WIDTH = 40;
 const ROW_BUTTON_WIDTH = 84;
 
 const HINT_MS = 4000;
@@ -92,7 +94,11 @@ function Grid({ table }: { readonly table: PageTable }) {
     ),
   );
   const opens = table.rows.some((row) => row.details.length > 0 || row.detailsHref !== '');
-  const contentWidth = widths.reduce((sum, width) => sum + width, 0) + (opens ? EXPANDER_WIDTH : 0);
+  const pick = usePicks();
+  const pickable = pick.isOn ? table.rows.map((row) => row.pickId).filter((id) => id !== '') : [];
+  const ticked = pickable.filter((id) => pick.picked.includes(id)).length;
+  const contentWidth =
+    widths.reduce((sum, width) => sum + width, 0) + (opens ? EXPANDER_WIDTH : 0) + (pickable.length > 0 ? PICK_WIDTH : 0);
   const isWide = viewWidth > 0 && contentWidth > viewWidth + 2;
   // As the web's table: one row open at a time.
   const [openRow, setOpenRow] = useState<number | null>(null);
@@ -102,6 +108,17 @@ function Grid({ table }: { readonly table: PageTable }) {
         <View>
           {table.columns.length > 0 ? (
             <View style={[styles.row, { backgroundColor: colors.tableHead }]}>
+              {pickable.length > 0 ? (
+                <Pressable
+                  onPress={() => pick.set(pickable, ticked < pickable.length)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: ticked === pickable.length ? true : ticked > 0 ? 'mixed' : false }}
+                  accessibilityLabel="Select all on this page"
+                  style={[styles.pickCell, { width: PICK_WIDTH }]}
+                >
+                  <TickBox isOn={ticked === pickable.length} isPart={ticked > 0 && ticked < pickable.length} />
+                </Pressable>
+              ) : null}
               {opens ? <View style={{ width: EXPANDER_WIDTH }} /> : null}
               {table.columns.map((column, index) => (
                 <Text
@@ -126,6 +143,7 @@ function Grid({ table }: { readonly table: PageTable }) {
               widths={widths}
               isFirst={rowIndex === 0}
               opens={opens}
+              picks={pickable.length > 0}
               isOpen={openRow === rowIndex}
               onToggle={() => setOpenRow(openRow === rowIndex ? null : rowIndex)}
               detailsWidth={viewWidth}
@@ -145,6 +163,8 @@ interface BodyRowProps {
   readonly isFirst: boolean;
   /** The table has rows that open: every row keeps the chevron column. */
   readonly opens: boolean;
+  /** The table's rows can be ticked for the page's bar: every row keeps the tick column. */
+  readonly picks: boolean;
   readonly isOpen: boolean;
   readonly onToggle: () => void;
   /** The screen's width, which an open row's details fill. */
@@ -152,9 +172,11 @@ interface BodyRowProps {
 }
 
 /** One record row: its cells, and what opening it shows under it. */
-function BodyRow({ row, table, widths, isFirst, opens, isOpen, onToggle, detailsWidth }: BodyRowProps) {
+function BodyRow({ row, table, widths, isFirst, opens, picks, isOpen, onToggle, detailsWidth }: BodyRowProps) {
   const { colors } = useTheme();
   const openLink = usePageLink();
+  const pick = usePicks();
+  const isTicked = row.pickId !== '' && pick.picked.includes(row.pickId);
   const canOpen = row.details.length > 0 || row.detailsHref !== '';
   return (
     <View>
@@ -171,6 +193,21 @@ function BodyRow({ row, table, widths, isFirst, opens, isOpen, onToggle, details
           isOpen ? { backgroundColor: colors.primarySoft } : null,
         ]}
       >
+        {picks ? (
+          <View style={[styles.pickCell, { width: PICK_WIDTH }]}>
+            {row.pickId ? (
+              <Pressable
+                onPress={() => pick.set([row.pickId], !isTicked)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isTicked }}
+                accessibilityLabel={row.pickLabel || `Select ${rowName(row)}`}
+                hitSlop={8}
+              >
+                <TickBox isOn={isTicked} />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
         {opens ? (
           <View style={[styles.expander, { width: EXPANDER_WIDTH }]}>
             {canOpen && isOpen ? <ChevronDown size={14} color={colors.textMuted} /> : null}
@@ -248,6 +285,21 @@ function RowDetails({ row, width }: { readonly row: PageRow; readonly width: num
       {row.detailBlocks.map((block, index) => (
         <PageBlockView key={index} block={block} />
       ))}
+    </View>
+  );
+}
+
+function TickBox({ isOn, isPart = false }: { readonly isOn: boolean; readonly isPart?: boolean }) {
+  const { colors } = useTheme();
+  const isFilled = isOn || isPart;
+  return (
+    <View
+      style={[
+        styles.tick,
+        { borderColor: isFilled ? colors.primary : colors.borderStrong, backgroundColor: isFilled ? colors.primary : colors.raised },
+      ]}
+    >
+      {isOn ? <Check size={12} color={colors.primaryInk} /> : isPart ? <Minus size={12} color={colors.primaryInk} /> : null}
     </View>
   );
 }
@@ -368,6 +420,8 @@ export function EmptyState({ message, action }: { readonly message: string; read
 const styles = StyleSheet.create({
   clip: { overflow: 'hidden' },
   expander: { alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
+  pickCell: { alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
+  tick: { width: 16, height: 16, borderWidth: 1, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   details: { borderTopWidth: 1, paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
   detailsLink: { fontFamily: fonts.semibold, fontSize: 12 },
   detailFacts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 18, rowGap: 6 },

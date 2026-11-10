@@ -1288,13 +1288,28 @@ def _page_get(user, path: str, params: dict):
     return page_request
 
 
+#: The ticked rows a drawer opens with: up to MAX_TICKED plain ids,
+#: comma-joined ("ids", "school_ids"), as the web's bar for ticked rows sends.
+MAX_TICKED = 200
+PLAIN_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def _is_id_list(key: str) -> bool:
+    return key == "ids" or key.endswith("_ids")
+
+
+def _fits(key: str, value: str) -> bool:
+    if not _is_id_list(key):
+        return len(value) <= MAX_QUERY_VALUE
+    ids = value.split(",") if value else []
+    return len(ids) <= MAX_TICKED and all(PLAIN_ID.match(part) for part in ids)
+
+
 def _page_params(query) -> dict:
     return {
         key: value
         for key, value in query.items()
-        if QUERY_KEY.match(key)
-        and key not in NOT_PASSED
-        and len(value) <= MAX_QUERY_VALUE
+        if QUERY_KEY.match(key) and key not in NOT_PASSED and _fits(key, value)
     }
 
 
@@ -1417,6 +1432,12 @@ class MyPlanFeedView(APIView):
 #: Drawers the app reads, by URL name.
 DRAWER_VIEWS = frozenset(
     {
+        # The bar for ticked rows (PageSelection): moved, cancelled or handed
+        # over together.
+        "activity_group_reschedule",
+        "activity_group_cancel",
+        "planning_bulk_assign_partner_drawer",
+        "planning_bulk_schedule_drawer",
         "activity_detail",
         "complete_drawer",
         "reschedule_drawer",
@@ -1464,6 +1485,10 @@ DRAWER_SAVES = frozenset(
         "partner_oversight_send",
         "project_withdraw_school",
         "pd_request",
+        "activity_group_reschedule",
+        "activity_group_cancel",
+        "planning_bulk_action",
+        "planning_bulk_schedule",
         # A page's own form, saved by the page's view (PageForm).
         "escalations",
         "my_targets_mscs",
@@ -1491,7 +1516,12 @@ def _page_drawer_html(user, path: str, query: dict) -> tuple[int, str]:
         return 404, ""
     page_request = _page_request(user, path)
     page_request.GET = page_request.GET.copy()
-    page_request.GET.update(_page_params(query))
+    for key, value in _page_params(query).items():
+        if key.endswith("_ids"):
+            # One value per ticked row, as the web's bar sends each one.
+            page_request.GET.setlist(key, value.split(","))
+        else:
+            page_request.GET[key] = value
     try:
         response = match.func(page_request, *match.args, **match.kwargs)
     except Http404:

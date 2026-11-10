@@ -2,6 +2,7 @@ package screens
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"strings"
 	"testing"
@@ -400,5 +401,31 @@ func TestAPageFormKeyMustBePlain(t *testing.T) {
 	}
 	if len(fetcher.paths) != 0 {
 		t.Fatalf("reached the feed: %v", fetcher.paths)
+	}
+}
+
+func TestADrawerTakesAListOfTickedIDs(t *testing.T) {
+	fetcher := &recordingFetcher{}
+	service := NewService(fetcher)
+	ctx := context.Background()
+	ids := make([]string, 150)
+	for i := range ids {
+		ids[i] = fmt.Sprintf("cmw9p8e4900p50wekh%03d", i)
+	}
+
+	_, err := service.GetDrawer(ctx, connect.NewRequest(&screensv1.GetDrawerRequest{
+		Path: "/activity-selection/cancel?ids=" + strings.Join(ids, ","),
+	}))
+
+	if err != nil {
+		t.Fatalf("150 ids: %v", err)
+	}
+	for _, bad := range []string{"a,,b", "a b", "a,<b>", strings.Repeat("a,", 201) + "a"} {
+		_, err := service.GetDrawer(ctx, connect.NewRequest(&screensv1.GetDrawerRequest{
+			Path: "/planning/bulk-schedule-drawer?school_ids=" + url.QueryEscape(bad),
+		}))
+		if connect.CodeOf(err) != connect.CodeInvalidArgument {
+			t.Fatalf("%q: got %v", bad, err)
+		}
 	}
 }

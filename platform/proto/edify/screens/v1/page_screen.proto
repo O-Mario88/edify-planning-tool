@@ -32,4 +32,6 @@ message GetPageResponse {
   // The dialogs the page opens itself (My Targets' Submit MSCS), each opened
   // by a link to "#dialog=<key>".
   repeated PageDialog dialogs = 7;
+  // The bar for the page's ticked rows, when it has one.
+  PageSelection selection = 8;
 }

@@ -75,3 +75,16 @@ export const cardStyles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 10, boxShadow: CARD_SHADOW },
   padded: { padding: 16 },
 });
+
+/** The page's ticked rows, for its bar (PageSelection): on when the page has one. */
+export interface PickState {
+  readonly isOn: boolean;
+  readonly picked: readonly string[];
+  /** Tick or untick these rows. */
+  readonly set: (ids: readonly string[], isTicked: boolean) => void;
+}
+export const PickContext = createContext<PickState>({ isOn: false, picked: [], set: () => undefined });
+
+export function usePicks(): PickState {
+  return useContext(PickContext);
+}

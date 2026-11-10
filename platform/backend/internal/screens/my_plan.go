@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"connectrpc.com/connect"
 
@@ -23,6 +24,30 @@ const (
 )
 
 var queryKey = regexp.MustCompile(`^[a-z][a-z_]{0,39}$`)
+
+// The ticked rows a drawer opens with ("ids", "school_ids"): up to
+// maxTickedIDs plain ids, comma-joined, as the web's bar for ticked rows
+// sends them.
+const maxTickedIDs = 200
+
+var plainID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
+
+func isIDList(key string) bool {
+	return key == "ids" || strings.HasSuffix(key, "_ids")
+}
+
+func isPlainIDList(value string) bool {
+	ids := strings.Split(value, ",")
+	if len(ids) > maxTickedIDs {
+		return false
+	}
+	for _, id := range ids {
+		if !plainID.MatchString(id) {
+			return false
+		}
+	}
+	return true
+}
 
 // GetMyPlan returns My Plan as the web draws it for the reader.
 func (s *Service) GetMyPlan(
@@ -47,7 +72,11 @@ func pageQuery(ctx context.Context, given map[string]string) (url.Values, error)
 	}
 	query := url.Values{}
 	for key, value := range given {
-		if !queryKey.MatchString(key) || len(value) > maxQueryValueLen {
+		fits := len(value) <= maxQueryValueLen
+		if isIDList(key) {
+			fits = value == "" || isPlainIDList(value)
+		}
+		if !queryKey.MatchString(key) || !fits {
 			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This view cannot be opened.")
 		}
 		if value != "" {

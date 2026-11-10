@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { PageBlock, PageDialog, PageHeader, PageTab } from "./page_pb";
+import type { PageBlock, PageDialog, PageHeader, PageSelection, PageTab } from "./page_pb";
 import { file_edify_screens_v1_page } from "./page_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/screens/v1/page_screen.proto.
  */
 export const file_edify_screens_v1_page_screen: GenFile = /*@__PURE__*/
-  fileDesc("CiJlZGlmeS9zY3JlZW5zL3YxL3BhZ2Vfc2NyZWVuLnByb3RvEhBlZGlmeS5zY3JlZW5zLnYxIogBCg5HZXRQYWdlUmVxdWVzdBIMCgRwYXRoGAEgASgJEjoKBXF1ZXJ5GAIgAygLMisuZWRpZnkuc2NyZWVucy52MS5HZXRQYWdlUmVxdWVzdC5RdWVyeUVudHJ5GiwKClF1ZXJ5RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASL3AQoPR2V0UGFnZVJlc3BvbnNlEiwKBmhlYWRlchgBIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUhlYWRlchInCgR0YWJzGAIgAygLMhkuZWRpZnkuc2NyZWVucy52MS5QYWdlVGFiEisKBmJsb2NrcxgDIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJsb2NrEhAKCHdlYl9wYXRoGAQgASgJEhAKCHJlZGlyZWN0GAUgASgJEg0KBWVycm9yGAYgASgJEi0KB2RpYWxvZ3MYByADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VEaWFsb2cyYwoRUGFnZVNjcmVlblNlcnZpY2USTgoHR2V0UGFnZRIgLmVkaWZ5LnNjcmVlbnMudjEuR2V0UGFnZVJlcXVlc3QaIS5lZGlmeS5zY3JlZW5zLnYxLkdldFBhZ2VSZXNwb25zZULjAQoUY29tLmVkaWZ5LnNjcmVlbnMudjFCD1BhZ2VTY3JlZW5Qcm90b1ABWlhnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L3NjcmVlbnMvdjE7c2NyZWVuc3YxogIDRVNYqgIQRWRpZnkuU2NyZWVucy5WMcoCEEVkaWZ5XFNjcmVlbnNcVjHiAhxFZGlmeVxTY3JlZW5zXFYxXEdQQk1ldGFkYXRh6gISRWRpZnk6OlNjcmVlbnM6OlYxYgZwcm90bzM", [file_edify_screens_v1_page]);
+  fileDesc("CiJlZGlmeS9zY3JlZW5zL3YxL3BhZ2Vfc2NyZWVuLnByb3RvEhBlZGlmeS5zY3JlZW5zLnYxIogBCg5HZXRQYWdlUmVxdWVzdBIMCgRwYXRoGAEgASgJEjoKBXF1ZXJ5GAIgAygLMisuZWRpZnkuc2NyZWVucy52MS5HZXRQYWdlUmVxdWVzdC5RdWVyeUVudHJ5GiwKClF1ZXJ5RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKrAgoPR2V0UGFnZVJlc3BvbnNlEiwKBmhlYWRlchgBIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUhlYWRlchInCgR0YWJzGAIgAygLMhkuZWRpZnkuc2NyZWVucy52MS5QYWdlVGFiEisKBmJsb2NrcxgDIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJsb2NrEhAKCHdlYl9wYXRoGAQgASgJEhAKCHJlZGlyZWN0GAUgASgJEg0KBWVycm9yGAYgASgJEi0KB2RpYWxvZ3MYByADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VEaWFsb2cSMgoJc2VsZWN0aW9uGAggASgLMh8uZWRpZnkuc2NyZWVucy52MS5QYWdlU2VsZWN0aW9uMmMKEVBhZ2VTY3JlZW5TZXJ2aWNlEk4KB0dldFBhZ2USIC5lZGlmeS5zY3JlZW5zLnYxLkdldFBhZ2VSZXF1ZXN0GiEuZWRpZnkuc2NyZWVucy52MS5HZXRQYWdlUmVzcG9uc2VC4wEKFGNvbS5lZGlmeS5zY3JlZW5zLnYxQg9QYWdlU2NyZWVuUHJvdG9QAVpYZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9zY3JlZW5zL3YxO3NjcmVlbnN2MaICA0VTWKoCEEVkaWZ5LlNjcmVlbnMuVjHKAhBFZGlmeVxTY3JlZW5zXFYx4gIcRWRpZnlcU2NyZWVuc1xWMVxHUEJNZXRhZGF0YeoCEkVkaWZ5OjpTY3JlZW5zOjpWMWIGcHJvdG8z", [file_edify_screens_v1_page]);
 
 /**
  * @generated from message edify.screens.v1.GetPageRequest
@@ -85,6 +85,13 @@ export type GetPageResponse = Message<"edify.screens.v1.GetPageResponse"> & {
    * @generated from field: repeated edify.screens.v1.PageDialog dialogs = 7;
    */
   dialogs: PageDialog[];
+
+  /**
+   * The bar for the page's ticked rows, when it has one.
+   *
+   * @generated from field: edify.screens.v1.PageSelection selection = 8;
+   */
+  selection?: PageSelection | undefined;
 };
 
 /**

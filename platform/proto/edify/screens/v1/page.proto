@@ -415,3 +415,21 @@ message PageDialog {
   string title = 2;
   repeated PageBlock blocks = 3;
 }
+
+// What the page's bar for ticked rows does: each of its buttons opens a
+// drawer with the ticked rows (PageRow.pick_id).
+message PageSelectionAction {
+  string label = 1;
+  // The drawer it opens, e.g. "/activity-selection/reschedule".
+  string href = 2;
+  // The parameter the ticks are sent in ("ids", "school_ids").
+  string param = 3;
+  // All ticks in one comma-joined value; otherwise the parameter repeats.
+  bool joined = 4;
+}
+
+message PageSelection {
+  // What the bar calls the ticks: "activities selected".
+  string noun = 1;
+  repeated PageSelectionAction actions = 2;
+}
