@@ -131,6 +131,79 @@ def _lines(card: Node, heading: Node, taken: set[int]) -> tuple[str, str]:
     return " ".join(before), " ".join(after)
 
 
+def is_strip_row(node: Node) -> bool:
+    """A row of surface cards that each hold one figure strip and a few words
+    (Reports' period cards: "Q1 (Oct - Dec) · Quarter 1", its figures, "No
+    target"): read as a record each, not as loose lines around strips."""
+    cards = [child for child in node.children if isinstance(child, Node)]
+    return len(cards) >= MIN_CARDS and all(_is_strip_card(card) for card in cards)
+
+
+def _is_strip_card(card: Node) -> bool:
+    if not (card.has("edify-surface") or card.has("border")):
+        return False
+    if not any(name.startswith("rounded") for name in card.classes):
+        return False
+    strips = card.find_all(lambda n: n.has("context-metrics"))
+    if len(strips) != 1 or card.find(
+        lambda n: n.tag in (*NOT_SMALL, "h2", "h3", "h4") or n.has("edify-data-chart")
+    ):
+        return False
+    outside = len(card.text().split()) - len(strips[0].text().split())
+    return 0 < outside <= MAX_CARD_WORDS
+
+
+def read_strip_row(node: Node) -> list[dict]:
+    """The row's cards as records: the first line names the card, the rest
+    say what it covers, and the strip's figures are its facts."""
+    from apps.mobile_feed import page_blocks
+
+    records = []
+    for card in (child for child in node.children if isinstance(child, Node)):
+        strip = card.find(lambda n: n.has("context-metrics"))
+        taken = {id(strip)} | {id(n) for n in strip.nodes()}
+        lines = _leaf_lines(card, taken)
+        records.append(
+            {
+                "title": lines[0] if lines else "",
+                "href": "",
+                "subtitle": " · ".join(lines[1:]),
+                "badges": [],
+                "actions": [],
+                "facts": [
+                    {
+                        "label": metric["label"],
+                        "value": metric["value"],
+                        "href": metric["href"],
+                        "tone": metric["tone"],
+                    }
+                    for metric in page_blocks._strip(strip)["metrics"]
+                    if metric["label"] or metric["value"]
+                ],
+                "details": [],
+                "detailsPath": "",
+            }
+        )
+    return records
+
+
+def _leaf_lines(card: Node, taken: set[int]) -> list[str]:
+    """The card's words outside ``taken``, one entry per element that holds
+    text of its own; the dash of an empty figure ("—") is left out."""
+    lines = []
+    for leaf in card.nodes():
+        if id(leaf) in taken or not isinstance(leaf, Node):
+            continue
+        if leaf.tag in ("script", "style", "template") or any(
+            isinstance(child, Node) for child in leaf.children
+        ):
+            continue
+        text = leaf.text()
+        if text and text != "—":
+            lines.append(text)
+    return lines
+
+
 def _href(card: Node, heading: Node) -> str:
     """The card's own page: its name's link, the card itself, or its one link."""
     link = heading if heading.tag == "a" else heading.find(lambda n: n.tag == "a")

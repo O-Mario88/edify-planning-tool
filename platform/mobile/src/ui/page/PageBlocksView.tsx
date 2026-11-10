@@ -4,7 +4,7 @@
  * yet is left out, never guessed at.
  */
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { PageBlock, PageFacts, PageSegments } from '../../gen/edify/screens/v1/page_pb';
 import { fonts, useTheme } from '../../theme';
@@ -155,13 +155,17 @@ function SegmentsCard({ segments, onFilter }: { readonly segments: PageSegments;
   const shown = segments.segments[open];
   return (
     <View style={[cardStyles.card, styles.clip, { backgroundColor: colors.raised, borderColor: colors.border }]}>
-      <View style={styles.titlebar}>
-        <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-          {segments.title}
-        </Text>
-        {segments.subtitle ? <Text style={[styles.subtitle, { color: colors.text }]}>{segments.subtitle}</Text> : null}
-      </View>
-      <View style={styles.switchArea}>
+      {segments.title || segments.subtitle ? (
+        <View style={styles.titlebar}>
+          <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+            {segments.title}
+          </Text>
+          {segments.subtitle ? <Text style={[styles.subtitle, { color: colors.text }]}>{segments.subtitle}</Text> : null}
+        </View>
+      ) : null}
+      <View style={[styles.switchArea, !(segments.title || segments.subtitle) && styles.switchAlone]}>
+        {/* Owner 2026-10-02: a long strip scrolls sideways rather than clip. */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.switchScroll}>
         <View style={[styles.switch, { backgroundColor: colors.surface }]} accessibilityRole="tablist">
           {segments.segments.map((segment, index) => {
             const isOn = index === open;
@@ -183,6 +187,7 @@ function SegmentsCard({ segments, onFilter }: { readonly segments: PageSegments;
             );
           })}
         </View>
+        </ScrollView>
         {segments.caption ? <Text style={[styles.caption, { color: colors.textMuted }]}>{segments.caption}</Text> : null}
       </View>
       {shown?.blocks.map((block, index) => {
@@ -209,6 +214,8 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.bold, fontSize: 15 },
   subtitle: { fontFamily: fonts.medium, fontSize: 13 },
   switchArea: { paddingHorizontal: 16, paddingBottom: 12, gap: 8 },
+  switchAlone: { paddingTop: 12 },
+  switchScroll: { flexGrow: 0 },
   switch: { flexDirection: 'row', alignSelf: 'flex-start', borderRadius: 10 },
   segment: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 32, paddingHorizontal: 14 },
   first: { borderTopLeftRadius: 8, borderBottomLeftRadius: 8 },

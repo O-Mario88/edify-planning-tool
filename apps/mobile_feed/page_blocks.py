@@ -1803,6 +1803,8 @@ def _several_blocks(node: Node) -> list[dict] | None:
 
     if card_grids.is_grid(node):
         return [{"record": record} for record in card_grids.read(node)]
+    if card_grids.is_strip_row(node):
+        return [{"record": record} for record in card_grids.read_strip_row(node)]
     if css_charts.is_area_card(node):
         return css_charts.read_area(node)
     return None

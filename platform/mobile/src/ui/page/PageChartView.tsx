@@ -56,6 +56,9 @@ export function PageChartView({ chart }: { readonly chart: PageChart }) {
   const [width, setWidth] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const scale = scaleOf(chart);
+  // Every figure zero (a new year, a quiet period): say so once, not one
+  // empty row per category; the figures stay under "View chart data".
+  const isEmpty = chart.series.every((series) => series.values.every((value) => value === 0));
   const trackWidth = Math.max(0, width - END_ROOM);
   const share = (value: number) => Math.min(1, value / scale.max) * trackWidth;
   const fillOf = (index: number) => {
@@ -75,7 +78,7 @@ export function PageChartView({ chart }: { readonly chart: PageChart }) {
         </Text>
         {chart.subtitle ? <Text style={[styles.subtitle, { color: colors.textMuted }]}>{chart.subtitle}</Text> : null}
       </View>
-      {chart.series.length > 1 ? (
+      {chart.series.length > 1 && !isEmpty ? (
         <View style={[styles.legend, { borderColor: colors.borderStrong }]}>
           {chart.series.map((series, index) => (
             <View key={series.name} style={styles.legendItem}>
@@ -85,8 +88,11 @@ export function PageChartView({ chart }: { readonly chart: PageChart }) {
           ))}
         </View>
       ) : null}
-      <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={styles.rows}>
-        {width > 0
+      {isEmpty ? (
+        <Text style={[styles.empty, { color: colors.textMuted }]}>Nothing recorded for this period yet.</Text>
+      ) : null}
+      <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={[styles.rows, isEmpty && styles.hidden]}>
+        {width > 0 && !isEmpty
           ? chart.categories.map((category, row) => {
               const bars = chart.series
                 .map((series, index) => ({ index, value: series.values[row] ?? 0 }))
@@ -94,8 +100,10 @@ export function PageChartView({ chart }: { readonly chart: PageChart }) {
               const longest = bars[0];
               const shortest = bars.length > 1 ? bars[bars.length - 1] : undefined;
               const fitsInside = shortest !== undefined && share(shortest.value) >= INSIDE_MIN;
+              // A row with nothing in it says "0" once, not once per series.
+              const isEmptyRow = bars.every((bar) => bar.value === 0);
               const after =
-                shortest && !fitsInside
+                shortest && !fitsInside && !isEmptyRow
                   ? bars.map((bar) => `${mark(bar.value)} ${chart.series[bar.index].name}`).join(', ')
                   : longest
                     ? mark(longest.value)
@@ -123,21 +131,31 @@ export function PageChartView({ chart }: { readonly chart: PageChart }) {
                         ) : null}
                       </View>
                     ))}
-                    <Text style={[styles.end, { left: longest ? share(longest.value) : 0, color: colors.textMuted }]}>{after}</Text>
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.end,
+                        { left: longest ? share(longest.value) : 0, maxWidth: width - (longest ? share(longest.value) : 0), color: colors.textMuted },
+                      ]}
+                    >
+                      {after}
+                    </Text>
                   </View>
                 </View>
               );
             })
           : null}
       </View>
-      <View style={[styles.axis, { width: trackWidth, borderTopColor: colors.textMuted }]}>
-        {ticks.map((tick) => (
-          <Text key={tick} style={[styles.tick, { left: share(tick) - 12, color: colors.textMuted }]}>
-            {mark(tick)}
-          </Text>
-        ))}
-      </View>
-      {chart.axisTitle ? (
+      {isEmpty ? null : (
+        <View style={[styles.axis, { width: trackWidth, borderTopColor: colors.textMuted }]}>
+          {ticks.map((tick) => (
+            <Text key={tick} style={[styles.tick, { left: share(tick) - 12, color: colors.textMuted }]}>
+              {mark(tick)}
+            </Text>
+          ))}
+        </View>
+      )}
+      {chart.axisTitle && !isEmpty ? (
         <Text style={[styles.unit, { width: trackWidth, color: colors.textMuted }]}>{chart.axisTitle}</Text>
       ) : null}
       <Pressable onPress={() => setIsOpen((open) => !open)} accessibilityRole="button" accessibilityState={{ expanded: isOpen }} style={styles.toggle}>
@@ -169,6 +187,8 @@ const styles = StyleSheet.create({
   key: { width: 12, height: 12 },
   legendText: { fontFamily: fonts.medium, fontSize: 12 },
   rows: { gap: 10 },
+  hidden: { display: 'none' },
+  empty: { fontFamily: fonts.medium, fontSize: 13 },
   name: { fontFamily: fonts.medium, fontSize: 13, marginBottom: 2 },
   track: { height: BAR_HEIGHT },
   bar: { position: 'absolute', left: 0, top: 0, height: BAR_HEIGHT, justifyContent: 'center', alignItems: 'flex-end' },

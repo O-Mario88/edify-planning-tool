@@ -1350,3 +1350,44 @@ class CoreSchoolRowTest(SimpleTestCase):
         self.assertEqual(record["pickLabel"], "Select Nakifuma UMEA Primary School")
         self.assertEqual(record["facts"][0]["value"], "Mukono")
         self.assertIn("5.8/10", repr(record["details"]))
+
+
+PERIOD_ROW = """
+<main><div class="grid gap-3">
+ <div class="edify-report-period edify-surface p-4 rounded-surface border">
+  <div><span class="edify-report-period__date">Q1 (Oct - Dec)</span><span>Quarter 1</span></div>
+  <section class="context-metrics"><div class="context-metrics__sentence">
+   <span class="context-metrics__fact"><span class="context-metrics__label">Targets achieved</span>
+    <strong class="context-metrics__value">4</strong></span></div></section>
+  <div class="rounded-full"><span>—</span><span>No target</span></div>
+ </div>
+ <div class="edify-report-period edify-surface p-4 rounded-surface border">
+  <div><span>Q2 (Jan - Mar)</span><span>Quarter 2</span></div>
+  <section class="context-metrics"><div class="context-metrics__sentence">
+   <span class="context-metrics__fact"><span class="context-metrics__label">Targets achieved</span>
+    <strong class="context-metrics__value">0</strong></span></div></section>
+ </div>
+</div></main>
+"""
+
+
+class StripRowTest(SimpleTestCase):
+    def test_each_period_card_of_a_row_is_one_record(self):
+        blocks = page_blocks.read(PERIOD_ROW)["blocks"]
+
+        self.assertEqual([list(b)[0] for b in blocks], ["record", "record"])
+        first = blocks[0]["record"]
+        self.assertEqual(first["title"], "Q1 (Oct - Dec)")
+        self.assertEqual(first["subtitle"], "Quarter 1 · No target")
+        self.assertEqual(
+            first["facts"],
+            [{"label": "Targets achieved", "value": "4", "href": "", "tone": ""}],
+        )
+
+    def test_a_single_surface_with_a_strip_keeps_its_strip(self):
+        one = PERIOD_ROW.split('<div class="edify-report-period', 2)
+        page = one[0] + '<div class="edify-report-period' + one[1] + "</div></main>"
+
+        blocks = page_blocks.read(page)["blocks"]
+
+        self.assertIn("strip", [list(b)[0] for b in blocks])

@@ -143,9 +143,11 @@ const styles = StyleSheet.create({
   fieldLabel: { fontFamily: fonts.semibold, fontSize: 13 },
   fieldValue: { fontFamily: fonts.bold, fontSize: 13 },
   dataRow: { paddingVertical: 12, borderBottomWidth: 1, gap: 4 },
-  dataLine: { flexDirection: 'row', alignItems: 'baseline', gap: 12 },
-  dataLabel: { fontFamily: fonts.semibold, fontSize: 13 },
-  dataValue: { fontFamily: fonts.semibold, fontSize: 12 },
+  // The label takes the line and its figure is ruled to the right edge, so a
+  // column of figures lines up down the card.
+  dataLine: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
+  dataLabel: { flex: 1, fontFamily: fonts.semibold, fontSize: 13 },
+  dataValue: { fontFamily: fonts.bold, fontSize: 13, fontVariant: ['tabular-nums'], textAlign: 'right' },
   dataMeta: { fontFamily: fonts.semibold, fontSize: 13 },
   links: { gap: 8 },
   linkText: { fontFamily: fonts.semibold, fontSize: 15 },
