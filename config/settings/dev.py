@@ -15,3 +15,7 @@ ALLOWED_HOSTS = ["*"]
 
 # Email stays in console mode (log + return link in the response) in dev.
 EMAIL_PROVIDER = "console"
+
+# The mobile feed's development commands (gateway_smoke). The feed itself is
+# wired by its URLs and needs no app entry in any other settings.
+INSTALLED_APPS = [*INSTALLED_APPS, "apps.mobile_feed"]  # noqa: F405
