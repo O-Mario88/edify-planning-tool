@@ -11,6 +11,7 @@ import type { DrawerItem } from '../gen/edify/screens/v1/drawer_pb';
 import type { DrawerField } from '../gen/edify/screens/v1/form_pb';
 import { fonts, radius, useTheme } from '../theme';
 import { Checklist } from './Checklist';
+import { DateField } from './DateField';
 import { DrawerHeading, DrawerInput, DrawerNote, DrawerText, FieldShell, partStyles as styles } from './drawerParts';
 import { choicesFor, isShown } from './drawerLogic';
 import type { Reloaded, Values } from './drawerLogic';
@@ -104,7 +105,20 @@ function Field({ field, values, reloaded, onChange }: FieldProps) {
     );
   }
   let control;
-  if (field.kind === 'radio') {
+  if (field.kind === 'date') {
+    control = (
+      <DateField
+        value={value}
+        onChange={(next) => onChange(field, next)}
+        label={field.label}
+        min={field.minDate}
+        max={field.maxDate}
+        isRequired={field.required}
+        isReadOnly={field.readOnly}
+        hasError={field.error !== ''}
+      />
+    );
+  } else if (field.kind === 'radio') {
     control = <RadioChoice field={field} value={value} onChange={(next) => onChange(field, next)} />;
   } else if (field.kind === 'select') {
     const [first, ...rest] = choicesFor(field, values, reloaded);
@@ -143,7 +157,7 @@ function Field({ field, values, reloaded, onChange }: FieldProps) {
         multiline={field.kind === 'textarea'}
         keyboardType={keyboardOf(field)}
         maxLength={field.maxLength}
-        placeholder={field.kind === 'date' ? 'YYYY-MM-DD' : field.placeholder}
+        placeholder={field.placeholder}
         accessibilityLabel={field.label}
       />
     );

@@ -28,6 +28,7 @@ REQUIRED_MARK = re.compile(r"\s*\*\s*$")
 SIMPLE_VALUE = re.compile(r"(\w+)\s*:\s*('([^']*)'|true|false)")
 EQUALS = re.compile(r"(\w+)\s*===\s*'([^']*)'")
 FLAG = re.compile(r"(!?)\s*(\w+)")
+DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def _is_control(node: Node) -> bool:
@@ -211,10 +212,16 @@ def _field(holder: Node, control: Node, root: Node) -> dict | None:
         "placeholder": control.get("placeholder"),
         "readOnly": "readonly" in control.attrs or "disabled" in control.attrs,
     }
-    for key in ("min", "max", "step"):
-        number = _number(control.get(key)) if control.get(key) else None
-        if number is not None:
-            field[key] = number
+    if kind == "date":
+        # A date field's range is days, not numbers.
+        for key, named in (("min", "minDate"), ("max", "maxDate")):
+            if DAY.match(control.get(key)):
+                field[named] = control.get(key)
+    else:
+        for key in ("min", "max", "step"):
+            number = _number(control.get(key)) if control.get(key) else None
+            if number is not None:
+                field[key] = number
     if control.get("maxlength").isdigit():
         field["maxLength"] = int(control.get("maxlength"))
     if when:

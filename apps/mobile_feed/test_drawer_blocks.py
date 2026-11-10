@@ -464,3 +464,20 @@ class RadioGroupTest(SimpleTestCase):
         self.assertEqual(
             fields[1]["showWhen"], [{"field": "period_type", "values": ["month_range"]}]
         )
+
+
+class DateRangeTest(SimpleTestCase):
+    def test_a_date_fields_range_comes_with_it(self):
+        drawer = """
+        <div data-edify-drawer><div class="drawer-body"><form hx-post="/x">
+        <div><label for="d">Completed date</label>
+        <input id="d" type="date" name="completed_date" min="2026-10-01" max="2026-11-10"></div>
+        </form></div></div>
+        """
+
+        field = drawer_blocks.read(drawer)["items"][0]["field"]
+
+        self.assertEqual(
+            (field["minDate"], field["maxDate"]), ("2026-10-01", "2026-11-10")
+        )
+        self.assertNotIn("min", field)

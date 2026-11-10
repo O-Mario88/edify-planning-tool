@@ -178,7 +178,10 @@ type DrawerField struct {
 	ReloadsPath   string `protobuf:"bytes,16,opt,name=reloads_path,json=reloadsPath,proto3" json:"reloads_path,omitempty"`
 	ReloadsTarget string `protobuf:"bytes,17,opt,name=reloads_target,json=reloadsTarget,proto3" json:"reloads_target,omitempty"`
 	// The field whose value picks which of this field's choices apply.
-	GroupBy       string `protobuf:"bytes,18,opt,name=group_by,json=groupBy,proto3" json:"group_by,omitempty"`
+	GroupBy string `protobuf:"bytes,18,opt,name=group_by,json=groupBy,proto3" json:"group_by,omitempty"`
+	// A date field's first and last day that may be picked (ISO, or empty).
+	MinDate       string `protobuf:"bytes,19,opt,name=min_date,json=minDate,proto3" json:"min_date,omitempty"`
+	MaxDate       string `protobuf:"bytes,20,opt,name=max_date,json=maxDate,proto3" json:"max_date,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -339,6 +342,20 @@ func (x *DrawerField) GetGroupBy() string {
 	return ""
 }
 
+func (x *DrawerField) GetMinDate() string {
+	if x != nil {
+		return x.MinDate
+	}
+	return ""
+}
+
+func (x *DrawerField) GetMaxDate() string {
+	if x != nil {
+		return x.MaxDate
+	}
+	return ""
+}
+
 type DrawerNote struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Text  string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
@@ -405,7 +422,7 @@ const file_edify_screens_v1_form_proto_rawDesc = "" +
 	"\x06detail\x18\x05 \x01(\tR\x06detail\"?\n" +
 	"\x0fDrawerCondition\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12\x16\n" +
-	"\x06values\x18\x02 \x03(\tR\x06values\"\xd8\x04\n" +
+	"\x06values\x18\x02 \x03(\tR\x06values\"\x8e\x05\n" +
 	"\vDrawerField\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
@@ -426,7 +443,9 @@ const file_edify_screens_v1_form_proto_rawDesc = "" +
 	"\tshow_when\x18\x0f \x03(\v2!.edify.screens.v1.DrawerConditionR\bshowWhen\x12!\n" +
 	"\freloads_path\x18\x10 \x01(\tR\vreloadsPath\x12%\n" +
 	"\x0ereloads_target\x18\x11 \x01(\tR\rreloadsTarget\x12\x19\n" +
-	"\bgroup_by\x18\x12 \x01(\tR\agroupByB\x06\n" +
+	"\bgroup_by\x18\x12 \x01(\tR\agroupBy\x12\x19\n" +
+	"\bmin_date\x18\x13 \x01(\tR\aminDate\x12\x19\n" +
+	"\bmax_date\x18\x14 \x01(\tR\amaxDateB\x06\n" +
 	"\x04_minB\x06\n" +
 	"\x04_maxB\a\n" +
 	"\x05_stepB\r\n" +

@@ -22,6 +22,7 @@ import type {
 import type { BulkProjectChoice } from '../gen/edify/screens/v1/school_directory_pb';
 import { fonts, radius, toneColors, useTheme } from '../theme';
 import { Drawer } from '../ui/Drawer';
+import { DateField } from '../ui/DateField';
 import { Select } from '../ui/Select';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -403,18 +404,7 @@ export function AddToProjectDrawer({ schoolId, onClose, onSaved }: ActionDrawerP
       </View>
       <View style={styles.field}>
         <Label text="Start date" />
-        <TextInput
-          value={startDate}
-          onChangeText={setStartDate}
-          placeholder="YYYY-MM-DD"
-          placeholderTextColor={colors.textSubtle}
-          keyboardType="numbers-and-punctuation"
-          accessibilityLabel="Start date, year-month-day"
-          style={inputStyle}
-        />
-        {isDateValid ? null : (
-          <Text style={[styles.help, { color: colors.danger }]}>Enter the date as year-month-day, e.g. 2026-11-10.</Text>
-        )}
+        <DateField value={startDate} onChange={setStartDate} label="Start date" hasError={!isDateValid} />
       </View>
       <View style={styles.field}>
         <Label text="Notes" />

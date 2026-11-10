@@ -47,6 +47,9 @@ message DrawerField {
   string reloads_target = 17;
   // The field whose value picks which of this field's choices apply.
   string group_by = 18;
+  // A date field's first and last day that may be picked (ISO, or empty).
+  string min_date = 19;
+  string max_date = 20;
 }
 
 message DrawerNote {

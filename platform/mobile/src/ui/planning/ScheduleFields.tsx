@@ -15,6 +15,7 @@ import type {
   PlanningLeadItem,
 } from '../../gen/edify/screens/v1/planning_drawer_pb';
 import { fonts, useTheme } from '../../theme';
+import { DateField } from '../DateField';
 import { DrawerButton, DrawerInput, DrawerNote, DrawerText, FieldShell, partStyles } from '../drawerParts';
 import { ChoiceField, FollowUpFields, ReadOnlyField, SELECT_MISSING, TEXT_MISSING, TrainingMeta } from './planningParts';
 import { changePurpose, chooseTraining, lockFor, trainingsFor } from './planningLogic';
@@ -158,13 +159,12 @@ export function ScheduleFields({ drawer, state, parts, capacity, onChange, onCan
         isRequired
         error={missing === 'date' ? dateMessage(state.date) : parts.followUpBlocked ? captions.dateYearUsed : undefined}
       >
-        <DrawerInput
+        <DateField
           value={state.date}
-          onChangeText={(date) => onChange({ ...state, date })}
-          placeholder="YYYY-MM-DD"
-          keyboardType="numbers-and-punctuation"
-          maxLength={10}
-          accessibilityLabel={labels.scheduled_date ?? 'Scheduled date'}
+          onChange={(date) => onChange({ ...state, date })}
+          label={labels.scheduled_date ?? 'Scheduled date'}
+          isRequired
+          hasError={missing === 'date'}
         />
       </FieldShell>
       {parts.showParticipants ? (
