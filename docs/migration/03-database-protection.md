@@ -115,3 +115,41 @@ No dual writes, ever. For each table:
 3. On approval, writes for that table move to Go in one step, and the existing
    application's write path for it is switched off in the same release.
 4. Rollback is switching back, which is why the schema does not change.
+
+## 3.8 The Cluster Leader Portal's own schema (2026-11-10)
+
+The owner chose a **Go-owned schema** for the portal's records (cluster
+leadership assignments and their history; later its invitations, attendance,
+minutes and action items). They are new records the existing application
+never writes, so there is no dual write.
+
+- **Where:** schema `cluster_leadership` in the same database, created by
+  `deploy/db/cluster_roles.sql` (run by `apply-roles.sh`), owned by the
+  NOLOGIN role `edify_cluster_owner`. The owner role holds no privilege on any
+  existing table: a migration cannot read, alter, index or write one
+  (`TestClusterOwnerCannotTouchTheExistingTables`).
+- **Migrations:** `internal/clusterlead/schema/migrations/*.sql`, applied only
+  by `clusterctl migrate --confirm-database=<name>`, as the owner role, one
+  transaction per file, refusing an edited migration (checksums) and any
+  database other than the one confirmed. The gateway never migrates; it reads
+  the applied version and answers "not set up on this server yet" until it
+  matches. Every migration passes a lint (`schema.Lint`): only `CREATE TABLE`,
+  `CREATE INDEX`, `ALTER TABLE`, `COMMENT ON` and `GRANT … TO edify_cluster_rw`
+  on `cluster_leadership` objects; no drop, truncate, delete, role change,
+  code, or reference into the existing schema.
+- **No foreign keys into the existing tables** (a foreign key would add a
+  trigger to them); Go checks the cluster and the account on every write.
+- **Writes:** the gateway's role is still read-only by default; a portal
+  write opens a read-write transaction on purpose and can reach only the
+  tables `edify_cluster_rw` was granted. Assignments can be inserted and
+  updated, never deleted; their history can only be appended to
+  (`TestGatewayWritesOnlyThePortalsOwnTables`). `TestGatewaySourcesContainNoSchemaChanges`
+  now allows writes and DDL only inside `internal/clusterlead`, and only on
+  `cluster_leadership` objects.
+- **Production:** none of this exists there. Creating the schema and running
+  `clusterctl migrate` on production is a separate step that needs the
+  owner's approval.
+- **The role:** `ClusterLeader` was added to the existing role list with no
+  web permission. Its four choice-only Django migrations
+  (`accounts 0040`, `acting 0002`, `audit 0009`, `help_center 0011`) issue no
+  SQL (`sqlmigrate` shows `(no-op)` for each).
