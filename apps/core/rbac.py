@@ -38,6 +38,12 @@ class EdifyRole(str, Enum):
     MFI_PARTNER_ADMIN = "MfiPartnerAdmin"
     MFI_LOAN_OFFICER = "MfiLoanOfficer"
     ADMIN = "Admin"
+    # A school representative or other authorised person who leads the
+    # clusters assigned to them (brief A1, 2026-11-10). The account lives
+    # here, made only by the people who manage users; which clusters it may
+    # reach, and everything it does there, is decided by the Go gateway from
+    # its own cluster_leadership assignments. It holds no web permission.
+    CLUSTER_LEADER = "ClusterLeader"
 
     @classmethod
     def values(cls) -> list[str]:
@@ -906,6 +912,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_FACILITY_VIEW,
         P.BUSINESS_TRANSFORMATION_PURPOSE_REQUEST,
     ],
+    # Nothing on the web: a Cluster Leader's reach is the clusters assigned to
+    # them, enforced by the gateway (platform/backend/internal/clusterlead),
+    # never a country- or role-wide permission.
+    EdifyRole.CLUSTER_LEADER: [],
 }
 
 

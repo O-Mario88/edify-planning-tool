@@ -83,6 +83,24 @@ type Config struct {
 	AnalyticsAddr string
 }
 
+// LoadGuard reads only what the production-protection guard needs, for a
+// tool that opens its own connection and serves nothing (cmd/clusterctl).
+// Production is refused exactly as Load refuses it.
+func LoadGuard(getenv func(string) string) (Config, error) {
+	env, err := parseEnvironment(getenv(envEnvironment))
+	if err != nil {
+		return Config{}, err
+	}
+	if env == Production {
+		return Config{}, ErrProductionNotApproved
+	}
+	return Config{
+		Env:                 env,
+		DBAllowedHosts:      splitList(getenv(envAllowedHosts)),
+		DBProductionMarkers: splitList(getenv(envProdMarkers)),
+	}, nil
+}
+
 // Load reads and validates configuration through getenv (os.Getenv in
 // production code, a map lookup in tests).
 func Load(getenv func(string) string) (Config, error) {

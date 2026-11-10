@@ -79,6 +79,9 @@ class AccommodationRateByRoleTest(SimpleTestCase):
             EdifyRole.PARTNER_FIELD_OFFICER.value,
             EdifyRole.MFI_PARTNER_ADMIN.value,
             EdifyRole.MFI_LOAN_OFFICER.value,
+            # Not staff either: a school's representative leading a cluster
+            # (brief A1, 2026-11-10) travels on no Edify night.
+            EdifyRole.CLUSTER_LEADER.value,
         }
         self.assertEqual(
             set(EdifyRole.values()) - MANAGEMENT_ACCOMMODATION_ROLES - partner_roles,

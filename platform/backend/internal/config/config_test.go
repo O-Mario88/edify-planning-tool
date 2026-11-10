@@ -186,3 +186,23 @@ func TestExistingAppURL(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadGuardRefusesProductionAndReadsOnlyTheGuardsFields(t *testing.T) {
+	if _, err := LoadGuard(env(map[string]string{"EDIFY_ENV": "production"})); !errors.Is(err, ErrProductionNotApproved) {
+		t.Fatalf("want ErrProductionNotApproved, got %v", err)
+	}
+	cfg, err := LoadGuard(env(map[string]string{
+		"EDIFY_ENV":                   "development",
+		"EDIFY_DB_ALLOWED_HOSTS":      "localhost, db.internal",
+		"EDIFY_DB_PRODUCTION_MARKERS": "prod-cluster",
+	}))
+	if err != nil {
+		t.Fatalf("LoadGuard: %v", err)
+	}
+	if cfg.Env != Development || len(cfg.DBAllowedHosts) != 2 || cfg.DBProductionMarkers[0] != "prod-cluster" {
+		t.Fatalf("unexpected guard config: %+v", cfg)
+	}
+	if cfg.DatabaseURL != "" || cfg.JWTSecret != "" {
+		t.Fatalf("LoadGuard must not read the gateway's connection or secret: %+v", cfg)
+	}
+}

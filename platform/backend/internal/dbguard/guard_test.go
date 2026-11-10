@@ -121,13 +121,39 @@ func TestCheckDSN(t *testing.T) {
 	}
 }
 
-// The gateway holds no schema migration code. This test fails the build if a
-// DDL statement or an ORM auto-migration call ever appears in its sources.
+// The gateway never writes to or changes the existing application's schema.
+// This test fails the build if a write, a DDL statement or an ORM
+// auto-migration call appears in its sources, with one sanctioned exception:
+// the Cluster Leader Portal's Go-owned schema. Inside internal/clusterlead a
+// write may target only cluster_leadership tables, DDL may appear only in its
+// schema package and only on cluster_leadership objects, and nothing anywhere
+// may drop, truncate or delete.
 func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 	forbidden := regexp.MustCompile(
 		`(?i)\b(CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|INDEX|SCHEMA|DATABASE|SEQUENCE|TRIGGER)\b|AutoMigrate|\bINSERT\s+INTO\b|\bUPDATE\s+\S+\s+SET\b|\bDELETE\s+FROM\b`,
 	)
 	root := filepath.Join("..", "..")
+	portal := filepath.Join(root, "internal", "clusterlead") + string(filepath.Separator)
+	portalSchema := filepath.Join(root, "internal", "clusterlead", "schema") + string(filepath.Separator)
+	// The lint describes the DDL it allows as patterns; it runs none.
+	lint := filepath.Join(root, "internal", "clusterlead", "schema", "lint.go")
+	targetsPortal := func(source []byte, match []int) bool {
+		statement := strings.ToUpper(string(source[match[0]:match[1]]))
+		if strings.Contains(statement, "DROP") || strings.Contains(statement, "TRUNCATE") ||
+			strings.Contains(statement, "DELETE") || strings.Contains(statement, "AUTOMIGRATE") {
+			return false
+		}
+		if strings.HasPrefix(statement, "UPDATE") {
+			return strings.HasPrefix(strings.TrimSpace(statement[len("UPDATE"):]), "CLUSTER_LEADERSHIP.")
+		}
+		after := strings.TrimSpace(string(source[match[1]:]))
+		for _, filler := range []string{"IF NOT EXISTS", "IF EXISTS", "ONLY"} {
+			if strings.HasPrefix(strings.ToUpper(after), filler) {
+				after = strings.TrimSpace(after[len(filler):])
+			}
+		}
+		return strings.HasPrefix(after, "cluster_leadership.")
+	}
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
@@ -145,8 +171,17 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		if readErr != nil {
 			return readErr
 		}
-		if match := forbidden.Find(source); match != nil {
-			t.Errorf("%s contains a write or schema statement: %q", path, match)
+		if path == lint {
+			return nil
+		}
+		for _, match := range forbidden.FindAllIndex(source, -1) {
+			text := string(source[match[0]:match[1]])
+			isDDL := regexp.MustCompile(`(?i)^(CREATE|ALTER)`).MatchString(text)
+			allowed := strings.HasPrefix(path, portal) && targetsPortal(source, match) &&
+				(!isDDL || strings.HasPrefix(path, portalSchema))
+			if !allowed {
+				t.Errorf("%s contains a write or schema statement: %q", path, text)
+			}
 		}
 		return nil
 	})

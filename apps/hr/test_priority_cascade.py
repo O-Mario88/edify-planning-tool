@@ -443,7 +443,9 @@ class ManagerRoutingTest(TestCase):
         and nothing on any screen would say so."""
         from apps.core.rbac import EdifyRole
 
-        external = {"PartnerAdmin", "PartnerFieldOfficer", "Admin"}
+        # A Cluster Leader is a school's representative, not Edify staff: no
+        # one sets priorities with them (brief A1, 2026-11-10).
+        external = {"PartnerAdmin", "PartnerFieldOfficer", "Admin", "ClusterLeader"}
         for role in EdifyRole:
             if role.value in external:
                 continue

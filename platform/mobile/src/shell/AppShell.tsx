@@ -26,6 +26,8 @@ interface AppShellProps {
   readonly onOpen: (url: string, label: string) => void;
   readonly initials: string;
   readonly onSearch: () => void;
+  /** Messages and Notifications in the top bar; a Cluster Leader has neither. */
+  readonly hasInbox?: boolean;
   readonly children: ReactNode;
 }
 
@@ -33,7 +35,7 @@ function pathOf(url: string): string {
   return url.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
 }
 
-export function AppShell({ bottom, activeUrl, onOpen, initials, onSearch, children }: AppShellProps) {
+export function AppShell({ bottom, activeUrl, onOpen, initials, onSearch, hasInbox = true, children }: AppShellProps) {
   const { colors, isDark, toggle } = useTheme();
   const insets = useSafeAreaInsets();
   const active = pathOf(activeUrl);
@@ -61,22 +63,26 @@ export function AppShell({ bottom, activeUrl, onOpen, initials, onSearch, childr
           <Search size={18} color={colors.primaryInk} />
         </Pressable>
         <View style={styles.topbarRight}>
-          <Pressable
-            onPress={() => onOpen('/messages', 'Messages')}
-            style={styles.control}
-            accessibilityRole="button"
-            accessibilityLabel="Messages"
-          >
-            <MessageCircleMore size={TOPBAR_ICON} color={colors.textMuted} />
-          </Pressable>
-          <Pressable
-            onPress={() => onOpen('/notifications', 'Notification centre')}
-            style={styles.control}
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
-          >
-            <Bell size={TOPBAR_ICON} color={colors.textMuted} />
-          </Pressable>
+          {hasInbox ? (
+            <>
+              <Pressable
+                onPress={() => onOpen('/messages', 'Messages')}
+                style={styles.control}
+                accessibilityRole="button"
+                accessibilityLabel="Messages"
+              >
+                <MessageCircleMore size={TOPBAR_ICON} color={colors.textMuted} />
+              </Pressable>
+              <Pressable
+                onPress={() => onOpen('/notifications', 'Notification centre')}
+                style={styles.control}
+                accessibilityRole="button"
+                accessibilityLabel="Notifications"
+              >
+                <Bell size={TOPBAR_ICON} color={colors.textMuted} />
+              </Pressable>
+            </>
+          ) : null}
           <Pressable
             onPress={toggle}
             style={styles.control}

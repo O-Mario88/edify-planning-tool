@@ -50,6 +50,19 @@ import { MyPlanScreenService } from '../gen/edify/screens/v1/my_plan_pb';
 import type { GetPageResponse } from '../gen/edify/screens/v1/page_screen_pb';
 import { PageScreenService } from '../gen/edify/screens/v1/page_screen_pb';
 
+import type {
+  AssignLeaderRequest,
+  AssignLeaderResponse,
+  EndAssignmentResponse,
+  GetClusterHomeResponse,
+  GetMyClustersResponse,
+  ListLeadersResponse,
+  ListManagedClustersResponse,
+  ListMemberSchoolsResponse,
+  ReplaceLeaderResponse,
+} from '../gen/edify/clusters/v1/leadership_pb';
+import { ClusterLeadershipService } from '../gen/edify/clusters/v1/leadership_pb';
+
 /** A request message's own fields, without the generated bookkeeping. */
 type Fields<T> = Partial<Omit<T, '$typeName' | '$unknown'>>;
 import { ApiError, callUnary } from './connect';
@@ -98,6 +111,15 @@ export interface EdifyApi {
   saveDrawer(path: string, values: Readonly<Record<string, string>>, form?: string): Promise<SaveDrawerResponse>;
   /** How an export is coming along, and its download link once ready. */
   getExport(jobId: string): Promise<GetExportResponse>;
+  // The Cluster Leader Portal (edify.clusters.v1.ClusterLeadershipService).
+  getMyClusters(): Promise<GetMyClustersResponse>;
+  getClusterHome(clusterId: string): Promise<GetClusterHomeResponse>;
+  listMemberSchools(clusterId: string, options: { page: number; search: string }): Promise<ListMemberSchoolsResponse>;
+  listManagedClusters(options: { page: number; search: string }): Promise<ListManagedClustersResponse>;
+  listLeaders(clusterId: string): Promise<ListLeadersResponse>;
+  assignLeader(request: Fields<AssignLeaderRequest>): Promise<AssignLeaderResponse>;
+  endAssignment(assignmentId: string, reason: string): Promise<EndAssignmentResponse>;
+  replaceLeader(assignmentId: string, newUserId: string, reason: string): Promise<ReplaceLeaderResponse>;
 }
 
 export function createEdifyApi(transport: ConnectTransport): EdifyApi {
@@ -208,6 +230,37 @@ export function createEdifyApi(transport: ConnectTransport): EdifyApi {
         clusterId,
       });
       return required(answer.result);
+    },
+    getMyClusters() {
+      return callUnary(transport, ClusterLeadershipService.method.getMyClusters, {});
+    },
+    getClusterHome(clusterId) {
+      return callUnary(transport, ClusterLeadershipService.method.getClusterHome, { clusterId });
+    },
+    listMemberSchools(clusterId, { page, search }) {
+      return callUnary(transport, ClusterLeadershipService.method.listMemberSchools, {
+        clusterId,
+        search,
+        page: { page, pageSize: 50 },
+      });
+    },
+    listManagedClusters({ page, search }) {
+      return callUnary(transport, ClusterLeadershipService.method.listManagedClusters, {
+        search,
+        page: { page, pageSize: 50 },
+      });
+    },
+    listLeaders(clusterId) {
+      return callUnary(transport, ClusterLeadershipService.method.listLeaders, { clusterId });
+    },
+    assignLeader(request) {
+      return callUnary(transport, ClusterLeadershipService.method.assignLeader, request);
+    },
+    endAssignment(assignmentId, reason) {
+      return callUnary(transport, ClusterLeadershipService.method.endAssignment, { assignmentId, reason });
+    },
+    replaceLeader(assignmentId, newUserId, reason) {
+      return callUnary(transport, ClusterLeadershipService.method.replaceLeader, { assignmentId, newUserId, reason });
     },
     async bulkAssignProject(schoolIds, projectId) {
       const answer = await callUnary(transport, SchoolActionService.method.bulkAssignProject, {

@@ -40,6 +40,7 @@ import (
 	schoolsv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/schools/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/schools/v1/schoolsv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dbguard"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/server"
@@ -51,6 +52,8 @@ const (
 	gatewayRole   = "edify_gateway"
 	signingSecret = "integration-test-signing-secret-0123456789"
 	rolesFile     = "../../../deploy/db/roles.sql"
+	// The Cluster Leader Portal's schema and roles (Go-owned).
+	clusterRolesFile = "../../../deploy/db/cluster_roles.sql"
 )
 
 var (
@@ -142,6 +145,18 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 	}
 	defer conn.Release()
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(roles)).ReadAll(); err != nil {
+		return "", err
+	}
+	// The Cluster Leader Portal's Go-owned schema: its roles, then its
+	// migrations, exactly as clusterctl migrate applies them.
+	clusterRoles, err := os.ReadFile(filepath.FromSlash(clusterRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(clusterRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	if _, err := schema.Apply(ctx, conn.Conn(), conn.Conn().Config().Database); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)

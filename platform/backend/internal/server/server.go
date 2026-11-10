@@ -3,6 +3,8 @@
 package server
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -11,11 +13,14 @@ import (
 	"connectrpc.com/grpchealth"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/clusters/v1/clustersv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1/identityv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/schools/v1/schoolsv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
@@ -65,5 +70,24 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
+	mux.Handle(clustersv1connect.NewClusterLeadershipServiceHandler(
+		clusterlead.NewService(clusterlead.NewStore(pool), time.Now, clusterSchemaReady(pool), logger), options...,
+	))
 	return httpmw.Chain(logger, httpmw.CORS(cfg.CORSAllowedOrigins, mux))
+}
+
+// clusterSchemaReady says whether the Cluster Leader Portal's schema is at the
+// version this build needs. It never migrates: `clusterctl migrate` does.
+func clusterSchemaReady(pool *pgxpool.Pool) func(context.Context) error {
+	return func(ctx context.Context) error {
+		applied, err := schema.Version(ctx, pool)
+		if err != nil {
+			return err
+		}
+		if applied < schema.Required() {
+			return fmt.Errorf("cluster_leadership is at version %d, this build needs %d: run clusterctl migrate",
+				applied, schema.Required())
+		}
+		return nil
+	}
 }

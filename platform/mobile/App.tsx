@@ -17,6 +17,9 @@ import { PageScreen } from './src/screens/PageScreen';
 import { PAGE_PATHS } from './src/nativePages';
 import { SchoolsScreen } from './src/screens/SchoolsScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
+import { ClusterLeaderApp } from './src/screens/cluster/ClusterLeaderApp';
+import { ClusterLeadersScreen } from './src/screens/cluster/ClusterLeadersScreen';
+import { LEADERS_URL, canManageLeaders, leadersSection } from './src/screens/cluster/clusterRoutes';
 import { AppShell, MENU_URL } from './src/shell/AppShell';
 import { ThemeProvider, signInPalette, spacing, useTheme } from './src/theme';
 import { DropdownLayer } from './src/ui/Dropdown';
@@ -45,6 +48,8 @@ const startup = start();
 
 /** The screens the app draws itself beside its pages. */
 const OWN_SCREENS: readonly string[] = ['/home', '/schools'];
+/** The existing role a Cluster Leader signs in with (apps/core/rbac.py). */
+const CLUSTER_LEADER = 'ClusterLeader';
 
 function pathOf(url: string): string {
   return url.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
@@ -121,6 +126,11 @@ function Root() {
       </>
     );
   }
+  // A Cluster Leader's reach is their assigned clusters, not a web menu: the
+  // portal of their own (brief A1-A3).
+  if (state.session.activeRole === CLUSTER_LEADER) {
+    return <ClusterLeaderApp session={state.session} />;
+  }
   return <SignedIn session={state.session} />;
 }
 
@@ -159,8 +169,14 @@ function SignedIn({ session }: { readonly session: Session }) {
   const pages = useMemo(() => pagesOf(navigation), [navigation]);
   // Every other path opens on the web.
   const isNative = useCallback(
-    (url: string) => OWN_SCREENS.includes(pathOf(url)) || pages.has(pathOf(url)) || schoolOf(url) !== null,
+    (url: string) =>
+      url === LEADERS_URL || OWN_SCREENS.includes(pathOf(url)) || pages.has(pathOf(url)) || schoolOf(url) !== null,
     [pages],
+  );
+  // Staff who manage cluster leaders find them under their own menu.
+  const sections = useMemo(
+    () => [...(navigation?.sections ?? []), ...(canManageLeaders(session.activeRole) ? [leadersSection()] : [])],
+    [navigation, session.activeRole],
   );
   const open = useCallback((url: string, label: string) => setRoute({ url, label }), []);
   const openPage = useCallback((url: string) => open(url, ''), [open]);
@@ -177,9 +193,9 @@ function SignedIn({ session }: { readonly session: Session }) {
   const path = pathOf(route.url);
   let screen;
   if (route.url === MENU_URL) {
-    screen = (
-      <MenuScreen session={session} sections={navigation?.sections ?? []} isNative={isNative} onOpen={open} />
-    );
+    screen = <MenuScreen session={session} sections={sections} isNative={isNative} onOpen={open} />;
+  } else if (route.url === LEADERS_URL) {
+    screen = <ClusterLeadersScreen />;
   } else if (path === '/home') {
     screen = <HomeScreen onOpen={open} />;
   } else if (path === '/schools') {

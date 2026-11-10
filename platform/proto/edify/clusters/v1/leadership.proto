@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package edify.clusters.v1;
+
+import "edify/common/v1/common.proto";
+
+// The Cluster Leader Portal (brief A1-A3). A Cluster Leader reaches only the
+// clusters assigned to them, while each assignment is live; every check is
+// made here, on every request. Clusters, schools and activities are the
+// existing records, read only; assignments and their history are this
+// service's own records (schema cluster_leadership).
+service ClusterLeadershipService {
+  // The caller's live cluster assignments (Cluster Leader only).
+  rpc GetMyClusters(GetMyClustersRequest) returns (GetMyClustersResponse);
+  // A cluster's Home: overview counts, priority actions, upcoming
+  // activities and quick actions (Cluster Leader of that cluster only).
+  rpc GetClusterHome(GetClusterHomeRequest) returns (GetClusterHomeResponse);
+  // The cluster's member schools: every operating school whose cluster this
+  // is, whatever its district (Cluster Leader of that cluster only).
+  rpc ListMemberSchools(ListMemberSchoolsRequest) returns (ListMemberSchoolsResponse);
+
+  // The clusters whose leaders the caller may manage, with each one's live
+  // leaders: every cluster for Admin and Program Lead, a CCEO's own clusters.
+  rpc ListManagedClusters(ListManagedClustersRequest) returns (ListManagedClustersResponse);
+  // A cluster's leaders, live and past, with every change (assignment
+  // administrators: Admin, Program Lead, the cluster's responsible staff).
+  rpc ListLeaders(ListLeadersRequest) returns (ListLeadersResponse);
+  // Give a cluster to an existing Cluster Leader account. Creates no account
+  // and grants no role: the account must already hold the role.
+  rpc AssignLeader(AssignLeaderRequest) returns (AssignLeaderResponse);
+  // End a live assignment. The assignment and its history are kept.
+  rpc EndAssignment(EndAssignmentRequest) returns (EndAssignmentResponse);
+  // End one leader's assignment and give the cluster to another, in one
+  // step; the new assignment names the one it replaced.
+  rpc ReplaceLeader(ReplaceLeaderRequest) returns (ReplaceLeaderResponse);
+}
+
+message GetMyClustersRequest {}
+
+message GetMyClustersResponse {
+  repeated ClusterSummary clusters = 1;
+}
+
+message GetClusterHomeRequest {
+  string cluster_id = 1;
+}
+
+message GetClusterHomeResponse {
+  ClusterSummary cluster = 1;
+  // Cluster Overview: each count opens the records it counts.
+  repeated HomeCount overview = 2;
+  // My Priority Actions: what needs the leader, most pressing first.
+  repeated PriorityAction priority_actions = 3;
+  // Upcoming Cluster Activities, soonest first.
+  repeated ClusterActivity upcoming = 4;
+  repeated QuickAction quick_actions = 5;
+}
+
+message ListMemberSchoolsRequest {
+  string cluster_id = 1;
+  edify.common.v1.PageRequest page = 2;
+  // Case-insensitive match on the school name or Edify School ID.
+  string search = 3;
+}
+
+message ListMemberSchoolsResponse {
+  repeated MemberSchool schools = 1;
+  edify.common.v1.PageInfo page = 2;
+}
+
+message ListManagedClustersRequest {
+  edify.common.v1.PageRequest page = 1;
+  // Case-insensitive match on the cluster name.
+  string search = 2;
+}
+
+message ListManagedClustersResponse {
+  repeated ManagedCluster clusters = 1;
+  edify.common.v1.PageInfo page = 2;
+}
+
+message ManagedCluster {
+  ClusterSummary cluster = 1;
+  // The names of the cluster's live leaders today.
+  repeated string live_leaders = 2;
+}
+
+message ListLeadersRequest {
+  string cluster_id = 1;
+}
+
+message ListLeadersResponse {
+  ClusterSummary cluster = 1;
+  // Live assignments first, then past ones, newest first.
+  repeated LeaderAssignment assignments = 2;
+  // Accounts holding the Cluster Leader role that may be given this cluster.
+  repeated LeaderCandidate candidates = 3;
+}
+
+message AssignLeaderRequest {
+  string cluster_id = 1;
+  string user_id = 2;
+  // ISO dates. starts_on defaults to today; ends_on may be empty (open).
+  string starts_on = 3;
+  string ends_on = 4;
+  string reason = 5;
+}
+
+message AssignLeaderResponse {
+  LeaderAssignment assignment = 1;
+}
+
+message EndAssignmentRequest {
+  string assignment_id = 1;
+  string reason = 2;
+}
+
+message EndAssignmentResponse {
+  LeaderAssignment assignment = 1;
+}
+
+message ReplaceLeaderRequest {
+  string assignment_id = 1;
+  string new_user_id = 2;
+  string reason = 3;
+}
+
+message ReplaceLeaderResponse {
+  LeaderAssignment ended = 1;
+  LeaderAssignment assignment = 2;
+}
+
+message ClusterSummary {
+  // `cluster.id`
+  string id = 1;
+  string name = 2;
+  // Existing values, verbatim.
+  string status = 3;
+  string cluster_type = 4;
+  string district = 5;
+  string sub_county = 6;
+  int32 member_school_count = 7;
+  // The caller's own assignment, when the caller leads this cluster.
+  LeaderAssignment my_assignment = 8;
+  // The responsible staff member's name, for requests and concerns.
+  string responsible_staff = 9;
+}
+
+message LeaderAssignment {
+  string id = 1;
+  string cluster_id = 2;
+  string user_id = 3;
+  string leader_name = 4;
+  string leader_email = 5;
+  // ISO dates; ends_on empty while open.
+  string starts_on = 6;
+  string ends_on = 7;
+  // "active", "suspended" or "ended".
+  string status = 8;
+  string assigned_by = 9;
+  string reason = 10;
+  string ended_reason = 11;
+  string replaces_assignment_id = 12;
+  repeated AssignmentEvent history = 13;
+}
+
+message AssignmentEvent {
+  // "assigned", "suspended", "reinstated", "ended" or "replaced".
+  string event = 1;
+  string actor = 2;
+  string reason = 3;
+  // RFC 3339.
+  string at = 4;
+}
+
+message LeaderCandidate {
+  string user_id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message HomeCount {
+  string key = 1;
+  string label = 2;
+  int32 value = 3;
+  // The list the count is of, as an app path ("schools", "activities?when=upcoming").
+  string href = 4;
+}
+
+message PriorityAction {
+  string key = 1;
+  string label = 2;
+  int32 count = 3;
+  string detail = 4;
+  string href = 5;
+  // "alert", "caution" or "info".
+  string tone = 6;
+}
+
+message ClusterActivity {
+  // The existing activity's id (`activity.id`), unchanged.
+  string id = 1;
+  string name = 2;
+  // ISO date; empty while only a month is planned.
+  string date = 3;
+  string location = 4;
+  // "Only Meeting", "Cluster Leaders Meeting", "Cluster Training", ...
+  string type = 5;
+  int32 invited_schools = 6;
+  int32 confirmed_schools = 7;
+  // The existing activity status, verbatim.
+  string status = 8;
+}
+
+message QuickAction {
+  string key = 1;
+  string label = 2;
+  bool enabled = 3;
+  // Why it is not available yet, when disabled.
+  string reason = 4;
+  string href = 5;
+}
+
+message MemberSchool {
+  string id = 1;
+  // Edify School ID: every school list carries it.
+  string school_id = 2;
+  string name = 3;
+  string school_type = 4;
+  string district = 5;
+  string sub_county = 6;
+  string operational_status = 7;
+  string current_fy_ssa_status = 8;
+}

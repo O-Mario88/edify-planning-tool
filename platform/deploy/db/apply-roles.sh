@@ -53,4 +53,6 @@ fi
 
 echo "applying gateway roles: environment=${env_name} host=${host:-local socket}"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/roles.sql"
+# The Cluster Leader Portal's Go-owned schema and its owner and writer roles.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/cluster_roles.sql"
 echo "done"
