@@ -142,7 +142,62 @@ def _badge_tone(node: Node) -> str:
     return next((tone for marker, tone in BADGE_TONES if marker in classes), "plain")
 
 
+#: The tone a list row's icon square carries, by its background class.
+ICON_TONES = (
+    ("edify-primary-soft", "info"),
+    ("bg-emerald", "good"),
+    ("bg-green", "good"),
+    ("bg-amber", "caution"),
+    ("bg-rose", "alert"),
+    ("bg-red", "alert"),
+    ("bg-violet", "brand"),
+    ("bg-purple", "brand"),
+    ("bg-teal", "good"),
+)
+
+
+def _role_home(home: Node) -> dict:
+    """The phone's task-first page header (components/mobile_role_home.html):
+    eyebrow, headline, line, the figure it counts and its primary action."""
+    copy = home.find(lambda n: n.has("mobile-role-home__copy"))
+    eyebrow = copy.find(lambda n: n.tag == "p") if copy else None
+    title = home.find(lambda n: n.tag == "h1")
+    line = copy.find(lambda n: n.tag == "span") if copy else None
+    context = home.find(lambda n: n.has("mobile-role-home__context"))
+    action = home.find(lambda n: n.has("mobile-role-home__action") and n.tag == "a")
+    label = action.find(lambda n: n.tag == "span") if action else None
+    return {
+        "eyebrow": eyebrow.text() if eyebrow else "",
+        "backLabel": "",
+        "backHref": "",
+        "title": title.text() if title else "",
+        "description": line.text() if line else "",
+        "badges": [
+            {"text": part.text(), "tone": "plain", "title": ""}
+            for part in (context.children if context else ())
+            if isinstance(part, Node) and part.text()
+        ],
+        "actions": (
+            [
+                {
+                    "key": "primary-action",
+                    "label": label.text() if label else action.text(),
+                    "primary": True,
+                    "enabled": True,
+                    "reason": "",
+                    "href": action.get("href"),
+                }
+            ]
+            if action
+            else []
+        ),
+    }
+
+
 def _header(main: Node) -> dict:
+    home = main.find(lambda n: "data-mobile-role-home" in n.attrs)
+    if home is not None:
+        return _role_home(home)
     back = main.find(lambda n: n.has("edify-back-link"))
     title = main.find(lambda n: n.tag == "h1")
     description = main.find(lambda n: n.has("edify-page-header__description"))
@@ -756,9 +811,44 @@ def _panel_items(node: Node, skip: set[int], out: list[dict]) -> list[dict]:
                 if tone:
                     item["tone"] = tone
                 out.append(item)
+        elif _is_link(child):
+            link = _link_item(child)
+            if link["text"]:
+                if out and "links" in out[-1]:
+                    out[-1]["links"]["links"].append(link)
+                else:
+                    out.append({"links": {"links": [link]}})
+        elif child.tag in ("form", "select", "input", "textarea", "template"):
+            continue
+        elif not any(isinstance(c, Node) for c in child.children):
+            text = child.text()
+            if text:
+                out.append({"text": text})
         else:
             _panel_items(child, skip, out)
     return out
+
+
+def _is_link(node: Node) -> bool:
+    """A link, or a button that opens something (a drawer, a page)."""
+    if node.tag == "a":
+        return bool(node.get("href") or node.get("hx-get"))
+    return node.tag == "button" and bool(node.get("hx-get"))
+
+
+def _link_item(node: Node) -> dict:
+    """A link row: its first line, the lines under it as its caption."""
+    lines = [
+        c.text()
+        for c in node.children
+        if isinstance(c, Node) and c.text() and not c.has("sr-only")
+    ]
+    text = lines[0] if len(lines) > 1 else node.text()
+    return {
+        "text": text,
+        "href": node.get("hx-get") or node.get("href"),
+        "caption": " · ".join(lines[1:]) if len(lines) > 1 else "",
+    }
 
 
 def _panel(node: Node) -> dict:
@@ -949,8 +1039,211 @@ def _link_tabs(nav: Node) -> dict | None:
     return result
 
 
+def _row_lines(row: Node) -> list[str]:
+    """A row's lines of text, its pills and actions aside."""
+    column = row.find(lambda n: n.has("flex-1") or n.has("min-w-0"))
+    holder = column or row
+    lines = [
+        p.text()
+        for p in holder.find_all(lambda n: n.tag in ("p", "h3", "h4"))
+        if p.text()
+    ]
+    return lines or ([holder.text()] if holder.text() else [])
+
+
+def _list_item(row: Node) -> dict:
+    icon = row.find(
+        lambda n: n.tag == "div"
+        and any(marker in n.get("class") for marker, _ in ICON_TONES)
+        and n.find(lambda m: m.tag == "svg") is not None
+    )
+    tone = (
+        next((t for marker, t in ICON_TONES if marker in icon.get("class")), "")
+        if icon
+        else ""
+    )
+    actions = [
+        {
+            "key": "button",
+            "label": link.text(),
+            "primary": "edify-primary" in link.get("class"),
+            "enabled": "disabled" not in link.attrs,
+            "reason": link.get("title"),
+            "href": link.get("hx-get") or link.get("href"),
+        }
+        for link in row.find_all(_is_link)
+        if link.text()
+    ]
+    badges = [
+        {"text": pill.text(), "tone": _badge_tone(pill), "title": pill.get("title")}
+        for pill in row.find_all(lambda n: n.tag == "span" and n.has("rounded-pill"))
+        if pill.text()
+    ]
+    lines = _row_lines(row)
+    return {
+        "title": lines[0] if lines else "",
+        "lines": lines[1:],
+        "badges": badges,
+        "actions": actions,
+        "href": row.get("href") if row.tag == "a" else "",
+        "tone": tone,
+    }
+
+
+#: `name === 'value'` in a row's x-show: the client-side filter it answers to.
+SHOWN_FOR = re.compile(r"(\w+)\s*===\s*'([^']*)'")
+#: `name='value'` in a chip's @click.
+CHIP_SETS = re.compile(r"^\s*(\w+)\s*=\s*'([^']*)'\s*;?\s*$")
+
+
+def _row_keys(row: Node) -> dict[str, str]:
+    """What a row is filtered on in the browser (``x-show`` naming
+    ``cat === 'Finance'``), the "all" alternatives aside."""
+    holder = row if row.get("x-show") else row.find(lambda n: bool(n.get("x-show")))
+    expression = holder.get("x-show") if holder is not None else ""
+    return {
+        name: value for name, value in SHOWN_FOR.findall(expression) if value != "all"
+    }
+
+
+def _group_item(details: Node) -> dict:
+    """An entry that opens onto its records (identical To-Dos as one)."""
+    summary = details.find(lambda n: n.tag == "summary")
+    spans = (
+        [
+            s
+            for s in summary.find_all(lambda n: n.tag == "span" and n.has("block"))
+            if s.text()
+        ]
+        if summary
+        else []
+    )
+    count = summary.find(lambda n: n.has("todo-group__count")) if summary else None
+    rows_holder = next(
+        (c for c in details.children if isinstance(c, Node) and c.tag != "summary"),
+        None,
+    )
+    children = (
+        [
+            _list_item(r)
+            for r in rows_holder.children
+            if isinstance(r, Node) and r.text()
+        ]
+        if rows_holder is not None
+        else []
+    )
+    return {
+        "title": spans[0].text() if spans else (summary.text() if summary else ""),
+        "lines": [s.text() for s in spans[1:]],
+        "badges": [],
+        "actions": [],
+        "href": "",
+        "tone": "",
+        "children": children,
+        "count": count.text() if count else str(len(children)),
+        "keys": _row_keys(details),
+    }
+
+
+def _row_item(row: Node) -> dict:
+    details = row if row.tag == "details" else None
+    if details is not None:
+        return _group_item(details)
+    return {**_list_item(row), "keys": _row_keys(row)}
+
+
+def _row_list(card: Node) -> dict | None:
+    """A card of rows, one record each (a task, an activity, a request)."""
+    if not (card.has("card") or card.has("edify-surface")) or not card.has("divide-y"):
+        return None
+    if card.find(lambda n: n.tag == "table"):
+        return None
+    rows = [c for c in card.children if isinstance(c, Node) and c.text()]
+    if not rows:
+        return None
+    return {
+        "title": "",
+        "count": "",
+        "subtitle": "",
+        "items": [_row_item(row) for row in rows],
+    }
+
+
+def _chips(rail: Node) -> dict | None:
+    """Buttons that filter the page in the browser (To-Do's categories): the
+    value each sets, its label and count, and the value the page opens on."""
+    if "data-edify-tablist" not in rail.attrs or rail.tag == "nav":
+        return None
+    chips, name = [], ""
+    buttons = rail.find_all(lambda n: n.tag == "button" and "data-edify-tab" in n.attrs)
+    if any(button.get("aria-controls") for button in buttons):
+        return None  # a switch between parts of a card: _segments reads it
+    for button in buttons:
+        sets = CHIP_SETS.match(button.get("@click"))
+        if sets is None:
+            return None
+        name = sets.group(1)
+        count = button.find(lambda n: "data-edify-tab-count" in n.attrs)
+        label = " ".join(
+            "".join(c for c in button.children if isinstance(c, str)).split()
+        )
+        chips.append(
+            {
+                "value": sets.group(2),
+                "label": label or button.text(),
+                "count": count.text() if count else "",
+            }
+        )
+    if not chips:
+        return None
+    return {
+        "name": name,
+        "label": rail.get("aria-label"),
+        "value": _opening_value(rail, name),
+        "chips": chips,
+    }
+
+
+def _opening_value(node: Node, name: str) -> str:
+    """The value the page's script starts ``name`` on (x-data="{ cat: 'all' }")."""
+    from apps.mobile_feed.planning_drawers import script_values
+
+    holder = node
+    while holder is not None:
+        if holder.get("x-data"):
+            value = script_values(holder.get("x-data")).get(name)
+            if value is not None:
+                return str(value)
+        holder = holder.parent
+    return ""
+
+
+def _home_section(section: Node) -> dict | None:
+    """A phone home's titled section of rows ("Do next  45 open")."""
+    if not section.has("mobile-home-section"):
+        return None
+    head = section.find(lambda n: n.has("mobile-home-section__header"))
+    title = head.find(lambda n: n.tag in ("h2", "h3")) if head else None
+    count = head.find(lambda n: n.tag == "span") if head else None
+    card = section.find(lambda n: _row_list(n) is not None)
+    found = _row_list(card) if card is not None else None
+    if found is None:
+        return None
+    return {
+        **found,
+        "title": title.text() if title else "",
+        "count": count.text() if count else "",
+    }
+
+
 def _block(node: Node) -> dict | None:
     """The block ``node`` is, or None to look inside it."""
+    if (section := _home_section(node)) is not None:
+        return {"list": section}
+    if (chips := _chips(node)) is not None:
+        return {"chips": chips}
+    if (rows := _row_list(node)) is not None:
+        return {"list": rows}
     if node.tag == "nav" and (tabs := _link_tabs(node)) is not None:
         return {"linkTabs": tabs}
     if node.tag == "form" and node.get("data-component") == "filter-toolbar":
@@ -1011,9 +1304,34 @@ def _holds_blocks(node: Node) -> bool:
     )
 
 
+#: The page header's parts, read by _header, never as blocks.
+HEADER_PARTS = ("edify-page-header", "mobile-role-home", "edify-back-link")
+#: Words a section needs before the fallback draws it as a panel.
+MIN_FALLBACK_WORDS = 2
+
+
+def _is_header(node: Node) -> bool:
+    """The page header's parts and its tab rail: read by _header and _tabs."""
+    return (
+        any(node.has(name) for name in HEADER_PARTS)
+        or "data-profile-tabs" in node.attrs
+    )
+
+
+def _fallback(node: Node) -> dict | None:
+    """A section no component reader knows, drawn as a plain panel of its
+    headings, text, rows and links rather than left out."""
+    if node.tag in ("form", "dialog", "template") or _is_header(node):
+        return None
+    if len(node.text().split()) < MIN_FALLBACK_WORDS:
+        return None
+    panel = _panel(node)
+    return {"panel": panel} if panel["items"] or panel["title"] else None
+
+
 def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
     for child in node.children:
-        if not isinstance(child, Node) or child.tag in SILENT:
+        if not isinstance(child, Node) or child.tag in SILENT or _is_header(child):
             continue
         if (
             later is not None
@@ -1024,21 +1342,75 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
             # read what that request answers, in its place.
             part = later(child.get("hx-get"))
             if part is not None:
-                _blocks(parse(part), out, later)
+                _blocks(_for_phone(parse(part)), out, later)
                 continue
         block = _block(child)
-        if block is None:
-            _blocks(child, out, later)
-        else:
+        if block is not None:
             out.append(block)
+        elif _holds_blocks(child) or _holds_known(child):
+            _blocks(child, out, later)
+        elif (fallback := _fallback(child)) is not None:
+            out.append(fallback)
     return out
 
 
+def _holds_known(node: Node) -> bool:
+    """Whether a component reader knows something inside ``node`` that
+    _holds_blocks does not look for (link tabs, filter toolbars, empty
+    states, a part loaded later), so it is read inside, not as a panel."""
+    return (
+        node.find(
+            lambda n: "data-edify-tablist" in n.attrs
+            or n.get("data-component") == "filter-toolbar"
+            or n.has("edify-filter-bar")
+            or n.has("edify-empty-state")
+            or "data-profile-tabs" in n.attrs
+            or "data-profile-identity" in n.attrs
+            or "data-profile-scope" in n.attrs
+            or n.get("hx-trigger") == "load"
+            or n.has("card")
+            or n.has("divide-y")
+            or _is_header(n)
+            or _switch_parts(n) is not None
+        )
+        is not None
+    )
+
+
+#: Shown again on a phone by a max-width variant (Tailwind max-sm/md/lg).
+PHONE_SHOWN = re.compile(
+    r"^max-(?:sm|md|lg):(?:block|flex|grid|inline|inline-flex|inline-block|table|contents)$"
+)
+PHONE_HIDDEN = re.compile(r"^max-(?:sm|md|lg):hidden$")
+
+
+def phone_hidden(node: Node) -> bool:
+    """Whether a phone (below the 64rem breakpoint) draws ``node`` at all:
+    the page's own classes decide, as the browser does at that width."""
+    classes = node.classes
+    if "mobile-home-hide" in classes or any(PHONE_HIDDEN.match(c) for c in classes):
+        return True
+    return "hidden" in classes and not any(PHONE_SHOWN.match(c) for c in classes)
+
+
+def _for_phone(node: Node) -> Node:
+    """``node`` with what a phone does not draw left out."""
+    node.children = [
+        child
+        for child in node.children
+        if isinstance(child, str) or not phone_hidden(child)
+    ]
+    for child in node.children:
+        if isinstance(child, Node):
+            _for_phone(child)
+    return node
+
+
 def read(html: str, later=None) -> dict:
-    """The page's header, tabs and blocks, in the order the page draws them.
+    """The page's header, tabs and blocks, in the order a phone draws them.
     ``later(path)`` answers a part the page loads after it opens, or None to
     leave it out."""
-    root = parse(html)
+    root = _for_phone(parse(html))
     main = root.find(lambda n: n.tag == "main") or root
     return {
         "header": _header(main),

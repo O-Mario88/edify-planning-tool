@@ -801,3 +801,40 @@ class MyPlanFeedTest(SchoolActionFeedTest):
         )
         fy = next(f for f in filters["filters"] if f["name"] == "fy")
         self.assertEqual(fy["value"], "2026")
+
+
+class PageFeedTest(SchoolActionFeedTest):
+    """Any page the app draws is the web page for the reader, and only the
+    pages the feed names are reachable."""
+
+    def page(self, path, **params):
+        return self.client.get(
+            "/api/mobile/v1/page", {"path": path, **params}, **self.auth
+        )
+
+    def test_a_named_page_is_read_as_blocks(self):
+        body = self.page("/todos").json()
+
+        self.assertTrue(body["header"]["title"])
+        self.assertEqual(body["webPath"], "/todos")
+
+    def test_a_page_not_named_is_not_reachable(self):
+        # The Users page exists, but the app does not read it.
+        self.assertEqual(self.page("/users").status_code, 404)
+        self.assertEqual(self.page("/no-such-page").status_code, 404)
+
+    def test_a_page_the_readers_role_cannot_open_is_refused(self):
+        from apps.mobile_feed.views import NATIVE_PAGES
+
+        self.assertIn("weekly_fund_requests", NATIVE_PAGES)
+        self.user.roles = ["Partner"]
+        self.user.active_role = "Partner"
+        self.user.save(update_fields=["roles", "active_role"])
+        token = issue_access_token(self.user.id, self.user.active_role)
+        response = self.client.get(
+            "/api/mobile/v1/page",
+            {"path": "/fund-requests/weekly"},
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertIn(response.status_code, (403, 404))

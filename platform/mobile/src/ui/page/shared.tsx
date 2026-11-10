@@ -16,6 +16,17 @@ export function usePageLink(): OpenLink {
   return useContext(PageLinkContext);
 }
 
+/** The page's chips: the value each chip filter is on, and how to change it. */
+export interface ChipState {
+  readonly chosen: Readonly<Record<string, string>>;
+  readonly choose: (name: string, value: string) => void;
+}
+export const ChipContext = createContext<ChipState>({ chosen: {}, choose: () => undefined });
+
+export function useChips(): ChipState {
+  return useContext(ChipContext);
+}
+
 /** The web's card shadow (.card, .edify-surface). */
 export const CARD_SHADOW =
   '0px 5px 20px -12px rgba(23, 48, 66, 0.23), 0px 1px 3px 0px rgba(23, 48, 66, 0.07)';

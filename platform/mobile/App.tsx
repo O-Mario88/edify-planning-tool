@@ -13,7 +13,8 @@ import type { GetNavigationResponse } from './src/gen/edify/screens/v1/navigatio
 import { HomeScreen } from './src/screens/HomeScreen';
 import { MenuScreen, WebOnlyScreen } from './src/screens/MoreScreen';
 import { SchoolProfileScreen } from './src/screens/SchoolProfileScreen';
-import { MyPlanScreen } from './src/screens/MyPlanScreen';
+import { PageScreen } from './src/screens/PageScreen';
+import { PAGE_PATHS } from './src/nativePages';
 import { SchoolsScreen } from './src/screens/SchoolsScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { AppShell, MENU_URL } from './src/shell/AppShell';
@@ -43,7 +44,7 @@ function start(): Startup {
 const startup = start();
 
 /** The paths this app draws itself. Every other path opens on the web. */
-const NATIVE_PATHS: readonly string[] = ['/home', '/schools', '/my-plan'];
+const NATIVE_PATHS: readonly string[] = ['/home', '/schools', ...PAGE_PATHS];
 
 function pathOf(url: string): string {
   return url.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
@@ -55,6 +56,12 @@ const SCHOOL_PROFILE = /^\/schools\/([^/]+)$/;
 function schoolOf(url: string): string | null {
   const match = SCHOOL_PROFILE.exec(pathOf(url));
   return match && match[1] !== 'closed' ? decodeURIComponent(match[1]) : null;
+}
+
+/** The query a route opened with, as a page's own parameters. */
+function queryOf(url: string): Record<string, string> {
+  const at = url.indexOf('?');
+  return at < 0 ? {} : Object.fromEntries(new URLSearchParams(url.slice(at + 1)).entries());
 }
 
 function isNative(url: string): boolean {
@@ -147,6 +154,7 @@ function SignedIn({ session }: { readonly session: Session }) {
   }, [api]);
 
   const open = useCallback((url: string, label: string) => setRoute({ url, label }), []);
+  const openPage = useCallback((url: string) => open(url, ''), [open]);
   const openSchool = useCallback(
     (schoolId: string) => setRoute({ url: `/schools/${encodeURIComponent(schoolId)}`, label: 'School' }),
     [],
@@ -167,8 +175,17 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <HomeScreen onOpen={open} />;
   } else if (path === '/schools') {
     screen = <SchoolsScreen searchSignal={searchSignal} onOpenSchool={openSchool} />;
-  } else if (path === '/my-plan') {
-    screen = <MyPlanScreen onOpenSchool={openSchool} />;
+  } else if (PAGE_PATHS.includes(path)) {
+    screen = (
+      <PageScreen
+        key={route.url}
+        path={path}
+        initialQuery={queryOf(route.url)}
+        isNative={isNative}
+        onOpen={openPage}
+        onOpenSchool={openSchool}
+      />
+    );
   } else if (schoolOf(route.url)) {
     const schoolId = schoolOf(route.url) ?? '';
     screen = (
@@ -187,7 +204,7 @@ function SignedIn({ session }: { readonly session: Session }) {
     <AppShell
       bottom={navigation?.bottom ?? []}
       // A school's profile belongs to the Schools tab, as on the web.
-      activeUrl={schoolOf(route.url) ? '/schools' : route.url}
+      activeUrl={schoolOf(route.url) ? '/schools' : path}
       onOpen={open}
       initials={initialsOf(session.name)}
       onSearch={handleSearch}

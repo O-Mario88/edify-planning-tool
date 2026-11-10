@@ -2277,6 +2277,321 @@ func (x *PageSegments) GetCaption() string {
 	return ""
 }
 
+// One record in a card of rows: a task, an activity, a request.
+type PageListItem struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Title string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// The lines under the title ("Nakisunga Hill Primary · partner").
+	Lines  []string     `protobuf:"bytes,2,rep,name=lines,proto3" json:"lines,omitempty"`
+	Badges []*PageBadge `protobuf:"bytes,3,rep,name=badges,proto3" json:"badges,omitempty"`
+	// The row's buttons and links ("Open").
+	Actions []*PageAction `protobuf:"bytes,4,rep,name=actions,proto3" json:"actions,omitempty"`
+	// Where the whole row leads, when it is a link.
+	Href string `protobuf:"bytes,5,opt,name=href,proto3" json:"href,omitempty"`
+	// The colour of its icon square: info, good, caution, alert, brand.
+	Tone string `protobuf:"bytes,6,opt,name=tone,proto3" json:"tone,omitempty"`
+	// An entry that opens onto its records (identical To-Dos as one).
+	Children []*PageListItem `protobuf:"bytes,7,rep,name=children,proto3" json:"children,omitempty"`
+	Count    string          `protobuf:"bytes,8,opt,name=count,proto3" json:"count,omitempty"`
+	// What the row is filtered on by the page's chips (cat → "Finance").
+	Keys          map[string]string `protobuf:"bytes,9,rep,name=keys,proto3" json:"keys,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageListItem) Reset() {
+	*x = PageListItem{}
+	mi := &file_edify_screens_v1_page_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageListItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageListItem) ProtoMessage() {}
+
+func (x *PageListItem) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_page_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageListItem.ProtoReflect.Descriptor instead.
+func (*PageListItem) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *PageListItem) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *PageListItem) GetLines() []string {
+	if x != nil {
+		return x.Lines
+	}
+	return nil
+}
+
+func (x *PageListItem) GetBadges() []*PageBadge {
+	if x != nil {
+		return x.Badges
+	}
+	return nil
+}
+
+func (x *PageListItem) GetActions() []*PageAction {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
+}
+
+func (x *PageListItem) GetHref() string {
+	if x != nil {
+		return x.Href
+	}
+	return ""
+}
+
+func (x *PageListItem) GetTone() string {
+	if x != nil {
+		return x.Tone
+	}
+	return ""
+}
+
+func (x *PageListItem) GetChildren() []*PageListItem {
+	if x != nil {
+		return x.Children
+	}
+	return nil
+}
+
+func (x *PageListItem) GetCount() string {
+	if x != nil {
+		return x.Count
+	}
+	return ""
+}
+
+func (x *PageListItem) GetKeys() map[string]string {
+	if x != nil {
+		return x.Keys
+	}
+	return nil
+}
+
+type PageChip struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	Count         string                 `protobuf:"bytes,3,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageChip) Reset() {
+	*x = PageChip{}
+	mi := &file_edify_screens_v1_page_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageChip) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageChip) ProtoMessage() {}
+
+func (x *PageChip) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_page_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageChip.ProtoReflect.Descriptor instead.
+func (*PageChip) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *PageChip) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *PageChip) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *PageChip) GetCount() string {
+	if x != nil {
+		return x.Count
+	}
+	return ""
+}
+
+// Buttons that filter the page's rows on the device (To-Do's categories).
+type PageChips struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The filter's name, as the rows' keys name it ("cat").
+	Name  string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Label string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	// The value the page opens on ("all").
+	Value         string      `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	Chips         []*PageChip `protobuf:"bytes,4,rep,name=chips,proto3" json:"chips,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageChips) Reset() {
+	*x = PageChips{}
+	mi := &file_edify_screens_v1_page_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageChips) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageChips) ProtoMessage() {}
+
+func (x *PageChips) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_page_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageChips.ProtoReflect.Descriptor instead.
+func (*PageChips) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *PageChips) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *PageChips) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *PageChips) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *PageChips) GetChips() []*PageChip {
+	if x != nil {
+		return x.Chips
+	}
+	return nil
+}
+
+// A card of rows, optionally titled with a count ("Do next  45 open").
+type PageList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Count         string                 `protobuf:"bytes,2,opt,name=count,proto3" json:"count,omitempty"`
+	Subtitle      string                 `protobuf:"bytes,3,opt,name=subtitle,proto3" json:"subtitle,omitempty"`
+	Items         []*PageListItem        `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageList) Reset() {
+	*x = PageList{}
+	mi := &file_edify_screens_v1_page_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageList) ProtoMessage() {}
+
+func (x *PageList) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_page_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageList.ProtoReflect.Descriptor instead.
+func (*PageList) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *PageList) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *PageList) GetCount() string {
+	if x != nil {
+		return x.Count
+	}
+	return ""
+}
+
+func (x *PageList) GetSubtitle() string {
+	if x != nil {
+		return x.Subtitle
+	}
+	return ""
+}
+
+func (x *PageList) GetItems() []*PageListItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
 type PageBlock struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Kind:
@@ -2292,6 +2607,8 @@ type PageBlock struct {
 	//	*PageBlock_Segments
 	//	*PageBlock_Empty
 	//	*PageBlock_LinkTabs
+	//	*PageBlock_List
+	//	*PageBlock_Chips
 	Kind          isPageBlock_Kind `protobuf_oneof:"kind"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2299,7 +2616,7 @@ type PageBlock struct {
 
 func (x *PageBlock) Reset() {
 	*x = PageBlock{}
-	mi := &file_edify_screens_v1_page_proto_msgTypes[32]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2311,7 +2628,7 @@ func (x *PageBlock) String() string {
 func (*PageBlock) ProtoMessage() {}
 
 func (x *PageBlock) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_page_proto_msgTypes[32]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2324,7 +2641,7 @@ func (x *PageBlock) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageBlock.ProtoReflect.Descriptor instead.
 func (*PageBlock) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{32}
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *PageBlock) GetKind() isPageBlock_Kind {
@@ -2433,6 +2750,24 @@ func (x *PageBlock) GetLinkTabs() *PageLinkTabs {
 	return nil
 }
 
+func (x *PageBlock) GetList() *PageList {
+	if x != nil {
+		if x, ok := x.Kind.(*PageBlock_List); ok {
+			return x.List
+		}
+	}
+	return nil
+}
+
+func (x *PageBlock) GetChips() *PageChips {
+	if x != nil {
+		if x, ok := x.Kind.(*PageBlock_Chips); ok {
+			return x.Chips
+		}
+	}
+	return nil
+}
+
 type isPageBlock_Kind interface {
 	isPageBlock_Kind()
 }
@@ -2483,6 +2818,14 @@ type PageBlock_LinkTabs struct {
 	LinkTabs *PageLinkTabs `protobuf:"bytes,11,opt,name=link_tabs,json=linkTabs,proto3,oneof"`
 }
 
+type PageBlock_List struct {
+	List *PageList `protobuf:"bytes,12,opt,name=list,proto3,oneof"`
+}
+
+type PageBlock_Chips struct {
+	Chips *PageChips `protobuf:"bytes,13,opt,name=chips,proto3,oneof"`
+}
+
 func (*PageBlock_ScopeLine) isPageBlock_Kind() {}
 
 func (*PageBlock_Facts) isPageBlock_Kind() {}
@@ -2504,6 +2847,10 @@ func (*PageBlock_Segments) isPageBlock_Kind() {}
 func (*PageBlock_Empty) isPageBlock_Kind() {}
 
 func (*PageBlock_LinkTabs) isPageBlock_Kind() {}
+
+func (*PageBlock_List) isPageBlock_Kind() {}
+
+func (*PageBlock_Chips) isPageBlock_Kind() {}
 
 var File_edify_screens_v1_page_proto protoreflect.FileDescriptor
 
@@ -2684,7 +3031,34 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\bsegments\x18\x01 \x03(\v2\x1d.edify.screens.v1.PageSegmentR\bsegments\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x1a\n" +
 	"\bsubtitle\x18\x03 \x01(\tR\bsubtitle\x12\x18\n" +
-	"\acaption\x18\x04 \x01(\tR\acaption\"\xbf\x04\n" +
+	"\acaption\x18\x04 \x01(\tR\acaption\"\x98\x03\n" +
+	"\fPageListItem\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x14\n" +
+	"\x05lines\x18\x02 \x03(\tR\x05lines\x123\n" +
+	"\x06badges\x18\x03 \x03(\v2\x1b.edify.screens.v1.PageBadgeR\x06badges\x126\n" +
+	"\aactions\x18\x04 \x03(\v2\x1c.edify.screens.v1.PageActionR\aactions\x12\x12\n" +
+	"\x04href\x18\x05 \x01(\tR\x04href\x12\x12\n" +
+	"\x04tone\x18\x06 \x01(\tR\x04tone\x12:\n" +
+	"\bchildren\x18\a \x03(\v2\x1e.edify.screens.v1.PageListItemR\bchildren\x12\x14\n" +
+	"\x05count\x18\b \x01(\tR\x05count\x12<\n" +
+	"\x04keys\x18\t \x03(\v2(.edify.screens.v1.PageListItem.KeysEntryR\x04keys\x1a7\n" +
+	"\tKeysEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"L\n" +
+	"\bPageChip\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\tR\x05value\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x12\x14\n" +
+	"\x05count\x18\x03 \x01(\tR\x05count\"}\n" +
+	"\tPageChips\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x12\x14\n" +
+	"\x05value\x18\x03 \x01(\tR\x05value\x120\n" +
+	"\x05chips\x18\x04 \x03(\v2\x1a.edify.screens.v1.PageChipR\x05chips\"\x88\x01\n" +
+	"\bPageList\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\tR\x05count\x12\x1a\n" +
+	"\bsubtitle\x18\x03 \x01(\tR\bsubtitle\x124\n" +
+	"\x05items\x18\x04 \x03(\v2\x1e.edify.screens.v1.PageListItemR\x05items\"\xa6\x05\n" +
 	"\tPageBlock\x12\x1f\n" +
 	"\n" +
 	"scope_line\x18\x01 \x01(\tH\x00R\tscopeLine\x123\n" +
@@ -2698,7 +3072,9 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\bsegments\x18\t \x01(\v2\x1e.edify.screens.v1.PageSegmentsH\x00R\bsegments\x12\x16\n" +
 	"\x05empty\x18\n" +
 	" \x01(\tH\x00R\x05empty\x12=\n" +
-	"\tlink_tabs\x18\v \x01(\v2\x1e.edify.screens.v1.PageLinkTabsH\x00R\blinkTabsB\x06\n" +
+	"\tlink_tabs\x18\v \x01(\v2\x1e.edify.screens.v1.PageLinkTabsH\x00R\blinkTabs\x120\n" +
+	"\x04list\x18\f \x01(\v2\x1a.edify.screens.v1.PageListH\x00R\x04list\x123\n" +
+	"\x05chips\x18\r \x01(\v2\x1b.edify.screens.v1.PageChipsH\x00R\x05chipsB\x06\n" +
 	"\x04kindB\xdd\x01\n" +
 	"\x14com.edify.screens.v1B\tPageProtoP\x01ZXgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1;screensv1\xa2\x02\x03ESX\xaa\x02\x10Edify.Screens.V1\xca\x02\x10Edify\\Screens\\V1\xe2\x02\x1cEdify\\Screens\\V1\\GPBMetadata\xea\x02\x12Edify::Screens::V1b\x06proto3"
 
@@ -2714,7 +3090,7 @@ func file_edify_screens_v1_page_proto_rawDescGZIP() []byte {
 	return file_edify_screens_v1_page_proto_rawDescData
 }
 
-var file_edify_screens_v1_page_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_edify_screens_v1_page_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_edify_screens_v1_page_proto_goTypes = []any{
 	(*PageBadge)(nil),        // 0: edify.screens.v1.PageBadge
 	(*PageAction)(nil),       // 1: edify.screens.v1.PageAction
@@ -2748,8 +3124,13 @@ var file_edify_screens_v1_page_proto_goTypes = []any{
 	(*PagePanel)(nil),        // 29: edify.screens.v1.PagePanel
 	(*PageSegment)(nil),      // 30: edify.screens.v1.PageSegment
 	(*PageSegments)(nil),     // 31: edify.screens.v1.PageSegments
-	(*PageBlock)(nil),        // 32: edify.screens.v1.PageBlock
-	nil,                      // 33: edify.screens.v1.PageFilters.HiddenEntry
+	(*PageListItem)(nil),     // 32: edify.screens.v1.PageListItem
+	(*PageChip)(nil),         // 33: edify.screens.v1.PageChip
+	(*PageChips)(nil),        // 34: edify.screens.v1.PageChips
+	(*PageList)(nil),         // 35: edify.screens.v1.PageList
+	(*PageBlock)(nil),        // 36: edify.screens.v1.PageBlock
+	nil,                      // 37: edify.screens.v1.PageFilters.HiddenEntry
+	nil,                      // 38: edify.screens.v1.PageListItem.KeysEntry
 }
 var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	0,  // 0: edify.screens.v1.PageHeader.badges:type_name -> edify.screens.v1.PageBadge
@@ -2757,7 +3138,7 @@ var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	4,  // 2: edify.screens.v1.PageFacts.facts:type_name -> edify.screens.v1.PageFact
 	6,  // 3: edify.screens.v1.PageFilter.options:type_name -> edify.screens.v1.PageFilterOption
 	7,  // 4: edify.screens.v1.PageFilters.filters:type_name -> edify.screens.v1.PageFilter
-	33, // 5: edify.screens.v1.PageFilters.hidden:type_name -> edify.screens.v1.PageFilters.HiddenEntry
+	37, // 5: edify.screens.v1.PageFilters.hidden:type_name -> edify.screens.v1.PageFilters.HiddenEntry
 	9,  // 6: edify.screens.v1.PageStrip.metrics:type_name -> edify.screens.v1.PageMetric
 	1,  // 7: edify.screens.v1.PageCell.actions:type_name -> edify.screens.v1.PageAction
 	12, // 8: edify.screens.v1.PageRow.cells:type_name -> edify.screens.v1.PageCell
@@ -2780,22 +3161,30 @@ var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	19, // 25: edify.screens.v1.PagePanelItem.meter:type_name -> edify.screens.v1.PageMeter
 	0,  // 26: edify.screens.v1.PagePanel.badges:type_name -> edify.screens.v1.PageBadge
 	28, // 27: edify.screens.v1.PagePanel.items:type_name -> edify.screens.v1.PagePanelItem
-	32, // 28: edify.screens.v1.PageSegment.blocks:type_name -> edify.screens.v1.PageBlock
+	36, // 28: edify.screens.v1.PageSegment.blocks:type_name -> edify.screens.v1.PageBlock
 	30, // 29: edify.screens.v1.PageSegments.segments:type_name -> edify.screens.v1.PageSegment
-	5,  // 30: edify.screens.v1.PageBlock.facts:type_name -> edify.screens.v1.PageFacts
-	8,  // 31: edify.screens.v1.PageBlock.filters:type_name -> edify.screens.v1.PageFilters
-	10, // 32: edify.screens.v1.PageBlock.strip:type_name -> edify.screens.v1.PageStrip
-	16, // 33: edify.screens.v1.PageBlock.table:type_name -> edify.screens.v1.PageTable
-	22, // 34: edify.screens.v1.PageBlock.rail:type_name -> edify.screens.v1.PageRail
-	24, // 35: edify.screens.v1.PageBlock.chart:type_name -> edify.screens.v1.PageChart
-	29, // 36: edify.screens.v1.PageBlock.panel:type_name -> edify.screens.v1.PagePanel
-	31, // 37: edify.screens.v1.PageBlock.segments:type_name -> edify.screens.v1.PageSegments
-	18, // 38: edify.screens.v1.PageBlock.link_tabs:type_name -> edify.screens.v1.PageLinkTabs
-	39, // [39:39] is the sub-list for method output_type
-	39, // [39:39] is the sub-list for method input_type
-	39, // [39:39] is the sub-list for extension type_name
-	39, // [39:39] is the sub-list for extension extendee
-	0,  // [0:39] is the sub-list for field type_name
+	0,  // 30: edify.screens.v1.PageListItem.badges:type_name -> edify.screens.v1.PageBadge
+	1,  // 31: edify.screens.v1.PageListItem.actions:type_name -> edify.screens.v1.PageAction
+	32, // 32: edify.screens.v1.PageListItem.children:type_name -> edify.screens.v1.PageListItem
+	38, // 33: edify.screens.v1.PageListItem.keys:type_name -> edify.screens.v1.PageListItem.KeysEntry
+	33, // 34: edify.screens.v1.PageChips.chips:type_name -> edify.screens.v1.PageChip
+	32, // 35: edify.screens.v1.PageList.items:type_name -> edify.screens.v1.PageListItem
+	5,  // 36: edify.screens.v1.PageBlock.facts:type_name -> edify.screens.v1.PageFacts
+	8,  // 37: edify.screens.v1.PageBlock.filters:type_name -> edify.screens.v1.PageFilters
+	10, // 38: edify.screens.v1.PageBlock.strip:type_name -> edify.screens.v1.PageStrip
+	16, // 39: edify.screens.v1.PageBlock.table:type_name -> edify.screens.v1.PageTable
+	22, // 40: edify.screens.v1.PageBlock.rail:type_name -> edify.screens.v1.PageRail
+	24, // 41: edify.screens.v1.PageBlock.chart:type_name -> edify.screens.v1.PageChart
+	29, // 42: edify.screens.v1.PageBlock.panel:type_name -> edify.screens.v1.PagePanel
+	31, // 43: edify.screens.v1.PageBlock.segments:type_name -> edify.screens.v1.PageSegments
+	18, // 44: edify.screens.v1.PageBlock.link_tabs:type_name -> edify.screens.v1.PageLinkTabs
+	35, // 45: edify.screens.v1.PageBlock.list:type_name -> edify.screens.v1.PageList
+	34, // 46: edify.screens.v1.PageBlock.chips:type_name -> edify.screens.v1.PageChips
+	47, // [47:47] is the sub-list for method output_type
+	47, // [47:47] is the sub-list for method input_type
+	47, // [47:47] is the sub-list for extension type_name
+	47, // [47:47] is the sub-list for extension extendee
+	0,  // [0:47] is the sub-list for field type_name
 }
 
 func init() { file_edify_screens_v1_page_proto_init() }
@@ -2811,7 +3200,7 @@ func file_edify_screens_v1_page_proto_init() {
 		(*PagePanelItem_Links)(nil),
 		(*PagePanelItem_Meter)(nil),
 	}
-	file_edify_screens_v1_page_proto_msgTypes[32].OneofWrappers = []any{
+	file_edify_screens_v1_page_proto_msgTypes[36].OneofWrappers = []any{
 		(*PageBlock_ScopeLine)(nil),
 		(*PageBlock_Facts)(nil),
 		(*PageBlock_Filters)(nil),
@@ -2823,6 +3212,8 @@ func file_edify_screens_v1_page_proto_init() {
 		(*PageBlock_Segments)(nil),
 		(*PageBlock_Empty)(nil),
 		(*PageBlock_LinkTabs)(nil),
+		(*PageBlock_List)(nil),
+		(*PageBlock_Chips)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2830,7 +3221,7 @@ func file_edify_screens_v1_page_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_screens_v1_page_proto_rawDesc), len(file_edify_screens_v1_page_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   34,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

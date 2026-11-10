@@ -31,3 +31,10 @@ export function webPageFor(href: string): string {
   return url.pathname + url.search;
 }
 
+
+/** Whether a row shows for the page's chips: a chip left on its "all"
+ * value, or one naming the row's own key, shows it (the web's x-show
+ * `cat === 'all' || cat === '<the row's>'`). */
+export function isShownFor(keys: Readonly<Record<string, string>>, chosen: Readonly<Record<string, string>>): boolean {
+  return Object.entries(chosen).every(([name, value]) => value === 'all' || value === '' || keys[name] === undefined || keys[name] === value);
+}

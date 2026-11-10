@@ -19,7 +19,7 @@ import (
 const (
 	pathMyPlan       = "/api/mobile/v1/my-plan"
 	maxQueryKeys     = 20
-	maxQueryValueLen = 64
+	maxQueryValueLen = 128
 )
 
 var queryKey = regexp.MustCompile(`^[a-z][a-z_]{0,39}$`)
@@ -28,22 +28,31 @@ var queryKey = regexp.MustCompile(`^[a-z][a-z_]{0,39}$`)
 func (s *Service) GetMyPlan(
 	ctx context.Context, request *connect.Request[screensv1.GetMyPlanRequest],
 ) (*connect.Response[screensv1.GetMyPlanResponse], error) {
-	given := request.Msg.GetQuery()
-	if len(given) > maxQueryKeys {
-		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This view of My Plan cannot be opened.")
-	}
-	query := url.Values{}
-	for key, value := range given {
-		if !queryKey.MatchString(key) || len(value) > maxQueryValueLen {
-			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This view of My Plan cannot be opened.")
-		}
-		if value != "" {
-			query.Set(key, value)
-		}
+	query, err := pageQuery(ctx, request.Msg.GetQuery())
+	if err != nil {
+		return nil, err
 	}
 	path := pathMyPlan
 	if len(query) > 0 {
 		path += "?" + query.Encode()
 	}
 	return fetch[screensv1.GetMyPlanResponse](ctx, s, path)
+}
+
+// pageQuery is a page's own query, refused when a key is not a plain word or
+// a value is too long. The feed decides which keys the page reads.
+func pageQuery(ctx context.Context, given map[string]string) (url.Values, error) {
+	if len(given) > maxQueryKeys {
+		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This view cannot be opened.")
+	}
+	query := url.Values{}
+	for key, value := range given {
+		if !queryKey.MatchString(key) || len(value) > maxQueryValueLen {
+			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This view cannot be opened.")
+		}
+		if value != "" {
+			query.Set(key, value)
+		}
+	}
+	return query, nil
 }

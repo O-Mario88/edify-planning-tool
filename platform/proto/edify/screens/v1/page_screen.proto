@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+import "edify/screens/v1/page.proto";
+
+// Any page the app draws from its components (To-Do, Dashboard, Clusters,
+// Calendar, Budget …): the page the existing application renders for the
+// same person, read as its header, tabs and blocks
+// (apps.mobile_feed.page_blocks). Only the pages the feed names are
+// reachable; the page's own gate decides who opens it.
+service PageScreenService {
+  rpc GetPage(GetPageRequest) returns (GetPageResponse);
+}
+
+message GetPageRequest {
+  // The page's web path ("/todos", "/clusters").
+  string path = 1;
+  // The page's own query, as its tabs, filters and pagers write it.
+  map<string, string> query = 2;
+}
+
+message GetPageResponse {
+  PageHeader header = 1;
+  repeated PageTab tabs = 2;
+  repeated PageBlock blocks = 3;
+  string web_path = 4;
+  // Where the page sent the reader instead (a page that redirects).
+  string redirect = 5;
+  // The page's refusal, when it is not the reader's to open.
+  string error = 6;
+}

@@ -1,44 +1,51 @@
 /**
- * My Plan: the page the web renders for the same person
- * (pages/my_plan/index.html), drawn natively — its header and Export, the
- * period tabs and Open Calendar, the filters, the figure strips, Planned and
- * remaining, each table of work with its rows and their Actions, and the
- * breakdown by period.
+ * Any page the app draws from its components (My Plan, To-Do, Dashboard,
+ * Clusters, Budget …): the page the web renders for the same person, drawn
+ * natively — its back link, eyebrow, title, description, pills and buttons,
+ * its tabs, and its blocks.
  *
- * The period tabs, filters and pagers stay on the screen and change its
- * query, as the page's own links do. A school opens its native profile. A
- * row's actions, Export and the other links open the web page they belong
- * to, until their drawers are native.
+ * A link that only changes this page's own query (its tabs, filters,
+ * pagers) stays on the screen. A page the app draws opens natively, a
+ * school opens its profile, and everything else opens on the web — a
+ * drawer on the page its record belongs to.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
 import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { Download } from 'lucide-react-native';
+import { ChevronLeft, Download } from 'lucide-react-native';
 
 import { ApiError } from '../api/connect';
 import { describe, useSession } from '../auth/SessionContext';
-import type { GetMyPlanResponse } from '../gen/edify/screens/v1/my_plan_pb';
+import type { GetPageResponse } from '../gen/edify/screens/v1/page_screen_pb';
+import type { PageAction } from '../gen/edify/screens/v1/page_pb';
 import { fonts, radius, useTheme } from '../theme';
 import { MakeRoomContext } from '../ui/Dropdown';
 import { PageBlocksView } from '../ui/page/PageBlocksView';
+import { ActionButton, Badge, Description, TabRail } from '../ui/page/PageHeaderParts';
 import { webPageFor } from '../ui/page/pageLinks';
 import { PageLinkContext } from '../ui/page/shared';
 
-const MY_PLAN = '/my-plan';
-
 type Query = Readonly<Record<string, string>>;
 
-interface MyPlanScreenProps {
-  /** Open a school's profile (its name in a table). */
+interface PageScreenProps {
+  /** The page's web path ("/my-plan"). */
+  readonly path: string;
+  /** The query the page opened with ("?fy=2026"). */
+  readonly initialQuery?: Query;
+  /** Whether the app draws a web path itself. */
+  readonly isNative: (path: string) => boolean;
+  /** Open a path the app draws (another page, a tab). */
+  readonly onOpen: (url: string) => void;
+  /** Open a school's profile. */
   readonly onOpenSchool: (schoolId: string) => void;
 }
 
-export function MyPlanScreen({ onOpenSchool }: MyPlanScreenProps) {
+export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSchool }: PageScreenProps) {
   const { api, environment, signOut } = useSession();
   const { colors } = useTheme();
-  const [query, setQuery] = useState<Query>({});
-  const [data, setData] = useState<GetMyPlanResponse | null>(null);
+  const [query, setQuery] = useState<Query>(initialQuery);
+  const [data, setData] = useState<GetPageResponse | null>(null);
   const [error, setError] = useState('');
   const [isBusy, setIsBusy] = useState(false);
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -48,7 +55,12 @@ export function MyPlanScreen({ onOpenSchool }: MyPlanScreenProps) {
     setIsBusy(true);
     setError('');
     try {
-      setData(await api.getMyPlan(query));
+      const answer = await api.getPage(path, query);
+      if (answer.redirect) {
+        onOpen(answer.redirect);
+        return;
+      }
+      setData(answer);
     } catch (cause) {
       if (cause instanceof ApiError && cause.code === 'unauthenticated') {
         await signOut();
@@ -58,23 +70,25 @@ export function MyPlanScreen({ onOpenSchool }: MyPlanScreenProps) {
     } finally {
       setIsBusy(false);
     }
-  }, [api, query, signOut]);
+  }, [api, onOpen, path, query, signOut]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const openWeb = useCallback(
-    (path: string) => void Linking.openURL(`${environment.identityUrl}${path}`),
+    (webPath: string) => void Linking.openURL(`${environment.identityUrl}${webPath}`),
     [environment.identityUrl],
   );
 
   const openLink = useCallback(
     (href: string) => {
-      const url = new URL(href, `http://edify.local${MY_PLAN}`);
-      if (url.pathname === MY_PLAN) {
-        // The page's own tabs and pagers: their link is the whole query.
+      const url = new URL(href, `http://edify.local${path}`);
+      const own = url.pathname.replace(/\/+$/, '') === path.replace(/\/+$/, '');
+      if (own) {
+        // The page's own tabs, filters and pagers: their link is the whole query.
         setQuery(Object.fromEntries(url.searchParams.entries()));
+        scroller.current?.scrollTo({ y: 0, animated: false });
         return;
       }
       const school = /^\/schools\/([^/]+)$/.exec(url.pathname);
@@ -82,9 +96,13 @@ export function MyPlanScreen({ onOpenSchool }: MyPlanScreenProps) {
         onOpenSchool(decodeURIComponent(school[1]));
         return;
       }
+      if (isNative(url.pathname)) {
+        onOpen(url.pathname + url.search);
+        return;
+      }
       openWeb(webPageFor(url.pathname + url.search));
     },
-    [onOpenSchool, openWeb],
+    [isNative, onOpen, onOpenSchool, openWeb, path],
   );
 
   const filter = useCallback(
@@ -109,7 +127,9 @@ export function MyPlanScreen({ onOpenSchool }: MyPlanScreenProps) {
   }
 
   const header = data?.header;
+  // Export sits beside the title, as the page header's control does on a phone.
   const exportAction = header?.actions.find((action) => action.key === 'export');
+  const buttons = header?.actions.filter((action) => action !== exportAction) ?? [];
   return (
     <PageLinkContext.Provider value={openLink}>
       <MakeRoomContext.Provider value={makeRoom}>
@@ -121,25 +141,35 @@ export function MyPlanScreen({ onOpenSchool }: MyPlanScreenProps) {
           keyboardShouldPersistTaps="handled"
           refreshControl={<RefreshControl refreshing={isBusy && data !== null} onRefresh={() => void load()} />}
         >
+          {header?.backLabel ? (
+            <Pressable onPress={() => openLink(header.backHref)} accessibilityRole="link" hitSlop={8} style={styles.back}>
+              <ChevronLeft size={14} color={colors.link} />
+              <Text style={[styles.backText, { color: colors.link }]}>{header.backLabel}</Text>
+            </Pressable>
+          ) : null}
           {header?.eyebrow ? <Text style={[styles.eyebrow, { color: colors.eyebrow }]}>{header.eyebrow}</Text> : null}
           <View style={styles.titleRow}>
             <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-              {header?.title || 'My Plan'}
+              {header?.title ?? ''}
             </Text>
-            {exportAction ? (
-              <Pressable
-                onPress={() => openLink(exportAction.href)}
-                accessibilityRole="button"
-                accessibilityLabel="Export this plan to Excel"
-                style={[styles.export, { borderColor: colors.outlineBorder, backgroundColor: colors.raised }]}
-              >
-                <Download size={14} color={colors.textSubtle} />
-                <Text style={[styles.exportText, { color: colors.text }]}>{exportAction.label}</Text>
-              </Pressable>
-            ) : null}
+            {exportAction ? <ExportButton action={exportAction} onPress={() => openLink(exportAction.href)} /> : null}
           </View>
-          {header?.description ? (
-            <Text style={[styles.description, { color: colors.textMuted }]}>{header.description}</Text>
+          {header?.description ? <Description text={header.description} /> : null}
+          {header && (header.badges.length > 0 || buttons.length > 0) ? (
+            <View style={styles.controls}>
+              {header.badges.map((badge, index) => (
+                <Badge key={badge.text} badge={badge} isWide={index === 0 && header.badges.length > 1} />
+              ))}
+              {buttons.map((action) => (
+                <ActionButton key={action.key + action.href} action={action} onPress={() => openLink(action.href)} />
+              ))}
+            </View>
+          ) : null}
+          {data && data.tabs.length > 0 ? (
+            <TabRail
+              tabs={data.tabs.map((tab) => ({ key: tab.key, label: tab.label, active: tab.active }))}
+              onPick={(tab) => setQuery((current) => ({ ...current, tab }))}
+            />
           ) : null}
           {error ? (
             <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">
@@ -151,7 +181,7 @@ export function MyPlanScreen({ onOpenSchool }: MyPlanScreenProps) {
               <PageBlocksView blocks={data.blocks} onFilter={filter} isRaised={false} />
             </View>
           ) : error ? null : (
-            <ActivityIndicator color={colors.primary} accessibilityLabel="Loading My Plan" />
+            <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />
           )}
         </ScrollView>
       </MakeRoomContext.Provider>
@@ -159,13 +189,30 @@ export function MyPlanScreen({ onOpenSchool }: MyPlanScreenProps) {
   );
 }
 
+function ExportButton({ action, onPress }: { readonly action: PageAction; readonly onPress: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${action.label} to Excel`}
+      style={[styles.export, { borderColor: colors.outlineBorder, backgroundColor: colors.raised }]}
+    >
+      <Download size={14} color={colors.textSubtle} />
+      <Text style={[styles.exportText, { color: colors.text }]}>{action.label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   page: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 32, gap: 12 },
+  back: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  backText: { fontFamily: fonts.semibold, fontSize: 12, textTransform: 'uppercase' },
   eyebrow: { fontFamily: fonts.semibold, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.4 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   title: { flexShrink: 1, fontFamily: fonts.bold, fontSize: 20, lineHeight: 24 },
+  controls: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   export: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 12 },
   exportText: { fontFamily: fonts.semibold, fontSize: 12 },
-  description: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 19, marginTop: -4 },
   error: { fontFamily: fonts.medium, fontSize: 13 },
 });

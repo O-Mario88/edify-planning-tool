@@ -16,11 +16,12 @@ import { ChevronLeft } from 'lucide-react-native';
 
 import { ApiError } from '../api/connect';
 import { describe, useSession } from '../auth/SessionContext';
-import type { PageAction, PageBadge } from '../gen/edify/screens/v1/page_pb';
+import type { PageAction } from '../gen/edify/screens/v1/page_pb';
 import type { GetSchoolProfileResponse } from '../gen/edify/screens/v1/school_profile_pb';
-import { fonts, toneColors, useTheme } from '../theme';
+import { fonts, useTheme } from '../theme';
 import { MakeRoomContext } from '../ui/Dropdown';
 import { PageBlocksView } from '../ui/page/PageBlocksView';
+import { ActionButton, Badge, Description, TabRail } from '../ui/page/PageHeaderParts';
 import { PageLinkContext } from '../ui/page/shared';
 import { WebDrawer } from '../ui/WebDrawer';
 import { PlanningDrawer } from '../ui/planning/PlanningDrawer';
@@ -273,128 +274,12 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolPr
 }
 
 /** "School ID: 1286", the value bold as the page sets it. */
-function Description({ text }: { readonly text: string }) {
-  const { colors } = useTheme();
-  const at = text.indexOf(': ');
-  return (
-    <Text style={[styles.description, { color: colors.textMuted }]}>
-      {at > 0 ? (
-        <>
-          {text.slice(0, at + 2)}
-          <Text style={[styles.descriptionValue, { color: colors.text }]}>{text.slice(at + 2)}</Text>
-        </>
-      ) : (
-        text
-      )}
-    </Text>
-  );
-}
-
-function Badge({ badge, isWide }: { readonly badge: PageBadge; readonly isWide: boolean }) {
-  const { colors } = useTheme();
-  const tone = badge.tone === 'plain' ? undefined : toneColors(colors, badge.tone);
-  return (
-    <View
-      accessibilityLabel={badge.title ? `${badge.text}. ${badge.title}` : badge.text}
-      style={[
-        styles.badge,
-        isWide && styles.wide,
-        tone ? { backgroundColor: tone.soft, borderColor: tone.fg, borderWidth: 1 } : { backgroundColor: colors.surfaceMuted },
-      ]}
-    >
-      <Text style={[styles.badgeText, { color: tone ? tone.fg : colors.textMuted }]}>{badge.text}</Text>
-    </View>
-  );
-}
-
-function ActionButton({ action, onPress }: { readonly action: PageAction; readonly onPress: () => void }) {
-  const { colors } = useTheme();
-  const look = action.primary
-    ? { backgroundColor: colors.primary, borderColor: colors.primary }
-    : action.enabled
-      ? { backgroundColor: colors.raised, borderColor: colors.border }
-      : { backgroundColor: colors.surfaceMuted, borderColor: colors.border };
-  const ink = action.primary ? colors.primaryInk : action.enabled ? colors.text : colors.textSubtle;
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={!action.enabled}
-      accessibilityRole="button"
-      accessibilityLabel={action.enabled ? action.label : `${action.label} unavailable: ${action.reason}`}
-      accessibilityState={{ disabled: !action.enabled }}
-      style={[styles.action, look, action.primary ? styles.primaryShadow : styles.shadow]}
-    >
-      <Text style={[styles.actionText, { color: ink }]}>{action.label}</Text>
-    </Pressable>
-  );
-}
-
-interface TabItem {
-  readonly key: string;
-  readonly label: string;
-  readonly active: boolean;
-}
-
-/** The profile's tab rail: straight dividers, the open tab filled, the rail
- * scrolling sideways when it is longer than the screen. */
-function TabRail({ tabs, onPick }: { readonly tabs: readonly TabItem[]; readonly onPick: (key: string) => void }) {
-  const { colors } = useTheme();
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={[styles.rail, { backgroundColor: colors.surface }]}
-      accessibilityRole="tablist"
-    >
-      {tabs.map((tab, index) => {
-        const next = tabs[index + 1];
-        const hasRule = next !== undefined && !tab.active && !next.active;
-        return (
-          <Pressable
-            key={tab.key}
-            onPress={() => onPick(tab.key)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: tab.active }}
-            style={[styles.tab, tab.active && { backgroundColor: colors.segmentActive }, tab.active && index === 0 && styles.tabFirst]}
-          >
-            <Text style={[styles.tabText, tab.active ? styles.tabOn : { color: colors.textMuted }]}>{tab.label}</Text>
-            {hasRule ? <View style={[styles.tabRule, { backgroundColor: colors.border }]} /> : null}
-          </Pressable>
-        );
-      })}
-    </ScrollView>
-  );
-}
-
 const styles = StyleSheet.create({
   page: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 32, gap: 16 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
   backText: { fontFamily: fonts.semibold, fontSize: 12, textTransform: 'uppercase' },
   title: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 23 },
-  description: { fontFamily: fonts.medium, fontSize: 13, marginTop: 4 },
-  descriptionValue: { fontFamily: fonts.bold },
   controls: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, alignItems: 'center' },
-  wide: { width: '100%' },
-  badgeText: { fontFamily: fonts.semibold, fontSize: 12 },
-  action: {
-    flexGrow: 1,
-    height: 32,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shadow: { boxShadow: '0px 1px 3px 0px rgba(0, 0, 0, 0.1), 0px 1px 2px -1px rgba(0, 0, 0, 0.1)' },
-  primaryShadow: { boxShadow: '0px 6px 14px -10px rgba(14, 93, 163, 0.44)' },
-  actionText: { fontFamily: fonts.semibold, fontSize: 12 },
-  rail: { flexGrow: 0, borderRadius: 10 },
-  tab: { height: 32, paddingHorizontal: 14, justifyContent: 'center' },
-  tabFirst: { borderTopLeftRadius: 8, borderBottomLeftRadius: 8 },
-  tabText: { fontFamily: fonts.semibold, fontSize: 13 },
-  tabOn: { fontFamily: fonts.bold, color: '#ffffff' },
-  tabRule: { position: 'absolute', right: 0, top: 8, bottom: 8, width: 1 },
   error: { fontFamily: fonts.medium, fontSize: 13 },
   toast: { position: 'absolute', left: 16, right: 16, bottom: 16, borderWidth: 1, borderRadius: 12, padding: 12 },
   toastText: { fontFamily: fonts.semibold, fontSize: 13 },

@@ -281,12 +281,46 @@ func TestMyPlanRefusesAQueryThatIsNotPlain(t *testing.T) {
 	for _, query := range []map[string]string{
 		{"fy&x": "1"},
 		{"Export": "xlsx"},
-		{"fy": strings.Repeat("9", 65)},
+		{"fy": strings.Repeat("9", 129)},
 	} {
 		_, err := service.GetMyPlan(context.Background(), connect.NewRequest(&screensv1.GetMyPlanRequest{Query: query}))
 		if connect.CodeOf(err) != connect.CodeInvalidArgument {
 			t.Fatalf("%v: got %v", query, err)
 		}
+	}
+	if len(fetcher.paths) != 0 {
+		t.Fatalf("reached the feed: %v", fetcher.paths)
+	}
+}
+
+func TestAPageGoesToTheFeedWithItsQuery(t *testing.T) {
+	fetcher := &recordingFetcher{}
+	service := NewService(fetcher)
+
+	_, _ = service.GetPage(context.Background(), connect.NewRequest(&screensv1.GetPageRequest{
+		Path: "/clusters", Query: map[string]string{"status": "active"},
+	}))
+
+	if strings.Join(fetcher.paths, "|") != "/api/mobile/v1/page?path=%2Fclusters&status=active" {
+		t.Fatalf("paths %v", fetcher.paths)
+	}
+}
+
+func TestAPagePathMustBePlain(t *testing.T) {
+	fetcher := &recordingFetcher{}
+	service := NewService(fetcher)
+
+	for _, path := range []string{"", "todos", "/../admin", "/todos?x=1", "https://elsewhere.example/x", "/a/b/c/d/e", "/Todos"} {
+		_, err := service.GetPage(context.Background(), connect.NewRequest(&screensv1.GetPageRequest{Path: path}))
+		if connect.CodeOf(err) != connect.CodeInvalidArgument {
+			t.Fatalf("%q: got %v", path, err)
+		}
+	}
+	_, err := service.GetPage(context.Background(), connect.NewRequest(&screensv1.GetPageRequest{
+		Path: "/todos", Query: map[string]string{"path": "/users"},
+	}))
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Fatalf("path in query: got %v", err)
 	}
 	if len(fetcher.paths) != 0 {
 		t.Fatalf("reached the feed: %v", fetcher.paths)

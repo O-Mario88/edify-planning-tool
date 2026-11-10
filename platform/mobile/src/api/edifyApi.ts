@@ -49,6 +49,8 @@ import type {
 import { PlanningDrawerService } from '../gen/edify/screens/v1/planning_drawer_pb';
 import type { GetMyPlanResponse } from '../gen/edify/screens/v1/my_plan_pb';
 import { MyPlanScreenService } from '../gen/edify/screens/v1/my_plan_pb';
+import type { GetPageResponse } from '../gen/edify/screens/v1/page_screen_pb';
+import { PageScreenService } from '../gen/edify/screens/v1/page_screen_pb';
 
 /** A request message's own fields, without the generated bookkeeping. */
 type Fields<T> = Partial<Omit<T, '$typeName' | '$unknown'>>;
@@ -90,6 +92,8 @@ export interface EdifyApi {
   getTrainingCapacity(request: Fields<GetTrainingCapacityRequest>): Promise<GetTrainingCapacityResponse>;
   /** My Plan for the page's own query (its tabs, filters and pagers). */
   getMyPlan(query: Readonly<Record<string, string>>): Promise<GetMyPlanResponse>;
+  /** Any page the app draws from its components, with its own query. */
+  getPage(path: string, query: Readonly<Record<string, string>>): Promise<GetPageResponse>;
 }
 
 export function createEdifyApi(transport: ConnectTransport): EdifyApi {
@@ -165,6 +169,9 @@ export function createEdifyApi(transport: ConnectTransport): EdifyApi {
     },
     getMyPlan(query) {
       return callUnary(transport, MyPlanScreenService.method.getMyPlan, { query: { ...query } });
+    },
+    getPage(path, query) {
+      return callUnary(transport, PageScreenService.method.getPage, { path, query: { ...query } });
     },
     async getAddToCluster(schoolId) {
       const answer = await callUnary(transport, SchoolActionService.method.getAddToCluster, { schoolId });

@@ -3,7 +3,7 @@
  * way the web draws that component on a phone; a kind the app does not know
  * yet is left out, never guessed at.
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { PageBlock, PageFacts, PageSegments } from '../../gen/edify/screens/v1/page_pb';
@@ -11,11 +11,13 @@ import { fonts, useTheme } from '../../theme';
 import { PageChartView } from './PageChartView';
 import { PageFilterBar } from './PageFilterBar';
 import { PageLinkTabsView } from './PageLinkTabsView';
+import { PageListView } from './PageListView';
+import { PageChipsView } from './PageChipsView';
 import { PagePanelView } from './PagePanelView';
 import { PageRailView } from './PageRailView';
 import { PageStripView } from './PageStripView';
 import { EmptyState, PageTableView } from './PageTableView';
-import { cardStyles, usePageLink } from './shared';
+import { ChipContext, cardStyles, usePageLink } from './shared';
 
 interface PageBlocksViewProps {
   readonly blocks: readonly PageBlock[];
@@ -27,12 +29,27 @@ interface PageBlocksViewProps {
 }
 
 export function PageBlocksView({ blocks, onFilter, isRaised = true }: PageBlocksViewProps) {
+  // The page's chip filters start on the values its script starts them on.
+  const opening = useMemo(
+    () =>
+      Object.fromEntries(
+        blocks.flatMap((block) => (block.kind.case === 'chips' ? [[block.kind.value.name, block.kind.value.value]] : [])),
+      ),
+    [blocks],
+  );
+  const [chosen, setChosen] = useState<Record<string, string>>(opening);
+  const chips = useMemo(
+    () => ({ chosen: { ...opening, ...chosen }, choose: (name: string, value: string) => setChosen((now) => ({ ...now, [name]: value })) }),
+    [chosen, opening],
+  );
   return (
-    <View style={styles.stack}>
-      {blocks.map((block, index) => (
-        <Block key={index} block={block} onFilter={onFilter} isRaised={isRaised} />
-      ))}
-    </View>
+    <ChipContext.Provider value={chips}>
+      <View style={styles.stack}>
+        {blocks.map((block, index) => (
+          <Block key={index} block={block} onFilter={onFilter} isRaised={isRaised} />
+        ))}
+      </View>
+    </ChipContext.Provider>
   );
 }
 
@@ -54,6 +71,10 @@ function Block({ block, onFilter, isRaised = true }: BlockProps) {
       return <PageFilterBar filters={kind.value} onFilter={onFilter} isRaised={isRaised} />;
     case 'linkTabs':
       return <PageLinkTabsView tabs={kind.value} />;
+    case 'list':
+      return <PageListView list={kind.value} />;
+    case 'chips':
+      return <PageChipsView chips={kind.value} />;
     case 'strip':
       return <PageStripView strip={kind.value} />;
     case 'table':

@@ -280,6 +280,49 @@ message PageSegments {
   string caption = 4;
 }
 
+// One record in a card of rows: a task, an activity, a request.
+message PageListItem {
+  string title = 1;
+  // The lines under the title ("Nakisunga Hill Primary · partner").
+  repeated string lines = 2;
+  repeated PageBadge badges = 3;
+  // The row's buttons and links ("Open").
+  repeated PageAction actions = 4;
+  // Where the whole row leads, when it is a link.
+  string href = 5;
+  // The colour of its icon square: info, good, caution, alert, brand.
+  string tone = 6;
+  // An entry that opens onto its records (identical To-Dos as one).
+  repeated PageListItem children = 7;
+  string count = 8;
+  // What the row is filtered on by the page's chips (cat → "Finance").
+  map<string, string> keys = 9;
+}
+
+message PageChip {
+  string value = 1;
+  string label = 2;
+  string count = 3;
+}
+
+// Buttons that filter the page's rows on the device (To-Do's categories).
+message PageChips {
+  // The filter's name, as the rows' keys name it ("cat").
+  string name = 1;
+  string label = 2;
+  // The value the page opens on ("all").
+  string value = 3;
+  repeated PageChip chips = 4;
+}
+
+// A card of rows, optionally titled with a count ("Do next  45 open").
+message PageList {
+  string title = 1;
+  string count = 2;
+  string subtitle = 3;
+  repeated PageListItem items = 4;
+}
+
 message PageBlock {
   oneof kind {
     // "Single school, FY 2026/27": what the profile covers.
@@ -295,5 +338,7 @@ message PageBlock {
     // An empty state's message ("No record yet: the figure is 0.").
     string empty = 10;
     PageLinkTabs link_tabs = 11;
+    PageList list = 12;
+    PageChips chips = 13;
   }
 }

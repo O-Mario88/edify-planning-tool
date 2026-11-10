@@ -513,3 +513,102 @@ class MyPlanComponentsTest(SimpleTestCase):
     def test_a_part_loaded_later_is_read_in_its_place(self):
         self.assertEqual(self.later, ["/my-plan/readiness?fy=2027"])
         self.assertEqual(self.kind("table")[-1]["title"], "Readiness")
+
+
+TODOS = """
+<main>
+<div x-data="{ cat: 'all', prio: 'all' }">
+  <header class="mobile-role-home edify-page-header" data-mobile-role-home>
+    <div class="mobile-role-home__copy"><p>My work</p><h1 class="edify-page-title">Action queue</h1><span>Start with the highest-priority task.</span></div>
+    <div class="mobile-role-home__context"><span class="mobile-role-home__figure"><strong>45</strong> open</span></div>
+    <a href="/my-plan/a1" class="mobile-role-home__action" data-mobile-primary-action><span>Do next: Chase Partner Delivery</span><span aria-hidden="true">→</span></a>
+  </header>
+  <section class="mobile-home-only mobile-home-section">
+    <div class="mobile-home-section__header"><h2>Do next</h2><span>45 open</span></div>
+    <div class="card px-3 divide-y divide-slate-50">
+      <div class="flex items-center"><div class="h-8 w-8 bg-amber-50"><svg></svg></div>
+        <div class="min-w-0 flex-1"><p>Enter SSA</p><p>Feed School</p></div>
+        <span class="hidden sm:inline-flex rounded-pill bg-rose-50">Critical</span>
+        <a href="/schools/s1/ssa-entry">Open</a></div>
+    </div>
+  </section>
+  <div class="edify-page-header mobile-home-hide"><h1 class="edify-page-title">To-Do</h1></div>
+  <div data-edify-tablist role="group" aria-label="Category">
+    <button type="button" data-edify-tab class="edify-tab" @click="cat='all'">All Categories</button>
+    <button type="button" data-edify-tab class="edify-tab" @click="cat='Finance'">Finance <span data-edify-tab-count>4</span></button>
+  </div>
+  <div class="card px-4 divide-y divide-slate-50">
+    <details class="todo-group" x-show="(cat === 'all' || cat === 'Finance') &amp;&amp; (prio === 'all' || prio === 'high')">
+      <summary><span class="min-w-0 flex-1"><span class="block">Confirm Fund Request</span><span class="block">2 · Apr 20, Apr 13</span></span><span class="todo-group__count">2</span></summary>
+      <div class="todo-group__rows divide-y">
+        <div class="flex"><div class="min-w-0 flex-1"><p>Confirm Fund Request</p><p>Apr 20</p></div><a href="/fund-requests/1">Open</a></div>
+        <div class="flex"><div class="min-w-0 flex-1"><p>Confirm Fund Request</p><p>Apr 13</p></div><a href="/fund-requests/2">Open</a></div>
+      </div>
+    </details>
+  </div>
+  <div class="rounded-surface"><p>Showing every task.</p><a href="/todos/history">History</a></div>
+</div>
+</main>
+"""
+
+
+class PhoneComponentsTest(SimpleTestCase):
+    def setUp(self):
+        self.page = page_blocks.read(TODOS)
+        self.blocks = self.page["blocks"]
+
+    def test_the_phones_role_home_is_the_header(self):
+        header = self.page["header"]
+
+        self.assertEqual(
+            (header["eyebrow"], header["title"]), ("My work", "Action queue")
+        )
+        self.assertEqual(header["badges"][0]["text"], "45 open")
+        self.assertEqual(
+            header["actions"][0]["label"], "Do next: Chase Partner Delivery"
+        )
+
+    def test_what_a_phone_does_not_draw_is_left_out(self):
+        text = repr(self.blocks)
+
+        self.assertNotIn("To-Do", text)
+        self.assertNotIn("Critical", text)
+
+    def test_a_home_section_is_a_titled_list_of_rows(self):
+        section = self.blocks[0]["list"]
+
+        self.assertEqual((section["title"], section["count"]), ("Do next", "45 open"))
+        item = section["items"][0]
+        self.assertEqual(
+            (item["title"], item["lines"], item["tone"]),
+            ("Enter SSA", ["Feed School"], "caution"),
+        )
+        self.assertEqual(item["actions"][0]["href"], "/schools/s1/ssa-entry")
+
+    def test_chips_carry_their_values_counts_and_opening_choice(self):
+        chips = self.blocks[1]["chips"]
+
+        self.assertEqual((chips["name"], chips["value"]), ("cat", "all"))
+        self.assertEqual(
+            [(c["value"], c["count"]) for c in chips["chips"]],
+            [("all", ""), ("Finance", "4")],
+        )
+
+    def test_a_group_opens_onto_its_rows_and_keeps_its_filter_keys(self):
+        group = self.blocks[2]["list"]["items"][0]
+
+        self.assertEqual(
+            (group["title"], group["count"]), ("Confirm Fund Request", "2")
+        )
+        self.assertEqual(
+            [c["lines"] for c in group["children"]], [["Apr 20"], ["Apr 13"]]
+        )
+        self.assertEqual(group["keys"], {"cat": "Finance", "prio": "high"})
+
+    def test_a_section_no_reader_knows_is_a_plain_panel(self):
+        panel = self.blocks[3]["panel"]
+
+        self.assertEqual(panel["items"][0], {"text": "Showing every task."})
+        self.assertEqual(
+            panel["items"][1]["links"]["links"][0]["href"], "/todos/history"
+        )

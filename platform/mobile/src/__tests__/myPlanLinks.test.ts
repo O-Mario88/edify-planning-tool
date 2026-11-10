@@ -1,7 +1,7 @@
 import { create } from '@bufbuild/protobuf';
 
 import { PageLinkTabSchema } from '../gen/edify/screens/v1/page_pb';
-import { railTabs, webPageFor } from '../ui/page/pageLinks';
+import { isShownFor, railTabs, webPageFor } from '../ui/page/pageLinks';
 
 const tab = (label: string, active = false) => create(PageLinkTabSchema, { label, href: `?period=${label}`, active });
 
@@ -32,5 +32,20 @@ describe('webPageFor', () => {
     expect(webPageFor('/planning/schedule-modal?cluster_id=c1&action=training')).toBe('/my-plan?cluster_id=c1');
     expect(webPageFor('/planning/schedule-modal?action=training&cluster_id=c1')).toBe('/my-plan?cluster_id=c1');
     expect(webPageFor('/planning/schedule-modal?action=meeting')).toBe('/my-plan');
+  });
+});
+
+describe('isShownFor', () => {
+  test("a row shows while each chip is on all or on the row's own value", () => {
+    const row = { cat: 'Finance', prio: 'high' };
+
+    expect(isShownFor(row, { cat: 'all', prio: 'all' })).toBe(true);
+    expect(isShownFor(row, { cat: 'Finance', prio: 'all' })).toBe(true);
+    expect(isShownFor(row, { cat: 'SSA', prio: 'all' })).toBe(false);
+    expect(isShownFor(row, { cat: 'Finance', prio: 'low' })).toBe(false);
+  });
+
+  test('a row with no key for a chip is not hidden by it', () => {
+    expect(isShownFor({}, { cat: 'SSA' })).toBe(true);
   });
 });

@@ -1086,27 +1086,65 @@ class TrainingCapacityFeedView(APIView):
         return Response({key: answer.get(key) for key in self.FIELDS if key in answer})
 
 
-# ── My Plan ────────────────────────────────────────────────────────────────
-#: What My Plan's own controls put in its address: the period tabs, the
-#: filter bar (with its two hidden "previous" values), the search and each
-#: table's pager. Anything else (an export, say) is not passed on.
-MY_PLAN_PARAMS = (
-    "period",
-    "fy",
-    "quarter",
-    "month",
-    "week",
-    "fy_prev",
-    "quarter_prev",
-    "district",
-    "staff",
-    "activity_type",
-    "status",
-    "q",
+# ── Pages read as their components ─────────────────────────────────────────
+# Any page the native app draws from its components: the page's own view,
+# run for the reader as a browser request would be (nothing saved), read by
+# apps.mobile_feed.page_blocks. Only the pages named here are reachable, the
+# page's own gate decides who opens it, and only the parts it loads after it
+# opens that are named here are read into it.
+
+#: The pages, by URL name (an unnamed route by its view's name).
+NATIVE_PAGES = frozenset(
+    {
+        "dashboard",
+        "planning_dashboard",
+        "my_plan",
+        "cluster_list",
+        "calendar",
+        "core_schools",
+        "programme_schools",
+        "todos",
+        "my_actions",
+        "debriefs_list",
+        "cluster_oversight",
+        "core_schools_oversight",
+        "partner_oversight",
+        "project_monitoring",
+        "weekly_fund_requests",
+        "team_performance",
+        "projects_list",
+        "escalations",
+        "extra_work",
+        "budget",
+        "work_plan",
+        "decision_log",
+        "my_targets",
+        "my_coaching",
+        "loans",
+        "priorities_master",
+        "my_performance",
+        "my_professional_development",
+        # An unnamed route is named by its view.
+        "personal_time_off_view",
+        "closed_schools",
+    }
 )
-PAGE_PARAM = re.compile(r"^[a-z_]{1,40}_page$")
-#: The parts My Plan loads once it is open, by path, and the view answering.
-MY_PLAN_LATER = {"/my-plan/readiness": "my_plan_readiness_view"}
+#: The parts a page loads after it opens that are page sections (never a
+#: drawer that pops open), by URL name.
+LATER_PARTS = frozenset(
+    {
+        "my_plan_readiness",
+        "today_panel",
+        "staff_activity",
+        "planning_monitor",
+        "cpo_schools",
+    }
+)
+#: A page's own query keys look like this; these never pass (they answer
+#: with a file, not the page).
+QUERY_KEY = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
+NOT_PASSED = frozenset({"export", "download", "format", "csv", "xlsx", "pdf"})
+MAX_QUERY_VALUE = 128
 
 
 def _page_get(user, path: str, params: dict):
@@ -1123,39 +1161,90 @@ def _page_get(user, path: str, params: dict):
     return page_request
 
 
-class MyPlanFeedView(APIView):
-    """My Plan: the page the web renders for the same person, read as its
-    components (apps.mobile_feed.page_blocks), with its readiness part."""
+def _page_params(query) -> dict:
+    return {
+        key: value
+        for key, value in query.items()
+        if QUERY_KEY.match(key)
+        and key not in NOT_PASSED
+        and len(value) <= MAX_QUERY_VALUE
+    }
+
+
+def _run_page(user, path: str, params: dict, names: frozenset):
+    """The page's response, or None when ``path`` is not one of ``names``
+    or ``user`` may not open it."""
+    from django.urls import Resolver404, resolve
+
+    from apps.core.permissions import can_open_url
+
+    try:
+        match = resolve(path)
+    except Resolver404:
+        return None
+    if (match.url_name or match.func.__name__) not in names or not can_open_url(
+        user, path
+    ):
+        return None
+    response = match.func(_page_get(user, path, params), *match.args, **match.kwargs)
+    if hasattr(response, "render") and not getattr(response, "is_rendered", True):
+        response.render()
+    return response
+
+
+def read_page(user, path: str, query) -> tuple[int, dict]:
+    """The page at ``path`` as blocks for ``user``: (status, body)."""
+    from urllib.parse import parse_qsl, urlparse
+
+    from django.http import Http404
+
+    from apps.mobile_feed import page_blocks
+
+    try:
+        page = _run_page(user, path, _page_params(query), NATIVE_PAGES)
+    except Http404:
+        return 404, {"error": "This page is not available."}
+    if page is None:
+        return 404, {"error": "This page is not available."}
+    if page.status_code in (301, 302, 303):
+        return 200, {"redirect": page.get("Location", "")}
+    if page.status_code != 200:
+        return page.status_code, {"error": "This page is not available to you."}
+
+    def later(part_path: str) -> str | None:
+        url = urlparse(part_path)
+        try:
+            part = _run_page(
+                user, url.path, _page_params(dict(parse_qsl(url.query))), LATER_PARTS
+            )
+        except Http404:
+            return None
+        return (
+            part.content.decode()
+            if part is not None and part.status_code == 200
+            else None
+        )
+
+    return 200, {**page_blocks.read(page.content.decode(), later), "webPath": path}
+
+
+class PageFeedView(APIView):
+    """A page the native app draws from its components (``?path=``), with
+    the page's own query."""
 
     def get(self, request: Request) -> Response:
-        from urllib.parse import parse_qsl, urlparse
-
-        from apps.frontend.views import my_plan_panel_views, my_plan_views
-        from apps.mobile_feed import page_blocks
-
         user = reader(request)
-        require_page(user, "my_plan")
-        params = {
-            key: value
-            for key, value in request.query_params.items()
-            if (key in MY_PLAN_PARAMS or PAGE_PARAM.match(key)) and len(value) <= 64
+        path = request.query_params.get("path", "")
+        query = {
+            key: value for key, value in request.query_params.items() if key != "path"
         }
-        page = my_plan_views.my_plan_view(_page_get(user, "/my-plan", params))
-        if page.status_code != 200:
-            return Response(
-                {"error": "My Plan is not available."}, status=page.status_code
-            )
+        status, body = read_page(user, path, query)
+        return Response(body, status=status)
 
-        def later(path: str) -> str | None:
-            url = urlparse(path)
-            name = MY_PLAN_LATER.get(url.path)
-            if name is None:
-                return None
-            part = getattr(my_plan_panel_views, name)(
-                _page_get(user, url.path, dict(parse_qsl(url.query)))
-            )
-            return part.content.decode() if part.status_code == 200 else None
 
-        return Response(
-            {**page_blocks.read(page.content.decode(), later), "webPath": "/my-plan"}
-        )
+class MyPlanFeedView(APIView):
+    """My Plan, as any page is read (kept for the My Plan service)."""
+
+    def get(self, request: Request) -> Response:
+        status, body = read_page(reader(request), "/my-plan", request.query_params)
+        return Response(body, status=status)

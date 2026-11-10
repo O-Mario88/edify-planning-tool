@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/screens/v1/page.proto.
  */
 export const file_edify_screens_v1_page: GenFile = /*@__PURE__*/
-  fileDesc("ChtlZGlmeS9zY3JlZW5zL3YxL3BhZ2UucHJvdG8SEGVkaWZ5LnNjcmVlbnMudjEiNgoJUGFnZUJhZGdlEgwKBHRleHQYASABKAkSDAoEdG9uZRgCIAEoCRINCgV0aXRsZRgDIAEoCSJoCgpQYWdlQWN0aW9uEgsKA2tleRgBIAEoCRINCgVsYWJlbBgCIAEoCRIPCgdwcmltYXJ5GAMgASgIEg8KB2VuYWJsZWQYBCABKAgSDgoGcmVhc29uGAUgASgJEgwKBGhyZWYYBiABKAkixAEKClBhZ2VIZWFkZXISEgoKYmFja19sYWJlbBgBIAEoCRIRCgliYWNrX2hyZWYYAiABKAkSDQoFdGl0bGUYAyABKAkSEwoLZGVzY3JpcHRpb24YBCABKAkSKwoGYmFkZ2VzGAUgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmFkZ2USLQoHYWN0aW9ucxgGIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUFjdGlvbhIPCgdleWVicm93GAcgASgJIjUKB1BhZ2VUYWISCwoDa2V5GAEgASgJEg0KBWxhYmVsGAIgASgJEg4KBmFjdGl2ZRgDIAEoCCI2CghQYWdlRmFjdBINCgVsYWJlbBgBIAEoCRINCgV2YWx1ZRgCIAEoCRIMCgRocmVmGAMgASgJIjYKCVBhZ2VGYWN0cxIpCgVmYWN0cxgBIAMoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3QiMAoQUGFnZUZpbHRlck9wdGlvbhINCgV2YWx1ZRgBIAEoCRINCgVsYWJlbBgCIAEoCSJtCgpQYWdlRmlsdGVyEgwKBG5hbWUYASABKAkSDQoFbGFiZWwYAiABKAkSDQoFdmFsdWUYAyABKAkSMwoHb3B0aW9ucxgEIAMoCzIiLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlck9wdGlvbiKmAQoLUGFnZUZpbHRlcnMSLQoHZmlsdGVycxgBIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlchI5CgZoaWRkZW4YAiADKAsyKS5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VGaWx0ZXJzLkhpZGRlbkVudHJ5Gi0KC0hpZGRlbkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiZAoKUGFnZU1ldHJpYxINCgVsYWJlbBgBIAEoCRINCgV2YWx1ZRgCIAEoCRIOCgZoZWxwZXIYAyABKAkSDAoEbm90ZRgEIAEoCRIMCgRocmVmGAUgASgJEgwKBHRvbmUYBiABKAkiWwoJUGFnZVN0cmlwEg0KBXRpdGxlGAEgASgJEi0KB21ldHJpY3MYAiADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VNZXRyaWMSEAoIc3VidGl0bGUYAyABKAkiLAoKUGFnZUNvbHVtbhINCgVsYWJlbBgBIAEoCRIPCgdudW1lcmljGAIgASgIIoIBCghQYWdlQ2VsbBIMCgR0ZXh0GAEgASgJEgwKBGhyZWYYAiABKAkSDAoEdG9uZRgDIAEoCRIOCgZzdHJvbmcYBCABKAgSDQoFYmFkZ2UYBSABKAgSLQoHYWN0aW9ucxgGIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUFjdGlvbiJnCgdQYWdlUm93EikKBWNlbGxzGAEgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlQ2VsbBIMCgR0b25lGAIgASgJEg8KB3BpY2tfaWQYAyABKAkSEgoKcGlja19sYWJlbBgEIAEoCSI9Cg1QYWdlUGFnZXJQYWdlEg0KBWxhYmVsGAEgASgJEgwKBGhyZWYYAiABKAkSDwoHY3VycmVudBgDIAEoCCJMCglQYWdlUGFnZXISDwoHc3VtbWFyeRgBIAEoCRIuCgVwYWdlcxgCIAMoCzIfLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVBhZ2VyUGFnZSKcAgoJUGFnZVRhYmxlEg0KBXRpdGxlGAEgASgJEhAKCHN1YnRpdGxlGAIgASgJEi0KB2NvbHVtbnMYAyADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VDb2x1bW4SJwoEcm93cxgEIAMoCzIZLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVJvdxIQCghmb290bm90ZRgFIAEoCRIVCg1lbXB0eV9tZXNzYWdlGAYgASgJEg0KBWNvdW50GAcgASgJEjIKDGVtcHR5X2FjdGlvbhgIIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUFjdGlvbhIqCgVwYWdlchgJIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVBhZ2VyIjoKC1BhZ2VMaW5rVGFiEg0KBWxhYmVsGAEgASgJEgwKBGhyZWYYAiABKAkSDgoGYWN0aXZlGAMgASgIImkKDFBhZ2VMaW5rVGFicxIrCgR0YWJzGAEgAygLMh0uZWRpZnkuc2NyZWVucy52MS5QYWdlTGlua1RhYhIsCgZiZXNpZGUYAiABKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VBY3Rpb24iSQoJUGFnZU1ldGVyEg0KBWxhYmVsGAEgASgJEg0KBXZhbHVlGAIgASgJEhAKCGZyYWN0aW9uGAMgASgBEgwKBGhyZWYYBCABKAkiNwoIUGFnZUxpbmsSDAoEdGV4dBgBIAEoCRIMCgRocmVmGAIgASgJEg8KB2NhcHRpb24YAyABKAkiygEKDFBhZ2VSYWlsUGFydBILCgNrZXkYASABKAkSDQoFdGl0bGUYAiABKAkSDgoGZmlndXJlGAMgASgJEhMKC2ZpZ3VyZV9ocmVmGAQgASgJEhMKC2ZpZ3VyZV9ub3RlGAUgASgJEisKBm1ldGVycxgGIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZU1ldGVyEgwKBG5vdGUYByABKAkSKQoFbGlua3MYCCADKAsyGi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rIloKCFBhZ2VSYWlsEg0KBXRpdGxlGAEgASgJEhAKCHN1YnRpdGxlGAIgASgJEi0KBXBhcnRzGAMgAygLMh4uZWRpZnkuc2NyZWVucy52MS5QYWdlUmFpbFBhcnQiKgoKUGFnZVNlcmllcxIMCgRuYW1lGAEgASgJEg4KBnZhbHVlcxgCIAMoASKwAQoJUGFnZUNoYXJ0Eg0KBXRpdGxlGAEgASgJEhAKCHN1YnRpdGxlGAIgASgJEhIKCmhvcml6b250YWwYAyABKAgSEgoKY2F0ZWdvcmllcxgEIAMoCRIsCgZzZXJpZXMYBSADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VTZXJpZXMSCwoDbWluGAYgASgBEgsKA21heBgHIAEoARISCgpheGlzX3RpdGxlGAggASgJIkcKC1BhZ2VEYXRhUm93Eg0KBWxhYmVsGAEgASgJEgwKBG1ldGEYAiABKAkSDQoFdmFsdWUYAyABKAkSDAoEdG9uZRgEIAEoCSI7CgxQYWdlRGF0YVJvd3MSKwoEcm93cxgBIAMoCzIdLmVkaWZ5LnNjcmVlbnMudjEuUGFnZURhdGFSb3ciNgoJUGFnZUxpbmtzEikKBWxpbmtzGAEgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlTGluayKDAgoNUGFnZVBhbmVsSXRlbRIRCgdoZWFkaW5nGAEgASgJSAASDgoEdGV4dBgCIAEoCUgAEi0KBmZpZWxkcxgDIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3RzSAASLgoEcm93cxgEIAEoCzIeLmVkaWZ5LnNjcmVlbnMudjEuUGFnZURhdGFSb3dzSAASLAoFbGlua3MYBSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rc0gAEiwKBW1ldGVyGAYgASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlTWV0ZXJIABIMCgR0b25lGAcgASgJQgYKBGtpbmQiiQEKCVBhZ2VQYW5lbBINCgV0aXRsZRgBIAEoCRIQCghzdWJ0aXRsZRgCIAEoCRIrCgZiYWRnZXMYAyADKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VCYWRnZRIuCgVpdGVtcxgEIAMoCzIfLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVBhbmVsSXRlbSJoCgtQYWdlU2VnbWVudBINCgVsYWJlbBgBIAEoCRIOCgZhY3RpdmUYAiABKAgSKwoGYmxvY2tzGAMgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmxvY2sSDQoFY291bnQYBCABKAkicQoMUGFnZVNlZ21lbnRzEi8KCHNlZ21lbnRzGAEgAygLMh0uZWRpZnkuc2NyZWVucy52MS5QYWdlU2VnbWVudBINCgV0aXRsZRgCIAEoCRIQCghzdWJ0aXRsZRgDIAEoCRIPCgdjYXB0aW9uGAQgASgJIucDCglQYWdlQmxvY2sSFAoKc2NvcGVfbGluZRgBIAEoCUgAEiwKBWZhY3RzGAIgASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlRmFjdHNIABIwCgdmaWx0ZXJzGAMgASgLMh0uZWRpZnkuc2NyZWVucy52MS5QYWdlRmlsdGVyc0gAEiwKBXN0cmlwGAQgASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlU3RyaXBIABIsCgV0YWJsZRgFIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVRhYmxlSAASKgoEcmFpbBgGIAEoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVJhaWxIABIsCgVjaGFydBgHIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUNoYXJ0SAASLAoFcGFuZWwYCCABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VQYW5lbEgAEjIKCHNlZ21lbnRzGAkgASgLMh4uZWRpZnkuc2NyZWVucy52MS5QYWdlU2VnbWVudHNIABIPCgVlbXB0eRgKIAEoCUgAEjMKCWxpbmtfdGFicxgLIAEoCzIeLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpbmtUYWJzSABCBgoEa2luZELdAQoUY29tLmVkaWZ5LnNjcmVlbnMudjFCCVBhZ2VQcm90b1ABWlhnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L3NjcmVlbnMvdjE7c2NyZWVuc3YxogIDRVNYqgIQRWRpZnkuU2NyZWVucy5WMcoCEEVkaWZ5XFNjcmVlbnNcVjHiAhxFZGlmeVxTY3JlZW5zXFYxXEdQQk1ldGFkYXRh6gISRWRpZnk6OlNjcmVlbnM6OlYxYgZwcm90bzM");
+  fileDesc("ChtlZGlmeS9zY3JlZW5zL3YxL3BhZ2UucHJvdG8SEGVkaWZ5LnNjcmVlbnMudjEiNgoJUGFnZUJhZGdlEgwKBHRleHQYASABKAkSDAoEdG9uZRgCIAEoCRINCgV0aXRsZRgDIAEoCSJoCgpQYWdlQWN0aW9uEgsKA2tleRgBIAEoCRINCgVsYWJlbBgCIAEoCRIPCgdwcmltYXJ5GAMgASgIEg8KB2VuYWJsZWQYBCABKAgSDgoGcmVhc29uGAUgASgJEgwKBGhyZWYYBiABKAkixAEKClBhZ2VIZWFkZXISEgoKYmFja19sYWJlbBgBIAEoCRIRCgliYWNrX2hyZWYYAiABKAkSDQoFdGl0bGUYAyABKAkSEwoLZGVzY3JpcHRpb24YBCABKAkSKwoGYmFkZ2VzGAUgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmFkZ2USLQoHYWN0aW9ucxgGIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUFjdGlvbhIPCgdleWVicm93GAcgASgJIjUKB1BhZ2VUYWISCwoDa2V5GAEgASgJEg0KBWxhYmVsGAIgASgJEg4KBmFjdGl2ZRgDIAEoCCI2CghQYWdlRmFjdBINCgVsYWJlbBgBIAEoCRINCgV2YWx1ZRgCIAEoCRIMCgRocmVmGAMgASgJIjYKCVBhZ2VGYWN0cxIpCgVmYWN0cxgBIAMoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3QiMAoQUGFnZUZpbHRlck9wdGlvbhINCgV2YWx1ZRgBIAEoCRINCgVsYWJlbBgCIAEoCSJtCgpQYWdlRmlsdGVyEgwKBG5hbWUYASABKAkSDQoFbGFiZWwYAiABKAkSDQoFdmFsdWUYAyABKAkSMwoHb3B0aW9ucxgEIAMoCzIiLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlck9wdGlvbiKmAQoLUGFnZUZpbHRlcnMSLQoHZmlsdGVycxgBIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlchI5CgZoaWRkZW4YAiADKAsyKS5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VGaWx0ZXJzLkhpZGRlbkVudHJ5Gi0KC0hpZGRlbkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiZAoKUGFnZU1ldHJpYxINCgVsYWJlbBgBIAEoCRINCgV2YWx1ZRgCIAEoCRIOCgZoZWxwZXIYAyABKAkSDAoEbm90ZRgEIAEoCRIMCgRocmVmGAUgASgJEgwKBHRvbmUYBiABKAkiWwoJUGFnZVN0cmlwEg0KBXRpdGxlGAEgASgJEi0KB21ldHJpY3MYAiADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VNZXRyaWMSEAoIc3VidGl0bGUYAyABKAkiLAoKUGFnZUNvbHVtbhINCgVsYWJlbBgBIAEoCRIPCgdudW1lcmljGAIgASgIIoIBCghQYWdlQ2VsbBIMCgR0ZXh0GAEgASgJEgwKBGhyZWYYAiABKAkSDAoEdG9uZRgDIAEoCRIOCgZzdHJvbmcYBCABKAgSDQoFYmFkZ2UYBSABKAgSLQoHYWN0aW9ucxgGIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUFjdGlvbiJnCgdQYWdlUm93EikKBWNlbGxzGAEgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlQ2VsbBIMCgR0b25lGAIgASgJEg8KB3BpY2tfaWQYAyABKAkSEgoKcGlja19sYWJlbBgEIAEoCSI9Cg1QYWdlUGFnZXJQYWdlEg0KBWxhYmVsGAEgASgJEgwKBGhyZWYYAiABKAkSDwoHY3VycmVudBgDIAEoCCJMCglQYWdlUGFnZXISDwoHc3VtbWFyeRgBIAEoCRIuCgVwYWdlcxgCIAMoCzIfLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVBhZ2VyUGFnZSKcAgoJUGFnZVRhYmxlEg0KBXRpdGxlGAEgASgJEhAKCHN1YnRpdGxlGAIgASgJEi0KB2NvbHVtbnMYAyADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VDb2x1bW4SJwoEcm93cxgEIAMoCzIZLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVJvdxIQCghmb290bm90ZRgFIAEoCRIVCg1lbXB0eV9tZXNzYWdlGAYgASgJEg0KBWNvdW50GAcgASgJEjIKDGVtcHR5X2FjdGlvbhgIIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUFjdGlvbhIqCgVwYWdlchgJIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVBhZ2VyIjoKC1BhZ2VMaW5rVGFiEg0KBWxhYmVsGAEgASgJEgwKBGhyZWYYAiABKAkSDgoGYWN0aXZlGAMgASgIImkKDFBhZ2VMaW5rVGFicxIrCgR0YWJzGAEgAygLMh0uZWRpZnkuc2NyZWVucy52MS5QYWdlTGlua1RhYhIsCgZiZXNpZGUYAiABKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VBY3Rpb24iSQoJUGFnZU1ldGVyEg0KBWxhYmVsGAEgASgJEg0KBXZhbHVlGAIgASgJEhAKCGZyYWN0aW9uGAMgASgBEgwKBGhyZWYYBCABKAkiNwoIUGFnZUxpbmsSDAoEdGV4dBgBIAEoCRIMCgRocmVmGAIgASgJEg8KB2NhcHRpb24YAyABKAkiygEKDFBhZ2VSYWlsUGFydBILCgNrZXkYASABKAkSDQoFdGl0bGUYAiABKAkSDgoGZmlndXJlGAMgASgJEhMKC2ZpZ3VyZV9ocmVmGAQgASgJEhMKC2ZpZ3VyZV9ub3RlGAUgASgJEisKBm1ldGVycxgGIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZU1ldGVyEgwKBG5vdGUYByABKAkSKQoFbGlua3MYCCADKAsyGi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rIloKCFBhZ2VSYWlsEg0KBXRpdGxlGAEgASgJEhAKCHN1YnRpdGxlGAIgASgJEi0KBXBhcnRzGAMgAygLMh4uZWRpZnkuc2NyZWVucy52MS5QYWdlUmFpbFBhcnQiKgoKUGFnZVNlcmllcxIMCgRuYW1lGAEgASgJEg4KBnZhbHVlcxgCIAMoASKwAQoJUGFnZUNoYXJ0Eg0KBXRpdGxlGAEgASgJEhAKCHN1YnRpdGxlGAIgASgJEhIKCmhvcml6b250YWwYAyABKAgSEgoKY2F0ZWdvcmllcxgEIAMoCRIsCgZzZXJpZXMYBSADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VTZXJpZXMSCwoDbWluGAYgASgBEgsKA21heBgHIAEoARISCgpheGlzX3RpdGxlGAggASgJIkcKC1BhZ2VEYXRhUm93Eg0KBWxhYmVsGAEgASgJEgwKBG1ldGEYAiABKAkSDQoFdmFsdWUYAyABKAkSDAoEdG9uZRgEIAEoCSI7CgxQYWdlRGF0YVJvd3MSKwoEcm93cxgBIAMoCzIdLmVkaWZ5LnNjcmVlbnMudjEuUGFnZURhdGFSb3ciNgoJUGFnZUxpbmtzEikKBWxpbmtzGAEgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlTGluayKDAgoNUGFnZVBhbmVsSXRlbRIRCgdoZWFkaW5nGAEgASgJSAASDgoEdGV4dBgCIAEoCUgAEi0KBmZpZWxkcxgDIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3RzSAASLgoEcm93cxgEIAEoCzIeLmVkaWZ5LnNjcmVlbnMudjEuUGFnZURhdGFSb3dzSAASLAoFbGlua3MYBSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rc0gAEiwKBW1ldGVyGAYgASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlTWV0ZXJIABIMCgR0b25lGAcgASgJQgYKBGtpbmQiiQEKCVBhZ2VQYW5lbBINCgV0aXRsZRgBIAEoCRIQCghzdWJ0aXRsZRgCIAEoCRIrCgZiYWRnZXMYAyADKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VCYWRnZRIuCgVpdGVtcxgEIAMoCzIfLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVBhbmVsSXRlbSJoCgtQYWdlU2VnbWVudBINCgVsYWJlbBgBIAEoCRIOCgZhY3RpdmUYAiABKAgSKwoGYmxvY2tzGAMgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmxvY2sSDQoFY291bnQYBCABKAkicQoMUGFnZVNlZ21lbnRzEi8KCHNlZ21lbnRzGAEgAygLMh0uZWRpZnkuc2NyZWVucy52MS5QYWdlU2VnbWVudBINCgV0aXRsZRgCIAEoCRIQCghzdWJ0aXRsZRgDIAEoCRIPCgdjYXB0aW9uGAQgASgJIsoCCgxQYWdlTGlzdEl0ZW0SDQoFdGl0bGUYASABKAkSDQoFbGluZXMYAiADKAkSKwoGYmFkZ2VzGAMgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmFkZ2USLQoHYWN0aW9ucxgEIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUFjdGlvbhIMCgRocmVmGAUgASgJEgwKBHRvbmUYBiABKAkSMAoIY2hpbGRyZW4YByADKAsyHi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaXN0SXRlbRINCgVjb3VudBgIIAEoCRI2CgRrZXlzGAkgAygLMiguZWRpZnkuc2NyZWVucy52MS5QYWdlTGlzdEl0ZW0uS2V5c0VudHJ5GisKCUtleXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIjcKCFBhZ2VDaGlwEg0KBXZhbHVlGAEgASgJEg0KBWxhYmVsGAIgASgJEg0KBWNvdW50GAMgASgJImIKCVBhZ2VDaGlwcxIMCgRuYW1lGAEgASgJEg0KBWxhYmVsGAIgASgJEg0KBXZhbHVlGAMgASgJEikKBWNoaXBzGAQgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlQ2hpcCJpCghQYWdlTGlzdBINCgV0aXRsZRgBIAEoCRINCgVjb3VudBgCIAEoCRIQCghzdWJ0aXRsZRgDIAEoCRItCgVpdGVtcxgEIAMoCzIeLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpc3RJdGVtIsEECglQYWdlQmxvY2sSFAoKc2NvcGVfbGluZRgBIAEoCUgAEiwKBWZhY3RzGAIgASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlRmFjdHNIABIwCgdmaWx0ZXJzGAMgASgLMh0uZWRpZnkuc2NyZWVucy52MS5QYWdlRmlsdGVyc0gAEiwKBXN0cmlwGAQgASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlU3RyaXBIABIsCgV0YWJsZRgFIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVRhYmxlSAASKgoEcmFpbBgGIAEoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVJhaWxIABIsCgVjaGFydBgHIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUNoYXJ0SAASLAoFcGFuZWwYCCABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VQYW5lbEgAEjIKCHNlZ21lbnRzGAkgASgLMh4uZWRpZnkuc2NyZWVucy52MS5QYWdlU2VnbWVudHNIABIPCgVlbXB0eRgKIAEoCUgAEjMKCWxpbmtfdGFicxgLIAEoCzIeLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpbmtUYWJzSAASKgoEbGlzdBgMIAEoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpc3RIABIsCgVjaGlwcxgNIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUNoaXBzSABCBgoEa2luZELdAQoUY29tLmVkaWZ5LnNjcmVlbnMudjFCCVBhZ2VQcm90b1ABWlhnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L3NjcmVlbnMvdjE7c2NyZWVuc3YxogIDRVNYqgIQRWRpZnkuU2NyZWVucy5WMcoCEEVkaWZ5XFNjcmVlbnNcVjHiAhxFZGlmeVxTY3JlZW5zXFYxXEdQQk1ldGFkYXRh6gISRWRpZnk6OlNjcmVlbnM6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message edify.screens.v1.PageBadge
@@ -1122,6 +1122,176 @@ export const PageSegmentsSchema: GenMessage<PageSegments> = /*@__PURE__*/
   messageDesc(file_edify_screens_v1_page, 31);
 
 /**
+ * One record in a card of rows: a task, an activity, a request.
+ *
+ * @generated from message edify.screens.v1.PageListItem
+ */
+export type PageListItem = Message<"edify.screens.v1.PageListItem"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * The lines under the title ("Nakisunga Hill Primary · partner").
+   *
+   * @generated from field: repeated string lines = 2;
+   */
+  lines: string[];
+
+  /**
+   * @generated from field: repeated edify.screens.v1.PageBadge badges = 3;
+   */
+  badges: PageBadge[];
+
+  /**
+   * The row's buttons and links ("Open").
+   *
+   * @generated from field: repeated edify.screens.v1.PageAction actions = 4;
+   */
+  actions: PageAction[];
+
+  /**
+   * Where the whole row leads, when it is a link.
+   *
+   * @generated from field: string href = 5;
+   */
+  href: string;
+
+  /**
+   * The colour of its icon square: info, good, caution, alert, brand.
+   *
+   * @generated from field: string tone = 6;
+   */
+  tone: string;
+
+  /**
+   * An entry that opens onto its records (identical To-Dos as one).
+   *
+   * @generated from field: repeated edify.screens.v1.PageListItem children = 7;
+   */
+  children: PageListItem[];
+
+  /**
+   * @generated from field: string count = 8;
+   */
+  count: string;
+
+  /**
+   * What the row is filtered on by the page's chips (cat → "Finance").
+   *
+   * @generated from field: map<string, string> keys = 9;
+   */
+  keys: { [key: string]: string };
+};
+
+/**
+ * Describes the message edify.screens.v1.PageListItem.
+ * Use `create(PageListItemSchema)` to create a new message.
+ */
+export const PageListItemSchema: GenMessage<PageListItem> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_page, 32);
+
+/**
+ * @generated from message edify.screens.v1.PageChip
+ */
+export type PageChip = Message<"edify.screens.v1.PageChip"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+
+  /**
+   * @generated from field: string label = 2;
+   */
+  label: string;
+
+  /**
+   * @generated from field: string count = 3;
+   */
+  count: string;
+};
+
+/**
+ * Describes the message edify.screens.v1.PageChip.
+ * Use `create(PageChipSchema)` to create a new message.
+ */
+export const PageChipSchema: GenMessage<PageChip> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_page, 33);
+
+/**
+ * Buttons that filter the page's rows on the device (To-Do's categories).
+ *
+ * @generated from message edify.screens.v1.PageChips
+ */
+export type PageChips = Message<"edify.screens.v1.PageChips"> & {
+  /**
+   * The filter's name, as the rows' keys name it ("cat").
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string label = 2;
+   */
+  label: string;
+
+  /**
+   * The value the page opens on ("all").
+   *
+   * @generated from field: string value = 3;
+   */
+  value: string;
+
+  /**
+   * @generated from field: repeated edify.screens.v1.PageChip chips = 4;
+   */
+  chips: PageChip[];
+};
+
+/**
+ * Describes the message edify.screens.v1.PageChips.
+ * Use `create(PageChipsSchema)` to create a new message.
+ */
+export const PageChipsSchema: GenMessage<PageChips> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_page, 34);
+
+/**
+ * A card of rows, optionally titled with a count ("Do next  45 open").
+ *
+ * @generated from message edify.screens.v1.PageList
+ */
+export type PageList = Message<"edify.screens.v1.PageList"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string count = 2;
+   */
+  count: string;
+
+  /**
+   * @generated from field: string subtitle = 3;
+   */
+  subtitle: string;
+
+  /**
+   * @generated from field: repeated edify.screens.v1.PageListItem items = 4;
+   */
+  items: PageListItem[];
+};
+
+/**
+ * Describes the message edify.screens.v1.PageList.
+ * Use `create(PageListSchema)` to create a new message.
+ */
+export const PageListSchema: GenMessage<PageList> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_page, 35);
+
+/**
  * @generated from message edify.screens.v1.PageBlock
  */
 export type PageBlock = Message<"edify.screens.v1.PageBlock"> & {
@@ -1198,6 +1368,18 @@ export type PageBlock = Message<"edify.screens.v1.PageBlock"> & {
      */
     value: PageLinkTabs;
     case: "linkTabs";
+  } | {
+    /**
+     * @generated from field: edify.screens.v1.PageList list = 12;
+     */
+    value: PageList;
+    case: "list";
+  } | {
+    /**
+     * @generated from field: edify.screens.v1.PageChips chips = 13;
+     */
+    value: PageChips;
+    case: "chips";
   } | { case: undefined; value?: undefined };
 };
 
@@ -1206,5 +1388,5 @@ export type PageBlock = Message<"edify.screens.v1.PageBlock"> & {
  * Use `create(PageBlockSchema)` to create a new message.
  */
 export const PageBlockSchema: GenMessage<PageBlock> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_page, 32);
+  messageDesc(file_edify_screens_v1_page, 36);
 
