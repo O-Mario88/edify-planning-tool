@@ -707,7 +707,9 @@ ROWS_WITH_DETAILS = """
  <dl class="school-record-row__metadata">
   <div><dt>District:</dt><dd>Mukono</dd></div>
   <div><dt>Last Visit:</dt><dd class="edify-status-text" data-edify-tone="danger">Never</dd></div>
- </dl></td></tr>
+ </dl>
+ <div class="edify-surface rounded-surface"><h3>Intervention scores</h3>
+ <p>Exposure to the Word of God (4.8/10)</p></div></td></tr>
 <tr class="cluster-school-row"><td>1598</td><td>Goma Primary</td></tr>
 </tbody></table></main>
 """
@@ -727,6 +729,9 @@ class RowDetailsTest(SimpleTestCase):
             [("District", "Mukono", ""), ("Last Visit", "Never", "alert")],
         )
         self.assertNotIn("details", table["rows"][1])
+        # What else the open row shows (the school's SSA scores) comes with it.
+        self.assertIn("Exposure to the Word of God", repr(first["detailBlocks"]))
+        self.assertNotIn("Open Central Primary", repr(first["detailBlocks"]))
 
 
 SELECTION_BAR = """
@@ -872,3 +877,76 @@ class PageDialogTest(SimpleTestCase):
         form = dialog["blocks"][0]["form"]
         # The sheet carries the title; the form under it does not repeat it.
         self.assertEqual((form["title"], form["submitLabel"]), ("", "Submit"))
+
+
+WRAPPED_FILTER_LABELS = """
+<main><form method="get" action="/work-plan" data-component="filter-toolbar">
+<label class="flex flex-col">Fiscal year
+<select name="fy"><option value="2026">FY 2026</option><option value="2027" selected>FY 2027</option></select>
+</label>
+<label for="st">Activity status</label>
+<select id="st" name="status"><option value="">All active statuses</option></select>
+</form></main>
+"""
+
+
+class FilterLabelTest(SimpleTestCase):
+    def test_a_label_around_or_naming_a_filter_is_its_label(self):
+        filters = page_blocks.read(WRAPPED_FILTER_LABELS)["blocks"][0]["filters"][
+            "filters"
+        ]
+
+        self.assertEqual(
+            [(f["name"], f["label"], f["value"]) for f in filters],
+            [("fy", "Fiscal year", "2027"), ("status", "Activity status", "")],
+        )
+
+
+FORM_TABS = """
+<main>
+<form id="filters-form" method="get">
+<input type="hidden" name="tab" value="client">
+<select name="fy"><option value="2026">FY 2026</option><option value="2027" selected>FY 2027</option></select>
+<input type="search" name="q" value="">
+</form>
+<div class="edify-view-toolbar"><nav role="tablist" aria-label="Planning views">
+<button type="button" role="tab" aria-selected="true"
+ @click="document.querySelector('#filters-form [name=tab]').value = 'client'; document.getElementById('filters-form').dispatchEvent(new Event('change'))">Client Schools</button>
+<button type="button" role="tab" aria-selected="false"
+ @click="document.querySelector('#filters-form [name=tab]').value = 'core'; document.getElementById('filters-form').dispatchEvent(new Event('change'))">Core Schools</button>
+</nav><span>Swipe for more views</span></div>
+</main>
+"""
+
+
+class FormTabsTest(SimpleTestCase):
+    def test_tabs_that_set_the_filter_form_link_to_its_values(self):
+        blocks = page_blocks.read(FORM_TABS)["blocks"]
+
+        tabs = next(b["linkTabs"] for b in blocks if "linkTabs" in b)
+        self.assertEqual(
+            tabs["tabs"],
+            [
+                {
+                    "label": "Client Schools",
+                    "href": "?tab=client&fy=2027",
+                    "active": True,
+                },
+                {"label": "Core Schools", "href": "?tab=core&fy=2027", "active": False},
+            ],
+        )
+
+
+FOLDED_FILTERS = """
+<main><details class="mobile-family-filter" open>
+<summary><span>Filters</span><small>Year, quarter and district</small><span aria-hidden="true">v</span></summary>
+<form method="get" class="edify-filter-bar"><select name="fy"><option value="2027">FY 2027</option></select></form>
+</details></main>
+"""
+
+
+class FoldedFiltersTest(SimpleTestCase):
+    def test_the_phone_fold_around_the_filters_is_not_drawn(self):
+        blocks = page_blocks.read(FOLDED_FILTERS)["blocks"]
+
+        self.assertEqual([list(b)[0] for b in blocks], ["filters"])

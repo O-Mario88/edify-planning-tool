@@ -276,11 +276,29 @@ def _facts(section: Node) -> dict:
     return {"facts": facts}
 
 
+def _filter_label(form: Node, select: Node) -> str:
+    """A filter's name: the page's filter label beside it, the label it sits
+    in or the label that names it, else what it says to a screen reader."""
+    holder = select.parent
+    marked = holder.find(lambda n: n.has("edify-filter-label")) if holder else None
+    if marked is not None:
+        return marked.text()
+    if holder is not None and holder.tag == "label":
+        own = "".join(c for c in holder.children if isinstance(c, str))
+        if own.strip():
+            return " ".join(own.split())
+    if select.get("id"):
+        named = form.find(
+            lambda n: n.tag == "label" and n.get("for") == select.get("id")
+        )
+        if named is not None:
+            return named.text()
+    return select.get("aria-label")
+
+
 def _filters(form: Node) -> dict:
     filters = []
     for select in form.find_all(lambda n: n.tag == "select"):
-        holder = select.parent
-        label = holder.find(lambda n: n.has("edify-filter-label")) if holder else None
         options = select.find_all(lambda n: n.tag == "option")
         chosen = next(
             (option.get("value") for option in options if "selected" in option.attrs),
@@ -289,7 +307,7 @@ def _filters(form: Node) -> dict:
         filters.append(
             {
                 "name": select.get("name"),
-                "label": label.text() if label else select.get("aria-label"),
+                "label": _filter_label(form, select),
                 "value": chosen,
                 "options": [
                     {"value": option.get("value"), "label": option.text()}
@@ -631,7 +649,21 @@ def _row_details(row: Node) -> dict:
         for fact in records.facts(holder)
     ]
     link = row.find(lambda n: n.tag == "a" and bool(n.get("href")))
-    return {"details": facts, "detailsHref": link.get("href") if link else ""}
+    # What else the open row shows (the school's SSA scores), as page blocks.
+    rest = Node("div", {}, None)
+    for cell in row.children:
+        if not isinstance(cell, Node):
+            continue
+        rest.children += [
+            child
+            for child in cell.children
+            if isinstance(child, Node) and child is not link and child.tag != "dl"
+        ]
+    return {
+        "details": facts,
+        "detailsHref": link.get("href") if link else "",
+        "detailBlocks": _blocks(rest, []),
+    }
 
 
 def _meter(item: Node) -> dict:
@@ -1161,6 +1193,65 @@ def _tile_grid(node: Node) -> dict | None:
     }
 
 
+#: A tab that sets a field of the page's filter form and sends it:
+#: ``document.querySelector('#filters-form [name=tab]').value = 'core'``.
+SETS_FORM_FIELD = re.compile(
+    r"querySelector\(\s*'#([\w-]+)\s+\[name=(\w+)\]'\s*\)\.value\s*=\s*'([^']*)'"
+)
+
+
+def _form_tabs(nav: Node) -> dict | None:
+    """Tabs that set a field of the page's filter form and send it
+    (Planning's Client Schools … Scheduled): each a link to the form's
+    values as they stand, that field changed."""
+    from urllib.parse import urlencode
+
+    tabs = [n for n in nav.find_all(lambda n: n.get("role") == "tab")]
+    sets = [SETS_FORM_FIELD.search(tab.get("@click")) for tab in tabs]
+    if not tabs or not all(sets):
+        return None
+    root = nav
+    while root.parent is not None:
+        root = root.parent
+    form = root.find(lambda n: n.tag == "form" and n.get("id") == sets[0].group(1))
+    if form is None:
+        return None
+    values = _form_state(form)
+    return {
+        "tabs": [
+            {
+                "label": tab.text(),
+                "href": "?" + urlencode({**values, found.group(2): found.group(3)}),
+                "active": tab.get("aria-selected") == "true",
+            }
+            for tab, found in zip(tabs, sets)
+        ]
+    }
+
+
+def _form_state(form: Node) -> dict[str, str]:
+    """What a GET form sends as it stands: each field's value, empty ones left out."""
+    values: dict[str, str] = {}
+    for node in form.find_all(
+        lambda n: n.tag in ("input", "select") and bool(n.get("name"))
+    ):
+        if node.tag == "select":
+            options = node.find_all(lambda n: n.tag == "option")
+            chosen = next((o for o in options if "selected" in o.attrs), None)
+            value = (
+                chosen.get("value")
+                if chosen
+                else (options[0].get("value") if options else "")
+            )
+        elif node.get("type").lower() in ("checkbox", "radio"):
+            value = node.get("value") if "checked" in node.attrs else ""
+        else:
+            value = node.get("value")
+        if value:
+            values[node.get("name")] = value
+    return values
+
+
 def _link_tabs(nav: Node) -> dict | None:
     """Tabs that are links (My Plan's This Week … This FY), with the link set
     beside them (Open Calendar)."""
@@ -1433,6 +1524,8 @@ def _block(node: Node) -> dict | None:
         and (tabs := _link_tabs(node) or _section_nav(node)) is not None
     ):
         return {"linkTabs": tabs}
+    if node.get("role") == "tablist" and (tabs := _form_tabs(node)) is not None:
+        return {"linkTabs": tabs}
     if _is_filter_form(node):
         return {"filters": _filters(node)}
     if node.tag == "p" and "data-profile-scope" in node.attrs:
@@ -1560,6 +1653,16 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
             continue
         if id(child) in taken or _is_beside_link(child):
             continue
+        if (
+            child.tag == "summary"
+            and node.tag == "details"
+            and node.find(
+                lambda n: _is_filter_form(n)
+                or (n.tag == "form" and n.has("edify-filter-bar"))
+            )
+        ):
+            # The phone's fold around the filters: the filter bar folds itself.
+            continue
         if (beside := sibling_switch(child)) is not None:
             out.append({"segments": beside[0]})
             taken |= beside[1]
@@ -1589,6 +1692,7 @@ def _holds_known(node: Node) -> bool:
         node.find(
             lambda n: "data-edify-tablist" in n.attrs
             or "data-row-disclosure-summary" in n.attrs
+            or (n.get("role") == "tablist" and _form_tabs(n) is not None)
             or _is_filter_form(n)
             or n.has("edify-filter-bar")
             or n.has("edify-empty-state")

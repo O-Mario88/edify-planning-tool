@@ -13,6 +13,7 @@ import { ChevronDown, ChevronRight, Inbox } from 'lucide-react-native';
 import type { PageAction, PageCell, PageColumn, PagePager, PageRow, PageTable } from '../../gen/edify/screens/v1/page_pb';
 import type { Palette } from '../../theme';
 import { fonts, useTheme } from '../../theme';
+import { PageBlockView } from './PageBlocksView';
 import { RowActions } from './RowActions';
 import { cardStyles, toneColor, usePageLink } from './shared';
 
@@ -244,6 +245,9 @@ function RowDetails({ row, width }: { readonly row: PageRow; readonly width: num
           </Text>
         ))}
       </View>
+      {row.detailBlocks.map((block, index) => (
+        <PageBlockView key={index} block={block} />
+      ))}
     </View>
   );
 }

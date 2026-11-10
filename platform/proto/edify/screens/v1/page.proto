@@ -134,6 +134,8 @@ message PageRow {
   // link to the record's own page there.
   repeated PageFact details = 5;
   string details_href = 6;
+  // What else the open row shows (the school's SSA scores).
+  repeated PageBlock detail_blocks = 7;
 }
 
 message PagePagerPage {

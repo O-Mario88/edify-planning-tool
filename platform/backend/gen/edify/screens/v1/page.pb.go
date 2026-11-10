@@ -923,8 +923,10 @@ type PageRow struct {
 	PickLabel string `protobuf:"bytes,4,opt,name=pick_label,json=pickLabel,proto3" json:"pick_label,omitempty"`
 	// What opening the row shows under it (the school's details), and the
 	// link to the record's own page there.
-	Details       []*PageFact `protobuf:"bytes,5,rep,name=details,proto3" json:"details,omitempty"`
-	DetailsHref   string      `protobuf:"bytes,6,opt,name=details_href,json=detailsHref,proto3" json:"details_href,omitempty"`
+	Details     []*PageFact `protobuf:"bytes,5,rep,name=details,proto3" json:"details,omitempty"`
+	DetailsHref string      `protobuf:"bytes,6,opt,name=details_href,json=detailsHref,proto3" json:"details_href,omitempty"`
+	// What else the open row shows (the school's SSA scores).
+	DetailBlocks  []*PageBlock `protobuf:"bytes,7,rep,name=detail_blocks,json=detailBlocks,proto3" json:"detail_blocks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -999,6 +1001,13 @@ func (x *PageRow) GetDetailsHref() string {
 		return x.DetailsHref
 	}
 	return ""
+}
+
+func (x *PageRow) GetDetailBlocks() []*PageBlock {
+	if x != nil {
+		return x.DetailBlocks
+	}
+	return nil
 }
 
 type PagePagerPage struct {
@@ -3350,7 +3359,7 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\x04tone\x18\x03 \x01(\tR\x04tone\x12\x16\n" +
 	"\x06strong\x18\x04 \x01(\bR\x06strong\x12\x14\n" +
 	"\x05badge\x18\x05 \x01(\bR\x05badge\x126\n" +
-	"\aactions\x18\x06 \x03(\v2\x1c.edify.screens.v1.PageActionR\aactions\"\xe0\x01\n" +
+	"\aactions\x18\x06 \x03(\v2\x1c.edify.screens.v1.PageActionR\aactions\"\xa2\x02\n" +
 	"\aPageRow\x120\n" +
 	"\x05cells\x18\x01 \x03(\v2\x1a.edify.screens.v1.PageCellR\x05cells\x12\x12\n" +
 	"\x04tone\x18\x02 \x01(\tR\x04tone\x12\x17\n" +
@@ -3358,7 +3367,8 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\n" +
 	"pick_label\x18\x04 \x01(\tR\tpickLabel\x124\n" +
 	"\adetails\x18\x05 \x03(\v2\x1a.edify.screens.v1.PageFactR\adetails\x12!\n" +
-	"\fdetails_href\x18\x06 \x01(\tR\vdetailsHref\"S\n" +
+	"\fdetails_href\x18\x06 \x01(\tR\vdetailsHref\x12@\n" +
+	"\rdetail_blocks\x18\a \x03(\v2\x1b.edify.screens.v1.PageBlockR\fdetailBlocks\"S\n" +
 	"\rPagePagerPage\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x12\x12\n" +
 	"\x04href\x18\x02 \x01(\tR\x04href\x12\x18\n" +
@@ -3604,60 +3614,61 @@ var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	1,  // 7: edify.screens.v1.PageCell.actions:type_name -> edify.screens.v1.PageAction
 	12, // 8: edify.screens.v1.PageRow.cells:type_name -> edify.screens.v1.PageCell
 	4,  // 9: edify.screens.v1.PageRow.details:type_name -> edify.screens.v1.PageFact
-	14, // 10: edify.screens.v1.PagePager.pages:type_name -> edify.screens.v1.PagePagerPage
-	11, // 11: edify.screens.v1.PageTable.columns:type_name -> edify.screens.v1.PageColumn
-	13, // 12: edify.screens.v1.PageTable.rows:type_name -> edify.screens.v1.PageRow
-	1,  // 13: edify.screens.v1.PageTable.empty_action:type_name -> edify.screens.v1.PageAction
-	15, // 14: edify.screens.v1.PageTable.pager:type_name -> edify.screens.v1.PagePager
-	17, // 15: edify.screens.v1.PageLinkTabs.tabs:type_name -> edify.screens.v1.PageLinkTab
-	1,  // 16: edify.screens.v1.PageLinkTabs.beside:type_name -> edify.screens.v1.PageAction
-	19, // 17: edify.screens.v1.PageRailPart.meters:type_name -> edify.screens.v1.PageMeter
-	20, // 18: edify.screens.v1.PageRailPart.links:type_name -> edify.screens.v1.PageLink
-	21, // 19: edify.screens.v1.PageRail.parts:type_name -> edify.screens.v1.PageRailPart
-	23, // 20: edify.screens.v1.PageChart.series:type_name -> edify.screens.v1.PageSeries
-	25, // 21: edify.screens.v1.PageDataRows.rows:type_name -> edify.screens.v1.PageDataRow
-	20, // 22: edify.screens.v1.PageLinks.links:type_name -> edify.screens.v1.PageLink
-	5,  // 23: edify.screens.v1.PagePanelItem.fields:type_name -> edify.screens.v1.PageFacts
-	26, // 24: edify.screens.v1.PagePanelItem.rows:type_name -> edify.screens.v1.PageDataRows
-	27, // 25: edify.screens.v1.PagePanelItem.links:type_name -> edify.screens.v1.PageLinks
-	19, // 26: edify.screens.v1.PagePanelItem.meter:type_name -> edify.screens.v1.PageMeter
-	0,  // 27: edify.screens.v1.PagePanel.badges:type_name -> edify.screens.v1.PageBadge
-	28, // 28: edify.screens.v1.PagePanel.items:type_name -> edify.screens.v1.PagePanelItem
-	36, // 29: edify.screens.v1.PageSegment.blocks:type_name -> edify.screens.v1.PageBlock
-	30, // 30: edify.screens.v1.PageSegments.segments:type_name -> edify.screens.v1.PageSegment
-	0,  // 31: edify.screens.v1.PageListItem.badges:type_name -> edify.screens.v1.PageBadge
-	1,  // 32: edify.screens.v1.PageListItem.actions:type_name -> edify.screens.v1.PageAction
-	32, // 33: edify.screens.v1.PageListItem.children:type_name -> edify.screens.v1.PageListItem
-	41, // 34: edify.screens.v1.PageListItem.keys:type_name -> edify.screens.v1.PageListItem.KeysEntry
-	33, // 35: edify.screens.v1.PageChips.chips:type_name -> edify.screens.v1.PageChip
-	32, // 36: edify.screens.v1.PageList.items:type_name -> edify.screens.v1.PageListItem
-	5,  // 37: edify.screens.v1.PageBlock.facts:type_name -> edify.screens.v1.PageFacts
-	8,  // 38: edify.screens.v1.PageBlock.filters:type_name -> edify.screens.v1.PageFilters
-	10, // 39: edify.screens.v1.PageBlock.strip:type_name -> edify.screens.v1.PageStrip
-	16, // 40: edify.screens.v1.PageBlock.table:type_name -> edify.screens.v1.PageTable
-	22, // 41: edify.screens.v1.PageBlock.rail:type_name -> edify.screens.v1.PageRail
-	24, // 42: edify.screens.v1.PageBlock.chart:type_name -> edify.screens.v1.PageChart
-	29, // 43: edify.screens.v1.PageBlock.panel:type_name -> edify.screens.v1.PagePanel
-	31, // 44: edify.screens.v1.PageBlock.segments:type_name -> edify.screens.v1.PageSegments
-	18, // 45: edify.screens.v1.PageBlock.link_tabs:type_name -> edify.screens.v1.PageLinkTabs
-	35, // 46: edify.screens.v1.PageBlock.list:type_name -> edify.screens.v1.PageList
-	34, // 47: edify.screens.v1.PageBlock.chips:type_name -> edify.screens.v1.PageChips
-	39, // 48: edify.screens.v1.PageBlock.record:type_name -> edify.screens.v1.PageRecord
-	15, // 49: edify.screens.v1.PageBlock.pager:type_name -> edify.screens.v1.PagePager
-	38, // 50: edify.screens.v1.PageBlock.form:type_name -> edify.screens.v1.PageForm
-	42, // 51: edify.screens.v1.PageFormItem.note:type_name -> edify.screens.v1.DrawerNote
-	43, // 52: edify.screens.v1.PageFormItem.field:type_name -> edify.screens.v1.DrawerField
-	44, // 53: edify.screens.v1.PageFormItem.show_when:type_name -> edify.screens.v1.DrawerCondition
-	37, // 54: edify.screens.v1.PageForm.items:type_name -> edify.screens.v1.PageFormItem
-	0,  // 55: edify.screens.v1.PageRecord.badges:type_name -> edify.screens.v1.PageBadge
-	1,  // 56: edify.screens.v1.PageRecord.actions:type_name -> edify.screens.v1.PageAction
-	4,  // 57: edify.screens.v1.PageRecord.facts:type_name -> edify.screens.v1.PageFact
-	36, // 58: edify.screens.v1.PageRecord.details:type_name -> edify.screens.v1.PageBlock
-	59, // [59:59] is the sub-list for method output_type
-	59, // [59:59] is the sub-list for method input_type
-	59, // [59:59] is the sub-list for extension type_name
-	59, // [59:59] is the sub-list for extension extendee
-	0,  // [0:59] is the sub-list for field type_name
+	36, // 10: edify.screens.v1.PageRow.detail_blocks:type_name -> edify.screens.v1.PageBlock
+	14, // 11: edify.screens.v1.PagePager.pages:type_name -> edify.screens.v1.PagePagerPage
+	11, // 12: edify.screens.v1.PageTable.columns:type_name -> edify.screens.v1.PageColumn
+	13, // 13: edify.screens.v1.PageTable.rows:type_name -> edify.screens.v1.PageRow
+	1,  // 14: edify.screens.v1.PageTable.empty_action:type_name -> edify.screens.v1.PageAction
+	15, // 15: edify.screens.v1.PageTable.pager:type_name -> edify.screens.v1.PagePager
+	17, // 16: edify.screens.v1.PageLinkTabs.tabs:type_name -> edify.screens.v1.PageLinkTab
+	1,  // 17: edify.screens.v1.PageLinkTabs.beside:type_name -> edify.screens.v1.PageAction
+	19, // 18: edify.screens.v1.PageRailPart.meters:type_name -> edify.screens.v1.PageMeter
+	20, // 19: edify.screens.v1.PageRailPart.links:type_name -> edify.screens.v1.PageLink
+	21, // 20: edify.screens.v1.PageRail.parts:type_name -> edify.screens.v1.PageRailPart
+	23, // 21: edify.screens.v1.PageChart.series:type_name -> edify.screens.v1.PageSeries
+	25, // 22: edify.screens.v1.PageDataRows.rows:type_name -> edify.screens.v1.PageDataRow
+	20, // 23: edify.screens.v1.PageLinks.links:type_name -> edify.screens.v1.PageLink
+	5,  // 24: edify.screens.v1.PagePanelItem.fields:type_name -> edify.screens.v1.PageFacts
+	26, // 25: edify.screens.v1.PagePanelItem.rows:type_name -> edify.screens.v1.PageDataRows
+	27, // 26: edify.screens.v1.PagePanelItem.links:type_name -> edify.screens.v1.PageLinks
+	19, // 27: edify.screens.v1.PagePanelItem.meter:type_name -> edify.screens.v1.PageMeter
+	0,  // 28: edify.screens.v1.PagePanel.badges:type_name -> edify.screens.v1.PageBadge
+	28, // 29: edify.screens.v1.PagePanel.items:type_name -> edify.screens.v1.PagePanelItem
+	36, // 30: edify.screens.v1.PageSegment.blocks:type_name -> edify.screens.v1.PageBlock
+	30, // 31: edify.screens.v1.PageSegments.segments:type_name -> edify.screens.v1.PageSegment
+	0,  // 32: edify.screens.v1.PageListItem.badges:type_name -> edify.screens.v1.PageBadge
+	1,  // 33: edify.screens.v1.PageListItem.actions:type_name -> edify.screens.v1.PageAction
+	32, // 34: edify.screens.v1.PageListItem.children:type_name -> edify.screens.v1.PageListItem
+	41, // 35: edify.screens.v1.PageListItem.keys:type_name -> edify.screens.v1.PageListItem.KeysEntry
+	33, // 36: edify.screens.v1.PageChips.chips:type_name -> edify.screens.v1.PageChip
+	32, // 37: edify.screens.v1.PageList.items:type_name -> edify.screens.v1.PageListItem
+	5,  // 38: edify.screens.v1.PageBlock.facts:type_name -> edify.screens.v1.PageFacts
+	8,  // 39: edify.screens.v1.PageBlock.filters:type_name -> edify.screens.v1.PageFilters
+	10, // 40: edify.screens.v1.PageBlock.strip:type_name -> edify.screens.v1.PageStrip
+	16, // 41: edify.screens.v1.PageBlock.table:type_name -> edify.screens.v1.PageTable
+	22, // 42: edify.screens.v1.PageBlock.rail:type_name -> edify.screens.v1.PageRail
+	24, // 43: edify.screens.v1.PageBlock.chart:type_name -> edify.screens.v1.PageChart
+	29, // 44: edify.screens.v1.PageBlock.panel:type_name -> edify.screens.v1.PagePanel
+	31, // 45: edify.screens.v1.PageBlock.segments:type_name -> edify.screens.v1.PageSegments
+	18, // 46: edify.screens.v1.PageBlock.link_tabs:type_name -> edify.screens.v1.PageLinkTabs
+	35, // 47: edify.screens.v1.PageBlock.list:type_name -> edify.screens.v1.PageList
+	34, // 48: edify.screens.v1.PageBlock.chips:type_name -> edify.screens.v1.PageChips
+	39, // 49: edify.screens.v1.PageBlock.record:type_name -> edify.screens.v1.PageRecord
+	15, // 50: edify.screens.v1.PageBlock.pager:type_name -> edify.screens.v1.PagePager
+	38, // 51: edify.screens.v1.PageBlock.form:type_name -> edify.screens.v1.PageForm
+	42, // 52: edify.screens.v1.PageFormItem.note:type_name -> edify.screens.v1.DrawerNote
+	43, // 53: edify.screens.v1.PageFormItem.field:type_name -> edify.screens.v1.DrawerField
+	44, // 54: edify.screens.v1.PageFormItem.show_when:type_name -> edify.screens.v1.DrawerCondition
+	37, // 55: edify.screens.v1.PageForm.items:type_name -> edify.screens.v1.PageFormItem
+	0,  // 56: edify.screens.v1.PageRecord.badges:type_name -> edify.screens.v1.PageBadge
+	1,  // 57: edify.screens.v1.PageRecord.actions:type_name -> edify.screens.v1.PageAction
+	4,  // 58: edify.screens.v1.PageRecord.facts:type_name -> edify.screens.v1.PageFact
+	36, // 59: edify.screens.v1.PageRecord.details:type_name -> edify.screens.v1.PageBlock
+	60, // [60:60] is the sub-list for method output_type
+	60, // [60:60] is the sub-list for method input_type
+	60, // [60:60] is the sub-list for extension type_name
+	60, // [60:60] is the sub-list for extension extendee
+	0,  // [0:60] is the sub-list for field type_name
 }
 
 func init() { file_edify_screens_v1_page_proto_init() }
