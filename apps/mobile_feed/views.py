@@ -1138,6 +1138,8 @@ LATER_PARTS = frozenset(
         "staff_activity",
         "planning_monitor",
         "cpo_schools",
+        "cluster_schools_partial",
+        "team_guidance_inbox",
     }
 )
 #: A page's own query keys look like this; these never pass (they answer
@@ -1214,8 +1216,13 @@ def read_page(user, path: str, query) -> tuple[int, dict]:
     def later(part_path: str) -> str | None:
         url = urlparse(part_path)
         try:
+            # A page's own sections (Core Schools' ?panel=queue) come from
+            # the page's view too.
             part = _run_page(
-                user, url.path, _page_params(dict(parse_qsl(url.query))), LATER_PARTS
+                user,
+                url.path,
+                _page_params(dict(parse_qsl(url.query))),
+                LATER_PARTS | NATIVE_PAGES,
             )
         except Http404:
             return None
@@ -1248,3 +1255,148 @@ class MyPlanFeedView(APIView):
     def get(self, request: Request) -> Response:
         status, body = read_page(reader(request), "/my-plan", request.query_params)
         return Response(body, status=status)
+
+
+# ── Any drawer a page opens ─────────────────────────────────────────────────
+# The web opens a drawer by fetching its view into #drawer-container. The
+# app reads the same drawer (apps.mobile_feed.drawer_blocks) and saves it by
+# posting the drawer's own fields to the view its form posts to. Only the
+# drawers and the saves named here are reachable; the views keep every rule.
+
+#: Drawers the app reads, by URL name.
+DRAWER_VIEWS = frozenset(
+    {
+        "activity_detail",
+        "complete_drawer",
+        "reschedule_drawer",
+        "edit_activity_drawer",
+        "cancel_activity_drawer",
+        "start_activity_drawer",
+        "activity_facilitator_drawer",
+        "complete_activity_drawer",
+        "salesforce_id_drawer",
+        "submit_for_review_drawer",
+        "activity_timeline_drawer",
+        "messages_drawer",
+        "notifications_drawer",
+        "non_school_activity_drawer",
+        "planning_recent_changes",
+        "create_cluster_drawer",
+        "cluster_facilitator_drawer",
+        "core_schedule_training_drawer",
+        "core_assign_partner_drawer",
+        "core_strategy_playbook_drawer",
+        "partner_oversight_detail",
+        "project_monitoring_school",
+        "project_withdraw_school",
+        "pd_request",
+        "pd_allocation_history",
+    }
+)
+#: The views a drawer's form may save to, by URL name.
+DRAWER_SAVES = frozenset(
+    {
+        "complete_activity",
+        "reschedule_activity",
+        "edit_activity",
+        "cancel_activity",
+        "start_activity_action",
+        "activity_facilitator_drawer",
+        "complete_activity_action",
+        "salesforce_id_action",
+        "submit_for_review_action",
+        "non_school_activity_action",
+        "create_cluster",
+        "cluster_facilitator",
+        "core_schedule_training_action",
+        "core_assign_partner_action",
+        "partner_oversight_send",
+        "project_withdraw_school",
+        "pd_request",
+    }
+)
+
+
+def _route(path: str, names: frozenset):
+    """The view a path resolves to when its name is one of ``names``."""
+    from django.urls import Resolver404, resolve
+
+    try:
+        match = resolve(path)
+    except Resolver404:
+        return None
+    return match if (match.url_name or match.func.__name__) in names else None
+
+
+def _page_drawer_html(user, path: str, query: dict) -> tuple[int, str]:
+    """The drawer at ``path`` as the web opens it for ``user``."""
+    from django.http import Http404
+
+    match = _route(path, DRAWER_VIEWS)
+    if match is None:
+        return 404, ""
+    page_request = _page_request(user, path)
+    page_request.GET = page_request.GET.copy()
+    page_request.GET.update(_page_params(query))
+    try:
+        response = match.func(page_request, *match.args, **match.kwargs)
+    except Http404:
+        return 404, ""
+    if hasattr(response, "render") and not getattr(response, "is_rendered", True):
+        response.render()
+    return response.status_code, response.content.decode()
+
+
+def _split(path_and_query: str) -> tuple[str, dict]:
+    from urllib.parse import parse_qsl, urlparse
+
+    url = urlparse(path_and_query)
+    return url.path, dict(parse_qsl(url.query))
+
+
+class DrawerFeedView(APIView):
+    """A drawer a page opens (``path``, its query included): read (GET) or
+    saved (POST ``{"path", "values"}``)."""
+
+    def get(self, request: Request) -> Response:
+        from apps.mobile_feed import drawer_blocks, page_blocks
+
+        user = reader(request)
+        path, query = _split(request.query_params.get("path", ""))
+        status, html = _page_drawer_html(user, path, query)
+        if status == 404:
+            return Response({"error": "This drawer is not available."}, status=404)
+        if "data-edify-drawer" not in html:
+            # The web's refusal or message in place of the drawer.
+            reason = page_blocks.parse(html).text() or "This is not available to you."
+            return Response({"refusal": reason}, status=200 if status < 500 else status)
+        return Response({"drawer": drawer_blocks.read(html)})
+
+    def post(self, request: Request) -> Response:
+        from django.http import Http404
+
+        from apps.mobile_feed import drawer_blocks, page_blocks
+
+        user = reader(request)
+        data = request.data if isinstance(request.data, dict) else {}
+        values = data.get("values")
+        if not isinstance(values, dict):
+            return Response({"error": "Values are required."}, status=400)
+        path, query = _split(str(data.get("path", "")))
+        status, html = _page_drawer_html(user, path, query)
+        if status != 200 or "data-edify-drawer" not in html:
+            return Response({"error": "This drawer is not available."}, status=404)
+        form = page_blocks.parse(html).find(lambda n: n.tag == "form")
+        target = (form.get("hx-post") or form.get("action")) if form else ""
+        save_path, _ = _split(target)
+        match = _route(save_path, DRAWER_SAVES) if save_path else None
+        if match is None:
+            return Response({"error": "This drawer cannot be saved here."}, status=400)
+        page_request = _page_request(
+            user, save_path, drawer_blocks.form_data(html, values)
+        )
+        try:
+            response = match.func(page_request, *match.args, **match.kwargs)
+        except Http404:
+            return Response({"error": "Not found."}, status=404)
+        return Response(_saved_outcome(response, page_request._messages))

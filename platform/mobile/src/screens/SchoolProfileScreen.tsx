@@ -227,8 +227,7 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolPr
         ) : null}
         {webDrawer ? (
           <WebDrawer
-            schoolId={schoolId}
-            kind={webDrawer}
+            source={{ schoolId, kind: webDrawer }}
             onClose={() => setWebDrawer(null)}
             onSaved={(message, redirect) => {
               setWebDrawer(null);

@@ -21,6 +21,237 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type GetDrawerRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The drawer's web path with its query ("/my-plan/a1/cancel-drawer").
+	Path          string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDrawerRequest) Reset() {
+	*x = GetDrawerRequest{}
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDrawerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDrawerRequest) ProtoMessage() {}
+
+func (x *GetDrawerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDrawerRequest.ProtoReflect.Descriptor instead.
+func (*GetDrawerRequest) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetDrawerRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+type GetDrawerResponse struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Drawer *PageDrawer            `protobuf:"bytes,1,opt,name=drawer,proto3" json:"drawer,omitempty"`
+	// The web's message in place of the drawer.
+	Refusal       string `protobuf:"bytes,2,opt,name=refusal,proto3" json:"refusal,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDrawerResponse) Reset() {
+	*x = GetDrawerResponse{}
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDrawerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDrawerResponse) ProtoMessage() {}
+
+func (x *GetDrawerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDrawerResponse.ProtoReflect.Descriptor instead.
+func (*GetDrawerResponse) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetDrawerResponse) GetDrawer() *PageDrawer {
+	if x != nil {
+		return x.Drawer
+	}
+	return nil
+}
+
+func (x *GetDrawerResponse) GetRefusal() string {
+	if x != nil {
+		return x.Refusal
+	}
+	return ""
+}
+
+type SaveDrawerRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Path  string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	// The drawer's fields by name. Fields the drawer does not have are ignored.
+	Values        map[string]string `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveDrawerRequest) Reset() {
+	*x = SaveDrawerRequest{}
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveDrawerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveDrawerRequest) ProtoMessage() {}
+
+func (x *SaveDrawerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveDrawerRequest.ProtoReflect.Descriptor instead.
+func (*SaveDrawerRequest) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SaveDrawerRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *SaveDrawerRequest) GetValues() map[string]string {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+type SaveDrawerResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Saved bool                   `protobuf:"varint,1,opt,name=saved,proto3" json:"saved,omitempty"`
+	// The web's confirmation when saved.
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	// Where the web went next, or empty.
+	Redirect string `protobuf:"bytes,3,opt,name=redirect,proto3" json:"redirect,omitempty"`
+	// The web's reason when not saved and the drawer was not drawn again.
+	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	// The drawer drawn again with its errors, when not saved.
+	Drawer        *PageDrawer `protobuf:"bytes,5,opt,name=drawer,proto3" json:"drawer,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveDrawerResponse) Reset() {
+	*x = SaveDrawerResponse{}
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveDrawerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveDrawerResponse) ProtoMessage() {}
+
+func (x *SaveDrawerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveDrawerResponse.ProtoReflect.Descriptor instead.
+func (*SaveDrawerResponse) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SaveDrawerResponse) GetSaved() bool {
+	if x != nil {
+		return x.Saved
+	}
+	return false
+}
+
+func (x *SaveDrawerResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *SaveDrawerResponse) GetRedirect() string {
+	if x != nil {
+		return x.Redirect
+	}
+	return ""
+}
+
+func (x *SaveDrawerResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *SaveDrawerResponse) GetDrawer() *PageDrawer {
+	if x != nil {
+		return x.Drawer
+	}
+	return nil
+}
+
 type DrawerOption struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Value string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -34,7 +265,7 @@ type DrawerOption struct {
 
 func (x *DrawerOption) Reset() {
 	*x = DrawerOption{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[0]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +277,7 @@ func (x *DrawerOption) String() string {
 func (*DrawerOption) ProtoMessage() {}
 
 func (x *DrawerOption) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[0]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +290,7 @@ func (x *DrawerOption) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrawerOption.ProtoReflect.Descriptor instead.
 func (*DrawerOption) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{0}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DrawerOption) GetValue() string {
@@ -101,7 +332,7 @@ type DrawerCondition struct {
 
 func (x *DrawerCondition) Reset() {
 	*x = DrawerCondition{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[1]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -113,7 +344,7 @@ func (x *DrawerCondition) String() string {
 func (*DrawerCondition) ProtoMessage() {}
 
 func (x *DrawerCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[1]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -126,7 +357,7 @@ func (x *DrawerCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrawerCondition.ProtoReflect.Descriptor instead.
 func (*DrawerCondition) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{1}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DrawerCondition) GetField() string {
@@ -175,7 +406,7 @@ type DrawerField struct {
 
 func (x *DrawerField) Reset() {
 	*x = DrawerField{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[2]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -187,7 +418,7 @@ func (x *DrawerField) String() string {
 func (*DrawerField) ProtoMessage() {}
 
 func (x *DrawerField) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[2]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -200,7 +431,7 @@ func (x *DrawerField) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrawerField.ProtoReflect.Descriptor instead.
 func (*DrawerField) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{2}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DrawerField) GetName() string {
@@ -340,7 +571,7 @@ type DrawerNote struct {
 
 func (x *DrawerNote) Reset() {
 	*x = DrawerNote{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[3]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -352,7 +583,7 @@ func (x *DrawerNote) String() string {
 func (*DrawerNote) ProtoMessage() {}
 
 func (x *DrawerNote) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[3]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -365,7 +596,7 @@ func (x *DrawerNote) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrawerNote.ProtoReflect.Descriptor instead.
 func (*DrawerNote) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{3}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DrawerNote) GetText() string {
@@ -393,6 +624,7 @@ type DrawerItem struct {
 	//	*DrawerItem_Facts
 	//	*DrawerItem_Lines
 	//	*DrawerItem_Field
+	//	*DrawerItem_Block
 	Kind isDrawerItem_Kind `protobuf_oneof:"kind"`
 	// Shown only while any condition holds; empty for always.
 	ShowWhen      []*DrawerCondition `protobuf:"bytes,7,rep,name=show_when,json=showWhen,proto3" json:"show_when,omitempty"`
@@ -402,7 +634,7 @@ type DrawerItem struct {
 
 func (x *DrawerItem) Reset() {
 	*x = DrawerItem{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[4]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -414,7 +646,7 @@ func (x *DrawerItem) String() string {
 func (*DrawerItem) ProtoMessage() {}
 
 func (x *DrawerItem) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[4]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -427,7 +659,7 @@ func (x *DrawerItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrawerItem.ProtoReflect.Descriptor instead.
 func (*DrawerItem) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{4}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DrawerItem) GetKind() isDrawerItem_Kind {
@@ -491,6 +723,15 @@ func (x *DrawerItem) GetField() *DrawerField {
 	return nil
 }
 
+func (x *DrawerItem) GetBlock() *PageBlock {
+	if x != nil {
+		if x, ok := x.Kind.(*DrawerItem_Block); ok {
+			return x.Block
+		}
+	}
+	return nil
+}
+
 func (x *DrawerItem) GetShowWhen() []*DrawerCondition {
 	if x != nil {
 		return x.ShowWhen
@@ -528,6 +769,12 @@ type DrawerItem_Field struct {
 	Field *DrawerField `protobuf:"bytes,6,opt,name=field,proto3,oneof"`
 }
 
+type DrawerItem_Block struct {
+	// What is not a form part, read as the pages read it: a part switching
+	// between tabs, a table, a card of figures.
+	Block *PageBlock `protobuf:"bytes,8,opt,name=block,proto3,oneof"`
+}
+
 func (*DrawerItem_Note) isDrawerItem_Kind() {}
 
 func (*DrawerItem_Heading) isDrawerItem_Kind() {}
@@ -539,6 +786,8 @@ func (*DrawerItem_Facts) isDrawerItem_Kind() {}
 func (*DrawerItem_Lines) isDrawerItem_Kind() {}
 
 func (*DrawerItem_Field) isDrawerItem_Kind() {}
+
+func (*DrawerItem_Block) isDrawerItem_Kind() {}
 
 type PageDrawer struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -558,7 +807,7 @@ type PageDrawer struct {
 
 func (x *PageDrawer) Reset() {
 	*x = PageDrawer{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[5]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -570,7 +819,7 @@ func (x *PageDrawer) String() string {
 func (*PageDrawer) ProtoMessage() {}
 
 func (x *PageDrawer) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[5]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -583,7 +832,7 @@ func (x *PageDrawer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageDrawer.ProtoReflect.Descriptor instead.
 func (*PageDrawer) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{5}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *PageDrawer) GetTitle() string {
@@ -647,7 +896,7 @@ type GetSchoolDrawerRequest struct {
 
 func (x *GetSchoolDrawerRequest) Reset() {
 	*x = GetSchoolDrawerRequest{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[6]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -659,7 +908,7 @@ func (x *GetSchoolDrawerRequest) String() string {
 func (*GetSchoolDrawerRequest) ProtoMessage() {}
 
 func (x *GetSchoolDrawerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[6]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -672,7 +921,7 @@ func (x *GetSchoolDrawerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchoolDrawerRequest.ProtoReflect.Descriptor instead.
 func (*GetSchoolDrawerRequest) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{6}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetSchoolDrawerRequest) GetSchoolId() string {
@@ -698,7 +947,7 @@ type GetSchoolDrawerResponse struct {
 
 func (x *GetSchoolDrawerResponse) Reset() {
 	*x = GetSchoolDrawerResponse{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[7]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -710,7 +959,7 @@ func (x *GetSchoolDrawerResponse) String() string {
 func (*GetSchoolDrawerResponse) ProtoMessage() {}
 
 func (x *GetSchoolDrawerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[7]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -723,7 +972,7 @@ func (x *GetSchoolDrawerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchoolDrawerResponse.ProtoReflect.Descriptor instead.
 func (*GetSchoolDrawerResponse) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{7}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetSchoolDrawerResponse) GetDrawer() *PageDrawer {
@@ -745,7 +994,7 @@ type SaveSchoolDrawerRequest struct {
 
 func (x *SaveSchoolDrawerRequest) Reset() {
 	*x = SaveSchoolDrawerRequest{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[8]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -757,7 +1006,7 @@ func (x *SaveSchoolDrawerRequest) String() string {
 func (*SaveSchoolDrawerRequest) ProtoMessage() {}
 
 func (x *SaveSchoolDrawerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[8]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -770,7 +1019,7 @@ func (x *SaveSchoolDrawerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveSchoolDrawerRequest.ProtoReflect.Descriptor instead.
 func (*SaveSchoolDrawerRequest) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{8}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SaveSchoolDrawerRequest) GetSchoolId() string {
@@ -812,7 +1061,7 @@ type SaveSchoolDrawerResponse struct {
 
 func (x *SaveSchoolDrawerResponse) Reset() {
 	*x = SaveSchoolDrawerResponse{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[9]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -824,7 +1073,7 @@ func (x *SaveSchoolDrawerResponse) String() string {
 func (*SaveSchoolDrawerResponse) ProtoMessage() {}
 
 func (x *SaveSchoolDrawerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[9]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -837,7 +1086,7 @@ func (x *SaveSchoolDrawerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveSchoolDrawerResponse.ProtoReflect.Descriptor instead.
 func (*SaveSchoolDrawerResponse) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{9}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SaveSchoolDrawerResponse) GetSaved() bool {
@@ -888,7 +1137,7 @@ type GetDrawerOptionsRequest struct {
 
 func (x *GetDrawerOptionsRequest) Reset() {
 	*x = GetDrawerOptionsRequest{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[10]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -900,7 +1149,7 @@ func (x *GetDrawerOptionsRequest) String() string {
 func (*GetDrawerOptionsRequest) ProtoMessage() {}
 
 func (x *GetDrawerOptionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[10]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -913,7 +1162,7 @@ func (x *GetDrawerOptionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDrawerOptionsRequest.ProtoReflect.Descriptor instead.
 func (*GetDrawerOptionsRequest) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{10}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetDrawerOptionsRequest) GetSource() string {
@@ -946,7 +1195,7 @@ type GetDrawerOptionsResponse struct {
 
 func (x *GetDrawerOptionsResponse) Reset() {
 	*x = GetDrawerOptionsResponse{}
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[11]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -958,7 +1207,7 @@ func (x *GetDrawerOptionsResponse) String() string {
 func (*GetDrawerOptionsResponse) ProtoMessage() {}
 
 func (x *GetDrawerOptionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_drawer_proto_msgTypes[11]
+	mi := &file_edify_screens_v1_drawer_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -971,7 +1220,7 @@ func (x *GetDrawerOptionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDrawerOptionsResponse.ProtoReflect.Descriptor instead.
 func (*GetDrawerOptionsResponse) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{11}
+	return file_edify_screens_v1_drawer_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetDrawerOptionsResponse) GetOptions() []*DrawerOption {
@@ -985,7 +1234,24 @@ var File_edify_screens_v1_drawer_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_drawer_proto_rawDesc = "" +
 	"\n" +
-	"\x1dedify/screens/v1/drawer.proto\x12\x10edify.screens.v1\x1a\x1bedify/screens/v1/page.proto\"l\n" +
+	"\x1dedify/screens/v1/drawer.proto\x12\x10edify.screens.v1\x1a\x1bedify/screens/v1/page.proto\"&\n" +
+	"\x10GetDrawerRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"c\n" +
+	"\x11GetDrawerResponse\x124\n" +
+	"\x06drawer\x18\x01 \x01(\v2\x1c.edify.screens.v1.PageDrawerR\x06drawer\x12\x18\n" +
+	"\arefusal\x18\x02 \x01(\tR\arefusal\"\xab\x01\n" +
+	"\x11SaveDrawerRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12G\n" +
+	"\x06values\x18\x02 \x03(\v2/.edify.screens.v1.SaveDrawerRequest.ValuesEntryR\x06values\x1a9\n" +
+	"\vValuesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xac\x01\n" +
+	"\x12SaveDrawerResponse\x12\x14\n" +
+	"\x05saved\x18\x01 \x01(\bR\x05saved\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1a\n" +
+	"\bredirect\x18\x03 \x01(\tR\bredirect\x12\x14\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\x124\n" +
+	"\x06drawer\x18\x05 \x01(\v2\x1c.edify.screens.v1.PageDrawerR\x06drawer\"l\n" +
 	"\fDrawerOption\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x14\n" +
@@ -1022,7 +1288,7 @@ const file_edify_screens_v1_drawer_proto_rawDesc = "" +
 	"\n" +
 	"DrawerNote\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x12\n" +
-	"\x04tone\x18\x02 \x01(\tR\x04tone\"\xdb\x02\n" +
+	"\x04tone\x18\x02 \x01(\tR\x04tone\"\x90\x03\n" +
 	"\n" +
 	"DrawerItem\x122\n" +
 	"\x04note\x18\x01 \x01(\v2\x1c.edify.screens.v1.DrawerNoteH\x00R\x04note\x12\x1a\n" +
@@ -1030,7 +1296,8 @@ const file_edify_screens_v1_drawer_proto_rawDesc = "" +
 	"\x04text\x18\x03 \x01(\tH\x00R\x04text\x123\n" +
 	"\x05facts\x18\x04 \x01(\v2\x1b.edify.screens.v1.PageFactsH\x00R\x05facts\x123\n" +
 	"\x05lines\x18\x05 \x01(\v2\x1b.edify.screens.v1.PageFactsH\x00R\x05lines\x125\n" +
-	"\x05field\x18\x06 \x01(\v2\x1d.edify.screens.v1.DrawerFieldH\x00R\x05field\x12>\n" +
+	"\x05field\x18\x06 \x01(\v2\x1d.edify.screens.v1.DrawerFieldH\x00R\x05field\x123\n" +
+	"\x05block\x18\b \x01(\v2\x1b.edify.screens.v1.PageBlockH\x00R\x05block\x12>\n" +
 	"\tshow_when\x18\a \x03(\v2!.edify.screens.v1.DrawerConditionR\bshowWhenB\x06\n" +
 	"\x04kind\"\xfa\x01\n" +
 	"\n" +
@@ -1070,7 +1337,11 @@ const file_edify_screens_v1_drawer_proto_rawDesc = "" +
 	"\x13SchoolDrawerService\x12f\n" +
 	"\x0fGetSchoolDrawer\x12(.edify.screens.v1.GetSchoolDrawerRequest\x1a).edify.screens.v1.GetSchoolDrawerResponse\x12i\n" +
 	"\x10SaveSchoolDrawer\x12).edify.screens.v1.SaveSchoolDrawerRequest\x1a*.edify.screens.v1.SaveSchoolDrawerResponse\x12i\n" +
-	"\x10GetDrawerOptions\x12).edify.screens.v1.GetDrawerOptionsRequest\x1a*.edify.screens.v1.GetDrawerOptionsResponseB\xdf\x01\n" +
+	"\x10GetDrawerOptions\x12).edify.screens.v1.GetDrawerOptionsRequest\x1a*.edify.screens.v1.GetDrawerOptionsResponse2\xc2\x01\n" +
+	"\x11PageDrawerService\x12T\n" +
+	"\tGetDrawer\x12\".edify.screens.v1.GetDrawerRequest\x1a#.edify.screens.v1.GetDrawerResponse\x12W\n" +
+	"\n" +
+	"SaveDrawer\x12#.edify.screens.v1.SaveDrawerRequest\x1a$.edify.screens.v1.SaveDrawerResponseB\xdf\x01\n" +
 	"\x14com.edify.screens.v1B\vDrawerProtoP\x01ZXgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1;screensv1\xa2\x02\x03ESX\xaa\x02\x10Edify.Screens.V1\xca\x02\x10Edify\\Screens\\V1\xe2\x02\x1cEdify\\Screens\\V1\\GPBMetadata\xea\x02\x12Edify::Screens::V1b\x06proto3"
 
 var (
@@ -1085,47 +1356,61 @@ func file_edify_screens_v1_drawer_proto_rawDescGZIP() []byte {
 	return file_edify_screens_v1_drawer_proto_rawDescData
 }
 
-var file_edify_screens_v1_drawer_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_edify_screens_v1_drawer_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_edify_screens_v1_drawer_proto_goTypes = []any{
-	(*DrawerOption)(nil),             // 0: edify.screens.v1.DrawerOption
-	(*DrawerCondition)(nil),          // 1: edify.screens.v1.DrawerCondition
-	(*DrawerField)(nil),              // 2: edify.screens.v1.DrawerField
-	(*DrawerNote)(nil),               // 3: edify.screens.v1.DrawerNote
-	(*DrawerItem)(nil),               // 4: edify.screens.v1.DrawerItem
-	(*PageDrawer)(nil),               // 5: edify.screens.v1.PageDrawer
-	(*GetSchoolDrawerRequest)(nil),   // 6: edify.screens.v1.GetSchoolDrawerRequest
-	(*GetSchoolDrawerResponse)(nil),  // 7: edify.screens.v1.GetSchoolDrawerResponse
-	(*SaveSchoolDrawerRequest)(nil),  // 8: edify.screens.v1.SaveSchoolDrawerRequest
-	(*SaveSchoolDrawerResponse)(nil), // 9: edify.screens.v1.SaveSchoolDrawerResponse
-	(*GetDrawerOptionsRequest)(nil),  // 10: edify.screens.v1.GetDrawerOptionsRequest
-	(*GetDrawerOptionsResponse)(nil), // 11: edify.screens.v1.GetDrawerOptionsResponse
-	nil,                              // 12: edify.screens.v1.SaveSchoolDrawerRequest.ValuesEntry
-	(*PageFacts)(nil),                // 13: edify.screens.v1.PageFacts
+	(*GetDrawerRequest)(nil),         // 0: edify.screens.v1.GetDrawerRequest
+	(*GetDrawerResponse)(nil),        // 1: edify.screens.v1.GetDrawerResponse
+	(*SaveDrawerRequest)(nil),        // 2: edify.screens.v1.SaveDrawerRequest
+	(*SaveDrawerResponse)(nil),       // 3: edify.screens.v1.SaveDrawerResponse
+	(*DrawerOption)(nil),             // 4: edify.screens.v1.DrawerOption
+	(*DrawerCondition)(nil),          // 5: edify.screens.v1.DrawerCondition
+	(*DrawerField)(nil),              // 6: edify.screens.v1.DrawerField
+	(*DrawerNote)(nil),               // 7: edify.screens.v1.DrawerNote
+	(*DrawerItem)(nil),               // 8: edify.screens.v1.DrawerItem
+	(*PageDrawer)(nil),               // 9: edify.screens.v1.PageDrawer
+	(*GetSchoolDrawerRequest)(nil),   // 10: edify.screens.v1.GetSchoolDrawerRequest
+	(*GetSchoolDrawerResponse)(nil),  // 11: edify.screens.v1.GetSchoolDrawerResponse
+	(*SaveSchoolDrawerRequest)(nil),  // 12: edify.screens.v1.SaveSchoolDrawerRequest
+	(*SaveSchoolDrawerResponse)(nil), // 13: edify.screens.v1.SaveSchoolDrawerResponse
+	(*GetDrawerOptionsRequest)(nil),  // 14: edify.screens.v1.GetDrawerOptionsRequest
+	(*GetDrawerOptionsResponse)(nil), // 15: edify.screens.v1.GetDrawerOptionsResponse
+	nil,                              // 16: edify.screens.v1.SaveDrawerRequest.ValuesEntry
+	nil,                              // 17: edify.screens.v1.SaveSchoolDrawerRequest.ValuesEntry
+	(*PageFacts)(nil),                // 18: edify.screens.v1.PageFacts
+	(*PageBlock)(nil),                // 19: edify.screens.v1.PageBlock
 }
 var file_edify_screens_v1_drawer_proto_depIdxs = []int32{
-	0,  // 0: edify.screens.v1.DrawerField.options:type_name -> edify.screens.v1.DrawerOption
-	1,  // 1: edify.screens.v1.DrawerField.show_when:type_name -> edify.screens.v1.DrawerCondition
-	3,  // 2: edify.screens.v1.DrawerItem.note:type_name -> edify.screens.v1.DrawerNote
-	13, // 3: edify.screens.v1.DrawerItem.facts:type_name -> edify.screens.v1.PageFacts
-	13, // 4: edify.screens.v1.DrawerItem.lines:type_name -> edify.screens.v1.PageFacts
-	2,  // 5: edify.screens.v1.DrawerItem.field:type_name -> edify.screens.v1.DrawerField
-	1,  // 6: edify.screens.v1.DrawerItem.show_when:type_name -> edify.screens.v1.DrawerCondition
-	4,  // 7: edify.screens.v1.PageDrawer.items:type_name -> edify.screens.v1.DrawerItem
-	5,  // 8: edify.screens.v1.GetSchoolDrawerResponse.drawer:type_name -> edify.screens.v1.PageDrawer
-	12, // 9: edify.screens.v1.SaveSchoolDrawerRequest.values:type_name -> edify.screens.v1.SaveSchoolDrawerRequest.ValuesEntry
-	5,  // 10: edify.screens.v1.SaveSchoolDrawerResponse.drawer:type_name -> edify.screens.v1.PageDrawer
-	0,  // 11: edify.screens.v1.GetDrawerOptionsResponse.options:type_name -> edify.screens.v1.DrawerOption
-	6,  // 12: edify.screens.v1.SchoolDrawerService.GetSchoolDrawer:input_type -> edify.screens.v1.GetSchoolDrawerRequest
-	8,  // 13: edify.screens.v1.SchoolDrawerService.SaveSchoolDrawer:input_type -> edify.screens.v1.SaveSchoolDrawerRequest
-	10, // 14: edify.screens.v1.SchoolDrawerService.GetDrawerOptions:input_type -> edify.screens.v1.GetDrawerOptionsRequest
-	7,  // 15: edify.screens.v1.SchoolDrawerService.GetSchoolDrawer:output_type -> edify.screens.v1.GetSchoolDrawerResponse
-	9,  // 16: edify.screens.v1.SchoolDrawerService.SaveSchoolDrawer:output_type -> edify.screens.v1.SaveSchoolDrawerResponse
-	11, // 17: edify.screens.v1.SchoolDrawerService.GetDrawerOptions:output_type -> edify.screens.v1.GetDrawerOptionsResponse
-	15, // [15:18] is the sub-list for method output_type
-	12, // [12:15] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	9,  // 0: edify.screens.v1.GetDrawerResponse.drawer:type_name -> edify.screens.v1.PageDrawer
+	16, // 1: edify.screens.v1.SaveDrawerRequest.values:type_name -> edify.screens.v1.SaveDrawerRequest.ValuesEntry
+	9,  // 2: edify.screens.v1.SaveDrawerResponse.drawer:type_name -> edify.screens.v1.PageDrawer
+	4,  // 3: edify.screens.v1.DrawerField.options:type_name -> edify.screens.v1.DrawerOption
+	5,  // 4: edify.screens.v1.DrawerField.show_when:type_name -> edify.screens.v1.DrawerCondition
+	7,  // 5: edify.screens.v1.DrawerItem.note:type_name -> edify.screens.v1.DrawerNote
+	18, // 6: edify.screens.v1.DrawerItem.facts:type_name -> edify.screens.v1.PageFacts
+	18, // 7: edify.screens.v1.DrawerItem.lines:type_name -> edify.screens.v1.PageFacts
+	6,  // 8: edify.screens.v1.DrawerItem.field:type_name -> edify.screens.v1.DrawerField
+	19, // 9: edify.screens.v1.DrawerItem.block:type_name -> edify.screens.v1.PageBlock
+	5,  // 10: edify.screens.v1.DrawerItem.show_when:type_name -> edify.screens.v1.DrawerCondition
+	8,  // 11: edify.screens.v1.PageDrawer.items:type_name -> edify.screens.v1.DrawerItem
+	9,  // 12: edify.screens.v1.GetSchoolDrawerResponse.drawer:type_name -> edify.screens.v1.PageDrawer
+	17, // 13: edify.screens.v1.SaveSchoolDrawerRequest.values:type_name -> edify.screens.v1.SaveSchoolDrawerRequest.ValuesEntry
+	9,  // 14: edify.screens.v1.SaveSchoolDrawerResponse.drawer:type_name -> edify.screens.v1.PageDrawer
+	4,  // 15: edify.screens.v1.GetDrawerOptionsResponse.options:type_name -> edify.screens.v1.DrawerOption
+	10, // 16: edify.screens.v1.SchoolDrawerService.GetSchoolDrawer:input_type -> edify.screens.v1.GetSchoolDrawerRequest
+	12, // 17: edify.screens.v1.SchoolDrawerService.SaveSchoolDrawer:input_type -> edify.screens.v1.SaveSchoolDrawerRequest
+	14, // 18: edify.screens.v1.SchoolDrawerService.GetDrawerOptions:input_type -> edify.screens.v1.GetDrawerOptionsRequest
+	0,  // 19: edify.screens.v1.PageDrawerService.GetDrawer:input_type -> edify.screens.v1.GetDrawerRequest
+	2,  // 20: edify.screens.v1.PageDrawerService.SaveDrawer:input_type -> edify.screens.v1.SaveDrawerRequest
+	11, // 21: edify.screens.v1.SchoolDrawerService.GetSchoolDrawer:output_type -> edify.screens.v1.GetSchoolDrawerResponse
+	13, // 22: edify.screens.v1.SchoolDrawerService.SaveSchoolDrawer:output_type -> edify.screens.v1.SaveSchoolDrawerResponse
+	15, // 23: edify.screens.v1.SchoolDrawerService.GetDrawerOptions:output_type -> edify.screens.v1.GetDrawerOptionsResponse
+	1,  // 24: edify.screens.v1.PageDrawerService.GetDrawer:output_type -> edify.screens.v1.GetDrawerResponse
+	3,  // 25: edify.screens.v1.PageDrawerService.SaveDrawer:output_type -> edify.screens.v1.SaveDrawerResponse
+	21, // [21:26] is the sub-list for method output_type
+	16, // [16:21] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_edify_screens_v1_drawer_proto_init() }
@@ -1134,14 +1419,15 @@ func file_edify_screens_v1_drawer_proto_init() {
 		return
 	}
 	file_edify_screens_v1_page_proto_init()
-	file_edify_screens_v1_drawer_proto_msgTypes[2].OneofWrappers = []any{}
-	file_edify_screens_v1_drawer_proto_msgTypes[4].OneofWrappers = []any{
+	file_edify_screens_v1_drawer_proto_msgTypes[6].OneofWrappers = []any{}
+	file_edify_screens_v1_drawer_proto_msgTypes[8].OneofWrappers = []any{
 		(*DrawerItem_Note)(nil),
 		(*DrawerItem_Heading)(nil),
 		(*DrawerItem_Text)(nil),
 		(*DrawerItem_Facts)(nil),
 		(*DrawerItem_Lines)(nil),
 		(*DrawerItem_Field)(nil),
+		(*DrawerItem_Block)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1149,9 +1435,9 @@ func file_edify_screens_v1_drawer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_screens_v1_drawer_proto_rawDesc), len(file_edify_screens_v1_drawer_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   18,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_edify_screens_v1_drawer_proto_goTypes,
 		DependencyIndexes: file_edify_screens_v1_drawer_proto_depIdxs,

@@ -209,3 +209,153 @@ var SchoolDrawerService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "edify/screens/v1/drawer.proto",
 }
+
+const (
+	PageDrawerService_GetDrawer_FullMethodName  = "/edify.screens.v1.PageDrawerService/GetDrawer"
+	PageDrawerService_SaveDrawer_FullMethodName = "/edify.screens.v1.PageDrawerService/SaveDrawer"
+)
+
+// PageDrawerServiceClient is the client API for PageDrawerService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Any drawer a page opens (an activity's Cancel, Create Cluster, a PD
+// request …), read from the drawer the existing application renders for the
+// same person and saved by the view its form posts to. Only the drawers and
+// saves the feed names are reachable.
+type PageDrawerServiceClient interface {
+	GetDrawer(ctx context.Context, in *GetDrawerRequest, opts ...grpc.CallOption) (*GetDrawerResponse, error)
+	SaveDrawer(ctx context.Context, in *SaveDrawerRequest, opts ...grpc.CallOption) (*SaveDrawerResponse, error)
+}
+
+type pageDrawerServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPageDrawerServiceClient(cc grpc.ClientConnInterface) PageDrawerServiceClient {
+	return &pageDrawerServiceClient{cc}
+}
+
+func (c *pageDrawerServiceClient) GetDrawer(ctx context.Context, in *GetDrawerRequest, opts ...grpc.CallOption) (*GetDrawerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDrawerResponse)
+	err := c.cc.Invoke(ctx, PageDrawerService_GetDrawer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageDrawerServiceClient) SaveDrawer(ctx context.Context, in *SaveDrawerRequest, opts ...grpc.CallOption) (*SaveDrawerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveDrawerResponse)
+	err := c.cc.Invoke(ctx, PageDrawerService_SaveDrawer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PageDrawerServiceServer is the server API for PageDrawerService service.
+// All implementations must embed UnimplementedPageDrawerServiceServer
+// for forward compatibility.
+//
+// Any drawer a page opens (an activity's Cancel, Create Cluster, a PD
+// request …), read from the drawer the existing application renders for the
+// same person and saved by the view its form posts to. Only the drawers and
+// saves the feed names are reachable.
+type PageDrawerServiceServer interface {
+	GetDrawer(context.Context, *GetDrawerRequest) (*GetDrawerResponse, error)
+	SaveDrawer(context.Context, *SaveDrawerRequest) (*SaveDrawerResponse, error)
+	mustEmbedUnimplementedPageDrawerServiceServer()
+}
+
+// UnimplementedPageDrawerServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedPageDrawerServiceServer struct{}
+
+func (UnimplementedPageDrawerServiceServer) GetDrawer(context.Context, *GetDrawerRequest) (*GetDrawerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDrawer not implemented")
+}
+func (UnimplementedPageDrawerServiceServer) SaveDrawer(context.Context, *SaveDrawerRequest) (*SaveDrawerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SaveDrawer not implemented")
+}
+func (UnimplementedPageDrawerServiceServer) mustEmbedUnimplementedPageDrawerServiceServer() {}
+func (UnimplementedPageDrawerServiceServer) testEmbeddedByValue()                           {}
+
+// UnsafePageDrawerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PageDrawerServiceServer will
+// result in compilation errors.
+type UnsafePageDrawerServiceServer interface {
+	mustEmbedUnimplementedPageDrawerServiceServer()
+}
+
+func RegisterPageDrawerServiceServer(s grpc.ServiceRegistrar, srv PageDrawerServiceServer) {
+	// If the following call panics, it indicates UnimplementedPageDrawerServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&PageDrawerService_ServiceDesc, srv)
+}
+
+func _PageDrawerService_GetDrawer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDrawerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageDrawerServiceServer).GetDrawer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PageDrawerService_GetDrawer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageDrawerServiceServer).GetDrawer(ctx, req.(*GetDrawerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PageDrawerService_SaveDrawer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveDrawerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageDrawerServiceServer).SaveDrawer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PageDrawerService_SaveDrawer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageDrawerServiceServer).SaveDrawer(ctx, req.(*SaveDrawerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// PageDrawerService_ServiceDesc is the grpc.ServiceDesc for PageDrawerService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PageDrawerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "edify.screens.v1.PageDrawerService",
+	HandlerType: (*PageDrawerServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetDrawer",
+			Handler:    _PageDrawerService_GetDrawer_Handler,
+		},
+		{
+			MethodName: "SaveDrawer",
+			Handler:    _PageDrawerService_SaveDrawer_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "edify/screens/v1/drawer.proto",
+}

@@ -326,3 +326,44 @@ func TestAPagePathMustBePlain(t *testing.T) {
 		t.Fatalf("reached the feed: %v", fetcher.paths)
 	}
 }
+
+func TestAPageDrawerGoesToTheFeed(t *testing.T) {
+	fetcher := &recordingFetcher{}
+	service := NewService(fetcher)
+	ctx := context.Background()
+
+	_, _ = service.GetDrawer(ctx, connect.NewRequest(&screensv1.GetDrawerRequest{Path: "/core-schools/schedule-training?school_id=1693"}))
+	_, _ = service.SaveDrawer(ctx, connect.NewRequest(&screensv1.SaveDrawerRequest{
+		Path: "/my-plan/a1/cancel-drawer", Values: map[string]string{"reason": "Rain"},
+	}))
+
+	want := []string{
+		"/api/mobile/v1/drawer?path=%2Fcore-schools%2Fschedule-training%3Fschool_id%3D1693",
+		"POST /api/mobile/v1/drawer",
+	}
+	if strings.Join(fetcher.paths, "|") != strings.Join(want, "|") {
+		t.Fatalf("paths %v", fetcher.paths)
+	}
+}
+
+func TestAPageDrawerPathMustBePlain(t *testing.T) {
+	fetcher := &recordingFetcher{}
+	service := NewService(fetcher)
+	ctx := context.Background()
+
+	for _, path := range []string{"", "https://elsewhere.example/x", "//elsewhere.example/x", "/../admin", "/my-plan/a1?Export=1", "/x?a=1&a=2"} {
+		_, err := service.GetDrawer(ctx, connect.NewRequest(&screensv1.GetDrawerRequest{Path: path}))
+		if connect.CodeOf(err) != connect.CodeInvalidArgument {
+			t.Fatalf("%q: got %v", path, err)
+		}
+	}
+	_, err := service.SaveDrawer(ctx, connect.NewRequest(&screensv1.SaveDrawerRequest{
+		Path: "/my-plan/a1/cancel-drawer", Values: map[string]string{"bad name": "x"},
+	}))
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Fatalf("field: got %v", err)
+	}
+	if len(fetcher.paths) != 0 {
+		t.Fatalf("reached the feed: %v", fetcher.paths)
+	}
+}

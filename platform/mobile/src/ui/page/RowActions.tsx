@@ -23,7 +23,7 @@ export function RowActions({ actions, label }: { readonly actions: readonly Page
       {buttons.map((action) => (
         <Pressable
           key={action.href}
-          onPress={() => openLink(action.href)}
+          onPress={() => openLink(action.href, action.drawer)}
           disabled={!action.enabled}
           accessibilityRole="button"
           accessibilityHint={action.reason || undefined}
@@ -67,7 +67,7 @@ export function RowActions({ actions, label }: { readonly actions: readonly Page
             isDisabled: !action.enabled,
             reason: action.reason || undefined,
             isDanger: action.key === 'danger',
-            onPress: () => openLink(action.href),
+            onPress: () => openLink(action.href, action.drawer),
           }))}
         />
       </Dropdown>

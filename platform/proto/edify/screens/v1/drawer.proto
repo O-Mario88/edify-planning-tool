@@ -16,6 +16,44 @@ service SchoolDrawerService {
   rpc GetDrawerOptions(GetDrawerOptionsRequest) returns (GetDrawerOptionsResponse);
 }
 
+// Any drawer a page opens (an activity's Cancel, Create Cluster, a PD
+// request …), read from the drawer the existing application renders for the
+// same person and saved by the view its form posts to. Only the drawers and
+// saves the feed names are reachable.
+service PageDrawerService {
+  rpc GetDrawer(GetDrawerRequest) returns (GetDrawerResponse);
+  rpc SaveDrawer(SaveDrawerRequest) returns (SaveDrawerResponse);
+}
+
+message GetDrawerRequest {
+  // The drawer's web path with its query ("/my-plan/a1/cancel-drawer").
+  string path = 1;
+}
+
+message GetDrawerResponse {
+  PageDrawer drawer = 1;
+  // The web's message in place of the drawer.
+  string refusal = 2;
+}
+
+message SaveDrawerRequest {
+  string path = 1;
+  // The drawer's fields by name. Fields the drawer does not have are ignored.
+  map<string, string> values = 2;
+}
+
+message SaveDrawerResponse {
+  bool saved = 1;
+  // The web's confirmation when saved.
+  string message = 2;
+  // Where the web went next, or empty.
+  string redirect = 3;
+  // The web's reason when not saved and the drawer was not drawn again.
+  string error = 4;
+  // The drawer drawn again with its errors, when not saved.
+  PageDrawer drawer = 5;
+}
+
 message DrawerOption {
   string value = 1;
   string label = 2;
@@ -74,6 +112,9 @@ message DrawerItem {
     // Figures as lines ("Active schools  -1").
     PageFacts lines = 5;
     DrawerField field = 6;
+    // What is not a form part, read as the pages read it: a part switching
+    // between tabs, a table, a card of figures.
+    PageBlock block = 8;
   }
   // Shown only while any condition holds; empty for always.
   repeated DrawerCondition show_when = 7;

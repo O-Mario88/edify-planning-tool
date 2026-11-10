@@ -69,7 +69,7 @@ function Row({ item, isFirst }: { readonly item: PageListItem; readonly isFirst:
             {item.actions.map((action) => (
               <Pressable
                 key={action.href + action.label}
-                onPress={() => openLink(action.href)}
+                onPress={() => openLink(action.href, action.drawer)}
                 disabled={!action.enabled}
                 accessibilityRole="button"
                 accessibilityLabel={`${action.label}: ${item.title}`}

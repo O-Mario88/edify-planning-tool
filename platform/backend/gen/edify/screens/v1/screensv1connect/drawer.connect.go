@@ -23,6 +23,8 @@ const _ = connect.IsAtLeastVersion1_13_0
 const (
 	// SchoolDrawerServiceName is the fully-qualified name of the SchoolDrawerService service.
 	SchoolDrawerServiceName = "edify.screens.v1.SchoolDrawerService"
+	// PageDrawerServiceName is the fully-qualified name of the PageDrawerService service.
+	PageDrawerServiceName = "edify.screens.v1.PageDrawerService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -42,6 +44,12 @@ const (
 	// SchoolDrawerServiceGetDrawerOptionsProcedure is the fully-qualified name of the
 	// SchoolDrawerService's GetDrawerOptions RPC.
 	SchoolDrawerServiceGetDrawerOptionsProcedure = "/edify.screens.v1.SchoolDrawerService/GetDrawerOptions"
+	// PageDrawerServiceGetDrawerProcedure is the fully-qualified name of the PageDrawerService's
+	// GetDrawer RPC.
+	PageDrawerServiceGetDrawerProcedure = "/edify.screens.v1.PageDrawerService/GetDrawer"
+	// PageDrawerServiceSaveDrawerProcedure is the fully-qualified name of the PageDrawerService's
+	// SaveDrawer RPC.
+	PageDrawerServiceSaveDrawerProcedure = "/edify.screens.v1.PageDrawerService/SaveDrawer"
 )
 
 // SchoolDrawerServiceClient is a client for the edify.screens.v1.SchoolDrawerService service.
@@ -169,4 +177,100 @@ func (UnimplementedSchoolDrawerServiceHandler) SaveSchoolDrawer(context.Context,
 
 func (UnimplementedSchoolDrawerServiceHandler) GetDrawerOptions(context.Context, *connect.Request[v1.GetDrawerOptionsRequest]) (*connect.Response[v1.GetDrawerOptionsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.screens.v1.SchoolDrawerService.GetDrawerOptions is not implemented"))
+}
+
+// PageDrawerServiceClient is a client for the edify.screens.v1.PageDrawerService service.
+type PageDrawerServiceClient interface {
+	GetDrawer(context.Context, *connect.Request[v1.GetDrawerRequest]) (*connect.Response[v1.GetDrawerResponse], error)
+	SaveDrawer(context.Context, *connect.Request[v1.SaveDrawerRequest]) (*connect.Response[v1.SaveDrawerResponse], error)
+}
+
+// NewPageDrawerServiceClient constructs a client for the edify.screens.v1.PageDrawerService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewPageDrawerServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) PageDrawerServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	pageDrawerServiceMethods := v1.File_edify_screens_v1_drawer_proto.Services().ByName("PageDrawerService").Methods()
+	return &pageDrawerServiceClient{
+		getDrawer: connect.NewClient[v1.GetDrawerRequest, v1.GetDrawerResponse](
+			httpClient,
+			baseURL+PageDrawerServiceGetDrawerProcedure,
+			connect.WithSchema(pageDrawerServiceMethods.ByName("GetDrawer")),
+			connect.WithClientOptions(opts...),
+		),
+		saveDrawer: connect.NewClient[v1.SaveDrawerRequest, v1.SaveDrawerResponse](
+			httpClient,
+			baseURL+PageDrawerServiceSaveDrawerProcedure,
+			connect.WithSchema(pageDrawerServiceMethods.ByName("SaveDrawer")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// pageDrawerServiceClient implements PageDrawerServiceClient.
+type pageDrawerServiceClient struct {
+	getDrawer  *connect.Client[v1.GetDrawerRequest, v1.GetDrawerResponse]
+	saveDrawer *connect.Client[v1.SaveDrawerRequest, v1.SaveDrawerResponse]
+}
+
+// GetDrawer calls edify.screens.v1.PageDrawerService.GetDrawer.
+func (c *pageDrawerServiceClient) GetDrawer(ctx context.Context, req *connect.Request[v1.GetDrawerRequest]) (*connect.Response[v1.GetDrawerResponse], error) {
+	return c.getDrawer.CallUnary(ctx, req)
+}
+
+// SaveDrawer calls edify.screens.v1.PageDrawerService.SaveDrawer.
+func (c *pageDrawerServiceClient) SaveDrawer(ctx context.Context, req *connect.Request[v1.SaveDrawerRequest]) (*connect.Response[v1.SaveDrawerResponse], error) {
+	return c.saveDrawer.CallUnary(ctx, req)
+}
+
+// PageDrawerServiceHandler is an implementation of the edify.screens.v1.PageDrawerService service.
+type PageDrawerServiceHandler interface {
+	GetDrawer(context.Context, *connect.Request[v1.GetDrawerRequest]) (*connect.Response[v1.GetDrawerResponse], error)
+	SaveDrawer(context.Context, *connect.Request[v1.SaveDrawerRequest]) (*connect.Response[v1.SaveDrawerResponse], error)
+}
+
+// NewPageDrawerServiceHandler builds an HTTP handler from the service implementation. It returns
+// the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewPageDrawerServiceHandler(svc PageDrawerServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	pageDrawerServiceMethods := v1.File_edify_screens_v1_drawer_proto.Services().ByName("PageDrawerService").Methods()
+	pageDrawerServiceGetDrawerHandler := connect.NewUnaryHandler(
+		PageDrawerServiceGetDrawerProcedure,
+		svc.GetDrawer,
+		connect.WithSchema(pageDrawerServiceMethods.ByName("GetDrawer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	pageDrawerServiceSaveDrawerHandler := connect.NewUnaryHandler(
+		PageDrawerServiceSaveDrawerProcedure,
+		svc.SaveDrawer,
+		connect.WithSchema(pageDrawerServiceMethods.ByName("SaveDrawer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/edify.screens.v1.PageDrawerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case PageDrawerServiceGetDrawerProcedure:
+			pageDrawerServiceGetDrawerHandler.ServeHTTP(w, r)
+		case PageDrawerServiceSaveDrawerProcedure:
+			pageDrawerServiceSaveDrawerHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedPageDrawerServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedPageDrawerServiceHandler struct{}
+
+func (UnimplementedPageDrawerServiceHandler) GetDrawer(context.Context, *connect.Request[v1.GetDrawerRequest]) (*connect.Response[v1.GetDrawerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.screens.v1.PageDrawerService.GetDrawer is not implemented"))
+}
+
+func (UnimplementedPageDrawerServiceHandler) SaveDrawer(context.Context, *connect.Request[v1.SaveDrawerRequest]) (*connect.Response[v1.SaveDrawerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.screens.v1.PageDrawerService.SaveDrawer is not implemented"))
 }

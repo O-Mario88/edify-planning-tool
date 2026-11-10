@@ -63,5 +63,6 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPlanningDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewMyPlanScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewPageScreenServiceHandler(screenService, options...))
+	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	return httpmw.Chain(logger, httpmw.CORS(cfg.CORSAllowedOrigins, mux))
 }

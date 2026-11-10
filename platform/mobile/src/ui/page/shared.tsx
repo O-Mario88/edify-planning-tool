@@ -8,8 +8,9 @@ import { StyleSheet } from 'react-native';
 
 import type { Palette } from '../../theme';
 
-/** Opens a web path the page links to: natively when the app has it. */
-export type OpenLink = (href: string) => void;
+/** Opens a web path the page links to: natively when the app has it.
+ * ``isDrawer``: the web opens it as a drawer. */
+export type OpenLink = (href: string, isDrawer?: boolean) => void;
 export const PageLinkContext = createContext<OpenLink>(() => undefined);
 
 export function usePageLink(): OpenLink {

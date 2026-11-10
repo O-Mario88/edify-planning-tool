@@ -838,3 +838,85 @@ class PageFeedTest(SchoolActionFeedTest):
         )
 
         self.assertIn(response.status_code, (403, 404))
+
+
+class PageDrawerFeedTest(SchoolActionFeedTest):
+    """A drawer a page opens is the web drawer, saved by the view its form
+    posts to; only the drawers and saves the feed names are reachable."""
+
+    def setUp(self):
+        super().setUp()
+        from django.utils import timezone
+
+        from apps.activities.models import Activity
+        from apps.core.fy import get_operational_fy, get_quarter_for_date
+
+        day = timezone.localdate() + timezone.timedelta(days=10)
+        self.visit = Activity.objects.create(
+            activity_type="school_visit",
+            status="scheduled",
+            school=self.school,
+            responsible_staff_id=self.profile.id,
+            delivery_type="staff",
+            planned_date=day,
+            fy=get_operational_fy(day),
+            quarter=get_quarter_for_date(day),
+        )
+
+    def drawer(self, path):
+        return self.client.get("/api/mobile/v1/drawer", {"path": path}, **self.auth)
+
+    def save(self, path, values):
+        return self.client.post(
+            "/api/mobile/v1/drawer",
+            {"path": path, "values": values},
+            format="json",
+            **self.auth,
+        )
+
+    def test_the_rows_menu_marks_its_drawers(self):
+        body = self.client.get(
+            "/api/mobile/v1/page", {"path": "/my-plan"}, **self.auth
+        ).json()
+        visits = next(
+            b["table"]
+            for b in body["blocks"]
+            if "table" in b and b["table"]["title"].startswith("School Visits")
+        )
+        menu = visits["rows"][0]["cells"][-1]["actions"]
+
+        cancel = next(a for a in menu if a["label"] == "Cancel Activity")
+        self.assertTrue(cancel["drawer"])
+        self.assertEqual(cancel["href"], f"/my-plan/{self.visit.id}/cancel-drawer")
+
+    def test_details_is_the_web_drawer(self):
+        body = self.drawer(f"/my-plan/{self.visit.id}").json()
+
+        self.assertIn("drawer", body)
+        self.assertTrue(body["drawer"]["title"])
+
+    def test_cancel_saves_through_the_web_view(self):
+        path = f"/my-plan/{self.visit.id}/cancel-drawer"
+        drawer = self.drawer(path).json()["drawer"]
+        fields = [i["field"] for i in drawer["items"] if "field" in i]
+        values = {f["name"]: f["value"] for f in fields}
+        for field in fields:
+            if field["kind"] == "select" and not values[field["name"]]:
+                values[field["name"]] = next(
+                    o["value"] for o in field["options"] if o["value"]
+                )
+            elif field["kind"] in ("text", "textarea") and not values[field["name"]]:
+                values[field["name"]] = "The school is closed for exams this week."
+
+        body = self.save(path, values).json()
+
+        self.assertTrue(body["saved"], body)
+        self.visit.refresh_from_db()
+        self.assertEqual(self.visit.status, "cancelled")
+
+    def test_a_drawer_not_named_is_not_reachable(self):
+        # The evidence upload drawer exists but the app does not draw it yet.
+        self.assertEqual(
+            self.drawer(f"/activities/{self.visit.id}/evidence").status_code, 404
+        )
+        self.assertEqual(self.drawer("/users").status_code, 404)

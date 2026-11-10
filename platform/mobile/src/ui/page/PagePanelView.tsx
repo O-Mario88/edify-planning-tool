@@ -85,7 +85,7 @@ function Item({ item }: { readonly item: PagePanelItem }) {
           {kind.value.links.map((link) => (
             <Pressable
               key={`${link.text}-${link.caption}`}
-              onPress={link.href ? () => openLink(link.href) : undefined}
+              onPress={link.href ? () => openLink(link.href, link.drawer) : undefined}
               disabled={!link.href}
               accessibilityRole={link.href ? 'link' : 'text'}
             >

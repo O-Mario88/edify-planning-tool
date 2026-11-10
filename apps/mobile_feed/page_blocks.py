@@ -126,6 +126,11 @@ def parse(html: str) -> Node:
     return builder.root
 
 
+def _opens_drawer(node: Node) -> bool:
+    """Whether the web opens what ``node`` links to as a drawer."""
+    return node.get("hx-target") == "#drawer-container"
+
+
 def _href(node: Node | None) -> str:
     if node is None:
         return ""
@@ -223,6 +228,7 @@ def _header(main: Node) -> dict:
                     "enabled": enabled,
                     "reason": "" if enabled else node.get("title"),
                     "href": node.get("hx-get") or node.get("href"),
+                    "drawer": _opens_drawer(node),
                 }
             )
     eyebrow = main.find(lambda n: n.has("edify-page-eyebrow"))
@@ -361,6 +367,7 @@ def _row_actions(cell: Node) -> list[dict]:
                 "enabled": "disabled" not in button.attrs,
                 "reason": button.get("title"),
                 "href": path,
+                "drawer": _opens_drawer(button),
             }
         )
     return actions
@@ -848,6 +855,7 @@ def _link_item(node: Node) -> dict:
         "text": text,
         "href": node.get("hx-get") or node.get("href"),
         "caption": " · ".join(lines[1:]) if len(lines) > 1 else "",
+        "drawer": _opens_drawer(node),
     }
 
 
@@ -879,11 +887,15 @@ def _panel(node: Node) -> dict:
 
 def _switch_parts(node: Node) -> tuple[Node, list[tuple[Node, Node]]] | None:
     """The tab list inside ``node`` and its (button, part) pairs."""
-    tablist = node.find(lambda n: "data-edify-tablist" in n.attrs)
+    tablist = node.find(
+        lambda n: "data-edify-tablist" in n.attrs or n.get("role") == "tablist"
+    )
     if tablist is None:
         return None
     pairs = []
-    for button in tablist.find_all(lambda n: "data-edify-tab" in n.attrs):
+    for button in tablist.find_all(
+        lambda n: "data-edify-tab" in n.attrs or n.get("role") == "tab"
+    ):
         target = button.get("aria-controls")
         part = (
             node.find(lambda n, target=target: n.get("id") == target)
@@ -920,7 +932,8 @@ def _segments(node: Node, tablist: Node, pairs: list[tuple[Node, Node]]) -> dict
             {
                 "label": label,
                 "count": count.text() if count else "",
-                "active": button.get("aria-pressed") == "true",
+                "active": button.get("aria-pressed") == "true"
+                or button.get("aria-selected") == "true",
                 "blocks": _blocks(part, []),
             }
         )
@@ -930,6 +943,89 @@ def _segments(node: Node, tablist: Node, pairs: list[tuple[Node, Node]]) -> dict
         "caption": caption.text() if caption else "",
         "segments": segments,
     }
+
+
+def _beside_switch(
+    node: Node, tablist: Node, pairs: list[tuple[Node, Node]]
+) -> list[Node]:
+    """What ``node`` holds besides its tab rail and the parts it switches
+    (figures above the tabs): read on their own, not inside the switch."""
+    parts = {id(part) for _, part in pairs}
+    return [
+        child
+        for child in node.children
+        if isinstance(child, Node)
+        and child.tag not in SILENT
+        and id(child) not in parts
+        and child is not tablist
+        and not _inside(tablist, child)
+        and child.tag not in ("h2", "h3", "h4", "p", "header")
+        and not child.has("edify-table-titlebar")
+        and child.text()
+    ]
+
+
+#: The triggers that fetch a part of the page once it is open or in view.
+LATER_TRIGGERS = re.compile(r"^\s*(load\b|intersect\b|revealed\b|load-[a-z-]+)")
+
+
+def _loads_later(node: Node) -> bool:
+    """A part the page fetches once it is open or scrolled into view (never a
+    drawer, which opens into the drawer container)."""
+    return (
+        bool(node.get("hx-get"))
+        and bool(LATER_TRIGGERS.match(node.get("hx-trigger")))
+        and node.get("hx-target") != "#drawer-container"
+    )
+
+
+def _section_nav(nav: Node) -> dict | None:
+    """The strip of a workspace's sibling pages (partials/_section_nav.html):
+    real links in the tab look, scrolling sideways on a phone."""
+    if not nav.has("edify-section-nav"):
+        return None
+    links = nav.find_all(
+        lambda n: n.tag == "a"
+        and (n.has("edify-section-nav__link") or n.has("edify-section-nav__cluster"))
+    )
+    if not links:
+        return None
+    eyebrow = nav.find(lambda n: n.has("edify-section-nav__eyebrow"))
+    return {
+        "tabs": [
+            {"label": a.text(), "href": a.get("href"), "active": a.has("is-active")}
+            for a in links
+        ],
+        "label": eyebrow.text() if eyebrow else "",
+        "scrolls": True,
+    }
+
+
+def _is_beside_link(node: Node) -> bool:
+    """The link drawn beside a rail of link tabs (Open Calendar): the rail
+    carries it, so it is not read again on its own."""
+    if node.tag != "a" or node.parent is None:
+        return False
+    siblings = [c for c in node.parent.children if isinstance(c, Node)]
+    before = siblings[: siblings.index(node)]
+    return any(
+        sibling.tag == "nav" and "data-edify-beside-link" in sibling.attrs
+        for sibling in before
+    )
+
+
+def sibling_switch(node: Node) -> tuple[dict, set[int]] | None:
+    """A tab rail whose parts sit beside it in a container that also holds
+    other things: the switch as a block, and the parts it takes."""
+    if node.parent is None or not (
+        "data-edify-tablist" in node.attrs or node.get("role") == "tablist"
+    ):
+        return None
+    holder = node.parent
+    switch = _switch_parts(holder)
+    if switch is None or switch[0] is not node or not _beside_switch(holder, *switch):
+        return None
+    return _segments(holder, *switch), {id(part) for _, part in switch[1]}
 
 
 def _holds_switch(node: Node) -> bool:
@@ -1070,6 +1166,7 @@ def _list_item(row: Node) -> dict:
             "enabled": "disabled" not in link.attrs,
             "reason": link.get("title"),
             "href": link.get("hx-get") or link.get("href"),
+            "drawer": _opens_drawer(link),
         }
         for link in row.find_all(_is_link)
         if link.text()
@@ -1236,6 +1333,20 @@ def _home_section(section: Node) -> dict | None:
     }
 
 
+def _is_filter_form(node: Node) -> bool:
+    """A form of selects that reloads the page it is on (method GET): the
+    page's filters, in any of the web's shapes."""
+    if node.tag != "form" or node.has("edify-filter-bar"):
+        return False
+    if (
+        node.get("data-component") == "filter-toolbar"
+        or "data-edify-filter-row" in node.attrs
+    ):
+        return True
+    is_get = (node.get("method") or "get").lower() == "get" and not node.get("hx-post")
+    return is_get and node.find(lambda n: n.tag == "select") is not None
+
+
 def _block(node: Node) -> dict | None:
     """The block ``node`` is, or None to look inside it."""
     if (section := _home_section(node)) is not None:
@@ -1244,13 +1355,18 @@ def _block(node: Node) -> dict | None:
         return {"chips": chips}
     if (rows := _row_list(node)) is not None:
         return {"list": rows}
-    if node.tag == "nav" and (tabs := _link_tabs(node)) is not None:
+    if (
+        node.tag == "nav"
+        and (tabs := _link_tabs(node) or _section_nav(node)) is not None
+    ):
         return {"linkTabs": tabs}
-    if node.tag == "form" and node.get("data-component") == "filter-toolbar":
+    if _is_filter_form(node):
         return {"filters": _filters(node)}
     if node.tag == "p" and "data-profile-scope" in node.attrs:
         return {"scopeLine": node.text()}
-    if "data-profile-identity" in node.attrs:
+    if "data-profile-identity" in node.attrs or (
+        node.tag == "dl" and node.find(lambda n: n.tag == "dt")
+    ):
         return {"facts": _facts(node)}
     if node.tag == "form" and node.has("edify-filter-bar"):
         return {"filters": _filters(node)}
@@ -1261,8 +1377,12 @@ def _block(node: Node) -> dict | None:
     if node.tag == "section" and node.has("edify-data-chart"):
         return {"chart": _chart(node)}
     switch = _switch_parts(node)
-    if switch is not None and not any(
-        isinstance(child, Node) and _holds_switch(child) for child in node.children
+    if (
+        switch is not None
+        and not any(
+            isinstance(child, Node) and _holds_switch(child) for child in node.children
+        )
+        and not _beside_switch(node, *switch)
     ):
         return {"segments": _segments(node, *switch)}
     if switch is not None:
@@ -1280,8 +1400,11 @@ def _block(node: Node) -> dict | None:
         node.has("edify-surface")
         and node.has("rounded-surface")
         and not _holds_blocks(node)
+        and node.text()
     ):
-        return {"panel": _panel(node)}
+        panel = _panel(node)
+        if panel["items"] or panel["title"]:
+            return {"panel": panel}
     if node.tag == "table":
         return {"table": _table(node, node)}
     if node.has("edify-empty-state"):
@@ -1326,18 +1449,23 @@ def _fallback(node: Node) -> dict | None:
     if len(node.text().split()) < MIN_FALLBACK_WORDS:
         return None
     panel = _panel(node)
-    return {"panel": panel} if panel["items"] or panel["title"] else None
+    if not panel["items"] and not panel["title"]:
+        panel["items"] = [{"text": node.text()}]
+    return {"panel": panel}
 
 
 def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
+    taken: set[int] = set()
     for child in node.children:
         if not isinstance(child, Node) or child.tag in SILENT or _is_header(child):
             continue
-        if (
-            later is not None
-            and child.get("hx-trigger") == "load"
-            and child.get("hx-get")
-        ):
+        if id(child) in taken or _is_beside_link(child):
+            continue
+        if (beside := sibling_switch(child)) is not None:
+            out.append({"segments": beside[0]})
+            taken |= beside[1]
+            continue
+        if later is not None and _loads_later(child):
             # A part the page loads once it is open (My Plan's readiness):
             # read what that request answers, in its place.
             part = later(child.get("hx-get"))
@@ -1361,13 +1489,14 @@ def _holds_known(node: Node) -> bool:
     return (
         node.find(
             lambda n: "data-edify-tablist" in n.attrs
-            or n.get("data-component") == "filter-toolbar"
+            or _is_filter_form(n)
             or n.has("edify-filter-bar")
             or n.has("edify-empty-state")
             or "data-profile-tabs" in n.attrs
             or "data-profile-identity" in n.attrs
             or "data-profile-scope" in n.attrs
-            or n.get("hx-trigger") == "load"
+            or _loads_later(n)
+            or n.has("edify-section-nav")
             or n.has("card")
             or n.has("divide-y")
             or _is_header(n)

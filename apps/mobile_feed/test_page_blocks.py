@@ -612,3 +612,12 @@ class PhoneComponentsTest(SimpleTestCase):
         self.assertEqual(
             panel["items"][1]["links"]["links"][0]["href"], "/todos/history"
         )
+
+
+class BesideLinkTest(SimpleTestCase):
+    def test_the_link_beside_link_tabs_is_read_once(self):
+        blocks = page_blocks.read(MY_PLAN)["blocks"]
+
+        self.assertFalse(
+            any("panel" in b and "Open Calendar" in repr(b) for b in blocks), blocks[:3]
+        )

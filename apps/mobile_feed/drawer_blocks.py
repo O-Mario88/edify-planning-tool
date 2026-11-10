@@ -213,13 +213,13 @@ def _lines(items: list[Node]) -> dict | None:
 
 
 def _facts(definition: Node) -> dict:
+    """A definition list's pairs, whether each pair sits in its own wrapper
+    or straight in the list."""
     facts = []
-    for term in definition.children:
-        if not isinstance(term, Node):
-            continue
+    for term in definition.find_all(lambda n: n.tag in ("dt", "dd")):
         if term.tag == "dt":
             facts.append({"label": term.text(), "value": "", "href": ""})
-        elif term.tag == "dd" and facts:
+        elif facts and not facts[-1]["value"]:
             facts[-1]["value"] = term.text()
     return {"facts": facts}
 
@@ -281,8 +281,15 @@ def _add(out: list[dict], item: dict, node: Node, root: Node) -> None:
 
 
 def _items(node: Node, root: Node, out: list[dict]) -> list[dict]:
+    from apps.mobile_feed import page_blocks
+
+    taken: set[int] = set()
     for child in node.children:
-        if isinstance(child, str) or _skipped(child):
+        if isinstance(child, str) or _skipped(child) or id(child) in taken:
+            continue
+        if (beside := page_blocks.sibling_switch(child)) is not None:
+            _add(out, {"block": {"segments": beside[0]}}, child, root)
+            taken |= beside[1]
             continue
         control = _holds_one_field(child)
         if "edify-note" in child.get("class"):
@@ -311,9 +318,19 @@ def _items(node: Node, root: Node, out: list[dict]) -> list[dict]:
         elif _is_control(child):
             if (field := _field(child.parent or child, child, root)) is not None:
                 out.append({"field": field})
+        elif not child.find(_is_control) and (block := _page_block(child)) is not None:
+            # What a drawer shows that is not a form: a part switching between
+            # tabs, a table, a card of figures — read as the pages read them.
+            _add(out, {"block": block}, child, root)
         else:
             _items(child, root, out)
     return out
+
+
+def _page_block(node: Node) -> dict | None:
+    from apps.mobile_feed import page_blocks
+
+    return page_blocks._block(node)
 
 
 def _resolve(items: list[dict], root: Node) -> None:

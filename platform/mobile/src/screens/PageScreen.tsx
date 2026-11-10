@@ -25,8 +25,17 @@ import { PageBlocksView } from '../ui/page/PageBlocksView';
 import { ActionButton, Badge, Description, TabRail } from '../ui/page/PageHeaderParts';
 import { webPageFor } from '../ui/page/pageLinks';
 import { PageLinkContext } from '../ui/page/shared';
+import { WebDrawer } from '../ui/WebDrawer';
+import { PlanningDrawer } from '../ui/planning/PlanningDrawer';
 
 type Query = Readonly<Record<string, string>>;
+
+const TOAST_MS = 4000;
+/** The planning drawers the app draws natively, by the path that opens them. */
+const PLANNING_DRAWERS: Readonly<Record<string, 'schedule' | 'assign'>> = {
+  '/planning/schedule-modal': 'schedule',
+  '/planning/assign-partner-modal': 'assign',
+};
 
 interface PageScreenProps {
   /** The page's web path ("/my-plan"). */
@@ -48,6 +57,10 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
   const [data, setData] = useState<GetPageResponse | null>(null);
   const [error, setError] = useState('');
   const [isBusy, setIsBusy] = useState(false);
+  /** The drawer open on this page: any drawer by its path, or a school's planning drawer. */
+  const [drawer, setDrawer] = useState<string | null>(null);
+  const [planning, setPlanning] = useState<{ readonly schoolId: string; readonly kind: 'schedule' | 'assign' } | null>(null);
+  const [toast, setToast] = useState('');
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
   const offset = useRef(0);
 
@@ -82,8 +95,18 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
   );
 
   const openLink = useCallback(
-    (href: string) => {
+    (href: string, isDrawer = false) => {
       const url = new URL(href, `http://edify.local${path}`);
+      if (isDrawer) {
+        const planningKind = PLANNING_DRAWERS[url.pathname];
+        const school = url.searchParams.get('school_id');
+        if (planningKind && school) {
+          setPlanning({ schoolId: school, kind: planningKind });
+          return;
+        }
+        setDrawer(url.pathname + url.search);
+        return;
+      }
       const own = url.pathname.replace(/\/+$/, '') === path.replace(/\/+$/, '');
       if (own) {
         // The page's own tabs, filters and pagers: their link is the whole query.
@@ -126,6 +149,21 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
     offset.current = event.nativeEvent.contentOffset.y;
   }
 
+  useEffect(() => {
+    if (!toast) {
+      return undefined;
+    }
+    const timer = setTimeout(() => setToast(''), TOAST_MS);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  function saved(message: string) {
+    setDrawer(null);
+    setPlanning(null);
+    setToast(message);
+    void load();
+  }
+
   const header = data?.header;
   // Export sits beside the title, as the page header's control does on a phone.
   const exportAction = header?.actions.find((action) => action.key === 'export');
@@ -152,7 +190,7 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
             <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
               {header?.title ?? ''}
             </Text>
-            {exportAction ? <ExportButton action={exportAction} onPress={() => openLink(exportAction.href)} /> : null}
+            {exportAction ? <ExportButton action={exportAction} onPress={() => openLink(exportAction.href, exportAction.drawer)} /> : null}
           </View>
           {header?.description ? <Description text={header.description} /> : null}
           {header && (header.badges.length > 0 || buttons.length > 0) ? (
@@ -161,7 +199,7 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
                 <Badge key={badge.text} badge={badge} isWide={index === 0 && header.badges.length > 1} />
               ))}
               {buttons.map((action) => (
-                <ActionButton key={action.key + action.href} action={action} onPress={() => openLink(action.href)} />
+                <ActionButton key={action.key + action.href} action={action} onPress={() => openLink(action.href, action.drawer)} />
               ))}
             </View>
           ) : null}
@@ -184,6 +222,39 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
             <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />
           )}
         </ScrollView>
+        {drawer ? (
+          <WebDrawer
+            source={{ path: drawer }}
+            onClose={() => setDrawer(null)}
+            onSaved={(message) => saved(message)}
+            onUnavailable={() => {
+              // A drawer the app does not draw yet opens on the web.
+              setDrawer(null);
+              openWeb(webPageFor(drawer));
+            }}
+          />
+        ) : null}
+        {planning ? (
+          <PlanningDrawer
+            schoolId={planning.schoolId}
+            kind={planning.kind}
+            onClose={() => setPlanning(null)}
+            onSaved={saved}
+            onOpenWeb={(webPath) => {
+              setPlanning(null);
+              openWeb(webPath);
+            }}
+          />
+        ) : null}
+        {toast ? (
+          <View
+            style={[styles.toast, { backgroundColor: colors.successSoft, borderColor: colors.success }]}
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
+          >
+            <Text style={[styles.toastText, { color: colors.success }]}>{toast}</Text>
+          </View>
+        ) : null}
       </MakeRoomContext.Provider>
     </PageLinkContext.Provider>
   );
@@ -215,4 +286,6 @@ const styles = StyleSheet.create({
   export: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 12 },
   exportText: { fontFamily: fonts.semibold, fontSize: 12 },
   error: { fontFamily: fonts.medium, fontSize: 13 },
+  toast: { position: 'absolute', left: 16, right: 16, bottom: 16, borderWidth: 1, borderRadius: 12, padding: 12 },
+  toastText: { fontFamily: fonts.semibold, fontSize: 13 },
 });

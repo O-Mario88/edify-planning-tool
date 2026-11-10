@@ -54,6 +54,7 @@ urlpatterns = [
     ),
     path("my-plan", views.MyPlanFeedView.as_view(), name="mobile-feed-my-plan"),
     path("page", views.PageFeedView.as_view(), name="mobile-feed-page"),
+    path("drawer", views.DrawerFeedView.as_view(), name="mobile-feed-drawer"),
     path(
         "planning/training-capacity",
         views.TrainingCapacityFeedView.as_view(),

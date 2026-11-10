@@ -93,7 +93,9 @@ type PageAction struct {
 	// Why a disabled button cannot be used, as the page says it.
 	Reason string `protobuf:"bytes,5,opt,name=reason,proto3" json:"reason,omitempty"`
 	// The web path the button opens (its drawer).
-	Href          string `protobuf:"bytes,6,opt,name=href,proto3" json:"href,omitempty"`
+	Href string `protobuf:"bytes,6,opt,name=href,proto3" json:"href,omitempty"`
+	// Opens as a drawer (the web fetches it into its drawer).
+	Drawer        bool `protobuf:"varint,7,opt,name=drawer,proto3" json:"drawer,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -168,6 +170,13 @@ func (x *PageAction) GetHref() string {
 		return x.Href
 	}
 	return ""
+}
+
+func (x *PageAction) GetDrawer() bool {
+	if x != nil {
+		return x.Drawer
+	}
+	return false
 }
 
 type PageHeader struct {
@@ -1258,9 +1267,14 @@ func (x *PageLinkTab) GetActive() bool {
 // Tabs that are links (My Plan's This Week … This FY), with the link drawn
 // beside them (Open Calendar).
 type PageLinkTabs struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tabs          []*PageLinkTab         `protobuf:"bytes,1,rep,name=tabs,proto3" json:"tabs,omitempty"`
-	Beside        *PageAction            `protobuf:"bytes,2,opt,name=beside,proto3" json:"beside,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Tabs   []*PageLinkTab         `protobuf:"bytes,1,rep,name=tabs,proto3" json:"tabs,omitempty"`
+	Beside *PageAction            `protobuf:"bytes,2,opt,name=beside,proto3" json:"beside,omitempty"`
+	// The strip's name, before its links ("Leave").
+	Label string `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"`
+	// A workspace's sibling pages: every link in a strip that scrolls
+	// sideways, rather than the rest under More.
+	Scrolls       bool `protobuf:"varint,4,opt,name=scrolls,proto3" json:"scrolls,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1307,6 +1321,20 @@ func (x *PageLinkTabs) GetBeside() *PageAction {
 		return x.Beside
 	}
 	return nil
+}
+
+func (x *PageLinkTabs) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *PageLinkTabs) GetScrolls() bool {
+	if x != nil {
+		return x.Scrolls
+	}
+	return false
 }
 
 type PageMeter struct {
@@ -1383,7 +1411,9 @@ type PageLink struct {
 	Text  string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
 	Href  string                 `protobuf:"bytes,2,opt,name=href,proto3" json:"href,omitempty"`
 	// A second line under the link (a date, a status).
-	Caption       string `protobuf:"bytes,3,opt,name=caption,proto3" json:"caption,omitempty"`
+	Caption string `protobuf:"bytes,3,opt,name=caption,proto3" json:"caption,omitempty"`
+	// Opens as a drawer.
+	Drawer        bool `protobuf:"varint,4,opt,name=drawer,proto3" json:"drawer,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1437,6 +1467,13 @@ func (x *PageLink) GetCaption() string {
 		return x.Caption
 	}
 	return ""
+}
+
+func (x *PageLink) GetDrawer() bool {
+	if x != nil {
+		return x.Drawer
+	}
+	return false
 }
 
 type PageRailPart struct {
@@ -2860,7 +2897,7 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\tPageBadge\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x12\n" +
 	"\x04tone\x18\x02 \x01(\tR\x04tone\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\"\x94\x01\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\"\xac\x01\n" +
 	"\n" +
 	"PageAction\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -2868,7 +2905,8 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\aprimary\x18\x03 \x01(\bR\aprimary\x12\x18\n" +
 	"\aenabled\x18\x04 \x01(\bR\aenabled\x12\x16\n" +
 	"\x06reason\x18\x05 \x01(\tR\x06reason\x12\x12\n" +
-	"\x04href\x18\x06 \x01(\tR\x04href\"\x87\x02\n" +
+	"\x04href\x18\x06 \x01(\tR\x04href\x12\x16\n" +
+	"\x06drawer\x18\a \x01(\bR\x06drawer\"\x87\x02\n" +
 	"\n" +
 	"PageHeader\x12\x1d\n" +
 	"\n" +
@@ -2953,19 +2991,22 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\vPageLinkTab\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x12\x12\n" +
 	"\x04href\x18\x02 \x01(\tR\x04href\x12\x16\n" +
-	"\x06active\x18\x03 \x01(\bR\x06active\"w\n" +
+	"\x06active\x18\x03 \x01(\bR\x06active\"\xa7\x01\n" +
 	"\fPageLinkTabs\x121\n" +
 	"\x04tabs\x18\x01 \x03(\v2\x1d.edify.screens.v1.PageLinkTabR\x04tabs\x124\n" +
-	"\x06beside\x18\x02 \x01(\v2\x1c.edify.screens.v1.PageActionR\x06beside\"g\n" +
+	"\x06beside\x18\x02 \x01(\v2\x1c.edify.screens.v1.PageActionR\x06beside\x12\x14\n" +
+	"\x05label\x18\x03 \x01(\tR\x05label\x12\x18\n" +
+	"\ascrolls\x18\x04 \x01(\bR\ascrolls\"g\n" +
 	"\tPageMeter\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\x12\x1a\n" +
 	"\bfraction\x18\x03 \x01(\x01R\bfraction\x12\x12\n" +
-	"\x04href\x18\x04 \x01(\tR\x04href\"L\n" +
+	"\x04href\x18\x04 \x01(\tR\x04href\"d\n" +
 	"\bPageLink\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x12\n" +
 	"\x04href\x18\x02 \x01(\tR\x04href\x12\x18\n" +
-	"\acaption\x18\x03 \x01(\tR\acaption\"\x8b\x02\n" +
+	"\acaption\x18\x03 \x01(\tR\acaption\x12\x16\n" +
+	"\x06drawer\x18\x04 \x01(\bR\x06drawer\"\x8b\x02\n" +
 	"\fPageRailPart\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +

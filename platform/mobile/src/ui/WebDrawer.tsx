@@ -12,6 +12,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
 import { Check } from 'lucide-react-native';
 
+import { ApiError } from '../api/connect';
 import { describe, useSession } from '../auth/SessionContext';
 import type { DrawerField, DrawerItem, PageDrawer } from '../gen/edify/screens/v1/drawer_pb';
 import { useTheme } from '../theme';
@@ -27,19 +28,24 @@ import {
   partStyles as styles,
 } from './drawerParts';
 import { Select } from './Select';
+import { PageBlockView } from './page/PageBlocksView';
 import { choicesFor, clearedBy, initialValues, isShown, valuesToSend } from './drawerLogic';
 import type { Reloaded, Values } from './drawerLogic';
 
+/** Which drawer: one of a school's (edit, close, ssa-entry), or any drawer a
+ * page opens, by its web path. */
+export type DrawerSource = { readonly schoolId: string; readonly kind: string } | { readonly path: string };
+
 interface WebDrawerProps {
-  readonly schoolId: string;
-  /** edit, close or ssa-entry. */
-  readonly kind: string;
+  readonly source: DrawerSource;
   readonly onClose: () => void;
   /** Saved: the web's confirmation, and where the web went next (or ''). */
   readonly onSaved: (message: string, redirect: string) => void;
+  /** The feed does not draw this drawer: its opener takes it elsewhere. */
+  readonly onUnavailable?: () => void;
 }
 
-export function WebDrawer({ schoolId, kind, onClose, onSaved }: WebDrawerProps) {
+export function WebDrawer({ source, onClose, onSaved, onUnavailable }: WebDrawerProps) {
   const { api } = useSession();
   const { colors } = useTheme();
   const [drawer, setDrawer] = useState<PageDrawer | null>(null);
@@ -60,15 +66,32 @@ export function WebDrawer({ schoolId, kind, onClose, onSaved }: WebDrawerProps) 
     onClose();
   }
 
+  const sourceKey = 'path' in source ? source.path : `${source.schoolId}/${source.kind}`;
   useEffect(() => {
-    api
-      .getSchoolDrawer(schoolId, kind)
+    const loading =
+      'path' in source
+        ? api.getDrawer(source.path).then((answer) => {
+            if (!answer.drawer) {
+              throw new Error(answer.refusal || 'This drawer could not be loaded. Please try again.');
+            }
+            return answer.drawer;
+          })
+        : api.getSchoolDrawer(source.schoolId, source.kind);
+    loading
       .then((answer) => {
         setDrawer(answer);
         setValues(initialValues(answer));
       })
-      .catch((cause: unknown) => setError(describe(cause)));
-  }, [api, kind, schoolId]);
+      .catch((cause: unknown) => {
+        if (onUnavailable && cause instanceof ApiError && cause.code === 'not_found') {
+          onUnavailable();
+          return;
+        }
+        setError(describe(cause));
+      });
+    // The source is named by its key; a new object for the same drawer does not reload it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, sourceKey]);
 
   function change(field: DrawerField, value: string) {
     if (!drawer) {
@@ -97,7 +120,9 @@ export function WebDrawer({ schoolId, kind, onClose, onSaved }: WebDrawerProps) 
     setIsBusy(true);
     setError('');
     try {
-      const answer = await api.saveSchoolDrawer(schoolId, kind, valuesToSend(drawer, values));
+      const sent = valuesToSend(drawer, values);
+      const answer =
+        'path' in source ? await api.saveDrawer(source.path, sent) : await api.saveSchoolDrawer(source.schoolId, source.kind, sent);
       if (answer.saved) {
         onSaved(answer.message, answer.redirect);
         return;
@@ -188,6 +213,8 @@ function Item({ item, values, reloaded, onChange }: ItemProps) {
           ))}
         </View>
       );
+    case 'block':
+      return <PageBlockView block={kind.value} />;
     case 'field':
       return isShown(kind.value.showWhen, values) ? (
         <Field field={kind.value} values={values} reloaded={reloaded} onChange={onChange} />

@@ -53,6 +53,11 @@ export function PageBlocksView({ blocks, onFilter, isRaised = true }: PageBlocks
   );
 }
 
+/** One page block on its own (a drawer's table or tabbed part). */
+export function PageBlockView({ block }: { readonly block: PageBlock }) {
+  return <Block block={block} onFilter={() => undefined} isRaised />;
+}
+
 interface BlockProps {
   readonly block: PageBlock;
   readonly onFilter: PageBlocksViewProps['onFilter'];

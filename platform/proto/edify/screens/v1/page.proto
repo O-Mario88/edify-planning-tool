@@ -26,6 +26,8 @@ message PageAction {
   string reason = 5;
   // The web path the button opens (its drawer).
   string href = 6;
+  // Opens as a drawer (the web fetches it into its drawer).
+  bool drawer = 7;
 }
 
 message PageHeader {
@@ -170,6 +172,11 @@ message PageLinkTab {
 message PageLinkTabs {
   repeated PageLinkTab tabs = 1;
   PageAction beside = 2;
+  // The strip's name, before its links ("Leave").
+  string label = 3;
+  // A workspace's sibling pages: every link in a strip that scrolls
+  // sideways, rather than the rest under More.
+  bool scrolls = 4;
 }
 
 message PageMeter {
@@ -185,6 +192,8 @@ message PageLink {
   string href = 2;
   // A second line under the link (a date, a status).
   string caption = 3;
+  // Opens as a drawer.
+  bool drawer = 4;
 }
 
 message PageRailPart {

@@ -68,3 +68,62 @@ func (s *Service) GetDrawerOptions(
 	query := url.Values{"source": {message.GetSource()}, message.GetName(): {message.GetValue()}}
 	return fetch[screensv1.GetDrawerOptionsResponse](ctx, s, pathDrawerOptions+"?"+query.Encode())
 }
+
+// Any drawer a page opens, read and saved by the existing application's own
+// views (apps.mobile_feed DrawerFeedView). The feed names the drawers and
+// saves that are reachable; the gateway only refuses a path that is not
+// plain.
+
+const pathPageDrawer = "/api/mobile/v1/drawer"
+
+// drawerPath checks a drawer's web path and query and returns them as one
+// plain path the feed reads.
+func drawerPath(ctx context.Context, raw string) (string, error) {
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Scheme != "" || parsed.Host != "" || !pagePath.MatchString(parsed.Path) {
+		return "", apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This drawer cannot be opened.")
+	}
+	given := map[string]string{}
+	for key, values := range parsed.Query() {
+		if len(values) != 1 {
+			return "", apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This drawer cannot be opened.")
+		}
+		given[key] = values[0]
+	}
+	query, err := pageQuery(ctx, given)
+	if err != nil {
+		return "", err
+	}
+	if len(query) == 0 {
+		return parsed.Path, nil
+	}
+	return parsed.Path + "?" + query.Encode(), nil
+}
+
+// GetDrawer returns a drawer as the web draws it for the reader.
+func (s *Service) GetDrawer(
+	ctx context.Context, request *connect.Request[screensv1.GetDrawerRequest],
+) (*connect.Response[screensv1.GetDrawerResponse], error) {
+	path, err := drawerPath(ctx, request.Msg.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	return fetch[screensv1.GetDrawerResponse](ctx, s, pathPageDrawer+"?"+url.Values{"path": {path}}.Encode())
+}
+
+// SaveDrawer saves a drawer through the view its form posts to.
+func (s *Service) SaveDrawer(
+	ctx context.Context, request *connect.Request[screensv1.SaveDrawerRequest],
+) (*connect.Response[screensv1.SaveDrawerResponse], error) {
+	message := request.Msg
+	path, err := drawerPath(ctx, message.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	for name := range message.GetValues() {
+		if !fieldName.MatchString(name) {
+			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This drawer has no such field.")
+		}
+	}
+	return send[screensv1.SaveDrawerResponse](ctx, s, pathPageDrawer, &screensv1.SaveDrawerRequest{Path: path, Values: message.GetValues()})
+}

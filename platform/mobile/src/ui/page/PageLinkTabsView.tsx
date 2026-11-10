@@ -4,7 +4,7 @@
  * open one — the rest under "More n", and the link beside the rail (Open
  * Calendar, a square calendar button).
  */
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CalendarDays, ChevronDown, ChevronUp } from 'lucide-react-native';
 
 import type { PageLinkTabs } from '../../gen/edify/screens/v1/page_pb';
@@ -14,6 +14,36 @@ import { railTabs } from './pageLinks';
 import { usePageLink } from './shared';
 
 export function PageLinkTabsView({ tabs }: { readonly tabs: PageLinkTabs }) {
+  return tabs.scrolls ? <SectionStrip tabs={tabs} /> : <Rail tabs={tabs} />;
+}
+
+/** A workspace's sibling pages: its name, then every page in a strip that
+ * scrolls sideways (partials/_section_nav.html). */
+function SectionStrip({ tabs }: { readonly tabs: PageLinkTabs }) {
+  const { colors } = useTheme();
+  const openLink = usePageLink();
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
+      {tabs.label ? <Text style={[styles.stripLabel, { color: colors.textSubtle }]}>{tabs.label}</Text> : null}
+      {tabs.tabs.map((tab) => (
+        <Pressable
+          key={tab.href}
+          onPress={() => openLink(tab.href)}
+          accessibilityRole="link"
+          accessibilityState={{ selected: tab.active }}
+          style={[
+            styles.stripLink,
+            { borderColor: tab.active ? colors.segmentActive : colors.raisedBorder, backgroundColor: tab.active ? colors.segmentActive : colors.raised },
+          ]}
+        >
+          <Text style={[styles.tabText, tab.active ? styles.tabOn : { color: colors.text }]}>{tab.label}</Text>
+        </Pressable>
+      ))}
+    </ScrollView>
+  );
+}
+
+function Rail({ tabs }: { readonly tabs: PageLinkTabs }) {
   const { colors } = useTheme();
   const openLink = usePageLink();
   const { shown, rest } = railTabs(tabs.tabs);
@@ -87,6 +117,9 @@ export function PageLinkTabsView({ tabs }: { readonly tabs: PageLinkTabs }) {
 }
 
 const styles = StyleSheet.create({
+  strip: { alignItems: 'center', gap: 6, paddingRight: 16 },
+  stripLabel: { fontFamily: fonts.semibold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4, marginRight: 4 },
+  stripLink: { height: 32, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 12, justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   rail: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, borderWidth: 1, borderRadius: radius.sm },
   tab: { height: 36, paddingHorizontal: 16, justifyContent: 'center' },

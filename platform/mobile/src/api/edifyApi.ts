@@ -37,9 +37,11 @@ import type {
   DrawerOption,
   GetDrawerOptionsRequest,
   PageDrawer,
+  GetDrawerResponse,
+  SaveDrawerResponse,
   SaveSchoolDrawerResponse,
 } from '../gen/edify/screens/v1/drawer_pb';
-import { SchoolDrawerService } from '../gen/edify/screens/v1/drawer_pb';
+import { PageDrawerService, SchoolDrawerService } from '../gen/edify/screens/v1/drawer_pb';
 import type {
   GetPlanningDrawerResponse,
   GetTrainingCapacityRequest,
@@ -94,6 +96,9 @@ export interface EdifyApi {
   getMyPlan(query: Readonly<Record<string, string>>): Promise<GetMyPlanResponse>;
   /** Any page the app draws from its components, with its own query. */
   getPage(path: string, query: Readonly<Record<string, string>>): Promise<GetPageResponse>;
+  /** Any drawer a page opens, by its web path and query. */
+  getDrawer(path: string): Promise<GetDrawerResponse>;
+  saveDrawer(path: string, values: Readonly<Record<string, string>>): Promise<SaveDrawerResponse>;
 }
 
 export function createEdifyApi(transport: ConnectTransport): EdifyApi {
@@ -169,6 +174,12 @@ export function createEdifyApi(transport: ConnectTransport): EdifyApi {
     },
     getMyPlan(query) {
       return callUnary(transport, MyPlanScreenService.method.getMyPlan, { query: { ...query } });
+    },
+    getDrawer(path) {
+      return callUnary(transport, PageDrawerService.method.getDrawer, { path });
+    },
+    saveDrawer(path, values) {
+      return callUnary(transport, PageDrawerService.method.saveDrawer, { path, values: { ...values } });
     },
     getPage(path, query) {
       return callUnary(transport, PageScreenService.method.getPage, { path, query: { ...query } });
