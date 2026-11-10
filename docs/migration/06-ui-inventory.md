@@ -557,3 +557,39 @@ The feed (`MyPlanFeedView`) passes only the page's own parameters (period,
 year, quarter, month, filters, `*_page`), never `export`; the gateway refuses
 any key that is not a plain word or a value over 64 characters. Tests:
 `MyPlanComponentsTest`, `MyPlanFeedTest`, `TestMyPlan*`, `myPlanLinks.test.ts`.
+
+## 6.14 Every role's pages, and the parts read since (2026-11-10)
+
+The feed draws 127 pages (`NATIVE_PAGES = CCEO_PAGES | ROLE_PAGES`), every
+sidebar page of every seeded role that opens for that role. `NavItem.native`
+marks a page the feed draws *and* the reader may open; the app routes by it.
+A menu link a role cannot open goes to the web, which sends the reader on
+(the Regional Program Lead's Country Map and Country Planning Oversight).
+
+| Part of the web | Read as | Module |
+|---|---|---|
+| A card that opens in place (`data-row-disclosure-summary`): clusters, projects | `PageRecord`: name, pills, Actions, facts, details, the list it loads once opened | `records.py` |
+| A table's hidden details row | `PageRow.details` / `detail_blocks` / `details_href`, opened under the row | `page_blocks._row_details` |
+| A list's own pager (`edify-pagination-scope`) | `PageBlock.pager` | `page_blocks._scoped_pager` |
+| Tabs that set the filter form's field and send it (Planning) | link tabs to the form's values with that field changed | `page_blocks._form_tabs` |
+| A POST form on the page (Escalations) | `PageForm`, saved through `SaveDrawer` with the form's key; `can_save` else "Continue on the web" | `page_forms.py` |
+| A closed dialog (`role=dialog`, `aria-modal`, a full-screen overlay) | `PageDialog`, opened by `#dialog=<flag>` as a sheet | `dialogs.py` |
+| The bar for ticked rows (activities, schools) | `PageSelection`; the app draws the tick column and the floating bar | `selection.py` |
+| Boxes sharing a name (incl. Alpine `x-for` over `x-data`) | one `checklist` field | `checklists.py` |
+| Radio buttons sharing a name | one `radio` field, drawn as pills | `checklists._radio_group` |
+| A date field | the Edify calendar (`DateField`), `min_date` / `max_date` | `calendar.ts`, `DateField.tsx` |
+| An export drawer | saved to `/exports/prepare`; `ExportService.GetExport` then a five-minute signed download link the phone's browser opens | `exports.py` |
+
+Hidden on opening and so not drawn: a part shown only once a list fills
+(`x-show="selected.length > 0"`), a closed dialog, the bar for ticked rows,
+the phone's fold around the filter bar.
+
+**The gateway decodes the feed strictly.** A key the contract does not know
+fails the whole screen, and neither the feed's tests nor the gateway's can see
+it. `python manage.py gateway_smoke --settings=config.settings.dev` walks every
+seeded role's menu, each native page and a school profile through the running
+gateway (442 pages, 0 failures, none over 3 s on 2026-11-10).
+
+Still on the web: file uploads (a native picker needs `expo-document-picker`,
+not yet added), downloads other than the export drawers, forms whose view the
+feed does not save through yet (they say "Continue on the web").
