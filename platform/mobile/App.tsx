@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold, useFonts } from '@expo-google-fonts/geist';
 import { StatusBar } from 'expo-status-bar';
@@ -43,8 +43,8 @@ function start(): Startup {
 
 const startup = start();
 
-/** The paths this app draws itself. Every other path opens on the web. */
-const NATIVE_PATHS: readonly string[] = ['/home', '/schools', ...PAGE_PATHS];
+/** The screens the app draws itself beside its pages. */
+const OWN_SCREENS: readonly string[] = ['/home', '/schools'];
 
 function pathOf(url: string): string {
   return url.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
@@ -64,8 +64,11 @@ function queryOf(url: string): Record<string, string> {
   return at < 0 ? {} : Object.fromEntries(new URLSearchParams(url.slice(at + 1)).entries());
 }
 
-function isNative(url: string): boolean {
-  return NATIVE_PATHS.includes(pathOf(url)) || schoolOf(url) !== null;
+/** The pages the app draws from their components: those the menu marks
+ * (the feed's own list, for this reader), and the known ones until it loads. */
+function pagesOf(navigation: GetNavigationResponse | null): ReadonlySet<string> {
+  const items = [...(navigation?.bottom ?? []), ...(navigation?.sections ?? []).flatMap((section) => section.items)];
+  return new Set([...PAGE_PATHS, ...items.filter((item) => item.native).map((item) => pathOf(item.url))]);
 }
 
 export default function App() {
@@ -153,6 +156,12 @@ function SignedIn({ session }: { readonly session: Session }) {
     };
   }, [api]);
 
+  const pages = useMemo(() => pagesOf(navigation), [navigation]);
+  // Every other path opens on the web.
+  const isNative = useCallback(
+    (url: string) => OWN_SCREENS.includes(pathOf(url)) || pages.has(pathOf(url)) || schoolOf(url) !== null,
+    [pages],
+  );
   const open = useCallback((url: string, label: string) => setRoute({ url, label }), []);
   const openPage = useCallback((url: string) => open(url, ''), [open]);
   const openSchool = useCallback(
@@ -175,7 +184,7 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <HomeScreen onOpen={open} />;
   } else if (path === '/schools') {
     screen = <SchoolsScreen searchSignal={searchSignal} onOpenSchool={openSchool} />;
-  } else if (PAGE_PATHS.includes(path)) {
+  } else if (pages.has(path)) {
     screen = (
       <PageScreen
         key={route.url}

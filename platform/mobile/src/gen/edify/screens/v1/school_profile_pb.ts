@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { PageBlock, PageHeader, PageTab } from "./page_pb";
+import type { PageBlock, PageDialog, PageHeader, PageTab } from "./page_pb";
 import { file_edify_screens_v1_page } from "./page_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/screens/v1/school_profile.proto.
  */
 export const file_edify_screens_v1_school_profile: GenFile = /*@__PURE__*/
-  fileDesc("CiVlZGlmeS9zY3JlZW5zL3YxL3NjaG9vbF9wcm9maWxlLnByb3RvEhBlZGlmeS5zY3JlZW5zLnYxIlUKF0dldFNjaG9vbFByb2ZpbGVSZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRILCgN0YWIYAiABKAkSCgoCZnkYAyABKAkSDgoGcGVyaW9kGAQgASgJIrABChhHZXRTY2hvb2xQcm9maWxlUmVzcG9uc2USLAoGaGVhZGVyGAEgASgLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlSGVhZGVyEicKBHRhYnMYAiADKAsyGS5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VUYWISKwoGYmxvY2tzGAMgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmxvY2sSEAoId2ViX3BhdGgYBCABKAkygQEKFFNjaG9vbFByb2ZpbGVTZXJ2aWNlEmkKEEdldFNjaG9vbFByb2ZpbGUSKS5lZGlmeS5zY3JlZW5zLnYxLkdldFNjaG9vbFByb2ZpbGVSZXF1ZXN0GiouZWRpZnkuc2NyZWVucy52MS5HZXRTY2hvb2xQcm9maWxlUmVzcG9uc2VC5gEKFGNvbS5lZGlmeS5zY3JlZW5zLnYxQhJTY2hvb2xQcm9maWxlUHJvdG9QAVpYZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9zY3JlZW5zL3YxO3NjcmVlbnN2MaICA0VTWKoCEEVkaWZ5LlNjcmVlbnMuVjHKAhBFZGlmeVxTY3JlZW5zXFYx4gIcRWRpZnlcU2NyZWVuc1xWMVxHUEJNZXRhZGF0YeoCEkVkaWZ5OjpTY3JlZW5zOjpWMWIGcHJvdG8z", [file_edify_screens_v1_page]);
+  fileDesc("CiVlZGlmeS9zY3JlZW5zL3YxL3NjaG9vbF9wcm9maWxlLnByb3RvEhBlZGlmeS5zY3JlZW5zLnYxIlUKF0dldFNjaG9vbFByb2ZpbGVSZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRILCgN0YWIYAiABKAkSCgoCZnkYAyABKAkSDgoGcGVyaW9kGAQgASgJIt8BChhHZXRTY2hvb2xQcm9maWxlUmVzcG9uc2USLAoGaGVhZGVyGAEgASgLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlSGVhZGVyEicKBHRhYnMYAiADKAsyGS5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VUYWISKwoGYmxvY2tzGAMgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmxvY2sSEAoId2ViX3BhdGgYBCABKAkSLQoHZGlhbG9ncxgFIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZURpYWxvZzKBAQoUU2Nob29sUHJvZmlsZVNlcnZpY2USaQoQR2V0U2Nob29sUHJvZmlsZRIpLmVkaWZ5LnNjcmVlbnMudjEuR2V0U2Nob29sUHJvZmlsZVJlcXVlc3QaKi5lZGlmeS5zY3JlZW5zLnYxLkdldFNjaG9vbFByb2ZpbGVSZXNwb25zZULmAQoUY29tLmVkaWZ5LnNjcmVlbnMudjFCElNjaG9vbFByb2ZpbGVQcm90b1ABWlhnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L3NjcmVlbnMvdjE7c2NyZWVuc3YxogIDRVNYqgIQRWRpZnkuU2NyZWVucy5WMcoCEEVkaWZ5XFNjcmVlbnNcVjHiAhxFZGlmeVxTY3JlZW5zXFYxXEdQQk1ldGFkYXRh6gISRWRpZnk6OlNjcmVlbnM6OlYxYgZwcm90bzM", [file_edify_screens_v1_page]);
 
 /**
  * @generated from message edify.screens.v1.GetSchoolProfileRequest
@@ -76,6 +76,13 @@ export type GetSchoolProfileResponse = Message<"edify.screens.v1.GetSchoolProfil
    * @generated from field: string web_path = 4;
    */
   webPath: string;
+
+  /**
+   * The dialogs the profile opens itself, by "#dialog=<key>".
+   *
+   * @generated from field: repeated edify.screens.v1.PageDialog dialogs = 5;
+   */
+  dialogs: PageDialog[];
 };
 
 /**

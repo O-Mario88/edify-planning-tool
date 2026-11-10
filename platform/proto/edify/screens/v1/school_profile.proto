@@ -27,4 +27,6 @@ message GetSchoolProfileResponse {
   repeated PageBlock blocks = 3;
   // The web path of this profile, for what the app opens on the web.
   string web_path = 4;
+  // The dialogs the profile opens itself, by "#dialog=<key>".
+  repeated PageDialog dialogs = 5;
 }

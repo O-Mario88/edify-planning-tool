@@ -1,7 +1,7 @@
 /**
- * The pages the app draws from their components (PageScreen), by web path.
- * The feed names the same pages (apps.mobile_feed NATIVE_PAGES); a page the
- * reader's role cannot open is refused there, as on the web.
+ * The pages the app draws from their components (PageScreen) before the menu
+ * loads, by web path. Once it loads, the menu marks every page the feed draws
+ * for this reader (apps.mobile_feed NATIVE_PAGES, NavItem.native).
  */
 export const PAGE_PATHS: readonly string[] = [
   '/dashboard',

@@ -30,4 +30,7 @@ message NavItem {
   string icon_svg = 3;
   // Stable key of the page, e.g. "my_plan".
   string page_key = 4;
+  // The app draws this page from its components (PageScreen); otherwise it
+  // opens on the web.
+  bool native = 5;
 }

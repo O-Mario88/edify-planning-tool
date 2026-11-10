@@ -18,6 +18,8 @@ export interface PageFormHost {
   /** The page's web path, which a form on it is saved with. */
   readonly path: string;
   readonly onSaved: (message: string) => void;
+  /** Open the page on the web, for a form the app does not save. */
+  readonly onOpenWeb: () => void;
 }
 export const PageFormContext = createContext<PageFormHost | null>(null);
 

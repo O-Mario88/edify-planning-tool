@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { PageBlock, PageHeader, PageTab } from "./page_pb";
+import type { PageBlock, PageDialog, PageHeader, PageTab } from "./page_pb";
 import { file_edify_screens_v1_page } from "./page_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/screens/v1/page_screen.proto.
  */
 export const file_edify_screens_v1_page_screen: GenFile = /*@__PURE__*/
-  fileDesc("CiJlZGlmeS9zY3JlZW5zL3YxL3BhZ2Vfc2NyZWVuLnByb3RvEhBlZGlmeS5zY3JlZW5zLnYxIogBCg5HZXRQYWdlUmVxdWVzdBIMCgRwYXRoGAEgASgJEjoKBXF1ZXJ5GAIgAygLMisuZWRpZnkuc2NyZWVucy52MS5HZXRQYWdlUmVxdWVzdC5RdWVyeUVudHJ5GiwKClF1ZXJ5RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASL3AQoPR2V0UGFnZVJlc3BvbnNlEiwKBmhlYWRlchgBIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUhlYWRlchInCgR0YWJzGAIgAygLMhkuZWRpZnkuc2NyZWVucy52MS5QYWdlVGFiEisKBmJsb2NrcxgDIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJsb2NrEhAKCHdlYl9wYXRoGAQgASgJEhAKCHJlZGlyZWN0GAUgASgJEg0KBWVycm9yGAYgASgJEi0KB2RpYWxvZ3MYByADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VEaWFsb2ciVQoKUGFnZURpYWxvZxILCgNrZXkYASABKAkSDQoFdGl0bGUYAiABKAkSKwoGYmxvY2tzGAMgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmxvY2syYwoRUGFnZVNjcmVlblNlcnZpY2USTgoHR2V0UGFnZRIgLmVkaWZ5LnNjcmVlbnMudjEuR2V0UGFnZVJlcXVlc3QaIS5lZGlmeS5zY3JlZW5zLnYxLkdldFBhZ2VSZXNwb25zZULjAQoUY29tLmVkaWZ5LnNjcmVlbnMudjFCD1BhZ2VTY3JlZW5Qcm90b1ABWlhnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L3NjcmVlbnMvdjE7c2NyZWVuc3YxogIDRVNYqgIQRWRpZnkuU2NyZWVucy5WMcoCEEVkaWZ5XFNjcmVlbnNcVjHiAhxFZGlmeVxTY3JlZW5zXFYxXEdQQk1ldGFkYXRh6gISRWRpZnk6OlNjcmVlbnM6OlYxYgZwcm90bzM", [file_edify_screens_v1_page]);
+  fileDesc("CiJlZGlmeS9zY3JlZW5zL3YxL3BhZ2Vfc2NyZWVuLnByb3RvEhBlZGlmeS5zY3JlZW5zLnYxIogBCg5HZXRQYWdlUmVxdWVzdBIMCgRwYXRoGAEgASgJEjoKBXF1ZXJ5GAIgAygLMisuZWRpZnkuc2NyZWVucy52MS5HZXRQYWdlUmVxdWVzdC5RdWVyeUVudHJ5GiwKClF1ZXJ5RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASL3AQoPR2V0UGFnZVJlc3BvbnNlEiwKBmhlYWRlchgBIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUhlYWRlchInCgR0YWJzGAIgAygLMhkuZWRpZnkuc2NyZWVucy52MS5QYWdlVGFiEisKBmJsb2NrcxgDIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJsb2NrEhAKCHdlYl9wYXRoGAQgASgJEhAKCHJlZGlyZWN0GAUgASgJEg0KBWVycm9yGAYgASgJEi0KB2RpYWxvZ3MYByADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VEaWFsb2cyYwoRUGFnZVNjcmVlblNlcnZpY2USTgoHR2V0UGFnZRIgLmVkaWZ5LnNjcmVlbnMudjEuR2V0UGFnZVJlcXVlc3QaIS5lZGlmeS5zY3JlZW5zLnYxLkdldFBhZ2VSZXNwb25zZULjAQoUY29tLmVkaWZ5LnNjcmVlbnMudjFCD1BhZ2VTY3JlZW5Qcm90b1ABWlhnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L3NjcmVlbnMvdjE7c2NyZWVuc3YxogIDRVNYqgIQRWRpZnkuU2NyZWVucy5WMcoCEEVkaWZ5XFNjcmVlbnNcVjHiAhxFZGlmeVxTY3JlZW5zXFYxXEdQQk1ldGFkYXRh6gISRWRpZnk6OlNjcmVlbnM6OlYxYgZwcm90bzM", [file_edify_screens_v1_page]);
 
 /**
  * @generated from message edify.screens.v1.GetPageRequest
@@ -93,33 +93,6 @@ export type GetPageResponse = Message<"edify.screens.v1.GetPageResponse"> & {
  */
 export const GetPageResponseSchema: GenMessage<GetPageResponse> = /*@__PURE__*/
   messageDesc(file_edify_screens_v1_page_screen, 1);
-
-/**
- * @generated from message edify.screens.v1.PageDialog
- */
-export type PageDialog = Message<"edify.screens.v1.PageDialog"> & {
-  /**
-   * @generated from field: string key = 1;
-   */
-  key: string;
-
-  /**
-   * @generated from field: string title = 2;
-   */
-  title: string;
-
-  /**
-   * @generated from field: repeated edify.screens.v1.PageBlock blocks = 3;
-   */
-  blocks: PageBlock[];
-};
-
-/**
- * Describes the message edify.screens.v1.PageDialog.
- * Use `create(PageDialogSchema)` to create a new message.
- */
-export const PageDialogSchema: GenMessage<PageDialog> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_page_screen, 2);
 
 /**
  * Any page the app draws from its components (To-Do, Dashboard, Clusters,

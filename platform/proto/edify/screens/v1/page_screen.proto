@@ -33,9 +33,3 @@ message GetPageResponse {
   // by a link to "#dialog=<key>".
   repeated PageDialog dialogs = 7;
 }
-
-message PageDialog {
-  string key = 1;
-  string title = 2;
-  repeated PageBlock blocks = 3;
-}

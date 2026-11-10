@@ -72,7 +72,12 @@ export function PageFormView({ form }: { readonly form: PageForm }) {
       )}
       {host ? (
         <View style={styles.footer}>
-          <DrawerButton label={form.submitLabel} onPress={() => void save()} isPrimary isBusy={isBusy} />
+          {form.canSave ? (
+            <DrawerButton label={form.submitLabel} onPress={() => void save()} isPrimary isBusy={isBusy} />
+          ) : (
+            // The app does not save this form yet: it is finished on the web.
+            <DrawerButton label="Continue on the web" onPress={host.onOpenWeb} isPrimary />
+          )}
         </View>
       ) : null}
     </View>

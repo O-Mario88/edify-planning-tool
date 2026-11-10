@@ -171,7 +171,10 @@ type NavItem struct {
 	// Icon as SVG markup, the same drawing the web page uses.
 	IconSvg string `protobuf:"bytes,3,opt,name=icon_svg,json=iconSvg,proto3" json:"icon_svg,omitempty"`
 	// Stable key of the page, e.g. "my_plan".
-	PageKey       string `protobuf:"bytes,4,opt,name=page_key,json=pageKey,proto3" json:"page_key,omitempty"`
+	PageKey string `protobuf:"bytes,4,opt,name=page_key,json=pageKey,proto3" json:"page_key,omitempty"`
+	// The app draws this page from its components (PageScreen); otherwise it
+	// opens on the web.
+	Native        bool `protobuf:"varint,5,opt,name=native,proto3" json:"native,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -234,6 +237,13 @@ func (x *NavItem) GetPageKey() string {
 	return ""
 }
 
+func (x *NavItem) GetNative() bool {
+	if x != nil {
+		return x.Native
+	}
+	return false
+}
+
 var File_edify_screens_v1_navigation_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_navigation_proto_rawDesc = "" +
@@ -246,12 +256,13 @@ const file_edify_screens_v1_navigation_proto_rawDesc = "" +
 	"\n" +
 	"NavSection\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x12/\n" +
-	"\x05items\x18\x02 \x03(\v2\x19.edify.screens.v1.NavItemR\x05items\"g\n" +
+	"\x05items\x18\x02 \x03(\v2\x19.edify.screens.v1.NavItemR\x05items\"\x7f\n" +
 	"\aNavItem\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x19\n" +
 	"\bicon_svg\x18\x03 \x01(\tR\aiconSvg\x12\x19\n" +
-	"\bpage_key\x18\x04 \x01(\tR\apageKey2u\n" +
+	"\bpage_key\x18\x04 \x01(\tR\apageKey\x12\x16\n" +
+	"\x06native\x18\x05 \x01(\bR\x06native2u\n" +
 	"\x11NavigationService\x12`\n" +
 	"\rGetNavigation\x12&.edify.screens.v1.GetNavigationRequest\x1a'.edify.screens.v1.GetNavigationResponseB\xe3\x01\n" +
 	"\x14com.edify.screens.v1B\x0fNavigationProtoP\x01ZXgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1;screensv1\xa2\x02\x03ESX\xaa\x02\x10Edify.Screens.V1\xca\x02\x10Edify\\Screens\\V1\xe2\x02\x1cEdify\\Screens\\V1\\GPBMetadata\xea\x02\x12Edify::Screens::V1b\x06proto3"

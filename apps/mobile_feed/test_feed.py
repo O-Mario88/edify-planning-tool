@@ -842,6 +842,22 @@ class PageFeedTest(SchoolActionFeedTest):
         self.assertEqual(schools.status_code, 200)
         self.assertIn("Feed School", repr(schools.json()["blocks"]))
 
+    def test_a_form_says_whether_the_app_saves_it(self):
+        body = self.page("/escalations").json()
+
+        form = next(b["form"] for b in body["blocks"] if "form" in b)
+        self.assertTrue(form["canSave"])
+        # Where a form posts stays in the feed.
+        self.assertNotIn("_action", repr(body))
+
+    def test_the_menu_marks_the_pages_the_app_draws(self):
+        body = self.client.get("/api/mobile/v1/navigation", **self.auth).json()
+
+        items = {i["url"]: i for s in body["sections"] for i in s["items"]}
+        self.assertTrue(items["/todos"]["native"])
+        # The directory has its own screen, not the page screen.
+        self.assertFalse(items["/schools"]["native"])
+
     def test_a_page_the_readers_role_cannot_open_is_refused(self):
         from apps.mobile_feed.views import NATIVE_PAGES
 

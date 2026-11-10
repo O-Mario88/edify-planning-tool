@@ -84,13 +84,31 @@ def priority_row(row: dict) -> dict:
     }
 
 
-def nav_item(item: dict) -> dict:
+def nav_item(item: dict, user=None) -> dict:
+    url = str(item.get("url") or "")
     return {
         "label": str(item.get("label") or ""),
-        "url": str(item.get("url") or ""),
+        "url": url,
         "iconSvg": str(item.get("icon") or ""),
         "pageKey": str(item.get("page_key") or ""),
+        "native": user is not None and _draws_natively(url, user),
     }
+
+
+def _draws_natively(url: str, user) -> bool:
+    """Whether the app draws the page at ``url`` from its components for
+    ``user``: a page it names that the reader may open. A menu link the
+    reader's role cannot open goes to the web, which sends them on, as a
+    browser would be."""
+    from django.urls import Resolver404, resolve
+
+    path = url.split("?")[0]
+    try:
+        match = resolve(path)
+    except Resolver404:
+        return False
+    named = (match.url_name or match.func.__name__) in NATIVE_PAGES
+    return named and can_open_url(user, path)
 
 
 class HomeFeedView(APIView):
@@ -197,11 +215,11 @@ class NavigationFeedView(APIView):
         bottom = build_mobile_nav_for_user(user, "/home", sections)
         return Response(
             {
-                "bottom": [nav_item(i) for i in bottom],
+                "bottom": [nav_item(i, user) for i in bottom],
                 "sections": [
                     {
                         "label": str(s.get("label") or s.get("title") or ""),
-                        "items": [nav_item(i) for i in s.get("items", [])],
+                        "items": [nav_item(i, user) for i in s.get("items", [])],
                     }
                     for s in sections
                 ],
@@ -764,7 +782,6 @@ class SchoolProfileFeedView(APIView):
         from django.test import RequestFactory
 
         from apps.frontend.views.school_views import school_detail_view
-        from apps.mobile_feed import page_blocks
 
         user = reader(request)
         require_page(user, "school_profile")
@@ -786,7 +803,7 @@ class SchoolProfileFeedView(APIView):
             return Response({"error": "School not found."}, status=404)
         if page.status_code != 200:
             return Response({"error": "School not found."}, status=page.status_code)
-        return Response({**page_blocks.read(page.content.decode()), "webPath": path})
+        return Response(page_body(page.content.decode(), path))
 
 
 # ── The profile's drawers ──────────────────────────────────────────────────
@@ -1094,7 +1111,7 @@ class TrainingCapacityFeedView(APIView):
 # opens that are named here are read into it.
 
 #: The pages, by URL name (an unnamed route by its view's name).
-NATIVE_PAGES = frozenset(
+CCEO_PAGES = frozenset(
     {
         "dashboard",
         "planning_dashboard",
@@ -1129,6 +1146,113 @@ NATIVE_PAGES = frozenset(
         "closed_schools",
     }
 )
+#: The other roles' sidebar pages (PL, CD, RVP, IA, HR, Admin, Accountant,
+#: Partner, MFI, Project Coordinator, Business Transformation): each opens
+#: for its role and reads without error (surveyed 2026-11-10). The page's own
+#: gate still decides who opens it, as on the web.
+ROLE_PAGES = frozenset(
+    {
+        "acting_leadership",
+        "actions_sent",
+        "admin_data_quality_center",
+        "admin_incidents",
+        "admin_maintenance",
+        "admin_my_plan",
+        "admin_planning",
+        "admin_roles_permissions",
+        "admin_staff_setup_queue",
+        "admin_support_queue",
+        "admin_team_plans",
+        "admin_users",
+        "approval_history_view",
+        "batch_payments_view",
+        "business_transformation_finance",
+        "business_transformation_government",
+        "business_transformation_overview",
+        "business_transformation_reports",
+        "candidate_pipeline",
+        "cce_engagements",
+        "cce_reports",
+        "cce_training_feedback",
+        "closure_quality",
+        "compensation_benefits",
+        "compliance_register",
+        "cost_intelligence",
+        "cost_settings",
+        "country_map",
+        "country_planning_oversight",
+        "coverage",
+        "cpd_learning",
+        "data_repair",
+        "disbursements",
+        "employee_relations",
+        "fiscal_year_planning",
+        "fund_approvals",
+        "health_safety",
+        "hr_analytics",
+        "hr_audit_log",
+        "hr_performance_console",
+        "hr_today",
+        "ia_compare",
+        "ia_dashboard",
+        "ia_duplicates",
+        "ia_framework",
+        "ia_history",
+        "ia_impact_reports",
+        "ia_learning",
+        "ia_lending_evidence",
+        "ia_partner_evidence",
+        "ia_returned",
+        "ia_samples",
+        "ia_stories",
+        "ia_verification_analytics",
+        "ia_verification_queue",
+        "leave_approvals",
+        "leave_policies",
+        "leave_tracker",
+        "mfi_portal_section",
+        "my_team",
+        "offboarding",
+        "onboarding",
+        "org_structure",
+        "ownership_transfers",
+        "partner_assigned_activities",
+        "partner_assigned_schools",
+        "partner_completed_payments",
+        "partner_evidence",
+        "partner_payments_view",
+        "partner_users",
+        "partners_list",
+        "performance_reviews",
+        "pl_review_queue",
+        "planning_monitor",
+        "policies",
+        "policy_compliance",
+        "priorities_master_register",
+        "programme_rollout",
+        "project_capacity",
+        "pulse_surveys",
+        "quality_checks",
+        "recognition",
+        "recovery_plans",
+        "recruitment",
+        "reports",
+        "special_projects_my_plan",
+        "special_projects_planning",
+        "ssa_verification_queue",
+        "staff_activity",
+        "staff_directory",
+        "system_health",
+        "target_distribution",
+        "team_availability",
+        "team_coaching",
+        "team_planning_oversight",
+        "upload_center",
+        "workforce_planning",
+    }
+)
+#: Every page the app draws from its components.
+NATIVE_PAGES = CCEO_PAGES | ROLE_PAGES
 #: The parts a page loads after it opens that are page sections (never a
 #: drawer that pops open), by URL name.
 LATER_PARTS = frozenset(
@@ -1195,13 +1319,37 @@ def _run_page(user, path: str, params: dict, names: frozenset):
     return response
 
 
+def page_body(html: str, path: str, later=None) -> dict:
+    """A page as the app reads it: its blocks, its dialogs, and whether the
+    feed saves each form it shows."""
+    from apps.mobile_feed import page_blocks
+
+    body = page_blocks.read(html, later)
+    _mark_forms(body, path)
+    return {**body, "webPath": path}
+
+
+def _mark_forms(node, page_path: str) -> None:
+    """Each form in ``node`` says whether the feed saves it (canSave): its
+    view is one the feed saves through. Where it posts is not sent on."""
+    if isinstance(node, list):
+        for item in node:
+            _mark_forms(item, page_path)
+        return
+    if not isinstance(node, dict):
+        return
+    if "_action" in node:
+        save_path, _ = _split(node.pop("_action") or page_path)
+        node["canSave"] = _route(save_path, DRAWER_SAVES) is not None
+    for value in node.values():
+        _mark_forms(value, page_path)
+
+
 def read_page(user, path: str, query) -> tuple[int, dict]:
     """The page at ``path`` as blocks for ``user``: (status, body)."""
     from urllib.parse import parse_qsl, urlparse
 
     from django.http import Http404
-
-    from apps.mobile_feed import page_blocks
 
     try:
         # A part a page loads later (a cluster card's schools) is opened on
@@ -1235,7 +1383,7 @@ def read_page(user, path: str, query) -> tuple[int, dict]:
             else None
         )
 
-    return 200, {**page_blocks.read(page.content.decode(), later), "webPath": path}
+    return 200, page_body(page.content.decode(), path, later)
 
 
 class PageFeedView(APIView):

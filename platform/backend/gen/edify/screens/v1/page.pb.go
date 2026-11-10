@@ -3108,7 +3108,9 @@ type PageForm struct {
 	Items       []*PageFormItem `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`
 	SubmitLabel string          `protobuf:"bytes,4,opt,name=submit_label,json=submitLabel,proto3" json:"submit_label,omitempty"`
 	// Names this form among the page's forms when it is saved.
-	Key           string `protobuf:"bytes,5,opt,name=key,proto3" json:"key,omitempty"`
+	Key string `protobuf:"bytes,5,opt,name=key,proto3" json:"key,omitempty"`
+	// The app saves it; otherwise the form is finished on the web.
+	CanSave       bool `protobuf:"varint,6,opt,name=can_save,json=canSave,proto3" json:"can_save,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3176,6 +3178,13 @@ func (x *PageForm) GetKey() string {
 		return x.Key
 	}
 	return ""
+}
+
+func (x *PageForm) GetCanSave() bool {
+	if x != nil {
+		return x.CanSave
+	}
+	return false
 }
 
 // A record card that opens in place (a cluster, a school, a project): its
@@ -3281,6 +3290,68 @@ func (x *PageRecord) GetDetailsPath() string {
 		return x.DetailsPath
 	}
 	return ""
+}
+
+// A dialog a page opens itself (My Targets' Submit MSCS), opened by a link
+// to "#dialog=<key>".
+type PageDialog struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Blocks        []*PageBlock           `protobuf:"bytes,3,rep,name=blocks,proto3" json:"blocks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageDialog) Reset() {
+	*x = PageDialog{}
+	mi := &file_edify_screens_v1_page_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageDialog) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageDialog) ProtoMessage() {}
+
+func (x *PageDialog) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_page_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageDialog.ProtoReflect.Descriptor instead.
+func (*PageDialog) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *PageDialog) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *PageDialog) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *PageDialog) GetBlocks() []*PageBlock {
+	if x != nil {
+		return x.Blocks
+	}
+	return nil
 }
 
 var File_edify_screens_v1_page_proto protoreflect.FileDescriptor
@@ -3524,13 +3595,14 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\x04text\x18\x03 \x01(\tH\x00R\x04text\x125\n" +
 	"\x05field\x18\x04 \x01(\v2\x1d.edify.screens.v1.DrawerFieldH\x00R\x05field\x12>\n" +
 	"\tshow_when\x18\x05 \x03(\v2!.edify.screens.v1.DrawerConditionR\bshowWhenB\x06\n" +
-	"\x04kind\"\x9f\x01\n" +
+	"\x04kind\"\xba\x01\n" +
 	"\bPageForm\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x124\n" +
 	"\x05items\x18\x03 \x03(\v2\x1e.edify.screens.v1.PageFormItemR\x05items\x12!\n" +
 	"\fsubmit_label\x18\x04 \x01(\tR\vsubmitLabel\x12\x10\n" +
-	"\x03key\x18\x05 \x01(\tR\x03key\"\xcb\x02\n" +
+	"\x03key\x18\x05 \x01(\tR\x03key\x12\x19\n" +
+	"\bcan_save\x18\x06 \x01(\bR\acanSave\"\xcb\x02\n" +
 	"\n" +
 	"PageRecord\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
@@ -3540,7 +3612,12 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\aactions\x18\x05 \x03(\v2\x1c.edify.screens.v1.PageActionR\aactions\x120\n" +
 	"\x05facts\x18\x06 \x03(\v2\x1a.edify.screens.v1.PageFactR\x05facts\x125\n" +
 	"\adetails\x18\a \x03(\v2\x1b.edify.screens.v1.PageBlockR\adetails\x12!\n" +
-	"\fdetails_path\x18\b \x01(\tR\vdetailsPathB\xdd\x01\n" +
+	"\fdetails_path\x18\b \x01(\tR\vdetailsPath\"i\n" +
+	"\n" +
+	"PageDialog\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x123\n" +
+	"\x06blocks\x18\x03 \x03(\v2\x1b.edify.screens.v1.PageBlockR\x06blocksB\xdd\x01\n" +
 	"\x14com.edify.screens.v1B\tPageProtoP\x01ZXgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1;screensv1\xa2\x02\x03ESX\xaa\x02\x10Edify.Screens.V1\xca\x02\x10Edify\\Screens\\V1\xe2\x02\x1cEdify\\Screens\\V1\\GPBMetadata\xea\x02\x12Edify::Screens::V1b\x06proto3"
 
 var (
@@ -3555,7 +3632,7 @@ func file_edify_screens_v1_page_proto_rawDescGZIP() []byte {
 	return file_edify_screens_v1_page_proto_rawDescData
 }
 
-var file_edify_screens_v1_page_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
+var file_edify_screens_v1_page_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
 var file_edify_screens_v1_page_proto_goTypes = []any{
 	(*PageBadge)(nil),        // 0: edify.screens.v1.PageBadge
 	(*PageAction)(nil),       // 1: edify.screens.v1.PageAction
@@ -3597,11 +3674,12 @@ var file_edify_screens_v1_page_proto_goTypes = []any{
 	(*PageFormItem)(nil),     // 37: edify.screens.v1.PageFormItem
 	(*PageForm)(nil),         // 38: edify.screens.v1.PageForm
 	(*PageRecord)(nil),       // 39: edify.screens.v1.PageRecord
-	nil,                      // 40: edify.screens.v1.PageFilters.HiddenEntry
-	nil,                      // 41: edify.screens.v1.PageListItem.KeysEntry
-	(*DrawerNote)(nil),       // 42: edify.screens.v1.DrawerNote
-	(*DrawerField)(nil),      // 43: edify.screens.v1.DrawerField
-	(*DrawerCondition)(nil),  // 44: edify.screens.v1.DrawerCondition
+	(*PageDialog)(nil),       // 40: edify.screens.v1.PageDialog
+	nil,                      // 41: edify.screens.v1.PageFilters.HiddenEntry
+	nil,                      // 42: edify.screens.v1.PageListItem.KeysEntry
+	(*DrawerNote)(nil),       // 43: edify.screens.v1.DrawerNote
+	(*DrawerField)(nil),      // 44: edify.screens.v1.DrawerField
+	(*DrawerCondition)(nil),  // 45: edify.screens.v1.DrawerCondition
 }
 var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	0,  // 0: edify.screens.v1.PageHeader.badges:type_name -> edify.screens.v1.PageBadge
@@ -3609,7 +3687,7 @@ var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	4,  // 2: edify.screens.v1.PageFacts.facts:type_name -> edify.screens.v1.PageFact
 	6,  // 3: edify.screens.v1.PageFilter.options:type_name -> edify.screens.v1.PageFilterOption
 	7,  // 4: edify.screens.v1.PageFilters.filters:type_name -> edify.screens.v1.PageFilter
-	40, // 5: edify.screens.v1.PageFilters.hidden:type_name -> edify.screens.v1.PageFilters.HiddenEntry
+	41, // 5: edify.screens.v1.PageFilters.hidden:type_name -> edify.screens.v1.PageFilters.HiddenEntry
 	9,  // 6: edify.screens.v1.PageStrip.metrics:type_name -> edify.screens.v1.PageMetric
 	1,  // 7: edify.screens.v1.PageCell.actions:type_name -> edify.screens.v1.PageAction
 	12, // 8: edify.screens.v1.PageRow.cells:type_name -> edify.screens.v1.PageCell
@@ -3639,7 +3717,7 @@ var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	0,  // 32: edify.screens.v1.PageListItem.badges:type_name -> edify.screens.v1.PageBadge
 	1,  // 33: edify.screens.v1.PageListItem.actions:type_name -> edify.screens.v1.PageAction
 	32, // 34: edify.screens.v1.PageListItem.children:type_name -> edify.screens.v1.PageListItem
-	41, // 35: edify.screens.v1.PageListItem.keys:type_name -> edify.screens.v1.PageListItem.KeysEntry
+	42, // 35: edify.screens.v1.PageListItem.keys:type_name -> edify.screens.v1.PageListItem.KeysEntry
 	33, // 36: edify.screens.v1.PageChips.chips:type_name -> edify.screens.v1.PageChip
 	32, // 37: edify.screens.v1.PageList.items:type_name -> edify.screens.v1.PageListItem
 	5,  // 38: edify.screens.v1.PageBlock.facts:type_name -> edify.screens.v1.PageFacts
@@ -3656,19 +3734,20 @@ var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	39, // 49: edify.screens.v1.PageBlock.record:type_name -> edify.screens.v1.PageRecord
 	15, // 50: edify.screens.v1.PageBlock.pager:type_name -> edify.screens.v1.PagePager
 	38, // 51: edify.screens.v1.PageBlock.form:type_name -> edify.screens.v1.PageForm
-	42, // 52: edify.screens.v1.PageFormItem.note:type_name -> edify.screens.v1.DrawerNote
-	43, // 53: edify.screens.v1.PageFormItem.field:type_name -> edify.screens.v1.DrawerField
-	44, // 54: edify.screens.v1.PageFormItem.show_when:type_name -> edify.screens.v1.DrawerCondition
+	43, // 52: edify.screens.v1.PageFormItem.note:type_name -> edify.screens.v1.DrawerNote
+	44, // 53: edify.screens.v1.PageFormItem.field:type_name -> edify.screens.v1.DrawerField
+	45, // 54: edify.screens.v1.PageFormItem.show_when:type_name -> edify.screens.v1.DrawerCondition
 	37, // 55: edify.screens.v1.PageForm.items:type_name -> edify.screens.v1.PageFormItem
 	0,  // 56: edify.screens.v1.PageRecord.badges:type_name -> edify.screens.v1.PageBadge
 	1,  // 57: edify.screens.v1.PageRecord.actions:type_name -> edify.screens.v1.PageAction
 	4,  // 58: edify.screens.v1.PageRecord.facts:type_name -> edify.screens.v1.PageFact
 	36, // 59: edify.screens.v1.PageRecord.details:type_name -> edify.screens.v1.PageBlock
-	60, // [60:60] is the sub-list for method output_type
-	60, // [60:60] is the sub-list for method input_type
-	60, // [60:60] is the sub-list for extension type_name
-	60, // [60:60] is the sub-list for extension extendee
-	0,  // [0:60] is the sub-list for field type_name
+	36, // 60: edify.screens.v1.PageDialog.blocks:type_name -> edify.screens.v1.PageBlock
+	61, // [61:61] is the sub-list for method output_type
+	61, // [61:61] is the sub-list for method input_type
+	61, // [61:61] is the sub-list for extension type_name
+	61, // [61:61] is the sub-list for extension extendee
+	0,  // [0:61] is the sub-list for field type_name
 }
 
 func init() { file_edify_screens_v1_page_proto_init() }
@@ -3715,7 +3794,7 @@ func file_edify_screens_v1_page_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_screens_v1_page_proto_rawDesc), len(file_edify_screens_v1_page_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   42,
+			NumMessages:   43,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

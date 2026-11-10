@@ -72,6 +72,9 @@ def read(node: Node) -> dict | None:
         "items": [item for item in items if any(kind in item for kind in ITEM_KINDS)],
         "submitLabel": submit.text() if submit is not None else "Save",
         "key": key(form),
+        # Where it posts, for the feed to say whether it saves it (canSave);
+        # never sent on.
+        "_action": form.get("hx-post") or form.get("action"),
     }
 
 

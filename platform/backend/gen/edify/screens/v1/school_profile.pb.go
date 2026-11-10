@@ -98,7 +98,9 @@ type GetSchoolProfileResponse struct {
 	Tabs   []*PageTab             `protobuf:"bytes,2,rep,name=tabs,proto3" json:"tabs,omitempty"`
 	Blocks []*PageBlock           `protobuf:"bytes,3,rep,name=blocks,proto3" json:"blocks,omitempty"`
 	// The web path of this profile, for what the app opens on the web.
-	WebPath       string `protobuf:"bytes,4,opt,name=web_path,json=webPath,proto3" json:"web_path,omitempty"`
+	WebPath string `protobuf:"bytes,4,opt,name=web_path,json=webPath,proto3" json:"web_path,omitempty"`
+	// The dialogs the profile opens itself, by "#dialog=<key>".
+	Dialogs       []*PageDialog `protobuf:"bytes,5,rep,name=dialogs,proto3" json:"dialogs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -161,6 +163,13 @@ func (x *GetSchoolProfileResponse) GetWebPath() string {
 	return ""
 }
 
+func (x *GetSchoolProfileResponse) GetDialogs() []*PageDialog {
+	if x != nil {
+		return x.Dialogs
+	}
+	return nil
+}
+
 var File_edify_screens_v1_school_profile_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_school_profile_proto_rawDesc = "" +
@@ -170,12 +179,13 @@ const file_edify_screens_v1_school_profile_proto_rawDesc = "" +
 	"\tschool_id\x18\x01 \x01(\tR\bschoolId\x12\x10\n" +
 	"\x03tab\x18\x02 \x01(\tR\x03tab\x12\x0e\n" +
 	"\x02fy\x18\x03 \x01(\tR\x02fy\x12\x16\n" +
-	"\x06period\x18\x04 \x01(\tR\x06period\"\xcf\x01\n" +
+	"\x06period\x18\x04 \x01(\tR\x06period\"\x87\x02\n" +
 	"\x18GetSchoolProfileResponse\x124\n" +
 	"\x06header\x18\x01 \x01(\v2\x1c.edify.screens.v1.PageHeaderR\x06header\x12-\n" +
 	"\x04tabs\x18\x02 \x03(\v2\x19.edify.screens.v1.PageTabR\x04tabs\x123\n" +
 	"\x06blocks\x18\x03 \x03(\v2\x1b.edify.screens.v1.PageBlockR\x06blocks\x12\x19\n" +
-	"\bweb_path\x18\x04 \x01(\tR\awebPath2\x81\x01\n" +
+	"\bweb_path\x18\x04 \x01(\tR\awebPath\x126\n" +
+	"\adialogs\x18\x05 \x03(\v2\x1c.edify.screens.v1.PageDialogR\adialogs2\x81\x01\n" +
 	"\x14SchoolProfileService\x12i\n" +
 	"\x10GetSchoolProfile\x12).edify.screens.v1.GetSchoolProfileRequest\x1a*.edify.screens.v1.GetSchoolProfileResponseB\xe6\x01\n" +
 	"\x14com.edify.screens.v1B\x12SchoolProfileProtoP\x01ZXgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1;screensv1\xa2\x02\x03ESX\xaa\x02\x10Edify.Screens.V1\xca\x02\x10Edify\\Screens\\V1\xe2\x02\x1cEdify\\Screens\\V1\\GPBMetadata\xea\x02\x12Edify::Screens::V1b\x06proto3"
@@ -199,18 +209,20 @@ var file_edify_screens_v1_school_profile_proto_goTypes = []any{
 	(*PageHeader)(nil),               // 2: edify.screens.v1.PageHeader
 	(*PageTab)(nil),                  // 3: edify.screens.v1.PageTab
 	(*PageBlock)(nil),                // 4: edify.screens.v1.PageBlock
+	(*PageDialog)(nil),               // 5: edify.screens.v1.PageDialog
 }
 var file_edify_screens_v1_school_profile_proto_depIdxs = []int32{
 	2, // 0: edify.screens.v1.GetSchoolProfileResponse.header:type_name -> edify.screens.v1.PageHeader
 	3, // 1: edify.screens.v1.GetSchoolProfileResponse.tabs:type_name -> edify.screens.v1.PageTab
 	4, // 2: edify.screens.v1.GetSchoolProfileResponse.blocks:type_name -> edify.screens.v1.PageBlock
-	0, // 3: edify.screens.v1.SchoolProfileService.GetSchoolProfile:input_type -> edify.screens.v1.GetSchoolProfileRequest
-	1, // 4: edify.screens.v1.SchoolProfileService.GetSchoolProfile:output_type -> edify.screens.v1.GetSchoolProfileResponse
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	5, // 3: edify.screens.v1.GetSchoolProfileResponse.dialogs:type_name -> edify.screens.v1.PageDialog
+	0, // 4: edify.screens.v1.SchoolProfileService.GetSchoolProfile:input_type -> edify.screens.v1.GetSchoolProfileRequest
+	1, // 5: edify.screens.v1.SchoolProfileService.GetSchoolProfile:output_type -> edify.screens.v1.GetSchoolProfileResponse
+	5, // [5:6] is the sub-list for method output_type
+	4, // [4:5] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_edify_screens_v1_school_profile_proto_init() }

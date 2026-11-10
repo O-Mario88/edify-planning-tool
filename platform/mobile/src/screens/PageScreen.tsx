@@ -182,7 +182,10 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
     [load],
   );
   // A form the page shows itself saves with the page's path, then the page reloads.
-  const formHost = useMemo(() => ({ path, onSaved: saved }), [path, saved]);
+  const formHost = useMemo(
+    () => ({ path, onSaved: saved, onOpenWeb: () => openWeb(webPageFor(path)) }),
+    [openWeb, path, saved],
+  );
 
   const openDialog = dialogKey ? data?.dialogs.find((dialog) => dialog.key === dialogKey) : undefined;
   const header = data?.header;

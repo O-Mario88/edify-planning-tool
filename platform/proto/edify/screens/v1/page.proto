@@ -388,6 +388,8 @@ message PageForm {
   string submit_label = 4;
   // Names this form among the page's forms when it is saved.
   string key = 5;
+  // The app saves it; otherwise the form is finished on the web.
+  bool can_save = 6;
 }
 
 // A record card that opens in place (a cluster, a school, a project): its
@@ -404,4 +406,12 @@ message PageRecord {
   repeated PageBlock details = 7;
   // The list the card loads once opened (its schools), as a page path.
   string details_path = 8;
+}
+
+// A dialog a page opens itself (My Targets' Submit MSCS), opened by a link
+// to "#dialog=<key>".
+message PageDialog {
+  string key = 1;
+  string title = 2;
+  repeated PageBlock blocks = 3;
 }

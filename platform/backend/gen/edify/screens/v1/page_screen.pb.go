@@ -171,66 +171,6 @@ func (x *GetPageResponse) GetDialogs() []*PageDialog {
 	return nil
 }
 
-type PageDialog struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Blocks        []*PageBlock           `protobuf:"bytes,3,rep,name=blocks,proto3" json:"blocks,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PageDialog) Reset() {
-	*x = PageDialog{}
-	mi := &file_edify_screens_v1_page_screen_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PageDialog) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PageDialog) ProtoMessage() {}
-
-func (x *PageDialog) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_page_screen_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PageDialog.ProtoReflect.Descriptor instead.
-func (*PageDialog) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_page_screen_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *PageDialog) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *PageDialog) GetTitle() string {
-	if x != nil {
-		return x.Title
-	}
-	return ""
-}
-
-func (x *PageDialog) GetBlocks() []*PageBlock {
-	if x != nil {
-		return x.Blocks
-	}
-	return nil
-}
-
 var File_edify_screens_v1_page_screen_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_page_screen_proto_rawDesc = "" +
@@ -250,12 +190,7 @@ const file_edify_screens_v1_page_screen_proto_rawDesc = "" +
 	"\bweb_path\x18\x04 \x01(\tR\awebPath\x12\x1a\n" +
 	"\bredirect\x18\x05 \x01(\tR\bredirect\x12\x14\n" +
 	"\x05error\x18\x06 \x01(\tR\x05error\x126\n" +
-	"\adialogs\x18\a \x03(\v2\x1c.edify.screens.v1.PageDialogR\adialogs\"i\n" +
-	"\n" +
-	"PageDialog\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x123\n" +
-	"\x06blocks\x18\x03 \x03(\v2\x1b.edify.screens.v1.PageBlockR\x06blocks2c\n" +
+	"\adialogs\x18\a \x03(\v2\x1c.edify.screens.v1.PageDialogR\adialogs2c\n" +
 	"\x11PageScreenService\x12N\n" +
 	"\aGetPage\x12 .edify.screens.v1.GetPageRequest\x1a!.edify.screens.v1.GetPageResponseB\xe3\x01\n" +
 	"\x14com.edify.screens.v1B\x0fPageScreenProtoP\x01ZXgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1;screensv1\xa2\x02\x03ESX\xaa\x02\x10Edify.Screens.V1\xca\x02\x10Edify\\Screens\\V1\xe2\x02\x1cEdify\\Screens\\V1\\GPBMetadata\xea\x02\x12Edify::Screens::V1b\x06proto3"
@@ -272,30 +207,29 @@ func file_edify_screens_v1_page_screen_proto_rawDescGZIP() []byte {
 	return file_edify_screens_v1_page_screen_proto_rawDescData
 }
 
-var file_edify_screens_v1_page_screen_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_edify_screens_v1_page_screen_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_edify_screens_v1_page_screen_proto_goTypes = []any{
 	(*GetPageRequest)(nil),  // 0: edify.screens.v1.GetPageRequest
 	(*GetPageResponse)(nil), // 1: edify.screens.v1.GetPageResponse
-	(*PageDialog)(nil),      // 2: edify.screens.v1.PageDialog
-	nil,                     // 3: edify.screens.v1.GetPageRequest.QueryEntry
-	(*PageHeader)(nil),      // 4: edify.screens.v1.PageHeader
-	(*PageTab)(nil),         // 5: edify.screens.v1.PageTab
-	(*PageBlock)(nil),       // 6: edify.screens.v1.PageBlock
+	nil,                     // 2: edify.screens.v1.GetPageRequest.QueryEntry
+	(*PageHeader)(nil),      // 3: edify.screens.v1.PageHeader
+	(*PageTab)(nil),         // 4: edify.screens.v1.PageTab
+	(*PageBlock)(nil),       // 5: edify.screens.v1.PageBlock
+	(*PageDialog)(nil),      // 6: edify.screens.v1.PageDialog
 }
 var file_edify_screens_v1_page_screen_proto_depIdxs = []int32{
-	3, // 0: edify.screens.v1.GetPageRequest.query:type_name -> edify.screens.v1.GetPageRequest.QueryEntry
-	4, // 1: edify.screens.v1.GetPageResponse.header:type_name -> edify.screens.v1.PageHeader
-	5, // 2: edify.screens.v1.GetPageResponse.tabs:type_name -> edify.screens.v1.PageTab
-	6, // 3: edify.screens.v1.GetPageResponse.blocks:type_name -> edify.screens.v1.PageBlock
-	2, // 4: edify.screens.v1.GetPageResponse.dialogs:type_name -> edify.screens.v1.PageDialog
-	6, // 5: edify.screens.v1.PageDialog.blocks:type_name -> edify.screens.v1.PageBlock
-	0, // 6: edify.screens.v1.PageScreenService.GetPage:input_type -> edify.screens.v1.GetPageRequest
-	1, // 7: edify.screens.v1.PageScreenService.GetPage:output_type -> edify.screens.v1.GetPageResponse
-	7, // [7:8] is the sub-list for method output_type
-	6, // [6:7] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	2, // 0: edify.screens.v1.GetPageRequest.query:type_name -> edify.screens.v1.GetPageRequest.QueryEntry
+	3, // 1: edify.screens.v1.GetPageResponse.header:type_name -> edify.screens.v1.PageHeader
+	4, // 2: edify.screens.v1.GetPageResponse.tabs:type_name -> edify.screens.v1.PageTab
+	5, // 3: edify.screens.v1.GetPageResponse.blocks:type_name -> edify.screens.v1.PageBlock
+	6, // 4: edify.screens.v1.GetPageResponse.dialogs:type_name -> edify.screens.v1.PageDialog
+	0, // 5: edify.screens.v1.PageScreenService.GetPage:input_type -> edify.screens.v1.GetPageRequest
+	1, // 6: edify.screens.v1.PageScreenService.GetPage:output_type -> edify.screens.v1.GetPageResponse
+	6, // [6:7] is the sub-list for method output_type
+	5, // [5:6] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_edify_screens_v1_page_screen_proto_init() }
@@ -310,7 +244,7 @@ func file_edify_screens_v1_page_screen_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_screens_v1_page_screen_proto_rawDesc), len(file_edify_screens_v1_page_screen_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
