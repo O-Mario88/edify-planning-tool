@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package edify.screens.v1;
 
+import "edify/screens/v1/form.proto";
+
 // A web page read as its shared components (apps.mobile_feed.page_blocks):
 // the page header, its tabs, and the blocks under them in the order the page
 // draws them. Every label, figure and line is the page's own text. An href is
@@ -358,7 +360,32 @@ message PageBlock {
     PageRecord record = 14;
     // A list's own pager, outside a table card (Clusters, Planning).
     PagePager pager = 15;
+    PageForm form = 16;
   }
+}
+
+// One part of a form on a page, in the order the form draws them.
+message PageFormItem {
+  oneof kind {
+    DrawerNote note = 1;
+    string heading = 2;
+    string text = 3;
+    DrawerField field = 4;
+  }
+  // Shown only while any condition holds; empty for always.
+  repeated DrawerCondition show_when = 5;
+}
+
+// A form the page shows itself (Escalations' "Escalate to …"), saved through
+// PageDrawerService.SaveDrawer with the page's path and this form's key.
+message PageForm {
+  string title = 1;
+  // The line under the title.
+  string text = 2;
+  repeated PageFormItem items = 3;
+  string submit_label = 4;
+  // Names this form among the page's forms when it is saved.
+  string key = 5;
 }
 
 // A record card that opens in place (a cluster, a school, a project): its

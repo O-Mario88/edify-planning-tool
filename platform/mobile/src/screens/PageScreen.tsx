@@ -9,7 +9,7 @@
  * school opens its profile, and everything else opens on the web — a
  * drawer on the page its record belongs to.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
 import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
@@ -24,13 +24,16 @@ import { MakeRoomContext } from '../ui/Dropdown';
 import { PageBlocksView } from '../ui/page/PageBlocksView';
 import { ActionButton, Badge, Description, TabRail } from '../ui/page/PageHeaderParts';
 import { webPageFor } from '../ui/page/pageLinks';
-import { PageLinkContext } from '../ui/page/shared';
+import { PageFormContext, PageLinkContext } from '../ui/page/shared';
+import { Drawer } from '../ui/Drawer';
 import { WebDrawer } from '../ui/WebDrawer';
 import { PlanningDrawer } from '../ui/planning/PlanningDrawer';
 
 type Query = Readonly<Record<string, string>>;
 
 const TOAST_MS = 4000;
+/** A link that opens one of the page's own dialogs ("#dialog=showMscs"). */
+const DIALOG_HREF = '#dialog=';
 /** The planning drawers the app draws natively, by the path that opens them. */
 const PLANNING_DRAWERS: Readonly<Record<string, 'schedule' | 'assign'>> = {
   '/planning/schedule-modal': 'schedule',
@@ -60,6 +63,8 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
   /** The drawer open on this page: any drawer by its path, or a school's planning drawer. */
   const [drawer, setDrawer] = useState<string | null>(null);
   const [planning, setPlanning] = useState<{ readonly schoolId: string; readonly kind: 'schedule' | 'assign' } | null>(null);
+  /** The page's own dialog open as a sheet, by its key. */
+  const [dialogKey, setDialogKey] = useState<string | null>(null);
   const [toast, setToast] = useState('');
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
   const offset = useRef(0);
@@ -96,6 +101,10 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
 
   const openLink = useCallback(
     (href: string, isDrawer = false) => {
+      if (href.startsWith(DIALOG_HREF)) {
+        setDialogKey(href.slice(DIALOG_HREF.length));
+        return;
+      }
       const url = new URL(href, `http://edify.local${path}`);
       if (isDrawer) {
         const planningKind = PLANNING_DRAWERS[url.pathname];
@@ -162,105 +171,119 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
     return () => clearTimeout(timer);
   }, [toast]);
 
-  function saved(message: string) {
-    setDrawer(null);
-    setPlanning(null);
-    setToast(message);
-    void load();
-  }
+  const saved = useCallback(
+    (message: string) => {
+      setDrawer(null);
+      setPlanning(null);
+      setDialogKey(null);
+      setToast(message);
+      void load();
+    },
+    [load],
+  );
+  // A form the page shows itself saves with the page's path, then the page reloads.
+  const formHost = useMemo(() => ({ path, onSaved: saved }), [path, saved]);
 
+  const openDialog = dialogKey ? data?.dialogs.find((dialog) => dialog.key === dialogKey) : undefined;
   const header = data?.header;
   // Export sits beside the title, as the page header's control does on a phone.
   const exportAction = header?.actions.find((action) => action.key === 'export');
   const buttons = header?.actions.filter((action) => action !== exportAction) ?? [];
   return (
     <PageLinkContext.Provider value={openLink}>
-      <MakeRoomContext.Provider value={makeRoom}>
-        <ScrollView
-          ref={scroller}
-          onScroll={trackScroll}
-          scrollEventThrottle={16}
-          contentContainerStyle={styles.page}
-          keyboardShouldPersistTaps="handled"
-          refreshControl={<RefreshControl refreshing={isBusy && data !== null} onRefresh={() => void load()} />}
-        >
-          {header?.backLabel ? (
-            <Pressable onPress={() => openLink(header.backHref)} accessibilityRole="link" hitSlop={8} style={styles.back}>
-              <ChevronLeft size={14} color={colors.link} />
-              <Text style={[styles.backText, { color: colors.link }]}>{header.backLabel}</Text>
-            </Pressable>
-          ) : null}
-          {header?.eyebrow ? <Text style={[styles.eyebrow, { color: colors.eyebrow }]}>{header.eyebrow}</Text> : null}
-          <View style={styles.titleRow}>
-            <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-              {header?.title ?? ''}
-            </Text>
-            {exportAction ? <ExportButton action={exportAction} onPress={() => openLink(exportAction.href, exportAction.drawer)} /> : null}
-          </View>
-          {header?.description ? <Description text={header.description} /> : null}
-          {header && (header.badges.length > 0 || buttons.length > 0) ? (
-            <View style={styles.controls}>
-              {header.badges.map((badge, index) => (
-                <Badge key={badge.text} badge={badge} isWide={index === 0 && header.badges.length > 1} />
-              ))}
-              {buttons.map((action) => (
-                <ActionButton key={action.key + action.href} action={action} onPress={() => openLink(action.href, action.drawer)} />
-              ))}
+      <PageFormContext.Provider value={formHost}>
+        <MakeRoomContext.Provider value={makeRoom}>
+          <ScrollView
+            ref={scroller}
+            onScroll={trackScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={styles.page}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={<RefreshControl refreshing={isBusy && data !== null} onRefresh={() => void load()} />}
+          >
+            {header?.backLabel ? (
+              <Pressable onPress={() => openLink(header.backHref)} accessibilityRole="link" hitSlop={8} style={styles.back}>
+                <ChevronLeft size={14} color={colors.link} />
+                <Text style={[styles.backText, { color: colors.link }]}>{header.backLabel}</Text>
+              </Pressable>
+            ) : null}
+            {header?.eyebrow ? <Text style={[styles.eyebrow, { color: colors.eyebrow }]}>{header.eyebrow}</Text> : null}
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+                {header?.title ?? ''}
+              </Text>
+              {exportAction ? <ExportButton action={exportAction} onPress={() => openLink(exportAction.href, exportAction.drawer)} /> : null}
             </View>
-          ) : null}
-          {data && data.tabs.length > 0 ? (
-            <TabRail
-              tabs={data.tabs.map((tab) => ({ key: tab.key, label: tab.label, active: tab.active }))}
-              onPick={(tab) => setQuery((current) => ({ ...current, tab }))}
+            {header?.description ? <Description text={header.description} /> : null}
+            {header && (header.badges.length > 0 || buttons.length > 0) ? (
+              <View style={styles.controls}>
+                {header.badges.map((badge, index) => (
+                  <Badge key={badge.text} badge={badge} isWide={index === 0 && header.badges.length > 1} />
+                ))}
+                {buttons.map((action) => (
+                  <ActionButton key={action.key + action.href} action={action} onPress={() => openLink(action.href, action.drawer)} />
+                ))}
+              </View>
+            ) : null}
+            {data && data.tabs.length > 0 ? (
+              <TabRail
+                tabs={data.tabs.map((tab) => ({ key: tab.key, label: tab.label, active: tab.active }))}
+                onPick={(tab) => setQuery((current) => ({ ...current, tab }))}
+              />
+            ) : null}
+            {error ? (
+              <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">
+                {error}
+              </Text>
+            ) : null}
+            {data ? (
+              <View style={{ opacity: isBusy ? 0.6 : 1 }}>
+                <PageBlocksView blocks={data.blocks} onFilter={filter} isRaised={false} />
+              </View>
+            ) : error ? null : (
+              <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />
+            )}
+          </ScrollView>
+          {drawer ? (
+            <WebDrawer
+              source={{ path: drawer }}
+              onClose={() => setDrawer(null)}
+              onSaved={(message) => saved(message)}
+              onUnavailable={() => {
+                // A drawer the app does not draw yet opens on the web.
+                setDrawer(null);
+                openWeb(webPageFor(drawer));
+              }}
             />
           ) : null}
-          {error ? (
-            <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">
-              {error}
-            </Text>
+          {openDialog ? (
+            <Drawer title={openDialog.title} onClose={() => setDialogKey(null)}>
+              <PageBlocksView blocks={openDialog.blocks} onFilter={filter} />
+            </Drawer>
           ) : null}
-          {data ? (
-            <View style={{ opacity: isBusy ? 0.6 : 1 }}>
-              <PageBlocksView blocks={data.blocks} onFilter={filter} isRaised={false} />
+          {planning ? (
+            <PlanningDrawer
+              schoolId={planning.schoolId}
+              kind={planning.kind}
+              onClose={() => setPlanning(null)}
+              onSaved={saved}
+              onOpenWeb={(webPath) => {
+                setPlanning(null);
+                openWeb(webPath);
+              }}
+            />
+          ) : null}
+          {toast ? (
+            <View
+              style={[styles.toast, { backgroundColor: colors.successSoft, borderColor: colors.success }]}
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
+            >
+              <Text style={[styles.toastText, { color: colors.success }]}>{toast}</Text>
             </View>
-          ) : error ? null : (
-            <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />
-          )}
-        </ScrollView>
-        {drawer ? (
-          <WebDrawer
-            source={{ path: drawer }}
-            onClose={() => setDrawer(null)}
-            onSaved={(message) => saved(message)}
-            onUnavailable={() => {
-              // A drawer the app does not draw yet opens on the web.
-              setDrawer(null);
-              openWeb(webPageFor(drawer));
-            }}
-          />
-        ) : null}
-        {planning ? (
-          <PlanningDrawer
-            schoolId={planning.schoolId}
-            kind={planning.kind}
-            onClose={() => setPlanning(null)}
-            onSaved={saved}
-            onOpenWeb={(webPath) => {
-              setPlanning(null);
-              openWeb(webPath);
-            }}
-          />
-        ) : null}
-        {toast ? (
-          <View
-            style={[styles.toast, { backgroundColor: colors.successSoft, borderColor: colors.success }]}
-            accessibilityRole="alert"
-            accessibilityLiveRegion="polite"
-          >
-            <Text style={[styles.toastText, { color: colors.success }]}>{toast}</Text>
-          </View>
-        ) : null}
-      </MakeRoomContext.Provider>
+          ) : null}
+        </MakeRoomContext.Provider>
+      </PageFormContext.Provider>
     </PageLinkContext.Provider>
   );
 }

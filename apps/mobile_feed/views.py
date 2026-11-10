@@ -1316,6 +1316,9 @@ DRAWER_SAVES = frozenset(
         "partner_oversight_send",
         "project_withdraw_school",
         "pd_request",
+        # A page's own form, saved by the page's view (PageForm).
+        "escalations",
+        "my_targets_mscs",
     }
 )
 
@@ -1357,6 +1360,50 @@ def _split(path_and_query: str) -> tuple[str, dict]:
     return url.path, dict(parse_qsl(url.query))
 
 
+#: A refusal longer than this is the page drawn again, not a reason.
+REFUSAL_LIMIT = 300
+
+
+def _save_page_form(user, path: str, query: dict, key: str, values: dict) -> dict:
+    """Save the form named ``key`` on the page at ``path``: its own fields
+    and hidden values, posted to where it posts, when that view is one the
+    feed saves through."""
+    from django.http import Http404
+
+    from apps.mobile_feed import drawer_blocks, page_blocks, page_forms
+
+    try:
+        page = _run_page(user, path, _page_params(query), NATIVE_PAGES)
+    except Http404:
+        page = None
+    if page is None or page.status_code != 200:
+        return {"saved": False, "error": "This page is not available."}
+    form = page_forms.find(page_blocks.parse(page.content.decode()), key)
+    if form is None:
+        return {"saved": False, "error": "This form is not available."}
+    save_path, _ = _split(form.get("hx-post") or form.get("action") or path)
+    match = _route(save_path, DRAWER_SAVES)
+    if match is None:
+        return {"saved": False, "error": "This form cannot be saved here."}
+    page_request = _page_request(
+        user, save_path, drawer_blocks.form_values(form, values)
+    )
+    try:
+        response = match.func(page_request, *match.args, **match.kwargs)
+    except Http404:
+        return {"saved": False, "error": "Not found."}
+    from django.contrib import messages as levels
+
+    outcome = _saved_outcome(response, page_request._messages)
+    refused = any(level >= levels.WARNING for level, _ in page_request._messages)
+    if not outcome["saved"] and not refused and response.status_code in (301, 302, 303):
+        # The page's view went back to the page without a word of refusal.
+        return {"saved": True, "message": "Saved.", "redirect": ""}
+    if len(outcome.get("error", "")) > REFUSAL_LIMIT or "drawer" in outcome:
+        return {"saved": False, "error": "This could not be saved."}
+    return outcome
+
+
 class DrawerFeedView(APIView):
     """A drawer a page opens (``path``, its query included): read (GET) or
     saved (POST ``{"path", "values"}``)."""
@@ -1386,6 +1433,10 @@ class DrawerFeedView(APIView):
         if not isinstance(values, dict):
             return Response({"error": "Values are required."}, status=400)
         path, query = _split(str(data.get("path", "")))
+        if data.get("form"):
+            return Response(
+                _save_page_form(user, path, query, str(data["form"]), values)
+            )
         status, html = _page_drawer_html(user, path, query)
         if status != 200 or "data-edify-drawer" not in html:
             return Response({"error": "This drawer is not available."}, status=404)

@@ -13,6 +13,14 @@ import type { Palette } from '../../theme';
 export type OpenLink = (href: string, isDrawer?: boolean) => void;
 export const PageLinkContext = createContext<OpenLink>(() => undefined);
 
+/** The page a form on it belongs to, and what to do once it saves. */
+export interface PageFormHost {
+  /** The page's web path, which a form on it is saved with. */
+  readonly path: string;
+  readonly onSaved: (message: string) => void;
+}
+export const PageFormContext = createContext<PageFormHost | null>(null);
+
 export function usePageLink(): OpenLink {
   return useContext(PageLinkContext);
 }

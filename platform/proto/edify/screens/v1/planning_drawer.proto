@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package edify.screens.v1;
 
-import "edify/screens/v1/drawer.proto";
+import "edify/screens/v1/form.proto";
 
 // A school's planning drawers from its profile: Schedule visit and Assign to
 // Partner. Their fields come and go with the drawer's own script, so the app

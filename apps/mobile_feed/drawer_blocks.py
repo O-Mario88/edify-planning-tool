@@ -435,33 +435,28 @@ def _form(html: str) -> Node | None:
 def field_names(html: str) -> set[str]:
     """The fields the drawer's form sends, hidden inputs aside."""
     form = _form(html)
-    if form is None:
-        return set()
-    return {node.get("name") for node in form.find_all(_is_control) if node.get("name")}
+    return _names(form) if form is not None else set()
 
 
 def hidden_values(html: str) -> dict[str, str]:
     """The hidden inputs the drawer's form sends, its CSRF token aside."""
     form = _form(html)
-    if form is None:
-        return {}
-    return {
-        node.get("name"): node.get("value")
-        for node in form.find_all(
-            lambda n: n.tag == "input" and n.get("type").lower() == "hidden"
-        )
-        if node.get("name") and node.get("name") != "csrfmiddlewaretoken"
-    }
+    return _hidden(form) if form is not None else {}
 
 
 def form_data(html: str, values: dict) -> dict[str, str | list[str]]:
-    """What a save posts: the drawer's hidden values as the web rendered them,
-    and the person's values for the drawer's own fields only — a checklist's
-    as one value per ticked box."""
-    names = field_names(html)
-    hidden = hidden_values(html)
+    """What a drawer's save posts (form_values for the drawer's form)."""
     form = _form(html)
-    lists = checklists.group_names(form) if form is not None else set()
+    return form_values(form, values) if form is not None else {}
+
+
+def form_values(form: Node, values: dict) -> dict[str, str | list[str]]:
+    """What a save posts: the form's hidden values as the web rendered them,
+    and the person's values for the form's own fields only — a checklist's
+    as one value per ticked box."""
+    names = _names(form)
+    hidden = _hidden(form)
+    lists = checklists.group_names(form)
     return {
         **{
             name: _ticked(value) if name in lists else str(value)
@@ -469,6 +464,20 @@ def form_data(html: str, values: dict) -> dict[str, str | list[str]]:
             if name in names and name not in hidden
         },
         **hidden,
+    }
+
+
+def _names(form: Node) -> set[str]:
+    return {node.get("name") for node in form.find_all(_is_control) if node.get("name")}
+
+
+def _hidden(form: Node) -> dict[str, str]:
+    return {
+        node.get("name"): node.get("value")
+        for node in form.find_all(
+            lambda n: n.tag == "input" and n.get("type").lower() == "hidden"
+        )
+        if node.get("name") and node.get("name") != "csrfmiddlewaretoken"
     }
 
 

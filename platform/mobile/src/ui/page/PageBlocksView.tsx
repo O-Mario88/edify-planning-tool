@@ -10,6 +10,7 @@ import type { PageBlock, PageFacts, PageSegments } from '../../gen/edify/screens
 import { fonts, useTheme } from '../../theme';
 import { PageChartView } from './PageChartView';
 import { PageFilterBar } from './PageFilterBar';
+import { PageFormView } from './PageFormView';
 import { PageLinkTabsView } from './PageLinkTabsView';
 import { PageListView } from './PageListView';
 import { PageChipsView } from './PageChipsView';
@@ -95,6 +96,8 @@ function Block({ block, onFilter, isRaised = true }: BlockProps) {
       return <SegmentsCard segments={kind.value} onFilter={onFilter} />;
     case 'record':
       return <PageRecordView record={kind.value} />;
+    case 'form':
+      return <PageFormView form={kind.value} />;
     case 'pager':
       return (
         <View style={[cardStyles.card, styles.clip, { backgroundColor: colors.raised, borderColor: colors.border }]}>

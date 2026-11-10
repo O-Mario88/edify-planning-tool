@@ -4,7 +4,12 @@
  * change clears, and what a save sends. Pure, so it is tested without a
  * device.
  */
-import type { DrawerCondition, DrawerField, DrawerOption, PageDrawer } from '../gen/edify/screens/v1/drawer_pb';
+import { create } from '@bufbuild/protobuf';
+
+import { DrawerItemSchema, PageDrawerSchema } from '../gen/edify/screens/v1/drawer_pb';
+import type { PageDrawer } from '../gen/edify/screens/v1/drawer_pb';
+import type { DrawerCondition, DrawerField, DrawerOption } from '../gen/edify/screens/v1/form_pb';
+import type { PageForm } from '../gen/edify/screens/v1/page_pb';
 
 export type Values = Readonly<Record<string, string>>;
 /** Choices a field's reload brought, by the field they belong to. */
@@ -116,4 +121,14 @@ export function missingField(drawer: PageDrawer, values: Values): string {
     }
   }
   return '';
+}
+
+/** A form a page shows itself, as a drawer: the same parts, values and stops. */
+export function asDrawer(form: PageForm): PageDrawer {
+  return create(PageDrawerSchema, {
+    title: form.title,
+    items: form.items.map((item) => create(DrawerItemSchema, { kind: item.kind, showWhen: item.showWhen })),
+    submitLabel: form.submitLabel,
+    canSubmit: true,
+  });
 }

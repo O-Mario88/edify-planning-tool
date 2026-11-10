@@ -33,14 +33,8 @@ import type {
   GetSchoolProfileResponse,
 } from '../gen/edify/screens/v1/school_profile_pb';
 import { SchoolProfileService } from '../gen/edify/screens/v1/school_profile_pb';
-import type {
-  DrawerOption,
-  GetDrawerOptionsRequest,
-  PageDrawer,
-  GetDrawerResponse,
-  SaveDrawerResponse,
-  SaveSchoolDrawerResponse,
-} from '../gen/edify/screens/v1/drawer_pb';
+import type { GetDrawerOptionsRequest, PageDrawer, GetDrawerResponse, SaveDrawerResponse, SaveSchoolDrawerResponse } from '../gen/edify/screens/v1/drawer_pb';
+import type { DrawerOption } from '../gen/edify/screens/v1/form_pb';
 import { PageDrawerService, SchoolDrawerService } from '../gen/edify/screens/v1/drawer_pb';
 import type {
   GetPlanningDrawerResponse,
@@ -98,7 +92,8 @@ export interface EdifyApi {
   getPage(path: string, query: Readonly<Record<string, string>>): Promise<GetPageResponse>;
   /** Any drawer a page opens, by its web path and query. */
   getDrawer(path: string): Promise<GetDrawerResponse>;
-  saveDrawer(path: string, values: Readonly<Record<string, string>>): Promise<SaveDrawerResponse>;
+  /** Save a drawer by its path, or (with `form`) a form the page at `path` shows itself. */
+  saveDrawer(path: string, values: Readonly<Record<string, string>>, form?: string): Promise<SaveDrawerResponse>;
 }
 
 export function createEdifyApi(transport: ConnectTransport): EdifyApi {
@@ -178,8 +173,8 @@ export function createEdifyApi(transport: ConnectTransport): EdifyApi {
     getDrawer(path) {
       return callUnary(transport, PageDrawerService.method.getDrawer, { path });
     },
-    saveDrawer(path, values) {
-      return callUnary(transport, PageDrawerService.method.saveDrawer, { path, values: { ...values } });
+    saveDrawer(path, values, form = '') {
+      return callUnary(transport, PageDrawerService.method.saveDrawer, { path, values: { ...values }, form });
     },
     getPage(path, query) {
       return callUnary(transport, PageScreenService.method.getPage, { path, query: { ...query } });

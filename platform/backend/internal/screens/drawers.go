@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"connectrpc.com/connect"
 
@@ -19,8 +20,10 @@ import (
 const pathDrawerOptions = "/api/mobile/v1/drawers/options"
 
 var (
-	drawerKind   = regexp.MustCompile(`^[a-z][a-z-]{0,31}$`)
-	fieldName    = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
+	drawerKind = regexp.MustCompile(`^[a-z][a-z-]{0,31}$`)
+	fieldName  = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
+	// A page form's key: the action it sends, its id, or the path it posts to.
+	formKey      = regexp.MustCompile(`^/?[A-Za-z0-9][A-Za-z0-9_/.-]{0,127}$`)
 	optionSource = regexp.MustCompile(`^/[a-z0-9/-]{1,63}$`)
 )
 
@@ -125,5 +128,11 @@ func (s *Service) SaveDrawer(
 			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This drawer has no such field.")
 		}
 	}
-	return send[screensv1.SaveDrawerResponse](ctx, s, pathPageDrawer, &screensv1.SaveDrawerRequest{Path: path, Values: message.GetValues()})
+	form := message.GetForm()
+	if form != "" && (!formKey.MatchString(form) || strings.Contains(form, "..")) {
+		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This form cannot be saved.")
+	}
+	return send[screensv1.SaveDrawerResponse](ctx, s, pathPageDrawer, &screensv1.SaveDrawerRequest{
+		Path: path, Values: message.GetValues(), Form: form,
+	})
 }

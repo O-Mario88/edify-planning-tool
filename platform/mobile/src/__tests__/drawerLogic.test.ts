@@ -1,17 +1,14 @@
 import { create } from '@bufbuild/protobuf';
 
-import {
-  DrawerConditionSchema,
-  DrawerFieldSchema,
-  DrawerItemSchema,
-  DrawerOptionSchema,
-  PageDrawerSchema,
-} from '../gen/edify/screens/v1/drawer_pb';
+import { DrawerItemSchema, PageDrawerSchema } from '../gen/edify/screens/v1/drawer_pb';
+import { DrawerConditionSchema, DrawerFieldSchema, DrawerOptionSchema } from '../gen/edify/screens/v1/form_pb';
+import { PageFormItemSchema, PageFormSchema } from '../gen/edify/screens/v1/page_pb';
 import {
   choicesFor,
   clearedBy,
   initialValues,
   isShown,
+  asDrawer,
   missingField,
   ticked,
   withTicked,
@@ -167,5 +164,28 @@ describe('missingField', () => {
     });
     expect(missingField(drawer, { school_type: 'client', core_cohort_number: '' })).toBe('');
     expect(missingField(drawer, { school_type: 'core', core_cohort_number: '' })).toBe('Core cohort');
+  });
+});
+
+describe('asDrawer', () => {
+  test("a page's own form is read as a drawer: its values, its required stop", () => {
+    const subject = create(DrawerFieldSchema, { name: 'subject', label: 'Subject', kind: 'text', required: true });
+    const form = create(PageFormSchema, {
+      title: 'Escalate',
+      submitLabel: 'Send',
+      key: 'raise',
+      items: [
+        create(PageFormItemSchema, { kind: { case: 'heading', value: 'What needs deciding' } }),
+        create(PageFormItemSchema, { kind: { case: 'field', value: subject } }),
+      ],
+    });
+
+    const drawer = asDrawer(form);
+
+    expect(drawer.submitLabel).toBe('Send');
+    expect(drawer.canSubmit).toBe(true);
+    expect(initialValues(drawer)).toEqual({ subject: '' });
+    expect(missingField(drawer, { subject: '' })).toBe('Subject');
+    expect(valuesToSend(drawer, { subject: 'Funding gap' })).toEqual({ subject: 'Funding gap' });
   });
 });

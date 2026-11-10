@@ -1507,7 +1507,7 @@ var File_edify_screens_v1_planning_drawer_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_planning_drawer_proto_rawDesc = "" +
 	"\n" +
-	"&edify/screens/v1/planning_drawer.proto\x12\x10edify.screens.v1\x1a\x1dedify/screens/v1/drawer.proto\"\xec\x03\n" +
+	"&edify/screens/v1/planning_drawer.proto\x12\x10edify.screens.v1\x1a\x1bedify/screens/v1/form.proto\"\xec\x03\n" +
 	"\x10PlanningTraining\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x1f\n" +
@@ -1762,7 +1762,7 @@ func file_edify_screens_v1_planning_drawer_proto_init() {
 	if File_edify_screens_v1_planning_drawer_proto != nil {
 		return
 	}
-	file_edify_screens_v1_drawer_proto_init()
+	file_edify_screens_v1_form_proto_init()
 	file_edify_screens_v1_planning_drawer_proto_msgTypes[7].OneofWrappers = []any{
 		(*PlanningLeadItem_Heading)(nil),
 		(*PlanningLeadItem_Line)(nil),

@@ -218,8 +218,12 @@ def _header(main: Node) -> dict:
                 }
             )
         elif node.tag == "button" or (node.tag == "a" and node.has("btn")):
+            from apps.mobile_feed import dialogs
+
             label = node.text()
             enabled = "disabled" not in node.attrs
+            # A button that opens one of the page's own dialogs opens its sheet.
+            opens = dialogs.opener_href(node)
             actions.append(
                 {
                     "key": _slug(label),
@@ -227,8 +231,8 @@ def _header(main: Node) -> dict:
                     "primary": node.has("edify-primary-solid"),
                     "enabled": enabled,
                     "reason": "" if enabled else node.get("title"),
-                    "href": node.get("hx-get") or node.get("href"),
-                    "drawer": _opens_drawer(node),
+                    "href": node.get("hx-get") or node.get("href") or opens,
+                    "drawer": _opens_drawer(node) or bool(opens),
                 }
             )
     eyebrow = main.find(lambda n: n.has("edify-page-eyebrow"))
@@ -1410,10 +1414,12 @@ def _is_filter_form(node: Node) -> bool:
 
 def _block(node: Node) -> dict | None:
     """The block ``node`` is, or None to look inside it."""
-    from apps.mobile_feed import records
+    from apps.mobile_feed import page_forms, records
 
     if records.is_record(node):
         return {"record": records.read(node)}
+    if (form := page_forms.read(node)) is not None:
+        return {"form": form}
     if node.has("edify-pagination-scope"):
         return {"pager": _scoped_pager(node)}
     if (section := _home_section(node)) is not None:
@@ -1528,8 +1534,10 @@ SHOWN_WHEN_FILLED = re.compile(r"^\s*(\w+)\.length(\s*>\s*0)?\s*$")
 def _hidden_on_opening(node: Node) -> bool:
     """A part the page shows only once a list fills (the selection bar, once a
     school is ticked) while that list starts empty: not drawn on opening."""
-    from apps.mobile_feed import checklists
+    from apps.mobile_feed import checklists, dialogs
 
+    if dialogs.closed_flag(node):
+        return True
     # Every part of an "a && b" must hold, so one empty list hides it.
     for part in node.get("x-show").split("&&"):
         shown = SHOWN_WHEN_FILLED.match(part)
@@ -1633,10 +1641,16 @@ def read(html: str, later=None) -> dict:
     """The page's header, tabs and blocks, in the order a phone draws them.
     ``later(path)`` answers a part the page loads after it opens, or None to
     leave it out."""
-    root = _for_phone(parse(html))
+    from apps.mobile_feed import dialogs
+
+    root = parse(html)
+    # The page's closed dialogs, read before they are left out of its blocks.
+    closed = dialogs.read_all(root)
+    root = _for_phone(root)
     main = root.find(lambda n: n.tag == "main") or root
     return {
         "header": _header(main),
         "tabs": _tabs(main),
+        "dialogs": closed,
         "blocks": _blocks(main, [], later),
     }

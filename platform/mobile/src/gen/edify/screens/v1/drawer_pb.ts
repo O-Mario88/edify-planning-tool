@@ -4,6 +4,8 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { DrawerCondition, DrawerField, DrawerNote, DrawerOption } from "./form_pb";
+import { file_edify_screens_v1_form } from "./form_pb";
 import type { PageBlock, PageFacts } from "./page_pb";
 import { file_edify_screens_v1_page } from "./page_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/screens/v1/drawer.proto.
  */
 export const file_edify_screens_v1_drawer: GenFile = /*@__PURE__*/
-  fileDesc("Ch1lZGlmeS9zY3JlZW5zL3YxL2RyYXdlci5wcm90bxIQZWRpZnkuc2NyZWVucy52MSIgChBHZXREcmF3ZXJSZXF1ZXN0EgwKBHBhdGgYASABKAkiUgoRR2V0RHJhd2VyUmVzcG9uc2USLAoGZHJhd2VyGAEgASgLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlRHJhd2VyEg8KB3JlZnVzYWwYAiABKAkikQEKEVNhdmVEcmF3ZXJSZXF1ZXN0EgwKBHBhdGgYASABKAkSPwoGdmFsdWVzGAIgAygLMi8uZWRpZnkuc2NyZWVucy52MS5TYXZlRHJhd2VyUmVxdWVzdC5WYWx1ZXNFbnRyeRotCgtWYWx1ZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIoMBChJTYXZlRHJhd2VyUmVzcG9uc2USDQoFc2F2ZWQYASABKAgSDwoHbWVzc2FnZRgCIAEoCRIQCghyZWRpcmVjdBgDIAEoCRINCgVlcnJvchgEIAEoCRIsCgZkcmF3ZXIYBSABKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VEcmF3ZXIiXQoMRHJhd2VyT3B0aW9uEg0KBXZhbHVlGAEgASgJEg0KBWxhYmVsGAIgASgJEg0KBWdyb3VwGAMgASgJEhAKCGRpc2FibGVkGAQgASgIEg4KBmRldGFpbBgFIAEoCSIwCg9EcmF3ZXJDb25kaXRpb24SDQoFZmllbGQYASABKAkSDgoGdmFsdWVzGAIgAygJIr0DCgtEcmF3ZXJGaWVsZBIMCgRuYW1lGAEgASgJEg0KBWxhYmVsGAIgASgJEgwKBGtpbmQYAyABKAkSDQoFdmFsdWUYBCABKAkSEAoIcmVxdWlyZWQYBSABKAgSDAoEaGVscBgGIAEoCRINCgVlcnJvchgHIAEoCRITCgtwbGFjZWhvbGRlchgIIAEoCRIRCglyZWFkX29ubHkYCSABKAgSEAoDbWluGAogASgBSACIAQESEAoDbWF4GAsgASgBSAGIAQESEQoEc3RlcBgMIAEoAUgCiAEBEhcKCm1heF9sZW5ndGgYDSABKAVIA4gBARIvCgdvcHRpb25zGA4gAygLMh4uZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJPcHRpb24SNAoJc2hvd193aGVuGA8gAygLMiEuZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJDb25kaXRpb24SFAoMcmVsb2Fkc19wYXRoGBAgASgJEhYKDnJlbG9hZHNfdGFyZ2V0GBEgASgJEhAKCGdyb3VwX2J5GBIgASgJQgYKBF9taW5CBgoEX21heEIHCgVfc3RlcEINCgtfbWF4X2xlbmd0aCIoCgpEcmF3ZXJOb3RlEgwKBHRleHQYASABKAkSDAoEdG9uZRgCIAEoCSLVAgoKRHJhd2VySXRlbRIsCgRub3RlGAEgASgLMhwuZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJOb3RlSAASEQoHaGVhZGluZxgCIAEoCUgAEg4KBHRleHQYAyABKAlIABIsCgVmYWN0cxgEIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3RzSAASLAoFbGluZXMYBSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VGYWN0c0gAEi4KBWZpZWxkGAYgASgLMh0uZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJGaWVsZEgAEiwKBWJsb2NrGAggASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmxvY2tIABI0CglzaG93X3doZW4YByADKAsyIS5lZGlmeS5zY3JlZW5zLnYxLkRyYXdlckNvbmRpdGlvbkIGCgRraW5kIrABCgpQYWdlRHJhd2VyEg0KBXRpdGxlGAEgASgJEhAKCHN1YnRpdGxlGAIgASgJEhQKDGhhc19yZXF1aXJlZBgDIAEoCBIrCgVpdGVtcxgEIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuRHJhd2VySXRlbRIUCgxzdWJtaXRfbGFiZWwYBSABKAkSFAoMY2FuY2VsX2xhYmVsGAYgASgJEhIKCmNhbl9zdWJtaXQYByABKAgiOQoWR2V0U2Nob29sRHJhd2VyUmVxdWVzdBIRCglzY2hvb2xfaWQYASABKAkSDAoEa2luZBgCIAEoCSJHChdHZXRTY2hvb2xEcmF3ZXJSZXNwb25zZRIsCgZkcmF3ZXIYASABKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VEcmF3ZXIisAEKF1NhdmVTY2hvb2xEcmF3ZXJSZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRraW5kGAIgASgJEkUKBnZhbHVlcxgDIAMoCzI1LmVkaWZ5LnNjcmVlbnMudjEuU2F2ZVNjaG9vbERyYXdlclJlcXVlc3QuVmFsdWVzRW50cnkaLQoLVmFsdWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKJAQoYU2F2ZVNjaG9vbERyYXdlclJlc3BvbnNlEg0KBXNhdmVkGAEgASgIEg8KB21lc3NhZ2UYAiABKAkSEAoIcmVkaXJlY3QYAyABKAkSDQoFZXJyb3IYBCABKAkSLAoGZHJhd2VyGAUgASgLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlRHJhd2VyIkYKF0dldERyYXdlck9wdGlvbnNSZXF1ZXN0Eg4KBnNvdXJjZRgBIAEoCRIMCgRuYW1lGAIgASgJEg0KBXZhbHVlGAMgASgJIksKGEdldERyYXdlck9wdGlvbnNSZXNwb25zZRIvCgdvcHRpb25zGAEgAygLMh4uZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJPcHRpb24y0wIKE1NjaG9vbERyYXdlclNlcnZpY2USZgoPR2V0U2Nob29sRHJhd2VyEiguZWRpZnkuc2NyZWVucy52MS5HZXRTY2hvb2xEcmF3ZXJSZXF1ZXN0GikuZWRpZnkuc2NyZWVucy52MS5HZXRTY2hvb2xEcmF3ZXJSZXNwb25zZRJpChBTYXZlU2Nob29sRHJhd2VyEikuZWRpZnkuc2NyZWVucy52MS5TYXZlU2Nob29sRHJhd2VyUmVxdWVzdBoqLmVkaWZ5LnNjcmVlbnMudjEuU2F2ZVNjaG9vbERyYXdlclJlc3BvbnNlEmkKEEdldERyYXdlck9wdGlvbnMSKS5lZGlmeS5zY3JlZW5zLnYxLkdldERyYXdlck9wdGlvbnNSZXF1ZXN0GiouZWRpZnkuc2NyZWVucy52MS5HZXREcmF3ZXJPcHRpb25zUmVzcG9uc2UywgEKEVBhZ2VEcmF3ZXJTZXJ2aWNlElQKCUdldERyYXdlchIiLmVkaWZ5LnNjcmVlbnMudjEuR2V0RHJhd2VyUmVxdWVzdBojLmVkaWZ5LnNjcmVlbnMudjEuR2V0RHJhd2VyUmVzcG9uc2USVwoKU2F2ZURyYXdlchIjLmVkaWZ5LnNjcmVlbnMudjEuU2F2ZURyYXdlclJlcXVlc3QaJC5lZGlmeS5zY3JlZW5zLnYxLlNhdmVEcmF3ZXJSZXNwb25zZULfAQoUY29tLmVkaWZ5LnNjcmVlbnMudjFCC0RyYXdlclByb3RvUAFaWGdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvc2NyZWVucy92MTtzY3JlZW5zdjGiAgNFU1iqAhBFZGlmeS5TY3JlZW5zLlYxygIQRWRpZnlcU2NyZWVuc1xWMeICHEVkaWZ5XFNjcmVlbnNcVjFcR1BCTWV0YWRhdGHqAhJFZGlmeTo6U2NyZWVuczo6VjFiBnByb3RvMw", [file_edify_screens_v1_page]);
+  fileDesc("Ch1lZGlmeS9zY3JlZW5zL3YxL2RyYXdlci5wcm90bxIQZWRpZnkuc2NyZWVucy52MSIgChBHZXREcmF3ZXJSZXF1ZXN0EgwKBHBhdGgYASABKAkiUgoRR2V0RHJhd2VyUmVzcG9uc2USLAoGZHJhd2VyGAEgASgLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlRHJhd2VyEg8KB3JlZnVzYWwYAiABKAkinwEKEVNhdmVEcmF3ZXJSZXF1ZXN0EgwKBHBhdGgYASABKAkSPwoGdmFsdWVzGAIgAygLMi8uZWRpZnkuc2NyZWVucy52MS5TYXZlRHJhd2VyUmVxdWVzdC5WYWx1ZXNFbnRyeRIMCgRmb3JtGAMgASgJGi0KC1ZhbHVlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEigwEKElNhdmVEcmF3ZXJSZXNwb25zZRINCgVzYXZlZBgBIAEoCBIPCgdtZXNzYWdlGAIgASgJEhAKCHJlZGlyZWN0GAMgASgJEg0KBWVycm9yGAQgASgJEiwKBmRyYXdlchgFIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZURyYXdlciLVAgoKRHJhd2VySXRlbRIsCgRub3RlGAEgASgLMhwuZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJOb3RlSAASEQoHaGVhZGluZxgCIAEoCUgAEg4KBHRleHQYAyABKAlIABIsCgVmYWN0cxgEIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3RzSAASLAoFbGluZXMYBSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VGYWN0c0gAEi4KBWZpZWxkGAYgASgLMh0uZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJGaWVsZEgAEiwKBWJsb2NrGAggASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmxvY2tIABI0CglzaG93X3doZW4YByADKAsyIS5lZGlmeS5zY3JlZW5zLnYxLkRyYXdlckNvbmRpdGlvbkIGCgRraW5kIrABCgpQYWdlRHJhd2VyEg0KBXRpdGxlGAEgASgJEhAKCHN1YnRpdGxlGAIgASgJEhQKDGhhc19yZXF1aXJlZBgDIAEoCBIrCgVpdGVtcxgEIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuRHJhd2VySXRlbRIUCgxzdWJtaXRfbGFiZWwYBSABKAkSFAoMY2FuY2VsX2xhYmVsGAYgASgJEhIKCmNhbl9zdWJtaXQYByABKAgiOQoWR2V0U2Nob29sRHJhd2VyUmVxdWVzdBIRCglzY2hvb2xfaWQYASABKAkSDAoEa2luZBgCIAEoCSJHChdHZXRTY2hvb2xEcmF3ZXJSZXNwb25zZRIsCgZkcmF3ZXIYASABKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VEcmF3ZXIisAEKF1NhdmVTY2hvb2xEcmF3ZXJSZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRraW5kGAIgASgJEkUKBnZhbHVlcxgDIAMoCzI1LmVkaWZ5LnNjcmVlbnMudjEuU2F2ZVNjaG9vbERyYXdlclJlcXVlc3QuVmFsdWVzRW50cnkaLQoLVmFsdWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKJAQoYU2F2ZVNjaG9vbERyYXdlclJlc3BvbnNlEg0KBXNhdmVkGAEgASgIEg8KB21lc3NhZ2UYAiABKAkSEAoIcmVkaXJlY3QYAyABKAkSDQoFZXJyb3IYBCABKAkSLAoGZHJhd2VyGAUgASgLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlRHJhd2VyIkYKF0dldERyYXdlck9wdGlvbnNSZXF1ZXN0Eg4KBnNvdXJjZRgBIAEoCRIMCgRuYW1lGAIgASgJEg0KBXZhbHVlGAMgASgJIksKGEdldERyYXdlck9wdGlvbnNSZXNwb25zZRIvCgdvcHRpb25zGAEgAygLMh4uZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJPcHRpb24y0wIKE1NjaG9vbERyYXdlclNlcnZpY2USZgoPR2V0U2Nob29sRHJhd2VyEiguZWRpZnkuc2NyZWVucy52MS5HZXRTY2hvb2xEcmF3ZXJSZXF1ZXN0GikuZWRpZnkuc2NyZWVucy52MS5HZXRTY2hvb2xEcmF3ZXJSZXNwb25zZRJpChBTYXZlU2Nob29sRHJhd2VyEikuZWRpZnkuc2NyZWVucy52MS5TYXZlU2Nob29sRHJhd2VyUmVxdWVzdBoqLmVkaWZ5LnNjcmVlbnMudjEuU2F2ZVNjaG9vbERyYXdlclJlc3BvbnNlEmkKEEdldERyYXdlck9wdGlvbnMSKS5lZGlmeS5zY3JlZW5zLnYxLkdldERyYXdlck9wdGlvbnNSZXF1ZXN0GiouZWRpZnkuc2NyZWVucy52MS5HZXREcmF3ZXJPcHRpb25zUmVzcG9uc2UywgEKEVBhZ2VEcmF3ZXJTZXJ2aWNlElQKCUdldERyYXdlchIiLmVkaWZ5LnNjcmVlbnMudjEuR2V0RHJhd2VyUmVxdWVzdBojLmVkaWZ5LnNjcmVlbnMudjEuR2V0RHJhd2VyUmVzcG9uc2USVwoKU2F2ZURyYXdlchIjLmVkaWZ5LnNjcmVlbnMudjEuU2F2ZURyYXdlclJlcXVlc3QaJC5lZGlmeS5zY3JlZW5zLnYxLlNhdmVEcmF3ZXJSZXNwb25zZULfAQoUY29tLmVkaWZ5LnNjcmVlbnMudjFCC0RyYXdlclByb3RvUAFaWGdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvc2NyZWVucy92MTtzY3JlZW5zdjGiAgNFU1iqAhBFZGlmeS5TY3JlZW5zLlYxygIQRWRpZnlcU2NyZWVuc1xWMeICHEVkaWZ5XFNjcmVlbnNcVjFcR1BCTWV0YWRhdGHqAhJFZGlmeTo6U2NyZWVuczo6VjFiBnByb3RvMw", [file_edify_screens_v1_form, file_edify_screens_v1_page]);
 
 /**
  * @generated from message edify.screens.v1.GetDrawerRequest
@@ -72,6 +74,14 @@ export type SaveDrawerRequest = Message<"edify.screens.v1.SaveDrawerRequest"> & 
    * @generated from field: map<string, string> values = 2;
    */
   values: { [key: string]: string };
+
+  /**
+   * A form on the page at `path` itself (Escalations' "Escalate to …"), by
+   * its key (PageForm.key), in place of a drawer.
+   *
+   * @generated from field: string form = 3;
+   */
+  form: string;
 };
 
 /**
@@ -125,211 +135,6 @@ export type SaveDrawerResponse = Message<"edify.screens.v1.SaveDrawerResponse"> 
  */
 export const SaveDrawerResponseSchema: GenMessage<SaveDrawerResponse> = /*@__PURE__*/
   messageDesc(file_edify_screens_v1_drawer, 3);
-
-/**
- * @generated from message edify.screens.v1.DrawerOption
- */
-export type DrawerOption = Message<"edify.screens.v1.DrawerOption"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-
-  /**
-   * @generated from field: string label = 2;
-   */
-  label: string;
-
-  /**
-   * The value of the field this choice belongs to (a parish's sub-county).
-   *
-   * @generated from field: string group = 3;
-   */
-  group: string;
-
-  /**
-   * @generated from field: bool disabled = 4;
-   */
-  disabled: boolean;
-
-  /**
-   * A second line under the choice's words ("SCH-1", "Also in Goma Cluster").
-   *
-   * @generated from field: string detail = 5;
-   */
-  detail: string;
-};
-
-/**
- * Describes the message edify.screens.v1.DrawerOption.
- * Use `create(DrawerOptionSchema)` to create a new message.
- */
-export const DrawerOptionSchema: GenMessage<DrawerOption> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 4);
-
-/**
- * "Shown while `field` holds one of `values`."
- *
- * @generated from message edify.screens.v1.DrawerCondition
- */
-export type DrawerCondition = Message<"edify.screens.v1.DrawerCondition"> & {
-  /**
-   * @generated from field: string field = 1;
-   */
-  field: string;
-
-  /**
-   * @generated from field: repeated string values = 2;
-   */
-  values: string[];
-};
-
-/**
- * Describes the message edify.screens.v1.DrawerCondition.
- * Use `create(DrawerConditionSchema)` to create a new message.
- */
-export const DrawerConditionSchema: GenMessage<DrawerCondition> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 5);
-
-/**
- * @generated from message edify.screens.v1.DrawerField
- */
-export type DrawerField = Message<"edify.screens.v1.DrawerField"> & {
-  /**
-   * The form field's name, as the save sends it.
-   *
-   * @generated from field: string name = 1;
-   */
-  name: string;
-
-  /**
-   * @generated from field: string label = 2;
-   */
-  label: string;
-
-  /**
-   * text, number, date, tel, email, select, textarea, checkbox, checklist.
-   *
-   * @generated from field: string kind = 3;
-   */
-  kind: string;
-
-  /**
-   * A checklist's value is its ticked choices' values, joined by commas.
-   *
-   * @generated from field: string value = 4;
-   */
-  value: string;
-
-  /**
-   * @generated from field: bool required = 5;
-   */
-  required: boolean;
-
-  /**
-   * @generated from field: string help = 6;
-   */
-  help: string;
-
-  /**
-   * The web's error for this field after a refused save.
-   *
-   * @generated from field: string error = 7;
-   */
-  error: string;
-
-  /**
-   * @generated from field: string placeholder = 8;
-   */
-  placeholder: string;
-
-  /**
-   * @generated from field: bool read_only = 9;
-   */
-  readOnly: boolean;
-
-  /**
-   * @generated from field: optional double min = 10;
-   */
-  min?: number | undefined;
-
-  /**
-   * @generated from field: optional double max = 11;
-   */
-  max?: number | undefined;
-
-  /**
-   * @generated from field: optional double step = 12;
-   */
-  step?: number | undefined;
-
-  /**
-   * @generated from field: optional int32 max_length = 13;
-   */
-  maxLength?: number | undefined;
-
-  /**
-   * @generated from field: repeated edify.screens.v1.DrawerOption options = 14;
-   */
-  options: DrawerOption[];
-
-  /**
-   * Shown only while any condition holds; empty for always.
-   *
-   * @generated from field: repeated edify.screens.v1.DrawerCondition show_when = 15;
-   */
-  showWhen: DrawerCondition[];
-
-  /**
-   * A change here reloads `reloads_target`'s choices from `reloads_path`.
-   *
-   * @generated from field: string reloads_path = 16;
-   */
-  reloadsPath: string;
-
-  /**
-   * @generated from field: string reloads_target = 17;
-   */
-  reloadsTarget: string;
-
-  /**
-   * The field whose value picks which of this field's choices apply.
-   *
-   * @generated from field: string group_by = 18;
-   */
-  groupBy: string;
-};
-
-/**
- * Describes the message edify.screens.v1.DrawerField.
- * Use `create(DrawerFieldSchema)` to create a new message.
- */
-export const DrawerFieldSchema: GenMessage<DrawerField> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 6);
-
-/**
- * @generated from message edify.screens.v1.DrawerNote
- */
-export type DrawerNote = Message<"edify.screens.v1.DrawerNote"> & {
-  /**
-   * @generated from field: string text = 1;
-   */
-  text: string;
-
-  /**
-   * danger, warning, info, success.
-   *
-   * @generated from field: string tone = 2;
-   */
-  tone: string;
-};
-
-/**
- * Describes the message edify.screens.v1.DrawerNote.
- * Use `create(DrawerNoteSchema)` to create a new message.
- */
-export const DrawerNoteSchema: GenMessage<DrawerNote> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 7);
 
 /**
  * One part of a drawer, in the order the drawer draws them.
@@ -404,7 +209,7 @@ export type DrawerItem = Message<"edify.screens.v1.DrawerItem"> & {
  * Use `create(DrawerItemSchema)` to create a new message.
  */
 export const DrawerItemSchema: GenMessage<DrawerItem> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 8);
+  messageDesc(file_edify_screens_v1_drawer, 4);
 
 /**
  * @generated from message edify.screens.v1.PageDrawer
@@ -457,7 +262,7 @@ export type PageDrawer = Message<"edify.screens.v1.PageDrawer"> & {
  * Use `create(PageDrawerSchema)` to create a new message.
  */
 export const PageDrawerSchema: GenMessage<PageDrawer> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 9);
+  messageDesc(file_edify_screens_v1_drawer, 5);
 
 /**
  * @generated from message edify.screens.v1.GetSchoolDrawerRequest
@@ -483,7 +288,7 @@ export type GetSchoolDrawerRequest = Message<"edify.screens.v1.GetSchoolDrawerRe
  * Use `create(GetSchoolDrawerRequestSchema)` to create a new message.
  */
 export const GetSchoolDrawerRequestSchema: GenMessage<GetSchoolDrawerRequest> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 10);
+  messageDesc(file_edify_screens_v1_drawer, 6);
 
 /**
  * @generated from message edify.screens.v1.GetSchoolDrawerResponse
@@ -500,7 +305,7 @@ export type GetSchoolDrawerResponse = Message<"edify.screens.v1.GetSchoolDrawerR
  * Use `create(GetSchoolDrawerResponseSchema)` to create a new message.
  */
 export const GetSchoolDrawerResponseSchema: GenMessage<GetSchoolDrawerResponse> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 11);
+  messageDesc(file_edify_screens_v1_drawer, 7);
 
 /**
  * @generated from message edify.screens.v1.SaveSchoolDrawerRequest
@@ -529,7 +334,7 @@ export type SaveSchoolDrawerRequest = Message<"edify.screens.v1.SaveSchoolDrawer
  * Use `create(SaveSchoolDrawerRequestSchema)` to create a new message.
  */
 export const SaveSchoolDrawerRequestSchema: GenMessage<SaveSchoolDrawerRequest> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 12);
+  messageDesc(file_edify_screens_v1_drawer, 8);
 
 /**
  * @generated from message edify.screens.v1.SaveSchoolDrawerResponse
@@ -575,7 +380,7 @@ export type SaveSchoolDrawerResponse = Message<"edify.screens.v1.SaveSchoolDrawe
  * Use `create(SaveSchoolDrawerResponseSchema)` to create a new message.
  */
 export const SaveSchoolDrawerResponseSchema: GenMessage<SaveSchoolDrawerResponse> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 13);
+  messageDesc(file_edify_screens_v1_drawer, 9);
 
 /**
  * @generated from message edify.screens.v1.GetDrawerOptionsRequest
@@ -606,7 +411,7 @@ export type GetDrawerOptionsRequest = Message<"edify.screens.v1.GetDrawerOptions
  * Use `create(GetDrawerOptionsRequestSchema)` to create a new message.
  */
 export const GetDrawerOptionsRequestSchema: GenMessage<GetDrawerOptionsRequest> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 14);
+  messageDesc(file_edify_screens_v1_drawer, 10);
 
 /**
  * @generated from message edify.screens.v1.GetDrawerOptionsResponse
@@ -623,7 +428,7 @@ export type GetDrawerOptionsResponse = Message<"edify.screens.v1.GetDrawerOption
  * Use `create(GetDrawerOptionsResponseSchema)` to create a new message.
  */
 export const GetDrawerOptionsResponseSchema: GenMessage<GetDrawerOptionsResponse> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_drawer, 15);
+  messageDesc(file_edify_screens_v1_drawer, 11);
 
 /**
  * A school's drawers from its profile (Edit Details, Close School, Enter SSA

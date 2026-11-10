@@ -367,3 +367,38 @@ func TestAPageDrawerPathMustBePlain(t *testing.T) {
 		t.Fatalf("reached the feed: %v", fetcher.paths)
 	}
 }
+
+func TestAPageFormSavesThroughTheFeedByItsKey(t *testing.T) {
+	fetcher := &recordingFetcher{}
+	service := NewService(fetcher)
+	ctx := context.Background()
+
+	_, err := service.SaveDrawer(ctx, connect.NewRequest(&screensv1.SaveDrawerRequest{
+		Path: "/escalations", Form: "raise", Values: map[string]string{"subject": "Funding gap"},
+	}))
+
+	if err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	if strings.Join(fetcher.paths, "|") != "POST /api/mobile/v1/drawer" {
+		t.Fatalf("paths %v", fetcher.paths)
+	}
+}
+
+func TestAPageFormKeyMustBePlain(t *testing.T) {
+	fetcher := &recordingFetcher{}
+	service := NewService(fetcher)
+	ctx := context.Background()
+
+	for _, key := range []string{"has space", "../admin", "https://elsewhere.example/x", strings.Repeat("a", 200)} {
+		_, err := service.SaveDrawer(ctx, connect.NewRequest(&screensv1.SaveDrawerRequest{
+			Path: "/escalations", Form: key, Values: map[string]string{},
+		}))
+		if connect.CodeOf(err) != connect.CodeInvalidArgument {
+			t.Fatalf("%q: got %v", key, err)
+		}
+	}
+	if len(fetcher.paths) != 0 {
+		t.Fatalf("reached the feed: %v", fetcher.paths)
+	}
+}

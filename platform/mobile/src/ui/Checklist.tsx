@@ -9,7 +9,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Check, Minus } from 'lucide-react-native';
 
-import type { DrawerField, DrawerOption } from '../gen/edify/screens/v1/drawer_pb';
+import type { DrawerField, DrawerOption } from '../gen/edify/screens/v1/form_pb';
 import { fonts, radius, useTheme } from '../theme';
 import { FieldShell } from './drawerParts';
 import { ticked, withTicked } from './drawerLogic';

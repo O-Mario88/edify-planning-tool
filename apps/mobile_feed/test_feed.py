@@ -972,6 +972,50 @@ class PageDrawerFeedTest(SchoolActionFeedTest):
         )
         self.assertEqual(len(mine), 2)
 
+    def test_a_form_the_page_shows_itself_saves_through_the_page(self):
+        from apps.flags.models import LeadershipEscalation
+
+        page = self.client.get(
+            "/api/mobile/v1/page", {"path": "/escalations"}, **self.auth
+        ).json()
+        form = next(b["form"] for b in page["blocks"] if "form" in b)
+        fields = {i["field"]["name"]: i["field"] for i in form["items"] if "field" in i}
+
+        body = self.client.post(
+            "/api/mobile/v1/drawer",
+            {
+                "path": "/escalations",
+                "form": form["key"],
+                "values": {
+                    "category": fields["category"]["options"][0]["value"],
+                    "subject": "Partner not delivering in Feed District",
+                    "detail": "Three visits missed this term.",
+                    # A field the form does not have never reaches the view.
+                    "decision": "approved",
+                },
+            },
+            format="json",
+            **self.auth,
+        ).json()
+
+        self.assertEqual(form["key"], "raise")
+        self.assertTrue(body["saved"], body)
+        escalation = LeadershipEscalation.objects.get(
+            subject="Partner not delivering in Feed District"
+        )
+        self.assertEqual(escalation.detail, "Three visits missed this term.")
+
+    def test_a_form_the_page_does_not_have_is_refused(self):
+        body = self.client.post(
+            "/api/mobile/v1/drawer",
+            {"path": "/escalations", "form": "nonsense", "values": {}},
+            format="json",
+            **self.auth,
+        ).json()
+
+        self.assertFalse(body["saved"])
+        self.assertEqual(body["error"], "This form is not available.")
+
     def test_a_drawer_not_named_is_not_reachable(self):
         # The evidence upload drawer exists but the app does not draw it yet.
         self.assertEqual(

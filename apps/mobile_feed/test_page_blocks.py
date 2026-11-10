@@ -791,3 +791,84 @@ class ScopedPagerTest(SimpleTestCase):
                 }
             ],
         )
+
+
+INLINE_FORM = """
+<main>
+<div class="edify-surface rounded-surface border p-5">
+<h2>Escalate to your Programme Lead</h2>
+<p>Use this when something is blocking your schools.</p>
+<form method="POST" class="grid">
+<input type="hidden" name="csrfmiddlewaretoken" value="t">
+<input type="hidden" name="action" value="raise">
+<div><label for="c">Category</label>
+<select id="c" name="category" required><option value="funding">Funding gap</option></select></div>
+<div><label for="s">Subject</label><input id="s" type="text" name="subject" required maxlength="255"></div>
+<div><label for="d">What is happening</label><textarea id="d" name="detail" required></textarea></div>
+<div><button type="submit" class="btn btn-primary">Send to Programme Lead</button></div>
+</form>
+</div>
+</main>
+"""
+
+
+class PageFormTest(SimpleTestCase):
+    def test_a_form_the_page_shows_itself_is_a_form_block(self):
+        blocks = page_blocks.read(INLINE_FORM)["blocks"]
+
+        self.assertEqual(len(blocks), 1, blocks)
+        form = blocks[0]["form"]
+        self.assertEqual(form["title"], "Escalate to your Programme Lead")
+        self.assertEqual(
+            form["text"], "Use this when something is blocking your schools."
+        )
+        self.assertEqual(form["key"], "raise")
+        self.assertEqual(form["submitLabel"], "Send to Programme Lead")
+        fields = [item["field"] for item in form["items"] if "field" in item]
+        self.assertEqual(
+            [(f["name"], f["kind"], f["required"]) for f in fields],
+            [
+                ("category", "select", True),
+                ("subject", "text", True),
+                ("detail", "textarea", True),
+            ],
+        )
+
+
+PAGE_DIALOG = """
+<main><div x-data="{ showRollup: false, showMscs: false }">
+<div class="edify-page-header"><h1>My Targets</h1>
+<div class="edify-page-header__controls">
+<button type="button" @click="showMscs = true" class="h-8 px-3">Submit MSCS</button>
+</div></div>
+<p>Track your targets.</p>
+<div x-show="showMscs" x-cloak role="dialog" aria-modal="true">
+ <div class="edify-surface rounded-surface p-5">
+  <div><h3>Submit MSCS</h3><p>Counts toward your MSCS target once approved.</p>
+  <button type="button" aria-label="Close MSCS form" @click="showMscs = false">x</button></div>
+  <form method="post" action="/my-targets/mscs">
+   <div><label for="t">Title</label><input id="t" name="title" required></div>
+   <button type="submit">Submit</button>
+  </form>
+ </div>
+</div>
+</div></main>
+"""
+
+
+class PageDialogTest(SimpleTestCase):
+    def test_a_button_that_opens_a_dialog_opens_it_natively(self):
+        page = page_blocks.read(PAGE_DIALOG)
+
+        submit = next(
+            a for a in page["header"]["actions"] if a["label"] == "Submit MSCS"
+        )
+        self.assertEqual((submit["href"], submit["drawer"]), ("#dialog=showMscs", True))
+        # The closed dialog is not drawn on the page itself.
+        self.assertNotIn("form", repr(page["blocks"]))
+        self.assertEqual([d["key"] for d in page["dialogs"]], ["showMscs"])
+        dialog = page["dialogs"][0]
+        self.assertEqual(dialog["title"], "Submit MSCS")
+        form = dialog["blocks"][0]["form"]
+        # The sheet carries the title; the form under it does not repeat it.
+        self.assertEqual((form["title"], form["submitLabel"]), ("", "Submit"))
