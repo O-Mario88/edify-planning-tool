@@ -36,6 +36,8 @@ import { SchoolProfileService } from '../gen/edify/screens/v1/school_profile_pb'
 import type { GetDrawerOptionsRequest, PageDrawer, GetDrawerResponse, SaveDrawerResponse, SaveSchoolDrawerResponse } from '../gen/edify/screens/v1/drawer_pb';
 import type { DrawerOption } from '../gen/edify/screens/v1/form_pb';
 import { PageDrawerService, SchoolDrawerService } from '../gen/edify/screens/v1/drawer_pb';
+import type { GetExportResponse } from '../gen/edify/screens/v1/export_pb';
+import { ExportService } from '../gen/edify/screens/v1/export_pb';
 import type {
   GetPlanningDrawerResponse,
   GetTrainingCapacityRequest,
@@ -94,6 +96,8 @@ export interface EdifyApi {
   getDrawer(path: string): Promise<GetDrawerResponse>;
   /** Save a drawer by its path, or (with `form`) a form the page at `path` shows itself. */
   saveDrawer(path: string, values: Readonly<Record<string, string>>, form?: string): Promise<SaveDrawerResponse>;
+  /** How an export is coming along, and its download link once ready. */
+  getExport(jobId: string): Promise<GetExportResponse>;
 }
 
 export function createEdifyApi(transport: ConnectTransport): EdifyApi {
@@ -175,6 +179,9 @@ export function createEdifyApi(transport: ConnectTransport): EdifyApi {
     },
     saveDrawer(path, values, form = '') {
       return callUnary(transport, PageDrawerService.method.saveDrawer, { path, values: { ...values }, form });
+    },
+    getExport(jobId) {
+      return callUnary(transport, ExportService.method.getExport, { jobId });
     },
     getPage(path, query) {
       return callUnary(transport, PageScreenService.method.getPage, { path, query: { ...query } });

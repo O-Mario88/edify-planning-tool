@@ -429,3 +429,21 @@ func TestADrawerTakesAListOfTickedIDs(t *testing.T) {
 		}
 	}
 }
+
+func TestAnExportIsReadFromTheFeedByItsJob(t *testing.T) {
+	fetcher := &recordingFetcher{}
+	service := NewService(fetcher)
+	ctx := context.Background()
+
+	_, _ = service.GetExport(ctx, connect.NewRequest(&screensv1.GetExportRequest{JobId: "cmw9p8e4900p50wekhe46"}))
+	for _, bad := range []string{"", "../admin", "a/b", "a?b=1", strings.Repeat("a", 65)} {
+		_, err := service.GetExport(ctx, connect.NewRequest(&screensv1.GetExportRequest{JobId: bad}))
+		if connect.CodeOf(err) != connect.CodeInvalidArgument {
+			t.Fatalf("%q: got %v", bad, err)
+		}
+	}
+
+	if strings.Join(fetcher.paths, "|") != "/api/mobile/v1/exports/cmw9p8e4900p50wekhe46" {
+		t.Fatalf("paths %v", fetcher.paths)
+	}
+}

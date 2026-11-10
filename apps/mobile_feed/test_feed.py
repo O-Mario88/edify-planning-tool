@@ -1076,6 +1076,46 @@ class PageDrawerFeedTest(SchoolActionFeedTest):
         self.assertEqual(_page_params({"school_ids": "a,<b>"}), {})
         self.assertEqual(_page_params({"note": "x" * 200}), {})
 
+    def _export(self):
+        path = "/my-plan/export-drawer"
+        drawer = self.drawer(path).json()["drawer"]
+        fields = [i["field"] for i in drawer["items"] if "field" in i]
+        return self.save(path, {f["name"]: f["value"] for f in fields}).json()
+
+    def test_an_export_is_prepared_and_downloaded_by_a_signed_link(self):
+        saved = self._export()
+
+        self.assertTrue(saved["saved"], saved)
+        status = self.client.get(
+            f"/api/mobile/v1/exports/{saved['exportJob']}", **self.auth
+        ).json()
+        self.assertEqual(status["status"], "ready")
+        self.assertTrue(status["filename"].endswith(".xlsx"), status)
+        # The phone's browser downloads it: no bearer token, the link is signed.
+        anonymous = APIClient()
+        file = anonymous.get(status["downloadUrl"])
+        self.assertEqual(file.status_code, 200)
+        self.assertIn("attachment", file["Content-Disposition"])
+
+    def test_a_download_link_is_refused_when_changed_or_not_the_readers(self):
+        from apps.mobile_feed.exports import export_download_url
+
+        saved = self._export()
+        url = self.client.get(
+            f"/api/mobile/v1/exports/{saved['exportJob']}", **self.auth
+        ).json()["downloadUrl"]
+
+        self.assertEqual(APIClient().get(url + "x").status_code, 404)
+        other = User.objects.create(
+            email="other@example.org", name="Other", status="active"
+        )
+        self.assertEqual(
+            APIClient()
+            .get(export_download_url(other.id, saved["exportJob"]))
+            .status_code,
+            404,
+        )
+
     def test_a_drawer_not_named_is_not_reachable(self):
         # The evidence upload drawer exists but the app does not draw it yet.
         self.assertEqual(

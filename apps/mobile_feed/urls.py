@@ -2,9 +2,19 @@
 
 from django.urls import path
 
-from . import views
+from . import exports, views
 
 urlpatterns = [
+    path(
+        "exports/<str:job_id>",
+        exports.ExportStatusFeedView.as_view(),
+        name="mobile-feed-export",
+    ),
+    path(
+        "exports/<str:job_id>/file",
+        exports.ExportFileView.as_view(),
+        name="mobile-feed-export-file",
+    ),
     path("home", views.HomeFeedView.as_view(), name="mobile-feed-home"),
     path(
         "home/queue", views.HomeQueueFeedView.as_view(), name="mobile-feed-home-queue"

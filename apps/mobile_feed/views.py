@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 
 from apps.core.exceptions import Forbidden
 from apps.core.permissions import can_open_url
+from apps.mobile_feed import exports
 
 HOME_PAGE = "home"
 #: The icons Home's own headings and rows use (partials/home/icon.html).
@@ -1494,6 +1495,9 @@ DRAWER_SAVES = frozenset(
         "my_targets_mscs",
     }
 )
+#: The export drawers open and save as any drawer (apps.mobile_feed.exports).
+DRAWER_VIEWS = DRAWER_VIEWS | exports.EXPORT_DRAWERS
+DRAWER_SAVES = DRAWER_SAVES | {exports.PREPARE}
 
 
 def _route(path: str, names: frozenset):
@@ -1631,4 +1635,15 @@ class DrawerFeedView(APIView):
             response = match.func(page_request, *match.args, **match.kwargs)
         except Http404:
             return Response({"error": "Not found."}, status=404)
+        if match.url_name == exports.PREPARE and response.status_code == 200:
+            # The file is being prepared: the app follows it (ExportStatusFeedView).
+            job = exports.job_in(response.content.decode())
+            if job:
+                return Response(
+                    {
+                        "saved": True,
+                        "message": "Your file is being prepared.",
+                        "exportJob": job,
+                    }
+                )
         return Response(_saved_outcome(response, page_request._messages))

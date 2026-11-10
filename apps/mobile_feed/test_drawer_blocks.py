@@ -417,3 +417,50 @@ class RepeatedHiddenValuesTest(SimpleTestCase):
         data = drawer_blocks.form_data(drawer, {"reason": "Exams", "activity_ids": "x"})
 
         self.assertEqual(data, {"reason": "Exams", "activity_ids": ["a1", "a2"]})
+
+
+RADIO_DRAWER = """
+<div data-edify-drawer><div class="drawer-body"><form hx-post="/exports/prepare"
+ x-data="{ periodMode: 'month_range', fromMonth: '10' }">
+<div class="space-y-3">
+ <div class="flex flex-col">
+  <label class="block">Period Customization</label>
+  <div class="flex">
+   <label><input type="radio" name="period_type" value="month_range" x-model="periodMode"><span>From (Month) to (Month)</span></label>
+   <label><input type="radio" name="period_type" value="custom_dates" x-model="periodMode"><span>Custom Dates</span></label>
+   <label><input type="radio" name="period_type" value="fy" x-model="periodMode"><span>Full FY</span></label>
+  </div>
+ </div>
+ <div x-show="periodMode === 'month_range'"><label for="f">From (Month)</label>
+  <select id="f" name="from_month" x-model="fromMonth"><option value="10">October</option></select></div>
+</div>
+<button type="submit">Download Excel</button></form></div></div>
+"""
+
+
+class RadioGroupTest(SimpleTestCase):
+    def test_radio_buttons_sharing_a_name_are_one_choice(self):
+        fields = [
+            i["field"]
+            for i in drawer_blocks.read(RADIO_DRAWER)["items"]
+            if "field" in i
+        ]
+
+        period = fields[0]
+        self.assertEqual(
+            (period["name"], period["kind"], period["label"]),
+            ("period_type", "radio", "Period Customization"),
+        )
+        self.assertEqual(period["value"], "month_range")
+        self.assertEqual(
+            [(o["value"], o["label"]) for o in period["options"]],
+            [
+                ("month_range", "From (Month) to (Month)"),
+                ("custom_dates", "Custom Dates"),
+                ("fy", "Full FY"),
+            ],
+        )
+        # The month fields show while the choice is the month range.
+        self.assertEqual(
+            fields[1]["showWhen"], [{"field": "period_type", "values": ["month_range"]}]
+        )

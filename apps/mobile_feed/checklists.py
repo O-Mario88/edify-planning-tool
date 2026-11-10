@@ -33,6 +33,8 @@ PHRASE = re.compile(r"^`([^`$]*)\$\{\s*(\w+)\.(\w+)\s*\}([^`$]*)`$")
 #: A live counter left empty once its number is taken out: "( selected)".
 EMPTIED_COUNT = re.compile(r"\s*\([^()]*\)\s*$")
 GETTER = r"get\s+{name}\s*\(\)\s*\{{\s*return\s+(.+?);?\s*\}}"
+#: A single-quoted JavaScript string: ``'month_range'``.
+JS_STRING = re.compile(r"'([^'\\]*)'")
 
 
 def is_box(node: Node) -> bool:
@@ -67,9 +69,53 @@ def group_names(form: Node) -> set[str]:
     return {name for name, count in counts.items() if count >= 2}
 
 
+def _is_radio(node: Node) -> bool:
+    return (
+        node.tag == "input"
+        and node.get("type").lower() == "radio"
+        and bool(node.get("name"))
+    )
+
+
+def _radio_group(node: Node, radios: list[Node], root: Node) -> dict | None:
+    """Radio buttons sharing one name, as one choice (kind ``radio``): its
+    words, each button's words, and the one chosen — ticked, or the value
+    the script binds them to (``x-model="periodMode"``)."""
+    if len(radios) < 2 or len({radio.get("name") for radio in radios}) != 1:
+        return None
+    label, marked = _label(node)
+    values = [radio.get("value") for radio in radios]
+    chosen = next((r.get("value") for r in radios if "checked" in r.attrs), "")
+    if not chosen and radios[0].get("x-model"):
+        holder = radios[0].parent
+        while holder is not None and not holder.get("x-data"):
+            holder = holder.parent
+        bound = (
+            data_value(holder.get("x-data"), radios[0].get("x-model"))
+            if holder
+            else None
+        )
+        chosen = bound if isinstance(bound, str) and bound in values else ""
+    return {
+        "name": radios[0].get("name"),
+        "label": label,
+        "kind": "radio",
+        "required": marked or any("required" in radio.attrs for radio in radios),
+        "help": _help(node),
+        "error": "",
+        "placeholder": "",
+        "readOnly": False,
+        "options": [_rendered_option(radio, root) for radio in radios],
+        "value": chosen,
+    }
+
+
 def read(node: Node, controls: list[Node], root: Node) -> dict | None:
     """``node`` as one checklist field when every field in it is a box of one
-    name; None otherwise."""
+    name, or one choice when every field is a radio button of one name;
+    None otherwise."""
+    if controls and all(_is_radio(control) for control in controls):
+        return _radio_group(node, controls, root)
     boxes = [control for control in controls if not _is_select_all(control)]
     if not boxes or not all(is_box(box) for box in boxes):
         return None
@@ -281,5 +327,7 @@ def data_value(data: str, name: str):
     try:
         value, _ = json.JSONDecoder().raw_decode(data, found.end())
     except ValueError:
-        return None
+        # A JavaScript literal JSON does not read: 'month_range'.
+        quoted = JS_STRING.match(data, found.end())
+        return quoted.group(1) if quoted else None
     return value

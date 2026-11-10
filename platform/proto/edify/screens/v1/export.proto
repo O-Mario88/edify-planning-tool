@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+// An export the reader asked for (a page's Export button, its drawer saved
+// through PageDrawerService): how the file is coming along, and once it is
+// ready a short-lived link the phone's browser downloads it from
+// (apps.mobile_feed.exports).
+service ExportService {
+  rpc GetExport(GetExportRequest) returns (GetExportResponse);
+}
+
+message GetExportRequest {
+  string job_id = 1;
+}
+
+message GetExportResponse {
+  // pending, running, ready or failed.
+  string status = 1;
+  string filename = 2;
+  // Why the file could not be made, when it failed.
+  string error = 3;
+  // The download link on the existing application, signed for the reader
+  // and this file and good for a few minutes; empty until the file is ready.
+  string download_url = 4;
+}

@@ -18,6 +18,7 @@ import { useTheme } from '../theme';
 import { Drawer } from './Drawer';
 import { DiscardPrompt, DrawerButton, DrawerNote } from './drawerParts';
 import { DrawerItemView } from './drawerFields';
+import { ExportProgress } from './ExportProgress';
 import { clearedBy, initialValues, isShown, missingField, valuesToSend } from './drawerLogic';
 import type { Reloaded } from './drawerLogic';
 
@@ -45,6 +46,8 @@ export function WebDrawer({ source, onClose, onSaved, onUnavailable }: WebDrawer
   const [isDirty, setIsDirty] = useState(false);
   const [isAsking, setIsAsking] = useState(false);
   const [refusals, setRefusals] = useState(0);
+  /** An export drawer's file being prepared (the drawer stays open on it, as on the web). */
+  const [exportJob, setExportJob] = useState('');
 
   /** As the web's drawer: closing with typed changes asks first. */
   function requestClose() {
@@ -119,6 +122,12 @@ export function WebDrawer({ source, onClose, onSaved, onUnavailable }: WebDrawer
       const sent = valuesToSend(drawer, values);
       const answer =
         'path' in source ? await api.saveDrawer(source.path, sent) : await api.saveSchoolDrawer(source.schoolId, source.kind, sent);
+      const job = 'exportJob' in answer ? answer.exportJob : '';
+      if (answer.saved && job) {
+        setIsDirty(false);
+        setExportJob(job);
+        return;
+      }
       if (answer.saved) {
         onSaved(answer.message, answer.redirect);
         return;
@@ -137,7 +146,9 @@ export function WebDrawer({ source, onClose, onSaved, onUnavailable }: WebDrawer
     }
   }
 
-  const footer = drawer ? (
+  const footer = exportJob ? (
+    <DrawerButton label="Close" onPress={onClose} />
+  ) : drawer ? (
     <>
       <DrawerButton label={drawer.cancelLabel || 'Cancel'} onPress={requestClose} />
       {drawer.canSubmit ? (
@@ -151,13 +162,15 @@ export function WebDrawer({ source, onClose, onSaved, onUnavailable }: WebDrawer
       title={drawer?.title ?? ''}
       subtitle={drawer?.subtitle}
       onClose={requestClose}
-      hasRequired={drawer?.hasRequired}
+      hasRequired={!exportJob && drawer?.hasRequired}
       footer={footer}
       topKey={refusals}
       overlay={isAsking ? <DiscardPrompt onKeep={() => setIsAsking(false)} onDiscard={onClose} /> : undefined}
     >
       {error ? <DrawerNote tone="danger" text={error} /> : null}
-      {drawer ? (
+      {exportJob ? (
+        <ExportProgress jobId={exportJob} />
+      ) : drawer ? (
         drawer.items.map((item, index) =>
           isShown(item.showWhen, values) ? (
             <DrawerItemView key={`${item.kind.case}-${index}`} item={item} values={values} reloaded={reloaded} onChange={change} />

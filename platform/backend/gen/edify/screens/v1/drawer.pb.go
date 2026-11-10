@@ -192,7 +192,9 @@ type SaveDrawerResponse struct {
 	// The web's reason when not saved and the drawer was not drawn again.
 	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	// The drawer drawn again with its errors, when not saved.
-	Drawer        *PageDrawer `protobuf:"bytes,5,opt,name=drawer,proto3" json:"drawer,omitempty"`
+	Drawer *PageDrawer `protobuf:"bytes,5,opt,name=drawer,proto3" json:"drawer,omitempty"`
+	// An export drawer's save: the file being prepared (ExportService).
+	ExportJob     string `protobuf:"bytes,6,opt,name=export_job,json=exportJob,proto3" json:"export_job,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -260,6 +262,13 @@ func (x *SaveDrawerResponse) GetDrawer() *PageDrawer {
 		return x.Drawer
 	}
 	return nil
+}
+
+func (x *SaveDrawerResponse) GetExportJob() string {
+	if x != nil {
+		return x.ExportJob
+	}
+	return ""
 }
 
 // One part of a drawer, in the order the drawer draws them.
@@ -895,13 +904,15 @@ const file_edify_screens_v1_drawer_proto_rawDesc = "" +
 	"\x04form\x18\x03 \x01(\tR\x04form\x1a9\n" +
 	"\vValuesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xac\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xcb\x01\n" +
 	"\x12SaveDrawerResponse\x12\x14\n" +
 	"\x05saved\x18\x01 \x01(\bR\x05saved\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1a\n" +
 	"\bredirect\x18\x03 \x01(\tR\bredirect\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x124\n" +
-	"\x06drawer\x18\x05 \x01(\v2\x1c.edify.screens.v1.PageDrawerR\x06drawer\"\x90\x03\n" +
+	"\x06drawer\x18\x05 \x01(\v2\x1c.edify.screens.v1.PageDrawerR\x06drawer\x12\x1d\n" +
+	"\n" +
+	"export_job\x18\x06 \x01(\tR\texportJob\"\x90\x03\n" +
 	"\n" +
 	"DrawerItem\x122\n" +
 	"\x04note\x18\x01 \x01(\v2\x1c.edify.screens.v1.DrawerNoteH\x00R\x04note\x12\x1a\n" +

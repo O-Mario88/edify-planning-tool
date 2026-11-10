@@ -56,6 +56,8 @@ message SaveDrawerResponse {
   string error = 4;
   // The drawer drawn again with its errors, when not saved.
   PageDrawer drawer = 5;
+  // An export drawer's save: the file being prepared (ExportService).
+  string export_job = 6;
 }
 
 // One part of a drawer, in the order the drawer draws them.
