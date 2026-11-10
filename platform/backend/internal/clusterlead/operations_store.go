@@ -47,14 +47,14 @@ type ActivityRecord struct {
 // Plan is a leader's meeting proposal.
 type Plan struct {
 	ID, ClusterID, Category, Title, TrainingCourseID, TrainingCourse string
-	PlannedOn                                                         time.Time
-	StartsAt, Venue                                                   string
-	IsOnline                                                          bool
-	Objectives, Agenda                                                string
-	ExpectedParticipants                                              int32
-	Facilitator, Resources, Notes, Status, ActivityID, ReviewNote     string
-	CreatedBy                                                         string
-	History                                                           []Event
+	PlannedOn                                                        time.Time
+	StartsAt, Venue                                                  string
+	IsOnline                                                         bool
+	Objectives, Agenda                                               string
+	ExpectedParticipants                                             int32
+	Facilitator, Resources, Notes, Status, ActivityID, ReviewNote    string
+	CreatedBy                                                        string
+	History                                                          []Event
 }
 
 // Course is a governed training course a cluster may receive.
