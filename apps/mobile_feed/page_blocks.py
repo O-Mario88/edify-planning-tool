@@ -978,8 +978,54 @@ def _panel(node: Node) -> dict:
         "title": title.text() if title else "",
         "subtitle": subtitle.text() if subtitle else "",
         "badges": badges,
-        "items": _panel_items(node, skip, []),
+        "items": _paired(_panel_items(node, skip, [])),
     }
+
+
+#: A figure on its own: "0", "1,204", "68%", "5.8 / 10", "UGX 1.3M", "—".
+FIGURE = re.compile(
+    r"^(?:—|[-+−]?(?:UGX\s+)?\d[\d,]*(?:\.\d+)?\s*(?:%|[KMB])?"
+    r"(?:\s*/\s*\d[\d,]*(?:\.\d+)?)?)$"
+)
+
+
+PAGER_CAPTION = re.compile(r"^Showing\s+\d")
+
+
+def _paired(items: list[dict]) -> list[dict]:
+    """A label line followed by its figure ("Escalations to Review", "0"),
+    as the panel's data rows rather than two loose lines; consecutive pairs
+    share one list."""
+    out: list[dict] = []
+    index = 0
+    while index < len(items):
+        item = items[index]
+        after = items[index + 1] if index + 1 < len(items) else None
+        is_pair = (
+            set(item) <= {"text", "tone"}
+            # A pager's caption ("Showing 1–50 of 65") is not a label.
+            and not PAGER_CAPTION.match(item["text"])
+            and after is not None
+            and set(after) <= {"text", "tone"}
+            and any(c.isalpha() for c in item["text"])
+            and FIGURE.match(after["text"].strip()) is not None
+        )
+        if not is_pair:
+            out.append(item)
+            index += 1
+            continue
+        row = {
+            "label": item["text"],
+            "meta": "",
+            "value": after["text"].strip(),
+            "tone": after.get("tone", ""),
+        }
+        if out and "rows" in out[-1]:
+            out[-1]["rows"]["rows"].append(row)
+        else:
+            out.append({"rows": {"rows": [row]}})
+        index += 2
+    return out
 
 
 def _switch_parts(node: Node) -> tuple[Node, list[tuple[Node, Node]]] | None:
@@ -1770,6 +1816,7 @@ def _holds_known(node: Node) -> bool:
         node.find(
             lambda n: "data-edify-tablist" in n.attrs
             or "data-row-disclosure-summary" in n.attrs
+            or n.has("school-record-row__summary")
             or (n.get("role") == "tablist" and _form_tabs(n) is not None)
             or _is_filter_form(n)
             or n.has("edify-filter-bar")

@@ -22,6 +22,8 @@ const END_ROOM = 52;
 const BAR_HEIGHT = 24;
 /** Narrower than this, a bar's number is written after it instead. */
 const INSIDE_MIN = 34;
+/** The pale whole behind a one-series bar: this share of the series' hue. */
+const WHOLE_SHADE = 12;
 
 function mix(hex: string, onto: string, share: number): string {
   const channel = (value: string, at: number) => parseInt(value.slice(at, at + 2), 16);
@@ -102,6 +104,11 @@ export function PageChartView({ chart }: { readonly chart: PageChart }) {
                 <View key={category} accessible accessibilityLabel={`${category}: ${bars.map((b) => `${mark(b.value)} ${chart.series[b.index].name}`).join(', ')}`}>
                   <Text style={[styles.name, { color: colors.text }]}>{category}</Text>
                   <View style={styles.track}>
+                    {chart.series.length === 1 ? (
+                      // One series: its bar is the dark part of the pale whole
+                      // (the scale's end), so a zero still reads as measured.
+                      <View style={[styles.whole, { width: trackWidth, backgroundColor: mix(colors.series1, colors.raised, WHOLE_SHADE) }]} />
+                    ) : null}
                     {bars.map((bar) => (
                       <View key={bar.index} style={[styles.bar, { width: share(bar.value), backgroundColor: fillOf(bar.index) }]}>
                         {fitsInside && shortest?.index === bar.index ? (
@@ -165,6 +172,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.medium, fontSize: 13, marginBottom: 2 },
   track: { height: BAR_HEIGHT },
   bar: { position: 'absolute', left: 0, top: 0, height: BAR_HEIGHT, justifyContent: 'center', alignItems: 'flex-end' },
+  whole: { position: 'absolute', left: 0, top: 0, height: BAR_HEIGHT },
   inside: { fontFamily: fonts.bold, fontSize: 13, paddingRight: 6 },
   end: { position: 'absolute', top: 3, paddingLeft: 8, fontFamily: fonts.medium, fontSize: 13 },
   axis: { height: 22, borderTopWidth: 1.5 },

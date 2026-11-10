@@ -289,7 +289,9 @@ function RowDetails({ row, width }: { readonly row: PageRow; readonly width: num
   );
 }
 
-function TickBox({ isOn, isPart = false }: { readonly isOn: boolean; readonly isPart?: boolean }) {
+/** The tick a row or record card shows for the page's bar; part-filled when
+ * some of a table's rows are ticked. */
+export function TickBox({ isOn, isPart = false }: { readonly isOn: boolean; readonly isPart?: boolean }) {
   const { colors } = useTheme();
   const isFilled = isOn || isPart;
   return (

@@ -14,18 +14,40 @@ import { describe, useSession } from '../../auth/SessionContext';
 import type { PageBlock, PageRecord } from '../../gen/edify/screens/v1/page_pb';
 import { fonts, radius, toneColors, useTheme } from '../../theme';
 import { PageBlockView } from './PageBlocksView';
+import { TickBox } from './PageTableView';
 import { RowActions } from './RowActions';
-import { cardStyles, toneColor, usePageLink } from './shared';
+import { cardStyles, toneColor, usePageLink, usePicks } from './shared';
 
 export function PageRecordView({ record }: { readonly record: PageRecord }) {
   const { colors } = useTheme();
   const openLink = usePageLink();
+  const pick = usePicks();
   const [isOpen, setIsOpen] = useState(false);
   const opened = useOpenedPart(record.detailsPath, isOpen);
   const canOpen = record.details.length > 0 || record.detailsPath !== '';
+  const canTick = pick.isOn && record.pickId !== '';
+  const isTicked = canTick && pick.picked.includes(record.pickId);
   return (
-    <View style={[cardStyles.card, styles.card, { backgroundColor: colors.raised, borderColor: colors.border }]}>
+    <View
+      style={[
+        cardStyles.card,
+        styles.card,
+        { backgroundColor: colors.raised, borderColor: isTicked ? colors.primary : colors.border },
+      ]}
+    >
       <View style={styles.head}>
+        {canTick ? (
+          <Pressable
+            onPress={() => pick.set([record.pickId], !isTicked)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isTicked }}
+            accessibilityLabel={record.pickLabel || `Select ${record.title}`}
+            hitSlop={10}
+            style={styles.tick}
+          >
+            <TickBox isOn={isTicked} />
+          </Pressable>
+        ) : null}
         <View style={styles.titleRow}>
           <Text
             onPress={() => (canOpen ? setIsOpen(!isOpen) : record.href ? openLink(record.href) : undefined)}
@@ -154,6 +176,7 @@ const styles = StyleSheet.create({
   card: { padding: 16, gap: 10 },
   head: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
   titleRow: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  tick: { paddingTop: 2 },
   title: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 20 },
   badge: { borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2 },
   badgeText: { fontFamily: fonts.semibold, fontSize: 11 },

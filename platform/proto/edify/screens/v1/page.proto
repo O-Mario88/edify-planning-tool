@@ -409,6 +409,10 @@ message PageRecord {
   repeated PageBlock details = 7;
   // The list the card loads once opened (its schools), as a page path.
   string details_path = 8;
+  // What the card's tick box ticks for the page's bar (PageSelection), and
+  // what it says ("Select Nakifuma UMEA Primary School"); '' for none.
+  string pick_id = 9;
+  string pick_label = 10;
 }
 
 // A dialog a page opens itself (My Targets' Submit MSCS), opened by a link

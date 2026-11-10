@@ -1282,3 +1282,71 @@ class LaterPartHeadersTest(SimpleTestCase):
             asked, [("/planning-monitor/?fy=2027", {"X-Edify-Embed": "dashboard"})]
         )
         self.assertNotIn("Loading", repr(blocks))
+
+
+ACTION_CENTER = """
+<main><div class="edify-surface rounded-surface p-5"><h2>Action Center</h2>
+ <div><p>Escalations to Review</p><p>3</p></div>
+ <div><p>Overdue Actions</p><p>12%</p></div>
+ <p>Showing 1–50 of 65</p><p>1</p>
+</div></main>
+"""
+
+CORE_SCHOOL_ROW = """
+<main><div class="card" x-data="{ selectedSchools: [] }"><ul class="core-school-list" role="list">
+<li class="core-school-row school-record-row">
+ <div class="school-record-row__summary">
+  <label class="school-record-row__select"><input type="checkbox" value="1693" x-model="selectedSchools" data-core-pick>
+   <span class="sr-only">Select Nakifuma UMEA Primary School</span></label>
+  <div class="school-record-row__content">
+   <h2 class="school-record-row__title"><a href="/schools/1693" class="school-record-row__link">Nakifuma UMEA Primary School</a></h2>
+   <dl class="school-record-row__metadata"><div><dt>District:</dt><dd>Mukono</dd></div></dl>
+  </div>
+ </div>
+ <div class="school-record-row__details"><dl class="school-record-row__metadata"><div><dt>SSA:</dt><dd>5.8/10</dd></div></dl></div>
+</li></ul></div></main>
+"""
+
+
+class PairedRowsTest(SimpleTestCase):
+    def test_a_label_then_its_figure_is_a_data_row(self):
+        panel = page_blocks.read(ACTION_CENTER)["blocks"][0]["panel"]
+
+        self.assertEqual(
+            panel["items"][0],
+            {
+                "rows": {
+                    "rows": [
+                        {
+                            "label": "Escalations to Review",
+                            "meta": "",
+                            "value": "3",
+                            "tone": "",
+                        },
+                        {
+                            "label": "Overdue Actions",
+                            "meta": "",
+                            "value": "12%",
+                            "tone": "",
+                        },
+                    ]
+                }
+            },
+        )
+        # A pager's caption keeps its own line.
+        self.assertEqual(
+            panel["items"][1:], [{"text": "Showing 1–50 of 65"}, {"text": "1"}]
+        )
+
+
+class CoreSchoolRowTest(SimpleTestCase):
+    def test_a_core_school_row_is_a_record_its_tick_box_ticks(self):
+        blocks = page_blocks.read(CORE_SCHOOL_ROW)["blocks"]
+
+        record = blocks[0]["record"]
+        self.assertEqual(record["title"], "Nakifuma UMEA Primary School")
+        self.assertEqual(record["href"], "/schools/1693")
+        self.assertEqual(record["pickId"], "1693")
+        self.assertEqual(record["pickLabel"], "Select Nakifuma UMEA Primary School")
+        self.assertEqual(record["facts"][0]["value"], "Mukono")
+        self.assertIn("5.8/10", repr(record["details"]))

@@ -3219,7 +3219,11 @@ type PageRecord struct {
 	// What the open card shows, read with the card.
 	Details []*PageBlock `protobuf:"bytes,7,rep,name=details,proto3" json:"details,omitempty"`
 	// The list the card loads once opened (its schools), as a page path.
-	DetailsPath   string `protobuf:"bytes,8,opt,name=details_path,json=detailsPath,proto3" json:"details_path,omitempty"`
+	DetailsPath string `protobuf:"bytes,8,opt,name=details_path,json=detailsPath,proto3" json:"details_path,omitempty"`
+	// What the card's tick box ticks for the page's bar (PageSelection), and
+	// what it says ("Select Nakifuma UMEA Primary School"); '' for none.
+	PickId        string `protobuf:"bytes,9,opt,name=pick_id,json=pickId,proto3" json:"pick_id,omitempty"`
+	PickLabel     string `protobuf:"bytes,10,opt,name=pick_label,json=pickLabel,proto3" json:"pick_label,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3306,6 +3310,20 @@ func (x *PageRecord) GetDetails() []*PageBlock {
 func (x *PageRecord) GetDetailsPath() string {
 	if x != nil {
 		return x.DetailsPath
+	}
+	return ""
+}
+
+func (x *PageRecord) GetPickId() string {
+	if x != nil {
+		return x.PickId
+	}
+	return ""
+}
+
+func (x *PageRecord) GetPickLabel() string {
+	if x != nil {
+		return x.PickLabel
 	}
 	return ""
 }
@@ -3747,7 +3765,7 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\x05items\x18\x03 \x03(\v2\x1e.edify.screens.v1.PageFormItemR\x05items\x12!\n" +
 	"\fsubmit_label\x18\x04 \x01(\tR\vsubmitLabel\x12\x10\n" +
 	"\x03key\x18\x05 \x01(\tR\x03key\x12\x19\n" +
-	"\bcan_save\x18\x06 \x01(\bR\acanSave\"\xcb\x02\n" +
+	"\bcan_save\x18\x06 \x01(\bR\acanSave\"\x83\x03\n" +
 	"\n" +
 	"PageRecord\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
@@ -3757,7 +3775,11 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\aactions\x18\x05 \x03(\v2\x1c.edify.screens.v1.PageActionR\aactions\x120\n" +
 	"\x05facts\x18\x06 \x03(\v2\x1a.edify.screens.v1.PageFactR\x05facts\x125\n" +
 	"\adetails\x18\a \x03(\v2\x1b.edify.screens.v1.PageBlockR\adetails\x12!\n" +
-	"\fdetails_path\x18\b \x01(\tR\vdetailsPath\"i\n" +
+	"\fdetails_path\x18\b \x01(\tR\vdetailsPath\x12\x17\n" +
+	"\apick_id\x18\t \x01(\tR\x06pickId\x12\x1d\n" +
+	"\n" +
+	"pick_label\x18\n" +
+	" \x01(\tR\tpickLabel\"i\n" +
 	"\n" +
 	"PageDialog\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
