@@ -1066,6 +1066,30 @@ def _beside_switch(
 LATER_TRIGGERS = re.compile(r"^\s*(load\b|intersect\b|revealed\b|load-[a-z-]+)")
 
 
+#: The request headers a part's section sets (``hx-headers``) that the feed
+#: sends on with the part: the dashboard's embed mark, without which the
+#: Planning Monitor and Staff Activity answer a Programme Lead with a redirect.
+FORWARDED_HEADERS = frozenset({"X-Edify-Embed"})
+
+
+def _sent_headers(node: Node) -> dict[str, str]:
+    """The headers htmx sends with ``node``'s request: the nearest
+    ``hx-headers`` of each name, among those the feed forwards."""
+    sent: dict[str, str] = {}
+    holder: Node | None = node
+    while holder is not None:
+        try:
+            declared = json.loads(holder.get("hx-headers") or "{}")
+        except ValueError:
+            declared = {}
+        if isinstance(declared, dict):
+            for name, value in declared.items():
+                if name in FORWARDED_HEADERS and isinstance(value, str):
+                    sent.setdefault(name, value)
+        holder = holder.parent
+    return sent
+
+
 def _loads_later(node: Node) -> bool:
     """A part the page fetches once it is open or scrolled into view (never a
     drawer, which opens into the drawer container)."""
@@ -1250,6 +1274,30 @@ def _form_state(form: Node) -> dict[str, str]:
         if value:
             values[node.get("name")] = value
     return values
+
+
+def _entity_tabs(nav: Node) -> dict | None:
+    """An oversight page's section links (My Performance's Executive Summary
+    … November Summary, Cluster Oversight's sections): link tabs."""
+    if not nav.has("oversight-entity-tabs"):
+        return None
+    links = nav.find_all(
+        lambda n: n.tag == "a" and n.has("oversight-entity-tabs__link")
+    )
+    if not links:
+        return None
+    return {
+        "tabs": [
+            {
+                "label": a.text(),
+                "href": a.get("href"),
+                "active": a.has("is-active") or a.get("aria-current") == "page",
+            }
+            for a in links
+        ],
+        # Long section names: every link on one strip that scrolls sideways.
+        "scrolls": True,
+    }
 
 
 def _link_tabs(nav: Node) -> dict | None:
@@ -1505,7 +1553,7 @@ def _is_filter_form(node: Node) -> bool:
 
 def _block(node: Node) -> dict | None:
     """The block ``node`` is, or None to look inside it."""
-    from apps.mobile_feed import page_forms, records
+    from apps.mobile_feed import css_charts, inline_charts, page_forms, records
 
     if records.is_record(node):
         return {"record": records.read(node)}
@@ -1521,7 +1569,8 @@ def _block(node: Node) -> dict | None:
         return {"list": rows}
     if (
         node.tag == "nav"
-        and (tabs := _link_tabs(node) or _section_nav(node)) is not None
+        and (tabs := _link_tabs(node) or _section_nav(node) or _entity_tabs(node))
+        is not None
     ):
         return {"linkTabs": tabs}
     if node.get("role") == "tablist" and (tabs := _form_tabs(node)) is not None:
@@ -1562,10 +1611,17 @@ def _block(node: Node) -> dict | None:
         tiles = _tile_grid(node)
         if tiles is not None:
             return {"strip": tiles}
+    if (chart := inline_charts.read(node)) is not None:
+        return {"chart": chart}
+    if (bars := css_charts.bar_card(node)) is not None:
+        return {"chart": bars}
     if (
         node.has("edify-surface")
         and node.has("rounded-surface")
         and not _holds_blocks(node)
+        # A card around a part loaded later is read inside, so that part is
+        # fetched (the PL dashboard's Planning Monitor), not left "Loading…".
+        and node.find(_loads_later) is None
         and node.text()
     ):
         panel = _panel(node)
@@ -1588,6 +1644,8 @@ def _holds_blocks(node: Node) -> bool:
             or n.tag == "table"
             or "data-insight-rail" in n.attrs
             or (n.has("edify-surface") and n.has("rounded-surface"))
+            # A chart the card sets up in its own script (inline_charts).
+            or (n is not node and "cfg.series" in n.get("x-data"))
         )
         is not None
     )
@@ -1597,6 +1655,8 @@ def _holds_blocks(node: Node) -> bool:
 HEADER_PARTS = ("edify-page-header", "mobile-role-home", "edify-back-link")
 #: Words a section needs before the fallback draws it as a panel.
 MIN_FALLBACK_WORDS = 2
+#: A heading on its own between a page's parts: a section title, not a card.
+SECTION_HEADINGS = ("h2", "h3")
 
 
 def _is_header(node: Node) -> bool:
@@ -1612,6 +1672,9 @@ def _fallback(node: Node) -> dict | None:
     headings, text, rows and links rather than left out."""
     if node.tag in ("form", "dialog", "template") or _is_header(node):
         return None
+    # A heading that is only a figure ("0") is a tile's number, not a title.
+    if node.tag in SECTION_HEADINGS and any(c.isalpha() for c in node.text()):
+        return {"section": node.text()}
     if len(node.text().split()) < MIN_FALLBACK_WORDS:
         return None
     panel = _panel(node)
@@ -1670,10 +1733,13 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
         if later is not None and _loads_later(child):
             # A part the page loads once it is open (My Plan's readiness):
             # read what that request answers, in its place.
-            part = later(child.get("hx-get"))
+            part = later(child.get("hx-get"), _sent_headers(child))
             if part is not None:
                 _blocks(_for_phone(parse(part)), out, later)
                 continue
+        if (several := _several_blocks(child)) is not None:
+            out.extend(several)
+            continue
         block = _block(child)
         if block is not None:
             out.append(block)
@@ -1682,6 +1748,18 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
         elif (fallback := _fallback(child)) is not None:
             out.append(fallback)
     return out
+
+
+def _several_blocks(node: Node) -> list[dict] | None:
+    """A part that is several blocks at once: a grid of small cards (a record
+    each), or an indicator card of My Performance (its chart and table)."""
+    from apps.mobile_feed import card_grids, css_charts
+
+    if card_grids.is_grid(node):
+        return [{"record": record} for record in card_grids.read(node)]
+    if css_charts.is_area_card(node):
+        return css_charts.read_area(node)
+    return None
 
 
 def _holds_known(node: Node) -> bool:
@@ -1750,8 +1828,8 @@ def _for_phone(node: Node) -> Node:
 
 def read(html: str, later=None) -> dict:
     """The page's header, tabs and blocks, in the order a phone draws them.
-    ``later(path)`` answers a part the page loads after it opens, or None to
-    leave it out."""
+    ``later(path, headers)`` answers a part the page loads after it opens
+    (with the headers its section sends), or None to leave it out."""
     from apps.mobile_feed import dialogs
 
     from apps.mobile_feed import selection

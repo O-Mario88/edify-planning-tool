@@ -72,6 +72,16 @@ function Block({ block, onFilter, isRaised = true }: BlockProps) {
   switch (kind.case) {
     case 'scopeLine':
       return <Text style={[styles.scope, { color: colors.textMuted }]}>{kind.value}</Text>;
+    case 'section':
+      // A heading between the page's sections: a title over what follows,
+      // ruled off from the part above it, never a card.
+      return (
+        <View style={[styles.section, { borderTopColor: colors.border }]}>
+          <Text style={[styles.sectionText, { color: colors.text }]} accessibilityRole="header">
+            {kind.value}
+          </Text>
+        </View>
+      );
     case 'facts':
       return <FactsCard facts={kind.value} />;
     case 'filters':
@@ -188,6 +198,8 @@ function SegmentsCard({ segments, onFilter }: { readonly segments: PageSegments;
 const styles = StyleSheet.create({
   stack: { gap: 16 },
   scope: { fontFamily: fonts.medium, fontSize: 13 },
+  section: { borderTopWidth: 1, paddingTop: 14, marginTop: 6 },
+  sectionText: { fontFamily: fonts.bold, fontSize: 17, letterSpacing: -0.2 },
   facts: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 12 },
   fact: { width: '50%', paddingRight: 8, gap: 2 },
   factLabel: { fontFamily: fonts.semibold, fontSize: 12 },

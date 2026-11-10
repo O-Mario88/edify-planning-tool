@@ -363,6 +363,9 @@ message PageBlock {
     // A list's own pager, outside a table card (Clusters, Planning).
     PagePager pager = 15;
     PageForm form = 16;
+    // A heading between a page's sections ("Program Growth"), drawn as a
+    // section title rather than as a card of its own.
+    string section = 17;
   }
 }
 

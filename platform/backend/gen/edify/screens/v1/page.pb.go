@@ -2685,6 +2685,7 @@ type PageBlock struct {
 	//	*PageBlock_Record
 	//	*PageBlock_Pager
 	//	*PageBlock_Form
+	//	*PageBlock_Section
 	Kind          isPageBlock_Kind `protobuf_oneof:"kind"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2871,6 +2872,15 @@ func (x *PageBlock) GetForm() *PageForm {
 	return nil
 }
 
+func (x *PageBlock) GetSection() string {
+	if x != nil {
+		if x, ok := x.Kind.(*PageBlock_Section); ok {
+			return x.Section
+		}
+	}
+	return ""
+}
+
 type isPageBlock_Kind interface {
 	isPageBlock_Kind()
 }
@@ -2942,6 +2952,12 @@ type PageBlock_Form struct {
 	Form *PageForm `protobuf:"bytes,16,opt,name=form,proto3,oneof"`
 }
 
+type PageBlock_Section struct {
+	// A heading between a page's sections ("Program Growth"), drawn as a
+	// section title rather than as a card of its own.
+	Section string `protobuf:"bytes,17,opt,name=section,proto3,oneof"`
+}
+
 func (*PageBlock_ScopeLine) isPageBlock_Kind() {}
 
 func (*PageBlock_Facts) isPageBlock_Kind() {}
@@ -2973,6 +2989,8 @@ func (*PageBlock_Record) isPageBlock_Kind() {}
 func (*PageBlock_Pager) isPageBlock_Kind() {}
 
 func (*PageBlock_Form) isPageBlock_Kind() {}
+
+func (*PageBlock_Section) isPageBlock_Kind() {}
 
 // One part of a form on a page, in the order the form draws them.
 type PageFormItem struct {
@@ -3694,7 +3712,7 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x14\n" +
 	"\x05count\x18\x02 \x01(\tR\x05count\x12\x1a\n" +
 	"\bsubtitle\x18\x03 \x01(\tR\bsubtitle\x124\n" +
-	"\x05items\x18\x04 \x03(\v2\x1e.edify.screens.v1.PageListItemR\x05items\"\xc5\x06\n" +
+	"\x05items\x18\x04 \x03(\v2\x1e.edify.screens.v1.PageListItemR\x05items\"\xe1\x06\n" +
 	"\tPageBlock\x12\x1f\n" +
 	"\n" +
 	"scope_line\x18\x01 \x01(\tH\x00R\tscopeLine\x123\n" +
@@ -3713,7 +3731,8 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\x05chips\x18\r \x01(\v2\x1b.edify.screens.v1.PageChipsH\x00R\x05chips\x126\n" +
 	"\x06record\x18\x0e \x01(\v2\x1c.edify.screens.v1.PageRecordH\x00R\x06record\x123\n" +
 	"\x05pager\x18\x0f \x01(\v2\x1b.edify.screens.v1.PagePagerH\x00R\x05pager\x120\n" +
-	"\x04form\x18\x10 \x01(\v2\x1a.edify.screens.v1.PageFormH\x00R\x04formB\x06\n" +
+	"\x04form\x18\x10 \x01(\v2\x1a.edify.screens.v1.PageFormH\x00R\x04form\x12\x1a\n" +
+	"\asection\x18\x11 \x01(\tH\x00R\asectionB\x06\n" +
 	"\x04kind\"\xf3\x01\n" +
 	"\fPageFormItem\x122\n" +
 	"\x04note\x18\x01 \x01(\v2\x1c.edify.screens.v1.DrawerNoteH\x00R\x04note\x12\x1a\n" +
@@ -3918,6 +3937,7 @@ func file_edify_screens_v1_page_proto_init() {
 		(*PageBlock_Record)(nil),
 		(*PageBlock_Pager)(nil),
 		(*PageBlock_Form)(nil),
+		(*PageBlock_Section)(nil),
 	}
 	file_edify_screens_v1_page_proto_msgTypes[37].OneofWrappers = []any{
 		(*PageFormItem_Note)(nil),

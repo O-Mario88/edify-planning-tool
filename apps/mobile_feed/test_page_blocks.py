@@ -437,7 +437,7 @@ class MyPlanComponentsTest(SimpleTestCase):
     def setUp(self):
         self.later = []
 
-        def later(path):
+        def later(path, headers):
             self.later.append(path)
             return '<div class="card"><h2>Readiness</h2><div class="edify-empty-state"><p>None yet.</p></div></div>'
 
@@ -1029,3 +1029,256 @@ class SelectionBarTest(SimpleTestCase):
         self.assertNotIn(
             "selection", page_blocks.read("<main><p>Nothing to tick.</p></main>")
         )
+
+
+PRIORITY_GRID = """
+<main><section class="edify-surface rounded-overlay p-5">
+<header><h2>FY 2027 Strategic Priorities</h2></header>
+<ol class="grid gap-3 sm:grid-cols-2">
+ <li class="flex rounded-surface border p-4">
+  <div><span class="uppercase">Priority 1</span>
+   <span class="rounded-full bg-slate-100 text-slate-500">Definition in progress</span></div>
+  <h3>Program Growth and Expansion</h3>
+  <section class="context-metrics"><div class="context-metrics__sentence">
+   <span class="context-metrics__fact"><span class="context-metrics__label">Milestones</span>
+    <strong class="context-metrics__value">5</strong></span>
+  </div></section>
+ </li>
+ <li class="flex rounded-surface border p-4">
+  <div><span class="uppercase">Priority 2</span>
+   <span class="rounded-full bg-emerald-100 text-emerald-700">Active</span></div>
+  <h3><a href="/priorities/2">Program Quality</a></h3>
+ </li>
+</ol></section></main>
+"""
+
+AREA_CARD = """
+<main><h2 class="tp-section-title">Program Growth</h2>
+<section class="tp-card" data-tp-area-row="active_schools">
+ <header class="tp-card__head"><h2>Active Schools: Target vs. Achieved</h2>
+  <span class="tp-card__meta">700 of 700 · 100% · On Track</span></header>
+ <div data-tp-chart="district"><h3 class="tp-chart-title">Active Schools by District</h3>
+  <div class="tp-chart" role="img">
+   <div class="tp-chart__group" data-tp-bar="Mukono"><div class="tp-chart__bars">
+    <span class="tp-chart__bar tp-chart__bar--target" title="Mukono target: 700"></span>
+    <span class="tp-chart__bar" title="Mukono achieved: 650"></span></div>
+    <span class="tp-chart__label">Mukono<br>650 / 700</span></div>
+   <div class="tp-chart__group" data-tp-bar="Kayunga"><div class="tp-chart__bars">
+    <span class="tp-chart__bar tp-chart__bar--target" title="Kayunga target: 1,200"></span>
+    <span class="tp-chart__bar" title="Kayunga achieved: 0"></span></div></div>
+  </div>
+  <div class="tp-chart-legend"><span>Target</span><span>Achieved</span></div>
+  <table><thead><tr><th>District</th><th>Target</th></tr></thead>
+   <tbody><tr><th>Mukono</th><td>700</td></tr></tbody></table>
+ </div>
+</section></main>
+"""
+
+PROGRESS_BARS = """
+<main><div class="edify-surface rounded-surface p-5">
+ <h2>Contribution to Roll-up</h2>
+ <div class="space-y-2.5">
+  <div><div class="flex"><span>Q1</span><span>25%</span></div>
+   <div class="h-[8px] overflow-hidden"><div class="h-full" style="width: 25%"></div></div></div>
+  <div><div class="flex"><span>Q2</span><span>0%</span></div>
+   <div class="h-[8px] overflow-hidden"><div class="h-full" style="width: 0%"></div></div></div>
+ </div>
+</div></main>
+"""
+
+ENTITY_TABS = """
+<main><nav class="oversight-entity-tabs" aria-label="Team Performance sections">
+ <a class="oversight-entity-tabs__link is-active" href="?tab=summary" aria-current="page"><span>Executive Summary</span></a>
+ <a class="oversight-entity-tabs__link" href="?tab=weekly"><span>Detailed Country Report</span></a>
+</nav></main>
+"""
+
+
+class CardGridTest(SimpleTestCase):
+    def test_each_small_card_of_a_grid_is_one_record(self):
+        blocks = page_blocks.read(PRIORITY_GRID)["blocks"]
+        records = [b["record"] for b in blocks if "record" in b]
+
+        self.assertEqual(
+            [r["title"] for r in records],
+            ["Program Growth and Expansion", "Program Quality"],
+        )
+        first, second = records
+        self.assertEqual(first["subtitle"], "Priority 1")
+        self.assertEqual(
+            first["badges"],
+            [{"text": "Definition in progress", "tone": "plain", "title": ""}],
+        )
+        self.assertEqual(
+            first["facts"],
+            [{"label": "Milestones", "value": "5", "href": "", "tone": ""}],
+        )
+        self.assertEqual(second["badges"][0]["tone"], "good")
+        self.assertEqual(second["href"], "/priorities/2")
+        # The grid's heading stays above its cards; no card is a stray panel.
+        self.assertNotIn("panel", repr([list(b) for b in blocks[1:]]))
+
+    def test_a_grid_of_full_surfaces_is_read_inside(self):
+        page = PRIORITY_GRID.replace(
+            "rounded-surface border", "edify-surface rounded-surface border"
+        )
+
+        blocks = page_blocks.read(page)["blocks"]
+
+        self.assertFalse(any("record" in b for b in blocks))
+
+
+class CssChartTest(SimpleTestCase):
+    def test_an_indicator_card_is_its_chart_then_its_table(self):
+        blocks = page_blocks.read(AREA_CARD)["blocks"]
+
+        self.assertEqual([list(b)[0] for b in blocks], ["section", "chart", "table"])
+        chart = blocks[1]["chart"]
+        self.assertEqual(chart["title"], "Active Schools: Target vs. Achieved")
+        self.assertEqual(chart["subtitle"], "700 of 700 · 100% · On Track")
+        self.assertEqual(chart["categories"], ["Mukono", "Kayunga"])
+        self.assertEqual(
+            chart["series"],
+            [
+                {"name": "Target", "values": [700.0, 1200.0]},
+                {"name": "Achieved", "values": [650.0, 0.0]},
+            ],
+        )
+
+    def test_a_card_of_progress_bars_is_a_chart_out_of_100(self):
+        blocks = page_blocks.read(PROGRESS_BARS)["blocks"]
+
+        self.assertEqual(len(blocks), 1)
+        chart = blocks[0]["chart"]
+        self.assertEqual(chart["title"], "Contribution to Roll-up")
+        self.assertEqual(chart["categories"], ["Q1", "Q2"])
+        self.assertEqual(chart["series"][0]["values"], [25.0, 0.0])
+        self.assertEqual(chart["max"], 100.0)
+
+
+class SectionHeadingTest(SimpleTestCase):
+    def test_a_heading_between_parts_is_a_section_title(self):
+        blocks = page_blocks.read(AREA_CARD)["blocks"]
+
+        self.assertEqual(blocks[0], {"section": "Program Growth"})
+
+
+class EntityTabsTest(SimpleTestCase):
+    def test_an_oversight_pages_section_links_are_link_tabs(self):
+        blocks = page_blocks.read(ENTITY_TABS)["blocks"]
+
+        self.assertEqual(
+            blocks,
+            [
+                {
+                    "linkTabs": {
+                        "tabs": [
+                            {
+                                "label": "Executive Summary",
+                                "href": "?tab=summary",
+                                "active": True,
+                            },
+                            {
+                                "label": "Detailed Country Report",
+                                "href": "?tab=weekly",
+                                "active": False,
+                            },
+                        ],
+                        "scrolls": True,
+                    }
+                }
+            ],
+        )
+
+
+TREND_CARD = """
+<main><div class="edify-surface rounded-surface p-5" x-data="{
+  chart: null,
+  initChart() {
+    const cfg = window.EdifyChartSystem.formBase({});
+    cfg.series = [
+      { name: 'Actual', data: [10, 25, null] },
+      { name: 'Expected Target Pace', data: [8, 16, 24], },
+    ];
+    cfg.labels = ['Oct','Nov','Dec'];
+  }
+}"><h2>Progress Trend</h2><div id="trend"></div></div></main>
+"""
+
+DONUT_CARD = """
+<main><div class="edify-surface rounded-surface p-5"><h3>Status</h3>
+<div x-data="{ init() { const cfg = {}; cfg.series = [3, 5]; cfg.labels = ['Open', 'Closed']; } }"></div>
+</div></main>
+"""
+
+COMPUTED_CARD = """
+<main><div class="edify-surface rounded-surface p-5" x-data="{ init() {
+  cfg.series = [{ name: 'Visits', data: points.map(p => p.count) }];
+  cfg.xaxis.categories = points.map(p => p.month); } }"><h2>Visits by month</h2><p>Visits this year.</p></div></main>
+"""
+
+EMBEDDED_PART = """
+<main><section hx-headers='{"X-Edify-Embed": "dashboard", "X-Other": "no"}'>
+ <div hx-get="/planning-monitor/?fy=2027" hx-trigger="load"><p>Loading the Planning Monitor…</p></div>
+</section></main>
+"""
+
+
+class InlineChartTest(SimpleTestCase):
+    def test_a_line_chart_set_up_in_script_is_one_bar_per_label(self):
+        blocks = page_blocks.read(TREND_CARD)["blocks"]
+
+        self.assertEqual(
+            blocks,
+            [
+                {
+                    "chart": {
+                        "title": "Progress Trend",
+                        "subtitle": "",
+                        "horizontal": True,
+                        "categories": ["Oct", "Nov", "Dec"],
+                        "series": [
+                            {"name": "Actual", "values": [10.0, 25.0, 0.0]},
+                            {
+                                "name": "Expected Target Pace",
+                                "values": [8.0, 16.0, 24.0],
+                            },
+                        ],
+                        "min": 0.0,
+                        "max": 0.0,
+                        "axisTitle": "",
+                    }
+                }
+            ],
+        )
+
+    def test_a_donut_is_one_series_across_its_labels(self):
+        charts = [
+            b["chart"] for b in page_blocks.read(DONUT_CARD)["blocks"] if "chart" in b
+        ]
+
+        self.assertEqual(len(charts), 1)
+        self.assertEqual(charts[0]["categories"], ["Open", "Closed"])
+        self.assertEqual(charts[0]["series"], [{"name": "", "values": [3.0, 5.0]}])
+
+    def test_a_chart_computed_in_the_browser_is_not_drawn_as_one(self):
+        blocks = page_blocks.read(COMPUTED_CARD)["blocks"]
+
+        self.assertFalse(any("chart" in b for b in blocks))
+        self.assertIn("Visits this year.", repr(blocks))
+
+
+class LaterPartHeadersTest(SimpleTestCase):
+    def test_a_part_is_asked_for_with_its_sections_embed_header_only(self):
+        asked = []
+
+        def later(path, headers):
+            asked.append((path, headers))
+            return "<div><p>Planned and remaining.</p></div>"
+
+        blocks = page_blocks.read(EMBEDDED_PART, later)["blocks"]
+
+        self.assertEqual(
+            asked, [("/planning-monitor/?fy=2027", {"X-Edify-Embed": "dashboard"})]
+        )
+        self.assertNotIn("Loading", repr(blocks))

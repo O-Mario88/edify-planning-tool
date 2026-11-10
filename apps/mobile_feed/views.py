@@ -1275,14 +1275,22 @@ NOT_PASSED = frozenset({"export", "download", "format", "csv", "xlsx", "pdf"})
 MAX_QUERY_VALUE = 128
 
 
-def _page_get(user, path: str, params: dict):
-    """A full-page (not HTMX) request the web view takes from ``user``."""
+def _page_get(user, path: str, params: dict, headers: dict | None = None):
+    """A full-page (not HTMX) request the web view takes from ``user``, with
+    any section headers forwarded for a part (only the forwarded names)."""
     from importlib import import_module
 
     from django.conf import settings
     from django.test import RequestFactory
 
-    page_request = RequestFactory().get(path, params)
+    from apps.mobile_feed.page_blocks import FORWARDED_HEADERS
+
+    sent = {
+        name: value
+        for name, value in (headers or {}).items()
+        if name in FORWARDED_HEADERS
+    }
+    page_request = RequestFactory().get(path, params, headers=sent)
     page_request.user = user
     page_request.session = import_module(settings.SESSION_ENGINE).SessionStore()
     page_request._messages = CollectedMessages()
@@ -1314,9 +1322,12 @@ def _page_params(query) -> dict:
     }
 
 
-def _run_page(user, path: str, params: dict, names: frozenset):
+def _run_page(
+    user, path: str, params: dict, names: frozenset, headers: dict | None = None
+):
     """The page's response, or None when ``path`` is not one of ``names``
-    or ``user`` may not open it."""
+    or ``user`` may not open it. ``headers`` are the ones the page's section
+    sends with a part it loads (page_blocks.FORWARDED_HEADERS)."""
     from django.urls import Resolver404, resolve
 
     from apps.core.permissions import can_open_url
@@ -1329,7 +1340,9 @@ def _run_page(user, path: str, params: dict, names: frozenset):
         user, path
     ):
         return None
-    response = match.func(_page_get(user, path, params), *match.args, **match.kwargs)
+    response = match.func(
+        _page_get(user, path, params, headers), *match.args, **match.kwargs
+    )
     if hasattr(response, "render") and not getattr(response, "is_rendered", True):
         response.render()
     return response
@@ -1380,7 +1393,7 @@ def read_page(user, path: str, query) -> tuple[int, dict]:
     if page.status_code != 200:
         return page.status_code, {"error": "This page is not available to you."}
 
-    def later(part_path: str) -> str | None:
+    def later(part_path: str, headers: dict[str, str]) -> str | None:
         url = urlparse(part_path)
         try:
             # A page's own sections (Core Schools' ?panel=queue) come from
@@ -1390,6 +1403,7 @@ def read_page(user, path: str, query) -> tuple[int, dict]:
                 url.path,
                 _page_params(dict(parse_qsl(url.query))),
                 LATER_PARTS | NATIVE_PAGES,
+                headers,
             )
         except Http404:
             return None
