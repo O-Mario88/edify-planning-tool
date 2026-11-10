@@ -43,17 +43,88 @@ func (s *Service) GetClusterHome(
 	if err != nil {
 		return nil, s.internal(ctx, err)
 	}
+	next := ""
+	if len(upcoming) > 0 {
+		next = upcoming[0].ID
+	}
+	ops, err := s.data.OperationsOf(ctx, clusterID, next, s.today())
+	if err != nil {
+		return nil, s.internal(ctx, err)
+	}
 
 	response := &clustersv1.GetClusterHomeResponse{
 		Cluster: summary,
 		Overview: []*clustersv1.HomeCount{
 			{Key: "member_schools", Label: "Member schools", Value: summary.GetMemberSchoolCount(), Href: "schools"},
 			{Key: "upcoming_meetings", Label: "Upcoming activities", Value: int32(len(upcoming)), Href: "activities?when=upcoming"}, // #nosec G115 -- at most upcomingLimit
+			{Key: "to_mobilise", Label: "Schools to mobilise", Value: ops.NotInvitedToNext, Href: "activities?when=upcoming"},
+			{Key: "outstanding_responses", Label: "Outstanding responses", Value: ops.Unanswered, Href: "activities?when=upcoming"},
+			{Key: "pending_actions", Label: "Pending actions", Value: ops.OpenItems, Href: "actions"},
 		},
-		QuickActions: quickActions(),
+		PriorityActions: priorityActions(ops),
+		QuickActions:    quickActions(),
 	}
 	for _, activity := range upcoming {
-		response.Upcoming = append(response.Upcoming, toActivity(activity))
+		row := toActivity(activity)
+		row.ConfirmedSchools = ops.Confirmed[activity.ID]
+		response.Upcoming = append(response.Upcoming, row)
+	}
+	return connect.NewResponse(response), nil
+}
+
+// priorityActions is what needs the leader, most pressing first; a count of
+// nothing is left out.
+func priorityActions(ops Operations) []*clustersv1.PriorityAction {
+	all := []*clustersv1.PriorityAction{
+		{Key: "returned_plans", Label: "Meetings to revise", Count: ops.Returned,
+			Detail: "Plans your CCEO returned for changes", Href: "plans", Tone: "alert"},
+		{Key: "overdue_items", Label: "Outstanding follow-ups", Count: ops.Overdue,
+			Detail: "Action items past their due date", Href: "actions", Tone: "alert"},
+		{Key: "unanswered", Label: "Schools yet to respond", Count: ops.Unanswered,
+			Detail: "Invited to an upcoming activity, no answer yet", Href: "activities?when=upcoming", Tone: "caution"},
+		{Key: "to_mobilise", Label: "Schools not yet invited", Count: ops.NotInvitedToNext,
+			Detail: "Member schools not invited to the next activity", Href: "activities?when=upcoming", Tone: "caution"},
+		{Key: "trainings_short", Label: "Training with incomplete mobilisation", Count: ops.TrainingsShort,
+			Detail: "Upcoming trainings with schools not yet invited", Href: "activities?when=upcoming", Tone: "caution"},
+		{Key: "minutes_due", Label: "Minutes awaiting submission", Count: ops.MinutesDue,
+			Detail: "Meetings held in the last 60 days", Href: "activities?when=past", Tone: "info"},
+	}
+	out := make([]*clustersv1.PriorityAction, 0, len(all))
+	for _, action := range all {
+		if action.GetCount() > 0 {
+			out = append(out, action)
+		}
+	}
+	return out
+}
+
+// ListActivities returns the cluster's upcoming or past activities.
+func (s *Service) ListActivities(
+	ctx context.Context, request *connect.Request[clustersv1.ListActivitiesRequest],
+) (*connect.Response[clustersv1.ListActivitiesResponse], error) {
+	principal, err := leader(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.checkReady(ctx); err != nil {
+		return nil, err
+	}
+	clusterID := request.Msg.GetClusterId()
+	if _, err := s.liveFor(ctx, principal.UserID, clusterID); err != nil {
+		return nil, err
+	}
+	var activities []Activity
+	if request.Msg.GetWhen() == "past" {
+		activities, err = s.data.PastActivities(ctx, clusterID, s.today(), maxPageSize)
+	} else {
+		activities, err = s.data.UpcomingActivities(ctx, clusterID, s.today(), maxPageSize)
+	}
+	if err != nil {
+		return nil, s.internal(ctx, err)
+	}
+	response := &clustersv1.ListActivitiesResponse{}
+	for _, activity := range activities {
+		response.Activities = append(response.Activities, toActivity(activity))
 	}
 	return connect.NewResponse(response), nil
 }
@@ -75,16 +146,13 @@ func toActivity(a Activity) *clustersv1.ClusterActivity {
 	return out
 }
 
-// quickActions are the Home's shortcuts. One that is not built yet says so
-// rather than leading nowhere.
+// quickActions are the Home's shortcuts (brief A3).
 func quickActions() []*clustersv1.QuickAction {
-	const planning = "Meeting planning and mobilisation arrive with cluster operations."
 	return []*clustersv1.QuickAction{
-		{Key: "plan_meeting", Label: "Plan Meeting", Reason: planning},
-		{Key: "mobilize", Label: "Mobilize Schools", Reason: planning},
+		{Key: "plan_meeting", Label: "Plan Meeting", Enabled: true, Href: "plans"},
+		{Key: "mobilize", Label: "Mobilize Schools", Enabled: true, Href: "activities?when=upcoming"},
 		{Key: "schools", Label: "View Member Schools", Enabled: true, Href: "schools"},
-		{Key: "attendance", Label: "Record Attendance", Reason: planning},
-		{Key: "performance", Label: "View Cluster Performance",
-			Reason: "Cluster performance arrives with the Impact Intelligence Engine."},
+		{Key: "attendance", Label: "Record Attendance", Enabled: true, Href: "activities?when=past"},
+		{Key: "performance", Label: "View Cluster Performance", Enabled: true, Href: "report"},
 	}
 }

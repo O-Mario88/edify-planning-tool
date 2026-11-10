@@ -496,6 +496,103 @@ func (x *ManagedCluster) GetLiveLeaders() []string {
 	return nil
 }
 
+type ListActivitiesRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ClusterId string                 `protobuf:"bytes,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	// "upcoming" (the default) or "past".
+	When          string `protobuf:"bytes,2,opt,name=when,proto3" json:"when,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListActivitiesRequest) Reset() {
+	*x = ListActivitiesRequest{}
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListActivitiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListActivitiesRequest) ProtoMessage() {}
+
+func (x *ListActivitiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListActivitiesRequest.ProtoReflect.Descriptor instead.
+func (*ListActivitiesRequest) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListActivitiesRequest) GetClusterId() string {
+	if x != nil {
+		return x.ClusterId
+	}
+	return ""
+}
+
+func (x *ListActivitiesRequest) GetWhen() string {
+	if x != nil {
+		return x.When
+	}
+	return ""
+}
+
+type ListActivitiesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Activities    []*ClusterActivity     `protobuf:"bytes,1,rep,name=activities,proto3" json:"activities,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListActivitiesResponse) Reset() {
+	*x = ListActivitiesResponse{}
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListActivitiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListActivitiesResponse) ProtoMessage() {}
+
+func (x *ListActivitiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListActivitiesResponse.ProtoReflect.Descriptor instead.
+func (*ListActivitiesResponse) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListActivitiesResponse) GetActivities() []*ClusterActivity {
+	if x != nil {
+		return x.Activities
+	}
+	return nil
+}
+
 type ListLeadersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ClusterId     string                 `protobuf:"bytes,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
@@ -505,7 +602,7 @@ type ListLeadersRequest struct {
 
 func (x *ListLeadersRequest) Reset() {
 	*x = ListLeadersRequest{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[9]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -517,7 +614,7 @@ func (x *ListLeadersRequest) String() string {
 func (*ListLeadersRequest) ProtoMessage() {}
 
 func (x *ListLeadersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[9]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -530,7 +627,7 @@ func (x *ListLeadersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLeadersRequest.ProtoReflect.Descriptor instead.
 func (*ListLeadersRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{9}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListLeadersRequest) GetClusterId() string {
@@ -553,7 +650,7 @@ type ListLeadersResponse struct {
 
 func (x *ListLeadersResponse) Reset() {
 	*x = ListLeadersResponse{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[10]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -565,7 +662,7 @@ func (x *ListLeadersResponse) String() string {
 func (*ListLeadersResponse) ProtoMessage() {}
 
 func (x *ListLeadersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[10]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -578,7 +675,7 @@ func (x *ListLeadersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLeadersResponse.ProtoReflect.Descriptor instead.
 func (*ListLeadersResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{10}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListLeadersResponse) GetCluster() *ClusterSummary {
@@ -616,7 +713,7 @@ type AssignLeaderRequest struct {
 
 func (x *AssignLeaderRequest) Reset() {
 	*x = AssignLeaderRequest{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[11]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -628,7 +725,7 @@ func (x *AssignLeaderRequest) String() string {
 func (*AssignLeaderRequest) ProtoMessage() {}
 
 func (x *AssignLeaderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[11]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -641,7 +738,7 @@ func (x *AssignLeaderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignLeaderRequest.ProtoReflect.Descriptor instead.
 func (*AssignLeaderRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{11}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *AssignLeaderRequest) GetClusterId() string {
@@ -688,7 +785,7 @@ type AssignLeaderResponse struct {
 
 func (x *AssignLeaderResponse) Reset() {
 	*x = AssignLeaderResponse{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[12]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -700,7 +797,7 @@ func (x *AssignLeaderResponse) String() string {
 func (*AssignLeaderResponse) ProtoMessage() {}
 
 func (x *AssignLeaderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[12]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -713,7 +810,7 @@ func (x *AssignLeaderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignLeaderResponse.ProtoReflect.Descriptor instead.
 func (*AssignLeaderResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{12}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *AssignLeaderResponse) GetAssignment() *LeaderAssignment {
@@ -733,7 +830,7 @@ type EndAssignmentRequest struct {
 
 func (x *EndAssignmentRequest) Reset() {
 	*x = EndAssignmentRequest{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[13]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -745,7 +842,7 @@ func (x *EndAssignmentRequest) String() string {
 func (*EndAssignmentRequest) ProtoMessage() {}
 
 func (x *EndAssignmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[13]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -758,7 +855,7 @@ func (x *EndAssignmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndAssignmentRequest.ProtoReflect.Descriptor instead.
 func (*EndAssignmentRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{13}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *EndAssignmentRequest) GetAssignmentId() string {
@@ -784,7 +881,7 @@ type EndAssignmentResponse struct {
 
 func (x *EndAssignmentResponse) Reset() {
 	*x = EndAssignmentResponse{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[14]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -796,7 +893,7 @@ func (x *EndAssignmentResponse) String() string {
 func (*EndAssignmentResponse) ProtoMessage() {}
 
 func (x *EndAssignmentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[14]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -809,7 +906,7 @@ func (x *EndAssignmentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndAssignmentResponse.ProtoReflect.Descriptor instead.
 func (*EndAssignmentResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{14}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *EndAssignmentResponse) GetAssignment() *LeaderAssignment {
@@ -830,7 +927,7 @@ type ReplaceLeaderRequest struct {
 
 func (x *ReplaceLeaderRequest) Reset() {
 	*x = ReplaceLeaderRequest{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[15]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -842,7 +939,7 @@ func (x *ReplaceLeaderRequest) String() string {
 func (*ReplaceLeaderRequest) ProtoMessage() {}
 
 func (x *ReplaceLeaderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[15]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +952,7 @@ func (x *ReplaceLeaderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplaceLeaderRequest.ProtoReflect.Descriptor instead.
 func (*ReplaceLeaderRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{15}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ReplaceLeaderRequest) GetAssignmentId() string {
@@ -889,7 +986,7 @@ type ReplaceLeaderResponse struct {
 
 func (x *ReplaceLeaderResponse) Reset() {
 	*x = ReplaceLeaderResponse{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[16]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -901,7 +998,7 @@ func (x *ReplaceLeaderResponse) String() string {
 func (*ReplaceLeaderResponse) ProtoMessage() {}
 
 func (x *ReplaceLeaderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[16]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -914,7 +1011,7 @@ func (x *ReplaceLeaderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplaceLeaderResponse.ProtoReflect.Descriptor instead.
 func (*ReplaceLeaderResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{16}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ReplaceLeaderResponse) GetEnded() *LeaderAssignment {
@@ -952,7 +1049,7 @@ type ClusterSummary struct {
 
 func (x *ClusterSummary) Reset() {
 	*x = ClusterSummary{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[17]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -964,7 +1061,7 @@ func (x *ClusterSummary) String() string {
 func (*ClusterSummary) ProtoMessage() {}
 
 func (x *ClusterSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[17]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -977,7 +1074,7 @@ func (x *ClusterSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClusterSummary.ProtoReflect.Descriptor instead.
 func (*ClusterSummary) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{17}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ClusterSummary) GetId() string {
@@ -1066,7 +1163,7 @@ type LeaderAssignment struct {
 
 func (x *LeaderAssignment) Reset() {
 	*x = LeaderAssignment{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[18]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1078,7 +1175,7 @@ func (x *LeaderAssignment) String() string {
 func (*LeaderAssignment) ProtoMessage() {}
 
 func (x *LeaderAssignment) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[18]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1091,7 +1188,7 @@ func (x *LeaderAssignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaderAssignment.ProtoReflect.Descriptor instead.
 func (*LeaderAssignment) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{18}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *LeaderAssignment) GetId() string {
@@ -1199,7 +1296,7 @@ type AssignmentEvent struct {
 
 func (x *AssignmentEvent) Reset() {
 	*x = AssignmentEvent{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[19]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1211,7 +1308,7 @@ func (x *AssignmentEvent) String() string {
 func (*AssignmentEvent) ProtoMessage() {}
 
 func (x *AssignmentEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[19]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1224,7 +1321,7 @@ func (x *AssignmentEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignmentEvent.ProtoReflect.Descriptor instead.
 func (*AssignmentEvent) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{19}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *AssignmentEvent) GetEvent() string {
@@ -1266,7 +1363,7 @@ type LeaderCandidate struct {
 
 func (x *LeaderCandidate) Reset() {
 	*x = LeaderCandidate{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[20]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1278,7 +1375,7 @@ func (x *LeaderCandidate) String() string {
 func (*LeaderCandidate) ProtoMessage() {}
 
 func (x *LeaderCandidate) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[20]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1291,7 +1388,7 @@ func (x *LeaderCandidate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaderCandidate.ProtoReflect.Descriptor instead.
 func (*LeaderCandidate) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{20}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *LeaderCandidate) GetUserId() string {
@@ -1328,7 +1425,7 @@ type HomeCount struct {
 
 func (x *HomeCount) Reset() {
 	*x = HomeCount{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[21]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1340,7 +1437,7 @@ func (x *HomeCount) String() string {
 func (*HomeCount) ProtoMessage() {}
 
 func (x *HomeCount) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[21]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1353,7 +1450,7 @@ func (x *HomeCount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HomeCount.ProtoReflect.Descriptor instead.
 func (*HomeCount) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{21}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *HomeCount) GetKey() string {
@@ -1399,7 +1496,7 @@ type PriorityAction struct {
 
 func (x *PriorityAction) Reset() {
 	*x = PriorityAction{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[22]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1411,7 +1508,7 @@ func (x *PriorityAction) String() string {
 func (*PriorityAction) ProtoMessage() {}
 
 func (x *PriorityAction) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[22]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1424,7 +1521,7 @@ func (x *PriorityAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PriorityAction.ProtoReflect.Descriptor instead.
 func (*PriorityAction) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{22}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *PriorityAction) GetKey() string {
@@ -1489,7 +1586,7 @@ type ClusterActivity struct {
 
 func (x *ClusterActivity) Reset() {
 	*x = ClusterActivity{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[23]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1501,7 +1598,7 @@ func (x *ClusterActivity) String() string {
 func (*ClusterActivity) ProtoMessage() {}
 
 func (x *ClusterActivity) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[23]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1514,7 +1611,7 @@ func (x *ClusterActivity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClusterActivity.ProtoReflect.Descriptor instead.
 func (*ClusterActivity) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{23}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ClusterActivity) GetId() string {
@@ -1587,7 +1684,7 @@ type QuickAction struct {
 
 func (x *QuickAction) Reset() {
 	*x = QuickAction{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[24]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1599,7 +1696,7 @@ func (x *QuickAction) String() string {
 func (*QuickAction) ProtoMessage() {}
 
 func (x *QuickAction) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[24]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1612,7 +1709,7 @@ func (x *QuickAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QuickAction.ProtoReflect.Descriptor instead.
 func (*QuickAction) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{24}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *QuickAction) GetKey() string {
@@ -1667,7 +1764,7 @@ type MemberSchool struct {
 
 func (x *MemberSchool) Reset() {
 	*x = MemberSchool{}
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[25]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1679,7 +1776,7 @@ func (x *MemberSchool) String() string {
 func (*MemberSchool) ProtoMessage() {}
 
 func (x *MemberSchool) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[25]
+	mi := &file_edify_clusters_v1_leadership_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1692,7 +1789,7 @@ func (x *MemberSchool) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MemberSchool.ProtoReflect.Descriptor instead.
 func (*MemberSchool) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{25}
+	return file_edify_clusters_v1_leadership_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *MemberSchool) GetId() string {
@@ -1784,7 +1881,15 @@ const file_edify_clusters_v1_leadership_proto_rawDesc = "" +
 	"\x04page\x18\x02 \x01(\v2\x19.edify.common.v1.PageInfoR\x04page\"p\n" +
 	"\x0eManagedCluster\x12;\n" +
 	"\acluster\x18\x01 \x01(\v2!.edify.clusters.v1.ClusterSummaryR\acluster\x12!\n" +
-	"\flive_leaders\x18\x02 \x03(\tR\vliveLeaders\"3\n" +
+	"\flive_leaders\x18\x02 \x03(\tR\vliveLeaders\"J\n" +
+	"\x15ListActivitiesRequest\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x01 \x01(\tR\tclusterId\x12\x12\n" +
+	"\x04when\x18\x02 \x01(\tR\x04when\"\\\n" +
+	"\x16ListActivitiesResponse\x12B\n" +
+	"\n" +
+	"activities\x18\x01 \x03(\v2\".edify.clusters.v1.ClusterActivityR\n" +
+	"activities\"3\n" +
 	"\x12ListLeadersRequest\x12\x1d\n" +
 	"\n" +
 	"cluster_id\x18\x01 \x01(\tR\tclusterId\"\xdd\x01\n" +
@@ -1896,11 +2001,12 @@ const file_edify_clusters_v1_leadership_proto_rawDesc = "" +
 	"\n" +
 	"sub_county\x18\x06 \x01(\tR\tsubCounty\x12-\n" +
 	"\x12operational_status\x18\a \x01(\tR\x11operationalStatus\x121\n" +
-	"\x15current_fy_ssa_status\x18\b \x01(\tR\x12currentFySsaStatus2\xd2\x06\n" +
+	"\x15current_fy_ssa_status\x18\b \x01(\tR\x12currentFySsaStatus2\xb9\a\n" +
 	"\x18ClusterLeadershipService\x12b\n" +
 	"\rGetMyClusters\x12'.edify.clusters.v1.GetMyClustersRequest\x1a(.edify.clusters.v1.GetMyClustersResponse\x12e\n" +
 	"\x0eGetClusterHome\x12(.edify.clusters.v1.GetClusterHomeRequest\x1a).edify.clusters.v1.GetClusterHomeResponse\x12n\n" +
-	"\x11ListMemberSchools\x12+.edify.clusters.v1.ListMemberSchoolsRequest\x1a,.edify.clusters.v1.ListMemberSchoolsResponse\x12t\n" +
+	"\x11ListMemberSchools\x12+.edify.clusters.v1.ListMemberSchoolsRequest\x1a,.edify.clusters.v1.ListMemberSchoolsResponse\x12e\n" +
+	"\x0eListActivities\x12(.edify.clusters.v1.ListActivitiesRequest\x1a).edify.clusters.v1.ListActivitiesResponse\x12t\n" +
 	"\x13ListManagedClusters\x12-.edify.clusters.v1.ListManagedClustersRequest\x1a..edify.clusters.v1.ListManagedClustersResponse\x12\\\n" +
 	"\vListLeaders\x12%.edify.clusters.v1.ListLeadersRequest\x1a&.edify.clusters.v1.ListLeadersResponse\x12_\n" +
 	"\fAssignLeader\x12&.edify.clusters.v1.AssignLeaderRequest\x1a'.edify.clusters.v1.AssignLeaderResponse\x12b\n" +
@@ -1920,7 +2026,7 @@ func file_edify_clusters_v1_leadership_proto_rawDescGZIP() []byte {
 	return file_edify_clusters_v1_leadership_proto_rawDescData
 }
 
-var file_edify_clusters_v1_leadership_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_edify_clusters_v1_leadership_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_edify_clusters_v1_leadership_proto_goTypes = []any{
 	(*GetMyClustersRequest)(nil),        // 0: edify.clusters.v1.GetMyClustersRequest
 	(*GetMyClustersResponse)(nil),       // 1: edify.clusters.v1.GetMyClustersResponse
@@ -1931,70 +2037,75 @@ var file_edify_clusters_v1_leadership_proto_goTypes = []any{
 	(*ListManagedClustersRequest)(nil),  // 6: edify.clusters.v1.ListManagedClustersRequest
 	(*ListManagedClustersResponse)(nil), // 7: edify.clusters.v1.ListManagedClustersResponse
 	(*ManagedCluster)(nil),              // 8: edify.clusters.v1.ManagedCluster
-	(*ListLeadersRequest)(nil),          // 9: edify.clusters.v1.ListLeadersRequest
-	(*ListLeadersResponse)(nil),         // 10: edify.clusters.v1.ListLeadersResponse
-	(*AssignLeaderRequest)(nil),         // 11: edify.clusters.v1.AssignLeaderRequest
-	(*AssignLeaderResponse)(nil),        // 12: edify.clusters.v1.AssignLeaderResponse
-	(*EndAssignmentRequest)(nil),        // 13: edify.clusters.v1.EndAssignmentRequest
-	(*EndAssignmentResponse)(nil),       // 14: edify.clusters.v1.EndAssignmentResponse
-	(*ReplaceLeaderRequest)(nil),        // 15: edify.clusters.v1.ReplaceLeaderRequest
-	(*ReplaceLeaderResponse)(nil),       // 16: edify.clusters.v1.ReplaceLeaderResponse
-	(*ClusterSummary)(nil),              // 17: edify.clusters.v1.ClusterSummary
-	(*LeaderAssignment)(nil),            // 18: edify.clusters.v1.LeaderAssignment
-	(*AssignmentEvent)(nil),             // 19: edify.clusters.v1.AssignmentEvent
-	(*LeaderCandidate)(nil),             // 20: edify.clusters.v1.LeaderCandidate
-	(*HomeCount)(nil),                   // 21: edify.clusters.v1.HomeCount
-	(*PriorityAction)(nil),              // 22: edify.clusters.v1.PriorityAction
-	(*ClusterActivity)(nil),             // 23: edify.clusters.v1.ClusterActivity
-	(*QuickAction)(nil),                 // 24: edify.clusters.v1.QuickAction
-	(*MemberSchool)(nil),                // 25: edify.clusters.v1.MemberSchool
-	(*v1.PageRequest)(nil),              // 26: edify.common.v1.PageRequest
-	(*v1.PageInfo)(nil),                 // 27: edify.common.v1.PageInfo
+	(*ListActivitiesRequest)(nil),       // 9: edify.clusters.v1.ListActivitiesRequest
+	(*ListActivitiesResponse)(nil),      // 10: edify.clusters.v1.ListActivitiesResponse
+	(*ListLeadersRequest)(nil),          // 11: edify.clusters.v1.ListLeadersRequest
+	(*ListLeadersResponse)(nil),         // 12: edify.clusters.v1.ListLeadersResponse
+	(*AssignLeaderRequest)(nil),         // 13: edify.clusters.v1.AssignLeaderRequest
+	(*AssignLeaderResponse)(nil),        // 14: edify.clusters.v1.AssignLeaderResponse
+	(*EndAssignmentRequest)(nil),        // 15: edify.clusters.v1.EndAssignmentRequest
+	(*EndAssignmentResponse)(nil),       // 16: edify.clusters.v1.EndAssignmentResponse
+	(*ReplaceLeaderRequest)(nil),        // 17: edify.clusters.v1.ReplaceLeaderRequest
+	(*ReplaceLeaderResponse)(nil),       // 18: edify.clusters.v1.ReplaceLeaderResponse
+	(*ClusterSummary)(nil),              // 19: edify.clusters.v1.ClusterSummary
+	(*LeaderAssignment)(nil),            // 20: edify.clusters.v1.LeaderAssignment
+	(*AssignmentEvent)(nil),             // 21: edify.clusters.v1.AssignmentEvent
+	(*LeaderCandidate)(nil),             // 22: edify.clusters.v1.LeaderCandidate
+	(*HomeCount)(nil),                   // 23: edify.clusters.v1.HomeCount
+	(*PriorityAction)(nil),              // 24: edify.clusters.v1.PriorityAction
+	(*ClusterActivity)(nil),             // 25: edify.clusters.v1.ClusterActivity
+	(*QuickAction)(nil),                 // 26: edify.clusters.v1.QuickAction
+	(*MemberSchool)(nil),                // 27: edify.clusters.v1.MemberSchool
+	(*v1.PageRequest)(nil),              // 28: edify.common.v1.PageRequest
+	(*v1.PageInfo)(nil),                 // 29: edify.common.v1.PageInfo
 }
 var file_edify_clusters_v1_leadership_proto_depIdxs = []int32{
-	17, // 0: edify.clusters.v1.GetMyClustersResponse.clusters:type_name -> edify.clusters.v1.ClusterSummary
-	17, // 1: edify.clusters.v1.GetClusterHomeResponse.cluster:type_name -> edify.clusters.v1.ClusterSummary
-	21, // 2: edify.clusters.v1.GetClusterHomeResponse.overview:type_name -> edify.clusters.v1.HomeCount
-	22, // 3: edify.clusters.v1.GetClusterHomeResponse.priority_actions:type_name -> edify.clusters.v1.PriorityAction
-	23, // 4: edify.clusters.v1.GetClusterHomeResponse.upcoming:type_name -> edify.clusters.v1.ClusterActivity
-	24, // 5: edify.clusters.v1.GetClusterHomeResponse.quick_actions:type_name -> edify.clusters.v1.QuickAction
-	26, // 6: edify.clusters.v1.ListMemberSchoolsRequest.page:type_name -> edify.common.v1.PageRequest
-	25, // 7: edify.clusters.v1.ListMemberSchoolsResponse.schools:type_name -> edify.clusters.v1.MemberSchool
-	27, // 8: edify.clusters.v1.ListMemberSchoolsResponse.page:type_name -> edify.common.v1.PageInfo
-	26, // 9: edify.clusters.v1.ListManagedClustersRequest.page:type_name -> edify.common.v1.PageRequest
+	19, // 0: edify.clusters.v1.GetMyClustersResponse.clusters:type_name -> edify.clusters.v1.ClusterSummary
+	19, // 1: edify.clusters.v1.GetClusterHomeResponse.cluster:type_name -> edify.clusters.v1.ClusterSummary
+	23, // 2: edify.clusters.v1.GetClusterHomeResponse.overview:type_name -> edify.clusters.v1.HomeCount
+	24, // 3: edify.clusters.v1.GetClusterHomeResponse.priority_actions:type_name -> edify.clusters.v1.PriorityAction
+	25, // 4: edify.clusters.v1.GetClusterHomeResponse.upcoming:type_name -> edify.clusters.v1.ClusterActivity
+	26, // 5: edify.clusters.v1.GetClusterHomeResponse.quick_actions:type_name -> edify.clusters.v1.QuickAction
+	28, // 6: edify.clusters.v1.ListMemberSchoolsRequest.page:type_name -> edify.common.v1.PageRequest
+	27, // 7: edify.clusters.v1.ListMemberSchoolsResponse.schools:type_name -> edify.clusters.v1.MemberSchool
+	29, // 8: edify.clusters.v1.ListMemberSchoolsResponse.page:type_name -> edify.common.v1.PageInfo
+	28, // 9: edify.clusters.v1.ListManagedClustersRequest.page:type_name -> edify.common.v1.PageRequest
 	8,  // 10: edify.clusters.v1.ListManagedClustersResponse.clusters:type_name -> edify.clusters.v1.ManagedCluster
-	27, // 11: edify.clusters.v1.ListManagedClustersResponse.page:type_name -> edify.common.v1.PageInfo
-	17, // 12: edify.clusters.v1.ManagedCluster.cluster:type_name -> edify.clusters.v1.ClusterSummary
-	17, // 13: edify.clusters.v1.ListLeadersResponse.cluster:type_name -> edify.clusters.v1.ClusterSummary
-	18, // 14: edify.clusters.v1.ListLeadersResponse.assignments:type_name -> edify.clusters.v1.LeaderAssignment
-	20, // 15: edify.clusters.v1.ListLeadersResponse.candidates:type_name -> edify.clusters.v1.LeaderCandidate
-	18, // 16: edify.clusters.v1.AssignLeaderResponse.assignment:type_name -> edify.clusters.v1.LeaderAssignment
-	18, // 17: edify.clusters.v1.EndAssignmentResponse.assignment:type_name -> edify.clusters.v1.LeaderAssignment
-	18, // 18: edify.clusters.v1.ReplaceLeaderResponse.ended:type_name -> edify.clusters.v1.LeaderAssignment
-	18, // 19: edify.clusters.v1.ReplaceLeaderResponse.assignment:type_name -> edify.clusters.v1.LeaderAssignment
-	18, // 20: edify.clusters.v1.ClusterSummary.my_assignment:type_name -> edify.clusters.v1.LeaderAssignment
-	19, // 21: edify.clusters.v1.LeaderAssignment.history:type_name -> edify.clusters.v1.AssignmentEvent
-	0,  // 22: edify.clusters.v1.ClusterLeadershipService.GetMyClusters:input_type -> edify.clusters.v1.GetMyClustersRequest
-	2,  // 23: edify.clusters.v1.ClusterLeadershipService.GetClusterHome:input_type -> edify.clusters.v1.GetClusterHomeRequest
-	4,  // 24: edify.clusters.v1.ClusterLeadershipService.ListMemberSchools:input_type -> edify.clusters.v1.ListMemberSchoolsRequest
-	6,  // 25: edify.clusters.v1.ClusterLeadershipService.ListManagedClusters:input_type -> edify.clusters.v1.ListManagedClustersRequest
-	9,  // 26: edify.clusters.v1.ClusterLeadershipService.ListLeaders:input_type -> edify.clusters.v1.ListLeadersRequest
-	11, // 27: edify.clusters.v1.ClusterLeadershipService.AssignLeader:input_type -> edify.clusters.v1.AssignLeaderRequest
-	13, // 28: edify.clusters.v1.ClusterLeadershipService.EndAssignment:input_type -> edify.clusters.v1.EndAssignmentRequest
-	15, // 29: edify.clusters.v1.ClusterLeadershipService.ReplaceLeader:input_type -> edify.clusters.v1.ReplaceLeaderRequest
-	1,  // 30: edify.clusters.v1.ClusterLeadershipService.GetMyClusters:output_type -> edify.clusters.v1.GetMyClustersResponse
-	3,  // 31: edify.clusters.v1.ClusterLeadershipService.GetClusterHome:output_type -> edify.clusters.v1.GetClusterHomeResponse
-	5,  // 32: edify.clusters.v1.ClusterLeadershipService.ListMemberSchools:output_type -> edify.clusters.v1.ListMemberSchoolsResponse
-	7,  // 33: edify.clusters.v1.ClusterLeadershipService.ListManagedClusters:output_type -> edify.clusters.v1.ListManagedClustersResponse
-	10, // 34: edify.clusters.v1.ClusterLeadershipService.ListLeaders:output_type -> edify.clusters.v1.ListLeadersResponse
-	12, // 35: edify.clusters.v1.ClusterLeadershipService.AssignLeader:output_type -> edify.clusters.v1.AssignLeaderResponse
-	14, // 36: edify.clusters.v1.ClusterLeadershipService.EndAssignment:output_type -> edify.clusters.v1.EndAssignmentResponse
-	16, // 37: edify.clusters.v1.ClusterLeadershipService.ReplaceLeader:output_type -> edify.clusters.v1.ReplaceLeaderResponse
-	30, // [30:38] is the sub-list for method output_type
-	22, // [22:30] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	29, // 11: edify.clusters.v1.ListManagedClustersResponse.page:type_name -> edify.common.v1.PageInfo
+	19, // 12: edify.clusters.v1.ManagedCluster.cluster:type_name -> edify.clusters.v1.ClusterSummary
+	25, // 13: edify.clusters.v1.ListActivitiesResponse.activities:type_name -> edify.clusters.v1.ClusterActivity
+	19, // 14: edify.clusters.v1.ListLeadersResponse.cluster:type_name -> edify.clusters.v1.ClusterSummary
+	20, // 15: edify.clusters.v1.ListLeadersResponse.assignments:type_name -> edify.clusters.v1.LeaderAssignment
+	22, // 16: edify.clusters.v1.ListLeadersResponse.candidates:type_name -> edify.clusters.v1.LeaderCandidate
+	20, // 17: edify.clusters.v1.AssignLeaderResponse.assignment:type_name -> edify.clusters.v1.LeaderAssignment
+	20, // 18: edify.clusters.v1.EndAssignmentResponse.assignment:type_name -> edify.clusters.v1.LeaderAssignment
+	20, // 19: edify.clusters.v1.ReplaceLeaderResponse.ended:type_name -> edify.clusters.v1.LeaderAssignment
+	20, // 20: edify.clusters.v1.ReplaceLeaderResponse.assignment:type_name -> edify.clusters.v1.LeaderAssignment
+	20, // 21: edify.clusters.v1.ClusterSummary.my_assignment:type_name -> edify.clusters.v1.LeaderAssignment
+	21, // 22: edify.clusters.v1.LeaderAssignment.history:type_name -> edify.clusters.v1.AssignmentEvent
+	0,  // 23: edify.clusters.v1.ClusterLeadershipService.GetMyClusters:input_type -> edify.clusters.v1.GetMyClustersRequest
+	2,  // 24: edify.clusters.v1.ClusterLeadershipService.GetClusterHome:input_type -> edify.clusters.v1.GetClusterHomeRequest
+	4,  // 25: edify.clusters.v1.ClusterLeadershipService.ListMemberSchools:input_type -> edify.clusters.v1.ListMemberSchoolsRequest
+	9,  // 26: edify.clusters.v1.ClusterLeadershipService.ListActivities:input_type -> edify.clusters.v1.ListActivitiesRequest
+	6,  // 27: edify.clusters.v1.ClusterLeadershipService.ListManagedClusters:input_type -> edify.clusters.v1.ListManagedClustersRequest
+	11, // 28: edify.clusters.v1.ClusterLeadershipService.ListLeaders:input_type -> edify.clusters.v1.ListLeadersRequest
+	13, // 29: edify.clusters.v1.ClusterLeadershipService.AssignLeader:input_type -> edify.clusters.v1.AssignLeaderRequest
+	15, // 30: edify.clusters.v1.ClusterLeadershipService.EndAssignment:input_type -> edify.clusters.v1.EndAssignmentRequest
+	17, // 31: edify.clusters.v1.ClusterLeadershipService.ReplaceLeader:input_type -> edify.clusters.v1.ReplaceLeaderRequest
+	1,  // 32: edify.clusters.v1.ClusterLeadershipService.GetMyClusters:output_type -> edify.clusters.v1.GetMyClustersResponse
+	3,  // 33: edify.clusters.v1.ClusterLeadershipService.GetClusterHome:output_type -> edify.clusters.v1.GetClusterHomeResponse
+	5,  // 34: edify.clusters.v1.ClusterLeadershipService.ListMemberSchools:output_type -> edify.clusters.v1.ListMemberSchoolsResponse
+	10, // 35: edify.clusters.v1.ClusterLeadershipService.ListActivities:output_type -> edify.clusters.v1.ListActivitiesResponse
+	7,  // 36: edify.clusters.v1.ClusterLeadershipService.ListManagedClusters:output_type -> edify.clusters.v1.ListManagedClustersResponse
+	12, // 37: edify.clusters.v1.ClusterLeadershipService.ListLeaders:output_type -> edify.clusters.v1.ListLeadersResponse
+	14, // 38: edify.clusters.v1.ClusterLeadershipService.AssignLeader:output_type -> edify.clusters.v1.AssignLeaderResponse
+	16, // 39: edify.clusters.v1.ClusterLeadershipService.EndAssignment:output_type -> edify.clusters.v1.EndAssignmentResponse
+	18, // 40: edify.clusters.v1.ClusterLeadershipService.ReplaceLeader:output_type -> edify.clusters.v1.ReplaceLeaderResponse
+	32, // [32:41] is the sub-list for method output_type
+	23, // [23:32] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_edify_clusters_v1_leadership_proto_init() }
@@ -2008,7 +2119,7 @@ func file_edify_clusters_v1_leadership_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_clusters_v1_leadership_proto_rawDesc), len(file_edify_clusters_v1_leadership_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

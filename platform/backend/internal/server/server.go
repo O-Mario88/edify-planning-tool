@@ -70,8 +70,11 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
-	mux.Handle(clustersv1connect.NewClusterLeadershipServiceHandler(
-		clusterlead.NewService(clusterlead.NewStore(pool), time.Now, clusterSchemaReady(pool), logger), options...,
+	clusterStore := clusterlead.NewStore(pool)
+	leadership := clusterlead.NewService(clusterStore, time.Now, clusterSchemaReady(pool), logger)
+	mux.Handle(clustersv1connect.NewClusterLeadershipServiceHandler(leadership, options...))
+	mux.Handle(clustersv1connect.NewClusterMobilizationServiceHandler(
+		clusterlead.NewOperations(leadership, clusterStore), options...,
 	))
 	return httpmw.Chain(logger, httpmw.CORS(cfg.CORSAllowedOrigins, mux))
 }

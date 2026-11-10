@@ -22,6 +22,7 @@ const (
 	ClusterLeadershipService_GetMyClusters_FullMethodName       = "/edify.clusters.v1.ClusterLeadershipService/GetMyClusters"
 	ClusterLeadershipService_GetClusterHome_FullMethodName      = "/edify.clusters.v1.ClusterLeadershipService/GetClusterHome"
 	ClusterLeadershipService_ListMemberSchools_FullMethodName   = "/edify.clusters.v1.ClusterLeadershipService/ListMemberSchools"
+	ClusterLeadershipService_ListActivities_FullMethodName      = "/edify.clusters.v1.ClusterLeadershipService/ListActivities"
 	ClusterLeadershipService_ListManagedClusters_FullMethodName = "/edify.clusters.v1.ClusterLeadershipService/ListManagedClusters"
 	ClusterLeadershipService_ListLeaders_FullMethodName         = "/edify.clusters.v1.ClusterLeadershipService/ListLeaders"
 	ClusterLeadershipService_AssignLeader_FullMethodName        = "/edify.clusters.v1.ClusterLeadershipService/AssignLeader"
@@ -47,6 +48,9 @@ type ClusterLeadershipServiceClient interface {
 	// The cluster's member schools: every operating school whose cluster this
 	// is, whatever its district (Cluster Leader of that cluster only).
 	ListMemberSchools(ctx context.Context, in *ListMemberSchoolsRequest, opts ...grpc.CallOption) (*ListMemberSchoolsResponse, error)
+	// The cluster's activities: upcoming (live, from today) or past (held or
+	// due in the last 120 days), for mobilising and for recording what happened.
+	ListActivities(ctx context.Context, in *ListActivitiesRequest, opts ...grpc.CallOption) (*ListActivitiesResponse, error)
 	// The clusters whose leaders the caller may manage, with each one's live
 	// leaders: every cluster for Admin and Program Lead, a CCEO's own clusters.
 	ListManagedClusters(ctx context.Context, in *ListManagedClustersRequest, opts ...grpc.CallOption) (*ListManagedClustersResponse, error)
@@ -95,6 +99,16 @@ func (c *clusterLeadershipServiceClient) ListMemberSchools(ctx context.Context, 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListMemberSchoolsResponse)
 	err := c.cc.Invoke(ctx, ClusterLeadershipService_ListMemberSchools_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *clusterLeadershipServiceClient) ListActivities(ctx context.Context, in *ListActivitiesRequest, opts ...grpc.CallOption) (*ListActivitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListActivitiesResponse)
+	err := c.cc.Invoke(ctx, ClusterLeadershipService_ListActivities_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -169,6 +183,9 @@ type ClusterLeadershipServiceServer interface {
 	// The cluster's member schools: every operating school whose cluster this
 	// is, whatever its district (Cluster Leader of that cluster only).
 	ListMemberSchools(context.Context, *ListMemberSchoolsRequest) (*ListMemberSchoolsResponse, error)
+	// The cluster's activities: upcoming (live, from today) or past (held or
+	// due in the last 120 days), for mobilising and for recording what happened.
+	ListActivities(context.Context, *ListActivitiesRequest) (*ListActivitiesResponse, error)
 	// The clusters whose leaders the caller may manage, with each one's live
 	// leaders: every cluster for Admin and Program Lead, a CCEO's own clusters.
 	ListManagedClusters(context.Context, *ListManagedClustersRequest) (*ListManagedClustersResponse, error)
@@ -201,6 +218,9 @@ func (UnimplementedClusterLeadershipServiceServer) GetClusterHome(context.Contex
 }
 func (UnimplementedClusterLeadershipServiceServer) ListMemberSchools(context.Context, *ListMemberSchoolsRequest) (*ListMemberSchoolsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListMemberSchools not implemented")
+}
+func (UnimplementedClusterLeadershipServiceServer) ListActivities(context.Context, *ListActivitiesRequest) (*ListActivitiesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListActivities not implemented")
 }
 func (UnimplementedClusterLeadershipServiceServer) ListManagedClusters(context.Context, *ListManagedClustersRequest) (*ListManagedClustersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListManagedClusters not implemented")
@@ -289,6 +309,24 @@ func _ClusterLeadershipService_ListMemberSchools_Handler(srv interface{}, ctx co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ClusterLeadershipServiceServer).ListMemberSchools(ctx, req.(*ListMemberSchoolsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ClusterLeadershipService_ListActivities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListActivitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterLeadershipServiceServer).ListActivities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ClusterLeadershipService_ListActivities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterLeadershipServiceServer).ListActivities(ctx, req.(*ListActivitiesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -401,6 +439,10 @@ var ClusterLeadershipService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMemberSchools",
 			Handler:    _ClusterLeadershipService_ListMemberSchools_Handler,
+		},
+		{
+			MethodName: "ListActivities",
+			Handler:    _ClusterLeadershipService_ListActivities_Handler,
 		},
 		{
 			MethodName: "ListManagedClusters",

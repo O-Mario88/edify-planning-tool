@@ -18,6 +18,9 @@ service ClusterLeadershipService {
   // The cluster's member schools: every operating school whose cluster this
   // is, whatever its district (Cluster Leader of that cluster only).
   rpc ListMemberSchools(ListMemberSchoolsRequest) returns (ListMemberSchoolsResponse);
+  // The cluster's activities: upcoming (live, from today) or past (held or
+  // due in the last 120 days), for mobilising and for recording what happened.
+  rpc ListActivities(ListActivitiesRequest) returns (ListActivitiesResponse);
 
   // The clusters whose leaders the caller may manage, with each one's live
   // leaders: every cluster for Admin and Program Lead, a CCEO's own clusters.
@@ -83,6 +86,16 @@ message ManagedCluster {
   ClusterSummary cluster = 1;
   // The names of the cluster's live leaders today.
   repeated string live_leaders = 2;
+}
+
+message ListActivitiesRequest {
+  string cluster_id = 1;
+  // "upcoming" (the default) or "past".
+  string when = 2;
+}
+
+message ListActivitiesResponse {
+  repeated ClusterActivity activities = 1;
 }
 
 message ListLeadersRequest {

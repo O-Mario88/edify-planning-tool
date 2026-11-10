@@ -42,6 +42,9 @@ const (
 	// ClusterLeadershipServiceListMemberSchoolsProcedure is the fully-qualified name of the
 	// ClusterLeadershipService's ListMemberSchools RPC.
 	ClusterLeadershipServiceListMemberSchoolsProcedure = "/edify.clusters.v1.ClusterLeadershipService/ListMemberSchools"
+	// ClusterLeadershipServiceListActivitiesProcedure is the fully-qualified name of the
+	// ClusterLeadershipService's ListActivities RPC.
+	ClusterLeadershipServiceListActivitiesProcedure = "/edify.clusters.v1.ClusterLeadershipService/ListActivities"
 	// ClusterLeadershipServiceListManagedClustersProcedure is the fully-qualified name of the
 	// ClusterLeadershipService's ListManagedClusters RPC.
 	ClusterLeadershipServiceListManagedClustersProcedure = "/edify.clusters.v1.ClusterLeadershipService/ListManagedClusters"
@@ -70,6 +73,9 @@ type ClusterLeadershipServiceClient interface {
 	// The cluster's member schools: every operating school whose cluster this
 	// is, whatever its district (Cluster Leader of that cluster only).
 	ListMemberSchools(context.Context, *connect.Request[v1.ListMemberSchoolsRequest]) (*connect.Response[v1.ListMemberSchoolsResponse], error)
+	// The cluster's activities: upcoming (live, from today) or past (held or
+	// due in the last 120 days), for mobilising and for recording what happened.
+	ListActivities(context.Context, *connect.Request[v1.ListActivitiesRequest]) (*connect.Response[v1.ListActivitiesResponse], error)
 	// The clusters whose leaders the caller may manage, with each one's live
 	// leaders: every cluster for Admin and Program Lead, a CCEO's own clusters.
 	ListManagedClusters(context.Context, *connect.Request[v1.ListManagedClustersRequest]) (*connect.Response[v1.ListManagedClustersResponse], error)
@@ -115,6 +121,12 @@ func NewClusterLeadershipServiceClient(httpClient connect.HTTPClient, baseURL st
 			connect.WithSchema(clusterLeadershipServiceMethods.ByName("ListMemberSchools")),
 			connect.WithClientOptions(opts...),
 		),
+		listActivities: connect.NewClient[v1.ListActivitiesRequest, v1.ListActivitiesResponse](
+			httpClient,
+			baseURL+ClusterLeadershipServiceListActivitiesProcedure,
+			connect.WithSchema(clusterLeadershipServiceMethods.ByName("ListActivities")),
+			connect.WithClientOptions(opts...),
+		),
 		listManagedClusters: connect.NewClient[v1.ListManagedClustersRequest, v1.ListManagedClustersResponse](
 			httpClient,
 			baseURL+ClusterLeadershipServiceListManagedClustersProcedure,
@@ -153,6 +165,7 @@ type clusterLeadershipServiceClient struct {
 	getMyClusters       *connect.Client[v1.GetMyClustersRequest, v1.GetMyClustersResponse]
 	getClusterHome      *connect.Client[v1.GetClusterHomeRequest, v1.GetClusterHomeResponse]
 	listMemberSchools   *connect.Client[v1.ListMemberSchoolsRequest, v1.ListMemberSchoolsResponse]
+	listActivities      *connect.Client[v1.ListActivitiesRequest, v1.ListActivitiesResponse]
 	listManagedClusters *connect.Client[v1.ListManagedClustersRequest, v1.ListManagedClustersResponse]
 	listLeaders         *connect.Client[v1.ListLeadersRequest, v1.ListLeadersResponse]
 	assignLeader        *connect.Client[v1.AssignLeaderRequest, v1.AssignLeaderResponse]
@@ -173,6 +186,11 @@ func (c *clusterLeadershipServiceClient) GetClusterHome(ctx context.Context, req
 // ListMemberSchools calls edify.clusters.v1.ClusterLeadershipService.ListMemberSchools.
 func (c *clusterLeadershipServiceClient) ListMemberSchools(ctx context.Context, req *connect.Request[v1.ListMemberSchoolsRequest]) (*connect.Response[v1.ListMemberSchoolsResponse], error) {
 	return c.listMemberSchools.CallUnary(ctx, req)
+}
+
+// ListActivities calls edify.clusters.v1.ClusterLeadershipService.ListActivities.
+func (c *clusterLeadershipServiceClient) ListActivities(ctx context.Context, req *connect.Request[v1.ListActivitiesRequest]) (*connect.Response[v1.ListActivitiesResponse], error) {
+	return c.listActivities.CallUnary(ctx, req)
 }
 
 // ListManagedClusters calls edify.clusters.v1.ClusterLeadershipService.ListManagedClusters.
@@ -211,6 +229,9 @@ type ClusterLeadershipServiceHandler interface {
 	// The cluster's member schools: every operating school whose cluster this
 	// is, whatever its district (Cluster Leader of that cluster only).
 	ListMemberSchools(context.Context, *connect.Request[v1.ListMemberSchoolsRequest]) (*connect.Response[v1.ListMemberSchoolsResponse], error)
+	// The cluster's activities: upcoming (live, from today) or past (held or
+	// due in the last 120 days), for mobilising and for recording what happened.
+	ListActivities(context.Context, *connect.Request[v1.ListActivitiesRequest]) (*connect.Response[v1.ListActivitiesResponse], error)
 	// The clusters whose leaders the caller may manage, with each one's live
 	// leaders: every cluster for Admin and Program Lead, a CCEO's own clusters.
 	ListManagedClusters(context.Context, *connect.Request[v1.ListManagedClustersRequest]) (*connect.Response[v1.ListManagedClustersResponse], error)
@@ -252,6 +273,12 @@ func NewClusterLeadershipServiceHandler(svc ClusterLeadershipServiceHandler, opt
 		connect.WithSchema(clusterLeadershipServiceMethods.ByName("ListMemberSchools")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clusterLeadershipServiceListActivitiesHandler := connect.NewUnaryHandler(
+		ClusterLeadershipServiceListActivitiesProcedure,
+		svc.ListActivities,
+		connect.WithSchema(clusterLeadershipServiceMethods.ByName("ListActivities")),
+		connect.WithHandlerOptions(opts...),
+	)
 	clusterLeadershipServiceListManagedClustersHandler := connect.NewUnaryHandler(
 		ClusterLeadershipServiceListManagedClustersProcedure,
 		svc.ListManagedClusters,
@@ -290,6 +317,8 @@ func NewClusterLeadershipServiceHandler(svc ClusterLeadershipServiceHandler, opt
 			clusterLeadershipServiceGetClusterHomeHandler.ServeHTTP(w, r)
 		case ClusterLeadershipServiceListMemberSchoolsProcedure:
 			clusterLeadershipServiceListMemberSchoolsHandler.ServeHTTP(w, r)
+		case ClusterLeadershipServiceListActivitiesProcedure:
+			clusterLeadershipServiceListActivitiesHandler.ServeHTTP(w, r)
 		case ClusterLeadershipServiceListManagedClustersProcedure:
 			clusterLeadershipServiceListManagedClustersHandler.ServeHTTP(w, r)
 		case ClusterLeadershipServiceListLeadersProcedure:
@@ -319,6 +348,10 @@ func (UnimplementedClusterLeadershipServiceHandler) GetClusterHome(context.Conte
 
 func (UnimplementedClusterLeadershipServiceHandler) ListMemberSchools(context.Context, *connect.Request[v1.ListMemberSchoolsRequest]) (*connect.Response[v1.ListMemberSchoolsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.clusters.v1.ClusterLeadershipService.ListMemberSchools is not implemented"))
+}
+
+func (UnimplementedClusterLeadershipServiceHandler) ListActivities(context.Context, *connect.Request[v1.ListActivitiesRequest]) (*connect.Response[v1.ListActivitiesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.clusters.v1.ClusterLeadershipService.ListActivities is not implemented"))
 }
 
 func (UnimplementedClusterLeadershipServiceHandler) ListManagedClusters(context.Context, *connect.Request[v1.ListManagedClustersRequest]) (*connect.Response[v1.ListManagedClustersResponse], error) {

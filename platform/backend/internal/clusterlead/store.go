@@ -228,6 +228,32 @@ LIMIT $5`, clusterID, plannedStatuses, day, zoneName, limit)
 	})
 }
 
+// pastWindowDays bounds how far back the past activities reach.
+const pastWindowDays = 120
+
+// PastActivities is the cluster's activities due before day, in the last
+// pastWindowDays, not cancelled, most recent first.
+func (s *Store) PastActivities(ctx context.Context, clusterID string, day time.Time, limit int) ([]Activity, error) {
+	rows, err := s.db.Query(ctx, `
+SELECT a.id, COALESCE(a.activity_name_snapshot, ''), COALESCE(a.meeting_kind, ''), a.status,
+       COALESCE((a.scheduled_date AT TIME ZONE $3)::date, a.planned_date) AS day,
+       COALESCE(a.venue, ''), COALESCE(a.schools_invited, 0),
+       COALESCE(cardinality(a.attended_school_ids), 0)
+FROM activity a
+WHERE a.cluster_id = $1 AND a.deleted_at IS NULL AND a.status NOT IN ('cancelled', 'rejected', 'not_planned')
+  AND COALESCE((a.scheduled_date AT TIME ZONE $3)::date, a.planned_date) < $2
+  AND COALESCE((a.scheduled_date AT TIME ZONE $3)::date, a.planned_date) >= $2::date - $4::int
+ORDER BY day DESC, a.id
+LIMIT $5`, clusterID, day, zoneName, pastWindowDays, limit)
+	if err != nil {
+		return nil, fmt.Errorf("clusterlead: reading past activities: %w", err)
+	}
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (Activity, error) {
+		var a Activity
+		return a, row.Scan(&a.ID, &a.Name, &a.Kind, &a.Status, &a.Date, &a.Venue, &a.Invited, &a.Attended)
+	})
+}
+
 // ClusterAssignments is every assignment of the cluster with its history,
 // live ones first, then the newest.
 func (s *Store) ClusterAssignments(ctx context.Context, clusterID string) ([]Assignment, error) {

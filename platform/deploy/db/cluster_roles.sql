@@ -52,5 +52,11 @@ GRANT SELECT (
 GRANT SELECT (
   id, activity_type, meeting_kind, status, scheduled_date, planned_date,
   venue, cluster_id, schools_invited, attended_school_ids, deleted_at,
-  activity_name_snapshot, responsible_staff_id
+  activity_name_snapshot, responsible_staff_id, training_course_id
 ) ON activity TO edify_gateway_ro;
+-- A cluster training names one of the governed courses that may be
+-- delivered to a cluster (brief A4: an authoritative training selection).
+GRANT SELECT (
+  id, display_name, is_training_course, status, cluster_delivery_allowed,
+  training_category, ssa_indicator_label
+) ON activity_catalogue_item TO edify_gateway_ro;

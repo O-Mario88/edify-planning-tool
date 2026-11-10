@@ -76,6 +76,10 @@ func (f *fakeData) UpcomingActivities(_ context.Context, id string, _ time.Time,
 	return f.upcoming[id], nil
 }
 
+func (f *fakeData) PastActivities(context.Context, string, time.Time, int) ([]Activity, error) {
+	return nil, nil
+}
+
 func (f *fakeData) ManagedClusters(_ context.Context, staffID, _ string, _ time.Time, _, _ int) ([]ManagedCluster, int64, error) {
 	var out []ManagedCluster
 	for _, id := range []string{"c-mine", "c-other"} {
@@ -85,6 +89,10 @@ func (f *fakeData) ManagedClusters(_ context.Context, staffID, _ string, _ time.
 		}
 	}
 	return out, int64(len(out)), nil
+}
+
+func (f *fakeData) OperationsOf(context.Context, string, string, time.Time) (Operations, error) {
+	return Operations{Confirmed: map[string]int32{"act1": 2}, Unanswered: 3}, nil
 }
 
 func (f *fakeData) ClusterAssignments(_ context.Context, id string) ([]Assignment, error) {

@@ -65,7 +65,10 @@ import { ClusterLeadershipService } from '../gen/edify/clusters/v1/leadership_pb
 
 /** A request message's own fields, without the generated bookkeeping. */
 type Fields<T> = Partial<Omit<T, '$typeName' | '$unknown'>>;
+import type { DescMessage, MessageInitShape, MessageShape } from '@bufbuild/protobuf';
+
 import { ApiError, callUnary } from './connect';
+import type { UnaryMethod } from './connect';
 import type { ConnectTransport } from './connect';
 
 export interface EdifyApi {
@@ -120,6 +123,14 @@ export interface EdifyApi {
   assignLeader(request: Fields<AssignLeaderRequest>): Promise<AssignLeaderResponse>;
   endAssignment(assignmentId: string, reason: string): Promise<EndAssignmentResponse>;
   replaceLeader(assignmentId: string, newUserId: string, reason: string): Promise<ReplaceLeaderResponse>;
+  /**
+   * Any unary call by its generated method, typed by the contract: the
+   * cluster operations screens call ClusterMobilizationService through it.
+   */
+  call<I extends DescMessage, O extends DescMessage>(
+    method: UnaryMethod<I, O>,
+    input: MessageInitShape<I>,
+  ): Promise<MessageShape<O>>;
 }
 
 export function createEdifyApi(transport: ConnectTransport): EdifyApi {
@@ -230,6 +241,9 @@ export function createEdifyApi(transport: ConnectTransport): EdifyApi {
         clusterId,
       });
       return required(answer.result);
+    },
+    call(method, input) {
+      return callUnary(transport, method, input);
     },
     getMyClusters() {
       return callUnary(transport, ClusterLeadershipService.method.getMyClusters, {});

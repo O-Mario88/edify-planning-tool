@@ -9,13 +9,32 @@ import { create } from '@bufbuild/protobuf';
 import type { NavItem, NavSection } from '../../gen/edify/screens/v1/navigation_pb';
 import { NavItemSchema, NavSectionSchema } from '../../gen/edify/screens/v1/navigation_pb';
 
-export type ClusterTab = 'home' | 'schools' | 'activities';
+/** The portal's pages: three tabs, and the work pages behind Home and More. */
+export type ClusterTab = 'home' | 'schools' | 'activities' | 'plans' | 'actions' | 'requests' | 'report';
 
 export const CLUSTER_TABS: Readonly<Record<ClusterTab, string>> = {
   home: 'cluster:home',
   schools: 'cluster:schools',
   activities: 'cluster:activities',
+  plans: 'cluster:plans',
+  actions: 'cluster:actions',
+  requests: 'cluster:requests',
+  report: 'cluster:report',
 };
+
+/** The leader's work pages, under their More menu. */
+export function clusterWorkSection(): NavSection {
+  const item = (label: string, tab: ClusterTab) => create(NavItemSchema, { label, url: CLUSTER_TABS[tab], native: true });
+  return create(NavSectionSchema, {
+    label: 'Cluster work',
+    items: [
+      item('Meeting plans', 'plans'),
+      item('Action items', 'actions'),
+      item('Requests to staff', 'requests'),
+      item('Cluster report', 'report'),
+    ],
+  });
+}
 
 // The icons are Lucide's, drawn like the web's own (stroke, currentColor).
 const svg = (body: string) =>
@@ -43,16 +62,15 @@ export function clusterBottomBar(): NavItem[] {
 /** The tab a Home count or quick action opens ("schools", "activities?when=upcoming"). */
 export function tabOf(href: string): ClusterTab | null {
   const path = href.split(/[?#]/)[0].replace(/^\/+|\/+$/g, '');
-  if (path === 'schools') {
-    return 'schools';
-  }
-  if (path === 'activities') {
-    return 'activities';
-  }
-  if (path === '' || path === 'home') {
+  if (path === '') {
     return 'home';
   }
-  return null;
+  return path in CLUSTER_TABS ? (path as ClusterTab) : null;
+}
+
+/** "activities?when=past" → "past"; upcoming otherwise. */
+export function whenOf(href: string): 'upcoming' | 'past' {
+  return /[?&]when=past\b/.test(href) ? 'past' : 'upcoming';
 }
 
 /** The tab a shell URL is, or null for the shell's own (the menu). */

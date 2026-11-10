@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/clusters/v1/leadership.proto.
  */
 export const file_edify_clusters_v1_leadership: GenFile = /*@__PURE__*/
-  fileDesc("CiJlZGlmeS9jbHVzdGVycy92MS9sZWFkZXJzaGlwLnByb3RvEhFlZGlmeS5jbHVzdGVycy52MSIWChRHZXRNeUNsdXN0ZXJzUmVxdWVzdCJMChVHZXRNeUNsdXN0ZXJzUmVzcG9uc2USMwoIY2x1c3RlcnMYASADKAsyIS5lZGlmeS5jbHVzdGVycy52MS5DbHVzdGVyU3VtbWFyeSIrChVHZXRDbHVzdGVySG9tZVJlcXVlc3QSEgoKY2x1c3Rlcl9pZBgBIAEoCSKmAgoWR2V0Q2x1c3RlckhvbWVSZXNwb25zZRIyCgdjbHVzdGVyGAEgASgLMiEuZWRpZnkuY2x1c3RlcnMudjEuQ2x1c3RlclN1bW1hcnkSLgoIb3ZlcnZpZXcYAiADKAsyHC5lZGlmeS5jbHVzdGVycy52MS5Ib21lQ291bnQSOwoQcHJpb3JpdHlfYWN0aW9ucxgDIAMoCzIhLmVkaWZ5LmNsdXN0ZXJzLnYxLlByaW9yaXR5QWN0aW9uEjQKCHVwY29taW5nGAQgAygLMiIuZWRpZnkuY2x1c3RlcnMudjEuQ2x1c3RlckFjdGl2aXR5EjUKDXF1aWNrX2FjdGlvbnMYBSADKAsyHi5lZGlmeS5jbHVzdGVycy52MS5RdWlja0FjdGlvbiJqChhMaXN0TWVtYmVyU2Nob29sc1JlcXVlc3QSEgoKY2x1c3Rlcl9pZBgBIAEoCRIqCgRwYWdlGAIgASgLMhwuZWRpZnkuY29tbW9uLnYxLlBhZ2VSZXF1ZXN0Eg4KBnNlYXJjaBgDIAEoCSJ2ChlMaXN0TWVtYmVyU2Nob29sc1Jlc3BvbnNlEjAKB3NjaG9vbHMYASADKAsyHy5lZGlmeS5jbHVzdGVycy52MS5NZW1iZXJTY2hvb2wSJwoEcGFnZRgCIAEoCzIZLmVkaWZ5LmNvbW1vbi52MS5QYWdlSW5mbyJYChpMaXN0TWFuYWdlZENsdXN0ZXJzUmVxdWVzdBIqCgRwYWdlGAEgASgLMhwuZWRpZnkuY29tbW9uLnYxLlBhZ2VSZXF1ZXN0Eg4KBnNlYXJjaBgCIAEoCSJ7ChtMaXN0TWFuYWdlZENsdXN0ZXJzUmVzcG9uc2USMwoIY2x1c3RlcnMYASADKAsyIS5lZGlmeS5jbHVzdGVycy52MS5NYW5hZ2VkQ2x1c3RlchInCgRwYWdlGAIgASgLMhkuZWRpZnkuY29tbW9uLnYxLlBhZ2VJbmZvIloKDk1hbmFnZWRDbHVzdGVyEjIKB2NsdXN0ZXIYASABKAsyIS5lZGlmeS5jbHVzdGVycy52MS5DbHVzdGVyU3VtbWFyeRIUCgxsaXZlX2xlYWRlcnMYAiADKAkiKAoSTGlzdExlYWRlcnNSZXF1ZXN0EhIKCmNsdXN0ZXJfaWQYASABKAkiuwEKE0xpc3RMZWFkZXJzUmVzcG9uc2USMgoHY2x1c3RlchgBIAEoCzIhLmVkaWZ5LmNsdXN0ZXJzLnYxLkNsdXN0ZXJTdW1tYXJ5EjgKC2Fzc2lnbm1lbnRzGAIgAygLMiMuZWRpZnkuY2x1c3RlcnMudjEuTGVhZGVyQXNzaWdubWVudBI2CgpjYW5kaWRhdGVzGAMgAygLMiIuZWRpZnkuY2x1c3RlcnMudjEuTGVhZGVyQ2FuZGlkYXRlIm4KE0Fzc2lnbkxlYWRlclJlcXVlc3QSEgoKY2x1c3Rlcl9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhEKCXN0YXJ0c19vbhgDIAEoCRIPCgdlbmRzX29uGAQgASgJEg4KBnJlYXNvbhgFIAEoCSJPChRBc3NpZ25MZWFkZXJSZXNwb25zZRI3Cgphc3NpZ25tZW50GAEgASgLMiMuZWRpZnkuY2x1c3RlcnMudjEuTGVhZGVyQXNzaWdubWVudCI9ChRFbmRBc3NpZ25tZW50UmVxdWVzdBIVCg1hc3NpZ25tZW50X2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSJQChVFbmRBc3NpZ25tZW50UmVzcG9uc2USNwoKYXNzaWdubWVudBgBIAEoCzIjLmVkaWZ5LmNsdXN0ZXJzLnYxLkxlYWRlckFzc2lnbm1lbnQiUgoUUmVwbGFjZUxlYWRlclJlcXVlc3QSFQoNYXNzaWdubWVudF9pZBgBIAEoCRITCgtuZXdfdXNlcl9pZBgCIAEoCRIOCgZyZWFzb24YAyABKAkihAEKFVJlcGxhY2VMZWFkZXJSZXNwb25zZRIyCgVlbmRlZBgBIAEoCzIjLmVkaWZ5LmNsdXN0ZXJzLnYxLkxlYWRlckFzc2lnbm1lbnQSNwoKYXNzaWdubWVudBgCIAEoCzIjLmVkaWZ5LmNsdXN0ZXJzLnYxLkxlYWRlckFzc2lnbm1lbnQi6gEKDkNsdXN0ZXJTdW1tYXJ5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDgoGc3RhdHVzGAMgASgJEhQKDGNsdXN0ZXJfdHlwZRgEIAEoCRIQCghkaXN0cmljdBgFIAEoCRISCgpzdWJfY291bnR5GAYgASgJEhsKE21lbWJlcl9zY2hvb2xfY291bnQYByABKAUSOgoNbXlfYXNzaWdubWVudBgIIAEoCzIjLmVkaWZ5LmNsdXN0ZXJzLnYxLkxlYWRlckFzc2lnbm1lbnQSGQoRcmVzcG9uc2libGVfc3RhZmYYCSABKAkisgIKEExlYWRlckFzc2lnbm1lbnQSCgoCaWQYASABKAkSEgoKY2x1c3Rlcl9pZBgCIAEoCRIPCgd1c2VyX2lkGAMgASgJEhMKC2xlYWRlcl9uYW1lGAQgASgJEhQKDGxlYWRlcl9lbWFpbBgFIAEoCRIRCglzdGFydHNfb24YBiABKAkSDwoHZW5kc19vbhgHIAEoCRIOCgZzdGF0dXMYCCABKAkSEwoLYXNzaWduZWRfYnkYCSABKAkSDgoGcmVhc29uGAogASgJEhQKDGVuZGVkX3JlYXNvbhgLIAEoCRIeChZyZXBsYWNlc19hc3NpZ25tZW50X2lkGAwgASgJEjMKB2hpc3RvcnkYDSADKAsyIi5lZGlmeS5jbHVzdGVycy52MS5Bc3NpZ25tZW50RXZlbnQiSwoPQXNzaWdubWVudEV2ZW50Eg0KBWV2ZW50GAEgASgJEg0KBWFjdG9yGAIgASgJEg4KBnJlYXNvbhgDIAEoCRIKCgJhdBgEIAEoCSI/Cg9MZWFkZXJDYW5kaWRhdGUSDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg0KBWVtYWlsGAMgASgJIkQKCUhvbWVDb3VudBILCgNrZXkYASABKAkSDQoFbGFiZWwYAiABKAkSDQoFdmFsdWUYAyABKAUSDAoEaHJlZhgEIAEoCSJnCg5Qcmlvcml0eUFjdGlvbhILCgNrZXkYASABKAkSDQoFbGFiZWwYAiABKAkSDQoFY291bnQYAyABKAUSDgoGZGV0YWlsGAQgASgJEgwKBGhyZWYYBSABKAkSDAoEdG9uZRgGIAEoCSKdAQoPQ2x1c3RlckFjdGl2aXR5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDAoEZGF0ZRgDIAEoCRIQCghsb2NhdGlvbhgEIAEoCRIMCgR0eXBlGAUgASgJEhcKD2ludml0ZWRfc2Nob29scxgGIAEoBRIZChFjb25maXJtZWRfc2Nob29scxgHIAEoBRIOCgZzdGF0dXMYCCABKAkiWAoLUXVpY2tBY3Rpb24SCwoDa2V5GAEgASgJEg0KBWxhYmVsGAIgASgJEg8KB2VuYWJsZWQYAyABKAgSDgoGcmVhc29uGAQgASgJEgwKBGhyZWYYBSABKAkisQEKDE1lbWJlclNjaG9vbBIKCgJpZBgBIAEoCRIRCglzY2hvb2xfaWQYAiABKAkSDAoEbmFtZRgDIAEoCRITCgtzY2hvb2xfdHlwZRgEIAEoCRIQCghkaXN0cmljdBgFIAEoCRISCgpzdWJfY291bnR5GAYgASgJEhoKEm9wZXJhdGlvbmFsX3N0YXR1cxgHIAEoCRIdChVjdXJyZW50X2Z5X3NzYV9zdGF0dXMYCCABKAky0gYKGENsdXN0ZXJMZWFkZXJzaGlwU2VydmljZRJiCg1HZXRNeUNsdXN0ZXJzEicuZWRpZnkuY2x1c3RlcnMudjEuR2V0TXlDbHVzdGVyc1JlcXVlc3QaKC5lZGlmeS5jbHVzdGVycy52MS5HZXRNeUNsdXN0ZXJzUmVzcG9uc2USZQoOR2V0Q2x1c3RlckhvbWUSKC5lZGlmeS5jbHVzdGVycy52MS5HZXRDbHVzdGVySG9tZVJlcXVlc3QaKS5lZGlmeS5jbHVzdGVycy52MS5HZXRDbHVzdGVySG9tZVJlc3BvbnNlEm4KEUxpc3RNZW1iZXJTY2hvb2xzEisuZWRpZnkuY2x1c3RlcnMudjEuTGlzdE1lbWJlclNjaG9vbHNSZXF1ZXN0GiwuZWRpZnkuY2x1c3RlcnMudjEuTGlzdE1lbWJlclNjaG9vbHNSZXNwb25zZRJ0ChNMaXN0TWFuYWdlZENsdXN0ZXJzEi0uZWRpZnkuY2x1c3RlcnMudjEuTGlzdE1hbmFnZWRDbHVzdGVyc1JlcXVlc3QaLi5lZGlmeS5jbHVzdGVycy52MS5MaXN0TWFuYWdlZENsdXN0ZXJzUmVzcG9uc2USXAoLTGlzdExlYWRlcnMSJS5lZGlmeS5jbHVzdGVycy52MS5MaXN0TGVhZGVyc1JlcXVlc3QaJi5lZGlmeS5jbHVzdGVycy52MS5MaXN0TGVhZGVyc1Jlc3BvbnNlEl8KDEFzc2lnbkxlYWRlchImLmVkaWZ5LmNsdXN0ZXJzLnYxLkFzc2lnbkxlYWRlclJlcXVlc3QaJy5lZGlmeS5jbHVzdGVycy52MS5Bc3NpZ25MZWFkZXJSZXNwb25zZRJiCg1FbmRBc3NpZ25tZW50EicuZWRpZnkuY2x1c3RlcnMudjEuRW5kQXNzaWdubWVudFJlcXVlc3QaKC5lZGlmeS5jbHVzdGVycy52MS5FbmRBc3NpZ25tZW50UmVzcG9uc2USYgoNUmVwbGFjZUxlYWRlchInLmVkaWZ5LmNsdXN0ZXJzLnYxLlJlcGxhY2VMZWFkZXJSZXF1ZXN0GiguZWRpZnkuY2x1c3RlcnMudjEuUmVwbGFjZUxlYWRlclJlc3BvbnNlQuoBChVjb20uZWRpZnkuY2x1c3RlcnMudjFCD0xlYWRlcnNoaXBQcm90b1ABWlpnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L2NsdXN0ZXJzL3YxO2NsdXN0ZXJzdjGiAgNFQ1iqAhFFZGlmeS5DbHVzdGVycy5WMcoCEUVkaWZ5XENsdXN0ZXJzXFYx4gIdRWRpZnlcQ2x1c3RlcnNcVjFcR1BCTWV0YWRhdGHqAhNFZGlmeTo6Q2x1c3RlcnM6OlYxYgZwcm90bzM", [file_edify_common_v1_common]);
+  fileDesc("CiJlZGlmeS9jbHVzdGVycy92MS9sZWFkZXJzaGlwLnByb3RvEhFlZGlmeS5jbHVzdGVycy52MSIWChRHZXRNeUNsdXN0ZXJzUmVxdWVzdCJMChVHZXRNeUNsdXN0ZXJzUmVzcG9uc2USMwoIY2x1c3RlcnMYASADKAsyIS5lZGlmeS5jbHVzdGVycy52MS5DbHVzdGVyU3VtbWFyeSIrChVHZXRDbHVzdGVySG9tZVJlcXVlc3QSEgoKY2x1c3Rlcl9pZBgBIAEoCSKmAgoWR2V0Q2x1c3RlckhvbWVSZXNwb25zZRIyCgdjbHVzdGVyGAEgASgLMiEuZWRpZnkuY2x1c3RlcnMudjEuQ2x1c3RlclN1bW1hcnkSLgoIb3ZlcnZpZXcYAiADKAsyHC5lZGlmeS5jbHVzdGVycy52MS5Ib21lQ291bnQSOwoQcHJpb3JpdHlfYWN0aW9ucxgDIAMoCzIhLmVkaWZ5LmNsdXN0ZXJzLnYxLlByaW9yaXR5QWN0aW9uEjQKCHVwY29taW5nGAQgAygLMiIuZWRpZnkuY2x1c3RlcnMudjEuQ2x1c3RlckFjdGl2aXR5EjUKDXF1aWNrX2FjdGlvbnMYBSADKAsyHi5lZGlmeS5jbHVzdGVycy52MS5RdWlja0FjdGlvbiJqChhMaXN0TWVtYmVyU2Nob29sc1JlcXVlc3QSEgoKY2x1c3Rlcl9pZBgBIAEoCRIqCgRwYWdlGAIgASgLMhwuZWRpZnkuY29tbW9uLnYxLlBhZ2VSZXF1ZXN0Eg4KBnNlYXJjaBgDIAEoCSJ2ChlMaXN0TWVtYmVyU2Nob29sc1Jlc3BvbnNlEjAKB3NjaG9vbHMYASADKAsyHy5lZGlmeS5jbHVzdGVycy52MS5NZW1iZXJTY2hvb2wSJwoEcGFnZRgCIAEoCzIZLmVkaWZ5LmNvbW1vbi52MS5QYWdlSW5mbyJYChpMaXN0TWFuYWdlZENsdXN0ZXJzUmVxdWVzdBIqCgRwYWdlGAEgASgLMhwuZWRpZnkuY29tbW9uLnYxLlBhZ2VSZXF1ZXN0Eg4KBnNlYXJjaBgCIAEoCSJ7ChtMaXN0TWFuYWdlZENsdXN0ZXJzUmVzcG9uc2USMwoIY2x1c3RlcnMYASADKAsyIS5lZGlmeS5jbHVzdGVycy52MS5NYW5hZ2VkQ2x1c3RlchInCgRwYWdlGAIgASgLMhkuZWRpZnkuY29tbW9uLnYxLlBhZ2VJbmZvIloKDk1hbmFnZWRDbHVzdGVyEjIKB2NsdXN0ZXIYASABKAsyIS5lZGlmeS5jbHVzdGVycy52MS5DbHVzdGVyU3VtbWFyeRIUCgxsaXZlX2xlYWRlcnMYAiADKAkiOQoVTGlzdEFjdGl2aXRpZXNSZXF1ZXN0EhIKCmNsdXN0ZXJfaWQYASABKAkSDAoEd2hlbhgCIAEoCSJQChZMaXN0QWN0aXZpdGllc1Jlc3BvbnNlEjYKCmFjdGl2aXRpZXMYASADKAsyIi5lZGlmeS5jbHVzdGVycy52MS5DbHVzdGVyQWN0aXZpdHkiKAoSTGlzdExlYWRlcnNSZXF1ZXN0EhIKCmNsdXN0ZXJfaWQYASABKAkiuwEKE0xpc3RMZWFkZXJzUmVzcG9uc2USMgoHY2x1c3RlchgBIAEoCzIhLmVkaWZ5LmNsdXN0ZXJzLnYxLkNsdXN0ZXJTdW1tYXJ5EjgKC2Fzc2lnbm1lbnRzGAIgAygLMiMuZWRpZnkuY2x1c3RlcnMudjEuTGVhZGVyQXNzaWdubWVudBI2CgpjYW5kaWRhdGVzGAMgAygLMiIuZWRpZnkuY2x1c3RlcnMudjEuTGVhZGVyQ2FuZGlkYXRlIm4KE0Fzc2lnbkxlYWRlclJlcXVlc3QSEgoKY2x1c3Rlcl9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhEKCXN0YXJ0c19vbhgDIAEoCRIPCgdlbmRzX29uGAQgASgJEg4KBnJlYXNvbhgFIAEoCSJPChRBc3NpZ25MZWFkZXJSZXNwb25zZRI3Cgphc3NpZ25tZW50GAEgASgLMiMuZWRpZnkuY2x1c3RlcnMudjEuTGVhZGVyQXNzaWdubWVudCI9ChRFbmRBc3NpZ25tZW50UmVxdWVzdBIVCg1hc3NpZ25tZW50X2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSJQChVFbmRBc3NpZ25tZW50UmVzcG9uc2USNwoKYXNzaWdubWVudBgBIAEoCzIjLmVkaWZ5LmNsdXN0ZXJzLnYxLkxlYWRlckFzc2lnbm1lbnQiUgoUUmVwbGFjZUxlYWRlclJlcXVlc3QSFQoNYXNzaWdubWVudF9pZBgBIAEoCRITCgtuZXdfdXNlcl9pZBgCIAEoCRIOCgZyZWFzb24YAyABKAkihAEKFVJlcGxhY2VMZWFkZXJSZXNwb25zZRIyCgVlbmRlZBgBIAEoCzIjLmVkaWZ5LmNsdXN0ZXJzLnYxLkxlYWRlckFzc2lnbm1lbnQSNwoKYXNzaWdubWVudBgCIAEoCzIjLmVkaWZ5LmNsdXN0ZXJzLnYxLkxlYWRlckFzc2lnbm1lbnQi6gEKDkNsdXN0ZXJTdW1tYXJ5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDgoGc3RhdHVzGAMgASgJEhQKDGNsdXN0ZXJfdHlwZRgEIAEoCRIQCghkaXN0cmljdBgFIAEoCRISCgpzdWJfY291bnR5GAYgASgJEhsKE21lbWJlcl9zY2hvb2xfY291bnQYByABKAUSOgoNbXlfYXNzaWdubWVudBgIIAEoCzIjLmVkaWZ5LmNsdXN0ZXJzLnYxLkxlYWRlckFzc2lnbm1lbnQSGQoRcmVzcG9uc2libGVfc3RhZmYYCSABKAkisgIKEExlYWRlckFzc2lnbm1lbnQSCgoCaWQYASABKAkSEgoKY2x1c3Rlcl9pZBgCIAEoCRIPCgd1c2VyX2lkGAMgASgJEhMKC2xlYWRlcl9uYW1lGAQgASgJEhQKDGxlYWRlcl9lbWFpbBgFIAEoCRIRCglzdGFydHNfb24YBiABKAkSDwoHZW5kc19vbhgHIAEoCRIOCgZzdGF0dXMYCCABKAkSEwoLYXNzaWduZWRfYnkYCSABKAkSDgoGcmVhc29uGAogASgJEhQKDGVuZGVkX3JlYXNvbhgLIAEoCRIeChZyZXBsYWNlc19hc3NpZ25tZW50X2lkGAwgASgJEjMKB2hpc3RvcnkYDSADKAsyIi5lZGlmeS5jbHVzdGVycy52MS5Bc3NpZ25tZW50RXZlbnQiSwoPQXNzaWdubWVudEV2ZW50Eg0KBWV2ZW50GAEgASgJEg0KBWFjdG9yGAIgASgJEg4KBnJlYXNvbhgDIAEoCRIKCgJhdBgEIAEoCSI/Cg9MZWFkZXJDYW5kaWRhdGUSDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg0KBWVtYWlsGAMgASgJIkQKCUhvbWVDb3VudBILCgNrZXkYASABKAkSDQoFbGFiZWwYAiABKAkSDQoFdmFsdWUYAyABKAUSDAoEaHJlZhgEIAEoCSJnCg5Qcmlvcml0eUFjdGlvbhILCgNrZXkYASABKAkSDQoFbGFiZWwYAiABKAkSDQoFY291bnQYAyABKAUSDgoGZGV0YWlsGAQgASgJEgwKBGhyZWYYBSABKAkSDAoEdG9uZRgGIAEoCSKdAQoPQ2x1c3RlckFjdGl2aXR5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDAoEZGF0ZRgDIAEoCRIQCghsb2NhdGlvbhgEIAEoCRIMCgR0eXBlGAUgASgJEhcKD2ludml0ZWRfc2Nob29scxgGIAEoBRIZChFjb25maXJtZWRfc2Nob29scxgHIAEoBRIOCgZzdGF0dXMYCCABKAkiWAoLUXVpY2tBY3Rpb24SCwoDa2V5GAEgASgJEg0KBWxhYmVsGAIgASgJEg8KB2VuYWJsZWQYAyABKAgSDgoGcmVhc29uGAQgASgJEgwKBGhyZWYYBSABKAkisQEKDE1lbWJlclNjaG9vbBIKCgJpZBgBIAEoCRIRCglzY2hvb2xfaWQYAiABKAkSDAoEbmFtZRgDIAEoCRITCgtzY2hvb2xfdHlwZRgEIAEoCRIQCghkaXN0cmljdBgFIAEoCRISCgpzdWJfY291bnR5GAYgASgJEhoKEm9wZXJhdGlvbmFsX3N0YXR1cxgHIAEoCRIdChVjdXJyZW50X2Z5X3NzYV9zdGF0dXMYCCABKAkyuQcKGENsdXN0ZXJMZWFkZXJzaGlwU2VydmljZRJiCg1HZXRNeUNsdXN0ZXJzEicuZWRpZnkuY2x1c3RlcnMudjEuR2V0TXlDbHVzdGVyc1JlcXVlc3QaKC5lZGlmeS5jbHVzdGVycy52MS5HZXRNeUNsdXN0ZXJzUmVzcG9uc2USZQoOR2V0Q2x1c3RlckhvbWUSKC5lZGlmeS5jbHVzdGVycy52MS5HZXRDbHVzdGVySG9tZVJlcXVlc3QaKS5lZGlmeS5jbHVzdGVycy52MS5HZXRDbHVzdGVySG9tZVJlc3BvbnNlEm4KEUxpc3RNZW1iZXJTY2hvb2xzEisuZWRpZnkuY2x1c3RlcnMudjEuTGlzdE1lbWJlclNjaG9vbHNSZXF1ZXN0GiwuZWRpZnkuY2x1c3RlcnMudjEuTGlzdE1lbWJlclNjaG9vbHNSZXNwb25zZRJlCg5MaXN0QWN0aXZpdGllcxIoLmVkaWZ5LmNsdXN0ZXJzLnYxLkxpc3RBY3Rpdml0aWVzUmVxdWVzdBopLmVkaWZ5LmNsdXN0ZXJzLnYxLkxpc3RBY3Rpdml0aWVzUmVzcG9uc2USdAoTTGlzdE1hbmFnZWRDbHVzdGVycxItLmVkaWZ5LmNsdXN0ZXJzLnYxLkxpc3RNYW5hZ2VkQ2x1c3RlcnNSZXF1ZXN0Gi4uZWRpZnkuY2x1c3RlcnMudjEuTGlzdE1hbmFnZWRDbHVzdGVyc1Jlc3BvbnNlElwKC0xpc3RMZWFkZXJzEiUuZWRpZnkuY2x1c3RlcnMudjEuTGlzdExlYWRlcnNSZXF1ZXN0GiYuZWRpZnkuY2x1c3RlcnMudjEuTGlzdExlYWRlcnNSZXNwb25zZRJfCgxBc3NpZ25MZWFkZXISJi5lZGlmeS5jbHVzdGVycy52MS5Bc3NpZ25MZWFkZXJSZXF1ZXN0GicuZWRpZnkuY2x1c3RlcnMudjEuQXNzaWduTGVhZGVyUmVzcG9uc2USYgoNRW5kQXNzaWdubWVudBInLmVkaWZ5LmNsdXN0ZXJzLnYxLkVuZEFzc2lnbm1lbnRSZXF1ZXN0GiguZWRpZnkuY2x1c3RlcnMudjEuRW5kQXNzaWdubWVudFJlc3BvbnNlEmIKDVJlcGxhY2VMZWFkZXISJy5lZGlmeS5jbHVzdGVycy52MS5SZXBsYWNlTGVhZGVyUmVxdWVzdBooLmVkaWZ5LmNsdXN0ZXJzLnYxLlJlcGxhY2VMZWFkZXJSZXNwb25zZULqAQoVY29tLmVkaWZ5LmNsdXN0ZXJzLnYxQg9MZWFkZXJzaGlwUHJvdG9QAVpaZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9jbHVzdGVycy92MTtjbHVzdGVyc3YxogIDRUNYqgIRRWRpZnkuQ2x1c3RlcnMuVjHKAhFFZGlmeVxDbHVzdGVyc1xWMeICHUVkaWZ5XENsdXN0ZXJzXFYxXEdQQk1ldGFkYXRh6gITRWRpZnk6OkNsdXN0ZXJzOjpWMWIGcHJvdG8z", [file_edify_common_v1_common]);
 
 /**
  * @generated from message edify.clusters.v1.GetMyClustersRequest
@@ -226,6 +226,47 @@ export const ManagedClusterSchema: GenMessage<ManagedCluster> = /*@__PURE__*/
   messageDesc(file_edify_clusters_v1_leadership, 8);
 
 /**
+ * @generated from message edify.clusters.v1.ListActivitiesRequest
+ */
+export type ListActivitiesRequest = Message<"edify.clusters.v1.ListActivitiesRequest"> & {
+  /**
+   * @generated from field: string cluster_id = 1;
+   */
+  clusterId: string;
+
+  /**
+   * "upcoming" (the default) or "past".
+   *
+   * @generated from field: string when = 2;
+   */
+  when: string;
+};
+
+/**
+ * Describes the message edify.clusters.v1.ListActivitiesRequest.
+ * Use `create(ListActivitiesRequestSchema)` to create a new message.
+ */
+export const ListActivitiesRequestSchema: GenMessage<ListActivitiesRequest> = /*@__PURE__*/
+  messageDesc(file_edify_clusters_v1_leadership, 9);
+
+/**
+ * @generated from message edify.clusters.v1.ListActivitiesResponse
+ */
+export type ListActivitiesResponse = Message<"edify.clusters.v1.ListActivitiesResponse"> & {
+  /**
+   * @generated from field: repeated edify.clusters.v1.ClusterActivity activities = 1;
+   */
+  activities: ClusterActivity[];
+};
+
+/**
+ * Describes the message edify.clusters.v1.ListActivitiesResponse.
+ * Use `create(ListActivitiesResponseSchema)` to create a new message.
+ */
+export const ListActivitiesResponseSchema: GenMessage<ListActivitiesResponse> = /*@__PURE__*/
+  messageDesc(file_edify_clusters_v1_leadership, 10);
+
+/**
  * @generated from message edify.clusters.v1.ListLeadersRequest
  */
 export type ListLeadersRequest = Message<"edify.clusters.v1.ListLeadersRequest"> & {
@@ -240,7 +281,7 @@ export type ListLeadersRequest = Message<"edify.clusters.v1.ListLeadersRequest">
  * Use `create(ListLeadersRequestSchema)` to create a new message.
  */
 export const ListLeadersRequestSchema: GenMessage<ListLeadersRequest> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 9);
+  messageDesc(file_edify_clusters_v1_leadership, 11);
 
 /**
  * @generated from message edify.clusters.v1.ListLeadersResponse
@@ -271,7 +312,7 @@ export type ListLeadersResponse = Message<"edify.clusters.v1.ListLeadersResponse
  * Use `create(ListLeadersResponseSchema)` to create a new message.
  */
 export const ListLeadersResponseSchema: GenMessage<ListLeadersResponse> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 10);
+  messageDesc(file_edify_clusters_v1_leadership, 12);
 
 /**
  * @generated from message edify.clusters.v1.AssignLeaderRequest
@@ -310,7 +351,7 @@ export type AssignLeaderRequest = Message<"edify.clusters.v1.AssignLeaderRequest
  * Use `create(AssignLeaderRequestSchema)` to create a new message.
  */
 export const AssignLeaderRequestSchema: GenMessage<AssignLeaderRequest> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 11);
+  messageDesc(file_edify_clusters_v1_leadership, 13);
 
 /**
  * @generated from message edify.clusters.v1.AssignLeaderResponse
@@ -327,7 +368,7 @@ export type AssignLeaderResponse = Message<"edify.clusters.v1.AssignLeaderRespon
  * Use `create(AssignLeaderResponseSchema)` to create a new message.
  */
 export const AssignLeaderResponseSchema: GenMessage<AssignLeaderResponse> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 12);
+  messageDesc(file_edify_clusters_v1_leadership, 14);
 
 /**
  * @generated from message edify.clusters.v1.EndAssignmentRequest
@@ -349,7 +390,7 @@ export type EndAssignmentRequest = Message<"edify.clusters.v1.EndAssignmentReque
  * Use `create(EndAssignmentRequestSchema)` to create a new message.
  */
 export const EndAssignmentRequestSchema: GenMessage<EndAssignmentRequest> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 13);
+  messageDesc(file_edify_clusters_v1_leadership, 15);
 
 /**
  * @generated from message edify.clusters.v1.EndAssignmentResponse
@@ -366,7 +407,7 @@ export type EndAssignmentResponse = Message<"edify.clusters.v1.EndAssignmentResp
  * Use `create(EndAssignmentResponseSchema)` to create a new message.
  */
 export const EndAssignmentResponseSchema: GenMessage<EndAssignmentResponse> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 14);
+  messageDesc(file_edify_clusters_v1_leadership, 16);
 
 /**
  * @generated from message edify.clusters.v1.ReplaceLeaderRequest
@@ -393,7 +434,7 @@ export type ReplaceLeaderRequest = Message<"edify.clusters.v1.ReplaceLeaderReque
  * Use `create(ReplaceLeaderRequestSchema)` to create a new message.
  */
 export const ReplaceLeaderRequestSchema: GenMessage<ReplaceLeaderRequest> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 15);
+  messageDesc(file_edify_clusters_v1_leadership, 17);
 
 /**
  * @generated from message edify.clusters.v1.ReplaceLeaderResponse
@@ -415,7 +456,7 @@ export type ReplaceLeaderResponse = Message<"edify.clusters.v1.ReplaceLeaderResp
  * Use `create(ReplaceLeaderResponseSchema)` to create a new message.
  */
 export const ReplaceLeaderResponseSchema: GenMessage<ReplaceLeaderResponse> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 16);
+  messageDesc(file_edify_clusters_v1_leadership, 18);
 
 /**
  * @generated from message edify.clusters.v1.ClusterSummary
@@ -480,7 +521,7 @@ export type ClusterSummary = Message<"edify.clusters.v1.ClusterSummary"> & {
  * Use `create(ClusterSummarySchema)` to create a new message.
  */
 export const ClusterSummarySchema: GenMessage<ClusterSummary> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 17);
+  messageDesc(file_edify_clusters_v1_leadership, 19);
 
 /**
  * @generated from message edify.clusters.v1.LeaderAssignment
@@ -561,7 +602,7 @@ export type LeaderAssignment = Message<"edify.clusters.v1.LeaderAssignment"> & {
  * Use `create(LeaderAssignmentSchema)` to create a new message.
  */
 export const LeaderAssignmentSchema: GenMessage<LeaderAssignment> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 18);
+  messageDesc(file_edify_clusters_v1_leadership, 20);
 
 /**
  * @generated from message edify.clusters.v1.AssignmentEvent
@@ -597,7 +638,7 @@ export type AssignmentEvent = Message<"edify.clusters.v1.AssignmentEvent"> & {
  * Use `create(AssignmentEventSchema)` to create a new message.
  */
 export const AssignmentEventSchema: GenMessage<AssignmentEvent> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 19);
+  messageDesc(file_edify_clusters_v1_leadership, 21);
 
 /**
  * @generated from message edify.clusters.v1.LeaderCandidate
@@ -624,7 +665,7 @@ export type LeaderCandidate = Message<"edify.clusters.v1.LeaderCandidate"> & {
  * Use `create(LeaderCandidateSchema)` to create a new message.
  */
 export const LeaderCandidateSchema: GenMessage<LeaderCandidate> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 20);
+  messageDesc(file_edify_clusters_v1_leadership, 22);
 
 /**
  * @generated from message edify.clusters.v1.HomeCount
@@ -658,7 +699,7 @@ export type HomeCount = Message<"edify.clusters.v1.HomeCount"> & {
  * Use `create(HomeCountSchema)` to create a new message.
  */
 export const HomeCountSchema: GenMessage<HomeCount> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 21);
+  messageDesc(file_edify_clusters_v1_leadership, 23);
 
 /**
  * @generated from message edify.clusters.v1.PriorityAction
@@ -702,7 +743,7 @@ export type PriorityAction = Message<"edify.clusters.v1.PriorityAction"> & {
  * Use `create(PriorityActionSchema)` to create a new message.
  */
 export const PriorityActionSchema: GenMessage<PriorityAction> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 22);
+  messageDesc(file_edify_clusters_v1_leadership, 24);
 
 /**
  * @generated from message edify.clusters.v1.ClusterActivity
@@ -762,7 +803,7 @@ export type ClusterActivity = Message<"edify.clusters.v1.ClusterActivity"> & {
  * Use `create(ClusterActivitySchema)` to create a new message.
  */
 export const ClusterActivitySchema: GenMessage<ClusterActivity> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 23);
+  messageDesc(file_edify_clusters_v1_leadership, 25);
 
 /**
  * @generated from message edify.clusters.v1.QuickAction
@@ -801,7 +842,7 @@ export type QuickAction = Message<"edify.clusters.v1.QuickAction"> & {
  * Use `create(QuickActionSchema)` to create a new message.
  */
 export const QuickActionSchema: GenMessage<QuickAction> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 24);
+  messageDesc(file_edify_clusters_v1_leadership, 26);
 
 /**
  * @generated from message edify.clusters.v1.MemberSchool
@@ -855,7 +896,7 @@ export type MemberSchool = Message<"edify.clusters.v1.MemberSchool"> & {
  * Use `create(MemberSchoolSchema)` to create a new message.
  */
 export const MemberSchoolSchema: GenMessage<MemberSchool> = /*@__PURE__*/
-  messageDesc(file_edify_clusters_v1_leadership, 25);
+  messageDesc(file_edify_clusters_v1_leadership, 27);
 
 /**
  * The Cluster Leader Portal (brief A1-A3). A Cluster Leader reaches only the
@@ -898,6 +939,17 @@ export const ClusterLeadershipService: GenService<{
     methodKind: "unary";
     input: typeof ListMemberSchoolsRequestSchema;
     output: typeof ListMemberSchoolsResponseSchema;
+  },
+  /**
+   * The cluster's activities: upcoming (live, from today) or past (held or
+   * due in the last 120 days), for mobilising and for recording what happened.
+   *
+   * @generated from rpc edify.clusters.v1.ClusterLeadershipService.ListActivities
+   */
+  listActivities: {
+    methodKind: "unary";
+    input: typeof ListActivitiesRequestSchema;
+    output: typeof ListActivitiesResponseSchema;
   },
   /**
    * The clusters whose leaders the caller may manage, with each one's live

@@ -1,0 +1,403 @@
+syntax = "proto3";
+
+package edify.clusters.v1;
+
+import "edify/clusters/v1/leadership.proto";
+
+// Cluster operations (brief A4-A7). A leader proposes meetings, mobilises
+// member schools for the cluster's activities, records what happened and
+// follows up; the cluster's staff review plans and answer requests. The
+// official activity stays the existing application's own record: a plan is
+// linked to it once staff schedule it there, and is never copied into one.
+service ClusterMobilizationService {
+  // The cluster's meeting plans, newest first (its leader, or its staff).
+  rpc ListPlans(ListPlansRequest) returns (ListPlansResponse);
+  // What a plan may name: the governed courses a cluster training may deliver.
+  rpc GetPlanOptions(GetPlanOptionsRequest) returns (GetPlanOptionsResponse);
+  // Create or edit a draft or returned plan, and submit it for review.
+  rpc SavePlan(SavePlanRequest) returns (SavePlanResponse);
+  rpc CancelPlan(CancelPlanRequest) returns (CancelPlanResponse);
+  // Staff: approve or return a submitted plan.
+  rpc ReviewPlan(ReviewPlanRequest) returns (ReviewPlanResponse);
+  // Staff: link an approved plan to the activity they scheduled for it.
+  rpc LinkPlan(LinkPlanRequest) returns (LinkPlanResponse);
+
+  // An activity's member schools with each one's invitation and attendance.
+  rpc GetMobilization(GetMobilizationRequest) returns (GetMobilizationResponse);
+  rpc InviteSchools(InviteSchoolsRequest) returns (InviteSchoolsResponse);
+  // What a school answered: acknowledged, confirmed or declined.
+  rpc RecordResponse(RecordResponseRequest) returns (RecordResponseResponse);
+  rpc FollowUp(FollowUpRequest) returns (FollowUpResponse);
+  // The leader's attendance record for an activity that has taken place.
+  rpc RecordAttendance(RecordAttendanceRequest) returns (RecordAttendanceResponse);
+  rpc SaveMinutes(SaveMinutesRequest) returns (SaveMinutesResponse);
+
+  rpc ListActionItems(ListActionItemsRequest) returns (ListActionItemsResponse);
+  rpc SaveActionItem(SaveActionItemRequest) returns (SaveActionItemResponse);
+  // Mark an item done or cancelled; its history is kept.
+  rpc CloseActionItem(CloseActionItemRequest) returns (CloseActionItemResponse);
+
+  rpc ListRequests(ListRequestsRequest) returns (ListRequestsResponse);
+  rpc SubmitRequest(SubmitRequestRequest) returns (SubmitRequestResponse);
+  // Staff: answer a leader's request.
+  rpc AnswerRequest(AnswerRequestRequest) returns (AnswerRequestResponse);
+
+  // The cluster management report for the financial year (brief A7).
+  rpc GetClusterReport(GetClusterReportRequest) returns (GetClusterReportResponse);
+}
+
+message MeetingPlan {
+  string id = 1;
+  string cluster_id = 2;
+  // "only_meeting", "cluster_leaders" or "training".
+  string category = 3;
+  string title = 4;
+  string training_course_id = 5;
+  string training_course = 6;
+  // ISO date.
+  string planned_on = 7;
+  string starts_at = 8;
+  string venue = 9;
+  bool is_online = 10;
+  string objectives = 11;
+  string agenda = 12;
+  int32 expected_participants = 13;
+  string facilitator = 14;
+  string resources = 15;
+  string notes = 16;
+  // "draft", "submitted", "returned", "approved", "scheduled" or "cancelled".
+  string status = 17;
+  // The official activity once staff have scheduled it.
+  string activity_id = 18;
+  string review_note = 19;
+  string created_by = 20;
+  repeated PlanEvent history = 21;
+  // What the caller may do with it now.
+  bool can_edit = 22;
+  bool can_review = 23;
+}
+
+message PlanEvent {
+  string event = 1;
+  string actor = 2;
+  string note = 3;
+  string at = 4;
+}
+
+message ListPlansRequest {
+  string cluster_id = 1;
+}
+
+message ListPlansResponse {
+  repeated MeetingPlan plans = 1;
+  // Live activities of the cluster an approved plan may be linked to (staff).
+  repeated ActivityChoice linkable_activities = 2;
+}
+
+message ActivityChoice {
+  string id = 1;
+  string label = 2;
+  string date = 3;
+}
+
+message GetPlanOptionsRequest {}
+
+message GetPlanOptionsResponse {
+  repeated CourseChoice courses = 1;
+}
+
+message CourseChoice {
+  string id = 1;
+  string name = 2;
+  string category = 3;
+  // The SSA intervention it serves.
+  string intervention = 4;
+}
+
+message SavePlanRequest {
+  // Empty to create.
+  string id = 1;
+  string cluster_id = 2;
+  string category = 3;
+  string title = 4;
+  string training_course_id = 5;
+  string planned_on = 6;
+  string starts_at = 7;
+  string venue = 8;
+  bool is_online = 9;
+  string objectives = 10;
+  string agenda = 11;
+  int32 expected_participants = 12;
+  string facilitator = 13;
+  string resources = 14;
+  string notes = 15;
+  // Send it for review once saved.
+  bool submit = 16;
+}
+
+message SavePlanResponse {
+  MeetingPlan plan = 1;
+}
+
+message CancelPlanRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message CancelPlanResponse {
+  MeetingPlan plan = 1;
+}
+
+message ReviewPlanRequest {
+  string id = 1;
+  // True approves; false returns it to the leader (a note is required).
+  bool approve = 2;
+  string note = 3;
+}
+
+message ReviewPlanResponse {
+  MeetingPlan plan = 1;
+}
+
+message LinkPlanRequest {
+  string id = 1;
+  string activity_id = 2;
+}
+
+message LinkPlanResponse {
+  MeetingPlan plan = 1;
+}
+
+message GetMobilizationRequest {
+  string activity_id = 1;
+}
+
+message GetMobilizationResponse {
+  ClusterActivity activity = 1;
+  repeated SchoolMobilization schools = 2;
+  // Whether schools may still be invited (a live activity not yet held).
+  bool can_invite = 3;
+  // Whether attendance may be recorded (the activity's day has come).
+  bool can_record_attendance = 4;
+  Minutes minutes = 5;
+  // Counts by state, for the summary line.
+  map<string, int32> counts = 6;
+}
+
+message SchoolMobilization {
+  string school_id = 1;
+  string edify_school_id = 2;
+  string name = 3;
+  string district = 4;
+  // "not_invited", "invited", "acknowledged", "confirmed", "declined",
+  // "no_response", "attended" or "absent". Attended and absent come only
+  // from an attendance record, never from an answer.
+  string state = 5;
+  string invitation_id = 6;
+  string channel = 7;
+  // "recorded" until a messaging integration confirms more.
+  string delivery_status = 8;
+  int32 follow_ups = 9;
+  string invited_at = 10;
+  string responded_at = 11;
+  string response_note = 12;
+  // Where the attendance came from: "official" (staff completed the
+  // activity), "leader" (the leader's record) or "".
+  string attendance_source = 13;
+  int32 participants = 14;
+}
+
+message InviteSchoolsRequest {
+  string activity_id = 1;
+  repeated string school_ids = 2;
+  // "in_person", "phone", "sms", "email" or "whatsapp".
+  string channel = 3;
+}
+
+message InviteSchoolsResponse {
+  int32 invited = 1;
+  // Schools already invited, left as they were.
+  int32 already_invited = 2;
+}
+
+message RecordResponseRequest {
+  string invitation_id = 1;
+  // "acknowledged", "confirmed" or "declined".
+  string status = 2;
+  string note = 3;
+}
+
+message RecordResponseResponse {
+  SchoolMobilization school = 1;
+}
+
+message FollowUpRequest {
+  string invitation_id = 1;
+  string note = 2;
+}
+
+message FollowUpResponse {
+  SchoolMobilization school = 1;
+}
+
+message AttendanceEntry {
+  string school_id = 1;
+  bool attended = 2;
+  int32 participants = 3;
+}
+
+message RecordAttendanceRequest {
+  string activity_id = 1;
+  repeated AttendanceEntry entries = 2;
+}
+
+message RecordAttendanceResponse {
+  int32 recorded = 1;
+}
+
+message Minutes {
+  string discussion = 1;
+  string decisions = 2;
+  // "draft" or "submitted"; empty when none is written.
+  string status = 3;
+  string submitted_at = 4;
+}
+
+message SaveMinutesRequest {
+  string activity_id = 1;
+  string discussion = 2;
+  string decisions = 3;
+  bool submit = 4;
+}
+
+message SaveMinutesResponse {
+  Minutes minutes = 1;
+}
+
+message ActionItem {
+  string id = 1;
+  string cluster_id = 2;
+  string activity_id = 3;
+  string title = 4;
+  string owner_school_id = 5;
+  string owner = 6;
+  string due_on = 7;
+  // "open", "done" or "cancelled".
+  string status = 8;
+  bool is_overdue = 9;
+  repeated PlanEvent history = 10;
+}
+
+message ListActionItemsRequest {
+  string cluster_id = 1;
+  // Only open items when true.
+  bool open_only = 2;
+}
+
+message ListActionItemsResponse {
+  repeated ActionItem items = 1;
+}
+
+message SaveActionItemRequest {
+  // Empty to create.
+  string id = 1;
+  string cluster_id = 2;
+  string activity_id = 3;
+  string title = 4;
+  string owner_school_id = 5;
+  string owner_name = 6;
+  string due_on = 7;
+}
+
+message SaveActionItemResponse {
+  ActionItem item = 1;
+}
+
+message CloseActionItemRequest {
+  string id = 1;
+  // "done" or "cancelled".
+  string status = 2;
+  string note = 3;
+}
+
+message CloseActionItemResponse {
+  ActionItem item = 1;
+}
+
+message LeaderRequest {
+  string id = 1;
+  string cluster_id = 2;
+  string subject = 3;
+  string body = 4;
+  // "open", "answered" or "closed".
+  string status = 5;
+  string asked_by = 6;
+  string asked_at = 7;
+  string answer = 8;
+  string answered_by = 9;
+  string answered_at = 10;
+}
+
+message ListRequestsRequest {
+  string cluster_id = 1;
+}
+
+message ListRequestsResponse {
+  repeated LeaderRequest requests = 1;
+}
+
+message SubmitRequestRequest {
+  string cluster_id = 1;
+  string subject = 2;
+  string body = 3;
+}
+
+message SubmitRequestResponse {
+  LeaderRequest request = 1;
+}
+
+message AnswerRequestRequest {
+  string id = 1;
+  string answer = 2;
+}
+
+message AnswerRequestResponse {
+  LeaderRequest request = 1;
+}
+
+message GetClusterReportRequest {
+  string cluster_id = 1;
+}
+
+message GetClusterReportResponse {
+  // "FY 2027".
+  string period = 1;
+  repeated ReportFigure figures = 2;
+  // Member schools absent from two or more held activities they were invited to.
+  repeated ReportSchool repeatedly_absent = 3;
+  // Held cluster trainings by the SSA intervention their course serves.
+  repeated ReportCount training_by_intervention = 4;
+  // Member schools by their SSA status for the financial year.
+  repeated ReportCount ssa_status = 5;
+  // What waits on staff: plans to review, requests to answer.
+  repeated ReportCount needs_staff = 6;
+}
+
+message ReportFigure {
+  string key = 1;
+  string label = 2;
+  string value = 3;
+}
+
+message ReportSchool {
+  string school_id = 1;
+  string edify_school_id = 2;
+  string name = 3;
+  int32 absences = 4;
+  int32 invitations = 5;
+}
+
+message ReportCount {
+  string label = 1;
+  int32 count = 2;
+}

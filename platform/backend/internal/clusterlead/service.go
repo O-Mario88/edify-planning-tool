@@ -37,6 +37,7 @@ type Data interface {
 	Cluster(ctx context.Context, clusterID string) (Cluster, error)
 	MemberSchools(ctx context.Context, clusterID, search string, limit, offset int) ([]School, int64, error)
 	UpcomingActivities(ctx context.Context, clusterID string, day time.Time, limit int) ([]Activity, error)
+	PastActivities(ctx context.Context, clusterID string, day time.Time, limit int) ([]Activity, error)
 	ManagedClusters(ctx context.Context, staffID, search string, day time.Time, limit, offset int) ([]ManagedCluster, int64, error)
 	ClusterAssignments(ctx context.Context, clusterID string) ([]Assignment, error)
 	Assignment(ctx context.Context, id string) (Assignment, error)
@@ -45,6 +46,8 @@ type Data interface {
 	CreateAssignment(ctx context.Context, a NewAssignment) error
 	EndAssignment(ctx context.Context, id, actorID, reason string, day time.Time) error
 	ReplaceAssignment(ctx context.Context, id string, next NewAssignment, day time.Time) error
+	// The Home's counts of the cluster's operations (migration 0002).
+	OperationsOf(ctx context.Context, clusterID, next string, day time.Time) (Operations, error)
 }
 
 // Service implements ClusterLeadershipService.
