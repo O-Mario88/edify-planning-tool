@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package edify.identity.v1;
+
+// Who the caller is, as the existing Edify identity system knows them. The
+// gateway issues no credentials of its own: sign-in, MFA, lockout and refresh
+// stay with the existing application until their migration is approved.
+service IdentityService {
+  // The authenticated caller's session.
+  rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+}
+
+message GetSessionRequest {}
+
+message GetSessionResponse {
+  Session session = 1;
+}
+
+message Session {
+  // The existing user id (CUID). Never re-issued.
+  string user_id = 1;
+  string email = 2;
+  string name = 3;
+  // Every role the account holds, in the existing role vocabulary
+  // ("CCEO", "Program Lead", "CountryDirector", ...).
+  repeated string roles = 4;
+  // The role this request is made in.
+  string active_role = 5;
+  // The existing staff profile id, empty for accounts without one.
+  string staff_profile_id = 6;
+}

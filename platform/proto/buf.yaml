@@ -1,0 +1,14 @@
+# Edify contract module. Every message that crosses a process boundary is
+# defined here and nowhere else: the mobile app, the Go gateway and the Python
+# workers all generate from these files.
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+breaking:
+  # Wire and JSON compatibility plus generated-code compatibility: a field or
+  # RPC may not be removed, renumbered or retyped once it is on the branch.
+  use:
+    - FILE

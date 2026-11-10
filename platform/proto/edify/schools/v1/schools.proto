@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package edify.schools.v1;
+
+import "edify/common/v1/common.proto";
+
+// Read access to the school directory. Every row comes from the existing
+// `school` table; identifiers are the existing ones, unchanged.
+service SchoolService {
+  // The caller's direct portfolio: operating schools assigned to the caller's
+  // own staff profile. Supervised teams' schools are not included.
+  rpc ListMySchools(ListMySchoolsRequest) returns (ListMySchoolsResponse);
+  // One school of the caller's direct portfolio, by Edify School ID or by
+  // record id. NOT_FOUND when it does not exist or is not the caller's.
+  rpc GetMySchool(GetMySchoolRequest) returns (GetMySchoolResponse);
+  // Descriptive statistics over the caller's direct portfolio, computed by
+  // the analytics worker from rows this service authorised.
+  rpc GetMyPortfolioSummary(GetMyPortfolioSummaryRequest) returns (GetMyPortfolioSummaryResponse);
+}
+
+message ListMySchoolsRequest {
+  edify.common.v1.PageRequest page = 1;
+  // Case-insensitive match on the school name or Edify School ID.
+  string search = 2;
+}
+
+message ListMySchoolsResponse {
+  repeated School schools = 1;
+  edify.common.v1.PageInfo page = 2;
+}
+
+message GetMySchoolRequest {
+  // The Edify School ID (`school.school_id`) or the record id (`school.id`).
+  string school_ref = 1;
+}
+
+message GetMySchoolResponse {
+  School school = 1;
+}
+
+message GetMyPortfolioSummaryRequest {}
+
+message GetMyPortfolioSummaryResponse {
+  int32 school_count = 1;
+  // Schools per existing school type value.
+  map<string, int32> schools_by_type = 2;
+  // Schools with an enrolment figure on record.
+  int32 schools_with_enrollment = 3;
+  int64 total_enrollment = 4;
+  double median_enrollment = 5;
+  // False when the analytics worker could not be reached; the counts above
+  // are then the gateway's own and the median is 0.
+  bool analytics_available = 6;
+}
+
+message School {
+  // Record id (`school.id`, CUID).
+  string id = 1;
+  // Edify School ID (`school.school_id`), the identifier people quote.
+  string school_id = 2;
+  string name = 3;
+  // Existing values, verbatim: school type, operational status, cluster
+  // status, SSA status for the current financial year, planning readiness.
+  string school_type = 4;
+  string operational_status = 5;
+  string cluster_status = 6;
+  string current_fy_ssa_status = 7;
+  string planning_readiness = 8;
+  // Geography names; empty when the school has none on record.
+  string region = 9;
+  string district = 10;
+  string sub_county = 11;
+  string parish = 12;
+  string cluster_id = 13;
+  // Absent when no enrolment figure is on record.
+  optional int32 enrollment = 14;
+  // Salesforce account id as typed in at onboarding; empty when none.
+  string salesforce_account_id = 15;
+}

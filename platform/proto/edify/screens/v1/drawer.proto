@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+import "edify/screens/v1/page.proto";
+
+// A school's drawers from its profile (Edit Details, Close School, Enter SSA
+// Score), read from the drawer the existing application renders for the same
+// person (apps.mobile_feed.drawer_blocks) and saved by the web view that
+// saves it. Only the drawers the feed names are reachable.
+service SchoolDrawerService {
+  rpc GetSchoolDrawer(GetSchoolDrawerRequest) returns (GetSchoolDrawerResponse);
+  rpc SaveSchoolDrawer(SaveSchoolDrawerRequest) returns (SaveSchoolDrawerResponse);
+  // The choices a field reloads when another field changes
+  // (District → Sub-county → Parish).
+  rpc GetDrawerOptions(GetDrawerOptionsRequest) returns (GetDrawerOptionsResponse);
+}
+
+message DrawerOption {
+  string value = 1;
+  string label = 2;
+  // The value of the field this choice belongs to (a parish's sub-county).
+  string group = 3;
+  bool disabled = 4;
+}
+
+// "Shown while `field` holds one of `values`."
+message DrawerCondition {
+  string field = 1;
+  repeated string values = 2;
+}
+
+message DrawerField {
+  // The form field's name, as the save sends it.
+  string name = 1;
+  string label = 2;
+  // text, number, date, tel, email, select, textarea, checkbox.
+  string kind = 3;
+  string value = 4;
+  bool required = 5;
+  string help = 6;
+  // The web's error for this field after a refused save.
+  string error = 7;
+  string placeholder = 8;
+  bool read_only = 9;
+  optional double min = 10;
+  optional double max = 11;
+  optional double step = 12;
+  optional int32 max_length = 13;
+  repeated DrawerOption options = 14;
+  // Shown only while any condition holds; empty for always.
+  repeated DrawerCondition show_when = 15;
+  // A change here reloads `reloads_target`'s choices from `reloads_path`.
+  string reloads_path = 16;
+  string reloads_target = 17;
+  // The field whose value picks which of this field's choices apply.
+  string group_by = 18;
+}
+
+message DrawerNote {
+  string text = 1;
+  // danger, warning, info, success.
+  string tone = 2;
+}
+
+// One part of a drawer, in the order the drawer draws them.
+message DrawerItem {
+  oneof kind {
+    DrawerNote note = 1;
+    string heading = 2;
+    string text = 3;
+    // Figures as a definition list ("Average score  5.5").
+    PageFacts facts = 4;
+    // Figures as lines ("Active schools  -1").
+    PageFacts lines = 5;
+    DrawerField field = 6;
+  }
+  // Shown only while any condition holds; empty for always.
+  repeated DrawerCondition show_when = 7;
+}
+
+message PageDrawer {
+  string title = 1;
+  // The line under the title, e.g. "1286 · Mukono".
+  string subtitle = 2;
+  // Shows "* Required information".
+  bool has_required = 3;
+  repeated DrawerItem items = 4;
+  string submit_label = 5;
+  string cancel_label = 6;
+  // False when the drawer only informs (the year's SSA is already entered).
+  bool can_submit = 7;
+}
+
+message GetSchoolDrawerRequest {
+  // The school's record id.
+  string school_id = 1;
+  // edit, close or ssa-entry.
+  string kind = 2;
+}
+
+message GetSchoolDrawerResponse {
+  PageDrawer drawer = 1;
+}
+
+message SaveSchoolDrawerRequest {
+  string school_id = 1;
+  string kind = 2;
+  // The drawer's fields by name. Fields the drawer does not have are ignored.
+  map<string, string> values = 3;
+}
+
+message SaveSchoolDrawerResponse {
+  bool saved = 1;
+  // The web's confirmation when saved.
+  string message = 2;
+  // Where the web went next (the directory, when the school left the
+  // reader's portfolio), or empty.
+  string redirect = 3;
+  // The web's reason when not saved and the drawer was not drawn again.
+  string error = 4;
+  // The drawer drawn again with its errors, when not saved.
+  PageDrawer drawer = 5;
+}
+
+message GetDrawerOptionsRequest {
+  // The web path the field reloads from, e.g. "/schools/sub-counties".
+  string source = 1;
+  // The changed field's name and value, e.g. district_id → "d1".
+  string name = 2;
+  string value = 3;
+}
+
+message GetDrawerOptionsResponse {
+  repeated DrawerOption options = 1;
+}

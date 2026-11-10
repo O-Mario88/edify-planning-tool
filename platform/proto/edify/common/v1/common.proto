@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package edify.common.v1;
+
+// Machine-readable failure attached to every error the gateway returns, as a
+// Connect/gRPC error detail. `code` is stable and safe to branch on; the
+// human message travels in the error itself.
+message ErrorDetail {
+  // Stable, upper-snake identifier, e.g. "AUTH_TOKEN_EXPIRED".
+  string code = 1;
+  // The request id the gateway logged this failure under.
+  string request_id = 2;
+  // W3C trace id of the request, for support to find the trace.
+  string trace_id = 3;
+}
+
+// Offset pagination, matching the existing API's page / pageSize envelope.
+message PageRequest {
+  // 1-based page number. 0 means the first page.
+  int32 page = 1;
+  // Rows per page. 0 means the server default (50); the server caps it at 200.
+  int32 page_size = 2;
+}
+
+// What a paginated response says about the whole result.
+message PageInfo {
+  int32 page = 1;
+  int32 page_size = 2;
+  int64 total = 3;
+  int32 total_pages = 4;
+}

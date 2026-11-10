@@ -1,0 +1,11 @@
+# Nearest-config wins, so this governs the worker even when ruff is run from
+# the repository root by the existing application's CI.
+target-version = "py313"
+line-length = 100
+extend-exclude = ["gen", ".venv"]
+
+[lint]
+select = ["E", "F", "I", "B", "UP", "S", "ANN"]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101", "ANN"]

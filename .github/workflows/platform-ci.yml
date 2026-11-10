@@ -1,0 +1,320 @@
+name: Platform CI
+
+# The Go gateway, the Protocol Buffer contracts, the Python analytics worker
+# and the React Native app (everything under platform/).
+#
+# This workflow runs for the migration branch and its sub-branches only. It
+# has no deploy job and holds no secret: nothing here can reach production,
+# and the only database it touches is the throwaway Postgres container below.
+# The existing application's CI and Deploy workflows are untouched.
+
+on:
+  pull_request:
+    branches:
+      - feature/edify-go-rn-migration
+    paths:
+      - "platform/**"
+      - ".github/workflows/platform-ci.yml"
+  push:
+    branches:
+      - feature/edify-go-rn-migration
+      - "feature/migration/**"
+    paths:
+      - "platform/**"
+      - ".github/workflows/platform-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: "1.27.3"
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "24"
+
+jobs:
+  contracts:
+    name: Protocol Buffer contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # History is needed to compare the contracts with their base.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: platform/tools/go.sum
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: platform/workers/analytics/requirements-dev.txt
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: platform/mobile/package-lock.json
+
+      - name: Install the pinned generators
+        working-directory: platform
+        run: |
+          make tools
+          python -m pip install -r workers/analytics/requirements-dev.txt
+          npm ci --prefix mobile
+
+      - name: Lint and format the contracts
+        working-directory: platform
+        run: make proto-lint
+
+      # A field or RPC may not be removed, renumbered or retyped. The base is
+      # the pull request's target, or the commit before a push.
+      - name: Contracts stay compatible with their base
+        working-directory: platform/proto
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if git cat-file -e "${BASE_SHA}:platform/proto/buf.yaml" 2>/dev/null; then
+            ../.bin/buf breaking --against "../../.git#ref=${BASE_SHA},subdir=platform/proto"
+          else
+            echo "No contracts at the base commit; nothing to compare with."
+          fi
+
+      - name: Generated code matches the contracts
+        working-directory: platform
+        env:
+          PYTHON: python
+        run: make proto-check
+
+  backend:
+    name: Go gateway
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: platform/backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            platform/backend/go.sum
+            platform/tools/go.sum
+
+      - name: Formatting
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+
+      - name: Module files are tidy
+        run: go mod tidy -diff
+
+      - name: Vet
+        run: go vet -tags integration ./...
+
+      - name: Unit tests
+        run: go test -race -cover ./...
+
+      - name: Known vulnerabilities
+        run: |
+          make -C .. tools
+          ../.bin/govulncheck ./...
+
+  backend-integration:
+    name: Gateway against the existing schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: edify_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Throwaway values for the service container above. Nothing here is a
+      # real credential, and the database name ends in _test because the
+      # integration tests refuse any other.
+      ADMIN_URL: postgresql://postgres:postgres@localhost:5432/edify_ci_test
+      CI_SIGNING_SECRET: ci-only-signing-secret-0123456789abcdefghijklmnop
+      CI_GATEWAY_PASSWORD: ci-only-gateway-password
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: requirements/*.txt
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: platform/backend/go.sum
+
+      # The schema under test is the real one: built by the existing
+      # application's own migrations at this commit, with its synthetic demo
+      # seed. No schema snapshot is kept that could drift from it.
+      - name: Build the existing schema with synthetic data
+        env:
+          DATABASE_URL: ${{ env.ADMIN_URL }}
+          JWT_SECRET: ${{ env.CI_SIGNING_SECRET }}
+          SECRET_KEY: ${{ env.CI_SIGNING_SECRET }}
+          DJANGO_SETTINGS_MODULE: config.settings.dev
+          ENABLE_BACKGROUND_JOBS: "false"
+        run: |
+          python -m pip install -r requirements/dev.txt
+          python manage.py migrate --noinput
+          python manage.py seed --demo
+
+      - name: Integration tests
+        working-directory: platform/backend
+        env:
+          EDIFY_TEST_ADMIN_DATABASE_URL: ${{ env.ADMIN_URL }}
+        run: go test -race -count=1 -tags integration ./internal/integration/ -v
+
+      # The same question asked of both backends on the same database: the
+      # gateway must return exactly what the existing API returns.
+      - name: Parity with the existing API
+        env:
+          DATABASE_URL: ${{ env.ADMIN_URL }}
+          JWT_SECRET: ${{ env.CI_SIGNING_SECRET }}
+          SECRET_KEY: ${{ env.CI_SIGNING_SECRET }}
+          DJANGO_SETTINGS_MODULE: config.settings.dev
+          ENABLE_BACKGROUND_JOBS: "false"
+          EDIFY_ENV: test
+          EDIFY_ADMIN_DATABASE_URL: ${{ env.ADMIN_URL }}
+          EDIFY_JWT_SECRET: ${{ env.CI_SIGNING_SECRET }}
+          EDIFY_HTTP_ADDR: 127.0.0.1:8090
+        run: |
+          platform/deploy/db/apply-roles.sh
+          psql "$ADMIN_URL" --set ON_ERROR_STOP=1 \
+            --command "ALTER ROLE edify_gateway PASSWORD '${CI_GATEWAY_PASSWORD}'"
+          (cd platform/backend && go build -o /tmp/gateway ./cmd/gateway)
+          EDIFY_DATABASE_URL="postgresql://edify_gateway:${CI_GATEWAY_PASSWORD}@localhost:5432/edify_ci_test" \
+            /tmp/gateway > /tmp/gateway.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl --silent --fail http://127.0.0.1:8090/readyz > /dev/null && break
+            sleep 1
+          done
+          python platform/tools/parity/school_parity.py || { cat /tmp/gateway.log; exit 1; }
+
+  worker:
+    name: Python analytics worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: platform/workers/analytics
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: platform/workers/analytics/requirements-dev.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt pip-audit
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Tests
+        run: python -m pytest -q
+
+      - name: Dependency CVE scan
+        run: pip-audit -r requirements.txt --strict --progress-spinner off
+
+  mobile:
+    name: React Native app
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: platform/mobile
+    env:
+      EXPO_PUBLIC_EDIFY_ENV: development
+      EXPO_PUBLIC_EDIFY_GATEWAY_URL: http://localhost:8090
+      EXPO_PUBLIC_EDIFY_IDENTITY_URL: http://localhost:8000
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: platform/mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test -- --ci
+
+      - name: Expo project health
+        run: npx expo-doctor
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      # Proves the JavaScript compiles for both platforms. It is NOT a native
+      # build: signed iOS and Android binaries are built and verified through
+      # EAS, which is a release-gate item, not something this job claims.
+      - name: Bundle JavaScript for iOS and Android
+        run: npx expo export --platform ios --platform android --output-dir "$RUNNER_TEMP/export"
+
+  images:
+    name: Container images build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Gateway image
+        run: docker build --file platform/backend/Dockerfile --tag edify-gateway:ci platform
+
+      - name: Worker image
+        run: docker build --file platform/workers/analytics/Dockerfile --tag edify-analytics:ci platform
+
+      - name: Neither image runs as root
+        run: |
+          for image in edify-gateway:ci edify-analytics:ci; do
+            user="$(docker inspect --format '{{.Config.User}}' "$image")"
+            echo "$image runs as '${user}'"
+            test -n "$user" && test "$user" != "root" && test "$user" != "0"
+          done

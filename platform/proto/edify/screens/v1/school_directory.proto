@@ -1,0 +1,143 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+import "edify/common/v1/common.proto";
+import "edify/screens/v1/school_actions.proto";
+
+// The School Directory, as the existing application builds it for the caller
+// (apps.frontend.views.school_views.school_directory_context): the same
+// schools, order, counts, filters and row actions as the web page.
+service SchoolDirectoryScreenService {
+  rpc GetSchoolDirectory(GetSchoolDirectoryRequest) returns (GetSchoolDirectoryResponse);
+}
+
+// The page's own query parameters. Empty means the page's default.
+message GetSchoolDirectoryRequest {
+  string q = 1;
+  string fy = 2;
+  string district = 3;
+  string sub_county = 4;
+  string school_type = 5;
+  string cluster_status = 6;
+  string project_status = 7;
+  string gap = 8;
+  // all | unclustered | clustered | not_assigned | assigned
+  string tab = 9;
+  int32 page = 10;
+}
+
+message GetSchoolDirectoryResponse {
+  repeated DirectoryTab tabs = 1;
+  string active_tab = 2;
+  DirectoryFilters filters = 3;
+  repeated DirectorySchool schools = 4;
+  edify.common.v1.PageInfo page = 5;
+  bool can_add_school = 6;
+  // Region roles read the directory and act on nothing.
+  bool read_only = 7;
+  // registry_empty | scope_empty | no_matches, when there are no rows.
+  string empty_state = 8;
+  // The bulk bar's choices: the clusters and projects its dialogs offer.
+  repeated ActionChoice bulk_clusters = 9;
+  repeated BulkProjectChoice bulk_projects = 10;
+  // Whether the bulk bar offers Reassign owner.
+  bool may_transfer_school = 11;
+  // Whether a school's name links to its profile (the row's can_open check).
+  bool may_open_profile = 12;
+}
+
+message BulkProjectChoice {
+  string value = 1;
+  // As the web labels it: name · coordinator · "3 of 10 left".
+  string label = 2;
+  // Places left for the caller; absent when unlimited.
+  optional int32 remaining = 3;
+  // Why no school can be added, or empty.
+  string block = 4;
+}
+
+message DirectoryTab {
+  string key = 1;
+  string label = 2;
+  int32 count = 3;
+}
+
+message DirectoryOption {
+  string value = 1;
+  string label = 2;
+}
+
+message DirectoryFilters {
+  string fy = 1;
+  repeated DirectoryOption fy_options = 2;
+  string district = 3;
+  repeated DirectoryOption districts = 4;
+  string sub_county = 5;
+  repeated DirectoryOption sub_counties = 6;
+  string school_type = 7;
+  repeated DirectoryOption school_types = 8;
+  string cluster_status = 9;
+  repeated DirectoryOption cluster_statuses = 10;
+  string project_status = 11;
+  repeated DirectoryOption project_statuses = 12;
+  string gap = 13;
+  // Labels carry their counts, as on the page: "No SSA (394)".
+  repeated DirectoryOption gaps = 14;
+}
+
+message DirectorySchool {
+  string id = 1;
+  string school_id = 2;
+  string name = 3;
+  string district = 4;
+  string district_id = 5;
+  string shipping_address = 6;
+  string school_type = 7;
+  string cluster_id = 8;
+  // "Not assigned" when the school is in no cluster.
+  string cluster_name = 9;
+  int32 enrolment = 10;
+  string phone = 11;
+  string contact = 12;
+  string staff_name = 13;
+  // Absent when the school has not been assessed.
+  optional double ssa_average = 14;
+  string ssa_tone = 15;
+  string visit_status_label = 16;
+  string visit_status_tone = 17;
+  // ISO 8601 date of the next visit, when one is planned.
+  string next_visit_date = 18;
+  string cluster_training_label = 19;
+  string cluster_training_reason = 20;
+  // positive | attention | empty
+  string cluster_training_state = 21;
+  int32 visit_count = 22;
+  int32 training_count = 23;
+  repeated DirectoryRowAction actions = 24;
+  repeated DirectorySsaGroup ssa_groups = 25;
+  // Projects the school is already in, so a bulk add can count only new ones.
+  repeated string project_ids = 26;
+}
+
+message DirectoryRowAction {
+  string key = 1;
+  string label = 2;
+  bool enabled = 3;
+  // Why the action is unavailable, shown under it.
+  string reason = 4;
+}
+
+message DirectorySsaGroup {
+  string key = 1;
+  string title = 2;
+  string tone = 3;
+  repeated DirectorySsaItem items = 4;
+}
+
+message DirectorySsaItem {
+  string label = 1;
+  double score = 2;
+  string band = 3;
+  string band_tone = 4;
+}

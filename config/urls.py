@@ -230,6 +230,9 @@ urlpatterns = [
     path("api/health/build", _build, name="health_build"),
     # Auth — public login/refresh/reset + JWT-gated /me.
     *api("auth", "apps.accounts.urls"),
+    # Screen feeds for the native app (migration branch): the view-models the
+    # web pages are rendered from, as JSON, for the Go gateway.
+    *api("mobile/v1", "apps.mobile_feed.urls"),
     # Geography — cascading admin-boundary reads.
     *api("geography", "apps.geography.urls"),
     # Schools — the source-of-truth directory.

@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+// The caller's navigation, as the existing application builds it for their
+// role (apps.core.navigation): the bottom bar and the full menu.
+service NavigationService {
+  rpc GetNavigation(GetNavigationRequest) returns (GetNavigationResponse);
+}
+
+message GetNavigationRequest {}
+
+message GetNavigationResponse {
+  // The bottom bar's destinations, in order. The app adds "More" itself.
+  repeated NavItem bottom = 1;
+  // The full menu, grouped as the sidebar groups it.
+  repeated NavSection sections = 2;
+}
+
+message NavSection {
+  string label = 1;
+  repeated NavItem items = 2;
+}
+
+message NavItem {
+  string label = 1;
+  // Path in the existing application, e.g. "/my-plan".
+  string url = 2;
+  // Icon as SVG markup, the same drawing the web page uses.
+  string icon_svg = 3;
+  // Stable key of the page, e.g. "my_plan".
+  string page_key = 4;
+}

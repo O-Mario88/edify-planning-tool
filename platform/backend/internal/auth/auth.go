@@ -1,0 +1,210 @@
+// Package auth authenticates gateway requests against the existing Edify
+// identity system.
+//
+// The gateway issues nothing. Sign-in, MFA, lockout and refresh-token rotation
+// stay in the existing application; it mints a short-lived HS256 access token
+// carrying {sub: user id, activeRole}. This package verifies that token and
+// then re-reads the account on every request, so a deactivated or deleted
+// account stops working at once rather than when its token expires.
+package auth
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"connectrpc.com/connect"
+	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+)
+
+const (
+	bearerPrefix      = "Bearer "
+	signingAlgorithm  = "HS256"
+	accountStatusLive = "active"
+)
+
+// ErrAccountNotFound is returned by an AccountLoader when no usable account
+// has the given id.
+var ErrAccountNotFound = errors.New("auth: account not found or inactive")
+
+// ErrTokenExpired and ErrTokenInvalid are the two ways verification fails.
+var (
+	ErrTokenExpired = errors.New("auth: token expired")
+	ErrTokenInvalid = errors.New("auth: token invalid")
+)
+
+// Claims are the fields of the existing access token the gateway reads.
+type Claims struct {
+	UserID     string
+	ActiveRole string
+}
+
+// Account is the existing account record, as far as the gateway needs it.
+type Account struct {
+	UserID string
+	Email  string
+	Name   string
+	Roles  []string
+	// ActiveRole is the account's stored role when loaded, and the role the
+	// request is made in once the account is part of a Principal.
+	ActiveRole     string
+	Status         string
+	StaffProfileID string
+	// InActingAppointment is true while the person holds an acting
+	// appointment, which changes their permissions in the existing system.
+	InActingAppointment bool
+}
+
+// Principal is the authenticated caller of one request.
+type Principal struct {
+	Account
+}
+
+// Verifier checks access tokens.
+type Verifier struct {
+	secret []byte
+	now    func() time.Time
+}
+
+// NewVerifier returns a Verifier for the environment's signing secret.
+func NewVerifier(secret string, now func() time.Time) *Verifier {
+	if now == nil {
+		now = time.Now
+	}
+	return &Verifier{secret: []byte(secret), now: now}
+}
+
+type tokenClaims struct {
+	ActiveRole string `json:"activeRole"`
+	jwt.RegisteredClaims
+}
+
+// Verify returns the claims of a valid token. Only HS256 is accepted and an
+// expiry is mandatory, so neither "alg: none" nor a non-expiring token passes.
+func (v *Verifier) Verify(raw string) (Claims, error) {
+	var claims tokenClaims
+	_, err := jwt.ParseWithClaims(raw, &claims,
+		func(*jwt.Token) (any, error) { return v.secret, nil },
+		jwt.WithValidMethods([]string{signingAlgorithm}),
+		jwt.WithExpirationRequired(),
+		jwt.WithTimeFunc(v.now),
+	)
+	switch {
+	case errors.Is(err, jwt.ErrTokenExpired):
+		return Claims{}, ErrTokenExpired
+	case err != nil:
+		return Claims{}, fmt.Errorf("%w: %v", ErrTokenInvalid, err)
+	case claims.Subject == "":
+		return Claims{}, fmt.Errorf("%w: no subject", ErrTokenInvalid)
+	}
+	return Claims{UserID: claims.Subject, ActiveRole: claims.ActiveRole}, nil
+}
+
+// AccountLoader reads the existing account for a user id.
+type AccountLoader interface {
+	LoadAccount(ctx context.Context, userID string) (Account, error)
+}
+
+// Authenticator turns an Authorization header into a Principal.
+type Authenticator struct {
+	verifier *Verifier
+	accounts AccountLoader
+}
+
+// NewAuthenticator wires token verification to the account store.
+func NewAuthenticator(verifier *Verifier, accounts AccountLoader) *Authenticator {
+	return &Authenticator{verifier: verifier, accounts: accounts}
+}
+
+// Authenticate verifies the bearer token in header and loads its account.
+// Every failure is a structured Unauthenticated or PermissionDenied error.
+func (a *Authenticator) Authenticate(ctx context.Context, header string) (Principal, error) {
+	if !strings.HasPrefix(header, bearerPrefix) || strings.TrimSpace(header[len(bearerPrefix):]) == "" {
+		return Principal{}, apierr.New(ctx, connect.CodeUnauthenticated, apierr.ReasonAuthMissing,
+			"Sign in to continue.")
+	}
+	claims, err := a.verifier.Verify(strings.TrimSpace(header[len(bearerPrefix):]))
+	if errors.Is(err, ErrTokenExpired) {
+		return Principal{}, apierr.New(ctx, connect.CodeUnauthenticated, apierr.ReasonAuthExpired,
+			"Your session has expired. Please sign in again.")
+	}
+	if err != nil {
+		return Principal{}, apierr.New(ctx, connect.CodeUnauthenticated, apierr.ReasonAuthInvalid,
+			"Invalid authentication token.")
+	}
+
+	account, err := a.accounts.LoadAccount(ctx, claims.UserID)
+	if errors.Is(err, ErrAccountNotFound) {
+		return Principal{}, apierr.New(ctx, connect.CodeUnauthenticated, apierr.ReasonAuthInvalid,
+			"User not found or inactive.")
+	}
+	if err != nil {
+		return Principal{}, fmt.Errorf("auth: loading account: %w", err)
+	}
+	if account.Status != accountStatusLive {
+		return Principal{}, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonAccountInactive,
+			"This account is not active.")
+	}
+	account.ActiveRole = resolveActiveRole(claims.ActiveRole, account)
+	return Principal{Account: account}, nil
+}
+
+// resolveActiveRole mirrors the existing rule: the token's role counts only
+// when the account still holds it; otherwise the account's own active role.
+func resolveActiveRole(tokenRole string, account Account) string {
+	for _, role := range account.Roles {
+		if role == tokenRole {
+			return tokenRole
+		}
+	}
+	return account.ActiveRole
+}
+
+type principalKey struct{}
+
+// WithPrincipal returns a context carrying the authenticated caller.
+func WithPrincipal(ctx context.Context, principal Principal) context.Context {
+	return context.WithValue(ctx, principalKey{}, principal)
+}
+
+// PrincipalFrom returns the authenticated caller, if the request has one.
+func PrincipalFrom(ctx context.Context) (Principal, bool) {
+	principal, ok := ctx.Value(principalKey{}).(Principal)
+	return principal, ok
+}
+
+// Interceptor authenticates every unary call before its handler runs.
+func (a *Authenticator) Interceptor() connect.UnaryInterceptorFunc {
+	return func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(ctx context.Context, request connect.AnyRequest) (connect.AnyResponse, error) {
+			principal, err := a.Authenticate(ctx, request.Header().Get("Authorization"))
+			if err != nil {
+				return nil, err
+			}
+			ctx = WithBearer(WithPrincipal(ctx, principal), bearerOf(request.Header().Get("Authorization")))
+			return next(ctx, request)
+		}
+	}
+}
+
+type bearerKey struct{}
+
+// WithBearer returns a context carrying the caller's verified access token,
+// for the one place that forwards it: the feed from the existing application.
+func WithBearer(ctx context.Context, token string) context.Context {
+	return context.WithValue(ctx, bearerKey{}, token)
+}
+
+// BearerFrom returns the caller's verified access token, or "".
+func BearerFrom(ctx context.Context) string {
+	token, _ := ctx.Value(bearerKey{}).(string)
+	return token
+}
+
+func bearerOf(header string) string {
+	return strings.TrimSpace(strings.TrimPrefix(header, bearerPrefix))
+}

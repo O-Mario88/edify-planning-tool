@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+// Home, as the existing application builds it for the caller's role
+// (apps.command_center.home_service). The values, wording, tones and links
+// are the server's: the app draws them and decides nothing.
+//
+// Until the Home rules are ported to Go, the gateway answers these calls by
+// asking the existing application for the same view-model.
+service HomeScreenService {
+  // The page without its To-Do queue.
+  rpc GetHome(GetHomeRequest) returns (GetHomeResponse);
+  // Priority actions, and the To-Do figures where they come with them.
+  rpc GetHomeQueue(GetHomeQueueRequest) returns (GetHomeQueueResponse);
+  // The To-Do figures, for roles whose Priority actions do not carry them.
+  rpc GetHomeTodoFigures(GetHomeTodoFiguresRequest) returns (GetHomeTodoFiguresResponse);
+}
+
+message GetHomeRequest {}
+
+message GetHomeResponse {
+  // "Good morning", worded by the server for its own clock.
+  string greeting = 1;
+  string first_name = 2;
+  // The role as the page titles it, e.g. "CCEO". Empty for a role without one.
+  string role_title = 3;
+  // The server's local day, ISO 8601 (YYYY-MM-DD), and its label ("Mon, Nov 9").
+  string today = 4;
+  string today_label = 5;
+  // The operational financial year label, e.g. "2027".
+  string fy = 6;
+  repeated HomeFigure figures = 7;
+  // Whether this role has a plan of its own (Upcoming activities is shown).
+  bool has_plan = 8;
+  repeated HomeUpcoming upcoming = 9;
+  repeated HomeShortcut shortcuts = 10;
+  // Set when this reader does not use Home; the path they start on instead.
+  string redirect_url = 11;
+  // The page's own small icons by name (bolt, grid, calendar, clock, chevron,
+  // arrow), as SVG markup.
+  map<string, string> glyphs = 12;
+}
+
+// One overview tile.
+message HomeFigure {
+  string key = 1;
+  string label = 2;
+  // The value as displayed ("0", "33", "No data").
+  string value = 3;
+  // Icon as SVG markup, the same drawing the web page uses.
+  string icon_svg = 4;
+  // brand | info | plain | caution | alert | good
+  string tone = 5;
+  string url = 6;
+  // True while the value is still to come (the To-Do figures).
+  bool loading = 7;
+  // What the figure counts, for assistive technology.
+  string description = 8;
+}
+
+message HomeUpcoming {
+  string id = 1;
+  // "NOV"
+  string month = 2;
+  int32 day = 3;
+  bool is_today = 4;
+  string title = 5;
+  string where = 6;
+  string time = 7;
+  string type_label = 8;
+  string status_label = 9;
+  string url = 10;
+}
+
+message HomeShortcut {
+  string label = 1;
+  string url = 2;
+  string icon_svg = 3;
+}
+
+message GetHomeQueueRequest {}
+
+message GetHomeQueueResponse {
+  repeated HomePriorityRow priority_rows = 1;
+  // How many To-Dos the reader has in all. Absent when the figures follow in
+  // GetHomeTodoFigures.
+  optional int32 priority_total = 2;
+  bool has_plan = 3;
+  repeated HomeFigure queue_figures = 4;
+  // True when the To-Do figures must be fetched with GetHomeTodoFigures.
+  bool todo_figures_later = 5;
+}
+
+message HomePriorityRow {
+  string key = 1;
+  string title = 2;
+  string context = 3;
+  string due_label = 4;
+  string due_tone = 5;
+  string status_label = 6;
+  string status_tone = 7;
+  // Tone of the round mark; falls back to status_tone when empty.
+  string mark_tone = 8;
+  string action_label = 9;
+  string url = 10;
+  string icon_svg = 11;
+  int32 count = 12;
+}
+
+message GetHomeTodoFiguresRequest {}
+
+message GetHomeTodoFiguresResponse {
+  repeated HomeFigure queue_figures = 1;
+  int32 priority_total = 2;
+}

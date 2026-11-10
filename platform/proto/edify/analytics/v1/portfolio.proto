@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package edify.analytics.v1;
+
+// INTERNAL. Called by the Go gateway only, never by a client. The worker
+// holds no database connection and decides nothing: it receives rows the
+// gateway has already authorised and returns descriptive statistics.
+service PortfolioAnalyticsService {
+  rpc SummarizePortfolio(SummarizePortfolioRequest) returns (SummarizePortfolioResponse);
+}
+
+message PortfolioSchool {
+  string school_type = 1;
+  optional int32 enrollment = 2;
+}
+
+message SummarizePortfolioRequest {
+  repeated PortfolioSchool schools = 1;
+}
+
+message SummarizePortfolioResponse {
+  int32 school_count = 1;
+  map<string, int32> schools_by_type = 2;
+  int32 schools_with_enrollment = 3;
+  int64 total_enrollment = 4;
+  double median_enrollment = 5;
+}

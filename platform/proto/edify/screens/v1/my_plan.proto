@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+import "edify/screens/v1/page.proto";
+
+// My Plan, read from the page the existing application renders for the same
+// person (my_plan_view, with the readiness part it loads after it opens):
+// its header and blocks, in the page's order.
+service MyPlanScreenService {
+  rpc GetMyPlan(GetMyPlanRequest) returns (GetMyPlanResponse);
+}
+
+message GetMyPlanRequest {
+  // The page's own query, as its tabs, filters and pagers write it
+  // (period, fy, quarter, month, district, staff, activity_type, status,
+  // <table>_page …). Anything else is not passed on.
+  map<string, string> query = 1;
+}
+
+message GetMyPlanResponse {
+  PageHeader header = 1;
+  repeated PageTab tabs = 2;
+  repeated PageBlock blocks = 3;
+  // The page's web path, for what the app opens on the web.
+  string web_path = 4;
+}

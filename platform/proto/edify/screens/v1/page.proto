@@ -1,0 +1,299 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+// A web page read as its shared components (apps.mobile_feed.page_blocks):
+// the page header, its tabs, and the blocks under them in the order the page
+// draws them. Every label, figure and line is the page's own text. An href is
+// the web path the element links to; the app opens what it draws natively and
+// the web for the rest.
+
+message PageBadge {
+  string text = 1;
+  // good, caution, alert, info or plain.
+  string tone = 2;
+  // The hover text, e.g. "Source: Recorded · Confirmed".
+  string title = 3;
+}
+
+message PageAction {
+  string key = 1;
+  string label = 2;
+  // The page's one primary button.
+  bool primary = 3;
+  bool enabled = 4;
+  // Why a disabled button cannot be used, as the page says it.
+  string reason = 5;
+  // The web path the button opens (its drawer).
+  string href = 6;
+}
+
+message PageHeader {
+  string back_label = 1;
+  string back_href = 2;
+  string title = 3;
+  // The line under the title, e.g. "School ID: 1286".
+  string description = 4;
+  repeated PageBadge badges = 5;
+  repeated PageAction actions = 6;
+  // The small line over the title ("My Work").
+  string eyebrow = 7;
+}
+
+message PageTab {
+  // The page's own value of its tab parameter, e.g. "overview".
+  string key = 1;
+  string label = 2;
+  bool active = 3;
+}
+
+message PageFact {
+  string label = 1;
+  string value = 2;
+  string href = 3;
+}
+
+message PageFacts {
+  repeated PageFact facts = 1;
+}
+
+message PageFilterOption {
+  string value = 1;
+  string label = 2;
+}
+
+message PageFilter {
+  // The query parameter the filter sets, e.g. "fy".
+  string name = 1;
+  string label = 2;
+  string value = 3;
+  repeated PageFilterOption options = 4;
+}
+
+message PageFilters {
+  repeated PageFilter filters = 1;
+  // The hidden values the filter form sends with every change (My Plan's
+  // previous year and quarter).
+  map<string, string> hidden = 2;
+}
+
+message PageMetric {
+  string label = 1;
+  // The figure as the tile shows it ("872", "UGX 1.3M", "0%").
+  string value = 2;
+  // The short line under the figure, when there is one.
+  string helper = 3;
+  // The fuller sentence the tile keeps for a screen reader.
+  string note = 4;
+  string href = 5;
+  string tone = 6;
+}
+
+message PageStrip {
+  string title = 1;
+  repeated PageMetric metrics = 2;
+  // The line under the title ("All activity types combined").
+  string subtitle = 3;
+}
+
+message PageColumn {
+  string label = 1;
+  // Right-aligned figures.
+  bool numeric = 2;
+}
+
+message PageCell {
+  string text = 1;
+  string href = 2;
+  // success, danger, warning, info, lime or empty; for a badge, the
+  // badge's colour (green, blue, amber, purple, rose, slate, primary …).
+  string tone = 3;
+  bool strong = 4;
+  // Drawn as one pill.
+  bool badge = 5;
+  // The row's own buttons and its Actions menu, in order. A button's key is
+  // "button", a menu item's "menu", a red menu item's "danger".
+  repeated PageAction actions = 6;
+}
+
+message PageRow {
+  repeated PageCell cells = 1;
+  // done (green), overdue (red), dayoff (on a holiday or leave day) or empty.
+  string tone = 2;
+  // The activity the row's tick box ticks for the Reschedule / Cancel bar,
+  // and what the tick box says; empty when the row cannot be ticked.
+  string pick_id = 3;
+  string pick_label = 4;
+}
+
+message PagePagerPage {
+  // "1", "2", "…", "Prev" or "Next".
+  string label = 1;
+  // The page's query ("?school_visits_page=2"); empty for the current page.
+  string href = 2;
+  bool current = 3;
+}
+
+// The shared table pager, when a table has more than one page.
+message PagePager {
+  // "Showing 1–50 of 51".
+  string summary = 1;
+  repeated PagePagerPage pages = 2;
+}
+
+message PageTable {
+  string title = 1;
+  // The line beside the title, e.g. "FY 2025/26 to FY 2026/27".
+  string subtitle = 2;
+  repeated PageColumn columns = 3;
+  repeated PageRow rows = 4;
+  // The note under the table.
+  string footnote = 5;
+  // Shown in place of rows when the table is empty.
+  string empty_message = 6;
+  // The count beside the title.
+  string count = 7;
+  // The empty state's way out ("Open Planning").
+  PageAction empty_action = 8;
+  PagePager pager = 9;
+}
+
+message PageLinkTab {
+  string label = 1;
+  // The page's query this tab opens ("?period=week").
+  string href = 2;
+  bool active = 3;
+}
+
+// Tabs that are links (My Plan's This Week … This FY), with the link drawn
+// beside them (Open Calendar).
+message PageLinkTabs {
+  repeated PageLinkTab tabs = 1;
+  PageAction beside = 2;
+}
+
+message PageMeter {
+  string label = 1;
+  string value = 2;
+  // How full the bar is, 0 to 1.
+  double fraction = 3;
+  string href = 4;
+}
+
+message PageLink {
+  string text = 1;
+  string href = 2;
+  // A second line under the link (a date, a status).
+  string caption = 3;
+}
+
+message PageRailPart {
+  string key = 1;
+  string title = 2;
+  string figure = 3;
+  string figure_href = 4;
+  string figure_note = 5;
+  repeated PageMeter meters = 6;
+  string note = 7;
+  repeated PageLink links = 8;
+}
+
+message PageRail {
+  string title = 1;
+  string subtitle = 2;
+  repeated PageRailPart parts = 3;
+}
+
+message PageSeries {
+  string name = 1;
+  repeated double values = 2;
+}
+
+// A bar chart (components/data_chart.html), from the data the page charts.
+message PageChart {
+  string title = 1;
+  string subtitle = 2;
+  bool horizontal = 3;
+  repeated string categories = 4;
+  repeated PageSeries series = 5;
+  double min = 6;
+  double max = 7;
+  string axis_title = 8;
+}
+
+message PageDataRow {
+  string label = 1;
+  // The second line under the label.
+  string meta = 2;
+  string value = 3;
+  string tone = 4;
+}
+
+message PageDataRows {
+  repeated PageDataRow rows = 1;
+}
+
+message PageLinks {
+  repeated PageLink links = 1;
+}
+
+// One part of a panel, in the order the panel draws them.
+message PagePanelItem {
+  oneof kind {
+    // A sub-heading inside the panel.
+    string heading = 1;
+    // A paragraph.
+    string text = 2;
+    PageFacts fields = 3;
+    PageDataRows rows = 4;
+    PageLinks links = 5;
+    PageMeter meter = 6;
+  }
+  // The tone of a text item's own status words.
+  string tone = 7;
+}
+
+// A titled card of record details (the Details tab's panels, SSA history).
+message PagePanel {
+  string title = 1;
+  string subtitle = 2;
+  repeated PageBadge badges = 3;
+  repeated PagePanelItem items = 4;
+}
+
+// A switch between parts drawn on the page itself (Participation's Planned
+// and Completed).
+message PageSegment {
+  string label = 1;
+  bool active = 2;
+  repeated PageBlock blocks = 3;
+  // The count in the switch's pill, e.g. "0".
+  string count = 4;
+}
+
+message PageSegments {
+  repeated PageSegment segments = 1;
+  string title = 2;
+  // The line beside the title, e.g. "0 planned · 0 completed".
+  string subtitle = 3;
+  // The sentence under the switch.
+  string caption = 4;
+}
+
+message PageBlock {
+  oneof kind {
+    // "Single school, FY 2026/27": what the profile covers.
+    string scope_line = 1;
+    PageFacts facts = 2;
+    PageFilters filters = 3;
+    PageStrip strip = 4;
+    PageTable table = 5;
+    PageRail rail = 6;
+    PageChart chart = 7;
+    PagePanel panel = 8;
+    PageSegments segments = 9;
+    // An empty state's message ("No record yet: the figure is 0.").
+    string empty = 10;
+    PageLinkTabs link_tabs = 11;
+  }
+}

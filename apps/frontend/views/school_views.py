@@ -349,6 +349,26 @@ def school_intelligence_partial(request, school_id):
 @require_page_permission("school_directory")
 @require_export_permission
 def school_directory_view(request):
+    context = school_directory_context(request)
+    # An export answers with the file itself.
+    if isinstance(context, HttpResponse):
+        return context
+
+    if request.headers.get("HX-Request") == "true":
+        if request.headers.get("X-Edify-Update-Scope") == "table":
+            return render(request, "partials/schools/table.html", context)
+        return render(request, "partials/schools/htmx_response.html", context)
+
+    return render(request, "pages/schools/index.html", context)
+
+
+def school_directory_context(request):
+    """The School Directory's view-model for `request`, or the export file.
+
+    Shared by the page and the native app's screen feed (apps.mobile_feed), so
+    both show the same schools, figures, filters and actions. The caller has
+    already applied the page's permission check.
+    """
     user = request.user
     scope = resolve_user_scope(user)
 
@@ -990,13 +1010,7 @@ def school_directory_view(request):
             user__roles__overlap=list(ownership_transfer.PORTFOLIO_ROLES),
         ),
     }
-
-    if request.headers.get("HX-Request") == "true":
-        if request.headers.get("X-Edify-Update-Scope") == "table":
-            return render(request, "partials/schools/table.html", context)
-        return render(request, "partials/schools/htmx_response.html", context)
-
-    return render(request, "pages/schools/index.html", context)
+    return context
 
 
 @require_page_permission("school_directory")
@@ -1059,6 +1073,19 @@ def school_parish_options_view(request):
 
 @require_page_permission("school_directory")
 def add_to_cluster_drawer_view(request, school_id):
+    return add_to_cluster_flow(
+        request, school_id, lambda template, context: render(request, template, context)
+    )
+
+
+def add_to_cluster_flow(request, school_id, respond):
+    """Add a school to one of its owner's clusters, or change its cluster.
+
+    `respond(template, context)` draws each outcome: the page passes Django's
+    `render`; the native app's screen feed (apps.mobile_feed) passes one that
+    returns the template and its context, so both get the same rules,
+    messages and results.
+    """
     """Add a school to one of its owner's clusters, or change its cluster.
 
     Owner, 2026-09-15 (twice):
@@ -1091,8 +1118,7 @@ def add_to_cluster_drawer_view(request, school_id):
     user = request.user
 
     if not has_permission(user, "cluster.assign"):
-        return render(
-            request,
+        return respond(
             "partials/schools/drawer_error.html",
             {"error": "You do not have permission to assign clusters."},
         )
@@ -1100,8 +1126,7 @@ def add_to_cluster_drawer_view(request, school_id):
     # supervisor and then fail on save with "outside your scope"; say so first.
     writable = direct_portfolio_schools(resolve_user_scope(user))
     if writable is None or not writable.filter(id=school.id).exists():
-        return render(
-            request,
+        return respond(
             "partials/schools/drawer_error.html",
             {"error": OVERSIGHT_ONLY_MESSAGE},
         )
@@ -1226,8 +1251,7 @@ def add_to_cluster_drawer_view(request, school_id):
         }
 
     if not school.school_id or not school.name or not school.district_id:
-        return render(
-            request,
+        return respond(
             "partials/schools/add_to_cluster_drawer.html",
             drawer_context(
                 "This school needs a School ID, Name, and District before it can "
@@ -1257,8 +1281,7 @@ def add_to_cluster_drawer_view(request, school_id):
 
         if is_change:
             if request.POST.get("confirm_change") != "yes":
-                return render(
-                    request,
+                return respond(
                     "partials/schools/add_to_cluster_drawer.html",
                     drawer_context(
                         f"Confirm that {school.name} should leave "
@@ -1267,8 +1290,7 @@ def add_to_cluster_drawer_view(request, school_id):
                     ),
                 )
             if len(reason) < 5:
-                return render(
-                    request,
+                return respond(
                     "partials/schools/add_to_cluster_drawer.html",
                     drawer_context("Give the reason for changing the cluster.", posted),
                 )
@@ -1286,22 +1308,19 @@ def add_to_cluster_drawer_view(request, school_id):
             )
             if cluster is None:
                 message = "Select one of the clusters belonging to this school's owner."
-                return render(
-                    request,
+                return respond(
                     "partials/schools/add_to_cluster_drawer.html",
                     drawer_context(message, posted),
                 )
             if cluster.is_current:
-                return render(
-                    request,
+                return respond(
                     "partials/schools/add_to_cluster_drawer.html",
                     drawer_context(
                         f"{school.name} is already in {cluster.name}.", posted
                     ),
                 )
             if cluster.is_cross_district and len(reason) < 5:
-                return render(
-                    request,
+                return respond(
                     "partials/schools/add_to_cluster_drawer.html",
                     drawer_context(
                         f"{cluster.name} is in {cluster.district.name}. Give the reason "
@@ -1312,8 +1331,7 @@ def add_to_cluster_drawer_view(request, school_id):
         else:
             cluster_name = request.POST.get("new_cluster_name", "").strip()
             if not cluster_name:
-                return render(
-                    request,
+                return respond(
                     "partials/schools/add_to_cluster_drawer.html",
                     drawer_context("Enter a cluster name to continue.", posted),
                 )
@@ -1333,8 +1351,7 @@ def add_to_cluster_drawer_view(request, school_id):
                     user,
                 )
             except (BadRequest, Forbidden) as e:
-                return render(
-                    request,
+                return respond(
                     "partials/schools/add_to_cluster_drawer.html",
                     drawer_context(str(e), posted),
                 )
@@ -1353,8 +1370,7 @@ def add_to_cluster_drawer_view(request, school_id):
                 user,
             )
         except (BadRequest, Forbidden, NotFoundError) as exc:
-            return render(
-                request,
+            return respond(
                 "partials/schools/add_to_cluster_drawer.html",
                 drawer_context(str(getattr(exc, "detail", exc)), posted),
             )
@@ -1371,8 +1387,7 @@ def add_to_cluster_drawer_view(request, school_id):
 
             flash.success(request, message)
             return redirect("/schools")
-        response = render(
-            request,
+        response = respond(
             "partials/schools/toast_success.html",
             {
                 "message": message,
@@ -1391,8 +1406,7 @@ def add_to_cluster_drawer_view(request, school_id):
         )
         return response
 
-    return render(
-        request,
+    return respond(
         "partials/schools/add_to_cluster_drawer.html",
         drawer_context(),
     )
@@ -1400,6 +1414,19 @@ def add_to_cluster_drawer_view(request, school_id):
 
 @require_page_permission("school_directory")
 def assign_to_project_drawer_view(request, school_id):
+    return assign_to_project_flow(
+        request, school_id, lambda template, context: render(request, template, context)
+    )
+
+
+def assign_to_project_flow(request, school_id, respond):
+    """Add a school to a project open for enrolment.
+
+    `respond(template, context)` draws each outcome: the page passes Django's
+    `render`; the native app's screen feed (apps.mobile_feed) passes one that
+    returns the template and its context, so both get the same rules,
+    messages and results.
+    """
     school = get_scoped_object_or_404(
         School, request.user, id=school_id, deleted_at__isnull=True
     )
@@ -1408,8 +1435,7 @@ def assign_to_project_drawer_view(request, school_id):
     from apps.core.permissions import has_permission
 
     if not has_permission(user, "project.assignSchool"):
-        return render(
-            request,
+        return respond(
             "partials/schools/drawer_error.html",
             {"error": "You do not have permission to assign projects."},
         )
@@ -1465,8 +1491,7 @@ def assign_to_project_drawer_view(request, school_id):
         notes = request.POST.get("notes", "").strip()
 
         if not project_id:
-            return render(
-                request,
+            return respond(
                 "partials/schools/assign_to_project_drawer.html",
                 _drawer_context({"validation_error": "Please select a project."}),
             )
@@ -1477,8 +1502,7 @@ def assign_to_project_drawer_view(request, school_id):
             project=project, school=school
         ).exists()
         if already_assigned:
-            return render(
-                request,
+            return respond(
                 "partials/schools/assign_to_project_drawer.html",
                 _drawer_context(
                     {"validation_error": "School is already assigned to this project."}
@@ -1486,8 +1510,7 @@ def assign_to_project_drawer_view(request, school_id):
             )
 
         if not project.accepts_new_work:
-            return render(
-                request,
+            return respond(
                 "partials/schools/assign_to_project_drawer.html",
                 _drawer_context(
                     {
@@ -1533,8 +1556,7 @@ def assign_to_project_drawer_view(request, school_id):
                 user,
             )
         except (BadRequest, Forbidden) as exc:
-            return render(
-                request,
+            return respond(
                 "partials/schools/assign_to_project_drawer.html",
                 _drawer_context({"validation_error": str(exc)}),
             )
@@ -1615,8 +1637,7 @@ def assign_to_project_drawer_view(request, school_id):
             .values_list("id", flat=True)
             .first()
         )
-        response = render(
-            request,
+        response = respond(
             "partials/schools/toast_success.html",
             {
                 "message": f"{school.name} assigned to {project.name}.",
@@ -1627,8 +1648,7 @@ def assign_to_project_drawer_view(request, school_id):
         response["HX-Trigger"] = "schools-updated"
         return response
 
-    return render(
-        request,
+    return respond(
         "partials/schools/assign_to_project_drawer.html",
         _drawer_context(),
     )

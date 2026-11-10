@@ -1,0 +1,6 @@
+# Generators built by `make tools` (versions pinned in tools/go.mod).
+.bin/
+# Local environment files. .env.example is the committed template.
+.env
+.env.*
+!.env.example

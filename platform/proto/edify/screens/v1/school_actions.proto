@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+// The School Directory's row actions, served by the existing application's
+// own drawer flows (apps.frontend.views.school_views.add_to_cluster_flow and
+// assign_to_project_flow): the same choices, rules, messages and results.
+service SchoolActionService {
+  rpc GetAddToCluster(GetAddToClusterRequest) returns (GetAddToClusterResponse);
+  rpc AddToCluster(AddToClusterRequest) returns (AddToClusterResponse);
+  rpc GetAddToProject(GetAddToProjectRequest) returns (GetAddToProjectResponse);
+  rpc AddToProject(AddToProjectRequest) returns (AddToProjectResponse);
+  // The directory's bulk bar, served by the web's own bulk saves.
+  rpc BulkAssignCluster(BulkAssignClusterRequest) returns (BulkAssignClusterResponse);
+  rpc BulkAssignProject(BulkAssignProjectRequest) returns (BulkAssignProjectResponse);
+}
+
+// What a bulk save reported, in the web's own words.
+message BulkActionResult {
+  bool saved = 1;
+  string message = 2;
+  // Schools skipped and why ("Skipped already-clustered schools: ...").
+  repeated string warnings = 3;
+  string error = 4;
+}
+
+message BulkAssignClusterRequest {
+  // Record ids of the ticked schools.
+  repeated string school_ids = 1;
+  string cluster_id = 2;
+}
+
+message BulkAssignClusterResponse {
+  BulkActionResult result = 1;
+}
+
+message BulkAssignProjectRequest {
+  repeated string school_ids = 1;
+  string project_id = 2;
+}
+
+message BulkAssignProjectResponse {
+  BulkActionResult result = 1;
+}
+
+message GetAddToClusterResponse {
+  AddToClusterForm form = 1;
+}
+
+message AddToClusterResponse {
+  SchoolActionResult result = 1;
+}
+
+message GetAddToProjectResponse {
+  AddToProjectForm form = 1;
+}
+
+message AddToProjectResponse {
+  SchoolActionResult result = 1;
+}
+
+// What a save did. Exactly one of saved, refused or error describes it.
+message SchoolActionResult {
+  bool saved = 1;
+  // The confirmation the web shows, e.g. "Hill Primary added to Cluster A."
+  string message = 2;
+  // The action cannot be taken by this person for this school.
+  string refused = 3;
+  // The form needs a correction; the person's entries stay as they are.
+  string error = 4;
+}
+
+message ActionChoice {
+  string value = 1;
+  string label = 2;
+  bool disabled = 3;
+  // Why this choice cannot be taken (a project's capacity, for example).
+  string reason = 4;
+}
+
+message GetAddToClusterRequest {
+  // Record id of the school (school.id).
+  string school_id = 1;
+}
+
+message AddToClusterForm {
+  // Set when the drawer cannot open for this person; nothing else is set.
+  string refused = 1;
+  // "Add Hill Primary to cluster" or "Change cluster for Hill Primary".
+  string title = 2;
+  bool is_change = 3;
+  string current_cluster_name = 4;
+  // The owner's clusters, labelled and ordered as on the web.
+  repeated ActionChoice clusters = 5;
+  string preselected_cluster_id = 6;
+  // Clusters across the district border: choosing one needs a reason.
+  repeated string cross_district_cluster_ids = 7;
+  bool has_selectable_cluster = 8;
+  // "Clusters of Paul N. (the school's owner)."
+  string owner_note = 9;
+  // Shown instead of, or under, the cluster list when it cannot be used.
+  string cluster_notice = 10;
+  string new_cluster_placeholder = 11;
+  string new_cluster_note = 12;
+  string reason_placeholder = 13;
+  // "Move this school out of Cluster A.", when changing.
+  string confirm_label = 14;
+  string submit_label = 15;
+  // A problem found before anything was entered (missing School ID...).
+  string error = 16;
+}
+
+message AddToClusterRequest {
+  string school_id = 1;
+  // existing | new
+  string action_type = 2;
+  string cluster_id = 3;
+  string new_cluster_name = 4;
+  string reason = 5;
+  bool confirm_change = 6;
+}
+
+message GetAddToProjectRequest {
+  string school_id = 1;
+}
+
+message AddToProjectForm {
+  string refused = 1;
+  string title = 2;
+  // A project with a reason cannot take this school (capacity).
+  repeated ActionChoice projects = 3;
+  repeated ActionChoice support_types = 4;
+  repeated ActionChoice coordinators = 5;
+  repeated ActionChoice focus_areas = 6;
+  // Shown when no project is open for enrolment.
+  string empty_notice = 7;
+  string error = 8;
+}
+
+message AddToProjectRequest {
+  string school_id = 1;
+  string project_id = 2;
+  string project_type = 3;
+  string participation_type = 4;
+  // ISO 8601 date, or empty.
+  string start_date = 5;
+  string support_area = 6;
+  string coordinator_id = 7;
+  string notes = 8;
+}

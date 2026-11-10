@@ -1,0 +1,6 @@
+# Runtime dependencies of the analytics worker, pinned.
+# Deliberately no database driver: this worker holds no database connection
+# (tests/test_server.py fails the build if one is added).
+grpcio==1.85.1
+grpcio-health-checking==1.85.1
+protobuf==7.36.2

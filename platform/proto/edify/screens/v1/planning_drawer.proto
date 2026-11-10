@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+import "edify/screens/v1/drawer.proto";
+
+// A school's planning drawers from its profile: Schedule visit and Assign to
+// Partner. Their fields come and go with the drawer's own script, so the app
+// runs the same rules (mobile src/ui/planning/planningLogic.ts) from the
+// values that script starts with, read from the drawer the existing
+// application renders for the same person (apps.mobile_feed.planning_drawers).
+// A save posts to the web view the drawer's form posts to.
+service PlanningDrawerService {
+  rpc GetPlanningDrawer(GetPlanningDrawerRequest) returns (GetPlanningDrawerResponse);
+  rpc SavePlanningDrawer(SavePlanningDrawerRequest) returns (SavePlanningDrawerResponse);
+  // What the Schedule drawer shows under its Training field: the officer's
+  // training ceiling and what is already scheduled under it.
+  rpc GetTrainingCapacity(GetTrainingCapacityRequest) returns (GetTrainingCapacityResponse);
+}
+
+// A training from the Training Catalogue, as the drawer's list offers it.
+message PlanningTraining {
+  string id = 1;
+  string label = 2;
+  string stable_code = 3;
+  string category = 4;
+  string ssa_indicator = 5;
+  // The SSA intervention the catalogue links the training to.
+  string ssa_intervention = 6;
+  string ssa_intervention_label = 7;
+  // The catalogue leaves the intervention to the planner.
+  bool planner_chooses = 8;
+  // On top of the school's own training for the year.
+  bool universal = 9;
+  bool staff_delivery_allowed = 10;
+  bool certified_agency_delivery_allowed = 11;
+  repeated string priority_titles = 12;
+}
+
+// A training the school completed, which a Follow Up follows up.
+message PlanningFollowUp {
+  string id = 1;
+  string label = 2;
+  string intervention_label = 3;
+}
+
+// What a purpose asks for (the drawer's Workflow Profile).
+message PurposeProfile {
+  bool requires_participants = 1;
+  bool schedulable = 2;
+  // Why it cannot be priced, when not schedulable.
+  string unavailable_reason = 3;
+}
+
+// Why a purpose is greyed, by financial year ("2027").
+message YearReasons {
+  map<string, string> by_year = 1;
+}
+
+message CodeList {
+  repeated string codes = 1;
+}
+
+// A note with a title over its body, as the web's notes are drawn.
+message PlanningNote {
+  string title = 1;
+  string text = 2;
+  // danger, warning, info, success.
+  string tone = 3;
+}
+
+// "Financial Health  (4.6/10 · Critical)".
+message PlanningLine {
+  string label = 1;
+  string value = 2;
+  string tone = 3;
+}
+
+// One part drawn above Purpose of visit, in order.
+message PlanningLeadItem {
+  oneof kind {
+    string heading = 1;
+    PlanningLine line = 2;
+    string text = 3;
+    PlanningNote note = 4;
+  }
+}
+
+message ExistingPlan {
+  string label = 1;
+  string status = 2;
+  // The planning badge's tone (green done, blue planned …).
+  string tone = 3;
+}
+
+// "This school already has plans this year", with its plans and buttons.
+message ExistingPlans {
+  PlanningNote note = 1;
+  repeated ExistingPlan plans = 2;
+  // The buttons' words by what they do: view, continue, follow-up, cancel.
+  map<string, string> buttons = 3;
+}
+
+// A project the school can be handed to a partner through.
+message ProjectHandover {
+  string label = 1;
+  // The web path that opens the project's own hand-over drawer.
+  string path = 2;
+}
+
+message PlanningDrawer {
+  // schedule or assign.
+  string kind = 1;
+  string title = 2;
+  string submit_label = 3;
+  string cancel_label = 4;
+  repeated PlanningLeadItem lead = 5;
+  ExistingPlans existing_plans = 6;
+  // Assign only.
+  repeated DrawerOption partners = 7;
+  // disabled: greyed from the start.
+  repeated DrawerOption purposes = 8;
+  string initial_purpose = 9;
+  // Said under Purpose (outreach only, a Core package, a used visit).
+  repeated string purpose_notes = 10;
+  // Purpose → the years its visit is already used in, and why.
+  map<string, YearReasons> visit_locks = 11;
+  repeated string purposes_locked_every_year = 12;
+  // Year → why only the universal trainings can still be scheduled.
+  map<string, string> training_locks = 13;
+  bool training_locked_every_year = 14;
+  map<string, PurposeProfile> profiles = 15;
+  repeated PlanningTraining trainings = 16;
+  string initial_training = 17;
+  string default_catalogue_item = 18;
+  // Partner → the stable codes of the trainings it delivers.
+  map<string, CodeList> partner_courses = 19;
+  repeated PlanningFollowUp follow_ups = 20;
+  bool follow_up_requires_training = 21;
+  repeated DrawerOption interventions = 22;
+  string initial_intervention = 23;
+  repeated string ssa_priorities = 24;
+  string activity_type = 25;
+  string recommendation_reason = 26;
+  // Schedule only: Facilitated by, "Staff" first.
+  repeated DrawerOption facilitators = 27;
+  repeated ProjectHandover project_handovers = 28;
+  // The drawer's sentences by name (helpers, follow-up lines, the
+  // responsible person …).
+  map<string, string> captions = 29;
+  bool has_justification = 30;
+  // Each select's empty first line, by the select's id.
+  map<string, string> placeholders = 31;
+  // Each field's label, by its id.
+  map<string, string> labels = 32;
+  // Notes drawn below the form's fields (a previous partner withdrawal).
+  repeated PlanningNote notes = 33;
+  // The hidden values the web rendered; the app sends them back as they are.
+  map<string, string> hidden = 34;
+}
+
+message GetPlanningDrawerRequest {
+  // The school's record id.
+  string school_id = 1;
+  // schedule or assign.
+  string kind = 2;
+}
+
+message GetPlanningDrawerResponse {
+  PlanningDrawer drawer = 1;
+  // The web's message when it draws one instead of the form (a school whose
+  // staff visits are locked).
+  string refusal = 2;
+}
+
+message SavePlanningDrawerRequest {
+  string school_id = 1;
+  string kind = 2;
+  // The values the drawer's form would post, by field name. Fields the
+  // drawer does not send are ignored.
+  map<string, string> values = 3;
+}
+
+message SavePlanningDrawerResponse {
+  bool saved = 1;
+  // The web's confirmation when saved.
+  string message = 2;
+  // Where the web went next, or empty.
+  string redirect = 3;
+  // The web's reason when not saved.
+  string error = 4;
+}
+
+message GetTrainingCapacityRequest {
+  // The catalogue item of the chosen training; empty for none.
+  string training = 1;
+  // The scheduled date (YYYY-MM-DD), or empty.
+  string date = 2;
+  // The school's ID, as the drawer names it.
+  string school = 3;
+}
+
+message GetTrainingCapacityResponse {
+  bool managed = 1;
+  optional int32 ceiling = 2;
+  int32 scheduled = 3;
+  optional int32 remaining = 4;
+  string staff_name = 5;
+  string fy = 6;
+  // The school is already counted, so it takes no new place.
+  bool counted = 7;
+}

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+import "edify/screens/v1/page.proto";
+
+// A school's profile (School 360), read from the page the existing
+// application renders for the same person (school_detail_view): its header,
+// tabs and the open tab's blocks.
+service SchoolProfileService {
+  rpc GetSchoolProfile(GetSchoolProfileRequest) returns (GetSchoolProfileResponse);
+}
+
+message GetSchoolProfileRequest {
+  // The school's record id.
+  string school_id = 1;
+  // The page's own query: the open tab, the financial year and the period.
+  // Empty takes the page's default.
+  string tab = 2;
+  string fy = 3;
+  string period = 4;
+}
+
+message GetSchoolProfileResponse {
+  PageHeader header = 1;
+  repeated PageTab tabs = 2;
+  repeated PageBlock blocks = 3;
+  // The web path of this profile, for what the app opens on the web.
+  string web_path = 4;
+}
