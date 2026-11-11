@@ -108,7 +108,7 @@ func applicationForm(partner, school, phone, key string) url.Values {
 		"boys": {"120"}, "girls": {"130"}, "fees_collected": {"UGX 9,000,000"}, "purpose": {"school_furniture"},
 		"requested": {"12,500,000"}, "partner": {partner}, "consent": {"yes"}, "idempotency_key": {key},
 		"religion": {"prefer_not_to_say"},
-		"stamp": {loans.DeriveKeys(signingSecret).FormStamp(time.Now().Add(-30 * time.Second))},
+		"stamp":    {loans.DeriveKeys(signingSecret).FormStamp(time.Now().Add(-30 * time.Second))},
 	}
 }
 

@@ -962,31 +962,33 @@ func (s *Service) SendChannelConfirmation(ctx context.Context, request *connect.
 	}), nil
 }
 
-// lenderCall is the start of every RPC for a lender's own staff.
-func (s *Service) lenderCall(ctx context.Context) (Actor, error) {
+// lenderCall is the start of every RPC for a lender's own staff: the
+// caller as an actor, and the lender they work for.
+func (s *Service) lenderCall(ctx context.Context) (Actor, string, error) {
 	principal, err := principalOf(ctx)
 	if err != nil {
-		return Actor{}, err
+		return Actor{}, "", err
 	}
 	if !IsLenderRole(principal.ActiveRole) {
-		return Actor{}, denied(ctx, "This is for a lending partner's own staff.")
+		return Actor{}, "", denied(ctx, "This is for a lending partner's own staff.")
 	}
 	if err := s.checkReady(ctx); err != nil {
-		return Actor{}, err
+		return Actor{}, "", err
 	}
 	partnerID, lenderName, err := s.store.LenderPartnerOf(ctx, principal.UserID)
 	if errors.Is(err, ErrNotFound) {
-		return Actor{}, denied(ctx, "Your account is not linked to a Loan Partner in the Partner Directory.")
+		return Actor{}, "", denied(ctx, "Your account is not linked to a Loan Partner in the Partner Directory.")
 	}
 	if err != nil {
-		return Actor{}, s.internal(ctx, err)
+		return Actor{}, "", s.internal(ctx, err)
 	}
-	return Actor{Kind: ActorLender, ID: principal.UserID, Name: principal.Name + " (" + lenderName + ")", PartnerID: partnerID}, nil
+	actor := Actor{Kind: ActorLender, ID: principal.UserID, Name: principal.Name + " (" + lenderName + ")", PartnerID: partnerID}
+	return actor, lenderName, nil
 }
 
 // ListMyReferrals are the applications addressed to the caller's lender.
 func (s *Service) ListMyReferrals(ctx context.Context, _ *connect.Request[loansv1.ListMyReferralsRequest]) (*connect.Response[loansv1.ListMyReferralsResponse], error) {
-	actor, err := s.lenderCall(ctx)
+	actor, lenderName, err := s.lenderCall(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -994,7 +996,7 @@ func (s *Service) ListMyReferrals(ctx context.Context, _ *connect.Request[loansv
 	if err != nil {
 		return nil, s.internal(ctx, err)
 	}
-	response := &loansv1.ListMyReferralsResponse{LenderName: actor.Name}
+	response := &loansv1.ListMyReferralsResponse{LenderName: lenderName}
 	for _, row := range rows {
 		message := s.rowMessage(row, access{full: true})
 		// Edify's internal tracking is not the lender's.
@@ -1006,7 +1008,7 @@ func (s *Service) ListMyReferrals(ctx context.Context, _ *connect.Request[loansv
 
 // GetMyReferral is one of the caller's lender's applications.
 func (s *Service) GetMyReferral(ctx context.Context, request *connect.Request[loansv1.GetMyReferralRequest]) (*connect.Response[loansv1.GetMyReferralResponse], error) {
-	actor, err := s.lenderCall(ctx)
+	actor, _, err := s.lenderCall(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1036,7 +1038,7 @@ func (s *Service) GetMyReferral(ctx context.Context, request *connect.Request[lo
 
 // RecordLenderUpdate records a stage, decision or message by the lender.
 func (s *Service) RecordLenderUpdate(ctx context.Context, request *connect.Request[loansv1.RecordLenderUpdateRequest]) (*connect.Response[loansv1.RecordLenderUpdateResponse], error) {
-	actor, err := s.lenderCall(ctx)
+	actor, _, err := s.lenderCall(ctx)
 	if err != nil {
 		return nil, err
 	}

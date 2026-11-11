@@ -20,6 +20,8 @@ import { SignInScreen } from './src/screens/SignInScreen';
 import { ClusterLeaderApp } from './src/screens/cluster/ClusterLeaderApp';
 import { ClusterLeadersScreen } from './src/screens/cluster/ClusterLeadersScreen';
 import { LEADERS_URL, canManageLeaders, leadersSection } from './src/screens/cluster/clusterRoutes';
+import { LoansRoute } from './src/screens/loans/LoansRoute';
+import { isLoansUrl, loansSection } from './src/screens/loans/loanRoutes';
 import { AppShell, MENU_URL } from './src/shell/AppShell';
 import { ThemeProvider, signInPalette, spacing, useTheme } from './src/theme';
 import { DropdownLayer } from './src/ui/Dropdown';
@@ -170,12 +172,23 @@ function SignedIn({ session }: { readonly session: Session }) {
   // Every other path opens on the web.
   const isNative = useCallback(
     (url: string) =>
-      url === LEADERS_URL || OWN_SCREENS.includes(pathOf(url)) || pages.has(pathOf(url)) || schoolOf(url) !== null,
+      url === LEADERS_URL ||
+      isLoansUrl(url) ||
+      OWN_SCREENS.includes(pathOf(url)) ||
+      pages.has(pathOf(url)) ||
+      schoolOf(url) !== null,
     [pages],
   );
   // Staff who manage cluster leaders find them under their own menu.
   const sections = useMemo(
-    () => [...(navigation?.sections ?? []), ...(canManageLeaders(session.activeRole) ? [leadersSection()] : [])],
+    () => {
+      const loans = loansSection(session.activeRole);
+      return [
+        ...(navigation?.sections ?? []),
+        ...(canManageLeaders(session.activeRole) ? [leadersSection()] : []),
+        ...(loans ? [loans] : []),
+      ];
+    },
     [navigation, session.activeRole],
   );
   const open = useCallback((url: string, label: string) => setRoute({ url, label }), []);
@@ -196,6 +209,8 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <MenuScreen session={session} sections={sections} isNative={isNative} onOpen={open} />;
   } else if (route.url === LEADERS_URL) {
     screen = <ClusterLeadersScreen />;
+  } else if (isLoansUrl(route.url)) {
+    screen = <LoansRoute key={route.url} url={route.url} />;
   } else if (path === '/home') {
     screen = <HomeScreen onOpen={open} />;
   } else if (path === '/schools') {

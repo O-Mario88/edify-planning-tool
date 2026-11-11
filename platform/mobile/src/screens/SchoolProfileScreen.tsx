@@ -16,6 +16,7 @@ import { ChevronLeft } from 'lucide-react-native';
 
 import { ApiError } from '../api/connect';
 import { describe, useSession } from '../auth/SessionContext';
+import { SchoolLoanHistory, canSeeSchoolLoans } from './loans/SchoolLoanHistory';
 import type { PageAction } from '../gen/edify/screens/v1/page_pb';
 import type { GetSchoolProfileResponse } from '../gen/edify/screens/v1/school_profile_pb';
 import { fonts, useTheme } from '../theme';
@@ -62,7 +63,8 @@ interface SchoolProfileScreenProps {
 }
 
 export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolProfileScreenProps) {
-  const { api, environment, signOut } = useSession();
+  const { api, environment, signOut, state } = useSession();
+  const activeRole = state.status === 'signedIn' ? state.session.activeRole : '';
   const { colors } = useTheme();
   const [query, setQuery] = useState<ProfileQuery>(START);
   const [data, setData] = useState<GetSchoolProfileResponse | null>(null);
@@ -205,6 +207,9 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolPr
                 blocks={data.blocks}
                 onFilter={(name, value) => setQuery((current) => ({ ...current, [name]: value }))}
               />
+              {canSeeSchoolLoans(activeRole) && (!query.tab || query.tab === 'overview') ? (
+                <SchoolLoanHistory schoolId={schoolId} />
+              ) : null}
             </>
           ) : error ? (
             <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">
