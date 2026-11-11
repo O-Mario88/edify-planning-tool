@@ -194,7 +194,7 @@ func (s *FollowUpService) rowFor(ctx context.Context, f follower, c *caseData, s
 		Reference: r.Reference, AppliedOn: day(r.SubmittedAt.In(kampala)), StatusLabel: status, StatusTone: tone,
 		DisbursementLabel: c.disbursementLabel(), FollowUpLabel: follow, FollowUpTone: followTone,
 		LastLenderUpdate: day(r.UpdatedAt.In(kampala)), LastNotification: last, NeedsAttention: due,
-		CanNotify: len(c.eligibleNotes(f.sender)) > 0, CanFollowUp: c.stage() != StageClosed}
+		CanNotify: len(c.eligibleNotes(f.sender)) > 0, NotifyNote: c.notifyNote(f.sender), CanFollowUp: c.stage() != StageClosed}
 	if r.NextFollowUp != nil {
 		row.NextFollowUpOn = day(*r.NextFollowUp)
 	}

@@ -11,9 +11,14 @@ import { NavItemSchema, NavSectionSchema } from '../../gen/edify/screens/v1/navi
 export const LOANS_URL = 'loans:referrals';
 export const LENDER_CHANNELS_URL = 'loans:lenders';
 export const MY_REFERRALS_URL = 'loans:mine';
+export const STAFF_LOANS_URL = 'loans:portfolio';
+export const SHARE_URL = 'loans:share';
+export const LENDER_CASES_URL = 'loans:cases';
 
 /** Edify staff who follow loan referrals (apps/core/rbac.py). Admin is not one. */
 const STAFF_ROLES = new Set(['BusinessTransformationOfficer', 'CountryDirector', 'RegionalVicePresident']);
+/** Field staff who follow their own schools' loans (staff loan tracking brief). */
+const FIELD_ROLES = new Set(['CCEO', 'Program Lead']);
 /** A lending partner's own staff. */
 const LENDER_ROLES = new Set(['MfiPartnerAdmin', 'MfiLoanOfficer']);
 
@@ -26,18 +31,34 @@ export function loansSection(role: string): NavSection | null {
   const item = (label: string, url: string) => create(NavItemSchema, { label, url, native: true });
   if (STAFF_ROLES.has(role)) {
     return create(NavSectionSchema, {
-      label: 'School loans',
-      items: [item('Loan referrals', LOANS_URL), item('Lending partners', LENDER_CHANNELS_URL)],
+      label: 'Loans & Financing',
+      items: [
+        item('Schools & loans', STAFF_LOANS_URL),
+        item('Loan referrals', LOANS_URL),
+        item('Lending partners', LENDER_CHANNELS_URL),
+        item('Share loan application', SHARE_URL),
+      ],
+    });
+  }
+  if (FIELD_ROLES.has(role)) {
+    return create(NavSectionSchema, {
+      label: 'Loans & Financing',
+      items: [item("My schools' loans", STAFF_LOANS_URL), item('Share loan application', SHARE_URL)],
     });
   }
   if (LENDER_ROLES.has(role)) {
-    return create(NavSectionSchema, { label: 'School loans', items: [item('Referrals to us', MY_REFERRALS_URL)] });
+    return create(NavSectionSchema, {
+      label: 'School loans',
+      items: [item('Lender cases', LENDER_CASES_URL), item('Referrals to us', MY_REFERRALS_URL), item('Share loan application', SHARE_URL)],
+    });
   }
   return null;
 }
 
+const LOAN_URLS = new Set([LOANS_URL, LENDER_CHANNELS_URL, MY_REFERRALS_URL, STAFF_LOANS_URL, SHARE_URL, LENDER_CASES_URL]);
+
 export function isLoansUrl(url: string): boolean {
-  return url === LOANS_URL || url === LENDER_CHANNELS_URL || url === MY_REFERRALS_URL;
+  return LOAN_URLS.has(url);
 }
 
 /** An amount in whole Uganda shillings, grouped: "UGX 45,000,000". */

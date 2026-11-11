@@ -50,7 +50,8 @@ type sharer struct {
 	edify          *access
 	lender         *LenderIdentity
 	clusters       []ShareCluster
-	inviteAny      bool // any directory school (BTO)
+	staffProfile   string // a CCEO's or PL's own portfolio, for invitations
+	inviteAny      bool   // any directory school (BTO)
 	editTemplates  bool
 	seeMetrics     bool
 	setLenderLinks bool // any lender's link policy (Country Director)
@@ -103,6 +104,11 @@ func (s *ShareService) caller(ctx context.Context) (sharer, error) {
 			return who, denied(ctx, "You can share the loan application while you lead a cluster.")
 		}
 		who.clusters = clusters
+	case principal.ActiveRole == roleCCEO || principal.ActiveRole == roleProgramLead:
+		if principal.StaffProfileID == "" {
+			return who, denied(ctx, "Your account has no staff profile.")
+		}
+		who.staffProfile = principal.StaffProfileID
 	default:
 		granted, ok := staffAccess[principal.ActiveRole]
 		if !ok {
@@ -181,7 +187,7 @@ func (s *ShareService) GetShareKit(ctx context.Context, _ *connect.Request[loans
 	if err != nil {
 		return nil, err
 	}
-	response := &loansv1.GetShareKitResponse{CanInviteSchools: who.inviteAny || len(who.clusters) > 0,
+	response := &loansv1.GetShareKitResponse{CanInviteSchools: who.inviteAny || len(who.clusters) > 0 || who.staffProfile != "",
 		CanEditTemplates: who.editTemplates, CanSeeMetrics: who.seeMetrics,
 		Note: "Sharing opens your phone's own WhatsApp, SMS or email: nothing is sent until you send it. The link opens the public form only; it shows nobody's application."}
 	now := s.now()
@@ -213,6 +219,18 @@ func (s *ShareService) GetShareKit(ctx context.Context, _ *connect.Request[loans
 			response.Clusters = append(response.Clusters, &loansv1.ShareCluster{ClusterId: c.ID, Name: c.Name,
 				MemberSchools: int32(c.MemberSchools)})
 		}
+	case who.staffProfile != "":
+		link, err := s.store.ReferralLink(ctx, "", who.actor, now)
+		if err != nil {
+			return nil, s.fail(ctx, err)
+		}
+		message, err := s.linkMessage(ctx, LinkReferral, link.ID, referralPath+link.ID, "School loan application link",
+			"The public form, where the school chooses its lender. No account needed. You will not see who applies through it.", "", false)
+		if err != nil {
+			return nil, s.fail(ctx, err)
+		}
+		message.CanReplace = true
+		response.Links = append(response.Links, message)
 	default:
 		message, err := s.linkMessage(ctx, "universal", "", applyPath, "School loan application link",
 			"The public form: the school fills it in and chooses its lender. No account needed.", "", false)
@@ -365,6 +383,15 @@ func (s *ShareService) InviteSchool(ctx context.Context, request *connect.Reques
 			return nil, denied(ctx, "You can invite the member schools of the clusters you lead.")
 		}
 		source = "cluster_leader"
+	case who.staffProfile != "":
+		mine, err := s.store.InPortfolio(ctx, request.Msg.GetSchoolId(), who.staffProfile)
+		if err != nil {
+			return nil, s.fail(ctx, err)
+		}
+		if !mine {
+			return nil, denied(ctx, "You can invite the schools in your own portfolio.")
+		}
+		source = "staff"
 	default:
 		return nil, denied(ctx, "Your role does not invite schools.")
 	}

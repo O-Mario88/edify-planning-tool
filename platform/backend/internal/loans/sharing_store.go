@@ -473,3 +473,13 @@ func (s *Store) InvitationMadeBy(ctx context.Context, id, userID string) (bool, 
 		id, userID).Scan(&mine)
 	return mine, err
 }
+
+// InPortfolio says whether an operating school is assigned to the staff profile.
+func (s *Store) InPortfolio(ctx context.Context, schoolID, staffProfile string) (bool, error) {
+	var mine bool
+	err := s.db.QueryRow(ctx, `
+SELECT EXISTS (SELECT 1 FROM school s JOIN staff_school_assignment a ON a.school_id = s.id
+  WHERE s.id = $1 AND a.staff_id = $2 AND s.deleted_at IS NULL AND s.operational_status IN ('active', 'reopened'))`,
+		schoolID, staffProfile).Scan(&mine)
+	return mine, err
+}

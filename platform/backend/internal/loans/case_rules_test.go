@@ -439,3 +439,76 @@ func TestTheStatementPDFIsWellFormed(t *testing.T) {
 		t.Fatalf("a long statement fit on %d page", pages)
 	}
 }
+
+func TestAStaffMemberIsToldWhyNothingCanBeSent(t *testing.T) {
+	staff := Sender{ID: "cceo", Role: "CCEO"}
+	steps := []struct {
+		name  string
+		setUp func(c *caseData)
+		want  string
+	}{
+		{"disbursed only by the lender's word", func(c *caseData) {
+			c.record = CaseRecord{Referral: c.record.Referral}
+			c.record.Referral.Status = StatusDisbursed
+		}, "ledger"},
+		{"approved, money not out", func(c *caseData) { approve(c, "appr") }, "disbursement"},
+		{"declined", func(c *caseData) { c.record.Decisions = []Decision{{Decision: "declined"}} }, "declined"},
+		{"closed", func(c *caseData) { c.record.ClosureStatus = "closed" }, "closed"},
+	}
+	for _, step := range steps {
+		t.Run(step.name, func(t *testing.T) {
+			c := newCase(t)
+			step.setUp(c)
+			if eligible := c.eligibleNotes(staff); len(eligible) > 0 {
+				t.Fatalf("expected nothing to send, got %v", eligible)
+			}
+			if note := c.notifyNote(staff); !strings.Contains(note, step.want) {
+				t.Fatalf("note %q does not mention %q", note, step.want)
+			}
+		})
+	}
+	c := newCase(t)
+	if note := c.notifyNote(staff); note != "" {
+		t.Fatalf("a case with something to send still explained itself: %q", note)
+	}
+}
+
+func TestAStepTheLenderSkippedIsNeverTheCurrentOne(t *testing.T) {
+	c := newCase(t)
+	c.record = CaseRecord{Referral: c.record.Referral}
+	c.record.Referral.Status = StatusDisbursed
+	current := ""
+	for _, step := range c.progress() {
+		if step.State == "current" && current == "" {
+			current = step.Key
+		}
+		if step.Key == "assigned" && (step.State != "not_reached" || !strings.Contains(step.Note, "Not recorded")) {
+			t.Fatalf("officer step for a lender-reported disbursement: %+v", step)
+		}
+		if step.Key == "disbursement" && step.State != "waiting" {
+			t.Fatalf("disbursement not in the ledger should wait: %+v", step)
+		}
+	}
+	if current != "" {
+		t.Fatalf("step %q made current behind the disbursement", current)
+	}
+}
+
+func TestNoPaymentOrClosureForALoanTheLedgerDoesNotHold(t *testing.T) {
+	c := newCase(t)
+	c.record = CaseRecord{Referral: c.record.Referral, Assignment: c.record.Assignment}
+	c.record.Referral.Status = StatusDisbursed
+	admin := lenderStaff("adm", RoleAdministrator, RoleFinance, RoleCollections)
+	for _, key := range []string{"record_payment", "close_loan"} {
+		if offered(c, admin)[key] {
+			t.Errorf("%s offered for a disbursement only the lender reported", key)
+		}
+	}
+	held := newCase(t)
+	approve(held, "appr")
+	register(held)
+	disburse(t, held)
+	if !offered(held, admin)["record_payment"] {
+		t.Fatal("record_payment not offered on a loan the ledger holds")
+	}
+}

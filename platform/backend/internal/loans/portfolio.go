@@ -362,8 +362,24 @@ func (c *caseData) progress() []ProgressStep {
 	}
 	add(release)
 
+	// A step with no record that lies before a later recorded one was taken
+	// outside this system (a loan tracked before the lender workflow): say so,
+	// and never make it the current step.
+	last := -1
+	for index, step := range steps {
+		if step.State != "not_reached" {
+			last = index
+		}
+	}
+	for index := 0; index < last; index++ {
+		if steps[index].State != "done" {
+			steps[index].State, steps[index].NextAction = "not_reached", ""
+			steps[index].Note = "Not recorded in this system"
+		}
+	}
+
 	// The first stage not done is the current one, unless already marked.
-	for index := range steps {
+	for index := max(last, 0); index < len(steps); index++ {
 		if steps[index].State == "done" {
 			continue
 		}

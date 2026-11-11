@@ -191,6 +191,27 @@ func (c *caseData) eligibleNotes(sender Sender) map[string]noteFacts {
 	return out
 }
 
+// notifyNote says, in a line, why nothing can be sent for the case right
+// now; it is empty when something can.
+func (c *caseData) notifyNote(sender Sender) string {
+	if len(c.eligibleNotes(sender)) > 0 {
+		return ""
+	}
+	r := c.record
+	switch {
+	case c.stage() == StageClosed:
+		return "The loan is closed. There is nothing to send."
+	case c.stage() == StageDeclined:
+		return "The application was declined. The lender tells the school."
+	case r.Referral.Status == StatusDisbursed && !c.disbursed():
+		return "Nothing to send until the lender records the disbursement in the ledger."
+	case r.LatestDecision() != nil || r.Referral.Status == StatusApproved:
+		return "Approved. The next notification is the disbursement, once the ledger shows it."
+	default:
+		return "No notification fits what is recorded for this loan yet."
+	}
+}
+
 // renderNote fills a template.
 func renderNote(kind string, c *caseData, facts noteFacts, link string) string {
 	return strings.NewReplacer(slotLender, c.record.Referral.LenderName, slotReference, c.record.Referral.Reference,

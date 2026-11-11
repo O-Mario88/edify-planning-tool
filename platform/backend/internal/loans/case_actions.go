@@ -369,7 +369,10 @@ var caseActions = []caseAction{
 		key: "record_payment", label: "Record a payment", primary: true,
 		description: "Records what the school paid, with its receipt. It counts towards the balance only once a finance officer verifies it.",
 		allowed: func(c *caseData, v viewer) bool {
-			return c.stage() == StageActive && !c.settled() && (officerOrAdmin(c, v) || v.has(RoleCollections) || v.has(RoleFinance))
+			// A payment is recorded against the ledger's loan, so the ledger must
+			// hold the disbursement, not only the lender's report of it.
+			return c.stage() == StageActive && c.disbursed() && !c.settled() &&
+				(officerOrAdmin(c, v) || v.has(RoleCollections) || v.has(RoleFinance))
 		},
 		fields: func(ctx context.Context, l *Lending, c *caseData, v viewer) ([]*loansv1.ActionField, error) {
 			return []*loansv1.ActionField{
@@ -484,7 +487,8 @@ var caseActions = []caseAction{
 		key: "close_loan", label: "Close the loan", danger: true,
 		description: "Only a loan with nothing outstanding, no payment awaiting verification and all security returned can be closed.",
 		allowed: func(c *caseData, v viewer) bool {
-			return (v.has(RoleAdministrator) || v.has(RoleFinance)) && (c.stage() == StageActive || c.stage() == StageSettledPending)
+			return (v.has(RoleAdministrator) || v.has(RoleFinance)) && c.disbursed() &&
+				(c.stage() == StageActive || c.stage() == StageSettledPending)
 		},
 		fields: func(ctx context.Context, l *Lending, c *caseData, v viewer) ([]*loansv1.ActionField, error) {
 			fields := []*loansv1.ActionField{field("note", "Closing note", "multiline", true, "", "")}

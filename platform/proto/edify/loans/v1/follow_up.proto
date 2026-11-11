@@ -63,6 +63,8 @@ message PortfolioLoanRow {
   // Amounts only for roles that may see them; empty otherwise.
   string requested = 22;
   string disbursed = 23;
+  // Why nothing can be sent right now; empty when can_notify.
+  string notify_note = 24;
 }
 
 message ListPortfolioLoansRequest {

@@ -126,8 +126,10 @@ type PortfolioLoanRow struct {
 	CanNotify        bool   `protobuf:"varint,20,opt,name=can_notify,json=canNotify,proto3" json:"can_notify,omitempty"`
 	CanFollowUp      bool   `protobuf:"varint,21,opt,name=can_follow_up,json=canFollowUp,proto3" json:"can_follow_up,omitempty"`
 	// Amounts only for roles that may see them; empty otherwise.
-	Requested     string `protobuf:"bytes,22,opt,name=requested,proto3" json:"requested,omitempty"`
-	Disbursed     string `protobuf:"bytes,23,opt,name=disbursed,proto3" json:"disbursed,omitempty"`
+	Requested string `protobuf:"bytes,22,opt,name=requested,proto3" json:"requested,omitempty"`
+	Disbursed string `protobuf:"bytes,23,opt,name=disbursed,proto3" json:"disbursed,omitempty"`
+	// Why nothing can be sent right now; empty when can_notify.
+	NotifyNote    string `protobuf:"bytes,24,opt,name=notify_note,json=notifyNote,proto3" json:"notify_note,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -319,6 +321,13 @@ func (x *PortfolioLoanRow) GetRequested() string {
 func (x *PortfolioLoanRow) GetDisbursed() string {
 	if x != nil {
 		return x.Disbursed
+	}
+	return ""
+}
+
+func (x *PortfolioLoanRow) GetNotifyNote() string {
+	if x != nil {
+		return x.NotifyNote
 	}
 	return ""
 }
@@ -1680,7 +1689,7 @@ const file_edify_loans_v1_follow_up_proto_rawDesc = "" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x18\n" +
 	"\aschools\x18\x03 \x01(\x05R\aschools\x12\x18\n" +
 	"\arecords\x18\x04 \x01(\x05R\arecords\x12\x12\n" +
-	"\x04rule\x18\x05 \x01(\tR\x04rule\"\xdd\x06\n" +
+	"\x04rule\x18\x05 \x01(\tR\x04rule\"\xfe\x06\n" +
 	"\x10PortfolioLoanRow\x12%\n" +
 	"\x0eapplication_id\x18\x01 \x01(\tR\rapplicationId\x12\x1f\n" +
 	"\vschool_name\x18\x02 \x01(\tR\n" +
@@ -1710,7 +1719,9 @@ const file_edify_loans_v1_follow_up_proto_rawDesc = "" +
 	"can_notify\x18\x14 \x01(\bR\tcanNotify\x12\"\n" +
 	"\rcan_follow_up\x18\x15 \x01(\bR\vcanFollowUp\x12\x1c\n" +
 	"\trequested\x18\x16 \x01(\tR\trequested\x12\x1c\n" +
-	"\tdisbursed\x18\x17 \x01(\tR\tdisbursed\"\xc7\x01\n" +
+	"\tdisbursed\x18\x17 \x01(\tR\tdisbursed\x12\x1f\n" +
+	"\vnotify_note\x18\x18 \x01(\tR\n" +
+	"notifyNote\"\xc7\x01\n" +
 	"\x19ListPortfolioLoansRequest\x12\x14\n" +
 	"\x05scope\x18\x01 \x01(\tR\x05scope\x12\x18\n" +
 	"\acounter\x18\x02 \x01(\tR\acounter\x12\x16\n" +
