@@ -1,0 +1,97 @@
+{{template "top" .}}
+{{if .Done}}<div class="notice notice--success" role="status"><p>{{.Done}}</p></div>{{end}}
+{{if .Problem}}<div class="notice notice--danger" role="alert"><p>{{.Problem}}</p></div>{{end}}
+<section class="card">
+  <div class="topbar"><div><p class="section__copy">{{.Reference}} · as of {{.AsOf}}</p><h2 class="section__title">{{.School}}</h2></div>
+    {{if .Status}}<span class="pill tone--{{.StatusTone}}">{{.Status}}</span>{{end}}</div>
+  <dl class="facts mt">
+    {{if .EdifySchoolID}}<div><dt>Edify School ID</dt><dd>{{.EdifySchoolID}}</dd></div>{{end}}
+    <div><dt>Lender</dt><dd>{{.Lender}}</dd></div>
+    {{if .Disbursed}}
+    <div><dt>Outstanding balance</dt><dd class="figure">{{.Outstanding}}</dd></div>
+    <div><dt>Owed today</dt><dd class="figure">{{.OwedToday}}</dd></div>
+    {{if .NextDue}}<div><dt>Next installment</dt><dd>{{.NextDue}}</dd></div>{{end}}
+    {{if .Overdue}}<div><dt>Overdue</dt><dd class="tone-text--alert">{{.Overdue}}</dd></div>{{end}}
+    {{end}}
+  </dl>
+  <p class="fine mt">{{.Lender}} is your lender. Edify provides the referral and tracking platform and is not the lender.</p>
+  {{if .Disbursed}}<div class="actions mt"><a class="button button--quiet button--small" href="/loan/statement/pdf">Download as PDF</a></div>{{end}}
+</section>
+
+{{if not .Disbursed}}
+<section class="card"><h2 class="section__title">No disbursement yet</h2>
+  <p class="section__copy">Your lender has not recorded a disbursement for this loan, so there is no balance yet.</p></section>
+{{else}}
+<section class="card">
+  <h2 class="section__title">How your balance is calculated</h2>
+  <p class="section__copy">Only payments your lender has verified count. A receipt that is still being checked does not change the balance.</p>
+  <dl class="sum mt">
+    {{range .Steps}}<div{{if .Total}} class="sum__total"{{end}}><dt>{{.Label}}</dt><dd>{{.Value}}</dd></div>{{end}}
+  </dl>
+  {{if .Pending}}<div class="notice notice--warning mt" role="status"><p>{{.Pending}} you reported is waiting for your lender's verification and is not yet in this balance.</p></div>{{end}}
+</section>
+
+<section class="card">
+  <h2 class="section__title">Repayment schedule</h2>
+  <div class="ledger" role="region" aria-label="Repayment schedule" tabindex="0"><table>
+    <thead><tr><th scope="col">No.</th><th scope="col">Due</th><th scope="col" class="num">Principal</th><th scope="col" class="num">Interest</th><th scope="col" class="num">Fees</th><th scope="col" class="num">Total</th><th scope="col" class="num">Paid</th><th scope="col" class="num">Remaining</th><th scope="col">Status</th></tr></thead>
+    <tbody>{{range .Installments}}<tr><td>{{.Number}}</td><td>{{.Due}}</td><td class="num">{{.Principal}}</td><td class="num">{{.Interest}}</td><td class="num">{{.Fee}}</td><td class="num">{{.Total}}</td><td class="num">{{.Paid}}</td><td class="num">{{.Remaining}}</td><td><span class="pill tone--{{.Tone}}">{{.Status}}</span></td></tr>{{else}}<tr><td colspan="9">Your lender has not posted the schedule yet.</td></tr>{{end}}</tbody>
+  </table></div>
+</section>
+
+<section class="card">
+  <h2 class="section__title">Statement</h2>
+  <p class="section__copy">Every charge and every verified payment, oldest first. The last balance is what is owed today.</p>
+  <div class="ledger" role="region" aria-label="Statement" tabindex="0"><table>
+    <thead><tr><th scope="col">Date</th><th scope="col">Description</th><th scope="col">Reference</th><th scope="col" class="num">Charged</th><th scope="col" class="num">Paid</th><th scope="col" class="num">Balance</th></tr></thead>
+    <tbody>{{range .Lines}}<tr><td>{{.Date}}</td><td>{{.Description}}</td><td>{{.Reference}}</td><td class="num">{{.Charged}}</td><td class="num">{{.Paid}}</td><td class="num">{{.Balance}}</td></tr>{{end}}</tbody>
+  </table></div>
+</section>
+
+{{if .Payments}}
+<section class="card">
+  <h2 class="section__title">Payments reported</h2>
+  <div class="ledger" role="region" aria-label="Payments reported" tabindex="0"><table>
+    <thead><tr><th scope="col">Paid on</th><th scope="col" class="num">Amount</th><th scope="col">Method</th><th scope="col">Reference</th><th scope="col">Status</th><th scope="col">Receipt</th></tr></thead>
+    <tbody>{{range .Payments}}<tr><td>{{.PaidOn}}</td><td class="num">{{.Amount}}</td><td>{{.Method}}</td><td>{{.Reference}}</td><td><span class="pill tone--{{.Tone}}">{{.Status}}</span>{{if .Note}}<br><span class="fine">{{.Note}}</span>{{end}}</td><td>{{if .DocumentID}}<a href="/loan/statement/receipt/{{.DocumentID}}">Download</a>{{end}}</td></tr>{{end}}</tbody>
+  </table></div>
+</section>
+{{end}}
+
+<section class="card">
+  <h2 class="section__title">Tell your lender about a payment</h2>
+  <p class="section__copy">Send the receipt or deposit slip for a payment you made. Your lender checks it against their records; it counts towards your balance only once they verify it.</p>
+  <form method="post" action="/loan/statement/payment" enctype="multipart/form-data" class="mt">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <div class="grid grid--two">
+      <div class="field"><label>Amount paid (UGX)<input type="text" name="amount" inputmode="numeric" required{{if eq .Field "amount"}} aria-invalid="true"{{end}}></label></div>
+      <div class="field"><label>Payment date<input type="date" name="paid_on" max="{{.Today}}" required{{if eq .Field "paid_on"}} aria-invalid="true"{{end}}></label></div>
+      <div class="field"><label>How you paid<select name="method" required>{{range .PaymentMethods}}<option value="{{.Value}}">{{.Label}}</option>{{end}}</select></label></div>
+      <div class="field"><label>Transaction reference<input type="text" name="reference" maxlength="120" required{{if eq .Field "reference"}} aria-invalid="true"{{end}}></label></div>
+    </div>
+    <div class="field"><label>Receipt (PDF, JPEG or PNG, up to 5 MB)<input type="file" name="receipt" accept="application/pdf,image/jpeg,image/png" required{{if eq .Field "receipt"}} aria-invalid="true"{{end}}></label></div>
+    <button class="button button--small" type="submit">Send to my lender</button>
+  </form>
+</section>
+{{end}}
+
+<section class="card">
+  <h2 class="section__title">Something not right?</h2>
+  <p class="section__copy">Report a missing payment or a figure that looks wrong, or ask your lender for an update. Your lender answers; nothing on this page changes until they do.</p>
+  <form method="post" action="/loan/statement/request" class="mt">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <div class="field"><label>What do you need?<select name="kind" required>
+      <option value="discrepancy">A payment is missing or a figure looks wrong</option>
+      <option value="statement_update">Please send an updated statement</option>
+      <option value="contact">Please contact me</option>
+      <option value="clarification">I have a question about my loan</option></select></label></div>
+    <div class="field"><label>Message<textarea name="message" maxlength="2000" required{{if eq .Field "message"}} aria-invalid="true"{{end}}></textarea></label></div>
+    <button class="button button--small" type="submit">Send</button>
+  </form>
+  {{if .Requests}}<ol class="timeline mt">{{range .Requests}}<li><strong>{{.Message}}</strong>{{if .Answer}}<br>Answer: {{.Answer}}{{else}}<br><span class="fine">Waiting for your lender</span>{{end}}<time>{{moment .CreatedAt}}</time></li>{{end}}</ol>{{end}}
+</section>
+
+<form method="post" action="/loan/statement/sign-out" class="actions"><input type="hidden" name="csrf" value="{{.CSRF}}">
+  <button class="button button--quiet button--small" type="submit">Sign out</button>
+  <p class="fine">For your privacy this page closes itself after {{.SessionMinutes}} minutes. Your visits are recorded.</p></form>
+{{template "bottom" .}}

@@ -95,6 +95,13 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(loansv1connect.NewLoanReferralServiceHandler(
 		loans.NewService(loanStore, cfg.Loans, mailer, LoansSchemaReady(pool), logger, time.Now), options...,
 	))
+	// Loan origination and servicing. Money is posted to the existing loan
+	// ledger as the signed-in person; nothing here writes a balance.
+	lending := loans.NewLending(loanStore, loans.NewLedgerClient(cfg.ExistingAppURL), loanKeys, cfg.Loans, mailer,
+		loans.NewSMSProvider(cfg.Loans), LoansSchemaReady(pool), logger, time.Now)
+	public.RegisterSchool(mux, lending)
+	mux.Handle(loansv1connect.NewLendingServiceHandler(loans.NewLendingService(lending), options...))
+	mux.Handle("POST /sms/delivery-report/{secret}", loanStore.DeliveryReports(cfg.Loans.SMSCallbackSecret, logger))
 	return httpmw.Chain(logger, httpmw.CORS(cfg.CORSAllowedOrigins, mux))
 }
 

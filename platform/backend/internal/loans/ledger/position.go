@@ -143,6 +143,7 @@ func (b Book) Position(asOf time.Time, dueWindowDays int) Position {
 		}
 		p.Installments = append(p.Installments, view)
 	}
+	reversed := b.ReversedBy(asOf)
 	for _, payment := range b.Payments {
 		if !onOrBefore(payment.ValueDate, asOf) {
 			continue
@@ -155,7 +156,7 @@ func (b Book) Position(asOf time.Time, dueWindowDays int) Position {
 			p.TotalVerifiedRepayments -= applied
 		} else {
 			p.TotalVerifiedRepayments += applied
-			if p.LastPaymentDate == nil || payment.ValueDate.After(*p.LastPaymentDate) {
+			if !reversed[payment.ID] && (p.LastPaymentDate == nil || payment.ValueDate.After(*p.LastPaymentDate)) {
 				when := DayOf(payment.ValueDate)
 				p.LastPaymentDate = &when
 			}
@@ -270,4 +271,15 @@ func (b Book) Statement(asOf time.Time) []Line {
 		lines[index] = e.line
 	}
 	return lines
+}
+
+// ReversedBy are the payments reversed on or before asOf, by id.
+func (b Book) ReversedBy(asOf time.Time) map[string]bool {
+	reversed := map[string]bool{}
+	for _, payment := range b.Payments {
+		if payment.Kind == KindReversal && onOrBefore(payment.ValueDate, asOf) {
+			reversed[payment.ReversalOf] = true
+		}
+	}
+	return reversed
 }

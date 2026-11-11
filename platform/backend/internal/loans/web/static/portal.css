@@ -286,3 +286,20 @@ details.action form { margin-top: 12px; }
 .topbar form { margin: 0; }
 .mt { margin-top: 14px; }
 .field label > input, .field label > textarea { margin-top: 6px; font-weight: 400; }
+/* School statements: figures line up, tables scroll sideways on a phone. */
+.figure { font-variant-numeric: tabular-nums; font-size: 17px; }
+.sum { margin: 0; display: grid; }
+.sum div { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-top: 1px solid var(--card-border); }
+.sum dt { color: var(--muted); }
+.sum dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sum .sum__total dt, .sum .sum__total dd { color: var(--text); font-weight: 750; }
+.ledger { overflow-x: auto; margin-top: 10px; border: 1px solid var(--card-border); border-radius: 10px; }
+.ledger:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ledger table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.ledger th, .ledger td { padding: 8px 10px; text-align: left; border-top: 1px solid var(--card-border); white-space: nowrap; vertical-align: top; }
+.ledger thead th { border-top: 0; background: var(--primary-soft); color: var(--primary-strong); font-size: 12.5px; }
+.ledger .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tone--good { background: var(--success-soft); color: var(--success); }
+.tone--caution { background: var(--warning-soft); color: var(--warning); }
+.tone--alert { background: var(--danger-soft); color: var(--danger); }
+.tone-text--alert { color: var(--danger); }

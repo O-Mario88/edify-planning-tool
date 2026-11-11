@@ -307,3 +307,19 @@ func TestTheStatementExplainsTheBalance(t *testing.T) {
 		t.Fatal("the running balance does not add up")
 	}
 }
+
+func TestAReversedPaymentIsNotTheLastPayment(t *testing.T) {
+	schedule := scheduleOf(t)
+	first := pay(t, "p1", Shillings(1_000_000), day(2027, 1, 5), Allocated{}, schedule)
+	second := pay(t, "p2", Shillings(500_000), day(2027, 1, 20), bookWith(t, first).AllocatedAsOf(day(2027, 1, 6)), schedule)
+	reversal := Payment{ID: "r2", Kind: KindReversal, ReversalOf: "p2", Amount: second.Amount, ValueDate: day(2027, 1, 25),
+		Allocations: second.Allocations}
+	before := bookWith(t, first, second).Position(day(2027, 1, 24), 14)
+	if before.LastPaymentDate == nil || !before.LastPaymentDate.Equal(day(2027, 1, 20)) {
+		t.Fatalf("before the reversal the last payment is %v", before.LastPaymentDate)
+	}
+	after := bookWith(t, first, second, reversal).Position(day(2027, 1, 26), 14)
+	if after.LastPaymentDate == nil || !after.LastPaymentDate.Equal(day(2027, 1, 5)) {
+		t.Fatalf("after reversing the 20 January payment the last payment is %v, want 5 January", after.LastPaymentDate)
+	}
+}

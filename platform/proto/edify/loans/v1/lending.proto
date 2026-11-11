@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package edify.loans.v1;
+
+import "edify/loans/v1/loans.proto";
+
+// The lending partner's loan management: its team, its applications from
+// assignment to closure, and Edify's oversight of them. A case's page is
+// drawn from what the server returns (CaseView): the sections to show and the
+// actions this person may take now, each with its fields. Every rule lives in
+// the gateway; the app only draws. Money postings go to the existing loan
+// ledger; nothing here edits a balance.
+service LendingService {
+  // The lender's dashboard and the caller's own tasks.
+  rpc GetLenderHome(GetLenderHomeRequest) returns (GetLenderHomeResponse);
+  rpc ListLenderCases(ListLenderCasesRequest) returns (ListLenderCasesResponse);
+  // One case, for its lender's staff or for Edify oversight.
+  rpc GetCase(GetCaseRequest) returns (GetCaseResponse);
+  // Take one of the actions GetCase offered.
+  rpc RunCaseAction(RunCaseActionRequest) returns (RunCaseActionResponse);
+  rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
+  // The lender's team: membership comes from the existing lender team; the
+  // administrator sets each member's duties and access here.
+  rpc GetLenderTeam(GetLenderTeamRequest) returns (GetLenderTeamResponse);
+  rpc SetLenderTeamMember(SetLenderTeamMemberRequest) returns (SetLenderTeamMemberResponse);
+  // Edify (BTO, Country Director, RVP): lending and servicing across lenders.
+  rpc GetServicingOverview(GetServicingOverviewRequest) returns (GetServicingOverviewResponse);
+}
+
+message Kpi {
+  string key = 1;
+  string label = 2;
+  string value = 3;
+  // "good", "info", "caution", "alert" or "plain".
+  string tone = 4;
+  // The case filter that lists what the figure counts.
+  string filter = 5;
+}
+
+message GetLenderHomeRequest {}
+
+message GetLenderHomeResponse {
+  string lender_name = 1;
+  repeated string roles = 2;
+  repeated Kpi kpis = 3;
+  // The caller's own work: new assignments, schools to contact, and so on.
+  repeated Kpi tasks = 4;
+}
+
+message ListLenderCasesRequest {
+  string filter = 1;
+  string search = 2;
+  int32 page = 3;
+}
+
+message CaseRow {
+  string application_id = 1;
+  string reference = 2;
+  string school_name = 3;
+  string edify_school_id = 4;
+  string district = 5;
+  string stage = 6;
+  string stage_label = 7;
+  string officer_name = 8;
+  string lender_name = 9;
+  // Formatted UGX amounts.
+  string requested = 10;
+  string outstanding = 11;
+  string next_due_on = 12;
+  string servicing_label = 13;
+  bool is_overdue = 14;
+  string submitted_at = 15;
+}
+
+message ListLenderCasesResponse {
+  repeated CaseRow rows = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  repeated Choice filters = 5;
+}
+
+message CaseLine {
+  string label = 1;
+  string value = 2;
+  string tone = 3;
+}
+
+message CaseTable {
+  repeated string columns = 1;
+  repeated CaseTableRow rows = 2;
+}
+
+message CaseTableRow {
+  repeated string cells = 1;
+  string tone = 2;
+  // A stored document the row refers to, if any.
+  string document_id = 3;
+}
+
+message CaseSection {
+  string key = 1;
+  string title = 2;
+  string note = 3;
+  repeated CaseLine lines = 4;
+  CaseTable table = 5;
+}
+
+message ActionField {
+  string key = 1;
+  string label = 2;
+  // "text", "multiline", "money", "date", "dates", "number", "percent",
+  // "choice", "check" or "file".
+  string kind = 3;
+  bool required = 4;
+  repeated Choice choices = 5;
+  string help = 6;
+  string value = 7;
+}
+
+message CaseAction {
+  string key = 1;
+  string label = 2;
+  string description = 3;
+  bool is_primary = 4;
+  bool is_danger = 5;
+  repeated ActionField fields = 6;
+}
+
+message CaseView {
+  string application_id = 1;
+  string reference = 2;
+  string title = 3;
+  string subtitle = 4;
+  string stage = 5;
+  string stage_label = 6;
+  string servicing_label = 7;
+  repeated CaseSection sections = 8;
+  repeated CaseAction actions = 9;
+}
+
+message GetCaseRequest {
+  string application_id = 1;
+}
+
+message GetCaseResponse {
+  CaseView view = 1;
+}
+
+message RunCaseActionRequest {
+  string application_id = 1;
+  string action = 2;
+  map<string, string> values = 3;
+  bytes file = 4;
+  string file_name = 5;
+}
+
+message RunCaseActionResponse {
+  string message = 1;
+  CaseView view = 2;
+}
+
+message GetDocumentRequest {
+  string application_id = 1;
+  string document_id = 2;
+}
+
+message GetDocumentResponse {
+  string file_name = 1;
+  string content_type = 2;
+  bytes content = 3;
+}
+
+message TeamMember {
+  string user_id = 1;
+  string name = 2;
+  string email = 3;
+  string officer_reference = 4;
+  // Active in the existing lender team.
+  bool membership_active = 5;
+  // Allowed to work in the platform (the administrator's switch).
+  bool platform_active = 6;
+  repeated string roles = 7;
+  int32 open_cases = 8;
+}
+
+message GetLenderTeamRequest {}
+
+message GetLenderTeamResponse {
+  string lender_name = 1;
+  repeated TeamMember members = 2;
+  repeated Choice roles = 3;
+  bool can_manage = 4;
+  string add_member_note = 5;
+}
+
+message SetLenderTeamMemberRequest {
+  string user_id = 1;
+  repeated string roles = 2;
+  bool platform_active = 3;
+  string note = 4;
+  // A loan officer's reference in the lender's own records. The existing
+  // loan ledger lets a loan officer work only loans carrying it, so it is
+  // saved there (through the existing application), never here.
+  string officer_reference = 5;
+}
+
+message SetLenderTeamMemberResponse {
+  TeamMember member = 1;
+}
+
+message GetServicingOverviewRequest {}
+
+message LenderPortfolio {
+  string partner_id = 1;
+  string lender_name = 2;
+  int32 applications = 3;
+  int32 awaiting_lender_action = 4;
+  int32 approved = 5;
+  int32 active_loans = 6;
+  int32 overdue_loans = 7;
+  int32 closed = 8;
+  int32 collateral_release_pending = 9;
+  string disbursed = 10;
+  string verified_collections = 11;
+  string outstanding = 12;
+  string overdue = 13;
+}
+
+message GetServicingOverviewResponse {
+  repeated Kpi kpis = 1;
+  repeated LenderPortfolio lenders = 2;
+  repeated CaseRow stalled = 3;
+}

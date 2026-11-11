@@ -1,0 +1,45 @@
+{{template "top" .}}
+{{if .Problem}}<div class="notice notice--danger" role="alert"><p>{{.Problem}}</p></div>{{end}}
+<section class="card">
+  <div class="topbar"><div><p class="section__copy">{{.Terms.Reference}} · version {{.AgreementVersion}} · issued {{.Terms.IssuedOn}}</p><h2 class="section__title">{{.Terms.School}}</h2></div>
+    <span class="pill">{{.Status}}</span></div>
+  <dl class="facts mt">
+    <div><dt>Lender</dt><dd>{{.Terms.Lender}}</dd></div>
+    <div><dt>Purpose</dt><dd>{{.Terms.Purpose}}</dd></div>
+    <div><dt>Loan amount</dt><dd class="figure">{{money .Terms.Principal}}</dd></div>
+    <div><dt>Interest</dt><dd>{{.Terms.RatePercent}}% per term, {{.Terms.MethodDescription}}</dd></div>
+    <div><dt>Total interest</dt><dd>{{money .Terms.TotalInterest}}</dd></div>
+    <div><dt>Total fees</dt><dd>{{money .Terms.TotalFees}}</dd></div>
+    <div><dt>Total to repay</dt><dd class="figure">{{money .Terms.TotalRepayable}}</dd></div>
+    {{if .Terms.Collateral}}<div><dt>Security</dt><dd>{{.Terms.Collateral}}</dd></div>{{end}}
+  </dl>
+</section>
+<section class="card">
+  <h2 class="section__title">Repayment schedule</h2>
+  <div class="ledger" role="region" aria-label="Repayment schedule" tabindex="0"><table>
+    <thead><tr><th scope="col">No.</th><th scope="col">Due</th><th scope="col" class="num">Principal</th><th scope="col" class="num">Interest</th><th scope="col" class="num">Fees</th><th scope="col" class="num">Total</th></tr></thead>
+    <tbody>{{range .Terms.Installments}}<tr><td>{{.Number}}</td><td>{{.DueDate}}</td><td class="num">{{money .Principal}}</td><td class="num">{{money .Interest}}</td><td class="num">{{money .Fee}}</td><td class="num">{{money .Total}}</td></tr>{{end}}</tbody>
+  </table></div>
+</section>
+<section class="card">
+  <h2 class="section__title">Please note</h2>
+  <ul class="steps">{{range .Terms.Conditions}}<li>{{.}}</li>{{end}}</ul>
+  <p class="fine mt">Terms fingerprint: <span class="reference">{{.Hash}}</span></p>
+</section>
+{{if not .Responded}}
+<section class="card">
+  <h2 class="section__title">Your answer</h2>
+  <form method="post" action="/loan/agreement/respond">
+    <input type="hidden" name="csrf" value="{{.CSRF}}"><input type="hidden" name="agreement" value="{{.AgreementID}}"><input type="hidden" name="hash" value="{{.Hash}}">
+    <div class="field"><label><input type="radio" name="response" value="accepted" required> I accept these proposed terms</label>
+      <label><input type="radio" name="response" value="clarification_requested"> I need clarification first</label>
+      <label><input type="radio" name="response" value="declined"> I decline these terms</label></div>
+    <div class="field"><label class="check"><input type="checkbox" name="confirm" value="yes"> I have read the terms and schedule above and am authorised to answer for the school.</label></div>
+    <div class="field"><label>Note <span class="optional">(required to decline or ask)</span><textarea name="note" maxlength="2000"></textarea></label></div>
+    <button class="button" type="submit">Send my answer</button>
+  </form>
+</section>
+{{end}}
+<form method="post" action="/loan/agreement/sign-out" class="actions"><input type="hidden" name="csrf" value="{{.CSRF}}">
+  <button class="button button--quiet button--small" type="submit">Sign out</button></form>
+{{template "bottom" .}}

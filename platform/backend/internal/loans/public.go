@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/ledger"
 )
 
 //go:embed web
@@ -555,6 +556,7 @@ var pageFuncs = template.FuncMap{
 	},
 	"day":         longDay,
 	"moment":      longMoment,
+	"money":       moneyText,
 	"status":      StatusLabel,
 	"actionLabel": func(action string) string { return actionLabels[action] },
 	"eventLabel":  func(kind string) string { return eventLabel(kind) },
@@ -604,3 +606,12 @@ func eventLabel(kind string) string {
 func longDay(at time.Time) string { return at.In(kampala).Format("2 January 2006") }
 
 func longMoment(at time.Time) string { return at.In(kampala).Format("2 January 2006, 15:04") + " EAT" }
+
+// moneyText formats a stored decimal amount, such as "1500000.00", as UGX.
+func moneyText(raw string) string {
+	m, err := ledger.ParseMoney(raw)
+	if err != nil {
+		return raw
+	}
+	return ledger.FormatUGX(m)
+}

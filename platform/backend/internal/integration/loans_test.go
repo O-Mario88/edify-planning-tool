@@ -79,6 +79,13 @@ VALUES ('`+channel.partner+`', true, '`+channel.email+`', '`+channel.email+`', n
 	}
 	cleanup := func() {
 		ctx := context.Background()
+		// Origination and servicing records, newest tables first.
+		for _, table := range []string{"sms_preference", "sms_message", "school_request", "school_access_log", "school_session",
+			"school_verification", "school_access", "payment_evidence_event", "payment_evidence", "document", "collateral_event",
+			"collateral", "approval_decision", "agreement_version", "recommendation", "assessment_event", "assessment",
+			"contact_log", "assignment", "lender_member_event", "lender_member"} {
+			_, _ = admin.Exec(ctx, `DELETE FROM school_loans.`+table)
+		}
 		for _, table := range []string{"application_event", "follow_up", "delivery_task", "lender_verification"} {
 			_, _ = admin.Exec(ctx, `DELETE FROM school_loans.`+table)
 		}

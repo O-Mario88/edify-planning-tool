@@ -66,6 +66,7 @@ var (
 	gateway *pgxpool.Pool // the read-only role the gateway really uses
 	baseURL string
 	mailbox string // the loan portal's development mailbox for this run
+	smsbox  string // and its development text messages
 )
 
 func TestMain(m *testing.M) {
@@ -122,8 +123,15 @@ func run(m *testing.M) int {
 		return 1
 	}
 	defer func() { _ = os.RemoveAll(mailbox) }()
+	smsbox, err = os.MkdirTemp("", "edify-loans-sms-")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "integration: making the SMS box:", err)
+		return 1
+	}
+	defer func() { _ = os.RemoveAll(smsbox) }()
 	cfg := config.Config{Env: config.Test, Release: "integration", JWTSecret: signingSecret,
-		Loans: config.Loans{PublicBaseURL: publicBaseURL, DevMailboxDir: mailbox, MailFrom: "loans@edify.test"}}
+		Loans: config.Loans{PublicBaseURL: publicBaseURL, DevMailboxDir: mailbox, MailFrom: "loans@edify.test",
+			SMSProvider: "dev_file", SMSDevDir: smsbox}}
 	httpServer := httptest.NewServer(server.New(cfg, gateway, nil, logger))
 	defer httpServer.Close()
 	baseURL = httpServer.URL

@@ -1,0 +1,25 @@
+{{template "top" .}}
+<section class="card">
+  {{if .Problem}}<div class="notice notice--danger" role="alert"><p>{{.Problem}}</p></div>{{end}}
+  {{if .CodeSent}}
+  <h2 class="section__title">Enter the code we sent</h2>
+  <p class="section__copy">We sent a six-digit code {{if .ByPhone}}by text message to <strong>{{.Destination}}</strong>{{else}}to <strong>{{.Destination}}</strong>{{end}}. It works for 10 minutes.</p>
+  <form method="post" action="/loan/{{.Purpose}}/verify" class="field mt">
+    <input type="hidden" name="t" value="{{.Token}}">
+    <label for="code">Code</label>
+    <input type="text" id="code" name="code" class="code-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" required>
+    <div class="actions mt"><button class="button" type="submit">{{if eq .Purpose "agreement"}}Open the terms{{else}}Open my statement{{end}}</button></div>
+  </form>
+  <form method="post" action="/loan/{{.Purpose}}/code"><input type="hidden" name="t" value="{{.Token}}">
+    <p class="fine">No code? <button type="submit" class="button button--quiet button--small">Send a new code</button></p></form>
+  {{else}}
+  <h2 class="section__title">Confirm it's you</h2>
+  <p class="section__copy">{{if eq .Purpose "agreement"}}These loan terms are{{else}}This statement is{{end}} private to your school. To open {{if eq .Purpose "agreement"}}them{{else}}it{{end}}, we will send a one-time code {{if .ByPhone}}by text message to <strong>{{.Destination}}</strong>{{else}}to <strong>{{.Destination}}</strong>{{end}}, the contact your lender has for you. You do not need an account.</p>
+  <form method="post" action="/loan/{{.Purpose}}/code" class="mt">
+    <input type="hidden" name="t" value="{{.Token}}">
+    <div class="actions"><button class="button" type="submit">Send me a code</button></div>
+  </form>
+  <p class="fine mt">Not your number? Contact your lender: do not use this link.</p>
+  {{end}}
+</section>
+{{template "bottom" .}}

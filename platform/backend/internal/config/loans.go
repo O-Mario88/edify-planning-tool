@@ -15,6 +15,12 @@ const (
 	envDevMailboxDir  = "EDIFY_DEV_MAILBOX_DIR"
 	envTrustProxy     = "EDIFY_TRUST_PROXY_HEADERS"
 	envPrivacyContact = "EDIFY_LOANS_PRIVACY_CONTACT"
+	envSMSProvider    = "EDIFY_SMS_PROVIDER"
+	envSMSDevDir      = "EDIFY_SMS_DEV_DIR"
+	envSMSUsername    = "EDIFY_SMS_USERNAME"
+	envSMSAPIKey      = "EDIFY_SMS_API_KEY"
+	envSMSSender      = "EDIFY_SMS_SENDER"
+	envSMSCallback    = "EDIFY_SMS_CALLBACK_SECRET"
 )
 
 // Loans configures the School Loan Application Portal's public pages and
@@ -39,6 +45,17 @@ type Loans struct {
 	TrustProxyHeaders bool
 	// PrivacyContact is who the privacy notice tells applicants to contact.
 	PrivacyContact string
+
+	// SMSProvider is "" (none: reminders and codes by SMS wait, and nothing is
+	// claimed sent), "dev_file" (development and test: each message is
+	// written to SMSDevDir) or "africastalking".
+	SMSProvider string
+	SMSDevDir   string
+	SMSUsername string
+	SMSAPIKey   string
+	SMSSender   string
+	// SMSCallbackSecret authenticates the provider's delivery reports.
+	SMSCallbackSecret string
 }
 
 func loadLoans(env Environment, getenv func(string) string) (Loans, error) {
@@ -51,6 +68,31 @@ func loadLoans(env Environment, getenv func(string) string) (Loans, error) {
 		DevMailboxDir:     strings.TrimSpace(getenv(envDevMailboxDir)),
 		TrustProxyHeaders: strings.EqualFold(strings.TrimSpace(getenv(envTrustProxy)), "true"),
 		PrivacyContact:    strings.TrimSpace(getenv(envPrivacyContact)),
+		SMSProvider:       strings.TrimSpace(getenv(envSMSProvider)),
+		SMSDevDir:         strings.TrimSpace(getenv(envSMSDevDir)),
+		SMSUsername:       strings.TrimSpace(getenv(envSMSUsername)),
+		SMSAPIKey:         getenv(envSMSAPIKey),
+		SMSSender:         strings.TrimSpace(getenv(envSMSSender)),
+		SMSCallbackSecret: getenv(envSMSCallback),
+	}
+	switch loans.SMSProvider {
+	case "":
+	case "dev_file":
+		if env != Development && env != Test {
+			return Loans{}, fmt.Errorf("config: %s=dev_file is for development and test only", envSMSProvider)
+		}
+		if loans.SMSDevDir == "" {
+			return Loans{}, fmt.Errorf("config: %s is required for dev_file", envSMSDevDir)
+		}
+	case "africastalking":
+		if loans.SMSUsername == "" || loans.SMSAPIKey == "" {
+			return Loans{}, fmt.Errorf("config: %s and %s are required for africastalking", envSMSUsername, envSMSAPIKey)
+		}
+		if len(loans.SMSCallbackSecret) < 24 {
+			return Loans{}, fmt.Errorf("config: %s must be a long random secret", envSMSCallback)
+		}
+	default:
+		return Loans{}, fmt.Errorf("config: %s must be dev_file or africastalking", envSMSProvider)
 	}
 	if loans.PublicBaseURL != "" {
 		parsed, err := url.Parse(loans.PublicBaseURL)

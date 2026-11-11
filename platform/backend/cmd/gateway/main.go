@@ -76,6 +76,11 @@ func run(logger *slog.Logger) error {
 	// lender its referral notification from the outbox, with retries.
 	worker := loans.NewWorker(loans.NewStore(pool), loans.NewMailer(cfg.Loans), cfg.Loans.PublicBaseURL, logger, time.Now)
 	go worker.Run(ctx, server.LoansSchemaReady(pool))
+	// Repayment reminders and school links by SMS, when a provider is set.
+	if sms := loans.NewSMSProvider(cfg.Loans); sms != nil {
+		smsWorker := loans.NewSMSWorker(loans.NewStore(pool), sms, loans.DeriveKeys(cfg.JWTSecret), cfg.Loans.PublicBaseURL, logger, time.Now)
+		go smsWorker.Run(ctx, server.LoansSchemaReady(pool))
+	}
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
