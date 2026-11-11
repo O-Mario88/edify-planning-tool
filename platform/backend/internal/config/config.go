@@ -84,6 +84,9 @@ type Config struct {
 
 	// Loans configures the School Loan Application Portal.
 	Loans Loans
+
+	// ClusterActions configures the Cluster Action Register's follow-up.
+	ClusterActions ClusterActions
 }
 
 // LoadGuard reads only what the production-protection guard needs, for a
@@ -146,6 +149,9 @@ func Load(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	if cfg.Loans, err = loadLoans(env, getenv); err != nil {
+		return Config{}, err
+	}
+	if cfg.ClusterActions, err = loadClusterActions(getenv); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil

@@ -2,17 +2,22 @@
  * A planned meeting or training (owner's mockup, 2026-11-11, "Meeting
  * Details"): its status in words, when and where, the agenda, the schools
  * invited, and Edit or Cancel while it is still planned. Once staff schedule
- * it, it opens the official activity for attendance and minutes.
+ * it, it opens the official activity for attendance and minutes. A meeting
+ * also shows the cluster's open action points to review (brief part 9:
+ * carry-forward) and raises new ones as Cluster Actions.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { CalendarDays, ChevronDown, ChevronRight, FileText, MapPin, Pencil, Trash2, Users } from 'lucide-react-native';
+import { CalendarDays, ChevronDown, ChevronRight, FileText, MapPin, Pencil, Plus, Trash2, Users } from 'lucide-react-native';
 
 import { describe, useSession } from '../../auth/SessionContext';
+import type { ActionCard } from '../../gen/edify/clusters/v1/actions_pb';
+import { ClusterActionService } from '../../gen/edify/clusters/v1/actions_pb';
 import type { GetPlanResponse } from '../../gen/edify/clusters/v1/mobilization_pb';
 import { ClusterMobilizationService } from '../../gen/edify/clusters/v1/mobilization_pb';
 import { fonts, radius, useTheme } from '../../theme';
 import { LoanHero, LoanSheet, PrimaryButton, StatusChip } from '../loans/loanUi';
+import { ActionCardRow } from './ClusterActionsScreen';
 import { channelLabel, planStatus } from './clusterData';
 import { longDate } from './clusterRoutes';
 import { MeetingForm } from './MeetingForm';
@@ -25,10 +30,14 @@ interface MeetingDetailProps {
   readonly clusterId: string;
   readonly clusterName: string;
   readonly onOpenActivity: (activityId: string) => void;
+  /** Opens a Cluster Action. */
+  readonly onOpenAction: (actionId: string) => void;
+  /** Starts a Cluster Action raised at this meeting ("plan:<id>" or "activity:<id>"). */
+  readonly onRaiseAction: (meeting: string) => void;
   readonly onBack: () => void;
 }
 
-export function MeetingDetailScreen({ planId, clusterId, clusterName, onOpenActivity, onBack }: MeetingDetailProps) {
+export function MeetingDetailScreen({ planId, clusterId, clusterName, onOpenActivity, onOpenAction, onRaiseAction, onBack }: MeetingDetailProps) {
   const { api } = useSession();
   const { colors } = useTheme();
   const [answer, setAnswer] = useState<GetPlanResponse | null>(null);
@@ -39,6 +48,7 @@ export function MeetingDetailScreen({ planId, clusterId, clusterName, onOpenActi
   const [reason, setReason] = useState('');
   const [isBusy, setIsBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const [carried, setCarried] = useState<readonly ActionCard[] | null>(null);
 
   const load = useCallback(() => {
     setError('');
@@ -48,6 +58,12 @@ export function MeetingDetailScreen({ planId, clusterId, clusterName, onOpenActi
       .catch((cause: unknown) => setError(describe(cause)));
   }, [api, planId]);
   useEffect(load, [load]);
+  useEffect(() => {
+    api
+      .call(ClusterActionService.method.listCarryForward, { clusterId })
+      .then((found) => setCarried(found.actions))
+      .catch(() => setCarried([]));
+  }, [api, clusterId]);
 
   const plan = answer?.plan;
   if (plan && isEditing) {
@@ -154,6 +170,24 @@ export function MeetingDetailScreen({ planId, clusterId, clusterName, onOpenActi
                 <PrimaryButton label={`Keep the ${noun.toLowerCase()}`} isOutline onPress={() => setIsCancelling(false)} />
               </View>
             ) : null}
+
+            {plan.category !== 'training' ? (
+              <>
+                <Text style={[styles.section, { color: colors.textMuted }]}>DECISIONS & ACTION POINTS</Text>
+                <PrimaryButton
+                  label="Raise an action from this meeting"
+                  icon={Plus}
+                  isOutline
+                  onPress={() => onRaiseAction(plan.activityId ? `activity:${plan.activityId}` : `plan:${plan.id}`)}
+                />
+                <Text style={[styles.section, { color: colors.textMuted }]}>REVIEW PREVIOUS ACTION POINTS</Text>
+                {carried === null ? <ActivityIndicator color={colors.primary} accessibilityLabel="Loading action points" /> : null}
+                {carried?.length === 0 ? (
+                  <Text style={[styles.muted, { color: colors.textMuted }]}>No open action points to review.</Text>
+                ) : null}
+                {carried?.map((action) => <ActionCardRow key={action.id} card={action} onPress={() => onOpenAction(action.id)} />)}
+              </>
+            ) : null}
           </>
         ) : null}
       </LoanSheet>
@@ -179,6 +213,7 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.bold, fontSize: 19 },
   chipRow: { flexDirection: 'row' },
   muted: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
+  section: { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 0.8, marginTop: 6 },
   line: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   lineText: { flex: 1, fontFamily: fonts.medium, fontSize: 15, lineHeight: 21 },
   rowCard: { flexDirection: 'row', alignItems: 'center', minHeight: 56 },

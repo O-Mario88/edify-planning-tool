@@ -92,3 +92,42 @@ const SSA_STATUSES: Readonly<Record<string, string>> = {
 export function ssaStatusLabel(status: string): string {
   return SSA_STATUSES[status] ?? status;
 }
+
+/**
+ * A key for one form's submission, made once when the form opens: a retry
+ * after a lost answer sends the same key, and the gateway answers with the
+ * action it already saved instead of a second one. It names an attempt; it
+ * is not a secret.
+ */
+export function newSubmissionKey(now: number = Date.now()): string {
+  const random = () => Math.floor(Math.random() * 36 ** 8).toString(36).padStart(8, '0');
+  return `ca-${now.toString(36)}-${random()}${random()}`;
+}
+
+/** The register's tabs for a leader (brief part 12). */
+export const ACTION_TABS = [
+  { key: 'open', label: 'Open' },
+  { key: 'waiting', label: 'Waiting' },
+  { key: 'completed', label: 'Completed' },
+] as const;
+
+export type ActionTab = (typeof ACTION_TABS)[number]['key'];
+
+export const PRIORITIES = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'high', label: 'High' },
+  { value: 'urgent', label: 'Urgent' },
+];
+
+/** A staff member's queues of Cluster Support Requests (brief part 5.3). */
+export const SUPPORT_QUEUES = [
+  { key: 'new', label: 'New' },
+  { key: 'clarification', label: 'Clarification' },
+  { key: 'accepted', label: 'Accepted' },
+  { key: 'planned', label: 'Planned' },
+  { key: 'in_progress', label: 'In progress' },
+  { key: 'overdue', label: 'Overdue' },
+  { key: 'completed', label: 'Completed' },
+];
+
+export type SupportScope = 'mine' | 'team';

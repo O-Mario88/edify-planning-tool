@@ -19,7 +19,8 @@ import { SchoolsScreen } from './src/screens/SchoolsScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { ClusterLeaderApp } from './src/screens/cluster/ClusterLeaderApp';
 import { ClusterLeadersScreen } from './src/screens/cluster/ClusterLeadersScreen';
-import { LEADERS_URL, canManageLeaders, leadersSection } from './src/screens/cluster/clusterRoutes';
+import { LEADERS_URL, SUPPORT_URL, canManageLeaders, leadersSection } from './src/screens/cluster/clusterRoutes';
+import { SupportRequestsScreen } from './src/screens/cluster/SupportRequestsScreen';
 import { LoansRoute } from './src/screens/loans/LoansRoute';
 import { isLoansUrl, loansSection } from './src/screens/loans/loanRoutes';
 import { AppShell, MENU_URL } from './src/shell/AppShell';
@@ -173,6 +174,7 @@ function SignedIn({ session }: { readonly session: Session }) {
   const isNative = useCallback(
     (url: string) =>
       url === LEADERS_URL ||
+      url === SUPPORT_URL ||
       isLoansUrl(url) ||
       OWN_SCREENS.includes(pathOf(url)) ||
       pages.has(pathOf(url)) ||
@@ -209,6 +211,8 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <MenuScreen session={session} sections={sections} isNative={isNative} onOpen={open} />;
   } else if (route.url === LEADERS_URL) {
     screen = <ClusterLeadersScreen />;
+  } else if (route.url === SUPPORT_URL) {
+    screen = <SupportRequestsScreen />;
   } else if (isLoansUrl(route.url)) {
     screen = <LoansRoute key={route.url} url={route.url} />;
   } else if (path === '/home') {

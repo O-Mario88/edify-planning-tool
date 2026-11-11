@@ -76,6 +76,12 @@ func (s *Service) GetClusterHome(
 // nothing is left out.
 func priorityActions(ops Operations) []*clustersv1.PriorityAction {
 	all := []*clustersv1.PriorityAction{
+		{Key: "actions_reply", Label: "Actions needing your reply", Count: ops.ActionsNeedReply,
+			Detail: "Your CCEO asked a question or returned a request", Href: "actions", Tone: "alert"},
+		{Key: "actions_review", Label: "Actions to review and close", Count: ops.ActionsToReview,
+			Detail: "Every school's support is finished", Href: "actions", Tone: "good"},
+		{Key: "actions_staff", Label: "Requests awaiting CCEO response", Count: ops.ActionsWithStaff,
+			Detail: "Sent for support, not yet answered", Href: "actions", Tone: "info"},
 		{Key: "returned_plans", Label: "Meetings to revise", Count: ops.Returned,
 			Detail: "Plans your CCEO returned for changes", Href: "plans", Tone: "alert"},
 		{Key: "overdue_items", Label: "Outstanding follow-ups", Count: ops.Overdue,

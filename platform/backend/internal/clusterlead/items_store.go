@@ -176,6 +176,12 @@ type Operations struct {
 	OpenItems  int32
 	Overdue    int32
 	Returned   int32
+	// Cluster actions (migration 0004): schools waiting on the leader's
+	// reply, actions whose every school is finished (to review and close),
+	// and schools waiting on staff.
+	ActionsNeedReply int32
+	ActionsToReview  int32
+	ActionsWithStaff int32
 	// Confirmed schools per upcoming activity.
 	Confirmed map[string]int32
 }
@@ -206,10 +212,22 @@ SELECT
          WHERE m.activity_id = a.id AND m.status = 'submitted')),
   (SELECT count(*) FROM cluster_leadership.action_item WHERE cluster_id = $1 AND status = 'open'),
   (SELECT count(*) FROM cluster_leadership.action_item WHERE cluster_id = $1 AND status = 'open' AND due_on < $3),
-  (SELECT count(*) FROM cluster_leadership.meeting_plan WHERE cluster_id = $1 AND status = 'returned')`,
-		clusterID, next, day, plannedStatuses, zoneName).Scan(
+  (SELECT count(*) FROM cluster_leadership.meeting_plan WHERE cluster_id = $1 AND status = 'returned'),
+  (SELECT count(*) FROM cluster_leadership.cluster_action_school x
+     JOIN cluster_leadership.cluster_action ca ON ca.id = x.action_id
+     WHERE ca.cluster_id = $1 AND ca.status = 'submitted' AND x.status IN ('clarification_requested', 'returned')),
+  (SELECT count(*) FROM cluster_leadership.cluster_action ca
+     WHERE ca.cluster_id = $1 AND ca.status = 'submitted' AND NOT EXISTS (
+       SELECT 1 FROM cluster_leadership.cluster_action_school x
+       LEFT JOIN activity act ON act.id = x.activity_id AND act.deleted_at IS NULL
+       WHERE x.action_id = ca.id AND NOT (x.status IN ('returned', 'declined', 'cancelled')
+         OR (x.status = 'accepted' AND act.status = ANY($6))))),
+  (SELECT count(*) FROM cluster_leadership.cluster_action_school x
+     JOIN cluster_leadership.cluster_action ca ON ca.id = x.action_id
+     WHERE ca.cluster_id = $1 AND ca.status = 'submitted' AND x.status IN ('awaiting_review', 'under_review'))`,
+		clusterID, next, day, plannedStatuses, zoneName, activityVerified).Scan(
 		&ops.NotInvitedToNext, &ops.Unanswered, &ops.TrainingsShort, &ops.MinutesDue,
-		&ops.OpenItems, &ops.Overdue, &ops.Returned)
+		&ops.OpenItems, &ops.Overdue, &ops.Returned, &ops.ActionsNeedReply, &ops.ActionsToReview, &ops.ActionsWithStaff)
 	if err != nil {
 		return Operations{}, fmt.Errorf("clusterlead: counting operations: %w", err)
 	}

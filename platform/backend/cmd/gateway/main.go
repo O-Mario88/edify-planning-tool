@@ -81,6 +81,13 @@ func run(logger *slog.Logger) error {
 	smsWorker := loans.NewSMSWorker(loans.NewStore(pool), loans.NewSMSProvider(cfg.Loans), loans.DeriveKeys(cfg.JWTSecret),
 		cfg.Loans.PublicBaseURL, logger, time.Now).WithCooldown(cfg.Loans.ReminderCooldownDays)
 	go smsWorker.Run(ctx, server.LoansSchemaReady(pool))
+	// Cluster Actions: reminders, overdue notices and policy escalation every
+	// thirty minutes; notices relayed into Edify's notifications every minute.
+	actions, noticeSender, clusterReady := server.ClusterActionFollowUp(cfg, pool, logger)
+	if noticeSender == nil {
+		logger.Warn("cluster actions: no EDIFY_INTERNAL_KEY or existing application; notices stay queued")
+	}
+	go actions.RunFollowUp(ctx, noticeSender, 30*time.Minute, clusterReady, logger)
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,

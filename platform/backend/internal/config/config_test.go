@@ -246,3 +246,33 @@ func TestLoanPortalSettingsRefuseProductionAndUnsafeMail(t *testing.T) {
 		t.Fatal("an http public base URL was accepted in staging")
 	}
 }
+
+func TestClusterActionFollowUpIsConfiguredWithinBounds(t *testing.T) {
+	base := map[string]string{"EDIFY_ENV": "development", "EDIFY_DATABASE_URL": "postgresql://localhost/edify_dev", "EDIFY_JWT_SECRET": strongSecret}
+	load := func(extra map[string]string) (Config, error) {
+		values := map[string]string{}
+		for k, v := range base {
+			values[k] = v
+		}
+		for k, v := range extra {
+			values[k] = v
+		}
+		return Load(env(values))
+	}
+	cfg, err := load(nil)
+	if err != nil || cfg.ClusterActions.RemindAfterDays != 3 || cfg.ClusterActions.EscalateAfterDays != 14 {
+		t.Fatalf("defaults: %+v %v", cfg.ClusterActions, err)
+	}
+	if cfg, err = load(map[string]string{"EDIFY_CLUSTER_ACTION_ESCALATE_DAYS": "0"}); err != nil || cfg.ClusterActions.EscalateAfterDays != 0 {
+		t.Fatalf("escalation can be switched off: %+v %v", cfg.ClusterActions, err)
+	}
+	for _, bad := range []map[string]string{
+		{"EDIFY_CLUSTER_ACTION_REMIND_DAYS": "0"},
+		{"EDIFY_CLUSTER_ACTION_ESCALATE_DAYS": "365"},
+		{"EDIFY_INTERNAL_KEY": "short"},
+	} {
+		if _, err := load(bad); err == nil {
+			t.Fatalf("accepted %v", bad)
+		}
+	}
+}

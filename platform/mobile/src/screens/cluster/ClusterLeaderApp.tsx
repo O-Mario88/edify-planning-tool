@@ -11,6 +11,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { describe, useSession } from '../../auth/SessionContext';
+import type { ClusterActionView } from '../../gen/edify/clusters/v1/actions_pb';
 import type { ClusterSummary, GetClusterHomeResponse } from '../../gen/edify/clusters/v1/leadership_pb';
 import type { MeetingPlan } from '../../gen/edify/clusters/v1/mobilization_pb';
 import { ClusterMobilizationService } from '../../gen/edify/clusters/v1/mobilization_pb';
@@ -19,7 +20,10 @@ import { AppShell, MENU_URL } from '../../shell/AppShell';
 import { fonts, radius, useTheme } from '../../theme';
 import { MenuScreen } from '../MoreScreen';
 import { ShareApplicationScreen } from '../loans/ShareSheet';
+import { ActionDetailScreen } from './ActionDetailScreen';
+import { ActionForm } from './ActionForm';
 import { ActivityScreen } from './ActivityScreen';
+import { ClusterActionsScreen } from './ClusterActionsScreen';
 import { ClusterHomeScreen } from './ClusterHomeScreen';
 import { ActionItemsScreen, RequestsScreen } from './ClusterWorkScreens';
 import { ManageClusterScreen } from './ManageClusterScreen';
@@ -44,6 +48,10 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
   const [when, setWhen] = useState<'upcoming' | 'past'>('upcoming');
   const [activityId, setActivityId] = useState('');
   const [planId, setPlanId] = useState('');
+  const [actionId, setActionId] = useState('');
+  // The New Action form, or a draft being edited; null when closed.
+  const [actionForm, setActionForm] = useState<{ readonly draft?: ClusterActionView; readonly fromMeeting?: string } | null>(null);
+  const [actionNotice, setActionNotice] = useState('');
   const [clusters, setClusters] = useState<readonly ClusterSummary[] | null>(null);
   const [clusterId, setClusterId] = useState('');
   const [home, setHome] = useState<GetClusterHomeResponse | null>(null);
@@ -89,6 +97,9 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
   const open = (next: string) => {
     setActivityId('');
     setPlanId('');
+    setActionId('');
+    setActionForm(null);
+    setActionNotice('');
     const tab = tabOf(next.replace(/^cluster:/, '')) ?? tabOfUrl(next);
     if (tab) {
       setWhen(whenOf(next));
@@ -116,10 +127,56 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
     screen = error ? <Notice title="The portal did not load" copy={error} /> : <Loading />;
   } else if (clusters.length === 0 || !chosen) {
     screen = <Notice title="No cluster is assigned to you yet" copy="Your CCEO or Programme Lead gives you a cluster. Once they have, it opens here." />;
+  } else if (actionForm) {
+    screen = (
+      <ActionForm
+        key={actionForm.draft?.card?.id ?? 'new'}
+        {...props}
+        draft={actionForm.draft}
+        fromMeeting={actionForm.fromMeeting}
+        onDone={(id, isSent) => {
+          setActionForm(null);
+          setActionNotice(isSent ? 'Sent for support. Each school went to the CCEO who holds it.' : 'Draft saved.');
+          setUrl(CLUSTER_TABS.actions);
+          setActionId(id);
+        }}
+        onBack={() => setActionForm(null)}
+      />
+    );
+  } else if (actionId) {
+    screen = (
+      <ActionDetailScreen
+        key={actionId}
+        actionId={actionId}
+        notice={actionNotice}
+        onEdit={(draft) => setActionForm({ draft })}
+        onBack={() => {
+          setActionId('');
+          setActionNotice('');
+          setUrl(CLUSTER_TABS.actions);
+        }}
+      />
+    );
   } else if (activityId) {
     screen = <ActivityScreen key={activityId} activityId={activityId} onBack={() => setActivityId('')} />;
   } else if (planId) {
-    screen = <MeetingDetailScreen key={planId} planId={planId} {...props} onOpenActivity={setActivityId} onBack={() => setPlanId('')} />;
+    screen = (
+      <MeetingDetailScreen
+        key={planId}
+        planId={planId}
+        {...props}
+        onOpenActivity={setActivityId}
+        onOpenAction={(id) => {
+          setPlanId('');
+          setActionId(id);
+        }}
+        onRaiseAction={(meeting) => {
+          setPlanId('');
+          setActionForm({ fromMeeting: meeting });
+        }}
+        onBack={() => setPlanId('')}
+      />
+    );
   } else if (tab === 'meetings') {
     screen = (
       <MeetingsScreen
@@ -155,6 +212,8 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
   } else if (tab === 'share') {
     screen = <ShareApplicationScreen key={chosen.id} eyebrow={chosen.name} />;
   } else if (tab === 'actions') {
+    screen = <ClusterActionsScreen key={chosen.id} {...props} onNew={() => setActionForm({})} onOpen={setActionId} />;
+  } else if (tab === 'todos') {
     screen = <ActionItemsScreen key={chosen.id} {...props} />;
   } else if (tab === 'requests') {
     screen = <RequestsScreen key={chosen.id} {...props} />;

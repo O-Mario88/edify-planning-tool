@@ -1,0 +1,447 @@
+syntax = "proto3";
+
+package edify.clusters.v1;
+
+import "edify/common/v1/common.proto";
+
+// The Cluster Action Register (owner brief, 2026-11-11): a school need raised
+// by a cluster's leader, routed school by school to the CCEO holding each
+// school, and followed until verified support is delivered and reviewed. An
+// action is a coordination record: staff plan the official activity in Edify
+// and link it; the activity's own status then shows each school's progress.
+service ClusterActionService {
+  // What a new action may name: support kinds, courses, the cluster's
+  // meetings, and its member schools.
+  rpc GetActionOptions(GetActionOptionsRequest) returns (GetActionOptionsResponse);
+  // The leader's register: Open, Waiting or Completed.
+  rpc ListActions(ListActionsRequest) returns (ListActionsResponse);
+  rpc GetAction(GetActionRequest) returns (GetActionResponse);
+  // Create or edit a draft, and send it for support (submit).
+  rpc SaveAction(SaveActionRequest) returns (SaveActionResponse);
+  // The leader answers a clarification or revises a returned school.
+  rpc ReplyToAction(ReplyToActionRequest) returns (ReplyToActionResponse);
+  rpc CancelAction(CancelActionRequest) returns (CancelActionResponse);
+  // Close once every school is verified, returned, declined or cancelled.
+  rpc CloseAction(CloseActionRequest) returns (CloseActionResponse);
+  // A meeting's review of an earlier action; never a new action.
+  rpc ReviewAction(ReviewActionRequest) returns (ReviewActionResponse);
+  // Raise an unresolved action to the supervising Program Lead.
+  rpc EscalateAction(EscalateActionRequest) returns (EscalateActionResponse);
+  // Unfinished actions to bring to the next meeting.
+  rpc ListCarryForward(ListCarryForwardRequest) returns (ListCarryForwardResponse);
+
+  // Staff: the cluster support requests routed to the caller (mine) or
+  // their team (a Program Lead's supervisees and what is routed to them).
+  rpc ListSupportRequests(ListSupportRequestsRequest) returns (ListSupportRequestsResponse);
+  // Staff: acknowledge, accept, ask for clarification, return or decline a
+  // school's request (a reason is required to return or decline).
+  rpc RespondToRequest(RespondToRequestRequest) returns (RespondToRequestResponse);
+  // Staff: the school's official activities that may be linked.
+  rpc ListLinkableActivities(ListLinkableActivitiesRequest) returns (ListLinkableActivitiesResponse);
+  rpc LinkActivity(LinkActivityRequest) returns (LinkActivityResponse);
+  rpc UnlinkActivity(UnlinkActivityRequest) returns (UnlinkActivityResponse);
+  // Staff: resolve an escalation routed to them.
+  rpc ResolveEscalation(ResolveEscalationRequest) returns (ResolveEscalationResponse);
+
+  // The cluster's action summary and resolution time (leader or staff).
+  rpc GetClusterActionSummary(GetClusterActionSummaryRequest) returns (GetClusterActionSummaryResponse);
+  // A school's cluster support history (its staff, or its cluster's leader).
+  rpc GetSchoolSupportHistory(GetSchoolSupportHistoryRequest) returns (GetSchoolSupportHistoryResponse);
+}
+
+message Choice {
+  string value = 1;
+  string label = 2;
+}
+
+message GetActionOptionsRequest {
+  string cluster_id = 1;
+}
+
+message GetActionOptionsResponse {
+  repeated Choice support_kinds = 1;
+  // Governed courses a cluster training may deliver (for a training need).
+  repeated Choice courses = 2;
+  // The cluster's recent and upcoming meetings, and the leader's own plans.
+  repeated Choice meetings = 3;
+  repeated Choice schools = 4;
+  repeated Choice sources = 5;
+}
+
+// One school of an action, and how far its support has got.
+message ActionSchool {
+  string school_id = 1;
+  string edify_school_id = 2;
+  string name = 3;
+  string responsible_staff = 4;
+  // "owner", "supervisor" (nobody held the school) or "unassigned".
+  string routed_to = 5;
+  // The coordination state (awaiting_review ... cancelled), or, once linked,
+  // the progress the linked activity shows: planned, in_progress,
+  // implementation_recorded, verified, or replan when it was cancelled.
+  string progress = 6;
+  string progress_label = 7;
+  // "good", "info", "caution", "alert" or "plain".
+  string progress_tone = 8;
+  string note = 9;
+  LinkedActivity activity = 10;
+  // What the caller may do with this school's request now.
+  bool can_respond = 11;
+  bool can_link = 12;
+}
+
+message LinkedActivity {
+  string id = 1;
+  string name = 2;
+  // ISO date.
+  string date = 3;
+  string status = 4;
+  string status_label = 5;
+}
+
+message ActionEvent {
+  string event = 1;
+  string label = 2;
+  string actor = 3;
+  string actor_role = 4;
+  string school = 5;
+  string note = 6;
+  string at = 7;
+}
+
+message ActionReview {
+  string id = 1;
+  string meeting = 2;
+  string progress = 3;
+  string challenges = 4;
+  string next_step = 5;
+  string outcome = 6;
+  string by = 7;
+  string at = 8;
+}
+
+message ActionEscalation {
+  string id = 1;
+  string reason = 2;
+  string raised_by = 3;
+  string to_staff = 4;
+  string status = 5;
+  string resolution = 6;
+  string at = 7;
+  bool can_resolve = 8;
+}
+
+// A compact card for lists.
+message ActionCard {
+  string id = 1;
+  string ref = 2;
+  string title = 3;
+  string cluster_name = 4;
+  // "Hope Primary School" or "4 schools".
+  string schools_label = 5;
+  string responsible = 6;
+  string status = 7;
+  string status_label = 8;
+  string status_tone = 9;
+  // "2 of 5 schools verified".
+  string progress_summary = 10;
+  // ISO date.
+  string target_on = 11;
+  bool is_overdue = 12;
+  string latest_update = 13;
+  string priority = 14;
+  // The one thing the caller can do next, when there is one ("Reply").
+  string next_action = 15;
+}
+
+message ClusterActionView {
+  ActionCard card = 1;
+  string cluster_id = 2;
+  string source = 3;
+  string source_label = 4;
+  string source_meeting = 5;
+  string support_kind = 6;
+  string support_kind_label = 7;
+  string training_course = 8;
+  string description = 9;
+  string expected_outcome = 10;
+  string created_by = 11;
+  string created_at = 12;
+  int32 fiscal_year = 13;
+  repeated ActionSchool schools = 14;
+  repeated ActionEvent history = 15;
+  repeated ActionReview reviews = 16;
+  repeated ActionEscalation escalations = 17;
+  string close_summary = 18;
+  int32 version = 19;
+  // Days from submission to the last school verified, when all are.
+  int32 resolution_days = 20;
+  bool can_edit = 21;
+  bool can_submit = 22;
+  bool can_cancel = 23;
+  bool can_close = 24;
+  bool can_review = 25;
+  bool can_escalate = 26;
+  bool can_reply = 27;
+  // Draft-only fields, so a draft can be edited.
+  repeated string school_ids = 28;
+  string training_course_id = 29;
+  string source_activity_id = 30;
+  string source_plan_id = 31;
+  string priority = 32;
+  string target_on = 33;
+  string title = 34;
+}
+
+message ListActionsRequest {
+  string cluster_id = 1;
+  // "open", "waiting" or "completed".
+  string tab = 2;
+  edify.common.v1.PageRequest page = 3;
+}
+
+message ListActionsResponse {
+  repeated ActionCard actions = 1;
+  map<string, int32> counts = 2;
+  edify.common.v1.PageInfo page = 3;
+}
+
+message GetActionRequest {
+  string id = 1;
+}
+
+message GetActionResponse {
+  ClusterActionView action = 1;
+}
+
+message SaveActionRequest {
+  // Empty to create.
+  string id = 1;
+  string cluster_id = 2;
+  repeated string school_ids = 3;
+  string support_kind = 4;
+  string training_course_id = 5;
+  string title = 6;
+  string description = 7;
+  string expected_outcome = 8;
+  string priority = 9;
+  // ISO date.
+  string target_on = 10;
+  string source = 11;
+  string source_activity_id = 12;
+  string source_plan_id = 13;
+  bool submit = 14;
+  // The client's key for this submission, so a retry never duplicates it.
+  string idempotency_key = 15;
+  // The version the leader edited, for an existing draft.
+  int32 version = 16;
+}
+
+message SaveActionResponse {
+  ClusterActionView action = 1;
+  // The idempotency key had already made this action: nothing new was made.
+  bool replayed = 2;
+}
+
+message ReplyToActionRequest {
+  string id = 1;
+  // Empty for every school waiting on the leader.
+  string school_id = 2;
+  string note = 3;
+}
+
+message ReplyToActionResponse {
+  ClusterActionView action = 1;
+}
+
+message CancelActionRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message CancelActionResponse {
+  ClusterActionView action = 1;
+}
+
+message CloseActionRequest {
+  string id = 1;
+  string summary = 2;
+}
+
+message CloseActionResponse {
+  ClusterActionView action = 1;
+}
+
+message ReviewActionRequest {
+  string id = 1;
+  string meeting_activity_id = 2;
+  string meeting_plan_id = 3;
+  string progress = 4;
+  string challenges = 5;
+  string next_step = 6;
+  // "continue", "escalate" or "propose_closure".
+  string outcome = 7;
+}
+
+message ReviewActionResponse {
+  ClusterActionView action = 1;
+}
+
+message EscalateActionRequest {
+  string id = 1;
+  string school_id = 2;
+  string reason = 3;
+}
+
+message EscalateActionResponse {
+  ClusterActionView action = 1;
+}
+
+message ListCarryForwardRequest {
+  string cluster_id = 1;
+}
+
+message ListCarryForwardResponse {
+  repeated ActionCard actions = 1;
+}
+
+// A school's request in a staff member's queue.
+message SupportRequestRow {
+  string action_id = 1;
+  string ref = 2;
+  string cluster_id = 3;
+  string cluster_name = 4;
+  string leader = 5;
+  string school_id = 6;
+  string edify_school_id = 7;
+  string school_name = 8;
+  string support = 9;
+  string description = 10;
+  string responsible_staff = 11;
+  string routed_to = 12;
+  string progress = 13;
+  string progress_label = 14;
+  string progress_tone = 15;
+  string submitted_on = 16;
+  string target_on = 17;
+  int32 days_waiting = 18;
+  bool is_overdue = 19;
+  bool can_respond = 20;
+  bool can_link = 21;
+  string priority = 22;
+}
+
+message ListSupportRequestsRequest {
+  // "mine" (the default) or "team".
+  string scope = 1;
+  // A queue key (new, clarification, accepted, planned, in_progress,
+  // completed, overdue) or empty for all open.
+  string queue = 2;
+  edify.common.v1.PageRequest page = 3;
+}
+
+message ListSupportRequestsResponse {
+  repeated SupportRequestRow rows = 1;
+  map<string, int32> counts = 2;
+  edify.common.v1.PageInfo page = 3;
+  // Whether the caller has a team view.
+  bool has_team = 4;
+}
+
+message RespondToRequestRequest {
+  string action_id = 1;
+  string school_id = 2;
+  // "acknowledge", "accept", "clarify", "return" or "decline".
+  string response = 3;
+  string note = 4;
+  // For return and decline: one of the brief's reasons.
+  string reason_code = 5;
+}
+
+message RespondToRequestResponse {
+  ClusterActionView action = 1;
+}
+
+message ListLinkableActivitiesRequest {
+  string action_id = 1;
+  string school_id = 2;
+}
+
+message ListLinkableActivitiesResponse {
+  repeated LinkedActivity activities = 1;
+}
+
+message LinkActivityRequest {
+  string action_id = 1;
+  string school_id = 2;
+  string activity_id = 3;
+}
+
+message LinkActivityResponse {
+  ClusterActionView action = 1;
+}
+
+message UnlinkActivityRequest {
+  string action_id = 1;
+  string school_id = 2;
+  string reason = 3;
+}
+
+message UnlinkActivityResponse {
+  ClusterActionView action = 1;
+}
+
+message ResolveEscalationRequest {
+  string escalation_id = 1;
+  string resolution = 2;
+}
+
+message ResolveEscalationResponse {
+  ClusterActionView action = 1;
+}
+
+message GetClusterActionSummaryRequest {
+  string cluster_id = 1;
+}
+
+message SummaryFigure {
+  string key = 1;
+  string label = 2;
+  int32 value = 3;
+}
+
+message GetClusterActionSummaryResponse {
+  repeated SummaryFigure figures = 1;
+  // School Support Resolution Time: days from submission to verified
+  // support, over schools verified in the financial year.
+  int32 median_resolution_days = 2;
+  int32 resolved_schools = 3;
+  // Most common needs, by support kind, this financial year.
+  repeated SummaryFigure needs = 4;
+  // Schools named in two or more actions this financial year.
+  repeated SummaryFigure repeat_schools = 5;
+}
+
+message GetSchoolSupportHistoryRequest {
+  string school_id = 1;
+}
+
+message SchoolSupportEntry {
+  string action_id = 1;
+  string ref = 2;
+  string cluster_name = 3;
+  string support = 4;
+  string source = 5;
+  string responsible_staff = 6;
+  string progress = 7;
+  string progress_label = 8;
+  string progress_tone = 9;
+  LinkedActivity activity = 10;
+  string submitted_on = 11;
+  string target_on = 12;
+  string next_step = 13;
+}
+
+message GetSchoolSupportHistoryResponse {
+  repeated SchoolSupportEntry entries = 1;
+}

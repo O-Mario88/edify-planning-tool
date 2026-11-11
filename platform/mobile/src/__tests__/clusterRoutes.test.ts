@@ -1,6 +1,7 @@
 import {
   CLUSTER_TABS,
   LEADERS_URL,
+  SUPPORT_URL,
   canManageLeaders,
   clusterBottomBar,
   clusterWorkSection,
@@ -20,8 +21,8 @@ describe('the Cluster Leader portal routes', () => {
 
   test('More keeps the follow-up, reports, cluster and the loan link one tap away', () => {
     const labels = clusterWorkSection().items.map((item) => item.label);
-    expect(labels).toEqual(['Action & follow-up', 'Requests to staff', 'Progress & Reports', 'Manage cluster', 'Share loan application']);
-    expect(clusterWorkSection().items.map((item) => tabOfUrl(item.url))).toEqual(['actions', 'requests', 'progress', 'manage', 'share']);
+    expect(labels).toEqual(['Action & follow-up', 'Requests to staff', 'Meeting to-dos', 'Progress & Reports', 'Manage cluster', 'Share loan application']);
+    expect(clusterWorkSection().items.map((item) => tabOfUrl(item.url))).toEqual(['actions', 'requests', 'todos', 'progress', 'manage', 'share']);
   });
 
   test("a Home count's link opens the tab it counts", () => {
@@ -50,7 +51,10 @@ describe('who sees Cluster Leaders', () => {
 
   test('the menu section opens the native screen', () => {
     const section = leadersSection();
-    expect(section.items.map((item) => [item.url, item.native])).toEqual([[LEADERS_URL, true]]);
+    expect(section.items.map((item) => [item.label, item.url, item.native])).toEqual([
+      ['Cluster support requests', SUPPORT_URL, true],
+      ['Cluster Leaders', LEADERS_URL, true],
+    ]);
   });
 });
 

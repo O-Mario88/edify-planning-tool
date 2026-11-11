@@ -1,4 +1,4 @@
-import { channelLabel, isTimeText, planStatus, ssaStatusLabel } from '../screens/cluster/clusterData';
+import { channelLabel, isTimeText, planStatus, ssaStatusLabel, newSubmissionKey } from '../screens/cluster/clusterData';
 import { safeFileName } from '../ui/savePdf';
 
 describe("a meeting plan's status reads in words", () => {
@@ -36,4 +36,15 @@ test('a report file name is safe on every phone', () => {
 test("SSA statuses read as the web's own words", () => {
   expect(ssaStatusLabel('not_done')).toBe('Not Done');
   expect(ssaStatusLabel('partner_assigned')).toBe('Partner Assigned');
+});
+
+describe('a Cluster Action submission key', () => {
+  test('each form gets its own, short enough for the gateway', () => {
+    const keys = new Set(Array.from({ length: 500 }, () => newSubmissionKey(1_800_000_000_000)));
+    expect(keys.size).toBe(500);
+    for (const key of keys) {
+      expect(key.length).toBeLessThanOrEqual(100);
+      expect(key).toMatch(/^ca-[0-9a-z]+-[0-9a-z]{16}$/);
+    }
+  });
 });

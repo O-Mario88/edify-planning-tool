@@ -20,6 +20,7 @@ export type ClusterTab =
   | 'mobilize'
   | 'share'
   | 'actions'
+  | 'todos'
   | 'requests';
 
 export const CLUSTER_TABS: Readonly<Record<ClusterTab, string>> = {
@@ -32,6 +33,7 @@ export const CLUSTER_TABS: Readonly<Record<ClusterTab, string>> = {
   mobilize: 'cluster:mobilize',
   share: 'cluster:share',
   actions: 'cluster:actions',
+  todos: 'cluster:todos',
   requests: 'cluster:requests',
 };
 
@@ -46,6 +48,7 @@ export function clusterWorkSection(): NavSection {
     items: [
       item('Action & follow-up', 'actions'),
       item('Requests to staff', 'requests'),
+      item('Meeting to-dos', 'todos'),
       item('Progress & Reports', 'progress'),
       item('Manage cluster', 'manage'),
       item('Share loan application', 'share'),
@@ -99,8 +102,11 @@ export function tabOfUrl(url: string): ClusterTab | null {
   return entry ? entry[0] : null;
 }
 
-/** Where staff manage cluster leaders: one section under their own menu. */
+/** Where staff manage cluster leaders, under their own menu. */
 export const LEADERS_URL = 'cluster:leaders';
+
+/** Where staff answer Cluster Actions routed to them (brief part 5.3). */
+export const SUPPORT_URL = 'cluster:support';
 
 /** The roles that may manage leaders (the gateway decides per cluster). */
 const LEADER_ADMINISTRATORS = new Set(['Admin', 'Program Lead', 'CCEO']);
@@ -112,7 +118,10 @@ export function canManageLeaders(activeRole: string): boolean {
 export function leadersSection(): NavSection {
   return create(NavSectionSchema, {
     label: 'Cluster leadership',
-    items: [create(NavItemSchema, { label: 'Cluster Leaders', url: LEADERS_URL, native: true })],
+    items: [
+      create(NavItemSchema, { label: 'Cluster support requests', url: SUPPORT_URL, native: true }),
+      create(NavItemSchema, { label: 'Cluster Leaders', url: LEADERS_URL, native: true }),
+    ],
   });
 }
 

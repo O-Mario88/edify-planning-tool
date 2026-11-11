@@ -152,20 +152,22 @@ export function ChoiceRow({ label, value, choices, onChange }: ChoiceRowProps) {
   );
 }
 
-/** A message after an action, or the gateway's refusal, in its colour. */
+/**
+ * A message after an action, or the gateway's refusal, in its tone's soft box,
+ * so it reads on the page and where a sheet overlaps the blue band alike.
+ */
 export function Notice({ text, isError }: { readonly text: string; readonly isError?: boolean }) {
   const { colors } = useTheme();
   if (!text) {
     return null;
   }
+  const tone = toneColors(colors, isError ? 'alert' : 'good');
   return (
-    <Text
-      accessibilityRole={isError ? 'alert' : undefined}
-      accessibilityLiveRegion="polite"
-      style={[styles.notice, { color: isError ? colors.danger : colors.success }]}
-    >
-      {text}
-    </Text>
+    <View style={[styles.noticeBox, { backgroundColor: tone.soft }]}>
+      <Text accessibilityRole={isError ? 'alert' : undefined} accessibilityLiveRegion="polite" style={[styles.notice, { color: tone.fg }]}>
+        {text}
+      </Text>
+    </View>
   );
 }
 
@@ -197,5 +199,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8 },
   chipText: { fontFamily: fonts.semibold, fontSize: 13 },
-  notice: { fontFamily: fonts.semibold, fontSize: 13 },
+  notice: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18 },
+  noticeBox: { borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 10 },
 });

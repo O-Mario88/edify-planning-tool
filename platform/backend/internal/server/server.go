@@ -77,8 +77,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	leadership := clusterlead.NewService(clusterStore, time.Now, clusterSchemaReady(pool), logger).
 		WithOnboarder(clusterlead.NewHTTPOnboarder(cfg.ExistingAppURL), cfg.ExistingAppURL)
 	mux.Handle(clustersv1connect.NewClusterLeadershipServiceHandler(leadership, options...))
-	mux.Handle(clustersv1connect.NewClusterMobilizationServiceHandler(
-		clusterlead.NewOperations(leadership, clusterStore), options...,
+	operations := clusterlead.NewOperations(leadership, clusterStore)
+	mux.Handle(clustersv1connect.NewClusterMobilizationServiceHandler(operations, options...))
+	mux.Handle(clustersv1connect.NewClusterActionServiceHandler(
+		clusterlead.NewActions(operations, clusterStore, clusterActionConfig(cfg)), options...,
 	))
 	// The School Loan Application Portal's public pages: no sign-in, no
 	// cookie, served as plain HTML for any phone browser.
@@ -130,4 +132,20 @@ func clusterSchemaReady(pool *pgxpool.Pool) func(context.Context) error {
 		}
 		return nil
 	}
+}
+
+// clusterActionConfig is the Cluster Action Register's follow-up policy.
+func clusterActionConfig(cfg config.Config) clusterlead.ActionConfig {
+	return clusterlead.ActionConfig{
+		RemindAfterDays:   cfg.ClusterActions.RemindAfterDays,
+		EscalateAfterDays: cfg.ClusterActions.EscalateAfterDays,
+	}
+}
+
+// ClusterActionFollowUp is the register's follow-up worker, for main to run.
+func ClusterActionFollowUp(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) (*clusterlead.ActionService, clusterlead.NoticeSender, func(context.Context) error) {
+	store := clusterlead.NewStore(pool)
+	lead := clusterlead.NewService(store, time.Now, nil, logger)
+	actions := clusterlead.NewActions(clusterlead.NewOperations(lead, store), store, clusterActionConfig(cfg))
+	return actions, clusterlead.NewHTTPNoticeSender(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey), clusterSchemaReady(pool)
 }

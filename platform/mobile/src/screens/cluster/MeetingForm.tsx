@@ -230,7 +230,7 @@ interface SchoolTickProps {
   readonly onPress: () => void;
 }
 
-function SchoolTick({ label, detail, isOn, onPress }: SchoolTickProps) {
+export function SchoolTick({ label, detail, isOn, onPress }: SchoolTickProps) {
   const { colors } = useTheme();
   return (
     <Pressable

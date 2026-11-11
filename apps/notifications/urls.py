@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import cluster_action_relay, views
 
 urlpatterns = [
     path("", views.NotificationRecentView.as_view(), name="list"),
@@ -14,6 +14,11 @@ urlpatterns = [
         "mark-all-read",
         views.NotificationMarkAllReadView.as_view(),
         name="mark-all-read",
+    ),
+    path(
+        "internal/cluster-action-notices",
+        cluster_action_relay.relay,
+        name="cluster-action-notices",
     ),
     path(
         "email/events",

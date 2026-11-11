@@ -981,6 +981,12 @@ NOTIFICATION_EMAIL_EAGER = _truthy(
 # Resend dashboard. Delivery, bounce and complaint events are refused until
 # it is set; without it a sent email reads "accepted by provider" and no more.
 RESEND_WEBHOOK_SECRET = os.environ.get("RESEND_WEBHOOK_SECRET", "").strip()
+
+# The key the Go gateway sends with Cluster Action notices it relays into
+# Edify's notifications (apps/notifications/cluster_action_relay.py). Empty
+# keeps that endpoint closed; it is a server-to-server secret, never a
+# browser's.
+EDIFY_INTERNAL_KEY = os.environ.get("EDIFY_INTERNAL_KEY", "").strip()
 if IS_TESTING:
     # A developer's own key pair must not make the suite talk to a push
     # service; a test that exercises push sets its own (override_settings).
