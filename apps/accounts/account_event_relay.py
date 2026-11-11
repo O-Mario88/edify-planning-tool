@@ -14,6 +14,10 @@ exactly as they do after a change on the web:
   analytics are filed afresh (apps.hr.accountability_cache, which this
   application advances on every such save of its own). The two kinds above
   change staff too, and advance it as well.
+- ``acting_appointed``, ``acting_cancelled``, ``acting_rescheduled``: Go made,
+  cancelled or moved the acting appointment ``subjectId``, and the
+  notifications this application sends after the same change on the web
+  go out (apps.acting.services._notify_*).
 
 Server to server: it answers only the internal key (settings.EDIFY_INTERNAL_KEY)
 and stays closed while no key is configured. Nothing here changes the account
@@ -40,6 +44,12 @@ logger = logging.getLogger(__name__)
 ROLES_CHANGED = "roles_changed"
 ACCOUNT_DELETED = "account_deleted"
 STAFF_CHANGED = "staff_changed"
+#: Acting notices and the sender each one calls (apps.acting.services).
+ACTING_NOTICES = {
+    "acting_appointed": "_notify_appointed",
+    "acting_cancelled": "_notify_cancelled",
+    "acting_rescheduled": "_notify_rescheduled",
+}
 
 
 @csrf_exempt  # A server's key, never a browser's session.
@@ -58,6 +68,14 @@ def relay(request):
     kind = str(event.get("kind") or "")
     if kind == STAFF_CHANGED:
         _advance_analytics_revision()
+        return JsonResponse({"ok": True}, status=200)
+    if kind in ACTING_NOTICES:
+        appointment_id = str(event.get("subjectId") or "").strip()
+        if not appointment_id:
+            return JsonResponse({"ok": False, "reason": "no_appointment"}, status=400)
+        from apps.acting import services as acting_services
+
+        getattr(acting_services, ACTING_NOTICES[kind])(appointment_id)
         return JsonResponse({"ok": True}, status=200)
     user = User.all_objects.filter(id=str(event.get("userId") or "")).first()
     if user is None:

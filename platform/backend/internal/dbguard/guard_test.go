@@ -159,6 +159,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "teams") + sep: {
 			"staff_supervisor_assignment", "partner_member", "partner_school_member", "activity",
 		},
+		// Acting appointments, and the account's acting hint and role in use.
+		filepath.Join(root, "internal", "acting") + sep: {"acting_assignment", `"user"`},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.

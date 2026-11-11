@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accountmail"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
@@ -39,8 +40,10 @@ type Mailer interface {
 
 // Event is a change other parts of the existing application must follow.
 type Event struct {
-	Kind   string // "roles_changed" or "account_deleted"
+	Kind   string // "roles_changed", "account_deleted", "staff_changed", or an acting notice
 	UserID string
+	// SubjectID names the record an acting notice is about.
+	SubjectID string
 }
 
 // EventRelay tells the existing application, which still owns what follows
@@ -113,6 +116,11 @@ func (s *Service) SwitchRole(ctx context.Context, principal auth.Principal, role
 		if _, err := tx.Exec(ctx, `UPDATE "user" SET active_role = $2, updated_at = $3 WHERE id = $1`,
 			principal.UserID, role, now); err != nil {
 			return fmt.Errorf("accounts: switching role: %w", err)
+		}
+		// Back to a role they hold: an acting capacity is left first, as the
+		// web's switch_role_view does, so the account works in that role.
+		if err := acting.SetCapacityInTx(ctx, tx, principal, false, now); err != nil {
+			return err
 		}
 		_, err := audit.Append(ctx, tx, audit.Entry{
 			Action: "role_switch", SubjectKind: audit.Text("User"), SubjectID: audit.Text(principal.UserID),
@@ -826,4 +834,16 @@ func toAny(items []string) []any {
 // (its cached analytics are filed under a revision it advances then).
 func (s *Service) StaffChanged() {
 	s.relay(Event{Kind: "staff_changed"})
+}
+
+// IssueToken is an access token for userID working in role, as SwitchRole
+// issues one.
+func (s *Service) IssueToken(userID, role string, now time.Time) (string, error) {
+	return signin.IssueAccessToken(s.deps.JWTSecret, userID, role, now, s.deps.AccessTokenTTL)
+}
+
+// ActingNotice tells the existing application, which still sends the
+// notifications, that an acting appointment was made, cancelled or moved.
+func (s *Service) ActingNotice(_ context.Context, kind, appointmentID string) {
+	s.relay(Event{Kind: kind, SubjectID: appointmentID})
 }

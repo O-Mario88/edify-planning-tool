@@ -15,6 +15,7 @@ import type { Session } from '../gen/edify/identity/v1/identity_pb';
 import type { NavSection } from '../gen/edify/screens/v1/navigation_pb';
 import { fonts, radius, spacing, type, useTheme } from '../theme';
 import { SvgIcon } from '../ui/SvgIcon';
+import { isWorkingAsActing, offersWorkAs, workAsChoices } from './acting/actingData';
 
 interface WebOnlyScreenProps {
   readonly title: string;
@@ -59,11 +60,11 @@ export function MenuScreen({ session, sections, isNative, onOpen }: MenuScreenPr
         <View style={styles.accountText}>
           <Text style={[styles.cardTitle, { color: colors.text }]}>{session.name}</Text>
           <Text style={[styles.body, styles.accountBody, { color: colors.textMuted }]}>
-            {session.activeRole} · {session.email}
+            {[session.activeRole, ...(isWorkingAsActing(session) && session.acting ? [session.acting.shortLabel, session.acting.monthLabel] : []), session.email].join(' · ')}
           </Text>
         </View>
       </View>
-      {session.roles.length > 1 ? <RoleSwitcher session={session} /> : null}
+      {offersWorkAs(session) ? <RoleSwitcher session={session} /> : null}
 
       {sections.map((section) => (
         <View key={section.label} style={styles.section}>
@@ -111,19 +112,29 @@ export function MenuScreen({ session, sections, isNative, onOpen }: MenuScreenPr
  * that role's.
  */
 function RoleSwitcher({ session }: { readonly session: Session }) {
-  const { switchRole } = useSession();
+  const { switchRole, setActingCapacity } = useSession();
   const { colors } = useTheme();
   const [pending, setPending] = useState('');
   const [error, setError] = useState('');
+  const choices = workAsChoices(session);
 
-  async function choose(role: string) {
-    if (pending || role === session.activeRole) {
+  async function choose(key: string) {
+    const current = choices.find((choice) => choice.isCurrent)?.key;
+    if (pending || key === current) {
       return;
     }
-    setPending(role);
+    setPending(key);
     setError('');
     try {
-      await switchRole(role);
+      if (key === 'acting') {
+        await setActingCapacity(true);
+      } else if (key === session.activeRole && isWorkingAsActing(session)) {
+        // Back to the role the appointment was made from: only the
+        // capacity changes.
+        await setActingCapacity(false);
+      } else {
+        await switchRole(key);
+      }
     } catch (cause) {
       setError(describe(cause));
     } finally {
@@ -135,26 +146,23 @@ function RoleSwitcher({ session }: { readonly session: Session }) {
     <View style={styles.section}>
       <Text style={[styles.sectionLabel, { color: colors.textSubtle }]}>Work as</Text>
       <View style={[styles.group, { backgroundColor: colors.raised, borderColor: colors.raisedBorder }]} accessibilityRole="radiogroup">
-        {session.roles.map((role, index) => {
-          const isCurrent = role === session.activeRole;
-          return (
-            <Pressable
-              key={role}
-              onPress={() => void choose(role)}
-              disabled={Boolean(pending)}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: isCurrent, busy: pending === role }}
-              accessibilityLabel={isCurrent ? `${role}, current role` : `Work as ${role}`}
-              style={[styles.row, index > 0 && { borderTopWidth: 1, borderTopColor: colors.raisedBorder }]}
-            >
-              <Text style={[styles.rowLabel, { color: colors.text }]} numberOfLines={1}>
-                {role}
-              </Text>
-              {pending === role ? <ActivityIndicator size="small" color={colors.primary} /> : null}
-              {isCurrent ? <Check size={18} color={colors.primary} /> : null}
-            </Pressable>
-          );
-        })}
+        {choices.map((choice, index) => (
+          <Pressable
+            key={choice.key}
+            onPress={() => void choose(choice.key)}
+            disabled={Boolean(pending)}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: choice.isCurrent, busy: pending === choice.key }}
+            accessibilityLabel={choice.isCurrent ? `${choice.label}, current` : `Work as ${choice.label}`}
+            style={[styles.row, index > 0 && { borderTopWidth: 1, borderTopColor: colors.raisedBorder }]}
+          >
+            <Text style={[styles.rowLabel, { color: colors.text }]} numberOfLines={1}>
+              {choice.label}
+            </Text>
+            {pending === choice.key ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+            {choice.isCurrent ? <Check size={18} color={colors.primary} /> : null}
+          </Pressable>
+        ))}
       </View>
       {error ? <Text style={[styles.switchError, { color: colors.danger }]} accessibilityRole="alert">{error}</Text> : null}
     </View>

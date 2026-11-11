@@ -138,3 +138,22 @@ GRANT SELECT (id, name) ON district TO edify_identity_rw;
 -- "delivered by" name with it (school_team._name_open_work).
 GRANT SELECT (assigned_partner_id, delivery_contact_name) ON activity TO edify_identity_rw;
 GRANT UPDATE (delivery_contact_name) ON activity TO edify_identity_rw;
+
+-- Acting leadership (acting.proto, 2026-11-11): an appointment for one
+-- calendar month, its change of month before it begins, its cancellation,
+-- and the appointee's switch between the acting capacity and their own role.
+-- Never a DELETE: an ended or cancelled appointment is the record. The
+-- person's acting_until hint is kept in step so the existing application
+-- sees every appointment made here.
+GRANT SELECT ON acting_assignment TO edify_identity_rw;
+GRANT INSERT (id, created_at, updated_at, role_key, acting_role, appointee_id, appointee_role,
+              appointed_by_id, appointed_by_role, scope_type, seat_id, country, start_date, end_date,
+              cancel_reason, in_capacity, grant_snapshot, revisions)
+  ON acting_assignment TO edify_identity_rw;
+GRANT UPDATE (start_date, end_date, revisions, reminded_at, cancelled_at, cancelled_by_id, cancel_reason,
+              in_capacity, updated_at)
+  ON acting_assignment TO edify_identity_rw;
+GRANT SELECT (acting_until) ON "user" TO edify_identity_rw;
+GRANT UPDATE (acting_until) ON "user" TO edify_identity_rw;
+-- Not the acts done under an appointment (actions_under): they are found by
+-- the audit payload, which this role never reads. That list stays on the web.

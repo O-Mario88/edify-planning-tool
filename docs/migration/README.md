@@ -20,6 +20,7 @@ deployed, or connected to production.
 | [08-sign-in.md](08-sign-in.md) | Sign-in, owned by Go: the existing rules ported, what it writes, what has not moved yet |
 | [09-accounts-and-roles.md](09-accounts-and-roles.md) | Accounts and roles, owned by Go: role switching, the forced password change, the Admin's Users screen |
 | [10-teams.md](10-teams.md) | Staff and partner teams, owned by Go: supervisors, managed teams, a partner's own team, logins and schools |
+| [11-acting-leadership.md](11-acting-leadership.md) | Acting leadership, owned by Go: appointing, moving and cancelling acting leaders, and the appointee's switch into the acting capacity |
 
 The code is under [`platform/`](../../platform/README.md).
 

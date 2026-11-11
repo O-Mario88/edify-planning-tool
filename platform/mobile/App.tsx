@@ -22,6 +22,8 @@ import { SchoolsScreen } from './src/screens/SchoolsScreen';
 import { NewPasswordScreen } from './src/screens/NewPasswordScreen';
 import { UsersScreen } from './src/screens/admin/UsersScreen';
 import { PartnerTeamScreen } from './src/screens/partner/PartnerTeamScreen';
+import { ActingLeadershipScreen } from './src/screens/acting/ActingLeadershipScreen';
+import { ACTING_URL } from './src/screens/acting/actingData';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { ClusterLeaderApp } from './src/screens/cluster/ClusterLeaderApp';
 import { ClusterLeadersScreen } from './src/screens/cluster/ClusterLeadersScreen';
@@ -240,6 +242,7 @@ function SignedIn({ session }: { readonly session: Session }) {
       url === SUPPORT_URL ||
       (pathOf(url) === USERS_URL && session.activeRole === ADMIN) ||
       (pathOf(url) === PARTNER_TEAM_URL && session.activeRole === PARTNER_ADMIN) ||
+      pathOf(url) === ACTING_URL ||
       isLoansUrl(url) ||
       OWN_SCREENS.includes(pathOf(url)) ||
       pages.has(pathOf(url)) ||
@@ -282,6 +285,8 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <UsersScreen />;
   } else if (path === PARTNER_TEAM_URL && session.activeRole === PARTNER_ADMIN) {
     screen = <PartnerTeamScreen />;
+  } else if (path === ACTING_URL) {
+    screen = <ActingLeadershipScreen />;
   } else if (isLoansUrl(route.url)) {
     screen = <LoansRoute key={route.url} url={route.url} />;
   } else if (path === '/home') {

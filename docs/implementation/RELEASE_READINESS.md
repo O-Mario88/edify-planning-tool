@@ -127,6 +127,21 @@ restarted to serve the new relay route (it runs without reloading).
 | iOS and Android Release: Team (Partner Admin) | Pass | the native Team screen opens from More → Users on both; Add member drawer on iOS |
 | App tests | Pass | type-check clean; 162 tests |
 
+## Acting leadership moved to Go (2026-11-11)
+
+[docs/migration/11-acting-leadership.md](../migration/11-acting-leadership.md).
+
+| Check | Result | Evidence |
+|---|---|---|
+| The policy identical on both sides | Pass | `apps/acting/tests/test_policy_export.py`, and `internal/acting` reads the export |
+| Go unit tests | Pass | whole months, this one to eleven ahead; Kampala's day; the state is the dates; the confirmation in the web's words; who appoints, cancels and moves a month; when a request is in the acting capacity |
+| Go integration suite: acting | Pass | a Program Lead appoints (grant recorded, hint kept, audited), one per seat and month, an outsider refused and the attempt kept, the month moved, the Director's board, cancelled and kept as History; the appointee enters, leaves (audited), switching role leaves it, entering from another held role returns a token; a Country Director appoints a Program Lead of their country; another Lead cannot see it |
+| Database role | Pass | cannot delete an appointment or move it to another seat; still cannot read the audit payload, so the acts-under list stays on the web |
+| The existing chain verifier | Pass | `verify_chain(full=True)`: ok, 870 rows on the test database, with Go's acting rows |
+| Django | Pass | the relay sends the acting notifications (2 tests); accounts, admin_users, acting and the matrix test: 423 passed; ruff, format, bandit clean |
+| Web build | Pass | pl1 appointed Deo M. Acting PL for November 2026 in the app; the web's page listed it and the web presented Deo as "CCEO · Acting PL · November 2026"; the existing notifications went out; in the app Deo's Work as showed the appointment, switching to CCEO left it on both app and web; pl1 cancelled it with a reason, kept in History |
+| iOS and Android Release | Built, not checked on device | both built and installed; the iPhone simulator was in use with another account, and the Android emulator was too loaded to take input (Mac load average about 10) |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

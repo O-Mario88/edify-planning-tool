@@ -37,9 +37,10 @@ own login, or a login of the organisation working as Partner Admin. A
 member's Field Officer login does not lead. "Manages the roster" adds the
 country roles (Country Director, Impact Assessment, Accountant, BTO, Admin).
 
-Someone working in an acting appointment is refused
-(`ACTING_APPOINTMENT_NOT_SUPPORTED`) and sent to the web, until acting
-leadership moves.
+Someone working in an acting capacity is refused
+(`ACTING_APPOINTMENT_NOT_SUPPORTED`) and sent to the web, until teams take
+the acting seat over; in their own role they are answered as themselves
+([11-acting-leadership.md](11-acting-leadership.md)).
 
 ## 10.2 What still happens in the existing application
 

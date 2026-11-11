@@ -4,13 +4,15 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { ActingCapacity } from "./acting_pb";
+import { file_edify_identity_v1_acting } from "./acting_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file edify/identity/v1/identity.proto.
  */
 export const file_edify_identity_v1_identity: GenFile = /*@__PURE__*/
-  fileDesc("CiBlZGlmeS9pZGVudGl0eS92MS9pZGVudGl0eS5wcm90bxIRZWRpZnkuaWRlbnRpdHkudjEiEwoRR2V0U2Vzc2lvblJlcXVlc3QiQQoSR2V0U2Vzc2lvblJlc3BvbnNlEisKB3Nlc3Npb24YASABKAsyGi5lZGlmeS5pZGVudGl0eS52MS5TZXNzaW9uIpMBCgdTZXNzaW9uEg8KB3VzZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRINCgVyb2xlcxgEIAMoCRITCgthY3RpdmVfcm9sZRgFIAEoCRIYChBzdGFmZl9wcm9maWxlX2lkGAYgASgJEhwKFG11c3RfY2hhbmdlX3Bhc3N3b3JkGAcgASgIMmwKD0lkZW50aXR5U2VydmljZRJZCgpHZXRTZXNzaW9uEiQuZWRpZnkuaWRlbnRpdHkudjEuR2V0U2Vzc2lvblJlcXVlc3QaJS5lZGlmeS5pZGVudGl0eS52MS5HZXRTZXNzaW9uUmVzcG9uc2VC6AEKFWNvbS5lZGlmeS5pZGVudGl0eS52MUINSWRlbnRpdHlQcm90b1ABWlpnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L2lkZW50aXR5L3YxO2lkZW50aXR5djGiAgNFSViqAhFFZGlmeS5JZGVudGl0eS5WMcoCEUVkaWZ5XElkZW50aXR5XFYx4gIdRWRpZnlcSWRlbnRpdHlcVjFcR1BCTWV0YWRhdGHqAhNFZGlmeTo6SWRlbnRpdHk6OlYxYgZwcm90bzM");
+  fileDesc("CiBlZGlmeS9pZGVudGl0eS92MS9pZGVudGl0eS5wcm90bxIRZWRpZnkuaWRlbnRpdHkudjEiEwoRR2V0U2Vzc2lvblJlcXVlc3QiQQoSR2V0U2Vzc2lvblJlc3BvbnNlEisKB3Nlc3Npb24YASABKAsyGi5lZGlmeS5pZGVudGl0eS52MS5TZXNzaW9uIsYBCgdTZXNzaW9uEg8KB3VzZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRINCgVyb2xlcxgEIAMoCRITCgthY3RpdmVfcm9sZRgFIAEoCRIYChBzdGFmZl9wcm9maWxlX2lkGAYgASgJEhwKFG11c3RfY2hhbmdlX3Bhc3N3b3JkGAcgASgIEjEKBmFjdGluZxgIIAEoCzIhLmVkaWZ5LmlkZW50aXR5LnYxLkFjdGluZ0NhcGFjaXR5MmwKD0lkZW50aXR5U2VydmljZRJZCgpHZXRTZXNzaW9uEiQuZWRpZnkuaWRlbnRpdHkudjEuR2V0U2Vzc2lvblJlcXVlc3QaJS5lZGlmeS5pZGVudGl0eS52MS5HZXRTZXNzaW9uUmVzcG9uc2VC6AEKFWNvbS5lZGlmeS5pZGVudGl0eS52MUINSWRlbnRpdHlQcm90b1ABWlpnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L2lkZW50aXR5L3YxO2lkZW50aXR5djGiAgNFSViqAhFFZGlmeS5JZGVudGl0eS5WMcoCEUVkaWZ5XElkZW50aXR5XFYx4gIdRWRpZnlcSWRlbnRpdHlcVjFcR1BCTWV0YWRhdGHqAhNFZGlmeTo6SWRlbnRpdHk6OlYxYgZwcm90bzM", [file_edify_identity_v1_acting]);
 
 /**
  * @generated from message edify.identity.v1.GetSessionRequest
@@ -92,6 +94,14 @@ export type Session = Message<"edify.identity.v1.Session"> & {
    * @generated from field: bool must_change_password = 7;
    */
   mustChangePassword: boolean;
+
+  /**
+   * An acting appointment that is active today and stands, unset otherwise
+   * (acting.proto). The person switches into or out of it from Work as.
+   *
+   * @generated from field: edify.identity.v1.ActingCapacity acting = 8;
+   */
+  acting?: ActingCapacity | undefined;
 };
 
 /**

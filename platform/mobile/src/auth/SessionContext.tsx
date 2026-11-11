@@ -7,6 +7,7 @@ import { createEdifyApi } from '../api/edifyApi';
 import type { EdifyApi } from '../api/edifyApi';
 import type { ConnectTransport } from '../api/connect';
 import { AccountService } from '../gen/edify/identity/v1/accounts_pb';
+import { ActingLeadershipService } from '../gen/edify/identity/v1/acting_pb';
 import type { AppEnvironment } from '../config/environment';
 import {
   appDevice,
@@ -35,6 +36,8 @@ interface SessionContextValue {
   verifyCode(challenge: CodeChallenge, code: string): Promise<void>;
   /** Work in another role the account holds; the screens follow. */
   switchRole(role: string): Promise<void>;
+  /** Work in today's acting appointment, or leave it for one's own role. */
+  setActingCapacity(acting: boolean): Promise<void>;
   /** Replaces a password an administrator chose. */
   setNewPassword(password: string, confirm: string): Promise<void>;
   signOut(): Promise<void>;
@@ -165,6 +168,22 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
     [api, loadSession, tokenStore],
   );
 
+  const setActingCapacity = useCallback(
+    async (acting: boolean) => {
+      const answer = await api.call(ActingLeadershipService.method.setActingCapacity, { acting });
+      if (answer.accessToken) {
+        // Entering also put the account back in the role the appointment
+        // was made from; its token says so.
+        const stored = await tokenStore.load();
+        if (stored) {
+          await tokenStore.save({ accessToken: answer.accessToken, refreshToken: stored.refreshToken });
+        }
+      }
+      await loadSession();
+    },
+    [api, loadSession, tokenStore],
+  );
+
   const setNewPassword = useCallback(
     async (password: string, confirm: string) => {
       await api.call(AccountService.method.setNewPassword, { password, confirm });
@@ -190,8 +209,10 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
   }, [loadSession]);
 
   const value = useMemo(
-    () => ({ state, api, environment, signInTransport, signIn, verifyCode, switchRole, setNewPassword, signOut, retry }),
-    [state, api, environment, signInTransport, signIn, verifyCode, switchRole, setNewPassword, signOut, retry],
+    () => ({
+      state, api, environment, signInTransport, signIn, verifyCode, switchRole, setActingCapacity, setNewPassword, signOut, retry,
+    }),
+    [state, api, environment, signInTransport, signIn, verifyCode, switchRole, setActingCapacity, setNewPassword, signOut, retry],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

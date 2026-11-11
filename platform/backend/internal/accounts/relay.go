@@ -29,7 +29,11 @@ func NewHTTPRelay(base, key string) *HTTPRelay {
 
 // Report delivers one event.
 func (r *HTTPRelay) Report(ctx context.Context, event Event) error {
-	payload, err := json.Marshal(map[string]string{"kind": event.Kind, "userId": event.UserID})
+	body := map[string]string{"kind": event.Kind, "userId": event.UserID}
+	if event.SubjectID != "" {
+		body["subjectId"] = event.SubjectID
+	}
+	payload, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}

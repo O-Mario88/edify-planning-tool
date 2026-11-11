@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package edify.identity.v1;
 
+import "edify/identity/v1/acting.proto";
+
 // Who the caller is, as the existing Edify identity system knows them. The
 // gateway issues no credentials of its own: sign-in, MFA, lockout and refresh
 // stay with the existing application until their migration is approved.
@@ -31,4 +33,7 @@ message Session {
   // An administrator chose this account's password: it must be replaced
   // before anything else (AccountService.SetNewPassword).
   bool must_change_password = 7;
+  // An acting appointment that is active today and stands, unset otherwise
+  // (acting.proto). The person switches into or out of it from Work as.
+  ActingCapacity acting = 8;
 }

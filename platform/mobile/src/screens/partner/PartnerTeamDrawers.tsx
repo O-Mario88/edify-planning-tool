@@ -4,16 +4,15 @@
  * the gateway's PartnerTeamService; a refusal is shown in its own words.
  */
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Check } from 'lucide-react-native';
 
-import { describe, useSession } from '../../auth/SessionContext';
+import { useSession } from '../../auth/SessionContext';
 import type { GetPartnerTeamResponse, PartnerMemberInfo } from '../../gen/edify/identity/v1/teams_pb';
 import { PartnerTeamService } from '../../gen/edify/identity/v1/teams_pb';
 import { fonts, radius, useTheme } from '../../theme';
-import { Drawer } from '../../ui/Drawer';
-import { DrawerButton, DrawerInput, DrawerNote, DrawerText, FieldShell } from '../../ui/drawerParts';
+import { DrawerInput, DrawerText, FieldShell } from '../../ui/drawerParts';
+import { SubmitDrawer, useSubmit } from '../../ui/SubmitDrawer';
 import { ChoiceRow } from '../cluster/opsParts';
 
 interface Base {
@@ -26,55 +25,6 @@ interface MemberBase extends Base {
   readonly member: PartnerMemberInfo;
 }
 
-/** One drawer's frame: the gateway call, its busy state and its refusal. */
-function useSubmit(onSaved: (message: string) => void) {
-  const [isBusy, setIsBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [topKey, setTopKey] = useState(0);
-  async function run(work: () => Promise<string>) {
-    setIsBusy(true);
-    setError('');
-    try {
-      onSaved(await work());
-    } catch (cause) {
-      setError(describe(cause));
-      setTopKey((key) => key + 1);
-      setIsBusy(false);
-    }
-  }
-  return { isBusy, error, setError, topKey, run };
-}
-
-function Frame({ title, subtitle, label, isBusy, error, topKey, onClose, onSubmit, children }: {
-  readonly title: string;
-  readonly subtitle?: string;
-  readonly label: string;
-  readonly isBusy: boolean;
-  readonly error: string;
-  readonly topKey: number;
-  readonly onClose: () => void;
-  readonly onSubmit: () => void;
-  readonly children: ReactNode;
-}) {
-  return (
-    <Drawer
-      title={title}
-      subtitle={subtitle}
-      onClose={onClose}
-      topKey={topKey}
-      footer={
-        <View style={styles.footer}>
-          <DrawerButton label="Cancel" onPress={onClose} />
-          <DrawerButton label={label} onPress={onSubmit} isPrimary isBusy={isBusy} />
-        </View>
-      }
-    >
-      {error ? <DrawerNote tone="danger" text={error} /> : null}
-      {children}
-    </Drawer>
-  );
-}
-
 /** Add a person to the roster: staff or volunteer. */
 export function AddMemberDrawer({ team, onClose, onSaved }: Base) {
   const { api } = useSession();
@@ -85,7 +35,7 @@ export function AddMemberDrawer({ team, onClose, onSaved }: Base) {
   const [email, setEmail] = useState('');
   const submit = useSubmit(onSaved);
   return (
-    <Frame
+    <SubmitDrawer
       title="Add team member"
       subtitle={team.partnerName}
       label="Add member"
@@ -114,7 +64,7 @@ export function AddMemberDrawer({ team, onClose, onSaved }: Base) {
       <FieldShell label="Email address" isOptional help="Needed later if they get a login of their own.">
         <DrawerInput value={email} onChangeText={setEmail} accessibilityLabel="Email address" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
       </FieldShell>
-    </Frame>
+    </SubmitDrawer>
   );
 }
 
@@ -125,7 +75,7 @@ export function MemberLoginDrawer({ team, member, onClose, onSaved }: MemberBase
   const [password, setPassword] = useState('');
   const submit = useSubmit(onSaved);
   return (
-    <Frame
+    <SubmitDrawer
       title="Give a login"
       subtitle={member.name}
       label="Give login"
@@ -152,7 +102,7 @@ export function MemberLoginDrawer({ team, member, onClose, onSaved }: MemberBase
       <FieldShell label="First password" isOptional help="Leave empty to email an invitation. A password you choose must be changed at the first sign-in.">
         <DrawerInput value={password} onChangeText={setPassword} accessibilityLabel="First password" secureTextEntry autoCapitalize="none" />
       </FieldShell>
-    </Frame>
+    </SubmitDrawer>
   );
 }
 
@@ -162,7 +112,7 @@ export function MemberPasswordDrawer({ team, member, onClose, onSaved }: MemberB
   const [password, setPassword] = useState('');
   const submit = useSubmit(onSaved);
   return (
-    <Frame
+    <SubmitDrawer
       title="Reset password"
       subtitle={member.name}
       label="Set password"
@@ -178,7 +128,7 @@ export function MemberPasswordDrawer({ team, member, onClose, onSaved }: MemberB
       <FieldShell label="New password" isRequired help="Their sessions end, and they must change it at the next sign-in.">
         <DrawerInput value={password} onChangeText={setPassword} accessibilityLabel="New password" secureTextEntry autoCapitalize="none" />
       </FieldShell>
-    </Frame>
+    </SubmitDrawer>
   );
 }
 
@@ -194,7 +144,7 @@ export function MemberSchoolsDrawer({ team, member, onClose, onSaved }: MemberBa
   const toggle = (id: string) =>
     setChosen((current) => (current.includes(id) ? current.filter((held) => held !== id) : [...current, id]));
   return (
-    <Frame
+    <SubmitDrawer
       title="Schools"
       subtitle={member.name}
       label="Save schools"
@@ -238,7 +188,7 @@ export function MemberSchoolsDrawer({ team, member, onClose, onSaved }: MemberBa
         })}
         {team.schools.length === 0 ? <DrawerText text="The organisation holds no schools yet." /> : null}
       </View>
-    </Frame>
+    </SubmitDrawer>
   );
 }
 
@@ -247,7 +197,7 @@ export function RemoveMemberDrawer({ team, member, onClose, onSaved }: MemberBas
   const { api } = useSession();
   const submit = useSubmit(onSaved);
   return (
-    <Frame
+    <SubmitDrawer
       title="Remove from team"
       subtitle={member.name}
       label="Remove"
@@ -264,12 +214,11 @@ export function RemoveMemberDrawer({ team, member, onClose, onSaved }: MemberBas
         tone="danger"
         text={`${member.name} leaves ${team.partnerName}'s team.${member.login ? ' Their own login stops signing in.' : ''} Schools they looked after go back to nobody; work already delivered keeps their name.`}
       />
-    </Frame>
+    </SubmitDrawer>
   );
 }
 
 const styles = StyleSheet.create({
-  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   list: { borderWidth: 1, borderRadius: radius.sm, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, paddingVertical: 8 },
   box: { width: 22, height: 22, borderWidth: 1.5, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },

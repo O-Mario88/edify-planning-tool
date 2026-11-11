@@ -109,3 +109,37 @@ class StaffChangedRelayTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(cache.get(REVISION), "before")
+
+
+@override_settings(EDIFY_INTERNAL_KEY=KEY)
+class ActingNoticeRelayTest(TestCase):
+    """Go makes, cancels and moves acting appointments; the notifications
+    the web sends after each still go from here."""
+
+    def _post(self, payload):
+        return self.client.post(
+            URL,
+            data=json.dumps(payload),
+            content_type="application/json",
+            headers={"X-Edify-Internal-Key": KEY},
+        )
+
+    def test_each_acting_notice_sends_the_webs_own_notification(self):
+        for kind, sender in (
+            ("acting_appointed", "_notify_appointed"),
+            ("acting_cancelled", "_notify_cancelled"),
+            ("acting_rescheduled", "_notify_rescheduled"),
+        ):
+            with (
+                self.subTest(kind=kind),
+                mock.patch(f"apps.acting.services.{sender}") as notify,
+            ):
+                response = self._post({"kind": kind, "subjectId": "appointment-1"})
+
+                self.assertEqual(response.status_code, 200)
+                notify.assert_called_once_with("appointment-1")
+
+    def test_a_notice_without_its_appointment_is_refused(self):
+        response = self._post({"kind": "acting_appointed"})
+
+        self.assertEqual(response.status_code, 400)

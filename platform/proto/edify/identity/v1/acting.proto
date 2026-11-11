@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+package edify.identity.v1;
+
+// Acting leadership, owned by Go (owner brief, 2026-11-11: "acting
+// leadership"). The existing rules, one for one (apps/acting/services.py,
+// policy.py), on the existing acting_assignment records.
+//
+// A Program Lead appoints one of their CCEOs Acting Program Lead, and a
+// Country Director one of their country's Program Leads Acting Country
+// Director, each for one whole calendar month. Nothing about either person
+// changes: roles and reporting lines are never written. The appointee
+// switches between the acting capacity and their own role.
+service ActingLeadershipService {
+  // Current, upcoming and history, as far as the caller may read, and
+  // whether the caller may appoint.
+  rpc GetActingBoard(GetActingBoardRequest) returns (GetActingBoardResponse);
+  // Who the caller may appoint, and for which months.
+  rpc GetAppointOptions(GetAppointOptionsRequest) returns (GetAppointOptionsResponse);
+  // The confirmation step, validated as the appointment itself will be.
+  rpc PreviewAppointment(PreviewAppointmentRequest) returns (PreviewAppointmentResponse);
+  rpc Appoint(AppointRequest) returns (AppointResponse);
+  // Move an appointment that has not begun to another month.
+  rpc ChangeMonth(ChangeMonthRequest) returns (ChangeMonthResponse);
+  // End an upcoming or active appointment now. The record is kept.
+  rpc CancelAppointment(CancelAppointmentRequest) returns (CancelAppointmentResponse);
+  // One appointment. The acts done under it are found by the audit payload,
+  // which the gateway never reads: that list stays on the web.
+  rpc GetAppointment(GetAppointmentRequest) returns (GetAppointmentResponse);
+  // The appointee works in the acting capacity, or in their own role.
+  rpc SetActingCapacity(SetActingCapacityRequest) returns (SetActingCapacityResponse);
+}
+
+message ActingAppointment {
+  string id = 1;
+  // "acting_pl" or "acting_cd".
+  string role_key = 2;
+  // "Acting Program Lead"; "Acting PL".
+  string label = 3;
+  string short_label = 4;
+  string appointee_user_id = 5;
+  string appointee_name = 6;
+  // The appointee's permanent role when appointed.
+  string appointee_role = 7;
+  string appointed_by_name = 8;
+  string appointed_by_role = 9;
+  // "John Lead's PL team", or the country.
+  string scope_label = 10;
+  // "2026-10", "October 2026", "October 1 – October 31, 2026".
+  string month = 11;
+  string month_label = 12;
+  string effective_label = 13;
+  // "upcoming", "active", "expired" or "cancelled".
+  string state = 14;
+  string state_label = 15;
+  string cancelled_by_name = 16;
+  string cancel_reason = 17;
+  // RFC 3339; empty unless cancelled.
+  string cancelled_at = 18;
+  // The caller may cancel it.
+  bool can_cancel = 19;
+  // The caller may move it to another month (the appointing leader, before
+  // it begins).
+  bool can_change_month = 20;
+  // Its month was changed before it began; the months it was first made for.
+  repeated string earlier_months = 21;
+}
+
+message GetActingBoardRequest {}
+
+message GetActingBoardResponse {
+  repeated ActingAppointment current = 1;
+  repeated ActingAppointment upcoming = 2;
+  repeated ActingAppointment history = 3;
+  // Set when the caller may appoint: "Acting PL", for "Appoint Acting PL".
+  string can_appoint_label = 4;
+}
+
+message ActingCandidate {
+  string staff_profile_id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message MonthChoice {
+  // "2026-10".
+  string value = 1;
+  // "October 2026".
+  string label = 2;
+  // "October 1 – October 31, 2026".
+  string effective_label = 3;
+}
+
+message GetAppointOptionsRequest {}
+
+message GetAppointOptionsResponse {
+  string label = 1;
+  // "CCEO": who may be appointed.
+  string appointee_role = 2;
+  repeated ActingCandidate candidates = 3;
+  repeated MonthChoice months = 4;
+}
+
+message PreviewAppointmentRequest {
+  string appointee_staff_id = 1;
+  string month = 2;
+}
+
+message PreviewAppointmentResponse {
+  string appointee_name = 1;
+  string label = 2;
+  string month_label = 3;
+  string effective_label = 4;
+  // "Sarah will receive Acting PL operational access for your entire PL
+  // team, …"
+  string statement = 5;
+}
+
+message AppointRequest {
+  string appointee_staff_id = 1;
+  string month = 2;
+}
+
+message AppointResponse {
+  ActingAppointment appointment = 1;
+}
+
+message ChangeMonthRequest {
+  string appointment_id = 1;
+  string month = 2;
+}
+
+message ChangeMonthResponse {
+  ActingAppointment appointment = 1;
+}
+
+message CancelAppointmentRequest {
+  string appointment_id = 1;
+  string reason = 2;
+}
+
+message CancelAppointmentResponse {
+  ActingAppointment appointment = 1;
+}
+
+message GetAppointmentRequest {
+  string appointment_id = 1;
+}
+
+message GetAppointmentResponse {
+  ActingAppointment appointment = 1;
+}
+
+message SetActingCapacityRequest {
+  // True to work in the acting capacity, false for the person's own role.
+  bool acting = 1;
+}
+
+message SetActingCapacityResponse {
+  ActingCapacity capacity = 1;
+  // Set when entering the capacity also switched the account to the role the
+  // appointment was made from: the access token for that role, to use from
+  // now on (as AccountService.SwitchRole returns one).
+  string access_token = 2;
+}
+
+// A person's acting appointment as it stands today, on their session.
+message ActingCapacity {
+  string appointment_id = 1;
+  string label = 2;
+  string short_label = 3;
+  // "October 2026".
+  string month_label = 4;
+  // Whose seat: "John Lead".
+  string seat_name = 5;
+  // The role the appointment was made from ("CCEO").
+  string appointee_role = 6;
+  // Working in the acting capacity now.
+  bool in_capacity = 7;
+}

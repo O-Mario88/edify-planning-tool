@@ -19,6 +19,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/schools/v1/schoolsv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accounts"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
@@ -69,6 +70,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		teams.NewPartnerService(teamStore, accountService, time.Now), logger)
 	mux.Handle(identityv1connect.NewStaffTeamServiceHandler(teamHandler, options...))
 	mux.Handle(identityv1connect.NewPartnerTeamServiceHandler(teamHandler, options...))
+	actingHandler := acting.NewHandler(acting.NewService(acting.NewStore(pool), time.Now, accountService.ActingNotice, accountService.IssueToken), logger)
+	mux.Handle(identityv1connect.NewActingLeadershipServiceHandler(actingHandler, options...))
 	// Signing in needs no session: structured errors, no authentication.
 	mux.Handle(identityv1connect.NewSignInServiceHandler(signInHandler(cfg, pool, logger),
 		connect.WithInterceptors(apierr.Interceptor(logger)), connect.WithReadMaxBytes(maxRequestBytes)))

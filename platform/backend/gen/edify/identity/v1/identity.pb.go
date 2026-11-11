@@ -117,8 +117,11 @@ type Session struct {
 	// An administrator chose this account's password: it must be replaced
 	// before anything else (AccountService.SetNewPassword).
 	MustChangePassword bool `protobuf:"varint,7,opt,name=must_change_password,json=mustChangePassword,proto3" json:"must_change_password,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// An acting appointment that is active today and stands, unset otherwise
+	// (acting.proto). The person switches into or out of it from Work as.
+	Acting        *ActingCapacity `protobuf:"bytes,8,opt,name=acting,proto3" json:"acting,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Session) Reset() {
@@ -200,14 +203,21 @@ func (x *Session) GetMustChangePassword() bool {
 	return false
 }
 
+func (x *Session) GetActing() *ActingCapacity {
+	if x != nil {
+		return x.Acting
+	}
+	return nil
+}
+
 var File_edify_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_edify_identity_v1_identity_proto_rawDesc = "" +
 	"\n" +
-	" edify/identity/v1/identity.proto\x12\x11edify.identity.v1\"\x13\n" +
+	" edify/identity/v1/identity.proto\x12\x11edify.identity.v1\x1a\x1eedify/identity/v1/acting.proto\"\x13\n" +
 	"\x11GetSessionRequest\"J\n" +
 	"\x12GetSessionResponse\x124\n" +
-	"\asession\x18\x01 \x01(\v2\x1a.edify.identity.v1.SessionR\asession\"\xdf\x01\n" +
+	"\asession\x18\x01 \x01(\v2\x1a.edify.identity.v1.SessionR\asession\"\x9a\x02\n" +
 	"\aSession\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
@@ -216,7 +226,8 @@ const file_edify_identity_v1_identity_proto_rawDesc = "" +
 	"\vactive_role\x18\x05 \x01(\tR\n" +
 	"activeRole\x12(\n" +
 	"\x10staff_profile_id\x18\x06 \x01(\tR\x0estaffProfileId\x120\n" +
-	"\x14must_change_password\x18\a \x01(\bR\x12mustChangePassword2l\n" +
+	"\x14must_change_password\x18\a \x01(\bR\x12mustChangePassword\x129\n" +
+	"\x06acting\x18\b \x01(\v2!.edify.identity.v1.ActingCapacityR\x06acting2l\n" +
 	"\x0fIdentityService\x12Y\n" +
 	"\n" +
 	"GetSession\x12$.edify.identity.v1.GetSessionRequest\x1a%.edify.identity.v1.GetSessionResponseB\xe8\x01\n" +
@@ -239,16 +250,18 @@ var file_edify_identity_v1_identity_proto_goTypes = []any{
 	(*GetSessionRequest)(nil),  // 0: edify.identity.v1.GetSessionRequest
 	(*GetSessionResponse)(nil), // 1: edify.identity.v1.GetSessionResponse
 	(*Session)(nil),            // 2: edify.identity.v1.Session
+	(*ActingCapacity)(nil),     // 3: edify.identity.v1.ActingCapacity
 }
 var file_edify_identity_v1_identity_proto_depIdxs = []int32{
 	2, // 0: edify.identity.v1.GetSessionResponse.session:type_name -> edify.identity.v1.Session
-	0, // 1: edify.identity.v1.IdentityService.GetSession:input_type -> edify.identity.v1.GetSessionRequest
-	1, // 2: edify.identity.v1.IdentityService.GetSession:output_type -> edify.identity.v1.GetSessionResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	3, // 1: edify.identity.v1.Session.acting:type_name -> edify.identity.v1.ActingCapacity
+	0, // 2: edify.identity.v1.IdentityService.GetSession:input_type -> edify.identity.v1.GetSessionRequest
+	1, // 3: edify.identity.v1.IdentityService.GetSession:output_type -> edify.identity.v1.GetSessionResponse
+	3, // [3:4] is the sub-list for method output_type
+	2, // [2:3] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_edify_identity_v1_identity_proto_init() }
@@ -256,6 +269,7 @@ func file_edify_identity_v1_identity_proto_init() {
 	if File_edify_identity_v1_identity_proto != nil {
 		return
 	}
+	file_edify_identity_v1_acting_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

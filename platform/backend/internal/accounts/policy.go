@@ -38,17 +38,14 @@ const (
 	msgLastAdmin              = "Cannot delete the last active Admin account."
 )
 
-// signedIn is the caller, refused while in an acting appointment: it swaps
-// the person's permissions in the existing system, and Go does not guess
-// which set applies.
+// signedIn is the caller. Someone working in an acting capacity still runs
+// their own account here (switching role, a new password: the existing
+// PERSONAL_VIEWS); account administration needs user.manage in the role in
+// use, which no acting appointment carries (an Admin is never appointed).
 func signedIn(ctx context.Context) (auth.Principal, error) {
 	principal, ok := auth.PrincipalFrom(ctx)
 	if !ok {
 		return auth.Principal{}, apierr.New(ctx, connect.CodeUnauthenticated, apierr.ReasonAuthMissing, "Sign in to continue.")
-	}
-	if principal.InActingAppointment {
-		return auth.Principal{}, apierr.New(ctx, connect.CodeFailedPrecondition, apierr.ReasonActingNotSupported,
-			"Accounts are not available here while you hold an acting appointment. Use the Edify web app.")
 	}
 	return principal, nil
 }

@@ -54,12 +54,45 @@ type Account struct {
 	ActiveRole     string
 	Status         string
 	StaffProfileID string
-	// InActingAppointment is true while the person holds an acting
-	// appointment, which changes their permissions in the existing system.
+	// Acting is the acting appointment the person holds today, when it is
+	// active and still stands (apps.acting.services.still_valid); nil
+	// otherwise. Whether they are working in it is InActingAppointment.
+	Acting *ActingAppointment
+	// InActingAppointment is true while the person is working in an acting
+	// capacity: the appointment is switched on and the request is made in
+	// the role it was made from. The existing system then presents them in
+	// the acting role, inside the appointing leader's seat; modules that
+	// have not taken that seat over refuse rather than guess.
 	InActingAppointment bool
 	// MustChangePassword: an administrator chose the password, and it must
 	// be replaced before anything else (the existing PasswordChangeMiddleware).
 	MustChangePassword bool
+}
+
+// ActingAppointment is the acting appointment a person holds today
+// (acting_assignment), as far as a request needs it.
+type ActingAppointment struct {
+	AppointmentID string
+	RoleKey       string
+	// ActingRole is the role whose operational capability set it delegates;
+	// AppointeeRole the permanent role it was made from.
+	ActingRole    string
+	AppointeeRole string
+	Label         string
+	ShortLabel    string
+	MonthLabel    string
+	SeatStaffID   string
+	SeatName      string
+	ScopeType     string
+	Country       string
+	// InCapacity is the appointee's own switch (in_capacity).
+	InCapacity bool
+}
+
+// WorkingIn says whether a request made in role is made in the acting
+// capacity (apps.acting.services.attach).
+func (a *ActingAppointment) WorkingIn(role string) bool {
+	return a != nil && a.InCapacity && role == a.AppointeeRole
 }
 
 // Principal is the authenticated caller of one request.
@@ -153,6 +186,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, header string) (Princi
 			"This account is not active.")
 	}
 	account.ActiveRole = resolveActiveRole(claims.ActiveRole, account)
+	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
 	return Principal{Account: account}, nil
 }
 
