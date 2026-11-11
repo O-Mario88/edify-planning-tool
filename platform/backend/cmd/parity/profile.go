@@ -24,6 +24,8 @@ import (
 type profileRun struct {
 	existing  string
 	tab       string
+	fy        string
+	period    string
 	sample    int
 	directory screensv1connect.SchoolDirectoryScreenServiceClient
 	profile   screensv1connect.SchoolProfileServiceClient
@@ -91,7 +93,7 @@ func (r *profileRun) account(ctx context.Context, email, token string) (compared
 }
 
 func (r *profileRun) goProfile(ctx context.Context, token, schoolID string) (*screensv1.GetSchoolProfileResponse, error) {
-	call := connect.NewRequest(&screensv1.GetSchoolProfileRequest{SchoolId: schoolID, Tab: r.tab})
+	call := connect.NewRequest(&screensv1.GetSchoolProfileRequest{SchoolId: schoolID, Tab: r.tab, Fy: r.fy, Period: r.period})
 	call.Header().Set("Authorization", "Bearer "+token)
 	answer, err := r.profile.GetSchoolProfile(ctx, call)
 	if err != nil {
@@ -104,7 +106,8 @@ func (r *profileRun) goProfile(ctx context.Context, token, schoolID string) (*sc
 // a refusal is put in the gateway's terms.
 func (r *profileRun) existingProfile(token, schoolID string) (*screensv1.GetSchoolProfileResponse, error) {
 	request, err := http.NewRequest(http.MethodGet,
-		r.existing+"/api/mobile/v1/schools/"+url.PathEscape(schoolID)+"/profile?tab="+url.QueryEscape(r.tab), nil)
+		r.existing+"/api/mobile/v1/schools/"+url.PathEscape(schoolID)+"/profile?"+url.Values{
+			"tab": {r.tab}, "fy": {r.fy}, "period": {r.period}}.Encode(), nil)
 	if err != nil {
 		return nil, err
 	}

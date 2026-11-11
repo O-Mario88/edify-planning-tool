@@ -62,6 +62,12 @@ def doors() -> dict:
             # (school_links._may_open).
             "open_cluster": bool(can_open_url(user, "/clusters/0")),
             "open_district": bool(can_open_url(user, "/districts/0")),
+            # Whether a person's name opens their profile, and a project's
+            # its monitoring page (profile_views.profile_context).
+            "open_staff": RolePermissionService.can_view_page(user, "staff"),
+            "open_projects": RolePermissionService.can_view_page(
+                user, "project_monitoring"
+            ),
         }
     return out
 
@@ -114,6 +120,7 @@ def rules() -> dict:
         "core_lifecycle_types": list(CORE_LIFECYCLE_TYPES),
         "closed_statuses": list(CLOSED_STATUSES),
         "closed_school_message": CLOSED_SCHOOL_MESSAGE,
+        "engine": engine_rules(),
         "gate": {
             "client_rule_types": list(gate.CLIENT_RULE_SCHOOL_TYPES),
             "core_rule_types": list(gate.CORE_RULE_SCHOOL_TYPES),
@@ -137,6 +144,41 @@ def rules() -> dict:
             "general_intervention": GENERAL_INTERVENTION,
             "lock_labels": dict(gate.LOCK_LABELS),
         },
+    }
+
+
+def engine_rules() -> dict:
+    """What the profile engine (apps.analytics.profile_intelligence and
+    profile_records) reads: the statuses it counts work and hand-overs by,
+    the words and tones of an SSA change, the story statuses, and the
+    intervention abbreviations a strip's figures use."""
+    from apps.analytics import profile_intelligence as engine
+    from apps.core.enums import SsaIntervention
+    from apps.core.interventions import INTERVENTION_ABBREVIATIONS
+    from apps.core.metrics.payload import HELPER_FIGURE_CHARS
+    from apps.partners.models import PartnerAssignment
+    from apps.ssa import change_rules
+    from apps.targets.models import MSCSStatus
+
+    return {
+        "completed_work_statuses": list(engine.COMPLETED_WORK_STATUSES),
+        "not_in_plan_statuses": list(engine.NOT_IN_PLAN_ACTIVITY_STATUSES),
+        "not_started_statuses": list(engine.NOT_STARTED_ACTIVITY_STATUSES),
+        "change_labels": dict(engine._CHANGE_LABELS),
+        "change_tones": dict(engine._CHANGE_TONES),
+        "fallback_rule_label": change_rules.FALLBACK_LABEL,
+        "min_interval_days": change_rules.MIN_INTERVAL_DAYS,
+        "strong_score": change_rules.STRONG_SCORE,
+        "handover_released_statuses": list(PartnerAssignment.RELEASED_STATUSES),
+        "handover_completed_status": PartnerAssignment.STATUS_COMPLETED,
+        "story_statuses": {
+            "draft": MSCSStatus.DRAFT.value,
+            "approved": MSCSStatus.APPROVED.value,
+            "waiting": [MSCSStatus.SUBMITTED.value, MSCSStatus.RETURNED.value],
+        },
+        "intervention_abbreviations": dict(INTERVENTION_ABBREVIATIONS),
+        "intervention_order": [value for value, _label in SsaIntervention.choices],
+        "helper_figure_chars": HELPER_FIGURE_CHARS,
     }
 
 

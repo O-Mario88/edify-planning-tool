@@ -148,3 +148,42 @@ ORDER BY s.id LIMIT 1`).Scan(&id); err != nil {
 		t.Fatalf("the Admin's doors: %v", keys)
 	}
 }
+
+func TestGoAnswersTheEnginesSmallerTabs(t *testing.T) {
+	userID := borrowAccount(t, "cceo@edify.org")
+	id, _ := anOfficersSchool(t, userID, "client")
+	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	for _, tab := range []string{"projects", "stories", "academic"} {
+		profile, err := profileOf(token, id, tab)
+		if err != nil {
+			t.Fatalf("%s: %v", tab, err)
+		}
+		blocks := profile.GetBlocks()
+		if len(blocks) < 4 || blocks[0].GetScopeLine() == "" || blocks[1].GetFacts() == nil ||
+			blocks[2].GetFilters().GetHidden()["tab"] != tab {
+			t.Fatalf("%s: the frame: %v", tab, blocks)
+		}
+		facts := map[string]string{}
+		for _, f := range blocks[1].GetFacts().GetFacts() {
+			facts[f.GetLabel()] = f.GetValue()
+		}
+		if facts["Status"] != "Operating" || facts["Fiscal Year"] == "" {
+			t.Fatalf("%s: the facts: %v", tab, facts)
+		}
+	}
+	// A past year and a quarter are read as asked; an unknown one is the
+	// running year, the whole of it.
+	profile, err := profileOf(token, id, "projects")
+	if err != nil {
+		t.Fatal(err)
+	}
+	running := profile.GetBlocks()[2].GetFilters().GetFilters()[0].GetValue()
+	answer, err := profileClient().GetSchoolProfile(context.Background(),
+		authed(&screensv1.GetSchoolProfileRequest{SchoolId: id, Tab: "projects", Fy: "1999", Period: "M13"}, token))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := answer.Msg.GetBlocks()[2].GetFilters().GetFilters(); got[0].GetValue() != running || got[1].GetValue() != "" {
+		t.Fatalf("an unknown year and period: %v", got)
+	}
+}

@@ -13,7 +13,8 @@ proved against the existing page before the next.
 | Piece | What moves | State |
 |---|---|---|
 | 1 | Opening a school (who may), the header with its badges and doors, the tab strip, the Details tab, and the visit rule those read | This document |
-| 2 | The profile engine: Overview, Projects, Stories, Academic | Next |
+| 2a | The profile engine's frame (scope line, facts, year and period) and its Projects, Stories and Academic tabs | Done, 13.6 |
+| 2b | The Overview: performance, operations and loans, the best and struggling intervention, the latest stories, the insights rail | Next |
 | 3 | SSA and Participation | |
 | 4 | Core School: the package rule, the Core tab, a Core school's Details | |
 | 5 | Closed schools and the Business Transformation panel with the loan register | With the school record changes and loans |
@@ -98,3 +99,42 @@ the activity, catalogue, eligibility, partner, hand-over and project columns
 the visit rule counts by, the SSA record's average and source, and only
 `school_id` of `bt_case` and `bt_mfi_loan` (whether the school has one).
 No write; the source scan in `internal/dbguard` allows these packages none.
+
+## 13.6 The profile engine, first tabs
+
+`internal/schoolprofile` now also answers the Projects, Stories and Academic
+tabs, for any year the page offers and any quarter or month. They are the
+profile engine's (`apps.analytics.profile_intelligence`, `profile_records`,
+`clusters.outcomes`) over one school, under the same frame every engine tab
+draws:
+
+- **Frame.** "Single school, FY 2026/27" (and "· work in Q1 (Oct–Dec)" for a
+  period); the facts (School ID, Type, Cohort, District and Sub-region with
+  their links, Sub-county, Cluster, the CCEO and Programme Lead holding it,
+  the partners holding work there, Status, Fiscal Year); the year and period
+  filters. A year the page does not offer is the running year; a period it
+  does not know is the whole year.
+- **Projects.** Each project with the school on it: its status, the school
+  here, every school on it, the capacity set for it, its work at the school
+  in the plan and completed (in the period), and the school's SSA on it,
+  judged by the SSA change rule (the published thresholds, else any move).
+- **Stories.** Most Significant Change stories about the school (or its
+  cluster) dated in the year, drafts left out: the counts, by intervention,
+  and the records.
+- **Academic.** Enrolment and learning results this year against last, a
+  school compared only with a figure in both years, and the records.
+
+Figures are written as the page writes them: a strip's line under a figure
+is cut to a second figure and the sentence kept as its note
+(`kpi_metrics.professional_kpis`), counts with thousands, scores to two
+places, a period's days read on Kampala's clock. A table longer than a page
+(50 rows) is passed to the existing application, which pages it.
+
+Proved with `cmd/parity -screen profile -tab <tab>` on all 700 of the CCEO's
+schools for each tab, and again for FY2026, Q1, November and an unknown year
+and period: none differing. Stories, enrolment by year and learning results
+were empty in the seed, so one school (Central Division Primary School,
+1000) was given four stories (approved, submitted, returned, and a draft that
+must not show), enrolment for both years and four learning results (three
+confirmed, one pending) with the existing models, each marked
+"[Go parity check]".

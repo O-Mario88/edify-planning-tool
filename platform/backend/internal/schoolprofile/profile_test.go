@@ -119,3 +119,90 @@ func TestOnlyTheRolesTheExistingGatesAdmitOpenProfiles(t *testing.T) {
 		t.Error("deletion is the Admin's alone")
 	}
 }
+
+func TestTheLineUnderAFigureIsCutAsThePageCutsIt(t *testing.T) {
+	// Each pair is what the existing Overview drew (helper, then note).
+	for helper, want := range map[string]string{
+		"0 to 0":                             "0 to 0",
+		"of 1 in FY 2026/27":                 "of 1 in FY 2026/27",
+		"0 in school · 0 at group trainings": "0 in school",
+		"1 approved · 2 with a reviewer":     "1 approved",
+		"0 schools · 0 for EdTech":           "0 schools · 0 for EdTech",
+		"learners on the school record":      "",
+		"previous 5.90":                      "",
+		"FY 2026/27":                         "",
+	} {
+		if got := briefHelper(helper); got != want {
+			t.Errorf("briefHelper(%q) = %q, want %q", helper, got, want)
+		}
+	}
+	block := strip("Learners",
+		kpi{label: "Enrolment", value: "105", helper: "learners on the school record"},
+		kpi{label: "Growth", value: "+9.4%", helper: "96 to 105"},
+		kpi{label: "enrolment", value: "1"},
+	).GetStrip()
+	if len(block.GetMetrics()) != 2 {
+		t.Fatalf("a label is drawn once: %v", block.GetMetrics())
+	}
+	if m := block.GetMetrics()[0]; m.GetHelper() != "" || m.GetNote() != "learners on the school record" {
+		t.Errorf("a sentence goes to the note: %+v", m)
+	}
+	if m := block.GetMetrics()[1]; m.GetHelper() != "96 to 105" || m.GetNote() != "" {
+		t.Errorf("a short figure stays: %+v", m)
+	}
+}
+
+func TestPeriodsAreTheYearsQuartersAndMonths(t *testing.T) {
+	for period, want := range map[string][3]string{
+		"Q1": {"2025-10-01", "2026-01-01", "Q1 (Oct–Dec)"},
+		"Q2": {"2026-01-01", "2026-04-01", "Q2 (Jan–Mar)"},
+		"Q4": {"2026-07-01", "2026-10-01", "Q4 (Jul–Sep)"},
+		"M1": {"2025-10-01", "2025-11-01", "Oct 2025"},
+		"M4": {"2026-01-01", "2026-02-01", "Jan 2026"},
+	} {
+		w := periodWindow("2026", period)
+		if w.start.Format("2006-01-02") != want[0] || w.end.Format("2006-01-02") != want[1] || w.label != want[2] {
+			t.Errorf("%s: %v %v %q", period, w.start, w.end, w.label)
+		}
+	}
+	if !periodWindow("2026", "").whole() || !periodWindow("2026", "M13").whole() || knownPeriod("M13") {
+		t.Error("the whole year, and a period that is not one")
+	}
+	if fyLabel("2027") != "FY 2026/27" || previousFY("2027") != "2026" {
+		t.Error("year labels")
+	}
+}
+
+func TestWordsAreWrittenAsTheRecordsWriteThem(t *testing.T) {
+	if status("in_review") != "In review" || status("LEARNING_OUTCOMES") != "Learning outcomes" || status("") != "" {
+		t.Error("status")
+	}
+	if projectStatus("on_hold") != "On Hold" || intcomma(1234567) != "1,234,567" || intcomma(-1200) != "-1,200" {
+		t.Error("project status or thousands")
+	}
+	people := []person{{"u1", "Amy"}, {"u2", "Bob"}, {"u3", "Cal"}, {"u4", "Dee"}}
+	if f := peopleFact("CCEO", people, true, "/staff/"); f.GetLabel() != "CCEOs" || f.GetValue() != "Amy, Bob, Cal and 1 more" || f.GetHref() != "/staff/u1" {
+		t.Errorf("many: %+v", f)
+	}
+	if f := peopleFact("CCEO", nil, true, "/staff/"); f.GetLabel() != "CCEOs" || f.GetValue() != "Not assigned" {
+		t.Errorf("none: %+v", f)
+	}
+	if f := peopleFact("Programme Lead", people[:1], false, "/staff/"); f.GetLabel() != "Programme Lead" || f.GetHref() != "" {
+		t.Errorf("one, not linked: %+v", f)
+	}
+}
+
+func TestAChangeIsJudgedByThePublishedRuleElseAnyMove(t *testing.T) {
+	up, down := 6.1, 5.7
+	if c := (ruleBook{}).overallChange(&down, &up); c.status != "improved" || *c.delta != 0.4 || c.tone() != "success" {
+		t.Errorf("any rise counts without a rule: %+v", c)
+	}
+	half := 0.5
+	book := ruleBook{{"leadership", ""}: {threshold: &half, direction: "improve"}}
+	if c := book.interventionChange("leadership", &down, &up); c.status != "no_change" {
+		t.Errorf("under the threshold: %+v", c)
+	}
+	if c := book.overallChange(nil, &up); c.status != "not_comparable" || c.delta != nil || c.label() != "No comparison yet" {
+		t.Errorf("one year missing: %+v", c)
+	}
+}

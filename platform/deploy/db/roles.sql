@@ -109,3 +109,21 @@ GRANT SELECT (intervention, target_interventions) ON project TO edify_gateway_ro
 -- existing application.
 GRANT SELECT (school_id) ON bt_case TO edify_gateway_ro;
 GRANT SELECT (school_id) ON bt_mfi_loan TO edify_gateway_ro;
+
+-- internal/schoolprofile, the profile engine's tabs (2026-11-12), read only:
+-- the school's sub-region, its stories, enrolment by year, learning
+-- results, and the published SSA change rules.
+GRANT SELECT (sub_region_id) ON district TO edify_gateway_ro;
+GRANT SELECT (id, name) ON sub_region TO edify_gateway_ro;
+GRANT SELECT (
+  id, school_id, cluster_id, title, story_date, status, intervention, outcome_area, evidence_uri, created_at
+) ON mscs_story TO edify_gateway_ro;
+GRANT SELECT (school_id, fy, enrollment, recorded_at) ON school_enrollment_history TO edify_gateway_ro;
+GRANT SELECT (
+  id, school_id, fy, assessed_on, assessment_type, subject, grade_level, learners_tested, mean_score,
+  max_score, verification_status, deleted_at
+) ON impact_learning_result TO edify_gateway_ro;
+GRANT SELECT (intervention, country, expected_direction, min_meaningful_change, effective_from, version, updated_at, status, active)
+  ON activity_intervention_mapping TO edify_gateway_ro;
+GRANT SELECT (id) ON ssa_record TO edify_gateway_ro;
+GRANT SELECT (planned_date) ON activity TO edify_gateway_ro;

@@ -34,6 +34,8 @@ type doors struct {
 	Take          bool `json:"take"`
 	OpenCluster   bool `json:"open_cluster"`
 	OpenDistrict  bool `json:"open_district"`
+	OpenStaff     bool `json:"open_staff"`
+	OpenProjects  bool `json:"open_projects"`
 }
 
 type profileRules struct {
@@ -52,6 +54,27 @@ type profileRules struct {
 	ClosedStatuses      []string          `json:"closed_statuses"`
 	ClosedSchoolMessage string            `json:"closed_school_message"`
 	Gate                visitgate.Rules   `json:"gate"`
+	Engine              engineRules       `json:"engine"`
+}
+
+// engineRules are the profile engine's vocabularies.
+type engineRules struct {
+	CompletedWorkStatuses    []string          `json:"completed_work_statuses"`
+	NotInPlanStatuses        []string          `json:"not_in_plan_statuses"`
+	NotStartedStatuses       []string          `json:"not_started_statuses"`
+	ChangeLabels             map[string]string `json:"change_labels"`
+	ChangeTones              map[string]string `json:"change_tones"`
+	StrongScore              float64           `json:"strong_score"`
+	HandoverReleasedStatuses []string          `json:"handover_released_statuses"`
+	HandoverCompletedStatus  string            `json:"handover_completed_status"`
+	StoryStatuses            struct {
+		Draft    string   `json:"draft"`
+		Approved string   `json:"approved"`
+		Waiting  []string `json:"waiting"`
+	} `json:"story_statuses"`
+	InterventionAbbreviations map[string]string `json:"intervention_abbreviations"`
+	InterventionOrder         []string          `json:"intervention_order"`
+	HelperFigureChars         int               `json:"helper_figure_chars"`
 }
 
 var rules = mustLoad()

@@ -43,8 +43,40 @@ func NewService(db Querier, now func() time.Time) *Service {
 	return &Service{db: db, now: now}
 }
 
-// detailsTab is the one tab Go answers so far.
+// detailsTab is the school's own record; the others Go answers are the
+// profile engine's.
 const detailsTab = "details"
+
+// servedTabs are the tabs Go answers; the rest (and no tab, the Overview)
+// are still the existing application's.
+var servedTabs = map[string]bool{detailsTab: true, "projects": true, "stories": true, "academic": true}
+
+// section is the open tab's blocks: the school's record, or the engine's
+// frame and section for the year and period asked.
+func (s *Service) section(ctx context.Context, p auth.Principal, sc school, tab string, req *screensv1.GetSchoolProfileRequest, now time.Time) ([]*screensv1.PageBlock, error) {
+	if tab == detailsTab {
+		return s.details(ctx, p, sc, now)
+	}
+	d := rules.Doors[p.ActiveRole]
+	l := lensOf(sc, tab, req.GetFy(), req.GetPeriod(), schooldirectory.OperationalFY(now))
+	frame, err := s.frame(ctx, d, sc, l)
+	if err != nil {
+		return nil, err
+	}
+	var blocks []*screensv1.PageBlock
+	switch tab {
+	case "projects":
+		blocks, err = s.projectsTab(ctx, d, sc, l)
+	case "stories":
+		blocks, err = s.storiesTab(ctx, sc, l)
+	case "academic":
+		blocks, err = s.academicTab(ctx, sc, l)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return append(frame, blocks...), nil
+}
 
 // school is the profile's record, as the page reads it.
 type school struct {
@@ -79,7 +111,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 	if !rules.Doors[p.ActiveRole].Profile {
 		return nil, true, ErrForbidden
 	}
-	if req.GetTab() != detailsTab {
+	tab := req.GetTab()
+	if !servedTabs[tab] {
 		return nil, false, nil
 	}
 	now := s.now()
@@ -102,24 +135,31 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 	if sc.closed() || sc.core() {
 		return nil, false, nil
 	}
-	held, err := s.hasBusinessTransformation(ctx, sc.ID)
-	if err != nil {
-		return nil, true, err
-	}
-	if held {
-		return nil, false, nil
+	if tab == detailsTab {
+		// The Details tab's Business Transformation panel reads the loan
+		// register, which is still the existing application's.
+		held, err := s.hasBusinessTransformation(ctx, sc.ID)
+		if err != nil {
+			return nil, true, err
+		}
+		if held {
+			return nil, false, nil
+		}
 	}
 	header, err := s.header(ctx, p, scope, sc, now)
 	if err != nil {
 		return nil, true, err
 	}
-	blocks, err := s.details(ctx, p, sc, now)
+	blocks, err := s.section(ctx, p, sc, tab, req, now)
+	if errors.Is(err, errTooLong) {
+		return nil, false, nil
+	}
 	if err != nil {
 		return nil, true, err
 	}
 	return &screensv1.GetSchoolProfileResponse{
 		Header:  header,
-		Tabs:    tabs(sc, detailsTab),
+		Tabs:    tabs(sc, tab),
 		Blocks:  blocks,
 		WebPath: "/schools/" + key,
 		Dialogs: []*screensv1.PageDialog{},

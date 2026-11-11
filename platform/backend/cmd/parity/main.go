@@ -42,6 +42,8 @@ func main() {
 	pause := flag.Duration("pause", 0, "wait between sign-ins, under the gateway's sign-in rate limit")
 	screen := flag.String("screen", "directory", "what to compare: directory or profile")
 	tab := flag.String("tab", "details", "profile: the tab to compare")
+	fy := flag.String("fy", "", "profile: the year asked (empty for the page's own)")
+	period := flag.String("period", "", "profile: the part of the year asked (Q1…Q4, M1…M12)")
 	probe := flag.String("probe", "admin@edify.org", "profile: the account whose schools are sampled for every account")
 	sample := flag.Int("sample", 40, "profile: how many of the probe's schools each account is also asked")
 	flag.Parse()
@@ -61,7 +63,7 @@ func main() {
 	directory := screensv1connect.NewSchoolDirectoryScreenServiceClient(http.DefaultClient, *gateway)
 	if *screen == "profile" {
 		os.Exit(runProfiles(ctx, signIn, &profileRun{
-			existing: *existing, tab: *tab, sample: *sample, directory: directory,
+			existing: *existing, tab: *tab, fy: *fy, period: *period, sample: *sample, directory: directory,
 			profile: screensv1connect.NewSchoolProfileServiceClient(http.DefaultClient, *gateway),
 		}, password, *probe, strings.Split(*users, ","), *pause))
 	}
