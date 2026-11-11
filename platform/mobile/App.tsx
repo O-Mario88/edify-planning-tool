@@ -23,7 +23,7 @@ import { NewPasswordScreen } from './src/screens/NewPasswordScreen';
 import { UsersScreen } from './src/screens/admin/UsersScreen';
 import { PartnerTeamScreen } from './src/screens/partner/PartnerTeamScreen';
 import { ActingLeadershipScreen } from './src/screens/acting/ActingLeadershipScreen';
-import { ACTING_URL } from './src/screens/acting/actingData';
+import { ACTING_URL, isWorkingAsActing } from './src/screens/acting/actingData';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { ClusterLeaderApp } from './src/screens/cluster/ClusterLeaderApp';
 import { ClusterLeadersScreen } from './src/screens/cluster/ClusterLeadersScreen';
@@ -211,6 +211,9 @@ function SignedIn({ session }: { readonly session: Session }) {
   const [route, setRoute] = useState<Route>(HOME);
   const [searchSignal, setSearchSignal] = useState(0);
   const [navigation, setNavigation] = useState<GetNavigationResponse | null>(null);
+  // Entering or leaving an acting capacity keeps the role's name ("CCEO")
+  // but changes the menu the existing application serves, so it counts too.
+  const actingNow = isWorkingAsActing(session);
 
   useEffect(() => {
     let isCurrent = true;
@@ -232,7 +235,7 @@ function SignedIn({ session }: { readonly session: Session }) {
     return () => {
       isCurrent = false;
     };
-  }, [api, session.activeRole]);
+  }, [api, session.activeRole, actingNow]);
 
   const pages = useMemo(() => pagesOf(navigation), [navigation]);
   // Every other path opens on the web.

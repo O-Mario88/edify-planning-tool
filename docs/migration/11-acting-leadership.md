@@ -102,7 +102,8 @@ Switching to a role one holds leaves the acting capacity, as the web's
   web (choose, then read and confirm).
 - **More → Work as** lists the appointment beside the roles held ("Acting
   Program Lead · November 2026"); the account card reads "CCEO · Acting PL ·
-  November 2026" while it is in use.
+  November 2026" while it is in use. Switching reloads the menu and bottom
+  tabs, which the existing application serves for the capacity in use.
 
 ## 11.6 What the database role may do
 

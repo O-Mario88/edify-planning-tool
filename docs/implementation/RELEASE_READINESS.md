@@ -140,7 +140,13 @@ restarted to serve the new relay route (it runs without reloading).
 | The existing chain verifier | Pass | `verify_chain(full=True)`: ok, 870 rows on the test database, with Go's acting rows |
 | Django | Pass | the relay sends the acting notifications (2 tests); accounts, admin_users, acting and the matrix test: 423 passed; ruff, format, bandit clean |
 | Web build | Pass | pl1 appointed Deo M. Acting PL for November 2026 in the app; the web's page listed it and the web presented Deo as "CCEO · Acting PL · November 2026"; the existing notifications went out; in the app Deo's Work as showed the appointment, switching to CCEO left it on both app and web; pl1 cancelled it with a reason, kept in History |
-| iOS and Android Release | Built, not checked on device | both built and installed; the iPhone simulator was in use with another account, and the Android emulator was too loaded to take input (Mac load average about 10) |
+| iOS Release | Pass | pl1 appointed Deo M. Acting PL for November through the drawer (both steps, the web's wording); Deo's More read "CCEO · Acting PL · November 2026", Work as switched to CCEO and back, the tabs following (Oversight in the acting capacity, Schools as CCEO); then cancelled from the app and kept in History |
+| Android Release | Pass | Deo's More showed the acting capacity ticked and the Oversight tab; switching to CCEO gave the CCEO card and tabs. The emulator was starved (Android's own "System UI isn't responding"), so the Acting Leadership screen itself was checked on iOS and the web build, not here |
+
+Found and fixed on the iPhone: switching into or out of the acting capacity
+left the menu and bottom tabs as they were until the app restarted. The app
+reloaded its menu only when the role's name changed, and an acting capacity
+keeps the name ("CCEO"); it now reloads on the capacity too.
 
 ## Open items
 
