@@ -4,8 +4,17 @@ import { base64Encode } from '@bufbuild/protobuf/wire';
 import { ApiError } from '../api/connect';
 import type { ConnectTransport, FetchLike, FetchResponse } from '../api/connect';
 import { createEdifyApi } from '../api/edifyApi';
-import { SignInError, refreshTokens, requestPasswordReset, revokeSession, signIn, signInFigures } from '../auth/identityClient';
-import type { IdentityFetch } from '../auth/identityClient';
+import {
+  SignInError,
+  appDevice,
+  publicTransport,
+  refreshTokens,
+  requestPasswordReset,
+  revokeSession,
+  signIn,
+  signInFigures,
+  verifySignInCode,
+} from '../auth/identityClient';
 import { ErrorDetailSchema } from '../gen/edify/common/v1/common_pb';
 
 function response(status: number, body: unknown, requestId = ''): FetchResponse {
@@ -122,28 +131,80 @@ describe('gateway client', () => {
   });
 });
 
-describe('sign-in against the existing identity system', () => {
-  const identityUrl = 'http://localhost:8000';
+// Signing in goes to the Go gateway's SignInService (owner brief, 2026-11-11).
+const SIGN_IN = 'http://localhost:8090/edify.identity.v1.SignInService';
 
-  test('posts the normalised email and returns the tokens', async () => {
-    const fetchImpl = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () =>
-      response(200, { accessToken: 'a', refreshToken: 'r', user: { id: 'u1' } }),
+function gatewayFetch(answer: FetchResponse | (() => never)) {
+  return jest.fn<ReturnType<FetchLike>, Parameters<FetchLike>>(async () =>
+    typeof answer === 'function' ? answer() : answer,
+  );
+}
+
+function sent(fetchImpl: jest.Mock<ReturnType<FetchLike>, Parameters<FetchLike>>) {
+  const [url, init] = fetchImpl.mock.calls[0];
+  return { url, body: JSON.parse(init.body) as unknown, auth: init.headers.Authorization };
+}
+
+const offline = () => {
+  throw new Error('offline');
+};
+
+describe('signing in through the gateway', () => {
+  test('a native build says phone or tablet; the web build says nothing', async () => {
+    expect(appDevice('android', false, 412, 915)).toBe('mobile');
+    expect(appDevice('android', false, 800, 1280)).toBe('tablet');
+    expect(appDevice('ios', true, 1024, 1366)).toBe('tablet');
+    expect(appDevice('web', false, 390, 844)).toBeNull();
+
+    const fetchImpl = gatewayFetch(response(200, {}));
+    await signInFigures(publicTransport('http://localhost:8090', fetchImpl, 'mobile'));
+    expect(fetchImpl.mock.calls[0][1].headers['X-Edify-Device']).toBe('mobile');
+    const web = gatewayFetch(response(200, {}));
+    await signInFigures(publicTransport('http://localhost:8090', web));
+    expect(web.mock.calls[0][1].headers['X-Edify-Device']).toBeUndefined();
+  });
+
+  test('posts the normalised email to SignIn, without a token, and returns the session', async () => {
+    const fetchImpl = gatewayFetch(
+      response(200, { session: { accessToken: 'a', refreshToken: 'r', account: { userId: 'u1' } } }),
     );
 
-    const tokens = await signIn(identityUrl, fetchImpl, '  Officer@Example.org ', 'the-password');
+    const result = await signIn(publicTransport('http://localhost:8090', fetchImpl), '  Officer@Example.org ', 'the-password');
 
-    expect(tokens).toEqual({ accessToken: 'a', refreshToken: 'r' });
-    const [url, init] = fetchImpl.mock.calls[0];
-    expect(url).toBe('http://localhost:8000/api/auth/login');
-    expect(JSON.parse(init.body ?? '')).toEqual({ email: 'officer@example.org', password: 'the-password' });
+    expect(result).toEqual({ kind: 'session', tokens: { accessToken: 'a', refreshToken: 'r' } });
+    expect(sent(fetchImpl)).toEqual({
+      url: `${SIGN_IN}/SignIn`,
+      body: { email: 'officer@example.org', password: 'the-password' },
+      auth: undefined,
+    });
+  });
+
+  test('an account with a second factor is asked for its code, then the code opens the session', async () => {
+    const asked = gatewayFetch(
+      response(200, {
+        codeRequired: { challengeToken: 'ch-1', channel: 'email', destinationHint: 'p•••••@edify.org', expiresInSeconds: 600 },
+      }),
+    );
+    const result = await signIn(publicTransport('http://localhost:8090', asked), 'paul@edify.org', 'x');
+    expect(result).toEqual({
+      kind: 'code',
+      challenge: { token: 'ch-1', channel: 'email', hint: 'p•••••@edify.org', expiresInSeconds: 600 },
+    });
+
+    const verified = gatewayFetch(response(200, { session: { accessToken: 'a', refreshToken: 'r' } }));
+    const challenge = result.kind === 'code' ? result.challenge : null;
+    await expect(
+      verifySignInCode(publicTransport('http://localhost:8090', verified), challenge!, '123 456'),
+    ).resolves.toEqual({ accessToken: 'a', refreshToken: 'r' });
+    expect(sent(verified)).toMatchObject({ url: `${SIGN_IN}/VerifySignInCode`, body: { challengeToken: 'ch-1', code: '123456' } });
   });
 
   test.each([
-    ['a rejected password', response(401, { message: 'Invalid email or password.' }), 'rejected'],
-    ['an account that needs a sign-in code', response(200, { mfaRequired: true, channel: 'email' }), 'mfa_required'],
-    ['an answer without tokens', response(200, {}), 'unexpected'],
+    ['a rejected password', response(401, { code: 'unauthenticated', message: 'Invalid email or password.' }), 'rejected'],
+    ['too many attempts', response(429, { code: 'resource_exhausted', message: 'Too many attempts.' }), 'rate_limited'],
+    ['an answer without tokens', response(200, { session: {} }), 'unexpected'],
   ])('reports %s', async (_name, answer, kind) => {
-    const failure = await signIn(identityUrl, async () => answer, 'a@b.org', 'x').catch(
+    const failure = await signIn(publicTransport('http://localhost:8090', gatewayFetch(answer)), 'a@b.org', 'x').catch(
       (error: unknown) => error,
     );
 
@@ -151,12 +212,17 @@ describe('sign-in against the existing identity system', () => {
     expect(failure).toMatchObject({ kind });
   });
 
-  test('reports an unreachable server', async () => {
-    const fetchImpl: IdentityFetch = async () => {
-      throw new Error('offline');
-    };
+  test('the gateway\'s refusal is shown in its own words', async () => {
+    const answer = response(401, { code: 'unauthenticated', message: 'Invalid email or password.' });
+    await expect(signIn(publicTransport('http://localhost:8090', gatewayFetch(answer)), 'a@b.org', 'x')).rejects.toThrow(
+      'Invalid email or password.',
+    );
+  });
 
-    await expect(signIn(identityUrl, fetchImpl, 'a@b.org', 'x')).rejects.toMatchObject({ kind: 'network' });
+  test('reports an unreachable server', async () => {
+    await expect(signIn(publicTransport('http://localhost:8090', gatewayFetch(offline)), 'a@b.org', 'x')).rejects.toMatchObject({
+      kind: 'network',
+    });
   });
 });
 
@@ -205,61 +271,52 @@ describe('short-lived access tokens', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
-  test('a refresh presents the refresh token once and returns the new pair', async () => {
-    const fetchImpl = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () =>
-      response(200, { accessToken: 'a2', refreshToken: 'r2' }),
-    );
+  test('a refresh presents the refresh token once, to the gateway, and returns the new pair', async () => {
+    const fetchImpl = gatewayFetch(response(200, { accessToken: 'a2', refreshToken: 'r2' }));
 
-    const tokens = await refreshTokens('http://localhost:8000', fetchImpl, 'r1');
+    const tokens = await refreshTokens(publicTransport('http://localhost:8090', fetchImpl), 'r1');
 
     expect(tokens).toEqual({ accessToken: 'a2', refreshToken: 'r2' });
-    const [url, init] = fetchImpl.mock.calls[0];
-    expect(url).toBe('http://localhost:8000/api/auth/refresh');
-    expect(JSON.parse(init.body ?? '')).toEqual({ refreshToken: 'r1' });
+    expect(sent(fetchImpl)).toEqual({ url: `${SIGN_IN}/RefreshSession`, body: { refreshToken: 'r1' }, auth: undefined });
   });
 
-  test('a refused refresh means the session is over', async () => {
-    const tokens = await refreshTokens('http://localhost:8000', async () => response(401, {}), 'r1');
+  test('a refused refresh means the session is over; an unreachable server keeps it', async () => {
+    const refused = gatewayFetch(response(401, { code: 'unauthenticated', message: 'Invalid or expired refresh token.' }));
+    await expect(refreshTokens(publicTransport('http://localhost:8090', refused), 'r1')).resolves.toBeNull();
 
-    expect(tokens).toBeNull();
+    await expect(refreshTokens(publicTransport('http://localhost:8090', gatewayFetch(offline)), 'r1')).rejects.toMatchObject({
+      kind: 'network',
+    });
+    const broken = gatewayFetch(response(503, { code: 'unavailable', message: 'down' }));
+    await expect(refreshTokens(publicTransport('http://localhost:8090', broken), 'r1')).rejects.toBeInstanceOf(SignInError);
   });
 });
 
-describe('the sign-in screen\'s other calls to the identity system', () => {
-  const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
-
+describe('the sign-in screen\'s other calls to the gateway', () => {
   test('a reset link is asked for with the address as typed, lower-cased', async () => {
-    const fetchImpl = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => ok({}));
-    await expect(requestPasswordReset('https://id.example', fetchImpl, ' Grace@School.ORG ')).resolves.toBe(true);
-    const [url, init] = fetchImpl.mock.calls[0];
-    expect(url).toBe('https://id.example/api/auth/forgot-password');
-    expect(JSON.parse(init.body ?? '')).toEqual({ email: 'grace@school.org' });
+    const fetchImpl = gatewayFetch(response(200, {}));
+    await expect(requestPasswordReset(publicTransport('http://localhost:8090', fetchImpl), ' Grace@School.ORG ')).resolves.toBe(true);
+    expect(sent(fetchImpl)).toMatchObject({ url: `${SIGN_IN}/RequestPasswordReset`, body: { email: 'grace@school.org' } });
   });
 
   test('a refused or unreachable reset request says so', async () => {
-    const refused = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => ({ ok: false, status: 429, json: async () => ({}) }));
-    await expect(requestPasswordReset('https://id.example', refused, 'a@b.org')).resolves.toBe(false);
-    const offline = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => {
-      throw new Error('offline');
-    });
-    await expect(requestPasswordReset('https://id.example', offline, 'a@b.org')).resolves.toBe(false);
+    const refused = gatewayFetch(response(429, { code: 'resource_exhausted', message: 'Too many attempts.' }));
+    await expect(requestPasswordReset(publicTransport('http://localhost:8090', refused), 'a@b.org')).resolves.toBe(false);
+    await expect(requestPasswordReset(publicTransport('http://localhost:8090', gatewayFetch(offline)), 'a@b.org')).resolves.toBe(false);
   });
 
   test('signing out revokes the refresh token, and never fails the sign-out', async () => {
-    const fetchImpl = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => {
-      throw new Error('offline');
-    });
-    await expect(revokeSession('https://id.example', fetchImpl, 'refresh-1')).resolves.toBeUndefined();
-    expect(fetchImpl.mock.calls[0][0]).toBe('https://id.example/api/auth/logout');
-    expect(JSON.parse(fetchImpl.mock.calls[0][1].body ?? '')).toEqual({ refreshToken: 'refresh-1' });
+    const fetchImpl = gatewayFetch(offline);
+    await expect(revokeSession(publicTransport('http://localhost:8090', fetchImpl), 'refresh-1')).resolves.toBeUndefined();
+    expect(sent(fetchImpl)).toMatchObject({ url: `${SIGN_IN}/SignOut`, body: { refreshToken: 'refresh-1' } });
   });
 
   test('the figures are read as the web page shows them, or not at all', async () => {
     const figures = { portfolio: '700', schoolsReached: '700', schoolsVisited: '0', schoolsTrained: '0', ssaCompleted: '306' };
-    const fetchImpl = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => ok(figures));
-    await expect(signInFigures('https://id.example', fetchImpl)).resolves.toEqual(figures);
-    expect(fetchImpl.mock.calls[0][1].method).toBe('GET');
-    const partial = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => ok({ portfolio: 700 }));
-    await expect(signInFigures('https://id.example', partial)).resolves.toBeNull();
+    const fetchImpl = gatewayFetch(response(200, figures));
+    await expect(signInFigures(publicTransport('http://localhost:8090', fetchImpl))).resolves.toEqual(figures);
+    expect(sent(fetchImpl).url).toBe(`${SIGN_IN}/GetSignInFigures`);
+    const partial = gatewayFetch(response(200, { portfolio: '700' }));
+    await expect(signInFigures(publicTransport('http://localhost:8090', partial))).resolves.toBeNull();
   });
 });

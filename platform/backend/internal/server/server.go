@@ -31,6 +31,7 @@ import (
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/signin"
 )
 
 const maxRequestBytes = 1 << 20
@@ -54,6 +55,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		schoolsv1connect.SchoolServiceName,
 	)))
 	mux.Handle(identityv1connect.NewIdentityServiceHandler(identity.NewService(), options...))
+	// Signing in needs no session: structured errors, no authentication.
+	mux.Handle(identityv1connect.NewSignInServiceHandler(signInHandler(cfg, pool, logger),
+		connect.WithInterceptors(apierr.Interceptor(logger)), connect.WithReadMaxBytes(maxRequestBytes)))
 	mux.Handle(schoolsv1connect.NewSchoolServiceHandler(
 		schools.NewService(schools.NewStore(pool), summarizer, logger), options...,
 	))
@@ -110,6 +114,47 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(loansv1connect.NewLoanFollowUpServiceHandler(loans.NewFollowUpService(lending), options...))
 	mux.Handle("POST /sms/delivery-report/{secret}", loanStore.DeliveryReports(cfg.Loans.SMSCallbackSecret, logger))
 	return httpmw.Chain(logger, httpmw.CORS(cfg.CORSAllowedOrigins, mux))
+}
+
+// signInHandler assembles sign-in: the existing accounts, the existing
+// policy, and the same mail and SMS providers the portal uses.
+func signInHandler(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *signin.Handler {
+	key, err := signin.ParseFieldKey(cfg.SignIn.FieldEncryptionKey)
+	if err != nil {
+		// config.Load validated the format; a failure here is a broken build.
+		panic(err)
+	}
+	policy := signin.DefaultPolicy()
+	policy.MFARequiredForAll = cfg.SignIn.MFARequiredForAll
+	policy.MFARequiredRoles = cfg.SignIn.MFARequiredRoles
+	deps := signin.Deps{
+		Store: signin.NewStore(pool), Policy: policy, JWTSecret: []byte(cfg.JWTSecret), FieldKey: key,
+		AppBaseURL: cfg.SignIn.AppBaseURL, Logger: logger, Now: time.Now,
+	}
+	if mailer := loans.NewMailer(cfg.Loans); mailer != nil {
+		deps.Mail = mailAdapter{mailer}
+	}
+	if provider := loans.NewSMSProvider(cfg.Loans); provider != nil {
+		deps.SMS = smsAdapter{provider}
+	}
+	if relay := signin.NewHTTPRelay(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey); relay != nil {
+		deps.Relay = relay
+	}
+	return signin.NewHandler(signin.NewService(deps), loans.NewLimiter(time.Now), cfg.Loans.TrustProxyHeaders, logger)
+}
+
+type mailAdapter struct{ mailer loans.Mailer }
+
+func (m mailAdapter) SendMail(ctx context.Context, to, subject, text string) error {
+	_, err := m.mailer.Send(ctx, loans.Message{To: to, Subject: subject, Text: text})
+	return err
+}
+
+type smsAdapter struct{ provider loans.SMSProvider }
+
+func (s smsAdapter) SendText(ctx context.Context, to, text string) error {
+	_, err := s.provider.Send(ctx, to, text)
+	return err
 }
 
 // LoansSchemaReady says whether school_loans is at the version this build

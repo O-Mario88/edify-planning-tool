@@ -143,6 +143,16 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "clusterlead") + sep: "cluster_leadership.",
 		filepath.Join(root, "internal", "loans") + sep:       "school_loans.",
 	}
+	// Signing in, which Go owns (owner brief, 2026-11-11), writes the existing
+	// sign-in tables, and the audit chain appends to the existing log: those
+	// two packages and those tables only, never a removal or DDL. The
+	// database role enforces the same columns (deploy/db/identity_roles.sql).
+	existingWriters := map[string][]string{
+		filepath.Join(root, "internal", "signin") + sep: {
+			`"user"`, "refresh_token", "mfa_challenge", "user_invitation", "staff_profile", "login_event",
+		},
+		filepath.Join(root, "internal", "audit") + sep: {"audit_log", "domain_event_log"},
+	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.
 	lint := filepath.Join(root, "internal", "ownedschema", "lint.go")
@@ -177,6 +187,16 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		for dir, schema := range writers {
 			if strings.HasPrefix(path, dir) && !isDDL {
 				return strings.HasPrefix(strings.ToLower(target), schema)
+			}
+		}
+		for dir, tables := range existingWriters {
+			if !strings.HasPrefix(path, dir) || isDDL {
+				continue
+			}
+			for _, table := range tables {
+				if strings.HasPrefix(target, table+" ") || strings.HasPrefix(target, table+"(") {
+					return true
+				}
 			}
 		}
 		return false

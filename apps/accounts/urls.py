@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from . import views
+from . import security_event_relay, views
 
 urlpatterns = [
     path("login", views.LoginView.as_view(), name="login"),
@@ -10,9 +10,14 @@ urlpatterns = [
     path("me", views.MeView.as_view(), name="me"),
     path("refresh", views.RefreshView.as_view(), name="refresh"),
     path("logout", views.LogoutView.as_view(), name="logout"),
-    path("sign-in-figures", views.SignInFiguresView.as_view(), name="sign-in-figures"),
     path("forgot-password", views.ForgotPasswordView.as_view(), name="forgot-password"),
     path("reset-password", views.ResetPasswordView.as_view(), name="reset-password"),
     path("invite/validate", views.InviteValidateView.as_view(), name="invite-validate"),
     path("set-password", views.SetPasswordView.as_view(), name="set-password"),
+    # From the Go gateway, which owns signing in (owner brief, 2026-11-11).
+    path(
+        "internal/security-events",
+        security_event_relay.relay,
+        name="security-events",
+    ),
 ]

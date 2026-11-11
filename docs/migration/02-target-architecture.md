@@ -117,30 +117,35 @@ tested with fakes and the SQL is tested against the real schema.
 
 ## 2.5 Authentication
 
+Signing in is Go's (owner brief, 2026-11-11). Full account:
+[08-sign-in.md](08-sign-in.md).
+
 ```
-app --email, password--> existing identity system (/api/auth/login)
-app <--access token (HS256, 15 min) + refresh token--
+app --email, password--> Go gateway  SignInService.SignIn
+                           check the password (existing bcrypt / PBKDF2 hashes)
+                           lockout, second factor, audit: the existing rules
+app <--access token (HS256, 15 min) + refresh token (rotating, hashed)--
 app --Authorization: Bearer--> Go gateway
                                  verify signature (HS256 only, expiry required)
                                  load the account from `user` on every request
                                  resolve the active role as the existing API does
 ```
 
-- The gateway mints nothing and stores no credential. Password checking, MFA,
-  lockout and refresh rotation are not reimplemented.
+- The tokens are the existing ones, so a session one system opens the other
+  honours; checked both ways on the development database.
 - The account is re-read on every request, so deactivating or deleting an
   account stops a live token at once.
-- The gateway's database role cannot read password hashes, MFA secrets or
-  refresh tokens (column-level grants).
+- The gateway reads the sign-in columns (password hashes, second-factor
+  secrets, token hashes) and writes only the lockout, reset, activation and
+  session columns, under its own role (`deploy/db/identity_roles.sql`). It can
+  never change an account's roles, email or second-factor enrolment, delete a
+  session or touch an audit row it wrote.
 - The signing secret is per environment. A token from one environment does not
   verify in another.
-
-Planned next (milestone 1): the app talks to the gateway only. The gateway
-gains an `AuthService` that forwards sign-in, MFA and refresh to the existing
-identity system server to server, so the app needs one base URL and the
-identity system is not exposed to devices directly. Moving token issuance
-itself into Go is a later, separately approved step; when it happens, the move
-to asymmetric signing (the gateway holding only a public key) happens with it.
+- The web's own sign-in page still uses the existing application; moving it
+  to Go is part of the approved production cutover (08 §8.4), after which the
+  move to asymmetric signing (the gateway the only holder of the private key)
+  can follow.
 
 ## 2.6 Errors, tracing, health
 
@@ -186,7 +191,7 @@ platform/mobile/
   src/api/connect         typed Connect client over fetch
   src/api/edifyApi        the gateway calls, typed by generated contracts
   src/auth/tokenStore     Keychain / Keystore (expo-secure-store)
-  src/auth/identityClient sign-in against the existing identity system
+  src/auth/identityClient sign-in through the gateway's SignInService
   src/auth/SessionContext the signed-in person
   src/shell/AppShell      top bar and bottom navigation
   src/screens             SignIn, Home, Schools, More

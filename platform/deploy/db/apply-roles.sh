@@ -57,4 +57,6 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/cluster_roles.sql"
 # The School Loan Application Portal's Go-owned schema and its roles.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/loan_roles.sql"
+# Signing in, which Go owns: exactly the existing sign-in's columns.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/identity_roles.sql"
 echo "done"

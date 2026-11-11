@@ -42,14 +42,18 @@ sentence is marked as such.
 
 - `edify_gateway_ro` (no login): `SELECT` on exactly the columns the gateway's
   queries name. Password hashes, MFA secrets, reset tokens, lockout columns
-  and refresh tokens are not readable.
+  and refresh tokens are not readable through it.
+- `edify_identity_rw` (no login, `identity_roles.sql`, 2026-11-11): signing in
+  moved to Go, so this role grants exactly the existing sign-in's columns —
+  see [08-sign-in.md §8.2](08-sign-in.md#82-what-it-writes-and-how-that-is-held).
 - `edify_gateway` (login): member of the above, `default_transaction_read_only`
   set on the role.
 
 Proven against a real database: update, delete, insert, create table, alter
-table, reading `user.password`, reading `mfa_secret`, reading `refresh_token`,
-reading an ungranted table, and switching the session out of read-only and
-then writing, are each refused.
+table, reading an ungranted table, switching the session out of read-only and
+then writing, changing an account's roles, email, superuser flag or
+second-factor enrolment, rewriting or deleting audit rows, and deleting
+sessions or accounts, are each refused.
 
 Migration permission stays with the existing application's owner role. When a
 Go module is approved to write, it gets a separate role with `INSERT`/`UPDATE`
@@ -107,6 +111,12 @@ This procedure needs explicit approval each time it is used.
 ## 3.7 Writes, when they come
 
 No dual writes, ever. For each table:
+
+(Sign-in is the one place where, on development and test databases, both
+systems write the same columns, under the same row locks and the same
+policy, while the web's sign-in page still uses the existing application.
+Production cutover moves the web's sign-in to Go in the same release, so
+step 3 below holds: 08 §8.4.)
 
 1. The existing application is the only writer.
 2. The Go module is built and compared in **shadow**: it computes what it

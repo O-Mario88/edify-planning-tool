@@ -5,9 +5,11 @@
  * line, and the four figures two by two beneath it. Every measurement is in
  * signin/signInLook.ts, read from the rendered web page.
  *
- * It keeps the app's sign-in policies: the existing identity system checks
- * the password; "Remember me" keeps only the address; "Forgot password?"
- * asks that system for a reset link, as the web's does.
+ * It keeps the app's sign-in policies: the Go gateway checks the password
+ * and asks for the second factor when the account needs one (the code step
+ * below, worded as the web's templates/pages/auth/mfa_verify.html); "Remember
+ * me" keeps only the address; "Forgot password?" asks for a reset link, as
+ * the web's does.
  */
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -28,6 +30,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { describe, useSession } from '../auth/SessionContext';
 import { requestPasswordReset, signInFigures } from '../auth/identityClient';
+import type { CodeChallenge } from '../auth/identityClient';
 import { loadRememberedEmail, rememberEmail } from '../auth/rememberedEmail';
 import { fonts } from '../theme';
 import { EdifyLogo } from '../ui/EdifyLogo';
@@ -37,6 +40,7 @@ import { AlertCircle, EyeClosed, EyeOpen, ShieldCheck } from './signin/signInIco
 import { gradients, ink, shadows, signInLayout, typeSizes } from './signin/signInLook';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CODE_DIGITS = 6;
 const LOGO_HEIGHT = 112 * (123 / 300);
 
 type Tone = 'error' | 'success' | 'info';
@@ -46,7 +50,7 @@ interface SignInScreenProps {
 }
 
 export function SignInScreen({ notice }: SignInScreenProps) {
-  const { signIn, environment } = useSession();
+  const { signIn, verifyCode, signInTransport } = useSession();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const layout = signInLayout(width, height);
@@ -58,7 +62,9 @@ export function SignInScreen({ notice }: SignInScreenProps) {
   const [isRemembered, setIsRemembered] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [focused, setFocused] = useState<'' | 'email' | 'password'>('');
+  const [focused, setFocused] = useState<'' | 'email' | 'password' | 'code'>('');
+  const [challenge, setChallenge] = useState<CodeChallenge | null>(null);
+  const [code, setCode] = useState('');
   const [status, setStatus] = useState<{ readonly tone: Tone; readonly text: string } | null>(notice ? { tone: 'info', text: notice } : null);
   const passwordRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
@@ -84,7 +90,7 @@ export function SignInScreen({ notice }: SignInScreenProps) {
 
   useEffect(() => {
     let isLive = true;
-    signInFigures(environment.identityUrl, (url, init) => fetch(url, init)).then((values) => {
+    signInFigures(signInTransport).then((values) => {
       if (isLive) {
         setFigures(values);
       }
@@ -98,7 +104,7 @@ export function SignInScreen({ notice }: SignInScreenProps) {
     return () => {
       isLive = false;
     };
-  }, [environment.identityUrl]);
+  }, [signInTransport]);
 
   const canSubmit = email.trim() !== '' && password !== '' && !isBusy;
 
@@ -110,12 +116,42 @@ export function SignInScreen({ notice }: SignInScreenProps) {
     setIsBusy(true);
     setStatus(null);
     try {
-      await signIn(email, password);
+      const stopped = await signIn(email, password);
       await rememberEmail(isRemembered ? email.trim().toLowerCase() : null);
+      if (stopped) {
+        setChallenge(stopped);
+        setCode('');
+        setPassword('');
+        setIsBusy(false);
+      }
     } catch (cause) {
       setStatus({ tone: 'error', text: describe(cause) });
       setIsBusy(false);
     }
+  }
+
+  async function handleVerify() {
+    if (!challenge || isBusy) {
+      return;
+    }
+    if (code.replace(/\D/g, '').length !== CODE_DIGITS) {
+      setStatus({ tone: 'error', text: `Enter the ${CODE_DIGITS}-digit code.` });
+      return;
+    }
+    setIsBusy(true);
+    setStatus(null);
+    try {
+      await verifyCode(challenge, code);
+    } catch (cause) {
+      setStatus({ tone: 'error', text: describe(cause) });
+      setIsBusy(false);
+    }
+  }
+
+  function startAgain() {
+    setChallenge(null);
+    setCode('');
+    setStatus(null);
   }
 
   async function handleForgot() {
@@ -125,7 +161,7 @@ export function SignInScreen({ notice }: SignInScreenProps) {
     }
     setIsSending(true);
     setStatus({ tone: 'info', text: 'Sending a secure reset link…' });
-    const isSent = await requestPasswordReset(environment.identityUrl, (url, init) => fetch(url, init), email);
+    const isSent = await requestPasswordReset(signInTransport, email);
     setIsSending(false);
     setStatus(
       isSent
@@ -138,7 +174,7 @@ export function SignInScreen({ notice }: SignInScreenProps) {
   // The web's labels are inline-block in a 16 px line, which sets them a
   // little down: 2.5 px at desktop size, 3.5 px at a phone's.
   const labelDrop = 2.5 + (13.6896 - sizes.label) * 1.5;
-  const field = (name: 'email' | 'password') => [styles.input, label, focused === name && styles.inputFocused];
+  const field = (name: 'email' | 'password' | 'code') => [styles.input, label, focused === name && styles.inputFocused];
   const card = (
     <View style={[styles.card, { width: layout.cardWidth }]}>
       <View style={{ paddingHorizontal: layout.innerSide, paddingVertical: layout.innerVertical }}>
@@ -146,10 +182,59 @@ export function SignInScreen({ notice }: SignInScreenProps) {
           <EdifyLogo height={LOGO_HEIGHT} color="navy" />
         </View>
         <Text style={[styles.title, { fontSize: sizes.display, lineHeight: sizes.display * 1.15 }]} accessibilityRole="header">
-          Sign in
+          {challenge ? codeTitle(challenge) : 'Sign in'}
         </Text>
-        <Text style={[styles.subtitle, label]}>Welcome back to your planning workspace.</Text>
+        <Text style={[styles.subtitle, label]}>
+          {challenge ? codeExplanation(challenge) : 'Welcome back to your planning workspace.'}
+        </Text>
 
+        {challenge ? (
+          <View style={styles.form}>
+            <Text style={[styles.fieldLabel, label, { marginTop: labelDrop }]} nativeID="code-label">
+              Sign-in code
+            </Text>
+            <TextInput
+              style={[field('code'), styles.codeInput]}
+              value={code}
+              onChangeText={(text) => {
+                setCode(text.replace(/\D/g, '').slice(0, CODE_DIGITS));
+                setStatus(null);
+              }}
+              onFocus={() => setFocused('code')}
+              onBlur={() => setFocused('')}
+              keyboardType="number-pad"
+              textContentType="oneTimeCode"
+              autoComplete="one-time-code"
+              maxLength={CODE_DIGITS}
+              autoFocus
+              returnKeyType="go"
+              onSubmitEditing={() => void handleVerify()}
+              accessibilityLabel="Sign-in code"
+              accessibilityLabelledBy="code-label"
+            />
+            {status ? (
+              <View style={[styles.alert, ALERT[status.tone], { marginTop: layout.isPhone ? 10.4 : 12 }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
+                <AlertCircle size={18.4} color={ALERT_INK[status.tone]} />
+                <Text style={[styles.alertText, label, { color: ALERT_INK[status.tone] }]}>{status.text}</Text>
+              </View>
+            ) : null}
+            <Pressable
+              ref={submitRef}
+              onPress={() => void handleVerify()}
+              disabled={isBusy}
+              accessibilityRole="button"
+              accessibilityLabel="Verify and continue"
+              accessibilityState={{ disabled: isBusy, busy: isBusy }}
+              style={({ pressed }) => [styles.submit, { marginTop: layout.isPhone ? 13.6 : 16.8 }, isBusy && styles.submitBusy, pressed && !isBusy && styles.submitPressed]}
+            >
+              <Text style={styles.submitText}>Verify and continue</Text>
+              {isBusy ? <ActivityIndicator color="#ffffff" size="small" /> : null}
+            </Pressable>
+            <Pressable onPress={startAgain} accessibilityRole="button" style={[styles.forgot, styles.startAgain]}>
+              <Text style={[styles.forgotText, label]}>Start again</Text>
+            </Pressable>
+          </View>
+        ) : (
         <View style={styles.form}>
           <Text style={[styles.fieldLabel, label, { marginTop: labelDrop }]} nativeID="email-label">
             Email address
@@ -255,6 +340,7 @@ export function SignInScreen({ notice }: SignInScreenProps) {
             {isBusy ? <ActivityIndicator color="#ffffff" size="small" /> : null}
           </Pressable>
         </View>
+        )}
 
         <View style={[styles.secure, layout.isPhone && styles.securePhone]} accessibilityLabel="Security information">
           <View style={[styles.shieldTile, layout.isPhone && styles.shieldTilePhone]}>
@@ -316,6 +402,21 @@ export function SignInScreen({ notice }: SignInScreenProps) {
   );
 }
 
+/** The web's code page heading (templates/pages/auth/mfa_verify.html). */
+function codeTitle(challenge: CodeChallenge): string {
+  if (challenge.channel === 'app') {
+    return 'Open your authenticator app';
+  }
+  return challenge.channel === 'sms' ? 'Check your phone' : 'Check your email';
+}
+
+function codeExplanation(challenge: CodeChallenge): string {
+  if (challenge.channel === 'app') {
+    return `Enter the ${CODE_DIGITS}-digit code the app shows for Edify Planning. It changes every 30 seconds; nothing was sent to you.`;
+  }
+  return `We sent a ${CODE_DIGITS}-digit code to ${challenge.hint}. Enter it to finish signing in.`;
+}
+
 const ALERT = StyleSheet.create({
   error: { borderColor: '#ffacba', backgroundColor: '#fff7f8' },
   success: { borderColor: '#a9dfd2', backgroundColor: '#f1fbf8' },
@@ -373,6 +474,8 @@ const styles = StyleSheet.create({
   checkboxOn: { borderColor: ink.toggle, backgroundColor: ink.toggle },
   rememberText: { fontFamily: fonts.semibold, color: ink.label },
   forgot: { justifyContent: 'center' },
+  startAgain: { alignSelf: 'center', minHeight: 44, marginTop: 8, paddingHorizontal: 8 },
+  codeInput: { letterSpacing: 6, fontFamily: fonts.semibold },
   forgotText: { fontFamily: fonts.semibold, color: ink.forgot },
   alert: { flexDirection: 'row', alignItems: 'center', gap: 11.2, minHeight: 49.6, paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1, borderRadius: 12 },
   alertText: { flex: 1, fontFamily: fonts.medium },

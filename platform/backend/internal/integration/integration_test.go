@@ -57,6 +57,8 @@ const (
 	clusterRolesFile = "../../../deploy/db/cluster_roles.sql"
 	// The School Loan Application Portal's schema and roles (Go-owned).
 	loanRolesFile = "../../../deploy/db/loan_roles.sql"
+	// Signing in, which Go owns: exactly the existing sign-in's columns.
+	identityRolesFile = "../../../deploy/db/identity_roles.sql"
 	// Where the loan portal's emails go in this run.
 	publicBaseURL = "http://127.0.0.1:9"
 )
@@ -134,7 +136,8 @@ func run(m *testing.M) int {
 			SMSProvider: "dev_file", SMSDevDir: smsbox,
 			// Each test is its own client (testClient), so rate limits apply
 			// per test rather than across the run.
-			TrustProxyHeaders: true}}
+			TrustProxyHeaders: true},
+		SignIn: config.SignIn{AppBaseURL: publicBaseURL}}
 	httpServer := httptest.NewServer(server.New(cfg, gateway, nil, logger))
 	defer httpServer.Close()
 	baseURL = httpServer.URL
@@ -191,6 +194,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := loanschema.Spec.Apply(ctx, conn.Conn(), conn.Conn().Config().Database); err != nil {
+		return "", err
+	}
+	identityRoles, err := os.ReadFile(filepath.FromSlash(identityRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(identityRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)
@@ -383,18 +393,31 @@ FROM information_schema.columns WHERE table_schema = 'public'`)
 
 // ── database protection ─────────────────────────────────────────────────────
 
+// Signing in moved to Go (owner brief, 2026-11-11), so the gateway now reads
+// the sign-in columns — password hashes, second-factor secrets, token hashes
+// — and writes the lockout, reset and session columns (identity_roles.sql).
+// What it still may never do is below: change who an account is or what it
+// may do, rewrite or remove an audit row, delete a session, or touch the
+// existing records it was not granted.
 func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
+	const rw = `BEGIN READ WRITE; `
 	statements := map[string]string{
 		"update a school":             `UPDATE school SET name = name`,
 		"delete an assignment":        `DELETE FROM staff_school_assignment`,
 		"insert a region":             `INSERT INTO region (id, name) VALUES ('x', 'x')`,
 		"create a table":              `CREATE TABLE gateway_should_not_exist (id int)`,
 		"alter a table":               `ALTER TABLE school ADD COLUMN gateway_should_not_exist int`,
-		"read password hashes":        `SELECT password FROM "user" LIMIT 1`,
-		"read MFA secrets":            `SELECT mfa_secret FROM "user" LIMIT 1`,
-		"read refresh tokens":         `SELECT token_hash FROM refresh_token LIMIT 1`,
 		"read an ungranted table":     `SELECT 1 FROM evidence_record LIMIT 1`,
 		"leave read-only then update": `SET default_transaction_read_only = off; UPDATE school SET name = name`,
+		"change an account's roles":   rw + `UPDATE "user" SET roles = roles`,
+		"make an account a superuser": rw + `UPDATE "user" SET is_superuser = is_superuser`,
+		"change an account's email":   rw + `UPDATE "user" SET email = email`,
+		"enrol a second factor":       rw + `UPDATE "user" SET mfa_secret = mfa_secret`,
+		"rewrite an audit row":        rw + `UPDATE audit_log SET reason = reason`,
+		"delete audit rows":           rw + `DELETE FROM audit_log`,
+		"delete sessions":             rw + `DELETE FROM refresh_token`,
+		"delete an account":           rw + `DELETE FROM "user"`,
+		"read the payload of the log": `SELECT payload FROM audit_log LIMIT 1`,
 	}
 	for name, statement := range statements {
 		t.Run(name, func(t *testing.T) {
@@ -413,6 +436,7 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 				t.Fatalf("refused for an unexpected reason: %s %s", pgErr.Code, pgErr.Message)
 			}
 			// Put the pooled session back the way the pool configured it.
+			_, _ = conn.Conn().PgConn().Exec(context.Background(), "ROLLBACK").ReadAll()
 			_, _ = conn.Exec(context.Background(), "SET default_transaction_read_only = on")
 		})
 	}

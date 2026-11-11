@@ -87,6 +87,9 @@ type Config struct {
 
 	// ClusterActions configures the Cluster Action Register's follow-up.
 	ClusterActions ClusterActions
+
+	// SignIn configures signing in.
+	SignIn SignIn
 }
 
 // LoadGuard reads only what the production-protection guard needs, for a
@@ -152,6 +155,9 @@ func Load(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	if cfg.ClusterActions, err = loadClusterActions(getenv); err != nil {
+		return Config{}, err
+	}
+	if cfg.SignIn, err = loadSignIn(env, getenv, cfg.ExistingAppURL); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil

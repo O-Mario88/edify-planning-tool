@@ -33,8 +33,17 @@ var builtinProductionMarkers = []string{
 }
 
 // protectedTables are tables the existing application owns. The gateway role
-// must not be able to change them.
-var protectedTables = []string{"school", "user", "staff_school_assignment"}
+// must not be able to change any column of them, or remove their rows.
+var protectedTables = []string{"school", "staff_school_assignment"}
+
+// protectedAccountColumns are the columns of "user" that say who an account
+// is and what it may do. Go owns signing in (owner brief, 2026-11-11), so
+// the gateway writes the lockout, reset and activation columns
+// (deploy/db/identity_roles.sql) — but never these, and never a DELETE.
+var protectedAccountColumns = []string{
+	"id", "email", "name", "roles", "active_role", "is_superuser", "is_staff",
+	"mfa_enabled", "mfa_secret", "mfa_channel", "deleted_at",
+}
 
 // ErrRefused wraps every refusal, so callers can tell a guard decision from
 // an ordinary connection failure.
@@ -125,11 +134,19 @@ SELECT current_database(),
        ARRAY(
          SELECT t FROM unnest($1::text[]) AS t
          WHERE to_regclass(quote_ident(t)) IS NOT NULL
-           AND (has_table_privilege(current_user, quote_ident(t), 'INSERT')
-             OR has_table_privilege(current_user, quote_ident(t), 'UPDATE')
+           AND (has_any_column_privilege(current_user, quote_ident(t), 'INSERT')
+             OR has_any_column_privilege(current_user, quote_ident(t), 'UPDATE')
              OR has_table_privilege(current_user, quote_ident(t), 'DELETE'))
+         UNION ALL
+         SELECT 'user' WHERE to_regclass('"user"') IS NOT NULL
+           AND (has_table_privilege(current_user, '"user"', 'INSERT')
+             OR has_table_privilege(current_user, '"user"', 'DELETE'))
+         UNION ALL
+         SELECT 'user.' || c FROM unnest($2::text[]) AS c
+         WHERE to_regclass('"user"') IS NOT NULL
+           AND has_column_privilege(current_user, '"user"', c, 'UPDATE')
        )`
-	err := db.QueryRow(ctx, query, protectedTables).Scan(
+	err := db.QueryRow(ctx, query, protectedTables, protectedAccountColumns).Scan(
 		&identity.Database, &identity.Role, &identity.Superuser, &identity.WritableTables,
 	)
 	if err != nil {

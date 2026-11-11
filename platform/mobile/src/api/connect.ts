@@ -35,6 +35,8 @@ export interface ConnectTransport {
    * true when a fresh one is in place and the call should be tried once more.
    */
   readonly refresh?: () => Promise<boolean>;
+  /** Headers every call carries (the sign-in calls' form factor). */
+  readonly headers?: Readonly<Record<string, string>>;
 }
 
 export interface UnaryMethod<I extends DescMessage, O extends DescMessage> {
@@ -114,6 +116,7 @@ async function sendUnary<I extends DescMessage, O extends DescMessage>(
   request: MessageInitShape<I>,
 ): Promise<MessageShape<O>> {
   const headers: Record<string, string> = {
+    ...transport.headers,
     'Content-Type': 'application/json',
     'Connect-Protocol-Version': '1',
   };

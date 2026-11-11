@@ -1,11 +1,21 @@
 /** The signed-in person, for every screen below the provider. */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { Dimensions, Platform } from 'react-native';
 
 import { createEdifyApi } from '../api/edifyApi';
 import type { EdifyApi } from '../api/edifyApi';
+import type { ConnectTransport } from '../api/connect';
 import type { AppEnvironment } from '../config/environment';
-import { refreshTokens, revokeSession, signIn as signInWithIdentity } from './identityClient';
+import {
+  appDevice,
+  publicTransport,
+  refreshTokens,
+  revokeSession,
+  signIn as signInThroughGateway,
+  verifySignInCode,
+} from './identityClient';
+import type { CodeChallenge } from './identityClient';
 import { KEYSTORE_UNREADABLE, afterFailedCheck, type SessionState } from './launch';
 import type { TokenStore } from './tokenStore';
 
@@ -16,7 +26,12 @@ interface SessionContextValue {
   readonly api: EdifyApi;
   /** The backends this build talks to (for links to the web app). */
   readonly environment: AppEnvironment;
-  signIn(email: string, password: string): Promise<void>;
+  /** The gateway without a session, for the sign-in screen's own calls. */
+  readonly signInTransport: ConnectTransport;
+  /** Signs in, or returns the code the account needs entered first. */
+  signIn(email: string, password: string): Promise<CodeChallenge | null>;
+  /** Finishes a sign-in that stopped for its code. */
+  verifyCode(challenge: CodeChallenge, code: string): Promise<void>;
   signOut(): Promise<void>;
   /** Ask the server again about a saved sign-in it could not be reached for. */
   retry(): Promise<void>;
@@ -33,8 +48,15 @@ interface ProviderProps {
 export function SessionProvider({ environment, tokenStore, children }: ProviderProps) {
   const [state, setState] = useState<SessionState>({ status: 'loading' });
 
-  // One refresh at a time: the identity system rotates refresh tokens and
-  // revokes the whole session if one is presented twice.
+  // Sign-in, refresh and sign-out go to the gateway, which owns signing in.
+  const signInTransport = useMemo(() => {
+    const screen = Dimensions.get('screen');
+    const device = appDevice(Platform.OS, Platform.OS === 'ios' && Platform.isPad, screen.width, screen.height);
+    return publicTransport(environment.gatewayUrl, (url, init) => fetch(url, init), device);
+  }, [environment.gatewayUrl]);
+
+  // One refresh at a time: refresh tokens rotate, and the whole session is
+  // revoked if one is presented twice.
   const refreshing = useRef<Promise<boolean> | null>(null);
 
   const refresh = useCallback((): Promise<boolean> => {
@@ -47,11 +69,7 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
         return false;
       }
       try {
-        const next = await refreshTokens(
-          environment.identityUrl,
-          (url, init) => fetch(url, init),
-          stored.refreshToken,
-        );
+        const next = await refreshTokens(signInTransport, stored.refreshToken);
         if (!next) {
           await tokenStore.clear();
           return false;
@@ -67,7 +85,7 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
     });
     refreshing.current = attempt;
     return attempt;
-  }, [environment.identityUrl, tokenStore]);
+  }, [signInTransport, tokenStore]);
 
   const api = useMemo(
     () =>
@@ -108,17 +126,24 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
   }, [loadSession]);
 
   const signIn = useCallback(
-    async (email: string, password: string) => {
-      const tokens = await signInWithIdentity(
-        environment.identityUrl,
-        (url, init) => fetch(url, init),
-        email,
-        password,
-      );
-      await tokenStore.save(tokens);
+    async (email: string, password: string): Promise<CodeChallenge | null> => {
+      const result = await signInThroughGateway(signInTransport, email, password);
+      if (result.kind === 'code') {
+        return result.challenge;
+      }
+      await tokenStore.save(result.tokens);
+      await loadSession();
+      return null;
+    },
+    [signInTransport, loadSession, tokenStore],
+  );
+
+  const verifyCode = useCallback(
+    async (challenge: CodeChallenge, code: string) => {
+      await tokenStore.save(await verifySignInCode(signInTransport, challenge, code));
       await loadSession();
     },
-    [environment.identityUrl, loadSession, tokenStore],
+    [signInTransport, loadSession, tokenStore],
   );
 
   // Signing out forgets the tokens on this phone at once and ends the session
@@ -128,9 +153,9 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
     await tokenStore.clear();
     setState({ status: 'signedOut', notice: '' });
     if (stored) {
-      void revokeSession(environment.identityUrl, (url, init) => fetch(url, init), stored.refreshToken);
+      void revokeSession(signInTransport, stored.refreshToken);
     }
-  }, [environment.identityUrl, tokenStore]);
+  }, [signInTransport, tokenStore]);
 
   const retry = useCallback(async () => {
     setState({ status: 'loading' });
@@ -138,8 +163,8 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
   }, [loadSession]);
 
   const value = useMemo(
-    () => ({ state, api, environment, signIn, signOut, retry }),
-    [state, api, environment, signIn, signOut, retry],
+    () => ({ state, api, environment, signInTransport, signIn, verifyCode, signOut, retry }),
+    [state, api, environment, signInTransport, signIn, verifyCode, signOut, retry],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

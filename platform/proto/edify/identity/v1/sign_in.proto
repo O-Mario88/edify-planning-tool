@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package edify.identity.v1;
+
+// Signing in, owned by the Go gateway (owner brief, 2026-11-11: "All
+// authentication and user workflows must be handled by Go"). It works on the
+// existing accounts with the existing rules: lockout, the second factor,
+// rotating refresh tokens with reuse detection, single-use reset and
+// invitation links. Every procedure here is callable without a session; each
+// is rate limited per address.
+service SignInService {
+  // Email and password. The answer is a session, or a code to enter first.
+  // Every refusal is the same Unauthenticated "Invalid email or password.".
+  rpc SignIn(SignInRequest) returns (SignInResponse);
+  // The code a stopped sign-in waits on.
+  rpc VerifySignInCode(VerifySignInCodeRequest) returns (VerifySignInCodeResponse);
+  // A new token pair for a refresh token, which is spent. Presenting a spent
+  // token again ends every session of its family.
+  rpc RefreshSession(RefreshSessionRequest) returns (RefreshSessionResponse);
+  // Ends the session the refresh token belongs to.
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+  // Mails a single-use reset link when the address has an account. The
+  // answer is the same either way.
+  rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+  // An invitation's state, without spending it.
+  rpc CheckInvitation(CheckInvitationRequest) returns (CheckInvitationResponse);
+  // A first password from an invitation; activates the account.
+  rpc AcceptInvitation(AcceptInvitationRequest) returns (AcceptInvitationResponse);
+  // The four public figures under the sign-in form.
+  rpc GetSignInFigures(GetSignInFiguresRequest) returns (GetSignInFiguresResponse);
+}
+
+message SignInRequest {
+  string email = 1;
+  string password = 2;
+  // Optional: the role to open the session in, honoured when the account
+  // holds it.
+  string active_role = 3;
+}
+
+message SignInResponse {
+  oneof result {
+    SessionGranted session = 1;
+    CodeRequired code_required = 2;
+  }
+}
+
+message SessionGranted {
+  // HS256, 15 minutes, {sub, activeRole}: the existing access token.
+  string access_token = 1;
+  // Opaque, single use, 7 days.
+  string refresh_token = 2;
+  SignedInAccount account = 3;
+}
+
+message SignedInAccount {
+  string user_id = 1;
+  string email = 2;
+  string name = 3;
+  repeated string roles = 4;
+  string active_role = 5;
+  string staff_profile_id = 6;
+}
+
+message CodeRequired {
+  // Presented back with the code; long enough not to be guessed.
+  string challenge_token = 1;
+  // "email", "sms" or "app".
+  string channel = 2;
+  // Where the code went, masked: "p•••@edify.org", "•••• 1234".
+  string destination_hint = 3;
+  int32 expires_in_seconds = 4;
+}
+
+message VerifySignInCodeRequest {
+  string challenge_token = 1;
+  string code = 2;
+  string active_role = 3;
+}
+
+// A right code always opens a session.
+message VerifySignInCodeResponse {
+  SessionGranted session = 1;
+}
+
+message RefreshSessionRequest {
+  string refresh_token = 1;
+}
+
+message RefreshSessionResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message SignOutRequest {
+  string refresh_token = 1;
+}
+
+message SignOutResponse {}
+
+message RequestPasswordResetRequest {
+  string email = 1;
+}
+
+message RequestPasswordResetResponse {}
+
+message ResetPasswordRequest {
+  string token = 1;
+  string password = 2;
+  string confirm = 3;
+}
+
+message ResetPasswordResponse {}
+
+message CheckInvitationRequest {
+  string token = 1;
+}
+
+message CheckInvitationResponse {
+  bool valid = 1;
+  // When not valid: "invalid", "revoked", "used" or "expired".
+  string reason = 2;
+  string email = 3;
+  string name = 4;
+}
+
+message AcceptInvitationRequest {
+  string token = 1;
+  string password = 2;
+  string confirm = 3;
+}
+
+message AcceptInvitationResponse {}
+
+message GetSignInFiguresRequest {}
+
+message GetSignInFiguresResponse {
+  // Thousands-grouped counts, e.g. "1,204".
+  string portfolio = 1;
+  string schools_reached = 2;
+  string schools_visited = 3;
+  string schools_trained = 4;
+  string ssa_completed = 5;
+}

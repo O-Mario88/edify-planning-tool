@@ -1,24 +1,19 @@
 /**
- * Sign-in against the EXISTING Edify identity system (POST /api/auth/login).
+ * Signing in, through the Go gateway's SignInService (owner brief,
+ * 2026-11-11: "All authentication and user workflows must be handled by
+ * Go"). The gateway checks the password, applies the lockout, asks for the
+ * second factor when the account needs one and issues the session; the app
+ * only carries what the person typed and keeps the tokens it is given.
  *
- * The app and the gateway issue no credentials of their own: passwords, MFA,
- * lockout and refresh rotation stay where they are. This client only carries
- * the person's email and password to that endpoint and returns its tokens.
+ * These calls carry no access token: they are how one is obtained.
  */
+import { ApiError, callUnary } from '../api/connect';
+import type { ConnectTransport, FetchLike } from '../api/connect';
+import { SignInService } from '../gen/edify/identity/v1/sign_in_pb';
+import type { SessionGranted } from '../gen/edify/identity/v1/sign_in_pb';
 import type { Tokens } from './tokenStore';
 
-export interface IdentityResponse {
-  readonly ok: boolean;
-  readonly status: number;
-  json(): Promise<unknown>;
-}
-
-export type IdentityFetch = (
-  url: string,
-  init: { method: string; headers: Record<string, string>; body?: string },
-) => Promise<IdentityResponse>;
-
-export type SignInFailure = 'rejected' | 'mfa_required' | 'network' | 'unexpected';
+export type SignInFailure = 'rejected' | 'rate_limited' | 'network' | 'unexpected';
 
 export class SignInError extends Error {
   constructor(
@@ -30,117 +25,145 @@ export class SignInError extends Error {
   }
 }
 
-const MFA_NOT_YET =
-  'This account needs a sign-in code, which this app does not support yet. Use the Edify web app.';
-
-function field(body: unknown, name: string): unknown {
-  return typeof body === 'object' && body !== null ? (body as Record<string, unknown>)[name] : undefined;
+/** A sign-in stopped for its code: where it went, and how to answer it. */
+export interface CodeChallenge {
+  readonly token: string;
+  /** "email", "sms" or "app". */
+  readonly channel: string;
+  /** Where the code went, masked ("p•••••@edify.org"). */
+  readonly hint: string;
+  readonly expiresInSeconds: number;
 }
 
-export async function signIn(
-  identityUrl: string,
-  fetchImpl: IdentityFetch,
-  email: string,
-  password: string,
-): Promise<Tokens> {
-  let response: IdentityResponse;
-  try {
-    response = await fetchImpl(`${identityUrl}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
-    });
-  } catch {
-    throw new SignInError('Could not reach the server.', 'network');
-  }
+export type SignInResult =
+  | { readonly kind: 'session'; readonly tokens: Tokens }
+  | { readonly kind: 'code'; readonly challenge: CodeChallenge };
 
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
-    throw new SignInError('The server sent an unreadable answer.', 'unexpected');
-  }
+/**
+ * The gateway, without a session: sign-in calls never send a token. A native
+ * build says whether it is a phone or a tablet, for the Staff Activity Log's
+ * sign-in record: its HTTP library names itself, not the device.
+ */
+export function publicTransport(gatewayUrl: string, fetchImpl: FetchLike, device: AppDevice | null = null): ConnectTransport {
+  return {
+    baseUrl: gatewayUrl,
+    fetch: fetchImpl,
+    getAccessToken: async () => null,
+    headers: device ? { 'X-Edify-Device': device } : undefined,
+  };
+}
 
-  if (!response.ok) {
-    const message = field(body, 'message');
-    throw new SignInError(
-      typeof message === 'string' && message ? message : 'The email or password is not right.',
-      'rejected',
-    );
+export type AppDevice = 'mobile' | 'tablet';
+
+/** A tablet by the existing rule's spirit: an iPad, or a screen 600 points across at its narrowest. */
+export function appDevice(os: string, isPad: boolean, width: number, height: number): AppDevice | null {
+  if (os === 'web') {
+    return null;
   }
-  if (field(body, 'mfaRequired') === true) {
-    throw new SignInError(MFA_NOT_YET, 'mfa_required');
+  return isPad || Math.min(width, height) >= TABLET_MIN_SIDE ? 'tablet' : 'mobile';
+}
+
+const TABLET_MIN_SIDE = 600;
+
+function failure(error: unknown, fallback: string): SignInError {
+  if (!(error instanceof ApiError)) {
+    return new SignInError(fallback, 'unexpected');
   }
-  const accessToken = field(body, 'accessToken');
-  const refreshToken = field(body, 'refreshToken');
-  if (typeof accessToken !== 'string' || typeof refreshToken !== 'string' || !accessToken) {
+  switch (error.code) {
+    case 'network':
+    case 'timeout':
+      return new SignInError('Could not reach the server.', 'network');
+    case 'unauthenticated':
+    case 'invalid_argument':
+      return new SignInError(error.message || fallback, 'rejected');
+    case 'resource_exhausted':
+      return new SignInError(error.message || 'Too many attempts. Wait a minute and try again.', 'rate_limited');
+  }
+  return new SignInError(error.message || fallback, 'unexpected');
+}
+
+function tokensOf(session: SessionGranted | undefined): Tokens {
+  if (!session?.accessToken || !session.refreshToken) {
     throw new SignInError('The server sent no session.', 'unexpected');
   }
-  return { accessToken, refreshToken };
+  return { accessToken: session.accessToken, refreshToken: session.refreshToken };
+}
+
+/** Email and password: a session, or the code the account needs first. */
+export async function signIn(transport: ConnectTransport, email: string, password: string): Promise<SignInResult> {
+  let answer;
+  try {
+    answer = await callUnary(transport, SignInService.method.signIn, {
+      email: email.trim().toLowerCase(),
+      password,
+    });
+  } catch (error) {
+    throw failure(error, 'The email or password is not right.');
+  }
+  const result = answer.result;
+  if (result.case === 'codeRequired') {
+    const { challengeToken, channel, destinationHint, expiresInSeconds } = result.value;
+    if (!challengeToken) {
+      throw new SignInError('The server sent no sign-in code.', 'unexpected');
+    }
+    return { kind: 'code', challenge: { token: challengeToken, channel, hint: destinationHint, expiresInSeconds } };
+  }
+  return { kind: 'session', tokens: tokensOf(result.case === 'session' ? result.value : undefined) };
+}
+
+/** The code a stopped sign-in waits on. */
+export async function verifySignInCode(transport: ConnectTransport, challenge: CodeChallenge, code: string): Promise<Tokens> {
+  let answer;
+  try {
+    answer = await callUnary(transport, SignInService.method.verifySignInCode, {
+      challengeToken: challenge.token,
+      code: code.replace(/\D/g, ''),
+    });
+  } catch (error) {
+    throw failure(error, 'That code is not right, or it has expired.');
+  }
+  return tokensOf(answer.session);
 }
 
 /**
- * Exchange a refresh token for a new pair (POST /api/auth/refresh). The
- * existing identity system rotates refresh tokens and treats a reused one as
- * theft, so a token is presented exactly once: callers must not run two
- * refreshes at the same time.
+ * Exchange a refresh token for a new pair. Refresh tokens rotate and a reused
+ * one ends the session, so a token is presented exactly once: callers must not
+ * run two refreshes at the same time. Null means the session is over; an
+ * unreachable server throws, and the session is kept.
  */
-export async function refreshTokens(
-  identityUrl: string,
-  fetchImpl: IdentityFetch,
-  refreshToken: string,
-): Promise<Tokens | null> {
-  let response: IdentityResponse;
+export async function refreshTokens(transport: ConnectTransport, refreshToken: string): Promise<Tokens | null> {
   try {
-    response = await fetchImpl(`${identityUrl}/api/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    });
-  } catch {
-    throw new SignInError('Could not reach the server.', 'network');
+    const answer = await callUnary(transport, SignInService.method.refreshSession, { refreshToken });
+    if (!answer.accessToken || !answer.refreshToken) {
+      return null;
+    }
+    return { accessToken: answer.accessToken, refreshToken: answer.refreshToken };
+  } catch (error) {
+    if (error instanceof ApiError && error.code === 'unauthenticated') {
+      return null;
+    }
+    throw failure(error, 'The session could not be renewed.');
   }
-  if (!response.ok) {
-    return null;
-  }
-  const body: unknown = await response.json().catch(() => null);
-  const accessToken = field(body, 'accessToken');
-  const nextRefreshToken = field(body, 'refreshToken');
-  if (typeof accessToken !== 'string' || typeof nextRefreshToken !== 'string' || !accessToken) {
-    return null;
-  }
-  return { accessToken, refreshToken: nextRefreshToken };
 }
 
 /**
- * Ask for a password reset link (POST /api/auth/forgot-password), as the web
- * sign-in's "Forgot password?" does. The answer never says whether the
- * address has an account; true means the request was accepted.
+ * Ask for a password reset link, as the web sign-in's "Forgot password?"
+ * does. The answer never says whether the address has an account; true means
+ * the request was accepted.
  */
-export async function requestPasswordReset(identityUrl: string, fetchImpl: IdentityFetch, email: string): Promise<boolean> {
+export async function requestPasswordReset(transport: ConnectTransport, email: string): Promise<boolean> {
   try {
-    const response = await fetchImpl(`${identityUrl}/api/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim().toLowerCase() }),
-    });
-    return response.ok;
+    await callUnary(transport, SignInService.method.requestPasswordReset, { email: email.trim().toLowerCase() });
+    return true;
   } catch {
     return false;
   }
 }
 
-/**
- * End the session on the server too (POST /api/auth/logout), so the refresh
- * token cannot be used again. Best effort: signing out never waits on it.
- */
-export async function revokeSession(identityUrl: string, fetchImpl: IdentityFetch, refreshToken: string): Promise<void> {
+/** End the session on the server too. Best effort: signing out never waits on it. */
+export async function revokeSession(transport: ConnectTransport, refreshToken: string): Promise<void> {
   try {
-    await fetchImpl(`${identityUrl}/api/auth/logout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    });
+    await callUnary(transport, SignInService.method.signOut, { refreshToken });
   } catch {
     // Offline: the token still expires on its own schedule.
   }
@@ -154,18 +177,12 @@ export interface SignInFigureValues {
   readonly ssaCompleted: string;
 }
 
-const FIGURE_KEYS = ['portfolio', 'schoolsReached', 'schoolsVisited', 'schoolsTrained', 'ssaCompleted'] as const;
-
-/** The four figures the web sign-in shows (GET /api/auth/sign-in-figures); null if unreadable. */
-export async function signInFigures(identityUrl: string, fetchImpl: IdentityFetch): Promise<SignInFigureValues | null> {
+/** The four figures the web sign-in shows; null if they cannot be read. */
+export async function signInFigures(transport: ConnectTransport): Promise<SignInFigureValues | null> {
   try {
-    const response = await fetchImpl(`${identityUrl}/api/auth/sign-in-figures`, { method: 'GET', headers: { Accept: 'application/json' } });
-    if (!response.ok) {
-      return null;
-    }
-    const body = await response.json();
-    const values = FIGURE_KEYS.map((key) => field(body, key));
-    if (!values.every((value): value is string => typeof value === 'string')) {
+    const answer = await callUnary(transport, SignInService.method.getSignInFigures, {});
+    const values = [answer.portfolio, answer.schoolsReached, answer.schoolsVisited, answer.schoolsTrained, answer.ssaCompleted];
+    if (values.some((value) => !value)) {
       return null;
     }
     const [portfolio, schoolsReached, schoolsVisited, schoolsTrained, ssaCompleted] = values;

@@ -17,6 +17,7 @@ deployed, or connected to production.
 | [04-migration-plan.md](04-migration-plan.md) | Dependency-ordered plan for every domain, and the release gate |
 | [05-environments-and-staging.md](05-environments-and-staging.md) | Development setup, staging deployment, CI and branch protection |
 | [07-school-loan-portal.md](07-school-loan-portal.md) | The School Loan Application Portal: journeys, roles, running it, open questions |
+| [08-sign-in.md](08-sign-in.md) | Sign-in, owned by Go: the existing rules ported, what it writes, what has not moved yet |
 
 The code is under [`platform/`](../../platform/README.md).
 

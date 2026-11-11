@@ -69,6 +69,28 @@ Changes made during measurement: the session check now runs while the fonts
 load instead of after them (no measurable change on the simulator), and the
 launch now reaches Sign in even if the phone's keystore cannot be read.
 
+## Sign-in moved to Go (2026-11-11)
+
+The app now signs in through the Go gateway's `SignInService`
+([docs/migration/08-sign-in.md](../migration/08-sign-in.md)); the brief's
+tests 8, 9, 12 and 13 above now run against Go.
+
+| Check | Result | Evidence |
+|---|---|---|
+| Go unit tests against values made by the existing code | Pass | `internal/signin`, `internal/audit`: bcrypt and PBKDF2 hashes, TOTP code, encrypted secret, audit hashes all produced by the existing application |
+| Go integration suite (test database, real gateway role) | Pass | sign-in, lockout at 10, refusal reasons, rate limit, code by email, refresh reuse, sign-out, reset link once, invitation once, figures, chain recomputed |
+| The existing chain verifier over Go's rows | Pass | `verify_chain(full=True)`: ok, 572 rows, 90 written by Go |
+| One session across both systems | Pass | dev database: Go session accepted by `/api/auth/me`, rotated by the existing refresh, then by Go; the spent token refused across both |
+| Admin alert from a Go sign-in | Pass | five wrong passwords through Go raised the existing "Failed-login threshold" incident |
+| Web build: code step | Pass | wrong code refused with the server's words; right code opened Home |
+| iOS Release: sign in through Go | Pass | `SignIn 200`, CCEO Home |
+| Android Release: saved session renewed, sign out, sign in | Pass | `RefreshSession 200` on the session saved before the update, `SignOut 200`, `SignIn 200`, CCEO Home |
+| An app sign-in is recorded as a phone, not a desktop | Pass (Android) | `login_event.device = mobile`; the app now declares phone or tablet, because its HTTP library names itself, not the device. Not re-checked on iOS (the iOS build predates this fix; unit-tested). |
+| Django accounts suite after the change | Pass | 250 passed |
+
+Not yet: the web's own sign-in page (production cutover, needs approval),
+user creation and account lifecycle, role switching.
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

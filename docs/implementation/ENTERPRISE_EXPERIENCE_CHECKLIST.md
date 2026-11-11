@@ -26,13 +26,13 @@ verified on the strength of code alone.
 | A9 | Valid session opens the role's home directly | Verified Complete | Quit and relaunch on both platforms opened Home with no sign-in. |
 | A10 | Expired session → sign in; offline → retry, sign-in kept | Implemented — Not Verified | `afterFailedCheck` (unit-tested); `LaunchView` retry screen. |
 | A11 | Sign-in screen replicates the web page (desktop, tablet, phone) | Verified Complete | Measured against the live web page at 1440×900, 768×1024, 390×844: every compared element within 0.5 px (phone), 1 px (tablet), 0.1 px (desktop). Tablet shows the figures 2×2 (web tablet swipes them). |
-| A12 | Password visibility, Remember me, Forgot password, errors | Implemented — Not Verified | Remember me verified on iOS (address prefilled after sign-out); a reset request was not sent from a device. |
+| A12 | Password visibility, Remember me, Forgot password, errors, sign-in code | Implemented — Not Verified | Remember me verified on iOS. Sign-in code step verified in the web build (wrong code refused, right code opened Home); reset link verified by the Go integration suite, not sent from a device. |
 | A13 | Secure sign-out (server revocation) | Verified Complete | iOS sign-out; identity log `POST /api/auth/logout 200`. |
 | A14 | Role-aware landing | Implemented — Not Verified | `src/landing.ts`: the web's rule (Home; Country Oversight for IA, CD, RVP, RPL when permitted). Cluster Leaders open their portal. Unit-tested. |
 | A15 | Account / role switching | Not Started | The web's switch is a session page; the app needs an identity API for it — part of moving sign-in to Go (backend-boundaries brief). |
 | A16 | Public school forms open without sign-in | Verified Complete | `/loans/apply` and `/loans/track` answer 200 without a session. |
 | A17 | Startup measured | Failed Verification | Cold start 2.3–3.7 s (emulator) and 3.0–3.2 s (simulator) against a 3 s target; warm 0.9–1.4 s. Physical phones not measured. |
-| A18 | Sign-in and users handled by Go | Blocked — External Dependency | Sign-in still uses the existing Django identity endpoints; moving it is the backend-boundaries brief, not yet started. |
+| A18 | Sign-in and users handled by Go | In Progress | The app signs in through Go's SignInService (docs/migration/08-sign-in.md): password, lockout, second factor, sessions, reset, invitations, figures. Verified: Go unit + integration suites, Django's verify_chain over Go's audit rows, sessions honoured across both systems, iOS and Android sign-in. Not yet: the web's own sign-in page (production cutover, needs approval), user creation and account lifecycle, role switching. |
 
 ## B. Enterprise Experience 2.0 (main mandate)
 

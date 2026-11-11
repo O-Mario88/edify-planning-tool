@@ -16,7 +16,6 @@ from apps.core.permissions import IsAuthenticated
 from apps.core.rbac import permissions_for_role
 from apps.core.scoping import resolve_user_scope
 from apps.core.throttling import ForgotPasswordRateThrottle, LoginRateThrottle
-from apps.frontend.views.auth_views import _login_stats
 
 from . import auth_services
 from .jwt import AuthPrincipal
@@ -122,29 +121,6 @@ class LogoutView(APIView):
         s = LogoutSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         return Response(auth_services.logout(s.validated_data.get("refreshToken")))
-
-
-class SignInFiguresView(APIView):
-    """The four figures under the web's sign-in form, for the app's (owner,
-    2026-11-11: the app's sign-in replicates the web's). Public, coarse
-    totals from the web page's own reckoning, so the two never disagree."""
-
-    permission_classes = [AllowAny]
-    authentication_classes: list = []
-
-    def get(self, request: Request) -> Response:
-        stats = _login_stats()
-        response = Response(
-            {
-                "portfolio": stats.get("stat_portfolio", "0"),
-                "schoolsReached": stats.get("stat_schools_reached", "0"),
-                "schoolsVisited": stats.get("stat_schools_visited", "0"),
-                "schoolsTrained": stats.get("stat_schools_trained", "0"),
-                "ssaCompleted": stats.get("stat_ssa_completed", "0"),
-            }
-        )
-        response["Cache-Control"] = "public, max-age=300"
-        return response
 
 
 class ForgotPasswordView(APIView):
