@@ -2,6 +2,7 @@ package clusterlead
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,6 +18,8 @@ type fakeOps struct {
 	plans       map[string]Plan
 	invitations []Invitation
 	attendance  map[string][]AttendanceRecord
+	planInvited map[string][]PlanInvitee
+	ssa         SSAAverages
 }
 
 func newOps() *fakeOps {
@@ -31,8 +34,9 @@ func newOps() *fakeOps {
 			"act-past":     {Activity: Activity{ID: "act-past", Kind: "only_meeting", Status: "scheduled", Date: &past}, ClusterID: "c-mine"},
 			"act-other":    {Activity: Activity{ID: "act-other", Kind: "only_meeting", Status: "scheduled", Date: &soon}, ClusterID: "c-other"},
 		},
-		plans:      map[string]Plan{},
-		attendance: map[string][]AttendanceRecord{},
+		plans:       map[string]Plan{},
+		attendance:  map[string][]AttendanceRecord{},
+		planInvited: map[string][]PlanInvitee{},
 	}
 }
 
@@ -57,13 +61,37 @@ func (f *fakeOps) Plan(_ context.Context, id string) (Plan, error) {
 	if !ok {
 		return Plan{}, ErrNotFound
 	}
+	p.InvitedCount = int32(len(f.planInvited[id])) // #nosec G115 -- a test's handful
 	return p, nil
+}
+func (f *fakeOps) InvitePlan(_ context.Context, _, plan string, schools, _ []string, channel, _ string) (int, error) {
+	if p := f.plans[plan]; p.Status == "scheduled" || p.Status == "cancelled" {
+		return 0, nil
+	}
+	n := 0
+	for _, school := range schools {
+		known := false
+		for _, inv := range f.planInvited[plan] {
+			known = known || inv.SchoolID == school
+		}
+		if !known {
+			f.planInvited[plan] = append(f.planInvited[plan], PlanInvitee{SchoolID: school, Name: school, Channel: channel, InvitedAt: day})
+			n++
+		}
+	}
+	return n, nil
+}
+func (f *fakeOps) PlanInvitees(_ context.Context, plan string) ([]PlanInvitee, error) {
+	return f.planInvited[plan], nil
+}
+func (f *fakeOps) SSAPerformance(context.Context, string, int) (SSAAverages, error) {
+	return f.ssa, nil
 }
 func (f *fakeOps) Courses(context.Context) ([]Course, error) {
 	return []Course{{ID: "course-tam", Name: "Teaching as Mission (TAM)"}}, nil
 }
 func (f *fakeOps) SavePlan(_ context.Context, p Plan, _ bool, actor, _ string) error {
-	if old, ok := f.plans[p.ID]; ok && old.Status != "draft" && old.Status != "returned" {
+	if old, ok := f.plans[p.ID]; ok && (old.Status == "scheduled" || old.Status == "cancelled") {
 		return ErrNotLive
 	}
 	p.CreatedBy = actor
@@ -303,5 +331,134 @@ func TestAttendanceWaitsForTheActivitysDay(t *testing.T) {
 	}
 	if err := record("act-past"); err != nil {
 		t.Fatalf("attendance after the day: %v", err)
+	}
+}
+
+func TestALeaderInvitesMemberSchoolsWhilePlanning(t *testing.T) {
+	f := newOps()
+	svc := operations(f)
+	saved, err := svc.SavePlan(leaderCtx(), connect.NewRequest(&clustersv1.SavePlanRequest{
+		ClusterId: "c-mine", Category: "only_meeting", Title: "Term 1 Cluster Meeting", PlannedOn: "2026-11-20", Submit: true,
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan := saved.Msg.GetPlan().GetId()
+	invite := func(ctx context.Context, schools ...string) (*clustersv1.InvitePlanSchoolsResponse, error) {
+		answer, err := svc.InvitePlanSchools(ctx, connect.NewRequest(&clustersv1.InvitePlanSchoolsRequest{
+			PlanId: plan, SchoolIds: schools, Channel: "phone",
+		}))
+		if err != nil {
+			return nil, err
+		}
+		return answer.Msg, nil
+	}
+	if _, err := invite(leaderCtx(), "s1", "not-a-member"); codeOf(err) != connect.CodeInvalidArgument {
+		t.Fatalf("a school outside the cluster must be refused, got %v", err)
+	}
+	if _, err := invite(cceoCtx(), "s1"); codeOf(err) != connect.CodePermissionDenied {
+		t.Fatalf("staff do not invite for the leader, got %v", err)
+	}
+	if got, err := invite(leaderCtx(), "s1", "s2"); err != nil || got.GetInvited() != 2 {
+		t.Fatalf("both member schools: %v %v", got, err)
+	}
+	if got, err := invite(leaderCtx(), "s1"); err != nil || got.GetAlreadyInvited() != 1 {
+		t.Fatalf("an invited school is left as it was: %v %v", got, err)
+	}
+	shown, err := svc.GetPlan(leaderCtx(), connect.NewRequest(&clustersv1.GetPlanRequest{Id: plan}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(shown.Msg.GetInvited()) != 2 || shown.Msg.GetPlan().GetInvitedCount() != 2 || !shown.Msg.GetCanInvite() ||
+		!shown.Msg.GetPlan().GetCanCancel() {
+		t.Fatalf("plan page: %v", shown.Msg)
+	}
+	if _, err := svc.CancelPlan(leaderCtx(), connect.NewRequest(&clustersv1.CancelPlanRequest{Id: plan})); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := invite(leaderCtx(), "s1"); codeOf(err) != connect.CodeFailedPrecondition {
+		t.Fatalf("a cancelled plan takes no invitations, got %v", err)
+	}
+}
+
+func TestSSAPerformanceComparesThisYearWithTheLast(t *testing.T) {
+	f := newOps()
+	f.ssa = SSAAverages{Current: 5.91, Previous: 4.96, SchoolsCurrent: 306, SchoolsPrevious: 700,
+		PairedCurrent: 6.0, PairedPrevious: 5.0, SchoolsPaired: 300}
+	got, err := operations(f).GetClusterReport(leaderCtx(), connect.NewRequest(&clustersv1.GetClusterReportRequest{ClusterId: "c-mine"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ssa := got.Msg.GetSsaPerformance()
+	// The change is the paired schools' (6.0 against 5.0), never the two
+	// years' different school sets (5.91 against 4.96).
+	if ssa.GetCurrentAverage() != "5.91" || ssa.GetPreviousAverage() != "4.96" || ssa.GetChange() != "+20%" || ssa.GetSchoolsCompared() != 300 ||
+		ssa.GetCurrentPeriod() != "FY 2027" || ssa.GetPreviousPeriod() != "FY 2026" {
+		t.Fatalf("ssa performance %v", ssa)
+	}
+	f.ssa = SSAAverages{Current: 5.2, Previous: 4.9, SchoolsCurrent: 2, SchoolsPrevious: 3}
+	got, _ = operations(f).GetClusterReport(leaderCtx(), connect.NewRequest(&clustersv1.GetClusterReportRequest{ClusterId: "c-mine"}))
+	if got.Msg.GetSsaPerformance().GetChange() != "" {
+		t.Fatalf("no change is claimed when no school was assessed in both years: %v", got.Msg.GetSsaPerformance())
+	}
+}
+
+func TestTheClusterReportIsAPDFForItsOwnClusterOnly(t *testing.T) {
+	f := newOps()
+	f.ssa = SSAAverages{Current: 5.91, Previous: 4.96, SchoolsCurrent: 3, SchoolsPrevious: 3,
+		PairedCurrent: 5.91, PairedPrevious: 4.96, SchoolsPaired: 3}
+	svc := operations(f)
+	got, err := svc.GetClusterReportPdf(leaderCtx(), connect.NewRequest(&clustersv1.GetClusterReportPdfRequest{ClusterId: "c-mine"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pdf := string(got.Msg.GetPdf())
+	if !strings.HasPrefix(pdf, "%PDF-") || !strings.Contains(pdf, "%%EOF") || !strings.Contains(pdf, "Participation rate") ||
+		!strings.Contains(pdf, "+19%") || !strings.HasSuffix(got.Msg.GetFileName(), ".pdf") {
+		t.Fatalf("not the report as a PDF: %q (%d bytes)", got.Msg.GetFileName(), len(pdf))
+	}
+	if _, err := svc.GetClusterReportPdf(leaderCtx(), connect.NewRequest(&clustersv1.GetClusterReportPdfRequest{ClusterId: "c-other"})); codeOf(err) != connect.CodePermissionDenied {
+		t.Fatalf("another cluster's report must be refused, got %v", err)
+	}
+}
+
+func TestAnEditedApprovedPlanGoesBackToStaff(t *testing.T) {
+	f := newOps()
+	svc := operations(f)
+	save := func(id string) (*clustersv1.MeetingPlan, error) {
+		got, err := svc.SavePlan(leaderCtx(), connect.NewRequest(&clustersv1.SavePlanRequest{
+			Id: id, ClusterId: "c-mine", Category: "only_meeting", Title: "Term 1 Cluster Meeting", PlannedOn: "2026-11-20", Submit: true,
+		}))
+		if err != nil {
+			return nil, err
+		}
+		return got.Msg.GetPlan(), nil
+	}
+	plan, err := save("")
+	if err != nil || !plan.GetCanEdit() {
+		t.Fatalf("a submitted plan is still the leader's to edit: %v %v", plan, err)
+	}
+	if plan, err = save(plan.GetId()); err != nil || plan.GetStatus() != "submitted" {
+		t.Fatalf("editing while staff review it: %v %v", plan, err)
+	}
+	if _, err := svc.ReviewPlan(cceoCtx(), connect.NewRequest(&clustersv1.ReviewPlanRequest{Id: plan.GetId(), Approve: true})); err != nil {
+		t.Fatal(err)
+	}
+	if plan, err = save(plan.GetId()); err != nil || plan.GetStatus() != "submitted" {
+		t.Fatalf("an edited approved plan goes back to staff: %v %v", plan, err)
+	}
+	if _, err := svc.CancelPlan(leaderCtx(), connect.NewRequest(&clustersv1.CancelPlanRequest{Id: plan.GetId()})); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := save(plan.GetId()); codeOf(err) != connect.CodeFailedPrecondition {
+		t.Fatalf("a cancelled plan cannot be edited, got %v", err)
+	}
+}
+
+func TestSSAStatusesReadAsTheApplicationWordsThem(t *testing.T) {
+	for status, want := range map[string]string{"not_done": "Not Done", "partner_assigned": "Partner Assigned", "done": "Done", "odd": "odd"} {
+		if got := ssaStatusLabel(status); got != want {
+			t.Errorf("%s: %q, want %q", status, got, want)
+		}
 	}
 }

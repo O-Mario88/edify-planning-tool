@@ -3,6 +3,7 @@ import {
   LEADERS_URL,
   canManageLeaders,
   clusterBottomBar,
+  clusterWorkSection,
   dateBox,
   leadersSection,
   longDate,
@@ -11,15 +12,23 @@ import {
 } from '../screens/cluster/clusterRoutes';
 
 describe('the Cluster Leader portal routes', () => {
-  test('the bottom bar is Home, Schools, Activities and the loan link, all drawn natively', () => {
+  test("the bottom bar is the mockup's Home, Meetings and Schools, all drawn natively", () => {
     const bar = clusterBottomBar();
-    expect(bar.map((item) => item.label)).toEqual(['Home', 'Schools', 'Activities', 'Loan link']);
+    expect(bar.map((item) => item.label)).toEqual(['Home', 'Meetings', 'Schools']);
     expect(bar.every((item) => item.native && item.iconSvg.startsWith('<svg'))).toBe(true);
+  });
+
+  test('More keeps the follow-up, reports, cluster and the loan link one tap away', () => {
+    const labels = clusterWorkSection().items.map((item) => item.label);
+    expect(labels).toEqual(['Action & follow-up', 'Requests to staff', 'Progress & Reports', 'Manage cluster', 'Share loan application']);
+    expect(clusterWorkSection().items.map((item) => tabOfUrl(item.url))).toEqual(['actions', 'requests', 'progress', 'manage', 'share']);
   });
 
   test("a Home count's link opens the tab it counts", () => {
     expect(tabOf('schools')).toBe('schools');
-    expect(tabOf('activities?when=upcoming')).toBe('activities');
+    // Home's older links to Activities and plans open Meetings.
+    expect(tabOf('activities?when=upcoming')).toBe('meetings');
+    expect(tabOf('plans')).toBe('meetings');
     expect(tabOf('')).toBe('home');
     expect(tabOf('/settings')).toBeNull();
   });

@@ -52,6 +52,12 @@ const (
 	// ClusterMobilizationServiceLinkPlanProcedure is the fully-qualified name of the
 	// ClusterMobilizationService's LinkPlan RPC.
 	ClusterMobilizationServiceLinkPlanProcedure = "/edify.clusters.v1.ClusterMobilizationService/LinkPlan"
+	// ClusterMobilizationServiceGetPlanProcedure is the fully-qualified name of the
+	// ClusterMobilizationService's GetPlan RPC.
+	ClusterMobilizationServiceGetPlanProcedure = "/edify.clusters.v1.ClusterMobilizationService/GetPlan"
+	// ClusterMobilizationServiceInvitePlanSchoolsProcedure is the fully-qualified name of the
+	// ClusterMobilizationService's InvitePlanSchools RPC.
+	ClusterMobilizationServiceInvitePlanSchoolsProcedure = "/edify.clusters.v1.ClusterMobilizationService/InvitePlanSchools"
 	// ClusterMobilizationServiceGetMobilizationProcedure is the fully-qualified name of the
 	// ClusterMobilizationService's GetMobilization RPC.
 	ClusterMobilizationServiceGetMobilizationProcedure = "/edify.clusters.v1.ClusterMobilizationService/GetMobilization"
@@ -91,6 +97,9 @@ const (
 	// ClusterMobilizationServiceGetClusterReportProcedure is the fully-qualified name of the
 	// ClusterMobilizationService's GetClusterReport RPC.
 	ClusterMobilizationServiceGetClusterReportProcedure = "/edify.clusters.v1.ClusterMobilizationService/GetClusterReport"
+	// ClusterMobilizationServiceGetClusterReportPdfProcedure is the fully-qualified name of the
+	// ClusterMobilizationService's GetClusterReportPdf RPC.
+	ClusterMobilizationServiceGetClusterReportPdfProcedure = "/edify.clusters.v1.ClusterMobilizationService/GetClusterReportPdf"
 )
 
 // ClusterMobilizationServiceClient is a client for the edify.clusters.v1.ClusterMobilizationService
@@ -100,13 +109,20 @@ type ClusterMobilizationServiceClient interface {
 	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
 	// What a plan may name: the governed courses a cluster training may deliver.
 	GetPlanOptions(context.Context, *connect.Request[v1.GetPlanOptionsRequest]) (*connect.Response[v1.GetPlanOptionsResponse], error)
-	// Create or edit a draft or returned plan, and submit it for review.
+	// Create or edit a plan that is still planned, and submit it for review;
+	// an edit after approval goes back to staff.
 	SavePlan(context.Context, *connect.Request[v1.SavePlanRequest]) (*connect.Response[v1.SavePlanResponse], error)
 	CancelPlan(context.Context, *connect.Request[v1.CancelPlanRequest]) (*connect.Response[v1.CancelPlanResponse], error)
 	// Staff: approve or return a submitted plan.
 	ReviewPlan(context.Context, *connect.Request[v1.ReviewPlanRequest]) (*connect.Response[v1.ReviewPlanResponse], error)
 	// Staff: link an approved plan to the activity they scheduled for it.
 	LinkPlan(context.Context, *connect.Request[v1.LinkPlanRequest]) (*connect.Response[v1.LinkPlanResponse], error)
+	// One plan with the member schools invited to it.
+	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	// The leader invites member schools to a planned meeting or training as
+	// soon as it is planned (owner's mockup, 2026-11-11). When staff link the
+	// plan to its official activity, these invitations carry over to it.
+	InvitePlanSchools(context.Context, *connect.Request[v1.InvitePlanSchoolsRequest]) (*connect.Response[v1.InvitePlanSchoolsResponse], error)
 	// An activity's member schools with each one's invitation and attendance.
 	GetMobilization(context.Context, *connect.Request[v1.GetMobilizationRequest]) (*connect.Response[v1.GetMobilizationResponse], error)
 	InviteSchools(context.Context, *connect.Request[v1.InviteSchoolsRequest]) (*connect.Response[v1.InviteSchoolsResponse], error)
@@ -126,6 +142,8 @@ type ClusterMobilizationServiceClient interface {
 	AnswerRequest(context.Context, *connect.Request[v1.AnswerRequestRequest]) (*connect.Response[v1.AnswerRequestResponse], error)
 	// The cluster management report for the financial year (brief A7).
 	GetClusterReport(context.Context, *connect.Request[v1.GetClusterReportRequest]) (*connect.Response[v1.GetClusterReportResponse], error)
+	// The same report as a PDF, for the leader to save, print or send.
+	GetClusterReportPdf(context.Context, *connect.Request[v1.GetClusterReportPdfRequest]) (*connect.Response[v1.GetClusterReportPdfResponse], error)
 }
 
 // NewClusterMobilizationServiceClient constructs a client for the
@@ -174,6 +192,18 @@ func NewClusterMobilizationServiceClient(httpClient connect.HTTPClient, baseURL 
 			httpClient,
 			baseURL+ClusterMobilizationServiceLinkPlanProcedure,
 			connect.WithSchema(clusterMobilizationServiceMethods.ByName("LinkPlan")),
+			connect.WithClientOptions(opts...),
+		),
+		getPlan: connect.NewClient[v1.GetPlanRequest, v1.GetPlanResponse](
+			httpClient,
+			baseURL+ClusterMobilizationServiceGetPlanProcedure,
+			connect.WithSchema(clusterMobilizationServiceMethods.ByName("GetPlan")),
+			connect.WithClientOptions(opts...),
+		),
+		invitePlanSchools: connect.NewClient[v1.InvitePlanSchoolsRequest, v1.InvitePlanSchoolsResponse](
+			httpClient,
+			baseURL+ClusterMobilizationServiceInvitePlanSchoolsProcedure,
+			connect.WithSchema(clusterMobilizationServiceMethods.ByName("InvitePlanSchools")),
 			connect.WithClientOptions(opts...),
 		),
 		getMobilization: connect.NewClient[v1.GetMobilizationRequest, v1.GetMobilizationResponse](
@@ -254,30 +284,39 @@ func NewClusterMobilizationServiceClient(httpClient connect.HTTPClient, baseURL 
 			connect.WithSchema(clusterMobilizationServiceMethods.ByName("GetClusterReport")),
 			connect.WithClientOptions(opts...),
 		),
+		getClusterReportPdf: connect.NewClient[v1.GetClusterReportPdfRequest, v1.GetClusterReportPdfResponse](
+			httpClient,
+			baseURL+ClusterMobilizationServiceGetClusterReportPdfProcedure,
+			connect.WithSchema(clusterMobilizationServiceMethods.ByName("GetClusterReportPdf")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // clusterMobilizationServiceClient implements ClusterMobilizationServiceClient.
 type clusterMobilizationServiceClient struct {
-	listPlans        *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
-	getPlanOptions   *connect.Client[v1.GetPlanOptionsRequest, v1.GetPlanOptionsResponse]
-	savePlan         *connect.Client[v1.SavePlanRequest, v1.SavePlanResponse]
-	cancelPlan       *connect.Client[v1.CancelPlanRequest, v1.CancelPlanResponse]
-	reviewPlan       *connect.Client[v1.ReviewPlanRequest, v1.ReviewPlanResponse]
-	linkPlan         *connect.Client[v1.LinkPlanRequest, v1.LinkPlanResponse]
-	getMobilization  *connect.Client[v1.GetMobilizationRequest, v1.GetMobilizationResponse]
-	inviteSchools    *connect.Client[v1.InviteSchoolsRequest, v1.InviteSchoolsResponse]
-	recordResponse   *connect.Client[v1.RecordResponseRequest, v1.RecordResponseResponse]
-	followUp         *connect.Client[v1.FollowUpRequest, v1.FollowUpResponse]
-	recordAttendance *connect.Client[v1.RecordAttendanceRequest, v1.RecordAttendanceResponse]
-	saveMinutes      *connect.Client[v1.SaveMinutesRequest, v1.SaveMinutesResponse]
-	listActionItems  *connect.Client[v1.ListActionItemsRequest, v1.ListActionItemsResponse]
-	saveActionItem   *connect.Client[v1.SaveActionItemRequest, v1.SaveActionItemResponse]
-	closeActionItem  *connect.Client[v1.CloseActionItemRequest, v1.CloseActionItemResponse]
-	listRequests     *connect.Client[v1.ListRequestsRequest, v1.ListRequestsResponse]
-	submitRequest    *connect.Client[v1.SubmitRequestRequest, v1.SubmitRequestResponse]
-	answerRequest    *connect.Client[v1.AnswerRequestRequest, v1.AnswerRequestResponse]
-	getClusterReport *connect.Client[v1.GetClusterReportRequest, v1.GetClusterReportResponse]
+	listPlans           *connect.Client[v1.ListPlansRequest, v1.ListPlansResponse]
+	getPlanOptions      *connect.Client[v1.GetPlanOptionsRequest, v1.GetPlanOptionsResponse]
+	savePlan            *connect.Client[v1.SavePlanRequest, v1.SavePlanResponse]
+	cancelPlan          *connect.Client[v1.CancelPlanRequest, v1.CancelPlanResponse]
+	reviewPlan          *connect.Client[v1.ReviewPlanRequest, v1.ReviewPlanResponse]
+	linkPlan            *connect.Client[v1.LinkPlanRequest, v1.LinkPlanResponse]
+	getPlan             *connect.Client[v1.GetPlanRequest, v1.GetPlanResponse]
+	invitePlanSchools   *connect.Client[v1.InvitePlanSchoolsRequest, v1.InvitePlanSchoolsResponse]
+	getMobilization     *connect.Client[v1.GetMobilizationRequest, v1.GetMobilizationResponse]
+	inviteSchools       *connect.Client[v1.InviteSchoolsRequest, v1.InviteSchoolsResponse]
+	recordResponse      *connect.Client[v1.RecordResponseRequest, v1.RecordResponseResponse]
+	followUp            *connect.Client[v1.FollowUpRequest, v1.FollowUpResponse]
+	recordAttendance    *connect.Client[v1.RecordAttendanceRequest, v1.RecordAttendanceResponse]
+	saveMinutes         *connect.Client[v1.SaveMinutesRequest, v1.SaveMinutesResponse]
+	listActionItems     *connect.Client[v1.ListActionItemsRequest, v1.ListActionItemsResponse]
+	saveActionItem      *connect.Client[v1.SaveActionItemRequest, v1.SaveActionItemResponse]
+	closeActionItem     *connect.Client[v1.CloseActionItemRequest, v1.CloseActionItemResponse]
+	listRequests        *connect.Client[v1.ListRequestsRequest, v1.ListRequestsResponse]
+	submitRequest       *connect.Client[v1.SubmitRequestRequest, v1.SubmitRequestResponse]
+	answerRequest       *connect.Client[v1.AnswerRequestRequest, v1.AnswerRequestResponse]
+	getClusterReport    *connect.Client[v1.GetClusterReportRequest, v1.GetClusterReportResponse]
+	getClusterReportPdf *connect.Client[v1.GetClusterReportPdfRequest, v1.GetClusterReportPdfResponse]
 }
 
 // ListPlans calls edify.clusters.v1.ClusterMobilizationService.ListPlans.
@@ -308,6 +347,16 @@ func (c *clusterMobilizationServiceClient) ReviewPlan(ctx context.Context, req *
 // LinkPlan calls edify.clusters.v1.ClusterMobilizationService.LinkPlan.
 func (c *clusterMobilizationServiceClient) LinkPlan(ctx context.Context, req *connect.Request[v1.LinkPlanRequest]) (*connect.Response[v1.LinkPlanResponse], error) {
 	return c.linkPlan.CallUnary(ctx, req)
+}
+
+// GetPlan calls edify.clusters.v1.ClusterMobilizationService.GetPlan.
+func (c *clusterMobilizationServiceClient) GetPlan(ctx context.Context, req *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
+	return c.getPlan.CallUnary(ctx, req)
+}
+
+// InvitePlanSchools calls edify.clusters.v1.ClusterMobilizationService.InvitePlanSchools.
+func (c *clusterMobilizationServiceClient) InvitePlanSchools(ctx context.Context, req *connect.Request[v1.InvitePlanSchoolsRequest]) (*connect.Response[v1.InvitePlanSchoolsResponse], error) {
+	return c.invitePlanSchools.CallUnary(ctx, req)
 }
 
 // GetMobilization calls edify.clusters.v1.ClusterMobilizationService.GetMobilization.
@@ -375,6 +424,11 @@ func (c *clusterMobilizationServiceClient) GetClusterReport(ctx context.Context,
 	return c.getClusterReport.CallUnary(ctx, req)
 }
 
+// GetClusterReportPdf calls edify.clusters.v1.ClusterMobilizationService.GetClusterReportPdf.
+func (c *clusterMobilizationServiceClient) GetClusterReportPdf(ctx context.Context, req *connect.Request[v1.GetClusterReportPdfRequest]) (*connect.Response[v1.GetClusterReportPdfResponse], error) {
+	return c.getClusterReportPdf.CallUnary(ctx, req)
+}
+
 // ClusterMobilizationServiceHandler is an implementation of the
 // edify.clusters.v1.ClusterMobilizationService service.
 type ClusterMobilizationServiceHandler interface {
@@ -382,13 +436,20 @@ type ClusterMobilizationServiceHandler interface {
 	ListPlans(context.Context, *connect.Request[v1.ListPlansRequest]) (*connect.Response[v1.ListPlansResponse], error)
 	// What a plan may name: the governed courses a cluster training may deliver.
 	GetPlanOptions(context.Context, *connect.Request[v1.GetPlanOptionsRequest]) (*connect.Response[v1.GetPlanOptionsResponse], error)
-	// Create or edit a draft or returned plan, and submit it for review.
+	// Create or edit a plan that is still planned, and submit it for review;
+	// an edit after approval goes back to staff.
 	SavePlan(context.Context, *connect.Request[v1.SavePlanRequest]) (*connect.Response[v1.SavePlanResponse], error)
 	CancelPlan(context.Context, *connect.Request[v1.CancelPlanRequest]) (*connect.Response[v1.CancelPlanResponse], error)
 	// Staff: approve or return a submitted plan.
 	ReviewPlan(context.Context, *connect.Request[v1.ReviewPlanRequest]) (*connect.Response[v1.ReviewPlanResponse], error)
 	// Staff: link an approved plan to the activity they scheduled for it.
 	LinkPlan(context.Context, *connect.Request[v1.LinkPlanRequest]) (*connect.Response[v1.LinkPlanResponse], error)
+	// One plan with the member schools invited to it.
+	GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error)
+	// The leader invites member schools to a planned meeting or training as
+	// soon as it is planned (owner's mockup, 2026-11-11). When staff link the
+	// plan to its official activity, these invitations carry over to it.
+	InvitePlanSchools(context.Context, *connect.Request[v1.InvitePlanSchoolsRequest]) (*connect.Response[v1.InvitePlanSchoolsResponse], error)
 	// An activity's member schools with each one's invitation and attendance.
 	GetMobilization(context.Context, *connect.Request[v1.GetMobilizationRequest]) (*connect.Response[v1.GetMobilizationResponse], error)
 	InviteSchools(context.Context, *connect.Request[v1.InviteSchoolsRequest]) (*connect.Response[v1.InviteSchoolsResponse], error)
@@ -408,6 +469,8 @@ type ClusterMobilizationServiceHandler interface {
 	AnswerRequest(context.Context, *connect.Request[v1.AnswerRequestRequest]) (*connect.Response[v1.AnswerRequestResponse], error)
 	// The cluster management report for the financial year (brief A7).
 	GetClusterReport(context.Context, *connect.Request[v1.GetClusterReportRequest]) (*connect.Response[v1.GetClusterReportResponse], error)
+	// The same report as a PDF, for the leader to save, print or send.
+	GetClusterReportPdf(context.Context, *connect.Request[v1.GetClusterReportPdfRequest]) (*connect.Response[v1.GetClusterReportPdfResponse], error)
 }
 
 // NewClusterMobilizationServiceHandler builds an HTTP handler from the service implementation. It
@@ -451,6 +514,18 @@ func NewClusterMobilizationServiceHandler(svc ClusterMobilizationServiceHandler,
 		ClusterMobilizationServiceLinkPlanProcedure,
 		svc.LinkPlan,
 		connect.WithSchema(clusterMobilizationServiceMethods.ByName("LinkPlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	clusterMobilizationServiceGetPlanHandler := connect.NewUnaryHandler(
+		ClusterMobilizationServiceGetPlanProcedure,
+		svc.GetPlan,
+		connect.WithSchema(clusterMobilizationServiceMethods.ByName("GetPlan")),
+		connect.WithHandlerOptions(opts...),
+	)
+	clusterMobilizationServiceInvitePlanSchoolsHandler := connect.NewUnaryHandler(
+		ClusterMobilizationServiceInvitePlanSchoolsProcedure,
+		svc.InvitePlanSchools,
+		connect.WithSchema(clusterMobilizationServiceMethods.ByName("InvitePlanSchools")),
 		connect.WithHandlerOptions(opts...),
 	)
 	clusterMobilizationServiceGetMobilizationHandler := connect.NewUnaryHandler(
@@ -531,6 +606,12 @@ func NewClusterMobilizationServiceHandler(svc ClusterMobilizationServiceHandler,
 		connect.WithSchema(clusterMobilizationServiceMethods.ByName("GetClusterReport")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clusterMobilizationServiceGetClusterReportPdfHandler := connect.NewUnaryHandler(
+		ClusterMobilizationServiceGetClusterReportPdfProcedure,
+		svc.GetClusterReportPdf,
+		connect.WithSchema(clusterMobilizationServiceMethods.ByName("GetClusterReportPdf")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.clusters.v1.ClusterMobilizationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClusterMobilizationServiceListPlansProcedure:
@@ -545,6 +626,10 @@ func NewClusterMobilizationServiceHandler(svc ClusterMobilizationServiceHandler,
 			clusterMobilizationServiceReviewPlanHandler.ServeHTTP(w, r)
 		case ClusterMobilizationServiceLinkPlanProcedure:
 			clusterMobilizationServiceLinkPlanHandler.ServeHTTP(w, r)
+		case ClusterMobilizationServiceGetPlanProcedure:
+			clusterMobilizationServiceGetPlanHandler.ServeHTTP(w, r)
+		case ClusterMobilizationServiceInvitePlanSchoolsProcedure:
+			clusterMobilizationServiceInvitePlanSchoolsHandler.ServeHTTP(w, r)
 		case ClusterMobilizationServiceGetMobilizationProcedure:
 			clusterMobilizationServiceGetMobilizationHandler.ServeHTTP(w, r)
 		case ClusterMobilizationServiceInviteSchoolsProcedure:
@@ -571,6 +656,8 @@ func NewClusterMobilizationServiceHandler(svc ClusterMobilizationServiceHandler,
 			clusterMobilizationServiceAnswerRequestHandler.ServeHTTP(w, r)
 		case ClusterMobilizationServiceGetClusterReportProcedure:
 			clusterMobilizationServiceGetClusterReportHandler.ServeHTTP(w, r)
+		case ClusterMobilizationServiceGetClusterReportPdfProcedure:
+			clusterMobilizationServiceGetClusterReportPdfHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -602,6 +689,14 @@ func (UnimplementedClusterMobilizationServiceHandler) ReviewPlan(context.Context
 
 func (UnimplementedClusterMobilizationServiceHandler) LinkPlan(context.Context, *connect.Request[v1.LinkPlanRequest]) (*connect.Response[v1.LinkPlanResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.clusters.v1.ClusterMobilizationService.LinkPlan is not implemented"))
+}
+
+func (UnimplementedClusterMobilizationServiceHandler) GetPlan(context.Context, *connect.Request[v1.GetPlanRequest]) (*connect.Response[v1.GetPlanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.clusters.v1.ClusterMobilizationService.GetPlan is not implemented"))
+}
+
+func (UnimplementedClusterMobilizationServiceHandler) InvitePlanSchools(context.Context, *connect.Request[v1.InvitePlanSchoolsRequest]) (*connect.Response[v1.InvitePlanSchoolsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.clusters.v1.ClusterMobilizationService.InvitePlanSchools is not implemented"))
 }
 
 func (UnimplementedClusterMobilizationServiceHandler) GetMobilization(context.Context, *connect.Request[v1.GetMobilizationRequest]) (*connect.Response[v1.GetMobilizationResponse], error) {
@@ -654,4 +749,8 @@ func (UnimplementedClusterMobilizationServiceHandler) AnswerRequest(context.Cont
 
 func (UnimplementedClusterMobilizationServiceHandler) GetClusterReport(context.Context, *connect.Request[v1.GetClusterReportRequest]) (*connect.Response[v1.GetClusterReportResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.clusters.v1.ClusterMobilizationService.GetClusterReport is not implemented"))
+}
+
+func (UnimplementedClusterMobilizationServiceHandler) GetClusterReportPdf(context.Context, *connect.Request[v1.GetClusterReportPdfRequest]) (*connect.Response[v1.GetClusterReportPdfResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.clusters.v1.ClusterMobilizationService.GetClusterReportPdf is not implemented"))
 }

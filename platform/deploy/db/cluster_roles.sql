@@ -60,3 +60,11 @@ GRANT SELECT (
   id, display_name, is_training_course, status, cluster_delivery_allowed,
   training_category, ssa_indicator_label
 ) ON activity_catalogue_item TO edify_gateway_ro;
+-- Manage Cluster → School Contacts: whom a leader calls to mobilise a member
+-- school (owner's mockup, 2026-11-11).
+GRANT SELECT (
+  director_name, headteacher_name, primary_contact_name, primary_contact_phone, school_phone
+) ON school TO edify_gateway_ro;
+-- Progress & Reports → SSA performance: member schools' confirmed average
+-- score, this financial year against the one before.
+GRANT SELECT (school_id, fy, average_score, verification_status, deleted_at) ON ssa_record TO edify_gateway_ro;

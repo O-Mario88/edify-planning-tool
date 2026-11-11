@@ -84,6 +84,8 @@ type Account struct {
 // School is a member school.
 type School struct {
 	ID, SchoolID, Name, Type, District, SubCounty, OperationalStatus, SSAStatus string
+	// Whom a leader contacts to mobilise the school.
+	Director, Headteacher, ContactName, ContactPhone, SchoolPhone string
 }
 
 // Activity is an existing cluster activity.
@@ -182,7 +184,9 @@ func (s *Store) MemberSchools(ctx context.Context, clusterID, search string, lim
 	}
 	rows, err := s.db.Query(ctx, `
 SELECT s.id, s.school_id, s.name, s.school_type, COALESCE(d.name, ''), COALESCE(sc.name, ''),
-       s.operational_status, s.current_fy_ssa_status
+       s.operational_status, s.current_fy_ssa_status,
+       COALESCE(s.director_name, ''), COALESCE(s.headteacher_name, ''), COALESCE(s.primary_contact_name, ''),
+       COALESCE(s.primary_contact_phone, ''), COALESCE(s.school_phone, '')
 FROM school s
 LEFT JOIN district d ON d.id = s.district_id
 LEFT JOIN sub_county sc ON sc.id = s.sub_county_id
@@ -195,7 +199,8 @@ LIMIT $3 OFFSET $4`, clusterID, pattern, limit, offset)
 	schools, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (School, error) {
 		var school School
 		return school, row.Scan(&school.ID, &school.SchoolID, &school.Name, &school.Type,
-			&school.District, &school.SubCounty, &school.OperationalStatus, &school.SSAStatus)
+			&school.District, &school.SubCounty, &school.OperationalStatus, &school.SSAStatus,
+			&school.Director, &school.Headteacher, &school.ContactName, &school.ContactPhone, &school.SchoolPhone)
 	})
 	if err != nil {
 		return nil, 0, fmt.Errorf("clusterlead: reading member schools: %w", err)

@@ -46,7 +46,7 @@ GROUP BY a.id HAVING count(s.id) >= 2 ORDER BY a.id LIMIT 1`).Scan(&activityID, 
 		ctx := context.Background()
 		_, _ = admin.Exec(ctx, `UPDATE activity SET status = $2, scheduled_date = $3, meeting_kind = $4 WHERE id = $1`,
 			activityID, status, scheduled, kind)
-		for _, table := range []string{"invitation_event", "plan_event", "action_item_event"} {
+		for _, table := range []string{"plan_invitation", "invitation_event", "plan_event", "action_item_event"} {
 			_, _ = admin.Exec(ctx, `DELETE FROM cluster_leadership.`+table)
 		}
 		for _, table := range []string{"invitation", "attendance_record", "meeting_minutes", "meeting_plan", "action_item", "leader_request"} {
@@ -77,6 +77,16 @@ func TestAClusterOperationsJourney(t *testing.T) {
 		t.Fatalf("the leader submits a plan: %v", err)
 	}
 	id := plan.Msg.GetPlan().GetId()
+
+	// The leader invites a school while the plan is still under review.
+	members, err := ops.GetMobilization(ctx, authed(&clustersv1.GetMobilizationRequest{ActivityId: activityID}, leaderBearer))
+	if err != nil || len(members.Msg.GetSchools()) < 3 {
+		t.Fatalf("the journey needs three member schools: %v %v", members, err)
+	}
+	early := members.Msg.GetSchools()[2].GetSchoolId()
+	if got, err := ops.InvitePlanSchools(ctx, authed(&clustersv1.InvitePlanSchoolsRequest{PlanId: id, SchoolIds: []string{early}, Channel: "sms"}, leaderBearer)); err != nil || got.Msg.GetInvited() != 1 {
+		t.Fatalf("the leader invites while planning: %v %v", got, err)
+	}
 	if _, err := ops.ReviewPlan(ctx, authed(&clustersv1.ReviewPlanRequest{Id: id, Approve: true}, leaderBearer)); connect.CodeOf(err) != connect.CodePermissionDenied {
 		t.Fatalf("a leader cannot approve their own plan, got %v", err)
 	}
@@ -92,6 +102,13 @@ func TestAClusterOperationsJourney(t *testing.T) {
 	board, err := ops.GetMobilization(ctx, authed(&clustersv1.GetMobilizationRequest{ActivityId: activityID}, leaderBearer))
 	if err != nil {
 		t.Fatal(err)
+	}
+	carried := false
+	for _, school := range board.Msg.GetSchools() {
+		carried = carried || school.GetSchoolId() == early && school.GetState() == "invited" && school.GetChannel() == "sms"
+	}
+	if !carried {
+		t.Fatal("the plan's invitation did not carry over to the linked activity")
 	}
 	schools := board.Msg.GetSchools()
 	pick := []string{schools[0].GetSchoolId(), schools[1].GetSchoolId()}
@@ -120,7 +137,8 @@ func TestAClusterOperationsJourney(t *testing.T) {
 	for _, c := range home.Msg.GetOverview() {
 		counts[c.GetKey()] = c.GetValue()
 	}
-	if counts["outstanding_responses"] != 1 || counts["to_mobilise"] != int32(len(schools)-2) {
+	// Three invited (one carried from the plan), one of them confirmed.
+	if counts["outstanding_responses"] != 2 || counts["to_mobilise"] != int32(len(schools)-3) {
 		t.Fatalf("the Home counts the mobilisation: %v", counts)
 	}
 	for _, a := range home.Msg.GetUpcoming() {
@@ -169,7 +187,7 @@ func TestAClusterOperationsJourney(t *testing.T) {
 	for _, f := range report.Msg.GetFigures() {
 		figures[f.GetKey()] = f.GetValue()
 	}
-	if figures["schools_invited"] != "2" || figures["schools_participating"] != "1" || figures["participation_rate"] != "50%" {
+	if figures["schools_invited"] != "3" || figures["schools_participating"] != "1" || figures["participation_rate"] != "33%" {
 		t.Fatalf("the report counts invitations and attendance apart: %v", figures)
 	}
 

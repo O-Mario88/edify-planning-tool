@@ -244,4 +244,10 @@ message MemberSchool {
   string sub_county = 6;
   string operational_status = 7;
   string current_fy_ssa_status = 8;
+  // Whom the leader contacts to mobilise the school.
+  string director_name = 9;
+  string headteacher_name = 10;
+  string contact_name = 11;
+  string contact_phone = 12;
+  string school_phone = 13;
 }

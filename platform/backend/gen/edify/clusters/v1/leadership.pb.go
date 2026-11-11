@@ -1758,8 +1758,14 @@ type MemberSchool struct {
 	SubCounty          string `protobuf:"bytes,6,opt,name=sub_county,json=subCounty,proto3" json:"sub_county,omitempty"`
 	OperationalStatus  string `protobuf:"bytes,7,opt,name=operational_status,json=operationalStatus,proto3" json:"operational_status,omitempty"`
 	CurrentFySsaStatus string `protobuf:"bytes,8,opt,name=current_fy_ssa_status,json=currentFySsaStatus,proto3" json:"current_fy_ssa_status,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// Whom the leader contacts to mobilise the school.
+	DirectorName    string `protobuf:"bytes,9,opt,name=director_name,json=directorName,proto3" json:"director_name,omitempty"`
+	HeadteacherName string `protobuf:"bytes,10,opt,name=headteacher_name,json=headteacherName,proto3" json:"headteacher_name,omitempty"`
+	ContactName     string `protobuf:"bytes,11,opt,name=contact_name,json=contactName,proto3" json:"contact_name,omitempty"`
+	ContactPhone    string `protobuf:"bytes,12,opt,name=contact_phone,json=contactPhone,proto3" json:"contact_phone,omitempty"`
+	SchoolPhone     string `protobuf:"bytes,13,opt,name=school_phone,json=schoolPhone,proto3" json:"school_phone,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *MemberSchool) Reset() {
@@ -1844,6 +1850,41 @@ func (x *MemberSchool) GetOperationalStatus() string {
 func (x *MemberSchool) GetCurrentFySsaStatus() string {
 	if x != nil {
 		return x.CurrentFySsaStatus
+	}
+	return ""
+}
+
+func (x *MemberSchool) GetDirectorName() string {
+	if x != nil {
+		return x.DirectorName
+	}
+	return ""
+}
+
+func (x *MemberSchool) GetHeadteacherName() string {
+	if x != nil {
+		return x.HeadteacherName
+	}
+	return ""
+}
+
+func (x *MemberSchool) GetContactName() string {
+	if x != nil {
+		return x.ContactName
+	}
+	return ""
+}
+
+func (x *MemberSchool) GetContactPhone() string {
+	if x != nil {
+		return x.ContactPhone
+	}
+	return ""
+}
+
+func (x *MemberSchool) GetSchoolPhone() string {
+	if x != nil {
+		return x.SchoolPhone
 	}
 	return ""
 }
@@ -1990,7 +2031,7 @@ const file_edify_clusters_v1_leadership_proto_rawDesc = "" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x18\n" +
 	"\aenabled\x18\x03 \x01(\bR\aenabled\x12\x16\n" +
 	"\x06reason\x18\x04 \x01(\tR\x06reason\x12\x12\n" +
-	"\x04href\x18\x05 \x01(\tR\x04href\"\x8d\x02\n" +
+	"\x04href\x18\x05 \x01(\tR\x04href\"\xc8\x03\n" +
 	"\fMemberSchool\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tschool_id\x18\x02 \x01(\tR\bschoolId\x12\x12\n" +
@@ -2001,7 +2042,13 @@ const file_edify_clusters_v1_leadership_proto_rawDesc = "" +
 	"\n" +
 	"sub_county\x18\x06 \x01(\tR\tsubCounty\x12-\n" +
 	"\x12operational_status\x18\a \x01(\tR\x11operationalStatus\x121\n" +
-	"\x15current_fy_ssa_status\x18\b \x01(\tR\x12currentFySsaStatus2\xb9\a\n" +
+	"\x15current_fy_ssa_status\x18\b \x01(\tR\x12currentFySsaStatus\x12#\n" +
+	"\rdirector_name\x18\t \x01(\tR\fdirectorName\x12)\n" +
+	"\x10headteacher_name\x18\n" +
+	" \x01(\tR\x0fheadteacherName\x12!\n" +
+	"\fcontact_name\x18\v \x01(\tR\vcontactName\x12#\n" +
+	"\rcontact_phone\x18\f \x01(\tR\fcontactPhone\x12!\n" +
+	"\fschool_phone\x18\r \x01(\tR\vschoolPhone2\xb9\a\n" +
 	"\x18ClusterLeadershipService\x12b\n" +
 	"\rGetMyClusters\x12'.edify.clusters.v1.GetMyClustersRequest\x1a(.edify.clusters.v1.GetMyClustersResponse\x12e\n" +
 	"\x0eGetClusterHome\x12(.edify.clusters.v1.GetClusterHomeRequest\x1a).edify.clusters.v1.GetClusterHomeResponse\x12n\n" +

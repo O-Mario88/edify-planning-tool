@@ -55,6 +55,14 @@ type Plan struct {
 	Facilitator, Resources, Notes, Status, ActivityID, ReviewNote    string
 	CreatedBy                                                        string
 	History                                                          []Event
+	// Member schools invited to the plan.
+	InvitedCount int32
+}
+
+// PlanInvitee is a member school invited to a plan.
+type PlanInvitee struct {
+	SchoolID, EdifySchoolID, Name, Channel string
+	InvitedAt                              time.Time
 }
 
 // Course is a governed training course a cluster may receive.
@@ -124,7 +132,8 @@ const selectPlan = `
 SELECT p.id::text, p.cluster_id, p.category, p.title, COALESCE(p.training_course_id, ''),
        COALESCE(c.display_name, ''), p.planned_on, p.starts_at, p.venue, p.is_online,
        p.objectives, p.agenda, p.expected_participants, p.facilitator, p.resources, p.notes,
-       p.status, COALESCE(p.activity_id, ''), p.review_note, p.created_by
+       p.status, COALESCE(p.activity_id, ''), p.review_note, p.created_by,
+       (SELECT count(*)::int FROM cluster_leadership.plan_invitation pi WHERE pi.plan_id = p.id)
 FROM cluster_leadership.meeting_plan p
 LEFT JOIN activity_catalogue_item c ON c.id = p.training_course_id`
 
@@ -133,7 +142,7 @@ func scanPlan(row pgx.CollectableRow) (Plan, error) {
 	err := row.Scan(&p.ID, &p.ClusterID, &p.Category, &p.Title, &p.TrainingCourseID, &p.TrainingCourse,
 		&p.PlannedOn, &p.StartsAt, &p.Venue, &p.IsOnline, &p.Objectives, &p.Agenda,
 		&p.ExpectedParticipants, &p.Facilitator, &p.Resources, &p.Notes, &p.Status,
-		&p.ActivityID, &p.ReviewNote, &p.CreatedBy)
+		&p.ActivityID, &p.ReviewNote, &p.CreatedBy, &p.InvitedCount)
 	return p, err
 }
 
@@ -231,7 +240,7 @@ UPDATE cluster_leadership.meeting_plan SET
   is_online = $8, objectives = $9, agenda = $10, expected_participants = $11, facilitator = $12,
   resources = $13, notes = $14, status = $15, updated_at = now(),
   submitted_at = CASE WHEN $15 = 'submitted' THEN now() ELSE submitted_at END
-WHERE id::text = $1 AND status IN ('draft', 'returned')`,
+WHERE id::text = $1 AND status IN ('draft', 'submitted', 'returned', 'approved')`,
 				p.ID, p.Category, p.Title, course, p.PlannedOn, p.StartsAt, p.Venue, p.IsOnline,
 				p.Objectives, p.Agenda, p.ExpectedParticipants, p.Facilitator, p.Resources, p.Notes, p.Status)
 			if err == nil && tag.RowsAffected() == 0 {
@@ -266,7 +275,96 @@ WHERE id::text = $1 AND status = ANY($2)`, id, from, status, actorID, note, null
 		if tag.RowsAffected() == 0 {
 			return ErrNotLive
 		}
+		if status == "scheduled" {
+			if err := carryPlanInvitations(ctx, tx, id, activityID); err != nil {
+				return err
+			}
+		}
 		return appendTo(ctx, tx, "plan_event", "plan_id", id, event, actorID, note)
+	})
+}
+
+// carryPlanInvitations turns a linked plan's invitations into invitations
+// of its official activity, as the leader made them; a school already
+// invited to the activity keeps that invitation.
+func carryPlanInvitations(ctx context.Context, tx pgx.Tx, planID, activityID string) error {
+	rows, err := tx.Query(ctx, `
+SELECT id::text, cluster_id, school_id, channel, invited_by, invited_at
+FROM cluster_leadership.plan_invitation WHERE plan_id::text = $1 AND carried_to IS NULL ORDER BY invited_at, id`, planID)
+	if err != nil {
+		return fmt.Errorf("clusterlead: reading a plan's invitations: %w", err)
+	}
+	type planInvitation struct {
+		id, clusterID, schoolID, channel, invitedBy string
+		invitedAt                                   time.Time
+	}
+	pending, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (planInvitation, error) {
+		var p planInvitation
+		return p, row.Scan(&p.id, &p.clusterID, &p.schoolID, &p.channel, &p.invitedBy, &p.invitedAt)
+	})
+	if err != nil {
+		return fmt.Errorf("clusterlead: reading a plan's invitations: %w", err)
+	}
+	for _, p := range pending {
+		invitationID, err := newID()
+		if err != nil {
+			return err
+		}
+		tag, err := tx.Exec(ctx, `
+INSERT INTO cluster_leadership.invitation (id, cluster_id, activity_id, school_id, status, channel, invited_by, invited_at)
+VALUES ($1, $2, $3, $4, 'invited', $5, $6, $7)
+ON CONFLICT (activity_id, school_id) DO NOTHING`, invitationID, p.clusterID, activityID, p.schoolID, p.channel, p.invitedBy, p.invitedAt)
+		if err != nil {
+			return fmt.Errorf("clusterlead: carrying an invitation: %w", err)
+		}
+		if tag.RowsAffected() == 0 {
+			continue
+		}
+		if err := appendTo(ctx, tx, "invitation_event", "invitation_id", invitationID, "invited", p.invitedBy,
+			p.channel+" (invited to the plan, carried to the scheduled activity)"); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `UPDATE cluster_leadership.plan_invitation SET carried_to = $2 WHERE id::text = $1`,
+			p.id, invitationID); err != nil {
+			return fmt.Errorf("clusterlead: marking a carried invitation: %w", err)
+		}
+	}
+	return nil
+}
+
+// InvitePlan records an invitation to the plan for each school not yet
+// invited to it; ids are new invitation ids, one per school, in order.
+func (s *Store) InvitePlan(ctx context.Context, clusterID, planID string, schoolIDs, ids []string, channel, actorID string) (int, error) {
+	invited := 0
+	err := s.inWrite(ctx, func(tx pgx.Tx) error {
+		for index, schoolID := range schoolIDs {
+			tag, err := tx.Exec(ctx, `
+INSERT INTO cluster_leadership.plan_invitation (id, plan_id, cluster_id, school_id, channel, invited_by)
+SELECT $1, p.id, $3, $4, $5, $6 FROM cluster_leadership.meeting_plan p
+WHERE p.id::text = $2 AND p.status IN ('draft', 'submitted', 'returned', 'approved')
+ON CONFLICT (plan_id, school_id) DO NOTHING`, ids[index], planID, clusterID, schoolID, channel, actorID)
+			if err != nil {
+				return fmt.Errorf("clusterlead: inviting a school to a plan: %w", err)
+			}
+			invited += int(tag.RowsAffected())
+		}
+		return nil
+	})
+	return invited, err
+}
+
+// PlanInvitees is the member schools invited to a plan, by name.
+func (s *Store) PlanInvitees(ctx context.Context, planID string) ([]PlanInvitee, error) {
+	rows, err := s.db.Query(ctx, `
+SELECT pi.school_id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), pi.channel, pi.invited_at
+FROM cluster_leadership.plan_invitation pi LEFT JOIN school s ON s.id = pi.school_id
+WHERE pi.plan_id::text = $1 ORDER BY s.name, pi.school_id`, planID)
+	if err != nil {
+		return nil, fmt.Errorf("clusterlead: reading a plan's invitees: %w", err)
+	}
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (PlanInvitee, error) {
+		var p PlanInvitee
+		return p, row.Scan(&p.SchoolID, &p.EdifySchoolID, &p.Name, &p.Channel, &p.InvitedAt)
 	})
 }
 

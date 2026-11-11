@@ -49,8 +49,12 @@ type MeetingPlan struct {
 	CreatedBy  string       `protobuf:"bytes,20,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
 	History    []*PlanEvent `protobuf:"bytes,21,rep,name=history,proto3" json:"history,omitempty"`
 	// What the caller may do with it now.
-	CanEdit       bool `protobuf:"varint,22,opt,name=can_edit,json=canEdit,proto3" json:"can_edit,omitempty"`
-	CanReview     bool `protobuf:"varint,23,opt,name=can_review,json=canReview,proto3" json:"can_review,omitempty"`
+	CanEdit   bool `protobuf:"varint,22,opt,name=can_edit,json=canEdit,proto3" json:"can_edit,omitempty"`
+	CanReview bool `protobuf:"varint,23,opt,name=can_review,json=canReview,proto3" json:"can_review,omitempty"`
+	// Member schools invited to the plan.
+	InvitedCount int32 `protobuf:"varint,24,opt,name=invited_count,json=invitedCount,proto3" json:"invited_count,omitempty"`
+	// Whether the leader may still cancel it (before it is scheduled).
+	CanCancel     bool `protobuf:"varint,25,opt,name=can_cancel,json=canCancel,proto3" json:"can_cancel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -246,6 +250,317 @@ func (x *MeetingPlan) GetCanReview() bool {
 	return false
 }
 
+func (x *MeetingPlan) GetInvitedCount() int32 {
+	if x != nil {
+		return x.InvitedCount
+	}
+	return 0
+}
+
+func (x *MeetingPlan) GetCanCancel() bool {
+	if x != nil {
+		return x.CanCancel
+	}
+	return false
+}
+
+type GetPlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPlanRequest) Reset() {
+	*x = GetPlanRequest{}
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPlanRequest) ProtoMessage() {}
+
+func (x *GetPlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPlanRequest.ProtoReflect.Descriptor instead.
+func (*GetPlanRequest) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetPlanRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetPlanResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Plan    *MeetingPlan           `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	Invited []*PlanInvitee         `protobuf:"bytes,2,rep,name=invited,proto3" json:"invited,omitempty"`
+	// Whether the leader may still invite schools to it.
+	CanInvite     bool `protobuf:"varint,3,opt,name=can_invite,json=canInvite,proto3" json:"can_invite,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPlanResponse) Reset() {
+	*x = GetPlanResponse{}
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPlanResponse) ProtoMessage() {}
+
+func (x *GetPlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPlanResponse.ProtoReflect.Descriptor instead.
+func (*GetPlanResponse) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetPlanResponse) GetPlan() *MeetingPlan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+func (x *GetPlanResponse) GetInvited() []*PlanInvitee {
+	if x != nil {
+		return x.Invited
+	}
+	return nil
+}
+
+func (x *GetPlanResponse) GetCanInvite() bool {
+	if x != nil {
+		return x.CanInvite
+	}
+	return false
+}
+
+type PlanInvitee struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SchoolId      string                 `protobuf:"bytes,1,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
+	EdifySchoolId string                 `protobuf:"bytes,2,opt,name=edify_school_id,json=edifySchoolId,proto3" json:"edify_school_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// "in_person", "phone", "sms", "email" or "whatsapp".
+	Channel string `protobuf:"bytes,4,opt,name=channel,proto3" json:"channel,omitempty"`
+	// ISO date.
+	InvitedOn     string `protobuf:"bytes,5,opt,name=invited_on,json=invitedOn,proto3" json:"invited_on,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlanInvitee) Reset() {
+	*x = PlanInvitee{}
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlanInvitee) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlanInvitee) ProtoMessage() {}
+
+func (x *PlanInvitee) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlanInvitee.ProtoReflect.Descriptor instead.
+func (*PlanInvitee) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *PlanInvitee) GetSchoolId() string {
+	if x != nil {
+		return x.SchoolId
+	}
+	return ""
+}
+
+func (x *PlanInvitee) GetEdifySchoolId() string {
+	if x != nil {
+		return x.EdifySchoolId
+	}
+	return ""
+}
+
+func (x *PlanInvitee) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *PlanInvitee) GetChannel() string {
+	if x != nil {
+		return x.Channel
+	}
+	return ""
+}
+
+func (x *PlanInvitee) GetInvitedOn() string {
+	if x != nil {
+		return x.InvitedOn
+	}
+	return ""
+}
+
+type InvitePlanSchoolsRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PlanId    string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	SchoolIds []string               `protobuf:"bytes,2,rep,name=school_ids,json=schoolIds,proto3" json:"school_ids,omitempty"`
+	// "in_person", "phone", "sms", "email" or "whatsapp".
+	Channel       string `protobuf:"bytes,3,opt,name=channel,proto3" json:"channel,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InvitePlanSchoolsRequest) Reset() {
+	*x = InvitePlanSchoolsRequest{}
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InvitePlanSchoolsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InvitePlanSchoolsRequest) ProtoMessage() {}
+
+func (x *InvitePlanSchoolsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InvitePlanSchoolsRequest.ProtoReflect.Descriptor instead.
+func (*InvitePlanSchoolsRequest) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *InvitePlanSchoolsRequest) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *InvitePlanSchoolsRequest) GetSchoolIds() []string {
+	if x != nil {
+		return x.SchoolIds
+	}
+	return nil
+}
+
+func (x *InvitePlanSchoolsRequest) GetChannel() string {
+	if x != nil {
+		return x.Channel
+	}
+	return ""
+}
+
+type InvitePlanSchoolsResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Invited int32                  `protobuf:"varint,1,opt,name=invited,proto3" json:"invited,omitempty"`
+	// Schools already invited, left as they were.
+	AlreadyInvited int32 `protobuf:"varint,2,opt,name=already_invited,json=alreadyInvited,proto3" json:"already_invited,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *InvitePlanSchoolsResponse) Reset() {
+	*x = InvitePlanSchoolsResponse{}
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InvitePlanSchoolsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InvitePlanSchoolsResponse) ProtoMessage() {}
+
+func (x *InvitePlanSchoolsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InvitePlanSchoolsResponse.ProtoReflect.Descriptor instead.
+func (*InvitePlanSchoolsResponse) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *InvitePlanSchoolsResponse) GetInvited() int32 {
+	if x != nil {
+		return x.Invited
+	}
+	return 0
+}
+
+func (x *InvitePlanSchoolsResponse) GetAlreadyInvited() int32 {
+	if x != nil {
+		return x.AlreadyInvited
+	}
+	return 0
+}
+
 type PlanEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Event         string                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
@@ -258,7 +573,7 @@ type PlanEvent struct {
 
 func (x *PlanEvent) Reset() {
 	*x = PlanEvent{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[1]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -270,7 +585,7 @@ func (x *PlanEvent) String() string {
 func (*PlanEvent) ProtoMessage() {}
 
 func (x *PlanEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[1]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -283,7 +598,7 @@ func (x *PlanEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanEvent.ProtoReflect.Descriptor instead.
 func (*PlanEvent) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{1}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PlanEvent) GetEvent() string {
@@ -323,7 +638,7 @@ type ListPlansRequest struct {
 
 func (x *ListPlansRequest) Reset() {
 	*x = ListPlansRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[2]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -335,7 +650,7 @@ func (x *ListPlansRequest) String() string {
 func (*ListPlansRequest) ProtoMessage() {}
 
 func (x *ListPlansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[2]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -348,7 +663,7 @@ func (x *ListPlansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansRequest.ProtoReflect.Descriptor instead.
 func (*ListPlansRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{2}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListPlansRequest) GetClusterId() string {
@@ -369,7 +684,7 @@ type ListPlansResponse struct {
 
 func (x *ListPlansResponse) Reset() {
 	*x = ListPlansResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[3]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -381,7 +696,7 @@ func (x *ListPlansResponse) String() string {
 func (*ListPlansResponse) ProtoMessage() {}
 
 func (x *ListPlansResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[3]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -394,7 +709,7 @@ func (x *ListPlansResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansResponse.ProtoReflect.Descriptor instead.
 func (*ListPlansResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{3}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListPlansResponse) GetPlans() []*MeetingPlan {
@@ -422,7 +737,7 @@ type ActivityChoice struct {
 
 func (x *ActivityChoice) Reset() {
 	*x = ActivityChoice{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[4]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -434,7 +749,7 @@ func (x *ActivityChoice) String() string {
 func (*ActivityChoice) ProtoMessage() {}
 
 func (x *ActivityChoice) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[4]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -447,7 +762,7 @@ func (x *ActivityChoice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActivityChoice.ProtoReflect.Descriptor instead.
 func (*ActivityChoice) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{4}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ActivityChoice) GetId() string {
@@ -479,7 +794,7 @@ type GetPlanOptionsRequest struct {
 
 func (x *GetPlanOptionsRequest) Reset() {
 	*x = GetPlanOptionsRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[5]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -491,7 +806,7 @@ func (x *GetPlanOptionsRequest) String() string {
 func (*GetPlanOptionsRequest) ProtoMessage() {}
 
 func (x *GetPlanOptionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[5]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -504,7 +819,7 @@ func (x *GetPlanOptionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanOptionsRequest.ProtoReflect.Descriptor instead.
 func (*GetPlanOptionsRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{5}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{10}
 }
 
 type GetPlanOptionsResponse struct {
@@ -516,7 +831,7 @@ type GetPlanOptionsResponse struct {
 
 func (x *GetPlanOptionsResponse) Reset() {
 	*x = GetPlanOptionsResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[6]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -528,7 +843,7 @@ func (x *GetPlanOptionsResponse) String() string {
 func (*GetPlanOptionsResponse) ProtoMessage() {}
 
 func (x *GetPlanOptionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[6]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -541,7 +856,7 @@ func (x *GetPlanOptionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanOptionsResponse.ProtoReflect.Descriptor instead.
 func (*GetPlanOptionsResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{6}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetPlanOptionsResponse) GetCourses() []*CourseChoice {
@@ -564,7 +879,7 @@ type CourseChoice struct {
 
 func (x *CourseChoice) Reset() {
 	*x = CourseChoice{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[7]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -576,7 +891,7 @@ func (x *CourseChoice) String() string {
 func (*CourseChoice) ProtoMessage() {}
 
 func (x *CourseChoice) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[7]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -589,7 +904,7 @@ func (x *CourseChoice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CourseChoice.ProtoReflect.Descriptor instead.
 func (*CourseChoice) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{7}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CourseChoice) GetId() string {
@@ -646,7 +961,7 @@ type SavePlanRequest struct {
 
 func (x *SavePlanRequest) Reset() {
 	*x = SavePlanRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[8]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -658,7 +973,7 @@ func (x *SavePlanRequest) String() string {
 func (*SavePlanRequest) ProtoMessage() {}
 
 func (x *SavePlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[8]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -671,7 +986,7 @@ func (x *SavePlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SavePlanRequest.ProtoReflect.Descriptor instead.
 func (*SavePlanRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{8}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SavePlanRequest) GetId() string {
@@ -795,7 +1110,7 @@ type SavePlanResponse struct {
 
 func (x *SavePlanResponse) Reset() {
 	*x = SavePlanResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[9]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -807,7 +1122,7 @@ func (x *SavePlanResponse) String() string {
 func (*SavePlanResponse) ProtoMessage() {}
 
 func (x *SavePlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[9]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -820,7 +1135,7 @@ func (x *SavePlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SavePlanResponse.ProtoReflect.Descriptor instead.
 func (*SavePlanResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{9}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SavePlanResponse) GetPlan() *MeetingPlan {
@@ -840,7 +1155,7 @@ type CancelPlanRequest struct {
 
 func (x *CancelPlanRequest) Reset() {
 	*x = CancelPlanRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[10]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -852,7 +1167,7 @@ func (x *CancelPlanRequest) String() string {
 func (*CancelPlanRequest) ProtoMessage() {}
 
 func (x *CancelPlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[10]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -865,7 +1180,7 @@ func (x *CancelPlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelPlanRequest.ProtoReflect.Descriptor instead.
 func (*CancelPlanRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{10}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CancelPlanRequest) GetId() string {
@@ -891,7 +1206,7 @@ type CancelPlanResponse struct {
 
 func (x *CancelPlanResponse) Reset() {
 	*x = CancelPlanResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[11]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -903,7 +1218,7 @@ func (x *CancelPlanResponse) String() string {
 func (*CancelPlanResponse) ProtoMessage() {}
 
 func (x *CancelPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[11]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -916,7 +1231,7 @@ func (x *CancelPlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelPlanResponse.ProtoReflect.Descriptor instead.
 func (*CancelPlanResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{11}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CancelPlanResponse) GetPlan() *MeetingPlan {
@@ -938,7 +1253,7 @@ type ReviewPlanRequest struct {
 
 func (x *ReviewPlanRequest) Reset() {
 	*x = ReviewPlanRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[12]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -950,7 +1265,7 @@ func (x *ReviewPlanRequest) String() string {
 func (*ReviewPlanRequest) ProtoMessage() {}
 
 func (x *ReviewPlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[12]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -963,7 +1278,7 @@ func (x *ReviewPlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewPlanRequest.ProtoReflect.Descriptor instead.
 func (*ReviewPlanRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{12}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ReviewPlanRequest) GetId() string {
@@ -996,7 +1311,7 @@ type ReviewPlanResponse struct {
 
 func (x *ReviewPlanResponse) Reset() {
 	*x = ReviewPlanResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[13]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1008,7 +1323,7 @@ func (x *ReviewPlanResponse) String() string {
 func (*ReviewPlanResponse) ProtoMessage() {}
 
 func (x *ReviewPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[13]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1021,7 +1336,7 @@ func (x *ReviewPlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewPlanResponse.ProtoReflect.Descriptor instead.
 func (*ReviewPlanResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{13}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ReviewPlanResponse) GetPlan() *MeetingPlan {
@@ -1041,7 +1356,7 @@ type LinkPlanRequest struct {
 
 func (x *LinkPlanRequest) Reset() {
 	*x = LinkPlanRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[14]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1053,7 +1368,7 @@ func (x *LinkPlanRequest) String() string {
 func (*LinkPlanRequest) ProtoMessage() {}
 
 func (x *LinkPlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[14]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1066,7 +1381,7 @@ func (x *LinkPlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkPlanRequest.ProtoReflect.Descriptor instead.
 func (*LinkPlanRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{14}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *LinkPlanRequest) GetId() string {
@@ -1092,7 +1407,7 @@ type LinkPlanResponse struct {
 
 func (x *LinkPlanResponse) Reset() {
 	*x = LinkPlanResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[15]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1104,7 +1419,7 @@ func (x *LinkPlanResponse) String() string {
 func (*LinkPlanResponse) ProtoMessage() {}
 
 func (x *LinkPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[15]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1117,7 +1432,7 @@ func (x *LinkPlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkPlanResponse.ProtoReflect.Descriptor instead.
 func (*LinkPlanResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{15}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *LinkPlanResponse) GetPlan() *MeetingPlan {
@@ -1136,7 +1451,7 @@ type GetMobilizationRequest struct {
 
 func (x *GetMobilizationRequest) Reset() {
 	*x = GetMobilizationRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[16]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1148,7 +1463,7 @@ func (x *GetMobilizationRequest) String() string {
 func (*GetMobilizationRequest) ProtoMessage() {}
 
 func (x *GetMobilizationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[16]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1161,7 +1476,7 @@ func (x *GetMobilizationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMobilizationRequest.ProtoReflect.Descriptor instead.
 func (*GetMobilizationRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{16}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetMobilizationRequest) GetActivityId() string {
@@ -1188,7 +1503,7 @@ type GetMobilizationResponse struct {
 
 func (x *GetMobilizationResponse) Reset() {
 	*x = GetMobilizationResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[17]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1200,7 +1515,7 @@ func (x *GetMobilizationResponse) String() string {
 func (*GetMobilizationResponse) ProtoMessage() {}
 
 func (x *GetMobilizationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[17]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1213,7 +1528,7 @@ func (x *GetMobilizationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMobilizationResponse.ProtoReflect.Descriptor instead.
 func (*GetMobilizationResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{17}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GetMobilizationResponse) GetActivity() *ClusterActivity {
@@ -1286,7 +1601,7 @@ type SchoolMobilization struct {
 
 func (x *SchoolMobilization) Reset() {
 	*x = SchoolMobilization{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[18]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1298,7 +1613,7 @@ func (x *SchoolMobilization) String() string {
 func (*SchoolMobilization) ProtoMessage() {}
 
 func (x *SchoolMobilization) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[18]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1311,7 +1626,7 @@ func (x *SchoolMobilization) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SchoolMobilization.ProtoReflect.Descriptor instead.
 func (*SchoolMobilization) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{18}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *SchoolMobilization) GetSchoolId() string {
@@ -1424,7 +1739,7 @@ type InviteSchoolsRequest struct {
 
 func (x *InviteSchoolsRequest) Reset() {
 	*x = InviteSchoolsRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[19]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1436,7 +1751,7 @@ func (x *InviteSchoolsRequest) String() string {
 func (*InviteSchoolsRequest) ProtoMessage() {}
 
 func (x *InviteSchoolsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[19]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1449,7 +1764,7 @@ func (x *InviteSchoolsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InviteSchoolsRequest.ProtoReflect.Descriptor instead.
 func (*InviteSchoolsRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{19}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *InviteSchoolsRequest) GetActivityId() string {
@@ -1484,7 +1799,7 @@ type InviteSchoolsResponse struct {
 
 func (x *InviteSchoolsResponse) Reset() {
 	*x = InviteSchoolsResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[20]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1496,7 +1811,7 @@ func (x *InviteSchoolsResponse) String() string {
 func (*InviteSchoolsResponse) ProtoMessage() {}
 
 func (x *InviteSchoolsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[20]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1509,7 +1824,7 @@ func (x *InviteSchoolsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InviteSchoolsResponse.ProtoReflect.Descriptor instead.
 func (*InviteSchoolsResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{20}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *InviteSchoolsResponse) GetInvited() int32 {
@@ -1538,7 +1853,7 @@ type RecordResponseRequest struct {
 
 func (x *RecordResponseRequest) Reset() {
 	*x = RecordResponseRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[21]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1550,7 +1865,7 @@ func (x *RecordResponseRequest) String() string {
 func (*RecordResponseRequest) ProtoMessage() {}
 
 func (x *RecordResponseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[21]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1563,7 +1878,7 @@ func (x *RecordResponseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordResponseRequest.ProtoReflect.Descriptor instead.
 func (*RecordResponseRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{21}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *RecordResponseRequest) GetInvitationId() string {
@@ -1596,7 +1911,7 @@ type RecordResponseResponse struct {
 
 func (x *RecordResponseResponse) Reset() {
 	*x = RecordResponseResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[22]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1608,7 +1923,7 @@ func (x *RecordResponseResponse) String() string {
 func (*RecordResponseResponse) ProtoMessage() {}
 
 func (x *RecordResponseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[22]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1621,7 +1936,7 @@ func (x *RecordResponseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordResponseResponse.ProtoReflect.Descriptor instead.
 func (*RecordResponseResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{22}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *RecordResponseResponse) GetSchool() *SchoolMobilization {
@@ -1641,7 +1956,7 @@ type FollowUpRequest struct {
 
 func (x *FollowUpRequest) Reset() {
 	*x = FollowUpRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[23]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1653,7 +1968,7 @@ func (x *FollowUpRequest) String() string {
 func (*FollowUpRequest) ProtoMessage() {}
 
 func (x *FollowUpRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[23]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1666,7 +1981,7 @@ func (x *FollowUpRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FollowUpRequest.ProtoReflect.Descriptor instead.
 func (*FollowUpRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{23}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *FollowUpRequest) GetInvitationId() string {
@@ -1692,7 +2007,7 @@ type FollowUpResponse struct {
 
 func (x *FollowUpResponse) Reset() {
 	*x = FollowUpResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[24]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1704,7 +2019,7 @@ func (x *FollowUpResponse) String() string {
 func (*FollowUpResponse) ProtoMessage() {}
 
 func (x *FollowUpResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[24]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1717,7 +2032,7 @@ func (x *FollowUpResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FollowUpResponse.ProtoReflect.Descriptor instead.
 func (*FollowUpResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{24}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *FollowUpResponse) GetSchool() *SchoolMobilization {
@@ -1738,7 +2053,7 @@ type AttendanceEntry struct {
 
 func (x *AttendanceEntry) Reset() {
 	*x = AttendanceEntry{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[25]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1750,7 +2065,7 @@ func (x *AttendanceEntry) String() string {
 func (*AttendanceEntry) ProtoMessage() {}
 
 func (x *AttendanceEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[25]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1763,7 +2078,7 @@ func (x *AttendanceEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttendanceEntry.ProtoReflect.Descriptor instead.
 func (*AttendanceEntry) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{25}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *AttendanceEntry) GetSchoolId() string {
@@ -1797,7 +2112,7 @@ type RecordAttendanceRequest struct {
 
 func (x *RecordAttendanceRequest) Reset() {
 	*x = RecordAttendanceRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[26]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1809,7 +2124,7 @@ func (x *RecordAttendanceRequest) String() string {
 func (*RecordAttendanceRequest) ProtoMessage() {}
 
 func (x *RecordAttendanceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[26]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1822,7 +2137,7 @@ func (x *RecordAttendanceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordAttendanceRequest.ProtoReflect.Descriptor instead.
 func (*RecordAttendanceRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{26}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *RecordAttendanceRequest) GetActivityId() string {
@@ -1848,7 +2163,7 @@ type RecordAttendanceResponse struct {
 
 func (x *RecordAttendanceResponse) Reset() {
 	*x = RecordAttendanceResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[27]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1860,7 +2175,7 @@ func (x *RecordAttendanceResponse) String() string {
 func (*RecordAttendanceResponse) ProtoMessage() {}
 
 func (x *RecordAttendanceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[27]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1873,7 +2188,7 @@ func (x *RecordAttendanceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordAttendanceResponse.ProtoReflect.Descriptor instead.
 func (*RecordAttendanceResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{27}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *RecordAttendanceResponse) GetRecorded() int32 {
@@ -1896,7 +2211,7 @@ type Minutes struct {
 
 func (x *Minutes) Reset() {
 	*x = Minutes{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[28]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1908,7 +2223,7 @@ func (x *Minutes) String() string {
 func (*Minutes) ProtoMessage() {}
 
 func (x *Minutes) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[28]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1921,7 +2236,7 @@ func (x *Minutes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Minutes.ProtoReflect.Descriptor instead.
 func (*Minutes) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{28}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *Minutes) GetDiscussion() string {
@@ -1964,7 +2279,7 @@ type SaveMinutesRequest struct {
 
 func (x *SaveMinutesRequest) Reset() {
 	*x = SaveMinutesRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[29]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1976,7 +2291,7 @@ func (x *SaveMinutesRequest) String() string {
 func (*SaveMinutesRequest) ProtoMessage() {}
 
 func (x *SaveMinutesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[29]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1989,7 +2304,7 @@ func (x *SaveMinutesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveMinutesRequest.ProtoReflect.Descriptor instead.
 func (*SaveMinutesRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{29}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *SaveMinutesRequest) GetActivityId() string {
@@ -2029,7 +2344,7 @@ type SaveMinutesResponse struct {
 
 func (x *SaveMinutesResponse) Reset() {
 	*x = SaveMinutesResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[30]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2041,7 +2356,7 @@ func (x *SaveMinutesResponse) String() string {
 func (*SaveMinutesResponse) ProtoMessage() {}
 
 func (x *SaveMinutesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[30]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2054,7 +2369,7 @@ func (x *SaveMinutesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveMinutesResponse.ProtoReflect.Descriptor instead.
 func (*SaveMinutesResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{30}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *SaveMinutesResponse) GetMinutes() *Minutes {
@@ -2083,7 +2398,7 @@ type ActionItem struct {
 
 func (x *ActionItem) Reset() {
 	*x = ActionItem{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[31]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2095,7 +2410,7 @@ func (x *ActionItem) String() string {
 func (*ActionItem) ProtoMessage() {}
 
 func (x *ActionItem) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[31]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2108,7 +2423,7 @@ func (x *ActionItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionItem.ProtoReflect.Descriptor instead.
 func (*ActionItem) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{31}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ActionItem) GetId() string {
@@ -2192,7 +2507,7 @@ type ListActionItemsRequest struct {
 
 func (x *ListActionItemsRequest) Reset() {
 	*x = ListActionItemsRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[32]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2204,7 +2519,7 @@ func (x *ListActionItemsRequest) String() string {
 func (*ListActionItemsRequest) ProtoMessage() {}
 
 func (x *ListActionItemsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[32]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2217,7 +2532,7 @@ func (x *ListActionItemsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListActionItemsRequest.ProtoReflect.Descriptor instead.
 func (*ListActionItemsRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{32}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListActionItemsRequest) GetClusterId() string {
@@ -2243,7 +2558,7 @@ type ListActionItemsResponse struct {
 
 func (x *ListActionItemsResponse) Reset() {
 	*x = ListActionItemsResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[33]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2255,7 +2570,7 @@ func (x *ListActionItemsResponse) String() string {
 func (*ListActionItemsResponse) ProtoMessage() {}
 
 func (x *ListActionItemsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[33]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2268,7 +2583,7 @@ func (x *ListActionItemsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListActionItemsResponse.ProtoReflect.Descriptor instead.
 func (*ListActionItemsResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{33}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ListActionItemsResponse) GetItems() []*ActionItem {
@@ -2294,7 +2609,7 @@ type SaveActionItemRequest struct {
 
 func (x *SaveActionItemRequest) Reset() {
 	*x = SaveActionItemRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[34]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2306,7 +2621,7 @@ func (x *SaveActionItemRequest) String() string {
 func (*SaveActionItemRequest) ProtoMessage() {}
 
 func (x *SaveActionItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[34]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2319,7 +2634,7 @@ func (x *SaveActionItemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveActionItemRequest.ProtoReflect.Descriptor instead.
 func (*SaveActionItemRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{34}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *SaveActionItemRequest) GetId() string {
@@ -2380,7 +2695,7 @@ type SaveActionItemResponse struct {
 
 func (x *SaveActionItemResponse) Reset() {
 	*x = SaveActionItemResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[35]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2392,7 +2707,7 @@ func (x *SaveActionItemResponse) String() string {
 func (*SaveActionItemResponse) ProtoMessage() {}
 
 func (x *SaveActionItemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[35]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2405,7 +2720,7 @@ func (x *SaveActionItemResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveActionItemResponse.ProtoReflect.Descriptor instead.
 func (*SaveActionItemResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{35}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *SaveActionItemResponse) GetItem() *ActionItem {
@@ -2427,7 +2742,7 @@ type CloseActionItemRequest struct {
 
 func (x *CloseActionItemRequest) Reset() {
 	*x = CloseActionItemRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[36]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2439,7 +2754,7 @@ func (x *CloseActionItemRequest) String() string {
 func (*CloseActionItemRequest) ProtoMessage() {}
 
 func (x *CloseActionItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[36]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2452,7 +2767,7 @@ func (x *CloseActionItemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloseActionItemRequest.ProtoReflect.Descriptor instead.
 func (*CloseActionItemRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{36}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *CloseActionItemRequest) GetId() string {
@@ -2485,7 +2800,7 @@ type CloseActionItemResponse struct {
 
 func (x *CloseActionItemResponse) Reset() {
 	*x = CloseActionItemResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[37]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2497,7 +2812,7 @@ func (x *CloseActionItemResponse) String() string {
 func (*CloseActionItemResponse) ProtoMessage() {}
 
 func (x *CloseActionItemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[37]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2510,7 +2825,7 @@ func (x *CloseActionItemResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloseActionItemResponse.ProtoReflect.Descriptor instead.
 func (*CloseActionItemResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{37}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *CloseActionItemResponse) GetItem() *ActionItem {
@@ -2539,7 +2854,7 @@ type LeaderRequest struct {
 
 func (x *LeaderRequest) Reset() {
 	*x = LeaderRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[38]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2551,7 +2866,7 @@ func (x *LeaderRequest) String() string {
 func (*LeaderRequest) ProtoMessage() {}
 
 func (x *LeaderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[38]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2564,7 +2879,7 @@ func (x *LeaderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaderRequest.ProtoReflect.Descriptor instead.
 func (*LeaderRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{38}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *LeaderRequest) GetId() string {
@@ -2646,7 +2961,7 @@ type ListRequestsRequest struct {
 
 func (x *ListRequestsRequest) Reset() {
 	*x = ListRequestsRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[39]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2658,7 +2973,7 @@ func (x *ListRequestsRequest) String() string {
 func (*ListRequestsRequest) ProtoMessage() {}
 
 func (x *ListRequestsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[39]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2671,7 +2986,7 @@ func (x *ListRequestsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRequestsRequest.ProtoReflect.Descriptor instead.
 func (*ListRequestsRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{39}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *ListRequestsRequest) GetClusterId() string {
@@ -2690,7 +3005,7 @@ type ListRequestsResponse struct {
 
 func (x *ListRequestsResponse) Reset() {
 	*x = ListRequestsResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[40]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2702,7 +3017,7 @@ func (x *ListRequestsResponse) String() string {
 func (*ListRequestsResponse) ProtoMessage() {}
 
 func (x *ListRequestsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[40]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2715,7 +3030,7 @@ func (x *ListRequestsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRequestsResponse.ProtoReflect.Descriptor instead.
 func (*ListRequestsResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{40}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *ListRequestsResponse) GetRequests() []*LeaderRequest {
@@ -2736,7 +3051,7 @@ type SubmitRequestRequest struct {
 
 func (x *SubmitRequestRequest) Reset() {
 	*x = SubmitRequestRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[41]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2748,7 +3063,7 @@ func (x *SubmitRequestRequest) String() string {
 func (*SubmitRequestRequest) ProtoMessage() {}
 
 func (x *SubmitRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[41]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2761,7 +3076,7 @@ func (x *SubmitRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitRequestRequest.ProtoReflect.Descriptor instead.
 func (*SubmitRequestRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{41}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *SubmitRequestRequest) GetClusterId() string {
@@ -2794,7 +3109,7 @@ type SubmitRequestResponse struct {
 
 func (x *SubmitRequestResponse) Reset() {
 	*x = SubmitRequestResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[42]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2806,7 +3121,7 @@ func (x *SubmitRequestResponse) String() string {
 func (*SubmitRequestResponse) ProtoMessage() {}
 
 func (x *SubmitRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[42]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2819,7 +3134,7 @@ func (x *SubmitRequestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitRequestResponse.ProtoReflect.Descriptor instead.
 func (*SubmitRequestResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{42}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *SubmitRequestResponse) GetRequest() *LeaderRequest {
@@ -2839,7 +3154,7 @@ type AnswerRequestRequest struct {
 
 func (x *AnswerRequestRequest) Reset() {
 	*x = AnswerRequestRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[43]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2851,7 +3166,7 @@ func (x *AnswerRequestRequest) String() string {
 func (*AnswerRequestRequest) ProtoMessage() {}
 
 func (x *AnswerRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[43]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2864,7 +3179,7 @@ func (x *AnswerRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnswerRequestRequest.ProtoReflect.Descriptor instead.
 func (*AnswerRequestRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{43}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *AnswerRequestRequest) GetId() string {
@@ -2890,7 +3205,7 @@ type AnswerRequestResponse struct {
 
 func (x *AnswerRequestResponse) Reset() {
 	*x = AnswerRequestResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[44]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2902,7 +3217,7 @@ func (x *AnswerRequestResponse) String() string {
 func (*AnswerRequestResponse) ProtoMessage() {}
 
 func (x *AnswerRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[44]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2915,7 +3230,7 @@ func (x *AnswerRequestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnswerRequestResponse.ProtoReflect.Descriptor instead.
 func (*AnswerRequestResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{44}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *AnswerRequestResponse) GetRequest() *LeaderRequest {
@@ -2934,7 +3249,7 @@ type GetClusterReportRequest struct {
 
 func (x *GetClusterReportRequest) Reset() {
 	*x = GetClusterReportRequest{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[45]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2946,7 +3261,7 @@ func (x *GetClusterReportRequest) String() string {
 func (*GetClusterReportRequest) ProtoMessage() {}
 
 func (x *GetClusterReportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[45]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2959,7 +3274,7 @@ func (x *GetClusterReportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClusterReportRequest.ProtoReflect.Descriptor instead.
 func (*GetClusterReportRequest) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{45}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *GetClusterReportRequest) GetClusterId() string {
@@ -2981,14 +3296,16 @@ type GetClusterReportResponse struct {
 	// Member schools by their SSA status for the financial year.
 	SsaStatus []*ReportCount `protobuf:"bytes,5,rep,name=ssa_status,json=ssaStatus,proto3" json:"ssa_status,omitempty"`
 	// What waits on staff: plans to review, requests to answer.
-	NeedsStaff    []*ReportCount `protobuf:"bytes,6,rep,name=needs_staff,json=needsStaff,proto3" json:"needs_staff,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	NeedsStaff []*ReportCount `protobuf:"bytes,6,rep,name=needs_staff,json=needsStaff,proto3" json:"needs_staff,omitempty"`
+	// Member schools' confirmed SSA average, this financial year against the one before.
+	SsaPerformance *SsaPerformance `protobuf:"bytes,7,opt,name=ssa_performance,json=ssaPerformance,proto3" json:"ssa_performance,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *GetClusterReportResponse) Reset() {
 	*x = GetClusterReportResponse{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[46]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3000,7 +3317,7 @@ func (x *GetClusterReportResponse) String() string {
 func (*GetClusterReportResponse) ProtoMessage() {}
 
 func (x *GetClusterReportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[46]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3013,7 +3330,7 @@ func (x *GetClusterReportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClusterReportResponse.ProtoReflect.Descriptor instead.
 func (*GetClusterReportResponse) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{46}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *GetClusterReportResponse) GetPeriod() string {
@@ -3058,6 +3375,119 @@ func (x *GetClusterReportResponse) GetNeedsStaff() []*ReportCount {
 	return nil
 }
 
+func (x *GetClusterReportResponse) GetSsaPerformance() *SsaPerformance {
+	if x != nil {
+		return x.SsaPerformance
+	}
+	return nil
+}
+
+type SsaPerformance struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "FY 2027" and "FY 2026".
+	CurrentPeriod  string `protobuf:"bytes,1,opt,name=current_period,json=currentPeriod,proto3" json:"current_period,omitempty"`
+	PreviousPeriod string `protobuf:"bytes,2,opt,name=previous_period,json=previousPeriod,proto3" json:"previous_period,omitempty"`
+	// Averages to two places ("5.91"); empty when no confirmed record.
+	CurrentAverage  string `protobuf:"bytes,3,opt,name=current_average,json=currentAverage,proto3" json:"current_average,omitempty"`
+	PreviousAverage string `protobuf:"bytes,4,opt,name=previous_average,json=previousAverage,proto3" json:"previous_average,omitempty"`
+	// "+19%" or "-3%", from the schools with a confirmed record in both years
+	// only, so a school assessed in one year alone never moves it; empty when
+	// no school has both.
+	Change          string `protobuf:"bytes,5,opt,name=change,proto3" json:"change,omitempty"`
+	SchoolsCurrent  int32  `protobuf:"varint,6,opt,name=schools_current,json=schoolsCurrent,proto3" json:"schools_current,omitempty"`
+	SchoolsPrevious int32  `protobuf:"varint,7,opt,name=schools_previous,json=schoolsPrevious,proto3" json:"schools_previous,omitempty"`
+	// Schools with a confirmed record in both years: the change is theirs.
+	SchoolsCompared int32 `protobuf:"varint,8,opt,name=schools_compared,json=schoolsCompared,proto3" json:"schools_compared,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SsaPerformance) Reset() {
+	*x = SsaPerformance{}
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SsaPerformance) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SsaPerformance) ProtoMessage() {}
+
+func (x *SsaPerformance) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[52]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SsaPerformance.ProtoReflect.Descriptor instead.
+func (*SsaPerformance) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{52}
+}
+
+func (x *SsaPerformance) GetCurrentPeriod() string {
+	if x != nil {
+		return x.CurrentPeriod
+	}
+	return ""
+}
+
+func (x *SsaPerformance) GetPreviousPeriod() string {
+	if x != nil {
+		return x.PreviousPeriod
+	}
+	return ""
+}
+
+func (x *SsaPerformance) GetCurrentAverage() string {
+	if x != nil {
+		return x.CurrentAverage
+	}
+	return ""
+}
+
+func (x *SsaPerformance) GetPreviousAverage() string {
+	if x != nil {
+		return x.PreviousAverage
+	}
+	return ""
+}
+
+func (x *SsaPerformance) GetChange() string {
+	if x != nil {
+		return x.Change
+	}
+	return ""
+}
+
+func (x *SsaPerformance) GetSchoolsCurrent() int32 {
+	if x != nil {
+		return x.SchoolsCurrent
+	}
+	return 0
+}
+
+func (x *SsaPerformance) GetSchoolsPrevious() int32 {
+	if x != nil {
+		return x.SchoolsPrevious
+	}
+	return 0
+}
+
+func (x *SsaPerformance) GetSchoolsCompared() int32 {
+	if x != nil {
+		return x.SchoolsCompared
+	}
+	return 0
+}
+
 type ReportFigure struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
@@ -3069,7 +3499,7 @@ type ReportFigure struct {
 
 func (x *ReportFigure) Reset() {
 	*x = ReportFigure{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[47]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3081,7 +3511,7 @@ func (x *ReportFigure) String() string {
 func (*ReportFigure) ProtoMessage() {}
 
 func (x *ReportFigure) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[47]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3094,7 +3524,7 @@ func (x *ReportFigure) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportFigure.ProtoReflect.Descriptor instead.
 func (*ReportFigure) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{47}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *ReportFigure) GetKey() string {
@@ -3131,7 +3561,7 @@ type ReportSchool struct {
 
 func (x *ReportSchool) Reset() {
 	*x = ReportSchool{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[48]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3143,7 +3573,7 @@ func (x *ReportSchool) String() string {
 func (*ReportSchool) ProtoMessage() {}
 
 func (x *ReportSchool) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[48]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3156,7 +3586,7 @@ func (x *ReportSchool) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportSchool.ProtoReflect.Descriptor instead.
 func (*ReportSchool) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{48}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *ReportSchool) GetSchoolId() string {
@@ -3204,7 +3634,7 @@ type ReportCount struct {
 
 func (x *ReportCount) Reset() {
 	*x = ReportCount{}
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[49]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3216,7 +3646,7 @@ func (x *ReportCount) String() string {
 func (*ReportCount) ProtoMessage() {}
 
 func (x *ReportCount) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[49]
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3229,7 +3659,7 @@ func (x *ReportCount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportCount.ProtoReflect.Descriptor instead.
 func (*ReportCount) Descriptor() ([]byte, []int) {
-	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{49}
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *ReportCount) GetLabel() string {
@@ -3246,11 +3676,108 @@ func (x *ReportCount) GetCount() int32 {
 	return 0
 }
 
+type GetClusterReportPdfRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClusterId     string                 `protobuf:"bytes,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetClusterReportPdfRequest) Reset() {
+	*x = GetClusterReportPdfRequest{}
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[56]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetClusterReportPdfRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetClusterReportPdfRequest) ProtoMessage() {}
+
+func (x *GetClusterReportPdfRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[56]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetClusterReportPdfRequest.ProtoReflect.Descriptor instead.
+func (*GetClusterReportPdfRequest) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{56}
+}
+
+func (x *GetClusterReportPdfRequest) GetClusterId() string {
+	if x != nil {
+		return x.ClusterId
+	}
+	return ""
+}
+
+type GetClusterReportPdfResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Pdf   []byte                 `protobuf:"bytes,1,opt,name=pdf,proto3" json:"pdf,omitempty"`
+	// "Cluster report - Kampala East - FY 2027.pdf".
+	FileName      string `protobuf:"bytes,2,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetClusterReportPdfResponse) Reset() {
+	*x = GetClusterReportPdfResponse{}
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[57]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetClusterReportPdfResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetClusterReportPdfResponse) ProtoMessage() {}
+
+func (x *GetClusterReportPdfResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_clusters_v1_mobilization_proto_msgTypes[57]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetClusterReportPdfResponse.ProtoReflect.Descriptor instead.
+func (*GetClusterReportPdfResponse) Descriptor() ([]byte, []int) {
+	return file_edify_clusters_v1_mobilization_proto_rawDescGZIP(), []int{57}
+}
+
+func (x *GetClusterReportPdfResponse) GetPdf() []byte {
+	if x != nil {
+		return x.Pdf
+	}
+	return nil
+}
+
+func (x *GetClusterReportPdfResponse) GetFileName() string {
+	if x != nil {
+		return x.FileName
+	}
+	return ""
+}
+
 var File_edify_clusters_v1_mobilization_proto protoreflect.FileDescriptor
 
 const file_edify_clusters_v1_mobilization_proto_rawDesc = "" +
 	"\n" +
-	"$edify/clusters/v1/mobilization.proto\x12\x11edify.clusters.v1\x1a\"edify/clusters/v1/leadership.proto\"\xe2\x05\n" +
+	"$edify/clusters/v1/mobilization.proto\x12\x11edify.clusters.v1\x1a\"edify/clusters/v1/leadership.proto\"\xa6\x06\n" +
 	"\vMeetingPlan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -3283,7 +3810,32 @@ const file_edify_clusters_v1_mobilization_proto_rawDesc = "" +
 	"\ahistory\x18\x15 \x03(\v2\x1c.edify.clusters.v1.PlanEventR\ahistory\x12\x19\n" +
 	"\bcan_edit\x18\x16 \x01(\bR\acanEdit\x12\x1d\n" +
 	"\n" +
-	"can_review\x18\x17 \x01(\bR\tcanReview\"[\n" +
+	"can_review\x18\x17 \x01(\bR\tcanReview\x12#\n" +
+	"\rinvited_count\x18\x18 \x01(\x05R\finvitedCount\x12\x1d\n" +
+	"\n" +
+	"can_cancel\x18\x19 \x01(\bR\tcanCancel\" \n" +
+	"\x0eGetPlanRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x9e\x01\n" +
+	"\x0fGetPlanResponse\x122\n" +
+	"\x04plan\x18\x01 \x01(\v2\x1e.edify.clusters.v1.MeetingPlanR\x04plan\x128\n" +
+	"\ainvited\x18\x02 \x03(\v2\x1e.edify.clusters.v1.PlanInviteeR\ainvited\x12\x1d\n" +
+	"\n" +
+	"can_invite\x18\x03 \x01(\bR\tcanInvite\"\x9f\x01\n" +
+	"\vPlanInvitee\x12\x1b\n" +
+	"\tschool_id\x18\x01 \x01(\tR\bschoolId\x12&\n" +
+	"\x0fedify_school_id\x18\x02 \x01(\tR\redifySchoolId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x18\n" +
+	"\achannel\x18\x04 \x01(\tR\achannel\x12\x1d\n" +
+	"\n" +
+	"invited_on\x18\x05 \x01(\tR\tinvitedOn\"l\n" +
+	"\x18InvitePlanSchoolsRequest\x12\x17\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12\x1d\n" +
+	"\n" +
+	"school_ids\x18\x02 \x03(\tR\tschoolIds\x12\x18\n" +
+	"\achannel\x18\x03 \x01(\tR\achannel\"^\n" +
+	"\x19InvitePlanSchoolsResponse\x12\x18\n" +
+	"\ainvited\x18\x01 \x01(\x05R\ainvited\x12'\n" +
+	"\x0falready_invited\x18\x02 \x01(\x05R\x0ealreadyInvited\"[\n" +
 	"\tPlanEvent\x12\x14\n" +
 	"\x05event\x18\x01 \x01(\tR\x05event\x12\x14\n" +
 	"\x05actor\x18\x02 \x01(\tR\x05actor\x12\x12\n" +
@@ -3502,7 +4054,7 @@ const file_edify_clusters_v1_mobilization_proto_rawDesc = "" +
 	"\arequest\x18\x01 \x01(\v2 .edify.clusters.v1.LeaderRequestR\arequest\"8\n" +
 	"\x17GetClusterReportRequest\x12\x1d\n" +
 	"\n" +
-	"cluster_id\x18\x01 \x01(\tR\tclusterId\"\x95\x03\n" +
+	"cluster_id\x18\x01 \x01(\tR\tclusterId\"\xe1\x03\n" +
 	"\x18GetClusterReportResponse\x12\x16\n" +
 	"\x06period\x18\x01 \x01(\tR\x06period\x129\n" +
 	"\afigures\x18\x02 \x03(\v2\x1f.edify.clusters.v1.ReportFigureR\afigures\x12L\n" +
@@ -3511,7 +4063,17 @@ const file_edify_clusters_v1_mobilization_proto_rawDesc = "" +
 	"\n" +
 	"ssa_status\x18\x05 \x03(\v2\x1e.edify.clusters.v1.ReportCountR\tssaStatus\x12?\n" +
 	"\vneeds_staff\x18\x06 \x03(\v2\x1e.edify.clusters.v1.ReportCountR\n" +
-	"needsStaff\"L\n" +
+	"needsStaff\x12J\n" +
+	"\x0fssa_performance\x18\a \x01(\v2!.edify.clusters.v1.SsaPerformanceR\x0essaPerformance\"\xcb\x02\n" +
+	"\x0eSsaPerformance\x12%\n" +
+	"\x0ecurrent_period\x18\x01 \x01(\tR\rcurrentPeriod\x12'\n" +
+	"\x0fprevious_period\x18\x02 \x01(\tR\x0epreviousPeriod\x12'\n" +
+	"\x0fcurrent_average\x18\x03 \x01(\tR\x0ecurrentAverage\x12)\n" +
+	"\x10previous_average\x18\x04 \x01(\tR\x0fpreviousAverage\x12\x16\n" +
+	"\x06change\x18\x05 \x01(\tR\x06change\x12'\n" +
+	"\x0fschools_current\x18\x06 \x01(\x05R\x0eschoolsCurrent\x12)\n" +
+	"\x10schools_previous\x18\a \x01(\x05R\x0fschoolsPrevious\x12)\n" +
+	"\x10schools_compared\x18\b \x01(\x05R\x0fschoolsCompared\"L\n" +
 	"\fReportFigure\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x14\n" +
@@ -3524,7 +4086,13 @@ const file_edify_clusters_v1_mobilization_proto_rawDesc = "" +
 	"\vinvitations\x18\x05 \x01(\x05R\vinvitations\"9\n" +
 	"\vReportCount\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x12\x14\n" +
-	"\x05count\x18\x02 \x01(\x05R\x05count2\xe1\x0e\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count\";\n" +
+	"\x1aGetClusterReportPdfRequest\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x01 \x01(\tR\tclusterId\"L\n" +
+	"\x1bGetClusterReportPdfResponse\x12\x10\n" +
+	"\x03pdf\x18\x01 \x01(\fR\x03pdf\x12\x1b\n" +
+	"\tfile_name\x18\x02 \x01(\tR\bfileName2\x99\x11\n" +
 	"\x1aClusterMobilizationService\x12V\n" +
 	"\tListPlans\x12#.edify.clusters.v1.ListPlansRequest\x1a$.edify.clusters.v1.ListPlansResponse\x12e\n" +
 	"\x0eGetPlanOptions\x12(.edify.clusters.v1.GetPlanOptionsRequest\x1a).edify.clusters.v1.GetPlanOptionsResponse\x12S\n" +
@@ -3533,7 +4101,9 @@ const file_edify_clusters_v1_mobilization_proto_rawDesc = "" +
 	"CancelPlan\x12$.edify.clusters.v1.CancelPlanRequest\x1a%.edify.clusters.v1.CancelPlanResponse\x12Y\n" +
 	"\n" +
 	"ReviewPlan\x12$.edify.clusters.v1.ReviewPlanRequest\x1a%.edify.clusters.v1.ReviewPlanResponse\x12S\n" +
-	"\bLinkPlan\x12\".edify.clusters.v1.LinkPlanRequest\x1a#.edify.clusters.v1.LinkPlanResponse\x12h\n" +
+	"\bLinkPlan\x12\".edify.clusters.v1.LinkPlanRequest\x1a#.edify.clusters.v1.LinkPlanResponse\x12P\n" +
+	"\aGetPlan\x12!.edify.clusters.v1.GetPlanRequest\x1a\".edify.clusters.v1.GetPlanResponse\x12n\n" +
+	"\x11InvitePlanSchools\x12+.edify.clusters.v1.InvitePlanSchoolsRequest\x1a,.edify.clusters.v1.InvitePlanSchoolsResponse\x12h\n" +
 	"\x0fGetMobilization\x12).edify.clusters.v1.GetMobilizationRequest\x1a*.edify.clusters.v1.GetMobilizationResponse\x12b\n" +
 	"\rInviteSchools\x12'.edify.clusters.v1.InviteSchoolsRequest\x1a(.edify.clusters.v1.InviteSchoolsResponse\x12e\n" +
 	"\x0eRecordResponse\x12(.edify.clusters.v1.RecordResponseRequest\x1a).edify.clusters.v1.RecordResponseResponse\x12S\n" +
@@ -3546,7 +4116,8 @@ const file_edify_clusters_v1_mobilization_proto_rawDesc = "" +
 	"\fListRequests\x12&.edify.clusters.v1.ListRequestsRequest\x1a'.edify.clusters.v1.ListRequestsResponse\x12b\n" +
 	"\rSubmitRequest\x12'.edify.clusters.v1.SubmitRequestRequest\x1a(.edify.clusters.v1.SubmitRequestResponse\x12b\n" +
 	"\rAnswerRequest\x12'.edify.clusters.v1.AnswerRequestRequest\x1a(.edify.clusters.v1.AnswerRequestResponse\x12k\n" +
-	"\x10GetClusterReport\x12*.edify.clusters.v1.GetClusterReportRequest\x1a+.edify.clusters.v1.GetClusterReportResponseB\xec\x01\n" +
+	"\x10GetClusterReport\x12*.edify.clusters.v1.GetClusterReportRequest\x1a+.edify.clusters.v1.GetClusterReportResponse\x12t\n" +
+	"\x13GetClusterReportPdf\x12-.edify.clusters.v1.GetClusterReportPdfRequest\x1a..edify.clusters.v1.GetClusterReportPdfResponseB\xec\x01\n" +
 	"\x15com.edify.clusters.v1B\x11MobilizationProtoP\x01ZZgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/clusters/v1;clustersv1\xa2\x02\x03ECX\xaa\x02\x11Edify.Clusters.V1\xca\x02\x11Edify\\Clusters\\V1\xe2\x02\x1dEdify\\Clusters\\V1\\GPBMetadata\xea\x02\x13Edify::Clusters::V1b\x06proto3"
 
 var (
@@ -3561,133 +4132,150 @@ func file_edify_clusters_v1_mobilization_proto_rawDescGZIP() []byte {
 	return file_edify_clusters_v1_mobilization_proto_rawDescData
 }
 
-var file_edify_clusters_v1_mobilization_proto_msgTypes = make([]protoimpl.MessageInfo, 51)
+var file_edify_clusters_v1_mobilization_proto_msgTypes = make([]protoimpl.MessageInfo, 59)
 var file_edify_clusters_v1_mobilization_proto_goTypes = []any{
-	(*MeetingPlan)(nil),              // 0: edify.clusters.v1.MeetingPlan
-	(*PlanEvent)(nil),                // 1: edify.clusters.v1.PlanEvent
-	(*ListPlansRequest)(nil),         // 2: edify.clusters.v1.ListPlansRequest
-	(*ListPlansResponse)(nil),        // 3: edify.clusters.v1.ListPlansResponse
-	(*ActivityChoice)(nil),           // 4: edify.clusters.v1.ActivityChoice
-	(*GetPlanOptionsRequest)(nil),    // 5: edify.clusters.v1.GetPlanOptionsRequest
-	(*GetPlanOptionsResponse)(nil),   // 6: edify.clusters.v1.GetPlanOptionsResponse
-	(*CourseChoice)(nil),             // 7: edify.clusters.v1.CourseChoice
-	(*SavePlanRequest)(nil),          // 8: edify.clusters.v1.SavePlanRequest
-	(*SavePlanResponse)(nil),         // 9: edify.clusters.v1.SavePlanResponse
-	(*CancelPlanRequest)(nil),        // 10: edify.clusters.v1.CancelPlanRequest
-	(*CancelPlanResponse)(nil),       // 11: edify.clusters.v1.CancelPlanResponse
-	(*ReviewPlanRequest)(nil),        // 12: edify.clusters.v1.ReviewPlanRequest
-	(*ReviewPlanResponse)(nil),       // 13: edify.clusters.v1.ReviewPlanResponse
-	(*LinkPlanRequest)(nil),          // 14: edify.clusters.v1.LinkPlanRequest
-	(*LinkPlanResponse)(nil),         // 15: edify.clusters.v1.LinkPlanResponse
-	(*GetMobilizationRequest)(nil),   // 16: edify.clusters.v1.GetMobilizationRequest
-	(*GetMobilizationResponse)(nil),  // 17: edify.clusters.v1.GetMobilizationResponse
-	(*SchoolMobilization)(nil),       // 18: edify.clusters.v1.SchoolMobilization
-	(*InviteSchoolsRequest)(nil),     // 19: edify.clusters.v1.InviteSchoolsRequest
-	(*InviteSchoolsResponse)(nil),    // 20: edify.clusters.v1.InviteSchoolsResponse
-	(*RecordResponseRequest)(nil),    // 21: edify.clusters.v1.RecordResponseRequest
-	(*RecordResponseResponse)(nil),   // 22: edify.clusters.v1.RecordResponseResponse
-	(*FollowUpRequest)(nil),          // 23: edify.clusters.v1.FollowUpRequest
-	(*FollowUpResponse)(nil),         // 24: edify.clusters.v1.FollowUpResponse
-	(*AttendanceEntry)(nil),          // 25: edify.clusters.v1.AttendanceEntry
-	(*RecordAttendanceRequest)(nil),  // 26: edify.clusters.v1.RecordAttendanceRequest
-	(*RecordAttendanceResponse)(nil), // 27: edify.clusters.v1.RecordAttendanceResponse
-	(*Minutes)(nil),                  // 28: edify.clusters.v1.Minutes
-	(*SaveMinutesRequest)(nil),       // 29: edify.clusters.v1.SaveMinutesRequest
-	(*SaveMinutesResponse)(nil),      // 30: edify.clusters.v1.SaveMinutesResponse
-	(*ActionItem)(nil),               // 31: edify.clusters.v1.ActionItem
-	(*ListActionItemsRequest)(nil),   // 32: edify.clusters.v1.ListActionItemsRequest
-	(*ListActionItemsResponse)(nil),  // 33: edify.clusters.v1.ListActionItemsResponse
-	(*SaveActionItemRequest)(nil),    // 34: edify.clusters.v1.SaveActionItemRequest
-	(*SaveActionItemResponse)(nil),   // 35: edify.clusters.v1.SaveActionItemResponse
-	(*CloseActionItemRequest)(nil),   // 36: edify.clusters.v1.CloseActionItemRequest
-	(*CloseActionItemResponse)(nil),  // 37: edify.clusters.v1.CloseActionItemResponse
-	(*LeaderRequest)(nil),            // 38: edify.clusters.v1.LeaderRequest
-	(*ListRequestsRequest)(nil),      // 39: edify.clusters.v1.ListRequestsRequest
-	(*ListRequestsResponse)(nil),     // 40: edify.clusters.v1.ListRequestsResponse
-	(*SubmitRequestRequest)(nil),     // 41: edify.clusters.v1.SubmitRequestRequest
-	(*SubmitRequestResponse)(nil),    // 42: edify.clusters.v1.SubmitRequestResponse
-	(*AnswerRequestRequest)(nil),     // 43: edify.clusters.v1.AnswerRequestRequest
-	(*AnswerRequestResponse)(nil),    // 44: edify.clusters.v1.AnswerRequestResponse
-	(*GetClusterReportRequest)(nil),  // 45: edify.clusters.v1.GetClusterReportRequest
-	(*GetClusterReportResponse)(nil), // 46: edify.clusters.v1.GetClusterReportResponse
-	(*ReportFigure)(nil),             // 47: edify.clusters.v1.ReportFigure
-	(*ReportSchool)(nil),             // 48: edify.clusters.v1.ReportSchool
-	(*ReportCount)(nil),              // 49: edify.clusters.v1.ReportCount
-	nil,                              // 50: edify.clusters.v1.GetMobilizationResponse.CountsEntry
-	(*ClusterActivity)(nil),          // 51: edify.clusters.v1.ClusterActivity
+	(*MeetingPlan)(nil),                 // 0: edify.clusters.v1.MeetingPlan
+	(*GetPlanRequest)(nil),              // 1: edify.clusters.v1.GetPlanRequest
+	(*GetPlanResponse)(nil),             // 2: edify.clusters.v1.GetPlanResponse
+	(*PlanInvitee)(nil),                 // 3: edify.clusters.v1.PlanInvitee
+	(*InvitePlanSchoolsRequest)(nil),    // 4: edify.clusters.v1.InvitePlanSchoolsRequest
+	(*InvitePlanSchoolsResponse)(nil),   // 5: edify.clusters.v1.InvitePlanSchoolsResponse
+	(*PlanEvent)(nil),                   // 6: edify.clusters.v1.PlanEvent
+	(*ListPlansRequest)(nil),            // 7: edify.clusters.v1.ListPlansRequest
+	(*ListPlansResponse)(nil),           // 8: edify.clusters.v1.ListPlansResponse
+	(*ActivityChoice)(nil),              // 9: edify.clusters.v1.ActivityChoice
+	(*GetPlanOptionsRequest)(nil),       // 10: edify.clusters.v1.GetPlanOptionsRequest
+	(*GetPlanOptionsResponse)(nil),      // 11: edify.clusters.v1.GetPlanOptionsResponse
+	(*CourseChoice)(nil),                // 12: edify.clusters.v1.CourseChoice
+	(*SavePlanRequest)(nil),             // 13: edify.clusters.v1.SavePlanRequest
+	(*SavePlanResponse)(nil),            // 14: edify.clusters.v1.SavePlanResponse
+	(*CancelPlanRequest)(nil),           // 15: edify.clusters.v1.CancelPlanRequest
+	(*CancelPlanResponse)(nil),          // 16: edify.clusters.v1.CancelPlanResponse
+	(*ReviewPlanRequest)(nil),           // 17: edify.clusters.v1.ReviewPlanRequest
+	(*ReviewPlanResponse)(nil),          // 18: edify.clusters.v1.ReviewPlanResponse
+	(*LinkPlanRequest)(nil),             // 19: edify.clusters.v1.LinkPlanRequest
+	(*LinkPlanResponse)(nil),            // 20: edify.clusters.v1.LinkPlanResponse
+	(*GetMobilizationRequest)(nil),      // 21: edify.clusters.v1.GetMobilizationRequest
+	(*GetMobilizationResponse)(nil),     // 22: edify.clusters.v1.GetMobilizationResponse
+	(*SchoolMobilization)(nil),          // 23: edify.clusters.v1.SchoolMobilization
+	(*InviteSchoolsRequest)(nil),        // 24: edify.clusters.v1.InviteSchoolsRequest
+	(*InviteSchoolsResponse)(nil),       // 25: edify.clusters.v1.InviteSchoolsResponse
+	(*RecordResponseRequest)(nil),       // 26: edify.clusters.v1.RecordResponseRequest
+	(*RecordResponseResponse)(nil),      // 27: edify.clusters.v1.RecordResponseResponse
+	(*FollowUpRequest)(nil),             // 28: edify.clusters.v1.FollowUpRequest
+	(*FollowUpResponse)(nil),            // 29: edify.clusters.v1.FollowUpResponse
+	(*AttendanceEntry)(nil),             // 30: edify.clusters.v1.AttendanceEntry
+	(*RecordAttendanceRequest)(nil),     // 31: edify.clusters.v1.RecordAttendanceRequest
+	(*RecordAttendanceResponse)(nil),    // 32: edify.clusters.v1.RecordAttendanceResponse
+	(*Minutes)(nil),                     // 33: edify.clusters.v1.Minutes
+	(*SaveMinutesRequest)(nil),          // 34: edify.clusters.v1.SaveMinutesRequest
+	(*SaveMinutesResponse)(nil),         // 35: edify.clusters.v1.SaveMinutesResponse
+	(*ActionItem)(nil),                  // 36: edify.clusters.v1.ActionItem
+	(*ListActionItemsRequest)(nil),      // 37: edify.clusters.v1.ListActionItemsRequest
+	(*ListActionItemsResponse)(nil),     // 38: edify.clusters.v1.ListActionItemsResponse
+	(*SaveActionItemRequest)(nil),       // 39: edify.clusters.v1.SaveActionItemRequest
+	(*SaveActionItemResponse)(nil),      // 40: edify.clusters.v1.SaveActionItemResponse
+	(*CloseActionItemRequest)(nil),      // 41: edify.clusters.v1.CloseActionItemRequest
+	(*CloseActionItemResponse)(nil),     // 42: edify.clusters.v1.CloseActionItemResponse
+	(*LeaderRequest)(nil),               // 43: edify.clusters.v1.LeaderRequest
+	(*ListRequestsRequest)(nil),         // 44: edify.clusters.v1.ListRequestsRequest
+	(*ListRequestsResponse)(nil),        // 45: edify.clusters.v1.ListRequestsResponse
+	(*SubmitRequestRequest)(nil),        // 46: edify.clusters.v1.SubmitRequestRequest
+	(*SubmitRequestResponse)(nil),       // 47: edify.clusters.v1.SubmitRequestResponse
+	(*AnswerRequestRequest)(nil),        // 48: edify.clusters.v1.AnswerRequestRequest
+	(*AnswerRequestResponse)(nil),       // 49: edify.clusters.v1.AnswerRequestResponse
+	(*GetClusterReportRequest)(nil),     // 50: edify.clusters.v1.GetClusterReportRequest
+	(*GetClusterReportResponse)(nil),    // 51: edify.clusters.v1.GetClusterReportResponse
+	(*SsaPerformance)(nil),              // 52: edify.clusters.v1.SsaPerformance
+	(*ReportFigure)(nil),                // 53: edify.clusters.v1.ReportFigure
+	(*ReportSchool)(nil),                // 54: edify.clusters.v1.ReportSchool
+	(*ReportCount)(nil),                 // 55: edify.clusters.v1.ReportCount
+	(*GetClusterReportPdfRequest)(nil),  // 56: edify.clusters.v1.GetClusterReportPdfRequest
+	(*GetClusterReportPdfResponse)(nil), // 57: edify.clusters.v1.GetClusterReportPdfResponse
+	nil,                                 // 58: edify.clusters.v1.GetMobilizationResponse.CountsEntry
+	(*ClusterActivity)(nil),             // 59: edify.clusters.v1.ClusterActivity
 }
 var file_edify_clusters_v1_mobilization_proto_depIdxs = []int32{
-	1,  // 0: edify.clusters.v1.MeetingPlan.history:type_name -> edify.clusters.v1.PlanEvent
-	0,  // 1: edify.clusters.v1.ListPlansResponse.plans:type_name -> edify.clusters.v1.MeetingPlan
-	4,  // 2: edify.clusters.v1.ListPlansResponse.linkable_activities:type_name -> edify.clusters.v1.ActivityChoice
-	7,  // 3: edify.clusters.v1.GetPlanOptionsResponse.courses:type_name -> edify.clusters.v1.CourseChoice
-	0,  // 4: edify.clusters.v1.SavePlanResponse.plan:type_name -> edify.clusters.v1.MeetingPlan
-	0,  // 5: edify.clusters.v1.CancelPlanResponse.plan:type_name -> edify.clusters.v1.MeetingPlan
-	0,  // 6: edify.clusters.v1.ReviewPlanResponse.plan:type_name -> edify.clusters.v1.MeetingPlan
-	0,  // 7: edify.clusters.v1.LinkPlanResponse.plan:type_name -> edify.clusters.v1.MeetingPlan
-	51, // 8: edify.clusters.v1.GetMobilizationResponse.activity:type_name -> edify.clusters.v1.ClusterActivity
-	18, // 9: edify.clusters.v1.GetMobilizationResponse.schools:type_name -> edify.clusters.v1.SchoolMobilization
-	28, // 10: edify.clusters.v1.GetMobilizationResponse.minutes:type_name -> edify.clusters.v1.Minutes
-	50, // 11: edify.clusters.v1.GetMobilizationResponse.counts:type_name -> edify.clusters.v1.GetMobilizationResponse.CountsEntry
-	18, // 12: edify.clusters.v1.RecordResponseResponse.school:type_name -> edify.clusters.v1.SchoolMobilization
-	18, // 13: edify.clusters.v1.FollowUpResponse.school:type_name -> edify.clusters.v1.SchoolMobilization
-	25, // 14: edify.clusters.v1.RecordAttendanceRequest.entries:type_name -> edify.clusters.v1.AttendanceEntry
-	28, // 15: edify.clusters.v1.SaveMinutesResponse.minutes:type_name -> edify.clusters.v1.Minutes
-	1,  // 16: edify.clusters.v1.ActionItem.history:type_name -> edify.clusters.v1.PlanEvent
-	31, // 17: edify.clusters.v1.ListActionItemsResponse.items:type_name -> edify.clusters.v1.ActionItem
-	31, // 18: edify.clusters.v1.SaveActionItemResponse.item:type_name -> edify.clusters.v1.ActionItem
-	31, // 19: edify.clusters.v1.CloseActionItemResponse.item:type_name -> edify.clusters.v1.ActionItem
-	38, // 20: edify.clusters.v1.ListRequestsResponse.requests:type_name -> edify.clusters.v1.LeaderRequest
-	38, // 21: edify.clusters.v1.SubmitRequestResponse.request:type_name -> edify.clusters.v1.LeaderRequest
-	38, // 22: edify.clusters.v1.AnswerRequestResponse.request:type_name -> edify.clusters.v1.LeaderRequest
-	47, // 23: edify.clusters.v1.GetClusterReportResponse.figures:type_name -> edify.clusters.v1.ReportFigure
-	48, // 24: edify.clusters.v1.GetClusterReportResponse.repeatedly_absent:type_name -> edify.clusters.v1.ReportSchool
-	49, // 25: edify.clusters.v1.GetClusterReportResponse.training_by_intervention:type_name -> edify.clusters.v1.ReportCount
-	49, // 26: edify.clusters.v1.GetClusterReportResponse.ssa_status:type_name -> edify.clusters.v1.ReportCount
-	49, // 27: edify.clusters.v1.GetClusterReportResponse.needs_staff:type_name -> edify.clusters.v1.ReportCount
-	2,  // 28: edify.clusters.v1.ClusterMobilizationService.ListPlans:input_type -> edify.clusters.v1.ListPlansRequest
-	5,  // 29: edify.clusters.v1.ClusterMobilizationService.GetPlanOptions:input_type -> edify.clusters.v1.GetPlanOptionsRequest
-	8,  // 30: edify.clusters.v1.ClusterMobilizationService.SavePlan:input_type -> edify.clusters.v1.SavePlanRequest
-	10, // 31: edify.clusters.v1.ClusterMobilizationService.CancelPlan:input_type -> edify.clusters.v1.CancelPlanRequest
-	12, // 32: edify.clusters.v1.ClusterMobilizationService.ReviewPlan:input_type -> edify.clusters.v1.ReviewPlanRequest
-	14, // 33: edify.clusters.v1.ClusterMobilizationService.LinkPlan:input_type -> edify.clusters.v1.LinkPlanRequest
-	16, // 34: edify.clusters.v1.ClusterMobilizationService.GetMobilization:input_type -> edify.clusters.v1.GetMobilizationRequest
-	19, // 35: edify.clusters.v1.ClusterMobilizationService.InviteSchools:input_type -> edify.clusters.v1.InviteSchoolsRequest
-	21, // 36: edify.clusters.v1.ClusterMobilizationService.RecordResponse:input_type -> edify.clusters.v1.RecordResponseRequest
-	23, // 37: edify.clusters.v1.ClusterMobilizationService.FollowUp:input_type -> edify.clusters.v1.FollowUpRequest
-	26, // 38: edify.clusters.v1.ClusterMobilizationService.RecordAttendance:input_type -> edify.clusters.v1.RecordAttendanceRequest
-	29, // 39: edify.clusters.v1.ClusterMobilizationService.SaveMinutes:input_type -> edify.clusters.v1.SaveMinutesRequest
-	32, // 40: edify.clusters.v1.ClusterMobilizationService.ListActionItems:input_type -> edify.clusters.v1.ListActionItemsRequest
-	34, // 41: edify.clusters.v1.ClusterMobilizationService.SaveActionItem:input_type -> edify.clusters.v1.SaveActionItemRequest
-	36, // 42: edify.clusters.v1.ClusterMobilizationService.CloseActionItem:input_type -> edify.clusters.v1.CloseActionItemRequest
-	39, // 43: edify.clusters.v1.ClusterMobilizationService.ListRequests:input_type -> edify.clusters.v1.ListRequestsRequest
-	41, // 44: edify.clusters.v1.ClusterMobilizationService.SubmitRequest:input_type -> edify.clusters.v1.SubmitRequestRequest
-	43, // 45: edify.clusters.v1.ClusterMobilizationService.AnswerRequest:input_type -> edify.clusters.v1.AnswerRequestRequest
-	45, // 46: edify.clusters.v1.ClusterMobilizationService.GetClusterReport:input_type -> edify.clusters.v1.GetClusterReportRequest
-	3,  // 47: edify.clusters.v1.ClusterMobilizationService.ListPlans:output_type -> edify.clusters.v1.ListPlansResponse
-	6,  // 48: edify.clusters.v1.ClusterMobilizationService.GetPlanOptions:output_type -> edify.clusters.v1.GetPlanOptionsResponse
-	9,  // 49: edify.clusters.v1.ClusterMobilizationService.SavePlan:output_type -> edify.clusters.v1.SavePlanResponse
-	11, // 50: edify.clusters.v1.ClusterMobilizationService.CancelPlan:output_type -> edify.clusters.v1.CancelPlanResponse
-	13, // 51: edify.clusters.v1.ClusterMobilizationService.ReviewPlan:output_type -> edify.clusters.v1.ReviewPlanResponse
-	15, // 52: edify.clusters.v1.ClusterMobilizationService.LinkPlan:output_type -> edify.clusters.v1.LinkPlanResponse
-	17, // 53: edify.clusters.v1.ClusterMobilizationService.GetMobilization:output_type -> edify.clusters.v1.GetMobilizationResponse
-	20, // 54: edify.clusters.v1.ClusterMobilizationService.InviteSchools:output_type -> edify.clusters.v1.InviteSchoolsResponse
-	22, // 55: edify.clusters.v1.ClusterMobilizationService.RecordResponse:output_type -> edify.clusters.v1.RecordResponseResponse
-	24, // 56: edify.clusters.v1.ClusterMobilizationService.FollowUp:output_type -> edify.clusters.v1.FollowUpResponse
-	27, // 57: edify.clusters.v1.ClusterMobilizationService.RecordAttendance:output_type -> edify.clusters.v1.RecordAttendanceResponse
-	30, // 58: edify.clusters.v1.ClusterMobilizationService.SaveMinutes:output_type -> edify.clusters.v1.SaveMinutesResponse
-	33, // 59: edify.clusters.v1.ClusterMobilizationService.ListActionItems:output_type -> edify.clusters.v1.ListActionItemsResponse
-	35, // 60: edify.clusters.v1.ClusterMobilizationService.SaveActionItem:output_type -> edify.clusters.v1.SaveActionItemResponse
-	37, // 61: edify.clusters.v1.ClusterMobilizationService.CloseActionItem:output_type -> edify.clusters.v1.CloseActionItemResponse
-	40, // 62: edify.clusters.v1.ClusterMobilizationService.ListRequests:output_type -> edify.clusters.v1.ListRequestsResponse
-	42, // 63: edify.clusters.v1.ClusterMobilizationService.SubmitRequest:output_type -> edify.clusters.v1.SubmitRequestResponse
-	44, // 64: edify.clusters.v1.ClusterMobilizationService.AnswerRequest:output_type -> edify.clusters.v1.AnswerRequestResponse
-	46, // 65: edify.clusters.v1.ClusterMobilizationService.GetClusterReport:output_type -> edify.clusters.v1.GetClusterReportResponse
-	47, // [47:66] is the sub-list for method output_type
-	28, // [28:47] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	6,  // 0: edify.clusters.v1.MeetingPlan.history:type_name -> edify.clusters.v1.PlanEvent
+	0,  // 1: edify.clusters.v1.GetPlanResponse.plan:type_name -> edify.clusters.v1.MeetingPlan
+	3,  // 2: edify.clusters.v1.GetPlanResponse.invited:type_name -> edify.clusters.v1.PlanInvitee
+	0,  // 3: edify.clusters.v1.ListPlansResponse.plans:type_name -> edify.clusters.v1.MeetingPlan
+	9,  // 4: edify.clusters.v1.ListPlansResponse.linkable_activities:type_name -> edify.clusters.v1.ActivityChoice
+	12, // 5: edify.clusters.v1.GetPlanOptionsResponse.courses:type_name -> edify.clusters.v1.CourseChoice
+	0,  // 6: edify.clusters.v1.SavePlanResponse.plan:type_name -> edify.clusters.v1.MeetingPlan
+	0,  // 7: edify.clusters.v1.CancelPlanResponse.plan:type_name -> edify.clusters.v1.MeetingPlan
+	0,  // 8: edify.clusters.v1.ReviewPlanResponse.plan:type_name -> edify.clusters.v1.MeetingPlan
+	0,  // 9: edify.clusters.v1.LinkPlanResponse.plan:type_name -> edify.clusters.v1.MeetingPlan
+	59, // 10: edify.clusters.v1.GetMobilizationResponse.activity:type_name -> edify.clusters.v1.ClusterActivity
+	23, // 11: edify.clusters.v1.GetMobilizationResponse.schools:type_name -> edify.clusters.v1.SchoolMobilization
+	33, // 12: edify.clusters.v1.GetMobilizationResponse.minutes:type_name -> edify.clusters.v1.Minutes
+	58, // 13: edify.clusters.v1.GetMobilizationResponse.counts:type_name -> edify.clusters.v1.GetMobilizationResponse.CountsEntry
+	23, // 14: edify.clusters.v1.RecordResponseResponse.school:type_name -> edify.clusters.v1.SchoolMobilization
+	23, // 15: edify.clusters.v1.FollowUpResponse.school:type_name -> edify.clusters.v1.SchoolMobilization
+	30, // 16: edify.clusters.v1.RecordAttendanceRequest.entries:type_name -> edify.clusters.v1.AttendanceEntry
+	33, // 17: edify.clusters.v1.SaveMinutesResponse.minutes:type_name -> edify.clusters.v1.Minutes
+	6,  // 18: edify.clusters.v1.ActionItem.history:type_name -> edify.clusters.v1.PlanEvent
+	36, // 19: edify.clusters.v1.ListActionItemsResponse.items:type_name -> edify.clusters.v1.ActionItem
+	36, // 20: edify.clusters.v1.SaveActionItemResponse.item:type_name -> edify.clusters.v1.ActionItem
+	36, // 21: edify.clusters.v1.CloseActionItemResponse.item:type_name -> edify.clusters.v1.ActionItem
+	43, // 22: edify.clusters.v1.ListRequestsResponse.requests:type_name -> edify.clusters.v1.LeaderRequest
+	43, // 23: edify.clusters.v1.SubmitRequestResponse.request:type_name -> edify.clusters.v1.LeaderRequest
+	43, // 24: edify.clusters.v1.AnswerRequestResponse.request:type_name -> edify.clusters.v1.LeaderRequest
+	53, // 25: edify.clusters.v1.GetClusterReportResponse.figures:type_name -> edify.clusters.v1.ReportFigure
+	54, // 26: edify.clusters.v1.GetClusterReportResponse.repeatedly_absent:type_name -> edify.clusters.v1.ReportSchool
+	55, // 27: edify.clusters.v1.GetClusterReportResponse.training_by_intervention:type_name -> edify.clusters.v1.ReportCount
+	55, // 28: edify.clusters.v1.GetClusterReportResponse.ssa_status:type_name -> edify.clusters.v1.ReportCount
+	55, // 29: edify.clusters.v1.GetClusterReportResponse.needs_staff:type_name -> edify.clusters.v1.ReportCount
+	52, // 30: edify.clusters.v1.GetClusterReportResponse.ssa_performance:type_name -> edify.clusters.v1.SsaPerformance
+	7,  // 31: edify.clusters.v1.ClusterMobilizationService.ListPlans:input_type -> edify.clusters.v1.ListPlansRequest
+	10, // 32: edify.clusters.v1.ClusterMobilizationService.GetPlanOptions:input_type -> edify.clusters.v1.GetPlanOptionsRequest
+	13, // 33: edify.clusters.v1.ClusterMobilizationService.SavePlan:input_type -> edify.clusters.v1.SavePlanRequest
+	15, // 34: edify.clusters.v1.ClusterMobilizationService.CancelPlan:input_type -> edify.clusters.v1.CancelPlanRequest
+	17, // 35: edify.clusters.v1.ClusterMobilizationService.ReviewPlan:input_type -> edify.clusters.v1.ReviewPlanRequest
+	19, // 36: edify.clusters.v1.ClusterMobilizationService.LinkPlan:input_type -> edify.clusters.v1.LinkPlanRequest
+	1,  // 37: edify.clusters.v1.ClusterMobilizationService.GetPlan:input_type -> edify.clusters.v1.GetPlanRequest
+	4,  // 38: edify.clusters.v1.ClusterMobilizationService.InvitePlanSchools:input_type -> edify.clusters.v1.InvitePlanSchoolsRequest
+	21, // 39: edify.clusters.v1.ClusterMobilizationService.GetMobilization:input_type -> edify.clusters.v1.GetMobilizationRequest
+	24, // 40: edify.clusters.v1.ClusterMobilizationService.InviteSchools:input_type -> edify.clusters.v1.InviteSchoolsRequest
+	26, // 41: edify.clusters.v1.ClusterMobilizationService.RecordResponse:input_type -> edify.clusters.v1.RecordResponseRequest
+	28, // 42: edify.clusters.v1.ClusterMobilizationService.FollowUp:input_type -> edify.clusters.v1.FollowUpRequest
+	31, // 43: edify.clusters.v1.ClusterMobilizationService.RecordAttendance:input_type -> edify.clusters.v1.RecordAttendanceRequest
+	34, // 44: edify.clusters.v1.ClusterMobilizationService.SaveMinutes:input_type -> edify.clusters.v1.SaveMinutesRequest
+	37, // 45: edify.clusters.v1.ClusterMobilizationService.ListActionItems:input_type -> edify.clusters.v1.ListActionItemsRequest
+	39, // 46: edify.clusters.v1.ClusterMobilizationService.SaveActionItem:input_type -> edify.clusters.v1.SaveActionItemRequest
+	41, // 47: edify.clusters.v1.ClusterMobilizationService.CloseActionItem:input_type -> edify.clusters.v1.CloseActionItemRequest
+	44, // 48: edify.clusters.v1.ClusterMobilizationService.ListRequests:input_type -> edify.clusters.v1.ListRequestsRequest
+	46, // 49: edify.clusters.v1.ClusterMobilizationService.SubmitRequest:input_type -> edify.clusters.v1.SubmitRequestRequest
+	48, // 50: edify.clusters.v1.ClusterMobilizationService.AnswerRequest:input_type -> edify.clusters.v1.AnswerRequestRequest
+	50, // 51: edify.clusters.v1.ClusterMobilizationService.GetClusterReport:input_type -> edify.clusters.v1.GetClusterReportRequest
+	56, // 52: edify.clusters.v1.ClusterMobilizationService.GetClusterReportPdf:input_type -> edify.clusters.v1.GetClusterReportPdfRequest
+	8,  // 53: edify.clusters.v1.ClusterMobilizationService.ListPlans:output_type -> edify.clusters.v1.ListPlansResponse
+	11, // 54: edify.clusters.v1.ClusterMobilizationService.GetPlanOptions:output_type -> edify.clusters.v1.GetPlanOptionsResponse
+	14, // 55: edify.clusters.v1.ClusterMobilizationService.SavePlan:output_type -> edify.clusters.v1.SavePlanResponse
+	16, // 56: edify.clusters.v1.ClusterMobilizationService.CancelPlan:output_type -> edify.clusters.v1.CancelPlanResponse
+	18, // 57: edify.clusters.v1.ClusterMobilizationService.ReviewPlan:output_type -> edify.clusters.v1.ReviewPlanResponse
+	20, // 58: edify.clusters.v1.ClusterMobilizationService.LinkPlan:output_type -> edify.clusters.v1.LinkPlanResponse
+	2,  // 59: edify.clusters.v1.ClusterMobilizationService.GetPlan:output_type -> edify.clusters.v1.GetPlanResponse
+	5,  // 60: edify.clusters.v1.ClusterMobilizationService.InvitePlanSchools:output_type -> edify.clusters.v1.InvitePlanSchoolsResponse
+	22, // 61: edify.clusters.v1.ClusterMobilizationService.GetMobilization:output_type -> edify.clusters.v1.GetMobilizationResponse
+	25, // 62: edify.clusters.v1.ClusterMobilizationService.InviteSchools:output_type -> edify.clusters.v1.InviteSchoolsResponse
+	27, // 63: edify.clusters.v1.ClusterMobilizationService.RecordResponse:output_type -> edify.clusters.v1.RecordResponseResponse
+	29, // 64: edify.clusters.v1.ClusterMobilizationService.FollowUp:output_type -> edify.clusters.v1.FollowUpResponse
+	32, // 65: edify.clusters.v1.ClusterMobilizationService.RecordAttendance:output_type -> edify.clusters.v1.RecordAttendanceResponse
+	35, // 66: edify.clusters.v1.ClusterMobilizationService.SaveMinutes:output_type -> edify.clusters.v1.SaveMinutesResponse
+	38, // 67: edify.clusters.v1.ClusterMobilizationService.ListActionItems:output_type -> edify.clusters.v1.ListActionItemsResponse
+	40, // 68: edify.clusters.v1.ClusterMobilizationService.SaveActionItem:output_type -> edify.clusters.v1.SaveActionItemResponse
+	42, // 69: edify.clusters.v1.ClusterMobilizationService.CloseActionItem:output_type -> edify.clusters.v1.CloseActionItemResponse
+	45, // 70: edify.clusters.v1.ClusterMobilizationService.ListRequests:output_type -> edify.clusters.v1.ListRequestsResponse
+	47, // 71: edify.clusters.v1.ClusterMobilizationService.SubmitRequest:output_type -> edify.clusters.v1.SubmitRequestResponse
+	49, // 72: edify.clusters.v1.ClusterMobilizationService.AnswerRequest:output_type -> edify.clusters.v1.AnswerRequestResponse
+	51, // 73: edify.clusters.v1.ClusterMobilizationService.GetClusterReport:output_type -> edify.clusters.v1.GetClusterReportResponse
+	57, // 74: edify.clusters.v1.ClusterMobilizationService.GetClusterReportPdf:output_type -> edify.clusters.v1.GetClusterReportPdfResponse
+	53, // [53:75] is the sub-list for method output_type
+	31, // [31:53] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_edify_clusters_v1_mobilization_proto_init() }
@@ -3702,7 +4290,7 @@ func file_edify_clusters_v1_mobilization_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_clusters_v1_mobilization_proto_rawDesc), len(file_edify_clusters_v1_mobilization_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   51,
+			NumMessages:   59,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

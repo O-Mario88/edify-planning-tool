@@ -1,17 +1,13 @@
 /**
- * The leader's follow-through (brief A2, A6, A7): action items with their
- * owner and due date, requests and concerns to the cluster's CCEO, and the
- * cluster management report for the financial year.
+ * The leader's follow-through (brief A2, A6): action items with their owner
+ * and due date, and requests and concerns to the cluster's CCEO. The report
+ * is Progress & Reports (ProgressScreen).
  */
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { describe, useSession } from '../../auth/SessionContext';
-import type {
-  ActionItem,
-  GetClusterReportResponse,
-  LeaderRequest,
-} from '../../gen/edify/clusters/v1/mobilization_pb';
+import type { ActionItem, LeaderRequest } from '../../gen/edify/clusters/v1/mobilization_pb';
 import { ClusterMobilizationService } from '../../gen/edify/clusters/v1/mobilization_pb';
 import type { MemberSchool } from '../../gen/edify/clusters/v1/leadership_pb';
 import { useTheme } from '../../theme';
@@ -187,75 +183,5 @@ export function RequestsScreen({ clusterId, clusterName }: ClusterProps) {
         </OpsCard>
       ))}
     </ScrollView>
-  );
-}
-
-export function ClusterReportScreen({ clusterId, clusterName }: ClusterProps) {
-  const { api } = useSession();
-  const { colors } = useTheme();
-  const [report, setReport] = useState<GetClusterReportResponse | null>(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    api
-      .call(METHOD.getClusterReport, { clusterId })
-      .then(setReport)
-      .catch((cause: unknown) => setError(describe(cause)));
-  }, [api, clusterId]);
-
-  if (!report) {
-    return (
-      <ScrollView contentContainerStyle={opsStyles.page}>
-        {error ? <Notice text={error} isError /> : <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />}
-      </ScrollView>
-    );
-  }
-  return (
-    <ScrollView contentContainerStyle={opsStyles.page}>
-      <OpsTitle eyebrow={clusterName} title="Cluster report" copy={`${report.period}: from the cluster's activities and your records.`} />
-      <OpsCard>
-        {report.figures.map((figure) => (
-          <View key={figure.key} style={opsStyles.spread}>
-            <Text style={[opsStyles.meta, { color: colors.text, fontSize: 13 }]}>{figure.label}</Text>
-            <Text style={[opsStyles.name, { color: colors.text }]}>{figure.value}</Text>
-          </View>
-        ))}
-      </OpsCard>
-      <SectionLabel>Schools repeatedly absent</SectionLabel>
-      <OpsCard>
-        {report.repeatedlyAbsent.length === 0 ? <Muted>No school was absent from two or more held activities.</Muted> : null}
-        {report.repeatedlyAbsent.map((school) => (
-          <View key={school.schoolId} style={opsStyles.spread}>
-            <Text style={[opsStyles.meta, { color: colors.text, flex: 1, fontSize: 13 }]}>
-              {school.name} ({school.edifySchoolId})
-            </Text>
-            <Text style={[opsStyles.name, { color: colors.danger }]}>
-              {school.absences} of {school.invitations}
-            </Text>
-          </View>
-        ))}
-      </OpsCard>
-      <Counts title="Trainings held, by intervention" counts={report.trainingByIntervention} empty="No cluster training held this year yet." />
-      <Counts title="Member schools by SSA status" counts={report.ssaStatus} empty="No member school." />
-      <Counts title="Waiting on staff" counts={report.needsStaff} empty="Nothing." />
-    </ScrollView>
-  );
-}
-
-function Counts({ title, counts, empty }: { readonly title: string; readonly counts: readonly { label: string; count: number }[]; readonly empty: string }) {
-  const { colors } = useTheme();
-  return (
-    <>
-      <SectionLabel>{title}</SectionLabel>
-      <OpsCard>
-        {counts.length === 0 ? <Muted>{empty}</Muted> : null}
-        {counts.map((count) => (
-          <View key={count.label} style={opsStyles.spread}>
-            <Text style={[opsStyles.meta, { color: colors.text, fontSize: 13 }]}>{count.label.replace(/_/g, ' ')}</Text>
-            <Text style={[opsStyles.name, { color: colors.text }]}>{count.count}</Text>
-          </View>
-        ))}
-      </OpsCard>
-    </>
   );
 }

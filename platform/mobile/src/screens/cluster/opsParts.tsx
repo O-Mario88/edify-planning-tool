@@ -109,6 +109,12 @@ export function Field({ label, value, onChange, placeholder, isMultiline, isNume
   );
 }
 
+/** A field's label, for inputs that draw none of their own (a date). */
+export function FieldLabel({ children }: { readonly children: string }) {
+  const { colors } = useTheme();
+  return <Text style={[styles.label, { color: colors.text }]}>{children}</Text>;
+}
+
 interface ChoiceRowProps {
   readonly label: string;
   readonly value: string;

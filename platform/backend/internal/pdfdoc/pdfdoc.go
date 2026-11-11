@@ -1,4 +1,6 @@
-package loans
+// Package pdfdoc writes small text PDFs: A4 pages of plain text in the
+// standard fonts every PDF reader has. No dependency, no embedded fonts.
+package pdfdoc
 
 import (
 	"bytes"
@@ -6,9 +8,7 @@ import (
 	"strings"
 )
 
-// A small PDF writer for school statements: A4 pages of plain text in the
-// two standard fonts every PDF reader has (Helvetica for words, Courier for
-// figures so amounts line up exactly). No dependency, no embedded fonts.
+// Helvetica for words, Courier for figures so amounts line up exactly.
 
 const (
 	pdfWidth, pdfHeight = 595, 842 // A4 in points
@@ -25,15 +25,16 @@ type pdfLine struct {
 	right bool    // a Courier line set flush right
 }
 
-type pdfDoc struct{ lines []pdfLine }
+// Doc is a document being written, line by line.
+type Doc struct{ lines []pdfLine }
 
-func (d *pdfDoc) title(text string) { d.lines = append(d.lines, pdfLine{"F2", 15, text, 0, false}) }
+func (d *Doc) Title(text string) { d.lines = append(d.lines, pdfLine{"F2", 15, text, 0, false}) }
 
-func (d *pdfDoc) heading(text string) { d.lines = append(d.lines, pdfLine{"F2", 11, text, 10, false}) }
+func (d *Doc) Heading(text string) { d.lines = append(d.lines, pdfLine{"F2", 11, text, 10, false}) }
 
-func (d *pdfDoc) text(text string) { d.lines = append(d.lines, pdfLine{"F1", 9.5, text, 0, false}) }
+func (d *Doc) Text(text string) { d.lines = append(d.lines, pdfLine{"F1", 9.5, text, 0, false}) }
 
-func (d *pdfDoc) mono(text string) { d.lines = append(d.lines, pdfLine{"F3", 8, text, 0, false}) }
+func (d *Doc) Mono(text string) { d.lines = append(d.lines, pdfLine{"F3", 8, text, 0, false}) }
 
 // pdfText keeps what Helvetica's standard encoding can show and escapes the
 // rest of PDF's string syntax.
@@ -58,8 +59,8 @@ func pdfText(raw string) string {
 	return b.String()
 }
 
-// wrap breaks text into lines of at most width characters.
-func wrap(text string, width int) []string {
+// Wrap breaks text into lines of at most width characters.
+func Wrap(text string, width int) []string {
 	var out []string
 	for _, paragraph := range strings.Split(text, "\n") {
 		words, current := strings.Fields(paragraph), ""
@@ -78,8 +79,8 @@ func wrap(text string, width int) []string {
 	return out
 }
 
-// bytes lays the lines out on pages, with a footer on each.
-func (d *pdfDoc) bytes(footer string) []byte {
+// Bytes lays the lines out on pages, with a footer on each.
+func (d *Doc) Bytes(footer string) []byte {
 	var pages [][]string
 	var stream []string
 	y := float64(pdfHeight - pdfMargin)
@@ -135,9 +136,9 @@ func (d *pdfDoc) bytes(footer string) []byte {
 	return out.Bytes()
 }
 
-// columns sets cells in fixed-width Courier columns; widths below zero are
+// Columns sets cells in fixed-width Courier columns; widths below zero are
 // right-aligned (figures).
-func columns(widths []int, cells ...string) string {
+func Columns(widths []int, cells ...string) string {
 	var b strings.Builder
 	for i, cell := range cells {
 		width := widths[i]

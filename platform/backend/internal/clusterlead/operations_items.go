@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
 
 	clustersv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/clusters/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pdfdoc"
 )
 
 // Action items (brief A6), requests to staff (A2) and the cluster report (A7).
@@ -252,11 +254,20 @@ func toRequest(r Request) *clustersv1.LeaderRequest {
 func (o *OperationsService) GetClusterReport(
 	ctx context.Context, request *connect.Request[clustersv1.GetClusterReportRequest],
 ) (*connect.Response[clustersv1.GetClusterReportResponse], error) {
-	if _, err := o.access(ctx, request.Msg.GetClusterId()); err != nil {
+	report, err := o.report(ctx, request.Msg.GetClusterId())
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(report), nil
+}
+
+// report is the cluster's report for the financial year, for its leader or staff.
+func (o *OperationsService) report(ctx context.Context, clusterID string) (*clustersv1.GetClusterReportResponse, error) {
+	if _, err := o.access(ctx, clusterID); err != nil {
 		return nil, err
 	}
 	start, end, year := fiscalYear(o.today())
-	data, err := o.ops.Report(ctx, request.Msg.GetClusterId(), start, end)
+	data, err := o.ops.Report(ctx, clusterID, start, end)
 	if err != nil {
 		return nil, o.internal(ctx, err)
 	}
@@ -289,8 +300,110 @@ func (o *OperationsService) GetClusterReport(
 	for _, c := range data.TrainingByIntervention {
 		response.TrainingByIntervention = append(response.TrainingByIntervention, &clustersv1.ReportCount{Label: c.Label, Count: c.Count})
 	}
-	for _, c := range data.SSAStatus {
-		response.SsaStatus = append(response.SsaStatus, &clustersv1.ReportCount{Label: c.Label, Count: c.Count})
+	ssa, err := o.ops.SSAPerformance(ctx, clusterID, year)
+	if err != nil {
+		return nil, o.internal(ctx, err)
 	}
-	return connect.NewResponse(response), nil
+	response.SsaPerformance = ssaPerformance(ssa, year)
+	for _, c := range data.SSAStatus {
+		response.SsaStatus = append(response.SsaStatus, &clustersv1.ReportCount{Label: ssaStatusLabel(c.Label), Count: c.Count})
+	}
+	return response, nil
+}
+
+// GetClusterReportPdf is the cluster report as a PDF the leader can save,
+// print or send: the same figures, nothing more.
+func (o *OperationsService) GetClusterReportPdf(
+	ctx context.Context, request *connect.Request[clustersv1.GetClusterReportPdfRequest],
+) (*connect.Response[clustersv1.GetClusterReportPdfResponse], error) {
+	clusterID := request.Msg.GetClusterId()
+	report, err := o.report(ctx, clusterID)
+	if err != nil {
+		return nil, err
+	}
+	cluster, err := o.data.Cluster(ctx, clusterID)
+	if err != nil {
+		return nil, o.internal(ctx, err)
+	}
+	pdf := reportPDF(cluster.Name, report, o.today().Format("2 Jan 2006"))
+	name := strings.NewReplacer("/", "-", "\\", "-", "\"", "").Replace(fmt.Sprintf("Cluster report - %s - %s.pdf", cluster.Name, report.GetPeriod()))
+	return connect.NewResponse(&clustersv1.GetClusterReportPdfResponse{Pdf: pdf, FileName: name}), nil
+}
+
+// reportPDF lays the report out on A4 pages.
+func reportPDF(clusterName string, r *clustersv1.GetClusterReportResponse, today string) []byte {
+	d := &pdfdoc.Doc{}
+	d.Title("Cluster report: " + clusterName)
+	d.Text(r.GetPeriod() + " | generated " + today)
+	d.Heading("Activity summary")
+	for _, f := range r.GetFigures() {
+		d.Mono(pdfdoc.Columns([]int{40, -12}, f.GetLabel(), f.GetValue()))
+	}
+	if ssa := r.GetSsaPerformance(); ssa != nil {
+		d.Heading("SSA performance (confirmed records, member schools)")
+		d.Mono(pdfdoc.Columns([]int{40, -12, -12}, "Average score", ssa.GetPreviousPeriod(), ssa.GetCurrentPeriod()))
+		d.Mono(pdfdoc.Columns([]int{40, -12, -12}, "", dash(ssa.GetPreviousAverage()), dash(ssa.GetCurrentAverage())))
+		d.Mono(pdfdoc.Columns([]int{40, -12, -12}, "Schools with a record", fmt.Sprint(ssa.GetSchoolsPrevious()), fmt.Sprint(ssa.GetSchoolsCurrent())))
+		if ssa.GetChange() != "" {
+			d.Text(fmt.Sprintf("Change: %s against %s, for the %d schools assessed in both years.",
+				ssa.GetChange(), ssa.GetPreviousPeriod(), ssa.GetSchoolsCompared()))
+		}
+	}
+	counts := func(title string, rows []*clustersv1.ReportCount) {
+		if len(rows) == 0 {
+			return
+		}
+		d.Heading(title)
+		for _, c := range rows {
+			d.Mono(pdfdoc.Columns([]int{40, -12}, c.GetLabel(), fmt.Sprint(c.GetCount())))
+		}
+	}
+	counts("Member schools by SSA status", r.GetSsaStatus())
+	counts("Trainings held by SSA intervention", r.GetTrainingByIntervention())
+	counts("Waiting on staff", r.GetNeedsStaff())
+	if absent := r.GetRepeatedlyAbsent(); len(absent) > 0 {
+		d.Heading("Schools absent from two or more activities")
+		d.Mono(pdfdoc.Columns([]int{10, 40, -9, -11}, "School ID", "School", "Absent", "Invited"))
+		for _, a := range absent {
+			d.Mono(pdfdoc.Columns([]int{10, 40, -9, -11}, a.GetEdifySchoolId(), a.GetName(), fmt.Sprint(a.GetAbsences()), fmt.Sprint(a.GetInvitations())))
+		}
+	}
+	return d.Bytes("Edify cluster report | " + clusterName + " | " + r.GetPeriod())
+}
+
+func dash(value string) string {
+	if value == "" {
+		return "-"
+	}
+	return value
+}
+
+// ssaPerformance words the SSA comparison. The change is measured on the
+// schools assessed in both years only, so a school assessed in one year alone
+// never moves it; with none, no change is claimed.
+func ssaPerformance(a SSAAverages, year int) *clustersv1.SsaPerformance {
+	out := &clustersv1.SsaPerformance{CurrentPeriod: fmt.Sprintf("FY %d", year), PreviousPeriod: fmt.Sprintf("FY %d", year-1),
+		SchoolsCurrent: a.SchoolsCurrent, SchoolsPrevious: a.SchoolsPrevious, SchoolsCompared: a.SchoolsPaired}
+	if a.SchoolsCurrent > 0 {
+		out.CurrentAverage = fmt.Sprintf("%.2f", a.Current)
+	}
+	if a.SchoolsPrevious > 0 {
+		out.PreviousAverage = fmt.Sprintf("%.2f", a.Previous)
+	}
+	if a.SchoolsPaired > 0 && a.PairedPrevious > 0 {
+		out.Change = fmt.Sprintf("%+.0f%%", (a.PairedCurrent-a.PairedPrevious)/a.PairedPrevious*100)
+	}
+	return out
+}
+
+// ssaStatusLabels are apps/core/enums.py SsaStatus's own labels.
+var ssaStatusLabels = map[string]string{
+	"not_done": "Not Done", "scheduled": "Scheduled", "partner_assigned": "Partner Assigned", "done": "Done", "none": "No status",
+}
+
+func ssaStatusLabel(status string) string {
+	if label, ok := ssaStatusLabels[status]; ok {
+		return label
+	}
+	return status
 }

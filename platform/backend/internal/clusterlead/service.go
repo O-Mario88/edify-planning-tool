@@ -172,6 +172,8 @@ func (s *Service) ListMemberSchools(
 			Id: school.ID, SchoolId: school.SchoolID, Name: school.Name, SchoolType: school.Type,
 			District: school.District, SubCounty: school.SubCounty,
 			OperationalStatus: school.OperationalStatus, CurrentFySsaStatus: school.SSAStatus,
+			DirectorName: school.Director, HeadteacherName: school.Headteacher, ContactName: school.ContactName,
+			ContactPhone: school.ContactPhone, SchoolPhone: school.SchoolPhone,
 		})
 	}
 	return connect.NewResponse(response), nil

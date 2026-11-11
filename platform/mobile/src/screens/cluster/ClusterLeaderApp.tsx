@@ -1,29 +1,36 @@
 /**
- * The app for a Cluster Leader (brief A1-A7): the clusters assigned to them
- * and nothing else. The gateway decides that reach on every request; this
- * screen only shows what it answers — Home, the member schools, the cluster's
- * activities (each opens its mobilisation, attendance and minutes), and the
- * work pages under More: plans, action items, requests and the report.
+ * The app for a Cluster Leader: the clusters assigned to them and nothing
+ * else. The gateway decides that reach on every request; this screen only
+ * shows what it answers. Laid out after the owner's mockup (2026-11-11):
+ * Home, Meetings and Schools tabs; Plan Meeting and Mobilize Schools forms;
+ * a meeting's details; Manage Cluster; Progress & Reports; and, under More,
+ * follow-up, requests to staff and the loan application link.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { describe, useSession } from '../../auth/SessionContext';
-import type { ClusterActivity, ClusterSummary, GetClusterHomeResponse } from '../../gen/edify/clusters/v1/leadership_pb';
-import { ClusterLeadershipService } from '../../gen/edify/clusters/v1/leadership_pb';
+import type { ClusterSummary, GetClusterHomeResponse } from '../../gen/edify/clusters/v1/leadership_pb';
+import type { MeetingPlan } from '../../gen/edify/clusters/v1/mobilization_pb';
+import { ClusterMobilizationService } from '../../gen/edify/clusters/v1/mobilization_pb';
 import type { Session } from '../../gen/edify/identity/v1/identity_pb';
 import { AppShell, MENU_URL } from '../../shell/AppShell';
 import { fonts, radius, useTheme } from '../../theme';
 import { MenuScreen } from '../MoreScreen';
-import { ActivityScreen } from './ActivityScreen';
-import { ActivityRow, ClusterHomeScreen } from './ClusterHomeScreen';
-import { ActionItemsScreen, ClusterReportScreen, RequestsScreen } from './ClusterWorkScreens';
 import { ShareApplicationScreen } from '../loans/ShareSheet';
+import { ActivityScreen } from './ActivityScreen';
+import { ClusterHomeScreen } from './ClusterHomeScreen';
+import { ActionItemsScreen, RequestsScreen } from './ClusterWorkScreens';
+import { ManageClusterScreen } from './ManageClusterScreen';
+import { MeetingDetailScreen } from './MeetingDetailScreen';
+import { MeetingForm } from './MeetingForm';
+import { MeetingsScreen } from './MeetingsScreen';
 import { MemberSchoolsScreen } from './MemberSchoolsScreen';
-import { PlansScreen } from './PlansScreen';
+import { ProgressScreen } from './ProgressScreen';
 import { CLUSTER_TABS, clusterBottomBar, clusterWorkSection, tabOf, tabOfUrl, whenOf } from './clusterRoutes';
-import { ChoiceRow, OpsTitle } from './opsParts';
+
+const WAITING = new Set(['draft', 'submitted', 'returned', 'approved']);
 
 function initialsOf(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -36,9 +43,11 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
   const [url, setUrl] = useState(CLUSTER_TABS.home);
   const [when, setWhen] = useState<'upcoming' | 'past'>('upcoming');
   const [activityId, setActivityId] = useState('');
+  const [planId, setPlanId] = useState('');
   const [clusters, setClusters] = useState<readonly ClusterSummary[] | null>(null);
   const [clusterId, setClusterId] = useState('');
   const [home, setHome] = useState<GetClusterHomeResponse | null>(null);
+  const [plans, setPlans] = useState<readonly MeetingPlan[]>([]);
   const [error, setError] = useState('');
   const bottom = useMemo(() => clusterBottomBar(), []);
   const sections = useMemo(() => [clusterWorkSection()], []);
@@ -65,6 +74,10 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
       .getClusterHome(clusterId)
       .then(setHome)
       .catch((cause: unknown) => setError(describe(cause)));
+    api
+      .call(ClusterMobilizationService.method.listPlans, { clusterId })
+      .then((answer) => setPlans(answer.plans))
+      .catch(() => setPlans([]));
   }, [api, clusterId]);
 
   useEffect(loadClusters, [loadClusters]);
@@ -75,7 +88,8 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
 
   const open = (next: string) => {
     setActivityId('');
-    const tab = tabOf(next.replace(/^cluster:/, ''));
+    setPlanId('');
+    const tab = tabOf(next.replace(/^cluster:/, '')) ?? tabOfUrl(next);
     if (tab) {
       setWhen(whenOf(next));
       setUrl(CLUSTER_TABS[tab]);
@@ -89,6 +103,11 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
   const tab = tabOfUrl(url);
   const chosen = clusters?.find((cluster) => cluster.id === clusterId);
   const props = { clusterId: chosen?.id ?? '', clusterName: chosen?.name ?? '' };
+  const nextPlan = plans.filter((plan) => WAITING.has(plan.status)).sort((a, b) => a.plannedOn.localeCompare(b.plannedOn))[0];
+  const openPlan = (id: string) => {
+    setActivityId('');
+    setPlanId(id);
+  };
 
   let screen;
   if (url === MENU_URL) {
@@ -99,85 +118,68 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
     screen = <Notice title="No cluster is assigned to you yet" copy="Your CCEO or Programme Lead gives you a cluster. Once they have, it opens here." />;
   } else if (activityId) {
     screen = <ActivityScreen key={activityId} activityId={activityId} onBack={() => setActivityId('')} />;
+  } else if (planId) {
+    screen = <MeetingDetailScreen key={planId} planId={planId} {...props} onOpenActivity={setActivityId} onBack={() => setPlanId('')} />;
+  } else if (tab === 'meetings') {
+    screen = (
+      <MeetingsScreen
+        key={chosen.id}
+        {...props}
+        initialWhen={when}
+        onPlanMeeting={() => open(CLUSTER_TABS.planMeeting)}
+        onMobilize={() => open(CLUSTER_TABS.mobilize)}
+        onOpenPlan={openPlan}
+        onOpenActivity={setActivityId}
+      />
+    );
+  } else if (tab === 'planMeeting' || tab === 'mobilize') {
+    screen = (
+      <MeetingForm
+        key={`${chosen.id}-${tab}`}
+        kind={tab === 'mobilize' ? 'training' : 'meeting'}
+        {...props}
+        onDone={(id) => {
+          setUrl(CLUSTER_TABS.meetings);
+          loadHome();
+          openPlan(id);
+        }}
+        onBack={() => open(CLUSTER_TABS.home)}
+      />
+    );
   } else if (tab === 'schools') {
     screen = <MemberSchoolsScreen key={chosen.id} {...props} />;
-  } else if (tab === 'activities') {
-    screen = <ActivitiesScreen key={`${chosen.id}-${when}`} {...props} when={when} onWhen={setWhen} onOpen={setActivityId} />;
+  } else if (tab === 'manage') {
+    screen = <ManageClusterScreen key={chosen.id} cluster={chosen} onOpenSchools={() => open(CLUSTER_TABS.schools)} onOpenActivity={setActivityId} />;
+  } else if (tab === 'progress') {
+    screen = <ProgressScreen key={chosen.id} cluster={chosen} />;
   } else if (tab === 'share') {
     screen = <ShareApplicationScreen key={chosen.id} eyebrow={chosen.name} />;
-  } else if (tab === 'plans') {
-    screen = <PlansScreen key={chosen.id} {...props} />;
   } else if (tab === 'actions') {
     screen = <ActionItemsScreen key={chosen.id} {...props} />;
   } else if (tab === 'requests') {
     screen = <RequestsScreen key={chosen.id} {...props} />;
-  } else if (tab === 'report') {
-    screen = <ClusterReportScreen key={chosen.id} {...props} />;
   } else {
     screen = (
       <ClusterHomeScreen
+        leaderName={session.name}
         home={home}
         error={error}
         clusters={clusters}
+        nextPlan={nextPlan}
         onSelectCluster={setClusterId}
-        onOpenTab={(next) => open(next)}
+        onOpenTab={(next) => open(CLUSTER_TABS[next])}
+        onOpenPlan={openPlan}
+        onOpenActivity={setActivityId}
         onRetry={loadHome}
       />
     );
   }
 
   return (
-    <AppShell bottom={bottom} activeUrl={url} onOpen={(next) => open(next)} initials={initialsOf(session.name)} onSearch={() => open('schools')} hasInbox={false}>
+    <AppShell bottom={bottom} activeUrl={url} onOpen={(next) => open(next)} initials={initialsOf(session.name)} onSearch={() => open(CLUSTER_TABS.schools)} hasInbox={false}>
       {screen}
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </AppShell>
-  );
-}
-
-interface ActivitiesProps {
-  readonly clusterId: string;
-  readonly clusterName: string;
-  readonly when: 'upcoming' | 'past';
-  readonly onWhen: (when: 'upcoming' | 'past') => void;
-  readonly onOpen: (activityId: string) => void;
-}
-
-function ActivitiesScreen({ clusterId, clusterName, when, onWhen, onOpen }: ActivitiesProps) {
-  const { api } = useSession();
-  const { colors } = useTheme();
-  const [activities, setActivities] = useState<readonly ClusterActivity[] | null>(null);
-  const [error, setError] = useState('');
-  useEffect(() => {
-    api
-      .call(ClusterLeadershipService.method.listActivities, { clusterId, when })
-      .then((answer) => setActivities(answer.activities))
-      .catch((cause: unknown) => setError(describe(cause)));
-  }, [api, clusterId, when]);
-  return (
-    <ScrollView contentContainerStyle={styles.list}>
-      <OpsTitle eyebrow={clusterName} title="Activities" copy="Open one to mobilise schools, record attendance or write its minutes." />
-      <ChoiceRow
-        label="Show"
-        value={when}
-        choices={[
-          { value: 'upcoming', label: 'Upcoming' },
-          { value: 'past', label: 'Past 120 days' },
-        ]}
-        onChange={(value) => onWhen(value === 'past' ? 'past' : 'upcoming')}
-      />
-      {error ? <Text style={[styles.copy, { color: colors.danger }]}>{error}</Text> : null}
-      {activities === null && !error ? <Loading /> : null}
-      {activities?.length === 0 ? (
-        <Text style={[styles.copy, { color: colors.textMuted }]}>
-          {when === 'past' ? 'No activity in the last 120 days.' : 'No cluster activity is planned yet. Once your CCEO schedules one, it appears here.'}
-        </Text>
-      ) : null}
-      {activities?.map((activity) => (
-        <Pressable key={activity.id} onPress={() => onOpen(activity.id)} accessibilityRole="button" accessibilityLabel={`Open ${activity.name}`}>
-          <ActivityRow activity={activity} />
-        </Pressable>
-      ))}
-    </ScrollView>
   );
 }
 
@@ -206,7 +208,6 @@ function Notice({ title, copy }: { readonly title: string; readonly copy: string
 
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  list: { padding: 12, gap: 10, paddingBottom: 24 },
   copy: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 19 },
   card: { alignSelf: 'stretch', borderWidth: 1, borderRadius: radius.lg, padding: 20, gap: 8 },
   noticeTitle: { fontFamily: fonts.bold, fontSize: 16 },

@@ -41,6 +41,9 @@ type OpsData interface {
 	AnswerRequestRecord(ctx context.Context, id, answer, actorID string) error
 	OperationsOf(ctx context.Context, clusterID, next string, day time.Time) (Operations, error)
 	Report(ctx context.Context, clusterID string, start, end time.Time) (ReportData, error)
+	InvitePlan(ctx context.Context, clusterID, planID string, schoolIDs, ids []string, channel, actorID string) (int, error)
+	PlanInvitees(ctx context.Context, planID string) ([]PlanInvitee, error)
+	SSAPerformance(ctx context.Context, clusterID string, fy int) (SSAAverages, error)
 }
 
 // NewOperations wires the operations service onto the leadership service's

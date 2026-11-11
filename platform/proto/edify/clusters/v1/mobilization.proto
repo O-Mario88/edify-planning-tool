@@ -14,13 +14,20 @@ service ClusterMobilizationService {
   rpc ListPlans(ListPlansRequest) returns (ListPlansResponse);
   // What a plan may name: the governed courses a cluster training may deliver.
   rpc GetPlanOptions(GetPlanOptionsRequest) returns (GetPlanOptionsResponse);
-  // Create or edit a draft or returned plan, and submit it for review.
+  // Create or edit a plan that is still planned, and submit it for review;
+  // an edit after approval goes back to staff.
   rpc SavePlan(SavePlanRequest) returns (SavePlanResponse);
   rpc CancelPlan(CancelPlanRequest) returns (CancelPlanResponse);
   // Staff: approve or return a submitted plan.
   rpc ReviewPlan(ReviewPlanRequest) returns (ReviewPlanResponse);
   // Staff: link an approved plan to the activity they scheduled for it.
   rpc LinkPlan(LinkPlanRequest) returns (LinkPlanResponse);
+  // One plan with the member schools invited to it.
+  rpc GetPlan(GetPlanRequest) returns (GetPlanResponse);
+  // The leader invites member schools to a planned meeting or training as
+  // soon as it is planned (owner's mockup, 2026-11-11). When staff link the
+  // plan to its official activity, these invitations carry over to it.
+  rpc InvitePlanSchools(InvitePlanSchoolsRequest) returns (InvitePlanSchoolsResponse);
 
   // An activity's member schools with each one's invitation and attendance.
   rpc GetMobilization(GetMobilizationRequest) returns (GetMobilizationResponse);
@@ -44,6 +51,8 @@ service ClusterMobilizationService {
 
   // The cluster management report for the financial year (brief A7).
   rpc GetClusterReport(GetClusterReportRequest) returns (GetClusterReportResponse);
+  // The same report as a PDF, for the leader to save, print or send.
+  rpc GetClusterReportPdf(GetClusterReportPdfRequest) returns (GetClusterReportPdfResponse);
 }
 
 message MeetingPlan {
@@ -75,6 +84,44 @@ message MeetingPlan {
   // What the caller may do with it now.
   bool can_edit = 22;
   bool can_review = 23;
+  // Member schools invited to the plan.
+  int32 invited_count = 24;
+  // Whether the leader may still cancel it (before it is scheduled).
+  bool can_cancel = 25;
+}
+
+message GetPlanRequest {
+  string id = 1;
+}
+
+message GetPlanResponse {
+  MeetingPlan plan = 1;
+  repeated PlanInvitee invited = 2;
+  // Whether the leader may still invite schools to it.
+  bool can_invite = 3;
+}
+
+message PlanInvitee {
+  string school_id = 1;
+  string edify_school_id = 2;
+  string name = 3;
+  // "in_person", "phone", "sms", "email" or "whatsapp".
+  string channel = 4;
+  // ISO date.
+  string invited_on = 5;
+}
+
+message InvitePlanSchoolsRequest {
+  string plan_id = 1;
+  repeated string school_ids = 2;
+  // "in_person", "phone", "sms", "email" or "whatsapp".
+  string channel = 3;
+}
+
+message InvitePlanSchoolsResponse {
+  int32 invited = 1;
+  // Schools already invited, left as they were.
+  int32 already_invited = 2;
 }
 
 message PlanEvent {
@@ -381,6 +428,25 @@ message GetClusterReportResponse {
   repeated ReportCount ssa_status = 5;
   // What waits on staff: plans to review, requests to answer.
   repeated ReportCount needs_staff = 6;
+  // Member schools' confirmed SSA average, this financial year against the one before.
+  SsaPerformance ssa_performance = 7;
+}
+
+message SsaPerformance {
+  // "FY 2027" and "FY 2026".
+  string current_period = 1;
+  string previous_period = 2;
+  // Averages to two places ("5.91"); empty when no confirmed record.
+  string current_average = 3;
+  string previous_average = 4;
+  // "+19%" or "-3%", from the schools with a confirmed record in both years
+  // only, so a school assessed in one year alone never moves it; empty when
+  // no school has both.
+  string change = 5;
+  int32 schools_current = 6;
+  int32 schools_previous = 7;
+  // Schools with a confirmed record in both years: the change is theirs.
+  int32 schools_compared = 8;
 }
 
 message ReportFigure {
@@ -400,4 +466,14 @@ message ReportSchool {
 message ReportCount {
   string label = 1;
   int32 count = 2;
+}
+
+message GetClusterReportPdfRequest {
+  string cluster_id = 1;
+}
+
+message GetClusterReportPdfResponse {
+  bytes pdf = 1;
+  // "Cluster report - Kampala East - FY 2027.pdf".
+  string file_name = 2;
 }

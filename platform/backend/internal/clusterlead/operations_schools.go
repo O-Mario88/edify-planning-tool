@@ -94,6 +94,25 @@ func (o *OperationsService) GetMobilization(
 	return connect.NewResponse(response), nil
 }
 
+// memberSchoolsOnly is the requested schools, each once, refused unless
+// every one is a member school of the cluster.
+func (o *OperationsService) memberSchoolsOnly(ctx context.Context, clusterID string, requested []string) ([]string, error) {
+	wanted := slices.Compact(slices.Sorted(slices.Values(requested)))
+	if len(wanted) == 0 || len(wanted) > maxSchoolsOnce {
+		return nil, invalid(ctx, "Choose between 1 and 500 schools.")
+	}
+	members, _, err := o.data.MemberSchools(ctx, clusterID, "", maxSchoolsOnce, 0)
+	if err != nil {
+		return nil, o.internal(ctx, err)
+	}
+	for _, id := range wanted {
+		if !slices.ContainsFunc(members, func(s School) bool { return s.ID == id }) {
+			return nil, invalid(ctx, "Only the cluster's member schools can be invited.")
+		}
+	}
+	return wanted, nil
+}
+
 func (o *OperationsService) canInvite(activity ActivityRecord) bool {
 	return slices.Contains(plannedStatuses, activity.Status) && activity.Date != nil && !activity.Date.Before(o.today())
 }
@@ -117,18 +136,9 @@ func (o *OperationsService) InviteSchools(
 	if !channels[channel] {
 		return nil, invalid(ctx, "Say how the schools were invited: in person, phone, SMS, email or WhatsApp.")
 	}
-	wanted := slices.Compact(slices.Sorted(slices.Values(request.Msg.GetSchoolIds())))
-	if len(wanted) == 0 || len(wanted) > maxSchoolsOnce {
-		return nil, invalid(ctx, "Choose between 1 and 500 schools.")
-	}
-	members, _, err := o.data.MemberSchools(ctx, activity.ClusterID, "", maxSchoolsOnce, 0)
+	wanted, err := o.memberSchoolsOnly(ctx, activity.ClusterID, request.Msg.GetSchoolIds())
 	if err != nil {
-		return nil, o.internal(ctx, err)
-	}
-	for _, id := range wanted {
-		if !slices.ContainsFunc(members, func(s School) bool { return s.ID == id }) {
-			return nil, invalid(ctx, "Only the cluster's member schools can be invited.")
-		}
+		return nil, err
 	}
 	ids := make([]string, len(wanted))
 	for i := range ids {

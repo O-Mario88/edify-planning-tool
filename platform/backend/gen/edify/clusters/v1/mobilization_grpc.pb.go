@@ -19,25 +19,28 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ClusterMobilizationService_ListPlans_FullMethodName        = "/edify.clusters.v1.ClusterMobilizationService/ListPlans"
-	ClusterMobilizationService_GetPlanOptions_FullMethodName   = "/edify.clusters.v1.ClusterMobilizationService/GetPlanOptions"
-	ClusterMobilizationService_SavePlan_FullMethodName         = "/edify.clusters.v1.ClusterMobilizationService/SavePlan"
-	ClusterMobilizationService_CancelPlan_FullMethodName       = "/edify.clusters.v1.ClusterMobilizationService/CancelPlan"
-	ClusterMobilizationService_ReviewPlan_FullMethodName       = "/edify.clusters.v1.ClusterMobilizationService/ReviewPlan"
-	ClusterMobilizationService_LinkPlan_FullMethodName         = "/edify.clusters.v1.ClusterMobilizationService/LinkPlan"
-	ClusterMobilizationService_GetMobilization_FullMethodName  = "/edify.clusters.v1.ClusterMobilizationService/GetMobilization"
-	ClusterMobilizationService_InviteSchools_FullMethodName    = "/edify.clusters.v1.ClusterMobilizationService/InviteSchools"
-	ClusterMobilizationService_RecordResponse_FullMethodName   = "/edify.clusters.v1.ClusterMobilizationService/RecordResponse"
-	ClusterMobilizationService_FollowUp_FullMethodName         = "/edify.clusters.v1.ClusterMobilizationService/FollowUp"
-	ClusterMobilizationService_RecordAttendance_FullMethodName = "/edify.clusters.v1.ClusterMobilizationService/RecordAttendance"
-	ClusterMobilizationService_SaveMinutes_FullMethodName      = "/edify.clusters.v1.ClusterMobilizationService/SaveMinutes"
-	ClusterMobilizationService_ListActionItems_FullMethodName  = "/edify.clusters.v1.ClusterMobilizationService/ListActionItems"
-	ClusterMobilizationService_SaveActionItem_FullMethodName   = "/edify.clusters.v1.ClusterMobilizationService/SaveActionItem"
-	ClusterMobilizationService_CloseActionItem_FullMethodName  = "/edify.clusters.v1.ClusterMobilizationService/CloseActionItem"
-	ClusterMobilizationService_ListRequests_FullMethodName     = "/edify.clusters.v1.ClusterMobilizationService/ListRequests"
-	ClusterMobilizationService_SubmitRequest_FullMethodName    = "/edify.clusters.v1.ClusterMobilizationService/SubmitRequest"
-	ClusterMobilizationService_AnswerRequest_FullMethodName    = "/edify.clusters.v1.ClusterMobilizationService/AnswerRequest"
-	ClusterMobilizationService_GetClusterReport_FullMethodName = "/edify.clusters.v1.ClusterMobilizationService/GetClusterReport"
+	ClusterMobilizationService_ListPlans_FullMethodName           = "/edify.clusters.v1.ClusterMobilizationService/ListPlans"
+	ClusterMobilizationService_GetPlanOptions_FullMethodName      = "/edify.clusters.v1.ClusterMobilizationService/GetPlanOptions"
+	ClusterMobilizationService_SavePlan_FullMethodName            = "/edify.clusters.v1.ClusterMobilizationService/SavePlan"
+	ClusterMobilizationService_CancelPlan_FullMethodName          = "/edify.clusters.v1.ClusterMobilizationService/CancelPlan"
+	ClusterMobilizationService_ReviewPlan_FullMethodName          = "/edify.clusters.v1.ClusterMobilizationService/ReviewPlan"
+	ClusterMobilizationService_LinkPlan_FullMethodName            = "/edify.clusters.v1.ClusterMobilizationService/LinkPlan"
+	ClusterMobilizationService_GetPlan_FullMethodName             = "/edify.clusters.v1.ClusterMobilizationService/GetPlan"
+	ClusterMobilizationService_InvitePlanSchools_FullMethodName   = "/edify.clusters.v1.ClusterMobilizationService/InvitePlanSchools"
+	ClusterMobilizationService_GetMobilization_FullMethodName     = "/edify.clusters.v1.ClusterMobilizationService/GetMobilization"
+	ClusterMobilizationService_InviteSchools_FullMethodName       = "/edify.clusters.v1.ClusterMobilizationService/InviteSchools"
+	ClusterMobilizationService_RecordResponse_FullMethodName      = "/edify.clusters.v1.ClusterMobilizationService/RecordResponse"
+	ClusterMobilizationService_FollowUp_FullMethodName            = "/edify.clusters.v1.ClusterMobilizationService/FollowUp"
+	ClusterMobilizationService_RecordAttendance_FullMethodName    = "/edify.clusters.v1.ClusterMobilizationService/RecordAttendance"
+	ClusterMobilizationService_SaveMinutes_FullMethodName         = "/edify.clusters.v1.ClusterMobilizationService/SaveMinutes"
+	ClusterMobilizationService_ListActionItems_FullMethodName     = "/edify.clusters.v1.ClusterMobilizationService/ListActionItems"
+	ClusterMobilizationService_SaveActionItem_FullMethodName      = "/edify.clusters.v1.ClusterMobilizationService/SaveActionItem"
+	ClusterMobilizationService_CloseActionItem_FullMethodName     = "/edify.clusters.v1.ClusterMobilizationService/CloseActionItem"
+	ClusterMobilizationService_ListRequests_FullMethodName        = "/edify.clusters.v1.ClusterMobilizationService/ListRequests"
+	ClusterMobilizationService_SubmitRequest_FullMethodName       = "/edify.clusters.v1.ClusterMobilizationService/SubmitRequest"
+	ClusterMobilizationService_AnswerRequest_FullMethodName       = "/edify.clusters.v1.ClusterMobilizationService/AnswerRequest"
+	ClusterMobilizationService_GetClusterReport_FullMethodName    = "/edify.clusters.v1.ClusterMobilizationService/GetClusterReport"
+	ClusterMobilizationService_GetClusterReportPdf_FullMethodName = "/edify.clusters.v1.ClusterMobilizationService/GetClusterReportPdf"
 )
 
 // ClusterMobilizationServiceClient is the client API for ClusterMobilizationService service.
@@ -54,13 +57,20 @@ type ClusterMobilizationServiceClient interface {
 	ListPlans(ctx context.Context, in *ListPlansRequest, opts ...grpc.CallOption) (*ListPlansResponse, error)
 	// What a plan may name: the governed courses a cluster training may deliver.
 	GetPlanOptions(ctx context.Context, in *GetPlanOptionsRequest, opts ...grpc.CallOption) (*GetPlanOptionsResponse, error)
-	// Create or edit a draft or returned plan, and submit it for review.
+	// Create or edit a plan that is still planned, and submit it for review;
+	// an edit after approval goes back to staff.
 	SavePlan(ctx context.Context, in *SavePlanRequest, opts ...grpc.CallOption) (*SavePlanResponse, error)
 	CancelPlan(ctx context.Context, in *CancelPlanRequest, opts ...grpc.CallOption) (*CancelPlanResponse, error)
 	// Staff: approve or return a submitted plan.
 	ReviewPlan(ctx context.Context, in *ReviewPlanRequest, opts ...grpc.CallOption) (*ReviewPlanResponse, error)
 	// Staff: link an approved plan to the activity they scheduled for it.
 	LinkPlan(ctx context.Context, in *LinkPlanRequest, opts ...grpc.CallOption) (*LinkPlanResponse, error)
+	// One plan with the member schools invited to it.
+	GetPlan(ctx context.Context, in *GetPlanRequest, opts ...grpc.CallOption) (*GetPlanResponse, error)
+	// The leader invites member schools to a planned meeting or training as
+	// soon as it is planned (owner's mockup, 2026-11-11). When staff link the
+	// plan to its official activity, these invitations carry over to it.
+	InvitePlanSchools(ctx context.Context, in *InvitePlanSchoolsRequest, opts ...grpc.CallOption) (*InvitePlanSchoolsResponse, error)
 	// An activity's member schools with each one's invitation and attendance.
 	GetMobilization(ctx context.Context, in *GetMobilizationRequest, opts ...grpc.CallOption) (*GetMobilizationResponse, error)
 	InviteSchools(ctx context.Context, in *InviteSchoolsRequest, opts ...grpc.CallOption) (*InviteSchoolsResponse, error)
@@ -80,6 +90,8 @@ type ClusterMobilizationServiceClient interface {
 	AnswerRequest(ctx context.Context, in *AnswerRequestRequest, opts ...grpc.CallOption) (*AnswerRequestResponse, error)
 	// The cluster management report for the financial year (brief A7).
 	GetClusterReport(ctx context.Context, in *GetClusterReportRequest, opts ...grpc.CallOption) (*GetClusterReportResponse, error)
+	// The same report as a PDF, for the leader to save, print or send.
+	GetClusterReportPdf(ctx context.Context, in *GetClusterReportPdfRequest, opts ...grpc.CallOption) (*GetClusterReportPdfResponse, error)
 }
 
 type clusterMobilizationServiceClient struct {
@@ -144,6 +156,26 @@ func (c *clusterMobilizationServiceClient) LinkPlan(ctx context.Context, in *Lin
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LinkPlanResponse)
 	err := c.cc.Invoke(ctx, ClusterMobilizationService_LinkPlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *clusterMobilizationServiceClient) GetPlan(ctx context.Context, in *GetPlanRequest, opts ...grpc.CallOption) (*GetPlanResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPlanResponse)
+	err := c.cc.Invoke(ctx, ClusterMobilizationService_GetPlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *clusterMobilizationServiceClient) InvitePlanSchools(ctx context.Context, in *InvitePlanSchoolsRequest, opts ...grpc.CallOption) (*InvitePlanSchoolsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InvitePlanSchoolsResponse)
+	err := c.cc.Invoke(ctx, ClusterMobilizationService_InvitePlanSchools_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -280,6 +312,16 @@ func (c *clusterMobilizationServiceClient) GetClusterReport(ctx context.Context,
 	return out, nil
 }
 
+func (c *clusterMobilizationServiceClient) GetClusterReportPdf(ctx context.Context, in *GetClusterReportPdfRequest, opts ...grpc.CallOption) (*GetClusterReportPdfResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetClusterReportPdfResponse)
+	err := c.cc.Invoke(ctx, ClusterMobilizationService_GetClusterReportPdf_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ClusterMobilizationServiceServer is the server API for ClusterMobilizationService service.
 // All implementations must embed UnimplementedClusterMobilizationServiceServer
 // for forward compatibility.
@@ -294,13 +336,20 @@ type ClusterMobilizationServiceServer interface {
 	ListPlans(context.Context, *ListPlansRequest) (*ListPlansResponse, error)
 	// What a plan may name: the governed courses a cluster training may deliver.
 	GetPlanOptions(context.Context, *GetPlanOptionsRequest) (*GetPlanOptionsResponse, error)
-	// Create or edit a draft or returned plan, and submit it for review.
+	// Create or edit a plan that is still planned, and submit it for review;
+	// an edit after approval goes back to staff.
 	SavePlan(context.Context, *SavePlanRequest) (*SavePlanResponse, error)
 	CancelPlan(context.Context, *CancelPlanRequest) (*CancelPlanResponse, error)
 	// Staff: approve or return a submitted plan.
 	ReviewPlan(context.Context, *ReviewPlanRequest) (*ReviewPlanResponse, error)
 	// Staff: link an approved plan to the activity they scheduled for it.
 	LinkPlan(context.Context, *LinkPlanRequest) (*LinkPlanResponse, error)
+	// One plan with the member schools invited to it.
+	GetPlan(context.Context, *GetPlanRequest) (*GetPlanResponse, error)
+	// The leader invites member schools to a planned meeting or training as
+	// soon as it is planned (owner's mockup, 2026-11-11). When staff link the
+	// plan to its official activity, these invitations carry over to it.
+	InvitePlanSchools(context.Context, *InvitePlanSchoolsRequest) (*InvitePlanSchoolsResponse, error)
 	// An activity's member schools with each one's invitation and attendance.
 	GetMobilization(context.Context, *GetMobilizationRequest) (*GetMobilizationResponse, error)
 	InviteSchools(context.Context, *InviteSchoolsRequest) (*InviteSchoolsResponse, error)
@@ -320,6 +369,8 @@ type ClusterMobilizationServiceServer interface {
 	AnswerRequest(context.Context, *AnswerRequestRequest) (*AnswerRequestResponse, error)
 	// The cluster management report for the financial year (brief A7).
 	GetClusterReport(context.Context, *GetClusterReportRequest) (*GetClusterReportResponse, error)
+	// The same report as a PDF, for the leader to save, print or send.
+	GetClusterReportPdf(context.Context, *GetClusterReportPdfRequest) (*GetClusterReportPdfResponse, error)
 	mustEmbedUnimplementedClusterMobilizationServiceServer()
 }
 
@@ -347,6 +398,12 @@ func (UnimplementedClusterMobilizationServiceServer) ReviewPlan(context.Context,
 }
 func (UnimplementedClusterMobilizationServiceServer) LinkPlan(context.Context, *LinkPlanRequest) (*LinkPlanResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LinkPlan not implemented")
+}
+func (UnimplementedClusterMobilizationServiceServer) GetPlan(context.Context, *GetPlanRequest) (*GetPlanResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPlan not implemented")
+}
+func (UnimplementedClusterMobilizationServiceServer) InvitePlanSchools(context.Context, *InvitePlanSchoolsRequest) (*InvitePlanSchoolsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method InvitePlanSchools not implemented")
 }
 func (UnimplementedClusterMobilizationServiceServer) GetMobilization(context.Context, *GetMobilizationRequest) (*GetMobilizationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMobilization not implemented")
@@ -386,6 +443,9 @@ func (UnimplementedClusterMobilizationServiceServer) AnswerRequest(context.Conte
 }
 func (UnimplementedClusterMobilizationServiceServer) GetClusterReport(context.Context, *GetClusterReportRequest) (*GetClusterReportResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetClusterReport not implemented")
+}
+func (UnimplementedClusterMobilizationServiceServer) GetClusterReportPdf(context.Context, *GetClusterReportPdfRequest) (*GetClusterReportPdfResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetClusterReportPdf not implemented")
 }
 func (UnimplementedClusterMobilizationServiceServer) mustEmbedUnimplementedClusterMobilizationServiceServer() {
 }
@@ -513,6 +573,42 @@ func _ClusterMobilizationService_LinkPlan_Handler(srv interface{}, ctx context.C
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ClusterMobilizationServiceServer).LinkPlan(ctx, req.(*LinkPlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ClusterMobilizationService_GetPlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterMobilizationServiceServer).GetPlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ClusterMobilizationService_GetPlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterMobilizationServiceServer).GetPlan(ctx, req.(*GetPlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ClusterMobilizationService_InvitePlanSchools_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InvitePlanSchoolsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterMobilizationServiceServer).InvitePlanSchools(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ClusterMobilizationService_InvitePlanSchools_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterMobilizationServiceServer).InvitePlanSchools(ctx, req.(*InvitePlanSchoolsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -751,6 +847,24 @@ func _ClusterMobilizationService_GetClusterReport_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ClusterMobilizationService_GetClusterReportPdf_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClusterReportPdfRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterMobilizationServiceServer).GetClusterReportPdf(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ClusterMobilizationService_GetClusterReportPdf_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterMobilizationServiceServer).GetClusterReportPdf(ctx, req.(*GetClusterReportPdfRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ClusterMobilizationService_ServiceDesc is the grpc.ServiceDesc for ClusterMobilizationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -781,6 +895,14 @@ var ClusterMobilizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LinkPlan",
 			Handler:    _ClusterMobilizationService_LinkPlan_Handler,
+		},
+		{
+			MethodName: "GetPlan",
+			Handler:    _ClusterMobilizationService_GetPlan_Handler,
+		},
+		{
+			MethodName: "InvitePlanSchools",
+			Handler:    _ClusterMobilizationService_InvitePlanSchools_Handler,
 		},
 		{
 			MethodName: "GetMobilization",
@@ -833,6 +955,10 @@ var ClusterMobilizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetClusterReport",
 			Handler:    _ClusterMobilizationService_GetClusterReport_Handler,
+		},
+		{
+			MethodName: "GetClusterReportPdf",
+			Handler:    _ClusterMobilizationService_GetClusterReportPdf_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

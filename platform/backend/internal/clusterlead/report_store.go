@@ -122,3 +122,41 @@ func (s *Store) counts(ctx context.Context, sql string, args ...any) ([]Count, e
 		return c, row.Scan(&c.Label, &c.Count)
 	})
 }
+
+// SSAAverages is the member schools' confirmed SSA average for a financial
+// year and the one before, and the same for only the schools with a record in
+// both years (the fair comparison); zero where there is no record.
+type SSAAverages struct {
+	Current, Previous               float64
+	SchoolsCurrent, SchoolsPrevious int32
+	PairedCurrent, PairedPrevious   float64
+	SchoolsPaired                   int32
+}
+
+// SSAPerformance averages the member schools' confirmed SSA records for fy
+// and fy-1 (a school's records within a year are averaged first, so each
+// school counts once a year).
+func (s *Store) SSAPerformance(ctx context.Context, clusterID string, fy int) (SSAAverages, error) {
+	var out SSAAverages
+	err := s.db.QueryRow(ctx, `
+WITH per_school AS (
+  SELECT r.school_id,
+         avg(r.average_score) FILTER (WHERE r.fy = $2) AS current,
+         avg(r.average_score) FILTER (WHERE r.fy = $3) AS previous
+  FROM ssa_record r JOIN school s ON s.id = r.school_id
+  WHERE`+memberPredicate+`
+    AND r.deleted_at IS NULL AND r.verification_status = 'confirmed' AND r.average_score IS NOT NULL
+    AND r.fy IN ($2, $3)
+  GROUP BY r.school_id)
+SELECT COALESCE(avg(current), 0), count(current)::int, COALESCE(avg(previous), 0), count(previous)::int,
+       COALESCE(avg(current) FILTER (WHERE previous IS NOT NULL), 0),
+       COALESCE(avg(previous) FILTER (WHERE current IS NOT NULL), 0),
+       count(*) FILTER (WHERE current IS NOT NULL AND previous IS NOT NULL)::int
+FROM per_school`, clusterID, fmt.Sprint(fy), fmt.Sprint(fy-1)).Scan(
+		&out.Current, &out.SchoolsCurrent, &out.Previous, &out.SchoolsPrevious,
+		&out.PairedCurrent, &out.PairedPrevious, &out.SchoolsPaired)
+	if err != nil {
+		return SSAAverages{}, fmt.Errorf("clusterlead: reading SSA averages: %w", err)
+	}
+	return out, nil
+}

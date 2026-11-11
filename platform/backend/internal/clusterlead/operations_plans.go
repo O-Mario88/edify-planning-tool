@@ -84,7 +84,8 @@ func (o *OperationsService) GetPlanOptions(
 	return connect.NewResponse(response), nil
 }
 
-// SavePlan creates or edits the leader's draft or returned plan.
+// SavePlan creates or edits the leader's plan while it is still planned;
+// saving with submit sends it (back) to staff for review.
 func (o *OperationsService) SavePlan(
 	ctx context.Context, request *connect.Request[clustersv1.SavePlanRequest],
 ) (*connect.Response[clustersv1.SavePlanResponse], error) {
@@ -197,7 +198,7 @@ func (o *OperationsService) CancelPlan(
 	if err != nil {
 		return nil, err
 	}
-	if err := o.move(ctx, plan.ID, []string{"draft", "submitted", "returned", "approved"}, "cancelled", who, reason, ""); err != nil {
+	if err := o.move(ctx, plan.ID, livePlanStatuses, "cancelled", who, reason, ""); err != nil {
 		return nil, err
 	}
 	return o.planResponse(ctx, plan.ID, who, func(p *clustersv1.MeetingPlan) *clustersv1.CancelPlanResponse {
@@ -255,6 +256,72 @@ func (o *OperationsService) LinkPlan(
 	})
 }
 
+// livePlanStatuses: a plan the leader may still invite schools to or cancel.
+var livePlanStatuses = []string{"draft", "submitted", "returned", "approved"}
+
+// GetPlan returns a plan with the member schools invited to it.
+func (o *OperationsService) GetPlan(
+	ctx context.Context, request *connect.Request[clustersv1.GetPlanRequest],
+) (*connect.Response[clustersv1.GetPlanResponse], error) {
+	plan, who, err := o.planFor(ctx, request.Msg.GetId(), o.access)
+	if err != nil {
+		return nil, err
+	}
+	invitees, err := o.ops.PlanInvitees(ctx, plan.ID)
+	if err != nil {
+		return nil, o.internal(ctx, err)
+	}
+	response := &clustersv1.GetPlanResponse{Plan: toPlan(plan, who), CanInvite: o.canInvitePlan(plan, who)}
+	for _, i := range invitees {
+		response.Invited = append(response.Invited, &clustersv1.PlanInvitee{SchoolId: i.SchoolID, EdifySchoolId: i.EdifySchoolID,
+			Name: i.Name, Channel: i.Channel, InvitedOn: i.InvitedAt.In(o.location).Format(isoDate)})
+	}
+	return connect.NewResponse(response), nil
+}
+
+// InvitePlanSchools records the leader's invitations to a planned meeting
+// or training; they carry over to its activity once staff link it.
+func (o *OperationsService) InvitePlanSchools(
+	ctx context.Context, request *connect.Request[clustersv1.InvitePlanSchoolsRequest],
+) (*connect.Response[clustersv1.InvitePlanSchoolsResponse], error) {
+	plan, who, err := o.planFor(ctx, request.Msg.GetPlanId(), o.access)
+	if err != nil {
+		return nil, err
+	}
+	if !who.isLeader {
+		return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied, "Only the cluster's leader mobilises its schools.")
+	}
+	if !o.canInvitePlan(plan, who) {
+		return nil, apierr.New(ctx, connect.CodeFailedPrecondition, apierr.ReasonInvalidArgument,
+			"Schools are invited to a plan that is still planned: not cancelled, not yet scheduled, not past.")
+	}
+	channel := request.Msg.GetChannel()
+	if !channels[channel] {
+		return nil, invalid(ctx, "Say how the schools were invited: in person, phone, SMS, email or WhatsApp.")
+	}
+	wanted, err := o.memberSchoolsOnly(ctx, plan.ClusterID, request.Msg.GetSchoolIds())
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, len(wanted))
+	for i := range ids {
+		if ids[i], err = newID(); err != nil {
+			return nil, o.internal(ctx, err)
+		}
+	}
+	invited, err := o.ops.InvitePlan(ctx, plan.ClusterID, plan.ID, wanted, ids, channel, who.principal.UserID)
+	if err != nil {
+		return nil, o.internal(ctx, err)
+	}
+	return connect.NewResponse(&clustersv1.InvitePlanSchoolsResponse{
+		Invited: int32(invited), AlreadyInvited: int32(len(wanted) - invited), // #nosec G115 -- at most maxSchoolsOnce
+	}), nil
+}
+
+func (o *OperationsService) canInvitePlan(p Plan, who side) bool {
+	return who.isLeader && slices.Contains(livePlanStatuses, p.Status) && !p.PlannedOn.Before(o.today())
+}
+
 // planFor is a plan and the caller's side of its cluster, by allowed().
 func (o *OperationsService) planFor(
 	ctx context.Context, id string, allowed func(context.Context, string) (side, error),
@@ -309,7 +376,9 @@ func toPlan(p Plan, who side) *clustersv1.MeetingPlan {
 		Objectives: p.Objectives, Agenda: p.Agenda, ExpectedParticipants: p.ExpectedParticipants,
 		Facilitator: p.Facilitator, Resources: p.Resources, Notes: p.Notes, Status: p.Status,
 		ActivityId: p.ActivityID, ReviewNote: p.ReviewNote, History: toEvents(p.History),
-		CanEdit:   who.isLeader && (p.Status == "draft" || p.Status == "returned"),
+		// Planned means editable; an edit after approval goes back to staff.
+		CanEdit:   who.isLeader && slices.Contains(livePlanStatuses, p.Status),
 		CanReview: !who.isLeader && p.Status == "submitted",
+		CanCancel: who.isLeader && slices.Contains(livePlanStatuses, p.Status), InvitedCount: p.InvitedCount,
 	}
 }

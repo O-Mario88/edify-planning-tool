@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/ledger"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pdfdoc"
 )
 
 // The school's pages, with no account: a director opens the private link
@@ -424,58 +425,58 @@ func (s *schoolPages) statementPDF(writer http.ResponseWriter, request *http.Req
 }
 
 func statementPDF(data statementPage) []byte {
-	d := &pdfDoc{}
-	d.title("School loan statement")
-	d.text(data.School + " | Edify School ID " + data.EdifySchoolID)
-	d.text("Lender: " + data.Lender + " | Reference " + data.Reference + " | As of " + data.AsOf)
-	d.text(data.Lender + " is the lender. Edify provides the referral and tracking platform and is not the lender.")
+	d := &pdfdoc.Doc{}
+	d.Title("School loan statement")
+	d.Text(data.School + " | Edify School ID " + data.EdifySchoolID)
+	d.Text("Lender: " + data.Lender + " | Reference " + data.Reference + " | As of " + data.AsOf)
+	d.Text(data.Lender + " is the lender. Edify provides the referral and tracking platform and is not the lender.")
 	if !data.Disbursed {
-		d.heading("No disbursement has been recorded yet.")
-		return d.bytes("Edify school loans | " + data.Reference)
+		d.Heading("No disbursement has been recorded yet.")
+		return d.Bytes("Edify school loans | " + data.Reference)
 	}
-	d.heading("Summary")
-	d.text("Status: " + data.Status + ". Outstanding balance: " + data.Outstanding + ". Owed today: " + data.OwedToday + ".")
+	d.Heading("Summary")
+	d.Text("Status: " + data.Status + ". Outstanding balance: " + data.Outstanding + ". Owed today: " + data.OwedToday + ".")
 	if data.Overdue != "" {
-		d.text("Overdue: " + data.Overdue + ".")
+		d.Text("Overdue: " + data.Overdue + ".")
 	}
 	if data.NextDue != "" {
-		d.text("Next installment: " + data.NextDue + ".")
+		d.Text("Next installment: " + data.NextDue + ".")
 	}
-	d.heading("How your balance is calculated")
+	d.Heading("How your balance is calculated")
 	for _, step := range data.Steps {
-		d.mono(columns([]int{58, -30}, step.Label, step.Value))
+		d.Mono(pdfdoc.Columns([]int{58, -30}, step.Label, step.Value))
 	}
-	d.text("Only payments your lender has verified count towards the balance.")
-	d.heading("Repayment schedule (amounts in UGX)")
+	d.Text("Only payments your lender has verified count towards the balance.")
+	d.Heading("Repayment schedule (amounts in UGX)")
 	widths := []int{2, 11, -11, -10, -9, -11, -11, -11, 15}
-	d.mono(columns(widths, "No", "Due", "Principal", "Interest", "Fees", "Total", "Paid", "Remaining", "Status"))
+	d.Mono(pdfdoc.Columns(widths, "No", "Due", "Principal", "Interest", "Fees", "Total", "Paid", "Remaining", "Status"))
 	for _, i := range data.Installments {
-		d.mono(columns(widths, fmt.Sprint(i.Number), i.Due, bare(i.Principal), bare(i.Interest), bare(i.Fee), bare(i.Total),
+		d.Mono(pdfdoc.Columns(widths, fmt.Sprint(i.Number), i.Due, bare(i.Principal), bare(i.Interest), bare(i.Fee), bare(i.Total),
 			bare(i.Paid), bare(i.Remaining), i.Status))
 	}
-	d.heading("Statement (amounts in UGX)")
+	d.Heading("Statement (amounts in UGX)")
 	widths = []int{11, 28, 17, -11, -11, -21}
-	d.mono(columns(widths, "Date", "Description", "Reference", "Charged", "Paid", "Balance"))
+	d.Mono(pdfdoc.Columns(widths, "Date", "Description", "Reference", "Charged", "Paid", "Balance"))
 	for _, l := range data.Lines {
-		d.mono(columns(widths, l.Date, l.Description, l.Reference, bare(l.Charged), bare(l.Paid), bare(l.Balance)))
+		d.Mono(pdfdoc.Columns(widths, l.Date, l.Description, l.Reference, bare(l.Charged), bare(l.Paid), bare(l.Balance)))
 	}
 	if len(data.Payments) > 0 {
-		d.heading("Payments reported (amounts in UGX)")
+		d.Heading("Payments reported (amounts in UGX)")
 		widths = []int{11, -11, 18, 24, 22}
-		d.mono(columns(widths, "Paid on", "Amount", "Reference", "Method", "Status"))
+		d.Mono(pdfdoc.Columns(widths, "Paid on", "Amount", "Reference", "Method", "Status"))
 		for _, p := range data.Payments {
-			d.mono(columns(widths, p.PaidOn, bare(p.Amount), p.Reference, p.Method, p.Status))
+			d.Mono(pdfdoc.Columns(widths, p.PaidOn, bare(p.Amount), p.Reference, p.Method, p.Status))
 		}
 		if data.Pending != "" {
-			d.text(data.Pending + " is waiting for your lender's verification and is not yet in the balance.")
+			d.Text(data.Pending + " is waiting for your lender's verification and is not yet in the balance.")
 		}
 	}
-	d.heading("Questions about this statement")
-	for _, l := range wrap("If a payment is missing or a figure looks wrong, report it from your statement page or contact "+
+	d.Heading("Questions about this statement")
+	for _, l := range pdfdoc.Wrap("If a payment is missing or a figure looks wrong, report it from your statement page or contact "+
 		data.Lender+" with your reference "+data.Reference+".", 110) {
-		d.text(l)
+		d.Text(l)
 	}
-	return d.bytes("Edify school loans | " + data.Reference + " | generated " + data.AsOf)
+	return d.Bytes("Edify school loans | " + data.Reference + " | generated " + data.AsOf)
 }
 
 // bare drops the currency from a formatted amount, for tables headed in UGX.
