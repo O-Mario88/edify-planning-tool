@@ -145,12 +145,14 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $8) ON CONFLICT (dedupe_key) DO NOTH
 
 // SMSWorker sends queued messages and queues the weekly reminders.
 type SMSWorker struct {
-	store    *Store
-	provider SMSProvider
-	keys     Keys
-	baseURL  string
-	logger   *slog.Logger
-	now      func() time.Time
+	// cooldownDays is the shared per-kind cooldown (config).
+	cooldownDays int
+	store        *Store
+	provider     SMSProvider
+	keys         Keys
+	baseURL      string
+	logger       *slog.Logger
+	now          func() time.Time
 }
 
 // NewSMSWorker returns the SMS worker; provider may be nil.
@@ -158,7 +160,16 @@ func NewSMSWorker(store *Store, provider SMSProvider, keys Keys, baseURL string,
 	if now == nil {
 		now = time.Now
 	}
-	return &SMSWorker{store: store, provider: provider, keys: keys, baseURL: strings.TrimRight(baseURL, "/"), logger: logger, now: now}
+	return &SMSWorker{store: store, provider: provider, keys: keys, baseURL: strings.TrimRight(baseURL, "/"), logger: logger, now: now,
+		cooldownDays: 7}
+}
+
+// WithCooldown sets the shared per-kind cooldown in days.
+func (w *SMSWorker) WithCooldown(days int) *SMSWorker {
+	if days > 0 {
+		w.cooldownDays = days
+	}
+	return w
 }
 
 // Reminder policy: weekly, on Mondays, in Kampala's daytime only.
@@ -240,13 +251,13 @@ func truncate(text string, limit int) string {
 
 // ReminderCandidate is an active loan that may need a reminder.
 type ReminderCandidate struct {
-	ApplicationID, LoanID, LenderName, Phone string
+	ApplicationID, LoanID, LenderName, Phone, SchoolID, Director string
 }
 
 // reminderCandidates are applications with a ledger loan, not closed.
 func (s *Store) reminderCandidates(ctx context.Context) ([]ReminderCandidate, error) {
 	rows, err := s.db.Query(ctx, `
-SELECT id, linked_mfi_loan_id, lender_name, director_phone FROM school_loans.application
+SELECT id, linked_mfi_loan_id, lender_name, director_phone, COALESCE(school_id, ''), director_name FROM school_loans.application
 WHERE linked_mfi_loan_id <> '' AND closure_status NOT IN ('closed', 'written_off')
   AND status NOT IN ('withdrawn', 'closed')`)
 	if err != nil {
@@ -256,7 +267,7 @@ WHERE linked_mfi_loan_id <> '' AND closure_status NOT IN ('closed', 'written_off
 	var out []ReminderCandidate
 	for rows.Next() {
 		var c ReminderCandidate
-		if err := rows.Scan(&c.ApplicationID, &c.LoanID, &c.LenderName, &c.Phone); err != nil {
+		if err := rows.Scan(&c.ApplicationID, &c.LoanID, &c.LenderName, &c.Phone, &c.SchoolID, &c.Director); err != nil {
 			return nil, err
 		}
 		out = append(out, c)
@@ -284,7 +295,10 @@ func ReminderFor(position ledger.Position, week string, applicationID string) (k
 }
 
 // QueueWeeklyReminders queues this week's reminders, once, on the reminder
-// day in Kampala's daytime. Each reads the loan's latest verified position.
+// day in Kampala's daytime. Each reads the loan's latest verified position
+// and goes through the school's notification history: it is skipped when a
+// person, or last week's reminder, already sent one of its kind inside the
+// cooldown, or the school has had its messages for the day or week.
 func (w *SMSWorker) QueueWeeklyReminders(ctx context.Context) (int, error) {
 	local := w.now().In(kampala)
 	if local.Weekday() != reminderWeekday || local.Hour() < reminderFromHour || local.Hour() >= reminderUntilHour {
@@ -311,18 +325,35 @@ func (w *SMSWorker) QueueWeeklyReminders(ctx context.Context) (int, error) {
 		if kind == "" {
 			continue
 		}
+		note := NoteOverdue
+		if kind == SMSUpcoming {
+			note = NoteUpcoming
+		}
+		// Check before issuing a link, so a skipped week issues none.
+		sameKind, limit, err := w.store.cooldown(ctx, w.store.db, c.ApplicationID, note, w.cooldownDays, w.now())
+		if err != nil {
+			return queued, err
+		}
+		if sameKind != "" || limit != "" {
+			continue
+		}
 		link, err := w.statementLink(ctx, c.ApplicationID, c.Phone, local)
 		if err != nil {
 			return queued, err
 		}
-		body := fmt.Sprintf("Edify Loan Reminder: your school loan installment with %s is due on %s. "+
-			"Contact %s if you need assistance. Your secure statement: %s",
-			c.LenderName, due.DueDate.Format("2 Jan 2006"), c.LenderName, link)
-		if kind == SMSOverdue {
-			body = fmt.Sprintf("Edify Loan Reminder: a school loan installment with %s is overdue. "+
-				"Please contact %s about it. Your secure statement: %s", c.LenderName, c.LenderName, link)
+		date := ""
+		if due != nil {
+			date = due.DueDate.Format("2 Jan 2006")
 		}
-		if err := w.store.QueueSMS(ctx, c.ApplicationID, kind, dedupe, c.Phone, body, w.now()); err != nil {
+		body := strings.NewReplacer(slotLender, c.LenderName, slotDate, date, slotLink, link).Replace(noteTemplates[note])
+		_, _, err = w.store.QueueNote(ctx, NoteDraft{ApplicationID: c.ApplicationID, SchoolID: c.SchoolID, LoanID: c.LoanID,
+			Type: note, Recipient: c.Phone, RecipientName: c.Director, Body: body, DedupeKey: dedupe},
+			Sender{ID: "system", Name: "Weekly reminder", Role: "system", Organisation: c.LenderName}, w.cooldownDays, w.now())
+		var field *FieldError
+		switch {
+		case errors.As(err, &field), errors.Is(err, ErrNoteDuplicate):
+			continue
+		case err != nil:
 			return queued, err
 		}
 		queued++
@@ -349,6 +380,9 @@ func (w *SMSWorker) Run(ctx context.Context, ready func(context.Context) error) 
 		if ready(ctx) == nil {
 			if _, err := w.SendDue(ctx); err != nil && ctx.Err() == nil {
 				w.logger.Error("loans: sending SMS failed", slog.String("error", err.Error()))
+			}
+			if _, err := w.SendDueNotes(ctx); err != nil && ctx.Err() == nil {
+				w.logger.Error("loans: sending notifications failed", slog.String("error", err.Error()))
 			}
 			if w.now().Sub(lastReminders) >= time.Hour && w.baseURL != "" {
 				if _, err := w.QueueWeeklyReminders(ctx); err != nil && ctx.Err() == nil {
@@ -385,11 +419,13 @@ func (s *Store) DeliveryReports(secret string, logger *slog.Logger) http.Handler
 			return
 		}
 		err := s.inWrite(request.Context(), func(tx pgx.Tx) error {
-			_, err := tx.Exec(request.Context(), `
+			if _, err := tx.Exec(request.Context(), `
 UPDATE school_loans.sms_message SET status = $2, delivered_at = CASE WHEN $2 = 'delivered' THEN now() ELSE delivered_at END,
   last_error = CASE WHEN $2 = 'failed' THEN $3 ELSE last_error END, updated_at = now()
-WHERE provider_message_id = $1 AND status IN ('submitted', 'delivered', 'failed')`, id, next, "Delivery report: "+status)
-			return err
+WHERE provider_message_id = $1 AND status IN ('submitted', 'delivered', 'failed')`, id, next, "Delivery report: "+status); err != nil {
+				return err
+			}
+			return noteDeliveryReport(request.Context(), tx, id, next, status)
 		})
 		if err != nil {
 			logger.Error("loans: recording an SMS delivery report", slog.String("error", err.Error()))

@@ -88,3 +88,6 @@ GRANT SELECT (officer_reference) ON bt_mfi_membership TO edify_gateway_ro;
 -- plan that adds up to the approved amount and an enrolment baseline.
 GRANT SELECT (id, loan_id, planned_amount) ON bt_loan_purpose_allocation TO edify_gateway_ro;
 GRANT SELECT (id, loan_id, kind, as_of_date) ON bt_enrolment_snapshot TO edify_gateway_ro;
+-- Staff loan tracking: a Programme Lead's team is the CCEOs they supervise,
+-- read from the existing reporting lines.
+GRANT SELECT (supervisee_id, supervisor_id) ON staff_supervisor_assignment TO edify_gateway_ro;

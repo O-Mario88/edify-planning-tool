@@ -546,6 +546,8 @@ var caseEventLabels = map[string]string{
 	"credit_approved": "Credit approved", "credit_declined": "Credit declined", "credit_returned": "Returned to the officer",
 	"recommendation_submitted": "Recommendation submitted", "ledger_referral": "Referred in the loan ledger",
 	"loan_closed": "Loan closed", "loan_written_off": "Loan written off", "school_request": "Request from the school",
+	"payment_reported": "Payment reported by the school (awaiting verification)", "notification": "Notification to the school",
+	"follow_up": "Edify follow-up",
 }
 
 func caseEventLabel(kind string) string {

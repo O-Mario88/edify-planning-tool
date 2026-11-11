@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -21,6 +22,7 @@ const (
 	envSMSAPIKey      = "EDIFY_SMS_API_KEY"
 	envSMSSender      = "EDIFY_SMS_SENDER"
 	envSMSCallback    = "EDIFY_SMS_CALLBACK_SECRET"
+	envCooldownDays   = "EDIFY_LOAN_REMINDER_COOLDOWN_DAYS"
 )
 
 // Loans configures the School Loan Application Portal's public pages and
@@ -56,24 +58,39 @@ type Loans struct {
 	SMSSender   string
 	// SMSCallbackSecret authenticates the provider's delivery reports.
 	SMSCallbackSecret string
+	// ReminderCooldownDays is how long after a notification of one kind to a
+	// school another of the same kind waits (staff, lenders and the weekly
+	// reminders alike). Default 7.
+	ReminderCooldownDays int
 }
+
+// defaultCooldownDays: one reminder of a kind to a school a week.
+const defaultCooldownDays = 7
 
 func loadLoans(env Environment, getenv func(string) string) (Loans, error) {
 	loans := Loans{
-		PublicBaseURL:     strings.TrimRight(strings.TrimSpace(getenv(envPublicBaseURL)), "/"),
-		SMTPAddr:          strings.TrimSpace(getenv(envSMTPAddr)),
-		SMTPUsername:      strings.TrimSpace(getenv(envSMTPUsername)),
-		SMTPPassword:      getenv(envSMTPPassword),
-		MailFrom:          strings.TrimSpace(getenv(envMailFrom)),
-		DevMailboxDir:     strings.TrimSpace(getenv(envDevMailboxDir)),
-		TrustProxyHeaders: strings.EqualFold(strings.TrimSpace(getenv(envTrustProxy)), "true"),
-		PrivacyContact:    strings.TrimSpace(getenv(envPrivacyContact)),
-		SMSProvider:       strings.TrimSpace(getenv(envSMSProvider)),
-		SMSDevDir:         strings.TrimSpace(getenv(envSMSDevDir)),
-		SMSUsername:       strings.TrimSpace(getenv(envSMSUsername)),
-		SMSAPIKey:         getenv(envSMSAPIKey),
-		SMSSender:         strings.TrimSpace(getenv(envSMSSender)),
-		SMSCallbackSecret: getenv(envSMSCallback),
+		PublicBaseURL:        strings.TrimRight(strings.TrimSpace(getenv(envPublicBaseURL)), "/"),
+		SMTPAddr:             strings.TrimSpace(getenv(envSMTPAddr)),
+		SMTPUsername:         strings.TrimSpace(getenv(envSMTPUsername)),
+		SMTPPassword:         getenv(envSMTPPassword),
+		MailFrom:             strings.TrimSpace(getenv(envMailFrom)),
+		DevMailboxDir:        strings.TrimSpace(getenv(envDevMailboxDir)),
+		TrustProxyHeaders:    strings.EqualFold(strings.TrimSpace(getenv(envTrustProxy)), "true"),
+		PrivacyContact:       strings.TrimSpace(getenv(envPrivacyContact)),
+		SMSProvider:          strings.TrimSpace(getenv(envSMSProvider)),
+		SMSDevDir:            strings.TrimSpace(getenv(envSMSDevDir)),
+		SMSUsername:          strings.TrimSpace(getenv(envSMSUsername)),
+		SMSAPIKey:            getenv(envSMSAPIKey),
+		SMSSender:            strings.TrimSpace(getenv(envSMSSender)),
+		SMSCallbackSecret:    getenv(envSMSCallback),
+		ReminderCooldownDays: defaultCooldownDays,
+	}
+	if raw := strings.TrimSpace(getenv(envCooldownDays)); raw != "" {
+		days, err := strconv.Atoi(raw)
+		if err != nil || days < 1 || days > 60 {
+			return Loans{}, fmt.Errorf("config: %s must be a whole number of days from 1 to 60", envCooldownDays)
+		}
+		loans.ReminderCooldownDays = days
 	}
 	switch loans.SMSProvider {
 	case "":

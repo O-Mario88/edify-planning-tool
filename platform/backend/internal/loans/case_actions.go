@@ -144,6 +144,19 @@ func evidenceKey(applicationID, reference string, amount ledger.Money, paidOn ti
 	return "evidence:" + hex.EncodeToString(sum[:16])
 }
 
+// lenderSender is a lender's staff member sending to a school: their
+// administrator may send a reminder inside the cooldown, with a reason.
+func lenderSender(v viewer) Sender {
+	roles := []string{}
+	for _, role := range lenderRoleOrder {
+		if v.has(role) {
+			roles = append(roles, role)
+		}
+	}
+	return Sender{ID: v.lender.UserID, Name: v.lender.Name, Role: strings.Join(roles, ","), Organisation: v.lender.LenderName,
+		IsLender: true, CanOverride: v.has(RoleAdministrator)}
+}
+
 func lenderActor(v viewer) Actor {
 	return Actor{Kind: ActorLender, ID: v.lender.UserID, Name: v.lender.Name + " (" + v.lender.LenderName + ")", PartnerID: v.lender.PartnerID}
 }
@@ -432,7 +445,8 @@ var caseActions = []caseAction{
 			if err != nil {
 				return "", err
 			}
-			return l.sendSchoolLink(ctx, c, "statement", channel, v.lender.UserID)
+			_, message, err := l.sendSchoolLink(ctx, c, "statement", channel, lenderSender(v))
+			return message, err
 		},
 	},
 	{
@@ -655,45 +669,47 @@ func openRequests(c *caseData) []Option {
 	return out
 }
 
-// sendSchoolLink issues a private link and sends it to the director.
-func (l *Lending) sendSchoolLink(ctx context.Context, c *caseData, purpose, channel, byID string) (string, error) {
-	if l.cfg.PublicBaseURL == "" {
-		return "", need("action", "This server has no public address configured (EDIFY_PUBLIC_BASE_URL), so no link can be sent.")
-	}
-	destination := c.record.Referral.DirectorPhone
-	if channel == "email" {
-		destination = c.record.Referral.DirectorEmail
-	}
-	token, err := l.store.IssueSchoolAccess(ctx, c.record.Referral.ID, purpose, channel, destination, byID, l.now())
-	if err != nil {
-		return "", err
-	}
-	link := l.cfg.PublicBaseURL + "/loan/" + purpose + "?t=" + token
-	lender := c.record.Referral.LenderName
-	body := fmt.Sprintf("Edify: your school loan statement with %s is ready. Open it here (a code will be sent to you): %s", lender, link)
-	kind := SMSStatementLink
+// sendSchoolLink sends the director a private link to their proposed terms
+// or statement: by SMS through the school's notification history (so it
+// counts towards the school's limits), or by email.
+func (l *Lending) sendSchoolLink(ctx context.Context, c *caseData, purpose, channel string, sender Sender) (string, string, error) {
+	byID := sender.ID
+	kind := NoteStatement
 	if purpose == "agreement" {
-		body = fmt.Sprintf("Edify: %s has proposed terms for your school loan %s. Review them here (a code will be sent to you): %s",
-			lender, c.record.Referral.Reference, link)
-		kind = SMSAgreementLink
+		kind = NoteAgreement
 	}
-	if channel == "email" {
-		if l.mailer == nil {
-			return "", need("channel", "Email is not configured on this server; send it by SMS.")
+	if channel != "email" {
+		id, status, err := l.sendSchoolNote(ctx, c, kind, sender, "", "")
+		if err != nil {
+			return "", "", err
 		}
-		if _, err := l.mailer.Send(ctx, Message{To: destination, Subject: "Your school loan " + purpose + " from " + lender,
-			Text: body + "\n\nEdify School Loans\n"}); err != nil {
-			return "", err
+		if status == "suppressed" {
+			return id, "Not sent: the school's number has opted out of text messages. Send it by email instead.", nil
 		}
-		return "Link emailed to " + maskEmail(destination) + ".", nil
+		if l.sms == nil {
+			return id, "Link queued. No SMS provider is configured on this server, so it has not been sent.", nil
+		}
+		return id, "Link queued to " + maskPhone(c.record.Referral.DirectorPhone) + "; it is sent within a minute.", nil
 	}
-	if err := l.store.QueueSMS(ctx, c.record.Referral.ID, kind, kind+":"+HashToken(token)[:24], destination, body, l.now()); err != nil {
-		return "", err
+	if l.mailer == nil {
+		return "", "", need("channel", "Email is not configured on this server; send it by SMS.")
 	}
-	if l.sms == nil {
-		return "Link queued. No SMS provider is configured on this server, so it has not been sent.", nil
+	base, err := publicLink(l.cfg.PublicBaseURL, "")
+	if err != nil {
+		return "", "", need("action", "This server has no HTTPS public address set, so no link can be sent.")
 	}
-	return "Link queued to " + maskPhone(destination) + "; it is sent within a minute.", nil
+	destination := c.record.Referral.DirectorEmail
+	token, err := l.store.IssueSchoolAccess(ctx, c.record.Referral.ID, purpose, "email", destination, byID, l.now())
+	if err != nil {
+		return "", "", err
+	}
+	facts := c.eligibleNotes(sender)[kind]
+	body := renderNote(kind, c, facts, base+"/loan/"+purpose+"?t="+token)
+	if _, err := l.mailer.Send(ctx, Message{To: destination, Subject: "Your school loan " + purpose + " from " + c.record.Referral.LenderName,
+		Text: body + "\n\nEdify School Loans\n"}); err != nil {
+		return "", "", err
+	}
+	return "", "Link emailed to " + maskEmail(destination) + ".", nil
 }
 
 func parseInt(raw string) (int, bool) {

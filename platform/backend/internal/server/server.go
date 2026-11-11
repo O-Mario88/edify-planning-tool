@@ -104,6 +104,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(loansv1connect.NewLoanShareServiceHandler(loans.NewShareService(loanStore,
 		loans.NewLedgerClient(cfg.ExistingAppURL), cfg.Loans.PublicBaseURL, LoansSchemaReady(pool), logger, time.Now), options...))
 	mux.Handle(loansv1connect.NewLendingServiceHandler(loans.NewLendingService(lending), options...))
+	mux.Handle(loansv1connect.NewLoanFollowUpServiceHandler(loans.NewFollowUpService(lending), options...))
 	mux.Handle("POST /sms/delivery-report/{secret}", loanStore.DeliveryReports(cfg.Loans.SMSCallbackSecret, logger))
 	return httpmw.Chain(logger, httpmw.CORS(cfg.CORSAllowedOrigins, mux))
 }

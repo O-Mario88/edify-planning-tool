@@ -380,7 +380,7 @@ type ShareCount struct {
 // stageCounts counts applications by the furthest stage each reached.
 const stageCounts = `
 count(a.id),
-count(a.id) FILTER (WHERE a.delivery_status IN ('delivered', 'opened', 'acknowledged')),
+count(a.id) FILTER (WHERE a.delivery_status IN ('sent', 'opened_by_lender')),
 count(a.id) FILTER (WHERE a.status IN ('under_review', 'information_requested', 'approved', 'disbursed', 'closed')
   OR EXISTS (SELECT 1 FROM school_loans.assessment x WHERE x.application_id = a.id)),
 count(a.id) FILTER (WHERE a.status IN ('approved', 'disbursed', 'closed')),

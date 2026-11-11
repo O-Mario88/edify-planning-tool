@@ -1,0 +1,220 @@
+syntax = "proto3";
+
+package edify.loans.v1;
+
+import "edify/loans/v1/lending.proto";
+import "edify/loans/v1/loans.proto";
+
+// Staff loan tracking: the loan applications of the schools in a person's
+// portfolio, each one's progress, notifications to the school and
+// follow-ups. Edify staff follow up; lenders alone assess, approve,
+// disburse and verify payments. Every rule lives in the gateway.
+service LoanFollowUpService {
+  // The caller's schools' loans: counters and rows. Scope "mine" (a CCEO's
+  // or PL's own portfolio), "team" (a PL's supervised CCEOs) or "all"
+  // (BTO, Country Director, RVP).
+  rpc ListPortfolioLoans(ListPortfolioLoansRequest) returns (ListPortfolioLoansResponse);
+  // One application's progress: stages, follow-ups and notifications.
+  rpc GetLoanProgress(GetLoanProgressRequest) returns (GetLoanProgressResponse);
+  // The notifications the caller may send now, with previews.
+  rpc PrepareNotification(PrepareNotificationRequest) returns (PrepareNotificationResponse);
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+  rpc RecordStaffFollowUp(RecordStaffFollowUpRequest) returns (RecordStaffFollowUpResponse);
+  // Whether anything the caller can see changed since a cursor: the app
+  // refreshes what it shows when it did.
+  rpc GetLoanChanges(GetLoanChangesRequest) returns (GetLoanChangesResponse);
+}
+
+message PortfolioCounter {
+  // "applied", "processing", "disbursed" or "follow_up_due".
+  string key = 1;
+  string label = 2;
+  int32 schools = 3;
+  int32 records = 4;
+  // How it is counted, in a sentence.
+  string rule = 5;
+}
+
+message PortfolioLoanRow {
+  string application_id = 1;
+  string school_name = 2;
+  string edify_school_id = 3;
+  string school_id = 4;
+  string district = 5;
+  string responsible_staff = 6;
+  string lender_name = 7;
+  string reference = 8;
+  string applied_on = 9;
+  // One of the display statuses (No Application ... Closed).
+  string status_label = 10;
+  // "good", "info", "caution", "alert" or "plain".
+  string status_tone = 11;
+  string disbursement_label = 12;
+  string follow_up_label = 13;
+  string follow_up_tone = 14;
+  // Where the caller may see it.
+  string next_payment_on = 15;
+  string last_lender_update = 16;
+  string last_notification = 17;
+  string next_follow_up_on = 18;
+  bool needs_attention = 19;
+  bool can_notify = 20;
+  bool can_follow_up = 21;
+  // Amounts only for roles that may see them; empty otherwise.
+  string requested = 22;
+  string disbursed = 23;
+}
+
+message ListPortfolioLoansRequest {
+  string scope = 1;
+  // A counter key, or empty for all.
+  string counter = 2;
+  string search = 3;
+  string lender_partner_id = 4;
+  string cceo_staff_id = 5;
+  int32 page = 6;
+}
+
+message ListPortfolioLoansResponse {
+  string scope = 1;
+  string scope_label = 2;
+  repeated Choice scopes = 3;
+  int32 portfolio_schools = 4;
+  int32 schools_without_application = 5;
+  repeated PortfolioCounter counters = 6;
+  repeated PortfolioLoanRow rows = 7;
+  int32 total = 8;
+  int32 page = 9;
+  int32 page_size = 10;
+  repeated Choice lenders = 11;
+  repeated Choice cceos = 12;
+  bool shows_amounts = 13;
+}
+
+message ProgressStage {
+  string key = 1;
+  string label = 2;
+  // "done", "current", "waiting" or "not_reached".
+  string state = 3;
+  // The latest confirmed update; empty when none is recorded.
+  string updated_on = 4;
+  // "School", "Edify" or the lender's name.
+  string responsible = 5;
+  string next_action = 6;
+  string note = 7;
+}
+
+message StaffFollowUp {
+  string id = 1;
+  string followed_up_on = 2;
+  string staff_name = 3;
+  string staff_role = 4;
+  string method = 5;
+  string reason = 6;
+  string summary = 7;
+  string school_feedback = 8;
+  string next_action = 9;
+  string next_follow_up_on = 10;
+  bool payment_reported = 11;
+  string payment_note = 12;
+}
+
+message NotificationEntry {
+  string id = 1;
+  string type_label = 2;
+  string sent_by = 3;
+  string sending_organisation = 4;
+  string recipient = 5;
+  string status_label = 6;
+  string status_tone = 7;
+  string created_at = 8;
+  string failure = 9;
+  string body = 10;
+}
+
+message GetLoanProgressRequest {
+  string application_id = 1;
+}
+
+message GetLoanProgressResponse {
+  PortfolioLoanRow row = 1;
+  repeated ProgressStage stages = 2;
+  repeated StaffFollowUp follow_ups = 3;
+  repeated NotificationEntry notifications = 4;
+  string assigned_officer = 5;
+  // The lender's official contact for Edify staff.
+  string lender_contact = 6;
+  repeated CaseLine facts = 7;
+}
+
+message NotificationOption {
+  string type = 1;
+  string label = 2;
+  string preview = 3;
+  int32 sms_parts = 4;
+  // Sent recently: the cooldown, and who sent it.
+  bool in_cooldown = 5;
+  string cooldown_note = 6;
+  // The caller may send it inside the cooldown, with a reason.
+  bool can_override = 7;
+}
+
+message PrepareNotificationRequest {
+  string application_id = 1;
+}
+
+message PrepareNotificationResponse {
+  string school_name = 1;
+  string recipient_name = 2;
+  // Masked: the phone on the application, never typed in.
+  string recipient_phone = 3;
+  bool recipient_verified = 4;
+  string reference = 5;
+  repeated NotificationOption options = 6;
+  string last_notification = 7;
+  string note = 8;
+}
+
+message SendNotificationRequest {
+  string application_id = 1;
+  string type = 2;
+  // Only to send inside the cooldown.
+  string exception_reason = 3;
+}
+
+message SendNotificationResponse {
+  NotificationEntry notification = 1;
+  string message = 2;
+}
+
+message RecordStaffFollowUpRequest {
+  string application_id = 1;
+  string followed_up_on = 2;
+  string method = 3;
+  string contacted_person = 4;
+  string reason = 5;
+  string summary = 6;
+  string school_feedback = 7;
+  string reported_issue = 8;
+  string next_action = 9;
+  string next_follow_up_on = 10;
+  string escalation_target = 11;
+  // The school says it paid: recorded for the lender to verify.
+  bool payment_reported = 12;
+  int64 reported_amount_ugx = 13;
+  string reported_paid_on = 14;
+}
+
+message RecordStaffFollowUpResponse {
+  StaffFollowUp follow_up = 1;
+}
+
+message GetLoanChangesRequest {
+  string since = 1;
+}
+
+message GetLoanChangesResponse {
+  // Opaque; send it back next time.
+  string cursor = 1;
+  bool changed = 2;
+}

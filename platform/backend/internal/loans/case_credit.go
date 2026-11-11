@@ -341,7 +341,8 @@ func agreementAction() caseAction {
 			if _, err := l.store.IssueAgreement(ctx, c.record.Referral.ID, r.ID, terms, v.lender.UserID, v.lender.Name, l.now()); err != nil {
 				return "", err
 			}
-			return l.sendSchoolLink(ctx, c, "agreement", channel, v.lender.UserID)
+			_, message, err := l.sendSchoolLink(ctx, c, "agreement", channel, lenderSender(v))
+			return message, err
 		},
 	}
 }
