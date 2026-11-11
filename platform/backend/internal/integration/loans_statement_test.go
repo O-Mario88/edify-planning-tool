@@ -322,3 +322,36 @@ func TestASchoolOpensOnlyItsOwnStatementWithACode(t *testing.T) {
 		t.Fatalf("a code is stored in plain text (%d, %v)", stored, err)
 	}
 }
+
+// A lender-reported loan's existing terms are recorded once, with the signed
+// agreement, and read back exactly; a second record is refused.
+func TestExistingLoanTermsAreRecordedOnceAndReadBack(t *testing.T) {
+	loanFixtures(t)
+	ctx := context.Background()
+	submit(t, applicationForm(lenderA, "Existing Loan School", "0772 000 401", "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"))
+	app, _ := applicationByPhone(t, "+256772000401")
+	store := loans.NewStore(gateway)
+	document, err := store.StoreDocument(ctx, app, "agreement", "agreement.pdf", []byte("%PDF-1.4\n"), "lender-admin", "lender")
+	if err != nil {
+		t.Fatal(err)
+	}
+	due := []time.Time{time.Date(2027, 2, 15, 0, 0, 0, 0, time.UTC), time.Date(2027, 6, 1, 0, 0, 0, 0, time.UTC)}
+	terms := loans.ExistingTerms{ExternalReference: "LN-OLD-9", RatePercent: "1.8", Method: "declining_balance",
+		Approved: 4_000_000_000, Fee: 50_000, DueDates: due, ApprovedOn: time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC),
+		AgreementDocumentID: document, RecordedBy: "lender-admin", RecordedByName: "Lender Admin"}
+	if err := store.RecordExistingTerms(ctx, app, terms); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.RecordExistingTerms(ctx, app, terms); err != loans.ErrConflict {
+		t.Fatalf("a second record answered %v", err)
+	}
+	record, err := store.CaseRecord(ctx, app, lenderA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := record.Existing
+	if got == nil || got.Approved != terms.Approved || got.Fee != terms.Fee || got.RatePercent != "1.8" ||
+		len(got.DueDates) != 2 || !got.DueDates[1].Equal(due[1]) || got.AgreementDocumentID != document || got.RecordedBy != "lender-admin" {
+		t.Fatalf("read back %+v", got)
+	}
+}

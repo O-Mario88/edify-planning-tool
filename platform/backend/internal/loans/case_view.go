@@ -94,6 +94,8 @@ func (c *caseData) amounts() (recommended, approved, disbursed string) {
 	}
 	if d := c.record.LatestDecision(); d != nil && d.ApprovedAmount != nil {
 		approved = ugx(*d.ApprovedAmount)
+	} else if e := c.record.Existing; e != nil {
+		approved = ugx(e.Approved)
 	}
 	if c.disbursed() {
 		disbursed = ugx(c.position.NetDisbursed)
@@ -111,6 +113,9 @@ func (l *Lending) view(ctx context.Context, c *caseData, v viewer) (*loansv1.Cas
 	}
 	summaryOnly := v.edify != nil && v.edify.summaryOnly
 	out.Sections = append(out.Sections, c.summarySection(v))
+	if s := c.existingLoanSection(); s != nil && !summaryOnly {
+		out.Sections = append(out.Sections, s)
+	}
 	if !summaryOnly {
 		out.Sections = append(out.Sections, c.schoolSection())
 	}
@@ -547,7 +552,7 @@ var caseEventLabels = map[string]string{
 	"recommendation_submitted": "Recommendation submitted", "ledger_referral": "Referred in the loan ledger",
 	"loan_closed": "Loan closed", "loan_written_off": "Loan written off", "school_request": "Request from the school",
 	"payment_reported": "Payment reported by the school (awaiting verification)", "notification": "Notification to the school",
-	"follow_up": "Edify follow-up",
+	"follow_up": "Edify follow-up", "existing_terms": "Existing loan terms recorded", "loan_linked": "Registered in the loan ledger",
 }
 
 func caseEventLabel(kind string) string {

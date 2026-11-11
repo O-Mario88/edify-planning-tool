@@ -80,7 +80,7 @@ VALUES ('`+channel.partner+`', true, '`+channel.email+`', '`+channel.email+`', n
 	cleanup := func() {
 		ctx := context.Background()
 		// Origination and servicing records, newest tables first.
-		for _, table := range []string{"notification_attempt", "notification", "tracking_session", "tracking_verification", "share_event", "sms_preference", "sms_message", "school_request", "school_access_log", "school_session",
+		for _, table := range []string{"existing_loan_terms", "notification_attempt", "notification", "tracking_session", "tracking_verification", "share_event", "sms_preference", "sms_message", "school_request", "school_access_log", "school_session",
 			"school_verification", "school_access", "payment_evidence_event", "payment_evidence", "document", "collateral_event",
 			"collateral", "approval_decision", "agreement_version", "recommendation", "assessment_event", "assessment",
 			"contact_log", "assignment", "lender_member_event", "lender_member"} {

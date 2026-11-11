@@ -301,6 +301,9 @@ func (c *caseData) progress() []ProgressStep {
 	case d != nil && d.Decision != "returned":
 		label := map[string]string{"approved": "Approved", "declined": "Declined"}[d.Decision]
 		add(ProgressStep{Key: "decision", Label: "Decision", State: "done", UpdatedOn: day(d.DecidedAt.In(kampala)), Responsible: lender, Note: label})
+	case r.Existing != nil:
+		add(ProgressStep{Key: "decision", Label: "Decision", State: "done", UpdatedOn: day(r.Existing.ApprovedOn), Responsible: lender,
+			Note: "Approved (terms recorded from the lender's existing loan)"})
 	case r.Referral.Status == StatusApproved || r.Referral.Status == StatusDeclined:
 		add(ProgressStep{Key: "decision", Label: "Decision", State: "done", UpdatedOn: stageDay(r.Referral.DecidedAt), Responsible: lender,
 			Note: StatusLabel(r.Referral.Status) + " (recorded through referral tracking)"})

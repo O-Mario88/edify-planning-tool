@@ -577,16 +577,34 @@ func disbursementAction() caseAction {
 		key: "record_disbursement", label: "Record the disbursement", primary: true,
 		description: "Records money your organisation actually paid out, with evidence, in the loan ledger, and posts the repayment schedule. Edify moves no money.",
 		allowed: func(c *caseData, v viewer) bool {
-			if !v.has(RoleFinance) || c.stage() != StageAwaitingDisbursement || !c.hasAllocation || !c.readyToDisburse() {
+			if !v.has(RoleFinance) || !c.hasLoan() || !c.hasAllocation || !c.readyToDisburse() {
+				return false
+			}
+			if c.reportedOnly() {
+				// Whoever recorded the existing terms does not also post the money.
+				return c.record.Existing != nil && c.record.Existing.RecordedBy != v.lender.UserID
+			}
+			if c.stage() != StageAwaitingDisbursement {
 				return false
 			}
 			d := c.record.LatestDecision()
 			return d != nil && d.Decision == "approved" && d.DecidedBy != v.lender.UserID
 		},
 		fields: func(ctx context.Context, l *Lending, c *caseData, v viewer) ([]*loansv1.ActionField, error) {
+			amount, on := fmt.Sprint(int64(c.loan.Approved)/100), c.today.Format("2006-01-02")
+			help := ""
+			if r := c.record.Referral; c.reportedOnly() {
+				help = "As the loan was paid out; the referral tracking reported it."
+				if r.Disbursed != nil {
+					amount = fmt.Sprint(*r.Disbursed)
+				}
+				if r.DisbursementDate != nil {
+					on = r.DisbursementDate.Format("2006-01-02")
+				}
+			}
 			return []*loansv1.ActionField{
-				field("amount", "Amount actually disbursed (UGX)", "money", true, "", fmt.Sprint(int64(c.loan.Approved)/100)),
-				field("disbursed_on", "Disbursement date", "date", true, "", c.today.Format("2006-01-02")),
+				field("amount", "Amount actually disbursed (UGX)", "money", true, help, amount),
+				field("disbursed_on", "Disbursement date", "date", true, help, on),
 				field("method", "Disbursement method", "choice", true, "", "bank", disbursementMethods...),
 				field("reference", "Disbursement reference", "text", true, "", ""),
 				field("bank_reference", "Bank or provider reference", "text", true, "", ""),
@@ -628,9 +646,15 @@ func disbursementAction() caseAction {
 			if len(in.file) == 0 {
 				return "", need("file", "Attach the evidence of disbursement.")
 			}
-			agreement := c.record.LatestAgreement()
-			if agreement == nil || agreement.Status != "accepted" {
-				return "", need("action", "The school's accepted terms are missing.")
+			// The schedule follows the agreed terms on the principal actually
+			// disbursed (the ledger requires the two to match).
+			terms, err := c.scheduleTerms(amount)
+			if err != nil {
+				return "", err
+			}
+			schedule, err := ledger.BuildSchedule(terms)
+			if err != nil {
+				return "", err
 			}
 			documentID, err := l.store.StoreDocument(ctx, c.record.Referral.ID, "disbursement", in.fileName, in.file, v.lender.UserID, "lender")
 			if err != nil {
@@ -639,23 +663,6 @@ func disbursementAction() caseAction {
 			if _, err := l.ledger.PostDisbursement(ctx, DisbursementPosting{LoanID: c.loan.ID,
 				IdempotencyKey: "disbursement:" + c.loan.ID + ":1", Amount: amount, Sequence: 1, DisbursedOn: *on, ValueDate: *on,
 				ExternalReference: reference, BankReference: method + ": " + bank + " to " + recipient + " (document " + documentID + ")"}); err != nil {
-				return "", err
-			}
-			// The schedule follows the accepted terms, on the principal actually
-			// disbursed (the ledger requires the two to match).
-			rec := c.record.LatestRecommendation()
-			for _, r := range c.record.Recommendations {
-				if r.ID == agreement.RecommendationID {
-					rec = &r
-				}
-			}
-			terms, err := rec.Terms()
-			if err != nil {
-				return "", err
-			}
-			terms.Principal = amount
-			schedule, err := ledger.BuildSchedule(terms)
-			if err != nil {
 				return "", err
 			}
 			if err := l.ledger.PostSchedule(ctx, c.loan.ID, 1, schedule); err != nil {
@@ -674,7 +681,8 @@ func prepareDisbursementAction() caseAction {
 		key: "prepare_disbursement", label: "Record the purpose plan and enrolment baseline", primary: true,
 		description: "The loan ledger needs both before the first disbursement: how the approved amount will be used, and how many learners the school has now.",
 		allowed: func(c *caseData, v viewer) bool {
-			return (officerOrAdmin(c, v) || v.has(RoleFinance)) && c.stage() == StageAwaitingDisbursement && !c.readyToDisburse()
+			return (officerOrAdmin(c, v) || v.has(RoleFinance)) && !c.readyToDisburse() &&
+				(c.stage() == StageAwaitingDisbursement || c.reportedOnly() && c.hasLoan())
 		},
 		fields: func(ctx context.Context, l *Lending, c *caseData, v viewer) ([]*loansv1.ActionField, error) {
 			var fields []*loansv1.ActionField
@@ -694,7 +702,7 @@ func prepareDisbursementAction() caseAction {
 				}
 				fields = append(fields,
 					field("learners", "Learners enrolled now", "number", true, "", learners),
-					field("as_of", "Counted on", "date", true, "On or before the disbursement.", c.today.Format("2006-01-02")),
+					field("as_of", "Counted on", "date", true, "On or before the disbursement.", baselineDay(c)),
 					field("cohort", "Who was counted", "text", true, "", "All enrolled learners, every class"),
 					field("evidence", "Evidence", "text", true, "The register or record you counted from.", ""))
 			}
@@ -745,6 +753,16 @@ func prepareDisbursementAction() caseAction {
 	}
 }
 
+// baselineDay is the default count date: today, or for a lender-reported
+// loan the reported disbursement day, since the ledger needs the baseline on
+// or before the disbursement.
+func baselineDay(c *caseData) string {
+	if on := c.record.Referral.DisbursementDate; c.reportedOnly() && on != nil {
+		return on.Format("2006-01-02")
+	}
+	return c.today.Format("2006-01-02")
+}
+
 // mirrorDisbursement copies a ledger disbursement onto the referral's own
 // tracking, which Edify's earlier pages read. The ledger is the record: a
 // failure here is logged and reported, never undoes the posting.
@@ -783,24 +801,10 @@ func finishDisbursementAction() caseAction {
 		},
 		run: func(ctx context.Context, l *Lending, c *caseData, v viewer, in actionInput) (string, error) {
 			if len(c.book.Installments) == 0 {
-				agreement := c.record.LatestAgreement()
-				if agreement == nil || agreement.Status != "accepted" {
-					return "", need("action", "The school's accepted terms are missing.")
-				}
-				var rec *Recommendation
-				for index := range c.record.Recommendations {
-					if c.record.Recommendations[index].ID == agreement.RecommendationID {
-						rec = &c.record.Recommendations[index]
-					}
-				}
-				if rec == nil {
-					return "", need("action", "The accepted recommendation is missing.")
-				}
-				terms, err := rec.Terms()
+				terms, err := c.scheduleTerms(c.position.NetDisbursed)
 				if err != nil {
 					return "", err
 				}
-				terms.Principal = c.position.NetDisbursed
 				schedule, err := ledger.BuildSchedule(terms)
 				if err != nil {
 					return "", err

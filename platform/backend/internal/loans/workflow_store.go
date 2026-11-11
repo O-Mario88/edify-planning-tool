@@ -158,6 +158,31 @@ type CaseRecord struct {
 	Evidence        []Evidence
 	Documents       []DocumentMeta
 	Requests        []SchoolRequest
+	// Existing is the terms a lender recorded for a loan it disbursed before
+	// this workflow; nil otherwise.
+	Existing *ExistingTerms
+}
+
+// ExistingTerms are a lender-reported loan's terms, entered after the fact
+// with the signed agreement so the loan can be registered in the ledger.
+type ExistingTerms struct {
+	ExternalReference, RatePercent, Method string
+	Approved, Fee                          ledger.Money
+	DueDates                               []time.Time
+	ApprovedOn                             time.Time
+	AgreementDocumentID                    string
+	RecordedBy, RecordedByName             string
+	RecordedAt                             time.Time
+}
+
+// Terms are the schedule terms the ledger is given, on a principal.
+func (e ExistingTerms) Terms(principal ledger.Money) (ledger.Terms, error) {
+	rate, err := ledger.ParseRate(e.RatePercent)
+	if err != nil {
+		return ledger.Terms{}, err
+	}
+	return ledger.Terms{Principal: principal, Rate: rate, Method: ledger.Method(e.Method), FeePerInstallment: e.Fee,
+		DueDates: e.DueDates}, nil
 }
 
 // LatestRecommendation is the newest version, or nil.
@@ -399,6 +424,25 @@ WHERE application_id = $1 ORDER BY created_at`, applicationID)
 				record.Requests = append(record.Requests, r)
 			}
 			return rows.Err()
+		},
+		func() error {
+			var e ExistingTerms
+			var approved, fee string
+			err := s.db.QueryRow(ctx, `
+SELECT external_reference, approved_amount::text, rate_percent, interest_method, fee_per_installment::text, due_dates,
+  approved_on, agreement_document_id::text, recorded_by, recorded_by_name, recorded_at
+FROM school_loans.existing_loan_terms WHERE application_id = $1`, applicationID).Scan(&e.ExternalReference, &approved,
+				&e.RatePercent, &e.Method, &fee, &e.DueDates, &e.ApprovedOn, &e.AgreementDocumentID, &e.RecordedBy,
+				&e.RecordedByName, &e.RecordedAt)
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil
+			}
+			if err != nil {
+				return err
+			}
+			e.Approved, e.Fee, e.DueDates = money(&approved), money(&fee), dates(e.DueDates)
+			record.Existing = &e
+			return nil
 		},
 	}
 	for _, query := range queries {
@@ -879,6 +923,28 @@ func (s *Store) SetLedgerReferral(ctx context.Context, applicationID, referralID
 		}
 		return appendEvent(ctx, tx, Event{ApplicationID: applicationID, Kind: "ledger_referral", ActorKind: "staff",
 			ActorID: byID, ActorName: byName, Note: "Referred in the loan ledger (" + referralID + ")."})
+	})
+}
+
+// RecordExistingTerms stores a lender-reported loan's terms, once.
+func (s *Store) RecordExistingTerms(ctx context.Context, applicationID string, e ExistingTerms) error {
+	return s.inWrite(ctx, func(tx pgx.Tx) error {
+		tag, err := tx.Exec(ctx, `
+INSERT INTO school_loans.existing_loan_terms (application_id, external_reference, approved_amount, rate_percent,
+  interest_method, fee_per_installment, due_dates, approved_on, agreement_document_id, recorded_by, recorded_by_name)
+VALUES ($1, $2, $3::numeric, $4, $5, $6::numeric, $7, $8, $9, $10, $11)
+ON CONFLICT (application_id) DO NOTHING`, applicationID, e.ExternalReference, e.Approved.String(), e.RatePercent, e.Method,
+			e.Fee.String(), e.DueDates, e.ApprovedOn, e.AgreementDocumentID, e.RecordedBy, e.RecordedByName)
+		if err != nil {
+			return err
+		}
+		if tag.RowsAffected() == 0 {
+			return ErrConflict
+		}
+		return appendEvent(ctx, tx, Event{ApplicationID: applicationID, Kind: "existing_terms", ActorKind: "lender",
+			ActorID: e.RecordedBy, ActorName: e.RecordedByName, Note: fmt.Sprintf(
+				"Existing loan %s recorded: %s approved on %s, %d repayment dates.", e.ExternalReference,
+				ledger.FormatUGX(e.Approved), e.ApprovedOn.Format("2 Jan 2006"), len(e.DueDates))})
 	})
 }
 

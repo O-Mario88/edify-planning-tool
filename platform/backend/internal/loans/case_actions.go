@@ -318,22 +318,36 @@ var caseActions = []caseAction{
 	collateralAddAction(),
 	collateralStatusAction(),
 	decisionAction(),
+	existingTermsAction(),
 	{
 		key: "register_loan", label: "Register the loan in the loan ledger", primary: true,
 		description: "Records the approved loan in Edify's existing loan ledger, which holds its money from here on.",
 		allowed: func(c *caseData, v viewer) bool {
-			return (v.has(RoleAdministrator) || v.has(RoleFinance)) && c.stage() == StageApproved && c.record.LedgerReferral != ""
+			return (v.has(RoleAdministrator) || v.has(RoleFinance)) && c.record.LedgerReferral != "" &&
+				(c.stage() == StageApproved || c.reportedOnly() && c.record.Existing != nil && !c.hasLoan())
 		},
 		fields: func(ctx context.Context, l *Lending, c *caseData, v viewer) ([]*loansv1.ActionField, error) {
+			reference := ""
+			if e := c.record.Existing; e != nil {
+				reference = e.ExternalReference
+			}
 			return []*loansv1.ActionField{field("external_reference", "Your loan number", "text", true,
-				"The reference your own loan system gives this loan.", "")}, nil
+				"The reference your own loan system gives this loan.", reference)}, nil
 		},
 		run: func(ctx context.Context, l *Lending, c *caseData, v viewer, in actionInput) (string, error) {
 			reference, err := in.text("external_reference", "Your loan number", true, 120)
 			if err != nil {
 				return "", err
 			}
-			decision := c.record.LatestDecision()
+			var approved ledger.Money
+			switch decision, existing := c.record.LatestDecision(), c.record.Existing; {
+			case decision != nil && decision.ApprovedAmount != nil:
+				approved = *decision.ApprovedAmount
+			case existing != nil:
+				approved = existing.Approved
+			default:
+				return "", need("action", "The approved amount is missing.")
+			}
 			officerReference := ""
 			if c.record.Assignment != nil {
 				team, err := l.store.Team(ctx, v.lender.PartnerID)
@@ -352,7 +366,7 @@ var caseActions = []caseAction{
 				}
 			}
 			loanID, err := l.ledger.RegisterLoan(ctx, LoanRegistration{ReferralID: c.record.LedgerReferral, ExternalReference: reference,
-				OfficerReference: officerReference, Approved: *decision.ApprovedAmount, Requested: ledger.Shillings(c.record.Referral.Requested)})
+				OfficerReference: officerReference, Approved: approved, Requested: ledger.Shillings(c.record.Referral.Requested)})
 			if err != nil {
 				return "", err
 			}
@@ -528,7 +542,8 @@ var caseActions = []caseAction{
 		key: "refer_in_ledger", label: "Refer the school in the loan ledger", primary: true,
 		description: "Creates the existing workflow's referral of this school to its lender, so the lender can register the approved loan.",
 		allowed: func(c *caseData, v viewer) bool {
-			return v.edify != nil && v.edify.managesLender && c.stage() == StageApproved && c.record.LedgerReferral == ""
+			return v.edify != nil && v.edify.managesLender && c.record.LedgerReferral == "" &&
+				(c.stage() == StageApproved || c.reportedOnly() && c.record.Existing != nil)
 		},
 		fields: func(ctx context.Context, l *Lending, c *caseData, v viewer) ([]*loansv1.ActionField, error) {
 			if c.record.Referral.SchoolDirectoryID == "" {

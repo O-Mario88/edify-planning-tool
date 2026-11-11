@@ -80,6 +80,32 @@ func (c *caseData) readyToDisburse() bool {
 
 func (c *caseData) disbursed() bool { return c.loan != nil && c.position.NetDisbursed > 0 }
 
+// reportedOnly: the lender reported the loan disbursed through referral
+// tracking, before the lender workflow, and the ledger does not hold it yet.
+func (c *caseData) reportedOnly() bool {
+	return c.record.Referral.Status == StatusDisbursed && !c.disbursed() && c.stage() != StageClosed
+}
+
+// scheduleTerms are the terms the repayment schedule follows, on the
+// principal actually disbursed: the school's accepted terms, or a
+// lender-reported loan's recorded existing terms.
+func (c *caseData) scheduleTerms(principal ledger.Money) (ledger.Terms, error) {
+	if agreement := c.record.LatestAgreement(); agreement != nil && agreement.Status == "accepted" {
+		for _, rec := range c.record.Recommendations {
+			if rec.ID == agreement.RecommendationID {
+				terms, err := rec.Terms()
+				terms.Principal = principal
+				return terms, err
+			}
+		}
+		return ledger.Terms{}, need("action", "The accepted recommendation is missing.")
+	}
+	if e := c.record.Existing; e != nil {
+		return e.Terms(principal)
+	}
+	return ledger.Terms{}, need("action", "The school's accepted terms are missing.")
+}
+
 func (c *caseData) settled() bool { return c.disbursed() && c.position.Status == ledger.StatusSettled }
 
 func (c *caseData) assignedTo(userID string) bool {

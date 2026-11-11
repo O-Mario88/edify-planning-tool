@@ -252,7 +252,7 @@ WHERE a.reference = $1 AND a.partner_id = $2`, reference, partnerID))
 var lenderEventKinds = []string{
 	"submitted", "delivery_sent", "lender_opened", "lender_acknowledged", "status_changed",
 	"information_requested", "approved", "declined", "disbursed", "closed", "withdrawn", "lender_message",
-	"payment_reported", "notification",
+	"payment_reported", "notification", "existing_terms", "loan_linked",
 }
 
 // Timeline is an application's events, oldest first. lenderView keeps to

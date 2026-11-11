@@ -512,3 +512,149 @@ func TestNoPaymentOrClosureForALoanTheLedgerDoesNotHold(t *testing.T) {
 		t.Fatal("record_payment not offered on a loan the ledger holds")
 	}
 }
+
+// reportedLoan is a loan the lender reported as disbursed through referral
+// tracking alone, before the lender workflow: nothing in the ledger.
+func reportedLoan(t *testing.T) *caseData {
+	t.Helper()
+	c := newCase(t)
+	c.record = CaseRecord{Referral: c.record.Referral, Assignment: c.record.Assignment}
+	c.record.Referral.Status = StatusDisbursed
+	c.record.Referral.SchoolDirectoryID = "school"
+	return c
+}
+
+func existingTerms(by string) *ExistingTerms {
+	return &ExistingTerms{ExternalReference: "LN-OLD-1", RatePercent: "3", Method: string(ledger.MethodDeclining),
+		Approved: ruleAmount, DueDates: ruleDueDays, ApprovedOn: ruleDay.AddDate(0, 0, -20), RecordedBy: by}
+}
+
+func TestALenderReportedLoanEntersTheLedgerStepByStep(t *testing.T) {
+	admin := lenderStaff("adm", RoleAdministrator, RoleFinance)
+	finance := lenderStaff("fin", RoleFinance)
+	officer := lenderStaff("off", RoleLoanOfficer)
+	cd := viewer{edify: &access{role: roleCountryDirector, managesLender: true}}
+	bto := viewer{edify: &access{role: roleBTO, followsUp: true}}
+	edifyOffered := func(c *caseData, v viewer, key string) bool {
+		for _, action := range (&Lending{}).actionsFor(c, v) {
+			if action.key == key {
+				return true
+			}
+		}
+		return false
+	}
+
+	c := reportedLoan(t)
+	if !offered(c, admin)["record_existing_terms"] || !offered(c, finance)["record_existing_terms"] {
+		t.Fatal("the lender's administrator and finance officer record the existing terms")
+	}
+	if offered(c, officer)["record_existing_terms"] {
+		t.Fatal("a loan officer alone records the terms")
+	}
+	if edifyOffered(c, cd, "refer_in_ledger") {
+		t.Fatal("referred in the ledger before its terms are recorded")
+	}
+
+	c.record.Existing = existingTerms("adm")
+	if offered(c, admin)["record_existing_terms"] {
+		t.Fatal("terms offered again once recorded")
+	}
+	if !edifyOffered(c, cd, "refer_in_ledger") {
+		t.Fatal("the Country Director refers the recorded loan in the ledger")
+	}
+	if offered(c, admin)["register_loan"] {
+		t.Fatal("registered before Edify's referral in the ledger")
+	}
+
+	c.record.LedgerReferral = "ledger-ref"
+	if !offered(c, admin)["register_loan"] {
+		t.Fatal("the lender registers the referred loan")
+	}
+
+	c.loan = &LedgerLoan{ID: "loan", Approved: ruleAmount, Requested: ruleAmount}
+	if !edifyOffered(c, bto, "reserve_facility") {
+		t.Fatal("the BTO reserves the facility")
+	}
+	c.hasAllocation = true
+	if !offered(c, admin)["prepare_disbursement"] {
+		t.Fatal("purpose plan and baseline come before the disbursement")
+	}
+	c.purposePlanned, c.hasBaseline = ruleAmount, true
+	if offered(c, admin)["record_disbursement"] {
+		t.Fatal("the person who recorded the terms posted the disbursement")
+	}
+	if !offered(c, finance)["record_disbursement"] {
+		t.Fatal("another finance officer records the disbursement")
+	}
+	if offered(c, finance)["record_payment"] {
+		t.Fatal("payments before the ledger holds the disbursement")
+	}
+}
+
+func TestExistingTermsBuildTheScheduleOnWhatWasDisbursed(t *testing.T) {
+	terms, err := existingTerms("adm").Terms(ruleAmount)
+	if err != nil {
+		t.Fatal(err)
+	}
+	schedule, err := ledger.BuildSchedule(terms)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var principal ledger.Money
+	for _, installment := range schedule {
+		principal += installment.Principal
+	}
+	if len(schedule) != len(ruleDueDays) || principal != ruleAmount {
+		t.Fatalf("%d installments with %s principal", len(schedule), principal)
+	}
+}
+
+func TestTheCasePageSaysWhoBringsTheLoanIntoTheLedgerNext(t *testing.T) {
+	next := func(c *caseData) string {
+		section := c.existingLoanSection()
+		if section == nil {
+			return ""
+		}
+		for _, line := range section.Lines {
+			if line.Tone == "caution" {
+				return line.Value
+			}
+		}
+		return "none"
+	}
+	c := reportedLoan(t)
+	if got := next(c); !strings.Contains(got, "administrator or finance officer") {
+		t.Fatalf("first step: %q", got)
+	}
+	c.record.Existing = existingTerms("adm")
+	if got := next(c); !strings.Contains(got, "Country Director") {
+		t.Fatalf("after the terms: %q", got)
+	}
+	c.record.LedgerReferral = "ref"
+	c.loan = &LedgerLoan{ID: "loan", Approved: ruleAmount}
+	if got := next(c); !strings.Contains(got, "BTO") {
+		t.Fatalf("after registration: %q", got)
+	}
+	if _, approved, _ := c.amounts(); approved != ugx(ruleAmount) {
+		t.Fatalf("approved amount %q, want the recorded terms' %q", approved, ugx(ruleAmount))
+	}
+	if newCase(t).existingLoanSection() != nil {
+		t.Fatal("a workflow loan showed the existing-loan steps")
+	}
+}
+
+func TestExistingTermsMayBeApprovedOnTheDayOfSubmissionAndDisbursement(t *testing.T) {
+	c := reportedLoan(t)
+	day := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
+	c.record.Referral.SubmittedAt = time.Date(2026, 11, 11, 6, 30, 0, 0, time.UTC)
+	c.record.Referral.DisbursementDate = &day
+	in := actionInput{today: day, values: map[string]string{"external_reference": "LN-1", "amount": "40000000",
+		"approved_on": "2026-11-11", "rate": "1.8", "method": string(ledger.MethodDeclining), "due_dates": "2027-02-15, 2027-06-01"}}
+	if _, err := readExistingTerms(c, in); err != nil {
+		t.Fatalf("same-day approval refused: %v", err)
+	}
+	in.values["approved_on"] = "2026-11-10"
+	if _, err := readExistingTerms(c, in); err == nil {
+		t.Fatal("an approval before the submission was accepted")
+	}
+}
