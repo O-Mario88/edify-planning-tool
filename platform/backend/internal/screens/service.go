@@ -20,6 +20,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
 const (
@@ -42,11 +43,18 @@ type Directory interface {
 	Build(ctx context.Context, p auth.Principal, req *screensv1.GetSchoolDirectoryRequest) (*screensv1.GetSchoolDirectoryResponse, error)
 }
 
-// Service implements HomeScreenService, NavigationService and
-// SchoolDirectoryScreenService.
+// Profile builds school profiles in Go (internal/schoolprofile). served is
+// false for what the existing application still answers.
+type Profile interface {
+	Build(ctx context.Context, p auth.Principal, req *screensv1.GetSchoolProfileRequest) (*screensv1.GetSchoolProfileResponse, bool, error)
+}
+
+// Service implements HomeScreenService, NavigationService,
+// SchoolDirectoryScreenService and SchoolProfileService.
 type Service struct {
 	existingApp Fetcher // nil when no existing application is configured
 	directory   Directory
+	profile     Profile
 	logger      *slog.Logger
 }
 
@@ -60,6 +68,13 @@ func NewService(existingApp Fetcher) *Service {
 // the existing application, which presents them in the acting seat.
 func (s *Service) WithDirectory(directory Directory, logger *slog.Logger) *Service {
 	s.directory, s.logger = directory, logger
+	return s
+}
+
+// WithProfile answers what Go has taken over of school profiles, for anyone
+// working in their own role; the rest is passed to the existing application.
+func (s *Service) WithProfile(profile Profile, logger *slog.Logger) *Service {
+	s.profile, s.logger = profile, logger
 	return s
 }
 
@@ -154,6 +169,21 @@ func (s *Service) GetSchoolProfile(
 	message := request.Msg
 	if err := requireSchool(ctx, message.GetSchoolId()); err != nil {
 		return nil, err
+	}
+	if principal, ok := auth.PrincipalFrom(ctx); ok && s.profile != nil && !principal.InActingAppointment {
+		response, served, err := s.profile.Build(ctx, principal, message)
+		switch {
+		case errors.Is(err, schoolprofile.ErrForbidden):
+			return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+				"Your role does not have permission to view this.")
+		case errors.Is(err, schoolprofile.ErrNotFound):
+			return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound,
+				"This was not found, or it is not yours to view.")
+		case err != nil:
+			return nil, apierr.Internal(ctx, s.logger, err)
+		case served:
+			return connect.NewResponse(response), nil
+		}
 	}
 	query := url.Values{}
 	for key, value := range map[string]string{

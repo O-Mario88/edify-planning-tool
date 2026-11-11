@@ -164,6 +164,24 @@ keeps the name ("CCEO"); it now reloads on the capacity too.
 | iOS Release | Pass | cceo@: Schools tab, 700 schools, same-named schools in School ID order, answered by Go in 73 ms; a row's Actions menu (Add to Cluster, Add to Project) opens below its button |
 | Android Release | Pass | Deo M. (CCEO, holds no school): the existing page's "No schools are assigned to you yet.", answered by Go in 21 ms |
 
+## School Profiles, first piece, read by Go (2026-11-12)
+
+[docs/migration/13-school-profiles.md](../migration/13-school-profiles.md): the
+Details tab of an open, non-Core school without Business Transformation
+records, with the header, doors and visit rule every tab shares.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/schools/test_school_profile_rules_export.py`, and `internal/schoolprofile` reads the export |
+| Parity with the existing page | Pass | `cmd/parity -screen profile` over all 29 accounts that may open a profile: 3,826 Details tabs compared field by field (3,308 of non-Core schools), none differing, refusals included; two schools first put in the lock states the seed lacked, through the existing web app |
+| Go unit tests | Pass | the visit rule (open, staff visit, partner waiting and dated, two partners, no partner name, Champion, both doors closed); Django's `floatformat` and Python's `str(float)` checked against Django's own answers; Kampala's dates and year; action keys; the tab strip; the SSA badge; data quality tones; each role's doors |
+| Go integration suite: profiles | Pass | Go answers an officer's Details tab with no existing application behind it; another tab and a Core school are passed on; another officer's school and an unknown one are not found; a partner admin is refused; the Admin sees the Danger Zone and Reassign Owner |
+| Database role | Pass | column SELECT only; of `bt_case` and `bt_mfi_loan` only `school_id`; the gateway still cannot read the audit payload |
+| Django | Pass | both rules exports current; ruff, format, bandit clean |
+| Web build | Pass | cceo@: Kimenyedde Church of Uganda Primary's Details tab from Go, "Awaiting schedule from partner", Assign to Partner and Enter SSA Score greyed |
+| iOS Release | Pass | cceo@: Central Division Church of Uganda Primary, Overview from the existing application, Details from Go |
+| Android Release | Pass | cceo@: KCCA UMEA Primary School's Details tab from Go, "Staff visit scheduled", Assign to Partner and Enter SSA Score greyed |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

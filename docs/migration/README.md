@@ -22,6 +22,7 @@ deployed, or connected to production.
 | [10-teams.md](10-teams.md) | Staff and partner teams, owned by Go: supervisors, managed teams, a partner's own team, logins and schools |
 | [11-acting-leadership.md](11-acting-leadership.md) | Acting leadership, owned by Go: appointing, moving and cancelling acting leaders, and the appointee's switch into the acting capacity |
 | [12-school-directory.md](12-school-directory.md) | The School Directory, read by Go: whose schools, filters, tabs and rows, proved against the existing page; writes and profiles not yet moved |
+| [13-school-profiles.md](13-school-profiles.md) | School Profiles, first piece: who may open a school, the header and its doors, the visit rule, and the Details tab, read by Go; the plan for the other tabs |
 
 The code is under [`platform/`](../../platform/README.md).
 

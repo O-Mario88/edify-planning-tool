@@ -32,6 +32,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/signin"
@@ -83,7 +84,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	if cfg.ExistingAppURL != "" {
 		existingApp = feed.NewClient(cfg.ExistingAppURL, logger)
 	}
-	screenService := screens.NewService(existingApp).WithDirectory(schooldirectory.NewService(pool, time.Now), logger)
+	screenService := screens.NewService(existingApp).
+		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
+		WithProfile(schoolprofile.NewService(pool, time.Now), logger)
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNavigationServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewSchoolDirectoryScreenServiceHandler(screenService, options...))

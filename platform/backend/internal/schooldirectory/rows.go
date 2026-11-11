@@ -373,28 +373,34 @@ WHERE school_id = ANY($1) AND activity_type = ANY($2) AND deleted_at IS NULL
 type coverage struct {
 	planned, required bool
 	label, reason     string
+	// The planned session's cluster and day, which the profile names.
+	clusterID, clusterName string
+	day                    *time.Time
 }
 
 // trainingCoverage is school_status.cluster_training_coverage for the year.
 func trainingCoverage(ctx context.Context, q Querier, page []school, fy string) (map[string]coverage, error) {
 	rows, err := q.Query(ctx, `
-SELECT c.school_id, a.status, a.activity_type, a.planned_date, a.scheduled_date
+SELECT c.school_id, a.status, a.activity_type, a.planned_date, a.scheduled_date,
+  COALESCE(a.cluster_id, ''), COALESCE(cl.name, '')
 FROM cluster_activity_attendance c JOIN activity a ON a.id = c.activity_id
+LEFT JOIN cluster cl ON cl.id = a.cluster_id
 WHERE c.school_id = ANY($1) AND (c.invited OR c.attended)
   AND a.activity_type = ANY($2) AND a.deleted_at IS NULL AND a.fy = $3`, ids(page), rules.ClusterSessionTypes, fy)
 	if err != nil {
 		return nil, fmt.Errorf("schooldirectory: reading cluster sessions: %w", err)
 	}
 	type session struct {
-		status, kind string
-		day          *time.Time
+		status, kind           string
+		day                    *time.Time
+		clusterID, clusterName string
 	}
 	linked := map[string][]session{}
 	for rows.Next() {
 		var schoolID string
 		var s session
 		var planned, scheduled *time.Time
-		if err := rows.Scan(&schoolID, &s.status, &s.kind, &planned, &scheduled); err != nil {
+		if err := rows.Scan(&schoolID, &s.status, &s.kind, &planned, &scheduled, &s.clusterID, &s.clusterName); err != nil {
 			rows.Close()
 			return nil, err
 		}
@@ -429,7 +435,8 @@ WHERE c.school_id = ANY($1) AND (c.invited OR c.attended)
 			if in(rules.ClusterMeetingTypes, live[0].kind) {
 				label = "Cluster Meeting Planned"
 			}
-			out[sc.ID] = coverage{planned: true, required: true, label: label}
+			out[sc.ID] = coverage{planned: true, required: true, label: label,
+				clusterID: live[0].clusterID, clusterName: live[0].clusterName, day: live[0].day}
 			continue
 		}
 		if sc.SchoolType != "" && !in(rules.TrainedTypes, sc.SchoolType) {

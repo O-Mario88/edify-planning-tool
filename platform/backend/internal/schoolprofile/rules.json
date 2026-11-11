@@ -1,0 +1,335 @@
+{
+  "closed_school_message": "This school is closed, so it takes no new activities. Its history is on the Closed Schools page; reopen the school before planning work there.",
+  "closed_statuses": [
+    "temporarily_closed",
+    "permanently_closed"
+  ],
+  "core_lifecycle_types": [
+    "core",
+    "core_trained",
+    "core_graduate",
+    "champion"
+  ],
+  "doors": {
+    "Accountant": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": true,
+      "profile": false,
+      "schedule": true,
+      "take": false,
+      "transfer_owner": false
+    },
+    "Admin": {
+      "assign_partner": true,
+      "assign_project": true,
+      "delete_school": true,
+      "enter_ssa": false,
+      "open_cluster": true,
+      "open_district": true,
+      "profile": true,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": true
+    },
+    "BusinessTransformationOfficer": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": false,
+      "profile": true,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": false
+    },
+    "CCEO": {
+      "assign_partner": true,
+      "assign_project": true,
+      "delete_school": false,
+      "enter_ssa": true,
+      "open_cluster": true,
+      "open_district": true,
+      "profile": true,
+      "schedule": true,
+      "take": true,
+      "transfer_owner": false
+    },
+    "ClusterLeader": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": false,
+      "profile": false,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": false
+    },
+    "CountryDirector": {
+      "assign_partner": false,
+      "assign_project": true,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": true,
+      "open_district": true,
+      "profile": true,
+      "schedule": true,
+      "take": false,
+      "transfer_owner": false
+    },
+    "HumanResources": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": false,
+      "profile": false,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": false
+    },
+    "ImpactAssessment": {
+      "assign_partner": true,
+      "assign_project": true,
+      "delete_school": false,
+      "enter_ssa": true,
+      "open_cluster": true,
+      "open_district": true,
+      "profile": true,
+      "schedule": true,
+      "take": false,
+      "transfer_owner": true
+    },
+    "MfiLoanOfficer": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": false,
+      "profile": false,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": false
+    },
+    "MfiPartnerAdmin": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": false,
+      "profile": false,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": false
+    },
+    "PartnerAdmin": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": false,
+      "profile": false,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": false
+    },
+    "PartnerFieldOfficer": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": false,
+      "profile": false,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": false
+    },
+    "Program Lead": {
+      "assign_partner": true,
+      "assign_project": true,
+      "delete_school": false,
+      "enter_ssa": true,
+      "open_cluster": true,
+      "open_district": true,
+      "profile": true,
+      "schedule": true,
+      "take": true,
+      "transfer_owner": false
+    },
+    "ProjectCoordinator": {
+      "assign_partner": true,
+      "assign_project": true,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": true,
+      "profile": true,
+      "schedule": true,
+      "take": false,
+      "transfer_owner": false
+    },
+    "RegionalProgramLead": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": false,
+      "profile": false,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": false
+    },
+    "RegionalVicePresident": {
+      "assign_partner": false,
+      "assign_project": false,
+      "delete_school": false,
+      "enter_ssa": false,
+      "open_cluster": false,
+      "open_district": false,
+      "profile": false,
+      "schedule": false,
+      "take": false,
+      "transfer_owner": false
+    }
+  },
+  "gate": {
+    "client_rule_types": [
+      "client",
+      "core_trained",
+      "core_graduate",
+      "champion"
+    ],
+    "client_visit_legacy_types": [
+      "school_visit",
+      "follow_up_visit"
+    ],
+    "companion_purpose": "in_school_training_delivery_visit",
+    "core_rule_types": [
+      "core"
+    ],
+    "data_collection_purposes": [
+      "ssa_support"
+    ],
+    "data_collection_types": [
+      "school_visit_ssa_collection",
+      "baseline_ssa_visit",
+      "partner_ssa_collection",
+      "ssa_activity",
+      "core_assessment_visit"
+    ],
+    "follow_up_visit_types": [
+      "school_visit",
+      "follow_up_visit",
+      "training_follow_up_visit",
+      "coaching_visit",
+      "in_school_support",
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection"
+    ],
+    "general_intervention": "general",
+    "in_school_support_types": [
+      "in_school_training",
+      "in_school_coaching_visit"
+    ],
+    "lock_labels": {
+      "awaiting_partner_schedule": "Awaiting schedule from partner",
+      "not_applicable": "",
+      "partner_visit_scheduled": "Partner visit scheduled",
+      "school_closed": "School closed",
+      "staff_visit_scheduled": "Staff visit scheduled",
+      "staff_visits_complete": "Staff visits complete",
+      "unlocked": "Unlocked"
+    },
+    "not_live_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred",
+      "not_planned",
+      "awaiting_owner_approval"
+    ],
+    "one_commitment_types": [
+      "client",
+      "core_trained",
+      "core_graduate"
+    ],
+    "outreach_only_types": [
+      "champion"
+    ],
+    "ssa_support_visit_types": [
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection"
+    ],
+    "staff_visit_cap": 1,
+    "unscheduled_handover_statuses": [
+      "assigned",
+      "pending_scheduling"
+    ]
+  },
+  "readiness": {
+    "awaiting_evidence": "Awaiting Evidence",
+    "awaiting_ia": "Awaiting IA",
+    "closed": "Closed",
+    "cost_catalogue_required": "Cost Catalogue Required",
+    "data_cleanup_required": "Data Cleanup Required",
+    "finance_pending": "Finance Pending",
+    "in_my_plan": "In My Plan",
+    "ready_for_baseline_ssa": "SSA Required",
+    "ready_for_partner_assignment": "Ready for Partner Assignment",
+    "ready_for_support_planning": "Ready for Support Planning",
+    "requires_cluster": "Requires Cluster",
+    "scheduled": "Scheduled"
+  },
+  "school_types": {
+    "champion": "Champion",
+    "client": "Client",
+    "core": "Core",
+    "core_graduate": "Core Graduate",
+    "core_trained": "Core Trained"
+  },
+  "ssa_current_statuses": [
+    "confirmed"
+  ],
+  "ssa_holding_statuses": [
+    "pending",
+    "confirmed"
+  ],
+  "ssa_interventions": {
+    "christlike_behaviour": "Christlike Behaviour",
+    "enrolment": "Enrolment",
+    "exposure_to_word_of_god": "Exposure to the Word of God",
+    "financial_health": "Financial Health",
+    "government_requirement": "Government Requirements",
+    "leadership": "Leadership",
+    "learning_environment": "Learning Environment",
+    "teaching_environment": "Teacher's Environment"
+  },
+  "ssa_source_on_visit": "Keyed on a visit",
+  "ssa_source_other": "Recorded",
+  "ssa_source_staff_keyed": "staff_keyed",
+  "ssa_sources": {
+    "file_import": "File import",
+    "ia_keyed": "Keyed by Impact Assessment",
+    "partner_submitted": "Partner submission",
+    "staff_keyed": "Keyed by staff"
+  },
+  "ssa_statuses": {
+    "confirmed": "Confirmed",
+    "flagged": "Flagged",
+    "pending": "Pending",
+    "returned": "Returned"
+  }
+}

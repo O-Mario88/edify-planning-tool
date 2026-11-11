@@ -27,6 +27,7 @@ import (
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	identityv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1/identityv1connect"
@@ -39,6 +40,10 @@ func main() {
 	existing := flag.String("existing", "http://localhost:8010", "the existing application")
 	users := flag.String("users", "", "comma-separated accounts to sign in as")
 	pause := flag.Duration("pause", 0, "wait between sign-ins, under the gateway's sign-in rate limit")
+	screen := flag.String("screen", "directory", "what to compare: directory or profile")
+	tab := flag.String("tab", "details", "profile: the tab to compare")
+	probe := flag.String("probe", "admin@edify.org", "profile: the account whose schools are sampled for every account")
+	sample := flag.Int("sample", 40, "profile: how many of the probe's schools each account is also asked")
 	flag.Parse()
 	password := os.Getenv("EDIFY_PARITY_PASSWORD")
 	for _, address := range []string{*gateway, *existing} {
@@ -54,6 +59,12 @@ func main() {
 	ctx := context.Background()
 	signIn := identityv1connect.NewSignInServiceClient(http.DefaultClient, *gateway)
 	directory := screensv1connect.NewSchoolDirectoryScreenServiceClient(http.DefaultClient, *gateway)
+	if *screen == "profile" {
+		os.Exit(runProfiles(ctx, signIn, &profileRun{
+			existing: *existing, tab: *tab, sample: *sample, directory: directory,
+			profile: screensv1connect.NewSchoolProfileServiceClient(http.DefaultClient, *gateway),
+		}, password, *probe, strings.Split(*users, ","), *pause))
+	}
 	compared, differing, existingFails := 0, 0, 0
 	for i, email := range strings.Split(*users, ",") {
 		if i > 0 {
@@ -330,4 +341,57 @@ func lenOf(v any) any {
 		return len(list)
 	}
 	return v
+}
+
+// runProfiles signs the probe and each account in and compares their
+// profiles; it returns the exit status.
+func runProfiles(ctx context.Context, signIn identityv1connect.SignInServiceClient, r *profileRun, password, probe string, users []string, pause time.Duration) int {
+	token := func(email string) (string, error) {
+		answer, err := signIn.SignIn(ctx, connect.NewRequest(&identityv1.SignInRequest{Email: strings.TrimSpace(email), Password: password}))
+		if err != nil || answer.Msg.GetSession() == nil {
+			return "", fmt.Errorf("cannot sign in: %v", err)
+		}
+		return answer.Msg.GetSession().GetAccessToken(), nil
+	}
+	probeToken, err := token(probe)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, probe, err)
+		return 2
+	}
+	if r.probe, err = r.list(ctx, probeToken); err != nil {
+		fmt.Fprintln(os.Stderr, probe, err)
+		return 2
+	}
+	// A spread of the probe's schools, not its first page alone.
+	if step := len(r.probe) / max(r.sample, 1); step > 1 {
+		spread := []listed{}
+		for i := 0; i < len(r.probe); i += step {
+			spread = append(spread, r.probe[i])
+		}
+		r.probe = spread
+	}
+	compared, differing, goSchools := 0, 0, 0
+	for _, email := range users {
+		time.Sleep(pause)
+		t, err := token(email)
+		if err != nil {
+			fmt.Printf("%-28s %v\n", email, err)
+			continue
+		}
+		c, d, g := r.account(ctx, email, t)
+		compared, differing, goSchools = compared+c, differing+d, goSchools+g
+	}
+	fmt.Printf("\n%d profiles compared (%d not Core), %d differing\n", compared, goSchools, differing)
+	if differing > 0 {
+		return 1
+	}
+	return 0
+}
+
+// asMap is a contract message as JSON values, every field present.
+func asMap(m proto.Message) map[string]any {
+	raw, _ := protojson.MarshalOptions{EmitUnpopulated: true}.Marshal(m)
+	var out map[string]any
+	_ = json.Unmarshal(raw, &out)
+	return out
 }

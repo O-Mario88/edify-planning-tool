@@ -81,3 +81,31 @@ GRANT SELECT (ssa_record_id, intervention, score) ON ssa_score TO edify_gateway_
 GRANT SELECT (id, school_id, activity_type, status, deleted_at, fy, planned_date, scheduled_date, attended_school_ids)
   ON activity TO edify_gateway_ro;
 GRANT SELECT (activity_id, school_id, invited, attended) ON cluster_activity_attendance TO edify_gateway_ro;
+
+-- internal/schoolprofile and internal/visitgate: a school's profile, its
+-- Details tab and the year's support visit (2026-11-11), read only.
+GRANT SELECT (
+  planning_readiness, parish_id, latitude, longitude, core_cohort_year, core_cohort_number,
+  director_name, headteacher_name, last_enrollment_date, data_quality_score, data_quality_status
+) ON school TO edify_gateway_ro;
+GRANT SELECT (id, name) ON parish TO edify_gateway_ro;
+GRANT SELECT (district_id) ON cluster TO edify_gateway_ro;
+GRANT SELECT (school_id, cluster_id, started_at, ended_at, start_reason, end_reason)
+  ON school_cluster_membership TO edify_gateway_ro;
+GRANT SELECT (average_score, verification_source, source_activity_id) ON ssa_record TO edify_gateway_ro;
+GRANT SELECT (
+  cluster_id, delivery_type, project_id, purpose_type, catalogue_item_id, training_course_id,
+  paired_school_visit_id, assigned_partner_id, created_at
+) ON activity TO edify_gateway_ro;
+GRANT SELECT (id, counts_toward_client_visit, universal_training, is_training_course)
+  ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (catalogue_item_id, counts_toward_entitlement) ON activity_eligibility_rule TO edify_gateway_ro;
+GRANT SELECT (id, name) ON partner TO edify_gateway_ro;
+GRANT SELECT (
+  school_id, partner_id, project_id, training_course_id, expected_activity_type, purpose_of_visit, status, created_at
+) ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (intervention, target_interventions) ON project TO edify_gateway_ro;
+-- Only whether a school has a case or a loan: its panel stays with the
+-- existing application.
+GRANT SELECT (school_id) ON bt_case TO edify_gateway_ro;
+GRANT SELECT (school_id) ON bt_mfi_loan TO edify_gateway_ro;
