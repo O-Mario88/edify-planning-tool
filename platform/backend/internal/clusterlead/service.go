@@ -38,8 +38,12 @@ type Data interface {
 	MemberSchools(ctx context.Context, clusterID, search string, limit, offset int) ([]School, int64, error)
 	UpcomingActivities(ctx context.Context, clusterID string, day time.Time, limit int) ([]Activity, error)
 	PastActivities(ctx context.Context, clusterID string, day time.Time, limit int) ([]Activity, error)
-	ManagedClusters(ctx context.Context, staffID, search string, day time.Time, limit, offset int) ([]ManagedCluster, int64, error)
+	// ownerIDs nil means every cluster.
+	ManagedClusters(ctx context.Context, ownerIDs []string, search string, day time.Time, limit, offset int) ([]ManagedCluster, int64, error)
 	ClusterAssignments(ctx context.Context, clusterID string) ([]Assignment, error)
+	// InvitedLeader is an account holding the Cluster Leader role alone,
+	// active or still invited; ErrNotFound otherwise.
+	InvitedLeader(ctx context.Context, userID string) (Account, error)
 	Assignment(ctx context.Context, id string) (Assignment, error)
 	Candidates(ctx context.Context) ([]Account, error)
 	Account(ctx context.Context, userID string) (Account, error)
@@ -60,6 +64,10 @@ type Service struct {
 	ready   func(context.Context) error
 	isReady atomic.Bool
 	logger  *slog.Logger
+	// onboarder makes leader accounts in the existing application; nil when
+	// there is none (OnboardLeader then says so). appBaseURL is its address.
+	onboarder  Onboarder
+	appBaseURL string
 }
 
 // NewService wires the service. ready may be nil.

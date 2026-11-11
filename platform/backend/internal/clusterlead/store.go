@@ -154,7 +154,7 @@ FROM cluster c
 LEFT JOIN district d ON d.id = c.district_id
 LEFT JOIN sub_county sc ON sc.id = c.sub_county_id
 LEFT JOIN staff_profile sp ON sp.id = c.responsible_staff_id AND sp.deleted_at IS NULL
-LEFT JOIN "user" u ON u.id = sp.user_id
+LEFT JOIN "user" u ON u.id = COALESCE(sp.user_id, c.responsible_staff_id)
 WHERE c.id = $1 AND c.deleted_at IS NULL`, clusterID).Scan(
 		&c.ID, &c.Name, &c.Status, &c.Type, &c.District, &c.SubCounty, &c.ResponsibleStaffID, &c.ResponsibleStaff)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -332,18 +332,22 @@ type ManagedCluster struct {
 	Leaders []string
 }
 
-// ManagedClusters is one page of not deleted clusters (only those staff
-// profile staffID is responsible for, unless staffID is ""), with each one's
+// ManagedClusters is one page of not deleted clusters (only those filed
+// under one of ownerIDs, unless ownerIDs is nil), with each one's
 // operating member schools and live leaders on day.
 func (s *Store) ManagedClusters(
-	ctx context.Context, staffID, search string, day time.Time, limit, offset int,
+	ctx context.Context, ownerIDs []string, search string, day time.Time, limit, offset int,
 ) ([]ManagedCluster, int64, error) {
 	pattern := likePattern(search)
-	const where = `
-WHERE c.deleted_at IS NULL AND ($1 = '' OR c.responsible_staff_id = $1)
+	all := ownerIDs == nil
+	// owners is the placeholder of ownerIDs in each query.
+	where := func(owners string) string {
+		return `
+WHERE c.deleted_at IS NULL AND ($1 OR c.responsible_staff_id = ANY(` + owners + `))
   AND ($2 = '' OR c.name ILIKE $2 ESCAPE '\')`
+	}
 	var total int64
-	if err := s.db.QueryRow(ctx, `SELECT count(*) FROM cluster c`+where, staffID, pattern).Scan(&total); err != nil {
+	if err := s.db.QueryRow(ctx, `SELECT count(*) FROM cluster c`+where("$3"), all, pattern, ownerIDs).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("clusterlead: counting clusters: %w", err)
 	}
 	rows, err := s.db.Query(ctx, `
@@ -360,9 +364,9 @@ FROM cluster c
 LEFT JOIN district d ON d.id = c.district_id
 LEFT JOIN sub_county sc ON sc.id = c.sub_county_id
 LEFT JOIN staff_profile sp ON sp.id = c.responsible_staff_id AND sp.deleted_at IS NULL
-LEFT JOIN "user" u ON u.id = sp.user_id`+where+`
+LEFT JOIN "user" u ON u.id = COALESCE(sp.user_id, c.responsible_staff_id)`+where("$6")+`
 ORDER BY c.name, c.id
-LIMIT $4 OFFSET $5`, staffID, pattern, day, limit, offset)
+LIMIT $4 OFFSET $5`, all, pattern, day, limit, offset, ownerIDs)
 	if err != nil {
 		return nil, 0, fmt.Errorf("clusterlead: listing clusters: %w", err)
 	}
@@ -400,6 +404,24 @@ SELECT id, name, email, $2 = ANY(roles) FROM "user"
 WHERE id = $1 AND deleted_at IS NULL AND is_active AND status = 'active'`, userID, RoleClusterLeader)
 	if err != nil {
 		return Account{}, fmt.Errorf("clusterlead: reading an account: %w", err)
+	}
+	account, err := pgx.CollectOneRow(rows, scanAccount)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Account{}, ErrNotFound
+	}
+	return account, err
+}
+
+// InvitedLeader is an account holding the Cluster Leader role and nothing
+// else, active or invited and not yet signed in; ErrNotFound otherwise.
+func (s *Store) InvitedLeader(ctx context.Context, userID string) (Account, error) {
+	rows, err := s.db.Query(ctx, `
+SELECT id, name, email, true FROM "user"
+WHERE id = $1 AND deleted_at IS NULL AND status IN ('active', 'pending_invited')
+  AND cardinality(roles) = 1 AND $2 = ALL(roles)`,
+		userID, RoleClusterLeader)
+	if err != nil {
+		return Account{}, fmt.Errorf("clusterlead: reading a leader account: %w", err)
 	}
 	account, err := pgx.CollectOneRow(rows, scanAccount)
 	if errors.Is(err, pgx.ErrNoRows) {

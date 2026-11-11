@@ -50,11 +50,11 @@ func (s *Service) ListManagedClusters(
 	if err := s.checkReady(ctx); err != nil {
 		return nil, err
 	}
-	staffID := ""
+	var ownerIDs []string
 	switch {
 	case anyClusterAdministrators[principal.ActiveRole]:
 	case principal.ActiveRole == roleCCEO && principal.StaffProfileID != "":
-		staffID = principal.StaffProfileID
+		ownerIDs = ownIDs(principal)
 	default:
 		return nil, notAdministrator(ctx)
 	}
@@ -66,7 +66,7 @@ func (s *Service) ListManagedClusters(
 	if err != nil {
 		return nil, err
 	}
-	clusters, total, err := s.data.ManagedClusters(ctx, staffID, search, s.today(), int(size), int((page-1)*size))
+	clusters, total, err := s.data.ManagedClusters(ctx, ownerIDs, search, s.today(), int(size), int((page-1)*size))
 	if err != nil {
 		return nil, s.internal(ctx, err)
 	}
@@ -259,7 +259,7 @@ func (s *Service) requireLeaderAccount(ctx context.Context, userID string) error
 	}
 	if !account.IsLeader {
 		return apierr.New(ctx, connect.CodeFailedPrecondition, apierr.ReasonPermissionDenied,
-			"This account does not hold the Cluster Leader role. An Admin gives it the role on the Users page.")
+			"This account does not hold the Cluster Leader role. Use Onboard a new Cluster Leader to make one.")
 	}
 	return nil
 }

@@ -4,8 +4,8 @@
  * shows its live leaders; opening one shows every assignment, live and past,
  * with its history, and lets the manager assign, end or replace a leader.
  *
- * The rules are the gateway's (who may manage which cluster, that the account
- * already holds the Cluster Leader role, that nothing is ever deleted); this
+ * The rules are the gateway's (who may manage which cluster, that a leader
+ * account holds the Cluster Leader role alone, that nothing is ever deleted); this
  * screen shows what it answers and says plainly when it refuses.
  */
 import { useCallback, useEffect, useState } from 'react';
@@ -19,6 +19,7 @@ import { DateField } from '../../ui/DateField';
 import { DrawerButton } from '../../ui/drawerParts';
 import { Select } from '../../ui/Select';
 import { longDate } from './clusterRoutes';
+import { OnboardLeaderForm } from './OnboardLeaderForm';
 
 export function ClusterLeadersScreen() {
   const [openId, setOpenId] = useState('');
@@ -62,7 +63,7 @@ function ManagedClusters({ onOpen }: { readonly onOpen: (clusterId: string) => v
             Cluster Leaders
           </Text>
           <Text style={[styles.copy, { color: colors.textMuted }]}>
-            Give a cluster to a Cluster Leader account, end or replace a leader. Every change is kept.
+            Onboard a new Cluster Leader, give a cluster to an existing one, or end or replace a leader. Every change is kept.
           </Text>
           <View style={[styles.search, { backgroundColor: colors.surface, borderColor: colors.fieldBorder }]}>
             <Search size={16} color={colors.textMuted} />
@@ -167,6 +168,7 @@ function LeadersOfCluster({ clusterId, onBack }: { readonly clusterId: string; r
               onError={setError}
             />
           ))}
+          <OnboardLeaderForm clusterId={clusterId} clusterName={answer.cluster?.name ?? ''} onDone={after} onError={setError} />
           <AssignForm clusterId={clusterId} answer={answer} onDone={after} onError={setError} />
           {past.length > 0 ? <Text style={[styles.section, { color: colors.text }]}>Past leaders</Text> : null}
           {past.map((assignment) => (

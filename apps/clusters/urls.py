@@ -28,6 +28,11 @@ urlpatterns = [
         views.ClusterEligibleForSchoolView.as_view(),
         name="eligible",
     ),
+    path(
+        "<str:cluster_id>/leaders",
+        views.ClusterLeaderOnboardView.as_view(),
+        name="leader-onboard",
+    ),
     path("<str:cluster_id>", views.ClusterDetailView.as_view(), name="detail"),
     path(
         "<str:cluster_id>/intelligence",

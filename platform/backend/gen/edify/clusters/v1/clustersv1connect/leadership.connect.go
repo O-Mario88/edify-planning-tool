@@ -60,6 +60,9 @@ const (
 	// ClusterLeadershipServiceReplaceLeaderProcedure is the fully-qualified name of the
 	// ClusterLeadershipService's ReplaceLeader RPC.
 	ClusterLeadershipServiceReplaceLeaderProcedure = "/edify.clusters.v1.ClusterLeadershipService/ReplaceLeader"
+	// ClusterLeadershipServiceOnboardLeaderProcedure is the fully-qualified name of the
+	// ClusterLeadershipService's OnboardLeader RPC.
+	ClusterLeadershipServiceOnboardLeaderProcedure = "/edify.clusters.v1.ClusterLeadershipService/OnboardLeader"
 )
 
 // ClusterLeadershipServiceClient is a client for the edify.clusters.v1.ClusterLeadershipService
@@ -90,6 +93,11 @@ type ClusterLeadershipServiceClient interface {
 	// End one leader's assignment and give the cluster to another, in one
 	// step; the new assignment names the one it replaced.
 	ReplaceLeader(context.Context, *connect.Request[v1.ReplaceLeaderRequest]) (*connect.Response[v1.ReplaceLeaderResponse], error)
+	// Onboard a new Cluster Leader for the cluster (owner, 2026-11-11): the
+	// existing application creates an account holding the Cluster Leader role
+	// alone and sends its invitation; the leader is then given the cluster.
+	// An Admin, a Program Lead, or the cluster's CCEO may.
+	OnboardLeader(context.Context, *connect.Request[v1.OnboardLeaderRequest]) (*connect.Response[v1.OnboardLeaderResponse], error)
 }
 
 // NewClusterLeadershipServiceClient constructs a client for the
@@ -157,6 +165,12 @@ func NewClusterLeadershipServiceClient(httpClient connect.HTTPClient, baseURL st
 			connect.WithSchema(clusterLeadershipServiceMethods.ByName("ReplaceLeader")),
 			connect.WithClientOptions(opts...),
 		),
+		onboardLeader: connect.NewClient[v1.OnboardLeaderRequest, v1.OnboardLeaderResponse](
+			httpClient,
+			baseURL+ClusterLeadershipServiceOnboardLeaderProcedure,
+			connect.WithSchema(clusterLeadershipServiceMethods.ByName("OnboardLeader")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -171,6 +185,7 @@ type clusterLeadershipServiceClient struct {
 	assignLeader        *connect.Client[v1.AssignLeaderRequest, v1.AssignLeaderResponse]
 	endAssignment       *connect.Client[v1.EndAssignmentRequest, v1.EndAssignmentResponse]
 	replaceLeader       *connect.Client[v1.ReplaceLeaderRequest, v1.ReplaceLeaderResponse]
+	onboardLeader       *connect.Client[v1.OnboardLeaderRequest, v1.OnboardLeaderResponse]
 }
 
 // GetMyClusters calls edify.clusters.v1.ClusterLeadershipService.GetMyClusters.
@@ -218,6 +233,11 @@ func (c *clusterLeadershipServiceClient) ReplaceLeader(ctx context.Context, req 
 	return c.replaceLeader.CallUnary(ctx, req)
 }
 
+// OnboardLeader calls edify.clusters.v1.ClusterLeadershipService.OnboardLeader.
+func (c *clusterLeadershipServiceClient) OnboardLeader(ctx context.Context, req *connect.Request[v1.OnboardLeaderRequest]) (*connect.Response[v1.OnboardLeaderResponse], error) {
+	return c.onboardLeader.CallUnary(ctx, req)
+}
+
 // ClusterLeadershipServiceHandler is an implementation of the
 // edify.clusters.v1.ClusterLeadershipService service.
 type ClusterLeadershipServiceHandler interface {
@@ -246,6 +266,11 @@ type ClusterLeadershipServiceHandler interface {
 	// End one leader's assignment and give the cluster to another, in one
 	// step; the new assignment names the one it replaced.
 	ReplaceLeader(context.Context, *connect.Request[v1.ReplaceLeaderRequest]) (*connect.Response[v1.ReplaceLeaderResponse], error)
+	// Onboard a new Cluster Leader for the cluster (owner, 2026-11-11): the
+	// existing application creates an account holding the Cluster Leader role
+	// alone and sends its invitation; the leader is then given the cluster.
+	// An Admin, a Program Lead, or the cluster's CCEO may.
+	OnboardLeader(context.Context, *connect.Request[v1.OnboardLeaderRequest]) (*connect.Response[v1.OnboardLeaderResponse], error)
 }
 
 // NewClusterLeadershipServiceHandler builds an HTTP handler from the service implementation. It
@@ -309,6 +334,12 @@ func NewClusterLeadershipServiceHandler(svc ClusterLeadershipServiceHandler, opt
 		connect.WithSchema(clusterLeadershipServiceMethods.ByName("ReplaceLeader")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clusterLeadershipServiceOnboardLeaderHandler := connect.NewUnaryHandler(
+		ClusterLeadershipServiceOnboardLeaderProcedure,
+		svc.OnboardLeader,
+		connect.WithSchema(clusterLeadershipServiceMethods.ByName("OnboardLeader")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.clusters.v1.ClusterLeadershipService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClusterLeadershipServiceGetMyClustersProcedure:
@@ -329,6 +360,8 @@ func NewClusterLeadershipServiceHandler(svc ClusterLeadershipServiceHandler, opt
 			clusterLeadershipServiceEndAssignmentHandler.ServeHTTP(w, r)
 		case ClusterLeadershipServiceReplaceLeaderProcedure:
 			clusterLeadershipServiceReplaceLeaderHandler.ServeHTTP(w, r)
+		case ClusterLeadershipServiceOnboardLeaderProcedure:
+			clusterLeadershipServiceOnboardLeaderHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -372,4 +405,8 @@ func (UnimplementedClusterLeadershipServiceHandler) EndAssignment(context.Contex
 
 func (UnimplementedClusterLeadershipServiceHandler) ReplaceLeader(context.Context, *connect.Request[v1.ReplaceLeaderRequest]) (*connect.Response[v1.ReplaceLeaderResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.clusters.v1.ClusterLeadershipService.ReplaceLeader is not implemented"))
+}
+
+func (UnimplementedClusterLeadershipServiceHandler) OnboardLeader(context.Context, *connect.Request[v1.OnboardLeaderRequest]) (*connect.Response[v1.OnboardLeaderResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.clusters.v1.ClusterLeadershipService.OnboardLeader is not implemented"))
 }

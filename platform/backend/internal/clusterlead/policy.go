@@ -2,6 +2,7 @@ package clusterlead
 
 import (
 	"context"
+	"slices"
 
 	"connectrpc.com/connect"
 
@@ -70,7 +71,21 @@ func mayAdminister(principal auth.Principal, cluster Cluster) bool {
 	}
 	return principal.ActiveRole == roleCCEO &&
 		principal.StaffProfileID != "" &&
-		cluster.ResponsibleStaffID == principal.StaffProfileID
+		slices.Contains(ownIDs(principal), cluster.ResponsibleStaffID)
+}
+
+// ownIDs is every id a cluster this person is responsible for may be filed
+// under: cluster.responsible_staff_id holds a user id when the web's edit
+// drawer saved it and a staff-profile id otherwise (apps/core/scoping.py
+// cluster_owner_ids).
+func ownIDs(principal auth.Principal) []string {
+	var ids []string
+	for _, id := range []string{principal.UserID, principal.StaffProfileID} {
+		if id != "" {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 func notYours(ctx context.Context) error {

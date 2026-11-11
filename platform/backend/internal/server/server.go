@@ -74,7 +74,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	clusterStore := clusterlead.NewStore(pool)
-	leadership := clusterlead.NewService(clusterStore, time.Now, clusterSchemaReady(pool), logger)
+	leadership := clusterlead.NewService(clusterStore, time.Now, clusterSchemaReady(pool), logger).
+		WithOnboarder(clusterlead.NewHTTPOnboarder(cfg.ExistingAppURL), cfg.ExistingAppURL)
 	mux.Handle(clustersv1connect.NewClusterLeadershipServiceHandler(leadership, options...))
 	mux.Handle(clustersv1connect.NewClusterMobilizationServiceHandler(
 		clusterlead.NewOperations(leadership, clusterStore), options...,

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"slices"
 	"testing"
 	"time"
 
@@ -80,11 +81,11 @@ func (f *fakeData) PastActivities(context.Context, string, time.Time, int) ([]Ac
 	return nil, nil
 }
 
-func (f *fakeData) ManagedClusters(_ context.Context, staffID, _ string, _ time.Time, _, _ int) ([]ManagedCluster, int64, error) {
+func (f *fakeData) ManagedClusters(_ context.Context, ownerIDs []string, _ string, _ time.Time, _, _ int) ([]ManagedCluster, int64, error) {
 	var out []ManagedCluster
 	for _, id := range []string{"c-mine", "c-other"} {
 		c := f.clusters[id]
-		if staffID == "" || c.ResponsibleStaffID == staffID {
+		if ownerIDs == nil || slices.Contains(ownerIDs, c.ResponsibleStaffID) {
 			out = append(out, ManagedCluster{Cluster: c, Members: int64(len(f.members[id]))})
 		}
 	}
@@ -127,6 +128,14 @@ func (f *fakeData) Candidates(context.Context) ([]Account, error) {
 func (f *fakeData) Account(_ context.Context, id string) (Account, error) {
 	a, ok := f.accounts[id]
 	if !ok {
+		return Account{}, ErrNotFound
+	}
+	return a, nil
+}
+
+func (f *fakeData) InvitedLeader(_ context.Context, id string) (Account, error) {
+	a, ok := f.accounts[id]
+	if !ok || !a.IsLeader {
 		return Account{}, ErrNotFound
 	}
 	return a, nil
@@ -411,5 +420,27 @@ func TestManagedClustersFollowTheAssignmentPolicy(t *testing.T) {
 	}
 	if _, err := count(as(RoleClusterLeader, "u-leader", "")); codeOf(err) != connect.CodePermissionDenied {
 		t.Fatalf("a Cluster Leader manages no cluster, got %v", err)
+	}
+}
+
+// A cluster's responsible_staff_id is a user id when the web's edit drawer
+// saved it and a staff-profile id otherwise (apps/core/scoping.py
+// cluster_owner_ids): the CCEO is responsible either way.
+func TestACCEOManagesTheirClusterFiledUnderEitherId(t *testing.T) {
+	f := newFake()
+	mine := f.clusters["c-mine"]
+	mine.ResponsibleStaffID = "u-cceo"
+	f.clusters["c-mine"] = mine
+	svc := service(f)
+	ctx := as(roleCCEO, "u-cceo", "sp-cceo")
+	if _, err := svc.ListLeaders(ctx, connect.NewRequest(&clustersv1.ListLeadersRequest{ClusterId: "c-mine"})); err != nil {
+		t.Fatalf("a cluster filed under the CCEO's user id: %v", err)
+	}
+	got, err := svc.ListManagedClusters(ctx, connect.NewRequest(&clustersv1.ListManagedClustersRequest{}))
+	if err != nil || len(got.Msg.GetClusters()) != 1 {
+		t.Fatalf("their managed clusters: %v %v", got, err)
+	}
+	if _, err := svc.ListLeaders(as(roleCCEO, "u-other", "sp-other"), connect.NewRequest(&clustersv1.ListLeadersRequest{ClusterId: "c-mine"})); codeOf(err) != connect.CodePermissionDenied {
+		t.Fatalf("another CCEO, got %v", err)
 	}
 }

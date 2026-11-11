@@ -28,6 +28,7 @@ const (
 	ClusterLeadershipService_AssignLeader_FullMethodName        = "/edify.clusters.v1.ClusterLeadershipService/AssignLeader"
 	ClusterLeadershipService_EndAssignment_FullMethodName       = "/edify.clusters.v1.ClusterLeadershipService/EndAssignment"
 	ClusterLeadershipService_ReplaceLeader_FullMethodName       = "/edify.clusters.v1.ClusterLeadershipService/ReplaceLeader"
+	ClusterLeadershipService_OnboardLeader_FullMethodName       = "/edify.clusters.v1.ClusterLeadershipService/OnboardLeader"
 )
 
 // ClusterLeadershipServiceClient is the client API for ClusterLeadershipService service.
@@ -65,6 +66,11 @@ type ClusterLeadershipServiceClient interface {
 	// End one leader's assignment and give the cluster to another, in one
 	// step; the new assignment names the one it replaced.
 	ReplaceLeader(ctx context.Context, in *ReplaceLeaderRequest, opts ...grpc.CallOption) (*ReplaceLeaderResponse, error)
+	// Onboard a new Cluster Leader for the cluster (owner, 2026-11-11): the
+	// existing application creates an account holding the Cluster Leader role
+	// alone and sends its invitation; the leader is then given the cluster.
+	// An Admin, a Program Lead, or the cluster's CCEO may.
+	OnboardLeader(ctx context.Context, in *OnboardLeaderRequest, opts ...grpc.CallOption) (*OnboardLeaderResponse, error)
 }
 
 type clusterLeadershipServiceClient struct {
@@ -165,6 +171,16 @@ func (c *clusterLeadershipServiceClient) ReplaceLeader(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *clusterLeadershipServiceClient) OnboardLeader(ctx context.Context, in *OnboardLeaderRequest, opts ...grpc.CallOption) (*OnboardLeaderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OnboardLeaderResponse)
+	err := c.cc.Invoke(ctx, ClusterLeadershipService_OnboardLeader_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ClusterLeadershipServiceServer is the server API for ClusterLeadershipService service.
 // All implementations must embed UnimplementedClusterLeadershipServiceServer
 // for forward compatibility.
@@ -200,6 +216,11 @@ type ClusterLeadershipServiceServer interface {
 	// End one leader's assignment and give the cluster to another, in one
 	// step; the new assignment names the one it replaced.
 	ReplaceLeader(context.Context, *ReplaceLeaderRequest) (*ReplaceLeaderResponse, error)
+	// Onboard a new Cluster Leader for the cluster (owner, 2026-11-11): the
+	// existing application creates an account holding the Cluster Leader role
+	// alone and sends its invitation; the leader is then given the cluster.
+	// An Admin, a Program Lead, or the cluster's CCEO may.
+	OnboardLeader(context.Context, *OnboardLeaderRequest) (*OnboardLeaderResponse, error)
 	mustEmbedUnimplementedClusterLeadershipServiceServer()
 }
 
@@ -236,6 +257,9 @@ func (UnimplementedClusterLeadershipServiceServer) EndAssignment(context.Context
 }
 func (UnimplementedClusterLeadershipServiceServer) ReplaceLeader(context.Context, *ReplaceLeaderRequest) (*ReplaceLeaderResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReplaceLeader not implemented")
+}
+func (UnimplementedClusterLeadershipServiceServer) OnboardLeader(context.Context, *OnboardLeaderRequest) (*OnboardLeaderResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method OnboardLeader not implemented")
 }
 func (UnimplementedClusterLeadershipServiceServer) mustEmbedUnimplementedClusterLeadershipServiceServer() {
 }
@@ -421,6 +445,24 @@ func _ClusterLeadershipService_ReplaceLeader_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ClusterLeadershipService_OnboardLeader_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OnboardLeaderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterLeadershipServiceServer).OnboardLeader(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ClusterLeadershipService_OnboardLeader_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterLeadershipServiceServer).OnboardLeader(ctx, req.(*OnboardLeaderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ClusterLeadershipService_ServiceDesc is the grpc.ServiceDesc for ClusterLeadershipService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -463,6 +505,10 @@ var ClusterLeadershipService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReplaceLeader",
 			Handler:    _ClusterLeadershipService_ReplaceLeader_Handler,
+		},
+		{
+			MethodName: "OnboardLeader",
+			Handler:    _ClusterLeadershipService_OnboardLeader_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -4,6 +4,7 @@ package integration
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sort"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	clustersv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/clusters/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/clusters/v1/clustersv1connect"
 	commonv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/common/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
 )
 
 const roleClusterLeader = "ClusterLeader"
@@ -180,5 +182,33 @@ func TestClusterLeaderSeesOnlyTheirAssignedClusterAndItsSchools(t *testing.T) {
 	leaders, err := client.ListLeaders(ctx, authed(&clustersv1.ListLeadersRequest{ClusterId: mine}, adminBearer))
 	if err != nil || len(leaders.Msg.GetAssignments()) != 1 || leaders.Msg.GetAssignments()[0].GetStatus() != "ended" {
 		t.Fatalf("the ended assignment is kept as history: %v %v", leaders, err)
+	}
+}
+
+// An onboarded leader is still invited (no password yet) when the cluster is
+// given to them; only an account holding the Cluster Leader role alone may be.
+func TestAnInvitedLeaderAccountMayBeGivenACluster(t *testing.T) {
+	ctx := context.Background()
+	userID := leaderFixture(t)
+	store := clusterlead.NewStore(gateway)
+	var status string
+	var active bool
+	if err := admin.QueryRow(ctx, `SELECT status, is_active FROM "user" WHERE id = $1`, userID).Scan(&status, &active); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = admin.Exec(context.Background(), `UPDATE "user" SET status = $2, is_active = $3 WHERE id = $1`, userID, status, active)
+	})
+	if _, err := admin.Exec(ctx, `UPDATE "user" SET status = 'pending_invited', is_active = false WHERE id = $1`, userID); err != nil {
+		t.Fatal(err)
+	}
+	if account, err := store.InvitedLeader(ctx, userID); err != nil || account.UserID != userID {
+		t.Fatalf("an invited leader: %v %v", account, err)
+	}
+	if _, err := admin.Exec(ctx, `UPDATE "user" SET roles = $2 WHERE id = $1`, userID, []string{roleClusterLeader, "CCEO"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.InvitedLeader(ctx, userID); !errors.Is(err, clusterlead.ErrNotFound) {
+		t.Fatalf("an account with another role too, got %v", err)
 	}
 }

@@ -83,9 +83,11 @@ interface FieldProps {
   readonly isMultiline?: boolean;
   readonly isNumeric?: boolean;
   readonly isReadOnly?: boolean;
+  /** An email address: the email keyboard, no capitals or corrections. */
+  readonly isEmail?: boolean;
 }
 
-export function Field({ label, value, onChange, placeholder, isMultiline, isNumeric, isReadOnly }: FieldProps) {
+export function Field({ label, value, onChange, placeholder, isMultiline, isNumeric, isReadOnly, isEmail }: FieldProps) {
   const { colors } = useTheme();
   return (
     <View style={styles.field}>
@@ -98,7 +100,9 @@ export function Field({ label, value, onChange, placeholder, isMultiline, isNume
         accessibilityLabel={label}
         editable={!isReadOnly}
         multiline={isMultiline}
-        keyboardType={isNumeric ? 'number-pad' : 'default'}
+        keyboardType={isNumeric ? 'number-pad' : isEmail ? 'email-address' : 'default'}
+        autoCapitalize={isEmail ? 'none' : 'sentences'}
+        autoCorrect={!isEmail}
         style={[
           styles.input,
           isMultiline && styles.multiline,

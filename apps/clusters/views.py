@@ -141,3 +141,17 @@ class ClusterImpactView(APIView):
         from apps.analytics.services import cluster_impact
 
         return Response(cluster_impact(cluster_id, request.user))
+
+
+class ClusterLeaderOnboardView(APIView):
+    """POST /api/clusters/<id>/leaders: onboard a Cluster Leader for the
+    cluster. Who may is decided per cluster (leader_onboarding.may_onboard),
+    so no blanket permission is required here beyond being signed in."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request, cluster_id: str) -> Response:
+        from .leader_onboarding import onboard_cluster_leader
+
+        answer = onboard_cluster_leader(cluster_id, request.data, request.user)
+        return Response(answer, status=200 if answer["existing"] else 201)

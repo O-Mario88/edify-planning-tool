@@ -36,6 +36,11 @@ service ClusterLeadershipService {
   // End one leader's assignment and give the cluster to another, in one
   // step; the new assignment names the one it replaced.
   rpc ReplaceLeader(ReplaceLeaderRequest) returns (ReplaceLeaderResponse);
+  // Onboard a new Cluster Leader for the cluster (owner, 2026-11-11): the
+  // existing application creates an account holding the Cluster Leader role
+  // alone and sends its invitation; the leader is then given the cluster.
+  // An Admin, a Program Lead, or the cluster's CCEO may.
+  rpc OnboardLeader(OnboardLeaderRequest) returns (OnboardLeaderResponse);
 }
 
 message GetMyClustersRequest {}
@@ -250,4 +255,23 @@ message MemberSchool {
   string contact_name = 11;
   string contact_phone = 12;
   string school_phone = 13;
+}
+
+message OnboardLeaderRequest {
+  string cluster_id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  string reason = 5;
+}
+
+message OnboardLeaderResponse {
+  LeaderAssignment assignment = 1;
+  // The email already had a Cluster Leader account; no new one was made.
+  bool existing_account = 2;
+  // The leader already led this cluster; nothing changed.
+  bool already_leading = 3;
+  // Only when email cannot reach the leader: the link to set a password,
+  // for the person onboarding them to pass on. Empty otherwise.
+  string invite_link = 4;
 }
