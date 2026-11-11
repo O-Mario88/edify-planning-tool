@@ -54,3 +54,30 @@ GRANT SELECT (id, name) ON region TO edify_gateway_ro;
 GRANT SELECT (id, name) ON district TO edify_gateway_ro;
 GRANT SELECT (id, name) ON sub_county TO edify_gateway_ro;
 GRANT SELECT (id, name) ON parish TO edify_gateway_ro;
+
+-- internal/schooldirectory: the School Directory (2026-11-11), read only.
+GRANT SELECT (
+  id, school_id, name, school_type, operational_status, cluster_status, region_id, district_id,
+  sub_county_id, cluster_id, enrollment, deleted_at, shipping_address, school_phone,
+  primary_contact_name, account_owner_id, account_owner_name_raw, uploaded_district_text,
+  uploaded_sub_county_text
+) ON school TO edify_gateway_ro;
+GRANT SELECT (id, name, country) ON region TO edify_gateway_ro;
+GRANT SELECT (id, name, region_id) ON district TO edify_gateway_ro;
+GRANT SELECT (id, name, district_id) ON sub_county TO edify_gateway_ro;
+GRANT SELECT (id, name, deleted_at, status, responsible_staff_id) ON cluster TO edify_gateway_ro;
+GRANT SELECT (id, user_id, deleted_at, country) ON staff_profile TO edify_gateway_ro;
+GRANT SELECT (id, name, active_role, roles, deleted_at) ON "user" TO edify_gateway_ro;
+GRANT SELECT (supervisor_id, supervisee_id) ON staff_supervisor_assignment TO edify_gateway_ro;
+GRANT SELECT (covering_staff_id, original_staff_id, start_datetime, end_datetime, status)
+  ON temporary_coverage_assignment TO edify_gateway_ro;
+GRANT SELECT (staff_id, region_id, district_id) ON staff_geography_assignment TO edify_gateway_ro;
+GRANT SELECT (id, name, status, deleted_at, manager_staff_id) ON project TO edify_gateway_ro;
+GRANT SELECT (id, project_id, school_id, assigned_staff_id, created_at) ON project_school_assignment TO edify_gateway_ro;
+GRANT SELECT (project_id, staff_id, is_active) ON project_staff_assignment TO edify_gateway_ro;
+GRANT SELECT (project_id, staff_id, max_schools) ON project_staff_capacity TO edify_gateway_ro;
+GRANT SELECT (id, school_id, fy, verification_status, deleted_at, date_of_ssa, created_at) ON ssa_record TO edify_gateway_ro;
+GRANT SELECT (ssa_record_id, intervention, score) ON ssa_score TO edify_gateway_ro;
+GRANT SELECT (id, school_id, activity_type, status, deleted_at, fy, planned_date, scheduled_date, attended_school_ids)
+  ON activity TO edify_gateway_ro;
+GRANT SELECT (activity_id, school_id, invited, attended) ON cluster_activity_attendance TO edify_gateway_ro;

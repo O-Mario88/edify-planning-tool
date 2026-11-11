@@ -21,6 +21,7 @@ deployed, or connected to production.
 | [09-accounts-and-roles.md](09-accounts-and-roles.md) | Accounts and roles, owned by Go: role switching, the forced password change, the Admin's Users screen |
 | [10-teams.md](10-teams.md) | Staff and partner teams, owned by Go: supervisors, managed teams, a partner's own team, logins and schools |
 | [11-acting-leadership.md](11-acting-leadership.md) | Acting leadership, owned by Go: appointing, moving and cancelling acting leaders, and the appointee's switch into the acting capacity |
+| [12-school-directory.md](12-school-directory.md) | The School Directory, read by Go: whose schools, filters, tabs and rows, proved against the existing page; writes and profiles not yet moved |
 
 The code is under [`platform/`](../../platform/README.md).
 

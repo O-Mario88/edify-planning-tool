@@ -1,0 +1,353 @@
+{
+  "allow_cd_operational_planning": true,
+  "capacity_exempt_roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator"
+  ],
+  "cluster_credit_statuses": [
+    "ia_verified",
+    "accountant_confirmed",
+    "closed"
+  ],
+  "cluster_meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "cluster_session_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "cluster_training",
+    "cluster_training_ssa_collection"
+  ],
+  "cluster_training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection"
+  ],
+  "completed_work_statuses": [
+    "ia_verified",
+    "closed",
+    "accountant_confirmed",
+    "completed"
+  ],
+  "country_roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CountryDirector",
+    "ImpactAssessment"
+  ],
+  "current_ssa_statuses": [
+    "confirmed"
+  ],
+  "dead_statuses": [
+    "cancelled",
+    "deferred",
+    "not_planned",
+    "rejected",
+    "returned",
+    "returned_by_ia"
+  ],
+  "directory_tabs": [
+    [
+      "all",
+      "All Schools"
+    ],
+    [
+      "unclustered",
+      "Unclustered"
+    ],
+    [
+      "clustered",
+      "Clustered"
+    ],
+    [
+      "not_assigned",
+      "Not Assigned to Project"
+    ],
+    [
+      "assigned",
+      "Assigned to Project"
+    ]
+  ],
+  "gap_labels": [
+    [
+      "any",
+      "Any Missing Detail"
+    ],
+    [
+      "no_owner",
+      "No Responsible Staff"
+    ],
+    [
+      "no_district",
+      "No District"
+    ],
+    [
+      "no_sub_county",
+      "No Sub-county"
+    ],
+    [
+      "no_cluster",
+      "No Cluster"
+    ],
+    [
+      "no_type",
+      "No School Type"
+    ],
+    [
+      "no_enrolment",
+      "No Enrolment"
+    ],
+    [
+      "no_school_id",
+      "No School ID"
+    ],
+    [
+      "no_ssa",
+      "No Confirmed SSA"
+    ]
+  ],
+  "open_project_statuses": [
+    "active",
+    "proposed",
+    "scaling",
+    "under_review"
+  ],
+  "page_access": {
+    "Accountant": {
+      "directory": false,
+      "profile": false
+    },
+    "Admin": {
+      "directory": true,
+      "profile": true
+    },
+    "BusinessTransformationOfficer": {
+      "directory": false,
+      "profile": true
+    },
+    "CCEO": {
+      "directory": true,
+      "profile": true
+    },
+    "ClusterLeader": {
+      "directory": false,
+      "profile": false
+    },
+    "CountryDirector": {
+      "directory": true,
+      "profile": true
+    },
+    "HumanResources": {
+      "directory": false,
+      "profile": false
+    },
+    "ImpactAssessment": {
+      "directory": true,
+      "profile": true
+    },
+    "MfiLoanOfficer": {
+      "directory": false,
+      "profile": false
+    },
+    "MfiPartnerAdmin": {
+      "directory": false,
+      "profile": false
+    },
+    "PartnerAdmin": {
+      "directory": false,
+      "profile": false
+    },
+    "PartnerFieldOfficer": {
+      "directory": false,
+      "profile": false
+    },
+    "Program Lead": {
+      "directory": true,
+      "profile": true
+    },
+    "ProjectCoordinator": {
+      "directory": true,
+      "profile": true
+    },
+    "RegionalProgramLead": {
+      "directory": true,
+      "profile": false
+    },
+    "RegionalVicePresident": {
+      "directory": false,
+      "profile": false
+    }
+  },
+  "pending_approval_statuses": [
+    "awaiting_owner_approval"
+  ],
+  "region_roles": [
+    "RegionalProgramLead"
+  ],
+  "school_training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "core_training"
+  ],
+  "school_types": [
+    [
+      "champion",
+      "Champion"
+    ],
+    [
+      "client",
+      "Client"
+    ],
+    [
+      "core",
+      "Core"
+    ],
+    [
+      "core_graduate",
+      "Core Graduate"
+    ],
+    [
+      "core_trained",
+      "Core Trained"
+    ]
+  ],
+  "ssa_groups": [
+    [
+      "urgent",
+      "SSA interventions needing urgent attention",
+      "danger"
+    ],
+    [
+      "performing-well",
+      "SSA interventions performing well",
+      "success"
+    ],
+    [
+      "warning",
+      "SSA interventions to watch",
+      "warning"
+    ]
+  ],
+  "ssa_interventions": [
+    [
+      "christlike_behaviour",
+      "Christlike Behaviour"
+    ],
+    [
+      "exposure_to_word_of_god",
+      "Exposure to the Word of God"
+    ],
+    [
+      "financial_health",
+      "Financial Health"
+    ],
+    [
+      "leadership",
+      "Leadership"
+    ],
+    [
+      "government_requirement",
+      "Government Requirements"
+    ],
+    [
+      "learning_environment",
+      "Learning Environment"
+    ],
+    [
+      "teaching_environment",
+      "Teacher's Environment"
+    ],
+    [
+      "enrolment",
+      "Enrolment"
+    ]
+  ],
+  "summary_only_roles": [
+    "RegionalVicePresident"
+  ],
+  "take_roles": [
+    "CCEO",
+    "Program Lead"
+  ],
+  "trained_types": [
+    "core",
+    "client",
+    "core_trained",
+    "core_graduate"
+  ],
+  "visit_count_types": [
+    "school_visit",
+    "core_visit",
+    "baseline_ssa_visit"
+  ],
+  "visit_labels": {
+    "no_visit_planned": "No Visit Planned",
+    "scheduled_for_visit": "Scheduled for Visit",
+    "visit_canceled": "Visit Canceled",
+    "visit_completed": "Visit Completed",
+    "visit_in_progress": "Visit In Progress",
+    "visit_planned": "Visit Planned",
+    "visit_submitted": "Visit Submitted",
+    "visit_verified": "Visit Verified"
+  },
+  "visit_precedence": [
+    "visit_in_progress",
+    "scheduled_for_visit",
+    "visit_submitted",
+    "visit_verified",
+    "visit_completed",
+    "visit_planned",
+    "visit_canceled",
+    "no_visit_planned"
+  ],
+  "visit_status_states": {
+    "accountant_confirmed": "visit_completed",
+    "assigned_to_partner": "visit_planned",
+    "awaiting_ia_verification": "visit_submitted",
+    "closed": "visit_completed",
+    "completed": "visit_completed",
+    "completion_started": "visit_in_progress",
+    "evidence_accepted": "visit_submitted",
+    "evidence_uploaded": "visit_submitted",
+    "ia_verified": "visit_verified",
+    "in_progress": "visit_in_progress",
+    "partner_scheduled": "scheduled_for_visit",
+    "planned": "visit_planned",
+    "rescheduled": "scheduled_for_visit",
+    "returned_by_pl": "visit_planned",
+    "salesforce_id_required": "visit_submitted",
+    "scheduled": "scheduled_for_visit",
+    "submitted_to_pl": "visit_submitted"
+  },
+  "visit_tones": {
+    "no_visit_planned": "neutral",
+    "scheduled_for_visit": "success",
+    "visit_canceled": "warning",
+    "visit_completed": "success",
+    "visit_in_progress": "info",
+    "visit_planned": "info",
+    "visit_submitted": "info",
+    "visit_verified": "success"
+  },
+  "visit_types": [
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
+    "core_visit",
+    "core_assessment_visit",
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection"
+  ]
+}

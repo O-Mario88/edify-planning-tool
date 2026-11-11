@@ -148,6 +148,22 @@ left the menu and bottom tabs as they were until the app restarted. The app
 reloaded its menu only when the role's name changed, and an acting capacity
 keeps the name ("CCEO"); it now reloads on the capacity too.
 
+## School Directory read by Go (2026-11-11)
+
+[docs/migration/12-school-directory.md](../migration/12-school-directory.md).
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/schools/test_school_directory_rules_export.py`, and `internal/schooldirectory` reads the export |
+| Parity with the existing page | Pass | `cmd/parity` over all 29 seed accounts that may open it: 667 answers compared field by field, none differing. 12 answers the existing page could not give (its project status filter fails); Go gave them |
+| Go unit tests | Pass | SSA bands, Python's sum and rounding, the score groups, thousands, the last page, the October year, owner ranking, search escaping, row Actions by role, who may open the page |
+| Go integration suite: directory | Pass | an officer reads their own schools 50 a page, each school once, found by School ID; the Admin reads every operating school; a partner admin is refused; someone acting is passed to the existing application |
+| Database role | Pass | column SELECT only, on the tables listed in the doc; the package writes nothing |
+| Django | Pass | the export test, the acting export and the directory controls audit: 7 passed; ruff, format, bandit clean |
+| Web build | Pass | cceo@: 700 schools, page 1 of 14, answered by Go in about 60 ms with no call to the existing application; the project status "Assigned" filter gives 26 schools; a row's Actions menu opens below its button |
+| iOS Release | Pass | cceo@: Schools tab, 700 schools, same-named schools in School ID order, answered by Go in 73 ms; a row's Actions menu (Add to Cluster, Add to Project) opens below its button |
+| Android Release | Pass | Deo M. (CCEO, holds no school): the existing page's "No schools are assigned to you yet.", answered by Go in 21 ms |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

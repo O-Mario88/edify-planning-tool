@@ -8,6 +8,8 @@ package screens
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"net/url"
 	"strconv"
 
@@ -16,6 +18,8 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 const (
@@ -33,15 +37,30 @@ type Fetcher interface {
 	Post(ctx context.Context, path string, in, out proto.Message) error
 }
 
+// Directory builds the School Directory in Go (internal/schooldirectory).
+type Directory interface {
+	Build(ctx context.Context, p auth.Principal, req *screensv1.GetSchoolDirectoryRequest) (*screensv1.GetSchoolDirectoryResponse, error)
+}
+
 // Service implements HomeScreenService, NavigationService and
 // SchoolDirectoryScreenService.
 type Service struct {
 	existingApp Fetcher // nil when no existing application is configured
+	directory   Directory
+	logger      *slog.Logger
 }
 
 // NewService wires the service. existingApp may be nil.
 func NewService(existingApp Fetcher) *Service {
 	return &Service{existingApp: existingApp}
+}
+
+// WithDirectory answers the School Directory in Go for anyone working in
+// their own role. Someone working in an acting capacity is still answered by
+// the existing application, which presents them in the acting seat.
+func (s *Service) WithDirectory(directory Directory, logger *slog.Logger) *Service {
+	s.directory, s.logger = directory, logger
+	return s
 }
 
 func fetch[T any, M interface {
@@ -91,6 +110,16 @@ func (s *Service) GetNavigation(
 func (s *Service) GetSchoolDirectory(
 	ctx context.Context, request *connect.Request[screensv1.GetSchoolDirectoryRequest],
 ) (*connect.Response[screensv1.GetSchoolDirectoryResponse], error) {
+	if principal, ok := auth.PrincipalFrom(ctx); ok && s.directory != nil && !principal.InActingAppointment {
+		response, err := s.directory.Build(ctx, principal, request.Msg)
+		if errors.Is(err, schooldirectory.ErrForbidden) {
+			return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied, err.Error())
+		}
+		if err != nil {
+			return nil, apierr.Internal(ctx, s.logger, err)
+		}
+		return connect.NewResponse(response), nil
+	}
 	message := request.Msg
 	query := url.Values{}
 	for key, value := range map[string]string{
