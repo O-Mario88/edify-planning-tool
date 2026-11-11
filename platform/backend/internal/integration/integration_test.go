@@ -418,6 +418,9 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"delete audit rows":           rw + `DELETE FROM audit_log`,
 		"delete sessions":             rw + `DELETE FROM refresh_token`,
 		"delete an account":           rw + `DELETE FROM "user"`,
+		"delete a partner":            rw + `DELETE FROM partner`,
+		"delete a school handover":    rw + `DELETE FROM partner_assignment`,
+		"delete an activity":          rw + `DELETE FROM activity`,
 		"read the payload of the log": `SELECT payload FROM audit_log LIMIT 1`,
 	}
 	for name, statement := range statements {

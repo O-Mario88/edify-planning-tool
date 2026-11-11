@@ -112,6 +112,21 @@ successful switch; the Users screen's filter tabs and the shared drawer
 buttons had no accessible names. The development identity server had to be
 restarted to serve the new relay route (it runs without reloading).
 
+## Staff and partner teams moved to Go (2026-11-11)
+
+[docs/migration/10-teams.md](../migration/10-teams.md).
+
+| Check | Result | Evidence |
+|---|---|---|
+| Go integration suite: teams | Pass | roster scoped to the reader; supervisor reassigned under the level rule (HR may, a CD may not for HR, the Admin overrides); a Program Lead's team configured and a CCEO kept to one lead; a Partner Admin adds a member, gives a login, splits schools (open work renamed, delivered work kept), removes them |
+| Database role still refuses the dangerous writes | Pass | deleting a partner, a hand-over or an activity; DELETE allowed in source only in `internal/teams`, only on the three link tables |
+| The existing chain verifier | Pass | `verify_chain(full=True)`: ok on dev (620 rows) and test (778 rows), including Go's teams audit rows |
+| Django relays | Pass | `staff_changed` advances the analytics revision; accounts, admin_users and the matrix test: 273 passed |
+| Web build: Users → Supervisor and Team (Admin) | Pass | Program Lead 1: choices limited to Country Directors, saved and audited `admin.supervisor_reassigned` (then put back); Team lists CCEOs with their current lead |
+| Web build: Team (Partner Admin) | Pass | add member, give a login with a first password, two schools, remove (login disabled, links removed); audited `partner.member_login_created`, `partner.school_team_member_set`, `admin.user_disabled`; the test account then removed by the Admin |
+| iOS and Android Release: Team (Partner Admin) | Pass | the native Team screen opens from More → Users on both; Add member drawer on iOS |
+| App tests | Pass | type-check clean; 162 tests |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

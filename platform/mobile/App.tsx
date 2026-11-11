@@ -21,6 +21,7 @@ import { HOME_URL, landingUrl } from './src/landing';
 import { SchoolsScreen } from './src/screens/SchoolsScreen';
 import { NewPasswordScreen } from './src/screens/NewPasswordScreen';
 import { UsersScreen } from './src/screens/admin/UsersScreen';
+import { PartnerTeamScreen } from './src/screens/partner/PartnerTeamScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { ClusterLeaderApp } from './src/screens/cluster/ClusterLeaderApp';
 import { ClusterLeadersScreen } from './src/screens/cluster/ClusterLeadersScreen';
@@ -198,6 +199,9 @@ const HOME: Route = { url: '/home', label: 'Home' };
 /** The web's Users page; native for the Admin, who alone manages accounts. */
 const USERS_URL = '/admin-panel/users';
 const ADMIN = 'Admin';
+/** The web's partner Team page; native for the Partner Admin, who runs the team. */
+const PARTNER_TEAM_URL = '/partner/users';
+const PARTNER_ADMIN = 'PartnerAdmin';
 
 function SignedIn({ session }: { readonly session: Session }) {
   const { api } = useSession();
@@ -235,6 +239,7 @@ function SignedIn({ session }: { readonly session: Session }) {
       url === LEADERS_URL ||
       url === SUPPORT_URL ||
       (pathOf(url) === USERS_URL && session.activeRole === ADMIN) ||
+      (pathOf(url) === PARTNER_TEAM_URL && session.activeRole === PARTNER_ADMIN) ||
       isLoansUrl(url) ||
       OWN_SCREENS.includes(pathOf(url)) ||
       pages.has(pathOf(url)) ||
@@ -275,6 +280,8 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <SupportRequestsScreen />;
   } else if (path === USERS_URL && session.activeRole === ADMIN) {
     screen = <UsersScreen />;
+  } else if (path === PARTNER_TEAM_URL && session.activeRole === PARTNER_ADMIN) {
+    screen = <PartnerTeamScreen />;
   } else if (isLoansUrl(route.url)) {
     screen = <LoansRoute key={route.url} url={route.url} />;
   } else if (path === '/home') {

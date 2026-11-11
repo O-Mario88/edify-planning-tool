@@ -89,3 +89,23 @@ class AccountEventRelayTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
         reprice.assert_not_called()
+
+
+@override_settings(EDIFY_INTERNAL_KEY=KEY)
+class StaffChangedRelayTest(TestCase):
+    def test_a_staff_or_team_change_files_cached_analytics_afresh(self):
+        from django.core.cache import cache
+
+        from apps.hr.accountability_cache import KEY as REVISION
+
+        cache.set(REVISION, "before", timeout=None)
+
+        response = self.client.post(
+            URL,
+            data=json.dumps({"kind": "staff_changed"}),
+            content_type="application/json",
+            headers={"X-Edify-Internal-Key": KEY},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(cache.get(REVISION), "before")

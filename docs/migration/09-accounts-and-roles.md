@@ -65,10 +65,10 @@ does exactly what it does after a web change:
   set up again (audited `admin.partner_login_released`), and the person's web
   sessions end.
 
-Not carried over yet: the supervisor and managed-people fields of the web's
-Add User drawer (`supervisor_service`), which belong to staff and team
-management, the brief's next item. An account added in the app has no
-supervisor until one is set on the web.
+The supervisor and managed-people settings (`supervisor_service`) moved to
+Go next, as their own Actions on each row:
+[10-teams.md](10-teams.md). Add user still creates the account without a
+supervisor; one is set from the row's Supervisor action afterwards.
 
 ## 9.3 The app
 

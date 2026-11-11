@@ -17,6 +17,7 @@ import { fonts, radius, toneColors, useTheme } from '../../theme';
 import { Dropdown, DropdownLayer, MenuList, menuHeight, useDropdown } from '../../ui/Dropdown';
 import { Notice } from '../cluster/opsParts';
 import { AccountFormDrawer, RemoveAccountDrawer, ResetPasswordDrawer } from './AccountDrawers';
+import { ManagedTeamDrawer, SupervisorDrawer } from './TeamDrawers';
 import { ACTION_LABELS, STATUS_FILTERS, actionsFor, lastSignIn, roleLabel, statusOf } from './accountsData';
 import type { AccountAction } from './accountsData';
 
@@ -25,7 +26,7 @@ const SEARCH_PAUSE_MS = 300;
 
 type Open =
   | { readonly kind: 'add' }
-  | { readonly kind: 'configure' | 'reset' | 'remove'; readonly account: ManagedAccount }
+  | { readonly kind: 'configure' | 'reset' | 'remove' | 'supervisor' | 'team'; readonly account: ManagedAccount }
   | null;
 
 export function UsersScreen() {
@@ -82,7 +83,7 @@ export function UsersScreen() {
   );
 
   async function act(account: ManagedAccount, action: AccountAction) {
-    if (action === 'configure' || action === 'reset' || action === 'remove') {
+    if (action === 'configure' || action === 'reset' || action === 'remove' || action === 'supervisor' || action === 'team') {
       setOpen({ kind: action, account });
       return;
     }
@@ -186,6 +187,8 @@ export function UsersScreen() {
       {open?.kind === 'configure' ? <AccountFormDrawer account={open.account} onClose={() => setOpen(null)} onSaved={saved} /> : null}
       {open?.kind === 'reset' ? <ResetPasswordDrawer account={open.account} onClose={() => setOpen(null)} onSaved={saved} /> : null}
       {open?.kind === 'remove' ? <RemoveAccountDrawer account={open.account} onClose={() => setOpen(null)} onSaved={saved} /> : null}
+      {open?.kind === 'supervisor' ? <SupervisorDrawer account={open.account} onClose={() => setOpen(null)} onSaved={saved} /> : null}
+      {open?.kind === 'team' ? <ManagedTeamDrawer account={open.account} onClose={() => setOpen(null)} onSaved={saved} /> : null}
     </DropdownLayer>
   );
 }

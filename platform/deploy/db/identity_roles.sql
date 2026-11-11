@@ -105,3 +105,36 @@ GRANT INSERT (id, user_id, at, role, ip, user_agent, device, active_seconds, las
 GRANT SELECT (id, deleted_at, operational_status) ON school TO edify_identity_rw;
 GRANT SELECT (activity_type, school_id, attended_school_ids, status, fy, deleted_at) ON activity TO edify_identity_rw;
 GRANT SELECT (school_id, fy, verification_status, deleted_at) ON ssa_record TO edify_identity_rw;
+
+-- Staff and partner teams (teams.proto, 2026-11-11): reporting lines, the
+-- people a manager manages, and a partner organisation's roster, its
+-- members' logins and the split of its schools. The only DELETE grants in
+-- this file are here, on link tables whose rows the existing code itself
+-- removes when a line or a split changes, and on a roster entry removed.
+GRANT SELECT (id, user_id, deleted_at, onboarding_state, title, country) ON staff_profile TO edify_identity_rw;
+GRANT SELECT (id, supervisee_id, supervisor_id, created_at) ON staff_supervisor_assignment TO edify_identity_rw;
+GRANT INSERT (id, supervisee_id, supervisor_id, created_at, updated_at) ON staff_supervisor_assignment TO edify_identity_rw;
+GRANT DELETE ON staff_supervisor_assignment TO edify_identity_rw;
+-- Row locks (SELECT … FOR UPDATE) need an UPDATE right on some column; the
+-- timestamp is the harmless one, as the existing code locks these rows too.
+GRANT UPDATE (updated_at) ON staff_supervisor_assignment TO edify_identity_rw;
+GRANT SELECT (staff_id) ON staff_school_assignment TO edify_identity_rw;
+
+GRANT SELECT (id, name, user_id, active_status, deleted_at, created_at) ON partner TO edify_identity_rw;
+GRANT SELECT (id, partner_id, name, role, title, phone, email, active, user_id) ON partner_member TO edify_identity_rw;
+GRANT INSERT (id, partner_id, name, role, title, phone, email, active, added_by_user_id, created_at, updated_at)
+  ON partner_member TO edify_identity_rw;
+GRANT UPDATE (user_id, email, updated_at) ON partner_member TO edify_identity_rw;
+GRANT DELETE ON partner_member TO edify_identity_rw;
+GRANT SELECT (id, partner_id, school_id, member_id) ON partner_school_member TO edify_identity_rw;
+GRANT INSERT (id, partner_id, school_id, member_id, assigned_by_user_id, created_at, updated_at)
+  ON partner_school_member TO edify_identity_rw;
+GRANT UPDATE (member_id, assigned_by_user_id, updated_at) ON partner_school_member TO edify_identity_rw;
+GRANT DELETE ON partner_school_member TO edify_identity_rw;
+GRANT SELECT (partner_id, school_id, status) ON partner_assignment TO edify_identity_rw;
+GRANT SELECT (id, name, district_id) ON school TO edify_identity_rw;
+GRANT SELECT (id, name) ON district TO edify_identity_rw;
+-- A school moved between team members takes its unfinished work's
+-- "delivered by" name with it (school_team._name_open_work).
+GRANT SELECT (assigned_partner_id, delivery_contact_name) ON activity TO edify_identity_rw;
+GRANT UPDATE (delivery_contact_name) ON activity TO edify_identity_rw;

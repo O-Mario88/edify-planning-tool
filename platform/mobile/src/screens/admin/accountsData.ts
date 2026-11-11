@@ -30,6 +30,17 @@ export function roleLabel(role: string): string {
   return ROLES.find((choice) => choice.value === role)?.label ?? role;
 }
 
+/** Roles that manage people (apps/accounts/supervisor_service.py _MANAGER_ROLES). */
+export const MANAGER_ROLES: readonly string[] = ['Program Lead', 'CountryDirector', 'ImpactAssessment', 'RegionalVicePresident'];
+
+/** Accounts without an Edify staff profile: the Admin, partners, lenders, Cluster Leaders. */
+const NOT_STAFF: readonly string[] = ['Admin', 'PartnerAdmin', 'PartnerFieldOfficer', 'MfiPartnerAdmin', 'MfiLoanOfficer', 'ClusterLeader'];
+
+/** Whether an account working in this role is Edify staff, with a reporting line. */
+export function isStaff(role: string): boolean {
+  return !NOT_STAFF.includes(role);
+}
+
 /** The status filter, as the web's Users page offers it. */
 export const STATUS_FILTERS: readonly { readonly value: string; readonly label: string }[] = [
   { value: '', label: 'All' },
@@ -57,6 +68,8 @@ export function statusOf(account: Pick<ManagedAccount, 'status'>): { readonly la
 export type AccountAction =
   | 'configure'
   | 'reset'
+  | 'supervisor'
+  | 'team'
   | 'resend'
   | 'revoke'
   | 'unlock'
@@ -71,10 +84,16 @@ export type AccountAction =
  * last, never for the Admin themselves.
  */
 export function actionsFor(
-  account: Pick<ManagedAccount, 'status' | 'invitationStatus' | 'locked' | 'userId'>,
+  account: Pick<ManagedAccount, 'status' | 'invitationStatus' | 'locked' | 'userId' | 'roles' | 'activeRole'>,
   selfId: string,
 ): AccountAction[] {
   const actions: AccountAction[] = ['configure', 'reset'];
+  if (isStaff(account.activeRole)) {
+    actions.push('supervisor');
+  }
+  if ([account.activeRole, ...account.roles].some((role) => MANAGER_ROLES.includes(role))) {
+    actions.push('team');
+  }
   if (account.status === 'pending_invited') {
     actions.push('resend');
     if (account.invitationStatus === 'pending') {
@@ -98,6 +117,8 @@ export function actionsFor(
 export const ACTION_LABELS: Readonly<Record<AccountAction, string>> = {
   configure: 'Configure',
   reset: 'Reset password',
+  supervisor: 'Supervisor',
+  team: 'Team',
   resend: 'Resend invitation',
   revoke: 'Revoke invitation',
   unlock: 'Unlock',

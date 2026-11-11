@@ -156,6 +156,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "accounts") + sep: {
 			`"user"`, "refresh_token", "user_invitation", "staff_profile", "staff_geography_assignment",
 		},
+		filepath.Join(root, "internal", "teams") + sep: {
+			"staff_supervisor_assignment", "partner_member", "partner_school_member", "activity",
+		},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.
@@ -178,9 +181,24 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		}
 		return after
 	}
+	// The one removal allowed: team link rows the existing code itself
+	// deletes when a reporting line or a school split changes, and a roster
+	// entry removed (apps/accounts/supervisor_service.py, apps/partners). The
+	// role grants DELETE on these three tables and no other.
+	teamsDir := filepath.Join(root, "internal", "teams") + sep
+	removableLinks := []string{"staff_supervisor_assignment", "partner_member", "partner_school_member"}
 	allowed := func(path string, source []byte, match []int) bool {
 		statement := string(source[match[0]:match[1]])
 		if removes(statement) {
+			if !strings.HasPrefix(path, teamsDir) || !strings.HasPrefix(strings.ToUpper(statement), "DELETE FROM") {
+				return false
+			}
+			target := targetOf(source, match)
+			for _, table := range removableLinks {
+				if strings.HasPrefix(target, table+" ") {
+					return true
+				}
+			}
 			return false
 		}
 		target := targetOf(source, match)

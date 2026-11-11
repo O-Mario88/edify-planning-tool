@@ -1,6 +1,6 @@
 import { actionsFor, lastSignIn, roleLabel, statusOf } from '../screens/admin/accountsData';
 
-const base = { status: 'active', invitationStatus: 'accepted', locked: false, userId: 'u1' };
+const base = { status: 'active', invitationStatus: 'accepted', locked: false, userId: 'u1', roles: ['Admin'], activeRole: 'Admin' };
 
 describe("the Users screen's row Actions (owner, 2026-10-09)", () => {
   test('an active account can be configured, reset, deactivated and removed', () => {
@@ -28,6 +28,24 @@ describe("the Users screen's row Actions (owner, 2026-10-09)", () => {
 
   test('the Admin never deactivates or removes their own account', () => {
     expect(actionsFor({ ...base, userId: 'admin' }, 'admin')).toEqual(['configure', 'reset']);
+  });
+});
+
+describe('team actions follow the role', () => {
+  test('staff have a supervisor; managers have a team', () => {
+    expect(actionsFor({ ...base, roles: ['CCEO'], activeRole: 'CCEO' }, 'admin')).toContain('supervisor');
+    expect(actionsFor({ ...base, roles: ['CCEO'], activeRole: 'CCEO' }, 'admin')).not.toContain('team');
+    expect(actionsFor({ ...base, roles: ['Program Lead'], activeRole: 'Program Lead' }, 'admin')).toEqual(
+      expect.arrayContaining(['supervisor', 'team']),
+    );
+  });
+
+  test('partners, lenders and Cluster Leaders have neither', () => {
+    for (const role of ['PartnerFieldOfficer', 'MfiLoanOfficer', 'ClusterLeader']) {
+      const actions = actionsFor({ ...base, roles: [role], activeRole: role }, 'admin');
+      expect(actions).not.toContain('supervisor');
+      expect(actions).not.toContain('team');
+    }
   });
 });
 

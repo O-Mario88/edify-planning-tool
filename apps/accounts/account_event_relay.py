@@ -10,6 +10,10 @@ exactly as they do after a change on the web:
   they now hold (apps/admin_users/services.py _reprice_planned_days).
 - ``account_deleted``: an organisation whose login it was is released to set
   up again, and the person's web sessions end (delete_user).
+- ``staff_changed``: a staff profile or a reporting line changed, so cached
+  analytics are filed afresh (apps.hr.accountability_cache, which this
+  application advances on every such save of its own). The two kinds above
+  change staff too, and advance it as well.
 
 Server to server: it answers only the internal key (settings.EDIFY_INTERNAL_KEY)
 and stays closed while no key is configured. Nothing here changes the account
@@ -35,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 ROLES_CHANGED = "roles_changed"
 ACCOUNT_DELETED = "account_deleted"
+STAFF_CHANGED = "staff_changed"
 
 
 @csrf_exempt  # A server's key, never a browser's session.
@@ -51,6 +56,9 @@ def relay(request):
         return JsonResponse({"ok": False, "reason": "not_an_object"}, status=400)
 
     kind = str(event.get("kind") or "")
+    if kind == STAFF_CHANGED:
+        _advance_analytics_revision()
+        return JsonResponse({"ok": True}, status=200)
     user = User.all_objects.filter(id=str(event.get("userId") or "")).first()
     if user is None:
         return JsonResponse({"ok": False, "reason": "no_user"}, status=400)
@@ -59,14 +67,32 @@ def relay(request):
         if user.deleted_at is not None:
             return JsonResponse({"ok": False, "reason": "deleted"}, status=400)
         _reprice_planned_days(user.id)
+        _advance_analytics_revision()
         return JsonResponse({"ok": True}, status=200)
     if kind == ACCOUNT_DELETED:
         if user.deleted_at is None:
             return JsonResponse({"ok": False, "reason": "not_deleted"}, status=400)
         unlinked = _release_organisation_login(user)
         _end_web_sessions(user)
+        _advance_analytics_revision()
         return JsonResponse({"ok": True, "partnerLoginOf": unlinked}, status=200)
     return JsonResponse({"ok": False, "reason": "unknown_kind"}, status=400)
+
+
+def _advance_analytics_revision() -> None:
+    """What a staff or reporting-line save does here (accountability_cache
+    .changed): cached analytics are filed under a new revision. A cache that
+    cannot be reached loses only the optimisation."""
+    from uuid import uuid4
+
+    from django.core.cache import cache
+
+    from apps.hr.accountability_cache import KEY
+
+    try:
+        cache.set(KEY, uuid4().hex, timeout=None)
+    except Exception:  # noqa: BLE001 - the change itself is already committed
+        logger.warning("Analytics revision not advanced", exc_info=True)
 
 
 def _release_organisation_login(user) -> list[str]:

@@ -1,0 +1,242 @@
+syntax = "proto3";
+
+package edify.identity.v1;
+
+// Staff and partner teams, owned by Go (owner brief, 2026-11-11: "Staff and
+// partner team management"). The existing rules, one for one
+// (apps/accounts/supervisor_service.py, apps/partners/services.py,
+// member_logins.py, school_team.py), on the existing records.
+service StaffTeamService {
+  // The staff roster with each person's supervisor (staffPerformance.view).
+  // A Program Lead sees the people they supervise and themselves.
+  rpc ListStaff(ListStaffRequest) returns (ListStaffResponse);
+  // Who supervises this person, and who may (staff.manage).
+  rpc GetSupervisor(GetSupervisorRequest) returns (GetSupervisorResponse);
+  // Set or change the direct reporting line (staff.manage). A CCEO is
+  // supervised by a Program Lead and a Program Lead by a Country Director,
+  // unless an Admin decides otherwise.
+  rpc AssignSupervisor(AssignSupervisorRequest) returns (AssignSupervisorResponse);
+  // The people a Program Lead, Impact Assessment or Regional Vice President
+  // manages, and who could be added (Admin). A Country Director's country
+  // team is automatic.
+  rpc GetManagedTeam(GetManagedTeamRequest) returns (GetManagedTeamResponse);
+  // Replace that list (Admin). A CCEO has one Program Lead: choosing one
+  // already in another lead's team moves them.
+  rpc ConfigureManagedTeam(ConfigureManagedTeamRequest) returns (ConfigureManagedTeamResponse);
+}
+
+// A partner organisation's own team: its roster, the members' own logins,
+// and which member looks after which of its schools. Run by the
+// organisation's Partner Admin or an Edify Admin.
+service PartnerTeamService {
+  // The team of partner_id, or of the caller's own organisation when empty.
+  rpc GetPartnerTeam(GetPartnerTeamRequest) returns (GetPartnerTeamResponse);
+  rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
+  // Their own login, if any, stops signing in; their schools go back to
+  // nobody.
+  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
+  // A Partner Field Officer login: an emailed invitation, or a first password
+  // to be changed at the first sign-in.
+  rpc CreateMemberLogin(CreateMemberLoginRequest) returns (CreateMemberLoginResponse);
+  rpc ResetMemberPassword(ResetMemberPasswordRequest) returns (ResetMemberPasswordResponse);
+  rpc SetMemberLoginActive(SetMemberLoginActiveRequest) returns (SetMemberLoginActiveResponse);
+  // Make these the schools this member looks after. A school another member
+  // had moves, with its unfinished work; one no longer ticked goes back to
+  // nobody. Only schools the organisation holds.
+  rpc SetMemberSchools(SetMemberSchoolsRequest) returns (SetMemberSchoolsResponse);
+}
+
+message StaffMember {
+  string staff_id = 1;
+  string user_id = 2;
+  string name = 3;
+  string email = 4;
+  string role = 5;
+  string title = 6;
+  string onboarding_state = 7;
+  string supervisor_staff_id = 8;
+  string supervisor_name = 9;
+  int32 assigned_school_count = 10;
+}
+
+message ListStaffRequest {
+  // Name or email, case-insensitive.
+  string search = 1;
+}
+
+message ListStaffResponse {
+  repeated StaffMember staff = 1;
+}
+
+message GetSupervisorRequest {
+  // The person's account.
+  string user_id = 1;
+}
+
+message SupervisorChoice {
+  string staff_id = 1;
+  string name = 2;
+  string role = 3;
+}
+
+message GetSupervisorResponse {
+  StaffMember staff = 1;
+  // The role that should supervise this person's role, or empty.
+  string expected_role = 2;
+  repeated SupervisorChoice choices = 3;
+}
+
+message AssignSupervisorRequest {
+  string user_id = 1;
+  string supervisor_staff_id = 2;
+}
+
+message AssignSupervisorResponse {
+  string old_supervisor_staff_id = 1;
+  string new_supervisor_staff_id = 2;
+  string new_supervisor_name = 3;
+}
+
+message ManagedPerson {
+  string staff_id = 1;
+  string name = 2;
+  string email = 3;
+  string role = 4;
+  string status = 5;
+  bool assigned = 6;
+  // Another Program Lead this CCEO reports to now, if any.
+  string other_manager = 7;
+}
+
+message GetManagedTeamRequest {
+  // The manager's account.
+  string user_id = 1;
+}
+
+message GetManagedTeamResponse {
+  // Empty when the account manages nobody.
+  string role = 1;
+  string country = 2;
+  // A Country Director's team is everyone eligible in the country.
+  bool automatic = 3;
+  repeated ManagedPerson people = 4;
+}
+
+message ConfigureManagedTeamRequest {
+  string user_id = 1;
+  repeated string staff_ids = 2;
+}
+
+message ConfigureManagedTeamResponse {
+  int32 assigned_count = 1;
+  int32 added_count = 2;
+  int32 removed_count = 3;
+}
+
+message PartnerLogin {
+  string user_id = 1;
+  string email = 2;
+  string status = 3;
+  bool is_active = 4;
+}
+
+message PartnerMemberInfo {
+  string member_id = 1;
+  string name = 2;
+  // "staff" or "volunteer".
+  string role = 3;
+  string title = 4;
+  string phone = 5;
+  string email = 6;
+  // Absent when the member has no login of their own.
+  PartnerLogin login = 7;
+  int32 school_count = 8;
+}
+
+message PartnerSchool {
+  string school_id = 1;
+  string name = 2;
+  string district = 3;
+  // The member who looks after it, or empty.
+  string member_id = 4;
+}
+
+message GetPartnerTeamRequest {
+  string partner_id = 1;
+}
+
+message GetPartnerTeamResponse {
+  string partner_id = 1;
+  string partner_name = 2;
+  // Whether the caller runs the team (logins and schools).
+  bool leads_team = 3;
+  // Whether the caller may add and remove people (country staff too).
+  bool manages_roster = 4;
+  repeated PartnerMemberInfo members = 5;
+  // The schools the organisation holds, by name.
+  repeated PartnerSchool schools = 6;
+}
+
+message AddMemberRequest {
+  string partner_id = 1;
+  string name = 2;
+  string role = 3;
+  string title = 4;
+  string phone = 5;
+  string email = 6;
+}
+
+message AddMemberResponse {
+  PartnerMemberInfo member = 1;
+}
+
+message RemoveMemberRequest {
+  string partner_id = 1;
+  string member_id = 2;
+}
+
+message RemoveMemberResponse {}
+
+message CreateMemberLoginRequest {
+  string partner_id = 1;
+  string member_id = 2;
+  // Defaults to the member's roster email.
+  string email = 3;
+  // Empty: an invitation is emailed.
+  string password = 4;
+}
+
+message CreateMemberLoginResponse {
+  bool invited = 1;
+  // Only when no mail provider can reach the person.
+  string invitation_link = 2;
+}
+
+message ResetMemberPasswordRequest {
+  string partner_id = 1;
+  string member_id = 2;
+  string password = 3;
+}
+
+message ResetMemberPasswordResponse {}
+
+message SetMemberLoginActiveRequest {
+  string partner_id = 1;
+  string member_id = 2;
+  bool active = 3;
+}
+
+message SetMemberLoginActiveResponse {}
+
+message SetMemberSchoolsRequest {
+  string partner_id = 1;
+  string member_id = 2;
+  repeated string school_ids = 3;
+}
+
+message SetMemberSchoolsResponse {
+  int32 given = 1;
+  int32 moved = 2;
+  int32 cleared = 3;
+  int32 activities_named = 4;
+}

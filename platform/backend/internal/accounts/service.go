@@ -174,6 +174,10 @@ type NewAccount struct {
 	PrimaryDistrictID                  string
 	AdditionalDistrictIDs              []string
 	Country, Department                string
+	// ForPartnerMember: a partner team member's own login
+	// (apps/partners/member_logins.py create_login) — no staff profile, since
+	// they are not Edify staff, and the team audits it in its own words.
+	ForPartnerMember bool
 }
 
 // Created is a new account, and its invitation link when no mail provider
@@ -183,133 +187,179 @@ type Created struct {
 	InvitationLink string
 }
 
-// Create is create(): the account, its staff profile and districts, and an
-// invitation or a first password that must be changed.
-func (s *Service) Create(ctx context.Context, principal auth.Principal, in NewAccount) (Created, error) {
-	now := s.deps.Now()
-	email := normalEmail(in.Email)
-	name := strings.TrimSpace(in.Name)
-	if name == "" {
-		return Created{}, refuse("name is required.")
+// prepared is a NewAccount checked against the rules, ready to insert.
+type prepared struct {
+	in                NewAccount
+	email, name       string
+	roles, districts  []string
+	password, country string
+}
+
+func (s *Service) prepare(principal auth.Principal, in NewAccount) (prepared, error) {
+	p := prepared{in: in, email: normalEmail(in.Email), name: strings.TrimSpace(in.Name)}
+	if p.name == "" {
+		return prepared{}, refuse("name is required.")
 	}
-	if _, err := mail.ParseAddress(email); err != nil || !strings.Contains(email, "@") {
-		return Created{}, refuse("Enter a valid email address.")
+	if _, err := mail.ParseAddress(p.email); err != nil || !strings.Contains(p.email, "@") {
+		return prepared{}, refuse("Enter a valid email address.")
 	}
 	if in.Role == "" {
-		return Created{}, refuse(msgRoleRequired)
+		return prepared{}, refuse(msgRoleRequired)
 	}
-	roles := rolesOf(in.Role, in.AdditionalRoles)
-	if bad := unknownRole(roles); bad != "" {
-		return Created{}, refuse(fmt.Sprintf("%q is not a role.", bad))
+	p.roles = rolesOf(in.Role, in.AdditionalRoles)
+	if bad := unknownRole(p.roles); bad != "" {
+		return prepared{}, refuse(fmt.Sprintf("%q is not a role.", bad))
 	}
-	if reason := mayAdminister(principal, nil, roles); reason != "" {
-		return Created{}, refuse(reason)
+	if reason := mayAdminister(principal, nil, p.roles); reason != "" {
+		return prepared{}, refuse(reason)
 	}
-	if rbac.AdminIsAlsoCCEO(roles) {
-		return Created{}, refuse(msgAdminNotCCEO)
+	if rbac.AdminIsAlsoCCEO(p.roles) {
+		return prepared{}, refuse(msgAdminNotCCEO)
 	}
 	if in.Password != "" {
-		if problems := signin.PasswordProblems(in.Password, email); len(problems) > 0 {
-			return Created{}, refuse(strings.Join(problems, " "))
+		if problems := signin.PasswordProblems(in.Password, p.email); len(problems) > 0 {
+			return prepared{}, refuse(strings.Join(problems, " "))
 		}
 	}
 	password, err := storedPassword(in.Password)
 	if err != nil {
-		return Created{}, err
+		return prepared{}, err
 	}
-	country := strings.TrimSpace(in.Country)
-	if country == "" {
-		country = "Uganda"
+	p.password = password
+	p.country = strings.TrimSpace(in.Country)
+	if p.country == "" {
+		p.country = "Uganda"
 	}
-	districts := rolesOf(strings.TrimSpace(in.PrimaryDistrictID), in.AdditionalDistrictIDs)
+	p.districts = rolesOf(strings.TrimSpace(in.PrimaryDistrictID), in.AdditionalDistrictIDs)
+	return p, nil
+}
 
+// insertAccount writes a prepared account inside tx, and returns its id and
+// the raw invitation token (empty when a first password was chosen).
+func insertAccount(ctx context.Context, tx pgx.Tx, principal auth.Principal, p prepared, now time.Time) (string, string, error) {
+	in := p.in
 	userID := cuid.New()
-	var invitation string
-	err = s.deps.Store.write(ctx, func(tx pgx.Tx) error {
-		if taken, err := emailTaken(ctx, tx, email, ""); err != nil || taken {
-			if err != nil {
-				return err
-			}
-			return &Refused{Message: msgEmailTaken, Conflict: true}
+	if taken, err := emailTaken(ctx, tx, p.email, ""); err != nil || taken {
+		if err != nil {
+			return "", "", err
 		}
-		if missing, err := missingDistrict(ctx, tx, districts); err != nil || missing != "" {
-			if err != nil {
-				return err
-			}
-			return refuse(fmt.Sprintf("District %q was not found.", missing))
+		return "", "", &Refused{Message: msgEmailTaken, Conflict: true}
+	}
+	if missing, err := missingDistrict(ctx, tx, p.districts); err != nil || missing != "" {
+		if err != nil {
+			return "", "", err
 		}
-		status, isActive := statusPending, false
-		var passwordSetAt *time.Time
-		if in.Password != "" {
-			status, isActive, passwordSetAt = statusActive, true, &now
-		}
-		_, err := tx.Exec(ctx, `
+		return "", "", refuse(fmt.Sprintf("District %q was not found.", missing))
+	}
+	status, isActive := statusPending, false
+	var passwordSetAt *time.Time
+	if in.Password != "" {
+		status, isActive, passwordSetAt = statusActive, true, &now
+	}
+	_, err := tx.Exec(ctx, `
 INSERT INTO "user" (id, email, name, phone, password, roles, active_role, status, is_active, password_set_at,
   must_change_password, is_superuser, is_staff, created_at, updated_at, failed_login_count, lockout_cycle_count,
   lockout_escalated, mfa_enabled, mfa_channel, sms_money_alerts, last_seen_path, last_seen_action,
   environment, source)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, false, false, $12, $12, 0, 0, false, false, 'email', true,
   '', '', 'production', 'manual_upload')`,
-			userID, email, name, nullable(strings.TrimSpace(in.Phone)), password, roles, in.Role, status, isActive,
-			passwordSetAt, in.Password != "", now)
-		if isUniqueViolation(err) {
-			return &Refused{Message: msgEmailTaken, Conflict: true}
-		}
-		if err != nil {
-			return fmt.Errorf("accounts: creating the account: %w", err)
-		}
+		userID, p.email, p.name, nullable(strings.TrimSpace(in.Phone)), p.password, p.roles, in.Role, status, isActive,
+		passwordSetAt, in.Password != "", now)
+	if isUniqueViolation(err) {
+		return "", "", &Refused{Message: msgEmailTaken, Conflict: true}
+	}
+	if err != nil {
+		return "", "", fmt.Errorf("accounts: creating the account: %w", err)
+	}
+	if !in.ForPartnerMember {
 		staffID := cuid.New()
 		_, err = tx.Exec(ctx, `
 INSERT INTO staff_profile (id, user_id, title, country, department, primary_district_id, onboarding_state,
   environment, source, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'production', 'manual_upload', $7, $7)`,
-			staffID, userID, in.Role, country, nullable(strings.TrimSpace(in.Department)),
+			staffID, userID, in.Role, p.country, nullable(strings.TrimSpace(in.Department)),
 			nullable(strings.TrimSpace(in.PrimaryDistrictID)), now)
 		if err != nil {
-			return fmt.Errorf("accounts: creating the staff profile: %w", err)
+			return "", "", fmt.Errorf("accounts: creating the staff profile: %w", err)
 		}
-		for _, district := range districts {
+		for _, district := range p.districts {
 			if _, err := tx.Exec(ctx, `
 INSERT INTO staff_geography_assignment (id, staff_id, district_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $4)`,
 				cuid.New(), staffID, district, now); err != nil {
-				return fmt.Errorf("accounts: assigning a district: %w", err)
+				return "", "", fmt.Errorf("accounts: assigning a district: %w", err)
 			}
 		}
-		if in.Password == "" {
-			if invitation, err = newInvitation(ctx, tx, userID, principal.UserID, now); err != nil {
-				return err
-			}
+	}
+	invitation := ""
+	if in.Password == "" {
+		if invitation, err = newInvitation(ctx, tx, userID, principal.UserID, now); err != nil {
+			return "", "", err
 		}
-		_, err = audit.Append(ctx, tx, audit.Entry{
+	}
+	if !in.ForPartnerMember {
+		if _, err := audit.Append(ctx, tx, audit.Entry{
 			Action: "admin.user_created", SubjectKind: audit.Text("user"), SubjectID: audit.Text(userID),
 			ActorID: audit.Text(principal.UserID), ActorRole: audit.Text(principal.ActiveRole), Success: true,
-			Payload: map[string]any{"email": email, "roles": toAny(roles), "invited": in.Password == ""},
-		}, now)
+			Payload: map[string]any{"email": p.email, "roles": toAny(p.roles), "invited": in.Password == ""},
+		}, now); err != nil {
+			return "", "", err
+		}
+	}
+	return userID, invitation, nil
+}
+
+// CreateInTx creates an account inside the caller's transaction, for a
+// change that must land with it (a partner member's login and its link).
+// The caller sends NotifyCreated once tx commits.
+func (s *Service) CreateInTx(ctx context.Context, tx pgx.Tx, principal auth.Principal, in NewAccount) (userID, invitation string, err error) {
+	p, err := s.prepare(principal, in)
+	if err != nil {
+		return "", "", err
+	}
+	return insertAccount(ctx, tx, principal, p, s.deps.Now())
+}
+
+// NotifyCreated sends a new account its email: the invitation, or that a
+// first password was set. It returns the invitation link when no mail
+// provider can reach the person, for the creator to hand over.
+func (s *Service) NotifyCreated(principal auth.Principal, name, email, invitation string) string {
+	if invitation == "" {
+		s.send(email, accountmail.AccountCreated(name, principal.Name, s.deps.AppBaseURL+"/login"))
+		return ""
+	}
+	s.send(email, accountmail.Invitation(name, principal.Name, s.invitationLink(invitation)))
+	if s.deps.Mail == nil {
+		return s.invitationLink(invitation)
+	}
+	return ""
+}
+
+// Create is create(): the account, its staff profile and districts, and an
+// invitation or a first password that must be changed.
+func (s *Service) Create(ctx context.Context, principal auth.Principal, in NewAccount) (Created, error) {
+	p, err := s.prepare(principal, in)
+	if err != nil {
+		return Created{}, err
+	}
+	var userID, invitation string
+	err = s.deps.Store.write(ctx, func(tx pgx.Tx) error {
+		var err error
+		userID, invitation, err = insertAccount(ctx, tx, principal, p, s.deps.Now())
 		return err
 	})
 	if err != nil {
 		return Created{}, err
 	}
+	s.relay(Event{Kind: "staff_changed", UserID: userID})
 
 	// Sent after the account is committed: a link to an account whose
 	// creation rolled back would be a link that cannot work.
-	var message accountmail.Message
-	if in.Password != "" {
-		message = accountmail.AccountCreated(name, principal.Name, s.deps.AppBaseURL+"/login")
-	} else {
-		message = accountmail.Invitation(name, principal.Name, s.invitationLink(invitation))
-	}
-	s.send(email, message)
-
+	link := s.NotifyCreated(principal, p.name, p.email, invitation)
 	account, err := s.Get(ctx, userID)
 	if err != nil {
 		return Created{}, err
 	}
-	created := Created{Account: account}
-	if in.Password == "" && s.deps.Mail == nil {
-		created.InvitationLink = s.invitationLink(invitation)
-	}
-	return created, nil
+	return Created{Account: account, InvitationLink: link}, nil
 }
 
 // Changes is what the Admin edits; empty strings are left alone.
@@ -770,4 +820,10 @@ func toAny(items []string) []any {
 		out[i] = item
 	}
 	return out
+}
+
+// StaffChanged tells the existing application that staff or a team changed
+// (its cached analytics are filed under a revision it advances then).
+func (s *Service) StaffChanged() {
+	s.relay(Event{Kind: "staff_changed"})
 }
