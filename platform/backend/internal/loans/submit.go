@@ -14,7 +14,7 @@ import (
 const ConsentVersion = "2026-11-11"
 
 // receiptLifetime is how long a receipt link shows the application's status.
-const receiptLifetime = 180 * 24 * time.Hour
+const receiptLifetime = 24 * time.Hour
 
 // duplicateWindow: a second application for the same school, from the same
 // phone, to the same lender within this window is the first one again.
@@ -26,7 +26,9 @@ type NewApplication struct {
 	Place      ResolvedPlace
 	Match      Match
 	Invitation *Invitation
-	Now        time.Time
+	// ShareLinkID is the lender's or sharer's link it came through, if any.
+	ShareLinkID string
+	Now         time.Time
 }
 
 // Submitted is what the applicant is told after submitting.
@@ -144,7 +146,7 @@ INSERT INTO school_loans.application (
   purpose_code, purpose_label, purpose_other, purpose_details, requested_amount_ugx, preferred_term_months,
   partner_id, lender_id, lender_name, consent_version, consent_recorded_at,
   school_match_status, school_id, match_method, matched_by, matched_at,
-  status, delivery_status, next_follow_up_on, submitted_at, updated_at
+  status, delivery_status, next_follow_up_on, submitted_at, updated_at, share_link_id
 ) VALUES (
   $1, $2, $3, $4, $5, $6, $7,
   $8, $9, $10, $11, $12,
@@ -153,7 +155,7 @@ INSERT INTO school_loans.application (
   $23, $24, $25, $26, $27, $28,
   $29, $30, $31, $32, $33,
   $34, $35, $36, $37, $38,
-  'submitted', 'queued', $39, $33, $33
+  'submitted', 'queued', $39, $33, $33, $40
 )`,
 		id, reference, input.IdempotencyKey, HashToken(receipt), app.Now.Add(receiptLifetime), source, invitationID,
 		input.SchoolName, input.DirectorName, input.DirectorPhone, input.DirectorEmail, input.Religion,
@@ -162,7 +164,7 @@ INSERT INTO school_loans.application (
 		input.Purpose.Code, input.Purpose.Label, input.PurposeOther, input.PurposeDetails, input.Requested, term,
 		lender.PartnerID, lender.LenderID, lender.Name, ConsentVersion, app.Now,
 		app.Match.Status, schoolID, app.Match.Method, matchedBy(app.Match), matchedAt(app.Match, app.Now),
-		firstFollowUp(app.Now),
+		firstFollowUp(app.Now), shareLink(app.ShareLinkID),
 	)
 	if err != nil {
 		return Submitted{}, fmt.Errorf("loans: storing the application: %w", err)
@@ -292,4 +294,26 @@ func mustZone(name string) *time.Location {
 		return time.FixedZone("EAT", 3*60*60)
 	}
 	return zone
+}
+
+func shareLink(id string) *string {
+	if id == "" {
+		return nil
+	}
+	return &id
+}
+
+// ReceiptOf is an application's receipt facts, for a verified tracking
+// session.
+func (s *Store) ReceiptOf(ctx context.Context, applicationID string) (Receipt, error) {
+	var receipt Receipt
+	err := s.db.QueryRow(ctx, `
+SELECT reference, school_name, lender_name, submitted_at, status, delivery_status
+FROM school_loans.application WHERE id = $1`, applicationID).
+		Scan(&receipt.Reference, &receipt.SchoolName, &receipt.LenderName, &receipt.SubmittedAt,
+			&receipt.Status, &receipt.DeliveryStatus)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Receipt{}, ErrNotFound
+	}
+	return receipt, err
 }

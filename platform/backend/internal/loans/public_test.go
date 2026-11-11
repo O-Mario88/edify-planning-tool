@@ -104,7 +104,7 @@ func TestTheReceiptPageShowsTheReference(t *testing.T) {
 		Receipt: Receipt{Reference: "EDL-7K3Q-X9MZ", SchoolName: "Seeta High", LenderName: "L"},
 		Fresh:   true, StatusLabel: "Submitted", DeliveryLabel: "Waiting to be sent", Progress: "p",
 	})
-	for _, want := range []string{"Application Received Successfully", "EDL-7K3Q-X9MZ", "Seeta High", "Waiting to be sent"} {
+	for _, want := range []string{"Your Loan Application Has Been Received", "EDL-7K3Q-X9MZ", "Seeta High", "Waiting to be sent"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("the receipt lacks %q", want)
 		}

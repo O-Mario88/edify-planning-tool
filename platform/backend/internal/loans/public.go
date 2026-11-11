@@ -66,10 +66,11 @@ func NewPublic(store *Store, keys Keys, cfg config.Loans, limits *Limiter, logge
 
 // Register adds the public routes to mux.
 func (p *Public) Register(mux *http.ServeMux) {
-	mux.HandleFunc("GET /apply/school-loan", p.form)
+	// The first links pointed here; they now lead to /loans/apply.
+	mux.HandleFunc("GET /apply/school-loan", p.legacyForm)
 	mux.HandleFunc("POST /apply/school-loan", p.submit)
 	mux.HandleFunc("GET /apply/school-loan/places", p.places)
-	mux.HandleFunc("GET /apply/school-loan/receipt", p.receipt)
+	mux.HandleFunc("GET /apply/school-loan/receipt", p.legacyReceipt)
 	mux.HandleFunc("GET /apply/school-loan/privacy", p.privacy)
 	mux.HandleFunc("GET /apply/static/{file}", serveStatic)
 }
@@ -161,8 +162,13 @@ type formPage struct {
 	Invite         string
 	InvitedSchool  string
 	InviteProblem  string
-	Total          string
-	Duplicate      *duplicateView
+	// A lender's or a sharer's link: its id, the lender it fixes, and why
+	// it could not be used.
+	LinkID       string
+	LockedLender string
+	LinkProblem  string
+	Total        string
+	Duplicate    *duplicateView
 }
 
 // Value is a field as last submitted.
@@ -281,8 +287,92 @@ func (p *Public) form(writer http.ResponseWriter, request *http.Request) {
 		p.unavailable(writer, err)
 		return
 	}
-	p.applyInvitation(request.Context(), &data, request.URL.Query().Get("invite"))
 	p.render(writer, http.StatusOK, "apply.html", data)
+}
+
+// legacyForm sends the first links, and their ?invite= tokens, to the
+// /loans/apply paths.
+func (p *Public) legacyForm(writer http.ResponseWriter, request *http.Request) {
+	target := applyPath
+	if token := request.URL.Query().Get("invite"); token != "" {
+		target = invitationPath + url.PathEscape(token)
+	}
+	http.Redirect(writer, request, target, http.StatusMovedPermanently)
+}
+
+// legacyReceipt sends a receipt link of the first form to its new path.
+func (p *Public) legacyReceipt(writer http.ResponseWriter, request *http.Request) {
+	target := applyPath + "/receipt/" + url.PathEscape(request.URL.Query().Get("r"))
+	if request.URL.Query().Get("new") == "1" {
+		target += "?new=1"
+	}
+	http.Redirect(writer, request, target, http.StatusMovedPermanently)
+}
+
+// invitationForm is the form opened from a school's invitation link. An
+// invalid or expired link still opens the ordinary form, saying so.
+func (p *Public) invitationForm(writer http.ResponseWriter, request *http.Request) {
+	if !p.limits.Allow("view:"+p.clientKey(request), pageViewsPerMinute, time.Minute) {
+		p.tooMany(writer)
+		return
+	}
+	data, err := p.formPage(request.Context(), url.Values{}, Problems{})
+	if err != nil {
+		p.unavailable(writer, err)
+		return
+	}
+	p.applyInvitation(request.Context(), &data, request.PathValue("token"))
+	p.render(writer, http.StatusOK, "apply.html", data)
+}
+
+// linkForm is the form opened from a lender's link (lender preselected,
+// fixed when its policy says so) or a sharer's link (counted only).
+func (p *Public) linkForm(kind string) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		if !p.limits.Allow("view:"+p.clientKey(request), pageViewsPerMinute, time.Minute) {
+			p.tooMany(writer)
+			return
+		}
+		data, err := p.formPage(request.Context(), url.Values{}, Problems{})
+		if err != nil {
+			p.unavailable(writer, err)
+			return
+		}
+		if link := p.applyLink(request.Context(), &data, request.PathValue("id")); link != nil && link.Kind != kind {
+			data.LinkID, data.LockedLender, data.LinkProblem = "", "", "This link is not valid. You can still apply below."
+			data.Values.Del("partner")
+		}
+		p.render(writer, http.StatusOK, "apply.html", data)
+	}
+}
+
+// applyLink applies a share link to the form: a live lender link preselects
+// its lender (fixes it, if its policy says so) while that lender is
+// receiving applications. It reveals nothing and proves nothing.
+func (p *Public) applyLink(ctx context.Context, data *formPage, id string) *ShareLink {
+	if id == "" {
+		return nil
+	}
+	link, err := p.store.LiveShareLink(ctx, id)
+	if err != nil {
+		data.LinkProblem = "This link has been replaced or is not valid. You can still apply below."
+		return nil
+	}
+	data.LinkID = link.ID
+	if link.Kind != LinkPartner {
+		return &link
+	}
+	for _, lender := range data.Lenders {
+		if lender.PartnerID == link.PartnerID {
+			data.Values.Set("partner", link.PartnerID)
+			if link.LockPartner {
+				data.LockedLender = lender.Name
+			}
+			return &link
+		}
+	}
+	data.LinkProblem = link.LenderName + " is not receiving applications through Edify right now. You can choose another lending partner below."
+	return &link
 }
 
 // applyInvitation shows which school an invitation link was sent to and
@@ -336,6 +426,15 @@ func (p *Public) submit(writer http.ResponseWriter, request *http.Request) {
 	}
 	data := formPage{Values: url.Values{}}
 	invitation := p.applyInvitation(ctx, &data, input.InviteToken)
+	shareLinkID := ""
+	if link, err := p.store.LiveShareLink(ctx, values.Get("link")); err == nil {
+		shareLinkID = link.ID
+		if link.Kind == LinkPartner && link.LockPartner && input.PartnerID != link.PartnerID {
+			// A lender's fixed link sends to that lender, whatever was posted.
+			p.reshow(writer, request, values, Problems{"partner": "This link sends applications to " + link.LenderName + " only."})
+			return
+		}
+	}
 	place, err := p.store.ResolvePlace(ctx, input)
 	if err != nil {
 		p.unavailable(writer, err)
@@ -347,7 +446,7 @@ func (p *Public) submit(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	submitted, err := p.store.Submit(ctx, p.keys, NewApplication{
-		Input: input, Place: place, Match: match, Invitation: invitation, Now: p.now(),
+		Input: input, Place: place, Match: match, Invitation: invitation, ShareLinkID: shareLinkID, Now: p.now(),
 	})
 	var duplicate *DuplicateError
 	switch {
@@ -362,6 +461,8 @@ func (p *Public) submit(writer http.ResponseWriter, request *http.Request) {
 			p.unavailable(writer, renderErr)
 			return
 		}
+		p.applyInvitation(ctx, &data, values.Get("invite"))
+		p.applyLink(ctx, &data, values.Get("link"))
 		data.Duplicate = &duplicateView{Reference: duplicate.Reference, When: longDay(duplicate.SubmittedAt)}
 		p.render(writer, http.StatusOK, "apply.html", data)
 		return
@@ -371,8 +472,7 @@ func (p *Public) submit(writer http.ResponseWriter, request *http.Request) {
 	}
 	p.logger.Info("loans: application received", slog.String("reference", submitted.Reference),
 		slog.Bool("replayed", submitted.Replayed), slog.String("school_match", match.Status))
-	http.Redirect(writer, request, "/apply/school-loan/receipt?new=1&r="+url.QueryEscape(submitted.ReceiptToken),
-		http.StatusSeeOther)
+	http.Redirect(writer, request, applyPath+"/receipt/"+url.PathEscape(submitted.ReceiptToken)+"?new=1", http.StatusSeeOther)
 }
 
 func (p *Public) reshow(writer http.ResponseWriter, request *http.Request, values url.Values, problems Problems) {
@@ -382,6 +482,7 @@ func (p *Public) reshow(writer http.ResponseWriter, request *http.Request, value
 		return
 	}
 	p.applyInvitation(request.Context(), &data, values.Get("invite"))
+	p.applyLink(request.Context(), &data, values.Get("link"))
 	p.render(writer, http.StatusUnprocessableEntity, "apply.html", data)
 }
 
@@ -432,14 +533,17 @@ type receiptPage struct {
 	StatusLabel   string
 	DeliveryLabel string
 	Progress      string
+	TrackLink     string
 }
 
-func (p *Public) receipt(writer http.ResponseWriter, request *http.Request) {
+func (p *Public) receiptPage(writer http.ResponseWriter, request *http.Request) {
 	if !p.limits.Allow("view:"+p.clientKey(request), pageViewsPerMinute, time.Minute) {
 		p.tooMany(writer)
 		return
 	}
-	token := request.URL.Query().Get("r")
+	writer.Header().Set("Cache-Control", "no-store")
+	writer.Header().Set("Referrer-Policy", "no-referrer")
+	token := request.PathValue("token")
 	receipt, err := p.store.ReceiptByToken(request.Context(), HashToken(token), p.now())
 	if errors.Is(err, ErrNotFound) || token == "" {
 		p.message(writer, http.StatusNotFound, "This link is not valid",
@@ -460,7 +564,7 @@ func (p *Public) receipt(writer http.ResponseWriter, request *http.Request) {
 			Version: p.version, Script: true},
 		Receipt: receipt, Fresh: fresh, SubmittedOn: longMoment(receipt.SubmittedAt),
 		StatusLabel: StatusLabel(receipt.Status), DeliveryLabel: DeliveryLabel(receipt.DeliveryStatus),
-		Progress: progressOf(receipt),
+		Progress: progressOf(receipt), TrackLink: p.cfg.PublicBaseURL + trackPath,
 	})
 }
 

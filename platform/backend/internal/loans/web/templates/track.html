@@ -1,0 +1,26 @@
+{{template "top" .}}
+<section class="card">
+  {{if .Problem}}<div class="notice notice--danger" role="alert"><p>{{.Problem}}</p></div>{{end}}
+  {{if .CodeStep}}
+  {{if .Sent}}<div class="notice notice--info" role="status"><p>{{.Sent}}</p></div>{{end}}
+  <form method="post" action="/loans/track/verify" class="mt">
+    <input type="hidden" name="reference" value="{{.Reference}}">
+    <div class="field"><label for="code">Code</label>
+      <input type="text" id="code" name="code" class="code-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" required></div>
+    <div class="actions"><button class="button" type="submit">See my application</button></div>
+  </form>
+  <p class="fine mt"><a href="/loans/track">Start again or ask for a new code</a></p>
+  {{else}}
+  <h2 class="section__title">Check your application's progress</h2>
+  <p class="section__copy">Enter the reference you were given when you applied, and the director's phone number from the application. We text a code to that phone. You do not need an account.</p>
+  <form method="post" action="/loans/track/code" class="mt">
+    <div class="field"><label for="reference">Application reference</label>
+      <input type="text" id="reference" name="reference" value="{{.Reference}}" required maxlength="20" autocapitalize="characters" autocomplete="off" placeholder="EDL-XXXX-XXXX"></div>
+    <div class="field"><label for="phone">Director's phone number</label>
+      <input type="tel" id="phone" name="phone" required inputmode="tel" autocomplete="tel" maxlength="20"></div>
+    <div class="actions"><button class="button" type="submit">Text me a code</button></div>
+  </form>
+  {{end}}
+  <p class="fine mt">Your loan statement, once you have a loan, comes from your lender's own link.</p>
+</section>
+{{template "bottom" .}}

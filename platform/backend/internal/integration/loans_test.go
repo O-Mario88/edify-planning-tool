@@ -80,7 +80,7 @@ VALUES ('`+channel.partner+`', true, '`+channel.email+`', '`+channel.email+`', n
 	cleanup := func() {
 		ctx := context.Background()
 		// Origination and servicing records, newest tables first.
-		for _, table := range []string{"sms_preference", "sms_message", "school_request", "school_access_log", "school_session",
+		for _, table := range []string{"tracking_session", "tracking_verification", "share_event", "sms_preference", "sms_message", "school_request", "school_access_log", "school_session",
 			"school_verification", "school_access", "payment_evidence_event", "payment_evidence", "document", "collateral_event",
 			"collateral", "approval_decision", "agreement_version", "recommendation", "assessment_event", "assessment",
 			"contact_log", "assignment", "lender_member_event", "lender_member"} {
@@ -89,7 +89,8 @@ VALUES ('`+channel.partner+`', true, '`+channel.email+`', '`+channel.email+`', n
 		for _, table := range []string{"application_event", "follow_up", "delivery_task", "lender_verification"} {
 			_, _ = admin.Exec(ctx, `DELETE FROM school_loans.`+table)
 		}
-		for _, table := range []string{"lender_access", "lender_session", "application", "invitation", "lender_channel_event", "lender_channel"} {
+		for _, table := range []string{"lender_access", "lender_session", "application", "invitation", "share_link", "share_template",
+			"lender_channel_event", "lender_channel"} {
 			_, _ = admin.Exec(ctx, `DELETE FROM school_loans.`+table)
 		}
 		_, _ = admin.Exec(ctx, `DELETE FROM partner WHERE id IN ($1, $2, $3)`, lenderA, lenderB, lenderC)
@@ -121,7 +122,13 @@ func applicationForm(partner, school, phone, key string) url.Values {
 
 func submit(t *testing.T, form url.Values) *http.Response {
 	t.Helper()
-	response, err := noRedirects().PostForm(baseURL+"/apply/school-loan", form)
+	request, err := http.NewRequest(http.MethodPost, baseURL+"/loans/apply", strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("X-Forwarded-For", testClient(t))
+	response, err := noRedirects().Do(request)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +156,7 @@ func TestTheLoanPortalFromApplicationToLender(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Anyone opens the form: no sign-in, no redirect, only eligible lenders.
-	page, err := noRedirects().Get(baseURL + "/apply/school-loan")
+	page, err := noRedirects().Get(baseURL + "/loans/apply")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +228,7 @@ FROM school_loans.application`).Scan(&total, &fees, &requested, &approved, &disb
 	var reference string
 	_ = admin.QueryRow(ctx, `SELECT reference FROM school_loans.application`).Scan(&reference)
 	for _, guess := range []string{reference, "not-a-token", ""} {
-		response, err := http.Get(baseURL + "/apply/school-loan/receipt?r=" + url.QueryEscape(guess))
+		response, err := http.Get(baseURL + "/loans/apply/receipt/" + url.PathEscape(guess))
 		if err != nil {
 			t.Fatal(err)
 		}

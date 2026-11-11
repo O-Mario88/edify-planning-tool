@@ -131,7 +131,10 @@ func run(m *testing.M) int {
 	defer func() { _ = os.RemoveAll(smsbox) }()
 	cfg := config.Config{Env: config.Test, Release: "integration", JWTSecret: signingSecret,
 		Loans: config.Loans{PublicBaseURL: publicBaseURL, DevMailboxDir: mailbox, MailFrom: "loans@edify.test",
-			SMSProvider: "dev_file", SMSDevDir: smsbox}}
+			SMSProvider: "dev_file", SMSDevDir: smsbox,
+			// Each test is its own client (testClient), so rate limits apply
+			// per test rather than across the run.
+			TrustProxyHeaders: true}}
 	httpServer := httptest.NewServer(server.New(cfg, gateway, nil, logger))
 	defer httpServer.Close()
 	baseURL = httpServer.URL
@@ -203,6 +206,16 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 }
 
 // ── helpers ─────────────────────────────────────────────────────────────────
+
+// testClient is the address a test's requests come from: one per test, so a
+// test's rate limits are its own.
+func testClient(t *testing.T) string {
+	sum := 0
+	for _, r := range t.Name() {
+		sum = (sum*31 + int(r)) % 65000
+	}
+	return fmt.Sprintf("10.%d.%d.%d", sum/256%256, sum%256, len(t.Name())%250+1)
+}
 
 func token(t *testing.T, userID, role string, expires time.Duration) string {
 	t.Helper()

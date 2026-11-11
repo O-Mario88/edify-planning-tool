@@ -1,0 +1,11 @@
+{{template "top" .}}
+<section class="card poster">
+  <img class="poster__qr" src="{{.QR}}" alt="QR code for the Edify school loan application" width="360" height="360">
+  <p class="poster__call">Scan to Apply for a School Loan</p>
+  {{if .Lender}}<p class="section__copy">Your application goes to <strong>{{.Lender}}</strong>.</p>{{end}}
+  <p class="section__copy">No account or password needed. It takes about 5 minutes.</p>
+  <p class="poster__link">Or open: <span class="reference">{{.Link}}</span></p>
+  <p class="fine">Lenders make their own assessment and decision. Edify is not the lender.</p>
+</section>
+<p class="fine no-print">Print this page, or save it as a PDF from your browser's print menu. <a href="{{.QR}}?download=1">Download the QR code alone</a>.</p>
+{{template "bottom" .}}

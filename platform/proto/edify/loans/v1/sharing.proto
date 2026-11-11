@@ -1,0 +1,213 @@
+syntax = "proto3";
+
+package edify.loans.v1;
+
+// Sharing the school loan application: the links a person may share, the
+// approved messages to share them with, QR codes and posters, school
+// invitations, and counts of what sharing led to. Every link opens the
+// public application, which needs no account; no link opens any private
+// application, tracking page or statement.
+service LoanShareService {
+  // The links and messages the caller may share.
+  rpc GetShareKit(GetShareKitRequest) returns (GetShareKitResponse);
+  // The caller tapped a share option (counted; nothing is sent).
+  rpc RecordShare(RecordShareRequest) returns (RecordShareResponse);
+  // A lender's administrator (or the Country Director) sets whether the
+  // lender's link fixes the lender or lets the school choose another.
+  rpc SetPartnerLinkPolicy(SetPartnerLinkPolicyRequest) returns (SetPartnerLinkPolicyResponse);
+  // Replace a link: the old one stops working, a new one is made.
+  rpc ReplaceShareLink(ReplaceShareLinkRequest) returns (ReplaceShareLinkResponse);
+  // School-specific invitations: a BTO for any directory school; a Cluster
+  // Leader for the member schools of a cluster they lead today.
+  rpc InviteSchool(InviteSchoolRequest) returns (InviteSchoolResponse);
+  rpc ListSchoolInvitations(ListSchoolInvitationsRequest) returns (ListSchoolInvitationsResponse);
+  rpc RevokeSchoolInvitation(RevokeSchoolInvitationRequest) returns (RevokeSchoolInvitationResponse);
+  // The approved message texts (BTO and Country Director edit them).
+  rpc GetShareTemplates(GetShareTemplatesRequest) returns (GetShareTemplatesResponse);
+  rpc SaveShareTemplate(SaveShareTemplateRequest) returns (SaveShareTemplateResponse);
+  // What sharing led to (BTO, Country Director, RVP).
+  rpc GetShareMetrics(GetShareMetricsRequest) returns (GetShareMetricsResponse);
+}
+
+message ShareMessage {
+  // "whatsapp", "sms" or "email".
+  string channel = 1;
+  string subject = 2;
+  string body = 3;
+  // SMS: how many 160-character (GSM) or 70-character (Unicode) parts.
+  int32 sms_parts = 4;
+}
+
+message ShareLink {
+  // "universal", "referral", "partner" or "invitation".
+  string kind = 1;
+  // The share_link id; empty for the universal link and invitations.
+  string id = 2;
+  string title = 3;
+  string description = 4;
+  // The exact HTTPS link the messages and the QR code carry.
+  string url = 5;
+  // A PNG of the QR code, and a printable poster, for this link.
+  string qr_url = 6;
+  string poster_url = 7;
+  repeated ShareMessage messages = 8;
+  // Partner links: the lender, and whether the school may choose another.
+  string lender_name = 9;
+  bool lock_partner = 10;
+  bool can_set_policy = 11;
+  bool can_replace = 12;
+  // Invitations: the school it names and when it stops working.
+  string school_name = 13;
+  string expires_on = 14;
+}
+
+message GetShareKitRequest {}
+
+message GetShareKitResponse {
+  repeated ShareLink links = 1;
+  bool can_invite_schools = 2;
+  bool can_edit_templates = 3;
+  bool can_see_metrics = 4;
+  // Shown under the share options.
+  string note = 5;
+  // Cluster Leaders: the clusters whose member schools they may invite.
+  repeated ShareCluster clusters = 6;
+}
+
+message ShareCluster {
+  string cluster_id = 1;
+  string name = 2;
+  int32 member_schools = 3;
+}
+
+message RecordShareRequest {
+  string link_kind = 1;
+  string link_id = 2;
+  string channel = 3;
+}
+
+message RecordShareResponse {}
+
+message SetPartnerLinkPolicyRequest {
+  // Empty for the caller's own lender (lender staff).
+  string partner_id = 1;
+  bool lock_partner = 2;
+}
+
+message SetPartnerLinkPolicyResponse {
+  ShareLink link = 1;
+}
+
+message ReplaceShareLinkRequest {
+  string link_id = 1;
+  string reason = 2;
+}
+
+message ReplaceShareLinkResponse {
+  ShareLink link = 1;
+}
+
+message SchoolInvitation {
+  string id = 1;
+  string school_name = 2;
+  string created_by_name = 3;
+  string created_at = 4;
+  string expires_on = 5;
+  // "active", "expired" or "revoked".
+  string status = 6;
+  string source = 7;
+  string campaign = 8;
+  // Applications made through it.
+  int32 applications = 9;
+}
+
+message InviteSchoolRequest {
+  // The School Directory id.
+  string school_id = 1;
+  // Optional: a campaign name, for counting.
+  string campaign = 2;
+}
+
+message InviteSchoolResponse {
+  // An invitation link with its messages. The link opens the public form for
+  // that school; it shows nobody's application.
+  ShareLink link = 1;
+}
+
+message ListSchoolInvitationsRequest {
+  string school_id = 1;
+}
+
+message ListSchoolInvitationsResponse {
+  repeated SchoolInvitation invitations = 1;
+}
+
+message RevokeSchoolInvitationRequest {
+  string invitation_id = 1;
+  string reason = 2;
+}
+
+message RevokeSchoolInvitationResponse {
+  SchoolInvitation invitation = 1;
+}
+
+message ShareTemplate {
+  string channel = 1;
+  string subject = 2;
+  string body = 3;
+  // The text Edify ships with; a saved template replaces it.
+  bool is_default = 4;
+  string updated_by_name = 5;
+  string updated_at = 6;
+}
+
+message GetShareTemplatesRequest {}
+
+message GetShareTemplatesResponse {
+  repeated ShareTemplate templates = 1;
+  bool can_edit = 2;
+  // The placeholders a template may use.
+  repeated string placeholders = 3;
+}
+
+message SaveShareTemplateRequest {
+  string channel = 1;
+  string subject = 2;
+  string body = 3;
+}
+
+message SaveShareTemplateResponse {
+  ShareTemplate template = 1;
+}
+
+message ShareMetricRow {
+  string label = 1;
+  int32 shares = 2;
+  int32 applications = 3;
+  int32 delivered = 4;
+  int32 in_assessment = 5;
+  int32 approved = 6;
+  int32 disbursed = 7;
+}
+
+message GetShareMetricsRequest {
+  // ISO dates; empty means the last 90 days.
+  string from_date = 1;
+  string to_date = 2;
+}
+
+message GetShareMetricsResponse {
+  string from_date = 1;
+  string to_date = 2;
+  int32 links_generated = 3;
+  int32 invitations_issued = 4;
+  int32 shares = 5;
+  // By how the application came in: universal, invitation, lender link,
+  // personal link.
+  repeated ShareMetricRow by_source = 6;
+  repeated ShareMetricRow by_lender = 7;
+  // Only where a Cluster Leader's link reliably attributes it.
+  repeated ShareMetricRow by_cluster = 8;
+  repeated ShareMetricRow by_channel = 9;
+  string note = 10;
+}

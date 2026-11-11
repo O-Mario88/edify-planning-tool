@@ -235,7 +235,9 @@ func TestApprovalNeedsTheAgreedAmountAndAcceptedSecurity(t *testing.T) {
 		{"a different amount", map[string]string{"decision": "approved", "approved_amount": "25,000,000", "conditions": "true", "rationale": "r"}, nil},
 		{"conditions not confirmed", map[string]string{"decision": "approved", "approved_amount": "30,000,000", "rationale": "r"}, nil},
 		{"security not yet accepted", map[string]string{"decision": "approved", "approved_amount": "30,000,000", "conditions": "true", "rationale": "r"},
-			func(c *caseData) { c.record.Collateral = []Collateral{{Description: "Land title", Status: "under_verification"}} }},
+			func(c *caseData) {
+				c.record.Collateral = []Collateral{{Description: "Land title", Status: "under_verification"}}
+			}},
 	}
 	for _, try := range tries {
 		t.Run(try.name, func(t *testing.T) {

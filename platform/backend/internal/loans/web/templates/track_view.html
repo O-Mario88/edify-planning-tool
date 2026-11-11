@@ -1,0 +1,21 @@
+{{template "top" .}}
+<section class="card receipt">
+  <div class="reference"><div><small>Application reference</small><strong>{{.Receipt.Reference}}</strong></div></div>
+  <dl class="facts">
+    <div><dt>School</dt><dd>{{.Receipt.SchoolName}}</dd></div>
+    <div><dt>Lending partner</dt><dd>{{.Receipt.LenderName}}</dd></div>
+    <div><dt>Submitted</dt><dd>{{.SubmittedOn}}</dd></div>
+    <div><dt>Application status</dt><dd>{{.StatusLabel}}</dd></div>
+    <div><dt>Delivery to the lender</dt><dd>{{.DeliveryLabel}}</dd></div>
+  </dl>
+  <p class="section__copy mt">{{.Progress}}</p>
+</section>
+<section class="card">
+  <h2 class="section__title">Progress</h2>
+  <ol class="timeline">{{range .Steps}}<li><strong>{{.Label}}</strong><time>{{moment .At}}</time></li>{{else}}<li>Nothing recorded yet.</li>{{end}}</ol>
+  <p class="fine mt">Only steps the lender or Edify has recorded are shown. The lender makes its own decision.</p>
+</section>
+<form method="post" action="/loans/track/sign-out" class="actions"><input type="hidden" name="csrf" value="{{.CSRF}}">
+  <button class="button button--quiet button--small" type="submit">Sign out</button>
+  <p class="fine">This page closes itself after {{.SessionMinutes}} minutes.</p></form>
+{{template "bottom" .}}

@@ -627,7 +627,7 @@ func (s *Service) GetApplicationLink(ctx context.Context, _ *connect.Request[loa
 	if _, _, err := s.staffCall(ctx); err != nil {
 		return nil, err
 	}
-	link, err := s.publicURL(ctx, "/apply/school-loan")
+	link, err := s.publicURL(ctx, applyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -653,13 +653,14 @@ func (s *Service) CreateInvitation(ctx context.Context, request *connect.Request
 	if err != nil {
 		return nil, s.internal(ctx, err)
 	}
-	token, expires, err := s.store.CreateInvitation(ctx, school, principal.UserID, principal.Name, s.now())
+	token, invitation, err := s.store.InviteSchool(ctx, school, LinkActor{ID: principal.UserID, Name: principal.Name,
+		Role: principal.ActiveRole}, "bto", "", s.now())
 	if err != nil {
 		return nil, s.internal(ctx, err)
 	}
-	link, _ := s.publicURL(ctx, "/apply/school-loan?invite="+url.QueryEscape(token))
+	link, _ := s.publicURL(ctx, invitationPath+url.PathEscape(token))
 	return connect.NewResponse(&loansv1.CreateInvitationResponse{
-		Url: link, SchoolName: school.Name, ExpiresOn: expires.In(kampala).Format("2006-01-02"),
+		Url: link, SchoolName: school.Name, ExpiresOn: invitation.ExpiresAt.In(kampala).Format("2006-01-02"),
 	}), nil
 }
 

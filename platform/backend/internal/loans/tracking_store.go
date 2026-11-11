@@ -612,26 +612,6 @@ func (s *Store) LinkLoan(ctx context.Context, applicationID, loanID, staffID, st
 // invitationLifetime is how long a school-specific link works.
 const invitationLifetime = 60 * 24 * time.Hour
 
-// CreateInvitation records a school-specific link and returns its token.
-func (s *Store) CreateInvitation(ctx context.Context, school SchoolCandidate, staffID, staffName string, now time.Time) (string, time.Time, error) {
-	token, err := NewToken()
-	if err != nil {
-		return "", time.Time{}, err
-	}
-	id, err := NewID()
-	if err != nil {
-		return "", time.Time{}, err
-	}
-	expires := now.Add(invitationLifetime)
-	err = s.inWrite(ctx, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `
-INSERT INTO school_loans.invitation (id, token_hash, school_id, school_name, created_by, created_by_name, created_at, expires_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, id, HashToken(token), school.ID, school.Name, staffID, staffName, now, expires)
-		return err
-	})
-	return token, expires, err
-}
-
 // SearchSchools finds directory schools by name or Edify School ID.
 func (s *Store) SearchSchools(ctx context.Context, query string) ([]SchoolCandidate, error) {
 	escaped := strings.NewReplacer(`\`, `\\`, "%", `\%`, "_", `\_`).Replace(strings.TrimSpace(query))

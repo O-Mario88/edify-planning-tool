@@ -130,6 +130,7 @@ func fetch(t *testing.T, client *http.Client, method, path string, form url.Valu
 	if form != nil {
 		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
+	request.Header.Set("X-Forwarded-For", testClient(t))
 	response, err := client.Do(request)
 	if err != nil {
 		t.Fatal(err)
@@ -260,6 +261,7 @@ func TestASchoolOpensOnlyItsOwnStatementWithACode(t *testing.T) {
 		_ = form.Close()
 		request, _ := http.NewRequest(http.MethodPost, baseURL+"/loan/statement/payment", &body)
 		request.Header.Set("Content-Type", form.FormDataContentType())
+		request.Header.Set("X-Forwarded-For", testClient(t))
 		response, err := school.Do(request)
 		if err != nil {
 			t.Fatal(err)

@@ -303,3 +303,14 @@ details.action form { margin-top: 12px; }
 .tone--caution { background: var(--warning-soft); color: var(--warning); }
 .tone--alert { background: var(--danger-soft); color: var(--danger); }
 .tone-text--alert { color: var(--danger); }
+/* Poster: the QR code large, the call to act larger; prints on one page. */
+.poster { text-align: center; }
+.poster__qr { width: min(100%, 360px); height: auto; image-rendering: pixelated; border: 1px solid var(--card-border); border-radius: 8px; background: #fff; }
+.poster__call { font-size: clamp(22px, 6vw, 30px); font-weight: 800; color: var(--primary-strong); margin: 16px 0 8px; }
+.poster__link { word-break: break-all; }
+.fixed-lender { margin: 4px 0; font-size: 17px; }
+@media print {
+  .no-print, .footer { display: none; }
+  .hero { padding: 12px 0; }
+  .card { box-shadow: none; border: 0; }
+}

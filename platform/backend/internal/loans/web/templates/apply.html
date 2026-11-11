@@ -15,16 +15,18 @@
 {{else if .InviteProblem}}
 <div class="notice notice--warning"><p>{{.InviteProblem}} You can still apply below.</p></div>
 {{end}}
+{{if .LinkProblem}}<div class="notice notice--warning"><p>{{.LinkProblem}}</p></div>{{end}}
 {{if not .Lenders}}
 <div class="notice notice--warning" role="status">
   <p><strong>Applications are paused.</strong> No lending partner is receiving applications through Edify right now. Please try again later, or contact your Edify officer.</p>
 </div>
 {{end}}
 
-<form id="loan-form" method="post" action="/apply/school-loan" data-places="/apply/school-loan/places" autocomplete="on">
+<form id="loan-form" method="post" action="/loans/apply" data-places="/apply/school-loan/places" autocomplete="on">
   <input type="hidden" name="idempotency_key" value="{{.IdempotencyKey}}">
   <input type="hidden" name="stamp" value="{{.Stamp}}">
   {{if .Invite}}<input type="hidden" name="invite" value="{{.Invite}}">{{end}}
+  {{if .LinkID}}<input type="hidden" name="link" value="{{.LinkID}}">{{end}}
   <div class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
 
   <section class="card" aria-labelledby="s-a">
@@ -145,6 +147,15 @@
         <input type="text" id="requested" name="requested" value="{{.Value "requested"}}" required inputmode="numeric" data-money {{.Invalid "requested"}}></div>
       {{template "problem" .Problem "requested"}}
     </div>
+    {{if .LockedLender}}
+    <div class="field">
+      <p class="label">Lending partner</p>
+      <p class="fixed-lender"><strong>{{.LockedLender}}</strong></p>
+      <span class="help">This link is from {{.LockedLender}}: your application goes only to them.</span>
+      <input type="hidden" name="partner" value="{{.Value "partner"}}">
+      {{template "problem" .Problem "partner"}}
+    </div>
+    {{else}}
     <div class="field">
       <label for="partner">Preferred lending partner</label>
       <span class="help">Your application goes only to the lender you choose.</span>
@@ -155,6 +166,7 @@
       <p class="lender-note" id="lender-note" aria-live="polite"></p>
       {{template "problem" .Problem "partner"}}
     </div>
+    {{end}}
     <div class="field">
       <label for="purpose_details">More about how the loan will be used <span class="optional">(optional)</span></label>
       <textarea id="purpose_details" name="purpose_details" maxlength="2000" {{.Invalid "purpose_details"}}>{{.Value "purpose_details"}}</textarea>

@@ -37,6 +37,11 @@ func (p *Public) RegisterSchool(mux *http.ServeMux, lending *Lending) {
 	mux.HandleFunc("GET /loan/statement/receipt/{document}", s.receipt)
 	mux.HandleFunc("POST /loan/statement/request", s.request)
 	mux.HandleFunc("POST /loan/statement/payment", s.reportPayment)
+	mux.HandleFunc("GET "+trackPath, s.trackForm)
+	mux.HandleFunc("POST "+trackPath+"/code", s.trackCode)
+	mux.HandleFunc("POST "+trackPath+"/verify", s.trackVerify)
+	mux.HandleFunc("GET "+trackPath+"/view", s.trackView)
+	mux.HandleFunc("POST "+trackPath+"/sign-out", s.trackSignOut)
 	mux.HandleFunc("GET /loan/agreement/view", s.agreement)
 	mux.HandleFunc("POST /loan/agreement/respond", s.respond)
 }
