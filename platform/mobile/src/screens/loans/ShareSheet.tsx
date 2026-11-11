@@ -38,14 +38,14 @@ function shareNow(link: ShareLink, record: (channel: ShareChannel) => void) {
   Share.share({ message: messageFor(link, 'whatsapp')?.body ?? link.url, title: link.title }).catch(() => undefined);
 }
 
-interface ShareTileProps {
+export interface ShareTileProps {
   readonly title: string;
   readonly caption: string;
   readonly icon: LucideIcon;
   readonly onPress: () => void;
 }
 
-function ShareTile({ title, caption, icon: Icon, onPress }: ShareTileProps) {
+export function ShareTile({ title, caption, icon: Icon, onPress }: ShareTileProps) {
   const { colors } = useTheme();
   return (
     <Pressable

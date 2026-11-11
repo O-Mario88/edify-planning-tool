@@ -6,14 +6,15 @@
  * back the set-password link for the person onboarding them to pass on.
  */
 import { useState } from 'react';
-import { Share, StyleSheet, Text, View } from 'react-native';
-import { Send, UserPlus } from 'lucide-react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { UserPlus } from 'lucide-react-native';
 
 import { describe, useSession } from '../../auth/SessionContext';
 import { ClusterLeadershipService } from '../../gen/edify/clusters/v1/leadership_pb';
 import { fonts, radius, useTheme } from '../../theme';
 import { PrimaryButton } from '../loans/loanUi';
 import { Field } from './opsParts';
+import { SendLinkOptions } from './SendLinkOptions';
 
 interface OnboardLeaderFormProps {
   readonly clusterId: string;
@@ -33,6 +34,8 @@ export function OnboardLeaderForm({ clusterId, clusterName, onDone, onError }: O
   const [phone, setPhone] = useState('');
   const [reason, setReason] = useState('');
   const [link, setLink] = useState('');
+  // Who the link is for, kept once the form clears so it can be addressed to them.
+  const [invitee, setInvitee] = useState({ name: '', email: '', phone: '' });
   const [isBusy, setIsBusy] = useState(false);
 
   if (!isOpen) {
@@ -61,6 +64,7 @@ export function OnboardLeaderForm({ clusterId, clusterName, onDone, onError }: O
         } else {
           onDone(`${who} now leads ${clusterName}. An invitation to set a password was emailed to ${email.trim()}.`);
         }
+        setInvitee({ name: who, email: email.trim(), phone: phone.trim() });
         setLink(answer.inviteLink);
         setName('');
         setEmail('');
@@ -83,12 +87,12 @@ export function OnboardLeaderForm({ clusterId, clusterName, onDone, onError }: O
       {link ? (
         <View style={[styles.link, { backgroundColor: colors.primarySoft }]}>
           <Text style={[styles.copy, { color: colors.text }]}>
-            Email cannot reach the leader from this server. Send them this link to set their password:
+            Email cannot reach the leader from this server. Send them this link to set their password, using any app on your phone:
           </Text>
           <Text style={[styles.mono, { color: colors.text }]} selectable>
             {link}
           </Text>
-          <PrimaryButton label="Send the link" icon={Send} onPress={() => void Share.share({ message: link })} />
+          <SendLinkOptions link={link} name={invitee.name} clusterName={clusterName} email={invitee.email} phone={invitee.phone} />
           <PrimaryButton
             label="Done"
             isOutline
