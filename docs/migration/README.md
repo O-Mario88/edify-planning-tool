@@ -16,6 +16,7 @@ deployed, or connected to production.
 | [03-database-protection.md](03-database-protection.md) | How production data is kept out of reach, and how that is enforced |
 | [04-migration-plan.md](04-migration-plan.md) | Dependency-ordered plan for every domain, and the release gate |
 | [05-environments-and-staging.md](05-environments-and-staging.md) | Development setup, staging deployment, CI and branch protection |
+| [07-school-loan-portal.md](07-school-loan-portal.md) | The School Loan Application Portal: journeys, roles, running it, open questions |
 
 The code is under [`platform/`](../../platform/README.md).
 

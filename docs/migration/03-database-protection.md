@@ -153,3 +153,46 @@ never writes, so there is no dual write.
   web permission. Its four choice-only Django migrations
   (`accounts 0040`, `acting 0002`, `audit 0009`, `help_center 0011`) issue no
   SQL (`sqlmigrate` shows `(no-op)` for each).
+
+## 3.9 The School Loan Application Portal's own schema (2026-11-11)
+
+The portal's records (applications schools submit through the public form,
+their timeline and follow-ups, the lender-delivery outbox, lender access
+links, codes and sessions, school invitation links, and each Loan Partner's
+receiving address) are new records the existing application never writes.
+They follow the Cluster Leader pattern (§3.8), which the owner chose for
+Go-owned records:
+
+- **Where:** schema `school_loans`, created by `deploy/db/loan_roles.sql`
+  (run by `apply-roles.sh`), owned by the NOLOGIN role `edify_loans_owner`,
+  which holds no privilege on any existing table. The gateway reaches it
+  through `edify_loans_rw`, table by table; event, follow-up and
+  channel-history tables are insert-only.
+- **Migrations:** `internal/loans/schema/migrations/0001-0003`, applied only by
+  `schemactl migrate --schema=school_loans --confirm-database=<name>`. The
+  migration mechanics (lint, checksums, ledger, owner role, advisory lock)
+  moved to `internal/ownedschema`, shared by both Go-owned schemas;
+  `clusterctl` still works for `cluster_leadership`.
+- **What it reads, never writes:** the Partner Directory's Loan Partners
+  (`partner`) and their lenders (`bt_mfi_organization`, `bt_mfi_membership`),
+  the School Directory (`school`, `district`, `sub_county`, `parish`), and, for
+  a school's history, `bt_loan_application`, `bt_mfi_loan` and
+  `bt_loan_purpose` — column by column in `loan_roles.sql`. The existing loan
+  workflow (the web form at `loan-applications/apply`, the MFI portal, the
+  loan ledger and its targets) keeps working exactly as it does.
+- **No foreign keys out of the schema**; Go checks partners, lenders and
+  schools on every write. School matching never creates a directory school.
+- **Guards:** `TestGatewaySourcesContainNoSchemaChanges` now allows writes only
+  inside `internal/clusterlead` (on `cluster_leadership`) and `internal/loans`
+  (on `school_loans`), and DDL only in `internal/ownedschema` on a schema's own
+  migration ledger; planted violations of both kinds were caught.
+  `TestTheGatewayRoleCannotWriteTheExistingLoanRecords` proves the gateway's
+  role is refused on `partner`, `bt_mfi_organization`, `bt_loan_application`
+  and `school`.
+- **Mail:** nothing is sent from development except to a file mailbox
+  (`EDIFY_DEV_MAILBOX_DIR`, refused outside development and test). Staging
+  needs `EDIFY_SMTP_ADDR` (TLS only), `EDIFY_MAIL_FROM` and an https
+  `EDIFY_PUBLIC_BASE_URL`; the production site is refused as a base URL.
+- **Production:** none of this exists there. Creating the schema, migrating it
+  and configuring mail on production each need the owner's approval, a
+  backup and a recovery plan.
