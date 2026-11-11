@@ -123,28 +123,38 @@ func TestCheckDSN(t *testing.T) {
 
 // The gateway never writes to or changes the existing application's schema.
 // This test fails the build if a write, a DDL statement or an ORM
-// auto-migration call appears in its sources, with one sanctioned exception:
-// the Cluster Leader Portal's Go-owned schema. Inside internal/clusterlead a
-// write may target only cluster_leadership tables, DDL may appear only in its
-// schema package and only on cluster_leadership objects, and nothing anywhere
-// may drop, truncate or delete.
+// auto-migration call appears in its sources, with sanctioned exceptions for
+// the Go-owned schemas only:
+//
+//   - inside internal/clusterlead a write may target only cluster_leadership
+//     tables, and inside internal/loans only school_loans tables;
+//   - DDL appears only in internal/ownedschema, the shared migration
+//     mechanics, and only on a schema's own migration ledger
+//     (%s.schema_migration, %s being the schema's checked name);
+//   - nothing anywhere may remove a table, its rows or its data.
 func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 	forbidden := regexp.MustCompile(
 		`(?i)\b(CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|INDEX|SCHEMA|DATABASE|SEQUENCE|TRIGGER)\b|AutoMigrate|\bINSERT\s+INTO\b|\bUPDATE\s+\S+\s+SET\b|\bDELETE\s+FROM\b`,
 	)
 	root := filepath.Join("..", "..")
-	portal := filepath.Join(root, "internal", "clusterlead") + string(filepath.Separator)
-	portalSchema := filepath.Join(root, "internal", "clusterlead", "schema") + string(filepath.Separator)
+	sep := string(filepath.Separator)
+	// Where a write may appear, and the schema it must name.
+	writers := map[string]string{
+		filepath.Join(root, "internal", "clusterlead") + sep: "cluster_leadership.",
+		filepath.Join(root, "internal", "loans") + sep:       "school_loans.",
+	}
+	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.
-	lint := filepath.Join(root, "internal", "clusterlead", "schema", "lint.go")
-	targetsPortal := func(source []byte, match []int) bool {
-		statement := strings.ToUpper(string(source[match[0]:match[1]]))
-		if strings.Contains(statement, "DROP") || strings.Contains(statement, "TRUNCATE") ||
-			strings.Contains(statement, "DELETE") || strings.Contains(statement, "AUTOMIGRATE") {
-			return false
-		}
-		if strings.HasPrefix(statement, "UPDATE") {
-			return strings.HasPrefix(strings.TrimSpace(statement[len("UPDATE"):]), "CLUSTER_LEADERSHIP.")
+	lint := filepath.Join(root, "internal", "ownedschema", "lint.go")
+	removes := func(statement string) bool {
+		upper := strings.ToUpper(statement)
+		return strings.Contains(upper, "DROP") || strings.Contains(upper, "TRUNCATE") ||
+			strings.Contains(upper, "DELETE") || strings.Contains(upper, "AUTOMIGRATE")
+	}
+	targetOf := func(source []byte, match []int) string {
+		statement := string(source[match[0]:match[1]])
+		if strings.HasPrefix(strings.ToUpper(statement), "UPDATE") {
+			return strings.TrimSpace(statement[len("UPDATE"):])
 		}
 		after := strings.TrimSpace(string(source[match[1]:]))
 		for _, filler := range []string{"IF NOT EXISTS", "IF EXISTS", "ONLY"} {
@@ -152,7 +162,24 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 				after = strings.TrimSpace(after[len(filler):])
 			}
 		}
-		return strings.HasPrefix(after, "cluster_leadership.")
+		return after
+	}
+	allowed := func(path string, source []byte, match []int) bool {
+		statement := string(source[match[0]:match[1]])
+		if removes(statement) {
+			return false
+		}
+		target := targetOf(source, match)
+		if strings.HasPrefix(path, mechanics) {
+			return strings.HasPrefix(target, "%s.schema_migration")
+		}
+		isDDL := regexp.MustCompile(`(?i)^(CREATE|ALTER)`).MatchString(statement)
+		for dir, schema := range writers {
+			if strings.HasPrefix(path, dir) && !isDDL {
+				return strings.HasPrefix(strings.ToLower(target), schema)
+			}
+		}
+		return false
 	}
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -175,12 +202,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 			return nil
 		}
 		for _, match := range forbidden.FindAllIndex(source, -1) {
-			text := string(source[match[0]:match[1]])
-			isDDL := regexp.MustCompile(`(?i)^(CREATE|ALTER)`).MatchString(text)
-			allowed := strings.HasPrefix(path, portal) && targetsPortal(source, match) &&
-				(!isDDL || strings.HasPrefix(path, portalSchema))
-			if !allowed {
-				t.Errorf("%s contains a write or schema statement: %q", path, text)
+			if !allowed(path, source, match) {
+				t.Errorf("%s contains a write or schema statement: %q", path, string(source[match[0]:match[1]]))
 			}
 		}
 		return nil

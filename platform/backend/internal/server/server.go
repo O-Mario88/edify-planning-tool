@@ -15,6 +15,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/clusters/v1/clustersv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1/identityv1connect"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/loans/v1/loansv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/schools/v1/schoolsv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
@@ -26,6 +27,8 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
+	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
 )
@@ -76,7 +79,29 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(clustersv1connect.NewClusterMobilizationServiceHandler(
 		clusterlead.NewOperations(leadership, clusterStore), options...,
 	))
+	// The School Loan Application Portal's public pages: no sign-in, no
+	// cookie, served as plain HTML for any phone browser.
+	loanStore := loans.NewStore(pool)
+	loanKeys := loans.DeriveKeys(cfg.JWTSecret)
+	public, err := loans.NewPublic(loanStore, loanKeys, cfg.Loans, loans.NewLimiter(time.Now), logger, time.Now)
+	if err != nil {
+		// The templates are embedded at build time; a parse failure is a
+		// broken build, caught by the package's own tests.
+		panic(err)
+	}
+	public.Register(mux)
+	mailer := loans.NewMailer(cfg.Loans)
+	public.RegisterLender(mux, mailer)
+	mux.Handle(loansv1connect.NewLoanReferralServiceHandler(
+		loans.NewService(loanStore, cfg.Loans, mailer, LoansSchemaReady(pool), logger, time.Now), options...,
+	))
 	return httpmw.Chain(logger, httpmw.CORS(cfg.CORSAllowedOrigins, mux))
+}
+
+// LoansSchemaReady says whether school_loans is at the version this build
+// needs. It never migrates: `schemactl migrate --schema=school_loans` does.
+func LoansSchemaReady(pool *pgxpool.Pool) func(context.Context) error {
+	return func(ctx context.Context) error { return loanschema.Spec.Ready(ctx, pool) }
 }
 
 // clusterSchemaReady says whether the Cluster Leader Portal's schema is at the

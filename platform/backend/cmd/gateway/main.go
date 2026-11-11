@@ -24,6 +24,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/analytics"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dbguard"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/server"
 )
@@ -70,6 +71,11 @@ func run(logger *slog.Logger) error {
 		defer func() { _ = client.Close() }()
 		summarizer = client
 	}
+
+	// The School Loan Application Portal's delivery worker: it sends each
+	// lender its referral notification from the outbox, with retries.
+	worker := loans.NewWorker(loans.NewStore(pool), loans.NewMailer(cfg.Loans), cfg.Loans.PublicBaseURL, logger, time.Now)
+	go worker.Run(ctx, server.LoansSchemaReady(pool))
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,

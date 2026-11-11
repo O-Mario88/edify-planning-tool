@@ -1,0 +1,516 @@
+syntax = "proto3";
+
+package edify.loans.v1;
+
+// School loan referrals: applications schools submit through the public form
+// (served as plain HTML by the gateway, not through this contract), and the
+// tracking that follows. Edify staff see them by role (BTO, Country
+// Director, RVP); a lender's own staff signed in to Edify see only the
+// applications addressed to their lender. A lender's credit decision is
+// only ever recorded by that lender, or by staff as an evidence-backed
+// correction. Amounts are whole Uganda shillings.
+service LoanReferralService {
+  // Totals, breakdowns and processing measures for the filtered applications.
+  rpc GetLoanDashboard(GetLoanDashboardRequest) returns (GetLoanDashboardResponse);
+  rpc ListLoanApplications(ListLoanApplicationsRequest) returns (ListLoanApplicationsResponse);
+  // One application: its details, timeline, follow-ups and delivery attempts.
+  rpc GetLoanApplication(GetLoanApplicationRequest) returns (GetLoanApplicationResponse);
+  // BTO: a follow-up with the lender. It never changes the application's status.
+  rpc RecordFollowUp(RecordFollowUpRequest) returns (RecordFollowUpResponse);
+  // Country Director or RVP: an oversight note.
+  rpc RecordOversightNote(RecordOversightNoteRequest) returns (RecordOversightNoteResponse);
+  // BTO: take responsibility for an application, or move its next follow-up.
+  rpc UpdateTracking(UpdateTrackingRequest) returns (UpdateTrackingResponse);
+  // BTO: directory schools a submission might be.
+  rpc SearchSchools(SearchSchoolsRequest) returns (SearchSchoolsResponse);
+  // BTO: link a submission to its directory school, or find it is not there.
+  rpc ResolveSchoolMatch(ResolveSchoolMatchRequest) returns (ResolveSchoolMatchResponse);
+  // BTO: queue the lender's notification again (after an address is corrected).
+  rpc ResendToLender(ResendToLenderRequest) returns (ResendToLenderResponse);
+  // BTO: record the lender's decision with its evidence, or withdraw or close.
+  rpc RecordCorrection(RecordCorrectionRequest) returns (RecordCorrectionResponse);
+  // BTO: link the application to the loan its lender registered in the loan ledger.
+  rpc LinkRegisteredLoan(LinkRegisteredLoanRequest) returns (LinkRegisteredLoanResponse);
+  // The universal application link to share with schools.
+  rpc GetApplicationLink(GetApplicationLinkRequest) returns (GetApplicationLinkResponse);
+  // BTO: a link that names one directory school.
+  rpc CreateInvitation(CreateInvitationRequest) returns (CreateInvitationResponse);
+  // The filtered applications as CSV, with the same fields the caller may see.
+  rpc ExportLoanApplications(ExportLoanApplicationsRequest) returns (ExportLoanApplicationsResponse);
+  // A directory school's loan applications and the loans registered for it.
+  rpc GetSchoolLoanHistory(GetSchoolLoanHistoryRequest) returns (GetSchoolLoanHistoryResponse);
+
+  // Country Director: the Loan Partners and how each receives referrals.
+  rpc ListLenderChannels(ListLenderChannelsRequest) returns (ListLenderChannelsResponse);
+  rpc SaveLenderChannel(SaveLenderChannelRequest) returns (SaveLenderChannelResponse);
+  // Country Director: email the lender the link that confirms its address.
+  rpc SendChannelConfirmation(SendChannelConfirmationRequest) returns (SendChannelConfirmationResponse);
+
+  // A lender's own staff (MfiPartnerAdmin, MfiLoanOfficer): their referrals.
+  rpc ListMyReferrals(ListMyReferralsRequest) returns (ListMyReferralsResponse);
+  rpc GetMyReferral(GetMyReferralRequest) returns (GetMyReferralResponse);
+  rpc RecordLenderUpdate(RecordLenderUpdateRequest) returns (RecordLenderUpdateResponse);
+}
+
+message LoanFilter {
+  // School name, reference, director or Edify School ID.
+  string search = 1;
+  string partner_id = 2;
+  string district = 3;
+  string status = 4;
+  string delivery_status = 5;
+  // ISO dates, inclusive, on the submission date.
+  string from_date = 6;
+  string to_date = 7;
+  int64 min_requested_ugx = 8;
+  int64 max_requested_ugx = 9;
+  // Open applications whose follow-up date has passed or was never set.
+  bool needs_follow_up = 10;
+  // "matched", "needs_review", "unmatched" or "not_in_directory".
+  string match_status = 11;
+  string purpose_code = 12;
+}
+
+message LoanApplicationRow {
+  string id = 1;
+  string reference = 2;
+  string school_name = 3;
+  // The Edify School ID, once the application is matched.
+  string edify_school_id = 4;
+  string district = 5;
+  // Empty when the caller's role sees totals only (RVP).
+  string director_name = 6;
+  string director_phone = 7;
+  int32 total_enrollment = 8;
+  // 0 with contact_details_hidden on the list.
+  int64 fees_collected_ugx = 9;
+  string purpose_label = 10;
+  int64 requested_ugx = 11;
+  string partner_id = 12;
+  string lender_name = 13;
+  // RFC 3339.
+  string submitted_at = 14;
+  string status = 15;
+  string status_label = 16;
+  string delivery_status = 17;
+  string delivery_label = 18;
+  // RFC 3339, or empty.
+  string last_follow_up_at = 19;
+  // ISO date, or empty.
+  string next_follow_up_on = 20;
+  string responsible_bto_name = 21;
+  bool is_overdue = 22;
+  string match_status = 23;
+  int64 approved_ugx = 24;
+  int64 disbursed_ugx = 25;
+}
+
+message ListLoanApplicationsRequest {
+  LoanFilter filter = 1;
+  int32 page = 2;
+}
+
+message ListLoanApplicationsResponse {
+  repeated LoanApplicationRow rows = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  // True for a role that sees no director contact details or fees.
+  bool contact_details_hidden = 5;
+  // What the caller may do on this page.
+  bool can_follow_up = 6;
+  bool can_manage_lenders = 7;
+  bool can_record_oversight = 8;
+  repeated LenderOption lenders = 9;
+  repeated Choice statuses = 10;
+  repeated Choice delivery_statuses = 11;
+  repeated Choice purposes = 12;
+}
+
+message LenderOption {
+  string partner_id = 1;
+  string name = 2;
+}
+
+message Choice {
+  string value = 1;
+  string label = 2;
+}
+
+message TimelineEntry {
+  string kind = 1;
+  string label = 2;
+  // "applicant", "staff", "lender" or "system".
+  string actor_kind = 3;
+  string actor_name = 4;
+  string from_status = 5;
+  string to_status = 6;
+  string note = 7;
+  string evidence = 8;
+  string at = 9;
+}
+
+message FollowUpEntry {
+  string id = 1;
+  string followed_up_on = 2;
+  string staff_name = 3;
+  string staff_role = 4;
+  string channel = 5;
+  string lender_name = 6;
+  string notes = 7;
+  string lender_feedback = 8;
+  string next_action = 9;
+  string next_follow_up_on = 10;
+  string document_reference = 11;
+  bool is_oversight = 12;
+  string created_at = 13;
+}
+
+message DeliveryAttempt {
+  // "lender_referral", "staff_alert" or "follow_up_reminder".
+  string kind = 1;
+  // "pending", "sent", "failed" or "cancelled".
+  string status = 2;
+  int32 attempts = 3;
+  string last_error = 4;
+  string sent_at = 5;
+  string next_attempt_at = 6;
+  // Masked, such as l***@lender.org.
+  string recipient = 7;
+}
+
+message SchoolOption {
+  string id = 1;
+  string edify_school_id = 2;
+  string name = 3;
+  string district = 4;
+}
+
+message LoanApplicationDetail {
+  LoanApplicationRow row = 1;
+  string source = 2;
+  string director_email = 3;
+  string sub_county = 4;
+  string parish = 5;
+  string village = 6;
+  int32 boys = 7;
+  int32 girls = 8;
+  string purpose_other = 9;
+  string purpose_details = 10;
+  int32 preferred_term_months = 11;
+  string match_method = 12;
+  // The directory school's id, once matched.
+  string school_id = 13;
+  string lender_received_at = 14;
+  string decided_at = 15;
+  string disbursement_date = 16;
+  string disbursement_reference = 17;
+  int32 agreed_term_months = 18;
+  string interest_rate = 19;
+  string linked_mfi_loan_id = 20;
+  string consent_version = 21;
+}
+
+message GetLoanApplicationRequest {
+  string id = 1;
+}
+
+message GetLoanApplicationResponse {
+  LoanApplicationDetail application = 1;
+  repeated TimelineEntry timeline = 2;
+  repeated FollowUpEntry follow_ups = 3;
+  repeated DeliveryAttempt deliveries = 4;
+  // Directory schools that look like this one, while it is unmatched.
+  repeated SchoolOption match_candidates = 5;
+  bool can_follow_up = 6;
+  bool can_record_oversight = 7;
+  // Lender decisions staff may record from this status as corrections.
+  repeated Choice correction_actions = 8;
+  bool contact_details_hidden = 9;
+}
+
+message RecordFollowUpRequest {
+  string application_id = 1;
+  string followed_up_on = 2;
+  // "phone", "email", "meeting", "whatsapp" or "other".
+  string channel = 3;
+  string notes = 4;
+  string lender_feedback = 5;
+  string next_action = 6;
+  string next_follow_up_on = 7;
+  string document_reference = 8;
+}
+
+message RecordFollowUpResponse {
+  FollowUpEntry follow_up = 1;
+}
+
+message RecordOversightNoteRequest {
+  string application_id = 1;
+  string notes = 2;
+  string next_follow_up_on = 3;
+}
+
+message RecordOversightNoteResponse {
+  FollowUpEntry follow_up = 1;
+}
+
+message UpdateTrackingRequest {
+  string application_id = 1;
+  bool take_responsibility = 2;
+  // ISO date; empty leaves it.
+  string next_follow_up_on = 3;
+}
+
+message UpdateTrackingResponse {
+  LoanApplicationRow row = 1;
+}
+
+message SearchSchoolsRequest {
+  string query = 1;
+}
+
+message SearchSchoolsResponse {
+  repeated SchoolOption schools = 1;
+}
+
+message ResolveSchoolMatchRequest {
+  string application_id = 1;
+  // The directory school; empty with not_in_directory.
+  string school_id = 2;
+  bool not_in_directory = 3;
+  string note = 4;
+}
+
+message ResolveSchoolMatchResponse {
+  LoanApplicationRow row = 1;
+}
+
+message ResendToLenderRequest {
+  string application_id = 1;
+  string note = 2;
+}
+
+message ResendToLenderResponse {
+  string message = 1;
+}
+
+message RecordCorrectionRequest {
+  string application_id = 1;
+  // A lender action ("approve", "decline", ...) or "withdraw" or "close".
+  string action = 2;
+  string note = 3;
+  string evidence = 4;
+  int64 approved_ugx = 5;
+  int64 disbursed_ugx = 6;
+  string disbursement_date = 7;
+  string disbursement_reference = 8;
+  int32 term_months = 9;
+  string interest_rate = 10;
+}
+
+message RecordCorrectionResponse {
+  string status = 1;
+  string status_label = 2;
+}
+
+message LinkRegisteredLoanRequest {
+  string application_id = 1;
+  string mfi_loan_id = 2;
+}
+
+message LinkRegisteredLoanResponse {
+  string message = 1;
+}
+
+message GetApplicationLinkRequest {}
+
+message GetApplicationLinkResponse {
+  string url = 1;
+}
+
+message CreateInvitationRequest {
+  string school_id = 1;
+}
+
+message CreateInvitationResponse {
+  string url = 1;
+  string school_name = 2;
+  string expires_on = 3;
+}
+
+message ExportLoanApplicationsRequest {
+  LoanFilter filter = 1;
+}
+
+message ExportLoanApplicationsResponse {
+  string file_name = 1;
+  string csv = 2;
+  int32 rows = 3;
+}
+
+message GetSchoolLoanHistoryRequest {
+  string school_id = 1;
+}
+
+message WebFormApplication {
+  string id = 1;
+  string submitted_at = 2;
+  string purpose = 3;
+  int64 requested_ugx = 4;
+  string status = 5;
+  string lender_name = 6;
+}
+
+message RegisteredLoan {
+  string id = 1;
+  string lender_name = 2;
+  string purpose = 3;
+  string status = 4;
+  int64 approved_ugx = 5;
+  int64 disbursed_ugx = 6;
+  string disbursement_date = 7;
+}
+
+message GetSchoolLoanHistoryResponse {
+  string school_name = 1;
+  repeated LoanApplicationRow applications = 2;
+  // Applications made through the existing Edify web form.
+  repeated WebFormApplication web_form_applications = 3;
+  // Loans the lenders registered in the existing loan ledger.
+  repeated RegisteredLoan registered_loans = 4;
+}
+
+message Breakdown {
+  string key = 1;
+  string label = 2;
+  int32 applications = 3;
+  int64 requested_ugx = 4;
+  int64 approved_ugx = 5;
+  int64 disbursed_ugx = 6;
+  int32 approved = 7;
+  int32 disbursed = 8;
+}
+
+message Measure {
+  string key = 1;
+  string label = 2;
+  // Shown when there were enough applications to say anything.
+  bool available = 3;
+  double value = 4;
+  // "hours", "days", "percent" or "ugx".
+  string unit = 5;
+  // How many applications the measure rests on.
+  int32 based_on = 6;
+  string note = 7;
+}
+
+message GetLoanDashboardRequest {
+  LoanFilter filter = 1;
+}
+
+message GetLoanDashboardResponse {
+  int32 total_applications = 1;
+  int32 awaiting_lender_receipt = 2;
+  int32 under_review = 3;
+  int32 approved = 4;
+  int32 declined = 5;
+  int32 disbursed = 6;
+  int64 requested_ugx = 7;
+  int64 approved_ugx = 8;
+  int64 disbursed_ugx = 9;
+  int32 needs_follow_up = 10;
+  int32 delivery_problems = 11;
+  int32 needs_school_match = 12;
+  repeated Breakdown by_lender = 13;
+  repeated Breakdown by_district = 14;
+  repeated Breakdown by_month = 15;
+  repeated Breakdown by_quarter = 16;
+  repeated Breakdown by_financial_year = 17;
+  repeated Breakdown by_purpose = 18;
+  repeated Breakdown by_status = 19;
+  repeated Measure measures = 20;
+}
+
+message LenderChannel {
+  string partner_id = 1;
+  string lender_name = 2;
+  // The partner has a lender record in the loan workflow.
+  bool has_lender_record = 3;
+  bool lender_active = 4;
+  bool data_sharing_agreement = 5;
+  bool referrals_enabled = 6;
+  string delivery_email = 7;
+  bool address_confirmed = 8;
+  string confirmed_at = 9;
+  bool awaiting_confirmation = 10;
+  string description = 11;
+  // The public form offers this lender now.
+  bool eligible = 12;
+  // Why it is not offered, in words.
+  repeated string problems = 13;
+  int32 portal_users = 14;
+}
+
+message ListLenderChannelsRequest {}
+
+message ListLenderChannelsResponse {
+  repeated LenderChannel channels = 1;
+  bool can_manage = 2;
+}
+
+message SaveLenderChannelRequest {
+  string partner_id = 1;
+  bool referrals_enabled = 2;
+  string delivery_email = 3;
+  string description = 4;
+}
+
+message SaveLenderChannelResponse {
+  LenderChannel channel = 1;
+  string message = 2;
+}
+
+message SendChannelConfirmationRequest {
+  string partner_id = 1;
+}
+
+message SendChannelConfirmationResponse {
+  string message = 1;
+}
+
+message ListMyReferralsRequest {}
+
+message ListMyReferralsResponse {
+  string lender_name = 1;
+  repeated LoanApplicationRow rows = 2;
+}
+
+message GetMyReferralRequest {
+  string application_id = 1;
+}
+
+message GetMyReferralResponse {
+  LoanApplicationDetail application = 1;
+  repeated TimelineEntry timeline = 2;
+  // What the lender may record from the current status.
+  repeated Choice actions = 3;
+}
+
+message RecordLenderUpdateRequest {
+  string application_id = 1;
+  // An action from GetMyReferralResponse.actions, or "message".
+  string action = 2;
+  string note = 3;
+  int64 approved_ugx = 4;
+  int64 disbursed_ugx = 5;
+  string disbursement_date = 6;
+  string disbursement_reference = 7;
+  int32 term_months = 8;
+  string interest_rate = 9;
+}
+
+message RecordLenderUpdateResponse {
+  string status = 1;
+  string status_label = 2;
+}

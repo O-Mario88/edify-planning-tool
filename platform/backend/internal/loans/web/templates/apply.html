@@ -1,0 +1,194 @@
+{{template "top" .}}
+{{if .Problems}}
+<div class="notice notice--danger" role="alert" tabindex="-1" id="problems">
+  <p><strong>Please check {{if eq (len .ProblemList) 1}}one answer{{else}}{{len .ProblemList}} answers{{end}}.</strong></p>
+  <ul>{{range .ProblemList}}<li><a href="#{{.Field}}">{{.Message}}</a></li>{{end}}</ul>
+</div>
+{{end}}
+{{if .Duplicate}}
+<div class="notice notice--warning" role="alert">
+  <p><strong>We already received this application.</strong> An application for this school from this phone number to this lender arrived on {{.Duplicate.When}} with reference <strong>{{.Duplicate.Reference}}</strong>. There is no need to send it again; your Edify officer can give you an update.</p>
+</div>
+{{end}}
+{{if .InvitedSchool}}
+<div class="notice notice--info"><p>This link was sent to <strong>{{.InvitedSchool}}</strong>. Please check every answer is right for your school.</p></div>
+{{else if .InviteProblem}}
+<div class="notice notice--warning"><p>{{.InviteProblem}} You can still apply below.</p></div>
+{{end}}
+{{if not .Lenders}}
+<div class="notice notice--warning" role="status">
+  <p><strong>Applications are paused.</strong> No lending partner is receiving applications through Edify right now. Please try again later, or contact your Edify officer.</p>
+</div>
+{{end}}
+
+<form id="loan-form" method="post" action="/apply/school-loan" data-places="/apply/school-loan/places" autocomplete="on">
+  <input type="hidden" name="idempotency_key" value="{{.IdempotencyKey}}">
+  <input type="hidden" name="stamp" value="{{.Stamp}}">
+  {{if .Invite}}<input type="hidden" name="invite" value="{{.Invite}}">{{end}}
+  <div class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+  <section class="card" aria-labelledby="s-a">
+    <div class="section__head"><span class="section__step" aria-hidden="true">1</span>
+      <div><h2 class="section__title" id="s-a">School information</h2><p class="section__copy">Who is applying, and how the lender can reach the director.</p></div></div>
+    <div class="field">
+      <label for="school_name">School name</label>
+      <input type="text" id="school_name" name="school_name" value="{{.Value "school_name"}}" required maxlength="300" autocomplete="organization" {{.Invalid "school_name"}}>
+      {{template "problem" .Problem "school_name"}}
+    </div>
+    <div class="field">
+      <label for="director_name">Director's full name</label>
+      <input type="text" id="director_name" name="director_name" value="{{.Value "director_name"}}" required maxlength="300" autocomplete="name" {{.Invalid "director_name"}}>
+      {{template "problem" .Problem "director_name"}}
+    </div>
+    <div class="grid grid--two">
+      <div class="field">
+        <label for="director_phone">Director's phone number</label>
+        <input type="tel" id="director_phone" name="director_phone" value="{{.Value "director_phone"}}" required inputmode="tel" autocomplete="tel" placeholder="0772 123456" {{.Invalid "director_phone"}}>
+        {{template "problem" .Problem "director_phone"}}
+      </div>
+      <div class="field">
+        <label for="director_email">Director's email <span class="optional">(optional)</span></label>
+        <input type="email" id="director_email" name="director_email" value="{{.Value "director_email"}}" inputmode="email" autocomplete="email" {{.Invalid "director_email"}}>
+        {{template "problem" .Problem "director_email"}}
+      </div>
+    </div>
+    <div class="field">
+      <label for="religion">Director's religion <span class="optional">(optional)</span></label>
+      <span class="help" id="religion-help">Voluntary. Edify uses this only to understand, in total, the communities its programmes reach. It is never sent to the lending partner and plays no part in any loan decision. Leave it blank if you prefer.</span>
+      <select id="religion" name="religion" aria-describedby="religion-help" {{.Invalid "religion"}}>
+        <option value="">— No answer —</option>
+        {{range .Religions}}<option value="{{.Code}}"{{if eq ($.Value "religion") .Code}} selected{{end}}>{{.Label}}</option>{{end}}
+      </select>
+      {{template "problem" .Problem "religion"}}
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="s-b">
+    <div class="section__head"><span class="section__step" aria-hidden="true">2</span>
+      <div><h2 class="section__title" id="s-b">School location</h2><p class="section__copy">Start typing to pick from Edify's list. If your place is not listed, type its full name.</p></div></div>
+    <div class="grid grid--two">
+      <div class="field">
+        <label for="district">District</label>
+        <input type="text" id="district" name="district" value="{{.Value "district"}}" list="districts" required maxlength="120" autocomplete="off" {{.Invalid "district"}}>
+        <datalist id="districts">{{range .Districts}}<option value="{{.Name}}">{{end}}</datalist>
+        {{template "problem" .Problem "district"}}
+      </div>
+      <div class="field">
+        <label for="sub_county">Sub-county</label>
+        <input type="text" id="sub_county" name="sub_county" value="{{.Value "sub_county"}}" list="sub-counties" required maxlength="120" autocomplete="off" {{.Invalid "sub_county"}}>
+        <datalist id="sub-counties"></datalist>
+        {{template "problem" .Problem "sub_county"}}
+      </div>
+      <div class="field">
+        <label for="parish">Parish</label>
+        <input type="text" id="parish" name="parish" value="{{.Value "parish"}}" list="parishes" required maxlength="120" autocomplete="off" {{.Invalid "parish"}}>
+        <datalist id="parishes"></datalist>
+        {{template "problem" .Problem "parish"}}
+      </div>
+      <div class="field">
+        <label for="village">Village</label>
+        <input type="text" id="village" name="village" value="{{.Value "village"}}" required maxlength="120" {{.Invalid "village"}}>
+        {{template "problem" .Problem "village"}}
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="s-c">
+    <div class="section__head"><span class="section__step" aria-hidden="true">3</span>
+      <div><h2 class="section__title" id="s-c">School enrollment</h2><p class="section__copy">Learners enrolled this term.</p></div></div>
+    <div class="grid grid--two">
+      <div class="field">
+        <label for="boys">Number of boys</label>
+        <input type="text" id="boys" name="boys" value="{{.Value "boys"}}" required inputmode="numeric" pattern="[0-9,]*" {{.Invalid "boys"}}>
+        {{template "problem" .Problem "boys"}}
+      </div>
+      <div class="field">
+        <label for="girls">Number of girls</label>
+        <input type="text" id="girls" name="girls" value="{{.Value "girls"}}" required inputmode="numeric" pattern="[0-9,]*" {{.Invalid "girls"}}>
+        {{template "problem" .Problem "girls"}}
+      </div>
+    </div>
+    <div class="total" aria-live="polite"><span>Total enrollment</span><output id="total-enrollment" for="boys girls">{{.Total}}</output></div>
+  </section>
+
+  <section class="card" aria-labelledby="s-d">
+    <div class="section__head"><span class="section__step" aria-hidden="true">4</span>
+      <div><h2 class="section__title" id="s-d">Financial information</h2></div></div>
+    <div class="field">
+      <label for="fees_collected">Average actual school fees collected per term</label>
+      <span class="help" id="fees-help">Enter the average total amount of school fees your school actually collects in one term, preferably based on your last three completed terms. Not the fees billed or expected: the money actually received.</span>
+      <div class="money"><span class="money__unit" aria-hidden="true">UGX</span>
+        <input type="text" id="fees_collected" name="fees_collected" value="{{.Value "fees_collected"}}" required inputmode="numeric" data-money aria-describedby="fees-help" {{.Invalid "fees_collected"}}></div>
+      {{template "problem" .Problem "fees_collected"}}
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="s-e">
+    <div class="section__head"><span class="section__step" aria-hidden="true">5</span>
+      <div><h2 class="section__title" id="s-e">Loan request</h2><p class="section__copy">What the loan is for, how much, and the lender you choose.</p></div></div>
+    <div class="field">
+      <label for="purpose">Loan purpose</label>
+      <select id="purpose" name="purpose" required {{.Invalid "purpose"}}>
+        <option value="">Choose a purpose</option>
+        {{range .Purposes}}<option value="{{.Code}}"{{if eq ($.Value "purpose") .Code}} selected{{end}}>{{.Label}}</option>{{end}}
+      </select>
+      {{template "problem" .Problem "purpose"}}
+    </div>
+    <div class="field" id="purpose-other">
+      <label for="purpose_other">If Other, describe the purpose</label>
+      <input type="text" id="purpose_other" name="purpose_other" value="{{.Value "purpose_other"}}" maxlength="200" {{.Invalid "purpose_other"}}>
+      {{template "problem" .Problem "purpose_other"}}
+    </div>
+    <div class="field">
+      <label for="requested">Requested loan amount</label>
+      <div class="money"><span class="money__unit" aria-hidden="true">UGX</span>
+        <input type="text" id="requested" name="requested" value="{{.Value "requested"}}" required inputmode="numeric" data-money {{.Invalid "requested"}}></div>
+      {{template "problem" .Problem "requested"}}
+    </div>
+    <div class="field">
+      <label for="partner">Preferred lending partner</label>
+      <span class="help">Your application goes only to the lender you choose.</span>
+      <select id="partner" name="partner" required {{.Invalid "partner"}}>
+        <option value="">Choose a lending partner</option>
+        {{range .Lenders}}<option value="{{.PartnerID}}" data-description="{{.Description}}"{{if eq ($.Value "partner") .PartnerID}} selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      <p class="lender-note" id="lender-note" aria-live="polite"></p>
+      {{template "problem" .Problem "partner"}}
+    </div>
+    <div class="field">
+      <label for="purpose_details">More about how the loan will be used <span class="optional">(optional)</span></label>
+      <textarea id="purpose_details" name="purpose_details" maxlength="2000" {{.Invalid "purpose_details"}}>{{.Value "purpose_details"}}</textarea>
+      {{template "problem" .Problem "purpose_details"}}
+    </div>
+    <div class="field">
+      <label for="term_months">Preferred repayment period in months <span class="optional">(optional)</span></label>
+      <input type="text" id="term_months" name="term_months" value="{{.Value "term_months"}}" inputmode="numeric" pattern="[0-9]*" maxlength="3" {{.Invalid "term_months"}}>
+      {{template "problem" .Problem "term_months"}}
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="s-f">
+    <div class="section__head"><span class="section__step" aria-hidden="true">6</span>
+      <div><h2 class="section__title" id="s-f">Declaration and consent</h2></div></div>
+    <ul class="consent">
+      <li>I am authorised to submit this application on behalf of the school.</li>
+      <li>The information I have given is accurate to the best of my knowledge.</li>
+      <li>Edify may process this application and share it with the lending partner I chose, only to help with this loan request.</li>
+      <li>Submitting an application does not guarantee that a loan will be approved.</li>
+      <li>The lending partner makes its own credit assessment and lending decision.</li>
+    </ul>
+    <label class="check" for="consent">
+      <input type="checkbox" id="consent" name="consent" value="yes" required {{.Invalid "consent"}}>
+      <span>I confirm all of the above.</span>
+    </label>
+    {{template "problem" .Problem "consent"}}
+    <p class="fine">Read how Edify uses this information in the <a href="/apply/school-loan/privacy" target="_blank" rel="noopener">privacy notice</a>.</p>
+  </section>
+
+  {{template "problem" .Problem "form"}}
+  <div class="actions">
+    <button class="button" type="submit" id="submit-button"{{if not .Lenders}} disabled{{end}}>Submit loan application</button>
+  </div>
+  <p class="fine">No account or password is needed. You will get an application reference straight away.</p>
+</form>
+{{template "bottom" .}}

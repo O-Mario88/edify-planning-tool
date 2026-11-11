@@ -1,0 +1,66 @@
+{{template "top" .}}
+{{if .Done}}<div class="notice notice--success" role="status"><p>{{.Done}}</p></div>{{end}}
+{{if .Problem}}<div class="notice notice--danger" role="alert"><p>{{.Problem}}</p></div>{{end}}
+<section class="card">
+  <div class="topbar"><div><p class="section__copy">{{.Referral.Reference}}</p><h2 class="section__title">{{status .Referral.Status}}</h2></div>
+    <a class="button button--quiet button--small" href="/lender/referrals">All referrals</a></div>
+  <dl class="facts mt">
+    <div><dt>School</dt><dd>{{.Referral.SchoolName}}{{if .Referral.EdifySchoolID}} ({{.Referral.EdifySchoolID}}){{end}}</dd></div>
+    <div><dt>Location</dt><dd>{{.Referral.Village}}, {{.Referral.Parish}}, {{.Referral.SubCounty}}, {{.Referral.District}}</dd></div>
+    <div><dt>Director</dt><dd>{{.Referral.DirectorName}}</dd></div>
+    <div><dt>Director's phone</dt><dd><a href="tel:{{.Referral.DirectorPhone}}">{{.Referral.DirectorPhone}}</a></dd></div>
+    {{if .Referral.DirectorEmail}}<div><dt>Director's email</dt><dd>{{.Referral.DirectorEmail}}</dd></div>{{end}}
+    <div><dt>Enrollment</dt><dd>{{.Referral.Total}} ({{.Referral.Boys}} boys, {{.Referral.Girls}} girls)</dd></div>
+    <div><dt>Average fees collected per term</dt><dd>{{ugx .Referral.FeesCollected}}</dd></div>
+    <div><dt>Purpose</dt><dd>{{.Referral.PurposeLabel}}{{if .Referral.PurposeOther}}: {{.Referral.PurposeOther}}{{end}}</dd></div>
+    <div><dt>Requested</dt><dd>{{ugx .Referral.Requested}}</dd></div>
+    {{if .Referral.PreferredTerm}}<div><dt>Preferred repayment period</dt><dd>{{.Referral.PreferredTerm}} months</dd></div>{{end}}
+    {{if .Referral.Approved}}<div><dt>Approved</dt><dd>{{ugxp .Referral.Approved}}</dd></div>{{end}}
+    {{if .Referral.Disbursed}}<div><dt>Disbursed</dt><dd>{{ugxp .Referral.Disbursed}}</dd></div>{{end}}
+    <div><dt>Submitted</dt><dd>{{moment .Referral.SubmittedAt}}</dd></div>
+  </dl>
+  {{if .Referral.PurposeDetails}}<p class="section__copy mt"><strong>About the loan:</strong> {{.Referral.PurposeDetails}}</p>{{end}}
+</section>
+
+<section class="card">
+  <h2 class="section__title">Record progress</h2>
+  <p class="section__copy">Edify and the school see each stage you record. Your credit decision is yours alone.</p>
+  {{$csrf := .CSRF}}{{$today := .Today}}
+  {{range .Actions}}
+  <details class="action"{{if eq . "acknowledge"}} open{{end}}>
+    <summary>{{actionLabel .}}</summary>
+    <form method="post">
+      <input type="hidden" name="csrf" value="{{$csrf}}"><input type="hidden" name="action" value="{{.}}">
+      {{if eq . "approve"}}
+        <div class="field"><label>Approved amount (UGX)<input type="text" name="approved_amount" inputmode="numeric" required></label></div>
+        <div class="grid grid--two"><div class="field"><label>Term in months <span class="optional">(optional)</span><input type="text" name="term_months" inputmode="numeric"></label></div>
+        <div class="field"><label>Interest rate <span class="optional">(optional)</span><input type="text" name="interest_rate" placeholder="e.g. 2% a month"></label></div></div>
+      {{else if eq . "disburse"}}
+        <div class="field"><label>Amount actually disbursed (UGX)<input type="text" name="disbursed_amount" inputmode="numeric" required></label></div>
+        <div class="grid grid--two"><div class="field"><label>Disbursement date<input type="text" name="disbursement_date" placeholder="{{$today}}" required></label></div>
+        <div class="field"><label>Loan or transaction reference<input type="text" name="disbursement_reference" required></label></div></div>
+      {{end}}
+      {{if or (eq . "request_information") (eq . "decline") (eq . "close")}}
+        <div class="field"><label>{{if eq . "decline"}}Reason{{else if eq . "close"}}Note{{else}}What information is needed{{end}}<textarea name="note" required></textarea></label></div>
+      {{else}}
+        <div class="field"><label>Note <span class="optional">(optional)</span><textarea name="note"></textarea></label></div>
+      {{end}}
+      <button class="button button--small" type="submit">{{actionLabel .}}</button>
+    </form>
+  </details>
+  {{end}}
+  <details class="action">
+    <summary>Send a message to Edify</summary>
+    <form method="post"><input type="hidden" name="csrf" value="{{$csrf}}"><input type="hidden" name="action" value="message">
+      <div class="field"><label>Message<textarea name="note" required></textarea></label></div>
+      <button class="button button--small" type="submit">Send</button></form>
+  </details>
+</section>
+
+<section class="card">
+  <h2 class="section__title">History</h2>
+  <ol class="timeline">
+  {{range .Timeline}}<li><strong>{{eventLabel .Kind}}</strong>{{if .Note}}<br>{{.Note}}{{end}}<time>{{moment .At}}</time></li>{{end}}
+  </ol>
+</section>
+{{template "bottom" .}}

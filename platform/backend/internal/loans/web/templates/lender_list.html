@@ -1,0 +1,12 @@
+{{template "top" .}}
+<section class="card">
+  <div class="topbar"><h2 class="section__title">Your referrals</h2>
+    <form method="post" action="/lender/sign-out"><input type="hidden" name="csrf" value="{{.CSRF}}"><button class="button button--quiet button--small" type="submit">Sign out</button></form></div>
+  {{if not .Referrals}}<p class="section__copy">No school has applied to {{.Lender}} through Edify yet.</p>{{end}}
+  <ul class="list">
+  {{range .Referrals}}
+    <li><a href="/lender/referrals/{{.Reference}}"><span><strong>{{.SchoolName}}</strong><small>{{.Reference}} · {{.District}} · {{ugx .Requested}} · {{day .SubmittedAt}}</small></span><span class="pill{{if eq .Status "disbursed" "closed"}} pill--done{{else if eq .Status "declined" "withdrawn"}} pill--stop{{end}}">{{status .Status}}</span></a></li>
+  {{end}}
+  </ul>
+</section>
+{{template "bottom" .}}

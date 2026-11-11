@@ -1,0 +1,33 @@
+{{define "top"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>{{.Title}} · Edify</title>
+<link rel="stylesheet" href="/apply/static/portal.css?v={{.Version}}">
+<link rel="icon" href="/apply/static/edify-logo-navy.png">
+</head>
+<body>
+<header class="hero">
+  <div class="hero__inner">
+    <img class="hero__logo" src="/apply/static/edify-logo-white.png" alt="Edify" width="92" height="38">
+    <p class="hero__eyebrow">{{.Eyebrow}}</p>
+    <h1>{{.Heading}}</h1>
+    {{if .Lede}}<p class="hero__lede">{{.Lede}}</p>{{end}}
+    {{if .Facts}}<ul class="hero__facts">{{range .Facts}}<li>{{.}}</li>{{end}}</ul>{{end}}
+  </div>
+</header>
+<main class="page" id="main">
+{{end}}
+
+{{define "bottom"}}
+<p class="footer">Edify · School loan applications · <a href="/apply/school-loan/privacy">Privacy notice</a></p>
+</main>
+{{if .Script}}<script src="/apply/static/apply.js?v={{.Version}}" defer></script>{{end}}
+</body>
+</html>
+{{end}}
+
+{{define "problem"}}{{if .}}<span class="error" role="alert">{{.}}</span>{{end}}{{end}}

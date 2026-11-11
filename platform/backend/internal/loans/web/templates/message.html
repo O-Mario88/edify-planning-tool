@@ -1,0 +1,7 @@
+{{template "top" .}}
+<section class="card">
+  <h2 class="section__title">{{.MessageTitle}}</h2>
+  <p class="section__copy">{{.Message}}</p>
+  {{if .Back}}<p><a class="button button--quiet" href="{{.Back}}">{{.BackLabel}}</a></p>{{end}}
+</section>
+{{template "bottom" .}}

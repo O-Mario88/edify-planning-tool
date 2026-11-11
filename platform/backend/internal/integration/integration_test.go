@@ -43,6 +43,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dbguard"
+	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/server"
 )
 
@@ -54,12 +55,17 @@ const (
 	rolesFile     = "../../../deploy/db/roles.sql"
 	// The Cluster Leader Portal's schema and roles (Go-owned).
 	clusterRolesFile = "../../../deploy/db/cluster_roles.sql"
+	// The School Loan Application Portal's schema and roles (Go-owned).
+	loanRolesFile = "../../../deploy/db/loan_roles.sql"
+	// Where the loan portal's emails go in this run.
+	publicBaseURL = "http://127.0.0.1:9"
 )
 
 var (
 	admin   *pgxpool.Pool // owner connection: reads expectations, flips fixtures
 	gateway *pgxpool.Pool // the read-only role the gateway really uses
 	baseURL string
+	mailbox string // the loan portal's development mailbox for this run
 )
 
 func TestMain(m *testing.M) {
@@ -110,7 +116,14 @@ func run(m *testing.M) int {
 	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	cfg := config.Config{Env: config.Test, Release: "integration", JWTSecret: signingSecret}
+	mailbox, err = os.MkdirTemp("", "edify-loans-mail-")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "integration: making the mailbox:", err)
+		return 1
+	}
+	defer func() { _ = os.RemoveAll(mailbox) }()
+	cfg := config.Config{Env: config.Test, Release: "integration", JWTSecret: signingSecret,
+		Loans: config.Loans{PublicBaseURL: publicBaseURL, DevMailboxDir: mailbox, MailFrom: "loans@edify.test"}}
 	httpServer := httptest.NewServer(server.New(cfg, gateway, nil, logger))
 	defer httpServer.Close()
 	baseURL = httpServer.URL
@@ -157,6 +170,16 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := schema.Apply(ctx, conn.Conn(), conn.Conn().Config().Database); err != nil {
+		return "", err
+	}
+	loanRoles, err := os.ReadFile(filepath.FromSlash(loanRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(loanRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	if _, err := loanschema.Spec.Apply(ctx, conn.Conn(), conn.Conn().Config().Database); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)

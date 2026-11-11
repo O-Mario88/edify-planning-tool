@@ -1,0 +1,27 @@
+{{template "top" .}}
+<section class="card receipt" aria-labelledby="r-title">
+  {{if .Fresh}}<span class="receipt__badge" aria-hidden="true">✓</span>{{end}}
+  <h2 id="r-title">{{if .Fresh}}Application Received Successfully{{else}}Your loan application{{end}}</h2>
+  <p class="section__copy">{{.Progress}}</p>
+  <div class="reference">
+    <div><small>Application reference</small><strong>{{.Receipt.Reference}}</strong></div>
+    <button type="button" class="button button--quiet button--small" id="copy-reference" data-reference="{{.Receipt.Reference}}" hidden>Copy</button>
+  </div>
+  <dl class="facts">
+    <div><dt>School</dt><dd>{{.Receipt.SchoolName}}</dd></div>
+    <div><dt>Lending partner</dt><dd>{{.Receipt.LenderName}}</dd></div>
+    <div><dt>Submitted</dt><dd>{{.SubmittedOn}}</dd></div>
+    <div><dt>Application status</dt><dd>{{.StatusLabel}}</dd></div>
+    <div><dt>Delivery to the lender</dt><dd>{{.DeliveryLabel}}</dd></div>
+  </dl>
+</section>
+<section class="card" aria-labelledby="n-title">
+  <h2 class="section__title" id="n-title">What happens next</h2>
+  <ol class="steps">
+    <li>Edify sends your application to {{.Receipt.LenderName}} only.</li>
+    <li>The lender reviews it and may contact the director for more information.</li>
+    <li>The lender makes its own decision. Edify follows up to keep things moving.</li>
+  </ol>
+</section>
+<div class="notice notice--info"><p><strong>Keep this page's link.</strong> It shows your application's progress. It is private to you: do not share it. Quote your reference when you speak to Edify or the lender.</p></div>
+{{template "bottom" .}}

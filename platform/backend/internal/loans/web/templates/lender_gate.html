@@ -1,0 +1,24 @@
+{{template "top" .}}
+<section class="card">
+  {{if .Problem}}<div class="notice notice--danger" role="alert"><p>{{.Problem}}</p></div>{{end}}
+  {{if .CodeSent}}
+  <h2 class="section__title">Enter the code we emailed</h2>
+  <p class="section__copy">We sent a six-digit code to <strong>{{.MaskedEmail}}</strong>. It works for 10 minutes.</p>
+  <form method="post" action="/lender/verify" class="field mt">
+    <input type="hidden" name="t" value="{{.Token}}">
+    <label for="code">Code</label>
+    <input type="text" id="code" name="code" class="code-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" required>
+    <div class="actions mt"><button class="button" type="submit">Open referrals</button></div>
+  </form>
+  <form method="post" action="/lender/code"><input type="hidden" name="t" value="{{.Token}}">
+    <p class="fine">No email? <button type="submit" class="button button--quiet button--small">Send a new code</button></p></form>
+  {{else}}
+  <h2 class="section__title">Confirm it's you</h2>
+  <p class="section__copy">This referral is addressed to your organisation only. To open it, we will email a one-time code to <strong>{{.MaskedEmail}}</strong>, your organisation's receiving address with Edify.</p>
+  <form method="post" action="/lender/code" class="mt">
+    <input type="hidden" name="t" value="{{.Token}}">
+    <div class="actions"><button class="button" type="submit">Email me a code</button></div>
+  </form>
+  {{end}}
+</section>
+{{template "bottom" .}}

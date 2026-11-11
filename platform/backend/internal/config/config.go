@@ -81,6 +81,9 @@ type Config struct {
 	// AnalyticsAddr is the internal gRPC address of the Python analytics
 	// worker. Empty disables the worker; the gateway then answers without it.
 	AnalyticsAddr string
+
+	// Loans configures the School Loan Application Portal.
+	Loans Loans
 }
 
 // LoadGuard reads only what the production-protection guard needs, for a
@@ -140,6 +143,9 @@ func Load(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	if err := validateExistingAppURL(env, cfg.ExistingAppURL); err != nil {
+		return Config{}, err
+	}
+	if cfg.Loans, err = loadLoans(env, getenv); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil

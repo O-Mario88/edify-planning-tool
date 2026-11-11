@@ -1,6 +1,7 @@
 // Package schema owns the Cluster Leader Portal's Postgres schema,
-// cluster_leadership: its migrations, the lint every migration must pass,
-// and the one command path that applies them (cmd/clusterctl migrate).
+// cluster_leadership: its migrations, and the one command path that applies
+// them (cmd/clusterctl migrate). The mechanics — lint, checksums, the
+// migration ledger, running as the owner role — are internal/ownedschema's.
 //
 // The gateway never migrates: it only asks Version whether the schema it
 // needs is there (brief: "Disable automatic database migrations in all
@@ -8,15 +9,11 @@
 package schema
 
 import (
-	"crypto/sha256"
+	"context"
 	"embed"
-	"encoding/hex"
-	"fmt"
 	"io/fs"
-	"path"
-	"sort"
-	"strconv"
-	"strings"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ownedschema"
 )
 
 // Name is the schema the portal owns. Nothing outside it is ever changed.
@@ -29,59 +26,54 @@ const OwnerRole = "edify_cluster_owner"
 // WriterRole is the only role a migration may grant to.
 const WriterRole = "edify_cluster_rw"
 
+// lockKey serialises migration runs (pg_advisory_xact_lock).
+const lockKey = 7_425_001
+
 //go:embed migrations/*.sql
 var files embed.FS
 
-// Migration is one numbered file of migrations/.
-type Migration struct {
-	Version  int
-	Name     string
-	SQL      string
-	Checksum string
+// Spec is cluster_leadership as internal/ownedschema describes a schema.
+var Spec = ownedschema.Spec{
+	Name:       Name,
+	OwnerRole:  OwnerRole,
+	WriterRole: WriterRole,
+	Files:      mustSub(files, "migrations"),
+	LockKey:    lockKey,
 }
 
-// Load returns the shipped migrations in order, each linted, numbered from 1
-// without gaps.
-func Load() ([]Migration, error) {
-	names, err := fs.Glob(files, "migrations/*.sql")
+func mustSub(root fs.FS, dir string) fs.FS {
+	sub, err := fs.Sub(root, dir)
 	if err != nil {
-		return nil, fmt.Errorf("schema: listing migrations: %w", err)
+		panic(err) // the directory is embedded at build time
 	}
-	sort.Strings(names)
-	migrations := make([]Migration, 0, len(names))
-	for index, name := range names {
-		raw, err := files.ReadFile(name)
-		if err != nil {
-			return nil, fmt.Errorf("schema: reading %s: %w", name, err)
-		}
-		base := path.Base(name)
-		number, _, found := strings.Cut(base, "_")
-		version, err := strconv.Atoi(number)
-		if !found || err != nil {
-			return nil, fmt.Errorf("schema: %s must be named NNNN_name.sql", base)
-		}
-		if version != index+1 {
-			return nil, fmt.Errorf("schema: %s is version %d, want %d", base, version, index+1)
-		}
-		if err := Lint(string(raw)); err != nil {
-			return nil, fmt.Errorf("schema: %s: %w", base, err)
-		}
-		sum := sha256.Sum256(raw)
-		migrations = append(migrations, Migration{
-			Version:  version,
-			Name:     strings.TrimSuffix(base, ".sql"),
-			SQL:      string(raw),
-			Checksum: hex.EncodeToString(sum[:]),
-		})
-	}
-	return migrations, nil
+	return sub
 }
+
+// Migration, Applied, Conn and ErrRefused are ownedschema's.
+type (
+	Migration = ownedschema.Migration
+	Applied   = ownedschema.Applied
+	Conn      = ownedschema.Conn
+)
+
+// ErrRefused wraps every refusal of a migration run.
+var ErrRefused = ownedschema.ErrRefused
+
+// Load returns the shipped migrations in order, each linted.
+func Load() ([]Migration, error) { return Spec.Load() }
 
 // Required is the version the code in this build needs.
-func Required() int {
-	migrations, err := Load()
-	if err != nil || len(migrations) == 0 {
-		return 0
-	}
-	return migrations[len(migrations)-1].Version
+func Required() int { return Spec.Required() }
+
+// Lint refuses SQL that reaches outside cluster_leadership.
+func Lint(sql string) error { return Spec.Lint(sql) }
+
+// Apply brings cluster_leadership up to the shipped migrations.
+func Apply(ctx context.Context, conn Conn, confirm string) ([]Applied, error) {
+	return Spec.Apply(ctx, conn, confirm)
+}
+
+// Version is the highest migration applied, or 0 when there is none.
+func Version(ctx context.Context, q ownedschema.Querier) (int, error) {
+	return Spec.Version(ctx, q)
 }

@@ -206,3 +206,43 @@ func TestLoadGuardRefusesProductionAndReadsOnlyTheGuardsFields(t *testing.T) {
 		t.Fatalf("LoadGuard must not read the gateway's connection or secret: %+v", cfg)
 	}
 }
+
+func TestLoanPortalSettingsRefuseProductionAndUnsafeMail(t *testing.T) {
+	base := map[string]string{
+		"EDIFY_ENV":          "development",
+		"EDIFY_DATABASE_URL": "postgresql://localhost:5432/edify_gorn_dev",
+		"EDIFY_JWT_SECRET":   "a-long-development-signing-secret-0123456789",
+	}
+	load := func(extra map[string]string) error {
+		values := map[string]string{}
+		for key, value := range base {
+			values[key] = value
+		}
+		for key, value := range extra {
+			values[key] = value
+		}
+		_, err := Load(func(key string) string { return values[key] })
+		return err
+	}
+	if err := load(map[string]string{"EDIFY_PUBLIC_BASE_URL": "https://apply.edifyplanning.app"}); err == nil {
+		t.Fatal("a public base URL on the production site was accepted")
+	}
+	if err := load(map[string]string{"EDIFY_DEV_MAILBOX_DIR": "/tmp/mail"}); err == nil {
+		t.Fatal("a mailbox without a From address was accepted")
+	}
+	if err := load(map[string]string{"EDIFY_DEV_MAILBOX_DIR": "/tmp/mail", "EDIFY_MAIL_FROM": "no-reply@localhost"}); err != nil {
+		t.Fatalf("a development mailbox was refused: %v", err)
+	}
+	base["EDIFY_ENV"] = "staging"
+	base["EDIFY_DB_ALLOWED_HOSTS"] = "staging-db.internal"
+	base["EDIFY_DATABASE_URL"] = "postgresql://staging-db.internal:5432/edify_staging"
+	if err := load(nil); err != nil {
+		t.Fatalf("the staging baseline must load, or the refusals below prove nothing: %v", err)
+	}
+	if err := load(map[string]string{"EDIFY_DEV_MAILBOX_DIR": "/tmp/mail", "EDIFY_MAIL_FROM": "x@y.z"}); err == nil {
+		t.Fatal("a file mailbox was accepted in staging")
+	}
+	if err := load(map[string]string{"EDIFY_PUBLIC_BASE_URL": "http://apply.staging.example"}); err == nil {
+		t.Fatal("an http public base URL was accepted in staging")
+	}
+}

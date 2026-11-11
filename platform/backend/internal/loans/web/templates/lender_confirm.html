@@ -1,0 +1,13 @@
+{{template "top" .}}
+<section class="card">
+  {{if .Confirmed}}
+  <h2 class="section__title">Thank you</h2>
+  <p class="section__copy"><strong>{{.MaskedEmail}}</strong> is now {{.Lender}}'s address for school loan referrals from Edify. You will receive each referral there.</p>
+  {{else}}
+  <h2 class="section__title">Is this your organisation's address?</h2>
+  <p class="section__copy">Edify will send {{.Lender}}'s school loan referrals to <strong>{{.MaskedEmail}}</strong>. Confirm only if this address belongs to {{.Lender}} and is read by the people who handle school loans.</p>
+  <form method="post" action="/lender/confirm-address" class="mt"><input type="hidden" name="t" value="{{.Token}}">
+    <div class="actions"><button class="button" type="submit">Confirm this address</button></div></form>
+  {{end}}
+</section>
+{{template "bottom" .}}
