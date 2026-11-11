@@ -11,6 +11,7 @@ import { Search } from 'lucide-react-native';
 import { describe, useSession } from '../../auth/SessionContext';
 import type { MemberSchool } from '../../gen/edify/clusters/v1/leadership_pb';
 import { fonts, radius, useTheme } from '../../theme';
+import { InviteSchoolPanel } from '../loans/ShareSheet';
 
 /** Wait this long after the last keystroke before searching. */
 const SEARCH_DELAY_MS = 300;
@@ -116,9 +117,11 @@ export function MemberSchoolsScreen({ clusterId, clusterName }: MemberSchoolsScr
 
 function SchoolRow({ school }: { readonly school: MemberSchool }) {
   const { colors } = useTheme();
+  const [isInviting, setIsInviting] = useState(false);
   return (
+    <View style={[styles.rowCard, { backgroundColor: colors.raised, borderColor: colors.raisedBorder }]}>
     <View
-      style={[styles.row, { backgroundColor: colors.raised, borderColor: colors.raisedBorder }]}
+      style={styles.row}
       accessible
       accessibilityLabel={`${school.name}, School ID ${school.schoolId}, ${school.district}`}
     >
@@ -135,6 +138,17 @@ function SchoolRow({ school }: { readonly school: MemberSchool }) {
         ) : null}
       </View>
     </View>
+      <Pressable
+        onPress={() => setIsInviting(!isInviting)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isInviting }}
+        accessibilityLabel={`Invite ${school.name} to apply for a school loan`}
+        style={styles.inviteToggle}
+      >
+        <Text style={[styles.inviteToggleText, { color: colors.link }]}>{isInviting ? 'Close' : 'Invite to apply for a loan'}</Text>
+      </Pressable>
+      {isInviting ? <InviteSchoolPanel schoolId={school.id} schoolName={school.name} /> : null}
+    </View>
   );
 }
 
@@ -147,7 +161,10 @@ const styles = StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 12, minHeight: 44, marginTop: 4 },
   input: { flex: 1, fontFamily: fonts.medium, fontSize: 16, paddingVertical: 8 },
   error: { fontFamily: fonts.medium, fontSize: 13 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: radius.md, padding: 12 },
+  rowCard: { borderWidth: 1, borderRadius: radius.md, padding: 12, gap: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  inviteToggle: { alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center' },
+  inviteToggleText: { fontFamily: fonts.semibold, fontSize: 13 },
   id: { minWidth: 56, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 6, alignItems: 'center' },
   idText: { fontFamily: fonts.bold, fontSize: 13, fontVariant: ['tabular-nums'] },
   body: { flex: 1, gap: 2 },

@@ -19,6 +19,7 @@ import { MenuScreen } from '../MoreScreen';
 import { ActivityScreen } from './ActivityScreen';
 import { ActivityRow, ClusterHomeScreen } from './ClusterHomeScreen';
 import { ActionItemsScreen, ClusterReportScreen, RequestsScreen } from './ClusterWorkScreens';
+import { ShareApplicationScreen } from '../loans/ShareSheet';
 import { MemberSchoolsScreen } from './MemberSchoolsScreen';
 import { PlansScreen } from './PlansScreen';
 import { CLUSTER_TABS, clusterBottomBar, clusterWorkSection, tabOf, tabOfUrl, whenOf } from './clusterRoutes';
@@ -102,6 +103,8 @@ export function ClusterLeaderApp({ session }: { readonly session: Session }) {
     screen = <MemberSchoolsScreen key={chosen.id} {...props} />;
   } else if (tab === 'activities') {
     screen = <ActivitiesScreen key={`${chosen.id}-${when}`} {...props} when={when} onWhen={setWhen} onOpen={setActivityId} />;
+  } else if (tab === 'share') {
+    screen = <ShareApplicationScreen key={chosen.id} eyebrow={chosen.name} />;
   } else if (tab === 'plans') {
     screen = <PlansScreen key={chosen.id} {...props} />;
   } else if (tab === 'actions') {

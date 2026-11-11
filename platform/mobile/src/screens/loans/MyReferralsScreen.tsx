@@ -20,7 +20,7 @@ import { formatUGX, parseUGX, shortDate, todayISO } from './loanRoutes';
 
 const METHOD = LoanReferralService.method;
 
-export function MyReferralsScreen() {
+export function MyReferralsScreen({ onShare }: { readonly onShare: () => void }) {
   const { api } = useSession();
   const { colors } = useTheme();
   const [answer, setAnswer] = useState<ListMyReferralsResponse | null>(null);
@@ -49,6 +49,7 @@ export function MyReferralsScreen() {
   return (
     <ScrollView contentContainerStyle={opsStyles.page}>
       <OpsTitle eyebrow={answer?.lenderName ?? 'School loans'} title="Referrals to us" copy="School loan applications Edify has sent to your organisation." />
+      <DrawerButton label="Share our application link" isPrimary onPress={onShare} />
       <Notice text={error} isError />
       {!answer && !error ? <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" /> : null}
       {answer && answer.rows.length === 0 ? <Muted>No school has applied to you through Edify yet.</Muted> : null}

@@ -11,9 +11,9 @@ import {
 } from '../screens/cluster/clusterRoutes';
 
 describe('the Cluster Leader portal routes', () => {
-  test('the bottom bar is Home, Schools and Activities, all drawn natively', () => {
+  test('the bottom bar is Home, Schools, Activities and the loan link, all drawn natively', () => {
     const bar = clusterBottomBar();
-    expect(bar.map((item) => item.label)).toEqual(['Home', 'Schools', 'Activities']);
+    expect(bar.map((item) => item.label)).toEqual(['Home', 'Schools', 'Activities', 'Loan link']);
     expect(bar.every((item) => item.native && item.iconSvg.startsWith('<svg'))).toBe(true);
   });
 

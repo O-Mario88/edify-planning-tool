@@ -14,7 +14,7 @@ import { fonts, radius, useTheme } from '../../theme';
 import { DrawerButton } from '../../ui/drawerParts';
 import { Select } from '../../ui/Select';
 import { ChoiceRow, Muted, Notice, OpsCard, OpsTitle, SectionLabel, opsStyles } from '../cluster/opsParts';
-import { Line, StatusPill, Tile, TileGrid, shareCsv, shareLink } from './loanParts';
+import { Line, StatusPill, Tile, TileGrid, shareCsv } from './loanParts';
 import { formatUGX, shortDate } from './loanRoutes';
 
 const METHOD = LoanReferralService.method;
@@ -30,7 +30,12 @@ interface Filter {
 
 const NO_FILTER: Filter = { search: '', status: '', partnerId: '', needsFollowUp: false, deliveryStatus: '', matchStatus: '' };
 
-export function LoanReferralsScreen({ onOpen }: { readonly onOpen: (applicationId: string) => void }) {
+interface LoanReferralsScreenProps {
+  readonly onOpen: (applicationId: string) => void;
+  readonly onShare: () => void;
+}
+
+export function LoanReferralsScreen({ onOpen, onShare }: LoanReferralsScreenProps) {
   const { api } = useSession();
   const { colors } = useTheme();
   const [filter, setFilter] = useState<Filter>(NO_FILTER);
@@ -69,13 +74,6 @@ export function LoanReferralsScreen({ onOpen }: { readonly onOpen: (applicationI
     setFilter({ ...NO_FILTER, search: filter.search, ...next });
   };
 
-  const copyLink = () => {
-    api
-      .call(METHOD.getApplicationLink, {})
-      .then((answer) => shareLink(answer.url, 'Edify school loan application'))
-      .then((message) => setNotice(message))
-      .catch((cause: unknown) => setError(describe(cause)));
-  };
   const exportCsv = () => {
     api
       .call(METHOD.exportLoanApplications, { filter: { ...filter } })
@@ -93,7 +91,7 @@ export function LoanReferralsScreen({ onOpen }: { readonly onOpen: (applicationI
         copy="Applications schools sent through Edify's public link, and where each stands with its lender."
       />
       <View style={opsStyles.actions}>
-        <DrawerButton label="Copy application link" isPrimary onPress={copyLink} />
+        <DrawerButton label="Share application link" isPrimary onPress={onShare} />
         <DrawerButton label="Export" onPress={exportCsv} />
       </View>
       <Notice text={notice} />

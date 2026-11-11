@@ -10,12 +10,13 @@ import type { NavItem, NavSection } from '../../gen/edify/screens/v1/navigation_
 import { NavItemSchema, NavSectionSchema } from '../../gen/edify/screens/v1/navigation_pb';
 
 /** The portal's pages: three tabs, and the work pages behind Home and More. */
-export type ClusterTab = 'home' | 'schools' | 'activities' | 'plans' | 'actions' | 'requests' | 'report';
+export type ClusterTab = 'home' | 'schools' | 'activities' | 'share' | 'plans' | 'actions' | 'requests' | 'report';
 
 export const CLUSTER_TABS: Readonly<Record<ClusterTab, string>> = {
   home: 'cluster:home',
   schools: 'cluster:schools',
   activities: 'cluster:activities',
+  share: 'cluster:share',
   plans: 'cluster:plans',
   actions: 'cluster:actions',
   requests: 'cluster:requests',
@@ -46,16 +47,21 @@ const HOME_ICON = svg(
 const SCHOOLS_ICON = svg(
   '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
 );
+// Lucide "share-2".
+const SHARE_ICON = svg(
+  '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>',
+);
 const ACTIVITIES_ICON = svg(
   '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
 );
 
-/** The portal's bottom bar: Home, Schools, Activities (More is the shell's). */
+/** The portal's bottom bar: Home, Schools, Activities, the loan link (More is the shell's). */
 export function clusterBottomBar(): NavItem[] {
   return [
     create(NavItemSchema, { label: 'Home', url: CLUSTER_TABS.home, iconSvg: HOME_ICON, native: true }),
     create(NavItemSchema, { label: 'Schools', url: CLUSTER_TABS.schools, iconSvg: SCHOOLS_ICON, native: true }),
     create(NavItemSchema, { label: 'Activities', url: CLUSTER_TABS.activities, iconSvg: ACTIVITIES_ICON, native: true }),
+    create(NavItemSchema, { label: 'Loan link', url: CLUSTER_TABS.share, iconSvg: SHARE_ICON, native: true }),
   ];
 }
 
