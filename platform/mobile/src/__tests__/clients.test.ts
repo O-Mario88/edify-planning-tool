@@ -4,7 +4,7 @@ import { base64Encode } from '@bufbuild/protobuf/wire';
 import { ApiError } from '../api/connect';
 import type { ConnectTransport, FetchLike, FetchResponse } from '../api/connect';
 import { createEdifyApi } from '../api/edifyApi';
-import { SignInError, refreshTokens, signIn } from '../auth/identityClient';
+import { SignInError, refreshTokens, requestPasswordReset, revokeSession, signIn, signInFigures } from '../auth/identityClient';
 import type { IdentityFetch } from '../auth/identityClient';
 import { ErrorDetailSchema } from '../gen/edify/common/v1/common_pb';
 
@@ -44,7 +44,7 @@ describe('gateway client', () => {
     expect(url).toBe('http://localhost:8090/edify.schools.v1.SchoolService/ListMySchools');
     expect(init.method).toBe('POST');
     expect(init.headers.Authorization).toBe('Bearer access-token');
-    expect(JSON.parse(init.body)).toEqual({ page: { page: 2, pageSize: 50 }, search: 'hill' });
+    expect(JSON.parse(init.body ?? '')).toEqual({ page: { page: 2, pageSize: 50 }, search: 'hill' });
 
     expect(result.schools.map((school) => school.schoolId)).toEqual(['1026', '1027']);
     expect(result.schools[0].enrollment).toBe(173);
@@ -135,7 +135,7 @@ describe('sign-in against the existing identity system', () => {
     expect(tokens).toEqual({ accessToken: 'a', refreshToken: 'r' });
     const [url, init] = fetchImpl.mock.calls[0];
     expect(url).toBe('http://localhost:8000/api/auth/login');
-    expect(JSON.parse(init.body)).toEqual({ email: 'officer@example.org', password: 'the-password' });
+    expect(JSON.parse(init.body ?? '')).toEqual({ email: 'officer@example.org', password: 'the-password' });
   });
 
   test.each([
@@ -215,12 +215,51 @@ describe('short-lived access tokens', () => {
     expect(tokens).toEqual({ accessToken: 'a2', refreshToken: 'r2' });
     const [url, init] = fetchImpl.mock.calls[0];
     expect(url).toBe('http://localhost:8000/api/auth/refresh');
-    expect(JSON.parse(init.body)).toEqual({ refreshToken: 'r1' });
+    expect(JSON.parse(init.body ?? '')).toEqual({ refreshToken: 'r1' });
   });
 
   test('a refused refresh means the session is over', async () => {
     const tokens = await refreshTokens('http://localhost:8000', async () => response(401, {}), 'r1');
 
     expect(tokens).toBeNull();
+  });
+});
+
+describe('the sign-in screen\'s other calls to the identity system', () => {
+  const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
+
+  test('a reset link is asked for with the address as typed, lower-cased', async () => {
+    const fetchImpl = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => ok({}));
+    await expect(requestPasswordReset('https://id.example', fetchImpl, ' Grace@School.ORG ')).resolves.toBe(true);
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe('https://id.example/api/auth/forgot-password');
+    expect(JSON.parse(init.body ?? '')).toEqual({ email: 'grace@school.org' });
+  });
+
+  test('a refused or unreachable reset request says so', async () => {
+    const refused = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => ({ ok: false, status: 429, json: async () => ({}) }));
+    await expect(requestPasswordReset('https://id.example', refused, 'a@b.org')).resolves.toBe(false);
+    const offline = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => {
+      throw new Error('offline');
+    });
+    await expect(requestPasswordReset('https://id.example', offline, 'a@b.org')).resolves.toBe(false);
+  });
+
+  test('signing out revokes the refresh token, and never fails the sign-out', async () => {
+    const fetchImpl = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => {
+      throw new Error('offline');
+    });
+    await expect(revokeSession('https://id.example', fetchImpl, 'refresh-1')).resolves.toBeUndefined();
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://id.example/api/auth/logout');
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body ?? '')).toEqual({ refreshToken: 'refresh-1' });
+  });
+
+  test('the figures are read as the web page shows them, or not at all', async () => {
+    const figures = { portfolio: '700', schoolsReached: '700', schoolsVisited: '0', schoolsTrained: '0', ssaCompleted: '306' };
+    const fetchImpl = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => ok(figures));
+    await expect(signInFigures('https://id.example', fetchImpl)).resolves.toEqual(figures);
+    expect(fetchImpl.mock.calls[0][1].method).toBe('GET');
+    const partial = jest.fn<ReturnType<IdentityFetch>, Parameters<IdentityFetch>>(async () => ok({ portfolio: 700 }));
+    await expect(signInFigures('https://id.example', partial)).resolves.toBeNull();
   });
 });

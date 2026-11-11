@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold, useFonts } from '@expo-google-fonts/geist';
+import { StyleSheet, Text, View } from 'react-native';
+import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold, Geist_700Bold_Italic, useFonts } from '@expo-google-fonts/geist';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { LOADING_HINT_AFTER_MS } from './src/auth/launch';
 import { SessionProvider, useSession } from './src/auth/SessionContext';
 import { secureTokenStore } from './src/auth/tokenStore';
 import { EnvironmentError, loadEnvironment } from './src/config/environment';
@@ -15,6 +17,7 @@ import { MenuScreen, WebOnlyScreen } from './src/screens/MoreScreen';
 import { SchoolProfileScreen } from './src/screens/SchoolProfileScreen';
 import { PageScreen } from './src/screens/PageScreen';
 import { PAGE_PATHS } from './src/nativePages';
+import { HOME_URL, landingUrl } from './src/landing';
 import { SchoolsScreen } from './src/screens/SchoolsScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { ClusterLeaderApp } from './src/screens/cluster/ClusterLeaderApp';
@@ -26,6 +29,13 @@ import { isLoansUrl, loansSection } from './src/screens/loans/loanRoutes';
 import { AppShell, MENU_URL } from './src/shell/AppShell';
 import { ThemeProvider, signInPalette, spacing, useTheme } from './src/theme';
 import { DropdownLayer } from './src/ui/Dropdown';
+import { LaunchView } from './src/ui/LaunchView';
+
+// The native launch screen stays up until the app knows what to open: fonts
+// loaded and the saved sign-in confirmed (Root hides it). No timer keeps it
+// longer than that.
+void SplashScreen.preventAutoHideAsync().catch(() => undefined);
+SplashScreen.setOptions({ duration: 200, fade: true });
 
 type Startup = { ok: true; environment: AppEnvironment } | { ok: false; reason: string };
 
@@ -80,7 +90,12 @@ function pagesOf(navigation: GetNavigationResponse | null): ReadonlySet<string> 
 }
 
 export default function App() {
-  const [areFontsLoaded] = useFonts({ Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold });
+  const [areFontsLoaded] = useFonts({ Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold, Geist_700Bold_Italic });
+  useEffect(() => {
+    if (!startup.ok) {
+      void SplashScreen.hideAsync().catch(() => undefined);
+    }
+  }, []);
 
   if (!startup.ok) {
     return (
@@ -92,15 +107,14 @@ export default function App() {
       </View>
     );
   }
-  if (!areFontsLoaded) {
-    return <Loading />;
-  }
+  // The saved sign-in is checked while the fonts load, not after them: the
+  // provider mounts at once and Root waits for both under the launch screen.
   return (
     <SafeAreaProvider>
       <ThemeProvider>
         <DropdownLayer>
           <SessionProvider environment={startup.environment} tokenStore={secureTokenStore}>
-            <Root />
+            {areFontsLoaded ? <Root /> : null}
           </SessionProvider>
         </DropdownLayer>
       </ThemeProvider>
@@ -108,18 +122,38 @@ export default function App() {
   );
 }
 
-function Loading() {
-  return (
-    <View style={styles.centered}>
-      <ActivityIndicator color={signInPalette.link} accessibilityLabel="Loading" />
-    </View>
-  );
+function hideLaunchScreen() {
+  void SplashScreen.hideAsync().catch(() => undefined);
 }
 
 function Root() {
-  const { state } = useSession();
+  const { state, retry, signOut } = useSession();
+  // Hide the native launch screen once the app knows what to open; a slow
+  // check hands over to the identical LaunchView, which then says so.
+  useEffect(() => {
+    if (state.status !== 'loading') {
+      hideLaunchScreen();
+    }
+  }, [state.status]);
+  useEffect(() => {
+    const timer = setTimeout(hideLaunchScreen, LOADING_HINT_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, []);
   if (state.status === 'loading') {
-    return <Loading />;
+    return (
+      <>
+        <LaunchView />
+        <StatusBar style="light" />
+      </>
+    );
+  }
+  if (state.status === 'unreachable') {
+    return (
+      <>
+        <LaunchView problem={state.notice} onRetry={() => void retry()} onSignOut={() => void signOut()} />
+        <StatusBar style="light" />
+      </>
+    );
   }
   if (state.status === 'signedOut') {
     return (
@@ -161,13 +195,23 @@ function SignedIn({ session }: { readonly session: Session }) {
     let isCurrent = true;
     api
       .getNavigation()
-      .then((answer) => (isCurrent ? setNavigation(answer) : undefined))
+      .then((answer) => {
+        if (!isCurrent) {
+          return;
+        }
+        setNavigation(answer);
+        // Land where the web lands this role, unless the person has moved on.
+        const landing = landingUrl(session.activeRole, answer);
+        if (landing !== HOME_URL) {
+          setRoute((current) => (current === HOME ? { url: landing, label: '' } : current));
+        }
+      })
       // Without its menu the app still shows Home; Home reports its own errors.
       .catch(() => undefined);
     return () => {
       isCurrent = false;
     };
-  }, [api]);
+  }, [api, session.activeRole]);
 
   const pages = useMemo(() => pagesOf(navigation), [navigation]);
   // Every other path opens on the web.

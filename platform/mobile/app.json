@@ -1,17 +1,26 @@
 {
   "expo": {
-    "name": "Edify (dev)",
+    "name": "Edify",
     "slug": "edify-mobile",
+    "scheme": "edify",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#062847",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "app.edifyplanning.nativeapp",
+      "icon": {
+        "light": "./assets/icon.png",
+        "dark": "./assets/icon-dark.png",
+        "tinted": "./assets/icon-tinted.png"
+      }
     },
     "android": {
+      "package": "app.edifyplanning.nativeapp",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#062847",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -19,12 +28,48 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Edify",
+      "shortName": "Edify",
+      "backgroundColor": "#062847",
+      "themeColor": "#062847"
     },
     "plugins": [
       "expo-secure-store",
       "expo-font",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#062847",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#062847",
+            "image": "./assets/splash-icon.png"
+          },
+          "ios": {
+            "backgroundColor": "#062847",
+            "image": "./assets/splash-lockup.png",
+            "imageWidth": 260,
+            "resizeMode": "contain",
+            "dark": {
+              "backgroundColor": "#062847",
+              "image": "./assets/splash-lockup.png"
+            }
+          },
+          "android": {
+            "backgroundColor": "#062847",
+            "image": "./assets/splash-icon.png",
+            "imageWidth": 200,
+            "dark": {
+              "backgroundColor": "#062847",
+              "image": "./assets/splash-icon.png"
+            }
+          }
+        }
+      ]
     ]
   }
 }

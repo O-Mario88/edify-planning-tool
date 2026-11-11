@@ -2,18 +2,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { ApiError } from '../api/connect';
 import { createEdifyApi } from '../api/edifyApi';
 import type { EdifyApi } from '../api/edifyApi';
 import type { AppEnvironment } from '../config/environment';
-import type { Session } from '../gen/edify/identity/v1/identity_pb';
-import { refreshTokens, signIn as signInWithIdentity } from './identityClient';
+import { refreshTokens, revokeSession, signIn as signInWithIdentity } from './identityClient';
+import { KEYSTORE_UNREADABLE, afterFailedCheck, type SessionState } from './launch';
 import type { TokenStore } from './tokenStore';
 
-export type SessionState =
-  | { status: 'loading' }
-  | { status: 'signedOut'; notice: string }
-  | { status: 'signedIn'; session: Session };
+export type { SessionState } from './launch';
 
 interface SessionContextValue {
   readonly state: SessionState;
@@ -22,6 +18,8 @@ interface SessionContextValue {
   readonly environment: AppEnvironment;
   signIn(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
+  /** Ask the server again about a saved sign-in it could not be reached for. */
+  retry(): Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -83,21 +81,25 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
   );
 
   const loadSession = useCallback(async () => {
-    if (!(await tokenStore.load())) {
+    // The phone's keystore can refuse to answer (a broken install, a locked
+    // device policy). Startup must still reach Sign in rather than wait on it.
+    const stored = await tokenStore.load().catch(() => undefined);
+    if (stored === undefined) {
+      setState({ status: 'signedOut', notice: KEYSTORE_UNREADABLE });
+      return;
+    }
+    if (!stored) {
       setState({ status: 'signedOut', notice: '' });
       return;
     }
     try {
       setState({ status: 'signedIn', session: await api.getSession() });
     } catch (error) {
-      const expired = error instanceof ApiError && error.code === 'unauthenticated';
-      if (expired) {
-        await tokenStore.clear();
+      const next = afterFailedCheck(error);
+      if (next.shouldClear) {
+        await tokenStore.clear().catch(() => undefined);
       }
-      setState({
-        status: 'signedOut',
-        notice: expired ? 'Your session has expired. Please sign in again.' : describe(error),
-      });
+      setState(next.state);
     }
   }, [api, tokenStore]);
 
@@ -119,14 +121,25 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
     [environment.identityUrl, loadSession, tokenStore],
   );
 
+  // Signing out forgets the tokens on this phone at once and ends the session
+  // on the server too, so the refresh token cannot be used again.
   const signOut = useCallback(async () => {
+    const stored = await tokenStore.load();
     await tokenStore.clear();
     setState({ status: 'signedOut', notice: '' });
-  }, [tokenStore]);
+    if (stored) {
+      void revokeSession(environment.identityUrl, (url, init) => fetch(url, init), stored.refreshToken);
+    }
+  }, [environment.identityUrl, tokenStore]);
+
+  const retry = useCallback(async () => {
+    setState({ status: 'loading' });
+    await loadSession();
+  }, [loadSession]);
 
   const value = useMemo(
-    () => ({ state, api, environment, signIn, signOut }),
-    [state, api, environment, signIn, signOut],
+    () => ({ state, api, environment, signIn, signOut, retry }),
+    [state, api, environment, signIn, signOut, retry],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

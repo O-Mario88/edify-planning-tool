@@ -15,7 +15,7 @@ export interface IdentityResponse {
 
 export type IdentityFetch = (
   url: string,
-  init: { method: string; headers: Record<string, string>; body: string },
+  init: { method: string; headers: Record<string, string>; body?: string },
 ) => Promise<IdentityResponse>;
 
 export type SignInFailure = 'rejected' | 'mfa_required' | 'network' | 'unexpected';
@@ -110,4 +110,67 @@ export async function refreshTokens(
     return null;
   }
   return { accessToken, refreshToken: nextRefreshToken };
+}
+
+/**
+ * Ask for a password reset link (POST /api/auth/forgot-password), as the web
+ * sign-in's "Forgot password?" does. The answer never says whether the
+ * address has an account; true means the request was accepted.
+ */
+export async function requestPasswordReset(identityUrl: string, fetchImpl: IdentityFetch, email: string): Promise<boolean> {
+  try {
+    const response = await fetchImpl(`${identityUrl}/api/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * End the session on the server too (POST /api/auth/logout), so the refresh
+ * token cannot be used again. Best effort: signing out never waits on it.
+ */
+export async function revokeSession(identityUrl: string, fetchImpl: IdentityFetch, refreshToken: string): Promise<void> {
+  try {
+    await fetchImpl(`${identityUrl}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+  } catch {
+    // Offline: the token still expires on its own schedule.
+  }
+}
+
+export interface SignInFigureValues {
+  readonly portfolio: string;
+  readonly schoolsReached: string;
+  readonly schoolsVisited: string;
+  readonly schoolsTrained: string;
+  readonly ssaCompleted: string;
+}
+
+const FIGURE_KEYS = ['portfolio', 'schoolsReached', 'schoolsVisited', 'schoolsTrained', 'ssaCompleted'] as const;
+
+/** The four figures the web sign-in shows (GET /api/auth/sign-in-figures); null if unreadable. */
+export async function signInFigures(identityUrl: string, fetchImpl: IdentityFetch): Promise<SignInFigureValues | null> {
+  try {
+    const response = await fetchImpl(`${identityUrl}/api/auth/sign-in-figures`, { method: 'GET', headers: { Accept: 'application/json' } });
+    if (!response.ok) {
+      return null;
+    }
+    const body = await response.json();
+    const values = FIGURE_KEYS.map((key) => field(body, key));
+    if (!values.every((value): value is string => typeof value === 'string')) {
+      return null;
+    }
+    const [portfolio, schoolsReached, schoolsVisited, schoolsTrained, ssaCompleted] = values;
+    return { portfolio, schoolsReached, schoolsVisited, schoolsTrained, ssaCompleted };
+  } catch {
+    return null;
+  }
 }

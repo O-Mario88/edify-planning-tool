@@ -1,0 +1,14 @@
+{
+  "comment": "Edify's app identity: one source for the app icon, launch screen, sign-in screen and generated images (scripts/brand_assets.py). The wave is drawn in a 1000 x 1000 box whose bottom edge is y = 1000; each wave is a cubic curve from the left edge to the right edge, filled down to the bottom.",
+  "navy": "#062847",
+  "navyDeep": "#001d39",
+  "white": "#ffffff",
+  "rule": "#8fb3cf",
+  "product": "#d7e6ef",
+  "waveBack": "#11a0a0",
+  "waveFront": "#36d39b",
+  "waves": {
+    "back": { "from": [0, 840], "c1": [330, 860], "c2": [640, 770], "to": [1000, 610] },
+    "front": { "from": [0, 940], "c1": [360, 940], "c2": [680, 870], "to": [1000, 745] }
+  }
+}
