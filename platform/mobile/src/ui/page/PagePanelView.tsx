@@ -1,8 +1,7 @@
 /**
  * A titled card of record details (a profile's Details tab, SSA history):
  * its title, the line under it and its badges, then its parts in the page's
- * order — sub-headings, paragraphs, fields (label over value, one to a line
- * on a phone), data rows, linked lists and a meter.
+ * order — sub-headings, paragraphs, fields ("Label: value", one to a line), data rows, linked lists and a meter.
  */
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -116,13 +115,16 @@ function Field({ field, isFirst }: { readonly field: PageFact; readonly isFirst:
   const openLink = usePageLink();
   return (
     <View style={[styles.field, !isFirst && { borderTopWidth: 1, borderTopColor: colors.raisedBorder }]}>
-      <Text style={[styles.fieldLabel, { color: colors.text }]}>{field.label}</Text>
-      <Text
-        onPress={field.href ? () => openLink(field.href) : undefined}
-        accessibilityRole={field.href ? 'link' : 'text'}
-        style={[styles.fieldValue, { color: colors.link }]}
-      >
-        {field.value}
+      {/* Owner 2026-11-12: "Cluster: Not in a cluster" on one line, the value in blue. */}
+      <Text style={[styles.fieldLabel, { color: colors.text }]}>
+        {field.label}:{' '}
+        <Text
+          onPress={field.href ? () => openLink(field.href) : undefined}
+          accessibilityRole={field.href ? 'link' : 'text'}
+          style={[styles.fieldValue, { color: colors.link }]}
+        >
+          {field.value}
+        </Text>
       </Text>
     </View>
   );
@@ -139,7 +141,7 @@ const styles = StyleSheet.create({
   body: { padding: 16, gap: 8 },
   heading: { fontFamily: fonts.bold, fontSize: 15, marginTop: 4 },
   text: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 19 },
-  field: { paddingVertical: 9.6, gap: 2 },
+  field: { paddingVertical: 9.6 },
   fieldLabel: { fontFamily: fonts.semibold, fontSize: 13 },
   fieldValue: { fontFamily: fonts.bold, fontSize: 13 },
   dataRow: { paddingVertical: 12, borderBottomWidth: 1, gap: 4 },

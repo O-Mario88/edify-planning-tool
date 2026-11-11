@@ -144,7 +144,7 @@ export function SchoolRow({
           {facts.map(([label, value]) => (
             <View key={label} style={styles.fact}>
               <Text style={[styles.factLabel, { color: colors.textSubtle }]}>{label}:</Text>
-              <Text style={[styles.factValue, { color: colors.text }]}>{value}</Text>
+              <Text style={[styles.factValue, { color: colors.link }]}>{value}</Text>
             </View>
           ))}
           <View style={styles.fact}>

@@ -275,7 +275,7 @@ function RowDetails({ row, width }: { readonly row: PageRow; readonly width: num
             <Text
               onPress={fact.href ? () => openLink(fact.href) : undefined}
               accessibilityRole={fact.href ? 'link' : undefined}
-              style={[styles.detailValue, { color: toneColor(colors, fact.tone) ?? (fact.href ? colors.link : colors.text) }]}
+              style={[styles.detailValue, { color: toneColor(colors, fact.tone) ?? colors.link }]}
             >
               {fact.value}
             </Text>

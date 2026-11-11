@@ -4,7 +4,7 @@
  * yet is left out, never guessed at.
  */
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import type { PageBlock, PageFacts, PageSegments } from '../../gen/edify/screens/v1/page_pb';
 import { fonts, useTheme } from '../../theme';
@@ -121,24 +121,32 @@ function Block({ block, onFilter, isRaised = true }: BlockProps) {
   }
 }
 
-/** The profile's identity card: its facts two to a row. */
+/** The profile's identity card: its facts, "Label: value". */
+const WIDE_FACTS = 768;
+
 function FactsCard({ facts }: { readonly facts: PageFacts }) {
   const { colors } = useTheme();
   const openLink = usePageLink();
+  // One to a line on a phone; side by side from a tablet up, as the web's
+  // profile header flows them.
+  const isWide = useWindowDimensions().width >= WIDE_FACTS;
   return (
     <View
       accessibilityLabel="Profile details"
       style={[cardStyles.card, cardStyles.padded, styles.facts, { backgroundColor: colors.raised, borderColor: colors.border }]}
     >
       {facts.facts.map((fact) => (
-        <View key={fact.label} style={styles.fact}>
-          <Text style={[styles.factLabel, { color: colors.textMuted }]}>{fact.label}</Text>
-          <Text
-            onPress={fact.href ? () => openLink(fact.href) : undefined}
-            accessibilityRole={fact.href ? 'link' : 'text'}
-            style={[styles.factValue, { color: colors.text, fontFamily: fact.href ? fonts.medium : fonts.semibold }]}
-          >
-            {fact.value}
+        <View key={fact.label} style={isWide ? styles.factWide : styles.fact}>
+          {/* Owner 2026-11-12: a fact reads "Label: value" on one line, the value in blue. */}
+          <Text style={[styles.factLabel, { color: colors.textMuted }]}>
+            {fact.label}:{' '}
+            <Text
+              onPress={fact.href ? () => openLink(fact.href) : undefined}
+              accessibilityRole={fact.href ? 'link' : 'text'}
+              style={[styles.factValue, { color: colors.link }]}
+            >
+              {fact.value}
+            </Text>
           </Text>
         </View>
       ))}
@@ -205,10 +213,11 @@ const styles = StyleSheet.create({
   scope: { fontFamily: fonts.medium, fontSize: 13 },
   section: { borderTopWidth: 1, paddingTop: 14, marginTop: 6 },
   sectionText: { fontFamily: fonts.bold, fontSize: 17, letterSpacing: -0.2 },
-  facts: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 12 },
-  fact: { width: '50%', paddingRight: 8, gap: 2 },
-  factLabel: { fontFamily: fonts.semibold, fontSize: 12 },
-  factValue: { fontSize: 13 },
+  facts: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8 },
+  fact: { width: '100%' },
+  factWide: { marginRight: 32 },
+  factLabel: { fontFamily: fonts.semibold, fontSize: 13 },
+  factValue: { fontFamily: fonts.semibold, fontSize: 13 },
   clip: { overflow: 'hidden' },
   titlebar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 12, rowGap: 4, paddingHorizontal: 16, paddingVertical: 12 },
   title: { fontFamily: fonts.bold, fontSize: 15 },

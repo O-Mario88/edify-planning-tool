@@ -139,8 +139,10 @@ function DetailsView({ cluster, onBack }: { readonly cluster: ClusterSummary; re
             .filter(([, value]) => value)
             .map(([label, value]) => (
               <View key={label} style={[styles.fact, { borderTopColor: colors.border }]}>
-                <Text style={[styles.muted, { color: colors.textMuted }]}>{label}</Text>
-                <Text style={[styles.factValue, { color: colors.text }]}>{value}</Text>
+                {/* Owner 2026-11-12: "Label: value" on one line, the value in blue. */}
+                <Text style={[styles.muted, { color: colors.textMuted }]}>
+                  {label}: <Text style={[styles.factValue, { color: colors.link }]}>{value}</Text>
+                </Text>
               </View>
             ))}
         </View>
@@ -188,6 +190,6 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: radius.lg, padding: 14, gap: 6 },
   phoneRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
   iconButton: { width: 44, height: 44, borderWidth: 1, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  fact: { borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 8, gap: 2 },
+  fact: { borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 8 },
   factValue: { fontFamily: fonts.semibold, fontSize: 15 },
 });
