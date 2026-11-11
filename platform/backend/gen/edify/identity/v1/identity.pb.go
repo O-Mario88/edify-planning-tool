@@ -114,8 +114,11 @@ type Session struct {
 	ActiveRole string `protobuf:"bytes,5,opt,name=active_role,json=activeRole,proto3" json:"active_role,omitempty"`
 	// The existing staff profile id, empty for accounts without one.
 	StaffProfileId string `protobuf:"bytes,6,opt,name=staff_profile_id,json=staffProfileId,proto3" json:"staff_profile_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// An administrator chose this account's password: it must be replaced
+	// before anything else (AccountService.SetNewPassword).
+	MustChangePassword bool `protobuf:"varint,7,opt,name=must_change_password,json=mustChangePassword,proto3" json:"must_change_password,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *Session) Reset() {
@@ -190,6 +193,13 @@ func (x *Session) GetStaffProfileId() string {
 	return ""
 }
 
+func (x *Session) GetMustChangePassword() bool {
+	if x != nil {
+		return x.MustChangePassword
+	}
+	return false
+}
+
 var File_edify_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_edify_identity_v1_identity_proto_rawDesc = "" +
@@ -197,7 +207,7 @@ const file_edify_identity_v1_identity_proto_rawDesc = "" +
 	" edify/identity/v1/identity.proto\x12\x11edify.identity.v1\"\x13\n" +
 	"\x11GetSessionRequest\"J\n" +
 	"\x12GetSessionResponse\x124\n" +
-	"\asession\x18\x01 \x01(\v2\x1a.edify.identity.v1.SessionR\asession\"\xad\x01\n" +
+	"\asession\x18\x01 \x01(\v2\x1a.edify.identity.v1.SessionR\asession\"\xdf\x01\n" +
 	"\aSession\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
@@ -205,7 +215,8 @@ const file_edify_identity_v1_identity_proto_rawDesc = "" +
 	"\x05roles\x18\x04 \x03(\tR\x05roles\x12\x1f\n" +
 	"\vactive_role\x18\x05 \x01(\tR\n" +
 	"activeRole\x12(\n" +
-	"\x10staff_profile_id\x18\x06 \x01(\tR\x0estaffProfileId2l\n" +
+	"\x10staff_profile_id\x18\x06 \x01(\tR\x0estaffProfileId\x120\n" +
+	"\x14must_change_password\x18\a \x01(\bR\x12mustChangePassword2l\n" +
 	"\x0fIdentityService\x12Y\n" +
 	"\n" +
 	"GetSession\x12$.edify.identity.v1.GetSessionRequest\x1a%.edify.identity.v1.GetSessionResponseB\xe8\x01\n" +

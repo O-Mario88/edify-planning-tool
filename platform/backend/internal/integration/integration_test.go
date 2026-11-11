@@ -346,7 +346,8 @@ func TestExistingSchemaContract(t *testing.T) {
 		"user.name": "character varying", "user.roles": "ARRAY",
 		"user.active_role": "character varying", "user.status": "character varying",
 		"user.is_active": "boolean", "user.deleted_at": "timestamp with time zone",
-		"staff_profile.id": "character varying", "staff_profile.user_id": "character varying",
+		"user.must_change_password": "boolean",
+		"staff_profile.id":          "character varying", "staff_profile.user_id": "character varying",
 		"staff_profile.deleted_at":         "timestamp with time zone",
 		"acting_assignment.appointee_id":   "character varying",
 		"acting_assignment.cancelled_at":   "timestamp with time zone",
@@ -393,12 +394,12 @@ FROM information_schema.columns WHERE table_schema = 'public'`)
 
 // ── database protection ─────────────────────────────────────────────────────
 
-// Signing in moved to Go (owner brief, 2026-11-11), so the gateway now reads
-// the sign-in columns — password hashes, second-factor secrets, token hashes
-// — and writes the lockout, reset and session columns (identity_roles.sql).
-// What it still may never do is below: change who an account is or what it
-// may do, rewrite or remove an audit row, delete a session, or touch the
-// existing records it was not granted.
+// Signing in and account administration moved to Go (owner brief,
+// 2026-11-11), so the gateway reads the sign-in columns and writes the
+// lockout, password, status, name, email and role columns
+// (identity_roles.sql). What it still may never do is below: make anyone a
+// superuser or staff, enrol a second factor, rewrite or remove an audit row,
+// delete a session or an account, or touch records it was not granted.
 func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 	const rw = `BEGIN READ WRITE; `
 	statements := map[string]string{
@@ -409,10 +410,10 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"alter a table":               `ALTER TABLE school ADD COLUMN gateway_should_not_exist int`,
 		"read an ungranted table":     `SELECT 1 FROM evidence_record LIMIT 1`,
 		"leave read-only then update": `SET default_transaction_read_only = off; UPDATE school SET name = name`,
-		"change an account's roles":   rw + `UPDATE "user" SET roles = roles`,
 		"make an account a superuser": rw + `UPDATE "user" SET is_superuser = is_superuser`,
-		"change an account's email":   rw + `UPDATE "user" SET email = email`,
+		"make an account staff":       rw + `UPDATE "user" SET is_staff = is_staff`,
 		"enrol a second factor":       rw + `UPDATE "user" SET mfa_secret = mfa_secret`,
+		"change an account's id":      rw + `UPDATE "user" SET id = id`,
 		"rewrite an audit row":        rw + `UPDATE audit_log SET reason = reason`,
 		"delete audit rows":           rw + `DELETE FROM audit_log`,
 		"delete sessions":             rw + `DELETE FROM refresh_token`,

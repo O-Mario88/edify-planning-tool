@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accountmail"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 )
 
@@ -272,17 +273,9 @@ func (s *Service) RequestPasswordReset(ctx context.Context, email string) error 
 	}
 	link := s.deps.AppBaseURL + "/reset-password?token=" + raw
 	minutes := int(s.deps.Policy.PasswordResetTTL.Minutes())
-	// The existing email, word for word (apps/core/email.py send_password_reset).
-	text := strings.Join([]string{
-		"Hello " + found.Name + ",", "",
-		"We received a request to reset your password. You can set a new one here:",
-		link, "",
-		fmt.Sprintf("This link expires in %d minutes and can only be used once.", minutes), "",
-		"If you did not request a password reset, you can safely ignore this email.", "",
-		"— Edify Planning and Monitoring Tool",
-	}, "\n")
+	message := accountmail.PasswordReset(found.Name, link, minutes)
 	s.background(func(bg context.Context) {
-		if err := s.deps.Mail.SendMail(bg, found.Email, "Reset your Edify Planning password", text); err != nil {
+		if err := s.deps.Mail.SendMail(bg, found.Email, message.Subject, message.Text); err != nil {
 			s.deps.Logger.Error("signin: the password reset email was not sent", "error", err)
 		}
 	})

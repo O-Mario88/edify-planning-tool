@@ -1,0 +1,192 @@
+syntax = "proto3";
+
+package edify.identity.v1;
+
+import "edify/common/v1/common.proto";
+
+// The signed-in person's own account (owner brief, 2026-11-11: "User
+// creation, invitations and account lifecycle. Roles and permission
+// management." — in Go).
+service AccountService {
+  // Work in another role the account already holds, as the web's role
+  // switcher does. The answer carries an access token in that role.
+  rpc SwitchRole(SwitchRoleRequest) returns (SwitchRoleResponse);
+  // The password an administrator chose must not survive the first sign-in:
+  // while one is owed, every other call is refused with
+  // PASSWORD_CHANGE_REQUIRED.
+  rpc SetNewPassword(SetNewPasswordRequest) returns (SetNewPasswordResponse);
+}
+
+// Every sign-in account, for whoever holds user.manage (the Admin alone,
+// owner 2026-10-09). The existing application's rules, one for one
+// (apps/admin_users/services.py).
+service AccountAdminService {
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+  // A new account: an invitation link, or a first password that must be
+  // changed at the first sign-in.
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
+  rpc ResendInvitation(ResendInvitationRequest) returns (ResendInvitationResponse);
+  rpc RevokeInvitation(RevokeInvitationRequest) returns (RevokeInvitationResponse);
+  // Active, suspended or disabled. Suspending or disabling ends every session
+  // and revokes any open invitation.
+  rpc SetAccountStatus(SetAccountStatusRequest) returns (SetAccountStatusResponse);
+  // Mails the person a single-use reset link and ends their sessions.
+  rpc SendPasswordReset(SendPasswordResetRequest) returns (SendPasswordResetResponse);
+  // Sets a first password the person must change, ends their sessions and
+  // lifts any lockout.
+  rpc SetTemporaryPassword(SetTemporaryPasswordRequest) returns (SetTemporaryPasswordResponse);
+  // Lifts a lockout, including one that needs an administrator.
+  rpc UnlockAccount(UnlockAccountRequest) returns (UnlockAccountResponse);
+  // Removes the account: it can no longer sign in and its address is freed.
+  // Nobody removes themselves, and the last active Admin stays.
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+}
+
+message SwitchRoleRequest {
+  string role = 1;
+}
+
+message SwitchRoleResponse {
+  string access_token = 1;
+  string active_role = 2;
+}
+
+message SetNewPasswordRequest {
+  string password = 1;
+  string confirm = 2;
+}
+
+message SetNewPasswordResponse {}
+
+message ManagedAccount {
+  string user_id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  repeated string roles = 5;
+  string active_role = 6;
+  // "pending_invited", "active", "suspended" or "disabled".
+  string status = 7;
+  bool is_active = 8;
+  // RFC 3339, empty when never.
+  string last_sign_in_at = 9;
+  bool password_set = 10;
+  // The latest invitation: "pending", "accepted", "revoked", "expired", or
+  // empty when there is none.
+  string invitation_status = 11;
+  string invitation_expires_at = 12;
+  // Locked now: by a timed lockout, or until an administrator lifts it.
+  bool locked = 13;
+  bool locked_until_admin = 14;
+  bool must_change_password = 15;
+}
+
+message ListAccountsRequest {
+  edify.common.v1.PageRequest page = 1;
+  // Name or email, case-insensitive.
+  string search = 2;
+  // One status, or empty for all.
+  string status = 3;
+}
+
+message ListAccountsResponse {
+  repeated ManagedAccount accounts = 1;
+  edify.common.v1.PageInfo page = 2;
+}
+
+message GetAccountRequest {
+  string user_id = 1;
+}
+
+message GetAccountResponse {
+  ManagedAccount account = 1;
+}
+
+message CreateAccountRequest {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  // The role the account opens in; additional_roles are also held.
+  string role = 4;
+  repeated string additional_roles = 5;
+  // Empty: an invitation is sent. Set: the account is active with this
+  // password, which must be changed at the first sign-in.
+  string password = 6;
+  string primary_district_id = 7;
+  repeated string additional_district_ids = 8;
+  string country = 9;
+  string department = 10;
+}
+
+message CreateAccountResponse {
+  ManagedAccount account = 1;
+  // Only when no mail provider can reach the person, so the Admin can hand
+  // the link over themselves.
+  string invitation_link = 2;
+}
+
+message UpdateAccountRequest {
+  string user_id = 1;
+  // Empty fields are left as they are.
+  string name = 2;
+  string email = 3;
+  optional string phone = 4;
+  // Set to change the roles: the role the account opens in, and the others.
+  string role = 5;
+  repeated string additional_roles = 6;
+}
+
+message UpdateAccountResponse {
+  ManagedAccount account = 1;
+}
+
+message ResendInvitationRequest {
+  string user_id = 1;
+}
+
+message ResendInvitationResponse {
+  // Only when no mail provider can reach the person.
+  string invitation_link = 1;
+}
+
+message RevokeInvitationRequest {
+  string user_id = 1;
+}
+
+message RevokeInvitationResponse {}
+
+message SetAccountStatusRequest {
+  string user_id = 1;
+  string status = 2;
+}
+
+message SetAccountStatusResponse {
+  ManagedAccount account = 1;
+}
+
+message SendPasswordResetRequest {
+  string user_id = 1;
+}
+
+message SendPasswordResetResponse {}
+
+message SetTemporaryPasswordRequest {
+  string user_id = 1;
+  string password = 2;
+}
+
+message SetTemporaryPasswordResponse {}
+
+message UnlockAccountRequest {
+  string user_id = 1;
+}
+
+message UnlockAccountResponse {}
+
+message DeleteAccountRequest {
+  string user_id = 1;
+}
+
+message DeleteAccountResponse {}

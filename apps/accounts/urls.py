@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from . import security_event_relay, views
+from . import account_event_relay, security_event_relay, views
 
 urlpatterns = [
     path("login", views.LoginView.as_view(), name="login"),
@@ -19,5 +19,10 @@ urlpatterns = [
         "internal/security-events",
         security_event_relay.relay,
         name="security-events",
+    ),
+    path(
+        "internal/account-events",
+        account_event_relay.relay,
+        name="account-events",
     ),
 ]

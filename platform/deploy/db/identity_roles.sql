@@ -10,8 +10,8 @@
 --                      the existing sign-in reads and writes
 --                      (apps/accounts/auth_services.py, lockout_service.py,
 --                      mfa_service.py), and nothing else: no DELETE anywhere,
---                      no UPDATE of any audit row, and on "user" only the
---                      password, lockout, reset and activation columns.
+--                      no UPDATE of any audit row, and on "user" never the
+--                      superuser or staff flags or second-factor enrolment.
 --
 -- The gateway role stays read-only by default (default_transaction_read_only,
 -- roles.sql): a sign-in write opens a read-write transaction on purpose.
@@ -36,7 +36,8 @@ GRANT SELECT (
   mfa_enabled, mfa_channel, mfa_secret,
   failed_login_count, failed_login_streak_started_at, locked_until, last_lockout_at,
   lockout_cycle_count, lockout_escalated,
-  password_reset_token_hash, password_reset_expires
+  password_reset_token_hash, password_reset_expires,
+  created_at, last_login_at, password_set_at, must_change_password
 ) ON "user" TO edify_identity_rw;
 GRANT UPDATE (
   failed_login_count, failed_login_streak_started_at, locked_until, last_lockout_at,
@@ -45,10 +46,28 @@ GRANT UPDATE (
   status, is_active
 ) ON "user" TO edify_identity_rw;
 
+-- Account administration and role switching (accounts.proto, 2026-11-11):
+-- the Admin creates, edits, suspends and removes accounts; a person works in
+-- a role they hold. Never the superuser or staff flags, never second-factor
+-- enrolment, never a DELETE: removal is the existing soft delete.
+GRANT INSERT (
+  id, email, name, phone, password, roles, active_role, status, is_active, password_set_at,
+  must_change_password, is_superuser, is_staff, created_at, updated_at, failed_login_count,
+  lockout_cycle_count, lockout_escalated, mfa_enabled, mfa_channel, sms_money_alerts,
+  last_seen_path, last_seen_action, environment, source
+) ON "user" TO edify_identity_rw;
+GRANT UPDATE (email, name, phone, roles, active_role, must_change_password, deleted_at, updated_at)
+  ON "user" TO edify_identity_rw;
+GRANT INSERT (id, user_id, title, country, department, primary_district_id, onboarding_state,
+              environment, source, created_at, updated_at)
+  ON staff_profile TO edify_identity_rw;
+GRANT INSERT (id, staff_id, district_id, created_at, updated_at) ON staff_geography_assignment TO edify_identity_rw;
+GRANT SELECT (id) ON district TO edify_identity_rw;
+
 -- Accepting an invitation activates the staff profile, unless an open
 -- onboarding plan still gates it.
 GRANT SELECT (id, user_id, deleted_at, onboarding_state) ON staff_profile TO edify_identity_rw;
-GRANT UPDATE (onboarding_state, updated_at) ON staff_profile TO edify_identity_rw;
+GRANT UPDATE (onboarding_state, title, deleted_at, updated_at) ON staff_profile TO edify_identity_rw;
 GRANT SELECT (staff_id, status) ON hr_onboarding_plan TO edify_identity_rw;
 
 -- Sessions: rotating refresh tokens, stored as hashes.
@@ -65,9 +84,10 @@ GRANT INSERT (id, user_id, channel, destination_hint, code_hash, client_token_ha
   ON mfa_challenge TO edify_identity_rw;
 GRANT UPDATE (expires_at, consumed_at, attempts, updated_at) ON mfa_challenge TO edify_identity_rw;
 
--- Invitations: read, and spent once.
-GRANT SELECT (id, user_id, token_hash, expires_at, accepted_at, revoked_at) ON user_invitation TO edify_identity_rw;
-GRANT UPDATE (accepted_at) ON user_invitation TO edify_identity_rw;
+-- Invitations: issued, read, spent once, revoked.
+GRANT SELECT (id, user_id, token_hash, expires_at, accepted_at, revoked_at, created_at) ON user_invitation TO edify_identity_rw;
+GRANT INSERT (id, user_id, invited_by_id, token_hash, expires_at, created_at, updated_at) ON user_invitation TO edify_identity_rw;
+GRANT UPDATE (accepted_at, revoked_at) ON user_invitation TO edify_identity_rw;
 
 -- The audit chain: the tail is read and rows are added; nothing is updated.
 GRANT SELECT (seq, hash) ON audit_log TO edify_identity_rw;

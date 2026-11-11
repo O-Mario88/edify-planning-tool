@@ -18,6 +18,7 @@ deployed, or connected to production.
 | [05-environments-and-staging.md](05-environments-and-staging.md) | Development setup, staging deployment, CI and branch protection |
 | [07-school-loan-portal.md](07-school-loan-portal.md) | The School Loan Application Portal: journeys, roles, running it, open questions |
 | [08-sign-in.md](08-sign-in.md) | Sign-in, owned by Go: the existing rules ported, what it writes, what has not moved yet |
+| [09-accounts-and-roles.md](09-accounts-and-roles.md) | Accounts and roles, owned by Go: role switching, the forced password change, the Admin's Users screen |
 
 The code is under [`platform/`](../../platform/README.md).
 

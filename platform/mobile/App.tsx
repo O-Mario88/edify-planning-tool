@@ -19,6 +19,8 @@ import { PageScreen } from './src/screens/PageScreen';
 import { PAGE_PATHS } from './src/nativePages';
 import { HOME_URL, landingUrl } from './src/landing';
 import { SchoolsScreen } from './src/screens/SchoolsScreen';
+import { NewPasswordScreen } from './src/screens/NewPasswordScreen';
+import { UsersScreen } from './src/screens/admin/UsersScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { ClusterLeaderApp } from './src/screens/cluster/ClusterLeaderApp';
 import { ClusterLeadersScreen } from './src/screens/cluster/ClusterLeadersScreen';
@@ -163,6 +165,15 @@ function Root() {
       </>
     );
   }
+  // A password an administrator chose is replaced before anything else.
+  if (state.session.mustChangePassword) {
+    return (
+      <>
+        <NewPasswordScreen />
+        <StatusBar style="dark" />
+      </>
+    );
+  }
   // A Cluster Leader's reach is their assigned clusters, not a web menu: the
   // portal of their own (brief A1-A3).
   if (state.session.activeRole === CLUSTER_LEADER) {
@@ -183,6 +194,10 @@ interface Route {
 }
 
 const HOME: Route = { url: '/home', label: 'Home' };
+
+/** The web's Users page; native for the Admin, who alone manages accounts. */
+const USERS_URL = '/admin-panel/users';
+const ADMIN = 'Admin';
 
 function SignedIn({ session }: { readonly session: Session }) {
   const { api } = useSession();
@@ -219,11 +234,12 @@ function SignedIn({ session }: { readonly session: Session }) {
     (url: string) =>
       url === LEADERS_URL ||
       url === SUPPORT_URL ||
+      (pathOf(url) === USERS_URL && session.activeRole === ADMIN) ||
       isLoansUrl(url) ||
       OWN_SCREENS.includes(pathOf(url)) ||
       pages.has(pathOf(url)) ||
       schoolOf(url) !== null,
-    [pages],
+    [pages, session.activeRole],
   );
   // Staff who manage cluster leaders find them under their own menu.
   const sections = useMemo(
@@ -257,6 +273,8 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <ClusterLeadersScreen />;
   } else if (route.url === SUPPORT_URL) {
     screen = <SupportRequestsScreen />;
+  } else if (path === USERS_URL && session.activeRole === ADMIN) {
+    screen = <UsersScreen />;
   } else if (isLoansUrl(route.url)) {
     screen = <LoansRoute key={route.url} url={route.url} />;
   } else if (path === '/home') {

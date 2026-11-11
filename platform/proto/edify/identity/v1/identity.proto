@@ -28,4 +28,7 @@ message Session {
   string active_role = 5;
   // The existing staff profile id, empty for accounts without one.
   string staff_profile_id = 6;
+  // An administrator chose this account's password: it must be replaced
+  // before anything else (AccountService.SetNewPassword).
+  bool must_change_password = 7;
 }

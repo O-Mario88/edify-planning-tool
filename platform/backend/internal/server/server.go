@@ -18,6 +18,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/loans/v1/loansv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/schools/v1/schoolsv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accounts"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
@@ -55,6 +56,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		schoolsv1connect.SchoolServiceName,
 	)))
 	mux.Handle(identityv1connect.NewIdentityServiceHandler(identity.NewService(), options...))
+	// The signed-in person's own account, and account administration.
+	accountHandler := accountsHandler(cfg, pool, logger)
+	mux.Handle(identityv1connect.NewAccountServiceHandler(accountHandler, options...))
+	mux.Handle(identityv1connect.NewAccountAdminServiceHandler(accountHandler, options...))
 	// Signing in needs no session: structured errors, no authentication.
 	mux.Handle(identityv1connect.NewSignInServiceHandler(signInHandler(cfg, pool, logger),
 		connect.WithInterceptors(apierr.Interceptor(logger)), connect.WithReadMaxBytes(maxRequestBytes)))
@@ -141,6 +146,24 @@ func signInHandler(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *
 		deps.Relay = relay
 	}
 	return signin.NewHandler(signin.NewService(deps), loans.NewLimiter(time.Now), cfg.Loans.TrustProxyHeaders, logger)
+}
+
+// accountsHandler assembles accounts: the existing records and rules, the
+// portal's mail provider, and the relay for what the existing application
+// still follows up (re-pricing after a role change, releasing a removed
+// organisation login).
+func accountsHandler(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *accounts.Handler {
+	deps := accounts.Deps{
+		Store: accounts.NewStore(pool), JWTSecret: []byte(cfg.JWTSecret), AppBaseURL: cfg.SignIn.AppBaseURL,
+		Logger: logger, Now: time.Now,
+	}
+	if mailer := loans.NewMailer(cfg.Loans); mailer != nil {
+		deps.Mail = mailAdapter{mailer}
+	}
+	if relay := accounts.NewHTTPRelay(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey); relay != nil {
+		deps.Relay = relay
+	}
+	return accounts.NewHandler(accounts.NewService(deps), logger)
 }
 
 type mailAdapter struct{ mailer loans.Mailer }

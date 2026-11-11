@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/identity/v1/identity.proto.
  */
 export const file_edify_identity_v1_identity: GenFile = /*@__PURE__*/
-  fileDesc("CiBlZGlmeS9pZGVudGl0eS92MS9pZGVudGl0eS5wcm90bxIRZWRpZnkuaWRlbnRpdHkudjEiEwoRR2V0U2Vzc2lvblJlcXVlc3QiQQoSR2V0U2Vzc2lvblJlc3BvbnNlEisKB3Nlc3Npb24YASABKAsyGi5lZGlmeS5pZGVudGl0eS52MS5TZXNzaW9uInUKB1Nlc3Npb24SDwoHdXNlcl9pZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIMCgRuYW1lGAMgASgJEg0KBXJvbGVzGAQgAygJEhMKC2FjdGl2ZV9yb2xlGAUgASgJEhgKEHN0YWZmX3Byb2ZpbGVfaWQYBiABKAkybAoPSWRlbnRpdHlTZXJ2aWNlElkKCkdldFNlc3Npb24SJC5lZGlmeS5pZGVudGl0eS52MS5HZXRTZXNzaW9uUmVxdWVzdBolLmVkaWZ5LmlkZW50aXR5LnYxLkdldFNlc3Npb25SZXNwb25zZULoAQoVY29tLmVkaWZ5LmlkZW50aXR5LnYxQg1JZGVudGl0eVByb3RvUAFaWmdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvaWRlbnRpdHkvdjE7aWRlbnRpdHl2MaICA0VJWKoCEUVkaWZ5LklkZW50aXR5LlYxygIRRWRpZnlcSWRlbnRpdHlcVjHiAh1FZGlmeVxJZGVudGl0eVxWMVxHUEJNZXRhZGF0YeoCE0VkaWZ5OjpJZGVudGl0eTo6VjFiBnByb3RvMw");
+  fileDesc("CiBlZGlmeS9pZGVudGl0eS92MS9pZGVudGl0eS5wcm90bxIRZWRpZnkuaWRlbnRpdHkudjEiEwoRR2V0U2Vzc2lvblJlcXVlc3QiQQoSR2V0U2Vzc2lvblJlc3BvbnNlEisKB3Nlc3Npb24YASABKAsyGi5lZGlmeS5pZGVudGl0eS52MS5TZXNzaW9uIpMBCgdTZXNzaW9uEg8KB3VzZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRINCgVyb2xlcxgEIAMoCRITCgthY3RpdmVfcm9sZRgFIAEoCRIYChBzdGFmZl9wcm9maWxlX2lkGAYgASgJEhwKFG11c3RfY2hhbmdlX3Bhc3N3b3JkGAcgASgIMmwKD0lkZW50aXR5U2VydmljZRJZCgpHZXRTZXNzaW9uEiQuZWRpZnkuaWRlbnRpdHkudjEuR2V0U2Vzc2lvblJlcXVlc3QaJS5lZGlmeS5pZGVudGl0eS52MS5HZXRTZXNzaW9uUmVzcG9uc2VC6AEKFWNvbS5lZGlmeS5pZGVudGl0eS52MUINSWRlbnRpdHlQcm90b1ABWlpnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L2lkZW50aXR5L3YxO2lkZW50aXR5djGiAgNFSViqAhFFZGlmeS5JZGVudGl0eS5WMcoCEUVkaWZ5XElkZW50aXR5XFYx4gIdRWRpZnlcSWRlbnRpdHlcVjFcR1BCTWV0YWRhdGHqAhNFZGlmeTo6SWRlbnRpdHk6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message edify.identity.v1.GetSessionRequest
@@ -84,6 +84,14 @@ export type Session = Message<"edify.identity.v1.Session"> & {
    * @generated from field: string staff_profile_id = 6;
    */
   staffProfileId: string;
+
+  /**
+   * An administrator chose this account's password: it must be replaced
+   * before anything else (AccountService.SetNewPassword).
+   *
+   * @generated from field: bool must_change_password = 7;
+   */
+  mustChangePassword: boolean;
 };
 
 /**

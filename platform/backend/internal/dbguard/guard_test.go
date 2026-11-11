@@ -143,15 +143,19 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "clusterlead") + sep: "cluster_leadership.",
 		filepath.Join(root, "internal", "loans") + sep:       "school_loans.",
 	}
-	// Signing in, which Go owns (owner brief, 2026-11-11), writes the existing
-	// sign-in tables, and the audit chain appends to the existing log: those
-	// two packages and those tables only, never a removal or DDL. The
+	// Signing in and account administration, which Go owns (owner brief,
+	// 2026-11-11), write the existing account tables, and the audit chain
+	// appends to the existing log: those packages and tables only, never a
+	// removal or DDL. The
 	// database role enforces the same columns (deploy/db/identity_roles.sql).
 	existingWriters := map[string][]string{
 		filepath.Join(root, "internal", "signin") + sep: {
 			`"user"`, "refresh_token", "mfa_challenge", "user_invitation", "staff_profile", "login_event",
 		},
 		filepath.Join(root, "internal", "audit") + sep: {"audit_log", "domain_event_log"},
+		filepath.Join(root, "internal", "accounts") + sep: {
+			`"user"`, "refresh_token", "user_invitation", "staff_profile", "staff_geography_assignment",
+		},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.

@@ -36,13 +36,14 @@ var builtinProductionMarkers = []string{
 // must not be able to change any column of them, or remove their rows.
 var protectedTables = []string{"school", "staff_school_assignment"}
 
-// protectedAccountColumns are the columns of "user" that say who an account
-// is and what it may do. Go owns signing in (owner brief, 2026-11-11), so
-// the gateway writes the lockout, reset and activation columns
-// (deploy/db/identity_roles.sql) — but never these, and never a DELETE.
+// protectedAccountColumns are the columns of "user" the gateway may never
+// change on an existing account. Go owns signing in and account
+// administration (owner brief, 2026-11-11), so it writes the lockout,
+// password, status, name, email and role columns (deploy/db/identity_roles.sql)
+// — but never who is a superuser or staff, never second-factor enrolment, and
+// never a DELETE: removal is the existing soft delete.
 var protectedAccountColumns = []string{
-	"id", "email", "name", "roles", "active_role", "is_superuser", "is_staff",
-	"mfa_enabled", "mfa_secret", "mfa_channel", "deleted_at",
+	"id", "is_superuser", "is_staff", "mfa_enabled", "mfa_secret", "mfa_channel",
 }
 
 // ErrRefused wraps every refusal, so callers can tell a guard decision from

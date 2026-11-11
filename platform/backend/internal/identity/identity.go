@@ -41,6 +41,7 @@ SELECT u.id,
        u.roles,
        u.active_role,
        u.status,
+       u.must_change_password,
        COALESCE(sp.id, ''),
        EXISTS (
          SELECT 1 FROM acting_assignment a
@@ -66,6 +67,7 @@ func (s *Store) LoadAccount(ctx context.Context, userID string) (auth.Account, e
 		&account.Roles,
 		&account.ActiveRole,
 		&account.Status,
+		&account.MustChangePassword,
 		&account.StaffProfileID,
 		&account.InActingAppointment,
 	)
@@ -96,12 +98,13 @@ func (s *Service) GetSession(
 	}
 	return connect.NewResponse(&identityv1.GetSessionResponse{
 		Session: &identityv1.Session{
-			UserId:         principal.UserID,
-			Email:          principal.Email,
-			Name:           principal.Name,
-			Roles:          principal.Roles,
-			ActiveRole:     principal.ActiveRole,
-			StaffProfileId: principal.StaffProfileID,
+			UserId:             principal.UserID,
+			Email:              principal.Email,
+			Name:               principal.Name,
+			Roles:              principal.Roles,
+			ActiveRole:         principal.ActiveRole,
+			StaffProfileId:     principal.StaffProfileID,
+			MustChangePassword: principal.MustChangePassword,
 		},
 	}), nil
 }

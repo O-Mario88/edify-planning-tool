@@ -35,17 +35,26 @@ ESCALATED = "lockout_escalated"
 MAX_STREAK = 1000
 
 
-@csrf_exempt  # A server's key, never a browser's session.
-@require_POST
-def relay(request):
+def internal_key_refusal(request):
+    """The answer to a request without the gateway's internal key, or None.
+    Closed (404) while no key is configured."""
     key = getattr(settings, "EDIFY_INTERNAL_KEY", "")
     if not key:
         return JsonResponse({"ok": False, "reason": "not_configured"}, status=404)
     if not hmac.compare_digest(
         request.headers.get("X-Edify-Internal-Key", "").encode(), key.encode()
     ):
-        logger.warning("refused a sign-in security event without the internal key")
+        logger.warning("refused a gateway event without the internal key")
         return JsonResponse({"ok": False}, status=403)
+    return None
+
+
+@csrf_exempt  # A server's key, never a browser's session.
+@require_POST
+def relay(request):
+    refusal = internal_key_refusal(request)
+    if refusal is not None:
+        return refusal
     try:
         event = json.loads(request.body or b"{}")
     except ValueError:

@@ -57,6 +57,9 @@ type Account struct {
 	// InActingAppointment is true while the person holds an acting
 	// appointment, which changes their permissions in the existing system.
 	InActingAppointment bool
+	// MustChangePassword: an administrator chose the password, and it must
+	// be replaced before anything else (the existing PasswordChangeMiddleware).
+	MustChangePassword bool
 }
 
 // Principal is the authenticated caller of one request.
@@ -177,6 +180,14 @@ func PrincipalFrom(ctx context.Context) (Principal, bool) {
 	return principal, ok
 }
 
+// Procedures open while a new password is owed: reading who you are, and
+// setting it. Everything else waits, as the existing
+// apps/accounts/middleware.py keeps the web on its change-password page.
+var openWhilePasswordOwed = map[string]bool{
+	"/edify.identity.v1.IdentityService/GetSession":    true,
+	"/edify.identity.v1.AccountService/SetNewPassword": true,
+}
+
 // Interceptor authenticates every unary call before its handler runs.
 func (a *Authenticator) Interceptor() connect.UnaryInterceptorFunc {
 	return func(next connect.UnaryFunc) connect.UnaryFunc {
@@ -184,6 +195,10 @@ func (a *Authenticator) Interceptor() connect.UnaryInterceptorFunc {
 			principal, err := a.Authenticate(ctx, request.Header().Get("Authorization"))
 			if err != nil {
 				return nil, err
+			}
+			if principal.MustChangePassword && !openWhilePasswordOwed[request.Spec().Procedure] {
+				return nil, apierr.New(ctx, connect.CodeFailedPrecondition, apierr.ReasonPasswordChangeRequired,
+					"Set a new password to continue.")
 			}
 			ctx = WithBearer(WithPrincipal(ctx, principal), bearerOf(request.Header().Get("Authorization")))
 			return next(ctx, request)

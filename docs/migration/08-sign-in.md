@@ -98,10 +98,8 @@ across both.
   notice) are raised by the existing application's notifications, which Go
   calls server to server (`POST /api/auth/internal/security-events`, internal
   key), until notifications move to Go.
-- **Account and role switching** in the app.
-- **Admin unlock, sending invitations, user creation** (the brief's "User
-  creation, invitations and account lifecycle") are still the existing
-  application's.
+- Role switching, user creation, invitations, admin unlock and the account
+  lifecycle moved to Go next: [09-accounts-and-roles.md](09-accounts-and-roles.md).
 - **Configuration parity**: the gateway's `EDIFY_JWT_SECRET`,
   `EDIFY_FIELD_ENCRYPTION_KEY`, `EDIFY_MFA_REQUIRED_FOR_ALL` and
   `EDIFY_MFA_REQUIRED_ROLES` must equal the existing application's

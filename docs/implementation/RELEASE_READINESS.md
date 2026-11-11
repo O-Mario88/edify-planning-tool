@@ -91,6 +91,27 @@ tests 8, 9, 12 and 13 above now run against Go.
 Not yet: the web's own sign-in page (production cutover, needs approval),
 user creation and account lifecycle, role switching.
 
+## Accounts and roles moved to Go (2026-11-11)
+
+[docs/migration/09-accounts-and-roles.md](../migration/09-accounts-and-roles.md).
+
+| Check | Result | Evidence |
+|---|---|---|
+| Permission matrix identical on both sides | Pass | `apps/core/test_rbac_matrix_export.py` (Django) and `internal/rbac` (Go) over the exported matrix |
+| Go integration suite: accounts | Pass | role switch kept across a renewed session and refused for an unheld role; non-Admin refused; invite → accept → sign in; Admin-chosen password blocks every call until replaced; role changes under the Admin/CCEO rules; suspend ends sessions; unlock and temporary password; removal frees the address, the last Admin stays |
+| Database role still refuses the dangerous writes | Pass | superuser and staff flags, second-factor enrolment, ids, deleting accounts, sessions or audit rows |
+| The existing chain verifier | Pass | `verify_chain(full=True)`: ok, 715 rows |
+| Django relays for what follows a change | Pass | 4 tests; on the dev servers `account_deleted` and `roles_changed` both answered ok |
+| Web build: Work as | Pass | CCEO ⇄ Program Lead; saved on the account and audited; the account reopened in the new role after signing in again |
+| Web build: Users (Admin) | Pass | 42 accounts listed; Add user with a first password; the new person held at Password Change Required, a mismatch refused in the existing words, then Home; Remove account |
+| iOS and Android Release: Work as | Pass | both switched CCEO ⇄ Program Lead (menu and Oversight tab followed) |
+| Django suites after the change | Pass | accounts, admin_users and the matrix test: 272 passed |
+
+Found and fixed while checking: the role switcher's spinner stayed after a
+successful switch; the Users screen's filter tabs and the shared drawer
+buttons had no accessible names. The development identity server had to be
+restarted to serve the new relay route (it runs without reloading).
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

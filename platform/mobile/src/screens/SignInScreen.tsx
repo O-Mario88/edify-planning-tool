@@ -501,3 +501,6 @@ const styles = StyleSheet.create({
   secureTitle: { fontFamily: fonts.bold, fontSize: 14.4, lineHeight: 18.72, color: ink.title, marginBottom: 3.52 },
   secureCopy: { fontFamily: fonts.medium, color: ink.muted },
 });
+
+/** The sign-in card's look, for the other screens of the signed-out journey. */
+export { ALERT as signInAlert, ALERT_INK as signInAlertInk, styles as signInStyles };

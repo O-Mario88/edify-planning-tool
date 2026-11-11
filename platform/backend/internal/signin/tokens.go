@@ -213,3 +213,14 @@ func maskPhone(number string) string {
 	}
 	return "•••• " + digits[len(digits)-4:]
 }
+
+// HashToken is how every single-use token is stored (hash_token).
+func HashToken(raw string) string { return hashToken(raw) }
+
+// NewToken is a fresh single-use token (generate_token).
+func NewToken() (string, error) { return newRawToken() }
+
+// IssueAccessToken signs the existing access token for userID in role.
+func IssueAccessToken(secret []byte, userID, role string, now time.Time, ttl time.Duration) (string, error) {
+	return issueAccessToken(secret, userID, role, now, ttl)
+}

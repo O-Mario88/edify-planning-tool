@@ -29,10 +29,10 @@ verified on the strength of code alone.
 | A12 | Password visibility, Remember me, Forgot password, errors, sign-in code | Implemented — Not Verified | Remember me verified on iOS. Sign-in code step verified in the web build (wrong code refused, right code opened Home); reset link verified by the Go integration suite, not sent from a device. |
 | A13 | Secure sign-out (server revocation) | Verified Complete | iOS sign-out; identity log `POST /api/auth/logout 200`. |
 | A14 | Role-aware landing | Implemented — Not Verified | `src/landing.ts`: the web's rule (Home; Country Oversight for IA, CD, RVP, RPL when permitted). Cluster Leaders open their portal. Unit-tested. |
-| A15 | Account / role switching | Not Started | The web's switch is a session page; the app needs an identity API for it — part of moving sign-in to Go (backend-boundaries brief). |
+| A15 | Account / role switching | Verified Complete | Go AccountService.SwitchRole; More → Work as (docs/migration/09-accounts-and-roles.md). Web build, iOS and Android Release: CCEO ⇄ Program Lead, saved on the account and audited. |
 | A16 | Public school forms open without sign-in | Verified Complete | `/loans/apply` and `/loans/track` answer 200 without a session. |
 | A17 | Startup measured | Failed Verification | Cold start 2.3–3.7 s (emulator) and 3.0–3.2 s (simulator) against a 3 s target; warm 0.9–1.4 s. Physical phones not measured. |
-| A18 | Sign-in and users handled by Go | In Progress | The app signs in through Go's SignInService (docs/migration/08-sign-in.md): password, lockout, second factor, sessions, reset, invitations, figures. Verified: Go unit + integration suites, Django's verify_chain over Go's audit rows, sessions honoured across both systems, iOS and Android sign-in. Not yet: the web's own sign-in page (production cutover, needs approval), user creation and account lifecycle, role switching. |
+| A18 | Sign-in and users handled by Go | In Progress | The app signs in through Go's SignInService (docs/migration/08-sign-in.md): password, lockout, second factor, sessions, reset, invitations, figures. Verified: Go unit + integration suites, Django's verify_chain over Go's audit rows, sessions honoured across both systems, iOS and Android sign-in. Not yet: the web's own sign-in page (production cutover, needs approval). User creation, account lifecycle and role switching followed (docs/migration/09-accounts-and-roles.md). |
 
 ## B. Enterprise Experience 2.0 (main mandate)
 

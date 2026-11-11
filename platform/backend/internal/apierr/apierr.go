@@ -29,6 +29,9 @@ const (
 	ReasonScreenUnavailable  = "SCREEN_UNAVAILABLE"
 	ReasonNotFound           = "NOT_FOUND"
 	ReasonInternal           = "INTERNAL"
+	// ReasonPasswordChangeRequired: the account's password was set by an
+	// administrator and must be replaced first.
+	ReasonPasswordChangeRequired = "PASSWORD_CHANGE_REQUIRED"
 )
 
 const internalMessage = "Something went wrong on our side. Please try again."

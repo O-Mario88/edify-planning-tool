@@ -36,7 +36,7 @@ REVOKE CREATE ON SCHEMA public FROM edify_gateway_ro;
 GRANT USAGE ON SCHEMA public TO edify_gateway_ro;
 
 -- internal/identity: the account behind an access token.
-GRANT SELECT (id, email, name, roles, active_role, status, is_active, deleted_at)
+GRANT SELECT (id, email, name, roles, active_role, status, is_active, deleted_at, must_change_password)
   ON "user" TO edify_gateway_ro;
 GRANT SELECT (id, user_id, deleted_at) ON staff_profile TO edify_gateway_ro;
 GRANT SELECT (appointee_id, cancelled_at, expired_at, start_date, end_date)

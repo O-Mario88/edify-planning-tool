@@ -6,6 +6,7 @@ import { Dimensions, Platform } from 'react-native';
 import { createEdifyApi } from '../api/edifyApi';
 import type { EdifyApi } from '../api/edifyApi';
 import type { ConnectTransport } from '../api/connect';
+import { AccountService } from '../gen/edify/identity/v1/accounts_pb';
 import type { AppEnvironment } from '../config/environment';
 import {
   appDevice,
@@ -32,6 +33,10 @@ interface SessionContextValue {
   signIn(email: string, password: string): Promise<CodeChallenge | null>;
   /** Finishes a sign-in that stopped for its code. */
   verifyCode(challenge: CodeChallenge, code: string): Promise<void>;
+  /** Work in another role the account holds; the screens follow. */
+  switchRole(role: string): Promise<void>;
+  /** Replaces a password an administrator chose. */
+  setNewPassword(password: string, confirm: string): Promise<void>;
   signOut(): Promise<void>;
   /** Ask the server again about a saved sign-in it could not be reached for. */
   retry(): Promise<void>;
@@ -146,6 +151,28 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
     [signInTransport, loadSession, tokenStore],
   );
 
+  const switchRole = useCallback(
+    async (role: string) => {
+      const answer = await api.call(AccountService.method.switchRole, { role });
+      const stored = await tokenStore.load();
+      if (!stored || !answer.accessToken) {
+        throw new Error('The role could not be switched.');
+      }
+      // The refresh token stays: the account itself now opens in this role.
+      await tokenStore.save({ accessToken: answer.accessToken, refreshToken: stored.refreshToken });
+      await loadSession();
+    },
+    [api, loadSession, tokenStore],
+  );
+
+  const setNewPassword = useCallback(
+    async (password: string, confirm: string) => {
+      await api.call(AccountService.method.setNewPassword, { password, confirm });
+      await loadSession();
+    },
+    [api, loadSession],
+  );
+
   // Signing out forgets the tokens on this phone at once and ends the session
   // on the server too, so the refresh token cannot be used again.
   const signOut = useCallback(async () => {
@@ -163,8 +190,8 @@ export function SessionProvider({ environment, tokenStore, children }: ProviderP
   }, [loadSession]);
 
   const value = useMemo(
-    () => ({ state, api, environment, signInTransport, signIn, verifyCode, signOut, retry }),
-    [state, api, environment, signInTransport, signIn, verifyCode, signOut, retry],
+    () => ({ state, api, environment, signInTransport, signIn, verifyCode, switchRole, setNewPassword, signOut, retry }),
+    [state, api, environment, signInTransport, signIn, verifyCode, switchRole, setNewPassword, signOut, retry],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

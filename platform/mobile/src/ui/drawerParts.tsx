@@ -156,6 +156,7 @@ export function DrawerButton({ label, onPress, isPrimary, isBusy, isDisabled }: 
       onPress={onPress}
       disabled={isOff}
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ busy: isBusy, disabled: isDisabled }}
       style={[
         styles.button,

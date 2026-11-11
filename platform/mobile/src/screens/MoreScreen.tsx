@@ -6,10 +6,11 @@
  * says so plainly and opens the same page of the Edify web app, rather than
  * showing a screen that looks finished and is not.
  */
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { ChevronRight, ExternalLink, LogOut } from 'lucide-react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Check, ChevronRight, ExternalLink, LogOut } from 'lucide-react-native';
 
-import { useSession } from '../auth/SessionContext';
+import { describe, useSession } from '../auth/SessionContext';
 import type { Session } from '../gen/edify/identity/v1/identity_pb';
 import type { NavSection } from '../gen/edify/screens/v1/navigation_pb';
 import { fonts, radius, spacing, type, useTheme } from '../theme';
@@ -62,6 +63,7 @@ export function MenuScreen({ session, sections, isNative, onOpen }: MenuScreenPr
           </Text>
         </View>
       </View>
+      {session.roles.length > 1 ? <RoleSwitcher session={session} /> : null}
 
       {sections.map((section) => (
         <View key={section.label} style={styles.section}>
@@ -103,6 +105,62 @@ export function MenuScreen({ session, sections, isNative, onOpen }: MenuScreenPr
   );
 }
 
+/**
+ * Work in another role the account holds, as the web's role switcher does:
+ * the account opens in that role from now on, and the menu and screens are
+ * that role's.
+ */
+function RoleSwitcher({ session }: { readonly session: Session }) {
+  const { switchRole } = useSession();
+  const { colors } = useTheme();
+  const [pending, setPending] = useState('');
+  const [error, setError] = useState('');
+
+  async function choose(role: string) {
+    if (pending || role === session.activeRole) {
+      return;
+    }
+    setPending(role);
+    setError('');
+    try {
+      await switchRole(role);
+    } catch (cause) {
+      setError(describe(cause));
+    } finally {
+      setPending('');
+    }
+  }
+
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionLabel, { color: colors.textSubtle }]}>Work as</Text>
+      <View style={[styles.group, { backgroundColor: colors.raised, borderColor: colors.raisedBorder }]} accessibilityRole="radiogroup">
+        {session.roles.map((role, index) => {
+          const isCurrent = role === session.activeRole;
+          return (
+            <Pressable
+              key={role}
+              onPress={() => void choose(role)}
+              disabled={Boolean(pending)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: isCurrent, busy: pending === role }}
+              accessibilityLabel={isCurrent ? `${role}, current role` : `Work as ${role}`}
+              style={[styles.row, index > 0 && { borderTopWidth: 1, borderTopColor: colors.raisedBorder }]}
+            >
+              <Text style={[styles.rowLabel, { color: colors.text }]} numberOfLines={1}>
+                {role}
+              </Text>
+              {pending === role ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+              {isCurrent ? <Check size={18} color={colors.primary} /> : null}
+            </Pressable>
+          );
+        })}
+      </View>
+      {error ? <Text style={[styles.switchError, { color: colors.danger }]} accessibilityRole="alert">{error}</Text> : null}
+    </View>
+  );
+}
+
 function WebLink({ label, url }: { readonly label: string; readonly url: string }) {
   const { colors } = useTheme();
   return (
@@ -128,6 +186,7 @@ const styles = StyleSheet.create({
   accountText: { flex: 1 },
   accountBody: { marginBottom: 0 },
   section: { marginBottom: spacing.lg },
+  switchError: { fontFamily: fonts.medium, fontSize: type.small, marginTop: spacing.sm, marginLeft: spacing.xs },
   sectionLabel: {
     fontFamily: fonts.semibold,
     fontSize: type.small,
