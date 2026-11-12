@@ -39,6 +39,9 @@ const (
 	// ActivityServiceRescheduleSchoolVisitProcedure is the fully-qualified name of the
 	// ActivityService's RescheduleSchoolVisit RPC.
 	ActivityServiceRescheduleSchoolVisitProcedure = "/edify.activities.v1.ActivityService/RescheduleSchoolVisit"
+	// ActivityServiceCancelSchoolVisitProcedure is the fully-qualified name of the ActivityService's
+	// CancelSchoolVisit RPC.
+	ActivityServiceCancelSchoolVisitProcedure = "/edify.activities.v1.ActivityService/CancelSchoolVisit"
 )
 
 // ActivityServiceClient is a client for the edify.activities.v1.ActivityService service.
@@ -55,6 +58,14 @@ type ActivityServiceClient interface {
 	// existing application's own words for why it was refused. A refusal
 	// leaves nothing written.
 	RescheduleSchoolVisit(context.Context, *connect.Request[v1.RescheduleSchoolVisitRequest]) (*connect.Response[v1.RescheduleSchoolVisitResponse], error)
+	// Call off one scheduled school visit as the caller: the third save
+	// (docs/migration/30), from My Plan's Cancel drawer
+	// (/my-plan/{id}/cancel-drawer posting to /my-plan/{id}/cancel), for
+	// exactly 30.1's case — a visit of the first save's kind, still only a
+	// plan, called off by its owner. The answer is the cancelled activity, or
+	// the existing application's own words for why it was refused. A refusal
+	// changes nothing but the refusal's own audit row, as today.
+	CancelSchoolVisit(context.Context, *connect.Request[v1.CancelSchoolVisitRequest]) (*connect.Response[v1.CancelSchoolVisitResponse], error)
 }
 
 // NewActivityServiceClient constructs a client for the edify.activities.v1.ActivityService service.
@@ -80,6 +91,12 @@ func NewActivityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(activityServiceMethods.ByName("RescheduleSchoolVisit")),
 			connect.WithClientOptions(opts...),
 		),
+		cancelSchoolVisit: connect.NewClient[v1.CancelSchoolVisitRequest, v1.CancelSchoolVisitResponse](
+			httpClient,
+			baseURL+ActivityServiceCancelSchoolVisitProcedure,
+			connect.WithSchema(activityServiceMethods.ByName("CancelSchoolVisit")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -87,6 +104,7 @@ func NewActivityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 type activityServiceClient struct {
 	scheduleSchoolVisit   *connect.Client[v1.ScheduleSchoolVisitRequest, v1.ScheduleSchoolVisitResponse]
 	rescheduleSchoolVisit *connect.Client[v1.RescheduleSchoolVisitRequest, v1.RescheduleSchoolVisitResponse]
+	cancelSchoolVisit     *connect.Client[v1.CancelSchoolVisitRequest, v1.CancelSchoolVisitResponse]
 }
 
 // ScheduleSchoolVisit calls edify.activities.v1.ActivityService.ScheduleSchoolVisit.
@@ -97,6 +115,11 @@ func (c *activityServiceClient) ScheduleSchoolVisit(ctx context.Context, req *co
 // RescheduleSchoolVisit calls edify.activities.v1.ActivityService.RescheduleSchoolVisit.
 func (c *activityServiceClient) RescheduleSchoolVisit(ctx context.Context, req *connect.Request[v1.RescheduleSchoolVisitRequest]) (*connect.Response[v1.RescheduleSchoolVisitResponse], error) {
 	return c.rescheduleSchoolVisit.CallUnary(ctx, req)
+}
+
+// CancelSchoolVisit calls edify.activities.v1.ActivityService.CancelSchoolVisit.
+func (c *activityServiceClient) CancelSchoolVisit(ctx context.Context, req *connect.Request[v1.CancelSchoolVisitRequest]) (*connect.Response[v1.CancelSchoolVisitResponse], error) {
+	return c.cancelSchoolVisit.CallUnary(ctx, req)
 }
 
 // ActivityServiceHandler is an implementation of the edify.activities.v1.ActivityService service.
@@ -113,6 +136,14 @@ type ActivityServiceHandler interface {
 	// existing application's own words for why it was refused. A refusal
 	// leaves nothing written.
 	RescheduleSchoolVisit(context.Context, *connect.Request[v1.RescheduleSchoolVisitRequest]) (*connect.Response[v1.RescheduleSchoolVisitResponse], error)
+	// Call off one scheduled school visit as the caller: the third save
+	// (docs/migration/30), from My Plan's Cancel drawer
+	// (/my-plan/{id}/cancel-drawer posting to /my-plan/{id}/cancel), for
+	// exactly 30.1's case — a visit of the first save's kind, still only a
+	// plan, called off by its owner. The answer is the cancelled activity, or
+	// the existing application's own words for why it was refused. A refusal
+	// changes nothing but the refusal's own audit row, as today.
+	CancelSchoolVisit(context.Context, *connect.Request[v1.CancelSchoolVisitRequest]) (*connect.Response[v1.CancelSchoolVisitResponse], error)
 }
 
 // NewActivityServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -134,12 +165,20 @@ func NewActivityServiceHandler(svc ActivityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(activityServiceMethods.ByName("RescheduleSchoolVisit")),
 		connect.WithHandlerOptions(opts...),
 	)
+	activityServiceCancelSchoolVisitHandler := connect.NewUnaryHandler(
+		ActivityServiceCancelSchoolVisitProcedure,
+		svc.CancelSchoolVisit,
+		connect.WithSchema(activityServiceMethods.ByName("CancelSchoolVisit")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.activities.v1.ActivityService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ActivityServiceScheduleSchoolVisitProcedure:
 			activityServiceScheduleSchoolVisitHandler.ServeHTTP(w, r)
 		case ActivityServiceRescheduleSchoolVisitProcedure:
 			activityServiceRescheduleSchoolVisitHandler.ServeHTTP(w, r)
+		case ActivityServiceCancelSchoolVisitProcedure:
+			activityServiceCancelSchoolVisitHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -155,4 +194,8 @@ func (UnimplementedActivityServiceHandler) ScheduleSchoolVisit(context.Context, 
 
 func (UnimplementedActivityServiceHandler) RescheduleSchoolVisit(context.Context, *connect.Request[v1.RescheduleSchoolVisitRequest]) (*connect.Response[v1.RescheduleSchoolVisitResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.activities.v1.ActivityService.RescheduleSchoolVisit is not implemented"))
+}
+
+func (UnimplementedActivityServiceHandler) CancelSchoolVisit(context.Context, *connect.Request[v1.CancelSchoolVisitRequest]) (*connect.Response[v1.CancelSchoolVisitResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.activities.v1.ActivityService.CancelSchoolVisit is not implemented"))
 }

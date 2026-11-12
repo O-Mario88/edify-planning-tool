@@ -1,0 +1,211 @@
+[
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7vrk008fvxekheps",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-11-17",
+   "activity_purpose_text": "[shadow-c] A",
+   "expected_outcome": "[shadow-c] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7ugn00b7crekhe2v",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "ssa_support",
+   "scheduled_date": "2026-11-18",
+   "activity_purpose_text": "[shadow-c] B",
+   "expected_outcome": "[shadow-c] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7wf5008ft3ekheff",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "story_gathering",
+   "scheduled_date": "2026-11-18",
+   "activity_purpose_text": "[shadow-c] C",
+   "expected_outcome": "[shadow-c] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7grv003oz8ekher8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "school_invitation",
+   "scheduled_date": "2026-11-19",
+   "activity_purpose_text": "[shadow-c] D",
+   "expected_outcome": "[shadow-c] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7p1600jp11ekhe2r",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "social_visit",
+   "scheduled_date": "2026-11-20",
+   "activity_purpose_text": "[shadow-c] E",
+   "expected_outcome": "[shadow-c] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7n6j00ld8hekhej6",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "training_follow_up",
+   "scheduled_date": "2026-11-24",
+   "activity_purpose_text": "[shadow-c] F",
+   "expected_outcome": "[shadow-c] outcome",
+   "catalogue_item_id": ""
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] E}/reschedule-drawer",
+  "form": "/my-plan/{activity:[shadow-c] E}/reschedule",
+  "set": {
+   "scheduled_date": "2026-12-01",
+   "reason": "[shadow-c] into the sent week"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] F}/reschedule-drawer",
+  "form": "/my-plan/{activity:[shadow-c] F}/reschedule",
+  "set": {
+   "scheduled_date": "2026-11-25",
+   "reason": "[shadow-c] moved first"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] A}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] A}/cancel",
+  "set": {
+   "reason": "[shadow-c] the school closed"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] B}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] B}/cancel",
+  "set": {
+   "reason": "[shadow-c] the head teacher is away"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] D}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] D}/cancel",
+  "set": {
+   "reason": ""
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] F}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] F}/cancel",
+  "set": {
+   "reason": "[shadow-c] moved, then called off"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] A}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] A}/cancel",
+  "set": {
+   "reason": "[shadow-c] again"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] E}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] E}/cancel",
+  "set": {
+   "reason": "[shadow-c] in the sent week"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/cmwclue57008yjsdhhc9v/cancel-drawer",
+  "form": "/my-plan/cmwclue57008yjsdhhc9v/cancel",
+  "set": {
+   "reason": "[shadow-c] pair"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/cmwd518kt00mo8bdhhc6v/cancel-drawer",
+  "form": "/my-plan/cmwd518kt00mo8bdhhc6v/cancel",
+  "set": {
+   "reason": "[shadow-c] core"
+  }
+ },
+ {
+  "who": "cceo1@edify.org",
+  "open": "/my-plan/cmwd2x86z008h5khkdjob/cancel-drawer",
+  "form": "/my-plan/cmwd2x86z008h5khkdjob/cancel",
+  "set": {
+   "reason": "[shadow-c] not mine"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] D}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] D}/cancel",
+  "set": {
+   "reason": "[shadow-c] the day empties"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] C}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] C}/cancel",
+  "set": {
+   "reason": "[shadow-c] the last of its day"
+  }
+ }
+]

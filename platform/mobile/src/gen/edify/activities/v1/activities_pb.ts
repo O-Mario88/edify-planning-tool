@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/activities/v1/activities.proto.
  */
 export const file_edify_activities_v1_activities: GenFile = /*@__PURE__*/
-  fileDesc("CiRlZGlmeS9hY3Rpdml0aWVzL3YxL2FjdGl2aXRpZXMucHJvdG8SE2VkaWZ5LmFjdGl2aXRpZXMudjEi6gEKGlNjaGVkdWxlU2Nob29sVmlzaXRSZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRIYChBwdXJwb3NlX29mX3Zpc2l0GAIgASgJEhYKDnNjaGVkdWxlZF9kYXRlGAMgASgJEhUKDWFjdGl2aXR5X2dvYWwYBCABKAkSGAoQZXhwZWN0ZWRfb3V0Y29tZRgFIAEoCRIcChRzc2FfZGV2aWF0aW9uX3JlYXNvbhgGIAEoCRIZChFjYXRhbG9ndWVfaXRlbV9pZBgHIAEoCRIdChVyZWNvbW1lbmRhdGlvbl9yZWFzb24YCCABKAkiaAobU2NoZWR1bGVTY2hvb2xWaXNpdFJlc3BvbnNlEjgKCGFjdGl2aXR5GAEgASgLMiYuZWRpZnkuYWN0aXZpdGllcy52MS5TY2hlZHVsZWRBY3Rpdml0eRIPCgdyZWZ1c2VkGAIgASgJIrQBChFTY2hlZHVsZWRBY3Rpdml0eRIKCgJpZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSFQoNYWN0aXZpdHlfdHlwZRgDIAEoCRIUCgxwbGFubmVkX2RhdGUYBCABKAkSCgoCZnkYBSABKAkSDwoHbWVzc2FnZRgGIAEoCRIOCgZub3RpY2UYByABKAkSEAoIcGxhbl91cmwYCCABKAkSFwoPcGxhbl9saW5rX2xhYmVsGAkgASgJIlsKHFJlc2NoZWR1bGVTY2hvb2xWaXNpdFJlcXVlc3QSEwoLYWN0aXZpdHlfaWQYASABKAkSFgoOc2NoZWR1bGVkX2RhdGUYAiABKAkSDgoGcmVhc29uGAMgASgJImwKHVJlc2NoZWR1bGVTY2hvb2xWaXNpdFJlc3BvbnNlEjoKCGFjdGl2aXR5GAEgASgLMiguZWRpZnkuYWN0aXZpdGllcy52MS5SZXNjaGVkdWxlZEFjdGl2aXR5Eg8KB3JlZnVzZWQYAiABKAkifgoTUmVzY2hlZHVsZWRBY3Rpdml0eRIKCgJpZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSFAoMcGxhbm5lZF9kYXRlGAMgASgJEgoKAmZ5GAQgASgJEhgKEHJlc2NoZWR1bGVfY291bnQYBSABKAUSDwoHbWVzc2FnZRgGIAEoCTKLAgoPQWN0aXZpdHlTZXJ2aWNlEngKE1NjaGVkdWxlU2Nob29sVmlzaXQSLy5lZGlmeS5hY3Rpdml0aWVzLnYxLlNjaGVkdWxlU2Nob29sVmlzaXRSZXF1ZXN0GjAuZWRpZnkuYWN0aXZpdGllcy52MS5TY2hlZHVsZVNjaG9vbFZpc2l0UmVzcG9uc2USfgoVUmVzY2hlZHVsZVNjaG9vbFZpc2l0EjEuZWRpZnkuYWN0aXZpdGllcy52MS5SZXNjaGVkdWxlU2Nob29sVmlzaXRSZXF1ZXN0GjIuZWRpZnkuYWN0aXZpdGllcy52MS5SZXNjaGVkdWxlU2Nob29sVmlzaXRSZXNwb25zZUL4AQoXY29tLmVkaWZ5LmFjdGl2aXRpZXMudjFCD0FjdGl2aXRpZXNQcm90b1ABWl5naXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L2FjdGl2aXRpZXMvdjE7YWN0aXZpdGllc3YxogIDRUFYqgITRWRpZnkuQWN0aXZpdGllcy5WMcoCE0VkaWZ5XEFjdGl2aXRpZXNcVjHiAh9FZGlmeVxBY3Rpdml0aWVzXFYxXEdQQk1ldGFkYXRh6gIVRWRpZnk6OkFjdGl2aXRpZXM6OlYxYgZwcm90bzM");
+  fileDesc("CiRlZGlmeS9hY3Rpdml0aWVzL3YxL2FjdGl2aXRpZXMucHJvdG8SE2VkaWZ5LmFjdGl2aXRpZXMudjEi6gEKGlNjaGVkdWxlU2Nob29sVmlzaXRSZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRIYChBwdXJwb3NlX29mX3Zpc2l0GAIgASgJEhYKDnNjaGVkdWxlZF9kYXRlGAMgASgJEhUKDWFjdGl2aXR5X2dvYWwYBCABKAkSGAoQZXhwZWN0ZWRfb3V0Y29tZRgFIAEoCRIcChRzc2FfZGV2aWF0aW9uX3JlYXNvbhgGIAEoCRIZChFjYXRhbG9ndWVfaXRlbV9pZBgHIAEoCRIdChVyZWNvbW1lbmRhdGlvbl9yZWFzb24YCCABKAkiaAobU2NoZWR1bGVTY2hvb2xWaXNpdFJlc3BvbnNlEjgKCGFjdGl2aXR5GAEgASgLMiYuZWRpZnkuYWN0aXZpdGllcy52MS5TY2hlZHVsZWRBY3Rpdml0eRIPCgdyZWZ1c2VkGAIgASgJIrQBChFTY2hlZHVsZWRBY3Rpdml0eRIKCgJpZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSFQoNYWN0aXZpdHlfdHlwZRgDIAEoCRIUCgxwbGFubmVkX2RhdGUYBCABKAkSCgoCZnkYBSABKAkSDwoHbWVzc2FnZRgGIAEoCRIOCgZub3RpY2UYByABKAkSEAoIcGxhbl91cmwYCCABKAkSFwoPcGxhbl9saW5rX2xhYmVsGAkgASgJIlsKHFJlc2NoZWR1bGVTY2hvb2xWaXNpdFJlcXVlc3QSEwoLYWN0aXZpdHlfaWQYASABKAkSFgoOc2NoZWR1bGVkX2RhdGUYAiABKAkSDgoGcmVhc29uGAMgASgJImwKHVJlc2NoZWR1bGVTY2hvb2xWaXNpdFJlc3BvbnNlEjoKCGFjdGl2aXR5GAEgASgLMiguZWRpZnkuYWN0aXZpdGllcy52MS5SZXNjaGVkdWxlZEFjdGl2aXR5Eg8KB3JlZnVzZWQYAiABKAkifgoTUmVzY2hlZHVsZWRBY3Rpdml0eRIKCgJpZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSFAoMcGxhbm5lZF9kYXRlGAMgASgJEgoKAmZ5GAQgASgJEhgKEHJlc2NoZWR1bGVfY291bnQYBSABKAUSDwoHbWVzc2FnZRgGIAEoCSI/ChhDYW5jZWxTY2hvb2xWaXNpdFJlcXVlc3QSEwoLYWN0aXZpdHlfaWQYASABKAkSDgoGcmVhc29uGAIgASgJImYKGUNhbmNlbFNjaG9vbFZpc2l0UmVzcG9uc2USOAoIYWN0aXZpdHkYASABKAsyJi5lZGlmeS5hY3Rpdml0aWVzLnYxLkNhbmNlbGxlZEFjdGl2aXR5Eg8KB3JlZnVzZWQYAiABKAkiUAoRQ2FuY2VsbGVkQWN0aXZpdHkSCgoCaWQYASABKAkSDgoGc3RhdHVzGAIgASgJEg4KBnJlYXNvbhgDIAEoCRIPCgdtZXNzYWdlGAQgASgJMv8CCg9BY3Rpdml0eVNlcnZpY2USeAoTU2NoZWR1bGVTY2hvb2xWaXNpdBIvLmVkaWZ5LmFjdGl2aXRpZXMudjEuU2NoZWR1bGVTY2hvb2xWaXNpdFJlcXVlc3QaMC5lZGlmeS5hY3Rpdml0aWVzLnYxLlNjaGVkdWxlU2Nob29sVmlzaXRSZXNwb25zZRJ+ChVSZXNjaGVkdWxlU2Nob29sVmlzaXQSMS5lZGlmeS5hY3Rpdml0aWVzLnYxLlJlc2NoZWR1bGVTY2hvb2xWaXNpdFJlcXVlc3QaMi5lZGlmeS5hY3Rpdml0aWVzLnYxLlJlc2NoZWR1bGVTY2hvb2xWaXNpdFJlc3BvbnNlEnIKEUNhbmNlbFNjaG9vbFZpc2l0Ei0uZWRpZnkuYWN0aXZpdGllcy52MS5DYW5jZWxTY2hvb2xWaXNpdFJlcXVlc3QaLi5lZGlmeS5hY3Rpdml0aWVzLnYxLkNhbmNlbFNjaG9vbFZpc2l0UmVzcG9uc2VC+AEKF2NvbS5lZGlmeS5hY3Rpdml0aWVzLnYxQg9BY3Rpdml0aWVzUHJvdG9QAVpeZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9hY3Rpdml0aWVzL3YxO2FjdGl2aXRpZXN2MaICA0VBWKoCE0VkaWZ5LkFjdGl2aXRpZXMuVjHKAhNFZGlmeVxBY3Rpdml0aWVzXFYx4gIfRWRpZnlcQWN0aXZpdGllc1xWMVxHUEJNZXRhZGF0YeoCFUVkaWZ5OjpBY3Rpdml0aWVzOjpWMWIGcHJvdG8z");
 
 /**
  * The drawer's own fields, named as it posts them.
@@ -315,6 +315,104 @@ export const RescheduledActivitySchema: GenMessage<RescheduledActivity> = /*@__P
   messageDesc(file_edify_activities_v1_activities, 5);
 
 /**
+ * The Cancel drawer's fields, named as it posts them.
+ *
+ * @generated from message edify.activities.v1.CancelSchoolVisitRequest
+ */
+export type CancelSchoolVisitRequest = Message<"edify.activities.v1.CancelSchoolVisitRequest"> & {
+  /**
+   * activity.id: the visit being called off.
+   *
+   * @generated from field: string activity_id = 1;
+   */
+  activityId: string;
+
+  /**
+   * reason: why it is called off. Required: the existing save refuses a
+   * blank one ("Give a reason this activity is being cancelled.").
+   *
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message edify.activities.v1.CancelSchoolVisitRequest.
+ * Use `create(CancelSchoolVisitRequestSchema)` to create a new message.
+ */
+export const CancelSchoolVisitRequestSchema: GenMessage<CancelSchoolVisitRequest> = /*@__PURE__*/
+  messageDesc(file_edify_activities_v1_activities, 6);
+
+/**
+ * What the cancel did. Exactly one of activity or refused is set.
+ *
+ * @generated from message edify.activities.v1.CancelSchoolVisitResponse
+ */
+export type CancelSchoolVisitResponse = Message<"edify.activities.v1.CancelSchoolVisitResponse"> & {
+  /**
+   * @generated from field: edify.activities.v1.CancelledActivity activity = 1;
+   */
+  activity?: CancelledActivity | undefined;
+
+  /**
+   * The existing application's words for a refused cancel, e.g. "Give a
+   * reason this activity is being cancelled."
+   *
+   * @generated from field: string refused = 2;
+   */
+  refused: string;
+};
+
+/**
+ * Describes the message edify.activities.v1.CancelSchoolVisitResponse.
+ * Use `create(CancelSchoolVisitResponseSchema)` to create a new message.
+ */
+export const CancelSchoolVisitResponseSchema: GenMessage<CancelSchoolVisitResponse> = /*@__PURE__*/
+  messageDesc(file_edify_activities_v1_activities, 7);
+
+/**
+ * The activity a cancel left, and the confirmation the web shows for it.
+ *
+ * @generated from message edify.activities.v1.CancelledActivity
+ */
+export type CancelledActivity = Message<"edify.activities.v1.CancelledActivity"> & {
+  /**
+   * activity.id.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * activity.status: "cancelled".
+   *
+   * @generated from field: string status = 2;
+   */
+  status: string;
+
+  /**
+   * activity.last_reason: the reason given.
+   *
+   * @generated from field: string reason = 3;
+   */
+  reason: string;
+
+  /**
+   * "Saved. Press Refresh to see it on the page."
+   *
+   * @generated from field: string message = 4;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message edify.activities.v1.CancelledActivity.
+ * Use `create(CancelledActivitySchema)` to create a new message.
+ */
+export const CancelledActivitySchema: GenMessage<CancelledActivity> = /*@__PURE__*/
+  messageDesc(file_edify_activities_v1_activities, 8);
+
+/**
  * Activities, saved by Go one save at a time (owner, 2026-11-12: "Yes, one
  * at a time"; docs/migration/03 §3.7, 27 §27.5). Until a save moves, the
  * existing application makes it; a save is never made by both.
@@ -358,6 +456,22 @@ export const ActivityService: GenService<{
     methodKind: "unary";
     input: typeof RescheduleSchoolVisitRequestSchema;
     output: typeof RescheduleSchoolVisitResponseSchema;
+  },
+  /**
+   * Call off one scheduled school visit as the caller: the third save
+   * (docs/migration/30), from My Plan's Cancel drawer
+   * (/my-plan/{id}/cancel-drawer posting to /my-plan/{id}/cancel), for
+   * exactly 30.1's case — a visit of the first save's kind, still only a
+   * plan, called off by its owner. The answer is the cancelled activity, or
+   * the existing application's own words for why it was refused. A refusal
+   * changes nothing but the refusal's own audit row, as today.
+   *
+   * @generated from rpc edify.activities.v1.ActivityService.CancelSchoolVisit
+   */
+  cancelSchoolVisit: {
+    methodKind: "unary";
+    input: typeof CancelSchoolVisitRequestSchema;
+    output: typeof CancelSchoolVisitResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_activities_v1_activities, 0);

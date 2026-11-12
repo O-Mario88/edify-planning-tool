@@ -524,6 +524,190 @@ func (x *RescheduledActivity) GetMessage() string {
 	return ""
 }
 
+// The Cancel drawer's fields, named as it posts them.
+type CancelSchoolVisitRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// activity.id: the visit being called off.
+	ActivityId string `protobuf:"bytes,1,opt,name=activity_id,json=activityId,proto3" json:"activity_id,omitempty"`
+	// reason: why it is called off. Required: the existing save refuses a
+	// blank one ("Give a reason this activity is being cancelled.").
+	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelSchoolVisitRequest) Reset() {
+	*x = CancelSchoolVisitRequest{}
+	mi := &file_edify_activities_v1_activities_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelSchoolVisitRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelSchoolVisitRequest) ProtoMessage() {}
+
+func (x *CancelSchoolVisitRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_activities_v1_activities_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelSchoolVisitRequest.ProtoReflect.Descriptor instead.
+func (*CancelSchoolVisitRequest) Descriptor() ([]byte, []int) {
+	return file_edify_activities_v1_activities_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CancelSchoolVisitRequest) GetActivityId() string {
+	if x != nil {
+		return x.ActivityId
+	}
+	return ""
+}
+
+func (x *CancelSchoolVisitRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+// What the cancel did. Exactly one of activity or refused is set.
+type CancelSchoolVisitResponse struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Activity *CancelledActivity     `protobuf:"bytes,1,opt,name=activity,proto3" json:"activity,omitempty"`
+	// The existing application's words for a refused cancel, e.g. "Give a
+	// reason this activity is being cancelled."
+	Refused       string `protobuf:"bytes,2,opt,name=refused,proto3" json:"refused,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelSchoolVisitResponse) Reset() {
+	*x = CancelSchoolVisitResponse{}
+	mi := &file_edify_activities_v1_activities_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelSchoolVisitResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelSchoolVisitResponse) ProtoMessage() {}
+
+func (x *CancelSchoolVisitResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_activities_v1_activities_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelSchoolVisitResponse.ProtoReflect.Descriptor instead.
+func (*CancelSchoolVisitResponse) Descriptor() ([]byte, []int) {
+	return file_edify_activities_v1_activities_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CancelSchoolVisitResponse) GetActivity() *CancelledActivity {
+	if x != nil {
+		return x.Activity
+	}
+	return nil
+}
+
+func (x *CancelSchoolVisitResponse) GetRefused() string {
+	if x != nil {
+		return x.Refused
+	}
+	return ""
+}
+
+// The activity a cancel left, and the confirmation the web shows for it.
+type CancelledActivity struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// activity.id.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// activity.status: "cancelled".
+	Status string `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	// activity.last_reason: the reason given.
+	Reason string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	// "Saved. Press Refresh to see it on the page."
+	Message       string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelledActivity) Reset() {
+	*x = CancelledActivity{}
+	mi := &file_edify_activities_v1_activities_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelledActivity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelledActivity) ProtoMessage() {}
+
+func (x *CancelledActivity) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_activities_v1_activities_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelledActivity.ProtoReflect.Descriptor instead.
+func (*CancelledActivity) Descriptor() ([]byte, []int) {
+	return file_edify_activities_v1_activities_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CancelledActivity) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CancelledActivity) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *CancelledActivity) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *CancelledActivity) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_edify_activities_v1_activities_proto protoreflect.FileDescriptor
 
 const file_edify_activities_v1_activities_proto_rawDesc = "" +
@@ -565,10 +749,23 @@ const file_edify_activities_v1_activities_proto_rawDesc = "" +
 	"\fplanned_date\x18\x03 \x01(\tR\vplannedDate\x12\x0e\n" +
 	"\x02fy\x18\x04 \x01(\tR\x02fy\x12)\n" +
 	"\x10reschedule_count\x18\x05 \x01(\x05R\x0frescheduleCount\x12\x18\n" +
-	"\amessage\x18\x06 \x01(\tR\amessage2\x8b\x02\n" +
+	"\amessage\x18\x06 \x01(\tR\amessage\"S\n" +
+	"\x18CancelSchoolVisitRequest\x12\x1f\n" +
+	"\vactivity_id\x18\x01 \x01(\tR\n" +
+	"activityId\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"y\n" +
+	"\x19CancelSchoolVisitResponse\x12B\n" +
+	"\bactivity\x18\x01 \x01(\v2&.edify.activities.v1.CancelledActivityR\bactivity\x12\x18\n" +
+	"\arefused\x18\x02 \x01(\tR\arefused\"m\n" +
+	"\x11CancelledActivity\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage2\xff\x02\n" +
 	"\x0fActivityService\x12x\n" +
 	"\x13ScheduleSchoolVisit\x12/.edify.activities.v1.ScheduleSchoolVisitRequest\x1a0.edify.activities.v1.ScheduleSchoolVisitResponse\x12~\n" +
-	"\x15RescheduleSchoolVisit\x121.edify.activities.v1.RescheduleSchoolVisitRequest\x1a2.edify.activities.v1.RescheduleSchoolVisitResponseB\xf8\x01\n" +
+	"\x15RescheduleSchoolVisit\x121.edify.activities.v1.RescheduleSchoolVisitRequest\x1a2.edify.activities.v1.RescheduleSchoolVisitResponse\x12r\n" +
+	"\x11CancelSchoolVisit\x12-.edify.activities.v1.CancelSchoolVisitRequest\x1a..edify.activities.v1.CancelSchoolVisitResponseB\xf8\x01\n" +
 	"\x17com.edify.activities.v1B\x0fActivitiesProtoP\x01Z^github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/activities/v1;activitiesv1\xa2\x02\x03EAX\xaa\x02\x13Edify.Activities.V1\xca\x02\x13Edify\\Activities\\V1\xe2\x02\x1fEdify\\Activities\\V1\\GPBMetadata\xea\x02\x15Edify::Activities::V1b\x06proto3"
 
 var (
@@ -583,7 +780,7 @@ func file_edify_activities_v1_activities_proto_rawDescGZIP() []byte {
 	return file_edify_activities_v1_activities_proto_rawDescData
 }
 
-var file_edify_activities_v1_activities_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_edify_activities_v1_activities_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_edify_activities_v1_activities_proto_goTypes = []any{
 	(*ScheduleSchoolVisitRequest)(nil),    // 0: edify.activities.v1.ScheduleSchoolVisitRequest
 	(*ScheduleSchoolVisitResponse)(nil),   // 1: edify.activities.v1.ScheduleSchoolVisitResponse
@@ -591,19 +788,25 @@ var file_edify_activities_v1_activities_proto_goTypes = []any{
 	(*RescheduleSchoolVisitRequest)(nil),  // 3: edify.activities.v1.RescheduleSchoolVisitRequest
 	(*RescheduleSchoolVisitResponse)(nil), // 4: edify.activities.v1.RescheduleSchoolVisitResponse
 	(*RescheduledActivity)(nil),           // 5: edify.activities.v1.RescheduledActivity
+	(*CancelSchoolVisitRequest)(nil),      // 6: edify.activities.v1.CancelSchoolVisitRequest
+	(*CancelSchoolVisitResponse)(nil),     // 7: edify.activities.v1.CancelSchoolVisitResponse
+	(*CancelledActivity)(nil),             // 8: edify.activities.v1.CancelledActivity
 }
 var file_edify_activities_v1_activities_proto_depIdxs = []int32{
 	2, // 0: edify.activities.v1.ScheduleSchoolVisitResponse.activity:type_name -> edify.activities.v1.ScheduledActivity
 	5, // 1: edify.activities.v1.RescheduleSchoolVisitResponse.activity:type_name -> edify.activities.v1.RescheduledActivity
-	0, // 2: edify.activities.v1.ActivityService.ScheduleSchoolVisit:input_type -> edify.activities.v1.ScheduleSchoolVisitRequest
-	3, // 3: edify.activities.v1.ActivityService.RescheduleSchoolVisit:input_type -> edify.activities.v1.RescheduleSchoolVisitRequest
-	1, // 4: edify.activities.v1.ActivityService.ScheduleSchoolVisit:output_type -> edify.activities.v1.ScheduleSchoolVisitResponse
-	4, // 5: edify.activities.v1.ActivityService.RescheduleSchoolVisit:output_type -> edify.activities.v1.RescheduleSchoolVisitResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	8, // 2: edify.activities.v1.CancelSchoolVisitResponse.activity:type_name -> edify.activities.v1.CancelledActivity
+	0, // 3: edify.activities.v1.ActivityService.ScheduleSchoolVisit:input_type -> edify.activities.v1.ScheduleSchoolVisitRequest
+	3, // 4: edify.activities.v1.ActivityService.RescheduleSchoolVisit:input_type -> edify.activities.v1.RescheduleSchoolVisitRequest
+	6, // 5: edify.activities.v1.ActivityService.CancelSchoolVisit:input_type -> edify.activities.v1.CancelSchoolVisitRequest
+	1, // 6: edify.activities.v1.ActivityService.ScheduleSchoolVisit:output_type -> edify.activities.v1.ScheduleSchoolVisitResponse
+	4, // 7: edify.activities.v1.ActivityService.RescheduleSchoolVisit:output_type -> edify.activities.v1.RescheduleSchoolVisitResponse
+	7, // 8: edify.activities.v1.ActivityService.CancelSchoolVisit:output_type -> edify.activities.v1.CancelSchoolVisitResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_edify_activities_v1_activities_proto_init() }
@@ -617,7 +820,7 @@ func file_edify_activities_v1_activities_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_activities_v1_activities_proto_rawDesc), len(file_edify_activities_v1_activities_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

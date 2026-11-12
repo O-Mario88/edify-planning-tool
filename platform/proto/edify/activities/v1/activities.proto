@@ -28,6 +28,15 @@ service ActivityService {
   // existing application's own words for why it was refused. A refusal
   // leaves nothing written.
   rpc RescheduleSchoolVisit(RescheduleSchoolVisitRequest) returns (RescheduleSchoolVisitResponse);
+
+  // Call off one scheduled school visit as the caller: the third save
+  // (docs/migration/30), from My Plan's Cancel drawer
+  // (/my-plan/{id}/cancel-drawer posting to /my-plan/{id}/cancel), for
+  // exactly 30.1's case — a visit of the first save's kind, still only a
+  // plan, called off by its owner. The answer is the cancelled activity, or
+  // the existing application's own words for why it was refused. A refusal
+  // changes nothing but the refusal's own audit row, as today.
+  rpc CancelSchoolVisit(CancelSchoolVisitRequest) returns (CancelSchoolVisitResponse);
 }
 
 // The drawer's own fields, named as it posts them.
@@ -123,4 +132,33 @@ message RescheduledActivity {
   int32 reschedule_count = 5;
   // "Saved. Press Refresh to see it on the page."
   string message = 6;
+}
+
+// The Cancel drawer's fields, named as it posts them.
+message CancelSchoolVisitRequest {
+  // activity.id: the visit being called off.
+  string activity_id = 1;
+  // reason: why it is called off. Required: the existing save refuses a
+  // blank one ("Give a reason this activity is being cancelled.").
+  string reason = 2;
+}
+
+// What the cancel did. Exactly one of activity or refused is set.
+message CancelSchoolVisitResponse {
+  CancelledActivity activity = 1;
+  // The existing application's words for a refused cancel, e.g. "Give a
+  // reason this activity is being cancelled."
+  string refused = 2;
+}
+
+// The activity a cancel left, and the confirmation the web shows for it.
+message CancelledActivity {
+  // activity.id.
+  string id = 1;
+  // activity.status: "cancelled".
+  string status = 2;
+  // activity.last_reason: the reason given.
+  string reason = 3;
+  // "Saved. Press Refresh to see it on the page."
+  string message = 4;
 }
