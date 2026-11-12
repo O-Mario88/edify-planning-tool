@@ -112,6 +112,13 @@ This procedure needs explicit approval each time it is used.
 
 No dual writes, ever. For each table:
 
+(Owner, 2026-11-12, for tables many saves write, such as `activity`: the
+cutover is **one save at a time**. A save moves to Go in one approved step
+and is switched off in Django in the same release; until a table's last
+save has moved, both systems write that table, each through its own saves
+only, under the same row locks and the same rules, as sign-in does. A save
+is never made by both. 27 §27.5.)
+
 (Sign-in is the one place where, on development and test databases, both
 systems write the same columns, under the same row locks and the same
 policy, while the web's sign-in page still uses the existing application.

@@ -81,7 +81,10 @@ request):
   a sanitised restore (M5's exit). The audit chain is then verified by the
   existing `verify_chain(full=True)`.
 
-## 27.5 Decision for the owner
+## 27.5 Decided: one save at a time (owner, 2026-11-12)
+
+The owner's answer: "Yes, one at a time". The reasoning it settled:
+
 
 **One writer per table (03, 3.7) cannot hold save by save for `activity`.**
 Dozens of saves write that table (schedule, edit, reschedule, cancel,
