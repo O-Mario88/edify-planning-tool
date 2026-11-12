@@ -149,6 +149,16 @@ def play(client: Client, step: dict) -> dict:
     for k, v in fields:
         data.setdefault(k, []).append(v)
     answer = client.post(form["action"], data, **headers)
+    # The pricing that follows a save runs in a thread of its own once the
+    # save commits (apps.daily_visit_batches.costs_follow); let it finish
+    # before the next step, as a person's next request waits for it.
+    from apps.daily_visit_batches.costs_follow import wait
+    from apps.routes import after_save
+
+    wait()
+    # And the route check that follows the pricing (apps.routes.after_save).
+    for thread in list(after_save._running):
+        thread.join(30)
     trigger = answer.headers.get("HX-Trigger", "")
     return {
         "ok": answer.status_code < 400,
@@ -156,6 +166,9 @@ def play(client: Client, step: dict) -> dict:
         "action": form["action"],
         "trigger": trigger,
         "message": message(answer.content.decode()),
+        # What the drawer posted, so another runner (cmd/shadow/goplay) can
+        # make the same save with the same fields.
+        "posted": data,
     }
 
 

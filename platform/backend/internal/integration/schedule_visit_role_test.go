@@ -4,9 +4,19 @@ package integration
 
 import (
 	"context"
+	"errors"
+	"io"
+	"log/slog"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
 )
 
 // The writer role for the first Go save, scheduling a school visit
@@ -67,5 +77,142 @@ UPDATE ssa_recommendation SET state = 'planned', planned_activity_id = 'role-tes
 		if _, err := tx.Exec(ctx, step.statement); err != nil {
 			t.Fatalf("%s: %v", step.name, err)
 		}
+	}
+}
+
+// The school row lock (27.8 §2): the gateway takes the same row lock the
+// existing save takes, through gateway_lock.lock_school, and a second
+// session asking for that row's lock waits for it; the gateway still cannot
+// write the school or become the lock's owner.
+func TestTheSchoolLockBlocksAnotherSessionsLock(t *testing.T) {
+	ctx := context.Background()
+	var schoolID string
+	if err := admin.QueryRow(ctx, `SELECT id FROM school WHERE deleted_at IS NULL LIMIT 1`).Scan(&schoolID); err != nil {
+		t.Fatal(err)
+	}
+	tx, err := gateway.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var locked bool
+	if err := tx.QueryRow(ctx, `SELECT gateway_lock.lock_school($1)`, schoolID).Scan(&locked); err != nil || !locked {
+		t.Fatalf("the gateway's lock: %v %v", locked, err)
+	}
+
+	other, err := admin.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = other.Rollback(ctx) }()
+	_, err = other.Exec(ctx, `SELECT 1 FROM school WHERE id = $1 FOR UPDATE NOWAIT`, schoolID)
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) || pgErr.Code != "55P03" {
+		t.Fatalf("another session's FOR UPDATE must wait for the gateway's lock, got %v", err)
+	}
+
+	for name, statement := range map[string]string{
+		"write a school":       `UPDATE school SET updated_at = updated_at WHERE id = '` + schoolID + `'`,
+		"become the lock role": `SET ROLE edify_school_lock_owner`,
+	} {
+		conn, err := gateway.Acquire(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = conn.Conn().PgConn().Exec(ctx, `BEGIN READ WRITE; `+statement).ReadAll()
+		if !errors.As(err, &pgErr) || pgErr.Code != "42501" {
+			t.Fatalf("%s: must be refused for privilege, got %v", name, err)
+		}
+		_, _ = conn.Conn().PgConn().Exec(ctx, "ROLLBACK").ReadAll()
+		conn.Release()
+	}
+}
+
+// fakePricing answers the day check as the existing application would for
+// a day it pools; the refusals below are all met before it is asked, or
+// handed on, so nothing is written.
+type fakePricing struct{ asked int }
+
+func (f *fakePricing) DayCheck(context.Context, map[string]any) (activities.DayVerdict, error) {
+	f.asked++
+	return activities.DayVerdict{Pooled: true}, nil
+}
+
+func (f *fakePricing) Settle(context.Context, []int64, string) error { return nil }
+
+// The save's refusals and hand-ons, made as the gateway against the test
+// database; none of them writes a row (the saves themselves are proved in
+// shadow, docs/migration/27 §27.9).
+func TestTheVisitSaveRefusesAndHandsOnInTheExistingWords(t *testing.T) {
+	ctx := context.Background()
+	pricing := &fakePricing{}
+	svc, err := activities.NewService(gateway, pricing, slog.New(slog.NewTextHandler(io.Discard, nil)),
+		func() time.Time { return time.Date(2026, 11, 12, 9, 0, 0, 0, time.UTC) })
+	if err != nil {
+		t.Fatal(err)
+	}
+	principal := func(email string) auth.Principal {
+		account, err := identity.NewStore(gateway).LoadAccount(ctx, borrowAccount(t, email))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return auth.Principal{Account: account}
+	}
+	cceo := principal("cceo@edify.org")
+	var client, core string
+	if err := admin.QueryRow(ctx, `
+WITH own AS (SELECT DISTINCT ON (a.school_id) a.school_id, a.staff_id FROM staff_school_assignment a ORDER BY a.school_id, a.created_at)
+SELECT
+  (SELECT s.school_id FROM school s JOIN own ON own.school_id = s.id WHERE own.staff_id = $1 AND s.deleted_at IS NULL
+     AND s.school_type = 'client' AND s.operational_status = 'active' ORDER BY s.school_id LIMIT 1),
+  (SELECT s.school_id FROM school s JOIN own ON own.school_id = s.id WHERE own.staff_id = $1 AND s.deleted_at IS NULL
+     AND s.school_type = 'core' ORDER BY s.school_id LIMIT 1)`, cceo.StaffProfileID).Scan(&client, &core); err != nil {
+		t.Fatal(err)
+	}
+	visit := func(school, purpose, day string) activities.Request {
+		return activities.Request{SchoolID: school, Purpose: purpose, Date: day}
+	}
+	var before int
+	if err := admin.QueryRow(ctx, `SELECT count(*) FROM activity`).Scan(&before); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name    string
+		who     auth.Principal
+		req     activities.Request
+		refusal string
+		handOn  bool
+	}{
+		{"the Admin plans nothing", principal("admin@edify.org"), visit(client, "donor_visit", "2026-11-20"),
+			"Planning belongs to the staff member responsible for the school.", false},
+		{"a day that has passed", cceo, visit(client, "donor_visit", "2026-11-10"),
+			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
+		{"no day", cceo, visit(client, "donor_visit", ""), "Pick the date this is planned for before scheduling it.", false},
+		{"a Core school", cceo, visit(core, "donor_visit", "2026-11-20"), "", true},
+		{"In-school Training", cceo, visit(client, "in_school_training", "2026-11-20"), "", true},
+		{"a pinned item nobody knows", cceo, activities.Request{SchoolID: client, Purpose: "donor_visit",
+			Date: "2026-11-20", CatalogueItemID: "no-such-item"}, "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := svc.Schedule(ctx, tt.who, tt.req, activities.Origin{IP: "127.0.0.1"})
+			var refused *activities.Refusal
+			switch {
+			case tt.handOn:
+				if !errors.Is(err, activities.ErrHandOn) {
+					t.Fatalf("must be handed on, got %v", err)
+				}
+			case !errors.As(err, &refused) || !strings.HasPrefix(refused.Message, tt.refusal):
+				t.Fatalf("got %v, want %q", err, tt.refusal)
+			}
+		})
+	}
+	var after int
+	if err := admin.QueryRow(ctx, `SELECT count(*) FROM activity`).Scan(&after); err != nil || after != before {
+		t.Fatalf("a refused or handed-on save wrote %d activities (%v)", after-before, err)
+	}
+	if pricing.asked != 0 {
+		t.Fatalf("the pricing was asked %d times before a refusal it never reaches", pricing.asked)
 	}
 }

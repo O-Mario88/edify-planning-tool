@@ -16,11 +16,17 @@
 -- The gateway role stays read-only by default (default_transaction_read_only,
 -- roles.sql): the save opens a read-write transaction on purpose (08 §8.2).
 --
--- Not granted, on purpose (27.7): the school row lock. The existing save
--- holds SELECT … FOR UPDATE on the school while it asks the one-visit rule,
--- and Postgres needs an UPDATE right on some school column for that lock.
--- The staging guard (dbguard.VerifyIdentity) refuses any gateway role that
--- can write a school column, so that grant waits for the owner's decision.
+-- The school row lock (27.8 §2): the existing save holds SELECT … FOR UPDATE
+-- on the school while it asks the one-visit rule, and Postgres takes a row
+-- lock only for a role with an UPDATE right on a column of the table. The
+-- gateway holds none on school (dbguard.VerifyIdentity refuses one), so the
+-- lock is taken by gateway_lock.lock_school(id): a SECURITY DEFINER function
+-- owned by edify_school_lock_owner, a NOLOGIN role no one is a member of
+-- that holds UPDATE (updated_at) on school and nothing else of it. The
+-- function writes nothing; it takes the same row lock Django's saves take, in
+-- the caller's transaction, so a Go save and a Django save at the same school
+-- wait for each other. The gateway gets EXECUTE on it and nothing else.
+-- A new database object: production needs the owner's approval at cutover.
 
 DO $$
 BEGIN
@@ -86,8 +92,64 @@ GRANT UPDATE (marked_at) ON target_ledger_dirty TO edify_activities_rw;
 GRANT INSERT (created_at, updated_at, owners, asked_by, asked_by_role, steps, provenance, attempts,
               held_reason)
   ON daily_visit_costs_to_follow TO edify_activities_rw;
+-- Its id, read back (RETURNING) to ask for that row's settling.
+GRANT SELECT (id) ON daily_visit_costs_to_follow TO edify_activities_rw;
 
 -- A Training Follow Up answers the school's open recommendation for its
 -- intervention (apps.ssa.plan_alignment.link_recommendations): planned, by
 -- this activity. Its other columns stay the SSA's.
 GRANT UPDATE (state, planned_activity_id, decided_at, updated_at) ON ssa_recommendation TO edify_activities_rw;
+
+-- The lock's owner and function.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edify_school_lock_owner') THEN
+    CREATE ROLE edify_school_lock_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT;
+  END IF;
+END
+$$;
+GRANT USAGE ON SCHEMA public TO edify_school_lock_owner;
+GRANT SELECT (id) ON school TO edify_school_lock_owner;
+GRANT UPDATE (updated_at) ON school TO edify_school_lock_owner;
+
+CREATE SCHEMA IF NOT EXISTS gateway_lock AUTHORIZATION edify_school_lock_owner;
+REVOKE ALL ON SCHEMA gateway_lock FROM PUBLIC;
+
+SET ROLE edify_school_lock_owner;
+CREATE OR REPLACE FUNCTION gateway_lock.lock_school(target_id varchar) RETURNS boolean
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  PERFORM 1 FROM public.school s WHERE s.id = target_id FOR UPDATE;
+  RETURN FOUND;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_lock.lock_school(varchar) FROM PUBLIC;
+RESET ROLE;
+
+GRANT USAGE ON SCHEMA gateway_lock TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_lock.lock_school(varchar) TO edify_activities_rw;
+
+-- What the save reads to decide (27.6), and nothing else of these tables.
+GRANT SELECT (id, school_id, name, school_type, operational_status, district_id, cluster_id, deleted_at, created_at)
+  ON school TO edify_activities_rw;
+GRANT SELECT (id, name, district_type) ON district TO edify_activities_rw;
+GRANT SELECT (school_id, staff_id, created_at) ON staff_school_assignment TO edify_activities_rw;
+GRANT SELECT (id, user_id, deleted_at, primary_district_id, created_at) ON staff_profile TO edify_activities_rw;
+GRANT SELECT (id, name, roles, active_role) ON "user" TO edify_activities_rw;
+GRANT SELECT (id, stable_code, workflow_kind, display_name, activity_type, delivery_method, evidence_profile,
+              salesforce_record_type, costing_profile, status, standard_support, counts_toward_client_visit,
+              requires_school, requires_cluster, is_training_course, participant_mode, effective_from, effective_to)
+  ON activity_catalogue_item TO edify_activities_rw;
+GRANT SELECT (id, catalogue_item_id, mapping_mode, is_primary, priority, active) ON activity_intervention_mapping TO edify_activities_rw;
+GRANT SELECT (catalogue_item_id, version) ON activity_catalogue_version TO edify_activities_rw;
+GRANT SELECT (id, school_id, fy, date_of_ssa, created_at, average_score, verification_status, deleted_at)
+  ON ssa_record TO edify_activities_rw;
+GRANT SELECT (id, ssa_record_id, intervention, score) ON ssa_score TO edify_activities_rw;
+GRANT SELECT (id, school_id, intervention, state, created_at) ON ssa_recommendation TO edify_activities_rw;
+GRANT SELECT (country, fy, follow_up_visit_requires_prior_training, created_at) ON fiscal_year_planning_policy TO edify_activities_rw;
+GRANT SELECT (id, activity_type, planned_date, deleted_at, responsible_staff_id, assigned_partner_id, status,
+              school_id, catalogue_item_id, purpose_type)
+  ON activity TO edify_activities_rw;
+GRANT SELECT (id, responsible_user, visit_date, created_at) ON daily_visit_batch TO edify_activities_rw;
+GRANT SELECT (covering_staff_id, original_staff_id, start_datetime, end_datetime, status, leave_request_id, created_at)
+  ON temporary_coverage_assignment TO edify_activities_rw;

@@ -32,7 +32,8 @@ type ScheduleSchoolVisitRequest struct {
 	PurposeOfVisit string `protobuf:"bytes,2,opt,name=purpose_of_visit,json=purposeOfVisit,proto3" json:"purpose_of_visit,omitempty"`
 	// scheduled_date: the planned day, "YYYY-MM-DD".
 	ScheduledDate string `protobuf:"bytes,3,opt,name=scheduled_date,json=scheduledDate,proto3" json:"scheduled_date,omitempty"`
-	// activity_goal: the purpose in the planner's words. May be empty.
+	// activity_goal (or activity_purpose_text, which the drawer posts): the
+	// purpose in the planner's words. May be empty.
 	ActivityGoal string `protobuf:"bytes,4,opt,name=activity_goal,json=activityGoal,proto3" json:"activity_goal,omitempty"`
 	// expected_outcome. May be empty.
 	ExpectedOutcome string `protobuf:"bytes,5,opt,name=expected_outcome,json=expectedOutcome,proto3" json:"expected_outcome,omitempty"`
@@ -43,8 +44,11 @@ type ScheduleSchoolVisitRequest struct {
 	// catalogue_item_id: the item the drawer pinned, if any. Empty: the item
 	// is resolved from the purpose, as the drawer's require_catalogue=yes asks.
 	CatalogueItemId string `protobuf:"bytes,7,opt,name=catalogue_item_id,json=catalogueItemId,proto3" json:"catalogue_item_id,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// recommendation_reason: the reason the drawer carries for the item it
+	// pinned. Cleared when the pinned item is replaced by the purpose's own.
+	RecommendationReason string `protobuf:"bytes,8,opt,name=recommendation_reason,json=recommendationReason,proto3" json:"recommendation_reason,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *ScheduleSchoolVisitRequest) Reset() {
@@ -122,6 +126,13 @@ func (x *ScheduleSchoolVisitRequest) GetSsaDeviationReason() string {
 func (x *ScheduleSchoolVisitRequest) GetCatalogueItemId() string {
 	if x != nil {
 		return x.CatalogueItemId
+	}
+	return ""
+}
+
+func (x *ScheduleSchoolVisitRequest) GetRecommendationReason() string {
+	if x != nil {
+		return x.RecommendationReason
 	}
 	return ""
 }
@@ -305,7 +316,7 @@ var File_edify_activities_v1_activities_proto protoreflect.FileDescriptor
 
 const file_edify_activities_v1_activities_proto_rawDesc = "" +
 	"\n" +
-	"$edify/activities/v1/activities.proto\x12\x13edify.activities.v1\"\xb8\x02\n" +
+	"$edify/activities/v1/activities.proto\x12\x13edify.activities.v1\"\xed\x02\n" +
 	"\x1aScheduleSchoolVisitRequest\x12\x1b\n" +
 	"\tschool_id\x18\x01 \x01(\tR\bschoolId\x12(\n" +
 	"\x10purpose_of_visit\x18\x02 \x01(\tR\x0epurposeOfVisit\x12%\n" +
@@ -313,7 +324,8 @@ const file_edify_activities_v1_activities_proto_rawDesc = "" +
 	"\ractivity_goal\x18\x04 \x01(\tR\factivityGoal\x12)\n" +
 	"\x10expected_outcome\x18\x05 \x01(\tR\x0fexpectedOutcome\x120\n" +
 	"\x14ssa_deviation_reason\x18\x06 \x01(\tR\x12ssaDeviationReason\x12*\n" +
-	"\x11catalogue_item_id\x18\a \x01(\tR\x0fcatalogueItemId\"{\n" +
+	"\x11catalogue_item_id\x18\a \x01(\tR\x0fcatalogueItemId\x123\n" +
+	"\x15recommendation_reason\x18\b \x01(\tR\x14recommendationReason\"{\n" +
 	"\x1bScheduleSchoolVisitResponse\x12B\n" +
 	"\bactivity\x18\x01 \x01(\v2&.edify.activities.v1.ScheduledActivityR\bactivity\x12\x18\n" +
 	"\arefused\x18\x02 \x01(\tR\arefused\"\x88\x02\n" +

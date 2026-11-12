@@ -1,0 +1,297 @@
+{
+  "alignment": {
+    "collection_kinds": [
+      "baseline_ssa_visit",
+      "cluster_meeting_ssa_review",
+      "cluster_training_ssa_collection",
+      "core_assessment_visit",
+      "partner_ssa_collection",
+      "school_visit_ssa_collection",
+      "ssa_activity"
+    ],
+    "critical_score": 5.0,
+    "current_ssa_fys": 2,
+    "engine_version": "apps.ssa.plan_alignment/2026-09",
+    "not_school_improvement_kinds": [
+      "donor_visit",
+      "field_event",
+      "programme_event",
+      "school_invitation",
+      "social_visit",
+      "story_gathering_visit"
+    ],
+    "priority_depth": 3,
+    "strong_score": 8.0
+  },
+  "batch": {
+    "eligible_types": [
+      "baseline_ssa_visit",
+      "coaching_visit",
+      "core_assessment_visit",
+      "core_visit",
+      "donor_visit",
+      "follow_up_visit",
+      "in_school_coaching_visit",
+      "in_school_support",
+      "partner_ssa_collection",
+      "school_invitation",
+      "school_visit",
+      "school_visit_ssa_collection",
+      "social_visit",
+      "story_gathering_visit",
+      "training_follow_up_visit"
+    ],
+    "field_role_aliases": [
+      "cceo",
+      "pl",
+      "program lead",
+      "programme lead"
+    ],
+    "field_roles": [
+      "CCEO",
+      "Program Lead"
+    ],
+    "hq_zone": [
+      "kampala",
+      "mukono",
+      "wakiso"
+    ],
+    "non_fundable_statuses": [
+      "awaiting_owner_approval",
+      "cancelled",
+      "deferred",
+      "rejected"
+    ],
+    "pool_extra_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review",
+      "cluster_training",
+      "cluster_training_ssa_collection",
+      "core_training",
+      "field_event",
+      "in_school_training",
+      "programme_event",
+      "school_improvement_training",
+      "training"
+    ]
+  },
+  "calendar_blocks_refuse": false,
+  "closed_school_message": "This school is closed, so it takes no new activities. Its history is on the Closed Schools page; reopen the school before planning work there.",
+  "closed_statuses": [
+    "temporarily_closed",
+    "permanently_closed"
+  ],
+  "costed_as": {
+    "core_assessment_visit": "school_visit",
+    "ssa_activity": "school_visit_ssa_collection"
+  },
+  "default_country": "Uganda",
+  "doors": {
+    "admin_refusal": "Planning belongs to the staff member responsible for the school. The Admin role administers the platform and does not schedule field work \u2014 ask the school's CCEO to plan it, or switch to your own field role if you hold one.",
+    "admin_role": "Admin",
+    "drawer": [
+      "Accountant",
+      "CCEO",
+      "CountryDirector",
+      "ImpactAssessment",
+      "Program Lead",
+      "ProjectCoordinator"
+    ],
+    "requesters": [
+      "Accountant"
+    ]
+  },
+  "duplicate_gone_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "not_planned",
+    "returned",
+    "returned_by_ia"
+  ],
+  "engine": {
+    "interventions": [
+      [
+        "christlike_behaviour",
+        "Christlike Behaviour"
+      ],
+      [
+        "exposure_to_word_of_god",
+        "Exposure to the Word of God"
+      ],
+      [
+        "financial_health",
+        "Financial Health"
+      ],
+      [
+        "leadership",
+        "Leadership"
+      ],
+      [
+        "government_requirement",
+        "Government Requirements"
+      ],
+      [
+        "learning_environment",
+        "Learning Environment"
+      ],
+      [
+        "teaching_environment",
+        "Teacher's Environment"
+      ],
+      [
+        "enrolment",
+        "Enrolment"
+      ]
+    ],
+    "min_peers": 4,
+    "persistence_window": 4,
+    "weakness_threshold": 5.5,
+    "weights": [
+      [
+        "severity",
+        0.45
+      ],
+      [
+        "trend",
+        0.25
+      ],
+      [
+        "peer_gap",
+        0.2
+      ],
+      [
+        "persistence",
+        0.1
+      ]
+    ]
+  },
+  "gate": {
+    "client_rule_types": [
+      "client",
+      "core_trained",
+      "core_graduate",
+      "champion"
+    ],
+    "companion_purpose": "in_school_training_delivery_visit",
+    "core_rule_types": [
+      "core"
+    ],
+    "follow_up_visit_types": [
+      "school_visit",
+      "follow_up_visit",
+      "training_follow_up_visit",
+      "coaching_visit",
+      "in_school_support",
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection"
+    ],
+    "in_school_support_types": [
+      "in_school_training",
+      "in_school_coaching_visit"
+    ],
+    "outreach_activity_types": [
+      "donor_visit",
+      "story_gathering_visit"
+    ],
+    "outreach_only_types": [
+      "champion"
+    ],
+    "school_type_labels": {
+      "champion": "Champion",
+      "client": "Client",
+      "core": "Core",
+      "core_graduate": "Core Graduate",
+      "core_trained": "Core Trained"
+    },
+    "ssa_support_visit_types": [
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection"
+    ]
+  },
+  "ledger_credited_types": [
+    "baseline_ssa_visit",
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "coaching_visit",
+    "core_assessment_visit",
+    "core_training",
+    "core_visit",
+    "donor_visit",
+    "follow_up_visit",
+    "in_school_coaching_visit",
+    "in_school_support",
+    "in_school_training",
+    "partner_ssa_collection",
+    "school_improvement_training",
+    "school_invitation",
+    "school_visit",
+    "school_visit_ssa_collection",
+    "social_visit",
+    "story_gathering_visit",
+    "training",
+    "training_follow_up_visit"
+  ],
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "purposes": {
+    "activity_types": {
+      "donor_visit": "donor_visit",
+      "in_school_coaching": "in_school_coaching_visit",
+      "in_school_training": "in_school_training",
+      "in_school_training_ssa": "in_school_training",
+      "school_invitation": "school_invitation",
+      "social_visit": "social_visit",
+      "ssa_support": "school_visit_ssa_collection",
+      "story_gathering": "story_gathering_visit",
+      "training_follow_up": "training_follow_up_visit"
+    },
+    "intervention_free": [
+      "donor_visit",
+      "school_invitation",
+      "social_visit",
+      "ssa_support",
+      "story_gathering"
+    ],
+    "labels": {
+      "donor_visit": "Donor Visit",
+      "in_school_coaching": "In-school Coaching Visit",
+      "in_school_training": "In-school Training",
+      "in_school_training_delivery_visit": "In-school Training Delivery Visit",
+      "in_school_training_ssa": "In-school Training + SSA Collection",
+      "school_invitation": "School Invitation",
+      "social_visit": "Social Visit",
+      "ssa_support": "SSA Support",
+      "story_gathering": "Content/Story Collection",
+      "training_follow_up": "Training Follow Up"
+    },
+    "retired": [
+      "in_school_coaching"
+    ],
+    "staff": [
+      "in_school_training",
+      "in_school_training_ssa",
+      "training_follow_up",
+      "ssa_support",
+      "donor_visit",
+      "story_gathering",
+      "school_invitation",
+      "social_visit"
+    ]
+  },
+  "salesforce_training_kinds": [
+    "cluster_meeting",
+    "cluster_training",
+    "core_training",
+    "in_school_training",
+    "school_improvement_training",
+    "ssa_activity",
+    "training"
+  ]
+}

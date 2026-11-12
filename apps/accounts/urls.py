@@ -2,6 +2,8 @@
 
 from django.urls import path
 
+from apps.daily_visit_batches import gateway_relay
+
 from . import account_event_relay, security_event_relay, views
 
 urlpatterns = [
@@ -24,5 +26,16 @@ urlpatterns = [
         "internal/account-events",
         account_event_relay.relay,
         name="account-events",
+    ),
+    # The money that follows a school visit Go saved (docs/migration/27).
+    path(
+        "internal/visit-day-check",
+        gateway_relay.visit_day_check,
+        name="visit-day-check",
+    ),
+    path(
+        "internal/costs-to-follow",
+        gateway_relay.costs_to_follow,
+        name="costs-to-follow",
     ),
 ]

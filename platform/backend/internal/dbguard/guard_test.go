@@ -161,6 +161,12 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		},
 		// Acting appointments, and the account's acting hint and role in use.
 		filepath.Join(root, "internal", "acting") + sep: {"acting_assignment", `"user"`},
+		// Scheduling a school visit, the first Go save (docs/migration/27;
+		// deploy/db/activities_roles.sql): the activity, its day, the costs
+		// to follow, the ledger's mark and the recommendation it answers.
+		filepath.Join(root, "internal", "activities") + sep: {
+			"activity", "daily_visit_batch", "daily_visit_costs_to_follow", "target_ledger_dirty", "ssa_recommendation",
+		},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.

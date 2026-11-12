@@ -31,7 +31,8 @@ message ScheduleSchoolVisitRequest {
   string purpose_of_visit = 2;
   // scheduled_date: the planned day, "YYYY-MM-DD".
   string scheduled_date = 3;
-  // activity_goal: the purpose in the planner's words. May be empty.
+  // activity_goal (or activity_purpose_text, which the drawer posts): the
+  // purpose in the planner's words. May be empty.
   string activity_goal = 4;
   // expected_outcome. May be empty.
   string expected_outcome = 5;
@@ -42,6 +43,9 @@ message ScheduleSchoolVisitRequest {
   // catalogue_item_id: the item the drawer pinned, if any. Empty: the item
   // is resolved from the purpose, as the drawer's require_catalogue=yes asks.
   string catalogue_item_id = 7;
+  // recommendation_reason: the reason the drawer carries for the item it
+  // pinned. Cleared when the pinned item is replaced by the purpose's own.
+  string recommendation_reason = 8;
 }
 
 // What the save did. Exactly one of activity or refused is set.

@@ -44,9 +44,14 @@ var chainColumns = map[string]map[string]bool{
 }
 
 // noise are tables a request writes about itself rather than about the work:
-// the runner's sign-in sessions and each request's timing telemetry. They
-// are left out unless -all is given.
-var noise = map[string]bool{"django_session": true, "interaction_event": true}
+// the runner's sign-in sessions and each request's timing telemetry — and
+// the time a person is seen on pages (the session's active seconds on
+// login_event, presence_time), which are wall-clock readings two runs can
+// never share, and which a Go save, made without opening a page, does not
+// touch. They are left out unless -all is given.
+var noise = map[string]bool{
+	"django_session": true, "interaction_event": true, "login_event": true, "presence_time": true,
+}
 
 func main() {
 	a := flag.String("a", "", "the first copy (the existing application's saves)")
