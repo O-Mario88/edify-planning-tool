@@ -643,6 +643,12 @@ databases): `advance_request (id, budget_line_id, status)`.
   (`{{ row.school_id }}` of None), link the school by its primary key, have
   no tick column and page by 20.
 
+**Re-checked by the coordinator on the merged build (2026-11-12)**: race,
+the integration suite, the my_plan suite (106 tests), the Core sheets golden
+(78 sheets, 589 rows, none differing), and `/my-plan` for admin@, pl1@,
+cceo1@ and cceo7@ (67 questions each, none differing) and cceo@ (65 of 67
+passed on to the existing application, its two format refusals equal).
+
 ### What is left
 
 - Piece 3's remaining rows: work still to deliver with its day-off marks,
