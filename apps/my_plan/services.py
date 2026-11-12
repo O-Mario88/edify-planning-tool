@@ -83,6 +83,38 @@ def _slot_status_is_complete(status: str | None) -> bool:
     return (status or "").strip().lower() in _COMPLETE_SLOT_STATUSES
 
 
+#: The Plan progress strip's tiles, in the page's order: (metric key, icon,
+#: variant). Labels, units and definitions are the metric registry's.
+MY_PLAN_TILES = (
+    ("my_plan_activities_planned_week", "calendar", "info"),
+    ("my_plan_activities_planned_month", "chart", "blue"),
+    ("my_plan_activities_planned_quarter", "calendar", "purple"),
+    ("my_plan_activities_planned_fy", "calendar", "warning"),
+    ("my_plan_visits_scheduled_period", "school", "blue"),
+    ("my_plan_trainings_scheduled_period", "target", "purple"),
+    ("my_plan_cluster_meetings_scheduled_period", "users", "warning"),
+    ("my_plan_completion_readiness_pct", "check", "success"),
+)
+
+#: The Month filter's choices, in fiscal-year order (October first).
+MONTH_OPTIONS = (
+    {"val": 10, "label": "October"},
+    {"val": 11, "label": "November"},
+    {"val": 12, "label": "December"},
+    {"val": 1, "label": "January"},
+    {"val": 2, "label": "February"},
+    {"val": 3, "label": "March"},
+    {"val": 4, "label": "April"},
+    {"val": 5, "label": "May"},
+    {"val": 6, "label": "June"},
+    {"val": 7, "label": "July"},
+    {"val": 8, "label": "August"},
+    {"val": 9, "label": "September"},
+)
+
+#: The Quarter filter's choices.
+QUARTER_OPTIONS = ("Q1", "Q2", "Q3", "Q4")
+
 #: What the filter selects say for "no narrowing". An unselected filter arrives
 #: as "all" from the form and as None from a URL that simply omits it; both mean
 #: the same thing and neither is a month.
@@ -1023,20 +1055,7 @@ def get_frontend_context(
         )
     ]
 
-    months = [
-        {"val": 10, "label": "October"},
-        {"val": 11, "label": "November"},
-        {"val": 12, "label": "December"},
-        {"val": 1, "label": "January"},
-        {"val": 2, "label": "February"},
-        {"val": 3, "label": "March"},
-        {"val": 4, "label": "April"},
-        {"val": 5, "label": "May"},
-        {"val": 6, "label": "June"},
-        {"val": 7, "label": "July"},
-        {"val": 8, "label": "August"},
-        {"val": 9, "label": "September"},
-    ]
+    months = [dict(month) for month in MONTH_OPTIONS]
 
     # 5. Apply selected filters to the query
     # My Plan had no search of any kind — not a control, not a query path — so
@@ -1327,55 +1346,22 @@ def get_frontend_context(
     # (metric key, measured value, icon, variant) -- icon and variant are the
     # only presentation choices left to the caller; everything else comes from
     # the registry.
-    my_plan_tiles = (
-        (
-            "my_plan_activities_planned_week",
-            MetricValue.measured(planned_this_week),
-            "calendar",
-            "info",
+    tile_values = {
+        "my_plan_activities_planned_week": MetricValue.measured(planned_this_week),
+        "my_plan_activities_planned_month": MetricValue.measured(planned_this_month),
+        "my_plan_activities_planned_quarter": MetricValue.measured(
+            planned_this_quarter
         ),
-        (
-            "my_plan_activities_planned_month",
-            MetricValue.measured(planned_this_month),
-            "chart",
-            "blue",
+        "my_plan_activities_planned_fy": MetricValue.measured(planned_this_fy),
+        "my_plan_visits_scheduled_period": MetricValue.measured(visits_scheduled),
+        "my_plan_trainings_scheduled_period": MetricValue.measured(trainings_scheduled),
+        "my_plan_cluster_meetings_scheduled_period": MetricValue.measured(
+            meetings_scheduled
         ),
-        (
-            "my_plan_activities_planned_quarter",
-            MetricValue.measured(planned_this_quarter),
-            "calendar",
-            "purple",
-        ),
-        (
-            "my_plan_activities_planned_fy",
-            MetricValue.measured(planned_this_fy),
-            "calendar",
-            "warning",
-        ),
-        (
-            "my_plan_visits_scheduled_period",
-            MetricValue.measured(visits_scheduled),
-            "school",
-            "blue",
-        ),
-        (
-            "my_plan_trainings_scheduled_period",
-            MetricValue.measured(trainings_scheduled),
-            "target",
-            "purple",
-        ),
-        (
-            "my_plan_cluster_meetings_scheduled_period",
-            MetricValue.measured(meetings_scheduled),
-            "users",
-            "warning",
-        ),
-        (
-            "my_plan_completion_readiness_pct",
-            completion_share,
-            "check",
-            "success",
-        ),
+        "my_plan_completion_readiness_pct": completion_share,
+    }
+    my_plan_tiles = tuple(
+        (key, tile_values[key], icon, variant) for key, icon, variant in MY_PLAN_TILES
     )
 
     # `render_strip` refuses to emit the same metric twice in one strip. The
@@ -2542,7 +2528,7 @@ def get_frontend_context(
         "quarter_prev": selected_quarter or "all",
         "period_label": period_label,
         "months": months,
-        "quarters": ["Q1", "Q2", "Q3", "Q4"],
+        "quarters": list(QUARTER_OPTIONS),
         "districts": districts,
         "selected_district": district_id,
         "staff_users": staff_users,

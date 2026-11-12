@@ -176,6 +176,11 @@ def _readiness_list(request, context) -> dict | None:
     }
 
 
+#: The Export options drawer's period keys: a My Plan request carrying any of
+#: them is an export (a workbook), not the page.
+EXPORT_PERIOD_KEYS = ("from_month", "to_month", "start_date", "end_date", "period_type")
+
+
 def _export_format(request) -> str:
     """ "csv" or "xlsx" when this My Plan request is an export, else "". The
     Export options drawer names the period without naming a format; its
@@ -188,10 +193,7 @@ def _export_format(request) -> str:
         export = "xlsx"
     if export in {"csv", "xlsx", "excel"}:
         return "csv" if export == "csv" else "xlsx"
-    if any(
-        k in request.GET
-        for k in ("from_month", "to_month", "start_date", "end_date", "period_type")
-    ):
+    if any(k in request.GET for k in EXPORT_PERIOD_KEYS):
         return "xlsx"
     return ""
 

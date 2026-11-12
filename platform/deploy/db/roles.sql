@@ -224,3 +224,7 @@ GRANT SELECT (school_id, issue_type, requested_action, workflow_route, state, re
 -- Core School Oversight (internal/coreoversight): the Core schools in the
 -- School model's order, and each school's sub-region for the grouping.
 GRANT SELECT (created_at, sub_region_id) ON school TO edify_gateway_ro;
+-- My Plan (internal/myplan): whether a training ceiling has been set for the
+-- reader (My Training Summary), which leaves their page to the existing
+-- application until the summary is Go's.
+GRANT SELECT (staff_id) ON training_ceiling TO edify_gateway_ro;
