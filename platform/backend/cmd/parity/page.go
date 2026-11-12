@@ -97,8 +97,15 @@ func comparePages(goAnswer *screensv1.GetPageResponse, goErr error, old *screens
 		}
 		return ""
 	}
+	goMap, oldMap := asMap(goAnswer), asMap(old)
+	// Both sides, always: a short-circuit here once left one side unsorted.
+	goTied := sortTies(goMap)
+	oldTied := sortTies(oldMap)
+	if goTied || oldTied {
+		tiedAnswers++
+	}
 	diffs := []string{}
-	walk("", asMap(goAnswer), asMap(old), &diffs)
+	walk("", goMap, oldMap, &diffs)
 	sort.Strings(diffs)
 	if len(diffs) > 12 {
 		diffs = append(diffs[:12], fmt.Sprintf("… and %d more", len(diffs)-12))
@@ -119,6 +126,48 @@ func (r *pageRun) each() []*pageRun {
 		out = append(out, &one)
 	}
 	return out
+}
+
+// tiedAnswers counts the answers whose tables held rows the existing page
+// gives no order to: runs of rows with the same name.
+var tiedAnswers int
+
+// sortTies puts each run of consecutive table rows that share a name (the
+// second cell) in School ID order (the first cell), on both sides before
+// they are compared: the existing page orders by name and nothing after it,
+// so Postgres may return equal names either way. It says whether any run
+// was found.
+func sortTies(page map[string]any) bool {
+	found := false
+	blocks, _ := page["blocks"].([]any)
+	for _, b := range blocks {
+		block, _ := b.(map[string]any)
+		table, _ := block["table"].(map[string]any)
+		rows, _ := table["rows"].([]any)
+		cell := func(r any, i int) string {
+			row, _ := r.(map[string]any)
+			cells, _ := row["cells"].([]any)
+			if len(cells) <= i {
+				return ""
+			}
+			c, _ := cells[i].(map[string]any)
+			text, _ := c["text"].(string)
+			return text
+		}
+		for start := 0; start < len(rows); {
+			end := start + 1
+			for end < len(rows) && cell(rows[end], 1) != "" && cell(rows[end], 1) == cell(rows[start], 1) {
+				end++
+			}
+			if end-start > 1 {
+				found = true
+				run := rows[start:end]
+				sort.SliceStable(run, func(i, j int) bool { return cell(run[i], 0) < cell(run[j], 0) })
+			}
+			start = end
+		}
+	}
+	return found
 }
 
 func queryText(q map[string]string) string {
@@ -162,6 +211,9 @@ func runPages(ctx context.Context, signIn identityv1connect.SignInServiceClient,
 		fmt.Printf("%-34s %d questions, %d differing\n", email, mine, theirs)
 	}
 	fmt.Printf("\n%d answers compared, %d differing\n", compared, differing)
+	if tiedAnswers > 0 {
+		fmt.Printf("%d answers held rows with the same name, compared in School ID order (the existing page gives them none)\n", tiedAnswers)
+	}
 	if differing > 0 {
 		return 1
 	}

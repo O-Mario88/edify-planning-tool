@@ -1,0 +1,391 @@
+{
+  "catalogue": {
+    "country": "Uganda",
+    "kind": "operational",
+    "status": "published"
+  },
+  "client_tab_types": [
+    "client",
+    "core_trained",
+    "core_graduate"
+  ],
+  "completed_work_statuses": [
+    "ia_verified",
+    "closed",
+    "accountant_confirmed",
+    "completed"
+  ],
+  "counted_visits": {
+    "cceo_role": "CCEO",
+    "companion_purpose": "in_school_training_delivery_visit",
+    "core_types": [
+      "core"
+    ],
+    "data_collection_purposes": [
+      "ssa_support"
+    ],
+    "data_collection_types": [
+      "school_visit_ssa_collection",
+      "baseline_ssa_visit",
+      "partner_ssa_collection",
+      "ssa_activity",
+      "core_assessment_visit"
+    ],
+    "kind_purposes": [
+      "in_school_coaching",
+      "in_school_training",
+      "training_follow_up"
+    ],
+    "outreach_purposes": [
+      "donor_visit",
+      "story_gathering",
+      "school_invitation",
+      "social_visit"
+    ],
+    "planned_states": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "completion_started",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "ia_verified",
+      "in_progress",
+      "partner_scheduled",
+      "planned",
+      "rescheduled",
+      "returned_by_ia",
+      "returned_by_pl",
+      "salesforce_id_required",
+      "scheduled",
+      "submitted_to_pl"
+    ],
+    "program_lead_role": "Program Lead",
+    "visit_shape_types": [
+      "in_school_training",
+      "in_school_coaching_visit",
+      "training_follow_up_visit",
+      "follow_up_visit",
+      "school_visit",
+      "coaching_visit",
+      "in_school_support",
+      "core_visit",
+      "school_visit_ssa_collection",
+      "baseline_ssa_visit",
+      "partner_ssa_collection",
+      "ssa_activity",
+      "core_assessment_visit"
+    ],
+    "visit_targets": {
+      "CCEO": 560,
+      "Program Lead": 280
+    }
+  },
+  "doors": {
+    "Accountant": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": false,
+      "page": true,
+      "schedule": true
+    },
+    "Admin": {
+      "assign_partner": true,
+      "bulk_schedule": false,
+      "open_school": true,
+      "page": true,
+      "schedule": false
+    },
+    "BusinessTransformationOfficer": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": true,
+      "page": false,
+      "schedule": false
+    },
+    "CCEO": {
+      "assign_partner": true,
+      "bulk_schedule": true,
+      "open_school": true,
+      "page": true,
+      "schedule": true
+    },
+    "ClusterLeader": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": false,
+      "page": false,
+      "schedule": false
+    },
+    "CountryDirector": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": true,
+      "page": true,
+      "schedule": true
+    },
+    "HumanResources": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": false,
+      "page": false,
+      "schedule": false
+    },
+    "ImpactAssessment": {
+      "assign_partner": true,
+      "bulk_schedule": false,
+      "open_school": true,
+      "page": true,
+      "schedule": true
+    },
+    "MfiLoanOfficer": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": false,
+      "page": false,
+      "schedule": false
+    },
+    "MfiPartnerAdmin": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": false,
+      "page": false,
+      "schedule": false
+    },
+    "PartnerAdmin": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": false,
+      "page": false,
+      "schedule": false
+    },
+    "PartnerFieldOfficer": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": false,
+      "page": false,
+      "schedule": false
+    },
+    "Program Lead": {
+      "assign_partner": true,
+      "bulk_schedule": true,
+      "open_school": true,
+      "page": true,
+      "schedule": true
+    },
+    "ProjectCoordinator": {
+      "assign_partner": true,
+      "bulk_schedule": true,
+      "open_school": true,
+      "page": true,
+      "schedule": true
+    },
+    "RegionalProgramLead": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": false,
+      "page": false,
+      "schedule": false
+    },
+    "RegionalVicePresident": {
+      "assign_partner": false,
+      "bulk_schedule": false,
+      "open_school": false,
+      "page": false,
+      "schedule": false
+    }
+  },
+  "informed_alignments": [
+    "priority",
+    "ssa_collection",
+    "not_applicable"
+  ],
+  "live_plan_statuses": [
+    "planned",
+    "scheduled",
+    "rescheduled",
+    "assigned_to_partner",
+    "partner_scheduled",
+    "awaiting_owner_approval",
+    "in_progress",
+    "completion_started"
+  ],
+  "not_active_work_statuses": [
+    "cancelled",
+    "deferred",
+    "not_planned",
+    "planned"
+  ],
+  "not_in_plan_activity_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "not_planned"
+  ],
+  "not_in_the_plan": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "not_planned",
+    "awaiting_owner_approval"
+  ],
+  "not_scheduled_statuses": [
+    "completed",
+    "closed",
+    "rejected",
+    "rescheduled",
+    "cancelled",
+    "deferred"
+  ],
+  "own_table_school_types": [
+    "champion"
+  ],
+  "partner_live_statuses": [
+    "assigned",
+    "pending_scheduling",
+    "partner_pending_schedule",
+    "assigned_to_partner_pending_scheduling",
+    "partner_scheduled"
+  ],
+  "partner_pending_statuses": [
+    "assigned",
+    "pending_scheduling",
+    "partner_pending_schedule",
+    "assigned_to_partner_pending_scheduling"
+  ],
+  "readiness_choices": [
+    [
+      "requires_cluster",
+      "Requires Cluster"
+    ],
+    [
+      "ready_for_baseline_ssa",
+      "SSA Required"
+    ],
+    [
+      "ready_for_support_planning",
+      "Ready for Support Planning"
+    ],
+    [
+      "ready_for_partner_assignment",
+      "Ready for Partner Assignment"
+    ],
+    [
+      "scheduled",
+      "Scheduled"
+    ],
+    [
+      "in_my_plan",
+      "In My Plan"
+    ],
+    [
+      "awaiting_evidence",
+      "Awaiting Evidence"
+    ],
+    [
+      "awaiting_ia",
+      "Awaiting IA"
+    ],
+    [
+      "finance_pending",
+      "Finance Pending"
+    ],
+    [
+      "closed",
+      "Closed"
+    ],
+    [
+      "data_cleanup_required",
+      "Data Cleanup Required"
+    ],
+    [
+      "cost_catalogue_required",
+      "Cost Catalogue Required"
+    ]
+  ],
+  "row_attendance_types": [
+    "cluster_training",
+    "cluster_meeting"
+  ],
+  "row_training_count_types": [
+    "training",
+    "core_training"
+  ],
+  "row_visit_count_types": [
+    "school_visit",
+    "core_visit",
+    "baseline_ssa_visit"
+  ],
+  "ssa_status_choices": [
+    [
+      "not_done",
+      "Not Done"
+    ],
+    [
+      "scheduled",
+      "Scheduled"
+    ],
+    [
+      "partner_assigned",
+      "Partner Assigned"
+    ],
+    [
+      "done",
+      "Done"
+    ]
+  ],
+  "strip_labels": [
+    "Ready for Support",
+    "SSA Required",
+    "Clusters Needing Action",
+    "Core Package Gaps",
+    "Partner Pending Schedule",
+    "In My Plan",
+    "SSA-Informed Plans",
+    "Cost Blocked",
+    "Data Cleanup Required"
+  ],
+  "support_filters": [
+    [
+      "all",
+      "All Schools"
+    ],
+    [
+      "staff_managed",
+      "Staff Managed"
+    ],
+    [
+      "partner_support",
+      "Partner Support"
+    ],
+    [
+      "my_scheduled_visits",
+      "My Scheduled Visits"
+    ],
+    [
+      "visit_not_planned",
+      "Visit Not Planned"
+    ],
+    [
+      "training_not_planned",
+      "Training Not Planned"
+    ],
+    [
+      "both_planned",
+      "Both Planned"
+    ],
+    [
+      "awaiting_verification",
+      "Awaiting Verification"
+    ],
+    [
+      "completed",
+      "Completed"
+    ],
+    [
+      "needs_replanning",
+      "Needs Replanning"
+    ]
+  ]
+}

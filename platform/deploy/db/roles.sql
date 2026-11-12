@@ -198,3 +198,8 @@ GRANT SELECT (id, closure_type, owner_at_closure, owner_name_at_closure, reopene
 -- Impact Assessment has set any.
 GRANT SELECT (health_weights, impact_weights, teacher_weights, leader_weights, maturity_rules, created_at)
   ON cluster_score_setting TO edify_gateway_ro;
+-- The Planning page: whether the country's operational rate card is published
+-- (active_catalogue), which Cost Blocked counts.
+GRANT SELECT (country, kind, status, is_active) ON cost_catalogue TO edify_gateway_ro;
+-- The Planning page's SSA-Informed Plans: each live plan's recorded verdict.
+GRANT SELECT (ssa_alignment) ON activity TO edify_gateway_ro;

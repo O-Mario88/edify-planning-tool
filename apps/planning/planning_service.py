@@ -25,6 +25,49 @@ from apps.ssa.presentation import build_ssa_score_summary
 _NOT_IN_THE_PLAN = (*NOT_IN_PLAN_ACTIVITY_STATUSES, "awaiting_owner_approval")
 
 
+#: The inline lists the Planning page reads, as module constants so the Go
+#: gateway's copy of the page reads the same sets (export_planning_page_rules).
+#: A Partner hand-over still waiting for a date, and the same with the dated one.
+PARTNER_PENDING_STATUSES = (
+    "assigned",
+    "pending_scheduling",
+    "partner_pending_schedule",
+    "assigned_to_partner_pending_scheduling",
+)
+PARTNER_LIVE_STATUSES = (*PARTNER_PENDING_STATUSES, "partner_scheduled")
+#: The Client Schools tab: the client rule's types (owner, 2026-10-02).
+CLIENT_TAB_TYPES = ("client", "core_trained", "core_graduate")
+#: Work that leaves a school free to plan when the support rule is off.
+NOT_ACTIVE_WORK_STATUSES = ("cancelled", "deferred", "not_planned", "planned")
+#: A row's Visit and Training counts, and the cluster sessions it attended.
+ROW_VISIT_COUNT_TYPES = ("school_visit", "core_visit", "baseline_ssa_visit")
+ROW_TRAINING_COUNT_TYPES = ("training", "core_training")
+ROW_ATTENDANCE_TYPES = ("cluster_training", "cluster_meeting")
+#: The live plans SSA-Informed Plans judges.
+LIVE_PLAN_STATUSES = (
+    "planned",
+    "scheduled",
+    "rescheduled",
+    "assigned_to_partner",
+    "partner_scheduled",
+    "awaiting_owner_approval",
+    "in_progress",
+    "completion_started",
+)
+#: Activities that do not make a school "In My Plan" for its readiness.
+NOT_SCHEDULED_STATUSES = tuple(
+    str(s)
+    for s in (
+        ActivityStatus.COMPLETED,
+        ActivityStatus.CLOSED,
+        ActivityStatus.REJECTED,
+        ActivityStatus.RESCHEDULED,
+        ActivityStatus.CANCELLED,
+        ActivityStatus.DEFERRED,
+    )
+)
+
+
 class PlanningReadinessService:
     @staticmethod
     def get_school_readiness(
@@ -280,19 +323,13 @@ class PlanningDashboardService:
             Activity.objects.filter(
                 deleted_at__isnull=True, fy=fy, school_id__isnull=False
             )
-            .exclude(status__in=["cancelled", "deferred", "not_planned", "planned"])
+            .exclude(status__in=list(NOT_ACTIVE_WORK_STATUSES))
             .values_list("school_id", flat=True)
         )
 
         active_partner_school_ids = PartnerAssignment.objects.filter(
             school_id__isnull=False,
-            status__in=[
-                "assigned",
-                "pending_scheduling",
-                "partner_pending_schedule",
-                "assigned_to_partner_pending_scheduling",
-                "partner_scheduled",
-            ],
+            status__in=list(PARTNER_LIVE_STATUSES),
         ).values_list("school_id", flat=True)
 
         # Partner-supported schools stay on Planning (owner, 2026-09-23): a
@@ -333,9 +370,7 @@ class PlanningDashboardService:
         # not here (owner, 2026-09-25; see the exclusion below).
         if active_tab == "client":
             table_schools_qs = _without_active_work(
-                schools_qs.filter(
-                    school_type__in=["client", "core_trained", "core_graduate"]
-                )
+                schools_qs.filter(school_type__in=list(CLIENT_TAB_TYPES))
             )
         elif active_tab == "core":
             table_schools_qs = _without_active_work(
@@ -356,13 +391,7 @@ class PlanningDashboardService:
             )
         elif active_tab == "partner":
             partner_school_ids = PartnerAssignment.objects.filter(
-                status__in=[
-                    "assigned",
-                    "pending_scheduling",
-                    "partner_pending_schedule",
-                    "assigned_to_partner_pending_scheduling",
-                    "partner_scheduled",
-                ]
+                status__in=list(PARTNER_LIVE_STATUSES)
             ).values_list("school_id", flat=True)
             table_schools_qs = schools_qs.filter(id__in=partner_school_ids)
         elif active_tab == "scheduled":
@@ -632,16 +661,7 @@ class PlanningDashboardService:
                 Activity.objects.filter(
                     school_id__in=school_ids, deleted_at__isnull=True, fy=fy
                 )
-                .exclude(
-                    status__in=[
-                        ActivityStatus.COMPLETED,
-                        ActivityStatus.CLOSED,
-                        ActivityStatus.REJECTED,
-                        ActivityStatus.RESCHEDULED,
-                        ActivityStatus.CANCELLED,
-                        ActivityStatus.DEFERRED,
-                    ]
-                )
+                .exclude(status__in=list(NOT_SCHEDULED_STATUSES))
                 .order_by("-planned_date", "-created_at")
             )
 
@@ -655,11 +675,7 @@ class PlanningDashboardService:
             completed_visits_by_school = dict(
                 Activity.objects.filter(
                     school_id__in=school_ids,
-                    activity_type__in=[
-                        "school_visit",
-                        "core_visit",
-                        "baseline_ssa_visit",
-                    ],
+                    activity_type__in=list(ROW_VISIT_COUNT_TYPES),
                     status__in=COMPLETED_WORK_STATUSES,
                     deleted_at__isnull=True,
                 )
@@ -670,7 +686,7 @@ class PlanningDashboardService:
             completed_trainings_by_school = dict(
                 Activity.objects.filter(
                     school_id__in=school_ids,
-                    activity_type__in=["training", "core_training"],
+                    activity_type__in=list(ROW_TRAINING_COUNT_TYPES),
                     status__in=COMPLETED_WORK_STATUSES,
                     deleted_at__isnull=True,
                 )
@@ -684,7 +700,7 @@ class PlanningDashboardService:
             # a query for every school row.
             wanted_school_ids = set(school_ids)
             cluster_attendance = Activity.objects.filter(
-                activity_type__in=["cluster_training", "cluster_meeting"],
+                activity_type__in=list(ROW_ATTENDANCE_TYPES),
                 status__in=COMPLETED_WORK_STATUSES,
                 deleted_at__isnull=True,
                 attended_school_ids__overlap=list(wanted_school_ids),
@@ -914,12 +930,7 @@ class PlanningDashboardService:
         partner_pending_ids = set(
             PartnerAssignment.objects.filter(
                 school_id__in=all_school_ids,
-                status__in=[
-                    "assigned",
-                    "pending_scheduling",
-                    "partner_pending_schedule",
-                    "assigned_to_partner_pending_scheduling",
-                ],
+                status__in=list(PARTNER_PENDING_STATUSES),
             ).values_list("school_id", flat=True)
         )
 
@@ -950,12 +961,7 @@ class PlanningDashboardService:
 
         partner_pending_schedule_count = PartnerAssignment.objects.filter(
             school_id__in=all_school_ids,
-            status__in=[
-                "assigned",
-                "pending_scheduling",
-                "partner_pending_schedule",
-                "assigned_to_partner_pending_scheduling",
-            ],
+            status__in=list(PARTNER_PENDING_STATUSES),
         ).count()
 
         scoped_cluster_ids = list(
@@ -984,16 +990,7 @@ class PlanningDashboardService:
             Activity.objects.filter(
                 deleted_at__isnull=True,
                 fy=fy,
-                status__in=[
-                    "planned",
-                    "scheduled",
-                    "rescheduled",
-                    "assigned_to_partner",
-                    "partner_scheduled",
-                    "awaiting_owner_approval",
-                    "in_progress",
-                    "completion_started",
-                ],
+                status__in=list(LIVE_PLAN_STATUSES),
             )
             .filter(in_scope_activity)
             .exclude(ssa_alignment="")
