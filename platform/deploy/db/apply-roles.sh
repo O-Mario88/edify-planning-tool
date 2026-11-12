@@ -61,4 +61,6 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/loan_roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/identity_roles.sql"
 # The Decision Log's narrow view of the audit chain: decision rows, subject keys only.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/decision_log_roles.sql"
+# Which forms an activity has in (its evidence kinds), after the file above.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/evidence_roles.sql"
 echo "done"

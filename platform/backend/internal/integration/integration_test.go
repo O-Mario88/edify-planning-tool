@@ -61,6 +61,8 @@ const (
 	identityRolesFile = "../../../deploy/db/identity_roles.sql"
 	// The Decision Log's narrow view of the audit chain.
 	decisionLogRolesFile = "../../../deploy/db/decision_log_roles.sql"
+	// Which forms an activity has in; after the file above.
+	evidenceRolesFile = "../../../deploy/db/evidence_roles.sql"
 	// Where the loan portal's emails go in this run.
 	publicBaseURL = "http://127.0.0.1:9"
 )
@@ -210,6 +212,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(decisionLogRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	evidenceRoles, err := os.ReadFile(filepath.FromSlash(evidenceRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(evidenceRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)

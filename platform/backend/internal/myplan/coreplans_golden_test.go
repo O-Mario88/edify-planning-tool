@@ -72,7 +72,7 @@ func TestCoreSchoolPlansAreTheExistingCodesSheets(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	sheets, rows, differing, passed := 0, 0, 0, 0
+	sheets, rows, differing := 0, 0, 0
 	for _, c := range golden.Cases {
 		var schools []CoreSchool
 		for _, s := range c.Schools {
@@ -89,10 +89,6 @@ func TestCoreSchoolPlansAreTheExistingCodesSheets(t *testing.T) {
 			got  Sheet
 			want goldenSheet
 		}{{"visits", visits, c.Visits}, {"trainings", trainings, c.Trainings}} {
-			if pair.got.Unported {
-				passed++
-				continue
-			}
 			sheets++
 			rows += len(pair.want.Rows)
 			if !sameSheet(t, c.Label+" "+pair.name, pair.got, pair.want) {
@@ -100,7 +96,7 @@ func TestCoreSchoolPlansAreTheExistingCodesSheets(t *testing.T) {
 			}
 		}
 	}
-	t.Logf("%d sheets (%d rows) compared, %d differing; %d sheets left to the existing code (a partner's completed work)", sheets, rows, differing, passed)
+	t.Logf("%d sheets (%d rows) compared, %d differing", sheets, rows, differing)
 	if sheets == 0 {
 		t.Fatal("nothing compared")
 	}

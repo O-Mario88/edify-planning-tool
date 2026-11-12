@@ -138,9 +138,6 @@ type row struct {
 	plannedBefore *time.Time
 	completedOn   *time.Time
 	isComplete    bool
-	// needsEvidence is a partner's work its status calls done, whose
-	// uploaded form decides it and which Go does not read.
-	needsEvidence bool
 }
 
 func (r *row) copy() *row {

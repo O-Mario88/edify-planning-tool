@@ -100,9 +100,6 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			if tab == "core_visits" {
 				sheet = visits
 			}
-			if err == nil && sheet.Unported {
-				err = myplan.ErrUnported
-			}
 			return sheet, err
 		}
 	}

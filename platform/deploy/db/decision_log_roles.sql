@@ -27,6 +27,8 @@ BEGIN
 END
 $$;
 
+-- The owner holds nothing else; evidence_roles.sql, which runs after this file,
+-- grants it the evidence columns its own view reads.
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM edify_audit_view_owner;
 GRANT USAGE ON SCHEMA public TO edify_audit_view_owner;
 GRANT SELECT (id, action, actor_id, actor_role, subject_id, payload, success, reason, created_at)

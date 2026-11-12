@@ -3,6 +3,7 @@ package myplan
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 	"unicode"
@@ -169,7 +170,6 @@ WHERE school_id = ANY($1) AND fy = ANY($2) AND deleted_at IS NULL AND verificati
 type completion struct {
 	salesforce    string
 	evidenceOK    bool
-	needsEvidence bool
 	earlyOn       *time.Time
 	deliveredOn   *time.Time
 	plannedBefore *time.Time
@@ -183,7 +183,49 @@ func planDay(planned, scheduled *time.Time) *time.Time {
 	return day(scheduled)
 }
 
-func completions(acts []*activity, today time.Time) map[string]completion {
+// evidenceKinds is _records' evidence: the kinds of form uploaded, and not
+// quarantined, for the activities asked for an upload (a partner's work),
+// read through gateway_read.activity_evidence_kind (evidence_roles.sql): the
+// gateway may not read evidence_record itself.
+func evidenceKinds(ctx context.Context, db schooldirectory.Querier, acts []*activity) (map[string]map[string]bool, error) {
+	var asked []string
+	for _, a := range acts {
+		if str(a.delivery) == "partner" {
+			asked = append(asked, a.id)
+		}
+	}
+	out := map[string]map[string]bool{}
+	if len(asked) == 0 {
+		return out, nil
+	}
+	rows, err := db.Query(ctx, `SELECT activity_id, kind FROM gateway_read.activity_evidence_kind WHERE activity_id = ANY($1)`, asked)
+	if err != nil {
+		return nil, fmt.Errorf("myplan: reading the forms uploaded: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id, kind string
+		if err := rows.Scan(&id, &kind); err != nil {
+			return nil, err
+		}
+		if out[id] == nil {
+			out[id] = map[string]bool{}
+		}
+		out[id][kind] = true
+	}
+	return out, rows.Err()
+}
+
+// expectedEvidence is completion_columns.expected_evidence's kind: an
+// attendance form for a training or meeting, a visit form for the rest.
+func expectedEvidence(activityType string) string {
+	if slices.Contains(rules.Rows.EvidenceAttendanceTypes, activityType) {
+		return rules.Rows.EvidenceAttendanceKind
+	}
+	return rules.Rows.EvidenceVisitKind
+}
+
+func completions(acts []*activity, today time.Time, kinds map[string]map[string]bool) map[string]completion {
 	out := map[string]completion{}
 	for _, a := range acts {
 		c := completion{salesforce: pyStrip(str(a.salesforce)), evidenceOK: true, plannedBefore: date(a.plannedBefore)}
@@ -211,9 +253,10 @@ func completions(acts []*activity, today time.Time) map[string]completion {
 			}
 		}
 		// A partner's work is complete only with its form uploaded
-		// (completion_columns, UPLOAD-OFF): the gateway may not read
-		// evidence_record, so its evidence is left unknown.
-		c.needsEvidence = str(a.delivery) == "partner"
+		// (completion_columns: evidence_ok for the work asked for an upload).
+		if str(a.delivery) == "partner" {
+			c.evidenceOK = kinds[a.id][expectedEvidence(a.activityType)]
+		}
 		out[a.id] = c
 	}
 	return out

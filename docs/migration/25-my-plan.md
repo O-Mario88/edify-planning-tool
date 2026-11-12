@@ -344,15 +344,22 @@ card's country, kind and status, the words, the district rules, the two
 sheets' titles and headings); the Budget status and the pill's words are
 written in Go, as `get_frontend_context` writes them inline.
 
-**Passed to the existing application.** A tab whose rows hold a partner's
-work its status calls done: such work is complete only with its form
-uploaded, and the gateway may not read `evidence_record`
-(`TestGatewayRoleCanNeitherWriteNorReadSecrets` names it as a table the
-gateway must not read). A column grant there was tried and taken back. The
-other tab of the same page is drawn when it holds none. Also passed: a
-stored cost component the existing code reads as a float or would fail on
-(a breakdown that is not a list, an allocation out of range, a label that
-is not text), and a district type with no label. A `?format=` other than
+**A partner's completed work.** Such work is complete only with its form
+uploaded and not quarantined (`completion_columns._records`). The gateway
+may not read `evidence_record` (`TestGatewayRoleCanNeitherWriteNorReadSecrets`
+names it as a table the gateway must not read), so it reads
+`gateway_read.activity_evidence_kind` (`platform/deploy/db/evidence_roles.sql`,
+made by the coordinator): each activity's uploaded, unquarantined kinds and
+nothing else of the record, checked by `TestTheEvidenceViewShowsOnlyUploadedKinds`.
+The expected kind is `expected_evidence`'s, exported (`evidence_attendance_types`,
+`evidence_attendance_kind`, `evidence_visit_kind`). It is a new database
+object, so production needs the owner's approval at cutover. (The agent's
+commit first passed such a tab on; the coordinator added the view and
+re-proved it.)
+
+**Passed to the existing application.** A stored cost component the
+existing code reads as a float or would fail on (a breakdown that is not a
+list, an allocation out of range, a label that is not text), and a district type with no label. A `?format=` other than
 `json` is not found for everyone (the feed's renderer negotiation), before
 the page is asked; Core School Oversight's own questions had not asked it.
 
@@ -456,8 +463,5 @@ and the visit days.
 
 ### What is left
 
-- A partner's completed work on these tabs (its evidence: a view the
-  coordinator could make, of `evidence_record`'s activity, kind and
-  quarantine only, would let Go draw it).
 - The rest of piece 3 (My Plan's own tables, Actions, ticks, row tones,
   day-off marks and the cards), and pieces 4 to 6; the downloads.

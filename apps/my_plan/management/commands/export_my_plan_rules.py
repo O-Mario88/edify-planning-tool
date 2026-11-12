@@ -181,6 +181,14 @@ def plan_rows() -> dict:
         "missing_sf": cc.MISSING_SF,
         "missing_evidence": cc.MISSING_EVIDENCE,
         "missing_both": cc.MISSING_BOTH,
+        # completion_columns.expected_evidence: the form a partner's work is
+        # completed with, attendance for these types and a visit form for
+        # every other.
+        "evidence_attendance_types": sorted(cc._ATTENDANCE_TYPES),
+        "evidence_attendance_kind": cc.expected_evidence(
+            next(iter(sorted(cc._ATTENDANCE_TYPES)))
+        )[0],
+        "evidence_visit_kind": cc.expected_evidence("school_visit")[0],
         "awaiting_ssa_label": visit_scores.AWAITING_SSA_LABEL,
         "field_roles": sorted(districts.FIELD_ROLES),
         "field_role_aliases": sorted(districts._FIELD_ROLE_ALIASES),

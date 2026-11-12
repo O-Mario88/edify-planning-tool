@@ -21,11 +21,6 @@ type Sheet struct {
 	Title   string
 	Headers []string
 	Rows    [][]string
-	// Unported is a sheet holding a partner's completed work, which its
-	// uploaded form decides and the gateway may not read (evidence_record
-	// is refused to it): its rows are not drawn as the existing code
-	// draws them, and the caller leaves the page to the existing code.
-	Unported bool
 }
 
 // coreActivityIDs is table_export.core_school_activity_ids: every live
@@ -75,13 +70,11 @@ func CoreSchoolPlans(ctx context.Context, db schooldirectory.Querier, schools []
 	for _, r := range visitRows {
 		if mine(r) {
 			visits.Rows = append(visits.Rows, visitCells(r))
-			visits.Unported = visits.Unported || r.needsEvidence
 		}
 	}
 	for _, r := range trainingRows {
 		if mine(r) {
 			trainings.Rows = append(trainings.Rows, trainingCells(r))
-			trainings.Unported = trainings.Unported || r.needsEvidence
 		}
 	}
 	return visits, trainings, nil
@@ -269,7 +262,11 @@ func (p *page) finish(ctx context.Context, db schooldirectory.Querier, acts []*a
 	if err != nil {
 		return err
 	}
-	done := completions(acts, p.today)
+	kinds, err := evidenceKinds(ctx, db, acts)
+	if err != nil {
+		return err
+	}
+	done := completions(acts, p.today, kinds)
 	for _, rows := range tables {
 		for _, r := range rows {
 			r.districtType = types[r.a.id]
@@ -278,8 +275,6 @@ func (p *page) finish(ctx context.Context, db schooldirectory.Querier, acts []*a
 			}
 			c := done[r.a.id]
 			officer := officerCompleted(r.a.status)
-			// Evidence decides only work its status calls done.
-			r.needsEvidence = officer && c.needsEvidence
 			r.salesforceID, r.plannedBefore = c.salesforce, c.plannedBefore
 			if officer {
 				r.completedOn = c.deliveredOn

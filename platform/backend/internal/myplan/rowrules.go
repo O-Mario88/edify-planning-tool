@@ -39,14 +39,19 @@ type RowRules struct {
 	FinishedEarly             string              `json:"finished_early"`
 	MissingSF                 string              `json:"missing_sf"`
 	MissingEvidence           string              `json:"missing_evidence"`
-	MissingBoth               string              `json:"missing_both"`
-	AwaitingSSALabel          string              `json:"awaiting_ssa_label"`
-	FieldRoles                []string            `json:"field_roles"`
-	FieldRoleAliases          []string            `json:"field_role_aliases"`
-	HQPrimaryDistricts        []string            `json:"hq_primary_districts"`
-	DayMarkLabels             map[string]string   `json:"day_mark_labels"`
-	CoreVisits                SheetRules          `json:"core_visits"`
-	CoreTrainings             SheetRules          `json:"core_trainings"`
+	// completion_columns.expected_evidence: the form a partner's work is
+	// completed with.
+	EvidenceAttendanceTypes []string          `json:"evidence_attendance_types"`
+	EvidenceAttendanceKind  string            `json:"evidence_attendance_kind"`
+	EvidenceVisitKind       string            `json:"evidence_visit_kind"`
+	MissingBoth             string            `json:"missing_both"`
+	AwaitingSSALabel        string            `json:"awaiting_ssa_label"`
+	FieldRoles              []string          `json:"field_roles"`
+	FieldRoleAliases        []string          `json:"field_role_aliases"`
+	HQPrimaryDistricts      []string          `json:"hq_primary_districts"`
+	DayMarkLabels           map[string]string `json:"day_mark_labels"`
+	CoreVisits              SheetRules        `json:"core_visits"`
+	CoreTrainings           SheetRules        `json:"core_trainings"`
 }
 
 // SheetRules are one of table_export's sheets: its title and headings.
