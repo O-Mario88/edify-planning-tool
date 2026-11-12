@@ -19,7 +19,8 @@ proved against the existing page before the next.
 | 3b | Participation | Done, 13.9 |
 | 4a | Core schools: the package rule in the header, a Core school's Details, and every engine tab at a Core school | Done, 13.10 |
 | 4b | The Core School tab (Core School Intelligence) | Done, 13.11 |
-| 5 | Closed schools and the Business Transformation panel with the loan register | With the school record changes and loans |
+| 5a | Closed schools | Done, 13.12 |
+| 5b | The Business Transformation panel and the Overview's loans strip (the loan register's scoping) | Next |
 
 ## 13.1 What moved
 
@@ -89,7 +90,7 @@ they are there and reproduced here:
 
 Updated as the pieces moved (2026-11-12):
 
-- Closed schools, the Details tab and
+- The Details tab and
   the Overview of a school with a Business Transformation case or an MFI
   loan, anyone working in an acting capacity, and a Participation table
   longer than one page (50 rows).
@@ -310,3 +311,24 @@ Transformation record (where "core" opens their Overview), for the four
 accounts that reach them; the Programme Lead also over all 700 of the
 team's schools, none differing. School 1006's tab was read side by side as
 the CCEO, block for block.
+
+## 13.12 Closed schools
+
+Go answers every tab of a closed school (temporarily or permanently closed)
+for anyone who may open it (the scope's closed schools, `get_one`).
+
+| Part | Existing rule it ports |
+|---|---|
+| The way back | "Back to Closed Schools", to the archive |
+| The banner | above every tab: the status and the day the school stopped; the latest closure's reason in its words, the learners at closure and the future work it cancelled. The page's reopening form is not read by the app |
+| The doors | Edit Details, Add to Project and Reassign Owner as for any school; no Schedule, Assign to Partner, Enter SSA Score or Close School, and no visit lock (`_profile_planning_controls`) |
+| The facts | "Status: Closed" on every engine tab |
+
+The seed had no closed school. Central Division Church of Uganda Primary
+(1078, a Core school) was closed temporarily through the existing web app as
+the CCEO, its reason marked "[Go parity check]".
+
+Proved against a gateway with no existing application behind it, school by
+school because the comparison tool lists open schools: 1078 for all 29
+accounts on all eight tabs, 232 answers, none differing (the refusals of the
+accounts that may not open it included).

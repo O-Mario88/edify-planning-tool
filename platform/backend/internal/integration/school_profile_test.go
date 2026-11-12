@@ -301,3 +301,37 @@ func TestTheParticipationTabListsTheWorkAndWhatTheReaderMayDo(t *testing.T) {
 		t.Fatalf("ticks %v, bar %v", ticked, profile.GetSelection())
 	}
 }
+
+func TestAClosedSchoolIsReadFromTheArchiveAndTakesNoNewWork(t *testing.T) {
+	userID := borrowAccount(t, "cceo@edify.org")
+	id, _ := anOfficersSchool(t, userID, "client")
+	ctx := context.Background()
+	var status string
+	if err := admin.QueryRow(ctx, `SELECT operational_status FROM school WHERE id = $1`, id).Scan(&status); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `UPDATE school SET operational_status = 'temporarily_closed', closure_effective_date = '2026-11-01' WHERE id = $1`, id); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = admin.Exec(context.Background(), `UPDATE school SET operational_status = $2, closure_effective_date = NULL WHERE id = $1`, id, status)
+	})
+	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	for _, tab := range []string{"details", "overview"} {
+		profile, err := profileOf(token, id, tab)
+		if err != nil {
+			t.Fatalf("%s: %v", tab, err)
+		}
+		header := profile.GetHeader()
+		if header.GetBackHref() != "/schools/closed" || header.GetBackLabel() != "Back to Closed Schools" {
+			t.Fatalf("%s: the way back: %v", tab, header)
+		}
+		if keys := actionKeys(profile); keys["schedule"] || keys["assign_to_partner"] || keys["close_school"] || !keys["edit_details"] {
+			t.Fatalf("%s: a closed school's doors: %v", tab, keys)
+		}
+		banner := profile.GetBlocks()[0].GetPanel()
+		if banner == nil || banner.GetItems()[0].GetText() != "Temporarily closed · 1 Nov 2026" {
+			t.Fatalf("%s: the banner: %v", tab, profile.GetBlocks()[0])
+		}
+	}
+}

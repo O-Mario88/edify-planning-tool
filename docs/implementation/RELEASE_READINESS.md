@@ -252,6 +252,21 @@ School tab of any Core-lifecycle school.
 | iOS Release | Pass | cceo@: school 1006 from Go: "Staff visits complete", Assign to Partner greyed; the Core School tab with "Staff: 2 visits, 0 trainings · Partner: 2 visits, 2 trainings" and the recommendations with Plan support |
 | Android Release | Not run | the emulator hung repeatedly (window manager stuck; cold boots on host and software graphics both froze under load); the same block kinds were checked on Android in the earlier pieces |
 
+## School Profiles, closed schools, read by Go (2026-11-12)
+
+[docs/migration/13-school-profiles.md](../migration/13-school-profiles.md),
+13.12: every tab of a temporarily or permanently closed school.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/schools/test_school_profile_rules_export.py` (now with the operational statuses and closure reasons) |
+| Parity with the existing page | Pass | school 1078 for all 29 accounts on all eight tabs against a gateway with no existing application behind it: 232 answers, none differing (refusals included); the CCEO's 699 open schools again for Details and Overview, none differing |
+| Records the seed lacked | Made in dev | school 1078 closed temporarily through the existing web app as the CCEO, its reason marked "[Go parity check]" |
+| Go integration suite | Pass | a school closed for the test reads "Back to Closed Schools", has no Schedule, Assign to Partner or Close School, and opens on its banner |
+| Django and Go checks | Pass | ruff, format, bandit clean; `go vet`, `gofmt`, `go test -race ./...` |
+| iOS Release | Pass | cceo@: Closed Schools → 1078 from Go: the banner, Edit Details and Add to Project only, "Status: Closed" |
+| Android Release | Not run | the emulator hangs (see the Core section) |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

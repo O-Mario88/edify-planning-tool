@@ -116,6 +116,7 @@ type school struct {
 	ClusterID                                   string
 	QualityScore                                *int
 	QualityStatus                               *string
+	ClosureDate                                 *time.Time
 }
 
 func (s school) closed() bool { return slices.Contains(rules.ClosedStatuses, s.Status) }
@@ -150,9 +151,6 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 	sc, err := s.load(ctx, id)
 	if err != nil {
 		return nil, true, err
-	}
-	if sc.closed() {
-		return nil, false, nil
 	}
 	// A tab the school's profile does not have is its first, the Overview
 	// (profile_views.profile_context).
@@ -189,6 +187,13 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 	if err != nil {
 		return nil, true, err
 	}
+	if sc.closed() {
+		banner, err := s.closedBanner(ctx, sc)
+		if err != nil {
+			return nil, true, err
+		}
+		blocks = append([]*screensv1.PageBlock{banner}, blocks...)
+	}
 	return &screensv1.GetSchoolProfileResponse{
 		Header:    header,
 		Tabs:      tabs(sc, tab),
@@ -211,7 +216,7 @@ SELECT s.id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(s.school_
   COALESCE(s.account_owner_id, ''), COALESCE(s.account_owner_name_raw, ''),
   COALESCE(s.school_phone, ''), COALESCE(s.primary_contact_name, ''), COALESCE(s.director_name, ''),
   COALESCE(s.headteacher_name, ''), s.last_enrollment_date, COALESCE(s.shipping_address, ''),
-  COALESCE(s.cluster_id, ''), s.data_quality_score, s.data_quality_status
+  COALESCE(s.cluster_id, ''), s.data_quality_score, s.data_quality_status, s.closure_effective_date
 FROM school s
 LEFT JOIN region r ON r.id = s.region_id
 LEFT JOIN district d ON d.id = s.district_id
@@ -221,7 +226,7 @@ WHERE s.id = $1`, id).Scan(&sc.ID, &sc.SchoolID, &sc.Name, &sc.Type, &sc.Status,
 		&sc.DistrictID, &sc.DistrictName, &sc.HasDistrict, &sc.SubCountyID, &sc.SubCountyName, &sc.HasSubCounty, &sc.ParishName,
 		&enrollment, &sc.Latitude, &sc.Longitude, &cohortYear, &cohortNumber, &sc.OwnerID, &sc.OwnerNameRaw,
 		&sc.Phone, &sc.ContactName, &sc.Director, &sc.Headteacher, &sc.LastEnrollment, &sc.Address,
-		&sc.ClusterID, &quality, &sc.QualityStatus)
+		&sc.ClusterID, &quality, &sc.QualityStatus, &sc.ClosureDate)
 	if err != nil {
 		return sc, fmt.Errorf("schoolprofile: reading the school: %w", err)
 	}

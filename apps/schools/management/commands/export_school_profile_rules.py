@@ -194,7 +194,11 @@ def rules() -> dict:
         DATA_COLLECTION_TYPES,
     )
     from apps.projects.models import GENERAL_INTERVENTION
-    from apps.schools.lifecycle_models import CLOSED_STATUSES
+    from apps.schools.lifecycle_models import (
+        CLOSED_STATUSES,
+        ClosureReason,
+        SchoolOperationalStatus,
+    )
     from apps.schools.lifecycle_service import CLOSED_SCHOOL_MESSAGE
     from apps.ssa import creation
     from apps.ssa import services as ssa_services
@@ -231,6 +235,9 @@ def rules() -> dict:
         "core_lifecycle_types": list(CORE_LIFECYCLE_TYPES),
         "closed_statuses": list(CLOSED_STATUSES),
         "closed_school_message": CLOSED_SCHOOL_MESSAGE,
+        # A closed school's banner (pages/schools/detail.html).
+        "operational_statuses": dict(SchoolOperationalStatus.choices),
+        "closure_reasons": dict(ClosureReason.choices),
         "engine": engine_rules(),
         "participation": participation_rules(),
         "core_tab": core_tab_rules(),

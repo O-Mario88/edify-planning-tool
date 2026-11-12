@@ -56,6 +56,8 @@ type profileRules struct {
 	CoreLifecycleTypes  []string           `json:"core_lifecycle_types"`
 	ClosedStatuses      []string           `json:"closed_statuses"`
 	ClosedSchoolMessage string             `json:"closed_school_message"`
+	OperationalStatuses map[string]string  `json:"operational_statuses"`
+	ClosureReasons      map[string]string  `json:"closure_reasons"`
 	Gate                visitgate.Rules    `json:"gate"`
 	Engine              engineRules        `json:"engine"`
 	Participation       participationRules `json:"participation"`

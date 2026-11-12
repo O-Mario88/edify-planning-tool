@@ -4,6 +4,23 @@
     "temporarily_closed",
     "permanently_closed"
   ],
+  "closure_reasons": {
+    "disaster": "Natural disaster or emergency",
+    "duplicate_record": "Duplicate or incorrect school record",
+    "facility": "Building or facility problem",
+    "financial": "Financial difficulties",
+    "government_closure": "Government closure",
+    "licensing": "Licence or registration issue",
+    "low_enrolment": "Low enrolment",
+    "management": "School management breakdown",
+    "merged": "Merged with another school",
+    "other": "Other",
+    "owner_decision": "Owner decision",
+    "relocated": "Relocated outside Edify scope",
+    "security": "Security or access problem",
+    "temporary_suspension": "Temporary suspension of operations",
+    "unconfirmed": "Unable to confirm continued operation"
+  },
   "core_lifecycle_types": [
     "core",
     "core_trained",
@@ -730,6 +747,12 @@
       "assigned",
       "pending_scheduling"
     ]
+  },
+  "operational_statuses": {
+    "active": "Active",
+    "permanently_closed": "Permanently closed",
+    "reopened": "Reopened",
+    "temporarily_closed": "Temporarily closed"
   },
   "participation": {
     "activity_types": {

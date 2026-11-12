@@ -125,7 +125,11 @@ LEFT JOIN sub_region sr ON sr.id = d.sub_region_id`, sc.DistrictID, sc.ClusterID
 		fact := peopleFact("Partner", partners, true, "/partners/")
 		facts = append(facts, fact)
 	}
-	add("Status", "Operating", "")
+	status := "Operating"
+	if sc.closed() {
+		status = "Closed"
+	}
+	add("Status", status, "")
 	add("Fiscal Year", fyLabel(l.fy), "")
 	return facts, nil
 }

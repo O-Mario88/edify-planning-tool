@@ -157,3 +157,8 @@ GRANT SELECT (support_type, visit_number, training_number) ON partner_assignment
 GRANT SELECT (visits_completed, trainings_completed) ON core_plan TO edify_gateway_ro;
 GRANT SELECT (school_id, champion_status) ON core_school_profile TO edify_gateway_ro;
 GRANT SELECT (school_id, intervention, score, score_band, reason, state, rank) ON ssa_recommendation TO edify_gateway_ro;
+-- A closed school's profile: its banner (status, effective date, and the
+-- latest closure's reason and what it took).
+GRANT SELECT (closure_effective_date) ON school TO edify_gateway_ro;
+GRANT SELECT (school_id, reason_category, reason, enrollment_at_closure, activities_cancelled, effective_date, created_at)
+  ON school_closure TO edify_gateway_ro;

@@ -28,6 +28,12 @@ func (s *Service) header(ctx context.Context, p auth.Principal, scope schooldire
 		Badges:      []*screensv1.PageBadge{readinessBadge(sc)},
 		Actions:     []*screensv1.PageAction{},
 	}
+	closed := sc.closed()
+	if closed {
+		// A closed school is reached from the Closed Schools archive, takes
+		// no new work, and has no visit of the year to lock.
+		h.BackLabel, h.BackHref = "Back to Closed Schools", "/schools/closed"
+	}
 
 	// Enter SSA Score and the year's SSA (ssa.creation.entry_state).
 	fy := localFY(now)
@@ -36,7 +42,7 @@ func (s *Service) header(ctx context.Context, p auth.Principal, scope schooldire
 		return nil, err
 	}
 	entryShown := false
-	if d.EnterSSA {
+	if d.EnterSSA && !closed {
 		if entryShown, err = schooldirectory.InReach(ctx, s.db, scope, sc.ID); err != nil {
 			return nil, err
 		}
@@ -49,14 +55,17 @@ func (s *Service) header(ctx context.Context, p auth.Principal, scope schooldire
 	}
 
 	// The year's support visit (_profile_planning_controls, visit_gate).
-	operational := schooldirectory.OperationalFY(now)
-	gate, err := visitgate.Of(ctx, s.db, rules.Gate,
-		visitgate.School{ID: sc.ID, Code: sc.SchoolID, Name: sc.Name, Type: sc.Type}, operational, operational)
-	if err != nil {
-		return nil, err
-	}
-	if lock := gate.LockLabel(rules.Gate); lock != "" {
-		h.Badges = append(h.Badges, &screensv1.PageBadge{Text: lock, Tone: "plain", Title: gate.StaffReason})
+	var gate visitgate.Gate
+	if !closed {
+		operational := schooldirectory.OperationalFY(now)
+		gate, err = visitgate.Of(ctx, s.db, rules.Gate,
+			visitgate.School{ID: sc.ID, Code: sc.SchoolID, Name: sc.Name, Type: sc.Type}, operational, operational)
+		if err != nil {
+			return nil, err
+		}
+		if lock := gate.LockLabel(rules.Gate); lock != "" {
+			h.Badges = append(h.Badges, &screensv1.PageBadge{Text: lock, Tone: "plain", Title: gate.StaffReason})
+		}
 	}
 
 	h.Actions = append(h.Actions, drawer("Edit Details", "/schools/"+sc.ID+"/edit-drawer", true))
@@ -66,12 +75,12 @@ func (s *Service) header(ctx context.Context, p auth.Principal, scope schooldire
 	if sc.Type == "core" && d.CoreSchools {
 		schedule, assign = "/core-schools/schedule-activity?school_id=", "/core-schools/assign-partner?school_id="
 	}
-	if d.Schedule {
+	if d.Schedule && !closed {
 		// A staff support visit locks only a closed school's Schedule, and a
 		// closed school is not served here.
 		h.Actions = append(h.Actions, drawer("Schedule", schedule+sc.SchoolID, false))
 	}
-	if d.AssignPartner {
+	if d.AssignPartner && !closed {
 		if gate.CanAssignPartner {
 			h.Actions = append(h.Actions, drawer("Assign to Partner", assign+sc.SchoolID, false))
 		} else {
@@ -91,7 +100,9 @@ func (s *Service) header(ctx context.Context, p auth.Principal, scope schooldire
 	if d.TransferOwner {
 		h.Actions = append(h.Actions, drawer("Reassign Owner", "/schools/"+sc.SchoolID+"/transfer-owner", false))
 	}
-	h.Actions = append(h.Actions, drawer("Close School", "/schools/"+sc.SchoolID+"/close-drawer", false))
+	if !closed {
+		h.Actions = append(h.Actions, drawer("Close School", "/schools/"+sc.SchoolID+"/close-drawer", false))
+	}
 	return h, nil
 }
 
@@ -211,4 +222,39 @@ func (r ssaRecord) badge(fy string) *screensv1.PageBadge {
 		tone = "plain"
 	}
 	return &screensv1.PageBadge{Text: text, Tone: tone, Title: "Source: " + r.sourceLabel() + " · " + status}
+}
+
+// closedBanner is a closed school's banner above every tab: its status and
+// the day it stopped, and the latest closure's reason and what it took. The
+// page's reopening form is not read.
+func (s *Service) closedBanner(ctx context.Context, sc school) (*screensv1.PageBlock, error) {
+	first := label(rules.OperationalStatuses, sc.Status)
+	if sc.ClosureDate != nil {
+		first += " · " + jMY(*sc.ClosureDate)
+	}
+	items := []*screensv1.PagePanelItem{text(collapse(first))}
+	var reasonCategory, reason string
+	var enrolment *int32
+	var cancelled int32
+	err := s.db.QueryRow(ctx, `
+SELECT COALESCE(reason_category, ''), COALESCE(reason, ''), enrollment_at_closure, COALESCE(activities_cancelled, 0)
+FROM school_closure WHERE school_id = $1 ORDER BY effective_date DESC, created_at DESC LIMIT 1`, sc.ID).Scan(
+		&reasonCategory, &reason, &enrolment, &cancelled)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+	case err != nil:
+		return nil, fmt.Errorf("schoolprofile: reading the closure: %w", err)
+	default:
+		items = append(items, text(collapse(label(rules.ClosureReasons, reasonCategory)+" — "+reason)))
+		took := ""
+		if enrolment != nil && *enrolment != 0 {
+			took += intcomma(int(*enrolment)) + " learners at closure · "
+		}
+		if cancelled != 0 {
+			took += fmt.Sprintf("%d future activity(s) cancelled · ", cancelled)
+		}
+		items = append(items, text(took+"History, evidence, finance and target credit are unchanged."))
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
+		Badges: []*screensv1.PageBadge{}, Items: pairedItems(items)}}}, nil
 }
