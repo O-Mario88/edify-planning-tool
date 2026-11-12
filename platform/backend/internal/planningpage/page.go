@@ -324,12 +324,12 @@ func pageLink(f filterState, page int) string {
 }
 
 // pager is the table's footer as the feed reads it.
-func pager(f filterState, total, pages int) (summary string, out []*screensv1.PagePagerPage) {
+func pager(f filterState, total, pages int, noun string) (summary string, out []*screensv1.PagePagerPage) {
 	start, end := 0, min(f.page*f.perPage, total)
 	if total > 0 {
 		start = (f.page-1)*f.perPage + 1
 	}
-	summary = fmt.Sprintf("Showing %d–%d of %d schools", start, end, total)
+	summary = fmt.Sprintf("Showing %d–%d of %d %s", start, end, total, noun)
 	if f.page > 1 {
 		out = append(out, &screensv1.PagePagerPage{Label: "Prev", Href: pageLink(f, f.page-1)})
 	}
@@ -350,14 +350,22 @@ func pager(f filterState, total, pages int) (summary string, out []*screensv1.Pa
 // together as one panel: only the parts written in their own elements reach
 // it (the sentence before a link does not).
 func emptyPanel(anyClustered bool, summary string, pages []*screensv1.PagePagerPage) *screensv1.PageBlock {
-	items := []*screensv1.PagePanelItem{}
 	if anyClustered {
-		items = append(items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: "Clear filters or adjust your search."}})
-	} else {
-		items = append(items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
-			Links: []*screensv1.PageLink{{Text: "School Directory", Href: "/schools"}},
-		}}})
+		return footerPanel([]*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{Text: "Clear filters or adjust your search."}}}, summary, pages)
 	}
+	return footerPanel([]*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
+		Links: []*screensv1.PageLink{{Text: "School Directory", Href: "/schools"}},
+	}}}}, summary, pages)
+}
+
+// emptyMessagePanel is a tab's empty card whose message stands alone
+// (Assigned to Partner's, the Clusters tab's), read with the footer.
+func emptyMessagePanel(message, summary string, pages []*screensv1.PagePagerPage) *screensv1.PageBlock {
+	return footerPanel([]*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{Text: message}}}, summary, pages)
+}
+
+// footerPanel is an empty card's items and the pager's footer read with it.
+func footerPanel(items []*screensv1.PagePanelItem, summary string, pages []*screensv1.PagePagerPage) *screensv1.PageBlock {
 	items = append(items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: summary}})
 	links := []*screensv1.PageLink{}
 	for _, p := range pages {
@@ -391,4 +399,14 @@ func selection(d Doors) *screensv1.PageSelection {
 		return nil
 	}
 	return &screensv1.PageSelection{Noun: "schools selected", Actions: actions}
+}
+
+// activityBar is partials/activities/selection_bar.html, the Scheduled
+// tab's bar for ticked calendar entries; the feed finds it before the bar
+// for ticked schools.
+func activityBar() *screensv1.PageSelection {
+	return &screensv1.PageSelection{Noun: "activities selected", Actions: []*screensv1.PageSelectionAction{
+		{Label: "Reschedule", Href: "/activity-selection/reschedule", Param: "ids", Joined: true},
+		{Label: "Cancel", Href: "/activity-selection/cancel", Param: "ids", Joined: true},
+	}}
 }

@@ -27,7 +27,7 @@ deployed, or connected to production.
 | [15-cluster-oversight.md](15-cluster-oversight.md) | Cluster Oversight's Command Center (the one address of the page the app opens), read by Go; its sections are not opened by the app |
 | [16-closed-schools.md](16-closed-schools.md) | The Closed Schools archive, read by Go |
 | [17-programme-schools.md](17-programme-schools.md) | Programme Schools (Core Trained, Core Graduate, Champion), read by Go |
-| [24-planning-page.md](24-planning-page.md) | Planning (M4): the Client and Core tabs of `/planning` read by Go (filters, strip, workload line, rows, doors, pages); the other tabs and every save not yet moved |
+| [24-planning-page.md](24-planning-page.md) | Planning (M4): every tab of `/planning` read by Go (filters, strip, workload line, rows, cluster cards, doors, pages); a priority allocation's page and every save not yet moved |
 
 The code is under [`platform/`](../../platform/README.md).
 

@@ -29,6 +29,10 @@ type planning struct {
 	Schools, WithSSA, Ready, Baseline, Cleanup int
 	MeetingsDone, MeetingsOpen                 int
 	NotVisited, NotTrained                     int
+	// missing is a cluster cluster_planning does not read (outside the
+	// reader's own active clusters): its row is {} on the page, every figure
+	// reads 0 and it has no gap.
+	missing bool
 }
 
 // coverage is ssaCoveragePct: round(done / total * 100, 1), 0.0 with no
@@ -45,6 +49,8 @@ func (p planning) metThisQuarter() bool { return p.MeetingsDone > 0 || p.Meeting
 // gap is gapCategory.
 func (p planning) gap() string {
 	switch {
+	case p.missing:
+		return ""
 	case p.MeetingsDone == 0:
 		return "no_meetings_this_fy"
 	case !p.metThisQuarter():

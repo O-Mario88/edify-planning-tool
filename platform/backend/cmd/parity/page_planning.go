@@ -14,7 +14,10 @@ func planningQuestions(ctx context.Context, r *pageRun, token string) []map[stri
 		{"page": "2"}, {"page": "5"}, {"page": "99"}, {"per_page": "50"}, {"per_page": "20", "page": "2"},
 		{"q": "central"}, {"q": "1650"}, {"q": "zzz"}, {"q": "Paul"},
 		{"school_type": "core"}, {"cluster_status": "unclustered"}, {"planning_readiness": "data_cleanup_required"},
-		{"ssa_status": "done"}, {"ssa_status": "not_done"}, {"ssa_status": "scheduled"}, {"district": "nonsense"}}
+		{"ssa_status": "done"}, {"ssa_status": "not_done"}, {"ssa_status": "scheduled"}, {"district": "nonsense"},
+		{"tab": "partner"}, {"tab": "partner", "group": "owner"}, {"tab": "scheduled"}, {"tab": "scheduled", "fy": "2026"},
+		{"tab": "clusters"}, {"tab": "clusters", "page": "2"}, {"tab": "clusters", "q": "cluster b"},
+		{"tab": "clusters", "planning_readiness": "not_scheduled"}, {"tab": "clusters", "fy": "2026"}}
 	for _, v := range []string{"requires_cluster", "ready_for_baseline_ssa", "ready_for_support_planning", "scheduled", "in_my_plan"} {
 		out = append(out, map[string]string{"planning_readiness": v})
 	}

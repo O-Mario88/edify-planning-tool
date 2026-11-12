@@ -216,8 +216,19 @@ func tableCondition(b *sqlb, f filterState, support bool) string {
 		parts = append(parts, "s.school_type = ANY("+b.arg(rules.ClientTabTypes)+")")
 	case "core":
 		parts = append(parts, "s.school_type = 'core'")
+	case "partner":
+		// The live-support rule the Responsible column reads, or, with the
+		// rule off, a hand-over in a live status.
+		if support {
+			parts = append(parts, schoolplanning.PartnerSupportCondition(f.dataFY, b.arg))
+		} else {
+			parts = append(parts, "s.id IN (SELECT pa.school_id FROM partner_assignment pa WHERE pa.status = ANY("+b.arg(rules.PartnerLiveStatuses)+"))")
+		}
+	case "scheduled":
+		parts = append(parts, fmt.Sprintf(`s.id IN (SELECT a.school_id FROM activity a WHERE a.deleted_at IS NULL AND a.fy = %s
+  AND NOT (a.status = ANY(%s)))`, b.arg(f.dataFY), b.arg(rules.NotInThePlan)))
 	}
-	if !support {
+	if !support && (f.tab == "client" || f.tab == "core") {
 		parts = append(parts, fmt.Sprintf(`s.id NOT IN (SELECT a.school_id FROM activity a WHERE a.deleted_at IS NULL AND a.fy = %s
   AND a.school_id IS NOT NULL AND NOT (a.status = ANY(%s)))`, b.arg(f.dataFY), b.arg(rules.NotActiveWorkStatuses)),
 			fmt.Sprintf(`s.id NOT IN (SELECT pa.school_id FROM partner_assignment pa WHERE pa.school_id IS NOT NULL

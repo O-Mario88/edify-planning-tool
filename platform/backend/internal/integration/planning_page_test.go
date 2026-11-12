@@ -10,7 +10,7 @@ import (
 )
 
 // The gateway under test has no existing application behind it, so every
-// answer here is Go's, and a tab Go does not answer is unavailable.
+// answer here is Go's, and what Go does not answer is unavailable.
 func TestThePlanningPageListsTheOfficersClusteredClientSchools(t *testing.T) {
 	var listed int
 	if err := admin.QueryRow(context.Background(), `
@@ -42,8 +42,12 @@ WHERE u.email = 'cceo@edify.org' AND s.deleted_at IS NULL AND s.operational_stat
 	if !table || page.GetSelection().GetNoun() != "schools selected" {
 		t.Fatalf("table %v, selection %v", table, page.GetSelection())
 	}
-	if _, err := pageOf(token, "/planning", map[string]string{"tab": "clusters"}); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("the Clusters tab is still the existing application's: %v", err)
+	clusters, err := pageOf(token, "/planning", map[string]string{"tab": "clusters"})
+	if err != nil || len(recordsOf(clusters)) == 0 {
+		t.Fatalf("the Clusters tab lists the officer's clusters as cards: %v", err)
+	}
+	if _, err := pageOf(token, "/planning", map[string]string{"priority_allocation": "x"}); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("a page opened from a priority allocation is still the existing application's: %v", err)
 	}
 }
 

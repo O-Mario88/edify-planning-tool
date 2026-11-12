@@ -332,7 +332,7 @@ migration branch by the coordinator ([15](../migration/15-cluster-oversight.md),
 | Known differences kept on purpose | — | ties with no order in the existing code (same-day closures, same-named programme schools) can come back in either order on both sides; see the documents' "looked wrong" lists |
 | iOS / Android Release | Not run | not checked on a device for these three pages |
 
-## Planning's Client and Core tabs read by Go (2026-11-12)
+## The Planning page read by Go (2026-11-12)
 
 [docs/migration/24-planning-page.md](../migration/24-planning-page.md): the
 first piece of M4.
@@ -340,9 +340,9 @@ first piece of M4.
 | Check | Result | Evidence |
 |---|---|---|
 | The rules identical on both sides | Pass | `apps/planning/test_planning_page_rules_export.py` (doors, menus, strip labels, the counted-visit rules, the planning service's lists now module constants) |
-| Parity with the existing page | Pass | all 29 accounts on a gateway with no existing application behind it: 1,170 answers, none differing; rows with the same name compared in School ID order (100 answers held such rows; the existing page gives them no order) |
+| Parity with the existing page | Pass | all 29 accounts on a gateway with no existing application behind it, every tab: 1,431 answers, none differing; rows with the same name compared in School ID order (104 answers held such rows; the existing page gives them no order) |
 | Go unit tests | Pass | the pager window, quarters, how the view reads its filters, group headings, tab links, fact colours, a row's facts, links and doors, the empty states, the bar |
-| Go integration suite | Pass | the officer's Client tab with its rows and bar, the Clusters tab passed on, a role without Planning turned away |
+| Go integration suite | Pass | the officer's Client tab with its rows and bar, the Clusters tab's cards, a priority allocation passed on, a role without Planning turned away |
 | Django and Go checks | Pass | ruff, format, bandit clean; the planning suites (1,680 tests) after the service's inline lists became module constants; `go vet`, `gofmt`, `go test -race ./...` |
 | iOS / Android Release | Not run | not checked on a device for this piece |
 

@@ -53,7 +53,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	operational := schooldirectory.OperationalFY(now)
 	f, readable := readFilters(query, operational, scope.CountryScope, now)
-	if !readable || (f.tab != "client" && f.tab != "core") {
+	if !readable || !in([]string{"client", "core", "partner", "scheduled", "clusters"}, f.tab) {
 		return nil, false, nil
 	}
 	page, err := s.page(ctx, p, scope, doors, f, operational, now)
@@ -70,10 +70,67 @@ func (s *Service) page(ctx context.Context, p auth.Principal, scope schooldirect
 		}
 	}
 
-	// The portfolio alone (the strip, the filter menus) and with the
-	// page's filters and tab (the table).
+	// The portfolio alone: the strip and the filter menus.
 	baseB := &sqlb{}
 	base := schooldirectory.DirectPortfolio(scope, baseB.arg)
+	// The filter menus: the portfolio's districts, and the people who hold
+	// its schools by their Program Lead.
+	districts := []option{}
+	if err := each(ctx, s.db, "districts", `SELECT d.id, COALESCE(d.name, '') FROM district d
+WHERE d.id IN (SELECT s.district_id FROM school s WHERE `+base+`) ORDER BY d.name`, func(rows pgx.Rows) error {
+		var o option
+		if err := rows.Scan(&o.value, &o.label); err != nil {
+			return err
+		}
+		districts = append(districts, o)
+		return nil
+	}, baseB.args...); err != nil {
+		return nil, err
+	}
+	staff, err := s.staffOptions(ctx, base, baseB.args)
+	if err != nil {
+		return nil, err
+	}
+	filters := formFilters(f, schooldirectory.FYOptions(now), districts, staff, support)
+	strip, err := stripBlock(ctx, s.db, base, baseB.args, f.dataFY)
+	if err != nil {
+		return nil, err
+	}
+
+	blocks := []*screensv1.PageBlock{
+		{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: filters, Hidden: map[string]string{"tab": f.tab}}}},
+		strip,
+	}
+	if line, err := workload(ctx, s.db, p, f.fy); err != nil {
+		return nil, err
+	} else if line != nil {
+		blocks = append(blocks, line)
+	}
+	blocks = append(blocks, tabs(f, filters))
+
+	var rest []*screensv1.PageBlock
+	var err2 error
+	if f.tab == "clusters" {
+		rest, err2 = s.clustersTab(ctx, p, scope, f)
+	} else {
+		rest, err2 = s.schoolsTab(ctx, scope, doors, f, owners, support, base, baseB.args, operational, now)
+	}
+	if err2 != nil {
+		return nil, err2
+	}
+	blocks = append(blocks, rest...)
+	bar := selection(doors)
+	if f.tab == "scheduled" {
+		bar = activityBar()
+	}
+	return &screensv1.GetPageResponse{Header: header(), Blocks: blocks, WebPath: Path, Selection: bar}, nil
+}
+
+// schoolsTab is a tab of schools (Client, Core, Assigned to Partner,
+// Scheduled): its rows by name or by holder, its pager or empty card.
+func (s *Service) schoolsTab(ctx context.Context, scope schooldirectory.Scope, doors Doors, f filterState, owners []string,
+	support bool, base string, baseArgs []any, operational string, now time.Time) ([]*screensv1.PageBlock, error) {
+	blocks := []*screensv1.PageBlock{}
 	b := &sqlb{}
 	where := filtered(b, scope, f, owners, support) + " AND " + tableCondition(b, f, support)
 	total, err := count(ctx, s.db, "the table", "SELECT count(*) FROM school s WHERE "+where, b.args...)
@@ -151,46 +208,20 @@ func (s *Service) page(ctx context.Context, p auth.Principal, scope schooldirect
 		return nil, err
 	}
 
-	// The filter menus: the portfolio's districts, and the people who hold
-	// its schools by their Program Lead.
-	districts := []option{}
-	if err := each(ctx, s.db, "districts", `SELECT d.id, COALESCE(d.name, '') FROM district d
-WHERE d.id IN (SELECT s.district_id FROM school s WHERE `+base+`) ORDER BY d.name`, func(rows pgx.Rows) error {
-		var o option
-		if err := rows.Scan(&o.value, &o.label); err != nil {
-			return err
-		}
-		districts = append(districts, o)
-		return nil
-	}, baseB.args...); err != nil {
-		return nil, err
+	if f.tab == "scheduled" {
+		// view_controls.html: the Scheduled tab's List View / Calendar View
+		// switch, read as a panel of its two words.
+		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Items: []*screensv1.PagePanelItem{
+			{Kind: &screensv1.PagePanelItem_Text{Text: "List View"}}, {Kind: &screensv1.PagePanelItem_Text{Text: "Calendar View"}},
+		}}}})
 	}
-	staff, err := s.staffOptions(ctx, base, baseB.args)
-	if err != nil {
-		return nil, err
-	}
-	filters := formFilters(f, schooldirectory.FYOptions(now), districts, staff, support)
-	strip, err := stripBlock(ctx, s.db, base, baseB.args, f.dataFY)
-	if err != nil {
-		return nil, err
-	}
-
-	blocks := []*screensv1.PageBlock{
-		{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: filters, Hidden: map[string]string{"tab": f.tab}}}},
-		strip,
-	}
-	if line, err := workload(ctx, s.db, p, f.fy); err != nil {
-		return nil, err
-	} else if line != nil {
-		blocks = append(blocks, line)
-	}
-	blocks = append(blocks, tabs(f, filters))
-
 	pages := (total + f.perPage - 1) / f.perPage
-	summary, pageLinks := pager(f, total, pages)
-	if len(list) == 0 {
+	summary, pageLinks := pager(f, total, pages, "schools")
+	if len(list) == 0 && f.tab == "partner" {
+		blocks = append(blocks, emptyMessagePanel("No partner assignments pending.", summary, pageLinks))
+	} else if len(list) == 0 {
 		anyClustered, err := count(ctx, s.db, "clustered schools", `SELECT count(*) FROM (SELECT 1 FROM school s WHERE `+base+`
-  AND s.cluster_status = 'clustered' AND s.cluster_id IS NOT NULL AND s.cluster_id <> '' LIMIT 1) x`, baseB.args...)
+  AND s.cluster_status = 'clustered' AND s.cluster_id IS NOT NULL AND s.cluster_id <> '' LIMIT 1) x`, baseArgs...)
 		if err != nil {
 			return nil, err
 		}
@@ -216,7 +247,7 @@ WHERE d.id IN (SELECT s.district_id FROM school s WHERE `+base+`) ORDER BY d.nam
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: table}},
 			&screensv1.PageBlock{Kind: &screensv1.PageBlock_Pager{Pager: &screensv1.PagePager{Summary: summary, Pages: pageLinks}}})
 	}
-	return &screensv1.GetPageResponse{Header: header(), Blocks: blocks, WebPath: Path, Selection: selection(doors)}, nil
+	return blocks, nil
 }
 
 // staffOptions is owner_groups.owner_filter_groups over the portfolio,

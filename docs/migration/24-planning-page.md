@@ -1,4 +1,4 @@
-# 24. Planning (M4), first piece: the Client and Core tabs, read by Go
+# 24. Planning (M4): the Planning page, read by Go
 
 Owner brief "Final backend responsibility and language boundaries"
 (2026-11-11): "Activity planning and scheduling". The migration plan's M4
@@ -7,8 +7,9 @@ this page, where staff choose the schools they plan for. It moves in pieces.
 
 | Piece | What moves | State |
 |---|---|---|
-| 1 | `/planning`'s Client Schools and Core Schools tabs: the filters, the strip, the workload line, the rows, their doors, pages and the selection bar | This document |
-| 2 | The Clusters, Assigned to Partner and Scheduled / In My Plan tabs (the last with its calendar), and a page opened from a priority allocation | Next; still the existing application's |
+| 1 | `/planning`'s Client Schools and Core Schools tabs: the filters, the strip, the workload line, the rows, their doors, pages and the selection bar | Done, 24.1 |
+| 2 | The Clusters, Assigned to Partner and Scheduled / In My Plan tabs | Done, 24.3 |
+| 3 | A page opened from a priority allocation (its banner and the allocation carried into Schedule) | Still the existing application's |
 | — | Every drawer and save the page opens (Schedule, Assign, bulk scheduling, Plan Field Event, Recent changes) | Still the existing application's |
 
 ## 24.1 What moved
@@ -59,3 +60,15 @@ returns equal names in the order its plan reads them; Django's statement and
 Go's are planned differently. The comparison now puts each run of rows with
 the same name in School ID order on both sides and says how many answers
 needed it, instead of hiding or failing them.
+
+## 24.3 The other three tabs
+
+| Tab | Existing rule it ports |
+|---|---|
+| Assigned to Partner | the same rows, of the schools a partner holds: the live-support rule the Responsible column reads (`active_assignment_q`), or with the rule off a hand-over in a live status; its own empty card ("No partner assignments pending.") |
+| Scheduled / In My Plan | the same rows, of the schools with work in the year's plan (anything but cancelled, rejected, deferred, not planned or waiting for its owner's approval); the List View / Calendar View switch; and its bar is the calendar's bar for ticked activities (Reschedule, Cancel), which the feed finds before the bar for ticked schools. The calendar itself is drawn by a script and never reaches the app |
+| Clusters | the reader's clusters, any status (`cluster_queryset`: a Program Lead's or other supervisor's team's too), less those with a meeting or training this year under "not scheduled", searched by name and filtered by district, by name, as the Clusters page's cards. `cluster_planning` reads only the reader's own active clusters, so a team cluster's card has no planning figures, as on the existing page |
+
+All 29 accounts on the gateway with no existing application behind it, every
+tab: 1,431 answers, none differing (104 held rows with the same name,
+compared in School ID order).
