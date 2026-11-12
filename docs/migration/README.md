@@ -24,6 +24,9 @@ deployed, or connected to production.
 | [12-school-directory.md](12-school-directory.md) | The School Directory, read by Go: whose schools, filters, tabs and rows, proved against the existing page; writes and profiles not yet moved |
 | [13-school-profiles.md](13-school-profiles.md) | School Profiles: who may open a school, the header and its doors, the visit rule, and every tab (Overview, SSA, Participation, Projects, Stories, Academic, Core School, Details) of an open school, Core schools included, read by Go; the plan for the rest |
 | [14-districts-and-clusters.md](14-districts-and-clusters.md) | Districts and clusters (M2): the Clusters page read by Go (whose clusters, filters, strip, cards, doors, pages), proved against the existing page; a card's schools, the cluster and district profiles and every save not yet moved |
+| [15-cluster-oversight.md](15-cluster-oversight.md) | Cluster Oversight's Command Center (the one address of the page the app opens), read by Go; its sections are not opened by the app |
+| [16-closed-schools.md](16-closed-schools.md) | The Closed Schools archive, read by Go |
+| [17-programme-schools.md](17-programme-schools.md) | Programme Schools (Core Trained, Core Graduate, Champion), read by Go |
 
 The code is under [`platform/`](../../platform/README.md).
 

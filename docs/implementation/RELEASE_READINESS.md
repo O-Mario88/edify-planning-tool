@@ -317,6 +317,21 @@ the visit lock, who supports each school and its Next Activity.
 | iOS Release | Pass | cceo@: Clusters page 2 → Cluster C → Show details: "Schools in Cluster (6)" and its rows, through the main gateway, which sends this path to Go before any fallback (the database did not show which process answered this time, so the Go-only parity above is the proof of the answer) |
 | Android Release | Not run | the emulator hangs |
 
+## Cluster Oversight, Closed Schools and Programme Schools read by Go (2026-11-12)
+
+Built by two agents in their own worktrees and branches, then merged into the
+migration branch by the coordinator ([15](../migration/15-cluster-oversight.md),
+[16](../migration/16-closed-schools.md), [17](../migration/17-programme-schools.md)).
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/clusters/test_cluster_oversight_rules_export.py`, `apps/schools/test_closed_schools_rules_export.py`, `apps/schools/test_programme_schools_rules_export.py` |
+| Parity, re-run by the coordinator on the merged build | Pass | all 29 accounts on a gateway with no existing application behind it: Closed Schools 580 answers, Programme Schools 891, none differing; Cluster Oversight 725 answers at `/cluster-oversight/` and 29 at each address the feed refuses, none differing |
+| Beyond the seed | Pass | the agents' golden comparisons: Cluster Oversight 17 pages built by the unmodified Django code from synthetic records; Closed Schools 403 answers over 530 closures in the test database; both school pages on a varied private copy (302 and 200 answers, none differing once tied rows are set aside) |
+| Django and Go checks | Pass | ruff, format, bandit clean; the cluster suites (313 tests) after `workspace.py`'s Command Center words became module constants; `go vet`, `gofmt`, `go test -race ./...`, the integration suite |
+| Known differences kept on purpose | — | ties with no order in the existing code (same-day closures, same-named programme schools) can come back in either order on both sides; see the documents' "looked wrong" lists |
+| iOS / Android Release | Not run | not checked on a device for these three pages |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.
