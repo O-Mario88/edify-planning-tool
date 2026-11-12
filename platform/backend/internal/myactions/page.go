@@ -29,6 +29,7 @@ func mustZone(name string) *time.Location {
 
 // view is everything the page is drawn from.
 type view struct {
+	side   side
 	role   Role
 	counts counts
 	rows   []action
@@ -145,22 +146,28 @@ func due(a action, today time.Time) string {
 	return text
 }
 
-// actionCell is the row's way on: active work opens its route from the
-// Actions menu (a blank route opens nothing); closed work views the school.
-func actionCell(a action) *screensv1.PageCell {
+// actionCell is the row's way on. Active work opens its route: from the
+// Actions menu where the row has a second step (Acknowledge for the
+// recipient, Escalate for the sender of overdue work; neither reaches the
+// app), else as the row's own link. A blank route opens nothing. Closed work
+// views the school.
+func actionCell(a action, sender bool) *screensv1.PageCell {
 	c := &screensv1.PageCell{}
 	switch {
-	case active(a.State) && a.Route != "":
-		c.Actions = []*screensv1.PageAction{{Key: "menu", Label: "Open", Enabled: true, Href: a.Route}}
 	case !active(a.State):
 		c.Actions = []*screensv1.PageAction{{Key: "button", Label: "View school", Primary: true, Enabled: true, Href: "/schools/" + a.SchoolPK}}
+	case a.Route == "":
+	case !sender || a.State == rules.OverdueState:
+		c.Actions = []*screensv1.PageAction{{Key: "menu", Label: "Open", Enabled: true, Href: a.Route}}
+	default:
+		c.Actions = []*screensv1.PageAction{{Key: "button", Label: "Open", Primary: true, Enabled: true, Href: a.Route}}
 	}
 	return c
 }
 
 // row is one action as the table writes it. The School ID is filled in by
 // the page's script, so the feed reads none.
-func row(a action, today time.Time) *screensv1.PageRow {
+func row(a action, today time.Time, sender bool) *screensv1.PageRow {
 	id := "—"
 	if a.SchoolPK != "" {
 		id = ""
@@ -169,14 +176,17 @@ func row(a action, today time.Time) *screensv1.PageRow {
 		{Text: id},
 		{Text: collapse(or(a.School, "School") + " " + or(a.District, "—")), Href: "/schools/" + a.SchoolPK},
 		{Text: collapse(a.RequestedAction + " " + issueLabel(a.IssueType))},
-		{Text: collapse(or(a.Sender, "—"))},
+		{Text: collapse(or(a.Counterparty, "—"))},
 		{Text: collapse(due(a, today))},
 		stateCell(a),
-		actionCell(a),
+		actionCell(a, sender),
 	}}
 }
 
-var columns = []string{"School ID", "School", "Requested action", "Sent by", "Due", "State", "Action"}
+// columns are the table's headings around the other party's.
+func columns(counterparty string) []string {
+	return []string{"School ID", "School", "Requested action", counterparty, "Due", "State", "Action"}
+}
 
 // page is the whole answer.
 func page(v view) *screensv1.GetPageResponse {
@@ -192,33 +202,34 @@ func page(v view) *screensv1.GetPageResponse {
 		blocks = append(blocks, provenance(v.counts))
 	}
 	if len(v.rows) == 0 {
-		blocks = append(blocks, panel(tabLinks(v.counts), textItem("Nothing has been assigned to you.")))
-		return response(blocks)
+		blocks = append(blocks, panel(tabLinks(v.counts), textItem(v.side.empty)))
+		return response(v.side, blocks)
 	}
 	blocks = append(blocks, panel(tabLinks(v.counts)))
 	t := &screensv1.PageTable{}
-	for i, l := range columns {
-		t.Columns = append(t.Columns, &screensv1.PageColumn{Label: l, Numeric: i == len(columns)-1})
+	headings := columns(v.side.column)
+	for i, l := range headings {
+		t.Columns = append(t.Columns, &screensv1.PageColumn{Label: l, Numeric: i == len(headings)-1})
 	}
 	number, pages := closedschools.PageOf(v.query.Get(pageParam), len(v.rows), rules.PageSize)
 	for _, a := range v.rows[(number-1)*rules.PageSize : min(number*rules.PageSize, len(v.rows))] {
-		t.Rows = append(t.Rows, row(a, v.today))
+		t.Rows = append(t.Rows, row(a, v.today, v.side.sender))
 	}
 	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: t}})
 	if pages > 1 {
 		blocks = append(blocks, closedschools.PagerPanel(pageParam, number, pages, len(v.rows), rules.PageSize, v.query, rules.QueryKeysNotPassed))
 	}
-	return response(blocks)
+	return response(v.side, blocks)
 }
 
-func response(blocks []*screensv1.PageBlock) *screensv1.GetPageResponse {
+func response(sd side, blocks []*screensv1.PageBlock) *screensv1.GetPageResponse {
 	return &screensv1.GetPageResponse{
 		Header: &screensv1.PageHeader{
 			Eyebrow:     "Urgent Attention",
-			Title:       "My Actions",
-			Description: "School issues assigned to you. These close automatically once the record shows the work is complete.",
+			Title:       sd.title,
+			Description: sd.intro,
 		},
 		Blocks:  blocks,
-		WebPath: Path,
+		WebPath: sd.path,
 	}
 }

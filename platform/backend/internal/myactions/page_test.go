@@ -77,18 +77,39 @@ func TestLatenessCountsOnlyActiveWorkPastItsDay(t *testing.T) {
 }
 
 func TestTheRowOffersOpenOrViewSchool(t *testing.T) {
-	if got := actionCell(action{State: "open", Route: "/x"}).GetActions(); len(got) != 1 || got[0].GetKey() != "menu" || got[0].GetPrimary() {
+	if got := actionCell(action{State: "open", Route: "/x"}, false).GetActions(); len(got) != 1 || got[0].GetKey() != "menu" || got[0].GetPrimary() {
 		t.Errorf("active work: %v", got)
 	}
-	if got := actionCell(action{State: "open"}).GetActions(); len(got) != 0 {
+	if got := actionCell(action{State: "open"}, false).GetActions(); len(got) != 0 {
 		t.Errorf("a blank route opens nothing: %v", got)
 	}
-	if got := actionCell(action{State: "cancelled", SchoolPK: "s1"}).GetActions(); len(got) != 1 || got[0].GetHref() != "/schools/s1" || !got[0].GetPrimary() {
+	if got := actionCell(action{State: "cancelled", SchoolPK: "s1"}, false).GetActions(); len(got) != 1 || got[0].GetHref() != "/schools/s1" || !got[0].GetPrimary() {
 		t.Errorf("closed work: %v", got)
 	}
-	r := row(action{State: "open"}, time.Time{}).GetCells()
+	r := row(action{State: "open"}, time.Time{}, false).GetCells()
 	if r[0].GetText() != "—" || r[1].GetText() != "School —" || r[3].GetText() != "—" {
 		t.Errorf("a row with no school on file: %v", r)
+	}
+}
+
+// The sender's Open is the row's own link, except on overdue work, whose
+// second step (Escalate) puts it in the Actions menu; a blank route opens
+// nothing on either.
+func TestTheSendersRowOpensItsRouteAsALinkUnlessOverdue(t *testing.T) {
+	if got := actionCell(action{State: "open", Route: "/x"}, true).GetActions(); len(got) != 1 || got[0].GetKey() != "button" ||
+		!got[0].GetPrimary() || got[0].GetHref() != "/x" {
+		t.Errorf("open work: %v", got)
+	}
+	if got := actionCell(action{State: "overdue", Route: "/x"}, true).GetActions(); len(got) != 1 || got[0].GetKey() != "menu" {
+		t.Errorf("overdue work: %v", got)
+	}
+	for _, state := range []string{"open", "overdue"} {
+		if got := actionCell(action{State: state}, true).GetActions(); len(got) != 0 {
+			t.Errorf("%s work with a blank route: %v", state, got)
+		}
+	}
+	if got := sides[SentPath]; got.reader != "sender_id" || got.counterparty != "recipient_id" || columns(got.column)[3] != "Assigned to" {
+		t.Errorf("the sender's side: %+v", got)
 	}
 }
 
@@ -97,7 +118,7 @@ func TestTheQueuePagesAndTheProvenanceLine(t *testing.T) {
 	for i := range rows {
 		rows[i] = action{State: "open", SchoolPK: "s"}
 	}
-	p := page(view{role: rules.Roles["CCEO"], counts: counts{Total: 60, Open: 60, Resolved: 2, AutoResolved: 2}, rows: rows,
+	p := page(view{side: sides[Path], role: rules.Roles["CCEO"], counts: counts{Total: 60, Open: 60, Resolved: 2, AutoResolved: 2}, rows: rows,
 		query: url.Values{"tab": {"all"}, pageParam: {"2"}}})
 	if got := p.GetBlocks()[0].GetPanel().GetItems()[0].GetText(); got != "2 of 2 resolved actions confirmed by the record." {
 		t.Errorf("the provenance line: %q", got)
@@ -109,7 +130,7 @@ func TestTheQueuePagesAndTheProvenanceLine(t *testing.T) {
 	if links[0].GetHref() != "?tab=all&table_rows_page=1" {
 		t.Errorf("the pager carries the tab: %v", links)
 	}
-	empty := page(view{role: rules.Roles["ProjectCoordinator"], query: url.Values{}})
+	empty := page(view{side: sides[Path], role: rules.Roles["ProjectCoordinator"], query: url.Values{}})
 	if empty.GetBlocks()[0].GetLinkTabs() == nil || empty.GetBlocks()[1].GetPanel().GetItems()[1].GetText() != "Nothing has been assigned to you." {
 		t.Errorf("the coordinator's empty queue: %v", empty.GetBlocks())
 	}

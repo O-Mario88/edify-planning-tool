@@ -30,7 +30,7 @@ deployed, or connected to production.
 | [18-decision-log.md](18-decision-log.md) | The Decision Log, read by Go through a narrow view of the audit chain (decision rows, subject keys only) |
 | [19-escalations.md](19-escalations.md) | Escalations, read by Go; raising and deciding stay with the existing application |
 | [20-field-debriefs.md](20-field-debriefs.md) | Field Debriefs: not moved; the map and what it waits on (HR reach, covering-lead rosters, partner scope) |
-| [21-my-actions.md](21-my-actions.md) | My Actions, read by Go |
+| [21-my-actions.md](21-my-actions.md) | My Actions and Actions Sent, read by Go |
 | [22-core-schools-oversight.md](22-core-schools-oversight.md) | Core Schools Oversight, read by Go; its Core School Visits and Trainings tabs wait on My Plan |
 | [24-planning-page.md](24-planning-page.md) | Planning (M4): every tab of `/planning` read by Go (filters, strip, workload line, rows, cluster cards, doors, pages); a priority allocation's page and every save not yet moved |
 | [25-my-plan.md](25-my-plan.md) | My Plan (M4): piece 1, the page for staff who hold nothing yet, read by Go; the map of the rest and its split into pieces 2–6 |

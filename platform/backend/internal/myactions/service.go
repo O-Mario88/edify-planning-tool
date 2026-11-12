@@ -17,8 +17,41 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
-// Path is the page this package answers.
-const Path = "/actions/mine"
+// Path is My Actions; SentPath is Actions Sent, the same rows read from the
+// sender's end (actions_sent).
+const (
+	Path     = "/actions/mine"
+	SentPath = "/actions/sent"
+)
+
+// side is one end of the rows: whose they are, whose name each row leads
+// with, and the page's gates and words.
+type side struct {
+	path         string
+	reader       string // the column that is the reader's: recipient_id or sender_id
+	counterparty string // the column whose name the row shows
+	sender       bool   // perspective == "sender"
+	roles        map[string]Role
+	team         decisionlog.PartnerTeam
+	limit        int
+	title, intro string
+	empty        string
+	column       string // the counterparty's column heading
+}
+
+var sides = map[string]side{
+	Path: {path: Path, reader: "recipient_id", counterparty: "sender_id", roles: rules.Roles, team: rules.PartnerTeamMembers,
+		limit: rules.RowLimit, title: "My Actions",
+		intro:  "School issues assigned to you. These close automatically once the record shows the work is complete.",
+		empty:  "Nothing has been assigned to you.",
+		column: "Sent by"},
+	SentPath: {path: SentPath, reader: "sender_id", counterparty: "recipient_id", sender: true, roles: rules.SentRoles,
+		team: rules.SentPartnerTeamMembers, limit: rules.SentRowLimit, title: "Actions Sent",
+		intro: "School issues you have assigned. Each one leaves the urgent list when it is sent and closes here when the " +
+			"record shows the work is done.",
+		empty:  "You have not sent any school actions yet.",
+		column: "Assigned to"},
+}
 
 // ErrNotAvailable is the page refused to the reader's role, which the
 // existing feed answers as a page that is not there.
@@ -38,11 +71,11 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 // action is one team_action row with the names the row shows.
 type action struct {
 	SchoolPK, IssueType, RequestedAction, Route, State, ReturnedReason string
-	SenderID                                                           string
+	CounterpartyID                                                     string
 	DueDate                                                            *time.Time
 	ResolvedBySystem                                                   bool
 	// Read beside it.
-	School, District, Sender string
+	School, District, Counterparty string
 }
 
 // counts are _counts over everything handed to the reader.
@@ -53,15 +86,16 @@ type counts struct {
 // Build answers path for p with the page's query. served is false for a
 // path this package does not answer.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != Path {
+	sd, ok := sides[path]
+	if !ok {
 		return nil, false, nil
 	}
-	role, ok := rules.Roles[p.ActiveRole]
+	role, ok := sd.roles[p.ActiveRole]
 	if !ok || !role.Page {
 		return nil, true, ErrNotAvailable
 	}
 	// A partner's team member is refused the page (member_scope.page_withheld).
-	switch member, err := decisionlog.PartnerTeamMember(ctx, s.db, p, rules.PartnerTeamMembers); {
+	switch member, err := decisionlog.PartnerTeamMember(ctx, s.db, p, sd.team); {
 	case err != nil:
 		return nil, true, err
 	case member == decisionlog.TeamMember:
@@ -73,20 +107,20 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if tab == "" {
 		tab = "open"
 	}
-	c, err := s.counts(ctx, p.UserID)
+	c, err := s.counts(ctx, sd, p.UserID)
 	if err != nil {
 		return nil, true, err
 	}
-	rows, err := s.actions(ctx, p.UserID, tab)
+	rows, err := s.actions(ctx, sd, p.UserID, tab)
 	if err != nil {
 		return nil, true, err
 	}
 	today := s.now().In(zone)
-	return page(view{role: role, counts: c, rows: rows, query: query,
+	return page(view{side: sd, role: role, counts: c, rows: rows, query: query,
 		today: time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.UTC)}), true, nil
 }
 
-func (s *Service) counts(ctx context.Context, userID string) (counts, error) {
+func (s *Service) counts(ctx context.Context, sd side, userID string) (counts, error) {
 	var c counts
 	err := s.db.QueryRow(ctx, `
 SELECT COUNT(*),
@@ -94,7 +128,7 @@ SELECT COUNT(*),
   COUNT(*) FILTER (WHERE state = ANY($4)),
   COUNT(*) FILTER (WHERE state = $5),
   COUNT(*) FILTER (WHERE state = $5 AND resolved_by_system)
-FROM team_action WHERE recipient_id = $1`,
+FROM team_action WHERE `+sd.reader+` = $1`,
 		userID, rules.ActiveStates, rules.OverdueState, []string{rules.OverdueState, rules.EscalatedState}, rules.ResolvedState,
 	).Scan(&c.Total, &c.Open, &c.Overdue, &c.Resolved, &c.AutoResolved)
 	if err != nil {
@@ -121,21 +155,21 @@ func tabFilter(tab string, args *[]any) string {
 	return ""
 }
 
-// actions is actions_received's rows: the tab's, soonest due first (no
-// date last), the newest first among equals, up to the queue's limit; with
-// the senders' names and the schools' names and districts.
-func (s *Service) actions(ctx context.Context, userID, tab string) ([]action, error) {
+// actions is actions_received's (or actions_sent's) rows: the tab's, soonest
+// due first (no date last), the newest first among equals, up to the queue's
+// limit; with the other party's names and the schools' names and districts.
+func (s *Service) actions(ctx context.Context, sd side, userID, tab string) ([]action, error) {
 	args := []any{userID}
-	where := "recipient_id = $1" + tabFilter(tab, &args)
+	where := sd.reader + " = $1" + tabFilter(tab, &args)
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`
-SELECT school_id, issue_type, requested_action, workflow_route, state, returned_reason, sender_id, due_date, resolved_by_system
-FROM team_action WHERE %s ORDER BY due_date ASC, created_at DESC LIMIT %d`, where, rules.RowLimit), args...)
+SELECT school_id, issue_type, requested_action, workflow_route, state, returned_reason, %s, due_date, resolved_by_system
+FROM team_action WHERE %s ORDER BY due_date ASC, created_at DESC LIMIT %d`, sd.counterparty, where, sd.limit), args...)
 	if err != nil {
 		return nil, fmt.Errorf("myactions: reading the actions: %w", err)
 	}
 	list, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (action, error) {
 		var a action
-		err := r.Scan(&a.SchoolPK, &a.IssueType, &a.RequestedAction, &a.Route, &a.State, &a.ReturnedReason, &a.SenderID,
+		err := r.Scan(&a.SchoolPK, &a.IssueType, &a.RequestedAction, &a.Route, &a.State, &a.ReturnedReason, &a.CounterpartyID,
 			&a.DueDate, &a.ResolvedBySystem)
 		return a, err
 	})
@@ -147,7 +181,7 @@ FROM team_action WHERE %s ORDER BY due_date ASC, created_at DESC LIMIT %d`, wher
 	}
 	senders, schools := []string{}, []string{}
 	for _, a := range list {
-		senders, schools = append(senders, a.SenderID), append(schools, a.SchoolPK)
+		senders, schools = append(senders, a.CounterpartyID), append(schools, a.SchoolPK)
 	}
 	names, err := s.names(ctx, senders)
 	if err != nil {
@@ -159,7 +193,7 @@ FROM team_action WHERE %s ORDER BY due_date ASC, created_at DESC LIMIT %d`, wher
 	}
 	for i := range list {
 		a := &list[i]
-		a.Sender = names[a.SenderID]
+		a.Counterparty = names[a.CounterpartyID]
 		place := places[a.SchoolPK]
 		a.School, a.District = place[0], place[1]
 	}
@@ -171,7 +205,7 @@ FROM team_action WHERE %s ORDER BY due_date ASC, created_at DESC LIMIT %d`, wher
 func (s *Service) names(ctx context.Context, ids []string) (map[string]string, error) {
 	rows, err := s.db.Query(ctx, `SELECT id, COALESCE(name, '') FROM "user" WHERE id = ANY($1)`, ids)
 	if err != nil {
-		return nil, fmt.Errorf("myactions: reading the senders: %w", err)
+		return nil, fmt.Errorf("myactions: reading the names: %w", err)
 	}
 	defer rows.Close()
 	out := map[string]string{}

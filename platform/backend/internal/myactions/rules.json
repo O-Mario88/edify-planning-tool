@@ -133,6 +133,95 @@
     }
   },
   "row_limit": 100,
+  "sent_partner_team_members": {
+    "roles": [
+      "PartnerAdmin",
+      "PartnerFieldOfficer"
+    ],
+    "withheld": false
+  },
+  "sent_roles": {
+    "Accountant": {
+      "page": false,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "CCEO": {
+      "page": false,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": true,
+      "strip": {
+        "label": "Team Assignments",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": true,
+            "href": "/actions/sent",
+            "label": "Actions Sent"
+          },
+          {
+            "active": false,
+            "href": "/extra-work",
+            "label": "Extra Work"
+          }
+        ]
+      }
+    },
+    "ProjectCoordinator": {
+      "page": false,
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "page": true,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": true,
+      "strip": null
+    }
+  },
+  "sent_row_limit": 100,
   "state_tones": {
     "acknowledged": [
       "Acknowledged",

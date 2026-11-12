@@ -1,8 +1,9 @@
 """Write the My Actions page's rules for the Go gateway.
 
 Go builds My Actions (/actions/mine, apps.frontend.views.action_views.
-my_actions_view, apps.planning.action_workspace.actions_received,
-pages/actions/workspace.html and partials/actions/table.html) from the
+my_actions_view, apps.planning.action_workspace.actions_received) and Actions
+Sent (/actions/sent, actions_sent_view, actions_sent), both drawn by
+pages/actions/workspace.html and partials/actions/table.html, from the
 vocabularies this command writes to
 platform/backend/internal/myactions/rules.json: who may open the page and the
 workspace strip each role is shown above it, the tabs, the issue labels, each
@@ -39,9 +40,11 @@ EXPORT_PATH = Path("platform/backend/internal/myactions/rules.json")
 
 PAGE_PATH = "/actions/mine"
 
+SENT_PATH = "/actions/sent"
 
-def roles() -> dict:
-    """What each role is given on the page, by the page's own gates."""
+
+def roles(permission: str = "my_actions", path: str = PAGE_PATH) -> dict:
+    """What each role is given on a page, by the page's own gates."""
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
 
@@ -49,11 +52,11 @@ def roles() -> dict:
     for role in EdifyRole:
         user = _role_user(role.value)
         out[role.value] = {
-            # require_page_permission("my_actions") and the feed's
+            # require_page_permission(permission) and the feed's
             # can_open_url.
-            "page": RolePermissionService.can_view_page(user, "my_actions")
-            and bool(can_open_url(user, PAGE_PATH)),
-            "strip": strip(user, PAGE_PATH, "partials/_section_nav.html"),
+            "page": RolePermissionService.can_view_page(user, permission)
+            and bool(can_open_url(user, path)),
+            "strip": strip(user, path, "partials/_section_nav.html"),
         }
     return out
 
@@ -81,6 +84,13 @@ def rules() -> dict:
         "page_size": TABLE_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),
         "partner_team_members": partner_team_members("my_actions"),
+        # Actions Sent (actions_sent_view, actions_sent): the same rows read
+        # from the sender's end, behind its own page permission.
+        "sent_roles": roles("actions_sent", SENT_PATH),
+        "sent_partner_team_members": partner_team_members("actions_sent"),
+        "sent_row_limit": inspect.signature(workspace.actions_sent)
+        .parameters["limit"]
+        .default,
     }
 
 

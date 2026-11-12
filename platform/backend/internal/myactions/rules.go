@@ -1,5 +1,5 @@
-// Package myactions is My Actions (/actions/mine): the school actions handed
-// to the reader, their tabs and counts, and the queue's pages, as the
+// Package myactions is My Actions (/actions/mine) and Actions Sent
+// (/actions/sent): the school actions handed to the reader, or sent by them, their tabs and counts, and the queue's pages, as the
 // existing page draws them (apps.frontend.views.action_views.
 // my_actions_view, apps.planning.action_workspace.actions_received,
 // pages/actions/workspace.html and partials/actions/table.html) and the
@@ -56,6 +56,10 @@ type Rules struct {
 	PageSize           int                     `json:"page_size"`
 	QueryKeysNotPassed []string                `json:"query_keys_not_passed"`
 	PartnerTeamMembers decisionlog.PartnerTeam `json:"partner_team_members"`
+	// Actions Sent's own gates and queue length.
+	SentRoles              map[string]Role         `json:"sent_roles"`
+	SentPartnerTeamMembers decisionlog.PartnerTeam `json:"sent_partner_team_members"`
+	SentRowLimit           int                     `json:"sent_row_limit"`
 }
 
 var rules = mustLoad(rulesJSON)
@@ -64,7 +68,7 @@ func mustLoad(raw []byte) Rules {
 	var r Rules
 	if err := json.Unmarshal(raw, &r); err != nil || len(r.Roles) == 0 || len(r.Tabs) == 0 || len(r.IssueLabels) == 0 ||
 		len(r.StateTones) == 0 || len(r.ActiveStates) == 0 || r.OverdueState == "" || r.EscalatedState == "" ||
-		r.ResolvedState == "" || r.RowLimit <= 0 || r.PageSize <= 0 {
+		r.ResolvedState == "" || r.RowLimit <= 0 || r.PageSize <= 0 || len(r.SentRoles) == 0 || r.SentRowLimit <= 0 {
 		panic(fmt.Sprintf("myactions: the embedded rules are unreadable: %v", err))
 	}
 	return r

@@ -103,4 +103,36 @@ sender on file, the pages and the provenance line.
   reader to the existing application rather than guess.
 - Actions due on the same day and created at the same instant have no order
   between them.
-- Every transition, and Actions Sent, stay the existing application's.
+- Every transition stays the existing application's.
+
+## 21.4 Actions Sent
+
+`/actions/sent` (`actions_sent_view`, `actions_sent`) is the same rows read
+from the sender's end, drawn by the same templates, so `internal/myactions`
+answers it too: a `side` says which column is the reader's, whose name each
+row shows, and the page's words and gates.
+
+| Part | Existing rule it ports |
+|---|---|
+| Who may open it | `require_page_permission("actions_sent")` and the feed's `can_open_url`, exported per role (`sent_roles`): Admin, Country Director, Impact Assessment, Program Lead, Regional Program Lead, Regional Vice President; a partner's team member is refused as on My Actions |
+| Whose rows | `sender_id` is the reader; the row shows the recipient's name under "Assigned to" (a recipient with no account reads "—") |
+| A row's way on | active work opens its route as the row's own link (the feed reads it as a primary button); overdue work, whose second step is Escalate, puts Open in the Actions menu (Escalate posts, so it never reaches the app); a blank route opens nothing; closed work views the school |
+| The rest | the tabs, counts, provenance line, issue and state labels, due words, pager and empty card are My Actions' own, with "You have not sent any school actions yet." |
+
+The view's words, header and empty sentence are written in Go, like My
+Actions'. `export_my_actions_rules` now also writes `sent_roles`,
+`sent_partner_team_members` and `sent_row_limit`.
+
+Proving it (the coordinator, 2026-11-12):
+
+- All 29 accounts on a gateway with no existing application behind it, the
+  same 14 questions as My Actions: `/actions/sent` 406 answers, none
+  differing; `/actions/mine` re-run after the change, 406, none differing.
+- The development database holds no school actions, so a golden comparison
+  carries the rows: the existing feed, unmodified, over 150 synthetic actions
+  in the test database (`gpa…`, sent by fourteen accounts, one recipient with
+  no account; all removed afterwards), 35 accounts, 10 questions each. 350
+  answers, none differing (`TestActionsSentMatchesTheExistingFeedOverManyActions`,
+  `EDIFY_ACTIONS_SENT_GOLDEN`). My Actions' own comparison regenerated and
+  re-run on the changed code: 350 answers, none differing.
+

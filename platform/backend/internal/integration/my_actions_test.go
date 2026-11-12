@@ -176,3 +176,34 @@ VALUES (now(), now(), 'gpm900001', '[Go parity check] member', 'member', '', '',
 		}
 	}
 }
+
+// actionsSentGoldenEnv names a file of the existing feed's answers for
+// Actions Sent over many actions (docs/migration/21-my-actions.md says how it
+// is made). Without it the comparison is skipped.
+const actionsSentGoldenEnv = "EDIFY_ACTIONS_SENT_GOLDEN"
+
+// Actions Sent is the same rows read from the sender's end: with the
+// existing feed's answers on file, Go's are compared with them field by field.
+func TestActionsSentMatchesTheExistingFeedOverManyActions(t *testing.T) {
+	path := os.Getenv(actionsSentGoldenEnv)
+	if path == "" {
+		t.Skipf("%s is not set", actionsSentGoldenEnv)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var golden struct {
+		Today   string          `json:"today"`
+		Rows    []teamActionRow `json:"rows"`
+		Answers []goldenAnswer  `json:"answers"`
+	}
+	if err := json.Unmarshal(raw, &golden); err != nil {
+		t.Fatal(err)
+	}
+	if today := time.Now().In(time.FixedZone("EAT", 3*3600)).Format("2006-01-02"); today != golden.Today {
+		t.Skipf("the answers were made on %s; today is %s, so every lateness has moved", golden.Today, today)
+	}
+	fileTeamActions(t, golden.Rows)
+	compareGolden(t, "/actions/sent", golden.Answers)
+}
