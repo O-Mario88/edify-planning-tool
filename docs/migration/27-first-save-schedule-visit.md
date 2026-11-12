@@ -338,3 +338,11 @@ closed without the key and refusing what they were not built for).
 **Not done.** The save is not wired into the gateway's routes, the web or
 the app (nothing is cut over). The replayed month of real scheduling on a
 sanitised restore (M5's exit) has not been run.
+
+**Re-run by the coordinator on the merged branch (2026-11-12)**, from a fresh
+pair of copies with the committed scenario: `0 of 15 steps answered
+differently`, `366 tables, 20 changed by the runs`, `0 of 20 changed tables
+differ`; `verify_chain(full=True)` on copy B: `{'ok': True, 'brokenAt':
+None, 'checkedRows': 15962, 'fromSeq': None}`. Race, the integration suite,
+ruff, format, bandit and the two Django tests pass. The save is not wired to
+any route, page or app, and nothing is cut over.

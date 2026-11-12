@@ -52,6 +52,8 @@ Done on this branch (initial assignment):
   existing `school` table, identical to what the existing API returns.
 - Python analytics worker called by the gateway over internal gRPC.
 - React Native (Expo) app foundation: sign-in, session, My Schools.
+- The first Go save (owner's staff school visit) proved in shadow, not wired
+  (27).
 - Web frontend decided (owner, 2026-11-12): Next.js, TypeScript and Tailwind CSS
   for browsers, a client of the same Go gateway (02, 2.10; plan M15). Not
   started yet.
