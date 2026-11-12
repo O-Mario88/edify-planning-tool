@@ -54,6 +54,8 @@ INSUFFICIENT = "Insufficient Evidence"
 CHAMPION_ORDER = (CHAMPION, POTENTIAL, PROGRESSING, NOT_YET, INSUFFICIENT)
 #: The official rule's SSA bar (`ChampionEligibilityService`).
 CHAMPION_LATEST_AVG = 8.0
+#: The stored Core profile statuses that make a school a Champion already.
+STORED_CHAMPION_STATUSES = ("Champion", "Approved Champion")
 
 #: What a school is listed for, each from an existing rule.
 DECLINED_REASON = "SSA declined"
@@ -466,9 +468,9 @@ def _read_champion(rows, schools) -> None:
         metrics = judged.get(code)
         row.champion_score = metrics["score"] if metrics else None
         row.champion_metrics = metrics
-        if row.school_type == "champion" or stored.get(code) in (
-            "Champion",
-            "Approved Champion",
+        if (
+            row.school_type == "champion"
+            or stored.get(code) in STORED_CHAMPION_STATUSES
         ):
             row.champion = CHAMPION
         elif not row.has_plan or not row.has_current_ssa:

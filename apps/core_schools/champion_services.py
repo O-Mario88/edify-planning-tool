@@ -17,6 +17,12 @@ from apps.core_schools.services import (
 
 logger = logging.getLogger(__name__)
 
+#: What the official rule counts: confirmed SSAs, and the school's closed
+#: activities, those with accepted evidence among them.
+CONFIRMED_SSA = "confirmed"
+CLOSED_STATUS = "closed"
+CLEAN_EVIDENCE = "accepted"
+
 
 class ChampionEligibilityService:
     @staticmethod
@@ -38,7 +44,7 @@ class ChampionEligibilityService:
 
         confirmed_ssas = list(
             school.ssa_records.filter(
-                deleted_at__isnull=True, verification_status="confirmed"
+                deleted_at__isnull=True, verification_status=CONFIRMED_SSA
             )
             .prefetch_related("scores")
             .order_by("date_of_ssa", "created_at")
@@ -49,8 +55,10 @@ class ChampionEligibilityService:
             )
         )
         activity_counts = school.activities.filter(deleted_at__isnull=True).aggregate(
-            closed=Count("id", filter=Q(status="closed")),
-            clean=Count("id", filter=Q(status="closed", evidence_status="accepted")),
+            closed=Count("id", filter=Q(status=CLOSED_STATUS)),
+            clean=Count(
+                "id", filter=Q(status=CLOSED_STATUS, evidence_status=CLEAN_EVIDENCE)
+            ),
         )
         return ChampionEligibilityService._score_loaded(
             confirmed_ssas=confirmed_ssas,
@@ -235,7 +243,7 @@ class ChampionEligibilityService:
             SsaRecord.objects.filter(
                 school__school_id__in=school_ids,
                 deleted_at__isnull=True,
-                verification_status="confirmed",
+                verification_status=CONFIRMED_SSA,
             )
             .values("id", "school__school_id", "date_of_ssa", "average_score")
             .order_by("school__school_id", "date_of_ssa", "created_at")
@@ -260,7 +268,7 @@ class ChampionEligibilityService:
                     "activities",
                     filter=Q(
                         activities__deleted_at__isnull=True,
-                        activities__status="closed",
+                        activities__status=CLOSED_STATUS,
                     ),
                     distinct=True,
                 ),
@@ -268,8 +276,8 @@ class ChampionEligibilityService:
                     "activities",
                     filter=Q(
                         activities__deleted_at__isnull=True,
-                        activities__status="closed",
-                        activities__evidence_status="accepted",
+                        activities__status=CLOSED_STATUS,
+                        activities__evidence_status=CLEAN_EVIDENCE,
                     ),
                     distinct=True,
                 ),

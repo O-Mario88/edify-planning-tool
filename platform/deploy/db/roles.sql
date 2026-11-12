@@ -221,3 +221,6 @@ GRANT SELECT (id) ON staff_supervisor_assignment TO edify_gateway_ro;
 GRANT SELECT (school_id, issue_type, requested_action, workflow_route, state, returned_reason, sender_id, recipient_id,
   due_date, resolved_by_system, created_at)
   ON team_action TO edify_gateway_ro;
+-- Core School Oversight (internal/coreoversight): the Core schools in the
+-- School model's order, and each school's sub-region for the grouping.
+GRANT SELECT (created_at, sub_region_id) ON school TO edify_gateway_ro;
