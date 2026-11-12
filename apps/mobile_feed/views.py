@@ -1527,6 +1527,8 @@ DRAWER_SAVES = frozenset(
         "my_targets_mscs",
     }
 )
+#: The save whose form the gateway may ask for (docs/migration/29).
+RESCHEDULE_SAVE = "reschedule_activity"
 #: The export drawers open and save as any drawer (apps.mobile_feed.exports).
 DRAWER_VIEWS = DRAWER_VIEWS | exports.EXPORT_DRAWERS
 DRAWER_SAVES = DRAWER_SAVES | {exports.PREPARE}
@@ -1660,9 +1662,18 @@ class DrawerFeedView(APIView):
         match = _route(save_path, DRAWER_SAVES) if save_path else None
         if match is None:
             return Response({"error": "This drawer cannot be saved here."}, status=400)
-        page_request = _page_request(
-            user, save_path, drawer_blocks.form_data(html, values)
-        )
+        form_data = drawer_blocks.form_data(html, values)
+        if request.query_params.get("form_only") == "1":
+            # The Reschedule save's form, for the gateway's Go move
+            # (docs/migration/29): what the save would post, where, and the
+            # request facts its rows would carry. Nothing is saved; no other
+            # drawer answers a form.
+            if match.url_name != RESCHEDULE_SAVE:
+                return Response(
+                    {"error": "This drawer has no form to give."}, status=400
+                )
+            return Response({**_form_only(form_data), "save": save_path})
+        page_request = _page_request(user, save_path, form_data)
         try:
             response = match.func(page_request, *match.args, **match.kwargs)
         except Http404:

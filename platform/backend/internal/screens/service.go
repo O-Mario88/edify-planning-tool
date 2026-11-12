@@ -64,6 +64,7 @@ type Service struct {
 	profile     Profile
 	pages       []Pages
 	visits      VisitSaver // nil unless EDIFY_GO_SAVES names schedule_visit
+	moves       MoveSaver  // nil unless EDIFY_GO_SAVES names reschedule_visit
 	logger      *slog.Logger
 }
 

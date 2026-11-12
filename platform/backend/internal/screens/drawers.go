@@ -132,7 +132,14 @@ func (s *Service) SaveDrawer(
 	if form != "" && (!formKey.MatchString(form) || strings.Contains(form, "..")) {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This form cannot be saved.")
 	}
-	return send[screensv1.SaveDrawerResponse](ctx, s, pathPageDrawer, &screensv1.SaveDrawerRequest{
-		Path: path, Values: message.GetValues(), Form: form,
-	})
+	forwarded := &screensv1.SaveDrawerRequest{Path: path, Values: message.GetValues(), Form: form}
+	if form == "" {
+		if answer, served, err := s.rescheduleInGo(ctx, forwarded); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
+	}
+	return send[screensv1.SaveDrawerResponse](ctx, s, pathPageDrawer, forwarded)
 }

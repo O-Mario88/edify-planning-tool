@@ -10,7 +10,7 @@ func TestGoSavesAreOffUnlessNamedAndOnlyInDevelopmentOrStaging(t *testing.T) {
 	const key = "0123456789abcdef0123456789abcdef"
 	tests := []struct {
 		name, env, saves, app, key string
-		want                       bool
+		want, wantMove             bool
 		wantErr                    string
 	}{
 		{name: "off by default", env: "development", app: "http://localhost:8010", key: key},
@@ -20,6 +20,10 @@ func TestGoSavesAreOffUnlessNamedAndOnlyInDevelopmentOrStaging(t *testing.T) {
 		{name: "an unknown save", env: "development", saves: "schedule_visit,pay_everyone", app: "http://localhost:8010", key: key, wantErr: `"pay_everyone"`},
 		{name: "without the existing application", env: "development", saves: "schedule_visit", key: key, wantErr: "EDIFY_EXISTING_APP_URL"},
 		{name: "without the internal key", env: "development", saves: "schedule_visit", app: "http://localhost:8010", wantErr: "EDIFY_INTERNAL_KEY"},
+		{name: "the move alone", env: "development", saves: "reschedule_visit", app: "http://localhost:8010", key: key, wantMove: true},
+		{name: "both saves", env: "development", saves: "schedule_visit, reschedule_visit", app: "http://localhost:8010", key: key, want: true, wantMove: true},
+		{name: "the move refused in test", env: "test", saves: "reschedule_visit", app: "http://localhost:8010", key: key, wantErr: "refused in test"},
+		{name: "the move without the internal key", env: "development", saves: "reschedule_visit", app: "http://localhost:8010", wantErr: "EDIFY_INTERNAL_KEY"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -40,8 +44,8 @@ func TestGoSavesAreOffUnlessNamedAndOnlyInDevelopmentOrStaging(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if cfg.GoSaves.ScheduleVisit != test.want {
-				t.Fatalf("ScheduleVisit = %v, want %v", cfg.GoSaves.ScheduleVisit, test.want)
+			if cfg.GoSaves.ScheduleVisit != test.want || cfg.GoSaves.RescheduleVisit != test.wantMove {
+				t.Fatalf("GoSaves = %+v, want schedule %v, move %v", cfg.GoSaves, test.want, test.wantMove)
 			}
 		})
 	}

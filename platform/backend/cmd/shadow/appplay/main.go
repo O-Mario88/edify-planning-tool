@@ -24,10 +24,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/protobuf/proto"
 
 	identityv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1"
@@ -66,6 +68,7 @@ func main() {
 	scenario := flag.String("scenario", "", "the scenario")
 	out := flag.String("out", "", "where the answers are written")
 	compare := flag.String("compare", "", "a.json,b.json: compare two runs")
+	flag.StringVar(&copyDSN, "db", "", "the copy the gateway serves, read to find a step's activity by its purpose text")
 	flag.Parse()
 	var err error
 	if *compare != "" {
@@ -99,6 +102,7 @@ func play(gateway, scenarioPath, out, password string) error {
 	client := &http.Client{Timeout: 2 * time.Minute}
 	signIn := identityv1connect.NewSignInServiceClient(client, gateway)
 	drawers := screensv1connect.NewPlanningDrawerServiceClient(client, gateway)
+	pageDrawers := screensv1connect.NewPageDrawerServiceClient(client, gateway)
 	tokens := map[string]string{}
 	result := run{Gateway: gateway, From: time.Now().UTC().Format(time.RFC3339Nano)}
 	for i, s := range steps {
@@ -111,7 +115,13 @@ func play(gateway, scenarioPath, out, password string) error {
 			token = signedIn.Msg.GetSession().GetAccessToken()
 			tokens[s.Who] = token
 		}
-		a, err := playStep(ctx, drawers, token, s)
+		var a answer
+		var err error
+		if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
+			a, err = playMove(ctx, pageDrawers, token, m[1], s)
+		} else {
+			a, err = playStep(ctx, drawers, token, s)
+		}
 		if err != nil {
 			return fmt.Errorf("step %d: %w", i+1, err)
 		}
@@ -240,4 +250,54 @@ func said(a answer) string {
 		return a.Code + ": " + a.Error
 	}
 	return a.Error
+}
+
+// copyDSN is the copy a run's gateway serves (-db).
+var copyDSN string
+
+// moveDrawer is My Plan's Reschedule drawer (docs/migration/29); its
+// activity may be named by its purpose text, `{activity:<text>}`, since each
+// copy makes its own ids.
+var (
+	moveDrawer  = regexp.MustCompile(`^/my-plan/([^/]+)/reschedule-drawer$`)
+	placeholder = regexp.MustCompile(`^\{activity:([^}]*)\}$`)
+)
+
+// playMove plays a Reschedule step as the app does: the page drawer read,
+// then saved with the fields the person fills (the new date and the reason).
+func playMove(ctx context.Context, drawers screensv1connect.PageDrawerServiceClient, token, target string, s step) (answer, error) {
+	activityID := target
+	if m := placeholder.FindStringSubmatch(target); m != nil {
+		if !strings.HasPrefix(copyDSN, "postgresql://localhost:5432/edify_shadow_") {
+			return answer{}, errors.New("-db must name a local shadow copy")
+		}
+		conn, err := pgx.Connect(ctx, copyDSN)
+		if err != nil {
+			return answer{}, err
+		}
+		defer conn.Close(ctx)
+		activityID = "missing"
+		err = conn.QueryRow(ctx, `SELECT id FROM activity WHERE activity_purpose_text = $1
+ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return answer{}, err
+		}
+	}
+	path := "/my-plan/" + activityID + "/reschedule-drawer"
+	got, err := drawers.GetDrawer(ctx, withToken(&screensv1.GetDrawerRequest{Path: path}, token))
+	if err != nil {
+		return failed(err), nil
+	}
+	if got.Msg.GetDrawer() == nil {
+		return answer{Error: "(no drawer) " + got.Msg.GetRefusal()}, nil
+	}
+	values := map[string]string{"scheduled_date": s.Set["scheduled_date"], "reason": s.Set["reason"]}
+	saved, err := drawers.SaveDrawer(ctx, withToken(&screensv1.SaveDrawerRequest{Path: path, Values: values}, token))
+	if err != nil {
+		a := failed(err)
+		a.Values = values
+		return a, nil
+	}
+	m := saved.Msg
+	return answer{Saved: m.GetSaved(), Message: m.GetMessage(), Redirect: m.GetRedirect(), Error: m.GetError(), Values: values}, nil
 }

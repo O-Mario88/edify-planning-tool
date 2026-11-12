@@ -195,3 +195,68 @@ incident's id inside a path written by Django's own refused-drawer door.
 **Not proved here.** A closed school, an open overdue reminder or day-off
 notice, a take-back of a sent week and lines in two weeks cannot be reached
 with the seed data; they are the code path and the hand-on rule only.
+
+## 29.7 The app's Reschedule save reaches Go (behind a switch, development only, 2026-11-12)
+
+**How it reaches Go.** The app is unchanged: it still reads the drawer with
+`PageDrawerService.GetDrawer("/my-plan/{id}/reschedule-drawer")` and saves
+it with `SaveDrawer(path, {scheduled_date, reason})`. With
+`EDIFY_GO_SAVES=reschedule_visit` the gateway (`internal/screens/reschedule_save.go`,
+called from `SaveDrawer` for that path and no page-form key) first asks the
+existing application for the form: `POST /api/mobile/v1/drawer?form_only=1`,
+the same `DrawerFeedView.post` with the same drawer read and refusals,
+answering `{"form": drawer_blocks.form_data(html, values), "save": the path
+the form posts to, "origin": {ip, agent, correlation}}` and saving nothing;
+every other drawer asked for a form is refused (400). Then, as 27.10: a
+form-request refusal is answered as is; a form Go does not take, a hand-on,
+or an acting seat is forwarded whole; a Go move answers `{saved: true,
+message: "Saved. Press Refresh to see it on the page. ×"}` (the toast and
+its close button, as `_saved_outcome` reads `saved_in_place`); a Go refusal
+answers `{saved: false, error}` in `error_fragment`'s words read back; a
+failure before the move answers `Unavailable`, nothing written. A move is
+never made by both.
+
+**The switch.** `config.GoSaves.RescheduleVisit`, named
+`reschedule_visit`; off unless named, refused in test and production, and
+needing the existing application's address and internal key, exactly as
+`schedule_visit`. It has been on only in this proof's own gateway (8097).
+
+**The proof at the app's level** (`cmd/shadow/appplay`, which now plays a
+Reschedule step as the app does and finds the step's activity on its own
+copy with `-db`): copy A through gateway 8096 with the switch off over
+Django 8196 on `edify_shadow_a`; copy B through gateway 8097 with
+`EDIFY_GO_SAVES=reschedule_visit` over Django 8197 on `edify_shadow_b`. The
+six scheduling steps are forwarded on both. On B Django served 12 form-only
+requests and 3 forwarded saves (the frozen day, the pair, the Core visit);
+Go made the other 9 (five moves, four refusals); the other officer's drawer
+was refused at its read on both. Last lines exactly as printed
+(`agent12_app_shadow1.txt`):
+
+```
+0 of 19 steps answered differently
+compare exit 0
+366 tables, 19 changed by the runs
+0 of 19 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 15976, 'fromSeq': None}
+```
+
+**Tests.** `internal/activities/reschedule_test.go` (Python's isoformat,
+the calendar day, the exported words, the hand-ons before any read);
+`internal/screens/reschedule_save_test.go` (forwarded while off; Go takes
+the move with the form's fields and origin and forwards nothing; every
+hand-on, another drawer, a save elsewhere and a non-text form forwarded;
+the refusal's words; a failure); `internal/config/go_saves_test.go` (the
+move's switch); `TestGatewayRoleCanNeitherWriteNorReadSecrets`,
+`TestStagingIdentityCheckAcceptsOnlyTheReadOnlyRole`,
+`TestGatewaySourcesContainNoSchemaChanges` (the timeline row added to the
+activities package's tables); Django `test_gateway_relay` (the move check's
+doors). The form-only door in `DrawerFeedView` has no Django test of its
+own (the suite's DB-backed tests are not run by this piece); it is proved by
+the app-level run above.
+
+**Not done.** Switching the move off in Django in the same release
+(03 §3.7) and any cutover wait for the owner; the switch is on nowhere but
+this proof's processes. The web (Next.js) does not call this path. The app's
+TypeScript stubs are not regenerated (no change reaches the app: it calls
+`SaveDrawer`, not the new RPC). No replayed month on a sanitised restore.

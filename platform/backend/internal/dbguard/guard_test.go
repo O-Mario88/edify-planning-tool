@@ -163,9 +163,11 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "acting") + sep: {"acting_assignment", `"user"`},
 		// Scheduling a school visit, the first Go save (docs/migration/27;
 		// deploy/db/activities_roles.sql): the activity, its day, the costs
-		// to follow, the ledger's mark and the recommendation it answers.
+		// to follow, the ledger's mark and the recommendation it answers;
+		// and moving one (docs/migration/29): its timeline row.
 		filepath.Join(root, "internal", "activities") + sep: {
 			"activity", "daily_visit_batch", "daily_visit_costs_to_follow", "target_ledger_dirty", "ssa_recommendation",
+			"activity_schedule_change",
 		},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
