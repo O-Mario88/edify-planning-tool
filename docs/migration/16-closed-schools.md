@@ -82,6 +82,10 @@ existing application behind it. The run's last lines:
 Twenty answers for each of the 30 accounts; the Project Coordinator and the
 Business Transformation Officer are turned away by both.
 
+The run was made again, with the same last lines, after the pager and the
+"Clear search" button moved to `closedschools/shared.go` for Programme
+Schools (17) to use.
+
 The development database holds one closure, so that run proves the gate, the
 scope's two shapes (a reader with the school in reach and one without), the
 figures, the impact strip, one row and the searches, and nothing about many
@@ -113,6 +117,18 @@ them, and their lead reading the same), the RVP's figures without rows, the
 impact strip with money in the millions ("UGX 124.16M"), and a role the page
 refuses. Only `school_closure` rows were written, and none is left.
 
+**A varied private copy.** For Programme Schools (17.2) the development
+database was copied to a private local one and varied; 130 closures were
+filed there too (three days apart, thirteen reopened, one at a school whose
+record was then deleted, one at a school with no district, every seventh
+recorded against another officer's user id). The existing application and a
+Go-only gateway were both started against the copy and compared by the same
+tool as ten accounts. It printed `200 answers compared, 3 differing`: the
+three were the seed's own closure and one filed for the same day, exchanged
+(16.3). With that one moved a day it printed:
+
+    200 answers compared, 0 differing
+
 **Unit tests** (`internal/closedschools/page_test.go`,
 `schooldirectory/export_closedschools_test.go`) hold what neither database
 reaches: a school with no district, no name or no official ID, a reader who
@@ -124,8 +140,12 @@ page number, and the query the pager's links carry.
 
 - Closures that take effect on the same day have no order between them: the
   page sorts by effective date alone, and so does Go, with the same
-  statement shape. Neither side promises which comes first; the comparison
-  avoids ties rather than proving them.
+  statement shape. Postgres may return such a pair either way, and on the
+  private copy it did (three answers of 200, 16.2). Go cannot follow an
+  order the existing page does not define; the model's own ordering
+  (`-effective_date, -created_at`) is replaced by the view's
+  `order_by("-effective_date")`, and restoring the second key there is the
+  existing application's to do.
 - A school whose record was deleted after it closed is still listed for the
   owner it was recorded against (the owner arm does not ask whether the
   school is deleted) and for nobody else. Go does the same; it reads as an

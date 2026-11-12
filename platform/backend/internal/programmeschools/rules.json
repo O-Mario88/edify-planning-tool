@@ -1,0 +1,96 @@
+{
+  "doors": {
+    "Accountant": {
+      "page": false,
+      "schedule": false
+    },
+    "Admin": {
+      "page": true,
+      "schedule": false
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "schedule": false
+    },
+    "CCEO": {
+      "page": true,
+      "schedule": true
+    },
+    "ClusterLeader": {
+      "page": false,
+      "schedule": false
+    },
+    "CountryDirector": {
+      "page": true,
+      "schedule": false
+    },
+    "HumanResources": {
+      "page": false,
+      "schedule": false
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "schedule": false
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "schedule": false
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "schedule": false
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "schedule": false
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "schedule": false
+    },
+    "Program Lead": {
+      "page": true,
+      "schedule": true
+    },
+    "ProjectCoordinator": {
+      "page": false,
+      "schedule": true
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "schedule": false
+    },
+    "RegionalVicePresident": {
+      "page": false,
+      "schedule": false
+    }
+  },
+  "max_rows": 500,
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "page_size": 50,
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "school_types": [
+    [
+      "core_trained",
+      "Core Trained"
+    ],
+    [
+      "core_graduate",
+      "Core Graduate"
+    ],
+    [
+      "champion",
+      "Champion"
+    ]
+  ]
+}

@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
-	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
@@ -61,8 +59,7 @@ func header(q string) *screensv1.PageHeader {
 		Description: "Schools that have stopped operating. Their records, history and finance remain intact and readable here.",
 	}
 	if q != "" {
-		label := collapse("Clear search“" + truncateChars(q, 24) + "”")
-		h.Actions = append(h.Actions, &screensv1.PageAction{Key: slug(label), Label: label, Enabled: true, Href: Path})
+		h.Actions = append(h.Actions, ClearSearch(q, Path))
 	}
 	return h
 }
@@ -126,17 +123,9 @@ func row(c closure, d Doors) *screensv1.PageRow {
 	}}
 }
 
-// pageOf is {% paginate %} and paginate_rows: the page asked for (anything
-// that is not a number is the first), held within the pages there are.
+// pageOf is the archive's page of total rows.
 func pageOf(requested string, total int) (number, pages int) {
-	pages = max(1, (total+rules.PageSize-1)/rules.PageSize)
-	number = 1
-	if requested != "" {
-		if n, ok := pyInt(requested); ok {
-			number = max(1, n)
-		}
-	}
-	return min(number, pages), pages
+	return PageOf(requested, total, rules.PageSize)
 }
 
 // window is make_pagination_window(current, pages, window_size=1); 0 is the
@@ -173,68 +162,14 @@ func window(current, pages int) []int {
 	return out
 }
 
-// carried is {% pager_query %}: every other value of the page's query, as
-// the feed passes it on (in key order, the keys it never passes left out).
+// carried is the rest of the archive's query, as its pager's links carry it.
 func carried(query url.Values) string {
-	keys := []string{}
-	for key := range query {
-		if key != pageParam && !in(rules.QueryKeysNotPassed, key) {
-			keys = append(keys, key)
-		}
-	}
-	sort.Strings(keys)
-	parts := []string{}
-	for _, key := range keys {
-		for _, value := range query[key] {
-			if value != "" {
-				parts = append(parts, url.QueryEscape(key)+"="+url.QueryEscape(value))
-			}
-		}
-	}
-	if len(parts) == 0 {
-		return ""
-	}
-	return strings.Join(parts, "&") + "&"
+	return carriedQuery(pageParam, query, rules.QueryKeysNotPassed)
 }
 
-// pager is components/table_pager.html as the feed reads it. The archive's
-// card has no heading, so the feed reads its table on its own and the pager
-// under it as a plain panel: the summary line, the current page and each gap
-// as text, and the runs of page links between them (Prev and Next with their
-// arrows as captions).
+// pager is the archive's pager.
 func pager(number, pages, total int, query url.Values) *screensv1.PageBlock {
-	first := (number-1)*rules.PageSize + 1
-	last := min(number*rules.PageSize, total)
-	text := func(t string) *screensv1.PagePanelItem {
-		return &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: t}}
-	}
-	items := []*screensv1.PagePanelItem{text(fmt.Sprintf("Showing %d–%d of %d", first, last, total))}
-	base := "?" + carried(query) + pageParam + "="
-	link := func(label, caption string, page int) {
-		l := &screensv1.PageLink{Text: label, Href: base + strconv.Itoa(page), Caption: caption}
-		if n := len(items); n > 0 && items[n-1].GetLinks() != nil {
-			items[n-1].GetLinks().Links = append(items[n-1].GetLinks().Links, l)
-			return
-		}
-		items = append(items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: []*screensv1.PageLink{l}}}})
-	}
-	if number > 1 {
-		link("Prev", "‹", number-1)
-	}
-	for _, n := range window(number, pages) {
-		switch {
-		case n == 0:
-			items = append(items, text("…"))
-		case n == number:
-			items = append(items, text(strconv.Itoa(n)))
-		default:
-			link(strconv.Itoa(n), "", n)
-		}
-	}
-	if number < pages {
-		link("Next", "›", number+1)
-	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Items: items}}}
+	return PagerPanel(pageParam, number, pages, total, rules.PageSize, query, rules.QueryKeysNotPassed)
 }
 
 var columns = []string{"School ID", "School", "District", "Former owner", "Closed", "Type", "Reason", "Enrolment", ""}
