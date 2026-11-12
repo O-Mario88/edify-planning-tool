@@ -344,7 +344,8 @@ first piece of M4.
 | Go unit tests | Pass | the pager window, quarters, how the view reads its filters, group headings, tab links, fact colours, a row's facts, links and doors, the empty states, the bar |
 | Go integration suite | Pass | the officer's Client tab with its rows and bar, the Clusters tab's cards, a priority allocation passed on, a role without Planning turned away |
 | Django and Go checks | Pass | ruff, format, bandit clean; the planning suites (1,680 tests) after the service's inline lists became module constants; `go vet`, `gofmt`, `go test -race ./...` |
-| iOS / Android Release | Not run | not checked on a device for this piece |
+| iOS Release | Pass | cceo@: More → Planning through the main gateway (answered in 0.3 s): the strip, "Your FY2027 visits: 7 of 560 planned.", Client and Core tabs with the rest under More |
+| Android Release | Not run | the emulator hangs |
 
 ## Open items
 
