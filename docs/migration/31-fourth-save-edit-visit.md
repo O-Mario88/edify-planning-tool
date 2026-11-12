@@ -262,3 +262,82 @@ drawer arrives with the expected outcome blank, so saving it writes `''` over
 the stored outcome unless the person retypes it, and it has no reason field,
 so the app cannot change a visit's day, school or purpose through Edit. The
 web's drawer keeps both. The fix belongs to the drawer the app is given.
+
+## 31.8 The app's Edit drawer: the reason, and the outcome (2026-11-12)
+
+**The expected outcome was never lost by Edit.** The feed reads a
+`<textarea>`'s text as its value (`drawer_blocks._value`, entities and line
+breaks kept); the Edit drawer for a visit with an outcome arrives with it,
+and an app save that changes only the goal keeps it (A3 kept "[shadow-e] A
+outcome edited" through step 13 on both copies). C, D and E had no outcome
+to keep: the school's Schedule drawer (`partials/planning/schedule_drawer.html`)
+has no expected-outcome field, on the web or in the app (`appplay`'s
+`scheduleValues` says so), so the visits were scheduled with `''`. The
+service-level run posts the scenario's outcome straight to
+`/planning/schedule-action`, which the drawer never does. Whether the
+Schedule drawer should ask for an expected outcome is the owner's call; it
+is not a feed or Go difference.
+
+**The reason field was dropped by the feed.** The web adds it with
+`<template x-if="asksWhy">` (a getter: the day, school, project or purpose
+moved), and the reader treated every `<template>` as silent. The save
+already took `reason` (the form's names include it), so only the drawer hid
+it. The contract's `show_when` says "while a field holds one of these
+values" and cannot say "differs from its opening value", so the reason is
+given as an optional field the app always shows; the save refuses ("Give
+the reason …") when it is needed, as the web's save does. Posting an empty
+reason is the same as not posting it: the view reads `reason` whether or
+not it is sent and leaves it out of the audit row's `fields`; Go's
+`EditRequestFromForm` takes it.
+
+**The rule, for every drawer** (`apps/mobile_feed/drawer_blocks.py`,
+`_scripted_part`): a `<template x-if>` is read like an `x-show` part. A
+condition the reader can follow (a choice of an `x-model` field, a constant)
+gives the part's items `show_when`, or leaves the part out when it is never
+added. One it cannot follow is shown with its fields optional only when it
+has fields and every one is `required` on the web; it stays out (as before)
+when it has an opposite beside it (`locked` / `!locked`), when the script
+draws its choices (`<template x-for>` inside), or when a field in it is
+optional on the web, so the app never sends a choice the web would not
+offer then. `<template x-for>` stays silent. No contract change; the app is
+unchanged (`drawerLogic.ts` shows an optional field and sends it).
+
+Every drawer the feed reads on the dev data, old reader against new (owners'
+Edit, Reschedule and Cancel drawers for every scheduled activity; the
+planning bulk Schedule and Assign Partner drawers for ten sets of schools):
+7 Edit drawers differ, each by the reason field alone; 7 Reschedule, 7
+Cancel, 10 bulk Schedule and 10 bulk Assign Partner drawers are identical.
+(Without the optional-field rule the bulk Schedule drawer would have gained
+its SSA intervention list for every purpose, and without the `x-for` rule
+an empty Training list.)
+
+**Tests.** `test_drawer_blocks.ScriptedPartTest` (a part the reader cannot
+follow shown and optional; one for a choice conditioned and required while
+shown; one never added, one of two opposites, one with an optional field,
+one whose choices the script draws, words alone: left out; `x-for` silent;
+the save posts the part); `test_feed.PageDrawerFeedTest`
+`test_edit_keeps_the_expected_outcome_and_offers_the_reason` and
+`test_edit_moves_the_day_with_the_reason_the_app_gives`. `apps.mobile_feed`
+on a private test database: 208 tests OK. ruff, format, bandit pass.
+
+**The proof at the app's level**, as 31.6 (`agent15_app_shadow.sh`, copies
+fresh from the base; `agent15_app_shadow2.txt`, on the committed code; the first run, `agent15_app_shadow1.txt`, printed the same). Steps 15, 17 and 18 (a new
+day, another school, another purpose, each with a reason) now save from the
+app on both copies, where they were refused; steps 7–14 are still Go's on B
+(five `activity-changed` announcements), 14 form-only requests, 7 drawer
+saves forwarded (the move and six hand-ons). Last lines exactly as printed:
+
+```
+0 of 21 steps answered differently
+compare exit 0
+366 tables, 19 changed by the runs
+0 of 19 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 15971, 'fromSeq': None}
+```
+
+On both copies C is rescheduled to 2026-11-26, B is cancelled and scheduled
+again at the other school with its outcome, D's purpose is a donor visit,
+and C, D and E keep the empty outcome they were scheduled with. (The
+script's "forwarded drawer saves" line prints 0 again; the 7 are counted
+from the server log, as in 31.6.)

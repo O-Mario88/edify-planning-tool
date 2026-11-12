@@ -7,7 +7,11 @@ line and error, and the few things the drawer's own script does that change
 what is shown — a field shown only for one choice (``x-show``), a choice
 list that another field reloads (``hx-get``), and choices that belong to
 another field's choice (``data-*`` on an option). An ``x-show`` the reader
-cannot follow leaves its field shown, never hidden.
+cannot follow leaves its field shown, never hidden. A part the script adds
+(``<template x-if>``) is read like an ``x-show`` part; one whose condition
+the reader cannot follow is shown with its fields optional when the web
+requires each of them whenever it adds them (the save says when they are
+needed), and is otherwise left out.
 
 What a drawer sends back is its own fields and hidden values only
 (``field_names``, ``hidden_values``): the save never takes a field the drawer
@@ -29,6 +33,14 @@ SIMPLE_VALUE = re.compile(r"(\w+)\s*:\s*('([^']*)'|true|false)")
 EQUALS = re.compile(r"(\w+)\s*===\s*'([^']*)'")
 FLAG = re.compile(r"(!?)\s*(\w+)")
 DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+class _Unfollowed(tuple):
+    """What ``_condition`` answers for an expression it cannot follow: shown,
+    as far as the reader knows (falsy, like "always")."""
+
+
+UNFOLLOWED = _Unfollowed()
 
 
 def _is_control(node: Node) -> bool:
@@ -80,14 +92,17 @@ def _show_when(node: Node, root: Node) -> list[dict] | None:
     while holder is not None and holder is not root:
         expression = holder.get("x-show")
         if expression:
-            return _condition(expression, *_scope_of(holder))
+            when = _condition(expression, *_scope_of(holder))
+            return [] if isinstance(when, _Unfollowed) else when
         holder = holder.parent
     return []
 
 
 def _condition(expression: str, constants: dict, models: dict) -> list[dict] | None:
+    """When an Alpine expression holds: [] for always, {field, values} lists,
+    None for never, UNFOLLOWED for an expression the reader cannot follow."""
     if "&&" in expression or "(" in expression:
-        return []
+        return UNFOLLOWED
     shown: dict[str, list[str]] = {}
     for alternative in (part.strip() for part in expression.split("||")):
         equals = EQUALS.fullmatch(alternative)
@@ -102,7 +117,7 @@ def _condition(expression: str, constants: dict, models: dict) -> list[dict] | N
             if bool(constants[flag.group(2)]) != (flag.group(1) == "!"):
                 return []
         else:
-            return []
+            return UNFOLLOWED
     if not shown:
         return None
     return [{"field": field, "values": values} for field, values in shown.items()]
@@ -318,6 +333,9 @@ def _items(node: Node, root: Node, out: list[dict]) -> list[dict]:
 
     taken: set[int] = set()
     for child in node.children:
+        if isinstance(child, Node) and child.tag == "template" and child.get("x-if"):
+            out.extend(_scripted_part(child, root))
+            continue
         if isinstance(child, str) or _skipped(child) or id(child) in taken:
             continue
         if (beside := page_blocks.sibling_switch(child)) is not None:
@@ -361,6 +379,59 @@ def _items(node: Node, root: Node, out: list[dict]) -> list[dict]:
         else:
             _items(child, root, out)
     return out
+
+
+def _scripted_part(template: Node, root: Node) -> list[dict]:
+    """What a ``<template x-if>`` adds, with its condition: shown for the
+    choices it names and left out when it is never added. One the reader
+    cannot follow is shown with its fields optional when it has fields and
+    the web requires each of them whenever it adds them (a reason the save
+    asks for when it must); otherwise, when the script chooses between it and its opposite, or
+    when the script draws its choices, it is left out, so the app never sends
+    what the web would not."""
+    when = _condition(template.get("x-if"), *_scope_of(template))
+    if when is None:
+        return []
+    items = _items(template, root, [])
+    if isinstance(when, _Unfollowed):
+        fields = [i["field"] for i in items if "field" in i]
+        drawn = template.find(lambda n: n.tag == "template" and bool(n.get("x-for")))
+        if (
+            _has_opposite(template)
+            or drawn is not None
+            or not fields
+            or not all(f["required"] for f in fields)
+        ):
+            return []
+        return [_optional(i) for i in items]
+    if not when:
+        return items
+    return [i if "showWhen" in i else {**i, "showWhen": when} for i in items]
+
+
+def _optional(item: dict) -> dict:
+    return (
+        {**item, "field": {**item["field"], "required": False}}
+        if "field" in item
+        else item
+    )
+
+
+def _has_opposite(template: Node) -> bool:
+    """Whether a ``<template x-if>`` beside this one adds what this one does
+    not (``locked`` and ``!locked``)."""
+    mine = "".join(template.get("x-if").split())
+    for other in template.parent.children if template.parent else []:
+        if other is template or isinstance(other, str) or other.tag != "template":
+            continue
+        theirs = "".join(other.get("x-if").split())
+        if theirs and (_negates(mine, theirs) or _negates(theirs, mine)):
+            return True
+    return False
+
+
+def _negates(negated: str, expression: str) -> bool:
+    return negated in (f"!{expression}", f"!({expression})")
 
 
 def _checklist(node: Node, root: Node) -> dict | None:

@@ -481,3 +481,93 @@ class DateRangeTest(SimpleTestCase):
             (field["minDate"], field["maxDate"]), ("2026-10-01", "2026-11-10")
         )
         self.assertNotIn("min", field)
+
+
+SCRIPTED = """
+<div data-edify-drawer><div class="drawer-body"><form hx-post="/my-plan/a1/edit">
+<div x-data="{ planDay: '2026-11-20', firstDay: '2026-11-20', get asksWhy() { return this.planDay !== this.firstDay; } }">
+<div><label for="day">Planned date</label>
+<input id="day" type="date" name="scheduled_date" x-model="planDay" value="2026-11-20" required></div>
+<template x-if="asksWhy">
+<div data-edit-reason><label for="why">Reason for the change <span>*</span></label>
+<textarea id="why" name="reason" required rows="3" placeholder="Why the date is changing"></textarea>
+<p class="edify-text-caption">Recorded with the activity.</p></div>
+</template>
+<template x-if="locked"><div><span>SSA intervention</span><input type="text" readonly :value="label"></div></template>
+<template x-if="!locked"><div><label for="focus">Focus intervention</label>
+<select id="focus" name="focus_intervention"><option value="">None</option></select></div></template>
+<template x-if="namesIntervention"><div><label for="day_focus">SSA intervention</label>
+<select id="day_focus" name="day_focus"><option value="">Each school's own</option></select></div></template>
+<template x-if="isCourse"><div><label for="course2">Training</label>
+<select id="course2" name="course" required><option value="">Select a training</option>
+<template x-for="c in courses"><option :value="c.id" x-text="c.label"></option></template></select></div></template>
+<template x-if="ceiling.managed"><span>Training ceiling</span></template>
+<template x-for="option in options"><div><label for="o">Option</label><input id="o" name="option"></div></template>
+</div>
+<div x-data="{ kind: 'visit', isTraining: false }">
+<div><label for="kind">Kind</label>
+<select id="kind" name="kind" x-model="kind"><option value="visit" selected>Visit</option><option value="core">Core</option></select></div>
+<template x-if="kind === 'core'"><div><label for="cohort">Cohort</label>
+<input id="cohort" type="number" name="cohort" required></div></template>
+<template x-if="isTraining"><div><label for="course">Training</label>
+<select id="course" name="training_course_id"><option value="">Choose</option></select></div></template>
+</div>
+<button type="submit">Save changes</button>
+</form></div></div>
+"""
+
+
+class ScriptedPartTest(SimpleTestCase):
+    """A part the drawer's script adds (``<template x-if>``) is read as a part
+    shown when the script would add it."""
+
+    def setUp(self):
+        self.items = drawer_blocks.read(SCRIPTED)["items"]
+        self.fields = {i["field"]["name"]: i for i in self.items if "field" in i}
+
+    def test_a_part_the_reader_cannot_follow_is_shown_and_optional(self):
+        reason = self.fields["reason"]
+
+        self.assertEqual(reason.get("showWhen", []), [])
+        self.assertEqual(
+            (reason["field"]["label"], reason["field"]["kind"]),
+            ("Reason for the change", "textarea"),
+        )
+        self.assertEqual(reason["field"]["value"], "")
+        # The web asks for it only sometimes; the save says when it is needed.
+        self.assertFalse(reason["field"]["required"])
+        self.assertEqual(reason["field"]["help"], "Recorded with the activity.")
+
+    def test_a_part_shown_for_a_choice_says_which_and_is_required_while_shown(self):
+        cohort = self.fields["cohort"]
+
+        self.assertEqual(cohort["showWhen"], [{"field": "kind", "values": ["core"]}])
+        self.assertTrue(cohort["field"]["required"])
+
+    def test_a_part_the_script_never_adds_is_left_out(self):
+        self.assertNotIn("training_course_id", self.fields)
+
+    def test_two_parts_the_script_chooses_between_are_left_out(self):
+        self.assertNotIn("focus_intervention", self.fields)
+        self.assertNotIn("", self.fields)
+
+    def test_a_part_with_a_field_the_web_never_insists_on_is_left_out(self):
+        # The app could otherwise send a choice the web does not offer then.
+        self.assertNotIn("day_focus", self.fields)
+
+    def test_a_part_whose_choices_the_script_draws_is_left_out(self):
+        # The app would get a choice list with nothing to choose.
+        self.assertNotIn("course", self.fields)
+
+    def test_words_alone_in_a_part_the_reader_cannot_follow_are_left_out(self):
+        self.assertNotIn({"text": "Training ceiling"}, self.items)
+
+    def test_a_repeated_row_template_stays_silent(self):
+        self.assertNotIn("option", self.fields)
+
+    def test_a_save_sends_the_part_the_drawer_shows(self):
+        sent = drawer_blocks.form_data(
+            SCRIPTED, {"scheduled_date": "2026-11-21", "reason": "Exams"}
+        )
+
+        self.assertEqual(sent, {"scheduled_date": "2026-11-21", "reason": "Exams"})

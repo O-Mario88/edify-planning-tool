@@ -1016,6 +1016,53 @@ class PageDrawerFeedTest(SchoolActionFeedTest):
         self.visit.refresh_from_db()
         self.assertEqual(self.visit.status, "cancelled")
 
+    def _edit_values(self, path):
+        drawer = self.drawer(path).json()["drawer"]
+        fields = {i["field"]["name"]: i for i in drawer["items"] if "field" in i}
+        return fields, {name: i["field"]["value"] for name, i in fields.items()}
+
+    def test_edit_keeps_the_expected_outcome_and_offers_the_reason(self):
+        self.visit.activity_purpose_text = "See the head teacher"
+        self.visit.expected_outcome = "A plan for the term & its <exams>"
+        self.visit.save(update_fields=["activity_purpose_text", "expected_outcome"])
+        path = f"/my-plan/{self.visit.id}/edit-drawer"
+
+        fields, values = self._edit_values(path)
+        body = self.save(path, {**values, "activity_purpose_text": "See the bursar"})
+
+        self.assertEqual(
+            values["expected_outcome"], "A plan for the term & its <exams>"
+        )
+        # The web adds the reason only once the day, school or purpose
+        # changes; the app shows it always and the save asks when it must.
+        self.assertEqual(fields["reason"].get("showWhen", []), [])
+        self.assertFalse(fields["reason"]["field"]["required"])
+        self.assertTrue(body.json()["saved"], body.json())
+        self.visit.refresh_from_db()
+        self.assertEqual(self.visit.activity_purpose_text, "See the bursar")
+        self.assertEqual(
+            self.visit.expected_outcome, "A plan for the term & its <exams>"
+        )
+
+    def test_edit_moves_the_day_with_the_reason_the_app_gives(self):
+        from django.utils import timezone
+
+        path = f"/my-plan/{self.visit.id}/edit-drawer"
+        _, values = self._edit_values(path)
+        new_day = (self.visit.planned_date + timezone.timedelta(days=1)).isoformat()
+
+        refused = self.save(path, {**values, "scheduled_date": new_day}).json()
+        moved = self.save(
+            path,
+            {**values, "scheduled_date": new_day, "reason": "Exams that day"},
+        ).json()
+
+        self.assertFalse(refused.get("saved"), refused)
+        self.assertIn("Give the reason the date is changing.", str(refused))
+        self.assertTrue(moved["saved"], moved)
+        self.visit.refresh_from_db()
+        self.assertEqual(self.visit.planned_date.isoformat(), new_day)
+
     def test_create_cluster_saves_each_ticked_sub_county(self):
         from apps.clusters.models import Cluster, ClusterSubCounty
         from apps.geography.models import SubCounty
