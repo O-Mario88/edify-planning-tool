@@ -212,3 +212,8 @@ GRANT SELECT (id, raised_by_user_id, raised_by_name, addressed_role, assigned_to
   detail, requested_decision, severity, due_date, status, decision, decision_note, resolved_at, created_at)
   ON leadership_escalation TO edify_gateway_ro;
 GRANT SELECT (id) ON staff_supervisor_assignment TO edify_gateway_ro;
+-- My Actions: the school actions handed to a person, their state, due date,
+-- route and how each closed.
+GRANT SELECT (school_id, issue_type, requested_action, workflow_route, state, returned_reason, sender_id, recipient_id,
+  due_date, resolved_by_system, created_at)
+  ON team_action TO edify_gateway_ro;

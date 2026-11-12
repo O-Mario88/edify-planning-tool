@@ -1,0 +1,192 @@
+{
+  "active_states": [
+    "acknowledged",
+    "blocked",
+    "escalated",
+    "in_progress",
+    "open",
+    "overdue"
+  ],
+  "escalated_state": "escalated",
+  "issue_labels": {
+    "intervention_critical": "Critical intervention area",
+    "intervention_follow_up": "Intervention follow-up",
+    "intervention_warning": "Weak intervention area",
+    "low_ssa": "Low SSA",
+    "no_ssa": "No SSA",
+    "no_training": "No training",
+    "no_visit": "No visit",
+    "no_visit_or_training": "No visit or training"
+  },
+  "overdue_state": "overdue",
+  "page_size": 50,
+  "partner_team_members": {
+    "roles": [
+      "PartnerAdmin",
+      "PartnerFieldOfficer"
+    ],
+    "withheld": true
+  },
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "resolved_state": "resolved",
+  "roles": {
+    "Accountant": {
+      "page": true,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": true,
+      "strip": null
+    },
+    "CCEO": {
+      "page": true,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": true,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "page": true,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": true,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": true,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": true,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": true,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": true,
+      "strip": {
+        "label": "Dashboard",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/dashboard?view=today",
+            "label": "Today"
+          },
+          {
+            "active": false,
+            "href": "/dashboard?view=operations",
+            "label": "Operations"
+          },
+          {
+            "active": false,
+            "href": "/dashboard?view=map",
+            "label": "Map"
+          },
+          {
+            "active": false,
+            "href": "/todos",
+            "label": "To-Do"
+          },
+          {
+            "active": true,
+            "href": "/actions/mine",
+            "label": "My Actions"
+          }
+        ]
+      }
+    },
+    "RegionalProgramLead": {
+      "page": true,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": true,
+      "strip": null
+    }
+  },
+  "row_limit": 100,
+  "state_tones": {
+    "acknowledged": [
+      "Acknowledged",
+      "info"
+    ],
+    "blocked": [
+      "Blocked",
+      "danger"
+    ],
+    "cancelled": [
+      "Cancelled",
+      "neutral"
+    ],
+    "escalated": [
+      "Escalated",
+      "danger"
+    ],
+    "in_progress": [
+      "In progress",
+      "info"
+    ],
+    "open": [
+      "Open",
+      "info"
+    ],
+    "overdue": [
+      "Overdue",
+      "danger"
+    ],
+    "resolved": [
+      "Resolved",
+      "success"
+    ],
+    "returned": [
+      "Returned",
+      "warning"
+    ]
+  },
+  "tabs": [
+    [
+      "open",
+      "Open"
+    ],
+    [
+      "overdue",
+      "Overdue"
+    ],
+    [
+      "resolved",
+      "Resolved"
+    ],
+    [
+      "all",
+      "All"
+    ]
+  ]
+}

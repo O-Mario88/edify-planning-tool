@@ -36,6 +36,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myactions"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmeschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
@@ -100,6 +101,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			clusteroversight.NewService(pool, time.Now),
 			decisionlog.NewService(pool, time.Now),
 			escalations.NewService(pool, time.Now),
+			myactions.NewService(pool, time.Now),
 		)
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNavigationServiceHandler(screenService, options...))
