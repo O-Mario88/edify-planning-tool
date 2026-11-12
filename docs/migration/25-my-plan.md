@@ -15,8 +15,10 @@ page did (24-planning-page.md).
 | 1 | The page as it opens for a member of staff who holds nothing yet and has no visit target: header, period tabs, the filter row, Plan progress, the four plan tables' empty states, Plan Breakdown by Period, the bar for ticked activities | Done, 25.2 |
 | 2 | Plan progress and the breakdown counted (the year's and the period's tiles, counted visits at Core and other schools, the completed share, the past-due note) for a member of staff with no target whose tables list nothing | Done, 25.6 |
 | 3a | The Core School Visits and Core School Trainings rows (the cluster expansion into Core schools, cost, budget status, verification, Status, completion columns, order), as Core School Oversight's two tabs list them | Done, 25.8 |
-| 3 | The rest of the plan's rows (25.7): School Visits, Trainings, Group Trainings, Cluster Meetings, programme and Programme-school work; row tone, day-off marks, row Actions, ticks, pagers; and the Returned, day-off and attention cards; a partner's completed work (its evidence) | Not started |
-| 4 | A Programme Lead's or CCEO's own Planned and remaining (`readiness.own`, `planning_monitor.own_monitor`), the visit-target helper and ceiling notice, and the readiness list (`?list=`) | Not started |
+| 3b | School Visits, Cluster Meetings, Core School Visits and the Programme-school sections, for a plan whose listed work is delivered or off the plan: row tone, completion columns, row Actions, ticks; the Status filter's Core-slot reading | Done, 25.9 |
+| 3 | The rest of the plan's rows (25.7): work still to be delivered (day-off marks and the day-off card), work sent back or handed in (the Returned and Waiting on Approval cards), money waiting on somebody, SSA visits awaiting scores, Core package slots (V/T numbers), Trainings and Group Trainings (the cluster expansion), programme activities, pagers past one page | Not started |
+| 4a | A Programme Lead's or CCEO's own Planned and remaining, the visit target under the visits tile and an empty readiness list, for a planner who holds no school and has no project ceiling or project school | Done, 25.9 |
+| 4 | Planned and remaining over held schools and project places (`readiness.own`, `planning_monitor.own_monitor`), the ceiling notice, the outreach sentence, and a readiness list with schools (`?list=`) | Not started |
 | 5 | My Training Summary (`training_ceilings.own_summary`) and Cluster Planning Status (`clusters.planning_status`) | Not started |
 | 6 | The partner's own My Plan (`partner_views.partner_plan_context`): five sections, facilitated clusters, training facilitations, Invoices & Payments | Not started |
 | — | Every drawer and save the page opens, the export drawer and the workbook | Still the existing application's |
@@ -471,3 +473,182 @@ sheets (589 rows), none differing.
 
 - The rest of piece 3 (My Plan's own tables, Actions, ticks, row tones,
   day-off marks and the cards), and pieces 4 to 6; the downloads.
+
+## 25.9 Pieces 4a and 3b: a planner's Planned and remaining, and the rows of delivered work
+
+Go now answers My Plan for the Programme Leads and CCEOs who hold no school,
+and lists the rows of the plan's own tables when everything they list is
+delivered work or work off the plan. On the seed that is every account but
+`cceo@edify.org` (700 schools, a training summary, 22 clusters on Cluster
+Planning Status): the four Programme Leads and nineteen CCEOs open My Plan
+from Go in every year and filter the parity asks, the CCEOs' FY 2026 with
+their delivered School Visits, Cluster Meetings, Core School Visits and
+Champion school work.
+
+### Piece 4a: Planned and remaining for a planner who holds no school
+
+| Part | Existing rule it ports |
+|---|---|
+| Who | `plans_visits`: a Programme Lead or CCEO by any role held, the role in use read as held; the target is the Programme Lead's (280) before the CCEO's (560) (`rules.planning_role`, `target_for`) |
+| What Go reads of it | nothing held: no school (any, deleted ones too), no project ceiling (`project_staff_capacity`), no school they added to a project (`project_school_assignment`); anything else in the gate of 25.2 as before |
+| The year | the year as sent, not stripped (`my_plan_readiness_view`: `request.GET["fy"]`), else today's; the title is "Planned and remaining · FY <year>" as the feed reads it (whitespace run together) |
+| Your visits | `staff_plan.visit_tallies` for the year as sent: counted visits by who planned them, wherever the school is (the statement piece 2 counts by); Planned, Target and Remaining open `?list=staff_scheduled`, `staff_queue`, `staff_visits_left` in the page's own query (`{% querystring list=… list_page=None %}#plan-list`), a zero is a muted 0; the share `planned * 100 // target`, its tone success / info (50 and over) / warning (`Line.tone`). Past the target (the ceiling notice and "n over") is passed |
+| The other five parts | none required, 0, 100% (neutral): a planner who holds no school owes no training, Partner or project figure |
+| Readiness | the plain average of the four parts' shares, rounded down |
+| The note under it | "Your target is … visits a year. You have scheduled visits at 0 of your schools yourself. Your schools take 0 of those … visits: recruit … more schools to meet your target. No project ceiling is set for you, so no project target is asked of you. Readiness is …" |
+| `?list=` | a key of `planning_monitor.GAP_LABELS` (stripped): the list's title, "0 schools · Close list" and its one row, "None of your schools: <label, lower case>." |
+| The visits tile | `brief_helper` cuts "of N a year · n Core, n Client" to "of N a year"; the sentence ("Follow up and In-school Training visits you planned, toward the N your role plans in a year: n at Core schools, n at Client, Core Trained and Core Graduate schools.") becomes the note. With outreach visits in the period the sentence grows: passed |
+
+### Piece 3b: the rows of delivered work
+
+`ReadPlanTables` lists the activities the tables list (the statement piece 2
+counts `Listed` by, now `listedWhere`, by planned date then made), reads
+them with 3a's `readActivities` / `readPage` / `newRow` / `finish` (cost,
+budget status, verification, District Type, completion columns, the
+completion gap and "Completed Early", order), and draws each table as
+`school_visits.html`, `cluster_meetings.html`, `core_school_visits.html`
+and `programme_school_work.html` draw it, as the feed reads them.
+
+| Part | Existing rule it ports |
+|---|---|
+| Which table | the loop's order: programme work first (passed), then a Programme-school type's visits and trainings (`PROGRAMME_SCHOOL_TYPES`, by type in that order), then a Core school's visit (a slotted one is passed), then `MY_PLAN_VISIT_TYPES`, `MY_PLAN_MEETING_TYPES`; a training anywhere is passed |
+| District | `plan_row_district`: the school's district for school work, the cluster's for a session, the other when blank ("—", "Unknown" and "" are blank); a session at no school reads its event district, else "Unknown". Cluster Meetings show the cluster's district (else the school's); Core School Visits the school's |
+| Cells | School ID ("—"; the Programme-school sections write "None" for a school with no ID), the name's link (`/schools/<School ID>`; the sections' `/schools/<pk>`, `/clusters/<id>` for work at a cluster), Activity ("School Visit" / "Core Visit" when blank), planned ("Unscheduled"; the sections "Awaiting schedule"), Completed, Executor ("Staff" when blank), Purpose ("—"), the meeting's "<kind>[ · purpose]" (`meeting_kind` label, the purpose when it says more than the type), Participants ("—" for none or 0), the intervention pill (primary), "UGX n" with the pair's note on visits, Budget status and Verification pills in the loop's colours, Salesforce ID or "Not in SF", Status pill (the sections: plain text) |
+| Status tone | `plan_row_tone` over `get_activity_status_label_and_class`'s class: completed work green; a Core school's work blue but red when sent back and amber awaiting its owner; "Scheduled" and "This Week" blue; then the class's colour (amber, red, green, slate); the completion gap amber, "Completed Early" green |
+| Row tint | `row_state`: done for officer-completed work; never overdue for the off-plan and sent-back states; overdue when its day (`plan_day`) has passed |
+| Tick | `may_tick` and not complete: the activity id and "Select <type> at <school or cluster> on <j M Y>" (none on the Programme-school sections, which draw no tick column) |
+| Actions | `activity_row.html`: complete work's "Complete" button (its title as the reason); otherwise View Details; for staff's own delivery Reschedule (not completed), Change Facilitator (`FACILITATOR_TRAINING_TYPES`, `FACILITATOR_EDITABLE_STATUSES`), Start (scheduled states), Complete Activity (not completed), Submit for Review (`compute_next_action` branch 5: a worked state, the form step met, the ID in, people attended for the types that need them); for any other delivery "Monitoring — partner-owned"; Cancel unless completed, cancelled, verified, confirmed or closed |
+| Headers | the four tables' count; Core School Visits "n m completed" (m: completed-work statuses) and the empty Core School Trainings beside it; a section's "<Type> School Visits and Trainings Planned (n)" |
+| The Status filter | 25.3's slot loop: when the listed work holds a Core school's and its schools have package slots, the select shows "all" if no slot's status is one of its values (and the past-due note reads that), else the page is passed (which slot is last is the table's order) |
+
+**Passed to the existing application**, asked of every listed activity
+(a row Go would draw or work in no table): work still to be delivered
+(`day_off.AWAITING_DELIVERY`: its day-off marks and card); work sent back,
+handed in, or verified by IA (the Returned and Waiting on Approval cards);
+a payment disbursed or in accountability (Finance pending), or an advance
+waiting on the Lead or the Accountant (`_MONEY_AWAITING_STATUSES`, Waiting
+on Approval; an advance in any other state is read and does not pass the
+page); and, for a row, an SSA visit awaiting scores, a meeting delivering a
+training, a meeting at no cluster, a Core slot, a training, programme work.
+Also: a table past one page (50 rows; a section 20) or a pager key in the
+query (`*_page`, a Programme-school type), and, beside a target, outreach
+visits in the period.
+
+The gate of 25.2 is narrowed to what My Training Summary reads: a training
+(or a meeting delivering one) they own or monitor, and a hand-over the
+Partner has not dated (`PartnerAssignment.UNSCHEDULED_STATUSES`); partner
+visits they monitor and completed hand-overs no longer pass the page (the
+staff page lists no partner delivery; the summary reads only open
+hand-overs).
+
+The vocabularies are exported under `tables` and `readiness` in
+`rules.json`; one literal was lifted to a module constant with no change in
+behaviour (`services.SUBMIT_NEEDS_PARTICIPANTS_TYPES`, compute_next_action
+branch 5).
+
+### Proving it
+
+**Against the existing feed, every seed account.** The 67 questions of 25.4,
+on a gateway with no existing application behind it. After piece 4a alone,
+the run's own last lines:
+
+```
+1943 answers compared, 1300 differing
+260 answers held rows with the same name, compared in School ID order (the existing page gives them none)
+```
+
+The 1,300 were the twenty CCEOs Go then passed (65 questions each, "This
+screen is not available here yet"); the other nine accounts (Admin,
+Business Transformation refused, Country Director, Impact Assessment,
+Project Coordinator, pl1–4) 0 differing.
+
+With pieces 4a and 3b, the run's own last lines:
+
+```
+1943 answers compared, 65 differing
+1495 answers held rows with the same name, compared in School ID order (the existing page gives them none)
+```
+
+The 65 are `cceo@edify.org`'s pages (every question but the two `format`
+refusals, which are equal), which Go passes (700 schools held) and a
+gateway with nothing behind it answers "This screen is not available here
+yet" (all 65 checked). The other 28 accounts, 67 questions each, are 0
+differing: Go answers every one of their pages, the nineteen CCEOs' FY 2026
+rows included. The 1,495 are pages whose tables repeat a name from one row
+to the next (a CCEO's two meetings at Cluster B, say), compared in School
+ID order by the tool's tie rule.
+
+**Against the existing feed, for rows the seed does not hold.**
+`internal/myplan/testdata/plan_tables_golden.py` files synthetic records in
+`edify_gorn_test` (ids `g8…`; two districts, a CCEO with a home district, a
+Programme Lead, an Impact Assessment officer, an Admin with no profile,
+three clusters, eight schools of six types, one with no School ID, a Core
+package with unlinked slots and one holding an activity; 320 activities of
+six visit and meeting types in seventeen states, from a seeded random
+source: staff and blank delivery, days today, this week, past and undated,
+scheduled-only days, padded and missing Salesforce IDs, reschedules,
+recorded delivery days, the day before completion, people attended and
+expected, meeting kinds, event districts, evidence and payment states; cost
+lines, and advances in five states) and asks the feed itself
+(`read_page`, unmodified) for `/my-plan` as each person for 58 queries (the
+page, years, periods, a search, types, each status alone, in FY 2026 and
+with the meeting type). `plan_tables_golden_test.go` asks Go's `Build` for
+the same principals and queries through the gateway's read-only role and
+expects the same page, field for field:
+
+```
+plan_tables_golden_test.go:126: 110 pages compared (61 rows of the plan's tables), 0 differing; 122 passed to the existing application
+```
+
+The rows compared held every Actions item the template offers but Start
+(scheduled work is passed), ticks, done tints, the three Programme-school
+sections, the completion gap and "Completed Early". A row tinted overdue is
+covered by the unit tests only (past work not delivered is listed only under
+"In progress" and "Overdue", whose pages held passed work). The records
+were removed afterwards (none left).
+
+Piece 2's golden comparison was run again after `ReadPlan` was refactored
+(`listedWhere`, `periodWhere`, the outreach count), for four accounts:
+
+```
+counts_golden_test.go:94: 216 plans counted, 0 differing
+```
+
+Unit tests (`readiness_test.go`, `plantables_test.go`): the target by role,
+Planned and remaining's links in a padded year's query, the list key, every
+pass of a row, the loop's table order, Submit's conditions, a row's tint,
+tick and menu (overdue in progress, deferred, complete, another delivery),
+the District and the meeting's purpose, the budget colours. Integration
+(`internal/integration/my_plan_test.go`): an empty Programme Lead's
+Planned and remaining with a list, a project ceiling passing the page, and
+an officer's delivered FY 2026 rows.
+
+Grants added (`platform/deploy/db/roles.sql`, applied additively to both
+databases): `advance_request (id, budget_line_id, status)`.
+
+### Found by comparing and reading
+
+- **Partner visits a CCEO monitors and completed hand-overs kept nineteen
+  CCEOs off Go.** The gate of 25.2 passed any activity monitored and any
+  hand-over; the staff page shows neither (partner delivery is not on the
+  staff plan, the training summary reads only hand-overs still open).
+- **Advances are everywhere in the seed** (each delivered visit and meeting
+  carries one waiting for its owner's confirmation), and a waiting
+  confirmation changes nothing on the page; only the four statuses that wait
+  on the Lead or the Accountant put a row on Waiting on Approval.
+- **The CCEOs' SSA visits are in no table.** `ssa_activity` is neither a My
+  Plan visit type nor a meeting: the loop files it nowhere, so a completed
+  SSA visit awaiting scores shows nothing.
+- **The Programme-school sections** write a missing School ID as "None"
+  (`{{ row.school_id }}` of None), link the school by its primary key, have
+  no tick column and page by 20.
+
+### What is left
+
+- Piece 3's remaining rows: work still to deliver with its day-off marks,
+  the Returned / Waiting on Approval / Finance cards, SSA visits awaiting
+  scores, Core slots (the feed's reading of "V1 1/8 Completed" was not
+  checked), Trainings and Group Trainings with the cluster expansion,
+  programme activities, pagers; piece 4 over held schools and project
+  places (`cceo@edify.org`), My Training Summary and Cluster Planning
+  Status; the partner's page.

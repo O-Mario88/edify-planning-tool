@@ -107,7 +107,7 @@ func visitsLine(c PlanCounts) string {
 // progressStrip is Plan progress (partials/my_plan/kpi_cards.html) for a
 // reader without a visit target. A plan with nothing in the period has no
 // completed share ("No data").
-func progressStrip(c PlanCounts) *screensv1.PageBlock {
+func progressStrip(c PlanCounts, target int) *screensv1.PageBlock {
 	values := []string{
 		comma(c.Week), comma(c.Month), comma(c.Quarter), comma(c.FY),
 		comma(c.Visits), comma(c.Trainings), comma(c.Meetings), share(c.Completed, c.Total),
@@ -117,6 +117,9 @@ func progressStrip(c PlanCounts) *screensv1.PageBlock {
 		m := &screensv1.PageMetric{Label: label, Value: values[i], Href: rules.Strip.Drilldown}
 		if rules.Strip.Keys[i] == "my_plan_visits_scheduled_period" {
 			m.Helper = visitsLine(c)
+			if target > 0 {
+				targetVisitsTile(m, target, c)
+			}
 		}
 		strip.Metrics = append(strip.Metrics, m)
 	}
@@ -177,16 +180,54 @@ func pastDueNote() *screensv1.PageBlock {
 	}}}
 }
 
+// pageParts are what My Plan is drawn from.
+type pageParts struct {
+	period  Period
+	years   []string
+	choices Choices
+	request Query
+	plan    Plan
+	filters Filters
+	// target is the reader's visit target (0 for none); planned their
+	// counted visits of the year.
+	target, planned int
+	tables          PlanTablesResult
+}
+
 // emptyPage is My Plan for a reader with no target whose tables list
 // nothing: the plan counted, the tables empty.
-func emptyPage(p Period, years []string, c Choices, request Query, plan Plan, f Filters) *screensv1.GetPageResponse {
-	blocks := []*screensv1.PageBlock{p.Tabs(request), filters(p, years, c, request), progressStrip(plan.Counts)}
-	if plan.PastDue > 0 && f.Status != "overdue" && f.Status != "under_way" {
+func emptyPage(p Period, years []string, c Choices, request Query, plan Plan, f Filters, target int) *screensv1.GetPageResponse {
+	return planPage(pageParts{period: p, years: years, choices: c, request: request, plan: plan, filters: f, target: target})
+}
+
+// planPage is My Plan: the plan counted, the planner's Planned and
+// remaining, and the tables.
+func planPage(parts pageParts) *screensv1.GetPageResponse {
+	p, request, f := parts.period, parts.request, parts.filters
+	form := filters(p, parts.years, parts.choices, request)
+	status := f.Status
+	if parts.tables.overwritten {
+		// The Status select shows the Core slot's status the loop left (25.3).
+		status = parts.tables.statusShown
+		for _, sel := range form.GetFilters().GetFilters() {
+			if sel.GetName() == "status" {
+				sel.Value = status
+			}
+		}
+	}
+	blocks := []*screensv1.PageBlock{p.Tabs(request), form, progressStrip(parts.plan.Counts, parts.target)}
+	if parts.plan.PastDue > 0 && status != "overdue" && status != "under_way" {
 		blocks = append(blocks, pastDueNote())
 	}
-	for _, t := range PlanTables {
-		blocks = append(blocks, emptyTable(t, p))
+	// A planner's own Planned and remaining, loaded once the page is open
+	// (readiness_panel.html), and the schools behind a figure when asked.
+	if parts.target > 0 {
+		blocks = append(blocks, readinessTable(parts.target, parts.planned, p.FY, request))
+		if key := readinessList(request); key != "" {
+			blocks = append(blocks, emptyReadinessList(key))
+		}
 	}
-	blocks = append(blocks, breakdown(plan.Counts))
+	blocks = append(blocks, planTablesBlocks(parts.tables, p)...)
+	blocks = append(blocks, breakdown(parts.plan.Counts))
 	return &screensv1.GetPageResponse{Header: header(request), Blocks: blocks, Selection: activityBar(), WebPath: Path}
 }

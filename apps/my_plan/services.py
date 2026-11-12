@@ -590,6 +590,15 @@ _WORKED_STATUSES = (
 # moved; without it a moved visit sat under "Upcoming" on its own day.
 _DATED_AND_OPEN = ("scheduled", "rescheduled", "in_progress")
 
+#: Work whose Submit waits for somebody to have attended (compute_next_action,
+#: branch 5).
+SUBMIT_NEEDS_PARTICIPANTS_TYPES = [
+    "training",
+    "cluster_training",
+    "cluster_meeting",
+    "core_training",
+]
+
 
 def compute_next_action(a, today, advances=None) -> dict:
     """Computes the single primary action and its properties for a given activity.
@@ -755,12 +764,7 @@ def compute_next_action(a, today, advances=None) -> dict:
         # scores can be optional but Salesforce ID is A MUST"): Submit waits
         # on the Salesforce ID, never on the school's SSA.
         participants_done = True
-        if a.activity_type in [
-            "training",
-            "cluster_training",
-            "cluster_meeting",
-            "core_training",
-        ]:
+        if a.activity_type in SUBMIT_NEEDS_PARTICIPANTS_TYPES:
             participants_done = (a.teachers_attended or 0) + (
                 a.leaders_attended or 0
             ) > 0

@@ -158,3 +158,82 @@ WHERE u.email = 'ia@edify.org'`).Scan(&staffID); err != nil {
 		t.Fatalf("a page listing work was answered by Go (or refused): %v", err)
 	}
 }
+
+// A Programme Lead who holds no school and has planned nothing opens My Plan
+// from Go, with their own Planned and remaining against 280 visits; a
+// project ceiling set for them leaves the page to the existing application.
+func TestMyPlanDrawsAnEmptyPlannersPlannedAndRemaining(t *testing.T) {
+	ctx := context.Background()
+	borrowAccount(t, "pl4@edify.org")
+	token := sessionOf(t, "pl4@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(token, "/my-plan", map[string]string{"fy": "2026", "list": "staff_queue"})
+	if err != nil {
+		t.Skipf("the seeded Programme Lead holds work here: %v", err)
+	}
+	var readiness, list bool
+	for _, block := range page.GetBlocks() {
+		table := block.GetTable()
+		switch {
+		case table.GetTitle() == "Planned and remaining · FY 2026":
+			readiness = table.GetRows()[0].GetCells()[2].GetText() == "280" &&
+				table.GetRows()[0].GetCells()[2].GetHref() == "?fy=2026&list=staff_queue#plan-list"
+		case table.GetSubtitle() == "0 schools · Close list":
+			list = true
+		}
+		if strip := block.GetStrip(); strip != nil && strip.GetTitle() == "Plan progress" && strip.GetMetrics()[4].GetHelper() != "of 280 a year" {
+			t.Errorf("visits tile %+v", strip.GetMetrics()[4])
+		}
+	}
+	if !readiness || !list {
+		t.Fatalf("readiness %v, list %v", readiness, list)
+	}
+	var staffID, projectID string
+	if err := admin.QueryRow(ctx, `SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
+WHERE u.email = 'pl4@edify.org'`).Scan(&staffID); err != nil {
+		t.Skipf("no staff profile: %v", err)
+	}
+	if err := admin.QueryRow(ctx, `SELECT id FROM project WHERE deleted_at IS NULL ORDER BY id LIMIT 1`).Scan(&projectID); err != nil {
+		t.Skipf("no project: %v", err)
+	}
+	var capacityID string
+	if err := admin.QueryRow(ctx, `INSERT INTO project_staff_capacity (created_at, updated_at, id, project_id, staff_id, max_schools, set_by, set_by_role)
+VALUES (now(), now(), 'goparitymyplancap', $1, $2, 5, 'goparity', 'Admin') RETURNING id`, projectID, staffID).Scan(&capacityID); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _, _ = admin.Exec(ctx, `DELETE FROM project_staff_capacity WHERE id = $1`, capacityID) })
+	if _, err := pageOf(token, "/my-plan", nil); err == nil {
+		t.Fatal("a planner with a project ceiling was drawn by Go")
+	}
+}
+
+// An officer whose year holds only delivered work opens My Plan from Go:
+// the rows of School Visits, Cluster Meetings and Core School Visits, each
+// with its Actions menu, and their own Planned and remaining counting the
+// visits they planned.
+func TestMyPlanDrawsAnOfficersDeliveredWork(t *testing.T) {
+	borrowAccount(t, "cceo2@edify.org")
+	token := sessionOf(t, "cceo2@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(token, "/my-plan", map[string]string{"fy": "2026"})
+	if err != nil {
+		t.Skipf("the seeded officer's year is not Go's here: %v", err)
+	}
+	rows := 0
+	for _, block := range page.GetBlocks() {
+		table := block.GetTable()
+		if table.GetTitle() == "Planned and remaining · FY 2026" && table.GetRows()[0].GetCells()[1].GetHref() != "?fy=2026&list=staff_scheduled#plan-list" {
+			t.Errorf("planned visits %+v", table.GetRows()[0])
+		}
+		for _, row := range table.GetRows() {
+			last := row.GetCells()[len(row.GetCells())-1]
+			if len(last.GetActions()) > 0 {
+				rows++
+				if last.GetActions()[0].GetLabel() != "View Details" || row.GetTone() != "done" {
+					t.Errorf("row %+v", row)
+				}
+			}
+		}
+	}
+	if rows == 0 {
+		t.Fatal("no row of delivered work")
+	}
+}

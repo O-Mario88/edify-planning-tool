@@ -188,6 +188,8 @@ type Plan struct {
 	PastDue int
 	// Listed is how many activities the tables would list.
 	Listed int
+	// Outreach is the period's donor, story, social and invitation visits.
+	Outreach int
 }
 
 // ReadPlan counts the plan of the people owners for the period p and the
@@ -204,32 +206,7 @@ func ReadPlan(ctx context.Context, db schooldirectory.Querier, owners []string, 
 			open = append(open, s)
 		}
 	}
-	periodQ := func(b *sqlb) string {
-		fy, _ := closedschools.PyInt(p.FY)
-		month := int(today.Month())
-		if p.HasMonth {
-			month = p.Month
-		}
-		year := fy
-		if month >= 10 {
-			year = fy - 1
-		}
-		switch p.Kind {
-		case "week":
-			start, end := weekRange(year, month, p.Week)
-			return inRange(b, start, end)
-		case "month":
-			return inRange(b, time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC),
-				time.Date(year, time.Month(month), daysIn(year, month), 0, 0, 0, 0, time.UTC))
-		case "quarter":
-			quarter := p.Quarter
-			if quarter == "" {
-				quarter = quarterOf(today.Month())
-			}
-			return "a.quarter = " + b.arg(quarter)
-		}
-		return "true"
-	}
+	periodQ := func(b *sqlb) string { return periodWhere(b, p, today) }
 	// The plan the tiles count: closed work included, unless a left-out state
 	// was asked for, when nothing is left out.
 	plan := func(b *sqlb) string {
@@ -283,23 +260,73 @@ func ReadPlan(ctx context.Context, db schooldirectory.Querier, owners []string, 
 		return out, fmt.Errorf("myplan: counting the period's visits: %w", err)
 	}
 	out.Counts.Visits = out.Counts.CoreVisits + out.Counts.ClientVisits
+	// Its outreach visits, named beside a visit target (outreach_visit_q:
+	// the staff plan holds no partner's SSA Support).
+	b = &sqlb{}
+	t := rules.Tables
+	where = plan(b) + " AND " + periodQ(b) + fmt.Sprintf(` AND a.school_id IS NOT NULL AND a.cluster_id IS NULL
+  AND (a.activity_type = ANY(%s) OR (a.activity_type = ANY(%s) AND a.purpose_type = ANY(%s)))`,
+		b.arg(t.OutreachTypes), b.arg(t.VisitShapeTypes), b.arg(t.OutreachPurposes))
+	if err := db.QueryRow(ctx, `SELECT count(*) `+planFrom+` WHERE `+where, b.args...).Scan(&out.Outreach); err != nil {
+		return out, fmt.Errorf("myplan: counting the period's outreach visits: %w", err)
+	}
 	// What the tables list: still ahead, delivered or sent back, unless a
 	// left-out state, work under way or overdue work was asked for.
 	b = &sqlb{}
-	where = planWhere(b, owners, p.FY, f, day) + " AND " + periodQ(b)
-	if !excludedAsked {
-		where += " AND " + notStatusIn(b, r.ExcludedStatuses)
-		if f.Status != "under_way" && f.Status != "overdue" {
-			t := b.arg(day)
-			where += fmt.Sprintf(` AND (a.planned_date >= %[1]s::date OR (a.planned_date IS NULL AND %[2]s >= %[1]s::date)
-  OR (a.planned_date IS NULL AND a.scheduled_date IS NULL) OR a.status = ANY(%[3]s) OR a.status = ANY(%[4]s))`,
-				t, localDay, b.arg(r.OfficerCompletedStatuses), b.arg(r.ReturnedStatuses))
-		}
-	}
+	where = listedWhere(b, owners, p, f, today)
 	if err := db.QueryRow(ctx, `SELECT count(*) `+planFrom+` WHERE `+where, b.args...).Scan(&out.Listed); err != nil {
 		return out, fmt.Errorf("myplan: counting the listed plan: %w", err)
 	}
 	return out, nil
+}
+
+// periodWhere is the slice the tables show (period): the week of the
+// month, the month, the quarter chosen or today's, or the whole year.
+func periodWhere(b *sqlb, p Period, today time.Time) string {
+	fy, _ := closedschools.PyInt(p.FY)
+	month := int(today.Month())
+	if p.HasMonth {
+		month = p.Month
+	}
+	year := fy
+	if month >= 10 {
+		year = fy - 1
+	}
+	switch p.Kind {
+	case "week":
+		start, end := weekRange(year, month, p.Week)
+		return inRange(b, start, end)
+	case "month":
+		return inRange(b, time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC),
+			time.Date(year, time.Month(month), daysIn(year, month), 0, 0, 0, 0, time.UTC))
+	case "quarter":
+		quarter := p.Quarter
+		if quarter == "" {
+			quarter = quarterOf(today.Month())
+		}
+		return "a.quarter = " + b.arg(quarter)
+	}
+	return "true"
+}
+
+// listedWhere is what the tables list of the plan of owners for the period
+// p and the filters f: still ahead, undated, delivered or sent back, unless
+// a left-out state, work under way or overdue work was asked for.
+func listedWhere(b *sqlb, owners []string, p Period, f Filters, today time.Time) string {
+	r := rules.Plan
+	day := today.In(kampala).Format(time.DateOnly)
+	where := planWhere(b, owners, p.FY, f, day) + " AND " + periodWhere(b, p, today.In(kampala))
+	if in(r.ExcludedStatuses, f.Status) {
+		return where
+	}
+	where += " AND " + notStatusIn(b, r.ExcludedStatuses)
+	if f.Status != "under_way" && f.Status != "overdue" {
+		t := b.arg(day)
+		where += fmt.Sprintf(` AND (a.planned_date >= %[1]s::date OR (a.planned_date IS NULL AND %[2]s >= %[1]s::date)
+  OR (a.planned_date IS NULL AND a.scheduled_date IS NULL) OR a.status = ANY(%[3]s) OR a.status = ANY(%[4]s))`,
+			t, localDay, b.arg(r.OfficerCompletedStatuses), b.arg(r.ReturnedStatuses))
+	}
+	return where
 }
 
 // countedVisit is staff_plan.counted_visits: planned and dated, a visit at a
