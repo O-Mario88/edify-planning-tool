@@ -162,3 +162,22 @@ GRANT SELECT (school_id, intervention, score, score_band, reason, state, rank) O
 GRANT SELECT (closure_effective_date) ON school TO edify_gateway_ro;
 GRANT SELECT (school_id, reason_category, reason, enrollment_at_closure, activities_cancelled, effective_date, created_at)
   ON school_closure TO edify_gateway_ro;
+-- A school's Business Transformation panel and the Overview's loans strip:
+-- the cases and their response, the loans with their latest repayment and
+-- verification, and the practice and compliance assessments. The gateway
+-- shows a loan's figures only to a reader of the register's sensitive view.
+GRANT SELECT (id, status, deleted_at, created_at) ON bt_case TO edify_gateway_ro;
+GRANT SELECT (case_id, kind, created_at) ON bt_case_recommendation TO edify_gateway_ro;
+GRANT SELECT (
+  id, purpose_id, mfi_id, status, salesforce_status, impact_status, external_loan_reference, currency,
+  disbursed_amount, term_months, disbursement_date, deleted_at, created_at
+) ON bt_mfi_loan TO edify_gateway_ro;
+GRANT SELECT (id, label, is_edtech) ON bt_loan_purpose TO edify_gateway_ro;
+GRANT SELECT (id, name) ON bt_mfi_organization TO edify_gateway_ro;
+GRANT SELECT (loan_id, status, outstanding_amount, as_of_date, created_at) ON bt_repayment_snapshot TO edify_gateway_ro;
+GRANT SELECT (loan_id, status, due_date) ON bt_loan_verification_requirement TO edify_gateway_ro;
+GRANT SELECT (id, loan_id) ON bt_loan_disbursement TO edify_gateway_ro;
+GRANT SELECT (disbursement_id) ON bt_loan_disbursement_reversal TO edify_gateway_ro;
+GRANT SELECT (case_id, assessed_on, verification_status, practices) ON bt_financial_practice_assessment TO edify_gateway_ro;
+GRANT SELECT (case_id, requirement_id, status) ON bt_school_compliance_assessment TO edify_gateway_ro;
+GRANT SELECT (id, label) ON bt_compliance_requirement TO edify_gateway_ro;

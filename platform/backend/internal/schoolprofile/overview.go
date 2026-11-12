@@ -344,7 +344,8 @@ func picks(rows []ivRow) (best, struggling *pick) {
 	return best, &pick{row: choose(others, byScore, worse), basis: "score"}
 }
 
-func (s *Service) overviewTab(ctx context.Context, d doors, sc school, l lens, now time.Time) ([]*screensv1.PageBlock, error) {
+func (s *Service) overviewTab(ctx context.Context, r btReader, sc school, l lens, now time.Time) ([]*screensv1.PageBlock, error) {
+	d := r.doors
 	book, err := s.ruleBook(ctx)
 	if err != nil {
 		return nil, err
@@ -541,14 +542,11 @@ func (s *Service) overviewTab(ctx context.Context, d doors, sc school, l lens, n
 	)
 	blocks := []*screensv1.PageBlock{performance, operations}
 	if d.Loans {
-		// A school with a loan or a case is passed to the existing
-		// application, so the register's figures here are nothing.
-		blocks = append(blocks, strip("Loans And Business Transformation",
-			kpi{label: "School Loans", value: "0", link: records + "loans", helper: "0 schools · 0 for EdTech"},
-			kpi{label: "Schools Funded", value: "0", link: records + "loans", helper: "with a loan disbursed, active or repaid"},
-			kpi{label: "Disbursed", value: "UGX 0", link: records + "loans"},
-			kpi{label: "Business Transformation Cases", value: "0", link: records + "cases", helper: "open, of 0 in 0 schools"},
-		))
+		finance, err := s.financeOf(ctx, r, sc)
+		if err != nil {
+			return nil, err
+		}
+		blocks = append(blocks, finance.strip(records))
 	}
 
 	// ── Best and struggling intervention ──────────────────────────────────

@@ -39,7 +39,7 @@ def doors() -> dict:
         can_open_url,
         has_permission,
     )
-    from apps.core.rbac import EdifyRole
+    from apps.core.rbac import EdifyRole, Permission
     from apps.schools import data_gaps
     from apps.schools.ownership_transfer import may_transfer_school
     from apps.ssa.creation import may_enter_role
@@ -76,8 +76,45 @@ def doors() -> dict:
             # A Core school's Schedule and Assign to Partner open the Core
             # Schools drawers for a reader of that page.
             "core_schools": RolePermissionService.can_view_page(user, "core_schools"),
+            # Business Transformation on Details: a loan's figures, and the
+            # Plan verification door.
+            "bt_sensitive": has_permission(
+                user, Permission.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW.value
+            ),
+            "bt_manage": has_permission(
+                user, Permission.BUSINESS_TRANSFORMATION_CASE_MANAGE.value
+            ),
         }
     return out
+
+
+def business_transformation_rules() -> dict:
+    """What a school's Business Transformation panel and the Overview's loans
+    strip read (business_transformation.services.school_profile_context,
+    scoped_cases, scoped_loans, lending_impact.scoped_impact_loans,
+    clusters.outcomes.loans_by_cluster): the role sets the loan register is
+    scoped by, the case statuses that are open, and every label shown."""
+    from apps.business_transformation import lending_impact
+    from apps.business_transformation import models as bt
+    from apps.business_transformation import services as bts
+    from apps.clusters.outcomes import _FUNDED
+
+    return {
+        "uganda_wide_roles": sorted(bts.UGANDA_WIDE_ROLES),
+        "mfi_roles": sorted(bts.MFI_ROLES),
+        "impact_country_roles": sorted(lending_impact.COUNTRY_ROLES),
+        "impact_country_bound_roles": sorted(lending_impact.COUNTRY_BOUND_ROLES),
+        "open_case_statuses": [str(s) for s in bt.OPEN_CASE_STATUSES],
+        "funded_loan_statuses": list(_FUNDED),
+        "case_statuses": dict(bt.CaseStatus.choices),
+        "recommendation_kinds": dict(bt.RecommendationKind.choices),
+        "loan_statuses": dict(bt.LoanStatus.choices),
+        "salesforce_statuses": dict(bt.SalesforceStatus.choices),
+        "impact_statuses": dict(bt.LoanImpactStatus.choices),
+        "requirement_statuses": dict(bt.VerificationRequirementStatus.choices),
+        "validation_statuses": dict(bt.IAValidationStatus.choices),
+        "compliance_statuses": dict(bt.ComplianceStatus.choices),
+    }
 
 
 def core_tab_rules() -> dict:
@@ -241,6 +278,7 @@ def rules() -> dict:
         "engine": engine_rules(),
         "participation": participation_rules(),
         "core_tab": core_tab_rules(),
+        "business_transformation": business_transformation_rules(),
         "gate": {
             "client_rule_types": list(gate.CLIENT_RULE_SCHOOL_TYPES),
             "core_rule_types": list(gate.CORE_RULE_SCHOOL_TYPES),

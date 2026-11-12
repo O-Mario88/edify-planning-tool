@@ -335,3 +335,22 @@ func TestAClosedSchoolIsReadFromTheArchiveAndTakesNoNewWork(t *testing.T) {
 		}
 	}
 }
+
+func TestASchoolWithBusinessTransformationIsGos(t *testing.T) {
+	var id string
+	if err := admin.QueryRow(context.Background(), `
+SELECT s.id FROM school s WHERE `+operatingSchools+` AND NOT (`+noBusinessTransformation+`) ORDER BY s.id LIMIT 1`).Scan(&id); err != nil {
+		t.Skip("no school with a Business Transformation record")
+	}
+	borrowAccount(t, "business-transformation@edify.org")
+	token := sessionOf(t, "business-transformation@edify.org", seededPassword).GetAccessToken()
+	for _, tab := range []string{"details", "overview"} {
+		profile, err := profileOf(token, id, tab)
+		if err != nil {
+			t.Fatalf("%s: %v", tab, err)
+		}
+		if tab == "details" && profile.GetBlocks()[1].GetPanel().GetTitle() != "Business Transformation" {
+			t.Fatalf("the panel: %v", profile.GetBlocks()[1])
+		}
+	}
+}

@@ -20,7 +20,7 @@ proved against the existing page before the next.
 | 4a | Core schools: the package rule in the header, a Core school's Details, and every engine tab at a Core school | Done, 13.10 |
 | 4b | The Core School tab (Core School Intelligence) | Done, 13.11 |
 | 5a | Closed schools | Done, 13.12 |
-| 5b | The Business Transformation panel and the Overview's loans strip (the loan register's scoping) | Next |
+| 5b | The Business Transformation panel and the Overview's loans strip (the loan register's scoping) | Done, 13.13 |
 
 ## 13.1 What moved
 
@@ -90,10 +90,8 @@ they are there and reproduced here:
 
 Updated as the pieces moved (2026-11-12):
 
-- The Details tab and
-  the Overview of a school with a Business Transformation case or an MFI
-  loan, anyone working in an acting capacity, and a Participation table
-  longer than one page (50 rows).
+- Anyone working in an acting capacity, and a Participation table longer
+  than one page (50 rows).
 - Every door's drawer and save (Edit Details, Schedule, Assign to Partner,
   Enter SSA Score, Add to Project, Reassign Owner, Close School), and every
   activity drawer the Participation rows open (View, Edit, Complete,
@@ -332,3 +330,30 @@ Proved against a gateway with no existing application behind it, school by
 school because the comparison tool lists open schools: 1078 for all 29
 accounts on all eight tabs, 232 answers, none differing (the refusals of the
 accounts that may not open it included).
+
+## 13.13 Business Transformation and the loans strip
+
+Go answers the Details tab and the Overview of a school with a Business
+Transformation case or an MFI loan, so every school's profile is now Go's
+(13.4 lists what is not).
+
+| Part | Existing rule it ports |
+|---|---|
+| Who reads the case | `scoped_cases`: the programme's wide roles everywhere; MFI roles nowhere; anyone else at the schools of their scope |
+| Who reads a loan | a reader of the register's sensitive view by `scoped_loans` (the wide roles and an officer, over `scoped_school_queryset`); anyone else by `lending_impact.scoped_impact_loans` (the country roles held to their country, an officer or Programme Lead at their schools), a loan with a disbursement standing |
+| The panel | the open case's status; the verified SSA signals; the case's response or "Awaiting triage."; each loan's purpose, lender and status, Salesforce and impact, latest repayment, verification and its due day, Plan verification for a manager of cases where it needs scheduling or is overdue, and its reference, disbursed and outstanding amounts and term for a reader of the sensitive view ("Summary view" otherwise); the latest practice assessment; the compliance assessments |
+| The loans strip | `profile_intelligence.finance`: the school's loans the register shows the reader (not cancelled), the schools funded, the amount disbursed, loans for EdTech, and every case at the school; an amount of a million or more shortened as the strip shortens it ("UGX 38.5M", `kpi_metrics.kpi_value`) |
+
+The project's own `|intcomma` (a whole number, "0" for nothing) is what the
+panel prints, not Django's.
+
+Proved against a gateway with no existing application behind it, school by
+school: both schools with a case and a loan (1001 and 1002) for all 29
+accounts on all eight tabs, 464 answers, none differing. The seed's cases
+have no response, practice or compliance assessment, and its loans no
+repayment snapshot or EdTech purpose; those lines are covered by unit tests
+built from the template's words.
+
+Then every school in the directory again, for all 29 accounts, on Overview
+and Details: 3,822 answers each (the run before 1078 was closed counted
+3,826), none differing and none passed on.

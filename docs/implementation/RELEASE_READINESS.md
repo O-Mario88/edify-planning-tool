@@ -267,6 +267,23 @@ School tab of any Core-lifecycle school.
 | iOS Release | Pass | cceo@: Closed Schools → 1078 from Go: the banner, Edit Details and Add to Project only, "Status: Closed" |
 | Android Release | Not run | the emulator hangs (see the Core section) |
 
+## School Profiles, Business Transformation and the loans strip, read by Go (2026-11-12)
+
+[docs/migration/13-school-profiles.md](../migration/13-school-profiles.md),
+13.13: the Business Transformation panel on Details and the loans strip on
+the Overview, so every school's profile is now read by Go.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/schools/test_school_profile_rules_export.py` (now with the case and loan statuses, the sensitive-view and case-manager doors) |
+| Parity with the existing page | Pass | against a gateway with no existing application behind it: schools 1001 and 1002 (a case and a loan each) for all 29 accounts on all eight tabs, 464 answers, none differing; every directory school for all 29 accounts on Overview and Details, 3,822 each, none differing, none passed on |
+| Lines the seed has no record for | Unit tests | a case's response, practice and compliance assessments, repayment snapshots, EdTech loans: built from the template's words |
+| Go unit tests | Pass | money shortened as the strip shortens it ("UGX 38.5M", half-even, zeros trimmed); a loan's lines with and without the sensitive view |
+| Go integration suite | Pass | a school with a case and a loan is Go's on Details and Overview |
+| Django and Go checks | Pass | ruff, format, bandit clean; `go vet`, `gofmt`, `go test -race ./...` |
+| iOS Release | Pass | cceo@: school 1001's Overview from Go: "1 loan", "UGX 38.5M", "1 case" |
+| Android Release | Not run | the emulator hangs (see the Core section) |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

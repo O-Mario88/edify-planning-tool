@@ -1,4 +1,110 @@
 {
+  "business_transformation": {
+    "case_statuses": {
+      "active": "Active",
+      "closed": "Closed",
+      "deferred": "Deferred",
+      "monitoring": "Monitoring",
+      "recommended": "Recommended",
+      "triage": "In triage"
+    },
+    "compliance_statuses": {
+      "action_required": "Action Required",
+      "compliant": "Compliant",
+      "exempt": "Exempt/Not Applicable",
+      "expired": "Expired",
+      "in_progress": "In Progress",
+      "not_assessed": "Not Assessed",
+      "not_started": "Not Started",
+      "under_review": "Under Review",
+      "unknown": "Unknown"
+    },
+    "funded_loan_statuses": [
+      "disbursed",
+      "active",
+      "repaid"
+    ],
+    "impact_country_bound_roles": [
+      "BusinessTransformationOfficer",
+      "CountryDirector",
+      "ImpactAssessment"
+    ],
+    "impact_country_roles": [
+      "BusinessTransformationOfficer",
+      "CountryDirector",
+      "ImpactAssessment",
+      "RegionalVicePresident"
+    ],
+    "impact_statuses": {
+      "baseline_required": "Baseline Required",
+      "due": "Due",
+      "early_progress": "Early Progress",
+      "insufficient_evidence": "Insufficient Evidence",
+      "mixed": "Mixed Impact",
+      "negative": "Negative Impact",
+      "no_change": "No Measurable Change",
+      "not_due": "Not Due",
+      "positive": "Positive Impact",
+      "strong_positive": "Strong Positive Impact",
+      "under_review": "Under Review"
+    },
+    "loan_statuses": {
+      "active": "Active",
+      "canceled": "Canceled",
+      "defaulted": "Defaulted",
+      "disbursed": "Disbursed",
+      "processing": "Processing",
+      "repaid": "Repaid"
+    },
+    "mfi_roles": [
+      "MfiLoanOfficer",
+      "MfiPartnerAdmin"
+    ],
+    "open_case_statuses": [
+      "recommended",
+      "triage",
+      "active",
+      "monitoring",
+      "deferred"
+    ],
+    "recommendation_kinds": {
+      "accountant_training": "School accountant training",
+      "compliance_support": "Government requirements support",
+      "financial_health_training": "Financial Health training",
+      "follow_up_mentorship": "Follow-up mentorship",
+      "further_assessment": "Further assessment",
+      "loan_impact_assessment": "Loan impact assessment",
+      "loan_readiness": "Loan readiness assessment",
+      "loan_referral": "MFI referral",
+      "loan_use_verification": "Loan-use verification",
+      "no_immediate_intervention": "No immediate intervention"
+    },
+    "requirement_statuses": {
+      "awaiting_verification": "Awaiting IA verification",
+      "cancelled": "Cancelled",
+      "needs_scheduling": "Needs scheduling",
+      "overdue": "Overdue",
+      "scheduled": "Scheduled",
+      "verified": "Verified"
+    },
+    "salesforce_statuses": {
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "returned": "Returned"
+    },
+    "uganda_wide_roles": [
+      "Admin",
+      "BusinessTransformationOfficer",
+      "CountryDirector",
+      "ImpactAssessment",
+      "RegionalVicePresident"
+    ],
+    "validation_statuses": {
+      "pending": "Pending",
+      "returned": "Returned",
+      "verified": "Verified"
+    }
+  },
   "closed_school_message": "This school is closed, so it takes no new activities. Its history is on the Closed Schools page; reopen the school before planning work there.",
   "closed_statuses": [
     "temporarily_closed",
@@ -124,6 +230,8 @@
     "Accountant": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": true,
       "delete_school": false,
       "enter_ssa": false,
@@ -141,6 +249,8 @@
     "Admin": {
       "assign_partner": true,
       "assign_project": true,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": true,
       "delete_school": true,
       "enter_ssa": false,
@@ -158,6 +268,8 @@
     "BusinessTransformationOfficer": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": true,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
@@ -175,6 +287,8 @@
     "CCEO": {
       "assign_partner": true,
       "assign_project": true,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": true,
       "delete_school": false,
       "enter_ssa": true,
@@ -192,6 +306,8 @@
     "ClusterLeader": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
@@ -209,6 +325,8 @@
     "CountryDirector": {
       "assign_partner": false,
       "assign_project": true,
+      "bt_manage": true,
+      "bt_sensitive": true,
       "core_schools": true,
       "delete_school": false,
       "enter_ssa": false,
@@ -226,6 +344,8 @@
     "HumanResources": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
@@ -243,6 +363,8 @@
     "ImpactAssessment": {
       "assign_partner": true,
       "assign_project": true,
+      "bt_manage": false,
+      "bt_sensitive": true,
       "core_schools": true,
       "delete_school": false,
       "enter_ssa": true,
@@ -260,6 +382,8 @@
     "MfiLoanOfficer": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": true,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
@@ -277,6 +401,8 @@
     "MfiPartnerAdmin": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": true,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
@@ -294,6 +420,8 @@
     "PartnerAdmin": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
@@ -311,6 +439,8 @@
     "PartnerFieldOfficer": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
@@ -328,6 +458,8 @@
     "Program Lead": {
       "assign_partner": true,
       "assign_project": true,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": true,
       "delete_school": false,
       "enter_ssa": true,
@@ -345,6 +477,8 @@
     "ProjectCoordinator": {
       "assign_partner": true,
       "assign_project": true,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
@@ -362,6 +496,8 @@
     "RegionalProgramLead": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": false,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
@@ -379,6 +515,8 @@
     "RegionalVicePresident": {
       "assign_partner": false,
       "assign_project": false,
+      "bt_manage": false,
+      "bt_sensitive": true,
       "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,

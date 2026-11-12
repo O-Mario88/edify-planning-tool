@@ -1,6 +1,7 @@
 package schoolprofile
 
 import (
+	"math/big"
 	"regexp"
 	"sort"
 	"strings"
@@ -101,6 +102,8 @@ func strip(title string, figures ...kpi) *screensv1.PageBlock {
 		}
 		if interventionNames.MatchString(value) {
 			value = abbreviate(value)
+		} else {
+			value = compactMoney(value)
 		}
 		metrics = append(metrics, &screensv1.PageMetric{Label: f.label, Value: value, Helper: helper, Note: note, Href: f.link})
 	}
@@ -199,4 +202,51 @@ func score(v *float64) string {
 		return "—"
 	}
 	return twoPlaces(*v)
+}
+
+// moneyValue is a figure in a currency, as kpi_metrics.kpi_value reads one.
+var moneyValue = regexp.MustCompile(`^(UGX|USD|EUR|GBP|KES|TZS|RWF)\s+(-?\d[\d,]*(?:\.\d+)?)$`)
+
+// compactMoney is kpi_metrics.kpi_value: a currency figure of a million or
+// more shown in millions (billions, trillions) to two places, trailing zeros
+// dropped, rounded as Python's Decimal rounds (half to even).
+func compactMoney(value string) string {
+	m := moneyValue.FindStringSubmatch(value)
+	if m == nil {
+		return value
+	}
+	amount, ok := new(big.Rat).SetString(strings.ReplaceAll(m[2], ",", ""))
+	if !ok {
+		return value
+	}
+	for _, unit := range []struct {
+		divisor int64
+		suffix  string
+	}{{1_000_000_000_000, "T"}, {1_000_000_000, "B"}, {1_000_000, "M"}} {
+		d := big.NewRat(unit.divisor, 1)
+		if new(big.Rat).Abs(amount).Cmp(d) < 0 {
+			continue
+		}
+		hundredths := new(big.Rat).Mul(new(big.Rat).Quo(amount, d), big.NewRat(100, 1))
+		short := halfEven(hundredths)
+		text := new(big.Rat).SetFrac(short, big.NewInt(100)).FloatString(2)
+		text = strings.TrimRight(strings.TrimRight(text, "0"), ".")
+		return m[1] + " " + text + unit.suffix
+	}
+	return value
+}
+
+// halfEven rounds a rational to the nearest integer, a half to the even one.
+func halfEven(r *big.Rat) *big.Int {
+	floor := new(big.Int).Div(r.Num(), r.Denom()) // Euclidean: floor for a positive denominator
+	rest := new(big.Rat).Sub(r, new(big.Rat).SetInt(floor))
+	switch rest.Cmp(big.NewRat(1, 2)) {
+	case 1:
+		return floor.Add(floor, big.NewInt(1))
+	case 0:
+		if floor.Bit(0) == 1 {
+			return floor.Add(floor, big.NewInt(1))
+		}
+	}
+	return floor
 }

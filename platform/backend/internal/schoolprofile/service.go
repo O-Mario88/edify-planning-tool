@@ -61,7 +61,7 @@ var stillExisting = map[string]bool{}
 // tab's ticked rows, where it has one.
 func (s *Service) section(ctx context.Context, p auth.Principal, scope schooldirectory.Scope, sc school, tab string, req *screensv1.GetSchoolProfileRequest, now time.Time) ([]*screensv1.PageBlock, *screensv1.PageSelection, error) {
 	if tab == detailsTab {
-		blocks, err := s.details(ctx, p, sc, now)
+		blocks, err := s.details(ctx, p, scope, sc, now)
 		return blocks, nil, err
 	}
 	d := rules.Doors[p.ActiveRole]
@@ -85,7 +85,7 @@ func (s *Service) section(ctx context.Context, p auth.Principal, scope schooldir
 	case "academic":
 		blocks, err = s.academicTab(ctx, sc, l)
 	case "overview":
-		blocks, err = s.overviewTab(ctx, d, sc, l, now)
+		blocks, err = s.overviewTab(ctx, btReader{p: p, scope: scope, doors: d}, sc, l, now)
 	case "ssa":
 		blocks, err = s.ssaTab(ctx, sc, l)
 	case "activities":
@@ -164,18 +164,6 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 	if !servedTabs[tab] {
 		return nil, false, nil
 	}
-	if tab == detailsTab || tab == "overview" {
-		// The Details tab's Business Transformation panel and the Overview's
-		// loans strip read the loan register, still the existing
-		// application's.
-		held, err := s.hasBusinessTransformation(ctx, sc.ID)
-		if err != nil {
-			return nil, true, err
-		}
-		if held {
-			return nil, false, nil
-		}
-	}
 	header, err := s.header(ctx, p, scope, sc, now)
 	if err != nil {
 		return nil, true, err
@@ -240,18 +228,6 @@ func intOf(v *int32) *int {
 	}
 	n := int(*v)
 	return &n
-}
-
-// hasBusinessTransformation: a case or an MFI loan at the school, whose
-// panel (the loan register's scoping) is still the existing application's.
-func (s *Service) hasBusinessTransformation(ctx context.Context, schoolID string) (bool, error) {
-	var held bool
-	err := s.db.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM bt_case WHERE school_id = $1) OR EXISTS (SELECT 1 FROM bt_mfi_loan WHERE school_id = $1)`, schoolID).Scan(&held)
-	if err != nil {
-		return false, fmt.Errorf("schoolprofile: reading Business Transformation: %w", err)
-	}
-	return held, nil
 }
 
 // localFY is ssa.creation.current_fy: the year Kampala's day falls in.

@@ -22,12 +22,12 @@ const notSpecified = "Not specified"
 // Transformation records, read as the page blocks read it: the record's
 // panel, Business Transformation, the data quality card, and an Admin's
 // Danger Zone.
-func (s *Service) details(ctx context.Context, p auth.Principal, sc school, now time.Time) ([]*screensv1.PageBlock, error) {
+func (s *Service) details(ctx context.Context, p auth.Principal, scope schooldirectory.Scope, sc school, now time.Time) ([]*screensv1.PageBlock, error) {
 	record, err := s.recordPanel(ctx, p, sc, now)
 	if err != nil {
 		return nil, err
 	}
-	bt, err := s.businessTransformation(ctx, sc)
+	bt, err := s.businessTransformation(ctx, btReader{p: p, scope: scope, doors: rules.Doors[p.ActiveRole]}, sc)
 	if err != nil {
 		return nil, err
 	}
@@ -256,57 +256,6 @@ WHERE m.school_id = $1 ORDER BY m.started_at DESC`, schoolID)
 		}
 		return &screensv1.PageLink{Text: name, Href: "/clusters/" + clusterID, Caption: caption}, nil
 	})
-}
-
-// businessTransformation is partials/schools/business_transformation.html
-// for a school with no case and no loan: the verified SSA signals and the
-// panel's own empty sentences.
-func (s *Service) businessTransformation(ctx context.Context, sc school) (*screensv1.PagePanel, error) {
-	// school_profile_context's score rows, in its own query and order.
-	rows, err := s.db.Query(ctx, `
-SELECT ssa_score.intervention, ssa_score.score, ssa_record.fy, ssa_record.date_of_ssa
-FROM ssa_score INNER JOIN ssa_record ON (ssa_score.ssa_record_id = ssa_record.id)
-WHERE (ssa_score.intervention IN ('financial_health', 'government_requirement') AND ssa_record.deleted_at IS NULL
-  AND ssa_record.school_id = $1 AND ssa_record.verification_status = 'confirmed')
-ORDER BY ssa_record.date_of_ssa DESC LIMIT 12`, sc.ID)
-	if err != nil {
-		return nil, fmt.Errorf("schoolprofile: reading SSA signals: %w", err)
-	}
-	signals, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*screensv1.PageDataRow, error) {
-		var intervention, fy string
-		var score float64
-		var held time.Time
-		if err := row.Scan(&intervention, &score, &fy, &held); err != nil {
-			return nil, err
-		}
-		band, tone := schooldirectory.SSABand(score)
-		return &screensv1.PageDataRow{
-			Label: label(rules.SSAInterventions, intervention),
-			Meta:  "FY" + fy + " · " + localJMY(held) + " · " + band,
-			Value: floatformat(score, 1),
-			Tone:  tone,
-		}, nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("schoolprofile: reading SSA signals: %w", err)
-	}
-	items := []*screensv1.PagePanelItem{}
-	if len(signals) > 0 {
-		items = append(items, heading("Verified SSA signals"),
-			&screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Rows{Rows: &screensv1.PageDataRows{Rows: signals[:min(4, len(signals))]}}})
-	}
-	items = append(items,
-		text("No active Business Transformation case or Edify-linked MFI loan is recorded for this school."),
-		heading("Business Accounting & Finance"),
-		text("No financial-practice adoption assessment recorded."),
-		heading("Government Requirements"),
-		text("Not assessed. No negative compliance conclusion is inferred."))
-	return &screensv1.PagePanel{
-		Title:    "Business Transformation",
-		Subtitle: "Uganda financial-health, compliance, and responsible-finance journey.",
-		Badges:   []*screensv1.PageBadge{},
-		Items:    items,
-	}, nil
 }
 
 // quality is the Data Quality Score card. Its "Required Cleanups" list

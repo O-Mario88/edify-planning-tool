@@ -39,6 +39,8 @@ type doors struct {
 	Loans         bool `json:"loans"`
 	MyPlan        bool `json:"my_plan"`
 	CoreSchools   bool `json:"core_schools"`
+	BTSensitive   bool `json:"bt_sensitive"`
+	BTManage      bool `json:"bt_manage"`
 }
 
 type profileRules struct {
@@ -62,6 +64,26 @@ type profileRules struct {
 	Engine              engineRules        `json:"engine"`
 	Participation       participationRules `json:"participation"`
 	CoreTab             coreTabRules       `json:"core_tab"`
+	BT                  btRules            `json:"business_transformation"`
+}
+
+// btRules are what the Business Transformation panel and the loans strip
+// read (export "business_transformation").
+type btRules struct {
+	UgandaWideRoles         []string          `json:"uganda_wide_roles"`
+	MFIRoles                []string          `json:"mfi_roles"`
+	ImpactCountryRoles      []string          `json:"impact_country_roles"`
+	ImpactCountryBoundRoles []string          `json:"impact_country_bound_roles"`
+	OpenCaseStatuses        []string          `json:"open_case_statuses"`
+	FundedLoanStatuses      []string          `json:"funded_loan_statuses"`
+	CaseStatuses            map[string]string `json:"case_statuses"`
+	RecommendationKinds     map[string]string `json:"recommendation_kinds"`
+	LoanStatuses            map[string]string `json:"loan_statuses"`
+	SalesforceStatuses      map[string]string `json:"salesforce_statuses"`
+	ImpactStatuses          map[string]string `json:"impact_statuses"`
+	RequirementStatuses     map[string]string `json:"requirement_statuses"`
+	ValidationStatuses      map[string]string `json:"validation_statuses"`
+	ComplianceStatuses      map[string]string `json:"compliance_statuses"`
 }
 
 // coreTabRules are what the Core School tab reads (export "core_tab").

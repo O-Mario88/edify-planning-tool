@@ -429,3 +429,49 @@ func TestRecommendationsOfferPlanSupportToWhoeverMayAct(t *testing.T) {
 		t.Fatalf("none: %v", none)
 	}
 }
+
+func TestLargeMoneyIsShortenedAsTheStripShortensIt(t *testing.T) {
+	// kpi_metrics.kpi_value's own answers.
+	for in, want := range map[string]string{
+		"UGX 38,500,000": "UGX 38.5M", "UGX 1,000,000": "UGX 1M", "UGX 999,999": "UGX 999,999",
+		"UGX 1,234,567,890": "UGX 1.23B", "UGX 1,005,000": "UGX 1M", "UGX 1,015,000": "UGX 1.02M", "UGX 0": "UGX 0", "12": "12",
+	} {
+		if got := compactMoney(in); got != want {
+			t.Errorf("%q: %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestALoanReadsAsTheFinancePortfolioWritesIt(t *testing.T) {
+	snap, need, disbursed := "on_track", "needs_scheduling", 38500000.0
+	due := time.Date(2027, 1, 10, 0, 0, 0, 0, time.UTC)
+	term := int32(18)
+	loan := btLoan{purpose: "Classroom Construction", edtech: true, mfi: "Demo Lending Partner", status: "disbursed",
+		salesforce: "pending", impact: "not_due", repayment: &snap, requirement: &need, due: &due,
+		reference: "LN-1", currency: "UGX", disbursed: &disbursed, term: &term}
+	texts := func(items []*screensv1.PagePanelItem) []string {
+		out := []string{}
+		for _, it := range items {
+			if it.GetLinks() != nil {
+				out = append(out, "link:"+it.GetLinks().GetLinks()[0].GetText())
+				continue
+			}
+			out = append(out, it.GetText())
+		}
+		return out
+	}
+	// A reader of the summary view: no figures, no door.
+	summary := texts(loan.lines(doors{}, school{Name: "Hill Primary"}))
+	if len(summary) != 5 || summary[0] != "Classroom Construction · EdTech" || summary[3] != "On Track" ||
+		summary[4] != label(rules.BT.RequirementStatuses, "needs_scheduling")+" · due 10 Jan 2027" {
+		t.Fatalf("summary: %q", summary)
+	}
+	// A manager of the register's sensitive view: the door and the figures.
+	full := texts(loan.lines(doors{BTSensitive: true, BTManage: true}, school{Name: "Hill Primary"}))
+	if full[5] != "link:Plan verification" || full[7] != "LN-1" || full[9] != "UGX 38,500,000" || full[11] != "UGX 0" || full[13] != "18 months" {
+		t.Fatalf("sensitive: %q", full)
+	}
+	if jsonLength([]byte(`{"a": 1, "b": 2}`)) != 2 || jsonLength([]byte(`[]`)) != 0 {
+		t.Error("practices recorded")
+	}
+}
