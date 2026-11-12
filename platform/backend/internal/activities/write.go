@@ -196,7 +196,7 @@ func duplicates(ctx context.Context, q Querier, pl *plan) error {
 	var same bool
 	if err := q.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM activity WHERE school_id = $1 AND planned_date = $2
   AND activity_type = $3 AND catalogue_item_id = $4 AND NOT (status = ANY($5))
-  AND NOT COALESCE(purpose_type = $6, false))`,
+  AND NOT COALESCE(purpose_type = $6, false) AND deleted_at IS NULL)`,
 		r.schoolID, r.plannedDate.Format(time.DateOnly), r.activityType, r.item.ID,
 		rules.DuplicateGoneStatuses, rules.Gate.CompanionPurpose).Scan(&same); err != nil {
 		return fmt.Errorf("activities: reading the school's visits that day: %w", err)
