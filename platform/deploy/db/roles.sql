@@ -198,3 +198,11 @@ GRANT SELECT (id, closure_type, owner_at_closure, owner_name_at_closure, reopene
 -- Impact Assessment has set any.
 GRANT SELECT (health_weights, impact_weights, teacher_weights, leader_weights, maturity_rules, created_at)
   ON cluster_score_setting TO edify_gateway_ro;
+-- The Decision Log: the decision rows of the audit chain, who took each in
+-- what role, on what subject, with what reason, and whether it succeeded.
+GRANT SELECT (action, actor_id, actor_role, subject_id, payload, success, reason, created_at) ON audit_log TO edify_gateway_ro;
+-- A partner's team member is refused the pages the Partner Admin keeps
+-- (apps.partners.member_scope): the login's roster entries and whether the
+-- partner's own login is theirs.
+GRANT SELECT (id, user_id, partner_id, active, role, name) ON partner_member TO edify_gateway_ro;
+GRANT SELECT (user_id) ON partner TO edify_gateway_ro;

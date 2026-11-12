@@ -28,6 +28,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusteroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
@@ -96,6 +97,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			closedschools.NewService(pool, time.Now),
 			programmeschools.NewService(pool, time.Now),
 			clusteroversight.NewService(pool, time.Now),
+			decisionlog.NewService(pool, time.Now),
 		)
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNavigationServiceHandler(screenService, options...))
