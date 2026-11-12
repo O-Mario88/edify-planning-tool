@@ -39,11 +39,12 @@ visit to the first school on the same day, and one visit dated in the past.
   its rows.
 - Untouched copies: 366 tables, none changed.
 
-What a single visit save writes, as this shows, is far more than the
-activity: its cost snapshot and lines, the day's batch and route, the fund
-request and the week's request lines, transport and advance rows, the
-audit chain and domain events. A Go save is proved only when all of it
-matches.
+Saving visits, as this shows, writes far more than the activities: the
+save itself writes the activity, its audit row and domain event, a ledger
+mark and the costs to follow, and the pricing that follows writes cost
+snapshots and lines, the day's batch and route, the fund request and the
+week's request lines, transport and advance rows (27.1 separates the two).
+A Go save is proved only when all of it matches.
 
 ## 26.3 What is next
 
