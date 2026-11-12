@@ -157,6 +157,25 @@ COUNTRY_READERS = {
 }
 
 
+# The lookback windows the page offers, the one it opens on, the longest it
+# accepts, and how many of the latest decisions it lists.
+DAY_OPTIONS = (7, 30, 90)
+DEFAULT_DAYS = 30
+MAX_DAYS = 365
+ROW_LIMIT = 200
+
+# The payload keys a row's subject is read from, in the order they are tried.
+DETAIL_KEYS = (
+    "staffName",
+    "schoolName",
+    "projectName",
+    "name",
+    "subject",
+    "course",
+    "monthKey",
+)
+
+
 def decision_log(principal, query: dict | None = None) -> dict:
     query = query or {}
     role = getattr(principal, "active_role", "")
@@ -167,7 +186,7 @@ def decision_log(principal, query: dict | None = None) -> dict:
     if group and group in DECISION_ACTIONS:
         rows = rows.filter(action__in=DECISION_ACTIONS[group])
 
-    days = _int(query.get("days"), 30)
+    days = _int(query.get("days"), DEFAULT_DAYS)
     rows = rows.filter(created_at__gte=timezone.now() - timedelta(days=days))
 
     if role in GLOBAL_READERS:
@@ -182,7 +201,7 @@ def decision_log(principal, query: dict | None = None) -> dict:
     if query.get("actor"):
         rows = rows.filter(actor_id=query["actor"])
 
-    rows = rows.select_related().order_by("-created_at")[:200]
+    rows = rows.select_related().order_by("-created_at")[:ROW_LIMIT]
 
     serialized = [_serialize(r) for r in rows]
     return {
@@ -190,7 +209,7 @@ def decision_log(principal, query: dict | None = None) -> dict:
         "groups": list(DECISION_ACTIONS),
         "activeGroup": group or "",
         "days": days,
-        "dayOptions": [7, 30, 90],
+        "dayOptions": list(DAY_OPTIONS),
         "total": len(serialized),
         "scopeLabel": _scope_label(role),
     }
@@ -251,15 +270,7 @@ def _group_for(action: str) -> str:
 def _detail(row: AuditLog) -> str:
     """A one-line human summary drawn from whatever the payload carries."""
     payload = row.payload if isinstance(row.payload, dict) else {}
-    for key in (
-        "staffName",
-        "schoolName",
-        "projectName",
-        "name",
-        "subject",
-        "course",
-        "monthKey",
-    ):
+    for key in DETAIL_KEYS:
         if payload.get(key):
             return str(payload[key])
     if payload.get("decision"):
@@ -269,7 +280,7 @@ def _detail(row: AuditLog) -> str:
 
 def _int(value, default: int) -> int:
     try:
-        return max(1, min(365, int(value)))
+        return max(1, min(MAX_DAYS, int(value)))
     except (TypeError, ValueError):
         return default
 

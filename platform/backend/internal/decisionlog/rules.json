@@ -1,0 +1,400 @@
+{
+  "day_options": [
+    7,
+    30,
+    90
+  ],
+  "default_days": 30,
+  "detail_keys": [
+    "staffName",
+    "schoolName",
+    "projectName",
+    "name",
+    "subject",
+    "course",
+    "monthKey"
+  ],
+  "groups": [
+    [
+      "Money",
+      [
+        "country_budget_approved_by_rvp",
+        "country_budget_returned_by_rvp",
+        "country_budget_submitted_to_rvp",
+        "country_budget_sent_to_accountant",
+        "country_budget_disbursed",
+        "country_budget_closed",
+        "rvp_annual_approve",
+        "rvp_annual_return",
+        "finance_partner_payment_clear",
+        "accountability_submitted"
+      ]
+    ],
+    [
+      "People",
+      [
+        "pd_supervisor_approve",
+        "pd_supervisor_return",
+        "pd_hr_approve",
+        "pd_hr_return",
+        "pd_hr_reject",
+        "leave.approved",
+        "leave.rejected",
+        "hr.coverage_granted",
+        "hr.coverage_reassigned",
+        "hr.coverage_revoked"
+      ]
+    ],
+    [
+      "Programme",
+      [
+        "project_create",
+        "special_project",
+        "strategy_note",
+        "plan_approve",
+        "plan_return",
+        "school.assign_project",
+        "school.bulk_assign_project"
+      ]
+    ],
+    [
+      "Quality",
+      [
+        "ssa_verify",
+        "ssa_return",
+        "ia_verify_completion",
+        "ia_return_completion",
+        "pl_approve_completion",
+        "pl_return_completion",
+        "flag_acknowledge",
+        "flag_resolve"
+      ]
+    ],
+    [
+      "Escalation",
+      [
+        "escalation_raise",
+        "escalation_acknowledge",
+        "escalation_resolve"
+      ]
+    ],
+    [
+      "Impact",
+      [
+        "ia.report.submitted",
+        "ia.report.reviewed",
+        "ia.report.returned",
+        "ia.report.released",
+        "ia.report.donor_requested",
+        "ia.report.donor_released",
+        "ia.report.donor_declined",
+        "ia.report.recommendation_responded",
+        "ia.report.school_brief_shared",
+        "ia.report.correction_started",
+        "ia.report.superseded"
+      ]
+    ]
+  ],
+  "labels": {
+    "accountability_submitted": "Submitted accountability",
+    "country_budget_approved_by_rvp": "Approved the General Budget",
+    "country_budget_closed": "Closed the General Budget period",
+    "country_budget_disbursed": "Marked the General Budget disbursed",
+    "country_budget_returned_by_rvp": "Returned the General Budget",
+    "country_budget_sent_to_accountant": "Handed the budget to the Accountant",
+    "country_budget_submitted_to_rvp": "Submitted the General Budget to the RVP",
+    "escalation_acknowledge": "Acknowledged an escalation",
+    "escalation_raise": "Escalated to the RVP",
+    "escalation_resolve": "Decided an escalation",
+    "finance_partner_payment_clear": "Cleared a partner payment",
+    "flag_acknowledge": "Acknowledged a quality flag",
+    "flag_resolve": "Resolved a quality flag",
+    "hr.coverage_granted": "Granted cover",
+    "hr.coverage_reassigned": "Reassigned cover",
+    "hr.coverage_revoked": "Revoked cover",
+    "ia.report.correction_started": "Started a corrected impact report",
+    "ia.report.donor_declined": "Declined a donor version of an impact report",
+    "ia.report.donor_released": "Approved a donor version of an impact report",
+    "ia.report.donor_requested": "Requested a donor version of an impact report",
+    "ia.report.recommendation_responded": "Responded to an impact recommendation",
+    "ia.report.released": "Released an impact report to country leadership",
+    "ia.report.returned": "Returned an impact report",
+    "ia.report.reviewed": "Reviewed an impact report",
+    "ia.report.school_brief_shared": "Shared impact findings with a school",
+    "ia.report.submitted": "Submitted an impact report for review",
+    "ia.report.superseded": "Superseded an impact report",
+    "ia_return_completion": "Returned an activity",
+    "ia_verify_completion": "Verified an activity",
+    "leave.approved": "Approved leave",
+    "leave.rejected": "Rejected leave",
+    "pd_hr_approve": "Approved a development request (HR stage)",
+    "pd_hr_reject": "Rejected a development request",
+    "pd_hr_return": "Returned a development request (HR stage)",
+    "pd_supervisor_approve": "Approved a development request (supervisor)",
+    "pd_supervisor_return": "Returned a development request (supervisor)",
+    "pl_approve_completion": "Confirmed an activity",
+    "pl_return_completion": "Returned an activity",
+    "plan_approve": "Approved a monthly plan",
+    "plan_return": "Returned a monthly plan",
+    "project_create": "Created a special project",
+    "rvp_annual_approve": "Approved and locked the annual baseline",
+    "rvp_annual_return": "Returned the annual budget",
+    "school.assign_project": "Assigned a school to a project",
+    "school.bulk_assign_project": "Bulk-assigned schools to a project",
+    "special_project": "Made a strategic project decision",
+    "ssa_return": "Returned an SSA record",
+    "ssa_verify": "Confirmed an SSA record",
+    "strategy_note": "Issued strategic guidance"
+  },
+  "max_days": 365,
+  "page_size": 50,
+  "partner_team_members": {
+    "roles": [
+      "PartnerAdmin",
+      "PartnerFieldOfficer"
+    ],
+    "withheld": true
+  },
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "roles": {
+    "Accountant": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "reach": "global",
+      "scope_label": "All decisions across the deployment",
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "CCEO": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": true,
+      "reach": "country",
+      "scope_label": "Decisions taken in your country",
+      "strip": null
+    },
+    "HumanResources": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "reach": "country",
+      "scope_label": "Decisions taken in your country",
+      "strip": {
+        "label": "",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/ia/dashboard/",
+            "label": "Dashboard"
+          },
+          {
+            "active": false,
+            "href": "/ia/framework/",
+            "label": "Measurement Framework"
+          },
+          {
+            "active": false,
+            "href": "/ia/school-evidence/",
+            "label": "School Evidence"
+          },
+          {
+            "active": false,
+            "href": "/ssa/upload/",
+            "label": "SSA Upload Center"
+          },
+          {
+            "active": false,
+            "href": "/ssa/unmatched",
+            "label": "Unmatched SSA"
+          },
+          {
+            "active": false,
+            "href": "/ia/stories/",
+            "label": "Most Significant Change"
+          },
+          {
+            "active": false,
+            "href": "/ia/learning/",
+            "label": "Programme Learning"
+          },
+          {
+            "active": false,
+            "href": "/ia/lending-evidence/",
+            "label": "Lending Evidence"
+          },
+          {
+            "active": false,
+            "href": "/ia/impact-reports/",
+            "label": "Impact Reports"
+          },
+          {
+            "active": false,
+            "href": "/reports",
+            "label": "Programme Output Reports"
+          },
+          {
+            "active": false,
+            "href": "/analytics/publishing",
+            "label": "Publishing"
+          },
+          {
+            "active": true,
+            "href": "/decision-log",
+            "label": "Decision Log"
+          },
+          {
+            "active": false,
+            "href": "/country-planning-oversight/",
+            "label": "Country Oversight"
+          },
+          {
+            "active": false,
+            "href": "/cluster-oversight/",
+            "label": "Cluster Oversight"
+          },
+          {
+            "active": false,
+            "href": "/core-schools-oversight/",
+            "label": "Core Schools Oversight"
+          },
+          {
+            "active": false,
+            "href": "/ia/verification/",
+            "label": "Verification Queue"
+          },
+          {
+            "active": false,
+            "href": "/ia/partner-evidence/",
+            "label": "Partner Evidence"
+          },
+          {
+            "active": false,
+            "href": "/ssa/verification/",
+            "label": "SSA Verification"
+          },
+          {
+            "active": false,
+            "href": "/ia/returned/",
+            "label": "Returned Activities"
+          },
+          {
+            "active": false,
+            "href": "/evidence/",
+            "label": "Evidence Review"
+          },
+          {
+            "active": false,
+            "href": "/ia/duplicates/",
+            "label": "Duplicate Review"
+          },
+          {
+            "active": false,
+            "href": "/ia/compare/",
+            "label": "Evidence Compare"
+          },
+          {
+            "active": false,
+            "href": "/ia/history/",
+            "label": "Verification History"
+          },
+          {
+            "active": false,
+            "href": "/ia/analytics/",
+            "label": "Verification Analytics"
+          },
+          {
+            "active": false,
+            "href": "/ia/samples/",
+            "label": "Sample Checks"
+          },
+          {
+            "active": false,
+            "href": "/admin-panel/data-quality-center",
+            "label": "Data Quality"
+          }
+        ]
+      }
+    },
+    "MfiLoanOfficer": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "Program Lead": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "page": true,
+      "reach": "own",
+      "scope_label": "Your own decisions",
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": true,
+      "reach": "global",
+      "scope_label": "All decisions across the deployment",
+      "strip": null
+    }
+  },
+  "row_limit": 200
+}

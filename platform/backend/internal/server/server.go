@@ -28,12 +28,15 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusteroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myactions"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmeschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -98,6 +101,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			programmeschools.NewService(pool, time.Now),
 			clusteroversight.NewService(pool, time.Now),
 			planningpage.NewService(pool, time.Now),
+			decisionlog.NewService(pool, time.Now),
+			escalations.NewService(pool, time.Now),
+			myactions.NewService(pool, time.Now),
 		)
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNavigationServiceHandler(screenService, options...))

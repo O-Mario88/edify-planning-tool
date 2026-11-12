@@ -59,4 +59,6 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/cluster_roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/loan_roles.sql"
 # Signing in, which Go owns: exactly the existing sign-in's columns.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/identity_roles.sql"
+# The Decision Log's narrow view of the audit chain: decision rows, subject keys only.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/decision_log_roles.sql"
 echo "done"

@@ -203,3 +203,21 @@ GRANT SELECT (health_weights, impact_weights, teacher_weights, leader_weights, m
 GRANT SELECT (country, kind, status, is_active) ON cost_catalogue TO edify_gateway_ro;
 -- The Planning page's SSA-Informed Plans: each live plan's recorded verdict.
 GRANT SELECT (ssa_alignment) ON activity TO edify_gateway_ro;
+-- The Decision Log reads the audit chain only through the narrow view
+-- gateway_read.decision_audit (decision_log_roles.sql), never audit_log.
+-- A partner's team member is refused the pages the Partner Admin keeps
+-- (apps.partners.member_scope): the login's roster entries and whether the
+-- partner's own login is theirs.
+GRANT SELECT (id, user_id, partner_id, active, role, name) ON partner_member TO edify_gateway_ro;
+GRANT SELECT (user_id) ON partner TO edify_gateway_ro;
+-- Escalations: the upward decision channel's rows, and which supervisor link
+-- comes first when a raiser has more than one.
+GRANT SELECT (id, raised_by_user_id, raised_by_name, addressed_role, assigned_to_user_id, country_id, category, subject,
+  detail, requested_decision, severity, due_date, status, decision, decision_note, resolved_at, created_at)
+  ON leadership_escalation TO edify_gateway_ro;
+GRANT SELECT (id) ON staff_supervisor_assignment TO edify_gateway_ro;
+-- My Actions: the school actions handed to a person, their state, due date,
+-- route and how each closed.
+GRANT SELECT (school_id, issue_type, requested_action, workflow_route, state, returned_reason, sender_id, recipient_id,
+  due_date, resolved_by_system, created_at)
+  ON team_action TO edify_gateway_ro;
