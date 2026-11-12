@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -119,6 +120,8 @@ func play(gateway, scenarioPath, out, password string) error {
 		var err error
 		if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
 			a, err = playMove(ctx, pageDrawers, token, m[1], m[2], s)
+		} else if m := editDrawer.FindStringSubmatch(s.Open); m != nil {
+			a, err = playEdit(ctx, pageDrawers, token, m[1], s)
 		} else {
 			a, err = playStep(ctx, drawers, token, s)
 		}
@@ -268,22 +271,9 @@ var (
 // drawer read, then saved with the fields the person fills (the new date and
 // the reason; for a cancel, the reason).
 func playMove(ctx context.Context, drawers screensv1connect.PageDrawerServiceClient, token, target, kind string, s step) (answer, error) {
-	activityID := target
-	if m := placeholder.FindStringSubmatch(target); m != nil {
-		if !strings.HasPrefix(copyDSN, "postgresql://localhost:5432/edify_shadow_") {
-			return answer{}, errors.New("-db must name a local shadow copy")
-		}
-		conn, err := pgx.Connect(ctx, copyDSN)
-		if err != nil {
-			return answer{}, err
-		}
-		defer conn.Close(ctx)
-		activityID = "missing"
-		err = conn.QueryRow(ctx, `SELECT id FROM activity WHERE activity_purpose_text = $1
-ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
-		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-			return answer{}, err
-		}
+	activityID, err := findActivity(ctx, target)
+	if err != nil {
+		return answer{}, err
 	}
 	path := "/my-plan/" + activityID + "/" + kind + "-drawer"
 	got, err := drawers.GetDrawer(ctx, withToken(&screensv1.GetDrawerRequest{Path: path}, token))
@@ -305,4 +295,86 @@ ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
 	}
 	m := saved.Msg
 	return answer{Saved: m.GetSaved(), Message: m.GetMessage(), Redirect: m.GetRedirect(), Error: m.GetError(), Values: values}, nil
+}
+
+// findActivity finds a `{activity:<text>}` step's activity on its own copy.
+func findActivity(ctx context.Context, target string) (string, error) {
+	m := placeholder.FindStringSubmatch(target)
+	if m == nil {
+		return target, nil
+	}
+	if !strings.HasPrefix(copyDSN, "postgresql://localhost:5432/edify_shadow_") {
+		return "", errors.New("-db must name a local shadow copy")
+	}
+	conn, err := pgx.Connect(ctx, copyDSN)
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close(ctx)
+	activityID := "missing"
+	err = conn.QueryRow(ctx, `SELECT id FROM activity WHERE activity_purpose_text = $1
+ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return "", err
+	}
+	return activityID, nil
+}
+
+// editDrawer is My Plan's Edit drawer (docs/migration/31).
+var editDrawer = regexp.MustCompile(`^/my-plan/([^/]+)/edit-drawer$`)
+
+// playEdit plays an Edit step as the app does (drawerLogic.ts): every
+// field's value as the drawer gives it, the step's choices over them, and
+// then only the fields shown for those values sent.
+func playEdit(ctx context.Context, drawers screensv1connect.PageDrawerServiceClient, token, target string, s step) (answer, error) {
+	activityID, err := findActivity(ctx, target)
+	if err != nil {
+		return answer{}, err
+	}
+	path := "/my-plan/" + activityID + "/edit-drawer"
+	got, err := drawers.GetDrawer(ctx, withToken(&screensv1.GetDrawerRequest{Path: path}, token))
+	if err != nil {
+		return failed(err), nil
+	}
+	drawer := got.Msg.GetDrawer()
+	if drawer == nil {
+		return answer{Error: "(no drawer) " + got.Msg.GetRefusal()}, nil
+	}
+	values := map[string]string{}
+	for _, item := range drawer.GetItems() {
+		if field := item.GetField(); field != nil {
+			values[field.GetName()] = field.GetValue()
+		}
+	}
+	for name, value := range s.Set {
+		values[name] = value
+	}
+	sent := map[string]string{}
+	for _, item := range drawer.GetItems() {
+		field := item.GetField()
+		if field != nil && shown(item.GetShowWhen(), values) && shown(field.GetShowWhen(), values) {
+			sent[field.GetName()] = values[field.GetName()]
+		}
+	}
+	saved, err := drawers.SaveDrawer(ctx, withToken(&screensv1.SaveDrawerRequest{Path: path, Values: sent}, token))
+	if err != nil {
+		a := failed(err)
+		a.Values = sent
+		return a, nil
+	}
+	m := saved.Msg
+	return answer{Saved: m.GetSaved(), Message: m.GetMessage(), Redirect: m.GetRedirect(), Error: m.GetError(), Values: sent}, nil
+}
+
+// shown is drawerLogic.isShown: no condition, or one the values meet.
+func shown(conditions []*screensv1.DrawerCondition, values map[string]string) bool {
+	if len(conditions) == 0 {
+		return true
+	}
+	for _, c := range conditions {
+		if slices.Contains(c.GetValues(), values[c.GetField()]) {
+			return true
+		}
+	}
+	return false
 }

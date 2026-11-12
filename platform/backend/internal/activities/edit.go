@@ -28,7 +28,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
-// The edit's own words (editing.py 303 and 361) and the action the view's
+// The edit's own words (editing.py 328 and 393) and the action the view's
 // error_fragment names before them (my_plan_views.py edit_activity_action).
 const (
 	editDateReason    = "Give the reason the date is changing."
@@ -135,7 +135,7 @@ func (s *Service) Edit(ctx context.Context, p auth.Principal, req EditRequest, o
 		Outcome: req.Posted["expected_outcome"], Message: rules.Move.SavedMessage}, nil
 }
 
-// prepareEdit is the view and `editing.edit` up to its transaction (450).
+// prepareEdit is the view and `editing.edit` up to its transaction (445).
 // A refusal comes back with the plan, for the view's failure row.
 func (s *Service) prepareEdit(ctx context.Context, p auth.Principal, req EditRequest, origin Origin) (*editPlan, error) {
 	now := s.now()
@@ -181,11 +181,11 @@ func (s *Service) prepareEdit(ctx context.Context, p auth.Principal, req EditReq
 	return pl, s.judgeEdit(pl)
 }
 
-// judgeEdit is editing.edit's own reading of the form (233–391) for a visit
+// judgeEdit is editing.edit's own reading of the form (275–443) for a visit
 // that passed the gates: the refusals Go makes, and what it hands on.
 func (s *Service) judgeEdit(pl *editPlan) error {
 	posted, reason := pl.req.Posted, pl.req.Reason
-	// The day (233–237): _parse_date, then the Kampala day against the plan's.
+	// The day (275–287): _parse_date, then the Kampala day against the plan's.
 	dateMoves := false
 	if raw := posted["scheduled_date"]; raw != "" {
 		if !isoDate.MatchString(raw) {
@@ -197,11 +197,11 @@ func (s *Service) judgeEdit(pl *editPlan) error {
 		}
 		dateMoves = !sameDay(day, pl.a.plannedDate)
 	}
-	// Another school (245–266): its own lookup and refusals are handed on.
+	// Another school (289–311): its own lookup and refusals are handed on.
 	if wanted, ok := posted["school_id"]; ok && wanted != "" && wanted != pl.a.schoolID && wanted != pl.a.schoolCode {
 		return handOn("another school")
 	}
-	// The day's reason (284), met before the purpose and the focus.
+	// The day's reason (328), met before the purpose and the focus.
 	if dateMoves && reason == "" {
 		return refuse("%s", editDateReason)
 	}
@@ -210,7 +210,7 @@ func (s *Service) judgeEdit(pl *editPlan) error {
 	}
 	purpose, purposePosted := posted["purpose_type"]
 	purposeMoves := purposePosted && purpose != pl.a.purpose
-	// The purpose's reason (346), when nothing before it refused.
+	// The purpose's reason (393), when nothing before it refused.
 	if purposeMoves && reason == "" {
 		return refuse("%s", editPurposeReason)
 	}
@@ -252,7 +252,7 @@ func editVisit(ctx context.Context, q Querier, id string) (*editedVisit, error) 
 	return &editedVisit{moved: *a, focus: text(focus)}, nil
 }
 
-// writeEdit is patch_activity's save (6820–6863) for the posted words: the
+// writeEdit is patch_activity's save (6820–6861) for the posted words: the
 // activity's row locked, checked unchanged since it was read, and its goal
 // and expected outcome written. It answers whether a row was saved: with
 // neither posted, patch_activity saves nothing.

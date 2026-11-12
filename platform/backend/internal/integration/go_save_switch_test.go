@@ -165,3 +165,64 @@ func TestTheGoCancelIsOffByDefaultAndRefusedInProduction(t *testing.T) {
 		}
 	}
 }
+
+// The app's Edit save reaches Go only behind EDIFY_GO_SAVES=edit_visit
+// (docs/migration/31): with the switch unset the drawer's save is forwarded
+// to the existing application as before, with no form asked for, and the
+// switch cannot be loaded in production or in the test environment.
+func TestTheGoEditIsOffByDefaultAndRefusedInProduction(t *testing.T) {
+	ctx := context.Background()
+	var mu sync.Mutex
+	var asked []string
+	existing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		asked = append(asked, r.Method+" "+r.URL.RequestURI())
+		mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"saved": false, "error": "the existing application's answer"}`)
+	}))
+	defer existing.Close()
+	environment := map[string]string{
+		"EDIFY_ENV": "development", "EDIFY_DATABASE_URL": "postgresql://localhost/edify_gorn_test",
+		"EDIFY_JWT_SECRET": signingSecret, "EDIFY_EXISTING_APP_URL": existing.URL,
+		"EDIFY_INTERNAL_KEY": "integration-internal-key-0123456789abcdef",
+	}
+	getenv := func(key string) string { return environment[key] }
+	cfg, err := config.Load(getenv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.GoSaves.EditVisit {
+		t.Fatal("the Go edit must be off unless EDIFY_GO_SAVES names it")
+	}
+	gatewayServer := httptest.NewServer(server.New(cfg, gateway, nil, slog.New(slog.NewTextHandler(io.Discard, nil))))
+	defer gatewayServer.Close()
+	var userID string
+	if err := admin.QueryRow(ctx, `SELECT id FROM "user" WHERE email = 'cceo@edify.org'`).Scan(&userID); err != nil {
+		t.Fatal(err)
+	}
+	drawers := screensv1connect.NewPageDrawerServiceClient(http.DefaultClient, gatewayServer.URL)
+	answer, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{
+		Path: "/my-plan/act1/edit-drawer", Values: map[string]string{"activity_purpose_text": "a new goal"},
+	}, token(t, userID, "CCEO", time.Minute)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if answer.Msg.GetError() != "the existing application's answer" {
+		t.Fatalf("the save was not the existing application's: %v", answer.Msg)
+	}
+	mu.Lock()
+	calls := strings.Join(asked, "; ")
+	mu.Unlock()
+	if calls != "POST /api/mobile/v1/drawer" {
+		t.Fatalf("the existing application was asked %q", calls)
+	}
+	environment["EDIFY_GO_SAVES"] = config.SaveEditVisit
+	for _, env := range []string{"production", "test"} {
+		environment["EDIFY_ENV"] = env
+		cfg, err := config.Load(getenv)
+		if err == nil || cfg.GoSaves.EditVisit {
+			t.Fatalf("%s: the switch loaded (%v)", env, cfg.GoSaves)
+		}
+	}
+}

@@ -66,6 +66,7 @@ type Service struct {
 	visits      VisitSaver  // nil unless EDIFY_GO_SAVES names schedule_visit
 	moves       MoveSaver   // nil unless EDIFY_GO_SAVES names reschedule_visit
 	cancels     CancelSaver // nil unless EDIFY_GO_SAVES names cancel_visit
+	edits       EditSaver   // nil unless EDIFY_GO_SAVES names edit_visit
 	logger      *slog.Logger
 }
 
