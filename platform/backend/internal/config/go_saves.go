@@ -18,6 +18,10 @@ type GoSaves struct {
 	// through internal/activities (docs/migration/29); everything else is
 	// forwarded as before.
 	RescheduleVisit bool
+	// CancelVisit: the app's Cancel drawer calls off 30.1's visits through
+	// internal/activities (docs/migration/30); everything else is forwarded
+	// as before.
+	CancelVisit bool
 }
 
 const (
@@ -26,10 +30,12 @@ const (
 	SaveScheduleVisit = "schedule_visit"
 	// SaveRescheduleVisit is the name EDIFY_GO_SAVES uses for the move.
 	SaveRescheduleVisit = "reschedule_visit"
+	// SaveCancelVisit is the name EDIFY_GO_SAVES uses for the cancel.
+	SaveCancelVisit = "cancel_visit"
 )
 
 // knownGoSaves are the saves the switch can name.
-var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit}
+var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit}
 
 // loadGoSaves reads EDIFY_GO_SAVES. A Go save asks the existing application
 // for the drawer's form and for the pricing (money stays Django's until
@@ -50,6 +56,7 @@ func loadGoSaves(env Environment, getenv func(string) string, existingApp, inter
 		}
 		out.ScheduleVisit = out.ScheduleVisit || name == SaveScheduleVisit
 		out.RescheduleVisit = out.RescheduleVisit || name == SaveRescheduleVisit
+		out.CancelVisit = out.CancelVisit || name == SaveCancelVisit
 	}
 	if existingApp == "" || internalKey == "" {
 		return GoSaves{}, fmt.Errorf("config: %s needs %s and %s: the save asks the existing application for the form and the pricing",

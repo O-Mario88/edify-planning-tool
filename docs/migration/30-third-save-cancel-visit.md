@@ -1,4 +1,4 @@
-# 30. The third save in Go: cancelling a school visit (mapped; a decision needed)
+# 30. The third save in Go: cancelling a school visit
 
 M5 (04): "schedule, reschedule, cancel … Each write appends the same audit
 and timeline rows as today." The owner's rule (2026-10-08, "Cancel undoes
@@ -9,12 +9,11 @@ by Go and settled by Django after commit, an acting seat handed on, and the
 writer role changing `activity.status` and `daily_visit_batch_id` and no
 other lifecycle column (29.4, 03 §3.7).
 
-**Where it stops.** The map (30.3), the measured writes (30.2), the
-scenario and the contract (30.5) are built. The writer role, the Go save,
-the shadow proof and the switch are **not** built: the cancel deletes the
-visit's un-disbursed advance inside its own transaction, which the writer
-role cannot do without a new kind of right (30.4). That is the owner's
-decision.
+**Where it stands (2026-11-12).** Mapped (30.3) and measured (30.2); the
+owner decided the advance (30.4); the function, the cancel check, the Go
+cancel and the app's switch are built and proved in shadow at the service
+and the app level (30.7, 30.8). Nothing is switched on outside this proof's
+own processes.
 
 ## 30.1 Scope
 
@@ -34,10 +33,15 @@ decision.
   has moved (a submitted or approved week carrying the visit, which is told
   after commit, `_notify_frozen_weekly_request`; a day whose week has left
   draft, which `remove_school` refuses and the cancel leaves frozen; a
-  disbursed advance; a milestone credit to reverse, `reverse_activity_progress`
-  on commit); anything that writes a notice after commit (an open overdue
-  reminder, an open day-off notice, as 29.1); a visit already cancelled
-  (the existing save cancels it again; Go takes only a plan).
+  milestone credit to reverse, `reverse_activity_progress` on commit;
+  a cancel whose pricing would be done inside the save); anything that
+  writes a notice after commit (an open overdue reminder, an open day-off
+  notice, as 29.1); a reason longer than `last_reason` holds (512).
+- **Kept as the existing save does them** (the coordinator: reproduce, do
+  not fix): a visit already cancelled is cancelled again (its reason
+  replaced, a new audit row, no timeline row); a visit on a day whose week
+  has left draft (and holds none of its lines in a sent week) stays on that
+  day; a disbursed advance stays (only unmoved ones are withdrawn).
 
 ## 30.2 What one cancel writes (measured, 2026-11-12)
 
@@ -109,7 +113,7 @@ removed on A), `activity_schedule_change` (9 more), `audit_log` and
 | Partner undo | 6627–6644 | partner work only | — |
 | Credits | 6652–6654 | `reverse_activity_progress` on commit: a no-op with no live `milestone_progress_credit` | any live credit → hand on |
 | Day | 6655 → `_detach_from_daily_visit_batch` 6468 → `remove_school` 693 | `_is_locked` (week left draft): refused and swallowed, the visit kept on the frozen day; else `daily_visit_batch = NULL`, the day kept for pricing (`_price_when_the_save_ends`) | the day's lock asked of the relay (a frozen day → hand on); the UPDATE of the batch column (granted) |
-| **Advances** | 6656–6658 | `AdvanceRequest … exclude(MONEY_MOVED_ADVANCE_STATUSES).delete()` | **needs DELETE on `advance_request` (30.4)** |
+| **Advances** | 6656–6658 | `AdvanceRequest … exclude(MONEY_MOVED_ADVANCE_STATUSES).delete()` | `gateway_money.withdraw_unmoved_advances` in the transaction (30.4, 30.6) |
 | Week, month | 6659–6660 | kept by `fund_requests_kept` into the costs row | the row |
 | Pair training | 6664–6665 | `school_visit` type only: none of the six purposes' types | — |
 | Hand-over | `costs_follow.py` 219–275 | `_assert_days_can_follow` on the day left (`_plan_day`, paid transport, the finance guards), then the row, then the settling thread | refusals asked of the relay before the transaction; the row; settled by Django after commit (27.9's door) |
@@ -121,8 +125,7 @@ The read-only Django check this needs is a third door beside 29's
 (`POST /api/auth/internal/visit-cancel-check`): the cancel played on the
 visit inside a transaction it rolls back, answering the day's lock, the
 frozen weeks, `_assert_days_can_follow`'s refusal and its words. That is
-27.8 §1's decided pattern; it is not built here, because the save it serves
-is not.
+27.8 §1's decided pattern; it is built (30.7).
 
 ## 30.4 Decided: the cancelled visit's advance (owner, 2026-11-12: "Narrow function")
 
@@ -187,9 +190,126 @@ built past the contract:
   generators; only the activities files changed. Nothing implements or calls
   the RPC.
 
-## 30.6 Not done
+## 30.6 The function (the owner's decision, built)
 
-The writer role's extension, `internal/activities` `Service.Cancel`, the
-cancel check door, the shadow proof at the service and the app level, and
-the `EDIFY_GO_SAVES=cancel_visit` switch all wait for 30.4. No Django file
-was changed. Nothing is switched on or cut over anywhere.
+`platform/deploy/db/advance_withdraw_roles.sql`, applied after
+`activities_roles.sql` by `apply-roles.sh` and the integration TestMain:
+`gateway_money.withdraw_unmoved_advances(activity_id) RETURNS integer`,
+`SECURITY DEFINER`, `search_path` pinned, owned by
+`edify_advance_withdraw_owner` (NOLOGIN, NOINHERIT, no members), which holds
+`SELECT (activity_id, status)` and `DELETE` on `advance_request` and nothing
+else. It deletes that activity's rows whose status is not one of
+`MONEY_MOVED_ADVANCE_STATUSES` (status is NOT NULL, so this is the
+existing `exclude()`), and answers how many. `edify_activities_rw` gets
+`USAGE` on the schema and `EXECUTE` on the function only.
+
+- The statuses are exported to `rules.json` (`cancel.money_moved_advance_statuses`,
+  `export_schedule_visit_rules`, drift-tested); `TestTheWithdrawFunctionNamesTheMovedStatuses`
+  fails when the SQL's list differs.
+- `TestTheWithdrawFunctionRemovesOnlyThatActivitysUnmovedAdvances`: one of
+  an activity's advances marked disbursed for the test (put back after);
+  the gateway's call removes exactly the others, the moved one and another
+  activity's stay; the gateway cannot `DELETE` an advance itself or
+  `SET ROLE edify_advance_withdraw_owner` (42501).
+- `TestGatewayRoleCanNeitherWriteNorReadSecrets` also refuses deleting or
+  changing an advance, becoming the owner role, and writing a milestone
+  credit; `dbguard.undeletableTables` names `advance_request`, so staging
+  refuses any gateway role that can delete an advance;
+  `TestStagingIdentityCheckAcceptsOnlyTheReadOnlyRole` passes.
+- The writer role needed nothing else: the cancel's columns (status,
+  `last_reason`, the batch, `updated_at`) and the timeline insert were
+  granted for the move (29.5).
+
+## 30.7 The cancel, built and proved in shadow
+
+| Piece | Where |
+|---|---|
+| The cancel | `internal/activities/cancel.go` (`Service.Cancel`), 30.3 in its order. Before the transaction: the hand-ons, the reason ("Give a reason this activity is being cancelled.", with the view's `cancel_activity` failure row), the notices, the relay's verdict and its refusal (with the failure row). One read-write transaction: the activity's lock (changed since the read: handed on), `status 'cancelled'`, `last_reason`, the `cancelled` timeline row unless it was already off the plan, the day left (unless its week has left draft), `withdraw_unmoved_advances`, the costs to follow exactly as the relay says the existing save keeps them (no row when nothing is kept). After commit: the ledger mark, the `cancel_activity` row (`reason "Activity cancelled"`, payload `{"reason"}`, the leave-cover stamp), then Django settles |
+| Money | `POST /api/auth/internal/visit-cancel-check` in `apps/daily_visit_batches/gateway_relay.py` (route in `apps/accounts/urls.py`): the cancel played on the activity in a transaction it rolls back; answers whether a sent week holds its lines, whether a credit would be reversed, whether its day has left draft, whether the save would price inside itself, the days, owner-weeks and owner-months it keeps, and `_assert_days_can_follow`'s refusal |
+| The audit chain | `internal/audit` now projects a row with no payload as `{"value": null}`, as `publish_audit_event` does (it wrote `{}`); found by the first run, whose only differing row was the refusal's event |
+| The shadow's Go half | `cmd/shadow/goplay` plays a step that opens `/my-plan/{id}/cancel-drawer` through `Service.Cancel` |
+
+The scenario's last steps were reordered (the pair, the Core visit and the
+other officer last) after the first run: the person's `last_seen_*` is the
+last request the existing application served them, and Go's saves are not
+its requests, so two of Go's cancels at the end left it on an earlier
+path. That run's only other difference was the projection above.
+
+**The run** (`agent13_shadow2.txt`), last lines exactly as printed:
+
+```
+0 of 19 steps answered differently
+goplay exit 0
+366 tables, 17 changed by the runs
+0 of 17 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 15972, 'fromSeq': None}
+```
+
+Eight cancel steps were Go's: seven cancels (A, whose day empties; B, whose
+day keeps C; F, rescheduled first; A again, already cancelled; E, on the
+sent week's locked day, kept on it; D; C) and the blank reason's refusal.
+Three were handed on: the pair, the Core visit, the other officer's drawer
+(refused at its read).
+
+## 30.8 The app's Cancel save reaches Go (behind a switch, development only)
+
+The app is unchanged: it reads `/my-plan/{id}/cancel-drawer` with
+`PageDrawerService.GetDrawer` and saves it with `SaveDrawer(path,
+{reason})`. With `EDIFY_GO_SAVES=cancel_visit` the gateway
+(`internal/screens/cancel_save.go`) asks the existing application for the
+form (`POST /api/mobile/v1/drawer?form_only=1`; `DrawerFeedView` now gives a
+form for the cancel's save as for the reschedule's, `FORM_ONLY_SAVES`, and
+saves nothing), then as 29.7: a form refusal is answered as is; a form Go
+does not take, a hand-on or an acting seat is forwarded whole; a Go cancel
+answers `{saved: true, message: "Saved. Press Refresh to see it on the
+page. ×"}`; a Go refusal `{saved: false, error: "Cancellation Error:
+{words}"}` (`error_fragment(exc, action="Cancellation Error")` read back); a
+failure before the cancel `Unavailable`, nothing written.
+
+`config.GoSaves.CancelVisit`, named `cancel_visit`: off unless named,
+refused in test and production, needing the existing application's address
+and internal key. It has been on only in this proof's gateway (8097).
+
+**The proof at the app's level** (`cmd/shadow/appplay` plays a Cancel step as
+the app does): copy A through gateway 8096 (switch off) over Django 8196 on
+`edify_shadow_a`, copy B through gateway 8097 with
+`EDIFY_GO_SAVES=cancel_visit` over Django 8197 on `edify_shadow_b`. On B
+Django served 10 form-only requests, 7 cancel checks and 4 forwarded drawer
+saves (the two moves, the pair, the Core visit); Go made the other 8. Last
+lines exactly as printed (`agent13_app_shadow1.txt`):
+
+```
+0 of 19 steps answered differently
+compare exit 0
+366 tables, 14 changed by the runs
+0 of 14 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 15970, 'fromSeq': None}
+```
+
+(The script's own "forwarded drawer saves" line printed 0: its pattern does
+not match this server's log format; the 4 above are counted from the log.)
+
+**Tests.** `internal/activities/cancel_test.go` (the function's statuses,
+the hand-ons before any read, no costs row when nothing is kept);
+`internal/screens/cancel_save_test.go` (forwarded while off; Go takes the
+cancel with the form's reason and origin and forwards nothing; hand-on,
+another drawer, a save elsewhere, a non-text form forwarded; the refusal's
+words; a failure); `internal/config/go_saves_test.go`; integration
+`TestTheGoCancelIsOffByDefaultAndRefusedInProduction`,
+`TestTheWithdrawFunctionRemovesOnlyThatActivitysUnmovedAdvances`, the
+gateway-role and staging tests; Django `test_gateway_relay` (the cancel
+check's door) and the rules drift test.
+
+## 30.9 Not done
+
+Switching the cancel off in Django in the same release (03 §3.7) and any
+cutover wait for the owner; the function is a new database object needing
+the owner's approval for production. No replayed month on a sanitised
+restore. Not reachable with the seed data, so covered by the code path and
+the hand-on rule only: a sent week holding the visit's lines, a milestone
+credit, an open overdue reminder or day-off notice, a disbursed advance
+beside a cancelled visit (the function's test covers the filter), and a
+pricing refusal on the day left. The form-only door for the cancel has no
+Django test of its own (DB-backed); the app-level run proves it.

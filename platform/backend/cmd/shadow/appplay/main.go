@@ -118,7 +118,7 @@ func play(gateway, scenarioPath, out, password string) error {
 		var a answer
 		var err error
 		if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
-			a, err = playMove(ctx, pageDrawers, token, m[1], s)
+			a, err = playMove(ctx, pageDrawers, token, m[1], m[2], s)
 		} else {
 			a, err = playStep(ctx, drawers, token, s)
 		}
@@ -255,17 +255,19 @@ func said(a answer) string {
 // copyDSN is the copy a run's gateway serves (-db).
 var copyDSN string
 
-// moveDrawer is My Plan's Reschedule drawer (docs/migration/29); its
+// moveDrawer is My Plan's Reschedule drawer (docs/migration/29) or its
+// Cancel drawer (30); its
 // activity may be named by its purpose text, `{activity:<text>}`, since each
 // copy makes its own ids.
 var (
-	moveDrawer  = regexp.MustCompile(`^/my-plan/([^/]+)/reschedule-drawer$`)
+	moveDrawer  = regexp.MustCompile(`^/my-plan/([^/]+)/(reschedule|cancel)-drawer$`)
 	placeholder = regexp.MustCompile(`^\{activity:([^}]*)\}$`)
 )
 
-// playMove plays a Reschedule step as the app does: the page drawer read,
-// then saved with the fields the person fills (the new date and the reason).
-func playMove(ctx context.Context, drawers screensv1connect.PageDrawerServiceClient, token, target string, s step) (answer, error) {
+// playMove plays a Reschedule or Cancel step as the app does: the page
+// drawer read, then saved with the fields the person fills (the new date and
+// the reason; for a cancel, the reason).
+func playMove(ctx context.Context, drawers screensv1connect.PageDrawerServiceClient, token, target, kind string, s step) (answer, error) {
 	activityID := target
 	if m := placeholder.FindStringSubmatch(target); m != nil {
 		if !strings.HasPrefix(copyDSN, "postgresql://localhost:5432/edify_shadow_") {
@@ -283,7 +285,7 @@ ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
 			return answer{}, err
 		}
 	}
-	path := "/my-plan/" + activityID + "/reschedule-drawer"
+	path := "/my-plan/" + activityID + "/" + kind + "-drawer"
 	got, err := drawers.GetDrawer(ctx, withToken(&screensv1.GetDrawerRequest{Path: path}, token))
 	if err != nil {
 		return failed(err), nil
@@ -292,6 +294,9 @@ ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
 		return answer{Error: "(no drawer) " + got.Msg.GetRefusal()}, nil
 	}
 	values := map[string]string{"scheduled_date": s.Set["scheduled_date"], "reason": s.Set["reason"]}
+	if kind == "cancel" {
+		values = map[string]string{"reason": s.Set["reason"]}
+	}
 	saved, err := drawers.SaveDrawer(ctx, withToken(&screensv1.SaveDrawerRequest{Path: path, Values: values}, token))
 	if err != nil {
 		a := failed(err)
