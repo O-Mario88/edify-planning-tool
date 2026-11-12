@@ -26,12 +26,20 @@ def _post(view, body, key=KEY):
 class GatewayRelayDoorsTest(SimpleTestCase):
     @override_settings(EDIFY_INTERNAL_KEY="")
     def test_both_doors_are_closed_while_no_key_is_configured(self):
-        for view in (gateway_relay.visit_day_check, gateway_relay.costs_to_follow):
+        for view in (
+            gateway_relay.visit_day_check,
+            gateway_relay.visit_move_check,
+            gateway_relay.costs_to_follow,
+        ):
             self.assertEqual(_post(view, {}).status_code, 404)
 
     @override_settings(EDIFY_INTERNAL_KEY=KEY)
     def test_a_request_without_the_key_is_refused(self):
-        for view in (gateway_relay.visit_day_check, gateway_relay.costs_to_follow):
+        for view in (
+            gateway_relay.visit_day_check,
+            gateway_relay.visit_move_check,
+            gateway_relay.costs_to_follow,
+        ):
             self.assertEqual(_post(view, {}, key="wrong").status_code, 403)
 
     @override_settings(EDIFY_INTERNAL_KEY=KEY)
@@ -47,3 +55,26 @@ class GatewayRelayDoorsTest(SimpleTestCase):
         for rows in ([], ["1"], [0], list(range(1, 30)), None):
             answer = _post(gateway_relay.costs_to_follow, {"rows": rows})
             self.assertEqual(answer.status_code, 400, rows)
+
+    @override_settings(EDIFY_INTERNAL_KEY=KEY)
+    def test_the_move_check_takes_an_activity_a_day_and_a_short_reason(self):
+        for body, reason in (
+            ({"scheduledDate": "2026-11-20"}, "bad_fields"),
+            ({"activityId": "x" * 31, "scheduledDate": "2026-11-20"}, "bad_fields"),
+            (
+                {"activityId": "a", "scheduledDate": "2026-11-20", "reason": 5},
+                "bad_fields",
+            ),
+            (
+                {
+                    "activityId": "a",
+                    "scheduledDate": "2026-11-20",
+                    "reason": "r" * 2001,
+                },
+                "bad_fields",
+            ),
+            ({"activityId": "a", "scheduledDate": "20 Nov"}, "bad_date"),
+        ):
+            answer = _post(gateway_relay.visit_move_check, body)
+            self.assertEqual(answer.status_code, 400, body)
+            self.assertEqual(json.loads(answer.content)["reason"], reason, body)

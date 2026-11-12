@@ -150,3 +150,48 @@ every other lifecycle, money, evidence, verification and ownership column of
   `activity_schedule_change` is undeletable. `TestGatewayRoleCanNeitherWriteNorReadSecrets`
   refuses each of them, removing the trail and reading a notice's words;
   `TestStagingIdentityCheckAcceptsOnlyTheReadOnlyRole` still passes.
+
+## 29.6 The move, built and proved in shadow (2026-11-12)
+
+| Piece | Where |
+|---|---|
+| The move | `internal/activities/reschedule.go` (`Service.Reschedule`): 29.3 in its order. Before the transaction: the hand-ons, the closed school, the date (blank: "Invalid date: "), the past date, the relay's verdict, the lines' week and month. One read-write transaction: the activity's lock (anything changed since the read: handed on, nothing written), the duplicate test, the day's refusal where the existing save meets it, the day joined (made with its defaults when the owner has none; the move's reason kept on it), the activity's UPDATE, the timeline row when the day changed, the costs to follow. After commit: the ledger's marks (sorted, distinct, one statement, as `_write_marks`), the `reschedule_activity` row on the chain with the leave-cover stamp, then Django settles the costs and announces |
+| Money (27.8 §1) | `POST /api/auth/internal/visit-move-check` in `apps/daily_visit_batches/gateway_relay.py` (route in `apps/accounts/urls.py`): the move played on the activity inside a transaction it rolls back (`will_take_back`, the frozen day, `_reprice_moved_activity`'s day refusals, `_assert_days_can_follow`); settling reuses 27.9's `costs-to-follow` door |
+| Vocabularies | `rules.json` `move`: the two notice events and `saved_in_place`'s words, exported by `export_schedule_visit_rules` |
+| The shadow's Go half | `cmd/shadow/goplay` plays a step that opens `/my-plan/{id}/reschedule-drawer` through `Service.Reschedule` (the activity found on copy B by its purpose text, as the runner finds it); a step whose drawer copy A refused is played on copy B by the existing application, as the gateway reads every drawer there. `cmd/shadow` now also reads an incident's `samples` (request tags) as `<chain>` and a path naming a row the run made as `<new>` |
+
+**The scenario** (`cmd/shadow/scenarios/reschedule_visit.json`, 19 steps):
+six visits scheduled through the first save (all six purposes), then moved:
+to a new day (the day left empties), onto another visit's day (leaving a
+shared one), within the same day, to a past date, onto a day of the
+submitted week that already has a batch (refused, "left draft"), to a new
+day in that week, out of that week into the next fiscal year (handed on:
+the day left is frozen), with no date, onto a short day with no reason
+(refused, "Reason required"), a second move of a moved visit; a
+training-and-visit pair, a Core school's visit and another officer's opening
+of a visit's drawer are handed on.
+
+**The run** (copy A through the existing application, copy B through Go
+with Django on 8196 over copy B; `agent12_shadow4.txt`), last lines exactly as
+printed:
+
+```
+0 of 19 steps answered differently
+goplay exit 0
+366 tables, 22 changed by the runs
+  ...
+0 of 22 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 15978, 'fromSeq': None}
+```
+
+Fifteen steps were Go's (the six schedules; five moves; four refusals: the
+past date, the left-draft day, no date, the short day), four handed on. The
+first run found two things, both fixed: Go marked the ledger once per day
+rather than once per distinct year in one statement (the ledger's serial
+ids then drifted), and the harness compared the request tags and the new
+incident's id inside a path written by Django's own refused-drawer door.
+
+**Not proved here.** A closed school, an open overdue reminder or day-off
+notice, a take-back of a sent week and lines in two weeks cannot be reached
+with the seed data; they are the code path and the hand-on rule only.

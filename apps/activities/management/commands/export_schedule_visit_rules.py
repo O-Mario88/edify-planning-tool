@@ -73,6 +73,10 @@ def rules() -> dict:
     from apps.ssa import plan_alignment, recommendation_engine
     from apps.targets.my_targets import AREA_SOURCES
 
+    from apps.activities.day_off import DAY_OFF_EVENT
+    from apps.core.htmx_saved import SAVED_MESSAGE
+    from apps.my_plan.past_due_service import OVERDUE_REMINDER_EVENT
+
     return {
         "doors": doors(),
         "purposes": {
@@ -131,6 +135,14 @@ def rules() -> dict:
             "interventions": [
                 [str(v), str(label)] for v, label in SsaIntervention.choices
             ],
+        },
+        # The second save, moving a visit (docs/migration/29): the notices
+        # the existing save settles after commit (a move meeting one is
+        # handed on) and the toast saved_in_place() answers with.
+        "move": {
+            "overdue_event": OVERDUE_REMINDER_EVENT,
+            "day_off_event": DAY_OFF_EVENT,
+            "saved_message": SAVED_MESSAGE,
         },
         "batch": {
             "field_roles": _values(districts.FIELD_ROLES),

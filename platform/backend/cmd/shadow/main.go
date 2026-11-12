@@ -37,10 +37,11 @@ import (
 
 // chainColumns are the audit chain's own columns: they are computed from the
 // rows' ids and times, which differ by run. A request's correlation id is a
-// random tag per request.
+// random tag per request, and an incident's samples are those tags.
 var chainColumns = map[string]map[string]bool{
-	"audit_log":        {"seq": true, "hash": true, "prev_hash": true, "correlation_id": true},
-	"domain_event_log": {"correlation_id": true},
+	"audit_log":             {"seq": true, "hash": true, "prev_hash": true, "correlation_id": true},
+	"domain_event_log":      {"correlation_id": true},
+	"admin_system_incident": {"samples": true},
 }
 
 // noise are tables a request writes about itself rather than about the work:
@@ -342,6 +343,16 @@ func settle(v any, made map[string]bool, w window) any {
 		}
 		if t, err := time.Parse(time.RFC3339Nano, x); err == nil && !t.Before(w.from) && !t.After(w.to) {
 			return "<now>"
+		}
+		if strings.Contains(x, "/") {
+			// A path naming a row the run made ("/admin-ops/incidents/<id>").
+			parts := strings.Split(x, "/")
+			for i, part := range parts {
+				if made[part] {
+					parts[i] = "<new>"
+				}
+			}
+			return strings.Join(parts, "/")
 		}
 		return x
 	case []any:

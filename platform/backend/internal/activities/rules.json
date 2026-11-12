@@ -236,6 +236,11 @@
     "training",
     "training_follow_up_visit"
   ],
+  "move": {
+    "day_off_event": "activity_on_day_off",
+    "overdue_event": "pl_activity_overdue_reminder",
+    "saved_message": "Saved. Press Refresh to see it on the page."
+  },
   "operating_statuses": [
     "active",
     "reopened"

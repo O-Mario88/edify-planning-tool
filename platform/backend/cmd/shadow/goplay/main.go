@@ -33,6 +33,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -133,8 +134,14 @@ func run(dsn, scenarioPath, aOut, out, django, key, runner, repo string) error {
 		posted := a.Outcomes[i].Posted
 		var o outcome
 		if posted == nil {
-			// The drawer did not open on copy A: there is no save to make.
-			o = outcome{OK: false, Message: "(no form posted on copy A)"}
+			// The drawer did not open on copy A: there is no save to make,
+			// and the gateway reads every drawer from the existing
+			// application, so its door is met there on copy B too.
+			o, err = handOn(raw[i], dsn, runner, repo)
+			if err != nil {
+				return fmt.Errorf("step %d (drawer refused): %w", i+1, err)
+			}
+			o.HandedOn = true
 		} else {
 			o, err = play(ctx, svc, accounts, pool, s, url.Values(posted))
 			if err != nil {
@@ -160,6 +167,9 @@ func run(dsn, scenarioPath, aOut, out, django, key, runner, repo string) error {
 
 func play(ctx context.Context, svc *activities.Service, accounts *identity.Store, pool *pgxpool.Pool,
 	s step, form url.Values) (outcome, error) {
+	if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
+		return playMove(ctx, svc, accounts, pool, s, m[1], form)
+	}
 	req, taken := activities.RequestFromForm(form)
 	if !taken {
 		return outcome{HandedOn: true}, nil
@@ -173,10 +183,9 @@ func play(ctx context.Context, svc *activities.Service, accounts *identity.Store
 		return outcome{}, err
 	}
 	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
-	correlation := make([]byte, 16)
-	_, _ = rand.Read(correlation)
+	correlation := newCorrelation()
 	answer, err := svc.Schedule(ctx, auth.Principal{Account: account}, req,
-		activities.Origin{IP: "127.0.0.1", CorrelationID: hex.EncodeToString(correlation)})
+		activities.Origin{IP: "127.0.0.1", CorrelationID: correlation})
 	var refusal *activities.Refusal
 	switch {
 	case errors.Is(err, activities.ErrHandOn):
@@ -197,6 +206,56 @@ func play(ctx context.Context, svc *activities.Service, accounts *identity.Store
 	}
 	return outcome{OK: true, Status: 200, Message: message + " " + answer.PlanLinkLabel}, nil
 }
+
+// moveDrawer is My Plan's Reschedule drawer (docs/migration/29); its
+// activity is named as the runner names it, `{activity:<purpose text>}`.
+var moveDrawer = regexp.MustCompile(`^/my-plan/([^/]+)/reschedule-drawer$`)
+
+func newCorrelation() string {
+	correlation := make([]byte, 16)
+	_, _ = rand.Read(correlation)
+	return hex.EncodeToString(correlation)
+}
+
+// playMove makes a Reschedule step through Go's move: the activity found on
+// copy B as the runner finds it, the drawer's posted date and reason.
+func playMove(ctx context.Context, svc *activities.Service, accounts *identity.Store, pool *pgxpool.Pool,
+	s step, target string, form url.Values) (outcome, error) {
+	activityID := target
+	if m := placeholder.FindStringSubmatch(target); m != nil {
+		activityID = "missing"
+		err := pool.QueryRow(ctx, `SELECT id FROM activity WHERE activity_purpose_text = $1
+ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return outcome{}, err
+		}
+	}
+	var userID string
+	if err := pool.QueryRow(ctx, `SELECT id FROM "user" WHERE email = $1`, s.Who).Scan(&userID); err != nil {
+		return outcome{}, fmt.Errorf("finding %s: %w", s.Who, err)
+	}
+	account, err := accounts.LoadAccount(ctx, userID)
+	if err != nil {
+		return outcome{}, err
+	}
+	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
+	answer, err := svc.Reschedule(ctx, auth.Principal{Account: account},
+		activities.MoveRequest{ActivityID: activityID, Date: form.Get("scheduled_date"), Reason: form.Get("reason")},
+		activities.Origin{IP: "127.0.0.1", CorrelationID: newCorrelation()})
+	var refusal *activities.Refusal
+	switch {
+	case errors.Is(err, activities.ErrHandOn):
+		fmt.Fprintln(os.Stderr, "goplay:", s.Who, "→", err)
+		return outcome{HandedOn: true}, nil
+	case errors.As(err, &refusal):
+		return outcome{OK: false, Status: 400, Message: strings.TrimSpace(refusal.Message)}, nil
+	case err != nil:
+		return outcome{}, err
+	}
+	return outcome{OK: true, Status: 200, Message: answer.Message}, nil
+}
+
+var placeholder = regexp.MustCompile(`^\{activity:([^}]*)\}$`)
 
 // handOn makes one step through the existing application on copy B, as the
 // gateway forwards a request it does not take.

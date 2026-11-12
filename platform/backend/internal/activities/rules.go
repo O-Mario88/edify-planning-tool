@@ -80,6 +80,11 @@ type Rules struct {
 		PoolExtraTypes      []string `json:"pool_extra_types"`
 		NonFundableStatuses []string `json:"non_fundable_statuses"`
 	} `json:"batch"`
+	Move struct {
+		OverdueEvent string `json:"overdue_event"`
+		DayOffEvent  string `json:"day_off_event"`
+		SavedMessage string `json:"saved_message"`
+	} `json:"move"`
 
 	weights []weight
 	labels  map[string]string

@@ -16,7 +16,15 @@ sign-in security-events relay and behind the same internal key:
   says ``plan.changed`` for the visit on the realtime stream exactly as the
   existing save's settling thread does (``live.after_costs``).
 
-Neither changes what any existing save does.
+* ``visit-move-check`` (docs/migration/29) asks the same of a move of such a
+  visit, before Go opens its transaction: whether the move would take a
+  sent, unpaid week back (``take_back_for_plan_change``; Go hands such a move
+  on), whether the day it leaves has left draft (left frozen; handed on), and
+  what ``_reprice_moved_activity``'s day refusals and ``_assert_days_can_follow``
+  would refuse, with their own words. It plays the move on the activity
+  inside a transaction it rolls back, so it writes nothing.
+
+None changes what any existing save does.
 """
 
 from __future__ import annotations
@@ -244,3 +252,138 @@ def costs_to_follow(request):
         except Exception:  # noqa: BLE001 — a page left stale, no more
             logger.warning("Costs to follow: announcing failed", exc_info=True)
     return JsonResponse({"ok": True, "settled": done}, status=200)
+
+
+#: The longest reason a move carries (the drawer's textarea, then the
+#: schedule trail keeps 512 of it).
+MAX_REASON = 2000
+
+
+def _move_probe(activity_id: str, new_day: date, reason: str) -> dict:
+    """Play the move's money as ``services.reschedule`` does for a visit of
+    the first save's kind (5306–5393, then ``costs_follow._hand_over``), and
+    say what it would meet. Always rolled back."""
+    from apps.activities.models import Activity
+    from apps.activities.services import (
+        _parse_date,
+        _reprice_moved_activity,
+        _schedule_period,
+    )
+    from apps.budget.costing_service import rate_cards_held
+    from apps.core.clock import local_day
+    from apps.core.fy import get_operational_fy, get_quarter_for_date
+    from apps.fund_requests.follow import fund_requests_kept
+    from apps.fund_requests.plan_changes import planner_change, will_take_back
+
+    from . import services
+    from .costs_follow import _assert_days_can_follow
+    from .pricing import DAILY_BATCH_ELIGIBLE_TYPES
+
+    answer = {
+        "refusal": "",
+        "stage": "",
+        "takesBack": False,
+        "leftFrozen": False,
+        "pooled": True,
+    }
+    try:
+        with rate_cards_held(), transaction.atomic():
+            activity = (
+                Activity.objects.select_for_update().filter(id=activity_id).first()
+            )
+            if activity is None:
+                raise _Probe({**answer, "pooled": False})
+            old_day = activity.planned_date or (
+                activity.scheduled_date and local_day(activity.scheduled_date)
+            )
+            if will_take_back(activity, days=(old_day, new_day)):
+                raise _Probe({**answer, "takesBack": True})
+            batch = activity.daily_visit_batch
+            if batch is not None and services._is_locked(
+                batch.responsible_user, batch.visit_date
+            ):
+                raise _Probe({**answer, "leftFrozen": True})
+            if (
+                activity.activity_type not in DAILY_BATCH_ELIGIBLE_TYPES
+                or activity.delivery_type != "staff"
+                or not activity.school_id
+            ):
+                raise _Probe({**answer, "pooled": False})
+            data = {
+                "scheduledDate": new_day.isoformat(),
+                "reason": reason,
+                "plannedMonth": new_day.month,
+                "plannedWeek": min(5, (new_day.day - 1) // 7 + 1),
+            }
+            new_date = _parse_date(data["scheduledDate"])
+            planned_date, planned_month, planned_week = _schedule_period(new_date, data)
+            activity.scheduled_date = new_date
+            activity.fy = get_operational_fy(new_date)
+            activity.quarter = get_quarter_for_date(new_date)
+            activity.planned_date = planned_date
+            activity.planned_month = planned_month
+            activity.planned_week = planned_week
+            activity.status = "rescheduled"
+            activity.last_reason = reason
+            activity.save(
+                update_fields=[
+                    "scheduled_date",
+                    "fy",
+                    "quarter",
+                    "planned_date",
+                    "planned_month",
+                    "planned_week",
+                    "status",
+                    "last_reason",
+                    "updated_at",
+                ]
+            )
+            days: dict = {}
+            with planner_change(None, activity), fund_requests_kept():
+                tokens = (
+                    services._days_to_price.set(days),
+                    services._after_pricing.set([]),
+                )
+                try:
+                    _reprice_moved_activity(activity, data, None)
+                except BadRequest as refused:
+                    raise _Probe(
+                        {**answer, "refusal": str(refused), "stage": "day"}
+                    ) from refused
+                finally:
+                    services._after_pricing.reset(tokens[1])
+                    services._days_to_price.reset(tokens[0])
+            try:
+                _assert_days_can_follow(days, together=False)
+            except BadRequest as refused:
+                raise _Probe(
+                    {**answer, "refusal": str(refused), "stage": "follow"}
+                ) from refused
+            raise _Probe(answer)
+    except _Probe as probed:
+        return probed.answer
+
+
+@csrf_exempt  # A server's key, never a browser's session.
+@require_POST
+def visit_move_check(request):
+    refusal = internal_key_refusal(request)
+    if refusal is not None:
+        return refusal
+    body = _body(request)
+    if body is None:
+        return JsonResponse({"ok": False, "reason": "not_an_object"}, status=400)
+    activity_id = body.get("activityId")
+    reason = body.get("reason", "")
+    if (
+        not isinstance(activity_id, str)
+        or not 0 < len(activity_id) <= 30
+        or not isinstance(reason, str)
+        or len(reason) > MAX_REASON
+    ):
+        return JsonResponse({"ok": False, "reason": "bad_fields"}, status=400)
+    try:
+        new_day = date.fromisoformat(str(body.get("scheduledDate", "")))
+    except ValueError:
+        return JsonResponse({"ok": False, "reason": "bad_date"}, status=400)
+    return JsonResponse({"ok": True, **_move_probe(activity_id, new_day, reason)})

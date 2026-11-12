@@ -224,12 +224,12 @@
  },
  {
   "who": "cceo1@edify.org",
-  "open": "/my-plan/{activity:[shadow-r] B}/reschedule-drawer",
-  "form": "/my-plan/{activity:[shadow-r] B}/reschedule",
+  "open": "/my-plan/cmwd2x86z008h5khkdjob/reschedule-drawer",
+  "form": "/my-plan/cmwd2x86z008h5khkdjob/reschedule",
   "set": {
    "scheduled_date": "2026-11-27",
    "reason": "[shadow-r] not mine"
   },
-  "note": "another officer's visit"
+  "note": "another officer's visit (a visit already in the data, so both copies name the same route)"
  }
 ]

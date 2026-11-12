@@ -102,3 +102,19 @@ func (h *HTTPPricing) Settle(ctx context.Context, rows []int64, activityID strin
 	}
 	return nil
 }
+
+// MoveCheck asks /api/auth/internal/visit-move-check (docs/migration/29).
+func (h *HTTPPricing) MoveCheck(ctx context.Context, activityID, date, reason string) (MoveVerdict, error) {
+	var answer struct {
+		OK bool `json:"ok"`
+		MoveVerdict
+	}
+	if err := h.post(ctx, "/api/auth/internal/visit-move-check",
+		map[string]any{"activityId": activityID, "scheduledDate": date, "reason": reason}, &answer); err != nil {
+		return MoveVerdict{}, err
+	}
+	if !answer.OK {
+		return MoveVerdict{}, fmt.Errorf("activities: the move check was not answered")
+	}
+	return answer.MoveVerdict, nil
+}

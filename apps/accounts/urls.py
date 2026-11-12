@@ -33,6 +33,12 @@ urlpatterns = [
         gateway_relay.visit_day_check,
         name="visit-day-check",
     ),
+    # The money a move of that visit meets (docs/migration/29).
+    path(
+        "internal/visit-move-check",
+        gateway_relay.visit_move_check,
+        name="visit-move-check",
+    ),
     path(
         "internal/costs-to-follow",
         gateway_relay.costs_to_follow,
