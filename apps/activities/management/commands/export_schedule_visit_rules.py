@@ -55,6 +55,9 @@ def doors() -> dict:
 
 def rules() -> dict:
     from apps.activities.duplicate_visits import GONE_STATUSES
+    from apps.activity_catalogue.models import MappingMode
+    from apps.core.enums import ActivityType
+    from apps.planning import training_entitlement
     from apps.activities.services import SALESFORCE_TRAINING_KINDS
     from apps.activity_catalogue.services import COSTED_AS
     from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
@@ -152,6 +155,21 @@ def rules() -> dict:
             "money_moved_advance_statuses": [
                 str(s) for s in MONEY_MOVED_ADVANCE_STATUSES
             ],
+        },
+        # The fifth save, an In-school Training and its school visit
+        # (docs/migration/32, planning.services.schedule_in_school_training_pair):
+        # the two purposes that plan the pair, the one whose visit collects
+        # the SSA, the two workflow profiles it resolves, the training shapes
+        # a universal course lifts out of the entitlement, and the mapping
+        # modes Go takes a course with.
+        "pair": {
+            "training_purpose": purposes.IN_SCHOOL_TRAINING,
+            "collects_ssa_purpose": purposes.IN_SCHOOL_TRAINING_SSA,
+            "training_kind": str(ActivityType.IN_SCHOOL_TRAINING),
+            "visit_kind": str(ActivityType.SCHOOL_VISIT),
+            "training_shapes": sorted(training_entitlement.IN_SCHOOL_TRAINING_SHAPES),
+            "fixed_mode": str(MappingMode.FIXED),
+            "administrative_mode": str(MappingMode.ADMINISTRATIVE),
         },
         "batch": {
             "field_roles": _values(districts.FIELD_ROLES),

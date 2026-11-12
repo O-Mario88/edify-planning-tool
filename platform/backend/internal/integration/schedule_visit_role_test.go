@@ -190,7 +190,10 @@ SELECT
 			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
 		{"no day", cceo, visit(client, "donor_visit", ""), "Pick the date this is planned for before scheduling it.", false},
 		{"a Core school", cceo, visit(core, "donor_visit", "2026-11-20"), "", true},
-		{"In-school Training", cceo, visit(client, "in_school_training", "2026-11-20"), "", true},
+		// The pair is Go's since docs/migration/32: with no course it is
+		// refused in the view's words before anything is read.
+		{"In-school Training with no course", cceo, visit(client, "in_school_training", "2026-11-20"),
+			"Select the Training to deliver.", false},
 		{"a pinned item nobody knows", cceo, activities.Request{SchoolID: client, Purpose: "donor_visit",
 			Date: "2026-11-20", CatalogueItemID: "no-such-item"}, "", true},
 	}

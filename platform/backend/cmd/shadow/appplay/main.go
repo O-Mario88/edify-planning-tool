@@ -198,7 +198,28 @@ func scheduleValues(drawer *screensv1.PlanningDrawer, set map[string]string) map
 			sent[name] = value
 		}
 	}
+	if purpose := set["purpose_of_visit"]; purpose == "in_school_training" || purpose == "in_school_training_ssa" {
+		trainingValues(drawer, set, sent)
+	}
 	return sent
+}
+
+// trainingValues is the training picker's part of scheduleValues
+// (docs/migration/32): the course chosen, its facilitator (blank is Staff),
+// and the reason withTrainingChosen gives the course.
+func trainingValues(drawer *screensv1.PlanningDrawer, set, sent map[string]string) {
+	sent["catalogue_item_id"] = set["catalogue_item_id"]
+	sent["facilitating_partner_id"] = set["facilitating_partner_id"]
+	for _, t := range drawer.GetTrainings() {
+		if t.GetId() != set["catalogue_item_id"] {
+			continue
+		}
+		if titles := t.GetPriorityTitles(); len(titles) > 0 {
+			sent["recommendation_reason"] = "Priority activity: " + strings.Join(titles, ", ")
+		} else {
+			sent["recommendation_reason"] = "Governed " + t.GetCategory() + " training."
+		}
+	}
 }
 
 // compareRuns holds run B's answers to run A's: every field the app reads

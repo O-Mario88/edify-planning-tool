@@ -191,3 +191,15 @@ GRANT SELECT (id, recipient_id, source_event_type, context_type, context_id, res
 -- (updated_at and the row's lock are already granted for the move). Free
 -- text only: no price, day, owner, school, purpose or focus.
 GRANT UPDATE (activity_purpose_text, expected_outcome) ON activity TO edify_activities_rw;
+
+-- The fifth save, an In-school Training and its school visit
+-- (docs/migration/32): the course the picker offers (its staff delivery,
+-- universality, category and indicator), its intervention mapping's
+-- intervention, whether the officer has a ceiling for it, and the two
+-- columns that join the pair on insert. No UPDATE: the training is
+-- inserted naming the visit already inserted.
+GRANT SELECT (staff_delivery_allowed, universal_training, training_category, ssa_indicator_label)
+  ON activity_catalogue_item TO edify_activities_rw;
+GRANT SELECT (intervention) ON activity_intervention_mapping TO edify_activities_rw;
+GRANT SELECT (staff_id, training_id, fy) ON training_ceiling TO edify_activities_rw;
+GRANT INSERT (training_course_id, paired_school_visit_id) ON activity TO edify_activities_rw;

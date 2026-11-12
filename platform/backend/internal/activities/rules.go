@@ -88,6 +88,15 @@ type Rules struct {
 	Cancel struct {
 		MoneyMovedAdvanceStatuses []string `json:"money_moved_advance_statuses"`
 	} `json:"cancel"`
+	Pair struct {
+		TrainingPurpose    string   `json:"training_purpose"`
+		CollectsSSAPurpose string   `json:"collects_ssa_purpose"`
+		TrainingKind       string   `json:"training_kind"`
+		VisitKind          string   `json:"visit_kind"`
+		TrainingShapes     []string `json:"training_shapes"`
+		FixedMode          string   `json:"fixed_mode"`
+		AdministrativeMode string   `json:"administrative_mode"`
+	} `json:"pair"`
 
 	weights []weight
 	labels  map[string]string

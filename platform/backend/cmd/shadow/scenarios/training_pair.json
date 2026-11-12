@@ -1,0 +1,325 @@
+[
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7qrq00g8doekhee8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-24",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] A leadership joins a day"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7pkf00bxclekhev8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training_ssa",
+   "scheduled_date": "2026-11-24",
+   "catalogue_item_id": "cmw9p6zjg00u2wieihg9o",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Governed Christian Transformation training.",
+   "activity_purpose_text": "[shadow-t] B with SSA collection",
+   "expected_outcome": "[shadow-t] B outcome"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7jlh00azwpekhe64",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-11-26",
+   "activity_purpose_text": "[shadow-t] C donor visit makes a day"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "catalogue_item_id": "defaultCatalogueItemId"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7jlh00azwpekhe64",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-26",
+   "catalogue_item_id": "cmw9p6zvd00u8dgeihgqm",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] D orientation beside a visit"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7qrq00g8doekhee8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-26",
+   "catalogue_item_id": "cmw9p6zuw003u0yeihg48",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Governed Business Transformation training.",
+   "activity_purpose_text": "[shadow-t] E second training"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7qrq00g8doekhee8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-26",
+   "catalogue_item_id": "cmw9p6zwf00hhggeihgtf",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Governed Other training.",
+   "activity_purpose_text": "[shadow-t] F universal on top"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7qrq00g8doekhee8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-24",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] G same again"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hau005dtaekhelg",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-10",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] H past"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hau005dtaekhelg",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-27",
+   "catalogue_item_id": "",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "",
+   "activity_purpose_text": "[shadow-t] I no course"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7ui0002ufdekhe44",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-27",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] J champion"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7iy900u9i9ekher2",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-12-01",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] K locked week"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7ugn00b7crekhe2v",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-27",
+   "catalogue_item_id": "cmw9p6zwf00hhggeihgtf",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Governed Other training.",
+   "activity_purpose_text": "[shadow-t] O universal first makes a day"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7ugn00b7crekhe2v",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-27",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] P identical training"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7ugn00b7crekhe2v",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training_ssa",
+   "scheduled_date": "2026-12-08",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] Q after the universal"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hau005dtaekhelg",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-27",
+   "catalogue_item_id": "cmw9p6zz200468ueihgvo",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "",
+   "activity_purpose_text": "[shadow-t] R not a course"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hau005dtaekhelg",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-27",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "cmw9p8dcz00h5w0ekheep",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] L facilitated"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7guw007tugekheqp",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-27",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] M core school"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo1@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7tuf00vs2pekhefs",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-11-27",
+   "catalogue_item_id": "cmw9p6zg600734ueihg0f",
+   "facilitating_partner_id": "",
+   "recommendation_reason": "Priority activity: Leaders trained",
+   "activity_purpose_text": "[shadow-t] N outside the portfolio"
+  },
+  "from_script": {
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ }
+]

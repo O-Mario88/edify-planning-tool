@@ -110,7 +110,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now),
 		)
-	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit {
+	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
+		cfg.GoSaves.ScheduleTrainingPair {
 		save := visitSave(cfg, pool, logger)
 		if cfg.GoSaves.ScheduleVisit {
 			screenService.WithVisitSave(save, logger)
@@ -123,6 +124,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		}
 		if cfg.GoSaves.EditVisit {
 			screenService.WithEditSave(save, logger)
+		}
+		if cfg.GoSaves.ScheduleTrainingPair {
+			screenService.WithTrainingPairSave(save, logger)
 		}
 	}
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))

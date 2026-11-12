@@ -26,6 +26,10 @@ type GoSaves struct {
 	// internal/activities (docs/migration/31); everything else is forwarded
 	// as before.
 	EditVisit bool
+	// ScheduleTrainingPair: the app's Schedule drawer saves 32's In-school
+	// Training and its school visit through internal/activities
+	// (docs/migration/32); everything else is forwarded as before.
+	ScheduleTrainingPair bool
 }
 
 const (
@@ -38,10 +42,13 @@ const (
 	SaveCancelVisit = "cancel_visit"
 	// SaveEditVisit is the name EDIFY_GO_SAVES uses for the edit.
 	SaveEditVisit = "edit_visit"
+	// SaveScheduleTrainingPair is the name EDIFY_GO_SAVES uses for the
+	// In-school Training and its school visit.
+	SaveScheduleTrainingPair = "schedule_training_pair"
 )
 
 // knownGoSaves are the saves the switch can name.
-var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit}
+var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit, SaveScheduleTrainingPair}
 
 // loadGoSaves reads EDIFY_GO_SAVES. A Go save asks the existing application
 // for the drawer's form and for the pricing (money stays Django's until
@@ -64,6 +71,7 @@ func loadGoSaves(env Environment, getenv func(string) string, existingApp, inter
 		out.RescheduleVisit = out.RescheduleVisit || name == SaveRescheduleVisit
 		out.CancelVisit = out.CancelVisit || name == SaveCancelVisit
 		out.EditVisit = out.EditVisit || name == SaveEditVisit
+		out.ScheduleTrainingPair = out.ScheduleTrainingPair || name == SaveScheduleTrainingPair
 	}
 	if existingApp == "" || internalKey == "" {
 		return GoSaves{}, fmt.Errorf("config: %s needs %s and %s: the save asks the existing application for the form and the pricing",
