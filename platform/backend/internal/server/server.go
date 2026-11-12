@@ -88,7 +88,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	screenService := screens.NewService(existingApp).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
 		WithProfile(schoolprofile.NewService(pool, time.Now), logger).
-		WithPages(clusterpage.NewService(pool, time.Now), logger)
+		WithPages(logger,
+			clusterpage.NewService(pool, time.Now),
+		)
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNavigationServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewSchoolDirectoryScreenServiceHandler(screenService, options...))

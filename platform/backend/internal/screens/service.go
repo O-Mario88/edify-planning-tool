@@ -49,8 +49,9 @@ type Profile interface {
 	Build(ctx context.Context, p auth.Principal, req *screensv1.GetSchoolProfileRequest) (*screensv1.GetSchoolProfileResponse, bool, error)
 }
 
-// Pages builds pages in Go (internal/clusterpage). served is false for a
-// page the existing application still answers.
+// Pages builds pages in Go (internal/clusterpage and the ones beside it).
+// served is false for a path the builder does not answer; a page refused to
+// the reader is pagegate.ErrNotAvailable.
 type Pages interface {
 	Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error)
 }
@@ -61,7 +62,7 @@ type Service struct {
 	existingApp Fetcher // nil when no existing application is configured
 	directory   Directory
 	profile     Profile
-	pages       Pages
+	pages       []Pages
 	logger      *slog.Logger
 }
 
@@ -85,11 +86,11 @@ func (s *Service) WithProfile(profile Profile, logger *slog.Logger) *Service {
 	return s
 }
 
-// WithPages answers the pages Go has taken over (the Clusters page), for
-// anyone working in their own role; the rest is passed to the existing
-// application.
-func (s *Service) WithPages(pages Pages, logger *slog.Logger) *Service {
-	s.pages, s.logger = pages, logger
+// WithPages answers the pages Go has taken over, for anyone working in
+// their own role: each builder is asked in turn, and a path none of them
+// answers is passed to the existing application.
+func (s *Service) WithPages(logger *slog.Logger, pages ...Pages) *Service {
+	s.pages, s.logger = append(s.pages, pages...), logger
 	return s
 }
 

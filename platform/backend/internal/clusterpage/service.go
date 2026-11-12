@@ -2,7 +2,6 @@ package clusterpage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -12,6 +11,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -20,7 +20,7 @@ const Path = "/clusters"
 
 // ErrNotAvailable is the page refused to the reader's role, which the
 // existing feed answers as a page that is not there.
-var ErrNotAvailable = errors.New("clusterpage: the page is not available to this reader")
+var ErrNotAvailable = pagegate.ErrNotAvailable
 
 // Service builds the Clusters page.
 type Service struct {
