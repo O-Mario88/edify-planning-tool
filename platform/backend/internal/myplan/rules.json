@@ -1,0 +1,169 @@
+{
+  "api_formats": [
+    "json"
+  ],
+  "cceo_role": "CCEO",
+  "doors": {
+    "Accountant": {
+      "page": true
+    },
+    "Admin": {
+      "page": true
+    },
+    "BusinessTransformationOfficer": {
+      "page": false
+    },
+    "CCEO": {
+      "page": true
+    },
+    "ClusterLeader": {
+      "page": false
+    },
+    "CountryDirector": {
+      "page": true
+    },
+    "HumanResources": {
+      "page": false
+    },
+    "ImpactAssessment": {
+      "page": true
+    },
+    "MfiLoanOfficer": {
+      "page": false
+    },
+    "MfiPartnerAdmin": {
+      "page": false
+    },
+    "PartnerAdmin": {
+      "page": true
+    },
+    "PartnerFieldOfficer": {
+      "page": true
+    },
+    "Program Lead": {
+      "page": true
+    },
+    "ProjectCoordinator": {
+      "page": true
+    },
+    "RegionalProgramLead": {
+      "page": false
+    },
+    "RegionalVicePresident": {
+      "page": false
+    }
+  },
+  "export_period_keys": [
+    "from_month",
+    "to_month",
+    "start_date",
+    "end_date",
+    "period_type"
+  ],
+  "month_options": [
+    [
+      10,
+      "October"
+    ],
+    [
+      11,
+      "November"
+    ],
+    [
+      12,
+      "December"
+    ],
+    [
+      1,
+      "January"
+    ],
+    [
+      2,
+      "February"
+    ],
+    [
+      3,
+      "March"
+    ],
+    [
+      4,
+      "April"
+    ],
+    [
+      5,
+      "May"
+    ],
+    [
+      6,
+      "June"
+    ],
+    [
+      7,
+      "July"
+    ],
+    [
+      8,
+      "August"
+    ],
+    [
+      9,
+      "September"
+    ]
+  ],
+  "not_passed_query_keys": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "partner_role_bridge": false,
+  "program_lead_role": "Program Lead",
+  "quarter_first_month": {
+    "Q1": 10,
+    "Q2": 1,
+    "Q3": 4,
+    "Q4": 7
+  },
+  "quarter_options": [
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4"
+  ],
+  "strip": {
+    "drilldown": "/my-plan",
+    "keys": [
+      "my_plan_activities_planned_week",
+      "my_plan_activities_planned_month",
+      "my_plan_activities_planned_quarter",
+      "my_plan_activities_planned_fy",
+      "my_plan_visits_scheduled_period",
+      "my_plan_trainings_scheduled_period",
+      "my_plan_cluster_meetings_scheduled_period",
+      "my_plan_completion_readiness_pct"
+    ],
+    "labels": [
+      "My Activities Planned This Week",
+      "My Activities Planned This Month",
+      "My Activities Planned This Quarter",
+      "My Activities Planned This Financial Year",
+      "School Visits Scheduled This Period",
+      "Trainings Scheduled This Period",
+      "Cluster Meetings Scheduled This Period",
+      "My Completed Share of Planned Work"
+    ],
+    "no_data": "No data"
+  },
+  "unset_filter_values": [
+    "",
+    "all",
+    "any",
+    "none"
+  ],
+  "visit_targets": {
+    "CCEO": 560,
+    "Program Lead": 280
+  }
+}

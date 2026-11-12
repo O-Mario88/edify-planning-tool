@@ -365,6 +365,19 @@ migration branch by the coordinator ([18](../migration/18-decision-log.md),
 | Django and Go checks | Pass | ruff, format, bandit clean; core_schools, audit and flags suites (368 tests) after their inline lists became module constants; `go vet`, `gofmt`, `go test -race ./...`, the integration suite |
 | iOS / Android Release | Not run | not checked on a device for these pages |
 
+## My Plan, first piece, read by Go (2026-11-12)
+
+[docs/migration/25-my-plan.md](../migration/25-my-plan.md): the page for a
+staff member who holds nothing yet. Everyone else's My Plan is still the
+existing application's.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/my_plan/test_my_plan_rules_export.py` (the strip's tiles, month and quarter choices and the export keys, now module constants) |
+| Parity, re-run by the coordinator on the merged build | Pass | the 5 accounts Go answers or refuses (Admin, Country Director, Impact Assessment, Project Coordinator, Business Transformation), gateway with no existing application behind it: 335 answers, none differing; the agent also showed all 29 accounts unchanged with the existing application behind the gateway (1,943 answers, none differing) |
+| Django and Go checks | Pass | ruff, format, bandit clean; the my_plan suite (106 tests); `go vet`, `gofmt`, `go test -race ./...`, the integration suite |
+| iOS / Android Release | Not run | not checked on a device |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

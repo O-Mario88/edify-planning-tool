@@ -33,6 +33,7 @@ deployed, or connected to production.
 | [21-my-actions.md](21-my-actions.md) | My Actions, read by Go |
 | [22-core-schools-oversight.md](22-core-schools-oversight.md) | Core Schools Oversight, read by Go; its Core School Visits and Trainings tabs wait on My Plan |
 | [24-planning-page.md](24-planning-page.md) | Planning (M4): every tab of `/planning` read by Go (filters, strip, workload line, rows, cluster cards, doors, pages); a priority allocation's page and every save not yet moved |
+| [25-my-plan.md](25-my-plan.md) | My Plan (M4): piece 1, the page for staff who hold nothing yet, read by Go; the map of the rest and its split into pieces 2–6 |
 
 The code is under [`platform/`](../../platform/README.md).
 
