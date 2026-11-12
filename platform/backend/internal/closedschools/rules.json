@@ -1,0 +1,170 @@
+{
+  "closure_reasons": [
+    [
+      "owner_decision",
+      "Owner decision"
+    ],
+    [
+      "financial",
+      "Financial difficulties"
+    ],
+    [
+      "low_enrolment",
+      "Low enrolment"
+    ],
+    [
+      "licensing",
+      "Licence or registration issue"
+    ],
+    [
+      "government_closure",
+      "Government closure"
+    ],
+    [
+      "merged",
+      "Merged with another school"
+    ],
+    [
+      "relocated",
+      "Relocated outside Edify scope"
+    ],
+    [
+      "facility",
+      "Building or facility problem"
+    ],
+    [
+      "security",
+      "Security or access problem"
+    ],
+    [
+      "disaster",
+      "Natural disaster or emergency"
+    ],
+    [
+      "management",
+      "School management breakdown"
+    ],
+    [
+      "temporary_suspension",
+      "Temporary suspension of operations"
+    ],
+    [
+      "duplicate_record",
+      "Duplicate or incorrect school record"
+    ],
+    [
+      "unconfirmed",
+      "Unable to confirm continued operation"
+    ],
+    [
+      "other",
+      "Other"
+    ]
+  ],
+  "closure_types": [
+    [
+      "temporary",
+      "Temporarily closed"
+    ],
+    [
+      "permanent",
+      "Permanently closed"
+    ]
+  ],
+  "doors": {
+    "Accountant": {
+      "impact": false,
+      "page": false,
+      "profiles": false
+    },
+    "Admin": {
+      "impact": true,
+      "page": true,
+      "profiles": true
+    },
+    "BusinessTransformationOfficer": {
+      "impact": false,
+      "page": false,
+      "profiles": true
+    },
+    "CCEO": {
+      "impact": false,
+      "page": true,
+      "profiles": true
+    },
+    "ClusterLeader": {
+      "impact": false,
+      "page": false,
+      "profiles": false
+    },
+    "CountryDirector": {
+      "impact": true,
+      "page": true,
+      "profiles": true
+    },
+    "HumanResources": {
+      "impact": false,
+      "page": false,
+      "profiles": false
+    },
+    "ImpactAssessment": {
+      "impact": true,
+      "page": true,
+      "profiles": true
+    },
+    "MfiLoanOfficer": {
+      "impact": false,
+      "page": false,
+      "profiles": false
+    },
+    "MfiPartnerAdmin": {
+      "impact": false,
+      "page": false,
+      "profiles": false
+    },
+    "PartnerAdmin": {
+      "impact": false,
+      "page": false,
+      "profiles": false
+    },
+    "PartnerFieldOfficer": {
+      "impact": false,
+      "page": false,
+      "profiles": false
+    },
+    "Program Lead": {
+      "impact": false,
+      "page": true,
+      "profiles": true
+    },
+    "ProjectCoordinator": {
+      "impact": false,
+      "page": false,
+      "profiles": true
+    },
+    "RegionalProgramLead": {
+      "impact": false,
+      "page": false,
+      "profiles": false
+    },
+    "RegionalVicePresident": {
+      "impact": true,
+      "page": true,
+      "profiles": false
+    }
+  },
+  "max_rows": 500,
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "page_size": 50,
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ]
+}

@@ -3391,6 +3391,11 @@ def _lifecycle_response(request, message: str, *, ok: bool = True):
     return local_redirect(came_from, fallback="/schools")
 
 
+#: The archive fetches at most this many closures; the table pages them
+#: (exported to the Go gateway by export_closed_schools_rules).
+CLOSED_ARCHIVE_MAX_ROWS = 500
+
+
 def _closed_archive_scope(user) -> Q:
     """The closures this reader may see, as a filter on SchoolClosure.
 
@@ -3480,7 +3485,7 @@ def closed_schools_view(request):
             "enrollment": c.enrollment_at_closure,
             "owner": c.owner_name_at_closure,
         }
-        for c in closures[:500]
+        for c in closures[:CLOSED_ARCHIVE_MAX_ROWS]
     ]
 
     # "Active" beside the archive means the same reader's schools, not the
