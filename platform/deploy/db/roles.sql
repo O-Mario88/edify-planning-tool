@@ -253,3 +253,8 @@ GRANT SELECT (id, responsible_user, visit_date) ON daily_visit_batch TO edify_ga
 -- from (costing_service.catalogue_rate).
 GRANT SELECT (id, country, kind, status, is_active, fy, version) ON cost_catalogue TO edify_gateway_ro;
 GRANT SELECT (catalogue_item_id) ON cost_setting TO edify_gateway_ro;
+
+-- My Plan's own tables (docs/migration/25-my-plan.md, 25.9): whether a
+-- listed activity's cost lines carry an advance request waiting on somebody
+-- (it would put the row on Waiting on Approval). Ids and status only.
+GRANT SELECT (id, budget_line_id, status) ON advance_request TO edify_gateway_ro;

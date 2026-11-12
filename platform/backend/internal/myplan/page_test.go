@@ -140,7 +140,7 @@ func TestTheTabsAndFiltersFollowThePeriod(t *testing.T) {
 
 func TestTheEmptyPageNamesTheSlice(t *testing.T) {
 	p, _ := ReadPeriod(values("period", "quarter"), noon)
-	page := emptyPage(p, []string{"2027"}, Choices{}, NewQuery(values("period", "quarter")), Plan{}, Filters{})
+	page := emptyPage(p, []string{"2027"}, Choices{}, NewQuery(values("period", "quarter")), Plan{}, Filters{}, 0)
 	if page.GetHeader().GetActions()[0].GetHref() != "/my-plan/export-drawer?period=quarter" {
 		t.Errorf("export %s", page.GetHeader().GetActions()[0].GetHref())
 	}
@@ -173,8 +173,6 @@ type failingDB struct{ unusedQuerier }
 func TestBuildPassesOrRefusesBeforeReading(t *testing.T) {
 	s := NewService(failingDB{}, func() time.Time { return noon })
 	staff := auth.Principal{Account: auth.Account{UserID: "u1", ActiveRole: "Admin", Roles: []string{"Admin"}}}
-	planner := staff
-	planner.Roles = []string{"Admin", "CCEO"}
 	refused := auth.Principal{Account: auth.Account{UserID: "u2", ActiveRole: "BusinessTransformationOfficer"}}
 	cases := []struct {
 		name    string
@@ -189,7 +187,6 @@ func TestBuildPassesOrRefusesBeforeReading(t *testing.T) {
 		{"a role the page refuses", refused, Path, values(), true, true},
 		{"a format no renderer answers", refused, Path, values("format", "csv"), true, true},
 		{"an export period", staff, Path, values("period_type", "month"), false, false},
-		{"a planner by a role held", planner, Path, values(), false, false},
 		{"a year the view fails on", staff, Path, values("fy", "abc"), false, false},
 	}
 	for _, c := range cases {

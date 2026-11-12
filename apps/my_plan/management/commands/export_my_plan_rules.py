@@ -99,6 +99,65 @@ def rules() -> dict:
         "api_formats": api_formats(),
         "plan": plan(),
         "rows": plan_rows(),
+        "readiness": readiness(),
+        "tables": plan_tables(),
+    }
+
+
+def readiness() -> dict:
+    """What a planner's own Planned and remaining names its lists by: the
+    schools behind each figure (planning_monitor.GAP_LABELS, which
+    my_plan_views._readiness_list reads a ?list= key against)."""
+    from apps.planning.planning_monitor import GAP_LABELS
+
+    return {"gap_labels": dict(GAP_LABELS)}
+
+
+def plan_tables() -> dict:
+    """What My Plan's own tables draw a row of finished work by: the row's
+    tint (completion_columns.row_state), its tick box (group_actions.may_tick),
+    its Actions menu (activity_row.html over compute_next_action), the cards
+    that would list it (attention.html) and the outreach visits named beside
+    the visit target."""
+    from apps.activities import completion_columns as cc
+    from apps.activities import day_off, facilitation, group_actions
+    from apps.activities.models import Activity
+    from apps.my_plan import services
+    from apps.core.enums import SchoolType
+    from apps.partners.models import PartnerAssignment
+    from apps.planning.country_oversight import rules as planning_rules
+    from apps.planning.visit_gate import PROGRAMME_SCHOOL_TYPES
+
+    return {
+        "awaiting_delivery": list(day_off.AWAITING_DELIVERY),
+        "never_overdue": sorted(cc._NEVER_OVERDUE),
+        "untickable": sorted(
+            group_actions._FINISHED_STATUSES | group_actions._CALLED_OFF_STATUSES
+        ),
+        "worked_statuses": list(services._WORKED_STATUSES),
+        "handed_in_statuses": sorted(services.HANDED_IN_STATUSES),
+        # An advance or claim waiting on somebody: compute_next_action's
+        # "view_status", which puts the row on Waiting on Approval.
+        "money_awaiting_statuses": sorted(services._MONEY_AWAITING_STATUSES),
+        "submit_needs_participants_types": list(
+            services.SUBMIT_NEEDS_PARTICIPANTS_TYPES
+        ),
+        "facilitator_types": sorted(facilitation.FACILITATOR_TRAINING_TYPES),
+        "facilitator_editable_statuses": sorted(
+            facilitation.FACILITATOR_EDITABLE_STATUSES
+        ),
+        "meeting_kind_labels": _choices(Activity, "meeting_kind"),
+        "outreach_types": list(planning_rules.OUTREACH_TYPES),
+        "outreach_purposes": list(planning_rules.OUTREACH_PURPOSES),
+        "visit_shape_types": list(planning_rules.VISIT_SHAPE_TYPES),
+        # training_ceilings._open_handovers: a hand-over the Partner has not
+        # dated, which My Training Summary may count.
+        "open_handover_statuses": list(PartnerAssignment.UNSCHEDULED_STATUSES),
+        # programme_school_work's sections: each programme school type's
+        # label (dict(SchoolType.choices)).
+        "programme_school_labels": {
+            kind: str(dict(SchoolType.choices)[kind]) for kind in PROGRAMME_SCHOOL_TYPES
+        },
     }
 
 

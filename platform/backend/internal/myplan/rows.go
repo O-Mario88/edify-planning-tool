@@ -302,6 +302,9 @@ type coreSlots struct {
 	kind     map[string]string
 	sequence map[string]*int
 	progress map[string]string
+	// statuses are every slot's status, as read (My Plan's Status filter
+	// shows the last of them: 25.3).
+	statuses []*string
 }
 
 func slotComplete(status *string) bool {
@@ -334,6 +337,7 @@ FROM core_activity_slot s INNER JOIN core_plan p ON p.id = s.core_plan_id WHERE 
 		if err := rows.Scan(&activityID, &kind, &seq, &status, &school, &fy); err != nil {
 			return out, err
 		}
+		out.statuses = append(out.statuses, status)
 		p := plan{str(school), pyNone(fy)}
 		s := slot{str(kind), pyIntNone(seq)}
 		packaged := str(kind) == "visit" || str(kind) == "training"

@@ -57,7 +57,29 @@ type Rules struct {
 	APIFormats         []string        `json:"api_formats"`
 	Plan               PlanRules       `json:"plan"`
 	Rows               RowRules        `json:"rows"`
+	Readiness          ReadinessRules  `json:"readiness"`
+	Tables             TableRules      `json:"tables"`
 	months             []monthOption
+}
+
+// TableRules are what My Plan's own tables draw a row of finished work by
+// (export_my_plan_rules.plan_tables).
+type TableRules struct {
+	AwaitingDelivery             []string          `json:"awaiting_delivery"`
+	NeverOverdue                 []string          `json:"never_overdue"`
+	Untickable                   []string          `json:"untickable"`
+	WorkedStatuses               []string          `json:"worked_statuses"`
+	HandedInStatuses             []string          `json:"handed_in_statuses"`
+	SubmitNeedsParticipantsTypes []string          `json:"submit_needs_participants_types"`
+	FacilitatorTypes             []string          `json:"facilitator_types"`
+	FacilitatorEditableStatuses  []string          `json:"facilitator_editable_statuses"`
+	MeetingKindLabels            map[string]string `json:"meeting_kind_labels"`
+	OutreachTypes                []string          `json:"outreach_types"`
+	OutreachPurposes             []string          `json:"outreach_purposes"`
+	VisitShapeTypes              []string          `json:"visit_shape_types"`
+	OpenHandoverStatuses         []string          `json:"open_handover_statuses"`
+	MoneyAwaitingStatuses        []string          `json:"money_awaiting_statuses"`
+	ProgrammeSchoolLabels        map[string]string `json:"programme_school_labels"`
 }
 
 // monthOption is one of the Month filter's choices.
