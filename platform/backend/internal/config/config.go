@@ -90,6 +90,9 @@ type Config struct {
 
 	// SignIn configures signing in.
 	SignIn SignIn
+
+	// GoSaves names the saves Go makes (EDIFY_GO_SAVES); all off by default.
+	GoSaves GoSaves
 }
 
 // LoadGuard reads only what the production-protection guard needs, for a
@@ -158,6 +161,9 @@ func Load(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	if cfg.SignIn, err = loadSignIn(env, getenv, cfg.ExistingAppURL); err != nil {
+		return Config{}, err
+	}
+	if cfg.GoSaves, err = loadGoSaves(env, getenv, cfg.ExistingAppURL, cfg.ClusterActions.InternalKey); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil

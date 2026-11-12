@@ -46,7 +46,8 @@ func (s *Service) GetPlanningDrawer(
 }
 
 // SavePlanningDrawer saves a planning drawer through the web view its form
-// posts to.
+// posts to, or, with the Go visit save switched on, a Schedule save Go takes
+// (planning_save.go).
 func (s *Service) SavePlanningDrawer(
 	ctx context.Context, request *connect.Request[screensv1.SavePlanningDrawerRequest],
 ) (*connect.Response[screensv1.SavePlanningDrawerResponse], error) {
@@ -58,6 +59,12 @@ func (s *Service) SavePlanningDrawer(
 		if !fieldName.MatchString(name) {
 			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This drawer has no such field.")
 		}
+	}
+	if answer, served, err := s.scheduleInGo(ctx, message); served {
+		if err != nil {
+			return nil, err
+		}
+		return connect.NewResponse(answer), nil
 	}
 	return send[screensv1.SavePlanningDrawerResponse](ctx, s, schoolPath(message.GetSchoolId(), "planning/"+message.GetKind()), message)
 }

@@ -346,3 +346,78 @@ differ`; `verify_chain(full=True)` on copy B: `{'ok': True, 'brokenAt':
 None, 'checkedRows': 15962, 'fromSeq': None}`. Race, the integration suite,
 ruff, format, bandit and the two Django tests pass. The save is not wired to
 any route, page or app, and nothing is cut over.
+
+## 27.10 The app's Schedule save reaches Go (behind a switch, development only, 2026-11-12)
+
+**How it reaches Go.** The app is unchanged: it still calls
+`PlanningDrawerService.SavePlanningDrawer(schoolId, "schedule", values)`.
+With `EDIFY_GO_SAVES=schedule_visit` the gateway
+(`internal/screens/planning_save.go`) first asks the existing application
+for the form, `POST /api/mobile/v1/schools/{id}/planning/schedule?form_only=1`:
+the same `PlanningDrawerFeedView` with the same `_open` checks and
+refusals, answering `{"form": form_data(kind, html, values), "origin": {ip,
+agent, correlation}}` and saving nothing (the origin is the request context
+its audit row and costs to follow would carry, so Go's rows say what the
+existing save would). Then:
+
+| Case | What the gateway does |
+|---|---|
+| the form request refused (`_open`: no school, not the reader's page, values missing) | answers that refusal: the same response the forwarded save meets |
+| `RequestFromForm` does not take the form, Go answers `ErrHandOn`, the person is in an acting seat, or the switch is off | forwards the original request to the existing application exactly as before |
+| Go saves | `{saved: true, message}`: `toast_message`'s words, the toast's sentence and then the ceiling notice, each whitespace-collapsed as `page_blocks` reads them; no redirect (the view sets no `HX-Redirect`) |
+| Go refuses | `{saved: false, error}`: the refusal's words as `error_fragment` paints them and `_saved_outcome` reads them back (a 403 refusal reads the same) |
+| Go fails before saving (database, the pricing relay) | `Unavailable`, "This could not be saved." Nothing was written: the save is one transaction and the pricing is asked before it |
+
+A save is never made by both: either Go saves (nothing is forwarded) or the
+request is forwarded whole (Go wrote nothing).
+
+**The switch.** `config.GoSaves` (`internal/config/go_saves.go`): every save
+off unless `EDIFY_GO_SAVES` names it; an unknown name, the test environment,
+or a missing `EDIFY_EXISTING_APP_URL` / `EDIFY_INTERNAL_KEY` is refused; in
+production the whole configuration is already refused
+(`ErrProductionNotApproved`). The writer role and `dbguard.VerifyIdentity`
+are unchanged and still checked at start. It has been on only in this
+proof's own gateway (8097); never on the main gateway.
+
+**The proof at the app's level** (`cmd/shadow/appplay`): each step of
+`scenarios/schedule_visit.json` is played as the app plays it, through a
+gateway: sign in, `GetPlanningDrawer`, then `SavePlanningDrawer` with the
+values `planningLogic.scheduleValues` sends for a visit (the drawer's own
+activity type, recommendation reason and catalogue item; staff delivery;
+the step's purpose, day and goal). Copy A: gateway 8096, switch off, over
+`edify_shadow_a` with a Django on 8196 over the same copy. Copy B: gateway
+8097 with the switch on, over `edify_shadow_b`, Django 8197. Every
+`SavePlanningDrawerResponse` must be identical, field by field, and so must
+the values sent. On B, Django's log shows 15 form requests and 3 forwarded
+saves (the pinned SSA-recommended Training Follow Up, the Core school, the
+other officer's school); Go made the other 12 (seven saves, five refusals).
+The gateway's sign-in refresh tokens are added to the comparison's noise
+(a random token, its family and a week-ahead expiry, like `django_session`):
+in the first run they were the only table that differed.
+
+Last lines exactly as printed (`agent11_app_shadow2.txt`):
+
+```
+0 of 15 steps answered differently
+compare exit 0
+366 tables, 19 changed by the runs
+  ...
+0 of 19 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 15962, 'fromSeq': None}
+```
+
+**Tests.** `internal/screens/planning_save_test.go` (forwarded while off; Go
+takes its case with the form's fields and origin and nothing is forwarded;
+every hand-on forwarded unchanged; the answers' words; a failed save; the
+form request's refusal; Python's whitespace), `internal/config/go_saves_test.go`,
+the integration test `TestTheGoVisitSaveIsOffByDefaultAndRefusedInProduction`
+(a gateway loaded from its environment forwards the save, asks for no form
+and writes no activity; production and test refuse the switch), and three
+Django tests beside `PlanningDrawerFeedTest` (the form is `form_data`'s and
+nothing is saved; the drawer's refusals hold; only Schedule answers a form).
+
+**Not done.** The switch is on nowhere but this proof's processes. The web
+(Next.js) does not call this path yet. The replayed month on a sanitised
+restore (M5's exit) has not been run. Cutover, and switching the save off
+in Django in the same release (03 §3.7), wait for the owner.

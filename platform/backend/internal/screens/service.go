@@ -63,6 +63,7 @@ type Service struct {
 	directory   Directory
 	profile     Profile
 	pages       []Pages
+	visits      VisitSaver // nil unless EDIFY_GO_SAVES names schedule_visit
 	logger      *slog.Logger
 }
 

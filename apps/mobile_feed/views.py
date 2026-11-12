@@ -1017,6 +1017,23 @@ def _planning_html(user, kind: str, school_id: str) -> tuple[int, str]:
     return response.status_code, response.content.decode()
 
 
+def _form_only(form: dict[str, str]) -> dict:
+    """The Schedule save's form, for the gateway's Go save (docs/migration/
+    27 §27.10): exactly what the save would post, and the request facts its
+    audit row and costs to follow would carry. Nothing is saved."""
+    from apps.core.request_context import get_request_context
+
+    context = get_request_context()
+    return {
+        "form": form,
+        "origin": {
+            "ip": (context.ip_address if context else None) or "",
+            "agent": (context.user_agent if context else None) or "",
+            "correlation": (context.correlation_id if context else None) or "",
+        },
+    }
+
+
 class PlanningDrawerFeedView(APIView):
     """A school's Schedule visit or Assign to Partner drawer: read (GET) or
     saved (POST)."""
@@ -1060,9 +1077,10 @@ class PlanningDrawerFeedView(APIView):
         if not isinstance(values, dict):
             return Response({"error": "Values are required."}, status=400)
         path, _view, save, _read = _planning_drawers()[kind]
-        page_request = _page_request(
-            user, path, planning_drawers.form_data(kind, html, values)
-        )
+        form = planning_drawers.form_data(kind, html, values)
+        if kind == "schedule" and request.query_params.get("form_only") == "1":
+            return Response(_form_only(form))
+        page_request = _page_request(user, path, form)
         response = save(page_request)
         outcome = _saved_outcome(response, page_request._messages)
         if outcome.get("saved"):

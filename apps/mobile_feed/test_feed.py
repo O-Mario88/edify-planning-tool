@@ -681,6 +681,73 @@ class PlanningDrawerFeedTest(SchoolActionFeedTest):
         self.assertTrue(body["error"])
         self.assertFalse(Activity.objects.filter(school_id=self.school.id).exists())
 
+    def form_only(self, kind, values, school=None):
+        school = school or self.school
+        return self.client.post(
+            f"/api/mobile/v1/schools/{school.id}/planning/{kind}?form_only=1",
+            {"values": values},
+            format="json",
+            **self.auth,
+        )
+
+    def test_the_schedule_form_is_what_the_save_would_post_and_nothing_is_saved(
+        self,
+    ):
+        from apps.activities.models import Activity
+        from apps.mobile_feed import planning_drawers
+
+        values = {
+            "purpose_of_visit": "donor_visit",
+            "scheduled_date": "2099-01-05",
+            "executor_type": "staff",
+            "expected_outcome": "not a field the app saves",
+        }
+        from apps.mobile_feed.views import _planning_html
+
+        body = self.form_only("schedule", values).json()
+
+        _status, html = _planning_html(self.user, "schedule", self.school.id)
+        expected = planning_drawers.form_data("schedule", html, values)
+        # Each drawer render carries its own CSRF token; the rest is the same.
+        body["form"].pop("csrfmiddlewaretoken", None)
+        expected.pop("csrfmiddlewaretoken", None)
+        self.assertEqual(body["form"], expected)
+        self.assertEqual(body["form"]["school_id"], "FEED-1")
+        self.assertNotIn("expected_outcome", body["form"])
+        self.assertEqual(
+            set(body["origin"]), {"ip", "agent", "correlation"}, body["origin"]
+        )
+        self.assertTrue(body["origin"]["correlation"])
+        self.assertFalse(Activity.objects.filter(school_id=self.school.id).exists())
+
+    def test_the_schedule_form_keeps_the_drawers_refusals(self):
+        self.assertEqual(
+            self.client.post(
+                f"/api/mobile/v1/schools/{self.school.id}/planning/schedule"
+                "?form_only=1",
+                {"values": "not a dict"},
+                format="json",
+                **self.auth,
+            ).status_code,
+            400,
+        )
+        self.assertEqual(
+            self.client.post(
+                "/api/mobile/v1/schools/NO-SUCH-SCHOOL/planning/schedule"
+                "?form_only=1",
+                {"values": {}},
+                format="json",
+                **self.auth,
+            ).status_code,
+            404,
+        )
+
+    def test_only_the_schedule_drawer_answers_its_form(self):
+        body = self.form_only("assign", {"purpose_of_visit": "training_follow_up"})
+
+        self.assertNotIn("form", body.json())
+        self.assertFalse(body.json()["saved"])
+
     def test_an_assignment_without_a_partner_is_refused(self):
         body = self.save("assign", {"purpose_of_visit": "training_follow_up"}).json()
 

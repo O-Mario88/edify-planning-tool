@@ -20,6 +20,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accounts"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
@@ -109,6 +110,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now),
 		)
+	if cfg.GoSaves.ScheduleVisit {
+		screenService.WithVisitSave(visitSave(cfg, pool, logger), logger)
+	}
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNavigationServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewSchoolDirectoryScreenServiceHandler(screenService, options...))
@@ -157,6 +161,20 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(loansv1connect.NewLoanFollowUpServiceHandler(loans.NewFollowUpService(lending), options...))
 	mux.Handle("POST /sms/delivery-report/{secret}", loanStore.DeliveryReports(cfg.Loans.SMSCallbackSecret, logger))
 	return httpmw.Chain(logger, httpmw.CORS(cfg.CORSAllowedOrigins, mux))
+}
+
+// visitSave is the Go visit save (docs/migration/27 §27.10), switched on by
+// EDIFY_GO_SAVES=schedule_visit only (development or staging, config.Load).
+// Its pricing is asked of, and settled by, the existing application.
+func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *activities.Service {
+	pricing := activities.NewHTTPPricing(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey, nil)
+	service, err := activities.NewService(pool, pricing, logger, time.Now)
+	if err != nil {
+		// Only a machine without the time zone database fails here: the
+		// gateway refuses to start rather than run with the switch quietly off.
+		panic(err)
+	}
+	return service
 }
 
 // signInHandler assembles sign-in: the existing accounts, the existing
