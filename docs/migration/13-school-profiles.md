@@ -17,7 +17,8 @@ proved against the existing page before the next.
 | 2b | The Overview: performance, operations and loans, the best and struggling intervention, the latest stories, the insights rail | Done, 13.7 |
 | 3a | SSA | Done, 13.8 |
 | 3b | Participation | Done, 13.9 |
-| 4 | Core School: the package rule, the Core tab, a Core school's Details | Next |
+| 4a | Core schools: the package rule in the header, a Core school's Details, and every engine tab at a Core school | Done, 13.10 |
+| 4b | The Core School tab (Core School Intelligence) | Done, 13.11 |
 | 5 | Closed schools and the Business Transformation panel with the loan register | With the school record changes and loans |
 
 ## 13.1 What moved
@@ -88,7 +89,7 @@ they are there and reproduced here:
 
 Updated as the pieces moved (2026-11-12):
 
-- Core and closed schools (and so the Core School tab), the Details tab and
+- Closed schools, the Details tab and
   the Overview of a school with a Business Transformation case or an MFI
   loan, anyone working in an acting capacity, and a Participation table
   longer than one page (50 rows).
@@ -249,3 +250,63 @@ Business Transformation record), SSA, Projects, Stories and Academic 597
 answered and identical. The earlier all-account runs (13.2, 13.7, 13.8) used
 a gateway that falls back to the existing application; they prove Go's
 answers matched, and these runs prove which answers were Go's.
+
+## 13.10 Core schools
+
+Go answers every tab of a Core school (the Core School tab in 13.11).
+
+| Part | Existing rule it ports |
+|---|---|
+| The package split | `core_schools.package_split.package_splits`: the school's live package for the year (or, while it has packages, the year's still to be made); the visits and trainings at the school dated in the year by who delivers them (`package_credit.slot_kind_for`: the follow-up and SSA Support visits staff deliver, the trainings at the school, the visit an in-school training writes beside itself; never outreach visits, a partner's SSA Support, a universal training or an Alumni project's work), with the existing query's joins; the group trainings filling the package's training slots; and the running year's hand-overs still waiting on the partner (`package_credit.assignment_kind`) |
+| The doors | `visit_gate._decide_by_rule` for a Core school: two visits a side; staff's half full locks the staff visit ("Staff visits complete"); the partner's two visits and two trainings held close Assign to Partner with the sentence the page says; SSA Support to a partner only while the year has no SSA |
+| The doors' addresses | a reader of Core Schools opens the Core Schools drawers (`/core-schools/schedule-activity`, `/core-schools/assign-partner`), anyone else the Planning drawers (`profile_core_routes`) |
+| Details | V1..V4 and T1..T4 of the school's live package for the year, else its newest: the slots taken (dated or handed to a partner) of the package's targets (`_core_package_marks`) |
+
+The seed's Core packages were all open. At Kimenyedde Church of Uganda
+Primary (1006), through the existing web app as the CCEO and marked
+"[Go parity check]": two staff core visits (a Training Follow Up and an SSA
+Support) and four hand-overs to Literacy Uganda (visits 3 and 4, trainings 1
+and 2), so the staff half is full and the partner's half is taken.
+
+Proved against a gateway with no existing application behind it: every
+engine tab and Details on all 700 of the CCEO's schools, Core schools
+included, every answer Go gave identical, the only ones passed on the two
+schools with a Business Transformation record (Overview and Details); and
+for all 29 accounts that may open a profile, Details (3,826 compared, 8
+passed on: those two schools) and Participation (3,826 compared, none passed
+on), none differing. School 1006's header was also read side by side: the
+"Staff visits complete" lock and its sentence, Assign to Partner greyed with
+"The partner's half of this package is taken: 2/2 visits and 2/2
+trainings.", the Core Schools drawers' addresses, and "4/4 V1V2V3V4".
+
+## 13.11 The Core School tab
+
+Go answers the Core School tab of a Core, Core Trained, Core Graduate or
+Champion school: the school's row of Core School Intelligence
+(`core_schools.intelligence.performance`), the same figures Core School
+Oversight shows for it.
+
+| Part | What it reads |
+|---|---|
+| SSA Trajectory | the latest confirmed records of the year and the year before, 120 days apart or more; each intervention by the country's rule first, the school's verdict by the mean change against the mean of those rules (`impact_engine.improvement_rows`, `change_rules.school_verdicts`) |
+| Package and Support | the year's Core plan as it records its completion; the package's 2 + 2 split (13.10); the hand-overs made in the year, by stage |
+| Participation | the register of the year's delivered cluster sessions and the school's own delivered trainings, as headcounts |
+| Outcomes | enrolment and learning results this year and last, each year on its own |
+| Recommended Support | the school's SSA recommendations still open or planned, by rank; Plan support for someone who may change the school's record (`may_write_school`) |
+| Champion Readiness | `ChampionEligibilityService.scan`'s inputs for the school (its Core profile, its live package, its confirmed SSAs) and `_read_champion`'s words; the Champion review for a Potential Champion, for a reader of Core Schools |
+
+The page reader keeps the sentence explaining the trajectory as its link
+alone, and drops the recommended training's name and the Accept, Defer and
+Reject forms (they are forms, which it does not read); Go matches today's
+text. School 1006 was given three SSA recommendations through the existing
+service (one accepted, one deferred, one as generated). Potential Champion,
+Progressing and a compared trajectory are not in the seed and are covered
+by unit tests built from the page's own words.
+
+Proved against a gateway with no existing application behind it: all 29
+accounts that may open a profile (3,826 compared), every answer Go gave
+identical, the only ones passed on the two schools with a Business
+Transformation record (where "core" opens their Overview), for the four
+accounts that reach them; the Programme Lead also over all 700 of the
+team's schools, none differing. School 1006's tab was read side by side as
+the CCEO, block for block.

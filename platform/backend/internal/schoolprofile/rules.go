@@ -38,6 +38,7 @@ type doors struct {
 	OpenProjects  bool `json:"open_projects"`
 	Loans         bool `json:"loans"`
 	MyPlan        bool `json:"my_plan"`
+	CoreSchools   bool `json:"core_schools"`
 }
 
 type profileRules struct {
@@ -58,6 +59,34 @@ type profileRules struct {
 	Gate                visitgate.Rules    `json:"gate"`
 	Engine              engineRules        `json:"engine"`
 	Participation       participationRules `json:"participation"`
+	CoreTab             coreTabRules       `json:"core_tab"`
+}
+
+// coreTabRules are what the Core School tab reads (export "core_tab").
+type coreTabRules struct {
+	TrajectoryLabels map[string]string `json:"trajectory_labels"`
+	Champion         struct {
+		Champion       string   `json:"champion"`
+		Potential      string   `json:"potential"`
+		Progressing    string   `json:"progressing"`
+		NotYet         string   `json:"not_yet"`
+		Insufficient   string   `json:"insufficient"`
+		LatestAvg      float64  `json:"latest_avg"`
+		StoredChampion []string `json:"stored_champion"`
+	} `json:"champion"`
+	SlotDoneStatuses          []string          `json:"slot_done_statuses"`
+	PackageWorkKinds          []string          `json:"package_work_kinds"`
+	PackageWorkSlots          int               `json:"package_work_slots"`
+	HandoverUnscheduled       []string          `json:"handover_unscheduled"`
+	HandoverScheduled         []string          `json:"handover_scheduled"`
+	HandoverCompleted         string            `json:"handover_completed"`
+	DeliveredStatuses         []string          `json:"delivered_statuses"`
+	ClusterSessionTypes       []string          `json:"cluster_session_types"`
+	TrainingTypes             []string          `json:"training_types"`
+	CountryWriteRoles         []string          `json:"country_write_roles"`
+	RecommendationStates      map[string]string `json:"recommendation_states"`
+	RecommendationLiveStates  []string          `json:"recommendation_live_states"`
+	RecommendationShownStates []string          `json:"recommendation_shown_states"`
 }
 
 // participationRules are what the Participation tab reads: the activity

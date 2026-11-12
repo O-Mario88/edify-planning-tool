@@ -10,10 +10,104 @@
     "core_graduate",
     "champion"
   ],
+  "core_tab": {
+    "champion": {
+      "champion": "Champion",
+      "insufficient": "Insufficient Evidence",
+      "latest_avg": 8.0,
+      "not_yet": "Not Yet Ready",
+      "potential": "Potential Champion",
+      "progressing": "Progressing",
+      "stored_champion": [
+        "Champion",
+        "Approved Champion"
+      ]
+    },
+    "cluster_session_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review",
+      "cluster_training",
+      "cluster_training_ssa_collection"
+    ],
+    "country_write_roles": [
+      "Admin",
+      "CountryDirector",
+      "ImpactAssessment"
+    ],
+    "delivered_statuses": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "ia_verified",
+      "salesforce_id_required",
+      "submitted_to_pl"
+    ],
+    "handover_completed": "completed",
+    "handover_scheduled": [
+      "scheduled",
+      "partner_scheduled"
+    ],
+    "handover_unscheduled": [
+      "assigned",
+      "pending_scheduling"
+    ],
+    "package_work_kinds": [
+      "visit",
+      "training"
+    ],
+    "package_work_slots": 8,
+    "recommendation_live_states": [
+      "generated",
+      "accepted",
+      "deferred",
+      "planned"
+    ],
+    "recommendation_shown_states": [
+      "generated",
+      "accepted",
+      "deferred",
+      "planned",
+      "planned"
+    ],
+    "recommendation_states": {
+      "accepted": "Accepted for planning",
+      "deferred": "Deferred",
+      "delivered": "Delivered and verified",
+      "generated": "Generated",
+      "planned": "Planned",
+      "rejected": "Rejected",
+      "superseded": "Superseded"
+    },
+    "slot_done_statuses": [
+      "accountant_confirmed",
+      "closed",
+      "completed",
+      "ia_verified"
+    ],
+    "training_types": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ],
+    "trajectory_labels": {
+      "declined": "Declined",
+      "improved": "Improved",
+      "maintained_strong": "Maintained Strong",
+      "no_change": "No Change",
+      "not_comparable": "Not Compared"
+    }
+  },
   "doors": {
     "Accountant": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": true,
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
@@ -30,6 +124,7 @@
     "Admin": {
       "assign_partner": true,
       "assign_project": true,
+      "core_schools": true,
       "delete_school": true,
       "enter_ssa": false,
       "loans": false,
@@ -46,6 +141,7 @@
     "BusinessTransformationOfficer": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
@@ -62,6 +158,7 @@
     "CCEO": {
       "assign_partner": true,
       "assign_project": true,
+      "core_schools": true,
       "delete_school": false,
       "enter_ssa": true,
       "loans": true,
@@ -78,6 +175,7 @@
     "ClusterLeader": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
@@ -94,6 +192,7 @@
     "CountryDirector": {
       "assign_partner": false,
       "assign_project": true,
+      "core_schools": true,
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
@@ -110,6 +209,7 @@
     "HumanResources": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
@@ -126,6 +226,7 @@
     "ImpactAssessment": {
       "assign_partner": true,
       "assign_project": true,
+      "core_schools": true,
       "delete_school": false,
       "enter_ssa": true,
       "loans": true,
@@ -142,6 +243,7 @@
     "MfiLoanOfficer": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
@@ -158,6 +260,7 @@
     "MfiPartnerAdmin": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
@@ -174,6 +277,7 @@
     "PartnerAdmin": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
@@ -190,6 +294,7 @@
     "PartnerFieldOfficer": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
@@ -206,6 +311,7 @@
     "Program Lead": {
       "assign_partner": true,
       "assign_project": true,
+      "core_schools": true,
       "delete_school": false,
       "enter_ssa": true,
       "loans": false,
@@ -222,6 +328,7 @@
     "ProjectCoordinator": {
       "assign_partner": true,
       "assign_project": true,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
@@ -238,6 +345,7 @@
     "RegionalProgramLead": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
@@ -254,6 +362,7 @@
     "RegionalVicePresident": {
       "assign_partner": false,
       "assign_project": false,
+      "core_schools": false,
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
@@ -436,6 +545,129 @@
       "follow_up_visit"
     ],
     "companion_purpose": "in_school_training_delivery_visit",
+    "core": {
+      "caps": {
+        "partner_trainings": 2,
+        "partner_visits": 2,
+        "staff_trainings": 2,
+        "staff_visits": 2
+      },
+      "cluster_training_types": [
+        "cluster_training",
+        "cluster_training_ssa_collection"
+      ],
+      "data_collection_visit_purposes": [
+        "ssa_support"
+      ],
+      "data_collection_visit_types": [
+        "baseline_ssa_visit",
+        "partner_ssa_collection",
+        "school_visit_ssa_collection"
+      ],
+      "lock_package_complete": "staff_visits_complete",
+      "non_package_visit_purposes": [
+        "donor_visit",
+        "school_invitation",
+        "social_visit",
+        "ssa_support",
+        "story_gathering"
+      ],
+      "outreach_visit_purposes": [
+        "donor_visit",
+        "school_invitation",
+        "social_visit",
+        "story_gathering"
+      ],
+      "outreach_visit_types": [
+        "donor_visit",
+        "school_invitation",
+        "social_visit",
+        "story_gathering_visit"
+      ],
+      "package_training_types": [
+        "core_training",
+        "in_school_training",
+        "school_improvement_training",
+        "training"
+      ],
+      "package_visit_types": [
+        "coaching_visit",
+        "core_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "school_visit",
+        "training_follow_up_visit"
+      ],
+      "plan_closed_statuses": [
+        "Archived",
+        "Cancelled",
+        "Exited",
+        "archived",
+        "cancelled",
+        "exited"
+      ],
+      "purpose_activity_types": {
+        "donor_visit": "donor_visit",
+        "in_school_coaching": "in_school_coaching_visit",
+        "in_school_training": "in_school_training",
+        "in_school_training_ssa": "in_school_training",
+        "school_invitation": "school_invitation",
+        "social_visit": "social_visit",
+        "ssa_support": "school_visit_ssa_collection",
+        "story_gathering": "story_gathering_visit",
+        "training_follow_up": "training_follow_up_visit"
+      },
+      "side_cap": 2,
+      "slot_allocated_statuses": [
+        "accountant_confirmed",
+        "accountantconfirmed",
+        "assigned_to_partner",
+        "awaiting_ia_verification",
+        "awaiting_owner_approval",
+        "closed",
+        "completed",
+        "completion started",
+        "completion_started",
+        "evidence accepted",
+        "evidence returned",
+        "evidence uploaded",
+        "evidence_accepted",
+        "evidence_returned",
+        "evidence_uploaded",
+        "ia pending",
+        "ia_verified",
+        "iapending",
+        "iaverified",
+        "in progress",
+        "in_progress",
+        "partner scheduled",
+        "partner_scheduled",
+        "rescheduled",
+        "returned",
+        "returned_by_ia",
+        "returned_by_pl",
+        "salesforce_id_required",
+        "scheduled",
+        "submitted_to_pl"
+      ],
+      "slot_done_statuses": [
+        "accountant_confirmed",
+        "accountantconfirmed",
+        "closed",
+        "completed",
+        "ia_verified",
+        "iaverified"
+      ],
+      "slot_handed_over_status": "assigned",
+      "uncredited_statuses": [
+        "awaiting_owner_approval",
+        "cancelled",
+        "deferred",
+        "not_planned",
+        "rejected"
+      ]
+    },
     "core_rule_types": [
       "core"
     ],

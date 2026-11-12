@@ -360,3 +360,72 @@ func TestALeadReadsTheTeamsWorkAndRunsTheirOwn(t *testing.T) {
 		t.Error("the director cannot reach the work")
 	}
 }
+
+func TestTheCoreTabWordsItsFiguresAsThePageDoes(t *testing.T) {
+	c := corePerformance{hasPlan: true, visitsDone: 3, visitsTarget: 4, trainingsDone: 5, trainingsTarget: 4, invited: 8, attended: 1}
+	// Each kind capped at its target: (3 + 4) of 8.
+	if got := c.packageLabel(); got != "88%" {
+		t.Errorf("package: %q", got)
+	}
+	if r := c.attendanceRate(); r == nil || *r != 12 {
+		t.Errorf("12.5%% rounds to the even neighbour: %v", r)
+	}
+	if signedFloat(0.1) != "+0.1" || signedFloat(-0.2) != "-0.2" || signedFloat(0) != "0.0" {
+		t.Error("signed figures")
+	}
+	ten := 10
+	var leaders *int
+	addHeadcount(&leaders, nil)
+	if leaders != nil {
+		t.Error("a missing headcount stays missing")
+	}
+	n := int32(3)
+	addHeadcount(&leaders, &n)
+	if dashInt(leaders) != "3" || dashInt(nil) != "—" || dashInt(&ten) != "10" {
+		t.Error("headcounts")
+	}
+}
+
+func TestChampionReadinessListsTheOfficialChecks(t *testing.T) {
+	sc := school{ID: "s1", SchoolID: "1006"}
+	potential := corePerformance{champion: rules.CoreTab.Champion.Potential,
+		metrics: &championMetrics{latestAvg: 8.25, lowestScore: 7.0, lowestIntervention: "leadership", totalSlots: 8, completedSlots: 8, eligible: true}}
+	panel := potential.championPanel(doors{CoreSchools: true}, sc).GetPanel()
+	lines := panel.GetItems()[0].GetLinks().GetLinks()
+	if panel.GetTitle() != "Champion Readiness: Potential Champion" ||
+		lines[0].GetText() != "Met: Latest SSA average 8.0 or more (now 8.3)" ||
+		lines[1].GetText() != "Met: No intervention below 7.0 (lowest 7.0, leadership)" ||
+		lines[2].GetText() != "Met: All package visits and trainings done (8 of 8)" {
+		t.Fatalf("the checks: %v", lines)
+	}
+	last := panel.GetItems()[len(panel.GetItems())-1].GetLinks().GetLinks()[0]
+	if last.GetText() != "Open Champion review" || last.GetHref() != "/core-schools/1006/champion-review" || !last.GetDrawer() {
+		t.Fatalf("the review: %v", last)
+	}
+	// Without the rule's inputs, each check is not judged and says why.
+	unjudged := corePerformance{champion: rules.CoreTab.Champion.Insufficient}.championPanel(doors{}, sc).GetPanel()
+	if got := unjudged.GetItems()[0].GetLinks().GetLinks()[0].GetText(); got != "Not judged: Latest SSA average 8.0 or more" {
+		t.Errorf("unjudged: %q", got)
+	}
+	if unjudged.GetItems()[1].GetText() != "The rule needs a confirmed SSA and a Core plan to judge this school." {
+		t.Error("the reason")
+	}
+}
+
+func TestRecommendationsOfferPlanSupportToWhoeverMayAct(t *testing.T) {
+	score := 6.1
+	recs := []coreRecommendation{{intervention: "financial_health", score: &score, band: "Improving", reason: "Weak twice.", state: "accepted"},
+		{intervention: "leadership", state: "planned"}}
+	blocks := recommendationBlocks(recs, true, school{ID: "s1"})
+	items := blocks[1].GetPanel().GetItems()
+	if blocks[0].GetSection() != "Recommended Support" || items[0].GetText() != "Financial Health (6.1, Improving)" ||
+		items[2].GetText() != "Accepted for planning" || items[3].GetLinks().GetLinks()[0].GetHref() != "/planning/schedule-modal?school_id=s1" {
+		t.Fatalf("an owner's: %v", items)
+	}
+	if read := recommendationBlocks(recs, false, school{ID: "s1"})[1].GetPanel().GetItems(); len(read) != 5 {
+		t.Fatalf("a reader's has no Plan support: %v", read)
+	}
+	if none := recommendationBlocks(nil, true, school{}); none[0].GetPanel().GetTitle() != "Recommended Support" {
+		t.Fatalf("none: %v", none)
+	}
+}

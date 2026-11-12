@@ -147,3 +147,13 @@ GRANT SELECT (activity_id, finding, improvements, created_at) ON school_visit_fe
 GRANT SELECT (id, scheduled_activity_id, monitoring_staff_id, assigning_staff_id, cluster_id, resolved_at, return_reason)
   ON partner_assignment TO edify_gateway_ro;
 GRANT SELECT (activity_id, amount) ON activity_schedule_cost_line TO edify_gateway_ro;
+-- A Core school's profile: its package's 2 + 2 split for the year's doors,
+-- and V1..V4 / T1..T4 on its Details.
+GRANT SELECT (id, school_id, fy, status, visits_target, trainings_target) ON core_plan TO edify_gateway_ro;
+GRANT SELECT (id, core_plan_id, activity_type, sequence_number, status, activity_id) ON core_activity_slot TO edify_gateway_ro;
+GRANT SELECT (support_type, visit_number, training_number) ON partner_assignment TO edify_gateway_ro;
+-- The Core School tab: the plan's recorded completion, the Core profile's
+-- Champion status, and the school's SSA recommendations.
+GRANT SELECT (visits_completed, trainings_completed) ON core_plan TO edify_gateway_ro;
+GRANT SELECT (school_id, champion_status) ON core_school_profile TO edify_gateway_ro;
+GRANT SELECT (school_id, intervention, score, score_band, reason, state, rank) ON ssa_recommendation TO edify_gateway_ro;

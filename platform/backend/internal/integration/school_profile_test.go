@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -83,14 +84,34 @@ func TestGoAnswersAnOfficersSchoolDetails(t *testing.T) {
 	}
 }
 
-func TestTheRestOfTheProfileIsStillTheExistingApplications(t *testing.T) {
+func TestACoreSchoolIsGosOnEveryTab(t *testing.T) {
 	userID := borrowAccount(t, "cceo@edify.org")
 	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
-	// A Core school's profile, whose package rule has not moved, is passed
-	// on; with no existing application here, it says so.
+	// No existing application is configured here: every answer is Go's.
 	core, _ := anOfficersSchool(t, userID, "core")
-	_, err := profileOf(token, core, "details")
-	requireCode(t, err, connect.CodeUnavailable, "")
+	tab, err := profileOf(token, core, "core")
+	if err != nil {
+		t.Fatalf("the Core School tab: %v", err)
+	}
+	blocks := tab.GetBlocks()
+	if blocks[0].GetStrip().GetTitle() != "Performance overview" || len(blocks[0].GetStrip().GetMetrics()) != 5 ||
+		!strings.HasPrefix(blocks[len(blocks)-2].GetPanel().GetTitle(), "Champion Readiness: ") {
+		t.Fatalf("the Core School tab: %v", blocks)
+	}
+	profile, err := profileOf(token, core, "details")
+	if err != nil {
+		t.Fatalf("a Core school's Details: %v", err)
+	}
+	keys := actionKeys(profile)
+	schedule := ""
+	for _, action := range profile.GetHeader().GetActions() {
+		if action.GetKey() == "schedule" {
+			schedule = action.GetHref()
+		}
+	}
+	if !keys["schedule"] || !strings.HasPrefix(schedule, "/core-schools/schedule-activity?") {
+		t.Fatalf("a Core school's Schedule opens the Core drawer: %q", schedule)
+	}
 }
 
 func TestASchoolOutsideTheScopeIsNotFound(t *testing.T) {

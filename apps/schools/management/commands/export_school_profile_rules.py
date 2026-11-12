@@ -73,8 +73,62 @@ def doors() -> dict:
             # Whether the Participation tab's rows may offer Edit, Complete,
             # Reschedule and Cancel at all (profile_activities._decorate).
             "my_plan": RolePermissionService.can_view_page(user, "my_plan"),
+            # A Core school's Schedule and Assign to Partner open the Core
+            # Schools drawers for a reader of that page.
+            "core_schools": RolePermissionService.can_view_page(user, "core_schools"),
         }
     return out
+
+
+def core_tab_rules() -> dict:
+    """What the Core School tab reads (apps.core_schools.intelligence and
+    champion_services, the SSA recommendations): its words, the statuses it
+    counts by, and who may act on a school."""
+    from apps.core.activity_types import TRAINING_TYPES
+    from apps.core.scoping import COUNTRY_WRITE_ROLES
+    from apps.core_schools import intelligence
+    from apps.core_schools.services import (
+        CORE_SLOT_DONE_STATUSES,
+        PACKAGE_WORK_KINDS,
+        PACKAGE_WORK_SLOTS,
+    )
+    from apps.partners.models import PartnerAssignment
+    from apps.planning import school_planning_badges as badges
+    from apps.ssa.recommendation_models import LIVE_STATES, RecommendationState
+
+    return {
+        "trajectory_labels": dict(intelligence.TRAJECTORY_LABELS),
+        "champion": {
+            "champion": intelligence.CHAMPION,
+            "potential": intelligence.POTENTIAL,
+            "progressing": intelligence.PROGRESSING,
+            "not_yet": intelligence.NOT_YET,
+            "insufficient": intelligence.INSUFFICIENT,
+            "latest_avg": intelligence.CHAMPION_LATEST_AVG,
+            "stored_champion": ["Champion", "Approved Champion"],
+        },
+        "slot_done_statuses": sorted(CORE_SLOT_DONE_STATUSES),
+        "package_work_kinds": list(PACKAGE_WORK_KINDS),
+        "package_work_slots": PACKAGE_WORK_SLOTS,
+        "handover_unscheduled": list(PartnerAssignment.UNSCHEDULED_STATUSES),
+        "handover_scheduled": [
+            PartnerAssignment.STATUS_SCHEDULED,
+            PartnerAssignment.STATUS_PARTNER_SCHEDULED,
+        ],
+        "handover_completed": PartnerAssignment.STATUS_COMPLETED,
+        "delivered_statuses": sorted(
+            badges.AWAITING_VERIFICATION_STATUSES | badges.VERIFIED_STATUSES
+        ),
+        "cluster_session_types": list(badges.CLUSTER_SESSION_TYPES),
+        "training_types": [str(t) for t in TRAINING_TYPES],
+        "country_write_roles": sorted(COUNTRY_WRITE_ROLES),
+        "recommendation_states": dict(RecommendationState.choices),
+        "recommendation_live_states": [str(s) for s in LIVE_STATES],
+        "recommendation_shown_states": [
+            *(str(s) for s in LIVE_STATES),
+            str(RecommendationState.PLANNED),
+        ],
+    }
 
 
 def participation_rules() -> dict:
@@ -179,6 +233,7 @@ def rules() -> dict:
         "closed_school_message": CLOSED_SCHOOL_MESSAGE,
         "engine": engine_rules(),
         "participation": participation_rules(),
+        "core_tab": core_tab_rules(),
         "gate": {
             "client_rule_types": list(gate.CLIENT_RULE_SCHOOL_TYPES),
             "core_rule_types": list(gate.CORE_RULE_SCHOOL_TYPES),
@@ -201,7 +256,47 @@ def rules() -> dict:
             "data_collection_purposes": list(DATA_COLLECTION_PURPOSES),
             "general_intervention": GENERAL_INTERVENTION,
             "lock_labels": dict(gate.LOCK_LABELS),
+            "core": core_package_rules(),
         },
+    }
+
+
+def core_package_rules() -> dict:
+    """What a Core school's 2 + 2 package split reads
+    (apps.core_schools.package_split and package_credit) and the visit
+    gate's words for it."""
+    from apps.core_schools import core_planning_services as planning
+    from apps.core_schools import package_credit as credit
+    from apps.core_schools import package_year
+    from apps.core_schools.services import CORE_PLAN_CLOSED_STATUSES
+    from apps.partners.purposes import PURPOSE_ACTIVITY_TYPES
+    from apps.planning import visit_gate as gate
+
+    return {
+        "side_cap": gate.CORE_STAFF_VISIT_CAP,
+        "caps": {
+            "staff_visits": gate.CORE_STAFF_VISIT_CAP,
+            "partner_visits": gate.CORE_PARTNER_VISIT_CAP,
+            "staff_trainings": gate.CORE_STAFF_TRAINING_CAP,
+            "partner_trainings": gate.CORE_PARTNER_TRAINING_CAP,
+        },
+        "package_visit_types": sorted(credit.PACKAGE_VISIT_TYPES),
+        "package_training_types": sorted(credit.PACKAGE_TRAINING_TYPES),
+        "data_collection_visit_types": sorted(credit.DATA_COLLECTION_VISIT_TYPES),
+        "data_collection_visit_purposes": sorted(credit.DATA_COLLECTION_VISIT_PURPOSES),
+        "outreach_visit_types": sorted(credit.OUTREACH_VISIT_TYPES),
+        "outreach_visit_purposes": sorted(credit.OUTREACH_VISIT_PURPOSES),
+        "non_package_visit_purposes": sorted(credit.NON_PACKAGE_VISIT_PURPOSES),
+        "uncredited_statuses": sorted(credit.UNCREDITED_STATUSES),
+        "cluster_training_types": sorted(package_year.CLUSTER_TRAINING_TYPES),
+        "plan_closed_statuses": sorted(CORE_PLAN_CLOSED_STATUSES),
+        "purpose_activity_types": dict(PURPOSE_ACTIVITY_TYPES),
+        "lock_package_complete": gate.LOCK_PACKAGE_COMPLETE,
+        # A package slot's state (core_planning_services.slot_state): taken
+        # once allocated or handed over, done once delivered.
+        "slot_allocated_statuses": sorted(planning.CORE_ALLOCATED_SLOT_STATUSES),
+        "slot_handed_over_status": "assigned",
+        "slot_done_statuses": sorted(planning.CORE_SLOT_DONE_LOWER),
     }
 
 

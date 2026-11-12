@@ -6,17 +6,15 @@
 // Champion schools take donor and story visits and are never handed over).
 //
 // It ports what a school's profile reads: the lock on the staff support
-// visit and why, and whether Assign to Partner is open and why not. The
-// Core package rule (2 + 2 staff and partner) is not ported yet: a Core
-// school is refused with ErrCoreNotPorted, and its readers stay with the
-// existing application. A closed school is not asked here either: the
+// visit and why, and whether Assign to Partner is open and why not, by the
+// client rule (one support visit a year) and the Core package rule (2 + 2
+// staff and partner, core.go). A closed school is not asked here: the
 // profile hides the doors of a closed school before the gate is read.
 package visitgate
 
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -49,19 +47,17 @@ type Rules struct {
 	DataCollectionPurposes      []string          `json:"data_collection_purposes"`
 	GeneralIntervention         string            `json:"general_intervention"`
 	LockLabels                  map[string]string `json:"lock_labels"`
+	Core                        CoreRules         `json:"core"`
 	// Set by the package that holds the rest of the export: SsaIntervention
 	// values and SchoolType labels.
 	SSAInterventions []string          `json:"-"`
 	SchoolTypeLabels map[string]string `json:"-"`
 }
 
-// ErrCoreNotPorted: the Core package rule is still the existing
-// application's.
-var ErrCoreNotPorted = errors.New("visitgate: the Core package rule is not ported yet")
-
-// School is what the gate reads of a school.
+// School is what the gate reads of a school; Code is its School ID, which
+// a Core plan is filed under.
 type School struct {
-	ID, Name, Type string
+	ID, Code, Name, Type string
 }
 
 const (
@@ -79,7 +75,7 @@ const (
 type Gate struct {
 	School School
 	FY     string
-	// Rule is "client" or "none".
+	// Rule is "client", "core" or "none".
 	Rule string
 	// StaffVisits are the year's staff support visits (a Training Follow Up
 	// or an In-school Training).
@@ -101,6 +97,10 @@ type Gate struct {
 	AssignSSAReason   string
 	CanAssignPartner  bool
 	AssignReason      string
+
+	// The Core package's split (package_split): what each side holds, and
+	// whether the school has a package for the year at all.
+	Split CoreSplit
 }
 
 func (g Gate) oneCommitment(r Rules) bool {
@@ -124,6 +124,8 @@ func (g Gate) lockState(r Rules) string {
 		return lockNotApplicable
 	case g.StaffCanSchedule:
 		return lockUnlocked
+	case g.Rule == "core":
+		return r.Core.LockPackageComplete
 	case g.StaffCode == codePartnerVisitAssigned:
 		if g.PartnerHoldingDated > 0 {
 			return lockPartnerScheduled
@@ -155,34 +157,44 @@ func ruleFor(r Rules, schoolType string) string {
 	}
 }
 
-// Of is visit_gate.visit_gate(school, fy) for an open school.
-func Of(ctx context.Context, q Querier, r Rules, school School, fy string) (Gate, error) {
+// Of is visit_gate.visit_gate(school, fy) for an open school; operational
+// is the running year (get_operational_fy), which decides whether a Core
+// school's package for fy may still be made and whether its waiting
+// hand-overs count.
+func Of(ctx context.Context, q Querier, r Rules, school School, fy, operational string) (Gate, error) {
 	g := Gate{
 		School: school, FY: fy, Rule: ruleFor(r, school.Type),
 		StaffCanSchedule: true, CanAssignVisit: true, CanAssignSSA: true, CanAssignPartner: true,
 	}
-	switch g.Rule {
-	case "core":
-		return g, ErrCoreNotPorted
-	case "none":
+	if g.Rule == "none" {
 		return g, nil
 	}
 	outside, err := projectsOutsideSSA(ctx, q, r)
 	if err != nil {
 		return g, err
 	}
-	if err := g.countVisits(ctx, q, r, outside); err != nil {
-		return g, err
-	}
-	if err := g.countHandovers(ctx, q, r, outside); err != nil {
-		return g, err
+	if g.Rule == "core" {
+		if g.Split, err = splitOf(ctx, q, r, school, fy, operational, outside); err != nil {
+			return g, err
+		}
+	} else {
+		if err := g.countVisits(ctx, q, r, outside); err != nil {
+			return g, err
+		}
+		if err := g.countHandovers(ctx, q, r, outside); err != nil {
+			return g, err
+		}
 	}
 	if err := q.QueryRow(ctx, `
 SELECT EXISTS (SELECT 1 FROM ssa_record WHERE school_id = $1 AND fy = $2 AND deleted_at IS NULL AND verification_status = 'confirmed')`,
 		school.ID, fy).Scan(&g.HasSSA); err != nil {
 		return g, fmt.Errorf("visitgate: reading the year's SSA: %w", err)
 	}
-	g.decide(r)
+	if g.Rule == "core" {
+		g.decideCore(r)
+	} else {
+		g.decide(r)
+	}
 	return g, nil
 }
 

@@ -234,6 +234,24 @@ partner support.
 | iOS Release | Pass | cceo@: Kimenyedde's Participation tab from Go: the work and channel tables, "Next: Cluster E, 28 Nov.", 7 planned and 7 completed, and Partner Support with "UGX 40,000" |
 | Android Release | Pass | cceo@: the same tab, the rescheduled training reading "26 Nov 2026 – 28 Nov", and the four hand-overs |
 
+## School Profiles, Core schools and the Core School tab, read by Go (2026-11-12)
+
+[docs/migration/13-school-profiles.md](../migration/13-school-profiles.md),
+13.10 and 13.11: the Core package's 2 + 2 rule in a Core school's header,
+its package on Details, every engine tab at a Core school, and the Core
+School tab of any Core-lifecycle school.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/schools/test_school_profile_rules_export.py` (now with the package split's vocabularies, the slot states, the Core Schools door, and the Core School tab's words and statuses) |
+| Parity with the existing page | Pass | against a gateway with no existing application behind it: every tab on all 700 of the CCEO's schools, Core included, every Go answer identical; Details, Participation and the Core School tab for all 29 accounts (3,826 each), none differing, the only profiles passed on the two schools with a Business Transformation record |
+| Records the seed lacked | Made in dev | every seeded Core package was open: at 1006, through the existing web app as the CCEO, two staff core visits and four hand-overs to Literacy Uganda (the staff half full, the partner's half taken), and three SSA recommendations through the existing service (accepted, deferred, generated) |
+| Go unit tests | Pass | package work by shape and deliverer, a hand-over's kind, each side's two closing its door, a slot's state; the Core School tab's package share, attendance rounding, headcounts, Champion checks and review, recommendations with and without Plan support |
+| Go integration suite | Pass | a Core school's Core School tab and Details are Go's, its Schedule opening the Core Schools drawer |
+| Django and Go checks | Pass | ruff, format, bandit clean; `go vet`, `gofmt`, `go test -race ./...` |
+| iOS Release | Pass | cceo@: school 1006 from Go: "Staff visits complete", Assign to Partner greyed; the Core School tab with "Staff: 2 visits, 0 trainings · Partner: 2 visits, 2 trainings" and the recommendations with Plan support |
+| Android Release | Not run | the emulator hung repeatedly (window manager stuck; cold boots on host and software graphics both froze under load); the same block kinds were checked on Android in the earlier pieces |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

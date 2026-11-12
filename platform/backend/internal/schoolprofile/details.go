@@ -2,8 +2,10 @@ package schoolprofile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -126,6 +128,13 @@ func (s *Service) recordPanel(ctx context.Context, p auth.Principal, sc school, 
 		visitText += " " + jMY(*visit.Next)
 	}
 	facts = append(facts, fact("Visit status (FY"+fy+")", visitText, ""))
+	if sc.Type == "core" {
+		marks, err := s.corePackageFacts(ctx, sc, fy)
+		if err != nil {
+			return nil, err
+		}
+		facts = append(facts, marks...)
+	}
 
 	coverage, err := schooldirectory.CoverageOf(ctx, s.db, sc.ID, sc.Type, sc.ClusterID, fy)
 	if err != nil {
@@ -333,4 +342,61 @@ func quality(sc school) *screensv1.PagePanel {
 			text("Score is updated automatically. Keep fields complete and verified to improve it."),
 		},
 	}
+}
+
+// corePackageFacts are a Core school's package on its Details
+// (_core_package_marks): the visits and trainings taken of the targets, and
+// V1..V4 / T1..T4. The school's live package for the year, else its newest
+// (get_live_core_plan); none where it has no package.
+func (s *Service) corePackageFacts(ctx context.Context, sc school, fy string) ([]*screensv1.PageFact, error) {
+	core := rules.Gate.Core
+	var planID, planFY string
+	var visitsTarget, trainingsTarget *int32
+	err := s.db.QueryRow(ctx, `
+SELECT id, fy, visits_target, trainings_target FROM core_plan
+WHERE school_id = $1 AND NOT (status = ANY($2))
+ORDER BY (fy = $3) DESC, fy DESC LIMIT 1`, sc.SchoolID, core.PlanClosedStatuses, fy).Scan(&planID, &planFY, &visitsTarget, &trainingsTarget)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("schoolprofile: reading the Core plan: %w", err)
+	}
+	rows, err := s.db.Query(ctx, `
+SELECT activity_type, COALESCE(sequence_number, 0), COALESCE(status, '') FROM core_activity_slot
+WHERE core_plan_id = $1 ORDER BY COALESCE(sequence_number, 0), id`, planID)
+	if err != nil {
+		return nil, fmt.Errorf("schoolprofile: reading the Core slots: %w", err)
+	}
+	defer rows.Close()
+	marks := map[string]string{}
+	taken := map[string]int{}
+	for rows.Next() {
+		var kind, status string
+		var sequence int32
+		if err := rows.Scan(&kind, &sequence, &status); err != nil {
+			return nil, err
+		}
+		if core.SlotTaken(status) {
+			taken[kind]++
+		}
+		letter := map[string]string{"visit": "V", "training": "T"}[kind]
+		marks[kind] += letter + strconv.Itoa(int(sequence))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	target := func(t *int32) int {
+		if t == nil || *t == 0 {
+			return 4
+		}
+		return int(*t)
+	}
+	value := func(kind string, t *int32) string {
+		return strings.TrimSpace(strconv.Itoa(taken[kind]) + "/" + strconv.Itoa(target(t)) + " " + marks[kind])
+	}
+	return []*screensv1.PageFact{
+		fact("Core visits (FY"+planFY+")", value("visit", visitsTarget), ""),
+		fact("Core trainings (FY"+planFY+")", value("training", trainingsTarget), ""),
+	}, nil
 }

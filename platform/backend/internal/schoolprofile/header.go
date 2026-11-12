@@ -49,8 +49,9 @@ func (s *Service) header(ctx context.Context, p auth.Principal, scope schooldire
 	}
 
 	// The year's support visit (_profile_planning_controls, visit_gate).
+	operational := schooldirectory.OperationalFY(now)
 	gate, err := visitgate.Of(ctx, s.db, rules.Gate,
-		visitgate.School{ID: sc.ID, Name: sc.Name, Type: sc.Type}, schooldirectory.OperationalFY(now))
+		visitgate.School{ID: sc.ID, Code: sc.SchoolID, Name: sc.Name, Type: sc.Type}, operational, operational)
 	if err != nil {
 		return nil, err
 	}
@@ -59,14 +60,20 @@ func (s *Service) header(ctx context.Context, p auth.Principal, scope schooldire
 	}
 
 	h.Actions = append(h.Actions, drawer("Edit Details", "/schools/"+sc.ID+"/edit-drawer", true))
+	// A Core school's doors are the Core Schools drawers, for a reader of
+	// that page (profile_core_routes).
+	schedule, assign := "/planning/schedule-modal?school_id=", "/planning/assign-partner-modal?school_id="
+	if sc.Type == "core" && d.CoreSchools {
+		schedule, assign = "/core-schools/schedule-activity?school_id=", "/core-schools/assign-partner?school_id="
+	}
 	if d.Schedule {
 		// A staff support visit locks only a closed school's Schedule, and a
 		// closed school is not served here.
-		h.Actions = append(h.Actions, drawer("Schedule", "/planning/schedule-modal?school_id="+sc.SchoolID, false))
+		h.Actions = append(h.Actions, drawer("Schedule", schedule+sc.SchoolID, false))
 	}
 	if d.AssignPartner {
 		if gate.CanAssignPartner {
-			h.Actions = append(h.Actions, drawer("Assign to Partner", "/planning/assign-partner-modal?school_id="+sc.SchoolID, false))
+			h.Actions = append(h.Actions, drawer("Assign to Partner", assign+sc.SchoolID, false))
 		} else {
 			h.Actions = append(h.Actions, greyed("Assign to Partner", gate.AssignReason))
 		}

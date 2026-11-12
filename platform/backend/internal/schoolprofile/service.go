@@ -49,7 +49,7 @@ const detailsTab = "details"
 
 // servedTabs are the tabs Go answers; the rest (and no tab, the Overview)
 // are still the existing application's.
-var servedTabs = map[string]bool{detailsTab: true, "overview": true, "ssa": true, "activities": true, "projects": true, "stories": true, "academic": true}
+var servedTabs = map[string]bool{detailsTab: true, "overview": true, "ssa": true, "activities": true, "projects": true, "stories": true, "academic": true, "core": true}
 
 // stillExisting are the tabs that are the existing application's whatever
 // the school. (Core School is too where a school has it; at a school that
@@ -66,6 +66,11 @@ func (s *Service) section(ctx context.Context, p auth.Principal, scope schooldir
 	}
 	d := rules.Doors[p.ActiveRole]
 	l := lensOf(sc, tab, req.GetFy(), req.GetPeriod(), schooldirectory.OperationalFY(now))
+	if tab == "core" {
+		// Not an engine tab: no scope line, facts or filters above it.
+		blocks, err := s.coreTab(ctx, scope, d, sc, l, now)
+		return blocks, nil, err
+	}
 	frame, err := s.frame(ctx, d, sc, l)
 	if err != nil {
 		return nil, nil, err
@@ -146,7 +151,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 	if err != nil {
 		return nil, true, err
 	}
-	if sc.closed() || sc.core() {
+	if sc.closed() {
 		return nil, false, nil
 	}
 	// A tab the school's profile does not have is its first, the Overview
