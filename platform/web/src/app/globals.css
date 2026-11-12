@@ -1,0 +1,60 @@
+/*
+ * The web app's stylesheet: Tailwind 4 over the existing web's own tokens.
+ * styles/generated/* are copied from the existing web's CSS by
+ * scripts/sync-tokens.mjs and checked by the unit tests; do not edit them.
+ */
+@import "tailwindcss";
+@import "../styles/generated/theme.css";
+@import "../styles/generated/edify-tokens.css";
+
+/* `dark:` follows the chosen theme (the root's .theme-dark), as on the
+   existing web, never the device alone. */
+@custom-variant dark (&:where(.theme-dark, .theme-dark *));
+
+@font-face {
+  font-family: "Geist Sans";
+  src: url("../fonts/Geist-Variable.woff2") format("woff2-variations"),
+       url("../fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* The selected segment of a tab rail: a literal in the existing web
+     (static/css/components/interactions.css, `.is-active` segment), not a
+     token there, so it is named here once. */
+  --edify-web-segment-active: #1976d2;
+}
+
+html {
+  background: var(--edify-bg);
+}
+
+/* The root stays 16px (rem is the existing web's rem); body text is the
+   body size, as there. */
+body {
+  background: var(--edify-bg);
+  color: var(--edify-text);
+  font-family: var(--edify-font-sans);
+  font-size: var(--edify-text-body-size);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Selects draw the existing web's chevron, not the platform's arrows. */
+select.edify-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23858e98' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-position: right 10px center;
+  background-repeat: no-repeat;
+  background-size: 14px;
+}
+
+/* The navigation's icons arrive as the existing web's SVG markup, with its
+   class names; size them as the sidebar does (sidebar.css). */
+.edify-nav-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}

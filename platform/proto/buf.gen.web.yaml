@@ -1,0 +1,19 @@
+# The web app's TypeScript contracts (platform/web/src/gen), from the same
+# pinned protoc-gen-es as the app (../web/package-lock.json pins it to the
+# version ../mobile/package-lock.json pins). Kept apart from buf.gen.yaml so
+# generating the web needs only the web's node_modules.
+# Run `make proto` from platform/; CI fails when the output differs.
+version: v2
+clean: true
+# The same managed options as buf.gen.yaml, so the embedded descriptors are
+# byte-for-byte the app's.
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/O-Mario88/edify-planning-tool/platform/backend/gen
+plugins:
+  - local: ../web/node_modules/.bin/protoc-gen-es
+    out: ../web/src/gen
+    opt: target=ts
+    include_imports: true

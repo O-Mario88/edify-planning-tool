@@ -1,7 +1,7 @@
 name: Platform CI
 
-# The Go gateway, the Protocol Buffer contracts, the Python analytics worker
-# and the React Native app (everything under platform/).
+# The Go gateway, the Protocol Buffer contracts, the Python analytics worker,
+# the React Native app and the Next.js web app (everything under platform/).
 #
 # This workflow runs for the migration branch and its sub-branches only. It
 # has no deploy job and holds no secret: nothing here can reach production,
@@ -62,7 +62,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: platform/mobile/package-lock.json
+          cache-dependency-path: |
+            platform/mobile/package-lock.json
+            platform/web/package-lock.json
 
       - name: Install the pinned generators
         working-directory: platform
@@ -70,6 +72,7 @@ jobs:
           make tools
           python -m pip install -r workers/analytics/requirements-dev.txt
           npm ci --prefix mobile
+          npm ci --prefix web
 
       - name: Lint and format the contracts
         working-directory: platform
@@ -295,6 +298,56 @@ jobs:
       # EAS, which is a release-gate item, not something this job claims.
       - name: Bundle JavaScript for iOS and Android
         run: npx expo export --platform ios --platform android --output-dir "$RUNNER_TEMP/export"
+
+  web:
+    name: Next.js web app
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: platform/web
+    # A development build: the app refuses anything else and any
+    # edifyplanning.app host (src/lib/environment.ts). Nothing here is
+    # reached; the build only needs the addresses to be valid.
+    env:
+      EDIFY_ENV: development
+      EDIFY_GATEWAY_URL: http://localhost:8090
+      EDIFY_EXISTING_WEB_URL: http://localhost:8010
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: platform/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # Includes the check that the design tokens are still the existing
+      # web's (scripts/sync-tokens.test.ts).
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      # The browser comparison with the existing web (e2e/, npm run
+      # test:compare) needs the existing web, the gateway and seed accounts on
+      # one machine. It is run locally, not here.
 
   images:
     name: Container images build

@@ -36,6 +36,7 @@ deployed, or connected to production.
 | [25-my-plan.md](25-my-plan.md) | My Plan (M4): piece 1, the page for staff who hold nothing yet, read by Go; the map of the rest and its split into pieces 2–6 |
 | [26-shadow-writes.md](26-shadow-writes.md) | The harness every save is proved with before Go writes it: two copies, the existing app's drawers played on one, a table-by-table comparison; proved against itself |
 | [27-first-save-schedule-visit.md](27-first-save-schedule-visit.md) | The first save in Go, scheduling a school visit: what one save writes (measured), the split (Go saves, money stays until M12), the first piece's scope, contract, writer role and proof; one owner decision |
+| [28-web-foundation.md](28-web-foundation.md) | The Next.js web foundation (M15): sign-in through the gateway, httpOnly session cookies, the shell, the existing web's tokens copied and checked, generated Connect clients, the School Directory from Go's answer, compared with Django at 1440 and 390 pixels |
 
 The code is under [`platform/`](../../platform/README.md).
 

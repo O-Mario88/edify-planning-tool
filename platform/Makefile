@@ -1,11 +1,12 @@
-# Edify platform (Go gateway, contracts, Python worker, React Native app).
+# Edify platform (Go gateway, contracts, Python worker, React Native app,
+# Next.js web app).
 # Nothing here touches the existing Django application or any database that
 # is not a local development or test database.
 
 # Relative on purpose: the checkout path may contain spaces.
 BIN := .bin
 
-.PHONY: tools proto proto-lint proto-breaking proto-check backend-vet backend-test worker-test mobile-test test
+.PHONY: tools proto proto-lint proto-breaking proto-check backend-vet backend-test worker-test mobile-test web-test test
 
 # Build the pinned generators (versions come from tools/go.mod).
 tools:
@@ -24,11 +25,12 @@ proto-breaking: tools
 
 proto: tools
 	cd proto && ../$(BIN)/buf generate
+	cd proto && ../$(BIN)/buf generate --template buf.gen.web.yaml
 	cd workers/analytics && ./scripts/gen_proto.sh
 
 # Generated code must match the contracts that are committed.
 proto-check: proto
-	git diff --exit-code -- backend/gen mobile/src/gen workers/analytics/gen
+	git diff --exit-code -- backend/gen mobile/src/gen web/src/gen workers/analytics/gen
 
 backend-vet:
 	cd backend && go vet ./...
@@ -42,4 +44,7 @@ worker-test:
 mobile-test:
 	cd mobile && npm run typecheck && npm test
 
-test: backend-vet backend-test worker-test mobile-test
+web-test:
+	cd web && npm run typecheck && npm run lint && npm test
+
+test: backend-vet backend-test worker-test mobile-test web-test
