@@ -49,6 +49,20 @@ stored key order, numbers as `int` or `float` (`1234567.0`, `1e-05`,
 (`{'a': 1, 'k': 'v'}`), `True` and `None`, and Python's truth deciding which
 key holds anything (`0`, `""`, `[]` do not).
 
+The gateway does not read `audit_log` itself: the audit chain's payloads
+(sign-ins, invitations, resets) are not the gateway's to read, and
+`TestGatewayRoleCanNeitherWriteNorReadSecrets` refuses them. It reads
+`gateway_read.decision_audit` (`platform/deploy/db/decision_log_roles.sql`),
+a view in its own schema, owned by a NOLOGIN role no one belongs to: the
+decision rows only, and of their payloads only the subject keys and
+`decision`, each value as stored. A payload that is not an object reads as
+none, which `_detail` treats the same way. The view's action list is the
+exported rules', checked by `TestTheDecisionLogViewShowsOnlyDecisions`. It is
+a new database object, so production needs the owner's approval at cutover.
+(The branch first granted the payload column; the coordinator replaced that
+grant with the view when merging, and re-ran parity: 783 answers, none
+differing.)
+
 Two Go helpers are shared rather than copied: `closedschools.PyInt`
 (`export_decisionlog.go`, Python's `int()` of a query value, including a
 number too long to hold) and the archive's pager (`closedschools.PagerPanel`).

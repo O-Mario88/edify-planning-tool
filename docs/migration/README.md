@@ -27,6 +27,11 @@ deployed, or connected to production.
 | [15-cluster-oversight.md](15-cluster-oversight.md) | Cluster Oversight's Command Center (the one address of the page the app opens), read by Go; its sections are not opened by the app |
 | [16-closed-schools.md](16-closed-schools.md) | The Closed Schools archive, read by Go |
 | [17-programme-schools.md](17-programme-schools.md) | Programme Schools (Core Trained, Core Graduate, Champion), read by Go |
+| [18-decision-log.md](18-decision-log.md) | The Decision Log, read by Go through a narrow view of the audit chain (decision rows, subject keys only) |
+| [19-escalations.md](19-escalations.md) | Escalations, read by Go; raising and deciding stay with the existing application |
+| [20-field-debriefs.md](20-field-debriefs.md) | Field Debriefs: not moved; the map and what it waits on (HR reach, covering-lead rosters, partner scope) |
+| [21-my-actions.md](21-my-actions.md) | My Actions, read by Go |
+| [22-core-schools-oversight.md](22-core-schools-oversight.md) | Core Schools Oversight, read by Go; its Core School Visits and Trainings tabs wait on My Plan |
 | [24-planning-page.md](24-planning-page.md) | Planning (M4): every tab of `/planning` read by Go (filters, strip, workload line, rows, cluster cards, doors, pages); a priority allocation's page and every save not yet moved |
 
 The code is under [`platform/`](../../platform/README.md).

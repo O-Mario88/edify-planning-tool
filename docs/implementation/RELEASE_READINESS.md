@@ -347,6 +347,24 @@ first piece of M4.
 | iOS Release | Pass | cceo@: More → Planning through the main gateway (answered in 0.3 s): the strip, "Your FY2027 visits: 7 of 560 planned.", Client and Core tabs with the rest under More |
 | Android Release | Not run | the emulator hangs |
 
+## The Decision Log, Escalations, My Actions and Core School Oversight read by Go (2026-11-12)
+
+Built by two agents in their own worktrees and branches, then merged into the
+migration branch by the coordinator ([18](../migration/18-decision-log.md),
+[19](../migration/19-escalations.md), [21](../migration/21-my-actions.md),
+[22](../migration/22-core-schools-oversight.md)). Field Debriefs
+([20](../migration/20-field-debriefs.md)) and Team Performance were not moved.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/audit/test_decision_log_rules_export.py`, `apps/flags/test_escalations_rules_export.py`, `apps/planning/test_my_actions_rules_export.py`, `apps/core_schools/test_core_oversight_rules_export.py` |
+| Parity, re-run by the coordinator on the merged build | Pass | all 29 accounts on a gateway with no existing application behind it: Decision Log 783 answers, Escalations 551, My Actions 406, Core School Oversight 2,117 (and 29 at each address the feed refuses), none differing; Cluster Oversight 725 and Planning 1,431 re-checked on the same build, none differing |
+| Beyond the seed | Pass | the agents' golden comparisons from the unmodified Django feed over synthetic rows in the test database (all removed afterwards): Decision Log 578 answers, Escalations 238, My Actions 350; Core School Oversight 40 pages, none differing |
+| The gateway still cannot read the audit chain's payloads | Pass | the branch had granted `audit_log.payload`, which `TestGatewayRoleCanNeitherWriteNorReadSecrets` refuses. The Decision Log now reads `gateway_read.decision_audit` (`platform/deploy/db/decision_log_roles.sql`: its own schema and NOLOGIN owner, the decision rows only, their subject keys only); `TestTheDecisionLogViewShowsOnlyDecisions` checks it against the exported rules. A new database object: production needs the owner's approval at cutover |
+| Learning scores add as Python adds | Pass | Go may fuse a multiply and an add (arm64 does); the learning sums of Cluster Oversight and the Core School tab now round each product first; tests use sums where the fused answer differs |
+| Django and Go checks | Pass | ruff, format, bandit clean; core_schools, audit and flags suites (368 tests) after their inline lists became module constants; `go vet`, `gofmt`, `go test -race ./...`, the integration suite |
+| iOS / Android Release | Not run | not checked on a device for these pages |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.
