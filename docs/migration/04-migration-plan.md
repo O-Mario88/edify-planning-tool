@@ -232,6 +232,25 @@ Runs alongside M5–M8.
 
 Exit: the same flows pass on physical iOS and Android devices.
 
+### M15. Web app in Next.js
+
+Owner, 2026-11-12: browsers get a Next.js web app (TypeScript, Tailwind CSS),
+part of the migration branch's new development (02, 2.10).
+
+Runs alongside M3 onwards, one domain behind its Go reads.
+
+- Foundation: `platform/web/` (App Router, TypeScript strict, Tailwind with
+  the `--edify-*` tokens), sign-in through the gateway's SignInService, the
+  shell (sidebar, header, role switch), generated Connect clients, CI job.
+- Pages domain by domain, built on the gateway answers already proved
+  (School Directory, School Profiles, Clusters, Planning, My Plan, …),
+  matched against the Django page at desktop and phone widths.
+- Saves through the gateway as each domain's writes move (M5 onwards).
+
+Exit, per domain: the Next.js pages pass the same browser checks as the
+Django pages they replace, and the cutover moves that domain's browsers in
+one approved step.
+
 ## 4.4 Keeping up with `main`
 
 `main` moves quickly. Each week: merge `main` into the migration branch, run

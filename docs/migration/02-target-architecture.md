@@ -3,9 +3,9 @@
 ## 2.1 One picture
 
 ```
- React Native app (iOS, Android)
-        |  HTTPS, Connect protocol, messages generated from platform/proto
-        v
+ React Native app (iOS, Android)      Next.js web app (browsers)
+                     |  HTTPS, Connect protocol, messages generated from platform/proto
+                     v
  +---------------------------------------------------------------+
  |  Go gateway  (one deployable, modular inside)                 |
  |  tracing -> structured errors -> authentication -> handlers   |
@@ -41,6 +41,13 @@ calls: an ordinary HTTPS POST with a JSON (or binary) body, which works with
 React Native's `fetch`, passes any proxy or load balancer, and is readable in
 logs. The request and response types are still generated from the `.proto`
 files, so the contract is the Protocol Buffer schema, not hand-written JSON.
+
+**Next.js for the web (owner, 2026-11-12).** Browsers get a Next.js web app
+(TypeScript, Tailwind CSS), the replacement for the pages Django renders
+today. It is a client of the same Go gateway as the mobile app, over the
+same generated contracts (Connect for the web), and holds no rules of its
+own. It is part of the migration branch's new development, beside the Go
+and Python services, the React Native app and the gRPC contracts (see 2.10).
 
 **Go owns the rules.** Authorization, validation, workflow states, money and
 counting are decided in Go modules and nowhere else. Python receives rows that
@@ -82,6 +89,7 @@ platform/
     gen/                   generated Go code (committed)
   workers/analytics/     Python worker (gRPC server, no database)
   mobile/                React Native app (Expo, TypeScript)
+  web/                   Next.js web app (TypeScript, Tailwind CSS)
   deploy/db/             least-privilege roles
   tools/parity/          parity check against the existing API
 ```
@@ -238,7 +246,35 @@ app --GetHome--> Go gateway --GET /api/mobile/v1/home (caller's token)--> existi
 - This is the one deliberate exception to "rules live in Go", and it is
   temporary by construction: each feed is a pointer to a rule not yet ported.
 
-## 2.9 Redis and queues
+## 2.10 Web app (Next.js)
+
+Owner, 2026-11-12: "Next.JS (TypeScript + Tailwind.CSS) is for Web browsers
+frontend."
+
+- **What it replaces.** The pages Django renders for browsers. When a
+  domain's reads and saves are Go's and its Next.js pages match the existing
+  ones, the browser moves to them in that domain's approved cutover, and the
+  Django pages for it are switched off in the same release (one writer, one
+  web front, rule 3.7).
+- **How it talks to Go.** Through the gateway only, with the TypeScript
+  types generated from `platform/proto` (Connect for the web); the same
+  authorisation answers the app gets, permissions sent as data. No rules,
+  money or counting in the browser.
+- **It looks like Edify.** Tailwind CSS (the existing web already uses
+  Tailwind 4) with the existing `--edify-*` tokens, Geist, the shell,
+  sidebar, page headers, tables, drawers and tabs the owner's design rules
+  set out (the memory's UI rules). A page is built by opening the same
+  Django page and matching it, the way the mobile screens are; workflows do
+  not change, only speed and polish.
+- **Proving it.** The same parity method: Go answers the page; the Next.js
+  page is checked against the Django page in the browser (Playwright),
+  desktop and phone widths, before any cutover.
+- **Where.** `platform/web/` (App Router, TypeScript strict), its own CI job
+  (type check, lint, build, browser tests). Development and staging builds
+  only, refusing `edifyplanning.app`, as the app does, until a production
+  release is approved.
+
+## 2.11 Redis and queues
 
 Not introduced. The gateway is stateless and the slice needs neither. They
 enter when a migrated domain needs them, and not before:
