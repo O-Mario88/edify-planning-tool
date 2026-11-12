@@ -14,8 +14,8 @@ proved against the existing page before the next.
 |---|---|---|
 | 1 | Opening a school (who may), the header with its badges and doors, the tab strip, the Details tab, and the visit rule those read | This document |
 | 2a | The profile engine's frame (scope line, facts, year and period) and its Projects, Stories and Academic tabs | Done, 13.6 |
-| 2b | The Overview: performance, operations and loans, the best and struggling intervention, the latest stories, the insights rail | Next |
-| 3 | SSA and Participation | |
+| 2b | The Overview: performance, operations and loans, the best and struggling intervention, the latest stories, the insights rail | Done, 13.7 |
+| 3 | SSA and Participation | Next |
 | 4 | Core School: the package rule, the Core tab, a Core school's Details | |
 | 5 | Closed schools and the Business Transformation panel with the loan register | With the school record changes and loans |
 
@@ -138,3 +138,36 @@ were empty in the seed, so one school (Central Division Primary School,
 must not show), enrolment for both years and four learning results (three
 confirmed, one pending) with the existing models, each marked
 "[Go parity check]".
+
+## 13.7 The Overview
+
+The Overview is the profile's first tab, and what a request with no tab (or
+one the school does not have) opens. Go now answers it for the same schools
+as the Details tab: open, not Core, no Business Transformation case or MFI
+loan. Those two keep the loans strip honest: the register's own visibility
+rules (`scoped_loans`) are not ported, so a school the register could show
+anything for is passed on, and every other school's strip reads nothing — and
+shows only to a role that may open the loan register, as on the web.
+
+| Part | What it reads |
+|---|---|
+| Performance And Impact | the school's enrolment; its SSA overall this year and last and the change, by the SSA change rule; whether it is assessed (a Champion school is not); teachers and leaders trained, at its own completed trainings and by the register of completed group trainings; enrolment and learning compared year on year; its stories |
+| Operations | visits, trainings and cluster meetings in the plan and completed (its own, and its cluster's sessions); visits expected of its type; online training and attendance by the register; teachers and leaders at cluster meetings; nothing planned |
+| Loans And Business Transformation | for a reader of the loan register: nothing, for the schools Go answers |
+| Best Performing And Struggling Intervention | `engine._intervention_picks` over the eight interventions: by the change where one rose (or fell), else by this year's score, the first of equals kept; the work that named each as its focus; what to do next |
+| Latest Change Stories | the five newest, with the count by intervention |
+| Profile Insights (rail) | the SSA score and each intervention's out of 10, and Needs Attention: no SSA, nothing planned, a decline (the school's, its cluster's, an intervention's), no training or visit in the plan where one is due, a partner's date awaited, and work past its date |
+
+Days are Kampala's: "past its date" is a planned day before today in
+Kampala, or a scheduled moment whose Kampala day is.
+
+Proved with `cmd/parity -screen profile -tab overview`: all 700 of the CCEO's
+schools for FY2027, FY2026 and FY2026 Q3, and all 29 accounts that may open a
+profile (3,826 compared), none differing. In the all-accounts run one CCEO's
+session expired partway; both sides refused the same four requests alike, and
+the account compared again showed no difference. Before the run, dev was
+given the work the seed lacked, with the existing models and marked
+"[Go parity check]": a completed in-school training (6 teachers, 2 leaders,
+focus Leadership) and an overdue donor visit at Central Division Primary
+School, and a completed online cluster training with its register at
+Kimenyedde's cluster.

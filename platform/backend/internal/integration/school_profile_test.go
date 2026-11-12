@@ -87,10 +87,11 @@ func TestTheRestOfTheProfileIsStillTheExistingApplications(t *testing.T) {
 	userID := borrowAccount(t, "cceo@edify.org")
 	client, _ := anOfficersSchool(t, userID, "client")
 	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
-	// Another tab is passed on; with no existing application here, it says so.
-	_, err := profileOf(token, client, "overview")
+	// The SSA and Participation tabs are passed on; with no existing
+	// application here, it says so.
+	_, err := profileOf(token, client, "ssa")
 	requireCode(t, err, connect.CodeUnavailable, "")
-	_, err = profileOf(token, client, "")
+	_, err = profileOf(token, client, "activities")
 	requireCode(t, err, connect.CodeUnavailable, "")
 	// So is a Core school's profile, whose package rule has not moved.
 	core, _ := anOfficersSchool(t, userID, "core")
@@ -149,11 +150,11 @@ ORDER BY s.id LIMIT 1`).Scan(&id); err != nil {
 	}
 }
 
-func TestGoAnswersTheEnginesSmallerTabs(t *testing.T) {
+func TestGoAnswersTheEnginesTabs(t *testing.T) {
 	userID := borrowAccount(t, "cceo@edify.org")
 	id, _ := anOfficersSchool(t, userID, "client")
 	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
-	for _, tab := range []string{"projects", "stories", "academic"} {
+	for _, tab := range []string{"overview", "projects", "stories", "academic"} {
 		profile, err := profileOf(token, id, tab)
 		if err != nil {
 			t.Fatalf("%s: %v", tab, err)
@@ -185,5 +186,33 @@ func TestGoAnswersTheEnginesSmallerTabs(t *testing.T) {
 	}
 	if got := answer.Msg.GetBlocks()[2].GetFilters().GetFilters(); got[0].GetValue() != running || got[1].GetValue() != "" {
 		t.Fatalf("an unknown year and period: %v", got)
+	}
+}
+
+func TestNoTabIsTheOverview(t *testing.T) {
+	userID := borrowAccount(t, "cceo@edify.org")
+	id, _ := anOfficersSchool(t, userID, "client")
+	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	for _, tab := range []string{"", "nonsense", "core"} {
+		profile, err := profileOf(token, id, tab)
+		if err != nil {
+			t.Fatalf("%q: %v", tab, err)
+		}
+		if profile.GetTabs()[0].GetKey() != "overview" || !profile.GetTabs()[0].GetActive() {
+			t.Fatalf("%q opens the Overview: %v", tab, profile.GetTabs())
+		}
+		titles := []string{}
+		for _, block := range profile.GetBlocks() {
+			if strip := block.GetStrip(); strip != nil {
+				titles = append(titles, strip.GetTitle())
+			}
+		}
+		if len(titles) < 2 || titles[0] != "Performance And Impact" || titles[1] != "Operations" {
+			t.Fatalf("%q: the strips: %v", tab, titles)
+		}
+		last := profile.GetBlocks()[len(profile.GetBlocks())-1].GetRail()
+		if last == nil || len(last.GetParts()) != 2 || len(last.GetParts()[0].GetMeters()) != 8 {
+			t.Fatalf("%q: the rail: %v", tab, last)
+		}
 	}
 }

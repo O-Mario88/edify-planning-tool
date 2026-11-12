@@ -182,6 +182,23 @@ records, with the header, doors and visit rule every tab shares.
 | iOS Release | Pass | cceo@: Central Division Church of Uganda Primary, Overview from the existing application, Details from Go |
 | Android Release | Pass | cceo@: KCCA UMEA Primary School's Details tab from Go, "Staff visit scheduled", Assign to Partner and Enter SSA Score greyed |
 
+## School Profiles, the profile engine's tabs, read by Go (2026-11-12)
+
+[docs/migration/13-school-profiles.md](../migration/13-school-profiles.md),
+13.6 and 13.7: the Overview (and a profile opened with no tab), Projects,
+Stories and Academic, for the same schools as the Details tab.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/schools/test_school_profile_rules_export.py` (now with the engine's statuses, change words, requirements by school type, activity kinds) |
+| Parity with the existing page | Pass | `cmd/parity -screen profile`: each of the five served tabs on all 700 of the CCEO's schools, none differing; the engine tabs again for FY2026, Q1, Q3, November and an unknown year and period, none differing; the Overview for all 29 accounts that may open a profile, 3,826 compared, none differing (one session expired partway and was compared again) |
+| Records the seed lacked | Made in dev | with the existing models, marked "[Go parity check]": four stories, enrolment for two years and four learning results at Central Division Primary School (1000); there a completed in-school training (6 teachers, 2 leaders, focus Leadership) and an overdue donor visit; and a completed online cluster training at Kimenyedde's cluster with its register |
+| Go unit tests | Pass | Python's rounding and sum; periods; the line under a strip's figure, cut as the page cuts it (cases from the real Overview); facts naming people; the change rule with and without a published threshold; the best and struggling intervention |
+| Go integration suite | Pass | Go answers the Overview, Projects, Stories and Academic with the frame; no tab, an unknown tab and Core School at a client school open the Overview; SSA and Participation are passed on |
+| Django and app | Pass | exports current; ruff, format, bandit clean; app type-check clean, 168 tests |
+| iOS Release | Pass | cceo@: a school's Overview from Go, the facts reading "Status: Operating" in one line, the strips filled |
+| Android Release | Pass | cceo@: Central Division Primary School's Overview from Go: Teachers Trained 6, School Leaders Trained 2, Enrolment Growth +9.4% |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

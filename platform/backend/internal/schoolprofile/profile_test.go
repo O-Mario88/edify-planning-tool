@@ -206,3 +206,31 @@ func TestAChangeIsJudgedByThePublishedRuleElseAnyMove(t *testing.T) {
 		t.Errorf("one year missing: %+v", c)
 	}
 }
+
+func TestTheBestAndTheStrugglingInterventionArePickedAsTheEngineDoes(t *testing.T) {
+	v := func(f float64) *float64 { return &f }
+	row := func(key string, previous, current *float64) ivRow {
+		r := ivRow{key: key, label: key, previous: previous, current: current}
+		r.verdict = (ruleBook{}).interventionChange(key, previous, current)
+		return r
+	}
+	if best, struggling := picks([]ivRow{row("a", nil, nil)}); best != nil || struggling != nil {
+		t.Fatal("nothing measured, nothing picked")
+	}
+	// Rises win by the change; the struggling one declined most.
+	best, struggling := picks([]ivRow{
+		row("a", v(5), v(6)), row("b", v(4), v(6)), row("c", v(7), v(6.5)), row("d", v(8), v(5)),
+	})
+	if best.row.key != "b" || best.basis != "change" || struggling.row.key != "d" || struggling.basis != "change" {
+		t.Fatalf("by change: %s %s, %s %s", best.row.key, best.basis, struggling.row.key, struggling.basis)
+	}
+	// No rise and no fall: by this year's score, the first of equals kept.
+	best, struggling = picks([]ivRow{row("a", nil, v(6)), row("b", nil, v(7)), row("c", nil, v(7)), row("d", nil, v(5))})
+	if best.row.key != "b" || best.basis != "score" || struggling.row.key != "d" || struggling.basis != "score" {
+		t.Fatalf("by score: %s %s, %s %s", best.row.key, best.basis, struggling.row.key, struggling.basis)
+	}
+	// One measured: it is not its own opposite.
+	if best, struggling = picks([]ivRow{row("a", nil, v(6)), row("b", nil, nil)}); best == nil || struggling != nil {
+		t.Fatal("one measured")
+	}
+}

@@ -49,7 +49,12 @@ const detailsTab = "details"
 
 // servedTabs are the tabs Go answers; the rest (and no tab, the Overview)
 // are still the existing application's.
-var servedTabs = map[string]bool{detailsTab: true, "projects": true, "stories": true, "academic": true}
+var servedTabs = map[string]bool{detailsTab: true, "overview": true, "projects": true, "stories": true, "academic": true}
+
+// stillExisting are the tabs that are the existing application's whatever
+// the school. (Core School is too where a school has it; at a school that
+// does not, it is the Overview.)
+var stillExisting = map[string]bool{"ssa": true, "activities": true}
 
 // section is the open tab's blocks: the school's record, or the engine's
 // frame and section for the year and period asked.
@@ -71,6 +76,8 @@ func (s *Service) section(ctx context.Context, p auth.Principal, sc school, tab 
 		blocks, err = s.storiesTab(ctx, sc, l)
 	case "academic":
 		blocks, err = s.academicTab(ctx, sc, l)
+	case "overview":
+		blocks, err = s.overviewTab(ctx, d, sc, l, now)
 	}
 	if err != nil {
 		return nil, err
@@ -112,7 +119,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 		return nil, true, ErrForbidden
 	}
 	tab := req.GetTab()
-	if !servedTabs[tab] {
+	if stillExisting[tab] {
 		return nil, false, nil
 	}
 	now := s.now()
@@ -135,9 +142,22 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 	if sc.closed() || sc.core() {
 		return nil, false, nil
 	}
-	if tab == detailsTab {
-		// The Details tab's Business Transformation panel reads the loan
-		// register, which is still the existing application's.
+	// A tab the school's profile does not have is its first, the Overview
+	// (profile_views.profile_context).
+	known := false
+	for _, t := range tabs(sc, "") {
+		known = known || t.GetKey() == tab
+	}
+	if !known {
+		tab = "overview"
+	}
+	if !servedTabs[tab] {
+		return nil, false, nil
+	}
+	if tab == detailsTab || tab == "overview" {
+		// The Details tab's Business Transformation panel and the Overview's
+		// loans strip read the loan register, still the existing
+		// application's.
 		held, err := s.hasBusinessTransformation(ctx, sc.ID)
 		if err != nil {
 			return nil, true, err

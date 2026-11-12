@@ -127,3 +127,8 @@ GRANT SELECT (intervention, country, expected_direction, min_meaningful_change, 
   ON activity_intervention_mapping TO edify_gateway_ro;
 GRANT SELECT (id) ON ssa_record TO edify_gateway_ro;
 GRANT SELECT (planned_date) ON activity TO edify_gateway_ro;
+-- The Overview: people trained, the online channel, the work naming each
+-- intervention, and the register's teachers and leaders.
+GRANT SELECT (teachers_attended, leaders_attended, programme_delivery_mode, focus_intervention)
+  ON activity TO edify_gateway_ro;
+GRANT SELECT (teachers, leaders) ON cluster_activity_attendance TO edify_gateway_ro;

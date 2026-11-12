@@ -16,6 +16,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": false,
       "open_cluster": false,
       "open_district": true,
       "open_projects": false,
@@ -30,6 +31,7 @@
       "assign_project": true,
       "delete_school": true,
       "enter_ssa": false,
+      "loans": false,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -44,6 +46,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": true,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -58,6 +61,7 @@
       "assign_project": true,
       "delete_school": false,
       "enter_ssa": true,
+      "loans": true,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -72,6 +76,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -86,6 +91,7 @@
       "assign_project": true,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": true,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -100,6 +106,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -114,6 +121,7 @@
       "assign_project": true,
       "delete_school": false,
       "enter_ssa": true,
+      "loans": true,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -128,6 +136,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": true,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -142,6 +151,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": true,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -156,6 +166,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -170,6 +181,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -184,6 +196,7 @@
       "assign_project": true,
       "delete_school": false,
       "enter_ssa": true,
+      "loans": false,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -198,6 +211,7 @@
       "assign_project": true,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": false,
       "open_cluster": false,
       "open_district": true,
       "open_projects": true,
@@ -212,6 +226,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -226,6 +241,7 @@
       "assign_project": false,
       "delete_school": false,
       "enter_ssa": false,
+      "loans": true,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -275,6 +291,7 @@
       "learning_environment": "LE",
       "teaching_environment": "TE"
     },
+    "intervention_method": "Best performing is the intervention that rose most since the previous year by the improvement rule; where none rose, the highest score this year. Struggling is the intervention that declined most since the previous year; where none declined, the lowest score this year, and of two level ones the one that rose least. An intervention with no confirmed score this year is not ranked.",
     "intervention_order": [
       "christlike_behaviour",
       "exposure_to_word_of_god",
@@ -284,6 +301,10 @@
       "learning_environment",
       "teaching_environment",
       "enrolment"
+    ],
+    "meeting_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
     ],
     "min_interval_days": 120,
     "not_in_plan_statuses": [
@@ -299,6 +320,38 @@
       "partner_scheduled",
       "assigned_to_partner"
     ],
+    "requirements": {
+      "": {
+        "takes_ssa": true,
+        "trainings": 0,
+        "visits": 0
+      },
+      "champion": {
+        "takes_ssa": false,
+        "trainings": 0,
+        "visits": 0
+      },
+      "client": {
+        "takes_ssa": true,
+        "trainings": 1,
+        "visits": 1
+      },
+      "core": {
+        "takes_ssa": true,
+        "trainings": 4,
+        "visits": 4
+      },
+      "core_graduate": {
+        "takes_ssa": true,
+        "trainings": 1,
+        "visits": 1
+      },
+      "core_trained": {
+        "takes_ssa": true,
+        "trainings": 1,
+        "visits": 1
+      }
+    },
     "story_statuses": {
       "approved": "approved",
       "draft": "draft",
@@ -307,7 +360,32 @@
         "returned"
       ]
     },
-    "strong_score": 8.0
+    "strong_score": 8.0,
+    "training_types": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ],
+    "visit_types": [
+      "school_visit",
+      "follow_up_visit",
+      "coaching_visit",
+      "in_school_support",
+      "donor_visit",
+      "story_gathering_visit",
+      "school_invitation",
+      "social_visit",
+      "training_follow_up_visit",
+      "in_school_coaching_visit",
+      "core_visit",
+      "core_assessment_visit",
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection"
+    ]
   },
   "gate": {
     "client_rule_types": [

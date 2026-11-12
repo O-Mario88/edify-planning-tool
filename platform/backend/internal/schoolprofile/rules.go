@@ -36,6 +36,7 @@ type doors struct {
 	OpenDistrict  bool `json:"open_district"`
 	OpenStaff     bool `json:"open_staff"`
 	OpenProjects  bool `json:"open_projects"`
+	Loans         bool `json:"loans"`
 }
 
 type profileRules struct {
@@ -75,6 +76,15 @@ type engineRules struct {
 	InterventionAbbreviations map[string]string `json:"intervention_abbreviations"`
 	InterventionOrder         []string          `json:"intervention_order"`
 	HelperFigureChars         int               `json:"helper_figure_chars"`
+	VisitTypes                []string          `json:"visit_types"`
+	TrainingTypes             []string          `json:"training_types"`
+	MeetingTypes              []string          `json:"meeting_types"`
+	InterventionMethod        string            `json:"intervention_method"`
+	Requirements              map[string]struct {
+		Visits    int  `json:"visits"`
+		Trainings int  `json:"trainings"`
+		TakesSSA  bool `json:"takes_ssa"`
+	} `json:"requirements"`
 }
 
 var rules = mustLoad()

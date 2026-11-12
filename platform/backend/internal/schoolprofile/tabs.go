@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -198,7 +197,18 @@ GROUP BY 1`, args...)
 
 // ── Stories (profile_records.stories and _story_tables) ────────────────────
 
-func (s *Service) storiesTab(ctx context.Context, sc school, l lens) ([]*screensv1.PageBlock, error) {
+// story is a Most Significant Change story about the school or its cluster.
+type story struct {
+	day                                              time.Time
+	title, code, schoolName, schoolID, area, outcome string
+	state                                            string
+	evidence                                         bool
+}
+
+// storyList is profile_records._story_queryset: the stories about the
+// school, or a cluster session at its live cluster, dated in the year, a
+// draft left out; newest first.
+func (s *Service) storyList(ctx context.Context, sc school, l lens) ([]story, error) {
 	end, _ := strconv.Atoi(l.fy)
 	start, stop := time.Date(end-1, 10, 1, 0, 0, 0, 0, time.UTC), time.Date(end, 10, 1, 0, 0, 0, 0, time.UTC)
 	rows, err := s.db.Query(ctx, `
@@ -212,17 +222,15 @@ ORDER BY st.story_date DESC, st.created_at DESC, st.id`, sc.ID, sc.ClusterID, st
 	if err != nil {
 		return nil, fmt.Errorf("schoolprofile: reading stories: %w", err)
 	}
-	type story struct {
-		day                                              time.Time
-		title, code, schoolName, schoolID, area, outcome string
-		state                                            string
-		evidence                                         bool
-	}
-	stories, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (story, error) {
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (story, error) {
 		var st story
 		err := row.Scan(&st.day, &st.title, &st.code, &st.schoolName, &st.schoolID, &st.area, &st.outcome, &st.state, &st.evidence)
 		return st, err
 	})
+}
+
+func (s *Service) storiesTab(ctx context.Context, sc school, l lens) ([]*screensv1.PageBlock, error) {
+	stories, err := s.storyList(ctx, sc, l)
 	if err != nil {
 		return nil, err
 	}
@@ -258,12 +266,7 @@ ORDER BY st.story_date DESC, st.created_at DESC, st.id`, sc.ID, sc.ClusterID, st
 		for name := range areas {
 			names = append(names, name)
 		}
-		sort.Slice(names, func(i, j int) bool {
-			if areas[names[i]] != areas[names[j]] {
-				return areas[names[i]] > areas[names[j]]
-			}
-			return names[i] < names[j]
-		})
+		sortAreas(names, areas)
 		parts := []string{}
 		for _, name := range names {
 			parts = append(parts, intcomma(areas[name])+" "+name)

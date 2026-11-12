@@ -16,31 +16,10 @@ import (
 func (s *Service) academicTab(ctx context.Context, sc school, l lens) ([]*screensv1.PageBlock, error) {
 	before := previousFY(l.fy)
 
-	// Enrolment recorded for each year (SchoolEnrollmentHistory), the
-	// latest recording of a year speaking for it.
-	years := map[string]int{}
-	rows, err := s.db.Query(ctx, `
-SELECT fy, enrollment FROM school_enrollment_history
-WHERE school_id = $1 AND fy = ANY($2) ORDER BY fy, recorded_at`, sc.ID, []string{l.fy, before})
+	was, hasWas, now, hasNow, err := s.enrolmentYears(ctx, sc.ID, l.fy, before)
 	if err != nil {
-		return nil, fmt.Errorf("schoolprofile: reading enrolment history: %w", err)
+		return nil, err
 	}
-	for rows.Next() {
-		var year string
-		var n *int32
-		if err := rows.Scan(&year, &n); err != nil {
-			rows.Close()
-			return nil, err
-		}
-		if n != nil {
-			years[year] = int(*n)
-		} else {
-			delete(years, year)
-		}
-	}
-	rows.Close()
-	was, hasWas := years[before]
-	now, hasNow := years[l.fy]
 
 	enrolment := 0
 	if sc.Enrollment != nil {
@@ -222,4 +201,33 @@ func joinDot(parts []string) string {
 		out += p
 	}
 	return out
+}
+
+// enrolmentYears is the enrolment recorded for the school in the year
+// before and in the year (SchoolEnrollmentHistory), the latest recording of
+// a year speaking for it.
+func (s *Service) enrolmentYears(ctx context.Context, schoolID, fy, before string) (was int, hasWas bool, now int, hasNow bool, err error) {
+	years := map[string]int{}
+	rows, err := s.db.Query(ctx, `
+SELECT fy, enrollment FROM school_enrollment_history
+WHERE school_id = $1 AND fy = ANY($2) ORDER BY fy, recorded_at`, schoolID, []string{fy, before})
+	if err != nil {
+		return 0, false, 0, false, fmt.Errorf("schoolprofile: reading enrolment history: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var year string
+		var n *int32
+		if err := rows.Scan(&year, &n); err != nil {
+			return 0, false, 0, false, err
+		}
+		if n != nil {
+			years[year] = int(*n)
+		} else {
+			delete(years, year)
+		}
+	}
+	was, hasWas = years[before]
+	now, hasNow = years[fy]
+	return was, hasWas, now, hasNow, rows.Err()
 }

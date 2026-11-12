@@ -68,6 +68,8 @@ def doors() -> dict:
             "open_projects": RolePermissionService.can_view_page(
                 user, "project_monitoring"
             ),
+            # The Overview's loans strip shows to a reader of the register.
+            "loans": RolePermissionService.can_view_page(user, "loans"),
         }
     return out
 
@@ -153,8 +155,9 @@ def engine_rules() -> dict:
     the words and tones of an SSA change, the story statuses, and the
     intervention abbreviations a strip's figures use."""
     from apps.analytics import profile_intelligence as engine
-    from apps.core.enums import SsaIntervention
+    from apps.core.enums import SchoolType, SsaIntervention
     from apps.core.interventions import INTERVENTION_ABBREVIATIONS
+    from apps.planning.country_oversight import rules
     from apps.core.metrics.payload import HELPER_FIGURE_CHARS
     from apps.partners.models import PartnerAssignment
     from apps.ssa import change_rules
@@ -179,6 +182,20 @@ def engine_rules() -> dict:
         "intervention_abbreviations": dict(INTERVENTION_ABBREVIATIONS),
         "intervention_order": [value for value, _label in SsaIntervention.choices],
         "helper_figure_chars": HELPER_FIGURE_CHARS,
+        "visit_types": list(engine._VISITS),
+        "training_types": list(engine._TRAININGS),
+        "meeting_types": list(engine._MEETINGS),
+        "intervention_method": engine.INTERVENTION_METHOD,
+        # What each school type is due in a year, and whether it is assessed
+        # (planning.country_oversight.rules); "" is a school with no type.
+        "requirements": {
+            school_type: {
+                "visits": rules.requirement_for(school_type).visits,
+                "trainings": rules.requirement_for(school_type).trainings,
+                "takes_ssa": rules.takes_ssa(school_type),
+            }
+            for school_type in ["", *(value for value, _ in SchoolType.choices)]
+        },
     }
 
 
