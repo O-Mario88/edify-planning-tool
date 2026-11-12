@@ -63,4 +63,6 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/identity_roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/decision_log_roles.sql"
 # Which forms an activity has in (its evidence kinds), after the file above.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/evidence_roles.sql"
+# Scheduling a school visit, the first save Go makes: exactly its writes.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/activities_roles.sql"
 echo "done"

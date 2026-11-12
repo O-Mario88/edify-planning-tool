@@ -46,6 +46,27 @@ var protectedAccountColumns = []string{
 	"id", "is_superuser", "is_staff", "mfa_enabled", "mfa_secret", "mfa_channel",
 }
 
+// undeletableTables are records Go now writes (the first save, scheduling a
+// school visit: deploy/db/activities_roles.sql) or appends to, and must never
+// remove: removal is the existing soft delete, and the audit chain and its
+// events are append-only.
+var undeletableTables = []string{
+	"activity", "daily_visit_batch", "daily_visit_costs_to_follow", "audit_log", "domain_event_log",
+}
+
+// protectedColumns ("table.column") are what the first save may insert but
+// never change afterwards: an activity's lifecycle, price, verification and
+// payment, a day's priced figures, and any audit row. Setting them is the
+// pricing's (Django's until M12) and the later saves' work.
+var protectedColumns = []string{
+	"activity.status", "activity.est_cost_cents", "activity.cost_missing", "activity.payment_status",
+	"activity.ia_verification_status", "activity.evidence_status", "activity.responsible_staff_id",
+	"activity.school_id", "activity.daily_visit_batch_id",
+	"daily_visit_batch.daily_pool_amount", "daily_visit_batch.per_school_amount",
+	"daily_visit_batch.school_count", "daily_visit_batch.rate_snapshot",
+	"audit_log.hash", "audit_log.prev_hash", "audit_log.seq", "audit_log.payload",
+}
+
 // ErrRefused wraps every refusal, so callers can tell a guard decision from
 // an ordinary connection failure.
 var ErrRefused = errors.New("dbguard: connection refused by the production-protection guard")
@@ -118,7 +139,8 @@ type Identity struct {
 	Role      string
 	Superuser bool
 	// WritableTables lists the protected tables the role holds a write
-	// privilege on.
+	// privilege on, the append-only tables whose rows it could remove ("audit_log
+	// (rows removable)") and the protected columns it could change ("activity.status").
 	WritableTables []string
 }
 
@@ -146,8 +168,25 @@ SELECT current_database(),
          SELECT 'user.' || c FROM unnest($2::text[]) AS c
          WHERE to_regclass('"user"') IS NOT NULL
            AND has_column_privilege(current_user, '"user"', c, 'UPDATE')
+         UNION ALL
+         SELECT t || ' (rows removable)' FROM unnest($3::text[]) AS t
+         WHERE to_regclass(quote_ident(t)) IS NOT NULL
+           AND has_table_privilege(current_user, quote_ident(t), 'DELETE')
+         UNION ALL
+         SELECT tc FROM unnest($4::text[]) AS tc
+         WHERE to_regclass(quote_ident(split_part(tc, '.', 1))) IS NOT NULL
+           -- CASE, not AND: AND does not promise to skip the privilege
+           -- check, which fails on a column the schema lacks.
+           AND CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                                 WHERE table_schema = 'public'
+                                   AND table_name = split_part(tc, '.', 1)
+                                   AND column_name = split_part(tc, '.', 2))
+                    THEN has_column_privilege(current_user, quote_ident(split_part(tc, '.', 1)),
+                                              split_part(tc, '.', 2), 'UPDATE')
+                    ELSE false END
        )`
-	err := db.QueryRow(ctx, query, protectedTables, protectedAccountColumns).Scan(
+	err := db.QueryRow(ctx, query, protectedTables, protectedAccountColumns,
+		undeletableTables, protectedColumns).Scan(
 		&identity.Database, &identity.Role, &identity.Superuser, &identity.WritableTables,
 	)
 	if err != nil {

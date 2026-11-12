@@ -63,6 +63,8 @@ const (
 	decisionLogRolesFile = "../../../deploy/db/decision_log_roles.sql"
 	// Which forms an activity has in; after the file above.
 	evidenceRolesFile = "../../../deploy/db/evidence_roles.sql"
+	// Scheduling a school visit, the first save Go makes: exactly its writes.
+	activitiesRolesFile = "../../../deploy/db/activities_roles.sql"
 	// Where the loan portal's emails go in this run.
 	publicBaseURL = "http://127.0.0.1:9"
 )
@@ -219,6 +221,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(evidenceRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	activitiesRoles, err := os.ReadFile(filepath.FromSlash(activitiesRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(activitiesRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)
@@ -442,6 +451,20 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"delete an acting appointment":  rw + `DELETE FROM acting_assignment`,
 		"re-seat an acting appointment": rw + `UPDATE acting_assignment SET seat_id = seat_id`,
 		"read the payload of the log":   `SELECT payload FROM audit_log LIMIT 1`,
+		// Scheduling a school visit (activities_roles.sql): the save inserts
+		// its rows and changes nothing after them.
+		"change an activity's status":     rw + `UPDATE activity SET status = status`,
+		"price an activity":               rw + `UPDATE activity SET est_cost_cents = est_cost_cents`,
+		"move an activity to another day": rw + `UPDATE activity SET daily_visit_batch_id = daily_visit_batch_id`,
+		"change a day's figures":          rw + `UPDATE daily_visit_batch SET daily_pool_amount = daily_pool_amount`,
+		"delete a day":                    rw + `DELETE FROM daily_visit_batch`,
+		"write a cost line":               rw + `INSERT INTO activity_schedule_cost_line (id) VALUES ('x')`,
+		"delete the costs to follow":      rw + `DELETE FROM daily_visit_costs_to_follow`,
+		"read the costs' provenance":      `SELECT provenance FROM daily_visit_costs_to_follow LIMIT 1`,
+		"delete a ledger mark":            rw + `DELETE FROM target_ledger_dirty`,
+		"delete domain events":            rw + `DELETE FROM domain_event_log`,
+		"rescore an SSA recommendation":   rw + `UPDATE ssa_recommendation SET score = score`,
+		"lock a school":                   rw + `SELECT id FROM school LIMIT 1 FOR UPDATE`,
 	}
 	for name, statement := range statements {
 		t.Run(name, func(t *testing.T) {

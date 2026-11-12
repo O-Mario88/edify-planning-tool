@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package edify.activities.v1;
+
+// Activities, saved by Go one save at a time (owner, 2026-11-12: "Yes, one
+// at a time"; docs/migration/03 §3.7, 27 §27.5). Until a save moves, the
+// existing application makes it; a save is never made by both.
+//
+// The first save is scheduling a school visit (docs/migration/27): the
+// existing Schedule drawer of the Planning page
+// (/planning/schedule-modal?school_id=… posting to
+// /planning/schedule-action), for exactly 27.3's case — a staff-delivered
+// visit for one of six purposes, planned by its owner at a school in their
+// own portfolio, with no project, priority allocation, source activity or
+// partner. Everything else is handed on to the existing application
+// unchanged.
+service ActivityService {
+  // Schedule one school visit as the caller. The answer is the new
+  // activity, or the existing application's own words for why it was
+  // refused. A refusal leaves nothing written.
+  rpc ScheduleSchoolVisit(ScheduleSchoolVisitRequest) returns (ScheduleSchoolVisitResponse);
+}
+
+// The drawer's own fields, named as it posts them.
+message ScheduleSchoolVisitRequest {
+  // The school: its record id or its school code (the drawer posts either;
+  // the existing view resolves both).
+  string school_id = 1;
+  // purpose_of_visit: one of "training_follow_up", "ssa_support",
+  // "donor_visit", "story_gathering", "school_invitation", "social_visit".
+  string purpose_of_visit = 2;
+  // scheduled_date: the planned day, "YYYY-MM-DD".
+  string scheduled_date = 3;
+  // activity_goal: the purpose in the planner's words. May be empty.
+  string activity_goal = 4;
+  // expected_outcome. May be empty.
+  string expected_outcome = 5;
+  // ssa_deviation_reason: why the plan departs from the school's SSA, when
+  // it does. May be empty; kept to 2,000 characters as the existing save
+  // keeps it.
+  string ssa_deviation_reason = 6;
+  // catalogue_item_id: the item the drawer pinned, if any. Empty: the item
+  // is resolved from the purpose, as the drawer's require_catalogue=yes asks.
+  string catalogue_item_id = 7;
+}
+
+// What the save did. Exactly one of activity or refused is set.
+message ScheduleSchoolVisitResponse {
+  ScheduledActivity activity = 1;
+  // The existing application's words for a refused save, e.g.
+  // "1 October 2026 has passed. Schedule work from 12 November 2026
+  // onwards." Nothing was written.
+  string refused = 2;
+}
+
+// The activity a save made, and the confirmation the web shows for it.
+message ScheduledActivity {
+  // activity.id.
+  string id = 1;
+  // activity.status: "scheduled".
+  string status = 2;
+  // activity.activity_type, e.g. "school_visit_ssa_collection".
+  string activity_type = 3;
+  // activity.planned_date, "YYYY-MM-DD".
+  string planned_date = 4;
+  // activity.fy, e.g. "2027".
+  string fy = 5;
+  // "School visit scheduled. It is on your My Plan — keep planning."
+  string message = 6;
+  // A warning the save raised without being refused: the planner is past
+  // the visits their role plans in a year. Empty when there is none.
+  string notice = 7;
+  // Where the work can be seen, "/my-plan?fy=2027&month=11&period=month",
+  // and its label, "Open My Plan".
+  string plan_url = 8;
+  string plan_link_label = 9;
+}
