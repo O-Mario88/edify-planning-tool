@@ -379,6 +379,16 @@ existing application's.
 | Django and Go checks | Pass | ruff, format, bandit clean; the my_plan suite (106 tests); `go vet`, `gofmt`, `go test -race ./...`, the integration suite | (re-run after piece 2: 106 tests, the integration suite, race)
 | iOS / Android Release | Not run | not checked on a device |
 
+## Actions Sent and Core School Oversight's planned-work tabs read by Go (2026-11-12)
+
+| Check | Result | Evidence |
+|---|---|---|
+| Actions Sent ([21.4](../migration/21-my-actions.md)) | Pass | all 29 accounts, gateway with no existing application behind it: 406 answers, none differing (My Actions re-run, 406, none differing); over 150 synthetic actions in the test database, 350 answers of 35 accounts, none differing (both comparisons) |
+| Core School Visits and Trainings tabs ([25.8](../migration/25-my-plan.md)) | Pass | all 29 accounts on the merged build: 3,451 answers, none differing (80 held same-named rows, compared in School ID order); the unmodified `table_export.core_school_plans` over synthetic records: 78 sheets (589 rows), none differing |
+| A partner's completed work reads only form kinds | Pass | `gateway_read.activity_evidence_kind` (`platform/deploy/db/evidence_roles.sql`): uploaded, unquarantined kinds per activity, nothing else; `TestTheEvidenceViewShowsOnlyUploadedKinds`; `evidence_record` itself stays refused. A new database object: production needs the owner's approval at cutover |
+| Go and Django checks | Pass | `go vet`, `gofmt`, `go test -race ./...`, the integration suite; ruff, format, bandit; the my_plan and my_actions drift tests |
+| iOS / Android Release | Not run | not checked on a device |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

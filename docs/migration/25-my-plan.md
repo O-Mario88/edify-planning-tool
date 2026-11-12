@@ -461,6 +461,12 @@ lines' ids, the weekly request lines and requests' status, cost settings,
 cost snapshots' components, the live card's columns, `cluster_activity_attendance.other`
 and the visit days.
 
+**Re-proved by the coordinator on the merged build (2026-11-12)**, with the
+evidence view in place: all 29 accounts, gateway with no existing
+application behind it, 3,451 answers compared, none differing (80 held
+same-named rows, compared in School ID order); the golden comparison, 78
+sheets (589 rows), none differing.
+
 ### What is left
 
 - The rest of piece 3 (My Plan's own tables, Actions, ticks, row tones,
