@@ -1,0 +1,376 @@
+{
+  "attention": {
+    "candidate": "Champion candidate",
+    "critical": "Critical SSA area",
+    "critical_below": 5.0,
+    "declined": "SSA declined",
+    "handover": "Partner hand-over not scheduled",
+    "no_ssa": "No current-year SSA",
+    "order": [
+      "SSA declined",
+      "Critical SSA area",
+      "No current-year SSA",
+      "Partner hand-over not scheduled",
+      "Package incomplete",
+      "Champion candidate"
+    ],
+    "package": "Package incomplete"
+  },
+  "champion": {
+    "champion": "Champion",
+    "champion_type": "champion",
+    "clean_evidence": "accepted",
+    "closed_status": "closed",
+    "confirmed_ssa": "confirmed",
+    "insufficient": "Insufficient Evidence",
+    "latest_avg": 8.0,
+    "not_yet": "Not Yet Ready",
+    "order": [
+      "Champion",
+      "Potential Champion",
+      "Progressing",
+      "Not Yet Ready",
+      "Insufficient Evidence"
+    ],
+    "package_work_kinds": [
+      "visit",
+      "training"
+    ],
+    "package_work_slots": 8,
+    "plan_closed_statuses": [
+      "Archived",
+      "Cancelled",
+      "Exited",
+      "archived",
+      "cancelled",
+      "exited"
+    ],
+    "potential": "Potential Champion",
+    "progressing": "Progressing",
+    "slot_done_statuses": [
+      "accountant_confirmed",
+      "closed",
+      "completed",
+      "ia_verified"
+    ],
+    "stored_champion": [
+      "Champion",
+      "Approved Champion"
+    ]
+  },
+  "change": {
+    "declined": "declined",
+    "improved": "improved",
+    "maintained_strong": "maintained_strong",
+    "no_change": "no_change",
+    "not_comparable": "not_comparable"
+  },
+  "cluster_session_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "cluster_training",
+    "cluster_training_ssa_collection"
+  ],
+  "confirmed_status": "confirmed",
+  "core_types": [
+    "core",
+    "core_trained",
+    "core_graduate",
+    "champion"
+  ],
+  "current_ssa_statuses": [
+    "confirmed"
+  ],
+  "delivered_statuses": [
+    "accountant_confirmed",
+    "awaiting_ia_verification",
+    "closed",
+    "completed",
+    "evidence_accepted",
+    "evidence_uploaded",
+    "ia_verified",
+    "salesforce_id_required",
+    "submitted_to_pl"
+  ],
+  "doors": {
+    "Accountant": {
+      "page": false,
+      "review": true,
+      "school": false
+    },
+    "Admin": {
+      "page": true,
+      "review": true,
+      "school": true
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "review": false,
+      "school": true
+    },
+    "CCEO": {
+      "page": true,
+      "review": true,
+      "school": true
+    },
+    "ClusterLeader": {
+      "page": false,
+      "review": false,
+      "school": false
+    },
+    "CountryDirector": {
+      "page": true,
+      "review": true,
+      "school": true
+    },
+    "HumanResources": {
+      "page": false,
+      "review": false,
+      "school": false
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "review": true,
+      "school": true
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "review": false,
+      "school": false
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "review": false,
+      "school": false
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "review": false,
+      "school": false
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "review": false,
+      "school": false
+    },
+    "Program Lead": {
+      "page": true,
+      "review": true,
+      "school": true
+    },
+    "ProjectCoordinator": {
+      "page": false,
+      "review": false,
+      "school": true
+    },
+    "RegionalProgramLead": {
+      "page": true,
+      "review": false,
+      "school": false
+    },
+    "RegionalVicePresident": {
+      "page": true,
+      "review": false,
+      "school": false
+    }
+  },
+  "feed_opens_page": true,
+  "groupings": [
+    [
+      "cceo",
+      "CCEO"
+    ],
+    [
+      "district",
+      "District"
+    ],
+    [
+      "sub_region",
+      "Sub-region"
+    ],
+    [
+      "cluster",
+      "Cluster"
+    ]
+  ],
+  "handover_completed": "completed",
+  "handover_scheduled": [
+    "scheduled",
+    "partner_scheduled"
+  ],
+  "handover_unscheduled": [
+    "assigned",
+    "pending_scheduling"
+  ],
+  "not_passed_query_keys": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "plan_tabs": [
+    "core_visits",
+    "core_trainings"
+  ],
+  "program_lead_role": "Program Lead",
+  "recommendation_shown_states": [
+    "generated",
+    "accepted",
+    "deferred",
+    "planned",
+    "planned"
+  ],
+  "recommendation_states": {
+    "accepted": "Accepted for planning",
+    "deferred": "Deferred",
+    "delivered": "Delivered and verified",
+    "generated": "Generated",
+    "planned": "Planned",
+    "rejected": "Rejected",
+    "superseded": "Superseded"
+  },
+  "school_types": {
+    "champion": "Champion",
+    "client": "Client",
+    "core": "Core",
+    "core_graduate": "Core Graduate",
+    "core_trained": "Core Trained"
+  },
+  "sorts": [
+    [
+      "name",
+      "School"
+    ],
+    [
+      "latest",
+      "Latest SSA, lowest first"
+    ],
+    [
+      "change",
+      "SSA change, largest decline first"
+    ],
+    [
+      "package",
+      "Package, least complete first"
+    ],
+    [
+      "attendance",
+      "Attendance, lowest first"
+    ]
+  ],
+  "ssa_interventions": [
+    [
+      "christlike_behaviour",
+      "Christlike Behaviour"
+    ],
+    [
+      "exposure_to_word_of_god",
+      "Exposure to the Word of God"
+    ],
+    [
+      "financial_health",
+      "Financial Health"
+    ],
+    [
+      "leadership",
+      "Leadership"
+    ],
+    [
+      "government_requirement",
+      "Government Requirements"
+    ],
+    [
+      "learning_environment",
+      "Learning Environment"
+    ],
+    [
+      "teaching_environment",
+      "Teacher's Environment"
+    ],
+    [
+      "enrolment",
+      "Enrolment"
+    ]
+  ],
+  "table_page_size": 50,
+  "tabs": [
+    [
+      "schools",
+      "Schools"
+    ],
+    [
+      "groups",
+      "Groups"
+    ],
+    [
+      "attention",
+      "Attention"
+    ],
+    [
+      "recommendations",
+      "Recommendations"
+    ],
+    [
+      "champion",
+      "Champion Readiness"
+    ],
+    [
+      "core_visits",
+      "Core School Visits"
+    ],
+    [
+      "core_trainings",
+      "Core School Trainings"
+    ]
+  ],
+  "training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+    "cluster_training_ssa_collection"
+  ],
+  "trajectory_filters": [
+    [
+      "improved",
+      "Improved"
+    ],
+    [
+      "declined",
+      "Declined"
+    ],
+    [
+      "no_change",
+      "No Change"
+    ],
+    [
+      "maintained_strong",
+      "Maintained Strong"
+    ],
+    [
+      "not_comparable",
+      "Not Compared"
+    ]
+  ],
+  "trajectory_labels": {
+    "declined": "Declined",
+    "improved": "Improved",
+    "maintained_strong": "Maintained Strong",
+    "no_change": "No Change",
+    "not_comparable": "Not Compared"
+  },
+  "trajectory_tones": {
+    "declined": "danger",
+    "improved": "success",
+    "maintained_strong": "success",
+    "no_change": "neutral",
+    "not_comparable": ""
+  }
+}

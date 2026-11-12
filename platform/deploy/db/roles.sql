@@ -198,3 +198,6 @@ GRANT SELECT (id, closure_type, owner_at_closure, owner_name_at_closure, reopene
 -- Impact Assessment has set any.
 GRANT SELECT (health_weights, impact_weights, teacher_weights, leader_weights, maturity_rules, created_at)
   ON cluster_score_setting TO edify_gateway_ro;
+-- Core School Oversight (internal/coreoversight): the Core schools in the
+-- School model's order, and each school's sub-region for the grouping.
+GRANT SELECT (created_at, sub_region_id) ON school TO edify_gateway_ro;
