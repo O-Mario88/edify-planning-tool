@@ -9,9 +9,12 @@
 --                        visit save writes (27.1, measured with the shadow
 --                        harness, 26): the activity row, its day's batch,
 --                        the audit row and its domain event, the target
---                        ledger's mark and the costs to follow. No DELETE
---                        anywhere, no UPDATE of an audit row, no UPDATE of
---                        an activity once inserted.
+--                        ledger's mark and the costs to follow; and what
+--                        one move of a visit writes (docs/migration/29): the
+--                        activity's day, batch and status, the day it
+--                        joins, its timeline row. No DELETE anywhere, no
+--                        UPDATE of an audit row or a timeline row, and no
+--                        UPDATE of an activity beyond the move's columns.
 --
 -- The gateway role stays read-only by default (default_transaction_read_only,
 -- roles.sql): the save opens a read-write transaction on purpose (08 §8.2).
@@ -153,3 +156,29 @@ GRANT SELECT (id, activity_type, planned_date, deleted_at, responsible_staff_id,
 GRANT SELECT (id, responsible_user, visit_date, created_at) ON daily_visit_batch TO edify_activities_rw;
 GRANT SELECT (covering_staff_id, original_staff_id, start_datetime, end_datetime, status, leave_request_id, created_at)
   ON temporary_coverage_assignment TO edify_activities_rw;
+
+-- ── The second save: moving a scheduled school visit (docs/migration/29) ──
+-- The activity's row is locked (SELECT … FOR UPDATE, which the UPDATE right
+-- below allows) and its day moved: exactly the columns services.reschedule,
+-- the day's leaving and the day's join write for 29.1's case. Its price,
+-- evidence, verification, payment, owner, school and kind stay unwritable
+-- (dbguard.protectedColumns).
+GRANT SELECT (last_reason, updated_at) ON activity TO edify_activities_rw;
+GRANT UPDATE (scheduled_date, fy, quarter, planned_date, planned_month, planned_week, reschedule_count,
+              last_reason, status, daily_visit_batch_id, updated_at)
+  ON activity TO edify_activities_rw;
+-- The day joined takes the move's reason when it differs (reschedule_within_batch).
+GRANT SELECT (reason) ON daily_visit_batch TO edify_activities_rw;
+GRANT UPDATE (reason) ON daily_visit_batch TO edify_activities_rw;
+-- The timeline row a moved day writes (apps.activities.schedule_trail).
+GRANT INSERT (id, kind, from_day, to_day, from_status, to_status, reason, changed_at, activity_id)
+  ON activity_schedule_change TO edify_activities_rw;
+-- The owner-weeks and owner-months the moved visit's lines sit in, kept for
+-- the pricing (sync_weekly/monthly_*_for_activity).
+GRANT SELECT (activity_id, responsible_user, fiscal_year, month, week_start_date)
+  ON activity_schedule_cost_line TO edify_activities_rw;
+-- Whether the existing save would write notices after the move (an open
+-- overdue reminder on the activity, an open day-off notice for its owner):
+-- such a move is handed on. Nothing of a notice's words is read.
+GRANT SELECT (id, recipient_id, source_event_type, context_type, context_id, resolved_at)
+  ON notification TO edify_activities_rw;

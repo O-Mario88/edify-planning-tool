@@ -19,6 +19,15 @@ service ActivityService {
   // activity, or the existing application's own words for why it was
   // refused. A refusal leaves nothing written.
   rpc ScheduleSchoolVisit(ScheduleSchoolVisitRequest) returns (ScheduleSchoolVisitResponse);
+
+  // Move one scheduled school visit to another day as the caller: the
+  // second save (docs/migration/29), from My Plan's Reschedule drawer
+  // (/my-plan/{id}/reschedule-drawer posting to /my-plan/{id}/reschedule),
+  // for exactly 29.1's case — a visit of the first save's kind, still only a
+  // plan, moved by its owner. The answer is the moved activity, or the
+  // existing application's own words for why it was refused. A refusal
+  // leaves nothing written.
+  rpc RescheduleSchoolVisit(RescheduleSchoolVisitRequest) returns (RescheduleSchoolVisitResponse);
 }
 
 // The drawer's own fields, named as it posts them.
@@ -78,4 +87,40 @@ message ScheduledActivity {
   // and its label, "Open My Plan".
   string plan_url = 8;
   string plan_link_label = 9;
+}
+
+// The Reschedule drawer's own fields, named as it posts them.
+message RescheduleSchoolVisitRequest {
+  // activity.id: the visit being moved.
+  string activity_id = 1;
+  // scheduled_date: the new day, "YYYY-MM-DD".
+  string scheduled_date = 2;
+  // reason: why the date is changing. The drawer asks for it; the existing
+  // save refuses a short day without one.
+  string reason = 3;
+}
+
+// What the move did. Exactly one of activity or refused is set.
+message RescheduleSchoolVisitResponse {
+  RescheduledActivity activity = 1;
+  // The existing application's words for a refused move, e.g.
+  // "This date's visits have already left draft status. Choose another
+  // date." Nothing was written.
+  string refused = 2;
+}
+
+// The activity a move left, and the confirmation the web shows for it.
+message RescheduledActivity {
+  // activity.id.
+  string id = 1;
+  // activity.status: "rescheduled".
+  string status = 2;
+  // activity.planned_date, "YYYY-MM-DD".
+  string planned_date = 3;
+  // activity.fy, e.g. "2027".
+  string fy = 4;
+  // activity.reschedule_count after the move.
+  int32 reschedule_count = 5;
+  // "Saved. Press Refresh to see it on the page."
+  string message = 6;
 }

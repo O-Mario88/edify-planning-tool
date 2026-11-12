@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/activities/v1/activities.proto.
  */
 export const file_edify_activities_v1_activities: GenFile = /*@__PURE__*/
-  fileDesc("CiRlZGlmeS9hY3Rpdml0aWVzL3YxL2FjdGl2aXRpZXMucHJvdG8SE2VkaWZ5LmFjdGl2aXRpZXMudjEi6gEKGlNjaGVkdWxlU2Nob29sVmlzaXRSZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRIYChBwdXJwb3NlX29mX3Zpc2l0GAIgASgJEhYKDnNjaGVkdWxlZF9kYXRlGAMgASgJEhUKDWFjdGl2aXR5X2dvYWwYBCABKAkSGAoQZXhwZWN0ZWRfb3V0Y29tZRgFIAEoCRIcChRzc2FfZGV2aWF0aW9uX3JlYXNvbhgGIAEoCRIZChFjYXRhbG9ndWVfaXRlbV9pZBgHIAEoCRIdChVyZWNvbW1lbmRhdGlvbl9yZWFzb24YCCABKAkiaAobU2NoZWR1bGVTY2hvb2xWaXNpdFJlc3BvbnNlEjgKCGFjdGl2aXR5GAEgASgLMiYuZWRpZnkuYWN0aXZpdGllcy52MS5TY2hlZHVsZWRBY3Rpdml0eRIPCgdyZWZ1c2VkGAIgASgJIrQBChFTY2hlZHVsZWRBY3Rpdml0eRIKCgJpZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSFQoNYWN0aXZpdHlfdHlwZRgDIAEoCRIUCgxwbGFubmVkX2RhdGUYBCABKAkSCgoCZnkYBSABKAkSDwoHbWVzc2FnZRgGIAEoCRIOCgZub3RpY2UYByABKAkSEAoIcGxhbl91cmwYCCABKAkSFwoPcGxhbl9saW5rX2xhYmVsGAkgASgJMosBCg9BY3Rpdml0eVNlcnZpY2USeAoTU2NoZWR1bGVTY2hvb2xWaXNpdBIvLmVkaWZ5LmFjdGl2aXRpZXMudjEuU2NoZWR1bGVTY2hvb2xWaXNpdFJlcXVlc3QaMC5lZGlmeS5hY3Rpdml0aWVzLnYxLlNjaGVkdWxlU2Nob29sVmlzaXRSZXNwb25zZUL4AQoXY29tLmVkaWZ5LmFjdGl2aXRpZXMudjFCD0FjdGl2aXRpZXNQcm90b1ABWl5naXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L2FjdGl2aXRpZXMvdjE7YWN0aXZpdGllc3YxogIDRUFYqgITRWRpZnkuQWN0aXZpdGllcy5WMcoCE0VkaWZ5XEFjdGl2aXRpZXNcVjHiAh9FZGlmeVxBY3Rpdml0aWVzXFYxXEdQQk1ldGFkYXRh6gIVRWRpZnk6OkFjdGl2aXRpZXM6OlYxYgZwcm90bzM");
+  fileDesc("CiRlZGlmeS9hY3Rpdml0aWVzL3YxL2FjdGl2aXRpZXMucHJvdG8SE2VkaWZ5LmFjdGl2aXRpZXMudjEi6gEKGlNjaGVkdWxlU2Nob29sVmlzaXRSZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRIYChBwdXJwb3NlX29mX3Zpc2l0GAIgASgJEhYKDnNjaGVkdWxlZF9kYXRlGAMgASgJEhUKDWFjdGl2aXR5X2dvYWwYBCABKAkSGAoQZXhwZWN0ZWRfb3V0Y29tZRgFIAEoCRIcChRzc2FfZGV2aWF0aW9uX3JlYXNvbhgGIAEoCRIZChFjYXRhbG9ndWVfaXRlbV9pZBgHIAEoCRIdChVyZWNvbW1lbmRhdGlvbl9yZWFzb24YCCABKAkiaAobU2NoZWR1bGVTY2hvb2xWaXNpdFJlc3BvbnNlEjgKCGFjdGl2aXR5GAEgASgLMiYuZWRpZnkuYWN0aXZpdGllcy52MS5TY2hlZHVsZWRBY3Rpdml0eRIPCgdyZWZ1c2VkGAIgASgJIrQBChFTY2hlZHVsZWRBY3Rpdml0eRIKCgJpZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSFQoNYWN0aXZpdHlfdHlwZRgDIAEoCRIUCgxwbGFubmVkX2RhdGUYBCABKAkSCgoCZnkYBSABKAkSDwoHbWVzc2FnZRgGIAEoCRIOCgZub3RpY2UYByABKAkSEAoIcGxhbl91cmwYCCABKAkSFwoPcGxhbl9saW5rX2xhYmVsGAkgASgJIlsKHFJlc2NoZWR1bGVTY2hvb2xWaXNpdFJlcXVlc3QSEwoLYWN0aXZpdHlfaWQYASABKAkSFgoOc2NoZWR1bGVkX2RhdGUYAiABKAkSDgoGcmVhc29uGAMgASgJImwKHVJlc2NoZWR1bGVTY2hvb2xWaXNpdFJlc3BvbnNlEjoKCGFjdGl2aXR5GAEgASgLMiguZWRpZnkuYWN0aXZpdGllcy52MS5SZXNjaGVkdWxlZEFjdGl2aXR5Eg8KB3JlZnVzZWQYAiABKAkifgoTUmVzY2hlZHVsZWRBY3Rpdml0eRIKCgJpZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSFAoMcGxhbm5lZF9kYXRlGAMgASgJEgoKAmZ5GAQgASgJEhgKEHJlc2NoZWR1bGVfY291bnQYBSABKAUSDwoHbWVzc2FnZRgGIAEoCTKLAgoPQWN0aXZpdHlTZXJ2aWNlEngKE1NjaGVkdWxlU2Nob29sVmlzaXQSLy5lZGlmeS5hY3Rpdml0aWVzLnYxLlNjaGVkdWxlU2Nob29sVmlzaXRSZXF1ZXN0GjAuZWRpZnkuYWN0aXZpdGllcy52MS5TY2hlZHVsZVNjaG9vbFZpc2l0UmVzcG9uc2USfgoVUmVzY2hlZHVsZVNjaG9vbFZpc2l0EjEuZWRpZnkuYWN0aXZpdGllcy52MS5SZXNjaGVkdWxlU2Nob29sVmlzaXRSZXF1ZXN0GjIuZWRpZnkuYWN0aXZpdGllcy52MS5SZXNjaGVkdWxlU2Nob29sVmlzaXRSZXNwb25zZUL4AQoXY29tLmVkaWZ5LmFjdGl2aXRpZXMudjFCD0FjdGl2aXRpZXNQcm90b1ABWl5naXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L2FjdGl2aXRpZXMvdjE7YWN0aXZpdGllc3YxogIDRUFYqgITRWRpZnkuQWN0aXZpdGllcy5WMcoCE0VkaWZ5XEFjdGl2aXRpZXNcVjHiAh9FZGlmeVxBY3Rpdml0aWVzXFYxXEdQQk1ldGFkYXRh6gIVRWRpZnk6OkFjdGl2aXRpZXM6OlYxYgZwcm90bzM");
 
 /**
  * The drawer's own fields, named as it posts them.
@@ -195,6 +195,126 @@ export const ScheduledActivitySchema: GenMessage<ScheduledActivity> = /*@__PURE_
   messageDesc(file_edify_activities_v1_activities, 2);
 
 /**
+ * The Reschedule drawer's own fields, named as it posts them.
+ *
+ * @generated from message edify.activities.v1.RescheduleSchoolVisitRequest
+ */
+export type RescheduleSchoolVisitRequest = Message<"edify.activities.v1.RescheduleSchoolVisitRequest"> & {
+  /**
+   * activity.id: the visit being moved.
+   *
+   * @generated from field: string activity_id = 1;
+   */
+  activityId: string;
+
+  /**
+   * scheduled_date: the new day, "YYYY-MM-DD".
+   *
+   * @generated from field: string scheduled_date = 2;
+   */
+  scheduledDate: string;
+
+  /**
+   * reason: why the date is changing. The drawer asks for it; the existing
+   * save refuses a short day without one.
+   *
+   * @generated from field: string reason = 3;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message edify.activities.v1.RescheduleSchoolVisitRequest.
+ * Use `create(RescheduleSchoolVisitRequestSchema)` to create a new message.
+ */
+export const RescheduleSchoolVisitRequestSchema: GenMessage<RescheduleSchoolVisitRequest> = /*@__PURE__*/
+  messageDesc(file_edify_activities_v1_activities, 3);
+
+/**
+ * What the move did. Exactly one of activity or refused is set.
+ *
+ * @generated from message edify.activities.v1.RescheduleSchoolVisitResponse
+ */
+export type RescheduleSchoolVisitResponse = Message<"edify.activities.v1.RescheduleSchoolVisitResponse"> & {
+  /**
+   * @generated from field: edify.activities.v1.RescheduledActivity activity = 1;
+   */
+  activity?: RescheduledActivity | undefined;
+
+  /**
+   * The existing application's words for a refused move, e.g.
+   * "This date's visits have already left draft status. Choose another
+   * date." Nothing was written.
+   *
+   * @generated from field: string refused = 2;
+   */
+  refused: string;
+};
+
+/**
+ * Describes the message edify.activities.v1.RescheduleSchoolVisitResponse.
+ * Use `create(RescheduleSchoolVisitResponseSchema)` to create a new message.
+ */
+export const RescheduleSchoolVisitResponseSchema: GenMessage<RescheduleSchoolVisitResponse> = /*@__PURE__*/
+  messageDesc(file_edify_activities_v1_activities, 4);
+
+/**
+ * The activity a move left, and the confirmation the web shows for it.
+ *
+ * @generated from message edify.activities.v1.RescheduledActivity
+ */
+export type RescheduledActivity = Message<"edify.activities.v1.RescheduledActivity"> & {
+  /**
+   * activity.id.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * activity.status: "rescheduled".
+   *
+   * @generated from field: string status = 2;
+   */
+  status: string;
+
+  /**
+   * activity.planned_date, "YYYY-MM-DD".
+   *
+   * @generated from field: string planned_date = 3;
+   */
+  plannedDate: string;
+
+  /**
+   * activity.fy, e.g. "2027".
+   *
+   * @generated from field: string fy = 4;
+   */
+  fy: string;
+
+  /**
+   * activity.reschedule_count after the move.
+   *
+   * @generated from field: int32 reschedule_count = 5;
+   */
+  rescheduleCount: number;
+
+  /**
+   * "Saved. Press Refresh to see it on the page."
+   *
+   * @generated from field: string message = 6;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message edify.activities.v1.RescheduledActivity.
+ * Use `create(RescheduledActivitySchema)` to create a new message.
+ */
+export const RescheduledActivitySchema: GenMessage<RescheduledActivity> = /*@__PURE__*/
+  messageDesc(file_edify_activities_v1_activities, 5);
+
+/**
  * Activities, saved by Go one save at a time (owner, 2026-11-12: "Yes, one
  * at a time"; docs/migration/03 §3.7, 27 §27.5). Until a save moves, the
  * existing application makes it; a save is never made by both.
@@ -222,6 +342,22 @@ export const ActivityService: GenService<{
     methodKind: "unary";
     input: typeof ScheduleSchoolVisitRequestSchema;
     output: typeof ScheduleSchoolVisitResponseSchema;
+  },
+  /**
+   * Move one scheduled school visit to another day as the caller: the
+   * second save (docs/migration/29), from My Plan's Reschedule drawer
+   * (/my-plan/{id}/reschedule-drawer posting to /my-plan/{id}/reschedule),
+   * for exactly 29.1's case — a visit of the first save's kind, still only a
+   * plan, moved by its owner. The answer is the moved activity, or the
+   * existing application's own words for why it was refused. A refusal
+   * leaves nothing written.
+   *
+   * @generated from rpc edify.activities.v1.ActivityService.RescheduleSchoolVisit
+   */
+  rescheduleSchoolVisit: {
+    methodKind: "unary";
+    input: typeof RescheduleSchoolVisitRequestSchema;
+    output: typeof RescheduleSchoolVisitResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_activities_v1_activities, 0);

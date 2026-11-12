@@ -122,8 +122,27 @@ def script_values(html: str, wanted: dict) -> dict:
     return out
 
 
+def resolve(path: str) -> str:
+    """A step may name an activity an earlier step made by its purpose text
+    (`{activity:[shadow-r] A}`): each copy makes its own ids, so the step
+    finds the activity on the copy it plays on."""
+    from apps.activities.models import Activity
+
+    def one(m):
+        found = (
+            Activity.objects.filter(activity_purpose_text=m.group(1))
+            .order_by("-created_at")
+            .values_list("id", flat=True)
+            .first()
+        )
+        return found or "missing"
+
+    return re.sub(r"\{activity:([^}]*)\}", one, path)
+
+
 def play(client: Client, step: dict) -> dict:
     headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
+    step = {**step, "open": resolve(step["open"]), "form": resolve(step["form"])}
     drawer = client.get(step["open"], **headers)
     if drawer.status_code != 200:
         return {

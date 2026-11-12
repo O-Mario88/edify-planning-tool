@@ -47,23 +47,34 @@ var protectedAccountColumns = []string{
 }
 
 // undeletableTables are records Go now writes (the first save, scheduling a
-// school visit: deploy/db/activities_roles.sql) or appends to, and must never
-// remove: removal is the existing soft delete, and the audit chain and its
-// events are append-only.
+// school visit, and the second, moving one: deploy/db/activities_roles.sql)
+// or appends to, and must never remove: removal is the existing soft delete,
+// and the audit chain, its events and the schedule trail are append-only.
 var undeletableTables = []string{
 	"activity", "daily_visit_batch", "daily_visit_costs_to_follow", "audit_log", "domain_event_log",
+	"activity_schedule_change",
 }
 
-// protectedColumns ("table.column") are what the first save may insert but
-// never change afterwards: an activity's lifecycle, price, verification and
-// payment, a day's priced figures, and any audit row. Setting them is the
-// pricing's (Django's until M12) and the later saves' work.
+// protectedColumns ("table.column") are what Go's saves may insert but never
+// change afterwards: an activity's price, verification, evidence, delivery
+// and payment, who owns it, where and for whom it happens, a day's owner,
+// date and priced figures, the schedule trail, and any audit row. Setting them
+// is the pricing's (Django's until M12) and the later saves' work. A move
+// (docs/migration/29) changes an activity's day, its batch and its status to
+// "rescheduled", so activity.status and activity.daily_visit_batch_id are no
+// longer here; every other lifecycle column is.
 var protectedColumns = []string{
-	"activity.status", "activity.est_cost_cents", "activity.cost_missing", "activity.payment_status",
+	"activity.est_cost_cents", "activity.cost_missing", "activity.payment_status",
 	"activity.ia_verification_status", "activity.evidence_status", "activity.responsible_staff_id",
-	"activity.school_id", "activity.daily_visit_batch_id",
+	"activity.school_id", "activity.cluster_id", "activity.project_id", "activity.assigned_partner_id",
+	"activity.delivery_type", "activity.activity_type", "activity.catalogue_item_id", "activity.deleted_at",
+	"activity.execution_started_at", "activity.actual_delivery_date", "activity.salesforce_activity_id",
+	"activity.submitted_to_ia_at", "activity.pl_reviewed_at", "activity.paired_school_visit_id",
 	"daily_visit_batch.daily_pool_amount", "daily_visit_batch.per_school_amount",
 	"daily_visit_batch.school_count", "daily_visit_batch.rate_snapshot",
+	"daily_visit_batch.responsible_user", "daily_visit_batch.visit_date",
+	"activity_schedule_change.from_day", "activity_schedule_change.to_day",
+	"activity_schedule_change.reason", "activity_schedule_change.kind",
 	"audit_log.hash", "audit_log.prev_hash", "audit_log.seq", "audit_log.payload",
 }
 

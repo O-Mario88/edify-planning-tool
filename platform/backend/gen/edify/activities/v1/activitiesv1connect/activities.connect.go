@@ -36,6 +36,9 @@ const (
 	// ActivityServiceScheduleSchoolVisitProcedure is the fully-qualified name of the ActivityService's
 	// ScheduleSchoolVisit RPC.
 	ActivityServiceScheduleSchoolVisitProcedure = "/edify.activities.v1.ActivityService/ScheduleSchoolVisit"
+	// ActivityServiceRescheduleSchoolVisitProcedure is the fully-qualified name of the
+	// ActivityService's RescheduleSchoolVisit RPC.
+	ActivityServiceRescheduleSchoolVisitProcedure = "/edify.activities.v1.ActivityService/RescheduleSchoolVisit"
 )
 
 // ActivityServiceClient is a client for the edify.activities.v1.ActivityService service.
@@ -44,6 +47,14 @@ type ActivityServiceClient interface {
 	// activity, or the existing application's own words for why it was
 	// refused. A refusal leaves nothing written.
 	ScheduleSchoolVisit(context.Context, *connect.Request[v1.ScheduleSchoolVisitRequest]) (*connect.Response[v1.ScheduleSchoolVisitResponse], error)
+	// Move one scheduled school visit to another day as the caller: the
+	// second save (docs/migration/29), from My Plan's Reschedule drawer
+	// (/my-plan/{id}/reschedule-drawer posting to /my-plan/{id}/reschedule),
+	// for exactly 29.1's case — a visit of the first save's kind, still only a
+	// plan, moved by its owner. The answer is the moved activity, or the
+	// existing application's own words for why it was refused. A refusal
+	// leaves nothing written.
+	RescheduleSchoolVisit(context.Context, *connect.Request[v1.RescheduleSchoolVisitRequest]) (*connect.Response[v1.RescheduleSchoolVisitResponse], error)
 }
 
 // NewActivityServiceClient constructs a client for the edify.activities.v1.ActivityService service.
@@ -63,17 +74,29 @@ func NewActivityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(activityServiceMethods.ByName("ScheduleSchoolVisit")),
 			connect.WithClientOptions(opts...),
 		),
+		rescheduleSchoolVisit: connect.NewClient[v1.RescheduleSchoolVisitRequest, v1.RescheduleSchoolVisitResponse](
+			httpClient,
+			baseURL+ActivityServiceRescheduleSchoolVisitProcedure,
+			connect.WithSchema(activityServiceMethods.ByName("RescheduleSchoolVisit")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // activityServiceClient implements ActivityServiceClient.
 type activityServiceClient struct {
-	scheduleSchoolVisit *connect.Client[v1.ScheduleSchoolVisitRequest, v1.ScheduleSchoolVisitResponse]
+	scheduleSchoolVisit   *connect.Client[v1.ScheduleSchoolVisitRequest, v1.ScheduleSchoolVisitResponse]
+	rescheduleSchoolVisit *connect.Client[v1.RescheduleSchoolVisitRequest, v1.RescheduleSchoolVisitResponse]
 }
 
 // ScheduleSchoolVisit calls edify.activities.v1.ActivityService.ScheduleSchoolVisit.
 func (c *activityServiceClient) ScheduleSchoolVisit(ctx context.Context, req *connect.Request[v1.ScheduleSchoolVisitRequest]) (*connect.Response[v1.ScheduleSchoolVisitResponse], error) {
 	return c.scheduleSchoolVisit.CallUnary(ctx, req)
+}
+
+// RescheduleSchoolVisit calls edify.activities.v1.ActivityService.RescheduleSchoolVisit.
+func (c *activityServiceClient) RescheduleSchoolVisit(ctx context.Context, req *connect.Request[v1.RescheduleSchoolVisitRequest]) (*connect.Response[v1.RescheduleSchoolVisitResponse], error) {
+	return c.rescheduleSchoolVisit.CallUnary(ctx, req)
 }
 
 // ActivityServiceHandler is an implementation of the edify.activities.v1.ActivityService service.
@@ -82,6 +105,14 @@ type ActivityServiceHandler interface {
 	// activity, or the existing application's own words for why it was
 	// refused. A refusal leaves nothing written.
 	ScheduleSchoolVisit(context.Context, *connect.Request[v1.ScheduleSchoolVisitRequest]) (*connect.Response[v1.ScheduleSchoolVisitResponse], error)
+	// Move one scheduled school visit to another day as the caller: the
+	// second save (docs/migration/29), from My Plan's Reschedule drawer
+	// (/my-plan/{id}/reschedule-drawer posting to /my-plan/{id}/reschedule),
+	// for exactly 29.1's case — a visit of the first save's kind, still only a
+	// plan, moved by its owner. The answer is the moved activity, or the
+	// existing application's own words for why it was refused. A refusal
+	// leaves nothing written.
+	RescheduleSchoolVisit(context.Context, *connect.Request[v1.RescheduleSchoolVisitRequest]) (*connect.Response[v1.RescheduleSchoolVisitResponse], error)
 }
 
 // NewActivityServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -97,10 +128,18 @@ func NewActivityServiceHandler(svc ActivityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(activityServiceMethods.ByName("ScheduleSchoolVisit")),
 		connect.WithHandlerOptions(opts...),
 	)
+	activityServiceRescheduleSchoolVisitHandler := connect.NewUnaryHandler(
+		ActivityServiceRescheduleSchoolVisitProcedure,
+		svc.RescheduleSchoolVisit,
+		connect.WithSchema(activityServiceMethods.ByName("RescheduleSchoolVisit")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.activities.v1.ActivityService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ActivityServiceScheduleSchoolVisitProcedure:
 			activityServiceScheduleSchoolVisitHandler.ServeHTTP(w, r)
+		case ActivityServiceRescheduleSchoolVisitProcedure:
+			activityServiceRescheduleSchoolVisitHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -112,4 +151,8 @@ type UnimplementedActivityServiceHandler struct{}
 
 func (UnimplementedActivityServiceHandler) ScheduleSchoolVisit(context.Context, *connect.Request[v1.ScheduleSchoolVisitRequest]) (*connect.Response[v1.ScheduleSchoolVisitResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.activities.v1.ActivityService.ScheduleSchoolVisit is not implemented"))
+}
+
+func (UnimplementedActivityServiceHandler) RescheduleSchoolVisit(context.Context, *connect.Request[v1.RescheduleSchoolVisitRequest]) (*connect.Response[v1.RescheduleSchoolVisitResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.activities.v1.ActivityService.RescheduleSchoolVisit is not implemented"))
 }
