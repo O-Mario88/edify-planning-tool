@@ -34,7 +34,10 @@ from django.contrib.auth import get_user_model
 from django.test import Client
 
 NAME = settings.DATABASES["default"]["NAME"]
-assert NAME.startswith("edify_shadow_"), f"refusing {NAME}: not a shadow copy"
+if not NAME.startswith("edify_shadow_"):
+    # Not an assert: python -O would drop it, and this is what keeps the
+    # runner off every database people use.
+    raise SystemExit(f"refusing {NAME}: not a shadow copy")
 
 
 class Forms(HTMLParser):
