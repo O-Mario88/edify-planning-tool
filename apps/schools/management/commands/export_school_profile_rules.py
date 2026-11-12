@@ -154,6 +154,7 @@ def engine_rules() -> dict:
     profile_records) reads: the statuses it counts work and hand-overs by,
     the words and tones of an SSA change, the story statuses, and the
     intervention abbreviations a strip's figures use."""
+    from apps.analytics import ia_workflow
     from apps.analytics import profile_intelligence as engine
     from apps.core.enums import SchoolType, SsaIntervention
     from apps.core.interventions import INTERVENTION_ABBREVIATIONS
@@ -186,6 +187,12 @@ def engine_rules() -> dict:
         "training_types": list(engine._TRAININGS),
         "meeting_types": list(engine._MEETINGS),
         "intervention_method": engine.INTERVENTION_METHOD,
+        # The SSA tab (ia_workflow.school_progress and the matrix).
+        "ssa_target": engine.SSA_TARGET,
+        "rule_sentence": change_rules.RULE_SENTENCE,
+        "state_tones": dict(ia_workflow.STATE_TONES),
+        "verified_activity_statuses": list(ia_workflow.VERIFIED_ACTIVITY_STATUSES),
+        "school_pairs_shown": ia_workflow.SCHOOL_PAIRS_SHOWN,
         # What each school type is due in a year, and whether it is assessed
         # (planning.country_oversight.rules); "" is a school with no type.
         "requirements": {

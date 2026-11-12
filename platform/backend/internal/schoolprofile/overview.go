@@ -28,6 +28,8 @@ type ivRow struct {
 type comparison struct {
 	rows              []ivRow
 	current, previous *float64
+	// The schools with a confirmed record in the year and the year before.
+	schools, previousSchools int
 }
 
 // interventionComparison reads the school's latest confirmed record of the
@@ -99,6 +101,13 @@ ORDER BY r.fy, r.date_of_ssa DESC, r.created_at DESC, r.id DESC`, schoolID, []st
 		return pyMean(values)
 	}
 	out := comparison{current: overall(fy), previous: overall(before)}
+	for _, r := range records {
+		if r.year == fy {
+			out.schools++
+		} else {
+			out.previousSchools++
+		}
+	}
 	for _, key := range rules.Engine.InterventionOrder {
 		out.rows = append(out.rows, ivRow{
 			key: key, label: rules.SSAInterventions[key],

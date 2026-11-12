@@ -80,6 +80,13 @@ type engineRules struct {
 	TrainingTypes             []string          `json:"training_types"`
 	MeetingTypes              []string          `json:"meeting_types"`
 	InterventionMethod        string            `json:"intervention_method"`
+	SSATarget                 float64           `json:"ssa_target"`
+	RuleSentence              string            `json:"rule_sentence"`
+	StateTones                map[string]string `json:"state_tones"`
+	VerifiedActivityStatuses  []string          `json:"verified_activity_statuses"`
+	SchoolPairsShown          int               `json:"school_pairs_shown"`
+	MinIntervalDays           int               `json:"min_interval_days"`
+	FallbackRuleLabel         string            `json:"fallback_rule_label"`
 	Requirements              map[string]struct {
 		Visits    int  `json:"visits"`
 		Trainings int  `json:"trainings"`

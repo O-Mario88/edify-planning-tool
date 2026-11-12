@@ -15,7 +15,8 @@ proved against the existing page before the next.
 | 1 | Opening a school (who may), the header with its badges and doors, the tab strip, the Details tab, and the visit rule those read | This document |
 | 2a | The profile engine's frame (scope line, facts, year and period) and its Projects, Stories and Academic tabs | Done, 13.6 |
 | 2b | The Overview: performance, operations and loans, the best and struggling intervention, the latest stories, the insights rail | Done, 13.7 |
-| 3 | SSA and Participation | Next |
+| 3a | SSA | Done, 13.8 |
+| 3b | Participation | Next |
 | 4 | Core School: the package rule, the Core tab, a Core school's Details | |
 | 5 | Closed schools and the Business Transformation panel with the loan register | With the school record changes and loans |
 
@@ -171,3 +172,28 @@ given the work the seed lacked, with the existing models and marked
 focus Leadership) and an overdue donor visit at Central Division Primary
 School, and a completed online cluster training with its register at
 Kimenyedde's cluster.
+
+## 13.8 The SSA tab
+
+Go answers the SSA tab for the same schools as the other tabs.
+
+| Part | What it reads |
+|---|---|
+| Intervention Matrix | each intervention's score in the year before and the year (the school's latest confirmed record of each), the change and what the change rule calls it, the target of 10.0 and what is left to it, and the school overall; the schools assessed in each year and at the target |
+| SSA score by intervention | the same two years as bars, last year's only where it was measured |
+| Annual SSA Progress | the average of every confirmed record of each year (not only the latest), with the schools assessed |
+| SSA change between confirmed assessments | `ia_workflow.school_progress`: the latest confirmed records of consecutive years, up to four pairs, newest first; a pair is compared only when its readings are 120 days apart or more, each intervention by the rule of the school's country first, then the deployment's, the school's verdict by the mean of the comparable moves and the mean of those interventions' thresholds; the verified activities delivered between the two readings |
+| SSA history | every record, newest first, its status, whether it counts, where its scores came from, its average; a note where newer records are not confirmed yet |
+
+Every SSA in the seed was dated 9 November 2026, so no pair was ever far
+enough apart to be compared. School 1000 was given, with the existing models
+and marked "[Go parity check]" (the activity) or visible in its history: a
+confirmed FY2027 SSA dated 15 March 2027 with all eight scores, a completed
+coaching visit between the two readings, and a pending FY2028 SSA newer than
+both.
+
+Proved with `cmd/parity -screen profile -tab ssa`: all 29 accounts that may
+open a profile (3,826 compared, 3,308 of non-Core schools) and all 700 of the
+CCEO's schools for FY2026, none differing. After the change the other tabs
+were compared again on the CCEO's 700 schools (Overview, Details, Projects,
+Stories, Academic), none differing.

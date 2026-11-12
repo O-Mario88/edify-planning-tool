@@ -60,20 +60,29 @@ ORDER BY effective_from DESC, version DESC, updated_at DESC`)
 var fallbackRule = changeRule{direction: "improve"}
 
 // rule is RuleBook.rule for the deployment (no country).
-func (b ruleBook) rule(intervention string) changeRule {
+func (b ruleBook) rule(intervention string) changeRule { return b.ruleIn(intervention, "") }
+
+// ruleIn is RuleBook.rule: the country's rule, else the deployment's, else
+// any move.
+func (b ruleBook) ruleIn(intervention, country string) changeRule {
+	if country != "" {
+		if r, ok := b[[2]string{intervention, country}]; ok {
+			return r
+		}
+	}
 	if r, ok := b[[2]string{intervention, ""}]; ok {
 		return r
 	}
 	return fallbackRule
 }
 
-// schoolRule is RuleBook.school_rule over every intervention: the mean of
-// their thresholds, or the fallback where none is set.
-func (b ruleBook) schoolRule(interventions []string) changeRule {
+// schoolRuleIn is RuleBook.school_rule in a country, with the words it is
+// shown in.
+func (b ruleBook) schoolRuleIn(interventions []string, country string) (changeRule, string) {
 	thresholds := []float64{}
 	any := false
 	for _, i := range interventions {
-		r := b.rule(i)
+		r := b.ruleIn(i, country)
 		if r.threshold != nil {
 			any = true
 			thresholds = append(thresholds, *r.threshold)
@@ -82,10 +91,17 @@ func (b ruleBook) schoolRule(interventions []string) changeRule {
 		}
 	}
 	if len(interventions) == 0 || !any {
-		return fallbackRule
+		return fallbackRule, rules.Engine.FallbackRuleLabel
 	}
 	mean := pyRound(pySum(thresholds)/float64(len(thresholds)), 2)
-	return changeRule{threshold: &mean, direction: "improve"}
+	return changeRule{threshold: &mean, direction: "improve"},
+		"±" + strconv.FormatFloat(mean, 'g', -1, 64) + " (mean of the approved domain rules)"
+}
+
+// schoolRule is RuleBook.school_rule for the deployment.
+func (b ruleBook) schoolRule(interventions []string) changeRule {
+	r, _ := b.schoolRuleIn(interventions, "")
+	return r
 }
 
 // change is a verdict: the move and what the rule calls it.

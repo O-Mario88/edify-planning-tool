@@ -87,11 +87,9 @@ func TestTheRestOfTheProfileIsStillTheExistingApplications(t *testing.T) {
 	userID := borrowAccount(t, "cceo@edify.org")
 	client, _ := anOfficersSchool(t, userID, "client")
 	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
-	// The SSA and Participation tabs are passed on; with no existing
-	// application here, it says so.
-	_, err := profileOf(token, client, "ssa")
-	requireCode(t, err, connect.CodeUnavailable, "")
-	_, err = profileOf(token, client, "activities")
+	// The Participation tab is passed on; with no existing application here,
+	// it says so.
+	_, err := profileOf(token, client, "activities")
 	requireCode(t, err, connect.CodeUnavailable, "")
 	// So is a Core school's profile, whose package rule has not moved.
 	core, _ := anOfficersSchool(t, userID, "core")
@@ -154,7 +152,7 @@ func TestGoAnswersTheEnginesTabs(t *testing.T) {
 	userID := borrowAccount(t, "cceo@edify.org")
 	id, _ := anOfficersSchool(t, userID, "client")
 	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
-	for _, tab := range []string{"overview", "projects", "stories", "academic"} {
+	for _, tab := range []string{"overview", "ssa", "projects", "stories", "academic"} {
 		profile, err := profileOf(token, id, tab)
 		if err != nil {
 			t.Fatalf("%s: %v", tab, err)
@@ -214,5 +212,31 @@ func TestNoTabIsTheOverview(t *testing.T) {
 		if last == nil || len(last.GetParts()) != 2 || len(last.GetParts()[0].GetMeters()) != 8 {
 			t.Fatalf("%q: the rail: %v", tab, last)
 		}
+	}
+}
+
+func TestTheSSATabNamesEveryInterventionAndTheSchoolsRecords(t *testing.T) {
+	userID := borrowAccount(t, "cceo@edify.org")
+	id, _ := anOfficersSchool(t, userID, "client")
+	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	profile, err := profileOf(token, id, "ssa")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var matrix *screensv1.PageTable
+	panels := []string{}
+	for _, block := range profile.GetBlocks() {
+		if table := block.GetTable(); table != nil && table.GetTitle() == "Intervention Matrix" {
+			matrix = table
+		}
+		if panel := block.GetPanel(); panel != nil {
+			panels = append(panels, panel.GetTitle())
+		}
+	}
+	if matrix == nil || len(matrix.GetRows()) != 9 || matrix.GetRows()[8].GetCells()[0].GetText() != "All interventions" {
+		t.Fatalf("the matrix: %v", matrix)
+	}
+	if len(panels) != 2 || panels[0] != "SSA change between confirmed assessments" || panels[1] != "SSA history" {
+		t.Fatalf("the school's records: %v", panels)
 	}
 }

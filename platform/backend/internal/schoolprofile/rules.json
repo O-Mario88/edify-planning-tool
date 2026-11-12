@@ -352,6 +352,21 @@
         "visits": 1
       }
     },
+    "rule_sentence": "Improved and declined follow the published IA measurement rule for each SSA domain (the school's country first, then the deployment rule); where no threshold is approved any movement counts, and readings less than 120 days apart are not compared.",
+    "school_pairs_shown": 4,
+    "ssa_target": 10.0,
+    "state_tones": {
+      "baseline_missing": "warning",
+      "declined": "danger",
+      "due": "warning",
+      "evidence_review": "warning",
+      "improved": "success",
+      "maintained_strong": "neutral",
+      "no_change": "neutral",
+      "not_scheduled": "warning",
+      "overdue": "danger",
+      "upcoming": "info"
+    },
     "story_statuses": {
       "approved": "approved",
       "draft": "draft",
@@ -368,6 +383,12 @@
       "cluster_training",
       "core_training",
       "cluster_training_ssa_collection"
+    ],
+    "verified_activity_statuses": [
+      "ia_verified",
+      "accountant_confirmed",
+      "completed",
+      "closed"
     ],
     "visit_types": [
       "school_visit",

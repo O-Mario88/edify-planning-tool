@@ -132,3 +132,5 @@ GRANT SELECT (planned_date) ON activity TO edify_gateway_ro;
 GRANT SELECT (teachers_attended, leaders_attended, programme_delivery_mode, focus_intervention)
   ON activity TO edify_gateway_ro;
 GRANT SELECT (teachers, leaders) ON cluster_activity_attendance TO edify_gateway_ro;
+-- The SSA tab: the verified support between two assessments.
+GRANT SELECT (activity_name_snapshot, actual_delivery_date) ON activity TO edify_gateway_ro;

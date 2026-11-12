@@ -199,6 +199,23 @@ Stories and Academic, for the same schools as the Details tab.
 | iOS Release | Pass | cceo@: a school's Overview from Go, the facts reading "Status: Operating" in one line, the strips filled |
 | Android Release | Pass | cceo@: Central Division Primary School's Overview from Go: Teachers Trained 6, School Leaders Trained 2, Enrolment Growth +9.4% |
 
+## School Profiles, the SSA tab, read by Go (2026-11-12)
+
+[docs/migration/13-school-profiles.md](../migration/13-school-profiles.md),
+13.8: the Intervention Matrix, both SSA charts, the change between confirmed
+assessments and the SSA history, for the same schools as the other tabs.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/schools/test_school_profile_rules_export.py` (now with the SSA target, the rule sentence, the 120-day gap, the pairs shown, the verified activity statuses and the fallback rule label); `rules.json` matches a fresh export |
+| Parity with the existing page | Pass | `cmd/parity -screen profile -tab ssa` over all 29 accounts that may open a profile: 3,826 compared (3,308 of non-Core schools), none differing; the CCEO's 700 schools again for FY2026, none differing; the other five served tabs compared again on the CCEO's 700 schools after the change, none differing |
+| Records the seed lacked | Made in dev | every seeded SSA is dated 9 November 2026, so no pair was ever compared; with the existing models, at Central Division Primary School (1000): a confirmed FY2027 SSA dated 15 March 2027 with all eight scores, a completed coaching visit between the readings (marked "[Go parity check]") and a pending FY2028 SSA |
+| Go unit tests | Pass | a pair judged by the country's rule first, then the deployment's, then any move; the mean of the domain thresholds as the school's rule |
+| Go integration suite | Pass | Go answers the SSA tab with all eight interventions and "All interventions" in the matrix, and the change and history panels; Participation is still passed on |
+| Django and Go checks | Pass | ruff, format, bandit clean; `go vet`, `gofmt`, `go test -race ./...` |
+| iOS Release | Pass | cceo@: school 1000's SSA tab from Go: Annual SSA Progress 5.9 and 6.3; "FY2026 vs FY2027 · 9 Nov 2026 → 15 Mar 2027 · 125 days apart", Improved (0.10), 1 activity: Leadership coaching |
+| Android Release | Pass | cceo@: school 1026's SSA tab from Go: the matrix, both charts (5.9 and 4.4), "Not compared (readings less than 120 days apart)", and its two confirmed records in the history |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

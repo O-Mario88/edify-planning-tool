@@ -234,3 +234,33 @@ func TestTheBestAndTheStrugglingInterventionArePickedAsTheEngineDoes(t *testing.
 		t.Fatal("one measured")
 	}
 }
+
+func TestAPairIsJudgedByTheCountrysRuleFirst(t *testing.T) {
+	half, one := 0.5, 1.0
+	book := ruleBook{
+		{"leadership", ""}:       {threshold: &half, direction: "improve"},
+		{"leadership", "Uganda"}: {threshold: &one, direction: "improve"},
+		{"enrolment", ""}:        {direction: "maintain_strong"},
+	}
+	if r := book.ruleIn("leadership", "Uganda"); *r.threshold != 1 {
+		t.Errorf("the country's rule: %v", *r.threshold)
+	}
+	if r := book.ruleIn("leadership", "Kenya"); *r.threshold != 0.5 {
+		t.Errorf("the deployment's rule: %v", *r.threshold)
+	}
+	if r := book.ruleIn("financial_health", "Uganda"); r.threshold != nil || r.direction != "improve" {
+		t.Errorf("any move: %+v", r)
+	}
+	// The school's rule is the mean of the thresholds, a missing one as 0.
+	r, words := book.schoolRuleIn([]string{"leadership", "financial_health"}, "Uganda")
+	if *r.threshold != 0.5 || words != "±0.5 (mean of the approved domain rules)" {
+		t.Errorf("mean rule: %v %q", *r.threshold, words)
+	}
+	if _, words := book.schoolRuleIn([]string{"financial_health"}, ""); words != "Any change (no approved threshold)" {
+		t.Errorf("fallback: %q", words)
+	}
+	// Holding a strong score is its own verdict.
+	if c := between(8.5, 8.2, book.ruleIn("enrolment", "")); c.status != "maintained_strong" {
+		t.Errorf("maintained strong: %+v", c)
+	}
+}
