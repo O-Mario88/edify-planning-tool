@@ -257,11 +257,13 @@ scenarios from fresh copies:
 Race, the integration suite, ruff, format, bandit, the relay tests and the
 generated-code check pass.
 
-**Found, to fix before the app ships (not a Go difference):** the app's Edit
-drawer arrives with the expected outcome blank, so saving it writes `''` over
-the stored outcome unless the person retypes it, and it has no reason field,
-so the app cannot change a visit's day, school or purpose through Edit. The
-web's drawer keeps both. The fix belongs to the drawer the app is given.
+**Found, then corrected (31.8):** the app's Edit drawer had no reason
+field, so the app could not change a visit's day, school or purpose through
+Edit; fixed in the feed's drawer reader (31.8). The "blank expected outcome"
+first suspected here was not a bug: the three visits never had an outcome,
+because the Schedule drawer (web and app alike) asks for none; a visit with
+an outcome keeps it through Edit. Whether the Schedule drawer should ask for
+an expected outcome is the owner's choice.
 
 ## 31.8 The app's Edit drawer: the reason, and the outcome (2026-11-12)
 
@@ -341,3 +343,17 @@ again at the other school with its outcome, D's purpose is a donor visit,
 and C, D and E keep the empty outcome they were scheduled with. (The
 script's "forwarded drawer saves" line prints 0 again; the 7 are counted
 from the server log, as in 31.6.)
+
+**The fix merged and re-checked by the coordinator (2026-11-13).** While
+comparing drawers the agent opened Complete drawers on the development
+database, and opening one starts completion: 8 activities moved to
+`completion_started` and 2 Core slots changed. The agent restored exactly
+those columns; the coordinator compared the rows with `edify_shadow_base`
+and found them byte-identical, and no activity left in `completion_started`.
+Left in place on the development database (append-only logs): 28
+`unauthorized_page_access` rows in `audit_log` and their domain events, and
+one target-ledger mark. Nothing touched production.
+Re-checked on the merged branch: `apps.mobile_feed` 208 tests OK (private
+test database, removed afterwards); the edit scenario at the app level
+`0 of 21 steps answered differently`, `0 of 19 changed tables differ`,
+`verify_chain` ok over 15,971 rows.
