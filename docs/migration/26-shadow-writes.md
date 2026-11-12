@@ -47,7 +47,7 @@ matches.
 
 ## 26.3 What is next
 
-- The first Go save: scheduling a school visit (M5), proved with this
+- The first Go save: scheduling a school visit (M5, designed in 27), proved with this
   scenario and then with a replayed month of real scheduling on a sanitised
   restore, as M5's exit asks.
 - The runner fills a drawer's script-bound fields from the values the
