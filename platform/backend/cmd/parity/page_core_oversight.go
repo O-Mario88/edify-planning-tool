@@ -6,8 +6,7 @@ func init() { pageQuestions["/core-schools-oversight/"] = coreOversightQuestions
 
 // coreOversightQuestions are Core School Oversight's: the page as it opens;
 // every year it offers, one it does not, one with stray spaces; each tab Go
-// draws (the two tabs of planned work are My Plan's and stay the existing
-// application's) and one that is not a tab; every grouping; every filter
+// draws and one that is not a tab; every grouping; every filter
 // value, values with stray spaces and values that are not values; every
 // sort; searches by name, by School ID and for nothing; pages in and out of
 // range and pages that are not pages; and filters, tabs and pages together.
@@ -38,7 +37,7 @@ func coreOversightQuestions(_ context.Context, _ *pageRun, _ string) []map[strin
 			out = append(out, map[string]string{"tab": tab, "sort": sort})
 		}
 	}
-	return append(out,
+	return append(append(out,
 		map[string]string{"fy": "2026", "page": "2"},
 		map[string]string{"sort": "latest", "page": "3", "district": "Mukono"},
 		map[string]string{"tab": "attention", "attention": "Critical SSA area", "q": "primary"},
@@ -47,5 +46,5 @@ func coreOversightQuestions(_ context.Context, _ *pageRun, _ string) []map[strin
 		map[string]string{"tab": "recommendations", "q": "kimenyedde"},
 		map[string]string{"fy": "2026", "tab": "recommendations"},
 		map[string]string{"fy": "2026", "download": "1", "export": "csv"},
-	)
+	), corePlanTabQuestions()...)
 }

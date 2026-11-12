@@ -231,3 +231,25 @@ GRANT SELECT (staff_id) ON training_ceiling TO edify_gateway_ro;
 -- My Plan's counts (internal/myplan): an activity's quarter, which the
 -- quarter tiles and This Quarter count by.
 GRANT SELECT (quarter) ON activity TO edify_gateway_ro;
+
+-- My Plan's rows (internal/myplan, docs/migration/25-my-plan.md 25.8), which
+-- Core School Oversight's two tabs of planned work list: the activity's
+-- people, cost, completion and district-day columns, its cost lines, weekly
+-- requests, cost snapshots and rates, and the visit days. Not evidence:
+-- the gateway may not read evidence_record, so a partner's completed work,
+-- whose form decides whether it is complete, is left to the existing
+-- application.
+GRANT SELECT (other_participants, expected_participants, participants_per_school, teachers_per_school, planning_source, cost_missing, ia_verification_status, ssa_collection_expected, daily_visit_batch_id, event_district_id, execution_started_at, submitted_to_ia_at, pl_reviewed_at, planned_date_before_completion) ON activity TO edify_gateway_ro;
+GRANT SELECT (district_type) ON district TO edify_gateway_ro;
+GRANT SELECT (primary_district_id) ON staff_profile TO edify_gateway_ro;
+GRANT SELECT (id) ON activity_schedule_cost_line TO edify_gateway_ro;
+GRANT SELECT (activity_budget_line_id, weekly_fund_request_id) ON weekly_fund_request_line TO edify_gateway_ro;
+GRANT SELECT (id, status) ON weekly_fund_request TO edify_gateway_ro;
+GRANT SELECT (catalogue_id, key, approved_minimum, unit_cost) ON cost_setting TO edify_gateway_ro;
+GRANT SELECT (activity_id, operational_rate_card_id, operational_breakdown, operational_cost, missing_configuration, is_current) ON activity_cost_snapshot TO edify_gateway_ro;
+GRANT SELECT (other) ON cluster_activity_attendance TO edify_gateway_ro;
+GRANT SELECT (id, responsible_user, visit_date) ON daily_visit_batch TO edify_gateway_ro;
+-- The live rate card a cluster session not yet costed reads its meal rate
+-- from (costing_service.catalogue_rate).
+GRANT SELECT (id, country, kind, status, is_active, fy, version) ON cost_catalogue TO edify_gateway_ro;
+GRANT SELECT (catalogue_item_id) ON cost_setting TO edify_gateway_ro;

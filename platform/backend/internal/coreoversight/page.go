@@ -12,6 +12,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
@@ -21,6 +22,7 @@ const (
 	dash           = "—"
 	pageParam      = "page"
 	emptySchools   = "No Core school in your scope matches."
+	emptyPlan      = "No planned work for the Core schools shown."
 	noSchool       = "No school."
 	noRecommended  = "No open recommendation for the schools shown."
 	recommendIntro = "The SSA recommendations recorded for each school from its confirmed SSA, with the recommended catalogue training (or why none is mapped) and where each stands. A recommendation is not an activity: support is planned from My Plan and Planning."
@@ -175,13 +177,32 @@ type reader struct {
 // page is the page drawn from the records for one reader. operational is
 // the running fiscal year the Champion rule reads a school's live plan in.
 func page(r *records, who reader, fy string, years []string, operational string, query url.Values) *screensv1.GetPageResponse {
+	out, _ := pageWith(r, who, fy, years, operational, query, nil)
+	return out
+}
+
+// planSheet answers a tab of planned work for the schools the filters keep.
+type planSheet func(shown []*school) (myplan.Sheet, error)
+
+// pageWith is the page, with plan answering the two tabs of planned work.
+func pageWith(r *records, who reader, fy string, years []string, operational string, query url.Values, plan planSheet) (*screensv1.GetPageResponse, error) {
 	v := newView(query, fy, years)
 	every := sortedBy(performance(r, fy, operational), "name")
-	rows := sortedBy(filtered(every, query), v.sort)
+	shown := filtered(every, query)
+	rows := sortedBy(shown, v.sort)
 	sum := summarise(rows)
 
 	blocks := []*screensv1.PageBlock{filterBlock(v, every), stripBlock(v, sum, len(every)), tabsBlock(v)}
 	switch v.tab {
+	case "core_visits", "core_trainings":
+		if plan == nil {
+			return nil, myplan.ErrUnported
+		}
+		sheet, err := plan(shown)
+		if err != nil {
+			return nil, err
+		}
+		blocks = append(blocks, planBlock(v, sheet))
 	case "groups":
 		blocks = append(blocks, groupBlocks(v, rows)...)
 	case "attention":
@@ -203,7 +224,35 @@ func page(r *records, who reader, fy string, years []string, operational string,
 		},
 		Blocks:  blocks,
 		WebPath: Path,
+	}, nil
+}
+
+// planBlock is the tab of planned work: table_export's sheet under
+// components/data_table, fifty rows a page.
+func planBlock(v view, sheet myplan.Sheet) *screensv1.PageBlock {
+	t := &screensv1.PageTable{Title: sheet.Title + ", FY " + v.fy, Subtitle: itoa(len(sheet.Rows)) + " planned"}
+	if len(sheet.Rows) == 0 {
+		t.EmptyMessage = emptyPlan
+		return tableBlock(t)
 	}
+	for _, h := range sheet.Headers {
+		t.Columns = append(t.Columns, &screensv1.PageColumn{Label: h})
+	}
+	number, pages := pageNumber(v.get(pageParam), len(sheet.Rows))
+	start := (number - 1) * rules.TablePageSize
+	shown := sheet.Rows[start:min(start+rules.TablePageSize, len(sheet.Rows))]
+	for _, cells := range shown {
+		row := &screensv1.PageRow{}
+		for _, c := range cells {
+			row.Cells = append(row.Cells, cell(collapse(c), "", ""))
+		}
+		t.Rows = append(t.Rows, row)
+	}
+	if pages > 1 {
+		t.Pager = pager(number, pages, len(sheet.Rows), len(shown), v.paged)
+		t.Footnote = t.Pager.GetSummary()
+	}
+	return tableBlock(t)
 }
 
 func option(value, label string) *screensv1.PageFilterOption {

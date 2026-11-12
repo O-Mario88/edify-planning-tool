@@ -2,6 +2,7 @@ package coreoversight
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"slices"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -51,8 +53,8 @@ func passed(query url.Values) url.Values {
 
 // Build answers path for p with the page's query. served is false for a
 // path this package does not answer, and for the two tabs of planned work
-// (Core School Visits and Core School Trainings), which are My Plan's own
-// tables and stay the existing application's until My Plan is Go's.
+// (Core School Visits and Core School Trainings, My Plan's own rows:
+// internal/myplan) when their rows need a part Go does not draw yet.
 //
 // Every other address under the page is not found there for every reader,
 // and so it is here.
@@ -66,15 +68,15 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !rules.FeedOpensPage {
 		return nil, false, nil
 	}
+	if myplan.FeedRefusesFormat(query) {
+		return nil, true, ErrNotAvailable
+	}
 	doors, ok := rules.Doors[p.ActiveRole]
 	if !ok || !doors.Page {
 		return nil, true, ErrNotAvailable
 	}
 	query = passed(query)
 	tab := choice(query, "tab", keysOf(rules.Tabs), "schools")
-	if in(rules.PlanTabs, tab) {
-		return nil, false, nil
-	}
 	now := s.now()
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {
@@ -86,7 +88,34 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
-	return page(found, reader{doors: doors}, fy, years, schooldirectory.OperationalFY(now), query), true, nil
+	var plan planSheet
+	if in(rules.PlanTabs, tab) {
+		plan = func(shown []*school) (myplan.Sheet, error) {
+			schools := make([]myplan.CoreSchool, 0, len(shown))
+			for _, r := range shown {
+				schools = append(schools, myplan.CoreSchool{PK: r.id, Code: r.code})
+			}
+			visits, trainings, err := myplan.CoreSchoolPlans(ctx, s.db, schools, fy, now)
+			sheet := trainings
+			if tab == "core_visits" {
+				sheet = visits
+			}
+			if err == nil && sheet.Unported {
+				err = myplan.ErrUnported
+			}
+			return sheet, err
+		}
+	}
+	out, err := pageWith(found, reader{doors: doors}, fy, years, schooldirectory.OperationalFY(now), query, plan)
+	if errors.Is(err, myplan.ErrUnported) {
+		// Rows that need a part of My Plan Go does not draw yet stay the
+		// existing application's.
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, true, err
+	}
+	return out, true, nil
 }
 
 // yearOptions is the view's sorted(fy_options(), reverse=True).

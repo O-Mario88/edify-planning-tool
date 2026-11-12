@@ -14,7 +14,8 @@ page did (24-planning-page.md).
 |---|---|---|
 | 1 | The page as it opens for a member of staff who holds nothing yet and has no visit target: header, period tabs, the filter row, Plan progress, the four plan tables' empty states, Plan Breakdown by Period, the bar for ticked activities | Done, 25.2 |
 | 2 | Plan progress and the breakdown counted (the year's and the period's tiles, counted visits at Core and other schools, the completed share, the past-due note) for a member of staff with no target whose tables list nothing | Done, 25.6 |
-| 3 | The plan's rows (25.7 lists what each needs): School Visits, Trainings (with the cluster expansion), Group Trainings, Cluster Meetings, Core School Visits, Core School Trainings, programme and Programme-school work; cost, budget status, verification, status pill, row tone, completion columns, row Actions, ticks, pagers; and the Returned, day-off and attention cards | Not started — the shared rows Core School Oversight's two tabs need |
+| 3a | The Core School Visits and Core School Trainings rows (the cluster expansion into Core schools, cost, budget status, verification, Status, completion columns, order), as Core School Oversight's two tabs list them | Done, 25.8 |
+| 3 | The rest of the plan's rows (25.7): School Visits, Trainings, Group Trainings, Cluster Meetings, programme and Programme-school work; row tone, day-off marks, row Actions, ticks, pagers; and the Returned, day-off and attention cards; a partner's completed work (its evidence) | Not started |
 | 4 | A Programme Lead's or CCEO's own Planned and remaining (`readiness.own`, `planning_monitor.own_monitor`), the visit-target helper and ceiling notice, and the readiness list (`?list=`) | Not started |
 | 5 | My Training Summary (`training_ceilings.own_summary`) and Cluster Planning Status (`clusters.planning_status`) | Not started |
 | 6 | The partner's own My Plan (`partner_views.partner_plan_context`): five sections, facilitated clusters, training facilitations, Invoices & Payments | Not started |
@@ -305,3 +306,158 @@ no account can prove the rows through the page until pieces 4 and 5 move
 with them; the rows' own proof will need the golden method of 22 (the
 existing loop run over generated activities with costs, weekly requests,
 returns, days off and Core slots).
+
+## 25.8 Piece 3a: the Core rows, on Core School Oversight
+
+Core School Oversight's two tabs of planned work (`?tab=core_visits`,
+`?tab=core_trainings`) are now Go's. Both are
+`apps.my_plan.table_export.core_school_plans`: My Plan's own Core School
+Visits and Core School Trainings rows (`get_frontend_context` over the
+activities `core_school_activity_ids` chooses, period "fy"), for the schools
+the page's filters keep, written as the export writes them
+(`CORE_SCHOOL_VISITS.columns`, `CORE_TRAINING_PLAN_COLUMNS`, `shown`). The
+rows are built in `internal/myplan` (`CoreSchoolPlans`) so My Plan's own
+page can list them when its other pieces move; `internal/coreoversight`
+draws the tab around them. My Plan's own page is served to no more readers
+than before.
+
+| Part | Existing rule it ports |
+|---|---|
+| Which work | `core_school_activity_ids`: live activities of the year, not set aside (cancelled, rejected, waiting for its owner, deferred, not planned), at the schools shown, the group sessions one of them is invited to or attended, and the cluster trainings of their clusters planned before invitations were recorded by name; then `context_for`'s queryset by planned date, then made |
+| Which table | the loop's own order of tests: programme work and Programme-school work out first; a Core school's (`school_type == "core"`) work by its package slot's kind, else by `VISIT_TYPES` / `TRAINING_TYPES`; a cluster training planned on a cluster (no School ID) expanded into the schools it reached (its invitations by school name, else the cluster's confirmed operating members, else all of them, newest school first), its Core schools moved to Core School Trainings with the slot's T-number and package progress; only the rows whose School ID is one of the schools shown (`mine`) |
+| School, district, activity | the school's School ID, name and district ("—" with none); `choice_label` of the type, with the slot's V-number and "n/m Completed" (`CoreActivitySlot` by activity, the 4 + 4 package of its plan, the onboarding slot outside it, a slot's status read stripped and in any case) |
+| District Type | `district_marks.district_type_marks`: a shared costed day's mark from all its live fundable members (`day_district_mark`), else the work's own district's type for the person responsible (`district_type_for_staff`: a field role held, by roles or the active role, against the profile's primary district; head office against Kampala, Wakiso and Mukono; the district's own type when nobody resolves) |
+| Executor | the partner (live partners) for a partner's work, else the owner's name by profile or account id ("Staff" otherwise) |
+| Purpose, intervention, training | the purpose written, else the visit purpose's label, else the type's; the focus intervention's label, "General" with none; `training_names.course_name_of` ("Not yet named"), `mode_of_delivery`; participants as recorded, else planned; an expanded school's people from its invitation, else the session's per school, else the session's total split |
+| Cost | `costing_service.planned_minimum_amounts`: each current snapshot component re-priced at its card's approved minimum (`minimum_share`: Decimal half up, shared-day and allocated shares, retired rates at their own amount, renamed keys through `RATE_ALIASES`); an in-school pair's note (`pair_cost_notes`); an expanded school's people × the session's meal rate (`planned_meal_rates`, else the live published card's `group_training_meals`), 0 online |
+| Budget status | the first cost line's first weekly request (`money_chain`): the eight states, "Cost Setup Required", "Budget Created", the pair's "In School Visit" / "In Training", "No Budget" |
+| Verification | `verification_label` with `lead_verified_owner_ids` (live profiles holding CCEO or Programme Lead, or supervised by a live Programme Lead) |
+| Status | `get_activity_status_label_and_class` (Kampala's day), "Awaiting SSA Scores" (`visit_scores.awaiting_scores`), then the completion gap ("Not Complete", "Missing Salesforce ID", "Missing evidence") or "Completed Early" (`completion_columns`) |
+| Dates, Salesforce ID | the day planned before completion, else the planned date ("Unscheduled"); the day done (recorded, else the day Complete was pressed in Kampala) for work its status calls done; the stored ID stripped, "Not in SF" |
+| Order | `completed_last_key`: work not complete first by planned date, undated last, complete work after; stable |
+| The tab | "<sheet>, FY <year>", "n planned", the empty sentence, fifty rows a page with the Schools tab's pager and its caption as the note |
+
+Every vocabulary is exported under `rows` in `internal/myplan/rules.json`
+(type and intervention labels, visit purposes, the type and status lists,
+the SSA and online rules, the cost keys, aliases and retired keys, the live
+card's country, kind and status, the words, the district rules, the two
+sheets' titles and headings); the Budget status and the pill's words are
+written in Go, as `get_frontend_context` writes them inline.
+
+**Passed to the existing application.** A tab whose rows hold a partner's
+work its status calls done: such work is complete only with its form
+uploaded, and the gateway may not read `evidence_record`
+(`TestGatewayRoleCanNeitherWriteNorReadSecrets` names it as a table the
+gateway must not read). A column grant there was tried and taken back. The
+other tab of the same page is drawn when it holds none. Also passed: a
+stored cost component the existing code reads as a float or would fail on
+(a breakdown that is not a list, an allocation out of range, a label that
+is not text), and a district type with no label. A `?format=` other than
+`json` is not found for everyone (the feed's renderer negotiation), before
+the page is asked; Core School Oversight's own questions had not asked it.
+
+### Found by comparing and reading
+
+- **The seed's partner visits.** FY 2026's Core School Visits holds four
+  partner visits marked completed with no form ("Not Complete"): that tab
+  in that year is left to the existing application for every reader who
+  sees those schools.
+- **An activity in two package slots** is numbered by whichever slot the
+  table returns last, on the existing page as in Go; booking puts school
+  work in one slot, so the golden data does too.
+- **A Core school's work at another year's plan.** The slots are read by
+  the school, not the year (as the existing code says), so a visit dated
+  into the next year keeps its number.
+
+### Proving it
+
+**Against the existing feed, every seed account.** `cmd/parity -screen page
+-path /core-schools-oversight/` now asks 119 questions of each account: Core
+School Oversight's 73 (22.4) and 46 of the two tabs
+(`page_core_plan_tabs.go`): each tab as it opens, in FY 2026, 2025, 2028 and
+1999, with searches, a district offered and not, each type, a trajectory,
+a need and a readiness value, a sort, pages 2, 999 and "abc", FY 2026 with
+a search and with page 2, a download's `format=xlsx`, a tab with spaces and
+a grouping beside a tab. On a gateway with no existing application behind
+it, all 29 accounts, the run's own last lines:
+
+```
+3451 answers compared, 15 differing
+80 answers held rows with the same name, compared in School ID order (the existing page gives them none)
+```
+
+The 15 are one tab in one year: FY 2026's Core School Visits (as it opens,
+searched "central", page 2) for the five readers who see the officer's
+schools (Admin, the officer, the Country Director, Impact Assessment,
+Programme Lead 1). That sheet holds the seed's four completed partner
+visits, so Go passes it, and a gateway with nothing behind answers "This
+screen is not available here yet" (all 15 checked). Every other answer is
+equal, the two tabs' FY 2027 rows, FY 2026's empty Core School Trainings
+and every refusal among them. With the existing application behind the same
+gateway, those five accounts:
+
+```
+595 answers compared, 0 differing
+80 answers held rows with the same name, compared in School ID order (the existing page gives them none)
+```
+
+**Against the existing code, for rows the seed does not hold.** The seed has
+two FY 2027 Core visits and FY 2026's seventeen, one district, no trainings
+at Core schools, no cluster session reaching one, no weekly requests beyond
+"Budget Created", no pairs, slots or visit days.
+`internal/myplan/testdata/core_plans_golden.py` files synthetic records in
+`edify_gorn_test` (ids `g7…`; three districts, five accounts with and
+without profiles, roles and home districts, a supervision line, three
+clusters, sixteen schools of five types, 171 activities of eleven types and
+fifteen states from a seeded random source, with days today, this week,
+later, past and undated, padded and missing Salesforce IDs, reschedules,
+recorded and pressed delivery days, the day before completion, attended and
+planned people, catalogue courses, online delivery; cost lines in eight
+weekly request states, some in two; cost snapshots priced pro rata, on a
+shared day, by allocation, at a retired or a renamed rate, missing, with no
+minimum and empty; Core plans in two years with slots in every state;
+invitations, uninvited sessions and their package slots; SSA records;
+visit days) and asks `table_export.core_school_plans` itself, unmodified,
+for 39 sets of schools and years (every school, the Core schools, five,
+none, the year before, each school alone in each year, and all but the
+first). `coreplans_golden_test.go` reads the same records through the
+gateway's read-only role and expects the same cells in the same order:
+
+```
+coreplans_golden_test.go:103: 74 sheets (423 rows) compared, 0 differing; 4 sheets left to the existing code (a partner's completed work)
+```
+
+The four are the sheets holding the one partner visit the script marks
+completed. Changing a rule in Go fails it: Decimal half up read as floor
+(6 sheets), the head-office zone (3), an account's roles read before its
+active role (3). The records were removed afterwards (none left). A first
+run, with `evidence_record` still granted, compared 322 rows of the partner
+completions too, all equal; that grant was then withdrawn (above).
+
+Unit tests (`internal/myplan/coreplans_test.go`) hold what neither reaches:
+`minimum_share` at its edges (half up and below, a shared day, the last
+share of an allocation, a retired rate with and without its amount, no
+minimum, no unit, a zero unit at a zero rate, and the three shapes Go
+passes), Python's truth of JSON values, every weekly request state, the
+pill's 7-day edge, "Activity ID Missing", the completion words, the day
+mark, money with thousands and a minus, and floor division.
+`internal/coreoversight/page_test.go` draws a tab of 51 rows (page 2, the
+pager's caption as the note, a filter narrowing the schools asked), the
+empty tab, an unported sheet and the `format` refusal.
+`internal/integration/core_plan_tabs_test.go` opens both tabs through the
+gateway for the Admin and refuses `format=xlsx`.
+
+Grants added (`platform/deploy/db/roles.sql`, applied additively to both
+databases): activity's people, cost, completion and visit-day columns,
+`district.district_type`, `staff_profile.primary_district_id`, the cost
+lines' ids, the weekly request lines and requests' status, cost settings,
+cost snapshots' components, the live card's columns, `cluster_activity_attendance.other`
+and the visit days.
+
+### What is left
+
+- A partner's completed work on these tabs (its evidence: a view the
+  coordinator could make, of `evidence_record`'s activity, kind and
+  quarantine only, would let Go draw it).
+- The rest of piece 3 (My Plan's own tables, Actions, ticks, row tones,
+  day-off marks and the cards), and pieces 4 to 6; the downloads.

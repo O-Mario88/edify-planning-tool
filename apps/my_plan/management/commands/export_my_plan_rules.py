@@ -98,6 +98,102 @@ def rules() -> dict:
         # is "not found" before the page is asked.
         "api_formats": api_formats(),
         "plan": plan(),
+        "rows": plan_rows(),
+    }
+
+
+def _choices(model, field: str) -> dict:
+    from apps.core.choice_labels import label_for
+
+    return {
+        str(value): str(label_for(model, field, value))
+        for value, _label in model._meta.get_field(field).flatchoices
+    }
+
+
+def plan_rows() -> dict:
+    """What the plan's rows are drawn from (get_frontend_context's loop and
+    the modules each column reads) and the two Core sheets Core School
+    Oversight lists (table_export.core_school_plans): the labels, the
+    statuses and types each rule reads, the cost keys and the words."""
+    from apps.activities import completion_columns as cc
+    from apps.activities import online_training, pair_costing, training_names
+    from apps.activities.models import Activity
+    from apps.activities.services import PARTNER_SSA_SUPPORT_ACTIVITY_TYPES
+    from apps.budget import costing
+    from django.conf import settings
+
+    from apps.budget.models import RateCardKind, RateCardStatus
+    from apps.budget.reference import (
+        CANONICAL_RATE_KEYS,
+        RATE_ALIASES,
+        RETIRED_COST_SETTING_KEYS,
+    )
+    from apps.core import activity_types
+    from apps.daily_visit_batches import districts, pricing
+    from apps.my_plan import services, table_export
+    from apps.partners.purposes import _LABELS as PURPOSE_LABELS
+    from apps.pl_review.services import LEAD_VERIFIED_ROLES
+    from apps.planning.country_oversight import rules as planning_rules
+    from apps.planning.visit_gate import PROGRAMME_SCHOOL_TYPES
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+    from apps.ssa import visit_scores
+    from apps.ssa.creation import HOLDING_STATUSES
+
+    return {
+        "activity_type_labels": _choices(Activity, "activity_type"),
+        "focus_intervention_labels": _choices(Activity, "focus_intervention"),
+        "purpose_labels": dict(PURPOSE_LABELS),
+        "visit_types": list(activity_types.VISIT_TYPES),
+        "training_types": [str(t) for t in activity_types.TRAINING_TYPES],
+        "cluster_meeting_types": list(activity_types.CLUSTER_MEETING_TYPES),
+        "programme_event_types": [str(t) for t in activity_types.PROGRAMME_EVENT_TYPES],
+        "programme_school_types": list(PROGRAMME_SCHOOL_TYPES),
+        "non_fundable_statuses": list(activity_types.NON_FUNDABLE_ACTIVITY_STATUSES),
+        "operating_statuses": list(OPERATING_STATUSES),
+        "approved_statuses": sorted(cc.APPROVED_STATUSES),
+        "lead_verified_roles": list(LEAD_VERIFIED_ROLES),
+        "partner_ssa_support_types": sorted(PARTNER_SSA_SUPPORT_ACTIVITY_TYPES),
+        "ssa_holding_statuses": list(HOLDING_STATUSES),
+        "not_assessed_types": list(planning_rules.NOT_ASSESSED_TYPES),
+        "online_training_types": [
+            str(t) for t in online_training.ONLINE_TRAINING_TYPES
+        ],
+        "online_mode": online_training.ONLINE,
+        "online_free_note": online_training.ONLINE_FREE_NOTE,
+        "online_training_label": training_names.ONLINE_TRAINING_LABEL,
+        "mode_of_delivery": dict(training_names.MODE_OF_DELIVERY),
+        "companion_gone_statuses": list(pair_costing.COMPANION_GONE_STATUSES),
+        "captured_in_visit_note": pair_costing.CAPTURED_IN_VISIT_NOTE,
+        "captured_in_training_note": pair_costing.CAPTURED_IN_TRAINING_NOTE,
+        "retired_cost_setting_keys": sorted(RETIRED_COST_SETTING_KEYS),
+        "rate_aliases": {key: list(old) for key, old in RATE_ALIASES.items()},
+        "meals_rate_keys": list(costing.MEALS_RATE_KEYS),
+        "group_training_meals_rate_key": costing.GROUP_TRAINING_MEALS_RATE_KEY,
+        # costing_service.active_catalogue and _rate_card: the live card a
+        # session not yet costed reads its meal rate from.
+        "catalogue_country": getattr(settings, "COUNTRY", "Uganda"),
+        "catalogue_kind": str(RateCardKind.OPERATIONAL),
+        "catalogue_status": str(RateCardStatus.PUBLISHED),
+        "canonical_rate_keys": sorted(CANONICAL_RATE_KEYS),
+        "complete_label": services.COMPLETE_LABEL,
+        "finished_early": cc.FINISHED_EARLY,
+        "missing_sf": cc.MISSING_SF,
+        "missing_evidence": cc.MISSING_EVIDENCE,
+        "missing_both": cc.MISSING_BOTH,
+        "awaiting_ssa_label": visit_scores.AWAITING_SSA_LABEL,
+        "field_roles": sorted(districts.FIELD_ROLES),
+        "field_role_aliases": sorted(districts._FIELD_ROLE_ALIASES),
+        "hq_primary_districts": list(districts.HQ_PRIMARY_DISTRICTS),
+        "day_mark_labels": dict(pricing.DAY_MARK_LABELS),
+        "core_visits": {
+            "title": table_export.CORE_VISITS_TITLE,
+            "headers": [h for h, _c in table_export.CORE_SCHOOL_VISITS.columns],
+        },
+        "core_trainings": {
+            "title": table_export.CORE_TRAININGS_TITLE,
+            "headers": [h for h, _c in table_export.CORE_TRAINING_PLAN_COLUMNS],
+        },
     }
 
 

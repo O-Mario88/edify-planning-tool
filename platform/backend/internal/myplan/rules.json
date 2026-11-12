@@ -309,6 +309,308 @@
     "Q3",
     "Q4"
   ],
+  "rows": {
+    "activity_type_labels": {
+      "baseline_ssa_visit": "SSA Visit",
+      "cluster_meeting": "Cluster Meeting",
+      "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+      "cluster_training": "Cluster Training",
+      "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+      "coaching_visit": "Coaching Visit",
+      "core_assessment_visit": "Core Assessment Visit",
+      "core_training": "Core Training",
+      "core_visit": "Core Visit",
+      "donor_visit": "Donor Visit",
+      "field_event": "Field Event",
+      "follow_up_visit": "Follow-up Visit",
+      "in_school_coaching_visit": "In-school Coaching Visit",
+      "in_school_support": "In-school Support",
+      "in_school_training": "In-school Training",
+      "partner_activity": "Partner Activity",
+      "partner_ssa_collection": "Partner SSA Collection",
+      "programme_event": "Programme Event",
+      "project_activity": "Project Activity",
+      "school_improvement_training": "School Improvement Training",
+      "school_invitation": "School Invitation",
+      "school_visit": "School Visit",
+      "school_visit_ssa_collection": "School Visit + SSA Collection",
+      "social_visit": "Social Visit",
+      "ssa_activity": "SSA Activity",
+      "story_gathering_visit": "Gathering Story",
+      "training": "Training",
+      "training_follow_up_visit": "Training Follow-up Visit"
+    },
+    "approved_statuses": [
+      "accountant_confirmed",
+      "closed",
+      "ia_verified"
+    ],
+    "awaiting_ssa_label": "Awaiting SSA Scores",
+    "canonical_rate_keys": [
+      "client_partner_visit",
+      "cluster_meetings_trainings_meals",
+      "core_partner_visit",
+      "group_training_facilitation_fee",
+      "group_training_meals",
+      "group_training_venue_cost",
+      "lunch_per_day",
+      "management_accommodation_per_night",
+      "onetest",
+      "partner_meetings",
+      "photocopying_training_materials",
+      "primary_transport_per_day",
+      "printing_training_materials",
+      "proprietor_conference",
+      "secondary_accommodation_per_night",
+      "secondary_breakfast_per_day",
+      "secondary_overnight_dinner_per_day",
+      "secondary_transport_per_day",
+      "student_conference",
+      "tot_trainings",
+      "tot_trainings_meals"
+    ],
+    "captured_in_training_note": "(captured in the in-school training cost)",
+    "captured_in_visit_note": "(captured in the school visit cost)",
+    "catalogue_country": "Uganda",
+    "catalogue_kind": "operational",
+    "catalogue_status": "published",
+    "cluster_meeting_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
+    "companion_gone_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred"
+    ],
+    "complete_label": "Complete",
+    "core_trainings": {
+      "headers": [
+        "School ID",
+        "School Name",
+        "Planned From",
+        "Executor",
+        "Training Name",
+        "SSA Intervention",
+        "Planned Date",
+        "Completed Date",
+        "Core Training Package",
+        "Participants",
+        "Delivery Type",
+        "Cost",
+        "Salesforce ID",
+        "Status"
+      ],
+      "title": "Core School Trainings"
+    },
+    "core_visits": {
+      "headers": [
+        "School ID",
+        "School Name",
+        "District",
+        "District Type",
+        "Activity",
+        "Planned Date",
+        "Completed Date",
+        "Executor",
+        "Purpose of Visit",
+        "SSA Intervention",
+        "Cost",
+        "Budget status",
+        "Verification",
+        "Salesforce ID",
+        "Status"
+      ],
+      "title": "Core School Visits"
+    },
+    "day_mark_labels": {
+      "mixed": "Mixed",
+      "primary": "Primary District",
+      "secondary": "Secondary District"
+    },
+    "field_role_aliases": [
+      "cceo",
+      "pl",
+      "program lead",
+      "programme lead"
+    ],
+    "field_roles": [
+      "CCEO",
+      "Program Lead"
+    ],
+    "finished_early": "Completed Early",
+    "focus_intervention_labels": {
+      "christlike_behaviour": "Christlike Behaviour",
+      "enrolment": "Enrolment",
+      "exposure_to_word_of_god": "Exposure to the Word of God",
+      "financial_health": "Financial Health",
+      "government_requirement": "Government Requirements",
+      "leadership": "Leadership",
+      "learning_environment": "Learning Environment",
+      "teaching_environment": "Teacher's Environment"
+    },
+    "group_training_meals_rate_key": "group_training_meals",
+    "hq_primary_districts": [
+      "Kampala",
+      "Wakiso",
+      "Mukono"
+    ],
+    "lead_verified_roles": [
+      "CCEO",
+      "Program Lead"
+    ],
+    "meals_rate_keys": [
+      "tot_trainings_meals",
+      "cluster_meetings_trainings_meals",
+      "group_training_meals"
+    ],
+    "missing_both": "Not Complete",
+    "missing_evidence": "Missing evidence",
+    "missing_sf": "Missing Salesforce ID",
+    "mode_of_delivery": {
+      "group": "Cluster Group Training",
+      "in_school": "In-School Training"
+    },
+    "non_fundable_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred",
+      "awaiting_owner_approval"
+    ],
+    "not_assessed_types": [
+      "champion"
+    ],
+    "online_free_note": "(online training: no cost)",
+    "online_mode": "online",
+    "online_training_label": "Online Training",
+    "online_training_types": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ],
+    "operating_statuses": [
+      "active",
+      "reopened"
+    ],
+    "partner_ssa_support_types": [
+      "baseline_ssa_visit",
+      "partner_ssa_collection",
+      "school_visit_ssa_collection",
+      "ssa_activity"
+    ],
+    "programme_event_types": [
+      "programme_event"
+    ],
+    "programme_school_types": [
+      "core_trained",
+      "core_graduate",
+      "champion"
+    ],
+    "purpose_labels": {
+      "donor_visit": "Donor Visit",
+      "in_school_coaching": "In-school Coaching Visit",
+      "in_school_training": "In-school Training",
+      "in_school_training_delivery_visit": "In-school Training Delivery Visit",
+      "in_school_training_ssa": "In-school Training + SSA Collection",
+      "school_invitation": "School Invitation",
+      "social_visit": "Social Visit",
+      "ssa_support": "SSA Support",
+      "story_gathering": "Content/Story Collection",
+      "training_follow_up": "Training Follow Up"
+    },
+    "rate_aliases": {
+      "client_partner_visit": [
+        "partner_visit_lump_sum"
+      ],
+      "cluster_meetings_trainings_meals": [
+        "cluster_meeting_participant_meal_cost_per_head",
+        "meals_per_participant"
+      ],
+      "core_partner_visit": [
+        "partner_visit_lump_sum"
+      ],
+      "lunch_per_day": [
+        "primary_lunch_per_day",
+        "secondary_lunch_per_day"
+      ],
+      "management_accommodation_per_night": [
+        "secondary_accommodation_per_night"
+      ],
+      "partner_meetings": [
+        "partner_visit_lump_sum"
+      ],
+      "tot_trainings_meals": [
+        "group_training_participant_meal_cost_per_head"
+      ]
+    },
+    "retired_cost_setting_keys": [
+      "accommodation",
+      "breakfast",
+      "client_staff_visit",
+      "cluster_meeting",
+      "cluster_meeting_cost",
+      "cluster_meeting_participant_meal_cost_per_head",
+      "cluster_meetings_trainings",
+      "core_school_training",
+      "core_school_visit",
+      "core_staff_visit",
+      "dinner",
+      "group_training_participant_meal_cost_per_head",
+      "lunch",
+      "meals_per_participant",
+      "mobilisation_per_participant",
+      "partner_training_lump_sum",
+      "partner_visit_lump_sum",
+      "primary_lunch_per_day",
+      "programme_accommodation_per_night",
+      "programme_facilitation_per_day",
+      "programme_materials_per_participant",
+      "programme_participant_meal_cost_per_head",
+      "programme_transport_per_day",
+      "programme_venue_per_day",
+      "project_partner_lump_sum",
+      "secondary_incidentals_per_day",
+      "secondary_lunch_per_day",
+      "ssa_support",
+      "ssa_visit_rate",
+      "staff_visit_transport_primary",
+      "staff_visit_transport_secondary",
+      "training_session_fee",
+      "venue"
+    ],
+    "ssa_holding_statuses": [
+      "pending",
+      "confirmed"
+    ],
+    "training_types": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ],
+    "visit_types": [
+      "school_visit",
+      "follow_up_visit",
+      "coaching_visit",
+      "in_school_support",
+      "donor_visit",
+      "story_gathering_visit",
+      "school_invitation",
+      "social_visit",
+      "training_follow_up_visit",
+      "in_school_coaching_visit",
+      "core_visit",
+      "core_assessment_visit",
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection"
+    ]
+  },
   "strip": {
     "drilldown": "/my-plan",
     "keys": [

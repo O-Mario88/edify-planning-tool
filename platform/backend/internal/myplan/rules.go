@@ -56,6 +56,7 @@ type Rules struct {
 	PartnerRoleBridge  bool            `json:"partner_role_bridge"`
 	APIFormats         []string        `json:"api_formats"`
 	Plan               PlanRules       `json:"plan"`
+	Rows               RowRules        `json:"rows"`
 	months             []monthOption
 }
 

@@ -5,11 +5,13 @@ import (
 	"errors"
 	"math"
 	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 )
 
 func TestOnlyThePageItselfIsAnsweredAndOnlyForItsRoles(t *testing.T) {
@@ -36,14 +38,47 @@ func TestOnlyThePageItselfIsAnsweredAndOnlyForItsRoles(t *testing.T) {
 	}
 }
 
-// The two tabs of planned work are My Plan's tables and stay the existing
-// application's; they are passed on before anything is read.
-func TestThePlannedWorkTabsAreLeftToTheExistingApplication(t *testing.T) {
+// The two tabs of planned work are My Plan's sheets of the schools the
+// filters keep (internal/myplan), fifty rows a page; rows that need a part
+// of My Plan Go does not draw yet leave the page to the existing
+// application, and a ?format= the feed has no renderer for is not found.
+func TestThePlannedWorkTabsListMyPlansSheet(t *testing.T) {
+	var asked []*school
+	rows := [][]string{}
+	for i := range 51 {
+		rows = append(rows, []string{"G" + strconv.Itoa(i), "A  school"})
+	}
+	plan := func(shown []*school) (myplan.Sheet, error) {
+		asked = shown
+		return myplan.Sheet{Title: "Core School Visits", Headers: []string{"School ID", "School Name"}, Rows: rows}, nil
+	}
+	r := &records{Schools: []schoolRow{{ID: "s1", Code: "1", Name: "One", Type: "core"}, {ID: "s2", Code: "2", Name: "Two", Type: "champion"}}}
+	out, err := pageWith(r, reader{}, "2027", []string{"2027"}, "2027", url.Values{"tab": {"core_visits"}, "type": {"core"}, "page": {"2"}}, plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(asked) != 1 || asked[0].id != "s1" {
+		t.Errorf("the sheet was asked for %v, want the one Core school the filter keeps", asked)
+	}
+	table := out.Blocks[3].GetTable()
+	if table.GetTitle() != "Core School Visits, FY 2027" || table.GetSubtitle() != "51 planned" || len(table.GetRows()) != 1 ||
+		table.GetRows()[0].GetCells()[1].GetText() != "A school" || table.GetFootnote() != "Showing 51–51 of 51" {
+		t.Errorf("table %v", table)
+	}
+	rows = nil
+	out, _ = pageWith(r, reader{}, "2027", []string{"2027"}, "2027", url.Values{"tab": {"core_visits"}}, plan)
+	if table := out.Blocks[3].GetTable(); table.GetEmptyMessage() != emptyPlan || len(table.GetColumns()) != 0 {
+		t.Errorf("empty table %v", table)
+	}
+	unported := func([]*school) (myplan.Sheet, error) { return myplan.Sheet{}, myplan.ErrUnported }
+	if _, err := pageWith(r, reader{}, "2027", []string{"2027"}, "2027", url.Values{"tab": {"core_trainings"}}, unported); !errors.Is(err, myplan.ErrUnported) {
+		t.Errorf("unported rows: %v", err)
+	}
 	s := NewService(nil, time.Now)
-	for _, tab := range []string{"core_visits", "core_trainings", " core_visits "} {
-		_, served, err := s.Build(context.Background(), auth.Principal{ActiveRole: "CCEO"}, Path, url.Values{"tab": {tab}})
-		if served || err != nil {
-			t.Errorf("tab %q: served %v, err %v", tab, served, err)
+	for _, format := range []string{"xlsx", "csv"} {
+		_, served, err := s.Build(context.Background(), auth.Principal{ActiveRole: "CCEO"}, Path, url.Values{"tab": {"core_visits"}, "format": {format}})
+		if !served || !errors.Is(err, ErrNotAvailable) {
+			t.Errorf("format %s: served %v, err %v", format, served, err)
 		}
 	}
 }
