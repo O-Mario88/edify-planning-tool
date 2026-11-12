@@ -421,3 +421,11 @@ nothing is saved; the drawer's refusals hold; only Schedule answers a form).
 (Next.js) does not call this path yet. The replayed month on a sanitised
 restore (M5's exit) has not been run. Cutover, and switching the save off
 in Django in the same release (03 §3.7), wait for the owner.
+
+**The app-level run re-run by the coordinator on the merged branch
+(2026-11-12)**, from fresh copies: `0 of 15 steps answered differently`,
+`366 tables, 19 changed by the runs`, `0 of 19 changed tables differ`,
+`verify_chain` ok over 15,962 rows; on copy B Django served 15 form-only
+requests and 3 forwarded saves, so Go made 12. Race, the integration suite,
+ruff, format, bandit and `PlanningDrawerFeedTest` (16 tests, on a private
+test database removed afterwards) pass.
