@@ -55,6 +55,7 @@ type Rules struct {
 	VisitTargets       map[string]int  `json:"visit_targets"`
 	PartnerRoleBridge  bool            `json:"partner_role_bridge"`
 	APIFormats         []string        `json:"api_formats"`
+	Plan               PlanRules       `json:"plan"`
 	months             []monthOption
 }
 

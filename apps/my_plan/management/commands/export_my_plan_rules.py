@@ -97,6 +97,47 @@ def rules() -> dict:
         # The feed is a REST framework view: a ?format= no renderer answers
         # is "not found" before the page is asked.
         "api_formats": api_formats(),
+        "plan": plan(),
+    }
+
+
+def plan() -> dict:
+    """What the page counts and lists (get_frontend_context): whose work,
+    which states each list leaves out, the Status filter's values, the tile
+    counts' activity types, and the rules a counted visit is read by."""
+    from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
+    from apps.activities.services import RETURNED_STATUSES
+    from apps.core.activity_types import (
+        COMPLETED_WORK_STATUSES,
+        NOT_STARTED_ACTIVITY_STATUSES,
+        UNDER_WAY_ACTIVITY_STATUSES,
+    )
+    from apps.core.metrics.payload import HELPER_FIGURE_CHARS
+    from apps.my_plan import services
+    from apps.planning import training_ceilings
+    from apps.planning.management.commands.export_planning_page_rules import (
+        counted_visits,
+    )
+
+    return {
+        "excluded_statuses": list(services.ACTIVE_MY_PLAN_EXCLUDED_STATUSES),
+        "partner_only_statuses": list(services.PARTNER_ONLY_STATUSES),
+        "officer_completed_statuses": sorted(OFFICER_COMPLETED_STATUSES),
+        "returned_statuses": list(RETURNED_STATUSES),
+        "completed_work_statuses": list(COMPLETED_WORK_STATUSES),
+        "not_started_statuses": list(NOT_STARTED_ACTIVITY_STATUSES),
+        "under_way_statuses": list(UNDER_WAY_ACTIVITY_STATUSES),
+        "plan_states": list(services.PLAN_STATES),
+        "submitted_filter_statuses": list(services.SUBMITTED_FILTER_STATUSES),
+        "returned_filter_statuses": list(services.RETURNED_FILTER_STATUSES),
+        "visit_types": list(services.MY_PLAN_VISIT_TYPES),
+        "training_types": list(services.MY_PLAN_TRAINING_TYPES),
+        "meeting_types": list(services.MY_PLAN_MEETING_TYPES),
+        "counted_visits": counted_visits(),
+        # My Training Summary's trainings (training_ceilings._training_q).
+        "summary_training_types": list(training_ceilings._TRAINING_TYPES),
+        "summary_meeting_types": list(training_ceilings._MEETING_TYPES),
+        "helper_figure_chars": HELPER_FIGURE_CHARS,
     }
 
 

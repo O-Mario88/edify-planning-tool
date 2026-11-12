@@ -98,20 +98,25 @@ func comma(n int) string {
 	return sign + digits
 }
 
+// visitsLine is the line under the visits figure for a reader without a
+// visit target: their counted visits at Core schools and at the others.
+func visitsLine(c PlanCounts) string {
+	return comma(c.CoreVisits) + " Core, " + comma(c.ClientVisits) + " Client"
+}
+
 // progressStrip is Plan progress (partials/my_plan/kpi_cards.html) for a
-// reader without a visit target: their counted visits are written "n Core,
-// n Client" under the visits figure. A reader with nothing planned has no
+// reader without a visit target. A plan with nothing in the period has no
 // completed share ("No data").
 func progressStrip(c PlanCounts) *screensv1.PageBlock {
 	values := []string{
 		comma(c.Week), comma(c.Month), comma(c.Quarter), comma(c.FY),
-		comma(c.Visits), comma(c.Trainings), comma(c.Meetings), rules.Strip.NoData,
+		comma(c.Visits), comma(c.Trainings), comma(c.Meetings), share(c.Completed, c.Total),
 	}
 	strip := &screensv1.PageStrip{Title: "Plan progress"}
 	for i, label := range rules.Strip.Labels {
 		m := &screensv1.PageMetric{Label: label, Value: values[i], Href: rules.Strip.Drilldown}
 		if rules.Strip.Keys[i] == "my_plan_visits_scheduled_period" {
-			m.Helper = comma(c.CoreVisits) + " Core, " + comma(c.ClientVisits) + " Client"
+			m.Helper = visitsLine(c)
 		}
 		strip.Metrics = append(strip.Metrics, m)
 	}
@@ -161,12 +166,27 @@ func activityBar() *screensv1.PageSelection {
 	}}
 }
 
-// emptyPage is My Plan for a reader with nothing planned and no target.
-func emptyPage(p Period, years []string, c Choices, request Query) *screensv1.GetPageResponse {
-	blocks := []*screensv1.PageBlock{p.Tabs(request), filters(p, years, c, request), progressStrip(PlanCounts{})}
+// pastDueNote is the line under Plan progress when planned work is past its
+// day and not delivered (partials/my_plan/kpi_cards.html): the feed reads
+// only its link, What needs you now on the Dashboard.
+func pastDueNote() *screensv1.PageBlock {
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
+		Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
+			Links: []*screensv1.PageLink{{Text: "What needs you now", Href: "/dashboard"}},
+		}}}},
+	}}}
+}
+
+// emptyPage is My Plan for a reader with no target whose tables list
+// nothing: the plan counted, the tables empty.
+func emptyPage(p Period, years []string, c Choices, request Query, plan Plan, f Filters) *screensv1.GetPageResponse {
+	blocks := []*screensv1.PageBlock{p.Tabs(request), filters(p, years, c, request), progressStrip(plan.Counts)}
+	if plan.PastDue > 0 && f.Status != "overdue" && f.Status != "under_way" {
+		blocks = append(blocks, pastDueNote())
+	}
 	for _, t := range PlanTables {
 		blocks = append(blocks, emptyTable(t, p))
 	}
-	blocks = append(blocks, breakdown(PlanCounts{}))
+	blocks = append(blocks, breakdown(plan.Counts))
 	return &screensv1.GetPageResponse{Header: header(request), Blocks: blocks, Selection: activityBar(), WebPath: Path}
 }

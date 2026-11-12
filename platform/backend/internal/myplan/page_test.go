@@ -140,7 +140,7 @@ func TestTheTabsAndFiltersFollowThePeriod(t *testing.T) {
 
 func TestTheEmptyPageNamesTheSlice(t *testing.T) {
 	p, _ := ReadPeriod(values("period", "quarter"), noon)
-	page := emptyPage(p, []string{"2027"}, Choices{}, NewQuery(values("period", "quarter")))
+	page := emptyPage(p, []string{"2027"}, Choices{}, NewQuery(values("period", "quarter")), Plan{}, Filters{})
 	if page.GetHeader().GetActions()[0].GetHref() != "/my-plan/export-drawer?period=quarter" {
 		t.Errorf("export %s", page.GetHeader().GetActions()[0].GetHref())
 	}

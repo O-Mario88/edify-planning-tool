@@ -13,8 +13,8 @@ page did (24-planning-page.md).
 | Piece | What moves | State |
 |---|---|---|
 | 1 | The page as it opens for a member of staff who holds nothing yet and has no visit target: header, period tabs, the filter row, Plan progress, the four plan tables' empty states, Plan Breakdown by Period, the bar for ticked activities | Done, 25.2 |
-| 2 | Plan progress and the breakdown counted (the period tiles, counted visits by school type, outreach, the completed share, the past-due note), still with nothing listed | Not started |
-| 3 | The plan's rows: School Visits, Trainings (with the cluster expansion), Group Trainings, Cluster Meetings, Core School Visits, Core School Trainings, programme and Programme-school work; cost, budget status, verification, status pill, row tone, completion columns, row Actions, ticks, pagers; and the Returned, day-off and attention cards | Not started — the shared rows Core School Oversight's two tabs need |
+| 2 | Plan progress and the breakdown counted (the year's and the period's tiles, counted visits at Core and other schools, the completed share, the past-due note) for a member of staff with no target whose tables list nothing | Done, 25.6 |
+| 3 | The plan's rows (25.7 lists what each needs): School Visits, Trainings (with the cluster expansion), Group Trainings, Cluster Meetings, Core School Visits, Core School Trainings, programme and Programme-school work; cost, budget status, verification, status pill, row tone, completion columns, row Actions, ticks, pagers; and the Returned, day-off and attention cards | Not started — the shared rows Core School Oversight's two tabs need |
 | 4 | A Programme Lead's or CCEO's own Planned and remaining (`readiness.own`, `planning_monitor.own_monitor`), the visit-target helper and ceiling notice, and the readiness list (`?list=`) | Not started |
 | 5 | My Training Summary (`training_ceilings.own_summary`) and Cluster Planning Status (`clusters.planning_status`) | Not started |
 | 6 | The partner's own My Plan (`partner_views.partner_plan_context`): five sections, facilitated clusters, training facilitations, Invoices & Payments | Not started |
@@ -198,10 +198,110 @@ passes and refusals Build makes before it reads the database.
 
 ## 25.5 What is left
 
-Pieces 2 to 6 above. The seed reaches little of them: one account has rows
+Pieces 3 to 6 above. The seed reaches little of them: one account has rows
 (13 activities, one returned, Core visits, a cluster expansion, a training
 summary and 22 clusters on Cluster Planning Status), so piece 3 needs the
 golden method of 22 and 18 (the existing code run over generated records)
 for cost, budget status, the money chain, day-off marks, verification and
 the completion columns. Planned and remaining (piece 4) reads every school
 a planner holds and is the slowest part of the page today.
+
+## 25.6 Piece 2: the plan counted
+
+Go now answers My Plan for a member of staff with no visit target whose
+tables list nothing, whatever else their plan holds: closed work, work
+dated in another part of the year, work a filter or search leaves off the
+tables. The page carries the plan's figures; anyone whose tables would list
+a row is still passed to the existing application.
+
+| Part | Existing rule it ports (`get_frontend_context`) |
+|---|---|
+| Whose work | `my_plan_activities`: not deleted, of the year as sent, owned under either id (`owner_ids`), not a partner's delivery and not in a partner's two statuses (`staff_my_plan_q`; `PARTNER_ONLY_STATUSES`) |
+| The plan the tiles count | that work less what is cancelled, rejected, waiting for its owner, deferred or not planned; closed work stays. A Status filter of one of the left-out states (closed among them) leaves nothing out |
+| The filters | `_narrow`, on the plan and the list alike: the search (stripped) in the school's name, School ID, the cluster's name, the school's district or the purpose, any case, its own `%` and `_` matched as themselves; the school's or the cluster's district; the owner; the type; the status, with Submitted and Returned standing for their groups and Planned (not started), In progress and Overdue (not started) read as Home reads them (`plan_state_q`); "all" and "All" are no choice |
+| The slice | `period`: the week of the month (`get_week_date_range`), the month, the quarter chosen or today's, or the year; a date is the planned date, else the scheduled time's day in Nairobi |
+| The year's tiles | over the whole plan: this week of today's month, this month, today's quarter, the year (`period_totals`) |
+| The period's tiles | counted visits (`staff_plan.counted_visits`, the statement `internal/planningpage` counts by), split by the school's type into Core and the rest ("n Core, n Client" under the figure); trainings and cluster meetings by type (`MY_PLAN_TRAINING_TYPES`, `MY_PLAN_MEETING_TYPES`); the completed share `round(n / d * 100, 1)` written without a trailing ".0", "No data" for nothing |
+| The past-due note | work of the period not handed in, approved or sent back whose day has passed (`staff_plan.past_due_q`), unless the Status filter is In progress or Overdue; the feed reads only its link, What needs you now (`/dashboard`) |
+| What the tables list | the list (the plan less closed work too) narrowed to what is ahead, undated, handed in or approved, or sent back; all of it under In progress, Overdue or a left-out state. Go answers only when this is nothing |
+
+Also passed: a reader whose visits line would be longer than a tile keeps
+(28 characters, `HELPER_FIGURE_CHARS`): its whole sentence becomes the note,
+with the outreach visits Go does not count. The gate of piece 1 now asks of
+activities only those the reader monitors, or the trainings and cluster
+meetings they own (My Training Summary's work); the rest is counted.
+
+The lists were lifted to module constants with no change in behaviour (the
+feed of all 29 accounts dumped again: identical): `MY_PLAN_VISIT_TYPES`,
+`MY_PLAN_TRAINING_TYPES`, `MY_PLAN_MEETING_TYPES` (each used twice),
+`SUBMITTED_FILTER_STATUSES`, `RETURNED_FILTER_STATUSES` and
+`PARTNER_ONLY_STATUSES`. They, the plan states, the completed, officer-
+completed and returned statuses, the counted-visit rules (the Planning
+page's own export) and the training summary's types are in `rules.json`
+under `plan`.
+
+**Proving it.** No seed account reaches piece 2 through the page: the one
+with work is a CCEO. So the counting is proved against the existing code
+itself. `internal/myplan/testdata/counts_golden.py` asks
+`get_frontend_context` for 54 queries each of three accounts (the officer
+with 13 activities, an Admin and a Programme Lead, both with none): every
+period, years, quarters, months and weeks, searches (with `%`, `_`, padding
+and capitals), a district, a staff member, each status (the left-out ones
+too) and six activity types. `counts_golden_test.go` counts the same plans
+through the gateway's read-only role on the development database:
+
+```
+counts_golden_test.go:94: 162 plans counted, 0 differing
+```
+
+Two of its rules the seed does not reach (it has no closed and no undated
+work: changing either rule still passes the golden comparison), so
+`TestMyPlanCountsClosedWorkAndLeavesListedWorkToTheExistingApplication`
+files them in the test database: a closed visit yesterday is counted (FY
+tile 1, completed share 100%, This FY 1 activities) and listed nowhere, so
+Go answers; an undated scheduled visit is listed, so the page is passed.
+
+Through the gateway with no existing application behind it, the accounts
+Go answers (each with an empty plan in the seed) and the refusal:
+
+```
+268 answers compared, 0 differing
+```
+
+All 29 accounts on the same gateway, the run's own last line:
+
+```
+1943 answers compared, 1560 differing
+```
+
+As for piece 1: the five accounts Go answers or refuses are 0 differing;
+the 1,560 are the 24 passed accounts' pages, which a gateway with nothing
+behind it answers "This screen is not available here yet" (checked line by
+line).
+
+## 25.7 What the rows need (piece 3)
+
+Each listed activity becomes a row through `get_frontend_context`'s loop
+and the table partials, and each column reads its own module:
+
+| Column or part | Reads |
+|---|---|
+| School ID, name, its link, district, cluster | the school or cluster, `plan_row_district`; a cluster training is expanded into its invited or attending schools (`ClusterActivityAttendance`, else the cluster's clustered operating schools), a Core school among them moved to Core School Trainings with its slot's T-number |
+| District Type | `daily_visit_batches.district_marks.district_type_labels` (Primary / Secondary / Mixed by the day's districts) |
+| Activity, Purpose, Focus intervention, Training name, Mode of delivery, Meeting topic | `choice_label`, `visit_purpose_label`, `training_names.course_name_of` / `mode_of_delivery`, the meeting kind |
+| Planned date, Completed date, the day-off mark | `activities.day_off.day_off_marks` (holidays and leave), `completion_columns` |
+| Executor | the partner, else the owner's name by either id |
+| Cost | `budget.costing_service.planned_minimum_amounts` (frozen cost components re-priced, shared days split), an in-school pair's note (`pair_costing.pair_cost_notes`), a cluster school's meals (`planned_meal_rates`) |
+| Budget status | the first cost line's weekly request (`money_chain`): eight states |
+| Verification | `verification_label` with `pl_review.lead_verified_owner_ids` |
+| Salesforce ID, Status | `completion_columns.completion_fields`, `get_activity_status_label_and_class`, `visit_scores.awaiting_scores`, `plan_row_tone`, finished early |
+| V1–V4 / T1–T4 and n/8 Completed | `CoreActivitySlot` by activity and by plan |
+| Actions | `partials/my_plan/activity_row.html`: twenty conditions over the reader's doors, `editing.edit_state`, `_can_reschedule`, `_can_cancel`, facilitator, Salesforce entry and completion |
+| Ticks, order, pages | `group_actions.may_tick`, `completed_last_key`, fifty a page |
+
+The seed holds rows for one CCEO only, and that CCEO's page also needs
+Planned and remaining, My Training Summary and Cluster Planning Status, so
+no account can prove the rows through the page until pieces 4 and 5 move
+with them; the rows' own proof will need the golden method of 22 (the
+existing loop run over generated activities with costs, weekly requests,
+returns, days off and Core slots).

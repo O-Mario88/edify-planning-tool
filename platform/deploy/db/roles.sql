@@ -228,3 +228,6 @@ GRANT SELECT (created_at, sub_region_id) ON school TO edify_gateway_ro;
 -- reader (My Training Summary), which leaves their page to the existing
 -- application until the summary is Go's.
 GRANT SELECT (staff_id) ON training_ceiling TO edify_gateway_ro;
+-- My Plan's counts (internal/myplan): an activity's quarter, which the
+-- quarter tiles and This Quarter count by.
+GRANT SELECT (quarter) ON activity TO edify_gateway_ro;

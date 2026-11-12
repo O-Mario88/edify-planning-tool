@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+	"unicode/utf8"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
@@ -77,11 +78,22 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil || held {
 		return nil, false, err
 	}
+	request := NewQuery(query)
+	f := ReadFilters(request)
+	plan, err := ReadPlan(ctx, s.db, ownerIDs(p), period, f, now)
+	if err != nil {
+		return nil, false, err
+	}
+	// Rows are the existing application's; so is a visits line too long for
+	// the tile, whose whole sentence becomes the note.
+	if plan.Listed > 0 || utf8.RuneCountInString(visitsLine(plan.Counts)) > rules.Plan.HelperFigureChars {
+		return nil, false, nil
+	}
 	choices, err := s.choices(ctx)
 	if err != nil {
 		return nil, true, err
 	}
-	return emptyPage(period, schooldirectory.FYOptions(now), choices, NewQuery(query)), true, nil
+	return emptyPage(period, schooldirectory.FYOptions(now), choices, request, plan, f), true, nil
 }
 
 // choices are the District and Staff member selects' options: every

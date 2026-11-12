@@ -119,6 +119,183 @@
     "xlsx"
   ],
   "partner_role_bridge": false,
+  "plan": {
+    "completed_work_statuses": [
+      "ia_verified",
+      "closed",
+      "accountant_confirmed",
+      "completed"
+    ],
+    "counted_visits": {
+      "cceo_role": "CCEO",
+      "companion_purpose": "in_school_training_delivery_visit",
+      "core_types": [
+        "core"
+      ],
+      "data_collection_purposes": [
+        "ssa_support"
+      ],
+      "data_collection_types": [
+        "school_visit_ssa_collection",
+        "baseline_ssa_visit",
+        "partner_ssa_collection",
+        "ssa_activity",
+        "core_assessment_visit"
+      ],
+      "kind_purposes": [
+        "in_school_coaching",
+        "in_school_training",
+        "training_follow_up"
+      ],
+      "outreach_purposes": [
+        "donor_visit",
+        "story_gathering",
+        "school_invitation",
+        "social_visit"
+      ],
+      "planned_states": [
+        "accountant_confirmed",
+        "awaiting_ia_verification",
+        "closed",
+        "completed",
+        "completion_started",
+        "evidence_accepted",
+        "evidence_uploaded",
+        "ia_verified",
+        "in_progress",
+        "partner_scheduled",
+        "planned",
+        "rescheduled",
+        "returned_by_ia",
+        "returned_by_pl",
+        "salesforce_id_required",
+        "scheduled",
+        "submitted_to_pl"
+      ],
+      "program_lead_role": "Program Lead",
+      "visit_shape_types": [
+        "in_school_training",
+        "in_school_coaching_visit",
+        "training_follow_up_visit",
+        "follow_up_visit",
+        "school_visit",
+        "coaching_visit",
+        "in_school_support",
+        "core_visit",
+        "school_visit_ssa_collection",
+        "baseline_ssa_visit",
+        "partner_ssa_collection",
+        "ssa_activity",
+        "core_assessment_visit"
+      ],
+      "visit_targets": {
+        "CCEO": 560,
+        "Program Lead": 280
+      }
+    },
+    "excluded_statuses": [
+      "closed",
+      "cancelled",
+      "rejected",
+      "awaiting_owner_approval",
+      "deferred",
+      "not_planned"
+    ],
+    "helper_figure_chars": 28,
+    "meeting_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
+    "not_started_statuses": [
+      "planned",
+      "scheduled",
+      "rescheduled",
+      "partner_scheduled",
+      "assigned_to_partner"
+    ],
+    "officer_completed_statuses": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "ia_verified",
+      "submitted_to_pl"
+    ],
+    "partner_only_statuses": [
+      "assigned_to_partner",
+      "partner_scheduled"
+    ],
+    "plan_states": [
+      "upcoming",
+      "under_way",
+      "overdue"
+    ],
+    "returned_filter_statuses": [
+      "returned",
+      "returned_by_pl",
+      "returned_by_ia"
+    ],
+    "returned_statuses": [
+      "returned",
+      "returned_by_pl",
+      "returned_by_ia"
+    ],
+    "submitted_filter_statuses": [
+      "submitted_to_pl",
+      "awaiting_ia_verification",
+      "ia_verified",
+      "accountant_confirmed"
+    ],
+    "summary_meeting_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
+    "summary_training_types": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ],
+    "training_types": [
+      "cluster_training",
+      "core_training",
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training_ssa_collection"
+    ],
+    "under_way_statuses": [
+      "in_progress",
+      "completion_started",
+      "evidence_uploaded",
+      "evidence_accepted",
+      "salesforce_id_required",
+      "submitted_to_pl",
+      "returned_by_pl",
+      "awaiting_ia_verification",
+      "returned",
+      "returned_by_ia"
+    ],
+    "visit_types": [
+      "school_visit",
+      "follow_up_visit",
+      "coaching_visit",
+      "in_school_support",
+      "donor_visit",
+      "story_gathering_visit",
+      "school_invitation",
+      "social_visit",
+      "training_follow_up_visit",
+      "in_school_coaching_visit",
+      "core_visit",
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection",
+      "core_assessment_visit"
+    ]
+  },
   "program_lead_role": "Program Lead",
   "quarter_first_month": {
     "Q1": 10,

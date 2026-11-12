@@ -96,6 +96,48 @@ MY_PLAN_TILES = (
     ("my_plan_completion_readiness_pct", "check", "success"),
 )
 
+#: The activity types the School Visits table and the visits tile list, the
+#: Trainings table and its tile, and the Cluster Meetings table and its tile.
+MY_PLAN_VISIT_TYPES = (
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
+    "core_visit",
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection",
+    "core_assessment_visit",
+)
+MY_PLAN_TRAINING_TYPES = (
+    "cluster_training",
+    "core_training",
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training_ssa_collection",
+)
+MY_PLAN_MEETING_TYPES = ("cluster_meeting", "cluster_meeting_ssa_review")
+
+#: The two statuses only a Partner's work carries: never on a staff My Plan.
+PARTNER_ONLY_STATUSES = ("assigned_to_partner", "partner_scheduled")
+
+#: What the Status filter's two umbrella values stand for: work sent onward
+#: for review anywhere in the PL/IA/accounts pipeline, and work sent back.
+SUBMITTED_FILTER_STATUSES = (
+    "submitted_to_pl",
+    "awaiting_ia_verification",
+    "ia_verified",
+    "accountant_confirmed",
+)
+RETURNED_FILTER_STATUSES = ("returned", "returned_by_pl", "returned_by_ia")
+
 #: The Month filter's choices, in fiscal-year order (October first).
 MONTH_OPTIONS = (
     {"val": 10, "label": "October"},
@@ -345,11 +387,7 @@ def staff_my_plan_q(staff_ids, principal=None) -> Q:
     cannot bring it back.
     """
     owned = Q(responsible_staff_id__in=staff_ids)
-    return (
-        owned
-        & ~Q(delivery_type="partner")
-        & ~Q(status__in=("assigned_to_partner", "partner_scheduled"))
-    )
+    return owned & ~Q(delivery_type="partner") & ~Q(status__in=PARTNER_ONLY_STATUSES)
 
 
 def my_plan_activities(principal, fy, scope=None):
@@ -1097,18 +1135,9 @@ def get_frontend_context(
             # than filtering on a status value that no Activity ever actually
             # has.
             if status == "submitted":
-                rows = rows.filter(
-                    status__in=[
-                        "submitted_to_pl",
-                        "awaiting_ia_verification",
-                        "ia_verified",
-                        "accountant_confirmed",
-                    ]
-                )
+                rows = rows.filter(status__in=SUBMITTED_FILTER_STATUSES)
             elif status == "returned_for_correction":
-                rows = rows.filter(
-                    status__in=["returned", "returned_by_pl", "returned_by_ia"]
-                )
+                rows = rows.filter(status__in=RETURNED_FILTER_STATUSES)
             elif status in PLAN_STATES:
                 # Planned, In progress and Overdue, as Home counts them.
                 rows = rows.filter(plan_state_q(status, today))
@@ -1223,44 +1252,15 @@ def get_frontend_context(
     activity_totals = plan_period.aggregate(
         visits=Count(
             "pk",
-            filter=Q(
-                activity_type__in=[
-                    "school_visit",
-                    "follow_up_visit",
-                    "coaching_visit",
-                    "in_school_support",
-                    "donor_visit",
-                    "story_gathering_visit",
-                    "school_invitation",
-                    "social_visit",
-                    "training_follow_up_visit",
-                    "in_school_coaching_visit",
-                    "core_visit",
-                    "baseline_ssa_visit",
-                    "school_visit_ssa_collection",
-                    "partner_ssa_collection",
-                    "core_assessment_visit",
-                ]
-            ),
+            filter=Q(activity_type__in=MY_PLAN_VISIT_TYPES),
         ),
         trainings=Count(
             "pk",
-            filter=Q(
-                activity_type__in=[
-                    "cluster_training",
-                    "core_training",
-                    "training",
-                    "in_school_training",
-                    "school_improvement_training",
-                    "cluster_training_ssa_collection",
-                ]
-            ),
+            filter=Q(activity_type__in=MY_PLAN_TRAINING_TYPES),
         ),
         meetings=Count(
             "pk",
-            filter=Q(
-                activity_type__in=["cluster_meeting", "cluster_meeting_ssa_review"]
-            ),
+            filter=Q(activity_type__in=MY_PLAN_MEETING_TYPES),
         ),
         total=Count("pk"),
         completed=Count("pk", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
@@ -1947,34 +1947,11 @@ def get_frontend_context(
             core_slot_kind == "training" or a.activity_type in TRAINING_TYPES
         ):
             core_school_trainings_list.append(activity_data)
-        elif a.activity_type in [
-            "school_visit",
-            "follow_up_visit",
-            "coaching_visit",
-            "in_school_support",
-            "donor_visit",
-            "story_gathering_visit",
-            "school_invitation",
-            "social_visit",
-            "training_follow_up_visit",
-            "in_school_coaching_visit",
-            "core_visit",
-            "baseline_ssa_visit",
-            "school_visit_ssa_collection",
-            "partner_ssa_collection",
-            "core_assessment_visit",
-        ]:
+        elif a.activity_type in MY_PLAN_VISIT_TYPES:
             school_visits_list.append(activity_data)
-        elif a.activity_type in [
-            "cluster_training",
-            "core_training",
-            "training",
-            "in_school_training",
-            "school_improvement_training",
-            "cluster_training_ssa_collection",
-        ]:
+        elif a.activity_type in MY_PLAN_TRAINING_TYPES:
             cluster_trainings_list.append(activity_data)
-        elif a.activity_type in ["cluster_meeting", "cluster_meeting_ssa_review"]:
+        elif a.activity_type in MY_PLAN_MEETING_TYPES:
             cluster_meetings_list.append(activity_data)
 
         # Finance / Accountability pending — advance disbursed but accountability
