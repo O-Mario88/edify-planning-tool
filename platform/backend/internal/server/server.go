@@ -22,6 +22,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
@@ -90,6 +91,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithProfile(schoolprofile.NewService(pool, time.Now), logger).
 		WithPages(logger,
 			clusterpage.NewService(pool, time.Now),
+			closedschools.NewService(pool, time.Now),
 		)
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNavigationServiceHandler(screenService, options...))
