@@ -539,7 +539,7 @@ WHERE school_id = $1 AND fy = ANY($2) AND deleted_at IS NULL AND verification_st
 			t = &sums{}
 			totals[year] = t
 		}
-		t.weighted += mean / maximum * 100 * float64(tested)
+		t.weighted = addShare(t.weighted, mean, maximum, float64(tested))
 		t.learners += float64(tested)
 	}
 	if err := rows.Err(); err != nil {
@@ -685,4 +685,12 @@ FROM ssa_recommendation WHERE school_id = $1 AND state = ANY($2) ORDER BY rank, 
 		err := row.Scan(&r.intervention, &r.score, &r.band, &r.reason, &r.state)
 		return r, err
 	})
+}
+
+// addShare is Python's `acc += mean / maximum * 100 * tested`: the product is
+// rounded before it is added. Go may fuse a multiply and an add into one step
+// with a single rounding (arm64 does), which Python never does, so the product
+// is converted on its own to keep the two apart.
+func addShare(acc, mean, maximum, learners float64) float64 {
+	return acc + float64(mean/maximum*100*learners)
 }

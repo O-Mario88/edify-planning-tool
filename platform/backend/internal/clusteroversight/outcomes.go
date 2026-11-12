@@ -80,8 +80,7 @@ func schoolScores(rows []learningRow) map[string]map[string]float64 {
 			totals[key] = &total{}
 			order = append(order, key)
 		}
-		share := row.Mean / row.Max * 100
-		totals[key].weighted += share * float64(row.Learners)
+		totals[key].weighted = addShare(totals[key].weighted, row.Mean, row.Max, float64(row.Learners))
 		totals[key].learners += float64(row.Learners)
 	}
 	out := map[string]map[string]float64{}
@@ -246,4 +245,12 @@ func ssaNowOf(members []string, scored map[string]schoolScore) ssaNow {
 		}
 	}
 	return out
+}
+
+// addShare is Python's `acc += mean / maximum * 100 * learners`: the product
+// is rounded before it is added. Go may fuse a multiply and an add into one
+// step with a single rounding (arm64 does), which Python never does, so the
+// product is converted on its own to keep the two apart.
+func addShare(acc, mean, maximum, learners float64) float64 {
+	return acc + float64(mean/maximum*100*learners)
 }
