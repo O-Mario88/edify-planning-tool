@@ -313,3 +313,21 @@ credit, an open overdue reminder or day-off notice, a disbursed advance
 beside a cancelled visit (the function's test covers the filter), and a
 pricing refusal on the day left. The form-only door for the cancel has no
 Django test of its own (DB-backed); the app-level run proves it.
+
+**Merged and re-proved by the coordinator (2026-11-12).** Because the cancel
+changed the shared audit writer (a payload-less event's data is now
+`{"value": null}`, as `publish_audit_event` writes it; every Go caller passes
+a `map[string]any`, so only payload-less events change), all six scenarios
+were re-run on the merged branch from fresh copies:
+
+| Save | Level | Steps answered differently | Changed tables differing | verify_chain |
+|---|---|---|---|---|
+| Schedule | service | 0 of 15 | 0 of 20 | (not run by this script) |
+| Schedule | app | 0 of 15 | 0 of 19 | ok, 15,962 rows |
+| Reschedule | service | 0 of 19 | 0 of 22 | ok, 15,978 rows |
+| Reschedule | app | 0 of 19 | 0 of 19 | ok, 15,976 rows |
+| Cancel | service | 0 of 19 | 0 of 17 | ok, 15,972 rows |
+| Cancel | app | 0 of 19 | 0 of 14 | ok, 15,970 rows |
+
+Race, the integration suite, ruff, format, bandit, the relay and rules
+tests (7) and the generated-code check pass.
