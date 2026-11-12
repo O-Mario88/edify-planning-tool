@@ -31,6 +31,7 @@ class GatewayRelayDoorsTest(SimpleTestCase):
             gateway_relay.visit_move_check,
             gateway_relay.visit_cancel_check,
             gateway_relay.costs_to_follow,
+            gateway_relay.activity_changed,
         ):
             self.assertEqual(_post(view, {}).status_code, 404)
 
@@ -41,6 +42,7 @@ class GatewayRelayDoorsTest(SimpleTestCase):
             gateway_relay.visit_move_check,
             gateway_relay.visit_cancel_check,
             gateway_relay.costs_to_follow,
+            gateway_relay.activity_changed,
         ):
             self.assertEqual(_post(view, {}, key="wrong").status_code, 403)
 
@@ -90,5 +92,17 @@ class GatewayRelayDoorsTest(SimpleTestCase):
             {"activityId": "a", "reason": "r" * 513},
         ):
             answer = _post(gateway_relay.visit_cancel_check, body)
+            self.assertEqual(answer.status_code, 400, body)
+            self.assertEqual(json.loads(answer.content)["reason"], "bad_fields", body)
+
+    @override_settings(EDIFY_INTERNAL_KEY=KEY)
+    def test_the_announcement_takes_one_activity_id(self):
+        for body in (
+            {},
+            {"activityId": ""},
+            {"activityId": "x" * 31},
+            {"activityId": 5},
+        ):
+            answer = _post(gateway_relay.activity_changed, body)
             self.assertEqual(answer.status_code, 400, body)
             self.assertEqual(json.loads(answer.content)["reason"], "bad_fields", body)

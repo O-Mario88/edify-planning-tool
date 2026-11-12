@@ -45,6 +45,13 @@ urlpatterns = [
         gateway_relay.visit_cancel_check,
         name="visit-cancel-check",
     ),
+    # An activity Go saved with no costs to follow, said on the realtime
+    # stream (docs/migration/31).
+    path(
+        "internal/activity-changed",
+        gateway_relay.activity_changed,
+        name="activity-changed",
+    ),
     path(
         "internal/costs-to-follow",
         gateway_relay.costs_to_follow,

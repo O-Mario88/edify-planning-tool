@@ -494,6 +494,10 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"change an advance":        rw + `UPDATE advance_request SET status = status`,
 		"become the withdraw role": rw + `SET ROLE edify_advance_withdraw_owner`,
 		"write a milestone credit": rw + `UPDATE hr_milestone_progress_credit SET reversed_at = reversed_at`,
+		// Editing a visit (31) writes its goal and expected outcome only.
+		"re-aim a visit at another intervention": rw + `UPDATE activity SET focus_intervention = focus_intervention`,
+		"change what a visit is for":             rw + `UPDATE activity SET purpose_type = purpose_type`,
+		"rewrite a visit's SSA verdict":          rw + `UPDATE activity SET ssa_alignment = ssa_alignment`,
 	}
 	for name, statement := range statements {
 		t.Run(name, func(t *testing.T) {

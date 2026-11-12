@@ -173,6 +173,9 @@ func play(ctx context.Context, svc *activities.Service, accounts *identity.Store
 	if m := cancelDrawer.FindStringSubmatch(s.Open); m != nil {
 		return playCancel(ctx, svc, accounts, pool, s, m[1], form)
 	}
+	if m := editDrawer.FindStringSubmatch(s.Open); m != nil {
+		return playEdit(ctx, svc, accounts, pool, s, m[1], form)
+	}
 	req, taken := activities.RequestFromForm(form)
 	if !taken {
 		return outcome{HandedOn: true}, nil
@@ -280,6 +283,45 @@ func playCancel(ctx context.Context, svc *activities.Service, accounts *identity
 	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
 	answer, err := svc.Cancel(ctx, auth.Principal{Account: account},
 		activities.CancelRequest{ActivityID: activityID, Reason: form.Get("reason")},
+		activities.Origin{IP: "127.0.0.1", CorrelationID: newCorrelation()})
+	var refusal *activities.Refusal
+	switch {
+	case errors.Is(err, activities.ErrHandOn):
+		fmt.Fprintln(os.Stderr, "goplay:", s.Who, "→", err)
+		return outcome{HandedOn: true}, nil
+	case errors.As(err, &refusal):
+		return outcome{OK: false, Status: 400, Message: strings.TrimSpace(refusal.Message)}, nil
+	case err != nil:
+		return outcome{}, err
+	}
+	return outcome{OK: true, Status: 200, Message: answer.Message}, nil
+}
+
+// editDrawer is My Plan's Edit drawer (docs/migration/31).
+var editDrawer = regexp.MustCompile(`^/my-plan/([^/]+)/edit-drawer$`)
+
+// playEdit makes an Edit step through Go's edit: the activity found on copy
+// B as the runner finds it, the drawer's posted form.
+func playEdit(ctx context.Context, svc *activities.Service, accounts *identity.Store, pool *pgxpool.Pool,
+	s step, target string, form url.Values) (outcome, error) {
+	activityID, err := findActivity(ctx, pool, target)
+	if err != nil {
+		return outcome{}, err
+	}
+	req, taken := activities.EditRequestFromForm(activityID, form)
+	if !taken {
+		return outcome{HandedOn: true}, nil
+	}
+	var userID string
+	if err := pool.QueryRow(ctx, `SELECT id FROM "user" WHERE email = $1`, s.Who).Scan(&userID); err != nil {
+		return outcome{}, fmt.Errorf("finding %s: %w", s.Who, err)
+	}
+	account, err := accounts.LoadAccount(ctx, userID)
+	if err != nil {
+		return outcome{}, err
+	}
+	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
+	answer, err := svc.Edit(ctx, auth.Principal{Account: account}, req,
 		activities.Origin{IP: "127.0.0.1", CorrelationID: newCorrelation()})
 	var refusal *activities.Refusal
 	switch {

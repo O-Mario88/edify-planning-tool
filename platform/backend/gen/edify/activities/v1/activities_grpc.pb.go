@@ -22,6 +22,7 @@ const (
 	ActivityService_ScheduleSchoolVisit_FullMethodName   = "/edify.activities.v1.ActivityService/ScheduleSchoolVisit"
 	ActivityService_RescheduleSchoolVisit_FullMethodName = "/edify.activities.v1.ActivityService/RescheduleSchoolVisit"
 	ActivityService_CancelSchoolVisit_FullMethodName     = "/edify.activities.v1.ActivityService/CancelSchoolVisit"
+	ActivityService_EditSchoolVisit_FullMethodName       = "/edify.activities.v1.ActivityService/EditSchoolVisit"
 )
 
 // ActivityServiceClient is the client API for ActivityService service.
@@ -61,6 +62,16 @@ type ActivityServiceClient interface {
 	// the existing application's own words for why it was refused. A refusal
 	// changes nothing but the refusal's own audit row, as today.
 	CancelSchoolVisit(ctx context.Context, in *CancelSchoolVisitRequest, opts ...grpc.CallOption) (*CancelSchoolVisitResponse, error)
+	// Change what one scheduled school visit is for, as the caller: the fourth
+	// save (docs/migration/31), from My Plan's Edit drawer
+	// (/my-plan/{id}/edit-drawer posting to /my-plan/{id}/edit), for exactly
+	// 31.1's case — a visit of the first save's kind, still only a plan,
+	// edited by its owner, its goal and expected outcome changed and its day,
+	// school, purpose and focus left as they are. The answer is the edited
+	// activity, or the existing application's own words for why it was
+	// refused. A refusal changes nothing but the refusal's own audit row, as
+	// today.
+	EditSchoolVisit(ctx context.Context, in *EditSchoolVisitRequest, opts ...grpc.CallOption) (*EditSchoolVisitResponse, error)
 }
 
 type activityServiceClient struct {
@@ -95,6 +106,16 @@ func (c *activityServiceClient) CancelSchoolVisit(ctx context.Context, in *Cance
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CancelSchoolVisitResponse)
 	err := c.cc.Invoke(ctx, ActivityService_CancelSchoolVisit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *activityServiceClient) EditSchoolVisit(ctx context.Context, in *EditSchoolVisitRequest, opts ...grpc.CallOption) (*EditSchoolVisitResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EditSchoolVisitResponse)
+	err := c.cc.Invoke(ctx, ActivityService_EditSchoolVisit_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +159,16 @@ type ActivityServiceServer interface {
 	// the existing application's own words for why it was refused. A refusal
 	// changes nothing but the refusal's own audit row, as today.
 	CancelSchoolVisit(context.Context, *CancelSchoolVisitRequest) (*CancelSchoolVisitResponse, error)
+	// Change what one scheduled school visit is for, as the caller: the fourth
+	// save (docs/migration/31), from My Plan's Edit drawer
+	// (/my-plan/{id}/edit-drawer posting to /my-plan/{id}/edit), for exactly
+	// 31.1's case — a visit of the first save's kind, still only a plan,
+	// edited by its owner, its goal and expected outcome changed and its day,
+	// school, purpose and focus left as they are. The answer is the edited
+	// activity, or the existing application's own words for why it was
+	// refused. A refusal changes nothing but the refusal's own audit row, as
+	// today.
+	EditSchoolVisit(context.Context, *EditSchoolVisitRequest) (*EditSchoolVisitResponse, error)
 	mustEmbedUnimplementedActivityServiceServer()
 }
 
@@ -156,6 +187,9 @@ func (UnimplementedActivityServiceServer) RescheduleSchoolVisit(context.Context,
 }
 func (UnimplementedActivityServiceServer) CancelSchoolVisit(context.Context, *CancelSchoolVisitRequest) (*CancelSchoolVisitResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CancelSchoolVisit not implemented")
+}
+func (UnimplementedActivityServiceServer) EditSchoolVisit(context.Context, *EditSchoolVisitRequest) (*EditSchoolVisitResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method EditSchoolVisit not implemented")
 }
 func (UnimplementedActivityServiceServer) mustEmbedUnimplementedActivityServiceServer() {}
 func (UnimplementedActivityServiceServer) testEmbeddedByValue()                         {}
@@ -232,6 +266,24 @@ func _ActivityService_CancelSchoolVisit_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ActivityService_EditSchoolVisit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EditSchoolVisitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ActivityServiceServer).EditSchoolVisit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ActivityService_EditSchoolVisit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ActivityServiceServer).EditSchoolVisit(ctx, req.(*EditSchoolVisitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ActivityService_ServiceDesc is the grpc.ServiceDesc for ActivityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -250,6 +302,10 @@ var ActivityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelSchoolVisit",
 			Handler:    _ActivityService_CancelSchoolVisit_Handler,
+		},
+		{
+			MethodName: "EditSchoolVisit",
+			Handler:    _ActivityService_EditSchoolVisit_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -134,3 +134,24 @@ func (h *HTTPPricing) CancelCheck(ctx context.Context, activityID, reason string
 	}
 	return answer.CancelVerdict, nil
 }
+
+// Announcer tells the existing application's realtime stream that an
+// activity Go saved has changed, when no costs follow to say it.
+type Announcer interface {
+	Announce(ctx context.Context, activityID string) error
+}
+
+// Announce asks /api/auth/internal/activity-changed (docs/migration/31).
+func (h *HTTPPricing) Announce(ctx context.Context, activityID string) error {
+	var answer struct {
+		OK bool `json:"ok"`
+	}
+	if err := h.post(ctx, "/api/auth/internal/activity-changed",
+		map[string]any{"activityId": activityID}, &answer); err != nil {
+		return err
+	}
+	if !answer.OK {
+		return fmt.Errorf("activities: the change was not announced")
+	}
+	return nil
+}

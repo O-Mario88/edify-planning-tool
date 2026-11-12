@@ -12,9 +12,12 @@
 --                        ledger's mark and the costs to follow; and what
 --                        one move of a visit writes (docs/migration/29): the
 --                        activity's day, batch and status, the day it
---                        joins, its timeline row. No DELETE anywhere, no
+--                        joins, its timeline row; and what an edit of a
+--                        visit's words writes (docs/migration/31): its goal
+--                        and expected outcome. No DELETE anywhere, no
 --                        UPDATE of an audit row or a timeline row, and no
---                        UPDATE of an activity beyond the move's columns.
+--                        UPDATE of an activity beyond the move's columns
+--                        and those two.
 --
 -- The gateway role stays read-only by default (default_transaction_read_only,
 -- roles.sql): the save opens a read-write transaction on purpose (08 §8.2).
@@ -182,3 +185,9 @@ GRANT SELECT (activity_id, responsible_user, fiscal_year, month, week_start_date
 -- such a move is handed on. Nothing of a notice's words is read.
 GRANT SELECT (id, recipient_id, source_event_type, context_type, context_id, resolved_at)
   ON notification TO edify_activities_rw;
+
+-- ── The fourth save: editing a scheduled school visit's words (docs/migration/31) ──
+-- patch_activity's save for 31.1's case: the goal and the expected outcome
+-- (updated_at and the row's lock are already granted for the move). Free
+-- text only: no price, day, owner, school, purpose or focus.
+GRANT UPDATE (activity_purpose_text, expected_outcome) ON activity TO edify_activities_rw;

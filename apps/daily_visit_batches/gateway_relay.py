@@ -35,6 +35,10 @@ sign-in security-events relay and behind the same internal key:
   the cancel on the activity inside a transaction it rolls back, so it writes
   nothing.
 
+* ``activity-changed`` (docs/migration/31) says ``plan.changed`` for an
+  activity Go saved when no costs follow it (an edit of a visit's goal or
+  expected outcome), as the existing save's commit says it.
+
 None changes what any existing save does.
 """
 
@@ -528,3 +532,28 @@ def visit_cancel_check(request):
     ):
         return JsonResponse({"ok": False, "reason": "bad_fields"}, status=400)
     return JsonResponse({"ok": True, **_cancel_probe(activity_id, reason)})
+
+
+@csrf_exempt  # A server's key, never a browser's session.
+@require_POST
+def activity_changed(request):
+    """Say ``plan.changed`` for an activity Go saved when no costs follow it
+    (docs/migration/31: an edit of a visit's words), exactly as the existing
+    save's own commit says it (``live`` on the activity's post_save)."""
+    refusal = internal_key_refusal(request)
+    if refusal is not None:
+        return refusal
+    body = _body(request)
+    activity_id = body.get("activityId") if body is not None else None
+    if not isinstance(activity_id, str) or not 0 < len(activity_id) <= 30:
+        return JsonResponse({"ok": False, "reason": "bad_fields"}, status=400)
+    from apps.activities import live
+    from apps.activities.models import Activity
+
+    activity = Activity.objects.filter(id=activity_id).first()
+    if activity is not None:
+        try:
+            live.announce_activity(activity)
+        except Exception:  # noqa: BLE001 — a page left stale, no more
+            logger.warning("Activity changed: announcing failed", exc_info=True)
+    return JsonResponse({"ok": True}, status=200)

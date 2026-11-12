@@ -37,6 +37,17 @@ service ActivityService {
   // the existing application's own words for why it was refused. A refusal
   // changes nothing but the refusal's own audit row, as today.
   rpc CancelSchoolVisit(CancelSchoolVisitRequest) returns (CancelSchoolVisitResponse);
+
+  // Change what one scheduled school visit is for, as the caller: the fourth
+  // save (docs/migration/31), from My Plan's Edit drawer
+  // (/my-plan/{id}/edit-drawer posting to /my-plan/{id}/edit), for exactly
+  // 31.1's case — a visit of the first save's kind, still only a plan,
+  // edited by its owner, its goal and expected outcome changed and its day,
+  // school, purpose and focus left as they are. The answer is the edited
+  // activity, or the existing application's own words for why it was
+  // refused. A refusal changes nothing but the refusal's own audit row, as
+  // today.
+  rpc EditSchoolVisit(EditSchoolVisitRequest) returns (EditSchoolVisitResponse);
 }
 
 // The drawer's own fields, named as it posts them.
@@ -161,4 +172,55 @@ message CancelledActivity {
   string reason = 3;
   // "Saved. Press Refresh to see it on the page."
   string message = 4;
+}
+
+// The Edit drawer's fields for a visit, named as it posts them. A field the
+// drawer did not post is left unset: the existing save changes only what is
+// posted, and its audit row names the fields that were.
+message EditSchoolVisitRequest {
+  // activity.id: the visit being edited.
+  string activity_id = 1;
+  // scheduled_date: the day the drawer shows (YYYY-MM-DD). Another day is a
+  // move (the second save's rules), handed on unless refused.
+  optional string scheduled_date = 2;
+  // purpose_type: the purpose the drawer shows. Another purpose is handed on
+  // unless refused.
+  optional string purpose_type = 3;
+  // school_id: the school's code as the drawer lists it. Another school is
+  // handed on.
+  optional string school_id = 4;
+  // focus_intervention: the SSA intervention the drawer shows. Another one is
+  // handed on.
+  optional string focus_intervention = 5;
+  // activity_purpose_text: the goal.
+  optional string activity_purpose_text = 6;
+  // expected_outcome: what the visit should leave behind.
+  optional string expected_outcome = 7;
+  // purpose_training_course_id: the training an In-school Training names;
+  // posted blank for the six purposes. A named one is handed on.
+  optional string purpose_training_course_id = 8;
+  // reason: why the day, school or purpose is changing; blank otherwise.
+  string reason = 9;
+}
+
+// What the edit did. Exactly one of activity or refused is set.
+message EditSchoolVisitResponse {
+  EditedActivity activity = 1;
+  // The existing application's words for a refused edit, e.g. "Give the
+  // reason the date is changing."
+  string refused = 2;
+}
+
+// The activity an edit left, and the confirmation the web shows for it.
+message EditedActivity {
+  // activity.id.
+  string id = 1;
+  // activity.status: unchanged, "scheduled" or "rescheduled".
+  string status = 2;
+  // activity.activity_purpose_text: the goal now.
+  string activity_purpose_text = 3;
+  // activity.expected_outcome: the expected outcome now.
+  string expected_outcome = 4;
+  // "Saved. Press Refresh to see it on the page."
+  string message = 5;
 }
