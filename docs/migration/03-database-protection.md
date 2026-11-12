@@ -119,6 +119,12 @@ save has moved, both systems write that table, each through its own saves
 only, under the same row locks and the same rules, as sign-in does. A save
 is never made by both. 27 §27.5.)
 
+(Owner, 2026-11-12: the gateway's activities writer role may change an
+activity's `status` and `daily_visit_batch_id`, which every move, cancel
+and completion needs; the staging guard keeps refusing every other
+lifecycle, money, evidence, verification and ownership column of `activity`.
+29 §29.4.)
+
 (Sign-in is the one place where, on development and test databases, both
 systems write the same columns, under the same row locks and the same
 policy, while the web's sign-in page still uses the existing application.

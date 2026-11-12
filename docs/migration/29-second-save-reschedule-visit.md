@@ -119,8 +119,8 @@ Covered by 27.8 and decided here:
    them and settled by Django after commit with 27.9's relay.
 3. **An acting seat** is handed on.
 
-Needs the coordinator's word (not covered by 27.8; built as proposed and
-flagged): `dbguard.protectedColumns` refused any gateway role that can
+**Decided by the owner, 2026-11-12: "Yes, allow both"** (not covered by
+27.8; built as proposed, then put to the owner): `dbguard.protectedColumns` refused any gateway role that can
 change `activity.status` or `activity.daily_visit_batch_id` ("the later
 saves' work", guard.go). A move must change both. The writer role grants
 `UPDATE` on exactly the move's columns (29.2), and the guard now refuses
@@ -260,3 +260,11 @@ the app-level run above.
 this proof's processes. The web (Next.js) does not call this path. The app's
 TypeScript stubs are not regenerated (no change reaches the app: it calls
 `SaveDrawer`, not the new RPC). No replayed month on a sanitised restore.
+
+**Merged and re-proved by the coordinator (2026-11-12)**, with the first
+save's same-day check now skipping deleted visits as Django's does: the
+schedule and reschedule scenarios at the service and the app level, from
+fresh copies, no step answered differently and no changed table differing
+(schedule 0 of 20 and 0 of 19, reschedule 0 of 22 and 0 of 19), the audit
+chain verifying on each; race and the integration suite pass. The owner
+allowed the writer role to change an activity's status and day (29.4).
