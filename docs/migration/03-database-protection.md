@@ -125,6 +125,12 @@ and completion needs; the staging guard keeps refusing every other
 lifecycle, money, evidence, verification and ownership column of `activity`.
 29 §29.4.)
 
+(Owner, 2026-11-12: a Go cancel withdraws the visit's unmoved advance
+through a narrow `SECURITY DEFINER` function,
+`gateway_money.withdraw_unmoved_advances`, owned by a NOLOGIN role that holds
+only `DELETE` on `advance_request`; the gateway may only execute it and
+holds no `DELETE` of its own. 30 §30.4.)
+
 (Sign-in is the one place where, on development and test databases, both
 systems write the same columns, under the same row locks and the same
 policy, while the web's sign-in page still uses the existing application.

@@ -124,7 +124,10 @@ frozen weeks, `_assert_days_can_follow`'s refusal and its words. That is
 27.8 §1's decided pattern; it is not built here, because the save it serves
 is not.
 
-## 30.4 Decision needed: the cancelled visit's advance
+## 30.4 Decided: the cancelled visit's advance (owner, 2026-11-12: "Narrow function")
+
+The owner chose the narrow function (option 1 below): `gateway_money.withdraw_unmoved_advances(activity_id)`, a `SECURITY DEFINER` function owned by a NOLOGIN role holding `DELETE` on `advance_request` and nothing else, deleting only that activity's advances whose money has not moved, by the existing save's own filter, inside the cancel's transaction. The gateway gets `EXECUTE` only and still holds no `DELETE` anywhere. A new database object: production needs the owner's approval at cutover.
+
 
 The owner's rule says cancelled work's money is withdrawn, and the drawer
 promises it ("Its cost and any undisbursed advance are withdrawn."). The
