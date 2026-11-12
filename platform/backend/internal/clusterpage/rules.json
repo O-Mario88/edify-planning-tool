@@ -13,99 +13,179 @@
   "doors": {
     "Accountant": {
       "add_schools": true,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": false,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": true,
+      "schools_list": true
     },
     "Admin": {
       "add_schools": true,
+      "assign_partner": true,
+      "bulk_schedule": false,
       "create": true,
+      "open_school": true,
       "page": true,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": true
     },
     "BusinessTransformationOfficer": {
       "add_schools": false,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": true,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": false
     },
     "CCEO": {
       "add_schools": true,
+      "assign_partner": true,
+      "bulk_schedule": true,
       "create": true,
+      "open_school": true,
       "page": true,
-      "plan": true
+      "plan": true,
+      "schedule": true,
+      "schools_list": true
     },
     "ClusterLeader": {
       "add_schools": false,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": false,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": false
     },
     "CountryDirector": {
       "add_schools": true,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": true,
+      "open_school": true,
       "page": true,
-      "plan": false
+      "plan": false,
+      "schedule": true,
+      "schools_list": true
     },
     "HumanResources": {
       "add_schools": false,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": false,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": false
     },
     "ImpactAssessment": {
       "add_schools": true,
+      "assign_partner": true,
+      "bulk_schedule": false,
       "create": true,
+      "open_school": true,
       "page": true,
-      "plan": false
+      "plan": false,
+      "schedule": true,
+      "schools_list": true
     },
     "MfiLoanOfficer": {
       "add_schools": false,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": false,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": false
     },
     "MfiPartnerAdmin": {
       "add_schools": false,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": false,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": false
     },
     "PartnerAdmin": {
       "add_schools": false,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": false,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": false
     },
     "PartnerFieldOfficer": {
       "add_schools": false,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": false,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": false
     },
     "Program Lead": {
       "add_schools": true,
+      "assign_partner": true,
+      "bulk_schedule": true,
       "create": true,
+      "open_school": true,
       "page": true,
-      "plan": true
+      "plan": true,
+      "schedule": true,
+      "schools_list": true
     },
     "ProjectCoordinator": {
       "add_schools": true,
+      "assign_partner": true,
+      "bulk_schedule": true,
       "create": false,
+      "open_school": true,
       "page": false,
-      "plan": true
+      "plan": true,
+      "schedule": true,
+      "schools_list": true
     },
     "RegionalProgramLead": {
       "add_schools": false,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": false,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": false
     },
     "RegionalVicePresident": {
       "add_schools": false,
+      "assign_partner": false,
+      "bulk_schedule": false,
       "create": false,
+      "open_school": false,
       "page": false,
-      "plan": false
+      "plan": false,
+      "schedule": false,
+      "schools_list": false
     }
   },
   "operating_statuses": [
@@ -181,5 +261,35 @@
     "Average Cluster SSA",
     "Weakest Intervention",
     "Pending Activities"
+  ],
+  "support_rule": {
+    "enabled": true,
+    "pilot_roles": [],
+    "pilot_users": []
+  },
+  "training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+    "cluster_training_ssa_collection"
+  ],
+  "visit_types": [
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
+    "core_visit",
+    "core_assessment_visit",
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection"
   ]
 }

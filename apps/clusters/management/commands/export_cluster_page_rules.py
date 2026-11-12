@@ -65,13 +65,31 @@ def doors() -> dict:
             "create": has_permission(user, Permission.CLUSTER_ASSIGN.value),
             # can_add_cluster_schools: the bulk-assign drawer's own check.
             "add_schools": planning,
+            # A card's schools (cluster_schools_partial): the Planning page's
+            # permission and the feed's can_open_url.
+            "schools_list": planning
+            and bool(can_open_url(user, "/partials/clusters/0/schools")),
+            # Its rows: Schedule (can_open_schedule_drawer), Assign
+            # (can_assign_to_partner), the bulk Schedule visit and Add to
+            # Meeting / Training (can_schedule_activity), and the school
+            # profile link (can_open_url("/schools/0")).
+            "schedule": RolePermissionService.can_open_schedule_drawer(user),
+            "assign_partner": RolePermissionService.can_assign_to_partner(user),
+            "bulk_schedule": RolePermissionService.can_schedule_activity(user),
+            "open_school": bool(can_open_url(user, "/schools/0")),
         }
     return out
 
 
 def rules() -> dict:
+    from django.conf import settings
+
     from apps.clusters import services
-    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+    from apps.core.activity_types import (
+        COMPLETED_WORK_STATUSES,
+        TRAINING_TYPES,
+        VISIT_TYPES,
+    )
     from apps.core.enums import SsaIntervention
     from apps.core.metrics.reconciled_registry import source_label_for_key
     from apps.planning.visit_gate import OWN_TABLE_SCHOOL_TYPES
@@ -89,6 +107,17 @@ def rules() -> dict:
         "planning_school_training_types": list(services.PLANNING_SCHOOL_TRAINING_KINDS),
         "ssa_interventions": [[key.value, key.label] for key in SsaIntervention],
         "strip_labels": [source_label_for_key(key) for key in STRIP_KEYS],
+        # The Partner-supported school rule (support_responsibility
+        # .visibility_enabled): the switch and its pilot roles and emails.
+        "support_rule": {
+            "enabled": settings.PARTNER_SUPPORTED_SCHOOL_PLANNING_VISIBILITY_ENABLED,
+            "pilot_roles": list(settings.PARTNER_SUPPORTED_SCHOOL_PLANNING_PILOT_ROLES),
+            "pilot_users": list(settings.PARTNER_SUPPORTED_SCHOOL_PLANNING_PILOT_USERS),
+        },
+        # A card's schools: the visit and training types a row's Last Visit
+        # and Last Training read.
+        "visit_types": [str(t) for t in VISIT_TYPES],
+        "training_types": [str(t) for t in TRAINING_TYPES],
     }
 
 

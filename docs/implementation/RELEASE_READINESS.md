@@ -301,6 +301,22 @@ menus, and the pages of `/clusters`.
 | iOS Release | Pass | cceo@: More → Clusters from Go (the gateway ran the page's own statements at the moment of the request): 22 clusters, "Mukono, Nakisunga, Goma Division, Kasawo", "District-level cluster", "Facilitated by: Literacy Uganda", an opened card's "No confirmed SSA scores are available yet." |
 | Android Release | Not run | the emulator hangs (see the Core section) |
 
+## A cluster card's schools read by Go (2026-11-12)
+
+[docs/migration/14-districts-and-clusters.md](../migration/14-districts-and-clusters.md),
+14.4: the list a cluster card loads when it opens, with the planning badges,
+the visit lock, who supports each school and its Next Activity.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/planning/test_school_planning_rules_export.py`, `apps/clusters/test_cluster_page_rules_export.py` |
+| Parity with the existing page | Pass | all 22 clusters for all 29 accounts on a gateway with no existing application behind it, four years each: 2,552 answers, none differing (four accounts re-asked after two grants were restored: 352, none differing) |
+| Go unit tests | Pass | badge buckets and kinds, chip words and order, a meeting as planned training, the day of a scheduled instant, a cell's chips read side by side, a row's doors, links, tick and facts |
+| Go integration suite | Pass | the officer's cluster's schools with their rows and bar; another officer turned away |
+| Django and Go checks | Pass | ruff, format, bandit clean; `go vet`, `gofmt`, `go test -race ./...` |
+| iOS Release | Pass | cceo@: Clusters page 2 → Cluster C → Show details: "Schools in Cluster (6)" and its rows, through the main gateway, which sends this path to Go before any fallback (the database did not show which process answered this time, so the Go-only parity above is the proof of the answer) |
+| Android Release | Not run | the emulator hangs |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

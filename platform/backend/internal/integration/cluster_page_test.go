@@ -91,3 +91,36 @@ func TestARoleOutsideThePageIsTurnedAway(t *testing.T) {
 		t.Fatalf("a Project Coordinator opening Clusters: %v, want not found", err)
 	}
 }
+
+func TestAClusterCardsSchoolsAreReadThroughGo(t *testing.T) {
+	var clusterID string
+	var schools int
+	if err := admin.QueryRow(context.Background(), `
+SELECT c.id, (SELECT count(*) FROM school s WHERE s.cluster_id = c.id AND s.deleted_at IS NULL
+  AND s.operational_status IN ('active', 'reopened') AND s.school_type IS DISTINCT FROM 'champion')
+FROM cluster c JOIN staff_profile sp ON sp.id = c.responsible_staff_id JOIN "user" u ON u.id = sp.user_id
+WHERE u.email = 'cceo@edify.org' AND c.deleted_at IS NULL ORDER BY c.name LIMIT 1`).Scan(&clusterID, &schools); err != nil {
+		t.Skip("the seeded officer owns no cluster")
+	}
+	borrowAccount(t, "cceo@edify.org")
+	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(token, "/partials/clusters/"+clusterID+"/schools", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := fmt.Sprintf("Schools in Cluster (%d)", schools); page.GetBlocks()[0].GetPanel().GetItems()[0].GetHeading() != want {
+		t.Fatalf("heading %v, want %s", page.GetBlocks()[0], want)
+	}
+	if schools > 0 {
+		table := page.GetBlocks()[1].GetTable()
+		if len(table.GetRows()) != schools || page.GetSelection() == nil {
+			t.Fatalf("%d rows for %d schools, selection %v", len(table.GetRows()), schools, page.GetSelection())
+		}
+	}
+
+	borrowAccount(t, "cceo1@edify.org")
+	other := sessionOf(t, "cceo1@edify.org", seededPassword).GetAccessToken()
+	if _, err := pageOf(other, "/partials/clusters/"+clusterID+"/schools", nil); connect.CodeOf(err) != connect.CodeNotFound {
+		t.Fatalf("another officer opening it: %v, want not found", err)
+	}
+}

@@ -1,0 +1,89 @@
+{
+  "awaiting_verification_statuses": [
+    "awaiting_ia_verification",
+    "completed",
+    "evidence_accepted",
+    "evidence_uploaded",
+    "salesforce_id_required",
+    "submitted_to_pl"
+  ],
+  "closed_handover_activity_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "closed"
+  ],
+  "cluster_meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "cluster_session_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "cluster_training",
+    "cluster_training_ssa_collection"
+  ],
+  "default_country": "Uganda",
+  "first_fy": 2025,
+  "kind_nouns": {
+    "cluster_meetings": "Cluster Meeting",
+    "trainings": "Training",
+    "visits": "Visit"
+  },
+  "needs_replanning_statuses": [
+    "returned",
+    "returned_by_ia",
+    "returned_by_pl"
+  ],
+  "next_nouns": {
+    "baseline_ssa_visit": "Data Gathering",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_meeting_ssa_review": "Cluster Meeting",
+    "cluster_training": "Group Training",
+    "cluster_training_ssa_collection": "Group Training",
+    "donor_visit": "Donor Visit",
+    "in_school_training": "In-school Training",
+    "school_visit": "School Visit",
+    "school_visit_ssa_collection": "Data Gathering",
+    "story_gathering_visit": "Content Gathering"
+  },
+  "planned_statuses": [
+    "assigned_to_partner",
+    "completion_started",
+    "in_progress",
+    "partner_scheduled",
+    "planned",
+    "rescheduled",
+    "scheduled"
+  ],
+  "training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+    "cluster_training_ssa_collection"
+  ],
+  "verified_statuses": [
+    "accountant_confirmed",
+    "closed",
+    "ia_verified"
+  ],
+  "visit_types": [
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
+    "core_visit",
+    "core_assessment_visit",
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection"
+  ]
+}

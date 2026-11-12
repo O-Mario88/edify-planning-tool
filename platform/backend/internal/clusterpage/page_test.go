@@ -6,6 +6,8 @@ import (
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
 func f(v float64) *float64 { return &v }
@@ -221,5 +223,51 @@ func TestOnlyTheRolesTheExistingGateLetsInOpenThePage(t *testing.T) {
 		if rules.Doors[role].Page != open {
 			t.Errorf("%s opens the page: %v, want %v", role, rules.Doors[role].Page, open)
 		}
+	}
+}
+
+func TestABadgeCellReadsItsChipsAsTheFeedDoes(t *testing.T) {
+	got := joinedChips([]schoolplanning.Chip{{Label: "1 Planned"}, {Label: "2 Complete"}}, []schoolplanning.Chip{{Label: "1 Cluster Meeting Planned"}})
+	if got != "1 Planned2 Complete1 Cluster Meeting Planned" {
+		t.Errorf("cell %q", got)
+	}
+}
+
+func TestASchoolRowOffersOnlyTheDoorsThatOpen(t *testing.T) {
+	sc := listedSchool{ID: "s1", Code: "1546", Name: "Kasawo Primary", Enrolment: 0}
+	sc.gate.CanAssignPartner = false
+	doors := Doors{Schedule: true, AssignPartner: true, BulkSchedule: false, OpenSchool: false}
+	row := schoolRow(clusterRef{id: "c1", name: "Cluster A"}, sc, nil, true, nil, true, doors, schoolprofile.GateRules(), false)
+	actions := row.GetCells()[len(row.GetCells())-1].GetActions()
+	if len(actions) != 1 || actions[0].GetLabel() != "Schedule" {
+		t.Errorf("a school the gate keeps from partners, read by a role that cannot plan sessions: %v", actions)
+	}
+	if row.GetCells()[1].GetHref() != "" || row.GetDetailsHref() != "" {
+		t.Error("a reader who may not open profiles gets no links")
+	}
+	if row.GetPickId() != "" {
+		t.Error("no tick box where nothing can be done to the ticked schools")
+	}
+	facts := map[string][2]string{}
+	for _, f := range row.GetDetails() {
+		facts[f.GetLabel()] = [2]string{f.GetValue(), f.GetTone()}
+	}
+	for label, want := range map[string][2]string{
+		"District": {"—", ""}, "Staff Name": {"Unassigned", ""}, "SSA": {"Not assessed", ""},
+		"Last Visit": {"Never", "alert"}, "Enrollment": {"0", ""}, "Next Activity": {"—", ""}, "Cluster": {"Cluster A", ""},
+	} {
+		if facts[label] != want {
+			t.Errorf("%s: %v, want %v", label, facts[label], want)
+		}
+	}
+	planner := Doors{Schedule: true, AssignPartner: true, BulkSchedule: true, OpenSchool: true}
+	sc.gate.CanAssignPartner = true
+	row = schoolRow(clusterRef{id: "c1"}, sc, nil, true, nil, true, planner, schoolprofile.GateRules(), true)
+	got := []string{}
+	for _, a := range row.GetCells()[len(row.GetCells())-1].GetActions() {
+		got = append(got, a.GetLabel())
+	}
+	if !slices.Equal(got, []string{"Schedule", "Assign", "Add to Meeting", "Add to Training"}) || row.GetPickId() != "1546" {
+		t.Errorf("a planner at a partner-supported school: %v, pick %q", got, row.GetPickId())
 	}
 }

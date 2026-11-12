@@ -24,7 +24,12 @@ import (
 // with the existing feed of it (apps.mobile_feed PageFeedView).
 type pageRun struct {
 	existing, path string
-	pages          screensv1connect.PageScreenServiceClient
+	// ids fill a path's {id} (a cluster's schools list, one per cluster);
+	// each is asked in turn.
+	ids []string
+	// question is the path with {id} its questions are registered under.
+	question string
+	pages    screensv1connect.PageScreenServiceClient
 }
 
 // pageQuestions are the questions each account is asked of a page, by the
@@ -34,7 +39,11 @@ type pageRun struct {
 var pageQuestions = map[string]func(ctx context.Context, r *pageRun, token string) []map[string]string{}
 
 func (r *pageRun) queries(ctx context.Context, token string) []map[string]string {
-	if questions, ok := pageQuestions[r.path]; ok {
+	key := r.path
+	if r.question != "" {
+		key = r.question
+	}
+	if questions, ok := pageQuestions[key]; ok {
 		return questions(ctx, r, token)
 	}
 	return []map[string]string{{}}
@@ -97,6 +106,21 @@ func comparePages(goAnswer *screensv1.GetPageResponse, goErr error, old *screens
 	return strings.Join(diffs, "\n")
 }
 
+// each is the run once per id for a path with {id}, else the run itself.
+func (r *pageRun) each() []*pageRun {
+	if !strings.Contains(r.path, "{id}") {
+		return []*pageRun{r}
+	}
+	out := []*pageRun{}
+	for _, id := range r.ids {
+		one := *r
+		one.path = strings.ReplaceAll(r.path, "{id}", id)
+		one.question = r.path
+		out = append(out, &one)
+	}
+	return out
+}
+
 func queryText(q map[string]string) string {
 	values := url.Values{}
 	for k, v := range q {
@@ -122,15 +146,17 @@ func runPages(ctx context.Context, signIn identityv1connect.SignInServiceClient,
 		}
 		token := answer.Msg.GetSession().GetAccessToken()
 		mine, theirs := 0, 0
-		for _, query := range r.queries(ctx, token) {
-			goAnswer, goErr := r.goPage(ctx, token, query)
-			oldAnswer, oldErr := r.existingPage(token, query)
-			compared++
-			mine++
-			if diff := comparePages(goAnswer, goErr, oldAnswer, oldErr); diff != "" {
-				differing++
-				theirs++
-				fmt.Printf("%-34s %-40s DIFFERS\n%s\n", email, queryText(query), diff)
+		for _, one := range r.each() {
+			for _, query := range one.queries(ctx, token) {
+				goAnswer, goErr := one.goPage(ctx, token, query)
+				oldAnswer, oldErr := one.existingPage(token, query)
+				compared++
+				mine++
+				if diff := comparePages(goAnswer, goErr, oldAnswer, oldErr); diff != "" {
+					differing++
+					theirs++
+					fmt.Printf("%-34s %-40s DIFFERS\n%s\n", email, one.path+" "+queryText(query), diff)
+				}
 			}
 		}
 		fmt.Printf("%-34s %d questions, %d differing\n", email, mine, theirs)

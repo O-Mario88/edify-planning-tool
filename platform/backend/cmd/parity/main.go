@@ -41,7 +41,8 @@ func main() {
 	users := flag.String("users", "", "comma-separated accounts to sign in as")
 	pause := flag.Duration("pause", 0, "wait between sign-ins, under the gateway's sign-in rate limit")
 	screen := flag.String("screen", "directory", "what to compare: directory, profile or page")
-	pagePath := flag.String("path", "/clusters", "page: the page's web path")
+	pagePath := flag.String("path", "/clusters", "page: the page's web path, {id} filled from -ids")
+	pageIDs := flag.String("ids", "", "page: comma-separated ids for a path with {id}")
 	tab := flag.String("tab", "details", "profile: the tab to compare")
 	fy := flag.String("fy", "", "profile: the year asked (empty for the page's own)")
 	period := flag.String("period", "", "profile: the part of the year asked (Q1…Q4, M1…M12)")
@@ -70,7 +71,7 @@ func main() {
 	}
 	if *screen == "page" {
 		os.Exit(runPages(ctx, signIn, &pageRun{
-			existing: *existing, path: *pagePath,
+			existing: *existing, path: *pagePath, ids: strings.Split(*pageIDs, ","),
 			pages: screensv1connect.NewPageScreenServiceClient(http.DefaultClient, *gateway),
 		}, password, strings.Split(*users, ","), *pause))
 	}

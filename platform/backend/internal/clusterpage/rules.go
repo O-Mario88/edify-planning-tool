@@ -26,6 +26,19 @@ type Doors struct {
 	Plan       bool `json:"plan"`
 	Create     bool `json:"create"`
 	AddSchools bool `json:"add_schools"`
+	// A card's schools (cluster_schools_partial) and its rows' doors.
+	SchoolsList   bool `json:"schools_list"`
+	Schedule      bool `json:"schedule"`
+	AssignPartner bool `json:"assign_partner"`
+	BulkSchedule  bool `json:"bulk_schedule"`
+	OpenSchool    bool `json:"open_school"`
+}
+
+// SupportRule is support_responsibility.visibility_enabled's settings.
+type SupportRule struct {
+	Enabled    bool     `json:"enabled"`
+	PilotRoles []string `json:"pilot_roles"`
+	PilotUsers []string `json:"pilot_users"`
 }
 
 // Rules are the page's vocabularies.
@@ -41,6 +54,9 @@ type Rules struct {
 	PlanningSchoolTrainingTypes []string         `json:"planning_school_training_types"`
 	SSAInterventions            [][2]string      `json:"ssa_interventions"`
 	StripLabels                 []string         `json:"strip_labels"`
+	SupportRule                 SupportRule      `json:"support_rule"`
+	VisitTypes                  []string         `json:"visit_types"`
+	TrainingTypes               []string         `json:"training_types"`
 }
 
 var rules = mustLoad(rulesJSON)

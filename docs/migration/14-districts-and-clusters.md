@@ -9,7 +9,7 @@ the next.
 | Piece | What moves | State |
 |---|---|---|
 | 1 | The Clusters page (`/clusters`): whose clusters, its filters, strip, cards, doors and pages | This document |
-| 2 | A cluster's schools, loaded when its card opens (`/partials/clusters/<id>/schools`) | Next |
+| 2 | A cluster's schools, loaded when its card opens (`/partials/clusters/<id>/schools`) | Done, 14.4 |
 | 3 | The Cluster Page and Cluster Profile (`/clusters/<id>`, `/clusters/<id>/profile`) | Planned |
 | 4 | District profiles (`/districts/<id>`) | Planned |
 | — | Every drawer and save (create, edit, delete, facilitator, add schools, schedule) | Still the existing application's |
@@ -86,6 +86,40 @@ tests built from `get_cluster_risk`'s order.
 
 ## 14.3 What is left
 
-- A card's schools, loaded on opening (piece 2), and the Cluster Page and
-  Profile (piece 3).
+- The Cluster Page and Profile (piece 3) and district profiles (piece 4).
 - Every drawer and save stays the existing application's.
+
+## 14.4 A card's schools
+
+`/partials/clusters/<id>/schools`, which the app loads when a card opens, is
+now Go's too (`internal/clusterpage/schools.go`). Its per-school planning
+figures live in a new package, `internal/schoolplanning`, so the Planning
+page (M4) can read the same ones.
+
+| Part | Existing rule it ports |
+|---|---|
+| Who may open it | `require_page_permission("planning")` and the feed's `can_open_url`; then `cluster_in_scope` over the whole scope (a lead's team included, unlike the Clusters page's own list): a cluster holding one of the scope's schools, one filed under the reader or their team, or an ownerless one in the scope's districts. Anything else is not found |
+| The rows | `cluster_schools`: operating schools by name, Champion left out; District, Shipping Address, School Type, Cluster, Enrollment, Primary Contact, Phone, Staff Name, the latest confirmed SSA (any year) with its colour, last completed visit and training ("Never" in red) |
+| Visit and Training Plan Status | `school_planning_badges`: activities naming the school, cluster sessions it is on the register of (invited, or attended once delivered), delivered sessions that recorded it attending; each activity once; over `planning_horizon` (the operational year reads forward through every year the selector offers and any year opened for planning). Chips sit side by side, so the feed reads "1 Planned2 Complete" |
+| Visit Lock | `visit_gate.lock_state_label` for each school (Go's `visitgate`, the client and Core rules) |
+| Responsible and Next Activity | the Partner-supported school rule (on unless switched off): Partner where a hand-over not given back is waiting for a date or is dated into this year or later on a live activity; the earliest planned activity from today, "Partner …" where a partner delivers it |
+| Its menu | Schedule (`can_open_schedule_drawer`), Assign where the visit rule lets the school go to a partner, Add to Meeting / Training at a partner-supported school for a planner. A greyed item has no address and Remove posts, so neither reaches the app |
+| Ticks | a tick box where the reader may schedule in bulk or hand the school over; the bar's Assign to partner and Schedule visit |
+
+The doors, the support rule's switch and the visit and training types are
+added to the Clusters page's export; the badges' statuses, types, Next
+Activity's words and the planning calendar's country are exported to
+`internal/schoolplanning/rules.json` by `manage.py export_school_planning_rules`
+(drift test `apps/planning/test_school_planning_rules_export.py`).
+
+Proved on the gateway with no existing application behind it: every one of
+the 22 clusters for all 29 accounts, as the card opens it and for FY 2026,
+2025 and 1999: 2,552 answers, none differing (the refusals included). The
+first full run lost two grants half way (a parallel worktree reapplied its
+own `roles.sql`, which revokes and re-grants); the four accounts it hit were
+asked again after the grants were restored, 352 answers, none differing.
+
+Not reachable with the seed and covered by unit tests instead: a partner-
+supported school's Responsible, Add to Meeting / Training and "Partner …"
+Next Activity; a register-only or attendance-only cluster session; a school
+with no district.

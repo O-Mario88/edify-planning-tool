@@ -282,11 +282,19 @@ func scoresPanel(c card, fy string) *screensv1.PageBlock {
 	groups, has := schooldirectory.SSAGroups(c.summary())
 	if !has {
 		items = append(items, textItem("No confirmed SSA scores are available yet."))
+	} else {
+		items = append(items, groupItems(groups)...)
 	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
+		Title: "Intervention scores", Subtitle: "SSA detail", Items: items,
+	}}}
+}
+
+// groupItems are partials/ssa/score_group_columns.html's groups: each
+// group's title and its scores, or the line that it holds none.
+func groupItems(groups []schooldirectory.SSAGroup) []*screensv1.PagePanelItem {
+	items := []*screensv1.PagePanelItem{}
 	for _, g := range groups {
-		if !has {
-			break
-		}
 		links := []*screensv1.PageLink{}
 		for _, item := range g.Items {
 			links = append(links, &screensv1.PageLink{Text: collapse(fmt.Sprintf("%s (%s/10)", item.Label, scoreText(item.Score)))})
@@ -298,9 +306,7 @@ func scoresPanel(c card, fy string) *screensv1.PageBlock {
 			&screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Heading{Heading: g.Title}},
 			&screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: links}}})
 	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
-		Title: "Intervention scores", Subtitle: "SSA detail", Items: items,
-	}}}
+	return items
 }
 
 // empty is cluster_list.html's "No clusters found." card.
