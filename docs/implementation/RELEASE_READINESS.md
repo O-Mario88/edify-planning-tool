@@ -375,7 +375,8 @@ existing application's.
 |---|---|---|
 | The rules identical on both sides | Pass | `apps/my_plan/test_my_plan_rules_export.py` (the strip's tiles, month and quarter choices and the export keys, now module constants) |
 | Parity, re-run by the coordinator on the merged build | Pass | the 5 accounts Go answers or refuses (Admin, Country Director, Impact Assessment, Project Coordinator, Business Transformation), gateway with no existing application behind it: 335 answers, none differing; the agent also showed all 29 accounts unchanged with the existing application behind the gateway (1,943 answers, none differing) |
-| Django and Go checks | Pass | ruff, format, bandit clean; the my_plan suite (106 tests); `go vet`, `gofmt`, `go test -race ./...`, the integration suite |
+| The plan's counts (piece 2) | Pass | `TestThePlanIsCountedAsTheExistingPageCountsIt`: Go against `get_frontend_context` itself on dev, re-run by the coordinator for cceo@, pl1@ and admin@: 162 plans counted, none differing; parity on the merged build for the 5 accounts Go answers: 335 answers, none differing |
+| Django and Go checks | Pass | ruff, format, bandit clean; the my_plan suite (106 tests); `go vet`, `gofmt`, `go test -race ./...`, the integration suite | (re-run after piece 2: 106 tests, the integration suite, race)
 | iOS / Android Release | Not run | not checked on a device |
 
 ## Open items
