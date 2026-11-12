@@ -85,15 +85,11 @@ func TestGoAnswersAnOfficersSchoolDetails(t *testing.T) {
 
 func TestTheRestOfTheProfileIsStillTheExistingApplications(t *testing.T) {
 	userID := borrowAccount(t, "cceo@edify.org")
-	client, _ := anOfficersSchool(t, userID, "client")
 	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
-	// The Participation tab is passed on; with no existing application here,
-	// it says so.
-	_, err := profileOf(token, client, "activities")
-	requireCode(t, err, connect.CodeUnavailable, "")
-	// So is a Core school's profile, whose package rule has not moved.
+	// A Core school's profile, whose package rule has not moved, is passed
+	// on; with no existing application here, it says so.
 	core, _ := anOfficersSchool(t, userID, "core")
-	_, err = profileOf(token, core, "details")
+	_, err := profileOf(token, core, "details")
 	requireCode(t, err, connect.CodeUnavailable, "")
 }
 
@@ -152,7 +148,7 @@ func TestGoAnswersTheEnginesTabs(t *testing.T) {
 	userID := borrowAccount(t, "cceo@edify.org")
 	id, _ := anOfficersSchool(t, userID, "client")
 	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
-	for _, tab := range []string{"overview", "ssa", "projects", "stories", "academic"} {
+	for _, tab := range []string{"overview", "ssa", "activities", "projects", "stories", "academic"} {
 		profile, err := profileOf(token, id, tab)
 		if err != nil {
 			t.Fatalf("%s: %v", tab, err)
@@ -238,5 +234,49 @@ func TestTheSSATabNamesEveryInterventionAndTheSchoolsRecords(t *testing.T) {
 	}
 	if len(panels) != 2 || panels[0] != "SSA change between confirmed assessments" || panels[1] != "SSA history" {
 		t.Fatalf("the school's records: %v", panels)
+	}
+}
+
+func TestTheParticipationTabListsTheWorkAndWhatTheReaderMayDo(t *testing.T) {
+	userID := borrowAccount(t, "cceo@edify.org")
+	id, _ := anOfficersSchool(t, userID, "client")
+	token := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	profile, err := profileOf(token, id, "activities")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tables := []string{}
+	var list *screensv1.PageSegments
+	for _, block := range profile.GetBlocks() {
+		if table := block.GetTable(); table != nil {
+			tables = append(tables, table.GetTitle())
+		}
+		if segments := block.GetSegments(); segments != nil {
+			list = segments
+		}
+	}
+	if len(tables) != 3 || tables[0] != "Visits, trainings and cluster meetings" || tables[1] != "Training By Channel" || tables[2] != "Cluster Meetings" {
+		t.Fatalf("the tables: %v", tables)
+	}
+	if list == nil || len(list.GetSegments()) != 2 || list.GetSegments()[0].GetLabel() != "Planned" || list.GetSegments()[1].GetLabel() != "Completed" {
+		t.Fatalf("the activity list: %v", list)
+	}
+	// Every row opens its activity; a row the officer may move can be
+	// ticked, and then the page carries the bar for the ticks.
+	ticked := false
+	for _, segment := range list.GetSegments() {
+		for _, row := range segment.GetBlocks()[0].GetTable().GetRows() {
+			cells := row.GetCells()
+			if len(cells) < 7 {
+				continue
+			}
+			if actions := cells[6].GetActions(); len(actions) == 0 || actions[0].GetLabel() != "View activity" {
+				t.Fatalf("a row's menu: %v", actions)
+			}
+			ticked = ticked || row.GetPickId() != ""
+		}
+	}
+	if ticked != (profile.GetSelection() != nil) {
+		t.Fatalf("ticks %v, bar %v", ticked, profile.GetSelection())
 	}
 }

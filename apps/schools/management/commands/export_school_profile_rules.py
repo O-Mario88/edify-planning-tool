@@ -70,8 +70,63 @@ def doors() -> dict:
             ),
             # The Overview's loans strip shows to a reader of the register.
             "loans": RolePermissionService.can_view_page(user, "loans"),
+            # Whether the Participation tab's rows may offer Edit, Complete,
+            # Reschedule and Cancel at all (profile_activities._decorate).
+            "my_plan": RolePermissionService.can_view_page(user, "my_plan"),
         }
     return out
+
+
+def participation_rules() -> dict:
+    """What the Participation tab reads: the planned and completed
+    activities' statuses and words (apps.activities.profile_activities and
+    editing), who may run work (apps.activities.services), and a partner
+    hand-over's next step (apps.planning.partner_oversight_service)."""
+    from apps.activities import editing
+    from apps.activities import profile_activities as acts
+    from apps.core.enums import ActivityType, MeetingKind
+    from apps.core.rbac import EdifyRole
+    from apps.core.scoping import COUNTRY_SCHEDULING_ROLES
+    from apps.partners.models import PartnerAssignment
+    from apps.partners.support_responsibility import left_partner_q
+    from apps.planning import partner_oversight_service as oversight
+    from apps.planning import school_planning_badges as badges
+
+    from django.db.models import Q
+
+    # left_partner_q, exported as its two arms; a change to it stops the
+    # export rather than drifting from Go.
+    left_statuses = ("returned", "cancelled")
+    returned = "returned_to_staff"
+    expected = Q(status__in=left_statuses) | (
+        Q(status=returned) & Q(resolved_at__isnull=False)
+    )
+    if left_partner_q() != expected:
+        raise ValueError(
+            "left_partner_q changed: update the Participation export and Go."
+        )
+    return {
+        "open_statuses": sorted(acts.OPEN_STATUSES),
+        "delivered_statuses": sorted(acts.DELIVERED_STATUSES),
+        "planned_statuses": sorted(badges.PLANNED_STATUSES),
+        "needs_replanning_statuses": sorted(badges.NEEDS_REPLANNING_STATUSES),
+        "verified_statuses": sorted(badges.VERIFIED_STATUSES),
+        "still_completing_statuses": sorted(acts._STILL_COMPLETING),
+        "editable_statuses": sorted(editing.EDITABLE_STATUSES),
+        "begun_statuses": sorted(editing.BEGUN_STATUSES),
+        "executed_statuses": sorted(editing.EXECUTED_STATUSES),
+        "page_size": acts.PAGE_SIZE,
+        "activity_types": dict(ActivityType.choices),
+        "meeting_kinds": dict(MeetingKind.choices),
+        "country_scheduling_roles": sorted(COUNTRY_SCHEDULING_ROLES),
+        "country_director": EdifyRole.COUNTRY_DIRECTOR.value,
+        "handover_left_statuses": list(left_statuses),
+        "handover_returned_status": returned,
+        "handover_unscheduled_statuses": list(PartnerAssignment.UNSCHEDULED_STATUSES),
+        "oversight_complete_statuses": list(oversight._COMPLETE_STATUSES),
+        "oversight_awaiting_ia_statuses": list(oversight._AWAITING_IA_STATUSES),
+        "oversight_evidence_review_statuses": list(oversight._EVIDENCE_REVIEW_STATUSES),
+    }
 
 
 def rules() -> dict:
@@ -123,6 +178,7 @@ def rules() -> dict:
         "closed_statuses": list(CLOSED_STATUSES),
         "closed_school_message": CLOSED_SCHOOL_MESSAGE,
         "engine": engine_rules(),
+        "participation": participation_rules(),
         "gate": {
             "client_rule_types": list(gate.CLIENT_RULE_SCHOOL_TYPES),
             "core_rule_types": list(gate.CORE_RULE_SCHOOL_TYPES),

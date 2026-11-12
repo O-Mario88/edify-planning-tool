@@ -37,25 +37,52 @@ type doors struct {
 	OpenStaff     bool `json:"open_staff"`
 	OpenProjects  bool `json:"open_projects"`
 	Loans         bool `json:"loans"`
+	MyPlan        bool `json:"my_plan"`
 }
 
 type profileRules struct {
-	Doors               map[string]doors  `json:"doors"`
-	SchoolTypes         map[string]string `json:"school_types"`
-	Readiness           map[string]string `json:"readiness"`
-	SSAStatuses         map[string]string `json:"ssa_statuses"`
-	SSAInterventions    map[string]string `json:"ssa_interventions"`
-	SSAHoldingStatuses  []string          `json:"ssa_holding_statuses"`
-	SSACurrentStatuses  []string          `json:"ssa_current_statuses"`
-	SSASources          map[string]string `json:"ssa_sources"`
-	SSASourceStaffKeyed string            `json:"ssa_source_staff_keyed"`
-	SSASourceOnVisit    string            `json:"ssa_source_on_visit"`
-	SSASourceOther      string            `json:"ssa_source_other"`
-	CoreLifecycleTypes  []string          `json:"core_lifecycle_types"`
-	ClosedStatuses      []string          `json:"closed_statuses"`
-	ClosedSchoolMessage string            `json:"closed_school_message"`
-	Gate                visitgate.Rules   `json:"gate"`
-	Engine              engineRules       `json:"engine"`
+	Doors               map[string]doors   `json:"doors"`
+	SchoolTypes         map[string]string  `json:"school_types"`
+	Readiness           map[string]string  `json:"readiness"`
+	SSAStatuses         map[string]string  `json:"ssa_statuses"`
+	SSAInterventions    map[string]string  `json:"ssa_interventions"`
+	SSAHoldingStatuses  []string           `json:"ssa_holding_statuses"`
+	SSACurrentStatuses  []string           `json:"ssa_current_statuses"`
+	SSASources          map[string]string  `json:"ssa_sources"`
+	SSASourceStaffKeyed string             `json:"ssa_source_staff_keyed"`
+	SSASourceOnVisit    string             `json:"ssa_source_on_visit"`
+	SSASourceOther      string             `json:"ssa_source_other"`
+	CoreLifecycleTypes  []string           `json:"core_lifecycle_types"`
+	ClosedStatuses      []string           `json:"closed_statuses"`
+	ClosedSchoolMessage string             `json:"closed_school_message"`
+	Gate                visitgate.Rules    `json:"gate"`
+	Engine              engineRules        `json:"engine"`
+	Participation       participationRules `json:"participation"`
+}
+
+// participationRules are what the Participation tab reads: the activity
+// list's statuses and words, who may run work, and a hand-over's next step.
+type participationRules struct {
+	OpenStatuses                    []string          `json:"open_statuses"`
+	DeliveredStatuses               []string          `json:"delivered_statuses"`
+	PlannedStatuses                 []string          `json:"planned_statuses"`
+	NeedsReplanningStatuses         []string          `json:"needs_replanning_statuses"`
+	VerifiedStatuses                []string          `json:"verified_statuses"`
+	StillCompletingStatuses         []string          `json:"still_completing_statuses"`
+	EditableStatuses                []string          `json:"editable_statuses"`
+	BegunStatuses                   []string          `json:"begun_statuses"`
+	ExecutedStatuses                []string          `json:"executed_statuses"`
+	PageSize                        int               `json:"page_size"`
+	ActivityTypes                   map[string]string `json:"activity_types"`
+	MeetingKinds                    map[string]string `json:"meeting_kinds"`
+	CountrySchedulingRoles          []string          `json:"country_scheduling_roles"`
+	CountryDirector                 string            `json:"country_director"`
+	HandoverLeftStatuses            []string          `json:"handover_left_statuses"`
+	HandoverReturnedStatus          string            `json:"handover_returned_status"`
+	HandoverUnscheduledStatuses     []string          `json:"handover_unscheduled_statuses"`
+	OversightCompleteStatuses       []string          `json:"oversight_complete_statuses"`
+	OversightAwaitingIAStatuses     []string          `json:"oversight_awaiting_ia_statuses"`
+	OversightEvidenceReviewStatuses []string          `json:"oversight_evidence_review_statuses"`
 }
 
 // engineRules are the profile engine's vocabularies.

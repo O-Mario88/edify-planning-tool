@@ -216,6 +216,24 @@ assessments and the SSA history, for the same schools as the other tabs.
 | iOS Release | Pass | cceo@: school 1000's SSA tab from Go: Annual SSA Progress 5.9 and 6.3; "FY2026 vs FY2027 · 9 Nov 2026 → 15 Mar 2027 · 125 days apart", Improved (0.10), 1 activity: Leadership coaching |
 | Android Release | Pass | cceo@: school 1026's SSA tab from Go: the matrix, both charts (5.9 and 4.4), "Not compared (readings less than 120 days apart)", and its two confirmed records in the history |
 
+## School Profiles, the Participation tab, read by Go (2026-11-12)
+
+[docs/migration/13-school-profiles.md](../migration/13-school-profiles.md),
+13.9: the year's work by kind, training by channel, cluster meetings, the
+planned and completed activities with each row's menu, visit findings and
+partner support.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/schools/test_school_profile_rules_export.py` (now with the activity list's statuses and words, who may run work, the My Plan door per role and a hand-over's next step); the export stops if `left_partner_q` changes |
+| Parity with the existing page | Pass | `cmd/parity -screen profile -tab activities` against a gateway with no existing application behind it: all 29 accounts that may open a profile, 3,826 compared, every answer Go gave identical, the rest passed on by design (426, Core schools); the CCEO's 700 schools for FY2026, Q2, November and an unknown year and period, 597 answered by Go, identical; the other six tabs re-run the same way on those 700, every Go answer identical |
+| Records the seed lacked | Made in dev | the seed's school activities were only completed or scheduled; with the existing models at Kimenyedde (1578), marked "[Go parity check] participation": one activity in each other state the list reads, a cluster meeting it is invited to, a group training it attended, a returned and a dated hand-over; at Central Division Primary School (1000) one visit finding |
+| Go unit tests | Pass | Django's title and truncation, Python's rounding; the page reader's label-and-figure pairing; each status as the list words it; who may run work (a lead's team read-only, their own and their direct clusters run; a Country Director read-only) |
+| Go integration suite | Pass | Go answers Participation with its three tables and the Planned / Completed list; every row opens its activity; the tick bar is present exactly when a row can be ticked |
+| Django and Go checks | Pass | ruff, format, bandit clean; `go vet`, `gofmt`, `go test -race ./...` |
+| iOS Release | Pass | cceo@: Kimenyedde's Participation tab from Go: the work and channel tables, "Next: Cluster E, 28 Nov.", 7 planned and 7 completed, and Partner Support with "UGX 40,000" |
+| Android Release | Pass | cceo@: the same tab, the rescheduled training reading "26 Nov 2026 – 28 Nov", and the four hand-overs |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

@@ -134,3 +134,16 @@ GRANT SELECT (teachers_attended, leaders_attended, programme_delivery_mode, focu
 GRANT SELECT (teachers, leaders) ON cluster_activity_attendance TO edify_gateway_ro;
 -- The SSA tab: the verified support between two assessments.
 GRANT SELECT (activity_name_snapshot, actual_delivery_date) ON activity TO edify_gateway_ro;
+-- The Participation tab: the school's planned and completed activities and
+-- who may run each, cluster meetings by kind, what follow-up visits found,
+-- and the support handed to partners with its cost.
+GRANT SELECT (
+  end_date, purpose_intervention, activity_purpose_text, venue, meeting_kind, evidence_status, payment_status,
+  follow_up_of_activity_id, monitored_by_staff_id, reschedule_count, responsible_staff_id, salesforce_activity_id
+) ON activity TO edify_gateway_ro;
+GRANT SELECT (region_id) ON cluster TO edify_gateway_ro;
+GRANT SELECT (deleted_at) ON partner TO edify_gateway_ro;
+GRANT SELECT (activity_id, finding, improvements, created_at) ON school_visit_feedback TO edify_gateway_ro;
+GRANT SELECT (id, scheduled_activity_id, monitoring_staff_id, assigning_staff_id, cluster_id, resolved_at, return_reason)
+  ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (activity_id, amount) ON activity_schedule_cost_line TO edify_gateway_ro;

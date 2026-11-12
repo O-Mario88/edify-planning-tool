@@ -17,6 +17,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
+      "my_plan": true,
       "open_cluster": false,
       "open_district": true,
       "open_projects": false,
@@ -32,6 +33,7 @@
       "delete_school": true,
       "enter_ssa": false,
       "loans": false,
+      "my_plan": true,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -47,6 +49,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
+      "my_plan": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -62,6 +65,7 @@
       "delete_school": false,
       "enter_ssa": true,
       "loans": true,
+      "my_plan": true,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -77,6 +81,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
+      "my_plan": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -92,6 +97,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
+      "my_plan": true,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -107,6 +113,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
+      "my_plan": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -122,6 +129,7 @@
       "delete_school": false,
       "enter_ssa": true,
       "loans": true,
+      "my_plan": true,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -137,6 +145,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
+      "my_plan": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -152,6 +161,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
+      "my_plan": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -167,6 +177,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
+      "my_plan": true,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -182,6 +193,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
+      "my_plan": true,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -197,6 +209,7 @@
       "delete_school": false,
       "enter_ssa": true,
       "loans": false,
+      "my_plan": true,
       "open_cluster": true,
       "open_district": true,
       "open_projects": true,
@@ -212,6 +225,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
+      "my_plan": true,
       "open_cluster": false,
       "open_district": true,
       "open_projects": true,
@@ -227,6 +241,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": false,
+      "my_plan": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -242,6 +257,7 @@
       "delete_school": false,
       "enter_ssa": false,
       "loans": true,
+      "my_plan": false,
       "open_cluster": false,
       "open_district": false,
       "open_projects": false,
@@ -481,6 +497,142 @@
     "unscheduled_handover_statuses": [
       "assigned",
       "pending_scheduling"
+    ]
+  },
+  "participation": {
+    "activity_types": {
+      "baseline_ssa_visit": "SSA Visit",
+      "cluster_meeting": "Cluster Meeting",
+      "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+      "cluster_training": "Cluster Training",
+      "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+      "coaching_visit": "Coaching Visit",
+      "core_assessment_visit": "Core Assessment Visit",
+      "core_training": "Core Training",
+      "core_visit": "Core Visit",
+      "donor_visit": "Donor Visit",
+      "field_event": "Field Event",
+      "follow_up_visit": "Follow-up Visit",
+      "in_school_coaching_visit": "In-school Coaching Visit",
+      "in_school_support": "In-school Support",
+      "in_school_training": "In-school Training",
+      "partner_activity": "Partner Activity",
+      "partner_ssa_collection": "Partner SSA Collection",
+      "programme_event": "Programme Event",
+      "project_activity": "Project Activity",
+      "school_improvement_training": "School Improvement Training",
+      "school_invitation": "School Invitation",
+      "school_visit": "School Visit",
+      "school_visit_ssa_collection": "School Visit + SSA Collection",
+      "social_visit": "Social Visit",
+      "ssa_activity": "SSA Activity",
+      "story_gathering_visit": "Gathering Story",
+      "training": "Training",
+      "training_follow_up_visit": "Training Follow-up Visit"
+    },
+    "begun_statuses": [
+      "completion_started",
+      "in_progress"
+    ],
+    "country_director": "CountryDirector",
+    "country_scheduling_roles": [
+      "Admin",
+      "CountryDirector",
+      "ImpactAssessment"
+    ],
+    "delivered_statuses": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "ia_verified",
+      "salesforce_id_required",
+      "submitted_to_pl"
+    ],
+    "editable_statuses": [
+      "planned",
+      "rescheduled",
+      "scheduled"
+    ],
+    "executed_statuses": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "ia_verified",
+      "salesforce_id_required",
+      "submitted_to_pl"
+    ],
+    "handover_left_statuses": [
+      "returned",
+      "cancelled"
+    ],
+    "handover_returned_status": "returned_to_staff",
+    "handover_unscheduled_statuses": [
+      "assigned",
+      "pending_scheduling"
+    ],
+    "meeting_kinds": {
+      "cluster_leaders": "Cluster Leaders Meeting",
+      "only_meeting": "Only Meeting",
+      "training": "Training"
+    },
+    "needs_replanning_statuses": [
+      "returned",
+      "returned_by_ia",
+      "returned_by_pl"
+    ],
+    "open_statuses": [
+      "assigned_to_partner",
+      "awaiting_owner_approval",
+      "completion_started",
+      "in_progress",
+      "partner_scheduled",
+      "planned",
+      "rescheduled",
+      "returned",
+      "returned_by_ia",
+      "returned_by_pl",
+      "scheduled"
+    ],
+    "oversight_awaiting_ia_statuses": [
+      "awaiting_ia_verification",
+      "salesforce_id_required"
+    ],
+    "oversight_complete_statuses": [
+      "ia_verified",
+      "accountant_confirmed",
+      "completed",
+      "closed"
+    ],
+    "oversight_evidence_review_statuses": [
+      "evidence_uploaded",
+      "submitted_to_pl",
+      "returned_by_pl"
+    ],
+    "page_size": 50,
+    "planned_statuses": [
+      "assigned_to_partner",
+      "completion_started",
+      "in_progress",
+      "partner_scheduled",
+      "planned",
+      "rescheduled",
+      "scheduled"
+    ],
+    "still_completing_statuses": [
+      "evidence_accepted",
+      "evidence_uploaded",
+      "salesforce_id_required"
+    ],
+    "verified_statuses": [
+      "accountant_confirmed",
+      "closed",
+      "ia_verified"
     ]
   },
   "readiness": {

@@ -45,6 +45,11 @@ type Scope struct {
 	// SchoolIDs is own and team, which decides whether projects are offered.
 	SchoolIDs     []string
 	OwnClusterIDs []string
+	// OwnDistrictIDs are the direct portfolio's districts, and
+	// SupervisedStaffIDs a lead's live supervisees (supervised_staff_ids):
+	// what deciding who may run a piece of work reads.
+	OwnDistrictIDs     []string
+	SupervisedStaffIDs []string
 }
 
 func uniq(items []string) []string {
@@ -119,7 +124,7 @@ WHERE psa.project_id IN (
 			return s, fmt.Errorf("schooldirectory: reading project schools: %w", err)
 		}
 		s.SchoolIDs = uniq(s.OwnSchoolIDs)
-		if s.OwnClusterIDs, err = ownClusters(ctx, q, s.SchoolIDs); err != nil {
+		if s.OwnClusterIDs, s.OwnDistrictIDs, err = ownGeography(ctx, q, s.SchoolIDs); err != nil {
 			return s, err
 		}
 	}
@@ -176,7 +181,9 @@ WHERE a.supervisor_id = ANY($1)`, holders)
 		if err != nil {
 			return fmt.Errorf("schooldirectory: reading the team: %w", err)
 		}
-		if supervisees = uniq(supervisees); len(supervisees) > 0 {
+		supervisees = uniq(supervisees)
+		s.SupervisedStaffIDs = supervisees
+		if len(supervisees) > 0 {
 			schools, err := strings1(ctx, q, `SELECT school_id FROM staff_school_assignment WHERE staff_id = ANY($1)`, supervisees)
 			if err != nil {
 				return fmt.Errorf("schooldirectory: reading team schools: %w", err)
@@ -190,22 +197,31 @@ WHERE a.supervisor_id = ANY($1)`, holders)
 	}
 	s.SchoolIDs = uniq(append(append([]string{}, s.OwnSchoolIDs...), team...))
 	var err2 error
-	s.OwnClusterIDs, err2 = ownClusters(ctx, q, s.OwnSchoolIDs)
+	s.OwnClusterIDs, s.OwnDistrictIDs, err2 = ownGeography(ctx, q, s.OwnSchoolIDs)
 	return err2
 }
 
-// ownClusters is _derive_from_schools' own_cluster_ids: the clusters of the
-// direct portfolio's live schools.
-func ownClusters(ctx context.Context, q Querier, own []string) ([]string, error) {
+// ownGeography is _derive_from_schools' own_cluster_ids and
+// own_district_ids: the clusters and districts of the direct portfolio's
+// live schools.
+func ownGeography(ctx context.Context, q Querier, own []string) (clusters, districts []string, err error) {
 	if len(own) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
-	ids, err := strings1(ctx, q, `
-SELECT cluster_id FROM school WHERE id = ANY($1) AND deleted_at IS NULL AND cluster_id IS NOT NULL AND cluster_id <> ''`, own)
+	rows, err := q.Query(ctx, `
+SELECT COALESCE(cluster_id, ''), COALESCE(district_id, '') FROM school WHERE id = ANY($1) AND deleted_at IS NULL ORDER BY id`, own)
 	if err != nil {
-		return nil, fmt.Errorf("schooldirectory: reading own clusters: %w", err)
+		return nil, nil, fmt.Errorf("schooldirectory: reading own clusters: %w", err)
 	}
-	return uniq(ids), nil
+	defer rows.Close()
+	for rows.Next() {
+		var cluster, district string
+		if err := rows.Scan(&cluster, &district); err != nil {
+			return nil, nil, err
+		}
+		clusters, districts = append(clusters, cluster), append(districts, district)
+	}
+	return uniq(clusters), uniq(districts), rows.Err()
 }
 
 // assignedRegions is a region role's geography: its region rows, or the

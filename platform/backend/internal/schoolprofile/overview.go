@@ -147,18 +147,9 @@ func activityScope(sc school, clusterIDs []string, l lens, args *[]any) string {
 
 func (s *Service) work(ctx context.Context, sc school, l lens, now time.Time) (work, error) {
 	w := work{focus: map[string][2]int{}}
-	// The engine reads the work of the school's cluster by its id, live or
-	// not; the records (_work) by its live cluster.
-	allClusters, liveClusters := []string{}, []string{}
-	if sc.ClusterID != "" {
-		allClusters = append(allClusters, sc.ClusterID)
-		var live bool
-		if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM cluster WHERE id = $1 AND deleted_at IS NULL)`, sc.ClusterID).Scan(&live); err != nil {
-			return w, fmt.Errorf("schoolprofile: reading the cluster: %w", err)
-		}
-		if live {
-			liveClusters = append(liveClusters, sc.ClusterID)
-		}
+	allClusters, liveClusters, err := s.clusterSets(ctx, sc)
+	if err != nil {
+		return w, err
 	}
 	today := now.In(kampala)
 	day := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.UTC)
@@ -252,6 +243,24 @@ GROUP BY 1`, args...)
 		return w, fmt.Errorf("schoolprofile: reading hand-overs: %w", err)
 	}
 	return w, nil
+}
+
+// clusterSets are the school's cluster as the engine reads its work (by its
+// id, live or not) and as the records read it (_work: the live cluster).
+func (s *Service) clusterSets(ctx context.Context, sc school) (all, live []string, err error) {
+	all, live = []string{}, []string{}
+	if sc.ClusterID == "" {
+		return all, live, nil
+	}
+	all = append(all, sc.ClusterID)
+	var isLive bool
+	if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM cluster WHERE id = $1 AND deleted_at IS NULL)`, sc.ClusterID).Scan(&isLive); err != nil {
+		return nil, nil, fmt.Errorf("schoolprofile: reading the cluster: %w", err)
+	}
+	if isLive {
+		live = append(live, sc.ClusterID)
+	}
+	return all, live, nil
 }
 
 // registerCounts are the register's online invitations and attendance

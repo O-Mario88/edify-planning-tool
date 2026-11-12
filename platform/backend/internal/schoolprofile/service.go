@@ -49,26 +49,29 @@ const detailsTab = "details"
 
 // servedTabs are the tabs Go answers; the rest (and no tab, the Overview)
 // are still the existing application's.
-var servedTabs = map[string]bool{detailsTab: true, "overview": true, "ssa": true, "projects": true, "stories": true, "academic": true}
+var servedTabs = map[string]bool{detailsTab: true, "overview": true, "ssa": true, "activities": true, "projects": true, "stories": true, "academic": true}
 
 // stillExisting are the tabs that are the existing application's whatever
 // the school. (Core School is too where a school has it; at a school that
 // does not, it is the Overview.)
-var stillExisting = map[string]bool{"activities": true}
+var stillExisting = map[string]bool{}
 
 // section is the open tab's blocks: the school's record, or the engine's
-// frame and section for the year and period asked.
-func (s *Service) section(ctx context.Context, p auth.Principal, sc school, tab string, req *screensv1.GetSchoolProfileRequest, now time.Time) ([]*screensv1.PageBlock, error) {
+// frame and section for the year and period asked; and the bar for the
+// tab's ticked rows, where it has one.
+func (s *Service) section(ctx context.Context, p auth.Principal, scope schooldirectory.Scope, sc school, tab string, req *screensv1.GetSchoolProfileRequest, now time.Time) ([]*screensv1.PageBlock, *screensv1.PageSelection, error) {
 	if tab == detailsTab {
-		return s.details(ctx, p, sc, now)
+		blocks, err := s.details(ctx, p, sc, now)
+		return blocks, nil, err
 	}
 	d := rules.Doors[p.ActiveRole]
 	l := lensOf(sc, tab, req.GetFy(), req.GetPeriod(), schooldirectory.OperationalFY(now))
 	frame, err := s.frame(ctx, d, sc, l)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var blocks []*screensv1.PageBlock
+	var selection *screensv1.PageSelection
 	switch tab {
 	case "projects":
 		blocks, err = s.projectsTab(ctx, d, sc, l)
@@ -80,11 +83,13 @@ func (s *Service) section(ctx context.Context, p auth.Principal, sc school, tab 
 		blocks, err = s.overviewTab(ctx, d, sc, l, now)
 	case "ssa":
 		blocks, err = s.ssaTab(ctx, sc, l)
+	case "activities":
+		blocks, selection, err = s.participationTab(ctx, p, scope, d, sc, l, now)
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return append(frame, blocks...), nil
+	return append(frame, blocks...), selection, nil
 }
 
 // school is the profile's record, as the page reads it.
@@ -172,7 +177,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 	if err != nil {
 		return nil, true, err
 	}
-	blocks, err := s.section(ctx, p, sc, tab, req, now)
+	blocks, selection, err := s.section(ctx, p, scope, sc, tab, req, now)
 	if errors.Is(err, errTooLong) {
 		return nil, false, nil
 	}
@@ -180,11 +185,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 		return nil, true, err
 	}
 	return &screensv1.GetSchoolProfileResponse{
-		Header:  header,
-		Tabs:    tabs(sc, tab),
-		Blocks:  blocks,
-		WebPath: "/schools/" + key,
-		Dialogs: []*screensv1.PageDialog{},
+		Header:    header,
+		Tabs:      tabs(sc, tab),
+		Blocks:    blocks,
+		WebPath:   "/schools/" + key,
+		Dialogs:   []*screensv1.PageDialog{},
+		Selection: selection,
 	}, true, nil
 }
 

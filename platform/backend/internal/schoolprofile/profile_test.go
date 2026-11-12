@@ -1,8 +1,13 @@
 package schoolprofile
 
 import (
+	"context"
 	"testing"
 	"time"
+
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 func TestFiguresArePrintedAsDjangoPrintsThem(t *testing.T) {
@@ -262,5 +267,96 @@ func TestAPairIsJudgedByTheCountrysRuleFirst(t *testing.T) {
 	// Holding a strong score is its own verdict.
 	if c := between(8.5, 8.2, book.ruleIn("enrolment", "")); c.status != "maintained_strong" {
 		t.Errorf("maintained strong: %+v", c)
+	}
+}
+
+func TestTextIsWrittenAsTheTemplateFiltersWriteIt(t *testing.T) {
+	// str.title() and Django's |title, as Python answers.
+	for in, want := range map[string]string{"in school training": "In School Training", "ssa's 2nd visit": "Ssa's 2nd Visit", "": ""} {
+		if got := djangoTitle(in); got != want {
+			t.Errorf("title(%q) = %q, want %q", in, got, want)
+		}
+	}
+	if got := pyTitle("ssa's 2nd visit"); got != "Ssa'S 2Nd Visit" {
+		t.Errorf("str.title: %q", got)
+	}
+	// |truncatechars:60 keeps 59 characters and an ellipsis.
+	long := "Reading corners for P1 to P3, with the head teacher\nand two class teachers"
+	if got := truncateChars(long, 60); got != long[:59]+"…" {
+		t.Errorf("truncatechars: %q", got)
+	}
+	if got := truncateChars("short", 60); got != "short" {
+		t.Errorf("truncatechars short: %q", got)
+	}
+	// Python's round() takes a half to the even neighbour.
+	if pyRoundInt(12.5) != 12 || pyRoundInt(13.5) != 14 || attendanceRate(1, 3) != 33 || attendanceRate(0, 0) != 0 {
+		t.Error("rounding")
+	}
+}
+
+func TestALabelAndItsFigureAreReadAsOneRow(t *testing.T) {
+	items := pairedItems([]*screensv1.PagePanelItem{
+		heading("Room to Read — Partner Activity"), text("Scheduled for 7 Apr 2026"),
+		text("Next: Pay the partner — Accountant"), text("UGX 40,000"), text("Completed"),
+		text("Finding"), text("Showing 1"),
+	})
+	if len(items) != 6 || items[2].GetRows().GetRows()[0].GetValue() != "UGX 40,000" || items[3].GetText() != "Completed" {
+		t.Fatalf("paired: %v", items)
+	}
+}
+
+func TestEachActivityReadsItsStatusAsTheListDoes(t *testing.T) {
+	today := time.Date(2026, 11, 12, 0, 0, 0, 0, time.UTC)
+	past, now, later := today.AddDate(0, 0, -1), today, today.AddDate(0, 0, 3)
+	for _, c := range []struct {
+		a           listedActivity
+		label, tone string
+	}{
+		{listedActivity{status: "ia_verified"}, "Complete", "success"},
+		{listedActivity{status: "awaiting_ia_verification", delivery: "partner"}, "IA Pending", "info"},
+		{listedActivity{status: "awaiting_ia_verification"}, "PL Pending", "info"},
+		{listedActivity{status: "evidence_uploaded", salesforceID: "SV-1"}, "Evidence Uploaded", "warning"},
+		{listedActivity{status: "evidence_uploaded"}, "Activity ID Missing", "warning"},
+		{listedActivity{status: "returned_by_pl", planned: &past}, "Returned for Correction", "danger"},
+		{listedActivity{status: "scheduled", planned: &past}, "Overdue", "danger"},
+		{listedActivity{status: "scheduled", planned: &now}, "Due Today", "warning"},
+		{listedActivity{status: "rescheduled", reschedules: 1, planned: &later}, "Rescheduled", "info"},
+		{listedActivity{status: "partner_scheduled", planned: &later}, "Partner Scheduled", "info"},
+		{listedActivity{status: "scheduled"}, "Scheduled", "info"},
+	} {
+		if label, tone := activityStatus(c.a, today); label != c.label || tone != c.tone {
+			t.Errorf("%s: %s/%s, want %s/%s", c.a.status, label, tone, c.label, c.tone)
+		}
+	}
+}
+
+func TestALeadReadsTheTeamsWorkAndRunsTheirOwn(t *testing.T) {
+	lead := reader{p: auth.Principal{UserID: "u-lead", StaffProfileID: "s-lead", ActiveRole: "Program Lead"},
+		scope: schooldirectory.Scope{Role: "Program Lead", UserID: "u-lead", StaffID: "s-lead",
+			SchoolIDs: []string{"own", "team"}, OwnSchoolIDs: []string{"own"}, SupervisedStaffIDs: []string{"s-officer"},
+			OwnDistrictIDs: []string{"d1"}}, ownersRead: true, clusterOwners: []string{"u-lead", "s-lead"}}
+	ctx := context.Background()
+	for _, c := range []struct {
+		a    listedActivity
+		want bool
+	}{
+		{listedActivity{schoolID: "team", staffID: "s-officer"}, false},
+		{listedActivity{schoolID: "own", staffID: "s-officer"}, true},
+		{listedActivity{schoolID: "team", staffID: "u-lead"}, true},
+		{listedActivity{schoolID: "team", monitorID: "s-lead"}, true},
+		{listedActivity{clusterID: "c", clusterLive: true, clusterLead: "s-officer"}, false},
+		{listedActivity{clusterID: "c", clusterLive: true, clusterDistrict: "d1"}, true},
+	} {
+		if got, err := lead.mayExecute(ctx, c.a); err != nil || got != c.want {
+			t.Errorf("%+v: %v, want %v", c.a, got, c.want)
+		}
+	}
+	// A Country Director reads the team's work and runs only their own.
+	cd := reader{p: auth.Principal{UserID: "u-cd"}, scope: schooldirectory.Scope{Role: "CountryDirector", CountryScope: true}}
+	if got, _ := cd.mayExecute(ctx, listedActivity{staffID: "s-officer"}); got {
+		t.Error("the director runs an officer's work")
+	}
+	if !cd.maySchedule(listedActivity{}) || !cd.inScope(listedActivity{}) {
+		t.Error("the director cannot reach the work")
 	}
 }

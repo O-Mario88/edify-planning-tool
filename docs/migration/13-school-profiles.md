@@ -16,8 +16,8 @@ proved against the existing page before the next.
 | 2a | The profile engine's frame (scope line, facts, year and period) and its Projects, Stories and Academic tabs | Done, 13.6 |
 | 2b | The Overview: performance, operations and loans, the best and struggling intervention, the latest stories, the insights rail | Done, 13.7 |
 | 3a | SSA | Done, 13.8 |
-| 3b | Participation | Next |
-| 4 | Core School: the package rule, the Core tab, a Core school's Details | |
+| 3b | Participation | Done, 13.9 |
+| 4 | Core School: the package rule, the Core tab, a Core school's Details | Next |
 | 5 | Closed schools and the Business Transformation panel with the loan register | With the school record changes and loans |
 
 ## 13.1 What moved
@@ -86,11 +86,16 @@ they are there and reproduced here:
 
 ## 13.4 What still happens in the existing application
 
-- Every other tab, and a request with no tab (Overview).
-- Core and closed schools, schools with a Business Transformation case or an
-  MFI loan, and anyone working in an acting capacity.
+Updated as the pieces moved (2026-11-12):
+
+- Core and closed schools (and so the Core School tab), the Details tab and
+  the Overview of a school with a Business Transformation case or an MFI
+  loan, anyone working in an acting capacity, and a Participation table
+  longer than one page (50 rows).
 - Every door's drawer and save (Edit Details, Schedule, Assign to Partner,
-  Enter SSA Score, Add to Project, Reassign Owner, Close School).
+  Enter SSA Score, Add to Project, Reassign Owner, Close School), and every
+  activity drawer the Participation rows open (View, Edit, Complete,
+  Reschedule, Cancel, and the bar for ticked activities).
 
 ## 13.5 What the database role may do
 
@@ -100,6 +105,11 @@ the activity, catalogue, eligibility, partner, hand-over and project columns
 the visit rule counts by, the SSA record's average and source, and only
 `school_id` of `bt_case` and `bt_mfi_loan` (whether the school has one).
 No write; the source scan in `internal/dbguard` allows these packages none.
+The engine's tabs added the columns each reads (stories, enrolment history,
+learning results, the published SSA rules, the register's teachers and
+leaders); the Participation tab adds the activity columns its list and
+checks read, a cluster's region, `school_visit_feedback`, the hand-over's
+own columns and only `activity_id` and `amount` of a cost line.
 
 ## 13.6 The profile engine, first tabs
 
@@ -197,3 +207,45 @@ open a profile (3,826 compared, 3,308 of non-Core schools) and all 700 of the
 CCEO's schools for FY2026, none differing. After the change the other tabs
 were compared again on the CCEO's 700 schools (Overview, Details, Projects,
 Stories, Academic), none differing.
+
+## 13.9 The Participation tab
+
+Go answers the Participation tab for the same schools as the other tabs,
+unless one of its two activity tables is longer than a page.
+
+| Part | What it reads |
+|---|---|
+| Visits, trainings and cluster meetings | `engine._execution` for the school and its cluster's sessions in the year and period: in the plan, completed, outstanding, upcoming, past its date, by staff and by partners, the schools reached; `engine._expected`: what the school's type is due and its coverage |
+| Training By Channel | `profile_records.channels`: in-school, group and online training, staff and partner, the register of completed sessions, and the training hand-overs a partner still holds |
+| Cluster Meetings | `profile_records.meetings`: meetings by kind, held, still to come and past their date; the school's attendance at those held; the next five |
+| Planned & Completed Activities | `profile_activities.for_school` and `profile_activities`: work at the school and the cluster sessions it was invited to or attended, split by status, each row's day, place, executor, status and purpose; each row's menu by the same checks the actions run (`_assert_in_scope`, `_assert_may_schedule`, `_assert_may_execute`, the Edit rule and the My Plan page gate); tick boxes and the bar for ticked activities where a row can be moved or cancelled |
+| School Visit Feedback | the 20 newest findings and improvements recorded at the school's visits, with the training paired with the visit or the visit it followed up |
+| Partner Support | `partner_oversight_service.build_items_for_school`: every hand-over the partner still holds, its stage, date, cost and the one next step |
+
+The reader's scope gained what those checks read: a lead's supervisees and
+the districts of the direct portfolio (`internal/schooldirectory`).
+
+The seed's activities at schools were only completed or scheduled. School
+1578 was given, with the existing models and marked "[Go parity check]
+participation", one activity in each other state the list reads (in
+progress, evidence uploaded with and without its Salesforce ID, returned by
+the Programme Lead, awaiting the owner's approval, dated by a partner, due
+today, rescheduled over three days with a long purpose, verified), a cluster
+leaders' meeting it is invited to, a completed group training it attended,
+and two hand-overs (one returned to staff, one dated). School 1000 was given
+one visit finding with two improvements.
+
+Proved with `cmd/parity -screen profile -tab activities` against a gateway
+with no existing application behind it, so an answer Go passes on shows as
+refused and cannot pass as Go's: all 29 accounts that may open a profile
+(3,826 compared), every answer Go gave identical, the only others the
+profiles Go passes on by design (426, Core schools; a school outside an
+account's reach was refused alike); the CCEO's 700 schools again for
+FY2026, Q2, November and an unknown year and period, 597 answered by Go and
+identical, the 103 Core schools passed on. The other tabs were compared the
+same way on the CCEO's 700 schools after the change: Overview and Details
+597 answered and identical (105 passed on: the Core schools and two with a
+Business Transformation record), SSA, Projects, Stories and Academic 597
+answered and identical. The earlier all-account runs (13.2, 13.7, 13.8) used
+a gateway that falls back to the existing application; they prove Go's
+answers matched, and these runs prove which answers were Go's.
