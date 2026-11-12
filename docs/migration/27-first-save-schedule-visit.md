@@ -254,3 +254,87 @@ rules are kept.
    payload carries the same acting stamps (`audit_stamp_for`, from the acting
    appointments Go already reads, 11), and `plan.changed` is announced on the
    same realtime stream the existing save uses.
+
+## 27.9 The save, built and proved in shadow (2026-11-12)
+
+27.8's three answers are built, and the save with them. 27.7's "no save is
+ported" is superseded.
+
+**What was built.**
+
+| Piece | Where |
+|---|---|
+| The save | `platform/backend/internal/activities` (`Service.Schedule`): the view and `_create` for 27.3's case in their order (27.6), the SSA need ported from `apps.ssa.recommendation_engine` and `plan_alignment` (numpy's pairwise sums, the rounded least-squares trend, the composite priority, the evidence and its reason in Python's float and date forms), one read-write transaction: the school's lock, the entitlement again, the two duplicate tests, the day's join (a new day made with its defaults), the row, the recommendation it answers, the costs to follow; after commit the ledger mark, the `activity.scheduled` row on the chain, then the settling |
+| What is handed on | `ErrHandOn`, with the reason: an asking role, a person working in an acting seat, a purpose outside the six, a pinned SSA-recommended item that stands (the governed costing), a Core school, a school outside the person's own portfolio or owned by someone else, an item that is not standard support for the purpose, a day the pricing does not pool. `RequestFromForm` hands on a drawer form carrying any field outside the case (a partner, project, source activity, cluster, focus, SSA flag) |
+| The rules | `rules.json`, exported by `apps/activities/management/commands/export_schedule_visit_rules.py`, drift test `apps/activities/test_schedule_visit_rules_export.py` |
+| Money (27.8 §1) | `apps/daily_visit_batches/gateway_relay.py`, beside the sign-in relays, behind the internal key: `POST /api/auth/internal/visit-day-check` (the cost preview's blockers, `attach_activity_to_batch`'s refusals and `_assert_days_can_follow`, played on the visit as Go will insert it, rolled back; the refusal's stage says where the existing save meets it) and `POST /api/auth/internal/costs-to-follow` (the existing `settle`, then `plan.changed` through `live.announce_activity` under `live.after_costs`, as the settling thread says it) |
+| The lock (27.8 §2) | `gateway_lock.lock_school(id)` in `activities_roles.sql`, owned by `edify_school_lock_owner` (NOLOGIN, `UPDATE (updated_at)` on school only); the gateway has `EXECUTE` |
+| The shadow's Go half | `cmd/shadow/goplay`: each step's drawer fields as copy A's runner posted them (the runner now records them), the person loaded as the gateway loads them, the connection working as `edify_gateway`; a step Go hands on is played through the existing application on copy B |
+
+**Two departures from 27.8 §3, said plainly.** The acting stamp
+(`audit_stamp_for`) is written only by an actor working in an acting
+appointment, and Go hands every such save on (as every Go module does for
+a person in another's seat), so no Go save writes it yet; the leave-cover
+stamp (`_acting_for`), which any actor can carry, is ported. And
+`plan.changed` is said by the existing application's own code at the end of
+the settling Go asks for, not by Go: in development the realtime bus is the
+existing application's process (no Redis), which Go cannot reach.
+
+**The scenario** (`cmd/shadow/scenarios/schedule_visit.json`, 15 steps):
+`cceo@edify.org` schedules each of the six purposes, a Training Follow Up
+both with the SSA recommendation's pinned item and without one, a visit
+that joins a day already made and visits that make their day; the refusals
+are the one-visit rule (the second Training Follow Up at a school), an
+identical visit, a day the pricing refuses (the copies' only fixture: the
+week of 30 November's weekly request for that officer set to `submitted` on
+`edify_shadow_base`, so its day is locked), a past date and a Champion
+school's SSA Support; a Core school's visit and `cceo1@edify.org` at
+another officer's school are handed on. A closed school cannot be reached
+with the seed data (no closed client school in an own portfolio); it is
+covered by the code path and the integration test only.
+
+**The run** (copy A through the existing application with its runner,
+copy B through Go; `go run ./cmd/shadow`), last lines exactly as printed:
+
+```
+0 of 15 steps answered differently
+goplay exit 0
+366 tables, 20 changed by the runs
+  activity                                 same (11 rows written on each)
+  ...
+  audit_log                                same (25 rows written on each)
+  daily_visit_batch                        same (7 rows written on each)
+  domain_event_log                         same (25 rows written on each)
+  target_ledger_dirty                      same (2 rows written on each)
+  ...
+0 of 20 changed tables differ
+shadow exit 0
+```
+
+Twelve steps were Go's (seven saves, five refusals), three handed on. The
+comparison leaves out, besides the runner's sessions and timing telemetry,
+`login_event`'s active seconds and `presence_time` (added to the harness's
+noise): the wall-clock time a person is seen on pages, which copy A's
+drawer openings write and two runs can never share. In the run before they
+were added they were the only two tables that differed (copy A's 58 active
+seconds against copy B's 62).
+
+**The chain.** `verify_chain(full=True)` on copy B after the run:
+`{'ok': True, 'brokenAt': None, 'checkedRows': 15962, 'fromSeq': None}`.
+
+**Tests.** `internal/activities` unit tests (numpy's sums and deviation,
+the trend, the priorities, each verdict's words, the stored evidence's
+JSON, Python's rounding, title case and dates, the UTC year and quarter, the
+day's district type, the drawer form); integration tests
+`TestTheSchoolLockBlocksAnotherSessionsLock` (another session's `FOR UPDATE
+NOWAIT` is refused while the gateway holds the lock; the gateway can neither
+write the school nor become the lock's owner),
+`TestTheVisitSaveRefusesAndHandsOnInTheExistingWords` (no row written, the
+pricing never asked), `TestTheActivitiesWriterRoleMakesTheVisitSavesWrites`,
+`TestGatewayRoleCanNeitherWriteNorReadSecrets`; Django
+`apps/daily_visit_batches/test_gateway_relay.py` (SimpleTestCase: the doors
+closed without the key and refusing what they were not built for).
+
+**Not done.** The save is not wired into the gateway's routes, the web or
+the app (nothing is cut over). The replayed month of real scheduling on a
+sanitised restore (M5's exit) has not been run.
