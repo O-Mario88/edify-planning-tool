@@ -1,0 +1,227 @@
+{
+  "addressee_labels": [
+    [
+      "PL",
+      "Programme Lead"
+    ],
+    [
+      "CD",
+      "Country Director"
+    ],
+    [
+      "RVP",
+      "Regional Vice President"
+    ]
+  ],
+  "categories": [
+    [
+      "funding_gap",
+      "Structural funding gap"
+    ],
+    [
+      "partner_performance",
+      "Partner performance"
+    ],
+    [
+      "staffing",
+      "Staffing / capacity"
+    ],
+    [
+      "project_direction",
+      "Special project direction"
+    ],
+    [
+      "policy_exception",
+      "Policy exception request"
+    ],
+    [
+      "regional_tradeoff",
+      "Cross-region trade-off"
+    ],
+    [
+      "school_blocker",
+      "School or cluster blocker"
+    ],
+    [
+      "other",
+      "Other"
+    ]
+  ],
+  "decisions": [
+    [
+      "approved",
+      "Approved"
+    ],
+    [
+      "declined",
+      "Declined"
+    ],
+    [
+      "deferred",
+      "Deferred"
+    ],
+    [
+      "delegated_back",
+      "Delegated back to the raiser"
+    ],
+    [
+      "noted",
+      "Noted — no action required"
+    ]
+  ],
+  "default_severity": "normal",
+  "page_size": 50,
+  "programme_lead_level": "PL",
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "regional_level": "RVP",
+  "role_for_addressee": {
+    "CD": "CountryDirector",
+    "PL": "Program Lead",
+    "RVP": "RegionalVicePresident"
+  },
+  "roles": {
+    "Accountant": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": false,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "Admin": {
+      "decides_all": true,
+      "decides_for": "",
+      "page": true,
+      "raises_to": "RVP",
+      "reads_country_board": false
+    },
+    "BusinessTransformationOfficer": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": false,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "CCEO": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": true,
+      "raises_to": "PL",
+      "reads_country_board": false
+    },
+    "ClusterLeader": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": false,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "CountryDirector": {
+      "decides_all": false,
+      "decides_for": "CD",
+      "page": true,
+      "raises_to": "RVP",
+      "reads_country_board": true
+    },
+    "HumanResources": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": false,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "ImpactAssessment": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": true,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "MfiLoanOfficer": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": false,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "MfiPartnerAdmin": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": false,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "PartnerAdmin": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": false,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "PartnerFieldOfficer": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": false,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "Program Lead": {
+      "decides_all": false,
+      "decides_for": "PL",
+      "page": true,
+      "raises_to": "CD",
+      "reads_country_board": false
+    },
+    "ProjectCoordinator": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": true,
+      "raises_to": "PL",
+      "reads_country_board": false
+    },
+    "RegionalProgramLead": {
+      "decides_all": false,
+      "decides_for": "",
+      "page": false,
+      "raises_to": "",
+      "reads_country_board": false
+    },
+    "RegionalVicePresident": {
+      "decides_all": false,
+      "decides_for": "RVP",
+      "page": true,
+      "raises_to": "",
+      "reads_country_board": false
+    }
+  },
+  "severities": [
+    [
+      "critical",
+      "Critical"
+    ],
+    [
+      "high",
+      "High"
+    ],
+    [
+      "normal",
+      "Normal"
+    ]
+  ],
+  "sla_days": {
+    "critical": 2,
+    "high": 4,
+    "normal": 7
+  },
+  "statuses": {
+    "acknowledged": "acknowledged",
+    "open": "open",
+    "resolved": "resolved"
+  }
+}

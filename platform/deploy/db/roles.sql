@@ -206,3 +206,9 @@ GRANT SELECT (action, actor_id, actor_role, subject_id, payload, success, reason
 -- partner's own login is theirs.
 GRANT SELECT (id, user_id, partner_id, active, role, name) ON partner_member TO edify_gateway_ro;
 GRANT SELECT (user_id) ON partner TO edify_gateway_ro;
+-- Escalations: the upward decision channel's rows, and which supervisor link
+-- comes first when a raiser has more than one.
+GRANT SELECT (id, raised_by_user_id, raised_by_name, addressed_role, assigned_to_user_id, country_id, category, subject,
+  detail, requested_decision, severity, due_date, status, decision, decision_note, resolved_at, created_at)
+  ON leadership_escalation TO edify_gateway_ro;
+GRANT SELECT (id) ON staff_supervisor_assignment TO edify_gateway_ro;
