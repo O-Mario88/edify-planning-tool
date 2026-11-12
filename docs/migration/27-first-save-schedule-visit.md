@@ -218,3 +218,39 @@ The role is applied to the test database by the suite's TestMain; it has
 not been applied to the development database.
 
 The shadow proof (27.4) has not been run for Go: there is no Go save to run.
+
+## 27.8 Decided (the coordinator, 2026-11-12, inside the owner's rules)
+
+None of the three changes a rule the owner set; each is the way the existing
+rules are kept.
+
+1. **The pricing's refusals stay Django's.** Money's rules move in M12 and
+   not before (27.2, 01 risk 7). Go asks a second internal, read-only Django
+   endpoint ("would the pricing refuse this day for this owner?"), server
+   to server with the internal key, **before** it opens its own
+   transaction: asked while Go holds the day's lock, Django's check would
+   wait on that lock and Go on Django's answer. The endpoint runs the
+   existing `costing_service.preview` blockers and `_assert_days_can_follow`
+   with their own words, inside a transaction it rolls back, and writes
+   nothing. The moment between that answer and Go's commit is the same one
+   `costs_follow` already allows for its own saves (money that moved after
+   the answer: the costs-to-follow row is held with the reason and
+   `resync_stale_batches` repairs the day), so a refusal there is handled as
+   the existing application handles it.
+2. **The school lock without a school write.** Postgres takes any row lock
+   (`FOR UPDATE` and `FOR SHARE` alike) only for a role with an UPDATE right
+   on a column of the table, and the gateway must hold none on `school`. A
+   narrow `SECURITY DEFINER` function, `gateway_lock.lock_school(id)`, owned
+   by a NOLOGIN role no one belongs to that holds `UPDATE (updated_at)` on
+   `school` and nothing else of it, runs `SELECT … FOR UPDATE` in the
+   caller's transaction: the gateway gets `EXECUTE` on the function only, the
+   lock is the same row lock Django's saves take (so a Go save and a Django
+   save at the same school wait for each other), and no school column can
+   be written. `TestGatewayRoleCanNeitherWriteNorReadSecrets` keeps refusing
+   a school write; a new test shows the function's lock blocks Django's.
+   Like the two `gateway_read` views it is a new database object, so
+   production needs the owner's approval at cutover.
+3. **The acting stamps and the live announcement are ported**: the audit
+   payload carries the same acting stamps (`audit_stamp_for`, from the acting
+   appointments Go already reads, 11), and `plan.changed` is announced on the
+   same realtime stream the existing save uses.
