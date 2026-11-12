@@ -232,3 +232,33 @@ hand-on rule only: a visit changed between the read and the lock, an edit
 posting neither text field, a person on leave cover (the stamp). The
 form-only door for the edit has no Django test of its own (DB-backed); the
 app-level run proves it. No replayed month on a sanitised restore.
+
+**Settled by the coordinator, inside the owner's rules (2026-11-12).** The
+writer role's `UPDATE (activity_purpose_text, expected_outcome)` on
+`activity` stands: free-text columns the guard does not protect, the
+minimum the edit needs, no rule changed. Focus changes stay handed on (their
+SSA re-judging writes columns the role does not hold). The `activity-changed`
+door only announces `plan.changed`, the pattern of the costs-to-follow relay.
+
+**Merged and re-proved on the merged branch (2026-11-12)**, every save's
+scenarios from fresh copies:
+
+| Save | Level | Steps answered differently | Changed tables differing | verify_chain |
+|---|---|---|---|---|
+| Schedule | service | 0 of 15 | 0 of 20 | (not run by this script) |
+| Schedule | app | 0 of 15 | 0 of 19 | ok, 15,962 rows |
+| Reschedule | service | 0 of 19 | 0 of 22 | ok, 15,978 rows |
+| Reschedule | app | 0 of 19 | 0 of 19 | ok, 15,976 rows |
+| Cancel | service | 0 of 19 | 0 of 17 | ok, 15,972 rows |
+| Cancel | app | 0 of 19 | 0 of 14 | ok, 15,970 rows |
+| Edit | service | 0 of 21 | 0 of 22 | ok, 15,973 rows |
+| Edit | app | 0 of 21 | 0 of 19 | ok, 15,965 rows |
+
+Race, the integration suite, ruff, format, bandit, the relay tests and the
+generated-code check pass.
+
+**Found, to fix before the app ships (not a Go difference):** the app's Edit
+drawer arrives with the expected outcome blank, so saving it writes `''` over
+the stored outcome unless the person retypes it, and it has no reason field,
+so the app cannot change a visit's day, school or purpose through Edit. The
+web's drawer keeps both. The fix belongs to the drawer the app is given.
