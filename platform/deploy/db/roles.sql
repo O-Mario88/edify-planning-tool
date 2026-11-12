@@ -193,3 +193,8 @@ GRANT SELECT (country, fy, planning_open_at) ON fiscal_year_planning_policy TO e
 -- against, whether it has been reopened, and what it gave back.
 GRANT SELECT (id, closure_type, owner_at_closure, owner_name_at_closure, reopened_at, partner_assignments_withdrawn, budget_released)
   ON school_closure TO edify_gateway_ro;
+-- Cluster Oversight's Command Center: the weights and maturity rules its
+-- scores are made with (the newest row), where the Country Director or
+-- Impact Assessment has set any.
+GRANT SELECT (health_weights, impact_weights, teacher_weights, leader_weights, maturity_rules, created_at)
+  ON cluster_score_setting TO edify_gateway_ro;

@@ -236,6 +236,38 @@ def _lead(ws: Workspace, cluster, query: str = "") -> list[dict]:
 
 LEAD_COLUMNS = [col("Cluster"), col("District"), col("CCEO")]
 
+#: The Command Center's table as it is described whatever the clusters:
+#: module constants so the Go gateway's export reads them
+#: (export_cluster_oversight_rules) rather than restating them.
+COMMAND_TITLE = "Command Center"
+COMMAND_COLUMNS = LEAD_COLUMNS + [
+    # The 2026-09-19 Cluster Oversight columns, kept when Cluster
+    # Management became that page (owner, 2026-10-17).
+    col("Cluster Leader's Name"),
+    col("Cluster Leader's Phone"),
+    col("Schools", numeric=True),
+    col("Attendance", numeric=True),
+    col(f"Absent {insights.MISSED_IN_A_ROW_ALERT}+ Sessions", numeric=True),
+    col("Date of Last Activity"),
+    col("Avg SSA", numeric=True),
+    col("Least Performing Intervention"),
+    col("SSA Change", numeric=True),
+    col("Enrolment Growth", numeric=True),
+    col("Learning Change", numeric=True),
+    col("Schools With Loans", numeric=True),
+    col("Approved Stories", numeric=True),
+    col("Health"),
+    col("Impact"),
+    col("Maturity"),
+]
+COMMAND_NOTE = (
+    "Health says whether the cluster is operating; Impact says whether "
+    "its schools' outcomes are moving. They are kept apart on purpose: "
+    "a cluster can be strong on one and weak on the other. A dash is a "
+    "figure the records cannot yet give, never a zero."
+)
+COMMAND_EMPTY = "No cluster is in your scope."
+
 
 def _ssa_now(ws: Workspace, clusters, fy: str) -> dict[str, dict]:
     """Each cluster's average SSA and weakest intervention in ``fy``: the
@@ -379,40 +411,15 @@ def _command(ws: Workspace, clusters, *, name: str, title: str) -> Table:
             "Health, Cluster Impact and maturity level. Each figure opens the "
             "cluster profile at the tab that lists what is behind it."
         ),
-        columns=LEAD_COLUMNS
-        + [
-            # The 2026-09-19 Cluster Oversight columns, kept when Cluster
-            # Management became that page (owner, 2026-10-17).
-            col("Cluster Leader's Name"),
-            col("Cluster Leader's Phone"),
-            col("Schools", numeric=True),
-            col("Attendance", numeric=True),
-            col(f"Absent {insights.MISSED_IN_A_ROW_ALERT}+ Sessions", numeric=True),
-            col("Date of Last Activity"),
-            col("Avg SSA", numeric=True),
-            col("Least Performing Intervention"),
-            col("SSA Change", numeric=True),
-            col("Enrolment Growth", numeric=True),
-            col("Learning Change", numeric=True),
-            col("Schools With Loans", numeric=True),
-            col("Approved Stories", numeric=True),
-            col("Health"),
-            col("Impact"),
-            col("Maturity"),
-        ],
+        columns=list(COMMAND_COLUMNS),
         rows=rows,
-        note=(
-            "Health says whether the cluster is operating; Impact says whether "
-            "its schools' outcomes are moving. They are kept apart on purpose: "
-            "a cluster can be strong on one and weak on the other. A dash is a "
-            "figure the records cannot yet give, never a zero."
-        ),
-        empty="No cluster is in your scope.",
+        note=COMMAND_NOTE,
+        empty=COMMAND_EMPTY,
     )
 
 
 def command(ws: Workspace, **_) -> Table:
-    return _command(ws, ws.clusters, name="cm-command", title="Command Center")
+    return _command(ws, ws.clusters, name="cm-command", title=COMMAND_TITLE)
 
 
 def my(ws: Workspace, **_) -> Table:
