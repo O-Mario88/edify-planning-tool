@@ -181,3 +181,7 @@ GRANT SELECT (disbursement_id) ON bt_loan_disbursement_reversal TO edify_gateway
 GRANT SELECT (case_id, assessed_on, verification_status, practices) ON bt_financial_practice_assessment TO edify_gateway_ro;
 GRANT SELECT (case_id, requirement_id, status) ON bt_school_compliance_assessment TO edify_gateway_ro;
 GRANT SELECT (id, label) ON bt_compliance_requirement TO edify_gateway_ro;
+-- The Clusters page: a cluster's leader and facilitating partner on its card,
+-- and the sub-counties it covers.
+GRANT SELECT (cluster_leader_name, cluster_leader_phone, facilitating_partner_id) ON cluster TO edify_gateway_ro;
+GRANT SELECT (cluster_id, sub_county_id) ON cluster_sub_county TO edify_gateway_ro;

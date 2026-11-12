@@ -284,6 +284,23 @@ the Overview, so every school's profile is now read by Go.
 | iOS Release | Pass | cceo@: school 1001's Overview from Go: "1 loan", "UGX 38.5M", "1 case" |
 | Android Release | Not run | the emulator hangs (see the Core section) |
 
+## Clusters page read by Go (2026-11-12)
+
+[docs/migration/14-districts-and-clusters.md](../migration/14-districts-and-clusters.md),
+piece 1 of M2: whose clusters, the filters, the strip, the cards with their
+menus, and the pages of `/clusters`.
+
+| Check | Result | Evidence |
+|---|---|---|
+| The rules identical on both sides | Pass | `apps/clusters/test_cluster_page_rules_export.py` (each role's doors, the statuses and activity types each figure counts, the interventions, the strip's labels) |
+| Parity with the existing page | Pass | all 29 accounts against a gateway with no existing application behind it, 870 answers (the page as it opens, every filter value it offers, searches, later and out-of-range pages, years and quarters, the two roles turned away), none differing |
+| Records the seed lacked | Made in dev | seven clusters "[Go parity check] Cluster 1–7" through the existing services as the CCEO: covered sub-counties out of order, one with none, leaders with stray spaces, a phone, one facilitated by Literacy Uganda; five pages |
+| Go unit tests | Pass | the risk's order (every branch, Needs Attention and Healthy included), the weakest four and their ties, Django's elided pages and `int()` page numbers, half-even shares, the figures' formats, a card's facts and colours, the sub-county fallbacks, the empty strip, the figure filters, the role gate |
+| Go integration suite | Pass | the officer's own clusters with their doors and total, the risk filter, an officer with none offered Create Cluster, a Project Coordinator turned away |
+| Django and Go checks | Pass | ruff, format, bandit clean; the cluster suites (56 tests) after the planning statuses became module constants; `go vet`, `gofmt`, `go test -race ./...`, the integration suite |
+| iOS Release | Pass | cceo@: More → Clusters from Go (the gateway ran the page's own statements at the moment of the request): 22 clusters, "Mukono, Nakisunga, Goma Division, Kasawo", "District-level cluster", "Facilitated by: Literacy Uganda", an opened card's "No confirmed SSA scores are available yet." |
+| Android Release | Not run | the emulator hangs (see the Core section) |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.

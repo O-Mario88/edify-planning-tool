@@ -40,7 +40,8 @@ func main() {
 	existing := flag.String("existing", "http://localhost:8010", "the existing application")
 	users := flag.String("users", "", "comma-separated accounts to sign in as")
 	pause := flag.Duration("pause", 0, "wait between sign-ins, under the gateway's sign-in rate limit")
-	screen := flag.String("screen", "directory", "what to compare: directory or profile")
+	screen := flag.String("screen", "directory", "what to compare: directory, profile or page")
+	pagePath := flag.String("path", "/clusters", "page: the page's web path")
 	tab := flag.String("tab", "details", "profile: the tab to compare")
 	fy := flag.String("fy", "", "profile: the year asked (empty for the page's own)")
 	period := flag.String("period", "", "profile: the part of the year asked (Q1…Q4, M1…M12)")
@@ -66,6 +67,12 @@ func main() {
 			existing: *existing, tab: *tab, fy: *fy, period: *period, sample: *sample, directory: directory,
 			profile: screensv1connect.NewSchoolProfileServiceClient(http.DefaultClient, *gateway),
 		}, password, *probe, strings.Split(*users, ","), *pause))
+	}
+	if *screen == "page" {
+		os.Exit(runPages(ctx, signIn, &pageRun{
+			existing: *existing, path: *pagePath,
+			pages: screensv1connect.NewPageScreenServiceClient(http.DefaultClient, *gateway),
+		}, password, strings.Split(*users, ","), *pause))
 	}
 	compared, differing, existingFails := 0, 0, 0
 	for i, email := range strings.Split(*users, ",") {

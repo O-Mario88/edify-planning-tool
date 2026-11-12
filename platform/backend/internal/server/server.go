@@ -24,6 +24,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
@@ -86,7 +87,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	}
 	screenService := screens.NewService(existingApp).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
-		WithProfile(schoolprofile.NewService(pool, time.Now), logger)
+		WithProfile(schoolprofile.NewService(pool, time.Now), logger).
+		WithPages(clusterpage.NewService(pool, time.Now), logger)
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNavigationServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewSchoolDirectoryScreenServiceHandler(screenService, options...))

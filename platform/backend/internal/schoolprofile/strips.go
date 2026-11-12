@@ -250,3 +250,18 @@ func halfEven(r *big.Rat) *big.Int {
 	}
 	return floor
 }
+
+// StripFigure is one figure of a strip, for a page outside the profile
+// (internal/clusterpage) that writes its strip the same way.
+type StripFigure struct {
+	Label, Value, Link, Helper string
+}
+
+// Strip is a strip as the page blocks read it (see strip).
+func Strip(title string, figures []StripFigure) *screensv1.PageBlock {
+	kpis := make([]kpi, len(figures))
+	for i, f := range figures {
+		kpis[i] = kpi{label: f.Label, value: f.Value, link: f.Link, helper: f.Helper}
+	}
+	return strip(title, kpis...)
+}

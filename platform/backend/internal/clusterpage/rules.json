@@ -1,0 +1,185 @@
+{
+  "card_training_types": [
+    "training",
+    "school_improvement_training",
+    "cluster_training"
+  ],
+  "completed_work_statuses": [
+    "ia_verified",
+    "closed",
+    "accountant_confirmed",
+    "completed"
+  ],
+  "doors": {
+    "Accountant": {
+      "add_schools": true,
+      "create": false,
+      "page": false,
+      "plan": false
+    },
+    "Admin": {
+      "add_schools": true,
+      "create": true,
+      "page": true,
+      "plan": false
+    },
+    "BusinessTransformationOfficer": {
+      "add_schools": false,
+      "create": false,
+      "page": false,
+      "plan": false
+    },
+    "CCEO": {
+      "add_schools": true,
+      "create": true,
+      "page": true,
+      "plan": true
+    },
+    "ClusterLeader": {
+      "add_schools": false,
+      "create": false,
+      "page": false,
+      "plan": false
+    },
+    "CountryDirector": {
+      "add_schools": true,
+      "create": true,
+      "page": true,
+      "plan": false
+    },
+    "HumanResources": {
+      "add_schools": false,
+      "create": false,
+      "page": false,
+      "plan": false
+    },
+    "ImpactAssessment": {
+      "add_schools": true,
+      "create": true,
+      "page": true,
+      "plan": false
+    },
+    "MfiLoanOfficer": {
+      "add_schools": false,
+      "create": false,
+      "page": false,
+      "plan": false
+    },
+    "MfiPartnerAdmin": {
+      "add_schools": false,
+      "create": false,
+      "page": false,
+      "plan": false
+    },
+    "PartnerAdmin": {
+      "add_schools": false,
+      "create": false,
+      "page": false,
+      "plan": false
+    },
+    "PartnerFieldOfficer": {
+      "add_schools": false,
+      "create": false,
+      "page": false,
+      "plan": false
+    },
+    "Program Lead": {
+      "add_schools": true,
+      "create": true,
+      "page": true,
+      "plan": true
+    },
+    "ProjectCoordinator": {
+      "add_schools": true,
+      "create": false,
+      "page": false,
+      "plan": true
+    },
+    "RegionalProgramLead": {
+      "add_schools": false,
+      "create": false,
+      "page": false,
+      "plan": false
+    },
+    "RegionalVicePresident": {
+      "add_schools": false,
+      "create": false,
+      "page": false,
+      "plan": false
+    }
+  },
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "own_table_school_types": [
+    "champion"
+  ],
+  "planning_done_statuses": [
+    "ia_verified",
+    "closed",
+    "accountant_confirmed"
+  ],
+  "planning_open_statuses": [
+    "scheduled",
+    "rescheduled",
+    "partner_scheduled",
+    "assigned_to_partner",
+    "evidence_uploaded",
+    "in_progress",
+    "awaiting_ia_verification"
+  ],
+  "planning_school_training_types": [
+    "school_training",
+    "core_training",
+    "project_activity"
+  ],
+  "planning_training_types": [
+    "cluster_training",
+    "school_improvement_training"
+  ],
+  "ssa_interventions": [
+    [
+      "christlike_behaviour",
+      "Christlike Behaviour"
+    ],
+    [
+      "exposure_to_word_of_god",
+      "Exposure to the Word of God"
+    ],
+    [
+      "financial_health",
+      "Financial Health"
+    ],
+    [
+      "leadership",
+      "Leadership"
+    ],
+    [
+      "government_requirement",
+      "Government Requirements"
+    ],
+    [
+      "learning_environment",
+      "Learning Environment"
+    ],
+    [
+      "teaching_environment",
+      "Teacher's Environment"
+    ],
+    [
+      "enrolment",
+      "Enrolment"
+    ]
+  ],
+  "strip_labels": [
+    "Total Clusters",
+    "Schools in Clusters",
+    "Without Current SSA",
+    "Needing Group Training",
+    "Not Met This Quarter",
+    "Average Cluster SSA",
+    "Weakest Intervention",
+    "Pending Activities"
+  ]
+}

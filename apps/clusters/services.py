@@ -1457,6 +1457,29 @@ def sub_counties_without_clusters(principal) -> list[dict]:
     ]
 
 
+#: What cluster_planning counts as a cluster's work done and still open, and
+#: which trainings it counts. Module constants so the Go gateway's Clusters
+#: page reads the same sets (export_cluster_page_rules).
+PLANNING_DONE_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
+PLANNING_OPEN_STATUSES = (
+    "scheduled",
+    "rescheduled",
+    "partner_scheduled",
+    "assigned_to_partner",
+    "evidence_uploaded",
+    "in_progress",
+    "awaiting_ia_verification",
+)
+PLANNING_TRAINING_KINDS = ("cluster_training", "school_improvement_training")
+PLANNING_SCHOOL_TRAINING_KINDS = (
+    "school_training",
+    "core_training",
+    "project_activity",
+)
+#: The trainings a cluster card's Last Training reads.
+CARD_TRAINING_KINDS = ("training", "school_improvement_training", "cluster_training")
+
+
 def cluster_planning(principal) -> list[dict]:
     """Per-cluster planning intelligence (cadence, SSA, coverage)."""
     from apps.activities.models import Activity
@@ -1480,18 +1503,10 @@ def cluster_planning(principal) -> list[dict]:
     # are now eight grouped reads whose cost does not change with the number of
     # clusters. The status and activity-type sets are unchanged, so every row
     # keeps the value it had.
-    DONE_STATUSES = ["ia_verified", "closed", "accountant_confirmed"]
-    OPEN_STATUSES = [
-        "scheduled",
-        "rescheduled",
-        "partner_scheduled",
-        "assigned_to_partner",
-        "evidence_uploaded",
-        "in_progress",
-        "awaiting_ia_verification",
-    ]
-    TRAINING_KINDS = ["cluster_training", "school_improvement_training"]
-    SCHOOL_TRAINING_KINDS = ["school_training", "core_training", "project_activity"]
+    DONE_STATUSES = list(PLANNING_DONE_STATUSES)
+    OPEN_STATUSES = list(PLANNING_OPEN_STATUSES)
+    TRAINING_KINDS = list(PLANNING_TRAINING_KINDS)
+    SCHOOL_TRAINING_KINDS = list(PLANNING_SCHOOL_TRAINING_KINDS)
 
     # One array for the five statements below, not an id a placeholder: a
     # country reader has 2,500 clusters, and writing them into each statement
@@ -1766,13 +1781,7 @@ class ClusterDashboardService:
         }
         trainings_by_cluster = {
             row["cluster_id"]: row["last"]
-            for row in cluster_acts.filter(
-                activity_type__in=[
-                    "training",
-                    "school_improvement_training",
-                    "cluster_training",
-                ]
-            )
+            for row in cluster_acts.filter(activity_type__in=list(CARD_TRAINING_KINDS))
             .values("cluster_id")
             .annotate(last=Max("planned_date"))
         }

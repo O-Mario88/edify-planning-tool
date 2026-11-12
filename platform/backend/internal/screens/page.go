@@ -2,6 +2,7 @@ package screens
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"regexp"
 
@@ -9,6 +10,8 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 )
 
 // Any page the app draws from its components, read by the existing
@@ -35,6 +38,18 @@ func (s *Service) GetPage(
 	}
 	if query.Has("path") {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This page cannot be opened.")
+	}
+	if principal, ok := auth.PrincipalFrom(ctx); ok && s.pages != nil && !principal.InActingAppointment {
+		response, served, err := s.pages.Build(ctx, principal, message.GetPath(), query)
+		switch {
+		case errors.Is(err, clusterpage.ErrNotAvailable):
+			return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound,
+				"This was not found, or it is not yours to view.")
+		case err != nil:
+			return nil, apierr.Internal(ctx, s.logger, err)
+		case served:
+			return connect.NewResponse(response), nil
+		}
 	}
 	full := url.Values{"path": {message.GetPath()}}
 	for key, values := range query {

@@ -162,3 +162,56 @@ func CoverageOf(ctx context.Context, q Querier, schoolID, schoolType, clusterID,
 
 // SSABand is core.enums.ssa_score_band: (label, tone).
 func SSABand(score float64) (string, string) { return ssaBand(&score) }
+
+// What the Clusters page (internal/clusterpage) reads from the directory: the
+// year options, Python's arithmetic and the SSA score groups.
+
+// FYOptions is core.fy.fy_options.
+func FYOptions(now time.Time) []string { return fyOptions(now) }
+
+// PySum is Python's sum() of floats; PyRound1 is round(x, 1).
+func PySum(values []float64) float64 { return pySum(values) }
+
+// PyRound1 is Python's round(x, 1).
+func PyRound1(x float64) float64 { return pyRound1(x) }
+
+// SSAScore is one intervention's score, or nil where none was recorded.
+type SSAScore struct {
+	Intervention string
+	Score        *float64
+}
+
+// SSAGroupItem is one scored intervention in a group.
+type SSAGroupItem struct {
+	Label string
+	Score float64
+}
+
+// SSAGroup is one of build_ssa_score_summary's groups, in its order.
+type SSAGroup struct {
+	Key, Title string
+	Items      []SSAGroupItem
+}
+
+// SSAGroups is ssa.presentation.build_ssa_score_summary's groups, and
+// whether any score was recorded (has_scores).
+func SSAGroups(scores []SSAScore) ([]SSAGroup, bool) {
+	raw := make([]struct {
+		intervention string
+		score        *float64
+	}, len(scores))
+	for i, s := range scores {
+		raw[i].intervention, raw[i].score = s.Intervention, s.Score
+	}
+	summary := summarize(raw)
+	groups := make([]SSAGroup, len(rules.SSAGroups))
+	has := false
+	for i, g := range rules.SSAGroups {
+		groups[i] = SSAGroup{Key: g[0], Title: g[1]}
+		for _, item := range summary.groups[i] {
+			groups[i].Items = append(groups[i].Items, SSAGroupItem{Label: item.label, Score: item.score})
+			has = true
+		}
+	}
+	return groups, has
+}
