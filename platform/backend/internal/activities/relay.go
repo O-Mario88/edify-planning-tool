@@ -118,3 +118,19 @@ func (h *HTTPPricing) MoveCheck(ctx context.Context, activityID, date, reason st
 	}
 	return answer.MoveVerdict, nil
 }
+
+// CancelCheck asks /api/auth/internal/visit-cancel-check (docs/migration/30).
+func (h *HTTPPricing) CancelCheck(ctx context.Context, activityID, reason string) (CancelVerdict, error) {
+	var answer struct {
+		OK bool `json:"ok"`
+		CancelVerdict
+	}
+	if err := h.post(ctx, "/api/auth/internal/visit-cancel-check",
+		map[string]any{"activityId": activityID, "reason": reason}, &answer); err != nil {
+		return CancelVerdict{}, err
+	}
+	if !answer.OK {
+		return CancelVerdict{}, fmt.Errorf("activities: the cancel check was not answered")
+	}
+	return answer.CancelVerdict, nil
+}

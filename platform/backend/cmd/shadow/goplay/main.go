@@ -170,6 +170,9 @@ func play(ctx context.Context, svc *activities.Service, accounts *identity.Store
 	if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
 		return playMove(ctx, svc, accounts, pool, s, m[1], form)
 	}
+	if m := cancelDrawer.FindStringSubmatch(s.Open); m != nil {
+		return playCancel(ctx, svc, accounts, pool, s, m[1], form)
+	}
 	req, taken := activities.RequestFromForm(form)
 	if !taken {
 		return outcome{HandedOn: true}, nil
@@ -253,6 +256,58 @@ ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
 		return outcome{}, err
 	}
 	return outcome{OK: true, Status: 200, Message: answer.Message}, nil
+}
+
+// cancelDrawer is My Plan's Cancel drawer (docs/migration/30).
+var cancelDrawer = regexp.MustCompile(`^/my-plan/([^/]+)/cancel-drawer$`)
+
+// playCancel makes a Cancel step through Go's cancel: the activity found on
+// copy B as the runner finds it, the drawer's posted reason.
+func playCancel(ctx context.Context, svc *activities.Service, accounts *identity.Store, pool *pgxpool.Pool,
+	s step, target string, form url.Values) (outcome, error) {
+	activityID, err := findActivity(ctx, pool, target)
+	if err != nil {
+		return outcome{}, err
+	}
+	var userID string
+	if err := pool.QueryRow(ctx, `SELECT id FROM "user" WHERE email = $1`, s.Who).Scan(&userID); err != nil {
+		return outcome{}, fmt.Errorf("finding %s: %w", s.Who, err)
+	}
+	account, err := accounts.LoadAccount(ctx, userID)
+	if err != nil {
+		return outcome{}, err
+	}
+	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
+	answer, err := svc.Cancel(ctx, auth.Principal{Account: account},
+		activities.CancelRequest{ActivityID: activityID, Reason: form.Get("reason")},
+		activities.Origin{IP: "127.0.0.1", CorrelationID: newCorrelation()})
+	var refusal *activities.Refusal
+	switch {
+	case errors.Is(err, activities.ErrHandOn):
+		fmt.Fprintln(os.Stderr, "goplay:", s.Who, "→", err)
+		return outcome{HandedOn: true}, nil
+	case errors.As(err, &refusal):
+		return outcome{OK: false, Status: 400, Message: strings.TrimSpace(refusal.Message)}, nil
+	case err != nil:
+		return outcome{}, err
+	}
+	return outcome{OK: true, Status: 200, Message: answer.Message}, nil
+}
+
+// findActivity is the runner's resolve(): a `{activity:<purpose text>}`
+// placeholder names the latest activity with that purpose text on the copy.
+func findActivity(ctx context.Context, pool *pgxpool.Pool, target string) (string, error) {
+	m := placeholder.FindStringSubmatch(target)
+	if m == nil {
+		return target, nil
+	}
+	activityID := "missing"
+	err := pool.QueryRow(ctx, `SELECT id FROM activity WHERE activity_purpose_text = $1
+ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return "", err
+	}
+	return activityID, nil
 }
 
 var placeholder = regexp.MustCompile(`^\{activity:([^}]*)\}$`)

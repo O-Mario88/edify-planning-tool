@@ -76,6 +76,7 @@ def rules() -> dict:
     from apps.activities.day_off import DAY_OFF_EVENT
     from apps.core.htmx_saved import SAVED_MESSAGE
     from apps.my_plan.past_due_service import OVERDUE_REMINDER_EVENT
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
 
     return {
         "doors": doors(),
@@ -143,6 +144,14 @@ def rules() -> dict:
             "overdue_event": OVERDUE_REMINDER_EVENT,
             "day_off_event": DAY_OFF_EVENT,
             "saved_message": SAVED_MESSAGE,
+        },
+        # The third save, cancelling a visit (docs/migration/30): the advance
+        # statuses whose money has moved, which the cancel keeps
+        # (gateway_money.withdraw_unmoved_advances names the same list).
+        "cancel": {
+            "money_moved_advance_statuses": [
+                str(s) for s in MONEY_MOVED_ADVANCE_STATUSES
+            ],
         },
         "batch": {
             "field_roles": _values(districts.FIELD_ROLES),

@@ -74,10 +74,9 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
 // leaves no phantom event (the existing code waits for the commit to the same
 // end).
 func project(ctx context.Context, tx pgx.Tx, e Entry, seq int64, now time.Time) error {
+	// publish_audit_event: a dict payload as it is, anything else (a row
+	// with no payload too) as {"value": payload}.
 	data := e.Payload
-	if data == nil {
-		data = map[string]any{}
-	}
 	if _, ok := data.(map[string]any); !ok {
 		data = map[string]any{"value": data}
 	}

@@ -53,6 +53,10 @@ var protectedAccountColumns = []string{
 var undeletableTables = []string{
 	"activity", "daily_visit_batch", "daily_visit_costs_to_follow", "audit_log", "domain_event_log",
 	"activity_schedule_change",
+	// The third save (cancelling, docs/migration/30) withdraws a visit's
+	// unmoved advances only through gateway_money.withdraw_unmoved_advances;
+	// a role that can delete advances itself is refused.
+	"advance_request",
 }
 
 // protectedColumns ("table.column") are what Go's saves may insert but never

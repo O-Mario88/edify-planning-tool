@@ -76,6 +76,18 @@
     ]
   },
   "calendar_blocks_refuse": false,
+  "cancel": {
+    "money_moved_advance_statuses": [
+      "disbursed",
+      "accountability_pl_pending",
+      "accountability_pending",
+      "accounted",
+      "reimbursement_pl_pending",
+      "reimbursement_submitted",
+      "reimbursement_disbursed",
+      "reimbursed"
+    ]
+  },
   "closed_school_message": "This school is closed, so it takes no new activities. Its history is on the Closed Schools page; reopen the school before planning work there.",
   "closed_statuses": [
     "temporarily_closed",

@@ -65,4 +65,6 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/decision_log_roles.sql
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/evidence_roles.sql"
 # Scheduling a school visit, the first save Go makes: exactly its writes.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/activities_roles.sql"
+# Cancelling a visit withdraws its unmoved advances through one narrow function.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/advance_withdraw_roles.sql"
 echo "done"

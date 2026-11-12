@@ -170,6 +170,22 @@
  },
  {
   "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] D}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] D}/cancel",
+  "set": {
+   "reason": "[shadow-c] the day empties"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-c] C}/cancel-drawer",
+  "form": "/my-plan/{activity:[shadow-c] C}/cancel",
+  "set": {
+   "reason": "[shadow-c] the last of its day"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
   "open": "/my-plan/cmwclue57008yjsdhhc9v/cancel-drawer",
   "form": "/my-plan/cmwclue57008yjsdhhc9v/cancel",
   "set": {
@@ -190,22 +206,6 @@
   "form": "/my-plan/cmwd2x86z008h5khkdjob/cancel",
   "set": {
    "reason": "[shadow-c] not mine"
-  }
- },
- {
-  "who": "cceo@edify.org",
-  "open": "/my-plan/{activity:[shadow-c] D}/cancel-drawer",
-  "form": "/my-plan/{activity:[shadow-c] D}/cancel",
-  "set": {
-   "reason": "[shadow-c] the day empties"
-  }
- },
- {
-  "who": "cceo@edify.org",
-  "open": "/my-plan/{activity:[shadow-c] C}/cancel-drawer",
-  "form": "/my-plan/{activity:[shadow-c] C}/cancel",
-  "set": {
-   "reason": "[shadow-c] the last of its day"
   }
  }
 ]

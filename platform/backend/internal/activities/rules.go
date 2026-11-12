@@ -85,6 +85,9 @@ type Rules struct {
 		DayOffEvent  string `json:"day_off_event"`
 		SavedMessage string `json:"saved_message"`
 	} `json:"move"`
+	Cancel struct {
+		MoneyMovedAdvanceStatuses []string `json:"money_moved_advance_statuses"`
+	} `json:"cancel"`
 
 	weights []weight
 	labels  map[string]string

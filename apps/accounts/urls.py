@@ -39,6 +39,12 @@ urlpatterns = [
         gateway_relay.visit_move_check,
         name="visit-move-check",
     ),
+    # The money a cancel of that visit meets (docs/migration/30).
+    path(
+        "internal/visit-cancel-check",
+        gateway_relay.visit_cancel_check,
+        name="visit-cancel-check",
+    ),
     path(
         "internal/costs-to-follow",
         gateway_relay.costs_to_follow,

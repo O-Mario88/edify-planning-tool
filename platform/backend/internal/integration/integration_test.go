@@ -65,6 +65,8 @@ const (
 	evidenceRolesFile = "../../../deploy/db/evidence_roles.sql"
 	// Scheduling a school visit, the first save Go makes: exactly its writes.
 	activitiesRolesFile = "../../../deploy/db/activities_roles.sql"
+	// Cancelling a visit: the narrow function that withdraws its unmoved advances.
+	advanceWithdrawRolesFile = "../../../deploy/db/advance_withdraw_roles.sql"
 	// Where the loan portal's emails go in this run.
 	publicBaseURL = "http://127.0.0.1:9"
 )
@@ -228,6 +230,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(activitiesRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	advanceWithdrawRoles, err := os.ReadFile(filepath.FromSlash(advanceWithdrawRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(advanceWithdrawRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)
@@ -479,6 +488,12 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"delete domain events":                  rw + `DELETE FROM domain_event_log`,
 		"rescore an SSA recommendation":         rw + `UPDATE ssa_recommendation SET score = score`,
 		"lock a school":                         rw + `SELECT id FROM school LIMIT 1 FOR UPDATE`,
+		// Cancelling a visit (30): advances are withdrawn only through
+		// gateway_money.withdraw_unmoved_advances.
+		"delete an advance":        rw + `DELETE FROM advance_request`,
+		"change an advance":        rw + `UPDATE advance_request SET status = status`,
+		"become the withdraw role": rw + `SET ROLE edify_advance_withdraw_owner`,
+		"write a milestone credit": rw + `UPDATE hr_milestone_progress_credit SET reversed_at = reversed_at`,
 	}
 	for name, statement := range statements {
 		t.Run(name, func(t *testing.T) {

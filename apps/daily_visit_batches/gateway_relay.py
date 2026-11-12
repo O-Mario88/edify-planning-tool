@@ -24,6 +24,17 @@ sign-in security-events relay and behind the same internal key:
   would refuse, with their own words. It plays the move on the activity
   inside a transaction it rolls back, so it writes nothing.
 
+* ``visit-cancel-check`` (docs/migration/30) asks the same of a cancel of
+  such a visit, before Go opens its transaction: whether a submitted or
+  approved week holds the visit's lines (its owner is told after commit; Go
+  hands such a cancel on), whether a milestone credit would be reversed on
+  commit (handed on), whether the day it leaves has left draft (the visit is
+  then kept on it, as ``_detach_from_daily_visit_batch`` keeps it), what the
+  costs to follow would keep (the days, owner-weeks and owner-months), and
+  what ``_assert_days_can_follow`` would refuse, with its own words. It plays
+  the cancel on the activity inside a transaction it rolls back, so it writes
+  nothing.
+
 None changes what any existing save does.
 """
 
@@ -387,3 +398,133 @@ def visit_move_check(request):
     except ValueError:
         return JsonResponse({"ok": False, "reason": "bad_date"}, status=400)
     return JsonResponse({"ok": True, **_move_probe(activity_id, new_day, reason)})
+
+
+#: The longest reason a cancel stores (activity.last_reason).
+MAX_CANCEL_REASON = 512
+
+
+def _cancel_probe(activity_id: str, reason: str) -> dict:
+    """Play the cancel's money as ``services._cancel_or_defer`` does for a
+    visit of the first save's kind (6600–6660, then ``costs_follow._hand_over``),
+    and say what it would meet and keep. Always rolled back."""
+    from apps.activities.models import Activity, ActivityScheduleCostLine
+    from apps.activities.services import _detach_from_daily_visit_batch
+    from apps.budget.costing_service import rate_cards_held
+    from apps.fund_requests.follow import fund_requests_kept
+    from apps.fund_requests.models import WeeklyFundRequest
+    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activity
+    from apps.fund_requests.weekly_service import (
+        REBUILDABLE_WEEKLY_STATUSES,
+        sync_weekly_requests_for_activity,
+    )
+    from apps.hr.models import MilestoneProgressCredit
+
+    from . import services
+    from .costs_follow import _assert_days_can_follow, _Kept
+
+    answer = {
+        "found": True,
+        "refusal": "",
+        "frozenWeeks": False,
+        "credited": False,
+        "leftFrozen": False,
+        "pricedHere": False,
+        "days": [],
+        "weeks": [],
+        "months": [],
+    }
+    try:
+        with rate_cards_held(), transaction.atomic():
+            activity = (
+                Activity.objects.select_for_update().filter(id=activity_id).first()
+            )
+            if activity is None:
+                raise _Probe({**answer, "found": False})
+            prior_buckets = list(
+                ActivityScheduleCostLine.objects.filter(activity=activity).values_list(
+                    "responsible_user", "fiscal_year", "month", "week_start_date"
+                )
+            )
+            frozen = (
+                WeeklyFundRequest.objects.filter(
+                    lines__activity_budget_line__activity=activity
+                )
+                .exclude(status__in=REBUILDABLE_WEEKLY_STATUSES)
+                .exclude(status__in=("disbursed", "accounted"))
+                .exists()
+            )
+            credited = MilestoneProgressCredit.objects.filter(
+                activity=activity, reversed_at__isnull=True
+            ).exists()
+            batch = activity.daily_visit_batch
+            left_frozen = batch is not None and services._is_locked(
+                batch.responsible_user, batch.visit_date
+            )
+            activity.status = "cancelled"
+            activity.last_reason = reason
+            activity.save(update_fields=["status", "last_reason", "updated_at"])
+            kept = _Kept(None)
+            days: dict = {}
+            afterwards: list = []
+            with fund_requests_kept() as waiting:
+                tokens = (
+                    services._kept_for_later.set(kept),
+                    services._days_to_price.set(days),
+                    services._after_pricing.set(afterwards),
+                )
+                try:
+                    _detach_from_daily_visit_batch(activity)
+                    sync_weekly_requests_for_activity(
+                        activity, prior_buckets=prior_buckets
+                    )
+                    sync_monthly_drafts_for_activity(
+                        activity, prior_buckets=prior_buckets
+                    )
+                finally:
+                    services._after_pricing.reset(tokens[2])
+                    services._days_to_price.reset(tokens[1])
+                    services._kept_for_later.reset(tokens[0])
+            refusal = ""
+            try:
+                _assert_days_can_follow(days, together=kept.together)
+            except BadRequest as refused:
+                refusal = str(refused)
+            raise _Probe(
+                {
+                    **answer,
+                    "refusal": refusal,
+                    "frozenWeeks": frozen,
+                    "credited": credited,
+                    "leftFrozen": left_frozen,
+                    "pricedHere": kept.priced_here or bool(afterwards),
+                    "days": [[day, owner] for day, (_c, owner) in days.items()],
+                    "weeks": [
+                        [owner, week.isoformat()] for owner, week in waiting["weeks"]
+                    ],
+                    "months": [list(period) for period in waiting["months"]],
+                }
+            )
+    except _Probe as probed:
+        return probed.answer
+
+
+@csrf_exempt  # A server's key, never a browser's session.
+@require_POST
+def visit_cancel_check(request):
+    refusal = internal_key_refusal(request)
+    if refusal is not None:
+        return refusal
+    body = _body(request)
+    if body is None:
+        return JsonResponse({"ok": False, "reason": "not_an_object"}, status=400)
+    activity_id = body.get("activityId")
+    reason = body.get("reason", "")
+    if (
+        not isinstance(activity_id, str)
+        or not 0 < len(activity_id) <= 30
+        or not isinstance(reason, str)
+        or len(reason) > MAX_CANCEL_REASON
+    ):
+        return JsonResponse({"ok": False, "reason": "bad_fields"}, status=400)
+    return JsonResponse({"ok": True, **_cancel_probe(activity_id, reason)})
