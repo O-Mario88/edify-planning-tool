@@ -15,7 +15,8 @@ reach rule once; each register is added to it as it is ported.
 | Staff Onboarding | `/onboarding` | This document |
 | Staff Offboarding | `/offboarding` | This document |
 | Candidate Pipeline | `/candidate-pipeline` | This document |
-| The other registers (pulse surveys, employee relations, compliance, compensation, recruitment, workforce planning, performance reviews, policies, HR audit log, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| Employment Compliance | `/compliance-register` | This document |
+| The other registers (pulse surveys, employee relations, compensation, recruitment, workforce planning, performance reviews, policies, HR audit log, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -106,6 +107,26 @@ Applications in selection, Screening, Interviews (interview, assessment or
 reference check), Offers (made or accepted), Hired. One drawer button,
 "Record a candidate".
 
+## 169.2g Employment Compliance
+
+`compliance_register_view`: first the gaps (`compliance_gaps`): each active,
+not exited person in reach, by name, against each mandatory requirement of
+their country or of every country ("All"), by name, that they have no record
+against: the person, requirement, their country, a dash for expiry, "No
+evidence on file", "Missing", and a "Record" drawer button for that person
+and requirement. A search keeps a gap whose person's name, requirement's name
+or person's country holds it (case-folded), or one the word "missing" holds
+(the view's own test: "iss" keeps every gap). Then the records of the People
+in reach whose person's name, requirement's name or country, or status holds
+the search, the most urgent first (expired, missing, due soon, compliant,
+anything else), by expiry day (none last) and name: the person, requirement,
+the requirement's country, expiry day, who verified it ("Not verified"), the
+status's label, and an "Update" drawer button. Figures: Requirements in reach
+(every one for the organisation; else those for every country and the
+reach's own, mandatory or not), Compliant and Due soon over the searched
+records, and Missing or expired over the searched records plus the searched
+gaps. Two drawer buttons: "Record evidence" and "Add a requirement".
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -123,7 +144,9 @@ decision); an exit's person, last working day, reason, handover owner and
 status (not its notes or clearances); an application's candidate, vacancy,
 stage and last change, a candidate's name and email (the email only to
 search it), a vacancy's role and country (not a candidate's phone, CV or
-notes, nor a vacancy's salary band or budget) (applied to `edify_gorn_dev` and
+notes, nor a vacancy's salary band or budget); a compliance requirement's
+country, name and whether it is mandatory, and an employee's record's
+status, expiry day and verifier (not the evidence document) (applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -136,7 +159,9 @@ notes, nor a vacancy's salary band or budget) (applied to `edify_gorn_dev` and
   and 10 incidents either side of the quarter and the year, another
   country, long citations, no injured person; 10 onboarding plans with
   checklists and 10 exits around today; 12 applications at every stage on
-  three vacancies), asks the existing feed 150 questions as Admin, HR and Impact Assessment and deletes
+  three vacancies; four requirements, mandatory and not, for every country,
+  Uganda and Kenya, and 14 records of every status), asks the existing feed
+  196 questions as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 

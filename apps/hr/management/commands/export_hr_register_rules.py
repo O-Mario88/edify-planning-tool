@@ -8,7 +8,7 @@ answers, who may open it, the workspace strip each role is shown above it and
 which of its drawer buttons each role is shown; the labels of a People
 record's lifecycle, a recognition's category and a safety incident's
 category, severity and status, an onboarding plan's status and an exit's
-reason, and which reasons are voluntary, and an application's stage; the label each context figure
+reason, and which reasons are voluntary, an application's stage and an employee's compliance status; the label each context figure
 is drawn with; how long the line under a figure may stay; and the register's
 page size. A change to any of them must be exported again;
 apps/hr/test_hr_register_rules_export.py fails until it is, so the two can
@@ -74,6 +74,11 @@ PAGES = {
         "drawers": ["/candidate-pipeline/new"],
         "metrics": ["Applications", "Screening", "Interviews", "Offers", "Hired"],
     },
+    "/compliance-register": {
+        "permission": "compliance_register",
+        "drawers": ["/compliance-register/new", "/compliance-register/requirement"],
+        "metrics": ["Requirements", "Compliant", "Due soon", "Missing or expired"],
+    },
     "/health-safety": {
         "permission": "health_safety",
         "drawers": ["/health-safety/new"],
@@ -121,6 +126,7 @@ def rules() -> dict:
     from apps.hr.models import (
         VOLUNTARY_EXIT_REASONS,
         ApplicationStage,
+        ComplianceStatus,
         ERSeverity,
         ExitReason,
         OnboardingStatus,
@@ -141,6 +147,7 @@ def rules() -> dict:
         "exit_reasons": dict(ExitReason.choices),
         "voluntary_exit_reasons": sorted(str(r) for r in VOLUNTARY_EXIT_REASONS),
         "application_stages": dict(ApplicationStage.choices),
+        "compliance_statuses": dict(ComplianceStatus.choices),
         "metric_labels": metric_labels(),
         "helper_figure_chars": HELPER_FIGURE_CHARS,
         "page_size": TABLE_PAGE_SIZE,

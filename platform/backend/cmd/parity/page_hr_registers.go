@@ -3,7 +3,7 @@ package main
 import "context"
 
 func init() {
-	for _, path := range []string{"/org-structure", "/recognition", "/health-safety", "/onboarding", "/offboarding", "/candidate-pipeline"} {
+	for _, path := range []string{"/org-structure", "/recognition", "/health-safety", "/onboarding", "/offboarding", "/candidate-pipeline", "/compliance-register"} {
 		pageQuestions[path] = hrRegisterQuestions
 	}
 }

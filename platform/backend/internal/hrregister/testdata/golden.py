@@ -29,6 +29,8 @@ from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
 from apps.hr.models import (
     Application,
     Candidate,
+    ComplianceRequirement,
+    EmployeeComplianceRecord,
     OffboardingPlan,
     OnboardingPlan,
     OnboardingTask,
@@ -44,6 +46,8 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 User = get_user_model()
 #: Deleted children first.
 TABLES = (
+    "hr_employee_compliance_record",
+    "hr_compliance_requirement",
     "hr_application",
     "hr_candidate",
     "hr_vacancy",
@@ -63,6 +67,7 @@ PATHS = (
     "/onboarding",
     "/offboarding",
     "/candidate-pipeline",
+    "/compliance-register",
 )
 
 
@@ -79,7 +84,7 @@ def file_rows():
         user = User.objects.create(
             id=f"ghru{i:03d}",
             email=f"ghr{i:03d}@example.org",
-            name=f"Golden Person {i % 50:02d}",
+            name=f"Golden Person {i:02d}",
             roles=["CCEO"],
             active_role=["CCEO", "Program Lead", "CountryDirector"][i % 3],
             is_active=True,
@@ -124,6 +129,7 @@ def file_rows():
         )
     file_lifecycle(profiles, today)
     file_candidates()
+    file_compliance(profiles, today)
     kinds = ["injury", "road_traffic", "near_miss", "hazard", "security", "illness"]
     for i in range(10):
         SafetyIncident.objects.create(
@@ -220,6 +226,29 @@ def file_candidates():
         )
 
 
+def file_compliance(profiles, today):
+    requirements = [
+        ComplianceRequirement.objects.create(
+            id=f"ghrq{i}",
+            country=["All", "Uganda", "Kenya", "Uganda"][i],
+            name=["Signed contract", "NSSF registration", "Work permit", "Tax PIN"][i],
+            is_mandatory=i != 3,
+        )
+        for i in range(4)
+    ]
+    statuses = ["Compliant", "Due Soon", "Expired", "Missing"]
+    admin = User.objects.get(email="admin@edify.org")
+    for i in range(14):
+        EmployeeComplianceRecord.objects.create(
+            id=f"ghrk{i:03d}",
+            staff=profiles[i],
+            requirement=requirements[i % 4],
+            status=statuses[i % 4],
+            expiry_date=None if i % 5 == 0 else today + timedelta(days=i * 11 - 60),
+            verified_by=admin if i % 2 else None,
+        )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -258,6 +287,9 @@ QUESTIONS = {
         {"q": "candidate07@example"},
         {"q": "accountant"},
         {"q": "reference"},
+        {"q": "nssf"},
+        {"q": "iss"},
+        {"q": "Due Soon"},
     ],
     "ia@edify.org": [{}, {"page": "2"}],
 }

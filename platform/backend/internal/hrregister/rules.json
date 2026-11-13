@@ -11,6 +11,12 @@
     "screening": "Screening",
     "withdrawn": "Withdrawn"
   },
+  "compliance_statuses": {
+    "Compliant": "Compliant",
+    "Due Soon": "Due soon",
+    "Expired": "Expired",
+    "Missing": "Missing"
+  },
   "exit_reasons": {
     "death_in_service": "Death in service",
     "dismissal": "Dismissal",
@@ -26,12 +32,15 @@
     "Active": "Active",
     "Applications": "Applications",
     "Awaiting supervisor": "Awaiting supervisor",
+    "Compliant": "Compliant",
     "Days lost": "Days lost",
     "Departments": "Departments",
+    "Due soon": "Due soon",
     "Handover gaps": "Handover gaps",
     "Hired": "Hired",
     "In progress": "In progress",
     "Interviews": "Interviews",
+    "Missing or expired": "Missing or expired",
     "Near misses": "Near misses",
     "No reporting line": "No reporting line",
     "Offers": "Offers",
@@ -43,6 +52,7 @@
     "Plans": "Plans",
     "Ready for activation": "Ready for activation",
     "Recognitions": "Recognitions",
+    "Requirements": "Requirements",
     "Screening": "Screening",
     "Serious incidents": "Serious incidents",
     "Voluntary exits": "Voluntary exits"
@@ -106,6 +116,99 @@
         "ImpactAssessment": {
           "drawers": [
             "/candidate-pipeline/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/compliance-register": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/compliance-register/new",
+            "/compliance-register/requirement"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/compliance-register/new",
+            "/compliance-register/requirement"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/compliance-register/new",
+            "/compliance-register/requirement"
           ],
           "page": true,
           "strip": null

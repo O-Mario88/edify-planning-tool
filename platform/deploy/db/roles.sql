@@ -419,3 +419,8 @@ GRANT SELECT (id, staff_id, last_working_day, exit_reason, handover_owner_id, st
 GRANT SELECT (id, candidate_id, vacancy_id, stage, updated_at) ON hr_application TO edify_gateway_ro;
 GRANT SELECT (id, name, email) ON hr_candidate TO edify_gateway_ro;
 GRANT SELECT (id, role, country) ON hr_vacancy TO edify_gateway_ro;
+-- Employment Compliance: each requirement's country, name and whether it is
+-- mandatory; each employee's record against one, its status, expiry day and
+-- who verified it. Not the evidence document or a requirement's description.
+GRANT SELECT (id, country, name, is_mandatory) ON hr_compliance_requirement TO edify_gateway_ro;
+GRANT SELECT (id, staff_id, requirement_id, status, expiry_date, verified_by_id) ON hr_employee_compliance_record TO edify_gateway_ro;
