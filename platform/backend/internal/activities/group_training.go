@@ -11,7 +11,7 @@ package activities
 // responsible for, for a governed course linked to one SSA intervention or
 // to none (an orientation), per school by category, the schools ticked by
 // name and none of them a Core school (its package slots stay Django's),
-// Facilitated by Staff, in person, with no project, priority, focus named by
+// Facilitated by Staff, in person or online (docs/migration/48), with no project, priority, focus named by
 // the planner or training ceiling for the officer and course this year, on a
 // day the pricing pools. Everything else is handed on unchanged.
 
@@ -75,6 +75,8 @@ type GroupTrainingRequest struct {
 	// The schools ticked by name, and whether the checklist was shown.
 	Invited      []string
 	InvitedShown bool
+	// Delivered online (docs/migration/48): the drawer's delivery_mode.
+	Online bool
 }
 
 // groupFormFields are the fields the drawer posts for this case. Any other
@@ -87,6 +89,8 @@ var groupFormFields = map[string]bool{
 	"delivery_type": true, "facilitating_partner_id": true, "ssa_deviation_reason": true, "executor_type": true,
 	"teachers_per_school": true, "leaders_per_school": true, "other_per_school": true, "activity_goal": true,
 	"activity_purpose_text": true, "expected_outcome": true, "catalogue_item_id": true, "scheduled_date": true,
+	// The online drawer's hidden field (docs/migration/48).
+	"delivery_mode": true,
 }
 
 // IsGroupTrainingForm is whether the posted form is a cluster's Group
@@ -124,6 +128,16 @@ func GroupTrainingRequestFromForm(form url.Values) (GroupTrainingRequest, bool) 
 		(trimmed("executor_type") != "" && trimmed("executor_type") != "staff") {
 		return GroupTrainingRequest{}, false
 	}
+	// Delivery (2357–2363): "online" makes it an online training; the
+	// in-person drawer posts no such field. Any other value, or two, is
+	// handed on.
+	online := false
+	if modes, posted := form["delivery_mode"]; posted {
+		if len(modes) != 1 || strings.TrimSpace(modes[0]) != onlineDelivery {
+			return GroupTrainingRequest{}, false
+		}
+		online = true
+	}
 	goal := one("activity_goal")
 	if goal == "" {
 		goal = one("activity_purpose_text")
@@ -140,7 +154,7 @@ func GroupTrainingRequestFromForm(form url.Values) (GroupTrainingRequest, bool) 
 		Teachers: trimmed("teachers_per_school"), Leaders: trimmed("leaders_per_school"), Other: trimmed("other_per_school"),
 		Printing: trimmed("printing_pages"), PhotocopyPages: trimmed("photocopy_pages"),
 		PhotocopyCopies: trimmed("photocopy_copies"), Invited: invited,
-		InvitedShown: trimmed("invited_schools_shown") != "",
+		InvitedShown: trimmed("invited_schools_shown") != "", Online: online,
 	}, true
 }
 
@@ -155,6 +169,9 @@ type groupPlan struct {
 	cluster cluster
 	invited []string
 	course  course
+	// The year `_create` counts the ceiling in (an online session's row
+	// later takes its planned day's year, docs/migration/48).
+	ceilingFY string
 }
 
 // ScheduleGroupTraining makes the save, or refuses it in the existing words,
@@ -168,7 +185,11 @@ func (s *Service) ScheduleGroupTraining(ctx context.Context, p auth.Principal, r
 	if err != nil {
 		return Answer{}, err
 	}
-	s.afterCommit(ctx, gp.plan, rowID)
+	if gp.row.group.online {
+		s.afterOnlineCommit(ctx, gp.plan)
+	} else {
+		s.afterCommit(ctx, gp.plan, rowID)
+	}
 	answer, err := s.answer(ctx, gp.plan)
 	if err != nil {
 		return Answer{}, err
@@ -385,6 +406,7 @@ func (s *Service) createGroup(ctx context.Context, p auth.Principal, req GroupTr
 		clusterID: cl.ID, perSchool: perSchool, schoolCount: members, invited: len(req.Invited),
 		expected: perSchool * len(req.Invited), teachers: categories[0], leaders: categories[1], other: categories[2],
 		printing: materials[0], photocopyPages: materials[1], photocopyCopies: materials[2],
+		online: req.Online,
 	}
 	ownerUID, err := fundingOwner(ctx, s.db, p.StaffProfileID, p.UserID)
 	if err != nil {
@@ -396,10 +418,16 @@ func (s *Service) createGroup(ctx context.Context, p auth.Principal, req GroupTr
 	if err != nil {
 		return nil, err
 	}
-	if verdict.Refusal != "" && verdict.Stage == "preview" {
+	if req.Online {
+		// No preview and no day (_create 3129–3135, _price_activity):
+		// the revision at UGX 0 instead (docs/migration/48).
+		if err := takeOnline(&row, verdict); err != nil {
+			return nil, err
+		}
+	} else if verdict.Refusal != "" && verdict.Stage == "preview" {
 		return nil, &Refusal{Message: verdict.Refusal}
 	}
-	if !verdict.Pooled && verdict.Refusal == "" {
+	if !req.Online && !verdict.Pooled && verdict.Refusal == "" {
 		return nil, handOn("the day does not pool the session")
 	}
 	if set, err := ceilingSet(ctx, s.db, p.StaffProfileID, c.ID, fy); err != nil || set {
@@ -413,7 +441,7 @@ func (s *Service) createGroup(ctx context.Context, p auth.Principal, req GroupTr
 	where := school{DistrictID: cl.DistrictID, DistrictName: cl.DistrictName, DistrictType: cl.DistrictType}
 	pl := &plan{p: p, school: where, item: *it, version: version, focus: focus, evidence: ev, row: row,
 		ownerUID: ownerUID, home: home, verdict: verdict, origin: origin, now: now}
-	return &groupPlan{plan: pl, cluster: cl, invited: req.Invited, course: c}, nil
+	return &groupPlan{plan: pl, cluster: cl, invited: req.Invited, course: c, ceilingFY: fy}, nil
 }
 
 func intersects(a, b []string) bool {
@@ -563,7 +591,7 @@ func (s *Service) writeGroup(ctx context.Context, gp *groupPlan) (int64, error) 
 	if _, err := tx.Exec(ctx, `SELECT gateway_lock.lock_cluster($1)`, gp.cluster.ID); err != nil {
 		return 0, fmt.Errorf("activities: locking the cluster: %w", err)
 	}
-	if set, err := ceilingSet(ctx, tx, pl.row.responsible, gp.course.ID, pl.row.fy); err != nil || set {
+	if set, err := ceilingSet(ctx, tx, pl.row.responsible, gp.course.ID, gp.ceilingFY); err != nil || set {
 		if err != nil {
 			return 0, err
 		}
@@ -583,16 +611,20 @@ func (s *Service) writeGroup(ctx context.Context, gp *groupPlan) (int64, error) 
 	if err := checkInvitations(ctx, tx, gp.cluster.ID, gp.invited); err != nil {
 		return 0, err
 	}
+	online := pl.row.group.online
 	// The day's refusal is met once the session joins it (costs_follow
-	// around the pricing, after the invitations and the verdict).
+	// around the pricing, after the invitations and the verdict). An online
+	// session joins none.
 	if pl.verdict.Refusal != "" {
 		return 0, &Refusal{Message: pl.verdict.Refusal}
 	}
-	batchID, _, err := s.joinDay(ctx, tx, pl)
-	if err != nil {
-		return 0, err
+	if !online {
+		batchID, _, err := s.joinDay(ctx, tx, pl)
+		if err != nil {
+			return 0, err
+		}
+		pl.row.batchID = batchID
 	}
-	pl.row.batchID = batchID
 	if err := insertActivity(ctx, tx, pl.row); err != nil {
 		return 0, err
 	}
@@ -608,8 +640,14 @@ func (s *Service) writeGroup(ctx context.Context, gp *groupPlan) (int64, error) 
 			return 0, err
 		}
 	}
-	rowID, err := keepCosts(ctx, tx, pl)
-	if err != nil {
+	var rowID int64
+	if online {
+		// The revision inside the save (_price_activity's online branch);
+		// no costs follow it.
+		if err := s.writeOnlineCost(ctx, tx, pl); err != nil {
+			return 0, err
+		}
+	} else if rowID, err = keepCosts(ctx, tx, pl); err != nil {
 		return 0, err
 	}
 	if err := tx.Commit(ctx); err != nil {

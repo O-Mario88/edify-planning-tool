@@ -1,0 +1,83 @@
+//go:build integration
+
+package integration
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+// The eighth save, a Group Training delivered online (docs/migration/48):
+// the writer role inserts the session with its delivery mode and its
+// periods, and its one cost revision at UGX 0. It can change neither
+// afterwards, nor remove the revision, nor write a cost line. Rolled back,
+// so the test database keeps no row; the foreign keys are deferred.
+func TestTheWriterRoleMakesTheOnlineTrainingsWritesAndNoMore(t *testing.T) {
+	ctx := context.Background()
+	tx, err := gateway.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	steps := []struct{ name, statement string }{
+		{"insert the online session", `INSERT INTO activity (id, created_at, updated_at, activity_type, fy, quarter,
+  delivery_type, executor_type, status, evidence_status, ia_verification_status, payment_status, reschedule_count,
+  est_cost_cents, cost_missing, environment, source, responsible_staff_id, purpose_type,
+  secondary_focus_interventions, attended_school_ids, ssa_collection_expected, catalogue_item_id,
+  recommendation_reason, recommendation_source, override_reason, ssa_alignment, ssa_deviation_reason,
+  planning_source, activity_context_type, support_rationale, venue, primary_driver_type, primary_driver_id,
+  driver_reason, delivery_contact_name, approval_owner_id, owner_decision_note, visit_justification,
+  partner_date_set_by, meeting_kind, cluster_id, expected_participants, participants_per_school,
+  cluster_school_count_snapshot, schools_invited, teachers_per_school, leaders_per_school, other_per_school,
+  programme_delivery_mode, week_start_date, week_end_date, month, fiscal_year)
+VALUES ('role-test-online', now(), now(), 'cluster_training', '2099', 'Q1', 'staff', 'staff', 'scheduled', 'none',
+  'pending', 'none', 0, 0, false, 'development', 'go', 'role-test', 'focus_intervention', '{}', '{}', false,
+  'role-test-item', '', '{}', '', '', '', 'cluster_planning', 'cluster', '', '', '', '', '', '', '', '', '', '', '',
+  'role-test-cluster', 6, 3, 4, 2, 2, 1, 0, 'online', '2098-11-23', '2098-11-29', 11, '2099')`},
+		{"insert its cost revision", `INSERT INTO activity_cost_snapshot (created_at, updated_at, id, sequence,
+  is_current, activity_catalogue_item_id, activity_catalogue_version, costing_profile_version, reference_cost,
+  operational_cost, approved_operating_limit, amount_disbursed, actual_accounted_spend, unused_balance,
+  reimbursement_amount, calculation_inputs, reference_breakdown, operational_breakdown, warnings,
+  missing_configuration, calculated_at, calculated_by, recalculation_reason, approved_by, approved_at, cost_status,
+  activity_id, operational_rate_card_id, reference_rate_card_id, supersedes_id)
+VALUES (now(), now(), 'role-test-revision', 1, true, 'role-test-item', 1, 'CLUSTER_TRAINING', NULL, 0, NULL, 0, 0,
+  0, 0, '{}', '[]', '[]', '[]', '[]', now(), 'role-test', NULL, NULL, NULL, 'estimated', 'role-test-online',
+  NULL, NULL, NULL)`},
+	}
+	for _, step := range steps {
+		if _, err := tx.Exec(ctx, step.statement); err != nil {
+			t.Fatalf("%s: %v", step.name, err)
+		}
+	}
+	_ = tx.Rollback(ctx)
+
+	refused, err := gateway.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = refused.Rollback(ctx) }()
+	for _, statement := range []string{
+		`UPDATE activity SET programme_delivery_mode = NULL WHERE false`,
+		`UPDATE activity SET week_start_date = NULL WHERE false`,
+		`UPDATE activity_cost_snapshot SET operational_cost = 1 WHERE false`,
+		`UPDATE activity_cost_snapshot SET is_current = false WHERE false`,
+		`DELETE FROM activity_cost_snapshot WHERE false`,
+		`INSERT INTO activity_schedule_cost_line (id) VALUES ('role-test-line')`,
+	} {
+		if _, err := refused.Exec(ctx, `SAVEPOINT s`); err != nil {
+			t.Fatal(err)
+		}
+		_, err = refused.Exec(ctx, statement)
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) || pgErr.Code != "42501" {
+			t.Fatalf("%s: want permission denied, got %v", statement, err)
+		}
+		if _, err := refused.Exec(ctx, `ROLLBACK TO SAVEPOINT s`); err != nil {
+			t.Fatal(err)
+		}
+	}
+}

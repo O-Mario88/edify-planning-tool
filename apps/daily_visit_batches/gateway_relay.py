@@ -13,7 +13,12 @@ sign-in security-events relay and behind the same internal key:
   Go will insert it inside a transaction it rolls back, so it writes nothing.
   A cluster Group Training (docs/migration/38) is played the same way, its
   preview asked with the cluster's district and the session's head count and
-  materials, as ``_create`` asks it.
+  materials, as ``_create`` asks it. A Group Training delivered online
+  (``apps.activities.online_training``; docs/migration/48) asks no preview and
+  joins no day: the probe answers instead the cost revision the existing
+  save writes for it inside its transaction (``_price_activity``'s online
+  branch: ``apply_to_activity`` at UGX 0), worked out by the same
+  ``calculate_dual`` and read only.
 * ``costs-to-follow`` settles the costs-to-follow rows Go wrote, once Go's
   save has committed, with the existing ``costs_follow.settle``, and then
   says ``plan.changed`` for the visit on the realtime stream exactly as the
@@ -115,6 +120,8 @@ PROBE_FIELDS = (
     "printing_pages",
     "photocopy_pages",
     "photocopy_copies",
+    # A Group Training delivered online (docs/migration/48).
+    "programme_delivery_mode",
 )
 
 #: The materials the cost preview reads, by the activity's own column.
@@ -223,10 +230,66 @@ def _preview_refusal(activity, catalogue) -> str:
     )
 
 
+def _online_cost(activity) -> dict:
+    """The cost revision `_price_activity` writes for an online Group
+    Training (`apply_to_activity` with `precomputed_cost=ActivityCost()`):
+    what `apply_to_activities` reads for the snapshot and its "cost
+    calculated" audit entry, from the same input `_costing_input` builds
+    with what `_create` holds in `data` (the head count it derived, the
+    materials it validated with a blank as 0). Read only."""
+    from apps.activities.services import _costing_input, _funding_owner_id
+    from apps.budget.costing import ActivityCost
+    from apps.budget.costing_service import (
+        _profiled_input,
+        _reference_as_written,
+        _serialize_line,
+        calculate_dual,
+    )
+
+    data = {
+        "expectedParticipants": activity.expected_participants,
+        **{key: getattr(activity, column) or 0 for key, column in _MATERIAL_COLUMNS},
+    }
+    input = _profiled_input(_costing_input(activity, data))
+    dual = calculate_dual({**input, "fy": input.get("fy") or activity.fy})
+    cost = ActivityCost()
+    card = dual["operationalCard"]
+    reference_card = dual["referenceCard"]
+    reference = (
+        _reference_as_written(cost, dual["reference"], reference_card)
+        if dual["reference"] is not None
+        else None
+    )
+    return {
+        "operationalCardId": card.id if card else None,
+        "operationalCardVersion": card.version if card else None,
+        "referenceCardId": reference_card.id if reference_card else None,
+        "referenceCardVersion": reference_card.version if reference_card else None,
+        "referenceCost": (
+            int(reference.amount)
+            if reference is not None and not reference.cost_missing
+            else None
+        ),
+        "referenceBreakdown": (
+            [_serialize_line(line) for line in reference.lines]
+            if reference is not None
+            else []
+        ),
+        "operationalCost": int(cost.amount),
+        "operationalBreakdown": [_serialize_line(line) for line in cost.lines],
+        "calculationInputs": dual["inputs"],
+        "warnings": dual["warnings"],
+        "missingConfiguration": cost.missing_items,
+        "costMissing": bool(cost.cost_missing or card is None),
+        "calculatedBy": _funding_owner_id(activity) or activity.responsible_staff_id,
+    }
+
+
 def _probe(fields: dict) -> dict:
     """Play the visit's join of its day as the existing save does, and say
     what the pricing would refuse. Always rolled back."""
     from apps.activities.models import Activity
+    from apps.activities.online_training import is_online_training
     from apps.activities.services import _funding_owner_id
     from apps.activity_catalogue.models import ActivityCatalogueItem
     from apps.budget.costing_service import rate_cards_held
@@ -240,6 +303,17 @@ def _probe(fields: dict) -> dict:
             catalogue = ActivityCatalogueItem.objects.filter(
                 id=activity.catalogue_item_id
             ).first()
+            if is_online_training(activity):
+                # Free and outside every day pool: no preview is asked of it
+                # (`_create` 3129–3135) and no day is joined (`_price_activity`).
+                raise _Probe(
+                    {
+                        "refusal": "",
+                        "stage": "",
+                        "pooled": False,
+                        "online": _online_cost(activity),
+                    }
+                )
             refusal = _preview_refusal(activity, catalogue)
             if refusal:
                 raise _Probe({"refusal": refusal, "stage": "preview", "pooled": False})

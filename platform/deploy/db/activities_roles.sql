@@ -261,3 +261,22 @@ RESET ROLE;
 REVOKE CREATE ON SCHEMA gateway_lock FROM edify_cluster_lock_owner;
 
 GRANT EXECUTE ON FUNCTION gateway_lock.lock_cluster(varchar) TO edify_activities_rw;
+
+-- ── The eighth save: a Group Training delivered online (docs/migration/48) ──
+-- Production at cutover with the owner's approval like every role change.
+-- An online session is free and joins no day, so the existing save writes
+-- its cost revision inside the save (_price_activity's online branch): the
+-- delivery mode and the period columns on the row (its price, UGX 0 and not
+-- missing, is already insertable above), and one current cost snapshot
+-- with its figures from the existing pricing (read through the day check).
+-- Insert only: no snapshot is changed, superseded or removed by Go, and no
+-- cost line, advance or fund request is written (dbguard keeps refusing).
+GRANT INSERT (programme_delivery_mode, week_start_date, week_end_date, month, fiscal_year)
+  ON activity TO edify_activities_rw;
+GRANT INSERT (created_at, updated_at, id, sequence, is_current, activity_catalogue_item_id,
+              activity_catalogue_version, costing_profile_version, reference_cost, operational_cost,
+              approved_operating_limit, amount_disbursed, actual_accounted_spend, unused_balance,
+              reimbursement_amount, calculation_inputs, reference_breakdown, operational_breakdown, warnings,
+              missing_configuration, calculated_at, calculated_by, recalculation_reason, approved_by, approved_at,
+              cost_status, activity_id, operational_rate_card_id, reference_rate_card_id, supersedes_id)
+  ON activity_cost_snapshot TO edify_activities_rw;
