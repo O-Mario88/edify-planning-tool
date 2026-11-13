@@ -1,0 +1,174 @@
+{
+  "doors": {
+    "Accountant": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": true,
+        "page": true
+      }
+    },
+    "Admin": {
+      "country": {
+        "open": true,
+        "page": true
+      },
+      "team": {
+        "open": true,
+        "page": true
+      }
+    },
+    "BusinessTransformationOfficer": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": false,
+        "page": false
+      }
+    },
+    "CCEO": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": false,
+        "page": false
+      }
+    },
+    "ClusterLeader": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": false,
+        "page": false
+      }
+    },
+    "CountryDirector": {
+      "country": {
+        "open": true,
+        "page": true
+      },
+      "team": {
+        "open": true,
+        "page": true
+      }
+    },
+    "HumanResources": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": true,
+        "page": true
+      }
+    },
+    "ImpactAssessment": {
+      "country": {
+        "open": true,
+        "page": true
+      },
+      "team": {
+        "open": true,
+        "page": true
+      }
+    },
+    "MfiLoanOfficer": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": false,
+        "page": false
+      }
+    },
+    "MfiPartnerAdmin": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": false,
+        "page": false
+      }
+    },
+    "PartnerAdmin": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": false,
+        "page": false
+      }
+    },
+    "PartnerFieldOfficer": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": false,
+        "page": false
+      }
+    },
+    "Program Lead": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": true,
+        "page": true
+      }
+    },
+    "ProjectCoordinator": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": false,
+        "page": false
+      }
+    },
+    "RegionalProgramLead": {
+      "country": {
+        "open": false,
+        "page": false
+      },
+      "team": {
+        "open": true,
+        "page": true
+      }
+    },
+    "RegionalVicePresident": {
+      "country": {
+        "open": true,
+        "page": true
+      },
+      "team": {
+        "open": true,
+        "page": true
+      }
+    }
+  },
+  "pages": {
+    "country": {
+      "feed_opens_page": true,
+      "path": "/country-planning-oversight/"
+    },
+    "team": {
+      "feed_opens_page": true,
+      "path": "/team-planning-oversight/"
+    }
+  }
+}
