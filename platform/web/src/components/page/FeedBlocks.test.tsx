@@ -163,6 +163,28 @@ describe('record cards and kinds not drawn yet', () => {
     expect(html).toContain('4.6/10');
   });
 
+  it('gives a card that loads its schools an opener, closed until opened', () => {
+    const html = draw({ blocks: [{ record: { title: 'Cluster A', href: '/clusters/a', detailsPath: '/partials/clusters/a/schools' } }] }, '/clusters');
+    expect(html).toContain('aria-label="Show details for Cluster A"');
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).not.toContain('data-record-open');
+  });
+
+  it('gives no opener to a card with nothing more, or a part not on the allow-list', () => {
+    const html = draw({ blocks: [{ record: { title: 'Cluster B', detailsPath: '/clusters/b/bulk-assign-drawer' } }] }, '/clusters');
+    expect(html).not.toContain('Show details for Cluster B');
+  });
+
+  it('sends a panel’s drawer link to the existing page, never to the drawer', () => {
+    const html = draw(
+      { blocks: [{ panel: { items: [{ text: 'No clusters found.' }, { links: { links: [{ text: 'Create Cluster', href: '/clusters/create-drawer', drawer: true }, { text: 'Open School Directory', href: '/schools' }] } }] } }] },
+      '/clusters',
+    );
+    expect(html).toMatch(new RegExp(`<a href="${DRAWER.replace(/[?]/g, "\\?")}"[^>]*>Create Cluster</a>`));
+    expect(html).not.toContain('create-drawer');
+    expect(html).toContain('href="/schools"');
+  });
+
   it('says so for a kind it does not draw', () => {
     expect(draw({ blocks: [{ chart: { title: 'x' } }] })).toContain('not drawn here yet');
   });

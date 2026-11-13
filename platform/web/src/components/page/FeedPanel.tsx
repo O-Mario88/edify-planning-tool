@@ -10,7 +10,7 @@ import type { PagePanel, PagePanelItem } from '@/gen/edify/screens/v1/page_pb';
 import { Badge } from '../blocks/Badge';
 import { textTone } from '../blocks/tones';
 
-function Item({ item, resolve }: { item: PagePanelItem; resolve: (href: string) => string }) {
+function Item({ item, resolve, drawerHref }: { item: PagePanelItem; resolve: (href: string) => string; drawerHref: string }) {
   const kind = item.kind;
   switch (kind.case) {
     case 'heading':
@@ -46,10 +46,13 @@ function Item({ item, resolve }: { item: PagePanelItem; resolve: (href: string) 
       return (
         <ul className="space-y-1">
           {kind.value.links.map((link, index) => {
-            const href = resolve(link.href);
+            // A drawer is never opened from here (some write when opened): its page on the existing web.
+            const href = link.drawer ? drawerHref : resolve(link.href);
             return (
               <li key={index} className="text-[13px]">
-                {href ? (
+                {href && link.drawer ? (
+                  <a href={href} className="font-semibold text-[var(--brand-primary-text)] underline dark:text-[var(--edify-accent-text)]">{link.text}</a>
+                ) : href ? (
                   <Link href={href} className="font-semibold text-[var(--brand-primary-text)] underline dark:text-[var(--edify-accent-text)]">{link.text}</Link>
                 ) : (
                   <span>{link.text}</span>
@@ -76,7 +79,7 @@ function Item({ item, resolve }: { item: PagePanelItem; resolve: (href: string) 
   }
 }
 
-export function FeedPanel({ panel, resolve, nested = false }: { panel: PagePanel; resolve: (href: string) => string; nested?: boolean }) {
+export function FeedPanel({ panel, resolve, drawerHref = '', nested = false }: { panel: PagePanel; resolve: (href: string) => string; drawerHref?: string; nested?: boolean }) {
   return (
     <section
       aria-label={panel.title || undefined}
@@ -94,7 +97,7 @@ export function FeedPanel({ panel, resolve, nested = false }: { panel: PagePanel
       ) : null}
       <div className="space-y-1.5">
         {panel.items.map((item, index) => (
-          <Item key={index} item={item} resolve={resolve} />
+          <Item key={index} item={item} resolve={resolve} drawerHref={drawerHref} />
         ))}
       </div>
     </section>

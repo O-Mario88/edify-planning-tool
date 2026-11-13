@@ -15,6 +15,8 @@ const PAGE_SEARCHES: Readonly<Record<string, PageSearchSpec>> = {
     placeholder: 'Search schools, School IDs, districts, sub-counties…',
     label: 'Search schools by name, School ID, district, sub-county, cluster or assigned owner',
   },
+  // cluster_views.py: the placeholder only, no label.
+  '/clusters': { placeholder: 'Search clusters…' },
   // planning_views.py: the placeholder only, no label.
   '/planning': { placeholder: 'Search planning schools…' },
   // my_plan_views.py

@@ -76,7 +76,7 @@ function CellActions({ actions, subject, hrefOf }: { actions: readonly PageActio
   );
 }
 
-function RowDetails({ row, columns, resolve, id, subject }: { row: PageRow; columns: number; resolve: (href: string) => string; id: string; subject: string }) {
+function RowDetails({ row, columns, resolve, id, subject, drawerHref }: { row: PageRow; columns: number; resolve: (href: string) => string; id: string; subject: string; drawerHref: string }) {
   const detailsHref = resolve(row.detailsHref);
   return (
     <tr id={id} className="border-b border-[var(--edify-table-divider)] bg-[var(--edify-card-surface)]">
@@ -97,7 +97,7 @@ function RowDetails({ row, columns, resolve, id, subject }: { row: PageRow; colu
         {row.detailBlocks.length ? (
           <div className="mt-3 grid gap-3">
             {row.detailBlocks.map((block, index) =>
-              block.kind.case === 'panel' ? <FeedPanel key={index} panel={block.kind.value} resolve={resolve} nested /> : null,
+              block.kind.case === 'panel' ? <FeedPanel key={index} panel={block.kind.value} resolve={resolve} drawerHref={drawerHref} nested /> : null,
             )}
           </div>
         ) : null}
@@ -206,7 +206,7 @@ export function FeedTable({ table, pagePath, drawerHref, selectable }: FeedTable
                         </td>
                       ))}
                     </tr>
-                    {open === index && hasDetails ? <RowDetails row={row} columns={span} resolve={resolve} id={detailsId} subject={subject} /> : null}
+                    {open === index && hasDetails ? <RowDetails row={row} columns={span} resolve={resolve} id={detailsId} subject={subject} drawerHref={drawerHref} /> : null}
                   </Fragment>
                 );
               })}

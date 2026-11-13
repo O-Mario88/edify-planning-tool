@@ -66,13 +66,13 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable }: FeedBlo
           case 'strip':
             return <FeedStrip key={index} strip={kind.value} resolve={resolve} />;
           case 'panel':
-            return <FeedPanel key={index} panel={kind.value} resolve={resolve} />;
+            return <FeedPanel key={index} panel={kind.value} resolve={resolve} drawerHref={drawerHref} />;
           case 'linkTabs':
             return <LinkTabsBlock key={index} rail={kind.value} pagePath={pagePath} hrefOf={hrefOf} />;
           case 'table':
             return <FeedTable key={index} table={kind.value} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />;
           case 'record':
-            return <FeedRecord key={index} record={kind.value} resolve={resolve} hrefOf={hrefOf} />;
+            return <FeedRecord key={index} record={kind.value} pagePath={pagePath} drawerHref={drawerHref} />;
           case 'pager':
             return (
               <div key={index} className="overflow-hidden rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)]">
