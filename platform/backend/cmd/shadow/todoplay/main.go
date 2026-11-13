@@ -30,6 +30,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -41,6 +42,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/presence"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todosnooze"
 )
 
@@ -127,6 +129,9 @@ func run(dsn, scenarioPath, aOut, out, runner, repo string) error {
 	if err != nil {
 		return err
 	}
+	// Each Go save stamps the person's presence as the middleware stamps the
+	// post on copy A (docs/migration/65).
+	svc.WithPresence(presence.NewStamper(pool), slog.New(slog.NewTextHandler(os.Stderr, nil)))
 	accounts := identity.NewStore(pool)
 
 	result := outcomes{Database: cfg.ConnConfig.Database, From: time.Now().UTC().Format(time.RFC3339Nano)}
@@ -192,7 +197,7 @@ func play(ctx context.Context, svc *todosnooze.Service, accounts *identity.Store
 // drawn reads the page an undo's answer shows from the existing application
 // on copy B, as the person, and puts it where Go's answer says.
 func drawn(who string, redraw todosnooze.Redraw, dsn, runner, repo string) (outcome, error) {
-	read, err := json.Marshal(map[string]string{"who": who, "get": redraw.Path})
+	read, err := json.Marshal(map[string]any{"who": who, "get": redraw.Path, "background": true})
 	if err != nil {
 		return outcome{}, err
 	}

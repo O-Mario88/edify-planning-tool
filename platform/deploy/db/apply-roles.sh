@@ -71,4 +71,6 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/advance_withdraw_roles
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/todo_roles.sql"
 # Undoing a snooze removes that one row through one narrow function.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/todo_unsnooze_roles.sql"
+# The presence stamp for requests Go answers: one narrow function, its columns only.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/presence_roles.sql"
 echo "done"

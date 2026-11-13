@@ -58,6 +58,12 @@ type Rules struct {
 		Reswap       string `json:"reswap"`
 		SectionField string `json:"section_field"`
 	} `json:"unsnooze"`
+	// Posts are where the row's menu and its Undo post (the requests the
+	// presence stamp names, docs/migration/65).
+	Posts struct {
+		Snooze   string `json:"snooze"`
+		Unsnooze string `json:"unsnooze"`
+	} `json:"posts"`
 }
 
 var rules = mustRules(rulesJSON)
@@ -68,7 +74,8 @@ func mustRules(raw []byte) Rules {
 		panic(fmt.Sprintf("todosnooze: rules.json: %v", err))
 	}
 	if r.Refusal == "" || len(r.SnoozeDays) == 0 || r.Lengths.TodoID == 0 || r.Lengths.Title == 0 ||
-		r.Unsnooze.Redraw == "" || r.Unsnooze.Retarget == "" || r.Unsnooze.Reswap == "" || r.Unsnooze.SectionField == "" {
+		r.Unsnooze.Redraw == "" || r.Unsnooze.Retarget == "" || r.Unsnooze.Reswap == "" || r.Unsnooze.SectionField == "" ||
+		r.Posts.Snooze == "" || r.Posts.Unsnooze == "" {
 		panic("todosnooze: rules.json is incomplete")
 	}
 	return r
