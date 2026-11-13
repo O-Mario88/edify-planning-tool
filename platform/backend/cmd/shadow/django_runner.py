@@ -180,11 +180,28 @@ def post_form(client: Client, step: dict) -> dict:
     }
 
 
+def read_page(client: Client, step: dict) -> dict:
+    """A step that only reads a page with the page's htmx headers: what the
+    existing application draws after a Go save whose answer is a redraw
+    (undoing a snooze answers with the Today panel, docs/migration/63)."""
+    headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
+    answer = client.get(step["get"], **headers)
+    return {
+        "ok": answer.status_code < 400,
+        "status": answer.status_code,
+        "action": step["get"],
+        "retarget": answer.headers.get("HX-Retarget", ""),
+        "message": message(answer.content.decode()),
+    }
+
+
 def play(client: Client, step: dict) -> dict:
     if "confirm_advance" in step:
         return confirm_advances(step)
     if "post" in step:
         return post_form(client, step)
+    if "get" in step:
+        return read_page(client, step)
     headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
     step = {**step, "open": resolve(step["open"]), "form": resolve(step["form"])}
     drawer = client.get(step["open"], **headers)

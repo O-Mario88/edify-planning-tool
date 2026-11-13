@@ -4,10 +4,13 @@
 // (apps.frontend.views.today_views.today_snooze ->
 // apps.command_center.today_actions.snooze, docs/migration/50).
 //
-// Undoing a snooze (today_unsnooze, a DELETE) and every decision taken on a
-// Today row (today_actions.perform, through each record's own service) are
-// still the existing application's: the save answers ErrHandOn for them and
-// for every reader it does not take.
+// Undoing a snooze (today_unsnooze) is Go's too: the row goes through the
+// narrow function gateway_todos.unsnooze (the gateway holds no DELETE), and
+// the Today panel the answer shows is drawn again by the existing
+// application (docs/migration/63). Every decision taken on a Today row
+// (today_actions.perform, through each record's own service) is still the
+// existing application's; the saves answer ErrHandOn for every reader they
+// do not take.
 //
 // The vocabularies are the existing ones, exported to rules.json by
 // `manage.py export_todo_snooze_rules`;
@@ -45,6 +48,16 @@ type Rules struct {
 		TodoID int `json:"todo_id"`
 		Title  int `json:"title"`
 	} `json:"lengths"`
+	// Unsnooze is what undoing a snooze answers: the Today panel the
+	// existing application draws again (Redraw, today_panel), put in the
+	// panel's place (Retarget, Reswap), with the This Week Me tab's field
+	// (SectionField) carried to the redraw.
+	Unsnooze struct {
+		Redraw       string `json:"redraw"`
+		Retarget     string `json:"retarget"`
+		Reswap       string `json:"reswap"`
+		SectionField string `json:"section_field"`
+	} `json:"unsnooze"`
 }
 
 var rules = mustRules(rulesJSON)
@@ -54,7 +67,8 @@ func mustRules(raw []byte) Rules {
 	if err := json.Unmarshal(raw, &r); err != nil {
 		panic(fmt.Sprintf("todosnooze: rules.json: %v", err))
 	}
-	if r.Refusal == "" || len(r.SnoozeDays) == 0 || r.Lengths.TodoID == 0 || r.Lengths.Title == 0 {
+	if r.Refusal == "" || len(r.SnoozeDays) == 0 || r.Lengths.TodoID == 0 || r.Lengths.Title == 0 ||
+		r.Unsnooze.Redraw == "" || r.Unsnooze.Retarget == "" || r.Unsnooze.Reswap == "" || r.Unsnooze.SectionField == "" {
 		panic("todosnooze: rules.json is incomplete")
 	}
 	return r

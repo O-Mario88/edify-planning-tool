@@ -73,5 +73,11 @@
   "snooze_days": {
     "next_week": 7,
     "tomorrow": 1
+  },
+  "unsnooze": {
+    "redraw": "/today/panel",
+    "reswap": "outerHTML",
+    "retarget": "[data-dashboard-today]",
+    "section_field": "today_section"
   }
 }

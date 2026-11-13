@@ -69,6 +69,8 @@ const (
 	advanceWithdrawRolesFile = "../../../deploy/db/advance_withdraw_roles.sql"
 	// Snoozing a To-Do from Today: one table's insert and three updated columns.
 	todoRolesFile = "../../../deploy/db/todo_roles.sql"
+	// Undoing a snooze: the narrow function that removes that one row.
+	todoUnsnoozeRolesFile = "../../../deploy/db/todo_unsnooze_roles.sql"
 	// Where the loan portal's emails go in this run.
 	publicBaseURL = "http://127.0.0.1:9"
 )
@@ -246,6 +248,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(todoRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	todoUnsnoozeRoles, err := os.ReadFile(filepath.FromSlash(todoUnsnoozeRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(todoUnsnoozeRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)

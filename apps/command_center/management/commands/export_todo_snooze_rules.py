@@ -6,7 +6,10 @@ from the vocabularies this command writes to
 platform/backend/internal/todosnooze/rules.json: which roles open the Today
 page (require_page_permission("today")), which roles the page asks per person
 (a partner's team member), the snooze choices and their days, the refusal's
-words, and the stored columns' lengths the save cuts the posted values to.
+words, and the stored columns' lengths the save cuts the posted values to;
+and for undoing a snooze (today_unsnooze), the Today panel the existing
+application draws again afterwards, where that answer goes, and the field
+that keeps a Programme Lead's redraw to their own day.
 A change to any of them must be exported again;
 apps/command_center/test_todo_snooze_rules_export.py fails until it is.
 
@@ -71,6 +74,22 @@ def lengths() -> dict:
     }
 
 
+def unsnooze() -> dict:
+    """Undoing a snooze answers with the whole Today panel drawn again
+    (today_unsnooze renders what today_panel renders), retargeted onto the
+    panel; the This Week Me tab's field rides along to the redraw."""
+    from django.urls import reverse
+
+    from apps.frontend.views import today_views
+
+    return {
+        "redraw": reverse("frontend:today_panel"),
+        "retarget": today_views.UNSNOOZE_RETARGET,
+        "reswap": today_views.UNSNOOZE_RESWAP,
+        "section_field": today_views.TODAY_SECTION_FIELD,
+    }
+
+
 def rules() -> dict:
     from apps.command_center.today_actions import SNOOZE_DAYS
 
@@ -79,6 +98,7 @@ def rules() -> dict:
         "snooze_days": dict(SNOOZE_DAYS),
         "refusal": refusal(),
         "lengths": lengths(),
+        "unsnooze": unsnooze(),
     }
 
 
