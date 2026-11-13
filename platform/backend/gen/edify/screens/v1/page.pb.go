@@ -2725,6 +2725,7 @@ type PageBlock struct {
 	//	*PageBlock_Pager
 	//	*PageBlock_Form
 	//	*PageBlock_Section
+	//	*PageBlock_Calendar
 	Kind          isPageBlock_Kind `protobuf_oneof:"kind"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2920,6 +2921,15 @@ func (x *PageBlock) GetSection() string {
 	return ""
 }
 
+func (x *PageBlock) GetCalendar() *PageCalendar {
+	if x != nil {
+		if x, ok := x.Kind.(*PageBlock_Calendar); ok {
+			return x.Calendar
+		}
+	}
+	return nil
+}
+
 type isPageBlock_Kind interface {
 	isPageBlock_Kind()
 }
@@ -2997,6 +3007,12 @@ type PageBlock_Section struct {
 	Section string `protobuf:"bytes,17,opt,name=section,proto3,oneof"`
 }
 
+type PageBlock_Calendar struct {
+	// A month calendar (the Calendar page), beside the event-type tabs that
+	// draw it as text.
+	Calendar *PageCalendar `protobuf:"bytes,18,opt,name=calendar,proto3,oneof"`
+}
+
 func (*PageBlock_ScopeLine) isPageBlock_Kind() {}
 
 func (*PageBlock_Facts) isPageBlock_Kind() {}
@@ -3031,6 +3047,284 @@ func (*PageBlock_Form) isPageBlock_Kind() {}
 
 func (*PageBlock_Section) isPageBlock_Kind() {}
 
+func (*PageBlock_Calendar) isPageBlock_Kind() {}
+
+// One entry of a calendar day: a piece of work, a leave day, a holiday or an
+// organization event, as the page's chip draws it.
+type PageCalendarEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "activity", "leave", "holiday" or "event": the event-type tab it is
+	// counted under (PageCalendar.kinds).
+	Kind string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
+	// An activity's colour family on the grid and legend ("visit",
+	// "training", "cluster", "core", "project", "programme", "activity");
+	// '' for the other kinds.
+	Family string `protobuf:"bytes,2,opt,name=family,proto3" json:"family,omitempty"`
+	Title  string `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	// The line under the title: the place, the run's dates or "Day 2 of 3",
+	// the reason to reschedule, a leave's type, a holiday's kind.
+	Meta string `protobuf:"bytes,4,opt,name=meta,proto3" json:"meta,omitempty"`
+	// What it opens, or ''.
+	Href string `protobuf:"bytes,5,opt,name=href,proto3" json:"href,omitempty"`
+	// What its tick box ticks for the page's bar (PageSelection), or '' for
+	// none. Every day of a multi-day activity carries the same one.
+	PickId string `protobuf:"bytes,6,opt,name=pick_id,json=pickId,proto3" json:"pick_id,omitempty"`
+	// A later day of an entry that runs over several days: it carries on the
+	// previous day's chip.
+	Continued bool `protobuf:"varint,7,opt,name=continued,proto3" json:"continued,omitempty"`
+	// Work planned on a public holiday or its owner's leave: to reschedule.
+	DayOff        bool `protobuf:"varint,8,opt,name=day_off,json=dayOff,proto3" json:"day_off,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageCalendarEvent) Reset() {
+	*x = PageCalendarEvent{}
+	mi := &file_edify_screens_v1_page_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageCalendarEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageCalendarEvent) ProtoMessage() {}
+
+func (x *PageCalendarEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_page_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageCalendarEvent.ProtoReflect.Descriptor instead.
+func (*PageCalendarEvent) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *PageCalendarEvent) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *PageCalendarEvent) GetFamily() string {
+	if x != nil {
+		return x.Family
+	}
+	return ""
+}
+
+func (x *PageCalendarEvent) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *PageCalendarEvent) GetMeta() string {
+	if x != nil {
+		return x.Meta
+	}
+	return ""
+}
+
+func (x *PageCalendarEvent) GetHref() string {
+	if x != nil {
+		return x.Href
+	}
+	return ""
+}
+
+func (x *PageCalendarEvent) GetPickId() string {
+	if x != nil {
+		return x.PickId
+	}
+	return ""
+}
+
+func (x *PageCalendarEvent) GetContinued() bool {
+	if x != nil {
+		return x.Continued
+	}
+	return false
+}
+
+func (x *PageCalendarEvent) GetDayOff() bool {
+	if x != nil {
+		return x.DayOff
+	}
+	return false
+}
+
+// One day of the month that has entries.
+type PageCalendarDay struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The day, "2026-11-26".
+	Date  string `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
+	Today bool   `protobuf:"varint,2,opt,name=today,proto3" json:"today,omitempty"`
+	// Any of its entries is to be rescheduled.
+	DayOff bool `protobuf:"varint,3,opt,name=day_off,json=dayOff,proto3" json:"day_off,omitempty"`
+	// In the page's order: events, holidays, leave, work, each by title.
+	Events        []*PageCalendarEvent `protobuf:"bytes,4,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageCalendarDay) Reset() {
+	*x = PageCalendarDay{}
+	mi := &file_edify_screens_v1_page_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageCalendarDay) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageCalendarDay) ProtoMessage() {}
+
+func (x *PageCalendarDay) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_page_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageCalendarDay.ProtoReflect.Descriptor instead.
+func (*PageCalendarDay) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *PageCalendarDay) GetDate() string {
+	if x != nil {
+		return x.Date
+	}
+	return ""
+}
+
+func (x *PageCalendarDay) GetToday() bool {
+	if x != nil {
+		return x.Today
+	}
+	return false
+}
+
+func (x *PageCalendarDay) GetDayOff() bool {
+	if x != nil {
+		return x.DayOff
+	}
+	return false
+}
+
+func (x *PageCalendarDay) GetEvents() []*PageCalendarEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
+type PageCalendar struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Year  int32                  `protobuf:"varint,1,opt,name=year,proto3" json:"year,omitempty"`
+	Month int32                  `protobuf:"varint,2,opt,name=month,proto3" json:"month,omitempty"`
+	// Today ("2026-11-13") when it falls in this month, else ''.
+	Today string `protobuf:"bytes,3,opt,name=today,proto3" json:"today,omitempty"`
+	// The event-type tabs: each one's key ("all", "activity", "leave",
+	// "holiday", "event"), label and count.
+	Kinds []*PageChip `protobuf:"bytes,4,rep,name=kinds,proto3" json:"kinds,omitempty"`
+	// The tab the page opens on (?event_kind=), "all" for every kind.
+	Kind string `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
+	// The days of the month with entries, in order.
+	Days          []*PageCalendarDay `protobuf:"bytes,6,rep,name=days,proto3" json:"days,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageCalendar) Reset() {
+	*x = PageCalendar{}
+	mi := &file_edify_screens_v1_page_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageCalendar) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageCalendar) ProtoMessage() {}
+
+func (x *PageCalendar) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_page_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageCalendar.ProtoReflect.Descriptor instead.
+func (*PageCalendar) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *PageCalendar) GetYear() int32 {
+	if x != nil {
+		return x.Year
+	}
+	return 0
+}
+
+func (x *PageCalendar) GetMonth() int32 {
+	if x != nil {
+		return x.Month
+	}
+	return 0
+}
+
+func (x *PageCalendar) GetToday() string {
+	if x != nil {
+		return x.Today
+	}
+	return ""
+}
+
+func (x *PageCalendar) GetKinds() []*PageChip {
+	if x != nil {
+		return x.Kinds
+	}
+	return nil
+}
+
+func (x *PageCalendar) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *PageCalendar) GetDays() []*PageCalendarDay {
+	if x != nil {
+		return x.Days
+	}
+	return nil
+}
+
 // One part of a form on a page, in the order the form draws them.
 type PageFormItem struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -3049,7 +3343,7 @@ type PageFormItem struct {
 
 func (x *PageFormItem) Reset() {
 	*x = PageFormItem{}
-	mi := &file_edify_screens_v1_page_proto_msgTypes[37]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3061,7 +3355,7 @@ func (x *PageFormItem) String() string {
 func (*PageFormItem) ProtoMessage() {}
 
 func (x *PageFormItem) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_page_proto_msgTypes[37]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3074,7 +3368,7 @@ func (x *PageFormItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageFormItem.ProtoReflect.Descriptor instead.
 func (*PageFormItem) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{37}
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *PageFormItem) GetKind() isPageFormItem_Kind {
@@ -3174,7 +3468,7 @@ type PageForm struct {
 
 func (x *PageForm) Reset() {
 	*x = PageForm{}
-	mi := &file_edify_screens_v1_page_proto_msgTypes[38]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3186,7 +3480,7 @@ func (x *PageForm) String() string {
 func (*PageForm) ProtoMessage() {}
 
 func (x *PageForm) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_page_proto_msgTypes[38]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3199,7 +3493,7 @@ func (x *PageForm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageForm.ProtoReflect.Descriptor instead.
 func (*PageForm) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{38}
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *PageForm) GetTitle() string {
@@ -3269,7 +3563,7 @@ type PageRecord struct {
 
 func (x *PageRecord) Reset() {
 	*x = PageRecord{}
-	mi := &file_edify_screens_v1_page_proto_msgTypes[39]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3281,7 +3575,7 @@ func (x *PageRecord) String() string {
 func (*PageRecord) ProtoMessage() {}
 
 func (x *PageRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_page_proto_msgTypes[39]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3294,7 +3588,7 @@ func (x *PageRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageRecord.ProtoReflect.Descriptor instead.
 func (*PageRecord) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{39}
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *PageRecord) GetTitle() string {
@@ -3380,7 +3674,7 @@ type PageDialog struct {
 
 func (x *PageDialog) Reset() {
 	*x = PageDialog{}
-	mi := &file_edify_screens_v1_page_proto_msgTypes[40]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3392,7 +3686,7 @@ func (x *PageDialog) String() string {
 func (*PageDialog) ProtoMessage() {}
 
 func (x *PageDialog) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_page_proto_msgTypes[40]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3405,7 +3699,7 @@ func (x *PageDialog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageDialog.ProtoReflect.Descriptor instead.
 func (*PageDialog) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{40}
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *PageDialog) GetKey() string {
@@ -3446,7 +3740,7 @@ type PageSelectionAction struct {
 
 func (x *PageSelectionAction) Reset() {
 	*x = PageSelectionAction{}
-	mi := &file_edify_screens_v1_page_proto_msgTypes[41]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3458,7 +3752,7 @@ func (x *PageSelectionAction) String() string {
 func (*PageSelectionAction) ProtoMessage() {}
 
 func (x *PageSelectionAction) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_page_proto_msgTypes[41]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3471,7 +3765,7 @@ func (x *PageSelectionAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageSelectionAction.ProtoReflect.Descriptor instead.
 func (*PageSelectionAction) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{41}
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *PageSelectionAction) GetLabel() string {
@@ -3513,7 +3807,7 @@ type PageSelection struct {
 
 func (x *PageSelection) Reset() {
 	*x = PageSelection{}
-	mi := &file_edify_screens_v1_page_proto_msgTypes[42]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3525,7 +3819,7 @@ func (x *PageSelection) String() string {
 func (*PageSelection) ProtoMessage() {}
 
 func (x *PageSelection) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_page_proto_msgTypes[42]
+	mi := &file_edify_screens_v1_page_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3538,7 +3832,7 @@ func (x *PageSelection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageSelection.ProtoReflect.Descriptor instead.
 func (*PageSelection) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{42}
+	return file_edify_screens_v1_page_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *PageSelection) GetNoun() string {
@@ -3774,7 +4068,7 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x14\n" +
 	"\x05count\x18\x02 \x01(\tR\x05count\x12\x1a\n" +
 	"\bsubtitle\x18\x03 \x01(\tR\bsubtitle\x124\n" +
-	"\x05items\x18\x04 \x03(\v2\x1e.edify.screens.v1.PageListItemR\x05items\"\xe1\x06\n" +
+	"\x05items\x18\x04 \x03(\v2\x1e.edify.screens.v1.PageListItemR\x05items\"\x9f\a\n" +
 	"\tPageBlock\x12\x1f\n" +
 	"\n" +
 	"scope_line\x18\x01 \x01(\tH\x00R\tscopeLine\x123\n" +
@@ -3794,8 +4088,30 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\x06record\x18\x0e \x01(\v2\x1c.edify.screens.v1.PageRecordH\x00R\x06record\x123\n" +
 	"\x05pager\x18\x0f \x01(\v2\x1b.edify.screens.v1.PagePagerH\x00R\x05pager\x120\n" +
 	"\x04form\x18\x10 \x01(\v2\x1a.edify.screens.v1.PageFormH\x00R\x04form\x12\x1a\n" +
-	"\asection\x18\x11 \x01(\tH\x00R\asectionB\x06\n" +
-	"\x04kind\"\xf3\x01\n" +
+	"\asection\x18\x11 \x01(\tH\x00R\asection\x12<\n" +
+	"\bcalendar\x18\x12 \x01(\v2\x1e.edify.screens.v1.PageCalendarH\x00R\bcalendarB\x06\n" +
+	"\x04kind\"\xcd\x01\n" +
+	"\x11PageCalendarEvent\x12\x12\n" +
+	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x16\n" +
+	"\x06family\x18\x02 \x01(\tR\x06family\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x12\n" +
+	"\x04meta\x18\x04 \x01(\tR\x04meta\x12\x12\n" +
+	"\x04href\x18\x05 \x01(\tR\x04href\x12\x17\n" +
+	"\apick_id\x18\x06 \x01(\tR\x06pickId\x12\x1c\n" +
+	"\tcontinued\x18\a \x01(\bR\tcontinued\x12\x17\n" +
+	"\aday_off\x18\b \x01(\bR\x06dayOff\"\x91\x01\n" +
+	"\x0fPageCalendarDay\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\x12\x14\n" +
+	"\x05today\x18\x02 \x01(\bR\x05today\x12\x17\n" +
+	"\aday_off\x18\x03 \x01(\bR\x06dayOff\x12;\n" +
+	"\x06events\x18\x04 \x03(\v2#.edify.screens.v1.PageCalendarEventR\x06events\"\xcb\x01\n" +
+	"\fPageCalendar\x12\x12\n" +
+	"\x04year\x18\x01 \x01(\x05R\x04year\x12\x14\n" +
+	"\x05month\x18\x02 \x01(\x05R\x05month\x12\x14\n" +
+	"\x05today\x18\x03 \x01(\tR\x05today\x120\n" +
+	"\x05kinds\x18\x04 \x03(\v2\x1a.edify.screens.v1.PageChipR\x05kinds\x12\x12\n" +
+	"\x04kind\x18\x05 \x01(\tR\x04kind\x125\n" +
+	"\x04days\x18\x06 \x03(\v2!.edify.screens.v1.PageCalendarDayR\x04days\"\xf3\x01\n" +
 	"\fPageFormItem\x122\n" +
 	"\x04note\x18\x01 \x01(\v2\x1c.edify.screens.v1.DrawerNoteH\x00R\x04note\x12\x1a\n" +
 	"\aheading\x18\x02 \x01(\tH\x00R\aheading\x12\x14\n" +
@@ -3851,7 +4167,7 @@ func file_edify_screens_v1_page_proto_rawDescGZIP() []byte {
 	return file_edify_screens_v1_page_proto_rawDescData
 }
 
-var file_edify_screens_v1_page_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
+var file_edify_screens_v1_page_proto_msgTypes = make([]protoimpl.MessageInfo, 48)
 var file_edify_screens_v1_page_proto_goTypes = []any{
 	(*PageBadge)(nil),           // 0: edify.screens.v1.PageBadge
 	(*PageAction)(nil),          // 1: edify.screens.v1.PageAction
@@ -3890,17 +4206,20 @@ var file_edify_screens_v1_page_proto_goTypes = []any{
 	(*PageChips)(nil),           // 34: edify.screens.v1.PageChips
 	(*PageList)(nil),            // 35: edify.screens.v1.PageList
 	(*PageBlock)(nil),           // 36: edify.screens.v1.PageBlock
-	(*PageFormItem)(nil),        // 37: edify.screens.v1.PageFormItem
-	(*PageForm)(nil),            // 38: edify.screens.v1.PageForm
-	(*PageRecord)(nil),          // 39: edify.screens.v1.PageRecord
-	(*PageDialog)(nil),          // 40: edify.screens.v1.PageDialog
-	(*PageSelectionAction)(nil), // 41: edify.screens.v1.PageSelectionAction
-	(*PageSelection)(nil),       // 42: edify.screens.v1.PageSelection
-	nil,                         // 43: edify.screens.v1.PageFilters.HiddenEntry
-	nil,                         // 44: edify.screens.v1.PageListItem.KeysEntry
-	(*DrawerNote)(nil),          // 45: edify.screens.v1.DrawerNote
-	(*DrawerField)(nil),         // 46: edify.screens.v1.DrawerField
-	(*DrawerCondition)(nil),     // 47: edify.screens.v1.DrawerCondition
+	(*PageCalendarEvent)(nil),   // 37: edify.screens.v1.PageCalendarEvent
+	(*PageCalendarDay)(nil),     // 38: edify.screens.v1.PageCalendarDay
+	(*PageCalendar)(nil),        // 39: edify.screens.v1.PageCalendar
+	(*PageFormItem)(nil),        // 40: edify.screens.v1.PageFormItem
+	(*PageForm)(nil),            // 41: edify.screens.v1.PageForm
+	(*PageRecord)(nil),          // 42: edify.screens.v1.PageRecord
+	(*PageDialog)(nil),          // 43: edify.screens.v1.PageDialog
+	(*PageSelectionAction)(nil), // 44: edify.screens.v1.PageSelectionAction
+	(*PageSelection)(nil),       // 45: edify.screens.v1.PageSelection
+	nil,                         // 46: edify.screens.v1.PageFilters.HiddenEntry
+	nil,                         // 47: edify.screens.v1.PageListItem.KeysEntry
+	(*DrawerNote)(nil),          // 48: edify.screens.v1.DrawerNote
+	(*DrawerField)(nil),         // 49: edify.screens.v1.DrawerField
+	(*DrawerCondition)(nil),     // 50: edify.screens.v1.DrawerCondition
 }
 var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	0,  // 0: edify.screens.v1.PageHeader.badges:type_name -> edify.screens.v1.PageBadge
@@ -3908,7 +4227,7 @@ var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	4,  // 2: edify.screens.v1.PageFacts.facts:type_name -> edify.screens.v1.PageFact
 	6,  // 3: edify.screens.v1.PageFilter.options:type_name -> edify.screens.v1.PageFilterOption
 	7,  // 4: edify.screens.v1.PageFilters.filters:type_name -> edify.screens.v1.PageFilter
-	43, // 5: edify.screens.v1.PageFilters.hidden:type_name -> edify.screens.v1.PageFilters.HiddenEntry
+	46, // 5: edify.screens.v1.PageFilters.hidden:type_name -> edify.screens.v1.PageFilters.HiddenEntry
 	9,  // 6: edify.screens.v1.PageStrip.metrics:type_name -> edify.screens.v1.PageMetric
 	1,  // 7: edify.screens.v1.PageCell.actions:type_name -> edify.screens.v1.PageAction
 	12, // 8: edify.screens.v1.PageRow.cells:type_name -> edify.screens.v1.PageCell
@@ -3940,7 +4259,7 @@ var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	0,  // 34: edify.screens.v1.PageListItem.badges:type_name -> edify.screens.v1.PageBadge
 	1,  // 35: edify.screens.v1.PageListItem.actions:type_name -> edify.screens.v1.PageAction
 	32, // 36: edify.screens.v1.PageListItem.children:type_name -> edify.screens.v1.PageListItem
-	44, // 37: edify.screens.v1.PageListItem.keys:type_name -> edify.screens.v1.PageListItem.KeysEntry
+	47, // 37: edify.screens.v1.PageListItem.keys:type_name -> edify.screens.v1.PageListItem.KeysEntry
 	33, // 38: edify.screens.v1.PageChips.chips:type_name -> edify.screens.v1.PageChip
 	32, // 39: edify.screens.v1.PageList.items:type_name -> edify.screens.v1.PageListItem
 	5,  // 40: edify.screens.v1.PageBlock.facts:type_name -> edify.screens.v1.PageFacts
@@ -3954,24 +4273,28 @@ var file_edify_screens_v1_page_proto_depIdxs = []int32{
 	18, // 48: edify.screens.v1.PageBlock.link_tabs:type_name -> edify.screens.v1.PageLinkTabs
 	35, // 49: edify.screens.v1.PageBlock.list:type_name -> edify.screens.v1.PageList
 	34, // 50: edify.screens.v1.PageBlock.chips:type_name -> edify.screens.v1.PageChips
-	39, // 51: edify.screens.v1.PageBlock.record:type_name -> edify.screens.v1.PageRecord
+	42, // 51: edify.screens.v1.PageBlock.record:type_name -> edify.screens.v1.PageRecord
 	15, // 52: edify.screens.v1.PageBlock.pager:type_name -> edify.screens.v1.PagePager
-	38, // 53: edify.screens.v1.PageBlock.form:type_name -> edify.screens.v1.PageForm
-	45, // 54: edify.screens.v1.PageFormItem.note:type_name -> edify.screens.v1.DrawerNote
-	46, // 55: edify.screens.v1.PageFormItem.field:type_name -> edify.screens.v1.DrawerField
-	47, // 56: edify.screens.v1.PageFormItem.show_when:type_name -> edify.screens.v1.DrawerCondition
-	37, // 57: edify.screens.v1.PageForm.items:type_name -> edify.screens.v1.PageFormItem
-	0,  // 58: edify.screens.v1.PageRecord.badges:type_name -> edify.screens.v1.PageBadge
-	1,  // 59: edify.screens.v1.PageRecord.actions:type_name -> edify.screens.v1.PageAction
-	4,  // 60: edify.screens.v1.PageRecord.facts:type_name -> edify.screens.v1.PageFact
-	36, // 61: edify.screens.v1.PageRecord.details:type_name -> edify.screens.v1.PageBlock
-	36, // 62: edify.screens.v1.PageDialog.blocks:type_name -> edify.screens.v1.PageBlock
-	41, // 63: edify.screens.v1.PageSelection.actions:type_name -> edify.screens.v1.PageSelectionAction
-	64, // [64:64] is the sub-list for method output_type
-	64, // [64:64] is the sub-list for method input_type
-	64, // [64:64] is the sub-list for extension type_name
-	64, // [64:64] is the sub-list for extension extendee
-	0,  // [0:64] is the sub-list for field type_name
+	41, // 53: edify.screens.v1.PageBlock.form:type_name -> edify.screens.v1.PageForm
+	39, // 54: edify.screens.v1.PageBlock.calendar:type_name -> edify.screens.v1.PageCalendar
+	37, // 55: edify.screens.v1.PageCalendarDay.events:type_name -> edify.screens.v1.PageCalendarEvent
+	33, // 56: edify.screens.v1.PageCalendar.kinds:type_name -> edify.screens.v1.PageChip
+	38, // 57: edify.screens.v1.PageCalendar.days:type_name -> edify.screens.v1.PageCalendarDay
+	48, // 58: edify.screens.v1.PageFormItem.note:type_name -> edify.screens.v1.DrawerNote
+	49, // 59: edify.screens.v1.PageFormItem.field:type_name -> edify.screens.v1.DrawerField
+	50, // 60: edify.screens.v1.PageFormItem.show_when:type_name -> edify.screens.v1.DrawerCondition
+	40, // 61: edify.screens.v1.PageForm.items:type_name -> edify.screens.v1.PageFormItem
+	0,  // 62: edify.screens.v1.PageRecord.badges:type_name -> edify.screens.v1.PageBadge
+	1,  // 63: edify.screens.v1.PageRecord.actions:type_name -> edify.screens.v1.PageAction
+	4,  // 64: edify.screens.v1.PageRecord.facts:type_name -> edify.screens.v1.PageFact
+	36, // 65: edify.screens.v1.PageRecord.details:type_name -> edify.screens.v1.PageBlock
+	36, // 66: edify.screens.v1.PageDialog.blocks:type_name -> edify.screens.v1.PageBlock
+	44, // 67: edify.screens.v1.PageSelection.actions:type_name -> edify.screens.v1.PageSelectionAction
+	68, // [68:68] is the sub-list for method output_type
+	68, // [68:68] is the sub-list for method input_type
+	68, // [68:68] is the sub-list for extension type_name
+	68, // [68:68] is the sub-list for extension extendee
+	0,  // [0:68] is the sub-list for field type_name
 }
 
 func init() { file_edify_screens_v1_page_proto_init() }
@@ -4006,8 +4329,9 @@ func file_edify_screens_v1_page_proto_init() {
 		(*PageBlock_Pager)(nil),
 		(*PageBlock_Form)(nil),
 		(*PageBlock_Section)(nil),
+		(*PageBlock_Calendar)(nil),
 	}
-	file_edify_screens_v1_page_proto_msgTypes[37].OneofWrappers = []any{
+	file_edify_screens_v1_page_proto_msgTypes[40].OneofWrappers = []any{
 		(*PageFormItem_Note)(nil),
 		(*PageFormItem_Heading)(nil),
 		(*PageFormItem_Text)(nil),
@@ -4019,7 +4343,7 @@ func file_edify_screens_v1_page_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_screens_v1_page_proto_rawDesc), len(file_edify_screens_v1_page_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   45,
+			NumMessages:   48,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

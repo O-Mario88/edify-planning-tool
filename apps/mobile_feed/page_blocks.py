@@ -1874,6 +1874,7 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
         if (beside := sibling_switch(child)) is not None:
             out.append({"segments": beside[0]})
             taken |= beside[1]
+            _calendar_after(child.parent, out)
             continue
         if later is not None and _loads_later(child):
             # A part the page loads once it is open (My Plan's readiness):
@@ -1888,11 +1889,22 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
         block = _block(child)
         if block is not None:
             out.append(block)
+            if "segments" in block:
+                _calendar_after(child, out)
         elif _holds_blocks(child) or _holds_known(child):
             _blocks(child, out, later)
         elif (fallback := _fallback(child)) is not None:
             out.append(fallback)
     return out
+
+
+def _calendar_after(holder: Node, out: list[dict]) -> None:
+    """The Calendar's month as a block of its own, right after the
+    event-type tabs that draw it as text (calendar_block)."""
+    from apps.mobile_feed import calendar_block
+
+    if (month := calendar_block.read(holder)) is not None:
+        out.append({"calendar": month})
 
 
 def _several_blocks(node: Node) -> list[dict] | None:

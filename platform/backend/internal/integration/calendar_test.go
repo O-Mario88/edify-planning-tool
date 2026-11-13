@@ -31,9 +31,17 @@ func TestTheCalendarOpensOnTheMonthThatHoldsToday(t *testing.T) {
 	if page.GetHeader().GetTitle() != "Calendar" || len(blocks) == 0 {
 		t.Fatalf("the page: %v", page)
 	}
-	rail := blocks[len(blocks)-1].GetSegments()
+	if len(blocks) < 2 {
+		t.Fatalf("the page: %v", page)
+	}
+	rail := blocks[len(blocks)-2].GetSegments()
 	if len(rail.GetSegments()) != 5 || rail.GetSegments()[0].GetBlocks()[0].GetPanel().GetTitle() != want {
 		t.Fatalf("the month: %v, want %s", rail, want)
+	}
+	// The month block after the rail: this month, today in it.
+	month := blocks[len(blocks)-1].GetCalendar()
+	if month.GetYear() != int32(today.Year()) || month.GetMonth() != int32(today.Month()) || month.GetToday() != today.Format(time.DateOnly) {
+		t.Fatalf("the month block: %v, want %s", month, today.Format(time.DateOnly))
 	}
 	if _, err := pageOf(token, "/calendar", map[string]string{"format": "csv"}); err == nil {
 		t.Fatal("a format the feed has no renderer for is answered")

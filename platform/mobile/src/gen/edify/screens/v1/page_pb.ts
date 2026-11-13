@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/screens/v1/page.proto.
  */
 export const file_edify_screens_v1_page: GenFile = /*@__PURE__*/
-  fileDesc("ChtlZGlmeS9zY3JlZW5zL3YxL3BhZ2UucHJvdG8SEGVkaWZ5LnNjcmVlbnMudjEiNgoJUGFnZUJhZGdlEgwKBHRleHQYASABKAkSDAoEdG9uZRgCIAEoCRINCgV0aXRsZRgDIAEoCSJ4CgpQYWdlQWN0aW9uEgsKA2tleRgBIAEoCRINCgVsYWJlbBgCIAEoCRIPCgdwcmltYXJ5GAMgASgIEg8KB2VuYWJsZWQYBCABKAgSDgoGcmVhc29uGAUgASgJEgwKBGhyZWYYBiABKAkSDgoGZHJhd2VyGAcgASgIIsQBCgpQYWdlSGVhZGVyEhIKCmJhY2tfbGFiZWwYASABKAkSEQoJYmFja19ocmVmGAIgASgJEg0KBXRpdGxlGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEisKBmJhZGdlcxgFIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJhZGdlEi0KB2FjdGlvbnMYBiADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VBY3Rpb24SDwoHZXllYnJvdxgHIAEoCSI1CgdQYWdlVGFiEgsKA2tleRgBIAEoCRINCgVsYWJlbBgCIAEoCRIOCgZhY3RpdmUYAyABKAgiRAoIUGFnZUZhY3QSDQoFbGFiZWwYASABKAkSDQoFdmFsdWUYAiABKAkSDAoEaHJlZhgDIAEoCRIMCgR0b25lGAQgASgJIjYKCVBhZ2VGYWN0cxIpCgVmYWN0cxgBIAMoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3QiMAoQUGFnZUZpbHRlck9wdGlvbhINCgV2YWx1ZRgBIAEoCRINCgVsYWJlbBgCIAEoCSJ+CgpQYWdlRmlsdGVyEgwKBG5hbWUYASABKAkSDQoFbGFiZWwYAiABKAkSDQoFdmFsdWUYAyABKAkSMwoHb3B0aW9ucxgEIAMoCzIiLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlck9wdGlvbhIPCgdjYXB0aW9uGAUgASgJIqYBCgtQYWdlRmlsdGVycxItCgdmaWx0ZXJzGAEgAygLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlRmlsdGVyEjkKBmhpZGRlbhgCIAMoCzIpLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlcnMuSGlkZGVuRW50cnkaLQoLSGlkZGVuRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJkCgpQYWdlTWV0cmljEg0KBWxhYmVsGAEgASgJEg0KBXZhbHVlGAIgASgJEg4KBmhlbHBlchgDIAEoCRIMCgRub3RlGAQgASgJEgwKBGhyZWYYBSABKAkSDAoEdG9uZRgGIAEoCSJbCglQYWdlU3RyaXASDQoFdGl0bGUYASABKAkSLQoHbWV0cmljcxgCIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZU1ldHJpYxIQCghzdWJ0aXRsZRgDIAEoCSIsCgpQYWdlQ29sdW1uEg0KBWxhYmVsGAEgASgJEg8KB251bWVyaWMYAiABKAgiggEKCFBhZ2VDZWxsEgwKBHRleHQYASABKAkSDAoEaHJlZhgCIAEoCRIMCgR0b25lGAMgASgJEg4KBnN0cm9uZxgEIAEoCBINCgViYWRnZRgFIAEoCBItCgdhY3Rpb25zGAYgAygLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlQWN0aW9uIt4BCgdQYWdlUm93EikKBWNlbGxzGAEgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlQ2VsbBIMCgR0b25lGAIgASgJEg8KB3BpY2tfaWQYAyABKAkSEgoKcGlja19sYWJlbBgEIAEoCRIrCgdkZXRhaWxzGAUgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlRmFjdBIUCgxkZXRhaWxzX2hyZWYYBiABKAkSMgoNZGV0YWlsX2Jsb2NrcxgHIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJsb2NrIj0KDVBhZ2VQYWdlclBhZ2USDQoFbGFiZWwYASABKAkSDAoEaHJlZhgCIAEoCRIPCgdjdXJyZW50GAMgASgIIngKCVBhZ2VQYWdlchIPCgdzdW1tYXJ5GAEgASgJEi4KBXBhZ2VzGAIgAygLMh8uZWRpZnkuc2NyZWVucy52MS5QYWdlUGFnZXJQYWdlEioKBHNpemUYAyABKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VGaWx0ZXIinAIKCVBhZ2VUYWJsZRINCgV0aXRsZRgBIAEoCRIQCghzdWJ0aXRsZRgCIAEoCRItCgdjb2x1bW5zGAMgAygLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlQ29sdW1uEicKBHJvd3MYBCADKAsyGS5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VSb3cSEAoIZm9vdG5vdGUYBSABKAkSFQoNZW1wdHlfbWVzc2FnZRgGIAEoCRINCgVjb3VudBgHIAEoCRIyCgxlbXB0eV9hY3Rpb24YCCABKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VBY3Rpb24SKgoFcGFnZXIYCSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VQYWdlciI6CgtQYWdlTGlua1RhYhINCgVsYWJlbBgBIAEoCRIMCgRocmVmGAIgASgJEg4KBmFjdGl2ZRgDIAEoCCKJAQoMUGFnZUxpbmtUYWJzEisKBHRhYnMYASADKAsyHS5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rVGFiEiwKBmJlc2lkZRgCIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUFjdGlvbhINCgVsYWJlbBgDIAEoCRIPCgdzY3JvbGxzGAQgASgIIkkKCVBhZ2VNZXRlchINCgVsYWJlbBgBIAEoCRINCgV2YWx1ZRgCIAEoCRIQCghmcmFjdGlvbhgDIAEoARIMCgRocmVmGAQgASgJIkcKCFBhZ2VMaW5rEgwKBHRleHQYASABKAkSDAoEaHJlZhgCIAEoCRIPCgdjYXB0aW9uGAMgASgJEg4KBmRyYXdlchgEIAEoCCLKAQoMUGFnZVJhaWxQYXJ0EgsKA2tleRgBIAEoCRINCgV0aXRsZRgCIAEoCRIOCgZmaWd1cmUYAyABKAkSEwoLZmlndXJlX2hyZWYYBCABKAkSEwoLZmlndXJlX25vdGUYBSABKAkSKwoGbWV0ZXJzGAYgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlTWV0ZXISDAoEbm90ZRgHIAEoCRIpCgVsaW5rcxgIIAMoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpbmsiWgoIUGFnZVJhaWwSDQoFdGl0bGUYASABKAkSEAoIc3VidGl0bGUYAiABKAkSLQoFcGFydHMYAyADKAsyHi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VSYWlsUGFydCIqCgpQYWdlU2VyaWVzEgwKBG5hbWUYASABKAkSDgoGdmFsdWVzGAIgAygBIrABCglQYWdlQ2hhcnQSDQoFdGl0bGUYASABKAkSEAoIc3VidGl0bGUYAiABKAkSEgoKaG9yaXpvbnRhbBgDIAEoCBISCgpjYXRlZ29yaWVzGAQgAygJEiwKBnNlcmllcxgFIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVNlcmllcxILCgNtaW4YBiABKAESCwoDbWF4GAcgASgBEhIKCmF4aXNfdGl0bGUYCCABKAkiRwoLUGFnZURhdGFSb3cSDQoFbGFiZWwYASABKAkSDAoEbWV0YRgCIAEoCRINCgV2YWx1ZRgDIAEoCRIMCgR0b25lGAQgASgJIjsKDFBhZ2VEYXRhUm93cxIrCgRyb3dzGAEgAygLMh0uZWRpZnkuc2NyZWVucy52MS5QYWdlRGF0YVJvdyI2CglQYWdlTGlua3MSKQoFbGlua3MYASADKAsyGi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rIsECCg1QYWdlUGFuZWxJdGVtEhEKB2hlYWRpbmcYASABKAlIABIOCgR0ZXh0GAIgASgJSAASLQoGZmllbGRzGAMgASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlRmFjdHNIABIuCgRyb3dzGAQgASgLMh4uZWRpZnkuc2NyZWVucy52MS5QYWdlRGF0YVJvd3NIABIsCgVsaW5rcxgFIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpbmtzSAASLAoFbWV0ZXIYBiABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VNZXRlckgAEgwKBHRvbmUYByABKAkSDAoEbGVhZBgIIAEoCRIuCgp0ZXh0X2xpbmtzGAkgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlTGlua0IGCgRraW5kIokBCglQYWdlUGFuZWwSDQoFdGl0bGUYASABKAkSEAoIc3VidGl0bGUYAiABKAkSKwoGYmFkZ2VzGAMgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmFkZ2USLgoFaXRlbXMYBCADKAsyHy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VQYW5lbEl0ZW0iaAoLUGFnZVNlZ21lbnQSDQoFbGFiZWwYASABKAkSDgoGYWN0aXZlGAIgASgIEisKBmJsb2NrcxgDIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJsb2NrEg0KBWNvdW50GAQgASgJInEKDFBhZ2VTZWdtZW50cxIvCghzZWdtZW50cxgBIAMoCzIdLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVNlZ21lbnQSDQoFdGl0bGUYAiABKAkSEAoIc3VidGl0bGUYAyABKAkSDwoHY2FwdGlvbhgEIAEoCSLKAgoMUGFnZUxpc3RJdGVtEg0KBXRpdGxlGAEgASgJEg0KBWxpbmVzGAIgAygJEisKBmJhZGdlcxgDIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJhZGdlEi0KB2FjdGlvbnMYBCADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VBY3Rpb24SDAoEaHJlZhgFIAEoCRIMCgR0b25lGAYgASgJEjAKCGNoaWxkcmVuGAcgAygLMh4uZWRpZnkuc2NyZWVucy52MS5QYWdlTGlzdEl0ZW0SDQoFY291bnQYCCABKAkSNgoEa2V5cxgJIAMoCzIoLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpc3RJdGVtLktleXNFbnRyeRorCglLZXlzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASI3CghQYWdlQ2hpcBINCgV2YWx1ZRgBIAEoCRINCgVsYWJlbBgCIAEoCRINCgVjb3VudBgDIAEoCSJiCglQYWdlQ2hpcHMSDAoEbmFtZRgBIAEoCRINCgVsYWJlbBgCIAEoCRINCgV2YWx1ZRgDIAEoCRIpCgVjaGlwcxgEIAMoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUNoaXAiaQoIUGFnZUxpc3QSDQoFdGl0bGUYASABKAkSDQoFY291bnQYAiABKAkSEAoIc3VidGl0bGUYAyABKAkSLQoFaXRlbXMYBCADKAsyHi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaXN0SXRlbSLeBQoJUGFnZUJsb2NrEhQKCnNjb3BlX2xpbmUYASABKAlIABIsCgVmYWN0cxgCIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3RzSAASMAoHZmlsdGVycxgDIAEoCzIdLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlcnNIABIsCgVzdHJpcBgEIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVN0cmlwSAASLAoFdGFibGUYBSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VUYWJsZUgAEioKBHJhaWwYBiABKAsyGi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VSYWlsSAASLAoFY2hhcnQYByABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VDaGFydEgAEiwKBXBhbmVsGAggASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlUGFuZWxIABIyCghzZWdtZW50cxgJIAEoCzIeLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVNlZ21lbnRzSAASDwoFZW1wdHkYCiABKAlIABIzCglsaW5rX3RhYnMYCyABKAsyHi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rVGFic0gAEioKBGxpc3QYDCABKAsyGi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaXN0SAASLAoFY2hpcHMYDSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VDaGlwc0gAEi4KBnJlY29yZBgOIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVJlY29yZEgAEiwKBXBhZ2VyGA8gASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlUGFnZXJIABIqCgRmb3JtGBAgASgLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlRm9ybUgAEhEKB3NlY3Rpb24YESABKAlIAEIGCgRraW5kIs0BCgxQYWdlRm9ybUl0ZW0SLAoEbm90ZRgBIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuRHJhd2VyTm90ZUgAEhEKB2hlYWRpbmcYAiABKAlIABIOCgR0ZXh0GAMgASgJSAASLgoFZmllbGQYBCABKAsyHS5lZGlmeS5zY3JlZW5zLnYxLkRyYXdlckZpZWxkSAASNAoJc2hvd193aGVuGAUgAygLMiEuZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJDb25kaXRpb25CBgoEa2luZCKLAQoIUGFnZUZvcm0SDQoFdGl0bGUYASABKAkSDAoEdGV4dBgCIAEoCRItCgVpdGVtcxgDIAMoCzIeLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZvcm1JdGVtEhQKDHN1Ym1pdF9sYWJlbBgEIAEoCRILCgNrZXkYBSABKAkSEAoIY2FuX3NhdmUYBiABKAgiqwIKClBhZ2VSZWNvcmQSDQoFdGl0bGUYASABKAkSDAoEaHJlZhgCIAEoCRIQCghzdWJ0aXRsZRgDIAEoCRIrCgZiYWRnZXMYBCADKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VCYWRnZRItCgdhY3Rpb25zGAUgAygLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlQWN0aW9uEikKBWZhY3RzGAYgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlRmFjdBIsCgdkZXRhaWxzGAcgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmxvY2sSFAoMZGV0YWlsc19wYXRoGAggASgJEg8KB3BpY2tfaWQYCSABKAkSEgoKcGlja19sYWJlbBgKIAEoCSJVCgpQYWdlRGlhbG9nEgsKA2tleRgBIAEoCRINCgV0aXRsZRgCIAEoCRIrCgZibG9ja3MYAyADKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VCbG9jayJRChNQYWdlU2VsZWN0aW9uQWN0aW9uEg0KBWxhYmVsGAEgASgJEgwKBGhyZWYYAiABKAkSDQoFcGFyYW0YAyABKAkSDgoGam9pbmVkGAQgASgIIlUKDVBhZ2VTZWxlY3Rpb24SDAoEbm91bhgBIAEoCRI2CgdhY3Rpb25zGAIgAygLMiUuZWRpZnkuc2NyZWVucy52MS5QYWdlU2VsZWN0aW9uQWN0aW9uQt0BChRjb20uZWRpZnkuc2NyZWVucy52MUIJUGFnZVByb3RvUAFaWGdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvc2NyZWVucy92MTtzY3JlZW5zdjGiAgNFU1iqAhBFZGlmeS5TY3JlZW5zLlYxygIQRWRpZnlcU2NyZWVuc1xWMeICHEVkaWZ5XFNjcmVlbnNcVjFcR1BCTWV0YWRhdGHqAhJFZGlmeTo6U2NyZWVuczo6VjFiBnByb3RvMw", [file_edify_screens_v1_form]);
+  fileDesc("ChtlZGlmeS9zY3JlZW5zL3YxL3BhZ2UucHJvdG8SEGVkaWZ5LnNjcmVlbnMudjEiNgoJUGFnZUJhZGdlEgwKBHRleHQYASABKAkSDAoEdG9uZRgCIAEoCRINCgV0aXRsZRgDIAEoCSJ4CgpQYWdlQWN0aW9uEgsKA2tleRgBIAEoCRINCgVsYWJlbBgCIAEoCRIPCgdwcmltYXJ5GAMgASgIEg8KB2VuYWJsZWQYBCABKAgSDgoGcmVhc29uGAUgASgJEgwKBGhyZWYYBiABKAkSDgoGZHJhd2VyGAcgASgIIsQBCgpQYWdlSGVhZGVyEhIKCmJhY2tfbGFiZWwYASABKAkSEQoJYmFja19ocmVmGAIgASgJEg0KBXRpdGxlGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEisKBmJhZGdlcxgFIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJhZGdlEi0KB2FjdGlvbnMYBiADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VBY3Rpb24SDwoHZXllYnJvdxgHIAEoCSI1CgdQYWdlVGFiEgsKA2tleRgBIAEoCRINCgVsYWJlbBgCIAEoCRIOCgZhY3RpdmUYAyABKAgiRAoIUGFnZUZhY3QSDQoFbGFiZWwYASABKAkSDQoFdmFsdWUYAiABKAkSDAoEaHJlZhgDIAEoCRIMCgR0b25lGAQgASgJIjYKCVBhZ2VGYWN0cxIpCgVmYWN0cxgBIAMoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3QiMAoQUGFnZUZpbHRlck9wdGlvbhINCgV2YWx1ZRgBIAEoCRINCgVsYWJlbBgCIAEoCSJ+CgpQYWdlRmlsdGVyEgwKBG5hbWUYASABKAkSDQoFbGFiZWwYAiABKAkSDQoFdmFsdWUYAyABKAkSMwoHb3B0aW9ucxgEIAMoCzIiLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlck9wdGlvbhIPCgdjYXB0aW9uGAUgASgJIqYBCgtQYWdlRmlsdGVycxItCgdmaWx0ZXJzGAEgAygLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlRmlsdGVyEjkKBmhpZGRlbhgCIAMoCzIpLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlcnMuSGlkZGVuRW50cnkaLQoLSGlkZGVuRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJkCgpQYWdlTWV0cmljEg0KBWxhYmVsGAEgASgJEg0KBXZhbHVlGAIgASgJEg4KBmhlbHBlchgDIAEoCRIMCgRub3RlGAQgASgJEgwKBGhyZWYYBSABKAkSDAoEdG9uZRgGIAEoCSJbCglQYWdlU3RyaXASDQoFdGl0bGUYASABKAkSLQoHbWV0cmljcxgCIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZU1ldHJpYxIQCghzdWJ0aXRsZRgDIAEoCSIsCgpQYWdlQ29sdW1uEg0KBWxhYmVsGAEgASgJEg8KB251bWVyaWMYAiABKAgiggEKCFBhZ2VDZWxsEgwKBHRleHQYASABKAkSDAoEaHJlZhgCIAEoCRIMCgR0b25lGAMgASgJEg4KBnN0cm9uZxgEIAEoCBINCgViYWRnZRgFIAEoCBItCgdhY3Rpb25zGAYgAygLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlQWN0aW9uIt4BCgdQYWdlUm93EikKBWNlbGxzGAEgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlQ2VsbBIMCgR0b25lGAIgASgJEg8KB3BpY2tfaWQYAyABKAkSEgoKcGlja19sYWJlbBgEIAEoCRIrCgdkZXRhaWxzGAUgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlRmFjdBIUCgxkZXRhaWxzX2hyZWYYBiABKAkSMgoNZGV0YWlsX2Jsb2NrcxgHIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJsb2NrIj0KDVBhZ2VQYWdlclBhZ2USDQoFbGFiZWwYASABKAkSDAoEaHJlZhgCIAEoCRIPCgdjdXJyZW50GAMgASgIIngKCVBhZ2VQYWdlchIPCgdzdW1tYXJ5GAEgASgJEi4KBXBhZ2VzGAIgAygLMh8uZWRpZnkuc2NyZWVucy52MS5QYWdlUGFnZXJQYWdlEioKBHNpemUYAyABKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VGaWx0ZXIinAIKCVBhZ2VUYWJsZRINCgV0aXRsZRgBIAEoCRIQCghzdWJ0aXRsZRgCIAEoCRItCgdjb2x1bW5zGAMgAygLMhwuZWRpZnkuc2NyZWVucy52MS5QYWdlQ29sdW1uEicKBHJvd3MYBCADKAsyGS5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VSb3cSEAoIZm9vdG5vdGUYBSABKAkSFQoNZW1wdHlfbWVzc2FnZRgGIAEoCRINCgVjb3VudBgHIAEoCRIyCgxlbXB0eV9hY3Rpb24YCCABKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VBY3Rpb24SKgoFcGFnZXIYCSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VQYWdlciI6CgtQYWdlTGlua1RhYhINCgVsYWJlbBgBIAEoCRIMCgRocmVmGAIgASgJEg4KBmFjdGl2ZRgDIAEoCCKJAQoMUGFnZUxpbmtUYWJzEisKBHRhYnMYASADKAsyHS5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rVGFiEiwKBmJlc2lkZRgCIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUFjdGlvbhINCgVsYWJlbBgDIAEoCRIPCgdzY3JvbGxzGAQgASgIIkkKCVBhZ2VNZXRlchINCgVsYWJlbBgBIAEoCRINCgV2YWx1ZRgCIAEoCRIQCghmcmFjdGlvbhgDIAEoARIMCgRocmVmGAQgASgJIkcKCFBhZ2VMaW5rEgwKBHRleHQYASABKAkSDAoEaHJlZhgCIAEoCRIPCgdjYXB0aW9uGAMgASgJEg4KBmRyYXdlchgEIAEoCCLKAQoMUGFnZVJhaWxQYXJ0EgsKA2tleRgBIAEoCRINCgV0aXRsZRgCIAEoCRIOCgZmaWd1cmUYAyABKAkSEwoLZmlndXJlX2hyZWYYBCABKAkSEwoLZmlndXJlX25vdGUYBSABKAkSKwoGbWV0ZXJzGAYgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlTWV0ZXISDAoEbm90ZRgHIAEoCRIpCgVsaW5rcxgIIAMoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpbmsiWgoIUGFnZVJhaWwSDQoFdGl0bGUYASABKAkSEAoIc3VidGl0bGUYAiABKAkSLQoFcGFydHMYAyADKAsyHi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VSYWlsUGFydCIqCgpQYWdlU2VyaWVzEgwKBG5hbWUYASABKAkSDgoGdmFsdWVzGAIgAygBIrABCglQYWdlQ2hhcnQSDQoFdGl0bGUYASABKAkSEAoIc3VidGl0bGUYAiABKAkSEgoKaG9yaXpvbnRhbBgDIAEoCBISCgpjYXRlZ29yaWVzGAQgAygJEiwKBnNlcmllcxgFIAMoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVNlcmllcxILCgNtaW4YBiABKAESCwoDbWF4GAcgASgBEhIKCmF4aXNfdGl0bGUYCCABKAkiRwoLUGFnZURhdGFSb3cSDQoFbGFiZWwYASABKAkSDAoEbWV0YRgCIAEoCRINCgV2YWx1ZRgDIAEoCRIMCgR0b25lGAQgASgJIjsKDFBhZ2VEYXRhUm93cxIrCgRyb3dzGAEgAygLMh0uZWRpZnkuc2NyZWVucy52MS5QYWdlRGF0YVJvdyI2CglQYWdlTGlua3MSKQoFbGlua3MYASADKAsyGi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rIsECCg1QYWdlUGFuZWxJdGVtEhEKB2hlYWRpbmcYASABKAlIABIOCgR0ZXh0GAIgASgJSAASLQoGZmllbGRzGAMgASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlRmFjdHNIABIuCgRyb3dzGAQgASgLMh4uZWRpZnkuc2NyZWVucy52MS5QYWdlRGF0YVJvd3NIABIsCgVsaW5rcxgFIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpbmtzSAASLAoFbWV0ZXIYBiABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VNZXRlckgAEgwKBHRvbmUYByABKAkSDAoEbGVhZBgIIAEoCRIuCgp0ZXh0X2xpbmtzGAkgAygLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlTGlua0IGCgRraW5kIokBCglQYWdlUGFuZWwSDQoFdGl0bGUYASABKAkSEAoIc3VidGl0bGUYAiABKAkSKwoGYmFkZ2VzGAMgAygLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlQmFkZ2USLgoFaXRlbXMYBCADKAsyHy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VQYW5lbEl0ZW0iaAoLUGFnZVNlZ21lbnQSDQoFbGFiZWwYASABKAkSDgoGYWN0aXZlGAIgASgIEisKBmJsb2NrcxgDIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJsb2NrEg0KBWNvdW50GAQgASgJInEKDFBhZ2VTZWdtZW50cxIvCghzZWdtZW50cxgBIAMoCzIdLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVNlZ21lbnQSDQoFdGl0bGUYAiABKAkSEAoIc3VidGl0bGUYAyABKAkSDwoHY2FwdGlvbhgEIAEoCSLKAgoMUGFnZUxpc3RJdGVtEg0KBXRpdGxlGAEgASgJEg0KBWxpbmVzGAIgAygJEisKBmJhZGdlcxgDIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJhZGdlEi0KB2FjdGlvbnMYBCADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VBY3Rpb24SDAoEaHJlZhgFIAEoCRIMCgR0b25lGAYgASgJEjAKCGNoaWxkcmVuGAcgAygLMh4uZWRpZnkuc2NyZWVucy52MS5QYWdlTGlzdEl0ZW0SDQoFY291bnQYCCABKAkSNgoEa2V5cxgJIAMoCzIoLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUxpc3RJdGVtLktleXNFbnRyeRorCglLZXlzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASI3CghQYWdlQ2hpcBINCgV2YWx1ZRgBIAEoCRINCgVsYWJlbBgCIAEoCRINCgVjb3VudBgDIAEoCSJiCglQYWdlQ2hpcHMSDAoEbmFtZRgBIAEoCRINCgVsYWJlbBgCIAEoCRINCgV2YWx1ZRgDIAEoCRIpCgVjaGlwcxgEIAMoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUNoaXAiaQoIUGFnZUxpc3QSDQoFdGl0bGUYASABKAkSDQoFY291bnQYAiABKAkSEAoIc3VidGl0bGUYAyABKAkSLQoFaXRlbXMYBCADKAsyHi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaXN0SXRlbSKSBgoJUGFnZUJsb2NrEhQKCnNjb3BlX2xpbmUYASABKAlIABIsCgVmYWN0cxgCIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZhY3RzSAASMAoHZmlsdGVycxgDIAEoCzIdLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUZpbHRlcnNIABIsCgVzdHJpcBgEIAEoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVN0cmlwSAASLAoFdGFibGUYBSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VUYWJsZUgAEioKBHJhaWwYBiABKAsyGi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VSYWlsSAASLAoFY2hhcnQYByABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VDaGFydEgAEiwKBXBhbmVsGAggASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlUGFuZWxIABIyCghzZWdtZW50cxgJIAEoCzIeLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVNlZ21lbnRzSAASDwoFZW1wdHkYCiABKAlIABIzCglsaW5rX3RhYnMYCyABKAsyHi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaW5rVGFic0gAEioKBGxpc3QYDCABKAsyGi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VMaXN0SAASLAoFY2hpcHMYDSABKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VDaGlwc0gAEi4KBnJlY29yZBgOIAEoCzIcLmVkaWZ5LnNjcmVlbnMudjEuUGFnZVJlY29yZEgAEiwKBXBhZ2VyGA8gASgLMhsuZWRpZnkuc2NyZWVucy52MS5QYWdlUGFnZXJIABIqCgRmb3JtGBAgASgLMhouZWRpZnkuc2NyZWVucy52MS5QYWdlRm9ybUgAEhEKB3NlY3Rpb24YESABKAlIABIyCghjYWxlbmRhchgSIAEoCzIeLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUNhbGVuZGFySABCBgoEa2luZCKRAQoRUGFnZUNhbGVuZGFyRXZlbnQSDAoEa2luZBgBIAEoCRIOCgZmYW1pbHkYAiABKAkSDQoFdGl0bGUYAyABKAkSDAoEbWV0YRgEIAEoCRIMCgRocmVmGAUgASgJEg8KB3BpY2tfaWQYBiABKAkSEQoJY29udGludWVkGAcgASgIEg8KB2RheV9vZmYYCCABKAgidAoPUGFnZUNhbGVuZGFyRGF5EgwKBGRhdGUYASABKAkSDQoFdG9kYXkYAiABKAgSDwoHZGF5X29mZhgDIAEoCBIzCgZldmVudHMYBCADKAsyIy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VDYWxlbmRhckV2ZW50IqQBCgxQYWdlQ2FsZW5kYXISDAoEeWVhchgBIAEoBRINCgVtb250aBgCIAEoBRINCgV0b2RheRgDIAEoCRIpCgVraW5kcxgEIAMoCzIaLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUNoaXASDAoEa2luZBgFIAEoCRIvCgRkYXlzGAYgAygLMiEuZWRpZnkuc2NyZWVucy52MS5QYWdlQ2FsZW5kYXJEYXkizQEKDFBhZ2VGb3JtSXRlbRIsCgRub3RlGAEgASgLMhwuZWRpZnkuc2NyZWVucy52MS5EcmF3ZXJOb3RlSAASEQoHaGVhZGluZxgCIAEoCUgAEg4KBHRleHQYAyABKAlIABIuCgVmaWVsZBgEIAEoCzIdLmVkaWZ5LnNjcmVlbnMudjEuRHJhd2VyRmllbGRIABI0CglzaG93X3doZW4YBSADKAsyIS5lZGlmeS5zY3JlZW5zLnYxLkRyYXdlckNvbmRpdGlvbkIGCgRraW5kIosBCghQYWdlRm9ybRINCgV0aXRsZRgBIAEoCRIMCgR0ZXh0GAIgASgJEi0KBWl0ZW1zGAMgAygLMh4uZWRpZnkuc2NyZWVucy52MS5QYWdlRm9ybUl0ZW0SFAoMc3VibWl0X2xhYmVsGAQgASgJEgsKA2tleRgFIAEoCRIQCghjYW5fc2F2ZRgGIAEoCCKrAgoKUGFnZVJlY29yZBINCgV0aXRsZRgBIAEoCRIMCgRocmVmGAIgASgJEhAKCHN1YnRpdGxlGAMgASgJEisKBmJhZGdlcxgEIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJhZGdlEi0KB2FjdGlvbnMYBSADKAsyHC5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VBY3Rpb24SKQoFZmFjdHMYBiADKAsyGi5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VGYWN0EiwKB2RldGFpbHMYByADKAsyGy5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VCbG9jaxIUCgxkZXRhaWxzX3BhdGgYCCABKAkSDwoHcGlja19pZBgJIAEoCRISCgpwaWNrX2xhYmVsGAogASgJIlUKClBhZ2VEaWFsb2cSCwoDa2V5GAEgASgJEg0KBXRpdGxlGAIgASgJEisKBmJsb2NrcxgDIAMoCzIbLmVkaWZ5LnNjcmVlbnMudjEuUGFnZUJsb2NrIlEKE1BhZ2VTZWxlY3Rpb25BY3Rpb24SDQoFbGFiZWwYASABKAkSDAoEaHJlZhgCIAEoCRINCgVwYXJhbRgDIAEoCRIOCgZqb2luZWQYBCABKAgiVQoNUGFnZVNlbGVjdGlvbhIMCgRub3VuGAEgASgJEjYKB2FjdGlvbnMYAiADKAsyJS5lZGlmeS5zY3JlZW5zLnYxLlBhZ2VTZWxlY3Rpb25BY3Rpb25C3QEKFGNvbS5lZGlmeS5zY3JlZW5zLnYxQglQYWdlUHJvdG9QAVpYZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9zY3JlZW5zL3YxO3NjcmVlbnN2MaICA0VTWKoCEEVkaWZ5LlNjcmVlbnMuVjHKAhBFZGlmeVxTY3JlZW5zXFYx4gIcRWRpZnlcU2NyZWVuc1xWMVxHUEJNZXRhZGF0YeoCEkVkaWZ5OjpTY3JlZW5zOjpWMWIGcHJvdG8z", [file_edify_screens_v1_form]);
 
 /**
  * @generated from message edify.screens.v1.PageBadge
@@ -1498,6 +1498,15 @@ export type PageBlock = Message<"edify.screens.v1.PageBlock"> & {
      */
     value: string;
     case: "section";
+  } | {
+    /**
+     * A month calendar (the Calendar page), beside the event-type tabs that
+     * draw it as text.
+     *
+     * @generated from field: edify.screens.v1.PageCalendar calendar = 18;
+     */
+    value: PageCalendar;
+    case: "calendar";
   } | { case: undefined; value?: undefined };
 };
 
@@ -1507,6 +1516,172 @@ export type PageBlock = Message<"edify.screens.v1.PageBlock"> & {
  */
 export const PageBlockSchema: GenMessage<PageBlock> = /*@__PURE__*/
   messageDesc(file_edify_screens_v1_page, 36);
+
+/**
+ * One entry of a calendar day: a piece of work, a leave day, a holiday or an
+ * organization event, as the page's chip draws it.
+ *
+ * @generated from message edify.screens.v1.PageCalendarEvent
+ */
+export type PageCalendarEvent = Message<"edify.screens.v1.PageCalendarEvent"> & {
+  /**
+   * "activity", "leave", "holiday" or "event": the event-type tab it is
+   * counted under (PageCalendar.kinds).
+   *
+   * @generated from field: string kind = 1;
+   */
+  kind: string;
+
+  /**
+   * An activity's colour family on the grid and legend ("visit",
+   * "training", "cluster", "core", "project", "programme", "activity");
+   * '' for the other kinds.
+   *
+   * @generated from field: string family = 2;
+   */
+  family: string;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * The line under the title: the place, the run's dates or "Day 2 of 3",
+   * the reason to reschedule, a leave's type, a holiday's kind.
+   *
+   * @generated from field: string meta = 4;
+   */
+  meta: string;
+
+  /**
+   * What it opens, or ''.
+   *
+   * @generated from field: string href = 5;
+   */
+  href: string;
+
+  /**
+   * What its tick box ticks for the page's bar (PageSelection), or '' for
+   * none. Every day of a multi-day activity carries the same one.
+   *
+   * @generated from field: string pick_id = 6;
+   */
+  pickId: string;
+
+  /**
+   * A later day of an entry that runs over several days: it carries on the
+   * previous day's chip.
+   *
+   * @generated from field: bool continued = 7;
+   */
+  continued: boolean;
+
+  /**
+   * Work planned on a public holiday or its owner's leave: to reschedule.
+   *
+   * @generated from field: bool day_off = 8;
+   */
+  dayOff: boolean;
+};
+
+/**
+ * Describes the message edify.screens.v1.PageCalendarEvent.
+ * Use `create(PageCalendarEventSchema)` to create a new message.
+ */
+export const PageCalendarEventSchema: GenMessage<PageCalendarEvent> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_page, 37);
+
+/**
+ * One day of the month that has entries.
+ *
+ * @generated from message edify.screens.v1.PageCalendarDay
+ */
+export type PageCalendarDay = Message<"edify.screens.v1.PageCalendarDay"> & {
+  /**
+   * The day, "2026-11-26".
+   *
+   * @generated from field: string date = 1;
+   */
+  date: string;
+
+  /**
+   * @generated from field: bool today = 2;
+   */
+  today: boolean;
+
+  /**
+   * Any of its entries is to be rescheduled.
+   *
+   * @generated from field: bool day_off = 3;
+   */
+  dayOff: boolean;
+
+  /**
+   * In the page's order: events, holidays, leave, work, each by title.
+   *
+   * @generated from field: repeated edify.screens.v1.PageCalendarEvent events = 4;
+   */
+  events: PageCalendarEvent[];
+};
+
+/**
+ * Describes the message edify.screens.v1.PageCalendarDay.
+ * Use `create(PageCalendarDaySchema)` to create a new message.
+ */
+export const PageCalendarDaySchema: GenMessage<PageCalendarDay> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_page, 38);
+
+/**
+ * @generated from message edify.screens.v1.PageCalendar
+ */
+export type PageCalendar = Message<"edify.screens.v1.PageCalendar"> & {
+  /**
+   * @generated from field: int32 year = 1;
+   */
+  year: number;
+
+  /**
+   * @generated from field: int32 month = 2;
+   */
+  month: number;
+
+  /**
+   * Today ("2026-11-13") when it falls in this month, else ''.
+   *
+   * @generated from field: string today = 3;
+   */
+  today: string;
+
+  /**
+   * The event-type tabs: each one's key ("all", "activity", "leave",
+   * "holiday", "event"), label and count.
+   *
+   * @generated from field: repeated edify.screens.v1.PageChip kinds = 4;
+   */
+  kinds: PageChip[];
+
+  /**
+   * The tab the page opens on (?event_kind=), "all" for every kind.
+   *
+   * @generated from field: string kind = 5;
+   */
+  kind: string;
+
+  /**
+   * The days of the month with entries, in order.
+   *
+   * @generated from field: repeated edify.screens.v1.PageCalendarDay days = 6;
+   */
+  days: PageCalendarDay[];
+};
+
+/**
+ * Describes the message edify.screens.v1.PageCalendar.
+ * Use `create(PageCalendarSchema)` to create a new message.
+ */
+export const PageCalendarSchema: GenMessage<PageCalendar> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_page, 39);
 
 /**
  * One part of a form on a page, in the order the form draws them.
@@ -1556,7 +1731,7 @@ export type PageFormItem = Message<"edify.screens.v1.PageFormItem"> & {
  * Use `create(PageFormItemSchema)` to create a new message.
  */
 export const PageFormItemSchema: GenMessage<PageFormItem> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_page, 37);
+  messageDesc(file_edify_screens_v1_page, 40);
 
 /**
  * A form the page shows itself (Escalations' "Escalate to …"), saved through
@@ -1607,7 +1782,7 @@ export type PageForm = Message<"edify.screens.v1.PageForm"> & {
  * Use `create(PageFormSchema)` to create a new message.
  */
 export const PageFormSchema: GenMessage<PageForm> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_page, 38);
+  messageDesc(file_edify_screens_v1_page, 41);
 
 /**
  * A record card that opens in place (a cluster, a school, a project): its
@@ -1681,7 +1856,7 @@ export type PageRecord = Message<"edify.screens.v1.PageRecord"> & {
  * Use `create(PageRecordSchema)` to create a new message.
  */
 export const PageRecordSchema: GenMessage<PageRecord> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_page, 39);
+  messageDesc(file_edify_screens_v1_page, 42);
 
 /**
  * A dialog a page opens itself (My Targets' Submit MSCS), opened by a link
@@ -1711,7 +1886,7 @@ export type PageDialog = Message<"edify.screens.v1.PageDialog"> & {
  * Use `create(PageDialogSchema)` to create a new message.
  */
 export const PageDialogSchema: GenMessage<PageDialog> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_page, 40);
+  messageDesc(file_edify_screens_v1_page, 43);
 
 /**
  * What the page's bar for ticked rows does: each of its buttons opens a
@@ -1752,7 +1927,7 @@ export type PageSelectionAction = Message<"edify.screens.v1.PageSelectionAction"
  * Use `create(PageSelectionActionSchema)` to create a new message.
  */
 export const PageSelectionActionSchema: GenMessage<PageSelectionAction> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_page, 41);
+  messageDesc(file_edify_screens_v1_page, 44);
 
 /**
  * @generated from message edify.screens.v1.PageSelection
@@ -1776,5 +1951,5 @@ export type PageSelection = Message<"edify.screens.v1.PageSelection"> & {
  * Use `create(PageSelectionSchema)` to create a new message.
  */
 export const PageSelectionSchema: GenMessage<PageSelection> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_page, 42);
+  messageDesc(file_edify_screens_v1_page, 45);
 

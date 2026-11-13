@@ -1,7 +1,7 @@
 'use client';
 /*
  * The Calendar under lg (the page's calendar-mobile section): the month as a
- * small grid with a dot on each day that has events, ‹ Today › around it,
+ * small grid with a dot for each kind of event a day holds, ‹ Today › around it,
  * and the chosen day's events under it ("All month" shows every day).
  * Today is chosen when the month is today's.
  */
@@ -15,6 +15,14 @@ import { Icon } from '../shell/icons';
 import { CalendarAgenda } from './CalendarAgenda';
 
 const INITIALS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const;
+/** A dot under a day for each kind it holds (calendar-mobile__dot--<kind>). */
+const DOT_KINDS = ['activity', 'leave', 'holiday', 'event'] as const;
+const DOT_TONES: Readonly<Record<(typeof DOT_KINDS)[number], string>> = {
+  activity: 'bg-[var(--brand-primary)]',
+  leave: 'bg-[var(--edify-warning)]',
+  holiday: 'bg-[var(--edify-danger)]',
+  event: 'bg-[var(--edify-purple)]',
+};
 
 export interface CalendarPhoneProps {
   readonly month: CalendarMonth;
@@ -63,7 +71,11 @@ export function CalendarPhone({ month, today, eyebrow, query, dayEmpty }: Calend
             className="flex h-10 flex-col items-center justify-center"
           >
             <span className={`grid h-8 w-8 place-items-center rounded-full text-[14px] font-semibold ${chosen === day.day ? 'bg-[var(--edify-accent)] text-white' : ''} ${day.day === today && chosen !== day.day ? 'ring-2 ring-[var(--edify-accent)]' : ''}`}>{day.day}</span>
-            <i className={`h-1 w-1 rounded-full ${day.events.length ? 'bg-[var(--edify-accent)]' : 'bg-transparent'}`} aria-hidden="true" />
+            <span className="flex h-1.5 gap-0.5" aria-hidden="true">
+              {DOT_KINDS.filter((kind) => day.events.some((event) => event.kind === kind)).map((kind) => (
+                <i key={kind} className={`h-1.5 w-1.5 rounded-full ${DOT_TONES[kind]}`} data-dot={kind} />
+              ))}
+            </span>
           </button>
         ))}
       </div>

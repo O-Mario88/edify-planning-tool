@@ -43,7 +43,24 @@ const ANSWER: JsonValue = {
         ],
       },
     },
+    {
+      calendar: {
+        year: 2026,
+        month: 2,
+        today: '2026-02-16',
+        kind: 'all',
+        kinds: [
+          { value: 'all', label: 'All events', count: '2' },
+          { value: 'holiday', label: 'Holidays', count: '1' },
+        ],
+        days: [
+          { date: '2026-02-03', events: [{ kind: 'activity', family: 'visit', title: 'Donor Visit', meta: 'Kimenyedde Primary', href: '/my-plan/a1', pickId: 'a1' }] },
+          { date: '2026-02-16', today: true, dayOff: true, events: [{ kind: 'holiday', title: 'Archbishop Janani Luwum Day', meta: 'Public holiday' }, { kind: 'activity', family: 'training', title: 'Group Training', meta: 'Reschedule: public holiday · Mukono', href: '/my-plan/a2', dayOff: true }] },
+        ],
+      },
+    },
   ],
+  selection: { noun: 'activities selected', actions: [{ label: 'Reschedule', href: '/activity-selection/reschedule', param: 'ids', joined: true }] },
 };
 
 function draw(query: Record<string, string>, view: 'month' | 'agenda' = 'month'): string {
@@ -68,11 +85,29 @@ describe('CalendarBody', () => {
     expect(html).toContain('Program Lead 1&#x27;s team');
   });
 
-  it('opens the composer and the other event tabs on the existing web', () => {
+  it('opens the composer on the existing web and each event tab on this page', () => {
     const html = draw({});
     expect(html).toContain(`href="${EXISTING}"`);
     expect(html).toContain('Add other event');
-    expect(html).toContain(`href="${EXISTING}?event_kind=holiday"`);
+    expect(html).toContain('href="/calendar?event_kind=holiday"');
+  });
+
+  it('colours each entry by its family, marks the day off and ticks what may be moved', () => {
+    const html = draw({ month: '2', year: '2026' });
+    expect(html).toMatch(/data-event="activity" data-family="visit"[^>]*><input type="checkbox"[^>]*data-pick="a1"[^>]*aria-label="Select Donor Visit, Kimenyedde Primary"/);
+    expect(html).toMatch(/data-day="16" data-day-off="true"/);
+    expect(html).toMatch(/data-event="activity" data-family="training" data-day-off="true"/);
+    expect(html).toContain('On a holiday or leave day: reschedule');
+  });
+
+  it('draws only the open tab’s entries', () => {
+    const answer = fromJson(GetPageResponseSchema, ANSWER);
+    const block = answer.blocks.at(-1);
+    if (block?.kind.case === 'calendar') block.kind.value.kind = 'holiday';
+    const html = renderToStaticMarkup(<CalendarBody answer={answer} query={{ month: '2', year: '2026', event_kind: 'holiday' }} view="month" existingHref={EXISTING} now={new Date(Date.UTC(2026, 1, 16, 9))} />);
+    expect(html).toContain('Archbishop Janani Luwum Day');
+    expect(html).not.toContain('Donor Visit');
+    expect(html).toMatch(/aria-selected="true"[^>]*><span>Holidays<\/span>/);
   });
 
   it('lists only the days with events in the Agenda view and keeps the view in the filters', () => {
