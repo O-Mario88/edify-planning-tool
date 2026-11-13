@@ -79,6 +79,35 @@ PRIORITY_LABEL = {
     "low": "Low",
 }
 
+#: Activities that leave the queue whatever their next action (_activity_todos).
+ACTIVITY_TODO_SETTLED_STATUSES = ("closed", "cancelled", "rejected", "not_planned")
+#: A weekly fund request waiting on its owner's confirmation, and the returns
+#: the owner must fix (_fund_request_todos).
+WEEKLY_CONFIRM_STATUS = "pending_responsible_confirmation"
+WEEKLY_RETURNED_STATUSES = (
+    "returned_by_pl",
+    "returned_by_cd",
+    "returned_by_rvp",
+    "returned_by_accountant",
+)
+#: The weekly status each approving role decides (_fund_request_todos).
+WEEKLY_APPROVER_STATUS = {
+    "Program Lead": "submitted_to_pl",
+    "CountryDirector": "submitted_to_cd",
+}
+#: Monthly fund plans returned to the requester (_fund_request_todos).
+MONTHLY_RETURNED_STATUSES = ("returned_by_pl", "returned_by_accountant")
+#: Partner work past its date that no longer needs chasing
+#: (_partner_delay_todos).
+PARTNER_DELAY_SETTLED_STATUSES = (
+    "closed",
+    "cancelled",
+    "rejected",
+    "ia_verified",
+    "awaiting_ia_verification",
+    "submitted_to_pl",
+)
+
 
 def _owner_ids(principal, scope):
     """Both identifier spaces — activities stamp responsible_staff_id as either
@@ -158,7 +187,7 @@ def _activity_todos(principal, scope, today, fy):
     qs = (
         Activity.objects.filter(deleted_at__isnull=True, fy=fy)
         .filter(ownership)
-        .exclude(status__in=["closed", "cancelled", "rejected", "not_planned"])
+        .exclude(status__in=list(ACTIVITY_TODO_SETTLED_STATUSES))
         .select_related("school", "cluster")
         .prefetch_related("schedule_cost_lines__advance_requests")[:120]
     )
@@ -203,15 +232,10 @@ def _fund_request_todos(principal, role):
 
     todos = []
     uid = getattr(principal, "user_id", None)
-    returned_statuses = [
-        "returned_by_pl",
-        "returned_by_cd",
-        "returned_by_rvp",
-        "returned_by_accountant",
-    ]
+    returned_statuses = list(WEEKLY_RETURNED_STATUSES)
     own = WeeklyFundRequest.objects.filter(
         responsible_user=uid,
-        status__in=["pending_responsible_confirmation", *returned_statuses],
+        status__in=[WEEKLY_CONFIRM_STATUS, *returned_statuses],
     ).order_by("-week_start_date")[:10]
     for w in own:
         returned = w.status in returned_statuses
@@ -237,10 +261,7 @@ def _fund_request_todos(principal, role):
             }
         )
 
-    approver_status = {
-        "Program Lead": "submitted_to_pl",
-        "CountryDirector": "submitted_to_cd",
-    }.get(role)
+    approver_status = WEEKLY_APPROVER_STATUS.get(role)
     supervised: list[str] = []
     if approver_status:
         approver_qs = WeeklyFundRequest.objects.filter(status=approver_status)
@@ -380,7 +401,7 @@ def _fund_request_todos(principal, role):
     for fr in FundRequest.objects.filter(
         submitted_by_user_id=uid,
         period="monthly",
-        status__in=["returned_by_pl", "returned_by_accountant"],
+        status__in=list(MONTHLY_RETURNED_STATUSES),
     ).order_by("-reviewed_at")[:8]:
         by = "Accountant" if fr.status == "returned_by_accountant" else "Program Lead"
         todos.append(
@@ -1470,16 +1491,7 @@ def _partner_delay_todos(principal, scope, today):
             monitored_by_staff_id__in=owner_ids,
             planned_date__lt=today,
         )
-        .exclude(
-            status__in=[
-                "closed",
-                "cancelled",
-                "rejected",
-                "ia_verified",
-                "awaiting_ia_verification",
-                "submitted_to_pl",
-            ]
-        )
+        .exclude(status__in=list(PARTNER_DELAY_SETTLED_STATUSES))
         .select_related("school")[:10]
     )
     todos = []

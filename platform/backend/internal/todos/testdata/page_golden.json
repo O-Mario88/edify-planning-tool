@@ -1,0 +1,5483 @@
+{
+ "today": "2026-11-13",
+ "answers": [
+  {
+   "role": "CCEO",
+   "rows": [],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "0 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": []
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "0",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "0",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "0",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "0",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "panel": {
+       "title": "",
+       "subtitle": "",
+       "badges": [],
+       "items": [
+        {
+         "text": "You're all caught up"
+        },
+        {
+         "text": "No actions require you right now. New To-Dos appear automatically as work moves through the pipeline."
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  },
+  {
+   "role": "CCEO",
+   "rows": [
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Finance",
+     "priority": "weird",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Plan Visit",
+     "action_url": "/schools/cmw0000000000000000000001",
+     "shape": "/schools/{id}",
+     "due": ""
+    }
+   ],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "1 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": [
+      {
+       "key": "primary-action",
+       "label": "Do next: Schedule V1 Core Visit — Nakifuma School",
+       "primary": true,
+       "enabled": true,
+       "reason": "",
+       "href": "/schools/cmw0000000000000000000001"
+      }
+     ]
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "list": {
+       "title": "Do next",
+       "count": "1 open",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        }
+       ]
+      }
+     },
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "0",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "1",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "0",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "1",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "cat",
+       "label": "Category",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All Categories",
+         "count": ""
+        },
+        {
+         "value": "Finance",
+         "label": "Finance",
+         "count": "1"
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "prio",
+       "label": "Priority",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All",
+         "count": ""
+        },
+        {
+         "value": "critical",
+         "label": "Critical",
+         "count": ""
+        },
+        {
+         "value": "high",
+         "label": "High",
+         "count": ""
+        },
+        {
+         "value": "medium",
+         "label": "Medium",
+         "count": ""
+        },
+        {
+         "value": "low",
+         "label": "Low",
+         "count": ""
+        }
+       ]
+      }
+     },
+     {
+      "list": {
+       "title": "",
+       "count": "",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "weird"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  },
+  {
+   "role": "CCEO",
+   "rows": [
+    {
+     "title": "Start",
+     "category": "Approval",
+     "priority": "critical",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "Kasawo C/U P/S & Annex · partner",
+     "action_label": "Open",
+     "action_url": "/activities/cmw0000000000000000000001/evidence",
+     "shape": "/activities/{id}/evidence",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Partner",
+     "priority": "weird",
+     "status_key": "blocked",
+     "actionable": false,
+     "linked": "  Spaced   Name  · partner",
+     "action_label": "Open",
+     "action_url": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+     "shape": "/my-plan/{id}/confirm-reimbursement-receipt",
+     "due": ""
+    }
+   ],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "2 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": [
+      {
+       "key": "primary-action",
+       "label": "Do next: Start",
+       "primary": true,
+       "enabled": true,
+       "reason": "",
+       "href": "/activities/cmw0000000000000000000001/evidence"
+      }
+     ]
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "list": {
+       "title": "Do next",
+       "count": "2 open",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Start",
+         "lines": [
+          "Kasawo C/U P/S & Annex · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/evidence",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Spaced Name · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {}
+        }
+       ]
+      }
+     },
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "1",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "0",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "1",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "1",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "cat",
+       "label": "Category",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All Categories",
+         "count": ""
+        },
+        {
+         "value": "Approval",
+         "label": "Approval",
+         "count": "1"
+        },
+        {
+         "value": "Partner",
+         "label": "Partner",
+         "count": "1"
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "prio",
+       "label": "Priority",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All",
+         "count": ""
+        },
+        {
+         "value": "critical",
+         "label": "Critical",
+         "count": ""
+        },
+        {
+         "value": "high",
+         "label": "High",
+         "count": ""
+        },
+        {
+         "value": "medium",
+         "label": "Medium",
+         "count": ""
+        },
+        {
+         "value": "low",
+         "label": "Low",
+         "count": ""
+        }
+       ]
+      }
+     },
+     {
+      "list": {
+       "title": "",
+       "count": "",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Start",
+         "lines": [
+          "Kasawo C/U P/S & Annex · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/evidence",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Approval",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Spaced Name · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Partner",
+          "prio": "weird"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  },
+  {
+   "role": "CCEO",
+   "rows": [
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Budget Approval",
+     "priority": "weird",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "  Spaced   Name ",
+     "action_label": "Plan Visit",
+     "action_url": "/my-plan/cmw0000000000000000000001?learning_results=1",
+     "shape": "/my-plan/{id}?learning_results=1",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Leave",
+     "priority": "critical",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Kasawo C/U P/S & Annex · partner",
+     "action_label": "Open",
+     "action_url": "/extra-work",
+     "shape": "/extra-work",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Start",
+     "category": "Business Transformation",
+     "priority": "medium",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Review & Sign",
+     "action_url": "/schools/1000#school-bt-title",
+     "shape": "/schools/{code}#school-bt-title",
+     "due": "2026-11-18"
+    }
+   ],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "3 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": [
+      {
+       "key": "primary-action",
+       "label": "Do next: Plan FY2028 Activities",
+       "primary": true,
+       "enabled": true,
+       "reason": "",
+       "href": "/extra-work"
+      }
+     ]
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "list": {
+       "title": "Do next",
+       "count": "3 open",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Kasawo C/U P/S & Annex · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/extra-work",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        },
+        {
+         "title": "Start",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/1000#school-bt-title",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {}
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Spaced Name"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001?learning_results=1",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        }
+       ]
+      }
+     },
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "1",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "1",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "0",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "2",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "cat",
+       "label": "Category",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All Categories",
+         "count": ""
+        },
+        {
+         "value": "Budget Approval",
+         "label": "Budget Approval",
+         "count": "1"
+        },
+        {
+         "value": "Business Transformation",
+         "label": "Business Transformation",
+         "count": "1"
+        },
+        {
+         "value": "Leave",
+         "label": "Leave",
+         "count": "1"
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "prio",
+       "label": "Priority",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All",
+         "count": ""
+        },
+        {
+         "value": "critical",
+         "label": "Critical",
+         "count": ""
+        },
+        {
+         "value": "high",
+         "label": "High",
+         "count": ""
+        },
+        {
+         "value": "medium",
+         "label": "Medium",
+         "count": ""
+        },
+        {
+         "value": "low",
+         "label": "Low",
+         "count": ""
+        }
+       ]
+      }
+     },
+     {
+      "list": {
+       "title": "",
+       "count": "",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Kasawo C/U P/S & Annex · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/extra-work",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Leave",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/1000#school-bt-title",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Business Transformation",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Spaced Name"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001?learning_results=1",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Budget Approval",
+          "prio": "weird"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  },
+  {
+   "role": "CCEO",
+   "rows": [
+    {
+     "title": "Confirm Fund Request",
+     "category": "Planning",
+     "priority": "low",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "Kasawo C/U P/S & Annex",
+     "action_label": "Review & Sign",
+     "action_url": "/activities/cmw0000000000000000000001/evidence",
+     "shape": "/activities/{id}/evidence",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Business Transformation",
+     "priority": "medium",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Review & Sign",
+     "action_url": "/schools",
+     "shape": "/schools",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Leave",
+     "priority": "medium",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Review & Sign",
+     "action_url": "/extra-work",
+     "shape": "/extra-work",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Execution",
+     "priority": "critical",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Nakifuma School · partner",
+     "action_label": "Plan Visit",
+     "action_url": "/my-plan/cmw0000000000000000000001/accountability",
+     "shape": "/my-plan/{id}/accountability",
+     "due": "2026-11-18"
+    }
+   ],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "4 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": [
+      {
+       "key": "primary-action",
+       "label": "Do next: Fix School Contact",
+       "primary": true,
+       "enabled": true,
+       "reason": "",
+       "href": "/my-plan/cmw0000000000000000000001/accountability"
+      }
+     ]
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "list": {
+       "title": "Do next",
+       "count": "4 open",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Fix School Contact",
+         "lines": [
+          "Nakifuma School · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/accountability",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {}
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {}
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/extra-work",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        }
+       ]
+      }
+     },
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "1",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "1",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "1",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "4",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "cat",
+       "label": "Category",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All Categories",
+         "count": ""
+        },
+        {
+         "value": "Business Transformation",
+         "label": "Business Transformation",
+         "count": "1"
+        },
+        {
+         "value": "Execution",
+         "label": "Execution",
+         "count": "1"
+        },
+        {
+         "value": "Leave",
+         "label": "Leave",
+         "count": "1"
+        },
+        {
+         "value": "Planning",
+         "label": "Planning",
+         "count": "1"
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "prio",
+       "label": "Priority",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All",
+         "count": ""
+        },
+        {
+         "value": "critical",
+         "label": "Critical",
+         "count": ""
+        },
+        {
+         "value": "high",
+         "label": "High",
+         "count": ""
+        },
+        {
+         "value": "medium",
+         "label": "Medium",
+         "count": ""
+        },
+        {
+         "value": "low",
+         "label": "Low",
+         "count": ""
+        }
+       ]
+      }
+     },
+     {
+      "list": {
+       "title": "",
+       "count": "",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Fix School Contact",
+         "lines": [
+          "Nakifuma School · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/accountability",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Business Transformation",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/extra-work",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Leave",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Kasawo C/U P/S & Annex"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/evidence",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "info",
+         "keys": {
+          "cat": "Planning",
+          "prio": "low"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  },
+  {
+   "role": "CCEO",
+   "rows": [
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Core Schools",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Review & Sign",
+     "action_url": "/ssa/verification/?status=returned&mine=1",
+     "shape": "/ssa/verification/?status=returned&mine=1",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Start",
+     "category": "Business Transformation",
+     "priority": "medium",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Fix",
+     "action_url": "/activities/cmw0000000000000000000001/start",
+     "shape": "/activities/{id}/start",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "overdue",
+     "actionable": false,
+     "linked": "Nakifuma School",
+     "action_label": "Review & Sign",
+     "action_url": "/clusters",
+     "shape": "/clusters",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "IA Verification",
+     "priority": "high",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Fix",
+     "action_url": "/schools/1000#school-bt-title",
+     "shape": "/schools/{code}#school-bt-title",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "SSA",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Kasawo C/U P/S & Annex · partner",
+     "action_label": "Fix",
+     "action_url": "/planning",
+     "shape": "/planning",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Execution",
+     "priority": "weird",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Open",
+     "action_url": "/planning/visit-requests",
+     "shape": "/planning/visit-requests",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Approval",
+     "priority": "critical",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Review & Sign",
+     "action_url": "/fund-requests/weekly",
+     "shape": "/fund-requests/weekly",
+     "due": "2026-11-18"
+    }
+   ],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "7 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": [
+      {
+       "key": "primary-action",
+       "label": "Do next: Plan FY2028 Activities",
+       "primary": true,
+       "enabled": true,
+       "reason": "",
+       "href": "/fund-requests/weekly"
+      }
+     ]
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "list": {
+       "title": "Do next",
+       "count": "7 open",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/fund-requests/weekly",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/1000#school-bt-title",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "brand",
+         "keys": {}
+        },
+        {
+         "title": "Start",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/start",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {}
+        }
+       ]
+      }
+     },
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "1",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "3",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "2",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "5",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "cat",
+       "label": "Category",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All Categories",
+         "count": ""
+        },
+        {
+         "value": "Approval",
+         "label": "Approval",
+         "count": "1"
+        },
+        {
+         "value": "Business Transformation",
+         "label": "Business Transformation",
+         "count": "1"
+        },
+        {
+         "value": "Core Schools",
+         "label": "Core Schools",
+         "count": "1"
+        },
+        {
+         "value": "Execution",
+         "label": "Execution",
+         "count": "1"
+        },
+        {
+         "value": "IA Verification",
+         "label": "IA Verification",
+         "count": "1"
+        },
+        {
+         "value": "Planning",
+         "label": "Planning",
+         "count": "1"
+        },
+        {
+         "value": "SSA",
+         "label": "SSA",
+         "count": "1"
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "prio",
+       "label": "Priority",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All",
+         "count": ""
+        },
+        {
+         "value": "critical",
+         "label": "Critical",
+         "count": ""
+        },
+        {
+         "value": "high",
+         "label": "High",
+         "count": ""
+        },
+        {
+         "value": "medium",
+         "label": "Medium",
+         "count": ""
+        },
+        {
+         "value": "low",
+         "label": "Low",
+         "count": ""
+        }
+       ]
+      }
+     },
+     {
+      "list": {
+       "title": "",
+       "count": "",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/fund-requests/weekly",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Approval",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/1000#school-bt-title",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "brand",
+         "keys": {
+          "cat": "IA Verification",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/start",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Business Transformation",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Kasawo C/U P/S & Annex · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/planning",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "caution",
+         "keys": {
+          "cat": "SSA",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/ssa/verification/?status=returned&mine=1",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Core Schools",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Fix School Contact",
+         "lines": [
+          "Nakifuma School"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/clusters",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "info",
+         "keys": {
+          "cat": "Planning",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [
+          "Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/planning/visit-requests",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "weird"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  },
+  {
+   "role": "CCEO",
+   "rows": [
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Leave",
+     "priority": "weird",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Open",
+     "action_url": "/partner/activities/cmw0000000000000000000001/evidence",
+     "shape": "/partner/activities/{id}/evidence",
+     "due": ""
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Finance",
+     "priority": "high",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "  Spaced   Name  · partner",
+     "action_label": "Review & Sign",
+     "action_url": "/fund-requests/weekly/cmw0000000000000000000001",
+     "shape": "/fund-requests/weekly/{id}",
+     "due": ""
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Finance",
+     "priority": "critical",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Review & Sign",
+     "action_url": "/fund-requests/weekly/cmw0000000000000000000001",
+     "shape": "/fund-requests/weekly/{id}",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Execution",
+     "priority": "medium",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Nakifuma School",
+     "action_label": "Fix",
+     "action_url": "/activities/cmw0000000000000000000001/salesforce-id",
+     "shape": "/activities/{id}/salesforce-id",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Business Transformation",
+     "priority": "weird",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Open",
+     "action_url": "/activities/cmw0000000000000000000001/submit",
+     "shape": "/activities/{id}/submit",
+     "due": ""
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Business Transformation",
+     "priority": "high",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Plan Visit",
+     "action_url": "/partner/activities/cmw0000000000000000000001/evidence",
+     "shape": "/partner/activities/{id}/evidence",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Start",
+     "category": "IA Verification",
+     "priority": "weird",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Kasawo C/U P/S & Annex",
+     "action_label": "Plan Visit",
+     "action_url": "/fund-requests/weekly",
+     "shape": "/fund-requests/weekly",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Execution",
+     "priority": "weird",
+     "status_key": "waiting_me",
+     "actionable": false,
+     "linked": "",
+     "action_label": "Review & Sign",
+     "action_url": "/my-plan/cmw0000000000000000000001/accountability",
+     "shape": "/my-plan/{id}/accountability",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Finance",
+     "priority": "high",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Fix",
+     "action_url": "/activities/cmw0000000000000000000001/evidence",
+     "shape": "/activities/{id}/evidence",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Core Schools",
+     "priority": "medium",
+     "status_key": "open",
+     "actionable": false,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Open",
+     "action_url": "/activities/cmw0000000000000000000001/complete",
+     "shape": "/activities/{id}/complete",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Approval",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "St. Mary's \"Hill\"",
+     "action_label": "Review & Sign",
+     "action_url": "/planning",
+     "shape": "/planning",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Evidence",
+     "priority": "high",
+     "status_key": "returned",
+     "actionable": false,
+     "linked": "Nakifuma School",
+     "action_label": "Review & Sign",
+     "action_url": "/partner/activities/cmw0000000000000000000001/evidence",
+     "shape": "/partner/activities/{id}/evidence",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Budget Approval",
+     "priority": "weird",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Fix",
+     "action_url": "/planning",
+     "shape": "/planning",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Approval",
+     "priority": "high",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Open",
+     "action_url": "/clusters/cmw0000000000000000000001/profile?tab=attendance&show=missing",
+     "shape": "/clusters/{id}/profile?tab=attendance&show=missing",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "SSA",
+     "priority": "weird",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "  Spaced   Name ",
+     "action_label": "Fix",
+     "action_url": "",
+     "shape": "",
+     "due": "2026-11-13"
+    }
+   ],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "12 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": [
+      {
+       "key": "primary-action",
+       "label": "Do next: Schedule V1 Core Visit — Nakifuma School",
+       "primary": true,
+       "enabled": true,
+       "reason": "",
+       "href": "/fund-requests/weekly/cmw0000000000000000000001"
+      }
+     ]
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "list": {
+       "title": "Do next",
+       "count": "12 open",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [
+          "Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/fund-requests/weekly/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/evidence",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/clusters/cmw0000000000000000000001/profile?tab=attendance&show=missing",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        }
+       ]
+      }
+     },
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "1",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "1",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "1",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "5",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "cat",
+       "label": "Category",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All Categories",
+         "count": ""
+        },
+        {
+         "value": "Approval",
+         "label": "Approval",
+         "count": "2"
+        },
+        {
+         "value": "Budget Approval",
+         "label": "Budget Approval",
+         "count": "1"
+        },
+        {
+         "value": "Business Transformation",
+         "label": "Business Transformation",
+         "count": "1"
+        },
+        {
+         "value": "Core Schools",
+         "label": "Core Schools",
+         "count": "1"
+        },
+        {
+         "value": "Execution",
+         "label": "Execution",
+         "count": "2"
+        },
+        {
+         "value": "Finance",
+         "label": "Finance",
+         "count": "3"
+        },
+        {
+         "value": "IA Verification",
+         "label": "IA Verification",
+         "count": "1"
+        },
+        {
+         "value": "SSA",
+         "label": "SSA",
+         "count": "1"
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "prio",
+       "label": "Priority",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All",
+         "count": ""
+        },
+        {
+         "value": "critical",
+         "label": "Critical",
+         "count": ""
+        },
+        {
+         "value": "high",
+         "label": "High",
+         "count": ""
+        },
+        {
+         "value": "medium",
+         "label": "Medium",
+         "count": ""
+        },
+        {
+         "value": "low",
+         "label": "Low",
+         "count": ""
+        }
+       ]
+      }
+     },
+     {
+      "list": {
+       "title": "",
+       "count": "",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [
+          "Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/fund-requests/weekly/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/evidence",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/clusters/cmw0000000000000000000001/profile?tab=attendance&show=missing",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Approval",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Spaced Name · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/fund-requests/weekly/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "St. Mary's \"Hill\""
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/planning",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Approval",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/salesforce-id",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Fix School Contact",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/complete",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Core Schools",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Kasawo C/U P/S & Annex"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/fund-requests/weekly",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "brand",
+         "keys": {
+          "cat": "IA Verification",
+          "prio": "weird"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/accountability",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "weird"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/planning",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Budget Approval",
+          "prio": "weird"
+         }
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [
+          "Spaced Name"
+         ],
+         "badges": [],
+         "actions": [],
+         "href": "",
+         "tone": "caution",
+         "keys": {
+          "cat": "SSA",
+          "prio": "weird"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/submit",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Business Transformation",
+          "prio": "weird"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  },
+  {
+   "role": "CCEO",
+   "rows": [
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Baseline & Field Data",
+     "priority": "weird",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Fix",
+     "action_url": "/schools/1000#school-bt-title",
+     "shape": "/schools/{code}#school-bt-title",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Business Transformation",
+     "priority": "high",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "St. Mary's \"Hill\"",
+     "action_label": "Fix",
+     "action_url": "/partner-oversight/?partner=cmw0000000000000000000001&status=returned",
+     "shape": "/partner-oversight/?partner={id}&status=returned",
+     "due": ""
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Core Schools",
+     "priority": "weird",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Review & Sign",
+     "action_url": "/activities/cmw0000000000000000000001/start",
+     "shape": "/activities/{id}/start",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "SSA",
+     "priority": "critical",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "  Spaced   Name  · partner",
+     "action_label": "Review & Sign",
+     "action_url": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+     "shape": "/my-plan/{id}/confirm-reimbursement-receipt",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Execution",
+     "priority": "medium",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Review & Sign",
+     "action_url": "/partner-oversight/?partner=cmw0000000000000000000001&status=returned",
+     "shape": "/partner-oversight/?partner={id}&status=returned",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Baseline & Field Data",
+     "priority": "low",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Review & Sign",
+     "action_url": "/core-schools",
+     "shape": "/core-schools",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Approval",
+     "priority": "critical",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "Koome <Island> · partner",
+     "action_label": "Plan Visit",
+     "action_url": "/schools/1000#school-bt-title",
+     "shape": "/schools/{code}#school-bt-title",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Data Quality",
+     "priority": "high",
+     "status_key": "open",
+     "actionable": true,
+     "linked": "Koome <Island>",
+     "action_label": "Open",
+     "action_url": "/my-plan/cmw0000000000000000000001/accountability",
+     "shape": "/my-plan/{id}/accountability",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Planning",
+     "priority": "low",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "Kasawo C/U P/S & Annex",
+     "action_label": "Review & Sign",
+     "action_url": "/partner/activities/cmw0000000000000000000001/evidence",
+     "shape": "/partner/activities/{id}/evidence",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Planning",
+     "priority": "low",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Open",
+     "action_url": "/activities/cmw0000000000000000000001/complete",
+     "shape": "/activities/{id}/complete",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Start",
+     "category": "Finance",
+     "priority": "high",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Open",
+     "action_url": "/my-plan",
+     "shape": "/my-plan",
+     "due": ""
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Baseline & Field Data",
+     "priority": "low",
+     "status_key": "open",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Plan Visit",
+     "action_url": "",
+     "shape": "",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Start",
+     "category": "Finance",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Fix",
+     "action_url": "/planning",
+     "shape": "/planning",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Business Transformation",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Koome <Island> · partner",
+     "action_label": "Fix",
+     "action_url": "/schools/cmw0000000000000000000001",
+     "shape": "/schools/{id}",
+     "due": ""
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "SSA",
+     "priority": "weird",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "St. Mary's \"Hill\" · partner",
+     "action_label": "Open",
+     "action_url": "/planning/visit-requests",
+     "shape": "/planning/visit-requests",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Budget Approval",
+     "priority": "high",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "Nakifuma School",
+     "action_label": "Plan Visit",
+     "action_url": "/my-plan/cmw0000000000000000000001/accountability",
+     "shape": "/my-plan/{id}/accountability",
+     "due": ""
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "SSA",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Plan Visit",
+     "action_url": "/my-plan",
+     "shape": "/my-plan",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "IA Verification",
+     "priority": "low",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Review & Sign",
+     "action_url": "/my-plan/cmw0000000000000000000001",
+     "shape": "/my-plan/{id}",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Start",
+     "category": "IA Verification",
+     "priority": "medium",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Fix",
+     "action_url": "/my-plan/cmw0000000000000000000001?learning_results=1",
+     "shape": "/my-plan/{id}?learning_results=1",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Core Schools",
+     "priority": "medium",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Nakifuma School",
+     "action_label": "Fix",
+     "action_url": "/activities/cmw0000000000000000000001/complete",
+     "shape": "/activities/{id}/complete",
+     "due": ""
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Partner",
+     "priority": "high",
+     "status_key": "open",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Plan Visit",
+     "action_url": "/schools/1000#school-bt-title",
+     "shape": "/schools/{code}#school-bt-title",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "SSA",
+     "priority": "medium",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Plan Visit",
+     "action_url": "/clusters",
+     "shape": "/clusters",
+     "due": ""
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Leave",
+     "priority": "low",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Review & Sign",
+     "action_url": "/partner/activities/cmw0000000000000000000001/evidence",
+     "shape": "/partner/activities/{id}/evidence",
+     "due": ""
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Finance",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Kasawo C/U P/S & Annex",
+     "action_label": "Fix",
+     "action_url": "/my-plan",
+     "shape": "/my-plan",
+     "due": ""
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Core Schools",
+     "priority": "high",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "St. Mary's \"Hill\" · partner",
+     "action_label": "Fix",
+     "action_url": "/my-plan/cmw0000000000000000000001?learning_results=1",
+     "shape": "/my-plan/{id}?learning_results=1",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Execution",
+     "priority": "low",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Plan Visit",
+     "action_url": "",
+     "shape": "",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Execution",
+     "priority": "weird",
+     "status_key": "overdue",
+     "actionable": false,
+     "linked": "Kasawo C/U P/S & Annex · partner",
+     "action_label": "Open",
+     "action_url": "/ssa/verification/?status=returned&mine=1",
+     "shape": "/ssa/verification/?status=returned&mine=1",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Start",
+     "category": "Budget Approval",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": false,
+     "linked": "Kasawo C/U P/S & Annex · partner",
+     "action_label": "Review & Sign",
+     "action_url": "/activities/cmw0000000000000000000001/complete",
+     "shape": "/activities/{id}/complete",
+     "due": ""
+    },
+    {
+     "title": "Start",
+     "category": "Data Quality",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Nakifuma School · partner",
+     "action_label": "Review & Sign",
+     "action_url": "/schools/cmw0000000000000000000001",
+     "shape": "/schools/{id}",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Execution",
+     "priority": "low",
+     "status_key": "waiting_me",
+     "actionable": false,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Open",
+     "action_url": "/activities/cmw0000000000000000000001/evidence",
+     "shape": "/activities/{id}/evidence",
+     "due": ""
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Data Quality",
+     "priority": "low",
+     "status_key": "due_today",
+     "actionable": false,
+     "linked": "Kasawo C/U P/S & Annex",
+     "action_label": "Review & Sign",
+     "action_url": "/clusters/cmw0000000000000000000001/profile?tab=attendance&show=missing",
+     "shape": "/clusters/{id}/profile?tab=attendance&show=missing",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Finance",
+     "priority": "weird",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Plan Visit",
+     "action_url": "/schools/cmw0000000000000000000001",
+     "shape": "/schools/{id}",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Evidence",
+     "priority": "low",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Review & Sign",
+     "action_url": "/extra-work",
+     "shape": "/extra-work",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "SSA",
+     "priority": "weird",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "Nakifuma School",
+     "action_label": "Review & Sign",
+     "action_url": "/schools/1000#school-bt-title",
+     "shape": "/schools/{code}#school-bt-title",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Data Quality",
+     "priority": "critical",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "  Spaced   Name ",
+     "action_label": "Review & Sign",
+     "action_url": "/my-plan/cmw0000000000000000000001?learning_results=1",
+     "shape": "/my-plan/{id}?learning_results=1",
+     "due": ""
+    },
+    {
+     "title": "Start",
+     "category": "IA Verification",
+     "priority": "critical",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Open",
+     "action_url": "/fund-requests/weekly",
+     "shape": "/fund-requests/weekly",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Start",
+     "category": "Finance",
+     "priority": "medium",
+     "status_key": "overdue",
+     "actionable": false,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Review & Sign",
+     "action_url": "/activities/cmw0000000000000000000001/submit",
+     "shape": "/activities/{id}/submit",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Data Quality",
+     "priority": "low",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "St. Mary's \"Hill\" · partner",
+     "action_label": "Plan Visit",
+     "action_url": "/partner/activities/cmw0000000000000000000001/evidence",
+     "shape": "/partner/activities/{id}/evidence",
+     "due": ""
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Baseline & Field Data",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Plan Visit",
+     "action_url": "/planning/visit-requests",
+     "shape": "/planning/visit-requests",
+     "due": ""
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Execution",
+     "priority": "medium",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "Nakifuma School",
+     "action_label": "Plan Visit",
+     "action_url": "/ssa/verification/?status=returned&mine=1",
+     "shape": "/ssa/verification/?status=returned&mine=1",
+     "due": ""
+    }
+   ],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "37 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": [
+      {
+       "key": "primary-action",
+       "label": "Do next: Chase Partner Delivery",
+       "primary": true,
+       "enabled": true,
+       "reason": "",
+       "href": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt"
+      }
+     ]
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "list": {
+       "title": "Do next",
+       "count": "37 open",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Spaced Name · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "caution",
+         "keys": {}
+        },
+        {
+         "title": "Fix School Contact",
+         "lines": [
+          "Koome <Island> · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/1000#school-bt-title",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {}
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/fund-requests/weekly",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "brand",
+         "keys": {}
+        }
+       ]
+      }
+     },
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "4",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "13",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "10",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "29",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "cat",
+       "label": "Category",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All Categories",
+         "count": ""
+        },
+        {
+         "value": "Approval",
+         "label": "Approval",
+         "count": "1"
+        },
+        {
+         "value": "Baseline & Field Data",
+         "label": "Baseline & Field Data",
+         "count": "4"
+        },
+        {
+         "value": "Budget Approval",
+         "label": "Budget Approval",
+         "count": "2"
+        },
+        {
+         "value": "Business Transformation",
+         "label": "Business Transformation",
+         "count": "2"
+        },
+        {
+         "value": "Core Schools",
+         "label": "Core Schools",
+         "count": "3"
+        },
+        {
+         "value": "Data Quality",
+         "label": "Data Quality",
+         "count": "4"
+        },
+        {
+         "value": "Evidence",
+         "label": "Evidence",
+         "count": "1"
+        },
+        {
+         "value": "Execution",
+         "label": "Execution",
+         "count": "5"
+        },
+        {
+         "value": "Finance",
+         "label": "Finance",
+         "count": "5"
+        },
+        {
+         "value": "IA Verification",
+         "label": "IA Verification",
+         "count": "3"
+        },
+        {
+         "value": "Partner",
+         "label": "Partner",
+         "count": "1"
+        },
+        {
+         "value": "Planning",
+         "label": "Planning",
+         "count": "1"
+        },
+        {
+         "value": "SSA",
+         "label": "SSA",
+         "count": "5"
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "prio",
+       "label": "Priority",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All",
+         "count": ""
+        },
+        {
+         "value": "critical",
+         "label": "Critical",
+         "count": ""
+        },
+        {
+         "value": "high",
+         "label": "High",
+         "count": ""
+        },
+        {
+         "value": "medium",
+         "label": "Medium",
+         "count": ""
+        },
+        {
+         "value": "low",
+         "label": "Low",
+         "count": ""
+        }
+       ]
+      }
+     },
+     {
+      "list": {
+       "title": "",
+       "count": "",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Spaced Name · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "caution",
+         "keys": {
+          "cat": "SSA",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Fix School Contact",
+         "lines": [
+          "Koome <Island> · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/1000#school-bt-title",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Approval",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/fund-requests/weekly",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "brand",
+         "keys": {
+          "cat": "IA Verification",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Spaced Name"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001?learning_results=1",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Data Quality",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Koome <Island>"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/accountability",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Data Quality",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/1000#school-bt-title",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Partner",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "St. Mary's \"Hill\" · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001?learning_results=1",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Core Schools",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "St. Mary's \"Hill\""
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/partner-oversight/?partner=cmw0000000000000000000001&status=returned",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Business Transformation",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Nakifuma School"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/accountability",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Budget Approval",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/partner-oversight/?partner=cmw0000000000000000000001&status=returned",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "caution",
+         "keys": {
+          "cat": "SSA",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001?learning_results=1",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "brand",
+         "keys": {
+          "cat": "IA Verification",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Nakifuma School · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Data Quality",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/planning",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/submit",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Koome <Island> · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Business Transformation",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/complete",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Core Schools",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/clusters",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "caution",
+         "keys": {
+          "cat": "SSA",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Kasawo C/U P/S & Annex"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Kasawo C/U P/S & Annex · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/complete",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Budget Approval",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Fix School Contact",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/planning/visit-requests",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Baseline & Field Data",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Fix School Contact",
+         "lines": [
+          "Nakifuma School"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/ssa/verification/?status=returned&mine=1",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/core-schools",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Baseline & Field Data",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Baseline & Field Data",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/extra-work",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "info",
+         "keys": {
+          "cat": "Evidence",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/complete",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "info",
+         "keys": {
+          "cat": "Planning",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [],
+         "badges": [],
+         "actions": [],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "brand",
+         "keys": {
+          "cat": "IA Verification",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Kasawo C/U P/S & Annex"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/clusters/cmw0000000000000000000001/profile?tab=attendance&show=missing",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Data Quality",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/evidence",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [
+          "Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "weird"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/start",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Core Schools",
+          "prio": "weird"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/1000#school-bt-title",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Baseline & Field Data",
+          "prio": "weird"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "St. Mary's \"Hill\" · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/planning/visit-requests",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "caution",
+         "keys": {
+          "cat": "SSA",
+          "prio": "weird"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Kasawo C/U P/S & Annex · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/ssa/verification/?status=returned&mine=1",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "weird"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [
+          "Nakifuma School"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/schools/1000#school-bt-title",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "caution",
+         "keys": {
+          "cat": "SSA",
+          "prio": "weird"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  },
+  {
+   "role": "CCEO",
+   "rows": [
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Partner",
+     "priority": "high",
+     "status_key": "blocked",
+     "actionable": false,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Plan Visit",
+     "action_url": "/activities/cmw0000000000000000000001/evidence",
+     "shape": "/activities/{id}/evidence",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Data Quality",
+     "priority": "low",
+     "status_key": "open",
+     "actionable": true,
+     "linked": "Koome <Island> · partner",
+     "action_label": "Fix",
+     "action_url": "/activities/cmw0000000000000000000001/start",
+     "shape": "/activities/{id}/start",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Finance",
+     "priority": "high",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Plan Visit",
+     "action_url": "/my-plan",
+     "shape": "/my-plan",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Partner",
+     "priority": "high",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "St. Mary's \"Hill\" · partner",
+     "action_label": "Fix",
+     "action_url": "",
+     "shape": "",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Data Quality",
+     "priority": "low",
+     "status_key": "open",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Plan Visit",
+     "action_url": "/clusters",
+     "shape": "/clusters",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Finance",
+     "priority": "high",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "  Spaced   Name ",
+     "action_label": "Plan Visit",
+     "action_url": "/partner/activities/cmw0000000000000000000001/evidence",
+     "shape": "/partner/activities/{id}/evidence",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Partner",
+     "priority": "high",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Review & Sign",
+     "action_url": "/fund-requests/weekly",
+     "shape": "/fund-requests/weekly",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Finance",
+     "priority": "high",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "St. Mary's \"Hill\" · partner",
+     "action_label": "Fix",
+     "action_url": "/partner/activities/cmw0000000000000000000001/evidence",
+     "shape": "/partner/activities/{id}/evidence",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Partner",
+     "priority": "high",
+     "status_key": "waiting_me",
+     "actionable": true,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Review & Sign",
+     "action_url": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+     "shape": "/my-plan/{id}/confirm-reimbursement-receipt",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Chase Partner Delivery",
+     "category": "Partner",
+     "priority": "high",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "  Spaced   Name ",
+     "action_label": "Plan Visit",
+     "action_url": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+     "shape": "/my-plan/{id}/confirm-reimbursement-receipt",
+     "due": ""
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Evidence",
+     "priority": "low",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Review & Sign",
+     "action_url": "/my-plan/cmw0000000000000000000001/accountability",
+     "shape": "/my-plan/{id}/accountability",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Confirm Fund Request",
+     "category": "Data Quality",
+     "priority": "medium",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Plan Visit",
+     "action_url": "/planning/visit-requests",
+     "shape": "/planning/visit-requests",
+     "due": ""
+    },
+    {
+     "title": "Start",
+     "category": "IA Verification",
+     "priority": "low",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "  Spaced   Name ",
+     "action_label": "Review & Sign",
+     "action_url": "/activities/cmw0000000000000000000001/evidence",
+     "shape": "/activities/{id}/evidence",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Schedule V1 Core Visit — Nakifuma School",
+     "category": "Execution",
+     "priority": "low",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Nakifuma School",
+     "action_label": "Review & Sign",
+     "action_url": "/activities/cmw0000000000000000000001/start",
+     "shape": "/activities/{id}/start",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Fix School Contact",
+     "category": "Business Transformation",
+     "priority": "critical",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Fix",
+     "action_url": "/clusters",
+     "shape": "/clusters",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Plan FY2028 Activities",
+     "category": "Evidence",
+     "priority": "high",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Open",
+     "action_url": "/activities/cmw0000000000000000000001/evidence",
+     "shape": "/activities/{id}/evidence",
+     "due": ""
+    }
+   ],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "14 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": [
+      {
+       "key": "primary-action",
+       "label": "Do next: Fix School Contact",
+       "primary": true,
+       "enabled": true,
+       "reason": "",
+       "href": "/clusters"
+      }
+     ]
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "list": {
+       "title": "Do next",
+       "count": "14 open",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Fix School Contact",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/clusters",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {}
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/fund-requests/weekly",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {}
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "Nakifuma School · Core Visit"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/evidence",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {}
+        }
+       ]
+      }
+     },
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "1",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "0",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "4",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "11",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "cat",
+       "label": "Category",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All Categories",
+         "count": ""
+        },
+        {
+         "value": "Business Transformation",
+         "label": "Business Transformation",
+         "count": "1"
+        },
+        {
+         "value": "Data Quality",
+         "label": "Data Quality",
+         "count": "3"
+        },
+        {
+         "value": "Evidence",
+         "label": "Evidence",
+         "count": "2"
+        },
+        {
+         "value": "Execution",
+         "label": "Execution",
+         "count": "1"
+        },
+        {
+         "value": "Finance",
+         "label": "Finance",
+         "count": "1"
+        },
+        {
+         "value": "IA Verification",
+         "label": "IA Verification",
+         "count": "1"
+        },
+        {
+         "value": "Partner",
+         "label": "Partner",
+         "count": "5"
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "prio",
+       "label": "Priority",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All",
+         "count": ""
+        },
+        {
+         "value": "critical",
+         "label": "Critical",
+         "count": ""
+        },
+        {
+         "value": "high",
+         "label": "High",
+         "count": ""
+        },
+        {
+         "value": "medium",
+         "label": "Medium",
+         "count": ""
+        },
+        {
+         "value": "low",
+         "label": "Low",
+         "count": ""
+        }
+       ]
+      }
+     },
+     {
+      "list": {
+       "title": "",
+       "count": "",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Fix School Contact",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/clusters",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Business Transformation",
+          "prio": "critical"
+         }
+        },
+        {
+         "title": "Chase Partner Delivery",
+         "lines": [
+          "5 · Weekly Fund Request · Apr 20, Nakifuma School · Core Visit, St. Mary's \"Hill\" · partner and 2 more"
+         ],
+         "badges": [],
+         "actions": [],
+         "href": "",
+         "tone": "",
+         "children": [
+          {
+           "title": "Chase Partner Delivery",
+           "lines": [
+            "Weekly Fund Request · Apr 20"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Review & Sign",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/fund-requests/weekly",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": ""
+          },
+          {
+           "title": "Chase Partner Delivery",
+           "lines": [
+            "Nakifuma School · Core Visit"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Plan Visit",
+             "primary": false,
+             "enabled": true,
+             "reason": "",
+             "href": "/activities/cmw0000000000000000000001/evidence",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": ""
+          },
+          {
+           "title": "Chase Partner Delivery",
+           "lines": [
+            "St. Mary's \"Hill\" · partner"
+           ],
+           "badges": [],
+           "actions": [],
+           "href": "",
+           "tone": ""
+          },
+          {
+           "title": "Chase Partner Delivery",
+           "lines": [
+            "Nakifuma School · Core Visit"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Review & Sign",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": ""
+          },
+          {
+           "title": "Chase Partner Delivery",
+           "lines": [
+            "Spaced Name"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Plan Visit",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/my-plan/cmw0000000000000000000001/confirm-reimbursement-receipt",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": ""
+          }
+         ],
+         "count": "5",
+         "keys": {
+          "cat": "Partner",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "good",
+         "keys": {
+          "cat": "Finance",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Plan FY2028 Activities",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/evidence",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "info",
+         "keys": {
+          "cat": "Evidence",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Confirm Fund Request",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/planning/visit-requests",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Data Quality",
+          "prio": "medium"
+         }
+        },
+        {
+         "title": "Fix School Contact",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Plan Visit",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/clusters",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Data Quality",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001/accountability",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "info",
+         "keys": {
+          "cat": "Evidence",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Fix School Contact",
+         "lines": [
+          "Koome <Island> · partner"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Fix",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/start",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Data Quality",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Start",
+         "lines": [
+          "Spaced Name"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/evidence",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "brand",
+         "keys": {
+          "cat": "IA Verification",
+          "prio": "low"
+         }
+        },
+        {
+         "title": "Schedule V1 Core Visit — Nakifuma School",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/activities/cmw0000000000000000000001/start",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "",
+         "keys": {
+          "cat": "Execution",
+          "prio": "low"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  },
+  {
+   "role": "CCEO",
+   "rows": [
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Koome <Island>",
+     "action_label": "Review & Sign",
+     "action_url": "/schools/cmw0000000000000000000001",
+     "shape": "/schools/{id}",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "returned",
+     "actionable": true,
+     "linked": "Nakifuma School · partner",
+     "action_label": "Fix",
+     "action_url": "/activities/cmw0000000000000000000001/evidence",
+     "shape": "/activities/{id}/evidence",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "returned",
+     "actionable": false,
+     "linked": "Nakifuma School · Core Visit",
+     "action_label": "Plan Visit",
+     "action_url": "/activities/cmw0000000000000000000001/complete",
+     "shape": "/activities/{id}/complete",
+     "due": ""
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Fix",
+     "action_url": "/schools/cmw0000000000000000000001",
+     "shape": "/schools/{id}",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "due_today",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Open",
+     "action_url": "/ssa/verification/?status=returned&mine=1",
+     "shape": "/ssa/verification/?status=returned&mine=1",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "open",
+     "actionable": false,
+     "linked": "St. Mary's \"Hill\" · partner",
+     "action_label": "Review & Sign",
+     "action_url": "/my-plan/cmw0000000000000000000001/accountability",
+     "shape": "/my-plan/{id}/accountability",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "open",
+     "actionable": true,
+     "linked": "",
+     "action_label": "Review & Sign",
+     "action_url": "/activities/cmw0000000000000000000001/start",
+     "shape": "/activities/{id}/start",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "open",
+     "actionable": true,
+     "linked": "St. Mary's \"Hill\"",
+     "action_label": "Open",
+     "action_url": "/activities/cmw0000000000000000000001/complete",
+     "shape": "/activities/{id}/complete",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Review & Sign",
+     "action_url": "",
+     "shape": "",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "returned",
+     "actionable": false,
+     "linked": "Koome <Island> · partner",
+     "action_label": "Fix",
+     "action_url": "/partner-oversight/?partner=cmw0000000000000000000001&status=returned",
+     "shape": "/partner-oversight/?partner={id}&status=returned",
+     "due": "2026-11-18"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "returned",
+     "actionable": false,
+     "linked": "",
+     "action_label": "Fix",
+     "action_url": "/schools/1000#school-bt-title",
+     "shape": "/schools/{code}#school-bt-title",
+     "due": ""
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "medium",
+     "status_key": "blocked",
+     "actionable": true,
+     "linked": "Nakifuma School",
+     "action_label": "Open",
+     "action_url": "/activities/cmw0000000000000000000001/complete",
+     "shape": "/activities/{id}/complete",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "high",
+     "status_key": "open",
+     "actionable": false,
+     "linked": "",
+     "action_label": "Open",
+     "action_url": "/clusters",
+     "shape": "/clusters",
+     "due": "2026-11-13"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "high",
+     "status_key": "open",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Review & Sign",
+     "action_url": "/my-plan/cmw0000000000000000000001",
+     "shape": "/my-plan/{id}",
+     "due": "2026-11-11"
+    },
+    {
+     "title": "Same",
+     "category": "Planning",
+     "priority": "high",
+     "status_key": "overdue",
+     "actionable": true,
+     "linked": "Weekly Fund Request · Apr 20",
+     "action_label": "Open",
+     "action_url": "/planning/visit-requests",
+     "shape": "/planning/visit-requests",
+     "due": "2026-11-18"
+    }
+   ],
+   "status": 200,
+   "body": {
+    "header": {
+     "eyebrow": "My work",
+     "backLabel": "",
+     "backHref": "",
+     "title": "Action queue",
+     "description": "Start with the highest-priority task; workflow state closes it automatically.",
+     "badges": [
+      {
+       "text": "15 open",
+       "tone": "plain",
+       "title": ""
+      }
+     ],
+     "actions": [
+      {
+       "key": "primary-action",
+       "label": "Do next: Same",
+       "primary": true,
+       "enabled": true,
+       "reason": "",
+       "href": "/my-plan/cmw0000000000000000000001"
+      }
+     ]
+    },
+    "tabs": [],
+    "dialogs": [],
+    "blocks": [
+     {
+      "list": {
+       "title": "Do next",
+       "count": "15 open",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Same",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Review & Sign",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/my-plan/cmw0000000000000000000001",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "info",
+         "keys": {}
+        },
+        {
+         "title": "Same",
+         "lines": [],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": false,
+           "enabled": true,
+           "reason": "",
+           "href": "/clusters",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "info",
+         "keys": {}
+        },
+        {
+         "title": "Same",
+         "lines": [
+          "Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [
+          {
+           "key": "button",
+           "label": "Open",
+           "primary": true,
+           "enabled": true,
+           "reason": "",
+           "href": "/planning/visit-requests",
+           "drawer": false
+          }
+         ],
+         "href": "",
+         "tone": "info",
+         "keys": {}
+        }
+       ]
+      }
+     },
+     {
+      "strip": {
+       "title": "Work requiring attention",
+       "metrics": [
+        {
+         "label": "Critical",
+         "value": "0",
+         "helper": "",
+         "note": "Highest-priority work",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Due today",
+         "value": "1",
+         "helper": "",
+         "note": "Complete before day end",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Overdue",
+         "value": "2",
+         "helper": "",
+         "note": "Past the required date",
+         "href": "",
+         "tone": ""
+        },
+        {
+         "label": "Waiting on me",
+         "value": "8",
+         "helper": "",
+         "note": "Your decision is next",
+         "href": "",
+         "tone": ""
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "cat",
+       "label": "Category",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All Categories",
+         "count": ""
+        },
+        {
+         "value": "Planning",
+         "label": "Planning",
+         "count": "15"
+        }
+       ]
+      }
+     },
+     {
+      "chips": {
+       "name": "prio",
+       "label": "Priority",
+       "value": "all",
+       "chips": [
+        {
+         "value": "all",
+         "label": "All",
+         "count": ""
+        },
+        {
+         "value": "critical",
+         "label": "Critical",
+         "count": ""
+        },
+        {
+         "value": "high",
+         "label": "High",
+         "count": ""
+        },
+        {
+         "value": "medium",
+         "label": "Medium",
+         "count": ""
+        },
+        {
+         "value": "low",
+         "label": "Low",
+         "count": ""
+        }
+       ]
+      }
+     },
+     {
+      "list": {
+       "title": "",
+       "count": "",
+       "subtitle": "",
+       "items": [
+        {
+         "title": "Same",
+         "lines": [
+          "3 · Weekly Fund Request · Apr 20, , Weekly Fund Request · Apr 20"
+         ],
+         "badges": [],
+         "actions": [],
+         "href": "",
+         "tone": "",
+         "children": [
+          {
+           "title": "Same",
+           "lines": [
+            "Weekly Fund Request · Apr 20"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Review & Sign",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/my-plan/cmw0000000000000000000001",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Open",
+             "primary": false,
+             "enabled": true,
+             "reason": "",
+             "href": "/clusters",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [
+            "Weekly Fund Request · Apr 20"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Open",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/planning/visit-requests",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          }
+         ],
+         "count": "3",
+         "keys": {
+          "cat": "Planning",
+          "prio": "high"
+         }
+        },
+        {
+         "title": "Same",
+         "lines": [
+          "12 · Weekly Fund Request · Apr 20, St. Mary's \"Hill\" · partner, Weekly Fund Request · Apr 20 and 9 more"
+         ],
+         "badges": [],
+         "actions": [],
+         "href": "",
+         "tone": "",
+         "children": [
+          {
+           "title": "Same",
+           "lines": [
+            "Weekly Fund Request · Apr 20"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Fix",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/schools/cmw0000000000000000000001",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [
+            "St. Mary's \"Hill\" · partner"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Review & Sign",
+             "primary": false,
+             "enabled": true,
+             "reason": "",
+             "href": "/my-plan/cmw0000000000000000000001/accountability",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [
+            "Weekly Fund Request · Apr 20"
+           ],
+           "badges": [],
+           "actions": [],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [
+            "Nakifuma School"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Open",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/activities/cmw0000000000000000000001/complete",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [
+            "Koome <Island>"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Review & Sign",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/schools/cmw0000000000000000000001",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [
+            "Nakifuma School · partner"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Fix",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/activities/cmw0000000000000000000001/evidence",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Open",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/ssa/verification/?status=returned&mine=1",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Review & Sign",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/activities/cmw0000000000000000000001/start",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [
+            "St. Mary's \"Hill\""
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Open",
+             "primary": true,
+             "enabled": true,
+             "reason": "",
+             "href": "/activities/cmw0000000000000000000001/complete",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [
+            "Koome <Island> · partner"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Fix",
+             "primary": false,
+             "enabled": true,
+             "reason": "",
+             "href": "/partner-oversight/?partner=cmw0000000000000000000001&status=returned",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [
+            "Nakifuma School · Core Visit"
+           ],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Plan Visit",
+             "primary": false,
+             "enabled": true,
+             "reason": "",
+             "href": "/activities/cmw0000000000000000000001/complete",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          },
+          {
+           "title": "Same",
+           "lines": [],
+           "badges": [],
+           "actions": [
+            {
+             "key": "button",
+             "label": "Fix",
+             "primary": false,
+             "enabled": true,
+             "reason": "",
+             "href": "/schools/1000#school-bt-title",
+             "drawer": false
+            }
+           ],
+           "href": "",
+           "tone": "info"
+          }
+         ],
+         "count": "12",
+         "keys": {
+          "cat": "Planning",
+          "prio": "medium"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "webPath": "/todos"
+   }
+  }
+ ]
+}

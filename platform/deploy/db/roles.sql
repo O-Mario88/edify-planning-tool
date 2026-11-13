@@ -265,3 +265,33 @@ GRANT SELECT (id, budget_line_id, status) ON advance_request TO edify_gateway_ro
 GRANT SELECT (staff_id, status, type, start_date, end_date, covering_staff_id) ON leave TO edify_gateway_ro;
 GRANT SELECT (title, description, start_date, end_date, block_type, is_active, country) ON calendar_block TO edify_gateway_ro;
 GRANT SELECT (date, name) ON public_holiday TO edify_gateway_ro;
+-- The To-Do page, read by Go (docs/migration/36-todos.md): a field officer's
+-- queue (activities and their advances, fund requests, partner returns and
+-- delays, project enrolments, extra work, route days, core slots, loan-use
+-- verifications, returned SSA and evidence, OneTest results, the next
+-- planning year, cluster attendance) and the records whose presence passes
+-- the reader on to the existing application.
+GRANT SELECT (approval_owner_id, costing_profile_snapshot) ON activity TO edify_gateway_ro;
+GRANT SELECT (returned_at) ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (assigned_by, baseline_score, impact_classification, follow_up_due_on, follow_up_ssa_id) ON project_school_assignment TO edify_gateway_ro;
+GRANT SELECT (due_date, status, title, urgency, assignee_id, reviewer_id, assigner_id, submitted_at) ON hr_extra_assignment TO edify_gateway_ro;
+GRANT SELECT (week_start_date, responsible_user, receipt_confirmed_at, disbursed_at) ON weekly_fund_request TO edify_gateway_ro;
+GRANT SELECT (period_key, submitted_by_user_id, period, status, reviewed_at, receipt_confirmed_at, disbursed_at) ON fund_request TO edify_gateway_ro;
+GRANT SELECT (visit_date, confidence, feasible, status, responsible_user) ON daily_visit_route_batch TO edify_gateway_ro;
+GRANT SELECT (staff_id, review_type, stage) ON hr_performance_review TO edify_gateway_ro;
+GRANT SELECT (user_id, target) ON monthly_personal_target TO edify_gateway_ro;
+GRANT SELECT (id) ON pd_request TO edify_gateway_ro;
+GRANT SELECT (deleted_at) ON daily_debrief TO edify_gateway_ro;
+GRANT SELECT (owner_user_id) ON daily_debrief_action TO edify_gateway_ro;
+GRANT SELECT (assignee_id, created_by_id) ON staff_usage_follow_up TO edify_gateway_ro;
+GRANT SELECT (acknowledged_at, cceo_user_id, cceo_staff_id) ON cce_cceo_coaching TO edify_gateway_ro;
+GRANT SELECT (acknowledged_at, recipient_user_id, recipient_staff_id) ON cce_team_guidance_receipt TO edify_gateway_ro;
+GRANT SELECT (activity_id) ON bt_loan_verification_requirement TO edify_gateway_ro;
+GRANT SELECT (collected_by_user_id, returned_at) ON ssa_record TO edify_gateway_ro;
+GRANT SELECT (recorded_by_user_id, source_activity_id) ON impact_learning_result TO edify_gateway_ro;
+GRANT SELECT (verification_status, recorded_by_user_id) ON impact_discipleship_record TO edify_gateway_ro;
+GRANT SELECT (verification_status, recorded_by_user_id) ON impact_edtech_check TO edify_gateway_ro;
+GRANT SELECT (verification_status, recorded_by_user_id) ON impact_edtech_deployment TO edify_gateway_ro;
+GRANT SELECT (costing_profile) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (execution_start) ON fiscal_year_planning_policy TO edify_gateway_ro;
+GRANT SELECT (reimbursement_receipt_confirmed_at, accountability_netsuite_id, created_at) ON advance_request TO edify_gateway_ro;
