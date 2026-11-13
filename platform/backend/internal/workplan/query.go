@@ -2,7 +2,6 @@ package workplan
 
 import (
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -258,21 +257,4 @@ func link(base []kv, overrides ...kv) string {
 		parts[i] = url.QueryEscape(p.key) + "=" + url.QueryEscape(p.value)
 	}
 	return "/work-plan?" + strings.Join(parts, "&")
-}
-
-// requestQuery is request.GET.urlencode as the feed hands the page its
-// query: every key it passes, in key order.
-func requestQuery(query url.Values) string {
-	keys := make([]string, 0, len(query))
-	for key := range query {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	parts := []string{}
-	for _, key := range keys {
-		for _, value := range query[key] {
-			parts = append(parts, url.QueryEscape(key)+"="+url.QueryEscape(value))
-		}
-	}
-	return strings.Join(parts, "&")
 }

@@ -152,6 +152,21 @@ func (n *node) textOf(shown bool) string {
 	return strings.Join(strings.Fields(b.String()), " ")
 }
 
+// collect is Node._collect(parts, shown=True): the element's words as
+// written, what only a screen reader hears left out.
+func (n *node) collect(b *strings.Builder) {
+	for _, c := range n.children {
+		switch v := c.(type) {
+		case string:
+			b.WriteString(v)
+		case *node:
+			if !silent[v.tag] && !v.has("sr-only") {
+				v.collect(b)
+			}
+		}
+	}
+}
+
 func inside(x, ancestor *node) bool {
 	for ; x != nil; x = x.parent {
 		if x == ancestor {
@@ -389,8 +404,95 @@ func listLink(item *node) *screensv1.PageLink {
 	return out
 }
 
+// inline is page_blocks.INLINE: the elements a sentence runs through;
+// anything else starts a part of its own.
+var inline = map[string]bool{
+	"a": true, "abbr": true, "b": true, "br": true, "button": true, "code": true, "em": true, "i": true, "mark": true,
+	"small": true, "span": true, "strong": true, "sub": true, "sup": true, "time": true, "u": true,
+}
+
+// mixed is page_blocks._mixed: whether n holds words of its own beside its
+// elements ("Enrollment: " before its bold figure).
+func mixed(n *node) bool {
+	words, element := false, false
+	for _, c := range n.children {
+		switch v := c.(type) {
+		case string:
+			words = words || strings.TrimSpace(v) != ""
+		case *node:
+			element = element || (!silent[v.tag] && v.text() != "")
+		}
+	}
+	return words && element
+}
+
+// sentences is page_blocks._sentences: a part whose own words run around its
+// elements, read whole: each run of words and inline elements one text item
+// (its bold opening as the lead, its links at their words), each block
+// inside it read in turn.
+func sentences(n *node, skip map[*node]bool, out []*screensv1.PagePanelItem) []*screensv1.PagePanelItem {
+	var parts strings.Builder
+	links := []*screensv1.PageLink{}
+	lead := ""
+	tone := n.get("data-edify-tone")
+	if tone == "" {
+		tone = n.get("data-tone")
+	}
+	flush := func() {
+		if text := strings.Join(strings.Fields(parts.String()), " "); text != "" {
+			item := textItem(text, tone)
+			item.Lead = lead
+			if len(links) > 0 {
+				item.TextLinks = links
+			}
+			out = append(out, item)
+		}
+		parts.Reset()
+		links = []*screensv1.PageLink{}
+		lead = ""
+	}
+	for _, c := range n.children {
+		child, ok := c.(*node)
+		if !ok {
+			parts.WriteString(c.(string))
+			continue
+		}
+		if silent[child.tag] || child.has("sr-only") || skip[child] {
+			continue
+		}
+		if !inline[child.tag] {
+			flush()
+			out = panelParts([]*node{child}, skip, out)
+			continue
+		}
+		if child.tag == "br" {
+			parts.WriteString(" ")
+			continue
+		}
+		if (child.tag == "strong" || child.tag == "b") && strings.TrimSpace(parts.String()) == "" {
+			lead = child.text()
+		}
+		if isLink(child) && child.text() != "" {
+			links = append(links, linkItem(child))
+		}
+		child.collect(&parts)
+	}
+	flush()
+	return out
+}
+
+// panelItems is page_blocks._panel_items: a part with words of its own read
+// as sentences, any other part element by element.
 func panelItems(n *node, skip map[*node]bool, out []*screensv1.PagePanelItem) []*screensv1.PagePanelItem {
-	for _, child := range n.elements() {
+	if mixed(n) {
+		return sentences(n, skip, out)
+	}
+	return panelParts(n.elements(), skip, out)
+}
+
+// panelParts is page_blocks._panel_parts.
+func panelParts(children []*node, skip map[*node]bool, out []*screensv1.PagePanelItem) []*screensv1.PagePanelItem {
+	for _, child := range children {
 		if skip[child] || silent[child.tag] || child.has("sr-only") {
 			continue
 		}
@@ -438,9 +540,10 @@ var figure = regexp.MustCompile(`^(?:—|[-+−]?(?:UGX\s+)?\d[\d,]*(?:\.\d+)?\s
 
 var pagerCaption = regexp.MustCompile(`^Showing\s+\d`)
 
+// plainText is an item _paired may pair: a text with at most its tone.
 func plainText(item *screensv1.PagePanelItem) (string, bool) {
 	t, ok := item.Kind.(*screensv1.PagePanelItem_Text)
-	if !ok {
+	if !ok || item.Lead != "" || len(item.TextLinks) > 0 {
 		return "", false
 	}
 	return t.Text, true

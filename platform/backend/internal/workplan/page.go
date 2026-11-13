@@ -8,6 +8,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
@@ -151,7 +152,7 @@ func (v *view) header() *screensv1.PageHeader {
 	}
 	if v.door.Export {
 		h.Actions = append(h.Actions, &screensv1.PageAction{Key: "export_excel", Label: "Export Excel", Enabled: true,
-			Href: "/work-plan/export.xlsx?" + requestQuery(v.query)})
+			Href: pageheader.Href("/work-plan/export.xlsx", v.query)})
 	}
 	if v.door.AddActivity {
 		h.Actions = append(h.Actions, &screensv1.PageAction{Key: "add_non_school_activity", Label: "Add Non-School Activity",
