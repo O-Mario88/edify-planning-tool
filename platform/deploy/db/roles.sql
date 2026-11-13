@@ -295,3 +295,12 @@ GRANT SELECT (verification_status, recorded_by_user_id) ON impact_edtech_deploym
 GRANT SELECT (costing_profile) ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (execution_start) ON fiscal_year_planning_policy TO edify_gateway_ro;
 GRANT SELECT (reimbursement_receipt_confirmed_at, accountability_netsuite_id, created_at) ON advance_request TO edify_gateway_ro;
+
+-- The Messages inbox for the web app (internal/messaging, docs/migration/42):
+-- the reader's thread memberships, the threads' subjects and records, the
+-- latest message's sender and the first 90 characters of its text, and the
+-- leave a thread may be about. No attachment, draft or file column.
+GRANT SELECT (thread_id, user_id, recipient_type, last_read_at, archived_at, starred) ON messaging_messageparticipant TO edify_gateway_ro;
+GRANT SELECT (id, subject, context_type, context_id, context_label, priority, created_by, last_reply_at, updated_at, is_system_generated) ON messaging_messagethread TO edify_gateway_ro;
+GRANT SELECT (thread_id, sender_id, body, created_at) ON message TO edify_gateway_ro;
+GRANT SELECT (id) ON leave TO edify_gateway_ro;
