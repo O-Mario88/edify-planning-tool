@@ -43,10 +43,11 @@ type UnsnoozePlan struct {
 }
 
 // DecideUnsnooze plays today_unsnooze up to the write. It refuses nothing:
-// the existing undo removes whatever matches (often nothing) and draws the
-// panel again. The posted id is matched whole, not cut to the column's
-// length as a snooze stores it (unsnooze filters on the posted value), so a
-// longer id matches no row there either.
+// the undo removes whatever matches (often nothing) and draws the panel
+// again. The existing undo matches the whole posted id while its snooze
+// stores the id cut to the column, so a long id could be snoozed but never
+// undone; Go matches the id the snooze stored (owner, 2026-11-13: "Can you
+// fix those from the go side"; intended.json go-fix-snooze-id-length).
 func DecideUnsnooze(p auth.Principal, r UnsnoozeRequest) (UnsnoozePlan, error) {
 	if !Takes(p) {
 		return UnsnoozePlan{}, ErrHandOn
@@ -62,7 +63,7 @@ func DecideUnsnooze(p auth.Principal, r UnsnoozeRequest) (UnsnoozePlan, error) {
 	}
 	return UnsnoozePlan{
 		UserID: p.UserID,
-		TodoID: r.TodoID,
+		TodoID: cut(r.TodoID, rules.Lengths.TodoID),
 		Redraw: Redraw{Path: path, Retarget: rules.Unsnooze.Retarget, Reswap: rules.Unsnooze.Reswap},
 	}, nil
 }
