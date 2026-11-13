@@ -458,3 +458,9 @@ GRANT SELECT (id, staff_id, salary_band, medical_cover, pension_scheme, next_rev
 -- answers). Never who answered, their key or their comment.
 GRANT SELECT (id, title, countries, opens_on, closes_on, status) ON hr_pulse_survey TO edify_gateway_ro;
 GRANT SELECT (survey_id, scores) ON hr_pulse_response TO edify_gateway_ro;
+
+-- Leave Policies (internal/leavepolicies, docs/migration/164-leave-policies.md):
+-- each leave type's label and key, beside the recorded public holidays
+-- already granted. Not the entitlements or approvers, which only the page's
+-- forms show.
+GRANT SELECT (label, leave_type) ON leave_type_policy TO edify_gateway_ro;
