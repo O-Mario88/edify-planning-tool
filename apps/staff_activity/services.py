@@ -82,6 +82,19 @@ STATUS_TONES = {
     "on_leave": "info",
 }
 
+# The leave that keeps a working day from being expected: the canonical leave
+# workflow's approved rows (``_leave_days``).
+LEAVE_APPROVED = "approved"
+
+# The managers the Supervisor column names: a person's first reporting line
+# to one of these roles (``_supervisor_names``).
+SUPERVISOR_ROLES = (
+    PROGRAM_LEAD,
+    COUNTRY_DIRECTOR,
+    "RegionalProgramLead",
+    "HumanResources",
+)
+
 # Follow-up suggestions (§9.1). Deliberately few and conservative: a
 # suggestion is an offer to talk, and a noisy one teaches managers to ignore it.
 FAILED_ACTIONS_SUGGESTION = 3
@@ -203,7 +216,7 @@ def _leave_days(profile_ids) -> dict[str, frozenset]:
 
     spans: dict[str, list] = defaultdict(list)
     for staff_id, start, end in Leave.objects.filter(
-        status="approved", staff_id__in=[p for p in profile_ids if p]
+        status=LEAVE_APPROVED, staff_id__in=[p for p in profile_ids if p]
     ).values_list("staff_id", "start_date", "end_date"):
         spans[staff_id].append((start, end))
     return {
@@ -804,12 +817,7 @@ def _supervisor_names(ids) -> dict[str, str]:
             supervisee__user_id__in=list(ids),
             supervisor__deleted_at__isnull=True,
             supervisee__deleted_at__isnull=True,
-            supervisor__user__active_role__in=(
-                PROGRAM_LEAD,
-                COUNTRY_DIRECTOR,
-                "RegionalProgramLead",
-                "HumanResources",
-            ),
+            supervisor__user__active_role__in=SUPERVISOR_ROLES,
         )
         .order_by("supervisor__user__name")
         .values_list("supervisee__user_id", "supervisor__user__name")

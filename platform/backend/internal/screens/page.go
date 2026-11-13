@@ -46,6 +46,9 @@ func (s *Service) GetPage(
 			case errors.Is(err, pagegate.ErrNotAvailable):
 				return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound,
 					"This was not found, or it is not yours to view.")
+			case errors.Is(err, pagegate.ErrForbidden):
+				return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+					"This page is not available to you.")
 			case err != nil:
 				return nil, apierr.Internal(ctx, s.logger, err)
 			case served:

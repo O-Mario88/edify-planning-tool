@@ -48,6 +48,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/signin"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffactivity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teams"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 )
@@ -113,6 +114,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			myplan.NewService(pool, time.Now),
 			calendarpage.NewService(pool, time.Now),
 			todos.NewService(pool, time.Now),
+			staffactivity.NewService(pool, time.Now),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
 		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel {

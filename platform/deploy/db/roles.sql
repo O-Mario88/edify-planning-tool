@@ -295,3 +295,16 @@ GRANT SELECT (verification_status, recorded_by_user_id) ON impact_edtech_deploym
 GRANT SELECT (costing_profile) ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (execution_start) ON fiscal_year_planning_policy TO edify_gateway_ro;
 GRANT SELECT (reimbursement_receipt_confirmed_at, accountability_netsuite_id, created_at) ON advance_request TO edify_gateway_ro;
+
+-- The Staff Activity Log (internal/staffactivity): who signed in and when,
+-- the active time by part of the platform, where each person is now (their
+-- last page and beat), and the meaningful actions the audit chain records.
+-- Of the audit chain only what counts and names an action, never its payload,
+-- hash, address or browser: a row whose school is named only in its payload
+-- passes the reader to the existing application. Of a sign-in, never its
+-- address or browser.
+GRANT SELECT (created_at, last_seen_at, last_seen_path, last_seen_action, last_seen_login_id) ON "user" TO edify_gateway_ro;
+GRANT SELECT (id, user_id, at, last_active_at, ended_at, device) ON login_event TO edify_gateway_ro;
+GRANT SELECT (user_id, day, section, seconds) ON presence_time TO edify_gateway_ro;
+GRANT SELECT (id, action, actor_id, success, created_at, correlation_id, subject_kind, subject_id) ON audit_log TO edify_gateway_ro;
+GRANT SELECT (status, subject_id) ON staff_usage_follow_up TO edify_gateway_ro;
