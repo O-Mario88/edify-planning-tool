@@ -58,28 +58,29 @@ VALUES ('gpn9pref', $1, false, '["zebra"]', true, now(), now())`, hr); err != ni
 	return hr
 }
 
-// lendBodies lets the gateway's role read a notice's words for one test, as
-// the coordinator's decision would (docs/migration/43); roles.sql does not.
-func lendBodies(t *testing.T) {
+// withholdBodies takes a notice's words away from the gateway's role for one
+// test, as before the coordinator's decision (docs/migration/43); roles.sql
+// grants them since 2026-11-13.
+func withholdBodies(t *testing.T) {
 	t.Helper()
-	if _, err := admin.Exec(context.Background(), `GRANT SELECT (body) ON notification TO edify_gateway_ro`); err != nil {
+	if _, err := admin.Exec(context.Background(), `REVOKE SELECT (body) ON notification FROM edify_gateway_ro`); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		_, _ = admin.Exec(context.Background(), `REVOKE SELECT (body) ON notification FROM edify_gateway_ro`)
+		_, _ = admin.Exec(context.Background(), `GRANT SELECT (body) ON notification TO edify_gateway_ro`)
 	})
 }
 
 func TestTheNotificationCentreIsNotAnsweredWithoutANoticesWords(t *testing.T) {
+	withholdBodies(t)
 	borrowAccount(t, "hr@edify.org")
 	token := sessionOf(t, "hr@edify.org", seededPassword).GetAccessToken()
 	if _, err := notificationCenterOf(token, &screensv1.GetNotificationCenterRequest{}); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("the page under the shipped grants: %v, want unavailable", err)
+		t.Fatalf("the page with the words withheld: %v, want unavailable", err)
 	}
 }
 
 func TestTheNotificationCentreIsTheReadersOwnAsTheExistingPageDrawsIt(t *testing.T) {
-	lendBodies(t)
 	fileNotifications(t)
 	borrowAccount(t, "hr@edify.org")
 	token := sessionOf(t, "hr@edify.org", seededPassword).GetAccessToken()
