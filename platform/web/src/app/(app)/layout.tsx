@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 
 import { IdentityService } from '@/gen/edify/identity/v1/identity_pb';
+import { MessagingService } from '@/gen/edify/messaging/v1/messaging_pb';
+import { NotificationCenterService } from '@/gen/edify/screens/v1/notification_center_pb';
 import { NavigationService } from '@/gen/edify/screens/v1/navigation_pb';
 import { SidebarBrand, SidebarNav, Sidebar } from '@/components/shell/Sidebar';
 import { BottomNav } from '@/components/shell/BottomNav';
@@ -19,7 +21,7 @@ import { initialsOf } from '@/lib/today';
  */
 export default async function ShellLayout({ children }: { children: ReactNode }) {
   const path = await currentPath();
-  const [session, navigation] = await asReader((token) =>
+  const [session, navigation, messages, notifications] = await asReader((token) =>
     Promise.all([
       gatewayClient(IdentityService, token).getSession({}),
       gatewayClient(NavigationService, token)
@@ -30,6 +32,14 @@ export default async function ShellLayout({ children }: { children: ReactNode })
           if (isUnavailable(error)) return { sections: [], bottom: [] };
           throw error;
         }),
+      // The top bar's badges, as the existing shell's: a count it cannot
+      // read draws no badge rather than failing the page (sidebar_counts).
+      gatewayClient(MessagingService, token)
+        .getUnreadCount({})
+        .then((answer) => answer.unread, () => 0),
+      gatewayClient(NotificationCenterService, token)
+        .getUnreadNotificationCount({})
+        .then((answer) => answer.unread, () => 0),
     ]),
   );
   const person = session.session;
@@ -52,7 +62,7 @@ export default async function ShellLayout({ children }: { children: ReactNode })
     <div className="flex min-h-dvh">
       <Sidebar sections={navigation.sections} path={path} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar search={pageSearch(path)} account={account} menu={menu} existingWebUrl={environment().existingWebUrl} />
+        <TopBar search={pageSearch(path)} account={account} menu={menu} existingWebUrl={environment().existingWebUrl} counts={{ messages, notifications }} />
         <main id="main" className="min-w-0 flex-1 pb-24 lg:pb-0">
           {children}
         </main>

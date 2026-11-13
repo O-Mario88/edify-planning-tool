@@ -210,13 +210,15 @@ def _header(main: Node) -> dict:
     badges, actions = [], []
     for node in controls.nodes() if controls else ():
         if node.tag == "span" and node.has("rounded-pill"):
-            badges.append(
-                {
-                    "text": node.text(),
-                    "tone": _badge_tone(node),
-                    "title": node.get("title"),
-                }
-            )
+            badge = {
+                "text": node.text(),
+                "tone": _badge_tone(node),
+                "title": node.get("title"),
+            }
+            # The year's support visit is taken: the page draws a lock.
+            if "data-visit-closed" in node.attrs:
+                badge["icon"] = "lock"
+            badges.append(badge)
         elif node.tag == "button" or (node.tag == "a" and node.has("btn")):
             from apps.mobile_feed import dialogs
 

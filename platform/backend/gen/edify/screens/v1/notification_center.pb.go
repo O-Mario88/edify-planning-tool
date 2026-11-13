@@ -22,6 +22,86 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type GetUnreadNotificationCountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUnreadNotificationCountRequest) Reset() {
+	*x = GetUnreadNotificationCountRequest{}
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUnreadNotificationCountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUnreadNotificationCountRequest) ProtoMessage() {}
+
+func (x *GetUnreadNotificationCountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUnreadNotificationCountRequest.ProtoReflect.Descriptor instead.
+func (*GetUnreadNotificationCountRequest) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{0}
+}
+
+type GetUnreadNotificationCountResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Unread        int32                  `protobuf:"varint,1,opt,name=unread,proto3" json:"unread,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUnreadNotificationCountResponse) Reset() {
+	*x = GetUnreadNotificationCountResponse{}
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUnreadNotificationCountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUnreadNotificationCountResponse) ProtoMessage() {}
+
+func (x *GetUnreadNotificationCountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUnreadNotificationCountResponse.ProtoReflect.Descriptor instead.
+func (*GetUnreadNotificationCountResponse) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetUnreadNotificationCountResponse) GetUnread() int32 {
+	if x != nil {
+		return x.Unread
+	}
+	return 0
+}
+
 // The page's own query parameters. Empty means the page's default.
 type GetNotificationCenterRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -46,7 +126,7 @@ type GetNotificationCenterRequest struct {
 
 func (x *GetNotificationCenterRequest) Reset() {
 	*x = GetNotificationCenterRequest{}
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[0]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -58,7 +138,7 @@ func (x *GetNotificationCenterRequest) String() string {
 func (*GetNotificationCenterRequest) ProtoMessage() {}
 
 func (x *GetNotificationCenterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[0]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -71,7 +151,7 @@ func (x *GetNotificationCenterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNotificationCenterRequest.ProtoReflect.Descriptor instead.
 func (*GetNotificationCenterRequest) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{0}
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetNotificationCenterRequest) GetStatus() string {
@@ -141,7 +221,7 @@ type GetNotificationCenterResponse struct {
 
 func (x *GetNotificationCenterResponse) Reset() {
 	*x = GetNotificationCenterResponse{}
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[1]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -153,7 +233,7 @@ func (x *GetNotificationCenterResponse) String() string {
 func (*GetNotificationCenterResponse) ProtoMessage() {}
 
 func (x *GetNotificationCenterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[1]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -166,7 +246,7 @@ func (x *GetNotificationCenterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNotificationCenterResponse.ProtoReflect.Descriptor instead.
 func (*GetNotificationCenterResponse) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{1}
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetNotificationCenterResponse) GetKpis() *NotificationKpis {
@@ -225,7 +305,7 @@ type NotificationKpis struct {
 
 func (x *NotificationKpis) Reset() {
 	*x = NotificationKpis{}
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[2]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -237,7 +317,7 @@ func (x *NotificationKpis) String() string {
 func (*NotificationKpis) ProtoMessage() {}
 
 func (x *NotificationKpis) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[2]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -250,7 +330,7 @@ func (x *NotificationKpis) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotificationKpis.ProtoReflect.Descriptor instead.
 func (*NotificationKpis) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{2}
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *NotificationKpis) GetActionRequired() int32 {
@@ -284,7 +364,7 @@ type NotificationFilters struct {
 
 func (x *NotificationFilters) Reset() {
 	*x = NotificationFilters{}
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[3]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -296,7 +376,7 @@ func (x *NotificationFilters) String() string {
 func (*NotificationFilters) ProtoMessage() {}
 
 func (x *NotificationFilters) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[3]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -309,7 +389,7 @@ func (x *NotificationFilters) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotificationFilters.ProtoReflect.Descriptor instead.
 func (*NotificationFilters) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{3}
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *NotificationFilters) GetStatus() string {
@@ -365,7 +445,7 @@ type NotificationOption struct {
 
 func (x *NotificationOption) Reset() {
 	*x = NotificationOption{}
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[4]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -377,7 +457,7 @@ func (x *NotificationOption) String() string {
 func (*NotificationOption) ProtoMessage() {}
 
 func (x *NotificationOption) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[4]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -390,7 +470,7 @@ func (x *NotificationOption) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotificationOption.ProtoReflect.Descriptor instead.
 func (*NotificationOption) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{4}
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *NotificationOption) GetValue() string {
@@ -442,7 +522,7 @@ type NotificationItem struct {
 
 func (x *NotificationItem) Reset() {
 	*x = NotificationItem{}
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[5]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -454,7 +534,7 @@ func (x *NotificationItem) String() string {
 func (*NotificationItem) ProtoMessage() {}
 
 func (x *NotificationItem) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[5]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -467,7 +547,7 @@ func (x *NotificationItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotificationItem.ProtoReflect.Descriptor instead.
 func (*NotificationItem) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{5}
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *NotificationItem) GetId() string {
@@ -614,7 +694,7 @@ type NotificationDelivery struct {
 
 func (x *NotificationDelivery) Reset() {
 	*x = NotificationDelivery{}
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[6]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -626,7 +706,7 @@ func (x *NotificationDelivery) String() string {
 func (*NotificationDelivery) ProtoMessage() {}
 
 func (x *NotificationDelivery) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[6]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -639,7 +719,7 @@ func (x *NotificationDelivery) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotificationDelivery.ProtoReflect.Descriptor instead.
 func (*NotificationDelivery) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{6}
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *NotificationDelivery) GetEmailEnabled() bool {
@@ -695,7 +775,7 @@ type NotificationCategoryChoice struct {
 
 func (x *NotificationCategoryChoice) Reset() {
 	*x = NotificationCategoryChoice{}
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[7]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -707,7 +787,7 @@ func (x *NotificationCategoryChoice) String() string {
 func (*NotificationCategoryChoice) ProtoMessage() {}
 
 func (x *NotificationCategoryChoice) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[7]
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -720,7 +800,7 @@ func (x *NotificationCategoryChoice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotificationCategoryChoice.ProtoReflect.Descriptor instead.
 func (*NotificationCategoryChoice) Descriptor() ([]byte, []int) {
-	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{7}
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *NotificationCategoryChoice) GetValue() string {
@@ -748,7 +828,10 @@ var File_edify_screens_v1_notification_center_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_notification_center_proto_rawDesc = "" +
 	"\n" +
-	"*edify/screens/v1/notification_center.proto\x12\x10edify.screens.v1\x1a\x1cedify/common/v1/common.proto\"\xf0\x01\n" +
+	"*edify/screens/v1/notification_center.proto\x12\x10edify.screens.v1\x1a\x1cedify/common/v1/common.proto\"#\n" +
+	"!GetUnreadNotificationCountRequest\"<\n" +
+	"\"GetUnreadNotificationCountResponse\x12\x16\n" +
+	"\x06unread\x18\x01 \x01(\x05R\x06unread\"\xf0\x01\n" +
 	"\x1cGetNotificationCenterRequest\x12\x1b\n" +
 	"\x06status\x18\x01 \x01(\tH\x00R\x06status\x88\x01\x01\x12\x1a\n" +
 	"\bpriority\x18\x02 \x01(\tR\bpriority\x12\x1a\n" +
@@ -815,9 +898,10 @@ const file_edify_screens_v1_notification_center_proto_rawDesc = "" +
 	"\x1aNotificationCategoryChoice\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x14\n" +
-	"\x05muted\x18\x03 \x01(\bR\x05muted2\x95\x01\n" +
+	"\x05muted\x18\x03 \x01(\bR\x05muted2\x9f\x02\n" +
 	"\x19NotificationCenterService\x12x\n" +
-	"\x15GetNotificationCenter\x12..edify.screens.v1.GetNotificationCenterRequest\x1a/.edify.screens.v1.GetNotificationCenterResponseB\xeb\x01\n" +
+	"\x15GetNotificationCenter\x12..edify.screens.v1.GetNotificationCenterRequest\x1a/.edify.screens.v1.GetNotificationCenterResponse\x12\x87\x01\n" +
+	"\x1aGetUnreadNotificationCount\x123.edify.screens.v1.GetUnreadNotificationCountRequest\x1a4.edify.screens.v1.GetUnreadNotificationCountResponseB\xeb\x01\n" +
 	"\x14com.edify.screens.v1B\x17NotificationCenterProtoP\x01ZXgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1;screensv1\xa2\x02\x03ESX\xaa\x02\x10Edify.Screens.V1\xca\x02\x10Edify\\Screens\\V1\xe2\x02\x1cEdify\\Screens\\V1\\GPBMetadata\xea\x02\x12Edify::Screens::V1b\x06proto3"
 
 var (
@@ -832,33 +916,37 @@ func file_edify_screens_v1_notification_center_proto_rawDescGZIP() []byte {
 	return file_edify_screens_v1_notification_center_proto_rawDescData
 }
 
-var file_edify_screens_v1_notification_center_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_edify_screens_v1_notification_center_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_edify_screens_v1_notification_center_proto_goTypes = []any{
-	(*GetNotificationCenterRequest)(nil),  // 0: edify.screens.v1.GetNotificationCenterRequest
-	(*GetNotificationCenterResponse)(nil), // 1: edify.screens.v1.GetNotificationCenterResponse
-	(*NotificationKpis)(nil),              // 2: edify.screens.v1.NotificationKpis
-	(*NotificationFilters)(nil),           // 3: edify.screens.v1.NotificationFilters
-	(*NotificationOption)(nil),            // 4: edify.screens.v1.NotificationOption
-	(*NotificationItem)(nil),              // 5: edify.screens.v1.NotificationItem
-	(*NotificationDelivery)(nil),          // 6: edify.screens.v1.NotificationDelivery
-	(*NotificationCategoryChoice)(nil),    // 7: edify.screens.v1.NotificationCategoryChoice
-	(*v1.PageInfo)(nil),                   // 8: edify.common.v1.PageInfo
+	(*GetUnreadNotificationCountRequest)(nil),  // 0: edify.screens.v1.GetUnreadNotificationCountRequest
+	(*GetUnreadNotificationCountResponse)(nil), // 1: edify.screens.v1.GetUnreadNotificationCountResponse
+	(*GetNotificationCenterRequest)(nil),       // 2: edify.screens.v1.GetNotificationCenterRequest
+	(*GetNotificationCenterResponse)(nil),      // 3: edify.screens.v1.GetNotificationCenterResponse
+	(*NotificationKpis)(nil),                   // 4: edify.screens.v1.NotificationKpis
+	(*NotificationFilters)(nil),                // 5: edify.screens.v1.NotificationFilters
+	(*NotificationOption)(nil),                 // 6: edify.screens.v1.NotificationOption
+	(*NotificationItem)(nil),                   // 7: edify.screens.v1.NotificationItem
+	(*NotificationDelivery)(nil),               // 8: edify.screens.v1.NotificationDelivery
+	(*NotificationCategoryChoice)(nil),         // 9: edify.screens.v1.NotificationCategoryChoice
+	(*v1.PageInfo)(nil),                        // 10: edify.common.v1.PageInfo
 }
 var file_edify_screens_v1_notification_center_proto_depIdxs = []int32{
-	2, // 0: edify.screens.v1.GetNotificationCenterResponse.kpis:type_name -> edify.screens.v1.NotificationKpis
-	3, // 1: edify.screens.v1.GetNotificationCenterResponse.filters:type_name -> edify.screens.v1.NotificationFilters
-	5, // 2: edify.screens.v1.GetNotificationCenterResponse.notifications:type_name -> edify.screens.v1.NotificationItem
-	8, // 3: edify.screens.v1.GetNotificationCenterResponse.page:type_name -> edify.common.v1.PageInfo
-	6, // 4: edify.screens.v1.GetNotificationCenterResponse.delivery:type_name -> edify.screens.v1.NotificationDelivery
-	4, // 5: edify.screens.v1.NotificationFilters.categories:type_name -> edify.screens.v1.NotificationOption
-	7, // 6: edify.screens.v1.NotificationDelivery.categories:type_name -> edify.screens.v1.NotificationCategoryChoice
-	0, // 7: edify.screens.v1.NotificationCenterService.GetNotificationCenter:input_type -> edify.screens.v1.GetNotificationCenterRequest
-	1, // 8: edify.screens.v1.NotificationCenterService.GetNotificationCenter:output_type -> edify.screens.v1.GetNotificationCenterResponse
-	8, // [8:9] is the sub-list for method output_type
-	7, // [7:8] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	4,  // 0: edify.screens.v1.GetNotificationCenterResponse.kpis:type_name -> edify.screens.v1.NotificationKpis
+	5,  // 1: edify.screens.v1.GetNotificationCenterResponse.filters:type_name -> edify.screens.v1.NotificationFilters
+	7,  // 2: edify.screens.v1.GetNotificationCenterResponse.notifications:type_name -> edify.screens.v1.NotificationItem
+	10, // 3: edify.screens.v1.GetNotificationCenterResponse.page:type_name -> edify.common.v1.PageInfo
+	8,  // 4: edify.screens.v1.GetNotificationCenterResponse.delivery:type_name -> edify.screens.v1.NotificationDelivery
+	6,  // 5: edify.screens.v1.NotificationFilters.categories:type_name -> edify.screens.v1.NotificationOption
+	9,  // 6: edify.screens.v1.NotificationDelivery.categories:type_name -> edify.screens.v1.NotificationCategoryChoice
+	2,  // 7: edify.screens.v1.NotificationCenterService.GetNotificationCenter:input_type -> edify.screens.v1.GetNotificationCenterRequest
+	0,  // 8: edify.screens.v1.NotificationCenterService.GetUnreadNotificationCount:input_type -> edify.screens.v1.GetUnreadNotificationCountRequest
+	3,  // 9: edify.screens.v1.NotificationCenterService.GetNotificationCenter:output_type -> edify.screens.v1.GetNotificationCenterResponse
+	1,  // 10: edify.screens.v1.NotificationCenterService.GetUnreadNotificationCount:output_type -> edify.screens.v1.GetUnreadNotificationCountResponse
+	9,  // [9:11] is the sub-list for method output_type
+	7,  // [7:9] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_edify_screens_v1_notification_center_proto_init() }
@@ -866,14 +954,14 @@ func file_edify_screens_v1_notification_center_proto_init() {
 	if File_edify_screens_v1_notification_center_proto != nil {
 		return
 	}
-	file_edify_screens_v1_notification_center_proto_msgTypes[0].OneofWrappers = []any{}
+	file_edify_screens_v1_notification_center_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_screens_v1_notification_center_proto_rawDesc), len(file_edify_screens_v1_notification_center_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

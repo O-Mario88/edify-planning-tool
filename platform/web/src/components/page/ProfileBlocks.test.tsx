@@ -100,7 +100,10 @@ describe('the profile’s header', () => {
       backHref: '/schools',
       title: 'Central Division Primary School',
       description: 'School ID: 1000',
-      badges: [{ text: 'SSA FY2027: 6.25', tone: 'good', title: 'Source: Keyed by Impact Assessment · Confirmed' }],
+      badges: [
+        { text: 'SSA FY2027: 6.25', tone: 'good', title: 'Source: Keyed by Impact Assessment · Confirmed' },
+        { text: 'Staff visit scheduled', tone: 'plain', title: 'A staff support visit is scheduled', icon: 'lock' },
+      ],
       actions: [
         { key: 'edit_details', label: 'Edit Details', primary: true, enabled: true, href: '/schools/x/edit-drawer', drawer: true },
         { key: 'enter_ssa_score', label: 'Enter SSA Score', reason: 'SSA already entered for FY2027' },
@@ -115,6 +118,12 @@ describe('the profile’s header', () => {
     expect(html).toContain('title="Source: Keyed by Impact Assessment · Confirmed"');
     expect(html).toContain(`href="${DRAWER}"`);
     expect(html).toMatch(/disabled="" title="SSA already entered for FY2027"/);
+  });
+
+  it('draws the visit lock before its badge’s words and the pencil on Edit Details, as the existing page does', () => {
+    expect(html).toMatch(/<svg viewBox="0 0 16 16"[^>]*><path d="M4\.5 7V5[^"]*"><\/path><\/svg>Staff visit scheduled/);
+    expect(html).toMatch(/<path[^>]*d="M11 5h-6a2 2 0 00-2 2v12[^"]*"><\/path><\/svg><span>Edit Details<\/span>/);
+    expect(html.match(/<svg/g)).toHaveLength(3);
   });
 
   it('never links back outside the site', () => {

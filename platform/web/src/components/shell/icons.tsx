@@ -18,6 +18,7 @@ const PATHS = {
   chevronRight: 'M9 5l7 7-7 7',
   plus: 'M12 4v16m8-8H4',
   download: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4',
+  edit: 'M11 5h-6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6m-1.4-9.4a2 2 0 112.8 2.8L11 15l-4 1 1-4 8.6-8.4z',
 } as const;
 
 export type IconName = keyof typeof PATHS;
@@ -26,6 +27,22 @@ export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGEle
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true" {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" d={PATHS[name]} />
+    </svg>
+  );
+}
+
+/** Filled drawings a badge carries by name (PageBadge.icon), on the existing web's 16px grid. */
+const BADGE_PATHS: Readonly<Record<string, string>> = {
+  lock: 'M4.5 7V5a3.5 3.5 0 1 1 7 0v2h.5A1.5 1.5 0 0 1 13.5 8.5v5A1.5 1.5 0 0 1 12 15H4a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 4 7h.5Zm1.5 0h4V5a2 2 0 1 0-4 0v2Z',
+};
+
+/** A badge's drawing, or nothing for a name the web does not draw. */
+export function BadgeIcon({ name, ...props }: { name: string } & SVGProps<SVGSVGElement>) {
+  const path = BADGE_PATHS[name];
+  if (!path) return null;
+  return (
+    <svg viewBox="0 0 16 16" width="10" height="10" fill="currentColor" aria-hidden="true" {...props}>
+      <path d={path} />
     </svg>
   );
 }

@@ -13,6 +13,7 @@ const ACTION_ICONS: Readonly<Record<string, IconName>> = {
   add_school: 'plus',
   export: 'download',
   create_cluster: 'plus',
+  edit_details: 'edit',
   plan_field_event: 'plus',
   schedule_group_training: 'calendar',
   schedule_cluster_meeting: 'calendar',
@@ -66,7 +67,7 @@ function RecordHeader({ header, hrefOf }: { header: PageHeaderMessage; hrefOf: (
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {header.badges.map((badge) => (
-          <Badge key={badge.text} tone={badge.tone} title={badge.title || undefined}>{badge.text}</Badge>
+          <Badge key={badge.text} tone={badge.tone} title={badge.title || undefined} icon={badge.icon}>{badge.text}</Badge>
         ))}
         {header.actions.map((action) => (
           <HeaderAction key={action.key} action={action} href={hrefOf(action)} />

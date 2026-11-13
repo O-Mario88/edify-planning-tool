@@ -64,7 +64,7 @@ func (s *Service) header(ctx context.Context, p auth.Principal, scope schooldire
 			return nil, err
 		}
 		if lock := gate.LockLabel(rules.Gate); lock != "" {
-			h.Badges = append(h.Badges, &screensv1.PageBadge{Text: lock, Tone: "plain", Title: gate.StaffReason})
+			h.Badges = append(h.Badges, &screensv1.PageBadge{Text: lock, Tone: "plain", Title: gate.StaffReason, Icon: "lock"})
 		}
 	}
 

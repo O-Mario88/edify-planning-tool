@@ -16,6 +16,9 @@ message PageBadge {
   string tone = 2;
   // The hover text, e.g. "Source: Recorded · Confirmed".
   string title = 3;
+  // The small drawing before the words, by name: "lock" (a school's support
+  // visit for the year is taken). Empty for a badge of words only.
+  string icon = 4;
 }
 
 message PageAction {

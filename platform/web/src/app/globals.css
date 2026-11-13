@@ -58,3 +58,74 @@ select.edify-select {
   height: 18px;
   stroke-width: 2;
 }
+
+/* A page's figures, laid out as the existing web's strip
+   (static/css/components.css, .context-metrics): below 48rem a grid of two
+   cells a row (four from 37.5rem), every part centred and nothing to swipe;
+   from 48rem one row that scrolls behind "Swipe for more" when it does not
+   fit; from 64rem a strip of eight or fewer shares the row, labels and the
+   line under the figure wrapping inside each cell and every figure on one
+   line with its neighbours'; nine or more keep the scrolling row. */
+.edify-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.edify-strip > div {
+  min-width: 0;
+  text-align: center;
+  border-color: var(--edify-border);
+}
+@media (max-width: 37.499rem) {
+  .edify-strip > div:nth-child(odd) { border-right-width: 1px; }
+  .edify-strip > div:nth-child(n + 3) { border-top-width: 1px; }
+  .edify-strip > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    border-right-width: 0;
+  }
+}
+@media (min-width: 37.5rem) and (max-width: 47.999rem) {
+  .edify-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .edify-strip > div:not(:nth-child(4n)):not(:last-child) { border-right-width: 1px; }
+  .edify-strip > div:nth-child(n + 5) { border-top-width: 1px; }
+}
+@media (min-width: 48rem) {
+  .edify-strip { display: flex; }
+  .edify-strip > div {
+    flex: 1 0 auto;
+    min-width: 130px;
+    text-align: left;
+  }
+  .edify-strip > div + div { border-left-width: 1px; }
+  .edify-strip .edify-strip__label { white-space: nowrap; }
+  .edify-strip .edify-strip__helper {
+    display: -webkit-box;
+    max-width: 22ch;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}
+@media (min-width: 64rem) {
+  .edify-strip:not(:has(> div:nth-child(9))) {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(min-content, 1fr);
+    grid-template-rows: auto auto 1fr;
+  }
+  .edify-strip:not(:has(> div:nth-child(9))) > div {
+    display: grid;
+    grid-row: 1 / span 3;
+    grid-template-rows: subgrid;
+    row-gap: 3px;
+    min-width: auto;
+  }
+  .edify-strip:not(:has(> div:nth-child(9))) .edify-strip__label { white-space: normal; overflow-wrap: normal; }
+  .edify-strip:not(:has(> div:nth-child(9))) .edify-strip__value { white-space: nowrap; }
+  .edify-strip:not(:has(> div:nth-child(9))) .edify-strip__helper {
+    display: block;
+    max-width: none;
+    overflow: visible;
+    overflow-wrap: break-word;
+    -webkit-line-clamp: none;
+  }
+}

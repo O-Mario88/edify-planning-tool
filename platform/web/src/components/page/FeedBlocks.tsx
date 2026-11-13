@@ -26,6 +26,8 @@ export interface FeedBlocksProps {
   readonly pagePath: string;
   readonly drawerHref: string;
   readonly selectable: boolean;
+  /** The filter row ends in a × back to the bare page; the school profile has no Clear. */
+  readonly clearFilters?: boolean;
 }
 
 function LinkTabsBlock({ rail, pagePath, hrefOf }: { rail: PageLinkTabs; pagePath: string; hrefOf: (action: PageAction) => string }) {
@@ -50,7 +52,7 @@ function joinsPrevious(blocks: readonly PageBlock[], index: number): boolean {
   return blocks[index]?.kind.case === 'pager' && (before === 'table' || before === 'panel');
 }
 
-export function FeedBlocks({ blocks, pagePath, drawerHref, selectable }: FeedBlocksProps) {
+export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilters = true }: FeedBlocksProps) {
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const pagerOf = (block: PageBlock | undefined) =>
@@ -67,7 +69,7 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable }: FeedBlo
               <FilterBar
                 key={index}
                 action={pagePath}
-                clearHref={pagePath}
+                clearHref={clearFilters ? pagePath : undefined}
                 oneRow
                 hidden={kind.value.hidden}
                 filters={kind.value.filters.map((filter) => ({

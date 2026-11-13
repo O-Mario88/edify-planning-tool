@@ -41,12 +41,13 @@ interface BlocksProps {
   readonly pagePath: string;
   readonly drawerHref: string;
   readonly selectable: boolean;
+  readonly clearFilters: boolean;
 }
 
 /** The SSA tab sets its last cards (the change between assessments, the history) side by side, two to one. */
-function Body({ blocks, pagePath, drawerHref, selectable, sideBySide }: BlocksProps & { sideBySide: boolean }) {
+function Body({ blocks, pagePath, drawerHref, selectable, clearFilters, sideBySide }: BlocksProps & { sideBySide: boolean }) {
   const cut = sideBySide ? trailingPanels(blocks) : blocks.length;
-  const draw = (part: readonly PageBlock[]) => <FeedBlocks blocks={part} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />;
+  const draw = (part: readonly PageBlock[]) => <FeedBlocks blocks={part} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} clearFilters={clearFilters} />;
   if (cut >= blocks.length) return draw(blocks);
   return (
     <>
@@ -70,7 +71,7 @@ export async function ProfilePage({ schoolId, query }: { schoolId: string; query
   const selectable = Boolean(answer.selection?.actions.length);
   const activeTab = answer.tabs.find((tab) => tab.active)?.key ?? '';
   const { frame, main, rail } = splitRail(answer.blocks);
-  const props = { pagePath, drawerHref, selectable };
+  const props = { pagePath, drawerHref, selectable, clearFilters: false };
   return (
     <div className="mx-auto max-w-[1500px] space-y-4 px-4 pb-24 pt-5 sm:px-6 lg:pb-8" data-page={pagePath} data-tab={activeTab}>
       {answer.header ? <PageHeader header={answer.header} hrefOf={hrefOf} /> : null}
