@@ -654,6 +654,8 @@ CLUSTER_CARDS = """
    <div class="school-record-row__ssa is-danger"><dt>Avg SSA:</dt><dd>4.6/10</dd></div>
    <div class="cluster-card__metadata-warning"><dt>Without SSA:</dt><dd>2 schools</dd></div>
    <div><dt>Owner:</dt><dd><a href="/staff/p1">Paul N.</a></dd></div>
+   <div class="cluster-card__metadata-action cluster-card__metadata-action--critical">
+    <dt>Next Action:</dt><dd>Schedule training</dd></div>
   </dl>
  </div>
  <div id="cluster-details-c1" x-show="cardExpanded" x-cloak class="cluster-card__details">
@@ -690,6 +692,9 @@ class RecordCardTest(SimpleTestCase):
                 ("Avg SSA", "4.6/10", "alert", ""),
                 ("Without SSA", "2 schools", "caution", ""),
                 ("Owner", "Paul N.", "", "/staff/p1"),
+                # The risk colour the card's CSS names for Next Action loses
+                # to `.school-record-row__metadata dd`: the page draws it plain.
+                ("Next Action", "Schedule training", "", ""),
             ],
         )
 
@@ -1607,3 +1612,112 @@ class HeaderActionsTest(SimpleTestCase):
         page = page_blocks.read(BAND_HEADER, path="/planning")
 
         self.assertEqual(page["blocks"], [])
+
+
+PLANNING_CHIPS = """
+<main>
+<section class="card"><div><table class="edify-record-table">
+<thead><tr><th>ID</th><th>Visit Plan Status</th><th>Training Plan Status</th><th>Visit Lock</th></tr></thead>
+<tbody><tr><td>1546</td>
+<td class="px-4 py-3" data-label="Visit Plan Status" data-planning-badges="visits">
+  <span class="school-planning-badges"><span class="school-planning-badge" data-planning-tone="planned">1 Planned</span><span class="school-planning-badge" data-planning-tone="verified">1 Verified</span><span class="school-planning-badge" data-planning-tone="closed" data-visit-closed="staff" title="Held by a visit"><svg aria-hidden="true"><path d="M4.5 7V5"/></svg>Visit held<span class="sr-only">: Held by a visit</span></span></span>
+</td>
+<td class="px-4 py-3" data-label="Training Plan Status" data-planning-badges="trainings">
+  <span class="school-planning-badges"><span class="school-planning-badge" data-planning-tone="none">Not Planned</span></span>
+</td>
+<td data-label="Visit Lock" class="school-plan-table__lock" data-visit-lock="unlocked"><span class="school-planning-badge" data-planning-tone="open" data-visit-lock="unlocked"><svg aria-hidden="true"><path d="M10.5 1.5"/></svg>Unlocked</span></td>
+</tr><tr><td>1598</td>
+<td data-planning-badges="visits"><span class="school-planning-badges"><span class="school-planning-badge" data-planning-tone="none">Not Planned</span></span></td>
+<td data-planning-badges="trainings"><span class="school-planning-badges"><span class="school-planning-badge" data-planning-tone="awaiting">1 Awaiting Verification</span><span class="school-planning-badge" data-planning-tone="planned" data-cluster-meeting>1 Meeting Planned</span></span></td>
+<td data-label="Visit Lock" data-visit-lock="staff_scheduled"><span class="school-planning-badge" data-planning-tone="closed" data-visit-lock="staff_scheduled" title="It has had its visit."><svg aria-hidden="true"><path d="M4.5 7V5"/></svg>Staff visit scheduled</span></td>
+</tr><tr><td>1650</td><td>—</td><td>—</td>
+<td data-label="Visit Lock" data-visit-lock="not_applicable"><span class="edify-text-muted" aria-label="Not applicable">—</span></td>
+</tr></tbody></table></div></section>
+</main>
+"""
+
+AUTHORED_MORE = """
+<main>
+<form id="filters-form" hx-get="/clusters" class="edify-filter-row w-full" data-edify-filter-row>
+  <div class="edify-filter-row__field"><span class="edify-filter-label">Fiscal year</span>
+    <select name="fy" aria-label="Filter by fiscal year"><option value="2027" selected>FY 2027</option></select></div>
+  <div class="edify-filter-row__field"><span class="edify-filter-label">Quarter</span>
+    <select name="quarter" aria-label="Filter by quarter"><option value="">All</option></select></div>
+  <div class="edify-filter-more edify-filter-row__field" data-edify-filter-more>
+    <button type="button" data-edify-filter-more-toggle><span>More<span class="edify-filter-more__long"> filters</span></span></button>
+    <div class="edify-filter-more__panel" role="group" aria-label="More filters" data-edify-filter-more-panel hidden>
+      <div class="edify-filter-row__field"><span class="edify-filter-label">SSA Status</span>
+        <select name="ssa_status" aria-label="Filter by SSA status"><option value="">All</option></select></div>
+    </div>
+  </div>
+</form>
+</main>
+"""
+
+
+class PlanningChipsTest(SimpleTestCase):
+    """A school's plan-status and Visit Lock chips keep each chip's colour,
+    padlock and hover sentence (components/school_planning_badges.html,
+    partials/planning/visit_lock_cell.html); the cell's text is unchanged."""
+
+    def setUp(self):
+        table = page_blocks.read(PLANNING_CHIPS)["blocks"][0]["table"]
+        self.first, self.second, self.third = (r["cells"] for r in table["rows"])
+
+    def test_each_chip_is_a_pill_with_the_pages_tone(self):
+        visits, trainings, lock = self.first[1:]
+
+        self.assertEqual(visits["text"], "1 Planned1 VerifiedVisit held")
+        self.assertEqual(
+            visits["pills"],
+            [
+                {"text": "1 Planned", "tone": "planned", "title": ""},
+                {"text": "1 Verified", "tone": "verified", "title": ""},
+                {
+                    "text": "Visit held",
+                    "tone": "closed",
+                    "title": "Held by a visit",
+                    "icon": "lock",
+                },
+            ],
+        )
+        self.assertEqual(
+            trainings["pills"], [{"text": "Not Planned", "tone": "none", "title": ""}]
+        )
+        self.assertEqual(
+            lock["pills"],
+            [{"text": "Unlocked", "tone": "open", "title": "", "icon": "unlock"}],
+        )
+        self.assertFalse(lock["badge"])
+
+    def test_a_held_visits_lock_carries_its_sentence(self):
+        trainings, lock = self.second[2:]
+
+        self.assertEqual(
+            [p["tone"] for p in trainings["pills"]], ["awaiting", "planned"]
+        )
+        self.assertEqual(
+            lock["pills"],
+            [
+                {
+                    "text": "Staff visit scheduled",
+                    "tone": "closed",
+                    "title": "It has had its visit.",
+                    "icon": "lock",
+                }
+            ],
+        )
+
+    def test_a_cell_without_chips_has_no_pills(self):
+        self.assertTrue(all("pills" not in cell for cell in self.third))
+        self.assertEqual(self.third[3]["text"], "—")
+
+
+class AuthoredMoreFiltersTest(SimpleTestCase):
+    def test_a_filter_the_page_folds_under_more_says_so(self):
+        filters = page_blocks.read(AUTHORED_MORE)["blocks"][0]["filters"]["filters"]
+
+        self.assertEqual(
+            [(f["name"], f.get("more", False)) for f in filters],
+            [("fy", False), ("quarter", False), ("ssa_status", True)],
+        )

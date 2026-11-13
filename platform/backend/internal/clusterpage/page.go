@@ -89,6 +89,10 @@ func filters(f filterState, fyOptions []string, districts, subCounties, staff []
 		selectBlock("cluster_risk", "Cluster risk", f.risk, withAll([]option{{"critical", "Critical"}, {"needs_attention", "Needs Attention"}, {"healthy", "Healthy"}})),
 		selectBlock("activity_status", "Activity status", f.activity, withAll([]option{{"pending", "Pending"}, {"completed", "Completed"}})),
 	}
+	// The template authors these three under its own More filters.
+	for _, folded := range list[len(list)-3:] {
+		folded.More = true
+	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: list}}}
 }
 
@@ -266,7 +270,9 @@ func record(c card, d Doors, fy string) *screensv1.PageRecord {
 		fact("SSA Required", strconv.Itoa(c.plan.Baseline), "alert"),
 		fact("Needing Cleanup", strconv.Itoa(c.plan.Cleanup), ""),
 		fact("Ready for Planning", strconv.Itoa(c.plan.Ready), "good"),
-		fact("Next Action", nextAction, riskTone(risk)),
+		// The card's CSS names a risk colour for Next Action, but
+		// `.school-record-row__metadata dd` wins: the page draws it plain.
+		fact("Next Action", nextAction, ""),
 	}
 	r.Details = []*screensv1.PageBlock{scoresPanel(c, fy)}
 	return r

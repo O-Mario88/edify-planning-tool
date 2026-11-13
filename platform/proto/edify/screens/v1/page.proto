@@ -17,7 +17,8 @@ message PageBadge {
   // The hover text, e.g. "Source: Recorded · Confirmed".
   string title = 3;
   // The small drawing before the words, by name: "lock" (a school's support
-  // visit for the year is taken). Empty for a badge of words only.
+  // visit for the year is taken), "unlock" (it is still open). Empty for a
+  // badge of words only.
   string icon = 4;
 }
 
@@ -83,6 +84,9 @@ message PageFilter {
   // The short word the page draws beside the select ("FY" for "Fiscal
   // year"), when it differs from the name.
   string caption = 5;
+  // The page folds it under its own "More filters" (the Clusters page
+  // authors the last three there), whatever the width.
+  bool more = 6;
 }
 
 message PageFilters {
@@ -129,6 +133,14 @@ message PageCell {
   // The row's own buttons and its Actions menu, in order. A button's key is
   // "button", a menu item's "menu", a red menu item's "danger".
   repeated PageAction actions = 6;
+  // The chips the cell draws side by side (a school's Visit and Training
+  // plan statuses, its Visit Lock), each in its own colour; the cell's text
+  // is still their words run together. A chip's tone is the page's own
+  // planning tone: none (red, Not Planned), planned (orange), awaiting
+  // (blue), verified (green), replan (amber), closed (grey, a held visit) or
+  // open (outlined, an unlocked one); its icon "lock" or "unlock"; its title
+  // the sentence the page shows on hover.
+  repeated PageBadge pills = 7;
 }
 
 message PageRow {
