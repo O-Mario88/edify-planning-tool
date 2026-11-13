@@ -12,6 +12,13 @@
 #
 # The development and production databases are never written: the source is
 # read by pg_dump, and every name this script creates or drops is checked.
+#
+# The base keeps the source's owners (no --no-owner): the Go-owned schemas
+# (gateway_read, cluster_leadership, school_loans) stay owned by their NOLOGIN
+# owner roles, as in development, so platform/deploy/db/apply-roles.sh runs
+# clean on the base (its SET ROLE steps create views and functions as those
+# owners). Grants are not copied (--no-privileges): apply-roles.sh makes them
+# from the repository's roles files. copies_test.sh proves both.
 set -euo pipefail
 
 source_db="${EDIFY_SHADOW_SOURCE:-edify_gorn_dev}"
@@ -31,7 +38,7 @@ case "${1:-}" in
     check "$base"
     dropdb --if-exists "$base"
     createdb "$base"
-    pg_dump --no-owner --no-privileges "$source_db" | psql --quiet --set ON_ERROR_STOP=1 "$base" >/dev/null
+    pg_dump --no-privileges "$source_db" | psql --quiet --set ON_ERROR_STOP=1 "$base" >/dev/null
     echo "made $base from $source_db"
     ;;
   fresh)
