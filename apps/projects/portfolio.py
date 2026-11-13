@@ -168,6 +168,13 @@ def portfolio_rows(project, *, fy: str | None = None) -> list[dict]:
     return rows
 
 
+#: How many of the newest enrolments schools_awaiting_project_planning reads
+#: for each school it may return.
+ENROLMENT_SCAN_FACTOR = 5
+#: Project work that does not count as planned at a school.
+NOT_PLANNED_STATUSES = ("cancelled", "rejected", "not_planned")
+
+
 def schools_awaiting_project_planning(coordinator_staff_id: str, *, limit: int = 10):
     """Project schools with no project activity planned yet, for the To-Do."""
     from apps.activities.models import Activity
@@ -195,7 +202,7 @@ def schools_awaiting_project_planning(coordinator_staff_id: str, *, limit: int =
         current_enrolments()
         .filter(project_id__in=project_ids)
         .select_related("school", "project")
-        .order_by("-created_at")[: limit * 5]
+        .order_by("-created_at")[: limit * ENROLMENT_SCAN_FACTOR]
     )
     if not enrolled:
         return []
@@ -205,7 +212,7 @@ def schools_awaiting_project_planning(coordinator_staff_id: str, *, limit: int =
             school_id__in=[a.school_id for a in enrolled],
             deleted_at__isnull=True,
         )
-        .exclude(status__in=("cancelled", "rejected", "not_planned"))
+        .exclude(status__in=NOT_PLANNED_STATUSES)
         .values_list("project_id", "school_id")
     )
     return [a for a in enrolled if (a.project_id, a.school_id) not in planned_pairs][
@@ -213,4 +220,9 @@ def schools_awaiting_project_planning(coordinator_staff_id: str, *, limit: int =
     ]
 
 
-__all__ = ["portfolio_rows", "schools_awaiting_project_planning"]
+__all__ = [
+    "ENROLMENT_SCAN_FACTOR",
+    "NOT_PLANNED_STATUSES",
+    "portfolio_rows",
+    "schools_awaiting_project_planning",
+]

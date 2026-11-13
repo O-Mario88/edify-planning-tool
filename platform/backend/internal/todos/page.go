@@ -33,6 +33,7 @@ type queue struct {
 	Rows                                          []todo
 	Critical, DueToday, WaitingMe, Overdue, Total int
 	Categories                                    [][2]string // (name, count), by name
+	Strip                                         *Strip
 }
 
 // buildQueue is the end of _get_todos: rows whose link the role may not
@@ -65,7 +66,7 @@ func buildQueue(role string, rows []todo) (queue, error) {
 		}
 		return dueBefore(a.Due, b.Due)
 	})
-	q := queue{Rows: kept, Total: len(kept)}
+	q := queue{Rows: kept, Total: len(kept), Strip: rules.Roles[role].Strip}
 	cats := map[string]int{}
 	for _, t := range kept {
 		if t.Priority == "critical" {
@@ -239,6 +240,13 @@ func page(q queue) *screensv1.GetPageResponse {
 			next.Items = append(next.Items, item)
 		}
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_List{List: next}})
+	}
+	if s := q.Strip; s != nil {
+		tabs := &screensv1.PageLinkTabs{Label: s.Label, Scrolls: s.Scrolls}
+		for _, t := range s.Tabs {
+			tabs.Tabs = append(tabs.Tabs, &screensv1.PageLinkTab{Label: t.Label, Href: t.Href, Active: t.Active})
+		}
+		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: tabs}})
 	}
 	metric := func(label string, n int, note string) *screensv1.PageMetric {
 		return &screensv1.PageMetric{Label: label, Value: strconv.Itoa(n), Note: note}

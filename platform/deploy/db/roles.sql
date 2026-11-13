@@ -404,3 +404,12 @@ GRANT SELECT (id) ON partner_invoice TO edify_gateway_ro;
 GRANT SELECT (program_lead_user_id) ON planning_oversight_follow_up TO edify_gateway_ro;
 GRANT SELECT (pl_user_id) ON target_catchup_plan TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
+
+-- The To-Do page's Project Coordinator and Business Transformation builders (agent/todos-pc-bto,
+-- docs/migration/58-todos-pc-bto.md): loan submission days, the states and finding words that say whether
+-- a loan section has rows, and loan impact conclusions' due days, states and preparer. No notes or amounts.
+GRANT SELECT (submitted_at) ON bt_mfi_loan TO edify_gateway_ro;
+GRANT SELECT (id) ON bt_loan_verification_requirement TO edify_gateway_ro;
+GRANT SELECT (requirement_id, finding, concern_reviewed_at) ON bt_loan_use_result TO edify_gateway_ro;
+GRANT SELECT (status) ON bt_loan_purpose_proposal TO edify_gateway_ro;
+GRANT SELECT (loan_id, due_date, ia_status, prepared_by, prepared_at, updated_at) ON bt_loan_impact_assessment TO edify_gateway_ro;

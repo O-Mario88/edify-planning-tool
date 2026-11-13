@@ -113,6 +113,12 @@ PARTNER_DELAY_SETTLED_STATUSES = (
     "awaiting_ia_verification",
     "submitted_to_pl",
 )
+#: Repayment states a Business Transformation reader reviews as a risk
+#: (_business_transformation_todos).
+BT_REPAYMENT_RISK_STATUSES = ("overdue_31_90", "overdue_90_plus")
+#: Operating schools, the ones a district's financing gap counts
+#: (_business_transformation_todos); a closed school is not eligible.
+BT_ELIGIBLE_SCHOOL_STATUSES = ("active", "reopened")
 
 
 def _owner_ids(principal, scope):
@@ -3219,7 +3225,6 @@ def _business_transformation_todos(principal, role, today):
         PortfolioSubmission,
         PortfolioSubmissionStatus,
         RepaymentSnapshot,
-        RepaymentStatus,
         SalesforceStatus,
         VerificationRequirementStatus,
     )
@@ -3486,10 +3491,7 @@ def _business_transformation_todos(principal, role, today):
         risky_snapshots = (
             RepaymentSnapshot.objects.filter(
                 loan_id__in=visible_ids,
-                status__in=[
-                    RepaymentStatus.OVERDUE_31_90,
-                    RepaymentStatus.OVERDUE_90_PLUS,
-                ],
+                status__in=BT_REPAYMENT_RISK_STATUSES,
             )
             .select_related("loan__school", "loan__mfi")
             .order_by("loan_id", "-as_of_date")
@@ -3568,7 +3570,7 @@ def _business_transformation_todos(principal, role, today):
                     "schools",
                     filter=Q(
                         schools__deleted_at__isnull=True,
-                        schools__operational_status__in=("active", "reopened"),
+                        schools__operational_status__in=BT_ELIGIBLE_SCHOOL_STATUSES,
                     ),
                     distinct=True,
                 ),

@@ -43,6 +43,7 @@ from types import SimpleNamespace
 
 from django.core.management.base import BaseCommand
 
+from apps.audit.management.commands.export_decision_log_rules import strip
 from apps.schools.management.commands.export_school_directory_rules import (
     _role_user,
 )
@@ -107,6 +108,16 @@ LINK_SHAPES = {
     "/performance-conversation?staff={id}": (
         "/performance-conversation?staff=cmw0000000000000000000001"
     ),
+    "/projects/planning?project={id}": (
+        "/projects/planning?project=cmw0000000000000000000001"
+    ),
+    "/loans?open={id}#loan-register-title": (
+        "/loans?open=cmw0000000000000000000001#loan-register-title"
+    ),
+    "/business-transformation/impact-reports": (
+        "/business-transformation/impact-reports"
+    ),
+    "/business-transformation": "/business-transformation",
 }
 
 #: The categories the row template draws an icon for; any other category is
@@ -249,6 +260,8 @@ def roles() -> dict:
             "page": RolePermissionService.can_view_page(user, "todos")
             and bool(can_open_url(user, PAGE_PATH)),
             "builders": reached_builders(role.value),
+            # The workspace strip the page shows the role (_section_nav).
+            "strip": strip(user, PAGE_PATH, "partials/_section_nav.html"),
         }
     return out
 
@@ -503,6 +516,50 @@ def lead_rules() -> dict:
     }
 
 
+def pc_bt_rules() -> dict:
+    """What the Project Coordinator's and Business Transformation's builders
+    Go has read (evidence_todos, fy_todos, portfolio_todos, the BT part of
+    _business_transformation_todos, learning_todos)."""
+    from apps.business_transformation import lending_impact as li
+    from apps.business_transformation import services as bt_services
+    from apps.business_transformation.models import (
+        DISBURSED_LOAN_STATUSES,
+        IAValidationStatus,
+        LoanPurposeProposalStatus,
+        LoanUseFinding,
+        SalesforceStatus,
+    )
+    from apps.command_center import todo_service as ts
+    from apps.impact import evidence_todos
+    from apps.planning import fy_todos
+    from apps.projects import portfolio, portfolio_todos
+    from apps.projects.models import OPEN_PROJECT_STATUSES
+
+    return {
+        "evidence_field_roles": list(evidence_todos.FIELD_ROLES),
+        "fy_planner_roles": list(fy_todos.PLANNER_ROLES),
+        "open_project_statuses": sorted(s.value for s in OPEN_PROJECT_STATUSES),
+        "project_row_limit": portfolio_todos.ROW_LIMIT,
+        "project_scan_factor": portfolio.ENROLMENT_SCAN_FACTOR,
+        "project_not_planned_statuses": list(portfolio.NOT_PLANNED_STATUSES),
+        "bt_loan_roles": sorted(bt_services.UGANDA_WIDE_ROLES),
+        "bt_impact_country_bound_roles": sorted(li.COUNTRY_BOUND_ROLES),
+        "bt_impact_country_roles": sorted(li.COUNTRY_ROLES),
+        "bt_salesforce_pending": SalesforceStatus.PENDING.value,
+        "bt_repayment_risk_statuses": list(ts.BT_REPAYMENT_RISK_STATUSES),
+        "bt_concern_findings": [
+            v for v in LoanUseFinding.values if v != LoanUseFinding.FULLY_APPROVED
+        ],
+        "bt_purpose_requested": LoanPurposeProposalStatus.REQUESTED.value,
+        "bt_eligible_school_statuses": list(ts.BT_ELIGIBLE_SCHOOL_STATUSES),
+        "bt_disbursed_loan_statuses": [str(v) for v in DISBURSED_LOAN_STATUSES],
+        "bt_ia_pending": IAValidationStatus.PENDING.value,
+        "bt_ia_returned": IAValidationStatus.RETURNED.value,
+        "bt_ia_verified": IAValidationStatus.VERIFIED.value,
+        "bt_legacy_preparer": li.LEGACY_PREPARER,
+    }
+
+
 def rules() -> dict:
     from apps.activities.models import Activity, ActivityType
     from apps.business_transformation.models import VerificationRequirementStatus
@@ -529,6 +586,7 @@ def rules() -> dict:
         ],
         "open_links": open_links(),
         "lead": lead_rules(),
+        "pc_bt": pc_bt_rules(),
         "category_tones": category_tones(),
         "priority_order": dict(ts.PRIORITY_ORDER),
         "priority_label": dict(ts.PRIORITY_LABEL),
