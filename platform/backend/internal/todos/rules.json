@@ -133,6 +133,61 @@
   "training": "Training",
   "training_follow_up_visit": "Training Follow-up Visit"
  },
+ "admin": {
+  "accountant_queue_statuses": {
+   "accountability": "accountability_pending",
+   "disbursed": "disbursed",
+   "monthly_request": "sent_to_accountant",
+   "partner_clearance": "ia_verified",
+   "partner_payable": "ia_confirmed",
+   "reimbursement": "reimbursement_submitted",
+   "weekly_request": "confirmed_for_advance"
+  },
+  "bt_verification_scheduling_roles": [
+   "Admin",
+   "BusinessTransformationOfficer",
+   "CountryDirector"
+  ],
+  "cost_catalogue_settled_statuses": [
+   "cancelled",
+   "rejected",
+   "deferred",
+   "closed"
+  ],
+  "country_budget": {
+   "accountant_roles": [
+    "Accountant",
+    "Admin"
+   ],
+   "approved_status": "approved_by_rvp",
+   "cd_roles": [
+    "CountryDirector",
+    "Admin"
+   ],
+   "country": "Uganda",
+   "returned_status": "returned_by_rvp",
+   "review_statuses": [
+    "draft_generated",
+    "cd_review",
+    "admin_plan_added"
+   ],
+   "rvp_roles": [
+    "RegionalVicePresident",
+    "Admin"
+   ],
+   "submitted_status": "submitted_to_rvp",
+   "team_request_status": "submitted_to_cd"
+  },
+  "partner_user_setup_pending": "pending",
+  "partner_user_setup_roles": [
+   "Admin"
+  ],
+  "policy_awaiting_publication_statuses": [
+   "approved",
+   "under_review",
+   "returned"
+  ]
+ },
  "attendance_max_rows": 10,
  "builders": [
   "_activity_todos",
@@ -464,6 +519,42 @@
    "RegionalProgramLead": false,
    "RegionalVicePresident": false
   },
+  "/admin-panel/users#partner-directory-title": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": false,
+   "HumanResources": false,
+   "ImpactAssessment": false,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/budget": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": true,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
+  },
   "/clusters": {
    "Accountant": false,
    "Admin": true,
@@ -514,6 +605,60 @@
    "PartnerAdmin": false,
    "PartnerFieldOfficer": false,
    "Program Lead": true,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/cost-settings": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/country-budget": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
+  },
+  "/disbursements": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": false,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
    "ProjectCoordinator": false,
    "RegionalProgramLead": false,
    "RegionalVicePresident": false
@@ -841,6 +986,24 @@
    "ProjectCoordinator": false,
    "RegionalProgramLead": true,
    "RegionalVicePresident": false
+  },
+  "/work-plan?view=fy": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": true,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": true,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
   }
  },
  "operating_statuses": [

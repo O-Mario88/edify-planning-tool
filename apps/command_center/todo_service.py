@@ -28,6 +28,7 @@ from django.utils import timezone
 
 from apps.core.cache_utils import stampede_safe_get_or_compute
 from apps.core.fy import get_operational_fy
+from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_user_scope
 from apps.schools.lifecycle_service import active_schools
 
@@ -89,6 +90,39 @@ WEEKLY_RETURNED_STATUSES = (
     "returned_by_cd",
     "returned_by_rvp",
     "returned_by_accountant",
+)
+#: The rows of the Accountant's desk, by the status that puts each there
+#: (_accountant_todos, _accountant_settlement_todos).
+ACCOUNTANT_QUEUE_STATUSES = {
+    "monthly_request": "sent_to_accountant",
+    "partner_clearance": "ia_verified",
+    "weekly_request": "confirmed_for_advance",
+    "accountability": "accountability_pending",
+    "reimbursement": "reimbursement_submitted",
+    "partner_payable": "ia_confirmed",
+    "disbursed": "disbursed",
+}
+#: The General Budget's desks (_country_budget_todos): the country whose
+#: budget they hold, who sits at each desk, and the statuses each acts on.
+COUNTRY_BUDGET_COUNTRY = "Uganda"
+COUNTRY_BUDGET_CD_ROLES = ("CountryDirector", "Admin")
+COUNTRY_BUDGET_RVP_ROLES = ("RegionalVicePresident", "Admin")
+COUNTRY_BUDGET_ACCOUNTANT_ROLES = ("Accountant", "Admin")
+COUNTRY_BUDGET_REVIEW_STATUSES = ("draft_generated", "cd_review", "admin_plan_added")
+COUNTRY_BUDGET_RETURNED_STATUS = "returned_by_rvp"
+COUNTRY_BUDGET_SUBMITTED_STATUS = "submitted_to_rvp"
+COUNTRY_BUDGET_APPROVED_STATUS = "approved_by_rvp"
+COUNTRY_BUDGET_TEAM_REQUEST_STATUS = "submitted_to_cd"
+#: Scheduled work that no longer needs a rate (_cost_catalogue_todos).
+COST_CATALOGUE_SETTLED_STATUSES = ("cancelled", "rejected", "deferred", "closed")
+#: Who plans a loan's post-disbursement verification visit
+#: (_business_transformation_todos).
+BT_VERIFICATION_SCHEDULING_ROLES = frozenset(
+    {
+        EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.ADMIN.value,
+    }
 )
 #: The weekly status each approving role decides (_fund_request_todos).
 WEEKLY_APPROVER_STATUS = {
@@ -1002,7 +1036,7 @@ def _cost_catalogue_todos(principal, role):
         deleted_at__isnull=True,
         cost_missing=True,
         scheduled_date__isnull=False,
-    ).exclude(status__in=("cancelled", "rejected", "deferred", "closed"))
+    ).exclude(status__in=COST_CATALOGUE_SETTLED_STATUSES)
     n = blocked.count()
     if not n:
         return []
@@ -1595,7 +1629,7 @@ def _accountant_todos(principal, role):
     todos = []
     monthly = list(
         FundRequest.objects.filter(
-            period="monthly", status="sent_to_accountant"
+            period="monthly", status=ACCOUNTANT_QUEUE_STATUSES["monthly_request"]
         ).order_by("-reviewed_at")[:10]
     )
     names = dict(
@@ -1634,7 +1668,7 @@ def _accountant_todos(principal, role):
         _Activity.objects.filter(
             deleted_at__isnull=True,
             delivery_type="partner",
-            status="ia_verified",
+            status=ACCOUNTANT_QUEUE_STATUSES["partner_clearance"],
             partner_payments__payment_type="advance",
         )
         .exclude(partner_payments__payment_type="clearance")
@@ -1665,9 +1699,9 @@ def _accountant_todos(principal, role):
             }
         )
 
-    for w in WeeklyFundRequest.objects.filter(status="confirmed_for_advance").order_by(
-        "-week_start_date"
-    )[:10]:
+    for w in WeeklyFundRequest.objects.filter(
+        status=ACCOUNTANT_QUEUE_STATUSES["weekly_request"]
+    ).order_by("-week_start_date")[:10]:
         todos.append(
             {
                 "id": f"disb-wfr-{w.id}",
@@ -1694,7 +1728,9 @@ def _accountant_todos(principal, role):
     from apps.fund_requests.models import AdvanceRequest
 
     for adv in (
-        AdvanceRequest.objects.filter(status="accountability_pending")
+        AdvanceRequest.objects.filter(
+            status=ACCOUNTANT_QUEUE_STATUSES["accountability"]
+        )
         .select_related("activity")
         .order_by("accountability_submitted_at")[:8]
     ):
@@ -1773,7 +1809,9 @@ def _accountant_settlement_todos():
         }
 
     # Money the organisation owes an employee.
-    for adv in AdvanceRequest.objects.filter(status="reimbursement_submitted")[:5]:
+    for adv in AdvanceRequest.objects.filter(
+        status=ACCOUNTANT_QUEUE_STATUSES["reimbursement"]
+    )[:5]:
         todos.append(
             row(
                 f"reimb-{adv.id}",
@@ -1804,7 +1842,7 @@ def _accountant_settlement_todos():
         Activity.objects.filter(
             deleted_at__isnull=True,
             delivery_type="partner",
-            payment_status="ia_confirmed",
+            payment_status=ACCOUNTANT_QUEUE_STATUSES["partner_payable"],
         )[:5]
     )
     partner_names = {}
@@ -1830,7 +1868,8 @@ def _accountant_settlement_todos():
     # Money out, accountability never returned — the loop that silently stays open.
     stale_before = today - timedelta(days=14)
     stale = AdvanceRequest.objects.filter(
-        status="disbursed", disbursed_at__date__lt=stale_before
+        status=ACCOUNTANT_QUEUE_STATUSES["disbursed"],
+        disbursed_at__date__lt=stale_before,
     )[:5]
     for adv in stale:
         todos.append(
@@ -1859,17 +1898,17 @@ def _country_budget_todos(principal, role):
     from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
 
     todos = []
-    if role in ("CountryDirector", "Admin"):
+    if role in COUNTRY_BUDGET_CD_ROLES:
         month_key = f"{date.today().year}-{date.today().month:02d}"
         current = MonthlyWorkPlanBudget.objects.filter(
-            country_id="Uganda",
+            country_id=COUNTRY_BUDGET_COUNTRY,
             month_key=month_key,
-            status__in=["draft_generated", "cd_review", "admin_plan_added"],
+            status__in=COUNTRY_BUDGET_REVIEW_STATUSES,
         ).first()
         if current:
             todos.append(_country_budget_todo(current, returned=False))
         for b in MonthlyWorkPlanBudget.objects.filter(
-            country_id="Uganda", status="returned_by_rvp"
+            country_id=COUNTRY_BUDGET_COUNTRY, status=COUNTRY_BUDGET_RETURNED_STATUS
         ).order_by("-month_key")[:5]:
             todos.append(_country_budget_todo(b, returned=True))
         # The FY Work Plan envelope, returned by the RVP. It produced no
@@ -1878,7 +1917,7 @@ def _country_budget_todos(principal, role):
         from apps.monthly_work_plan.models import CountryAnnualBudget
 
         for cab in CountryAnnualBudget.objects.filter(
-            country_id="Uganda", status="returned_by_rvp"
+            country_id=COUNTRY_BUDGET_COUNTRY, status=COUNTRY_BUDGET_RETURNED_STATUS
         ).order_by("-fy")[:3]:
             todos.append(
                 {
@@ -1907,9 +1946,9 @@ def _country_budget_todos(principal, role):
         # behind them that reached the CD only as a mis-routed notification.
         from apps.fund_requests.models import FundRequest
 
-        for fr in FundRequest.objects.filter(status="submitted_to_cd").order_by(
-            "-created_at"
-        )[:10]:
+        for fr in FundRequest.objects.filter(
+            status=COUNTRY_BUDGET_TEAM_REQUEST_STATUS
+        ).order_by("-created_at")[:10]:
             todos.append(
                 {
                     "id": f"fr-cd-{fr.id}",
@@ -1934,9 +1973,9 @@ def _country_budget_todos(principal, role):
                 }
             )
 
-    if role in ("RegionalVicePresident", "Admin"):
+    if role in COUNTRY_BUDGET_RVP_ROLES:
         for b in MonthlyWorkPlanBudget.objects.filter(
-            country_id="Uganda", status="submitted_to_rvp"
+            country_id=COUNTRY_BUDGET_COUNTRY, status=COUNTRY_BUDGET_SUBMITTED_STATUS
         ).order_by("-month_key")[:5]:
             todos.append(
                 {
@@ -1959,9 +1998,9 @@ def _country_budget_todos(principal, role):
                 }
             )
 
-    if role in ("Accountant", "Admin"):
+    if role in COUNTRY_BUDGET_ACCOUNTANT_ROLES:
         for b in MonthlyWorkPlanBudget.objects.filter(
-            country_id="Uganda", status="approved_by_rvp"
+            country_id=COUNTRY_BUDGET_COUNTRY, status=COUNTRY_BUDGET_APPROVED_STATUS
         ).order_by("-month_key")[:5]:
             todos.append(
                 {
@@ -3379,11 +3418,7 @@ def _business_transformation_todos(principal, role, today):
                 }
             )
 
-    if role in {
-        EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
-        EdifyRole.COUNTRY_DIRECTOR.value,
-        EdifyRole.ADMIN.value,
-    }:
+    if role in BT_VERIFICATION_SCHEDULING_ROLES:
         loan_ids = bt_services.scoped_loans(principal).values("id")
         requirements = (
             LoanVerificationRequirement.objects.filter(

@@ -77,7 +77,8 @@ type Rules struct {
 	TargetReviewType            string              `json:"target_review_type"`
 	TargetReviewStagesNotAgreed []string            `json:"target_review_stages_not_agreed"`
 
-	Lead LeadRules `json:"lead"`
+	Lead  LeadRules  `json:"lead"`
+	Admin AdminRules `json:"admin"`
 }
 
 var rules = mustLoad(rulesJSON)
@@ -87,7 +88,8 @@ func mustLoad(raw []byte) Rules {
 	if err := json.Unmarshal(raw, &r); err != nil || len(r.Roles) == 0 || len(r.Builders) == 0 ||
 		len(r.OpenLinks) == 0 || len(r.PriorityOrder) == 0 || len(r.ActionMeta) == 0 || r.GroupMin <= 0 ||
 		len(r.ActivityTypeLabels) == 0 || len(r.CoreKinds) == 0 || r.MissedInARowAlert <= 0 ||
-		r.AttendanceMaxRows <= 0 || r.Lead.OneToOneDueDay <= 0 || r.Lead.CoachingRowLimit <= 0 || r.Lead.SSAPendingStatus == "" || r.PlanningCountry == "" || len(r.EvidenceTables) == 0 {
+		r.AttendanceMaxRows <= 0 || r.Lead.OneToOneDueDay <= 0 || r.Lead.CoachingRowLimit <= 0 || r.Lead.SSAPendingStatus == "" || r.PlanningCountry == "" || len(r.EvidenceTables) == 0 ||
+		r.Admin.CountryBudget.Country == "" || len(r.Admin.AccountantQueueStatuses) == 0 || r.Admin.PartnerUserSetupPending == "" {
 		panic(fmt.Sprintf("todos: the embedded rules are unreadable: %v", err))
 	}
 	return r

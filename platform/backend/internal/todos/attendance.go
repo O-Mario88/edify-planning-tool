@@ -17,9 +17,6 @@ func sortStable[T any](list []T, less func(a, b T) bool) {
 // more sessions in a row, the most such schools first, at most
 // AttendanceMaxRows.
 func attendanceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if r.role != "CCEO" && r.role != leadRole {
-		return nil, errPassOn
-	}
 	if len(r.owners) == 0 {
 		return nil, nil
 	}

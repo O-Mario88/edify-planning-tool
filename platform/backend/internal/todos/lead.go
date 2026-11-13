@@ -131,7 +131,12 @@ func leaveGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
 }
 
 // cdFlagGuard stands for _cd_flag_todos: a flag assigned to the reader.
+// The Country Director's and the Admin's desk follows up every overdue open
+// flag, so for any reader but a lead any flag passes them on.
 func cdFlagGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	if r.role != leadRole {
+		return passOnIf(s.exists(ctx, `SELECT 1 FROM cd_flag`))
+	}
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM cd_flag WHERE assigned_to_user_id = $1`, r.p.UserID))
 }
 
