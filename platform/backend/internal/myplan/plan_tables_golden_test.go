@@ -55,7 +55,7 @@ func TestMyPlansTablesAreTheFeedsOwn(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	s := NewService(db, func() time.Time { return golden.Now })
+	s := NewService(db, func() time.Time { return golden.Now }).WithTrainingSummary(goldenSummary)
 	principals := map[string]auth.Principal{}
 	compared, differing, passed, rows := 0, 0, 0, 0
 	seen := map[string]int{}

@@ -51,7 +51,10 @@ func TestTableOfFollowsTheLoopsOrder(t *testing.T) {
 		{"a meeting at a cluster", &activity{activityType: "cluster_meeting", hasCluster: true}, tableMeetings},
 		{"a meeting at no cluster", &activity{activityType: "cluster_meeting"}, -1},
 		{"programme work", &activity{activityType: "school_visit", planningSource: sp("manual_work_plan")}, -1},
-		{"a training", &activity{activityType: "cluster_training", hasCluster: true}, -1},
+		{"a training at a cluster", &activity{activityType: "cluster_training", hasCluster: true}, tableTrainings},
+		{"an in-school training", &activity{activityType: "in_school_training", hasSchool: true, schoolType: sp("client")}, tableTrainings},
+		{"a training at no place", &activity{activityType: "training"}, tableTrainings},
+		{"a Champion school's training", &activity{activityType: "in_school_training", hasSchool: true, schoolType: sp("champion")}, tableProgrammeSchool},
 		{"a Champion school's visit", &activity{activityType: "school_visit", hasSchool: true, schoolType: sp("champion")}, tableProgrammeSchool},
 	}
 	for _, c := range cases {

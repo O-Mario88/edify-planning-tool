@@ -42,21 +42,24 @@ func plans(p auth.Principal) bool {
 // closed ones too: a page answered here is one with none of them. Their
 // other work is counted, and the page is Go's only when the tables list
 // none of it (ReadPlan).
-func holdsAnything(ctx context.Context, db schooldirectory.Querier, p auth.Principal) (bool, error) {
+//
+// trains is the first of them alone (a training of their own): since piece
+// 3e My Training Summary is drawn from internal/trainingsummary, so it no
+// longer makes held.
+func holdsAnything(ctx context.Context, db schooldirectory.Querier, p auth.Principal) (held, trains bool, err error) {
 	owners := ownerIDs(p)
-	var held bool
-	err := db.QueryRow(ctx, `SELECT
+	err = db.QueryRow(ctx, `SELECT
     EXISTS (SELECT 1 FROM activity a WHERE (a.monitored_by_staff_id = ANY($1) OR a.responsible_staff_id = ANY($1))
-            AND (a.activity_type = ANY($3) OR (a.activity_type = ANY($4) AND a.meeting_kind = 'training')))
- OR EXISTS (SELECT 1 FROM school s WHERE s.account_owner_id = ANY($1))
+            AND (a.activity_type = ANY($3) OR (a.activity_type = ANY($4) AND a.meeting_kind = 'training'))),
+    EXISTS (SELECT 1 FROM school s WHERE s.account_owner_id = ANY($1))
  OR EXISTS (SELECT 1 FROM cluster c WHERE c.responsible_staff_id = ANY($1))
  OR EXISTS (SELECT 1 FROM partner_assignment pa WHERE (pa.assigning_staff_id = ANY($1) OR pa.monitoring_staff_id = ANY($1))
             AND pa.status = ANY($5))
  OR EXISTS (SELECT 1 FROM training_ceiling tc WHERE tc.staff_id = ANY($1))
  OR EXISTS (SELECT 1 FROM partner pt WHERE pt.user_id = $2)
- OR EXISTS (SELECT 1 FROM partner_member pm WHERE pm.user_id = $2)`, owners, p.UserID, rules.Plan.SummaryTrainingTypes, rules.Plan.SummaryMeetingTypes, rules.Tables.OpenHandoverStatuses).Scan(&held)
+ OR EXISTS (SELECT 1 FROM partner_member pm WHERE pm.user_id = $2)`, owners, p.UserID, rules.Plan.SummaryTrainingTypes, rules.Plan.SummaryMeetingTypes, rules.Tables.OpenHandoverStatuses).Scan(&trains, &held)
 	if err != nil {
-		return false, fmt.Errorf("myplan: reading what the reader holds: %w", err)
+		return false, false, fmt.Errorf("myplan: reading what the reader holds: %w", err)
 	}
-	return held, nil
+	return held, trains, nil
 }
