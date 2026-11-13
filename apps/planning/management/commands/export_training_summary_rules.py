@@ -72,6 +72,8 @@ def doors() -> dict:
             "lens_tabs_team": _tabs(available, False),
             "reads_country": training_summary.may_read_country(user),
             "sets_country_ceiling": training_ceilings.may_set_country_ceiling(user),
+            # The staff_link tag's _may_open: a name links to the profile.
+            "opens_staff_profile": bool(can_open_url(user, "/staff/0")),
         }
     return out
 
@@ -109,6 +111,67 @@ def tones() -> dict:
     }
 
 
+def summary_flag_tones() -> dict:
+    """The By staff tab's Status tone, by where a row stands
+    (training_ceilings.SummaryRow.flag_tone)."""
+    from apps.planning.training_ceilings import SummaryRow
+
+    def row(ceiling, group):
+        return SummaryRow(
+            staff_id="",
+            staff_name="",
+            training_id="",
+            training_name="",
+            intervention="",
+            ceiling_id="",
+            ceiling=ceiling,
+            group=group,
+            in_school=0,
+        )
+
+    rows = {
+        "unset": row(None, 1),
+        "above": row(1, 2),
+        "available": row(2, 1),
+        "reached": row(1, 1),
+    }
+    if any(r.state != state for state, r in rows.items()):
+        raise CommandError("A summary row's states changed; read the tones again.")
+    return {state: r.flag_tone for state, r in rows.items()}
+
+
+def coverage() -> dict:
+    """The Schools tab's words and statuses (apps.planning.training_coverage):
+    each route's label, each status's label, order and tone, what the Show
+    filter offers, the activity statuses a commitment is in progress or
+    completed at, and which schools take a training (``uncovered``)."""
+    from apps.core.activity_types import (
+        COMPLETED_WORK_STATUSES,
+        UNDER_WAY_ACTIVITY_STATUSES,
+    )
+    from apps.core.pagination import TABLE_PAGE_SIZE
+    from apps.planning import training_coverage as tcov
+    from apps.planning.country_oversight import policy
+    from apps.planning.country_oversight import rules as oversight
+    from apps.schools.lifecycle_service import OPERATING_STATUSES
+
+    return {
+        "route_labels": dict(tcov.ROUTE_LABELS),
+        "status_labels": dict(tcov.STATUS_LABELS),
+        "status_order": list(tcov.STATUS_ORDER),
+        "status_tones": dict(tcov.STATUS_TONES),
+        "show_options": [[key, label] for key, label in tcov.SHOW_OPTIONS],
+        "figures": list(tcov.FIGURES),
+        "completed_statuses": list(COMPLETED_WORK_STATUSES),
+        "under_way_statuses": list(UNDER_WAY_ACTIVITY_STATUSES),
+        "trained_types": list(oversight.TRAINED_TYPES),
+        "excluded_duplicate_statuses": list(policy.EXCLUDED_DUPLICATE_STATUSES),
+        "operating_statuses": [str(getattr(s, "value", s)) for s in OPERATING_STATUSES],
+        "table_page_size": TABLE_PAGE_SIZE,
+        "summary_flag_tones": summary_flag_tones(),
+    }
+
+
 def rules() -> dict:
     from apps.activity_catalogue.models import CatalogueActivityType, DeliveryMethod
     from apps.core.enums import ExecutorType
@@ -130,6 +193,7 @@ def rules() -> dict:
     return {
         "doors": doors(),
         "tones": tones(),
+        "coverage": coverage(),
         "training_types": list(tc._TRAINING_TYPES),
         "meeting_types": list(tc._MEETING_TYPES),
         "meeting_kind_training": str(tc.MeetingKind.TRAINING.value),

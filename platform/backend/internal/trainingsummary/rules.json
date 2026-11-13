@@ -17,6 +17,130 @@
     "CountryDirector",
     "ImpactAssessment"
   ],
+  "coverage": {
+    "completed_statuses": [
+      "ia_verified",
+      "closed",
+      "accountant_confirmed",
+      "completed"
+    ],
+    "excluded_duplicate_statuses": [
+      "confirmed",
+      "merged"
+    ],
+    "figures": [
+      "covered",
+      "staff",
+      "partner",
+      "partner_scheduled",
+      "awaiting",
+      "group",
+      "remaining"
+    ],
+    "operating_statuses": [
+      "active",
+      "reopened"
+    ],
+    "route_labels": {
+      "group": "Group Training",
+      "partner": "In-School \u00b7 Partner",
+      "staff": "In-School \u00b7 Staff"
+    },
+    "show_options": [
+      [
+        "",
+        "Every school"
+      ],
+      [
+        "covered",
+        "Covered"
+      ],
+      [
+        "staff",
+        "Staff planned"
+      ],
+      [
+        "partner",
+        "Partner assigned"
+      ],
+      [
+        "partner_scheduled",
+        "Partner scheduled"
+      ],
+      [
+        "awaiting",
+        "Awaiting partner scheduling"
+      ],
+      [
+        "group",
+        "Group scheduled"
+      ],
+      [
+        "in_progress",
+        "In progress"
+      ],
+      [
+        "completed",
+        "Completed"
+      ],
+      [
+        "remaining",
+        "Not yet covered"
+      ]
+    ],
+    "status_labels": {
+      "completed": "Completed",
+      "group_scheduled": "Group Scheduled",
+      "in_progress": "In Progress",
+      "not_covered": "Not Covered",
+      "partner_assigned": "Partner Assigned \u2014 Awaiting Schedule",
+      "partner_scheduled": "Partner Scheduled",
+      "staff_planned": "Staff Planned"
+    },
+    "status_order": [
+      "not_covered",
+      "staff_planned",
+      "partner_assigned",
+      "partner_scheduled",
+      "group_scheduled",
+      "in_progress",
+      "completed"
+    ],
+    "status_tones": {
+      "completed": "success",
+      "group_scheduled": "info",
+      "in_progress": "info",
+      "not_covered": "danger",
+      "partner_assigned": "warning",
+      "partner_scheduled": "info",
+      "staff_planned": "info"
+    },
+    "summary_flag_tones": {
+      "above": "danger",
+      "available": "warning",
+      "reached": "success",
+      "unset": "neutral"
+    },
+    "table_page_size": 50,
+    "trained_types": [
+      "core",
+      "client",
+      "core_trained",
+      "core_graduate"
+    ],
+    "under_way_statuses": [
+      "in_progress",
+      "completion_started",
+      "evidence_uploaded",
+      "evidence_accepted",
+      "salesforce_id_required",
+      "submitted_to_pl",
+      "returned_by_pl",
+      "awaiting_ia_verification",
+      "returned",
+      "returned_by_ia"
+    ]
+  },
   "dated_by_partner": "partner",
   "default_country": "Uganda",
   "doors": {
@@ -25,6 +149,7 @@
       "feed_opens": true,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": false,
       "page": true,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -87,6 +212,7 @@
           "label": "Target Performance"
         }
       ],
+      "opens_staff_profile": true,
       "page": true,
       "reads_country": true,
       "sets_country_ceiling": true,
@@ -97,6 +223,7 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": false,
       "page": false,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -107,6 +234,7 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": false,
       "page": false,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -117,6 +245,7 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": false,
       "page": false,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -179,6 +308,7 @@
           "label": "Target Performance"
         }
       ],
+      "opens_staff_profile": true,
       "page": true,
       "reads_country": true,
       "sets_country_ceiling": false,
@@ -189,6 +319,7 @@
       "feed_opens": true,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": true,
       "page": true,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -271,6 +402,7 @@
           "label": "Target Performance"
         }
       ],
+      "opens_staff_profile": true,
       "page": true,
       "reads_country": true,
       "sets_country_ceiling": true,
@@ -281,6 +413,7 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": false,
       "page": false,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -291,6 +424,7 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": false,
       "page": false,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -301,6 +435,7 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": false,
       "page": false,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -311,6 +446,7 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": false,
       "page": false,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -373,6 +509,7 @@
           "label": "Target Performance"
         }
       ],
+      "opens_staff_profile": true,
       "page": true,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -383,6 +520,7 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": false,
       "page": false,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -435,6 +573,7 @@
           "label": "Target Performance"
         }
       ],
+      "opens_staff_profile": false,
       "page": true,
       "reads_country": false,
       "sets_country_ceiling": false,
@@ -445,6 +584,7 @@
       "feed_opens": true,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "opens_staff_profile": true,
       "page": true,
       "reads_country": false,
       "sets_country_ceiling": false,
