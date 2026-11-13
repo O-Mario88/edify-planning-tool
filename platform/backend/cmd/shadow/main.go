@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/parity"
 	"os"
 	"slices"
 	"sort"
@@ -72,7 +73,14 @@ func main() {
 	to := flag.String("to", "", "the run's end (RFC 3339)")
 	show := flag.Int("show", 3, "rows to print for each table that differs")
 	all := flag.Bool("all", false, "compare the request-noise tables too (sessions, timing telemetry)")
+	scenario := flag.String("scenario", "", "the save scenario's name (snooze_todo …): rows that differ only as internal/parity/intended.json lists for it are accepted")
 	flag.Parse()
+	list, err := parity.CheckedIn()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "shadow:", err)
+		os.Exit(2)
+	}
+	intended, scenarioName = list, *scenario
 	if *all {
 		noise = map[string]bool{}
 	}
@@ -91,6 +99,13 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+// intended is the checked-in list of intended differences and scenarioName
+// the scenario they are looked up under (internal/parity).
+var (
+	intended     *parity.List
+	scenarioName string
+)
 
 type window struct{ from, to time.Time }
 
@@ -153,10 +168,18 @@ func run(ctx context.Context, dsnA, dsnB string, w window, show int) (int, error
 			fmt.Printf("  %-40s same (%d rows written on each)\n", t, len(na))
 			continue
 		}
+		pairs, restA, restB := intended.PairRows(parity.Answer{Tool: parity.ToolShadow, Where: scenarioName, Question: t}, extraA, extraB)
+		if len(restA) == 0 && len(restB) == 0 {
+			fmt.Printf("  %-40s same but as intended (%d rows written on each, %d differing only as listed)\n", t, len(na), len(pairs))
+			for _, p := range pairs {
+				fmt.Println(parity.IntendedLines(p.Accepted))
+			}
+			continue
+		}
 		differing++
-		fmt.Printf("  %-40s DIFFERS: %d rows only in a, %d only in b\n", t, len(extraA), len(extraB))
-		printSome("a", extraA, show)
-		printSome("b", extraB, show)
+		fmt.Printf("  %-40s DIFFERS: %d rows only in a, %d only in b\n", t, len(restA), len(restB))
+		printSome("a", restA, show)
+		printSome("b", restB, show)
 	}
 	fmt.Printf("%d of %d changed tables differ\n", differing, len(changed))
 	return differing, nil

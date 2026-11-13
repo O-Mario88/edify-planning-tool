@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/parity"
 	"io"
 	"net/http"
 	"net/url"
@@ -49,6 +50,12 @@ func main() {
 	probe := flag.String("probe", "admin@edify.org", "profile: the account whose schools are sampled for every account")
 	sample := flag.Int("sample", 40, "profile: how many of the probe's schools each account is also asked")
 	flag.Parse()
+	list, err := parity.CheckedIn()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "parity:", err)
+		os.Exit(2)
+	}
+	intended = list
 	password := os.Getenv("EDIFY_PARITY_PASSWORD")
 	for _, address := range []string{*gateway, *existing} {
 		if u, err := url.Parse(address); err != nil || (u.Hostname() != "localhost" && u.Hostname() != "127.0.0.1") {
@@ -317,11 +324,25 @@ func compareRows(goRows, oldRows []any, diffs *[]string) {
 }
 
 func walk(path string, a, b any, diffs *[]string) {
+	found := []parity.Diff{}
+	diffWalk(path, a, b, &found)
+	for _, d := range found {
+		*diffs = append(*diffs, d.Text)
+	}
+}
+
+// diffWalk records every difference between Go's answer a and the existing
+// one b as a field path and the two values as text, the form the list of
+// intended differences matches (internal/parity).
+func diffWalk(path string, a, b any, diffs *[]parity.Diff) {
+	add := func(goText, oldText, text string) {
+		*diffs = append(*diffs, parity.Diff{Field: path, Go: goText, Existing: oldText, Text: text})
+	}
 	switch av := a.(type) {
 	case map[string]any:
 		bv, ok := b.(map[string]any)
 		if !ok {
-			*diffs = append(*diffs, fmt.Sprintf("  %s: go %v, existing %v", path, a, b))
+			add(fmt.Sprint(a), fmt.Sprint(b), fmt.Sprintf("  %s: go %v, existing %v", path, a, b))
 			return
 		}
 		keys := map[string]bool{}
@@ -332,20 +353,21 @@ func walk(path string, a, b any, diffs *[]string) {
 			keys[k] = true
 		}
 		for k := range keys {
-			walk(path+"."+k, av[k], bv[k], diffs)
+			diffWalk(path+"."+k, av[k], bv[k], diffs)
 		}
 	case []any:
 		bv, ok := b.([]any)
 		if !ok || len(av) != len(bv) {
-			*diffs = append(*diffs, fmt.Sprintf("  %s: go %d items, existing %v items", path, len(av), lenOf(b)))
+			add(fmt.Sprintf("%d items", len(av)), fmt.Sprintf("%v items", lenOf(b)),
+				fmt.Sprintf("  %s: go %d items, existing %v items", path, len(av), lenOf(b)))
 			return
 		}
 		for i := range av {
-			walk(fmt.Sprintf("%s[%d]", path, i), av[i], bv[i], diffs)
+			diffWalk(fmt.Sprintf("%s[%d]", path, i), av[i], bv[i], diffs)
 		}
 	default:
 		if !reflect.DeepEqual(a, b) {
-			*diffs = append(*diffs, fmt.Sprintf("  %s: go %v, existing %v", path, a, b))
+			add(fmt.Sprint(a), fmt.Sprint(b), fmt.Sprintf("  %s: go %v, existing %v", path, a, b))
 		}
 	}
 }
