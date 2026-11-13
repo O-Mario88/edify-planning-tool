@@ -401,6 +401,17 @@ existing application's.
 | Go checks | Pass | `go build`, `go vet`, `go test -race` (activities, screens, config, shadow), the integration suite |
 | Production | Not changed | the fix is on the migration branch only; `main` keeps the defect until the owner approves it |
 
+## The sixth save: group reschedule and group cancel (2026-11-13)
+
+| Check | Result | Evidence |
+|---|---|---|
+| Group reschedule ([33](../migration/33-sixth-save-group-actions.md)) | Pass | service 0 of 20 steps, 0 of 20 changed tables differing; app (3 s settle after each step) 0 of 20, 0 of 19; verify_chain ok over 16,037 rows |
+| Group cancel | Pass | service 0 of 23 steps, 0 of 15 tables; app 0 of 23, 0 of 14; verify_chain ok over 15,999 rows |
+| Every earlier save re-proved on the merged branch | Pass | schedule, reschedule, cancel, edit and the training pair at both levels: 0 steps and 0 changed tables differing, verify_chain ok on each run that checks it (`m21_all.sh`, 14 runs) |
+| App-level timing | Noted | without a pause the group-reschedule app run differed only in `domain_event_log.payload.auditSeq`: the existing app prices after answering and the next step's refusal was sealed first; the web's next request waits for that pricing, the app's does not. Proved with `appplay -settle 3s` |
+| Go checks | Pass | gofmt, `go vet ./...`, `go test -race ./...`, the integration suite |
+| Groups Go forwards whole | Open | several visits onto a day with none yet, and the group's whole-day pricing check: both wait for a read-only group check in Django (33) |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.
