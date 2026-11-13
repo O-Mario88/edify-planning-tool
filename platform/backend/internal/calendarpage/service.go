@@ -217,7 +217,7 @@ func (s *Service) view(ctx context.Context, p auth.Principal, role Role, r reque
 		keep.add("view", "agenda")
 	}
 	v := &view{year: r.year, mon: r.mon, today: today, agenda: r.agenda, m: m, person: shown,
-		kind: r.kind, status: r.status, filtersActive: r.kind != "" || r.status != "" || r.eventKind != "all",
+		kind: r.kind, status: r.status, eventKind: r.eventKind, filtersActive: r.kind != "" || r.status != "" || r.eventKind != "all",
 		leave: role.Leave, addEvent: role.AddEvent, strip: role.Strip, picks: len(ticks)}
 	v.teamTabs, v.memberTabs = peopleTabs(p, teams, shownTeam, shown, monthRows,
 		append(params{{"year", itoa(r.year)}, {"month", itoa(int(r.mon))}}, keep...))

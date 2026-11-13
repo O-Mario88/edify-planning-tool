@@ -12,6 +12,11 @@ type event struct {
 	kind              string
 	title, meta, href string
 	pick              bool
+	// What the month block (PageCalendar) carries beside the words: the
+	// activity's colour family, the activity it ticks, a later day of a run
+	// and a day-off mark.
+	family, pickID    string
+	continued, dayOff bool
 }
 
 // kindOrder is the view's event_order: events, holidays, leave, work.
@@ -96,7 +101,12 @@ func (m *month) addActivities(rows []*activity, sp map[string]span, marks map[st
 			if dayOff {
 				meta = "Reschedule: " + strings.ToLower(mark.label()) + " · " + meta
 			}
-			m.days[d] = append(m.days[d], event{kind: "activity", title: title, meta: meta, href: href, pick: ticks[a.id]})
+			e := event{kind: "activity", title: title, meta: meta, href: href, pick: ticks[a.id],
+				family: family(a.kind), continued: d.After(s.start), dayOff: dayOff}
+			if e.pick {
+				e.pickID = a.id
+			}
+			m.days[d] = append(m.days[d], e)
 		}
 	}
 	sort.SliceStable(m.dayOff, func(i, j int) bool { return m.dayOff[i].date.Before(m.dayOff[j].date) })
@@ -159,10 +169,19 @@ func (m *month) addEvents(events []orgEvent) {
 			meta = "Planning blocked"
 		}
 		for d := later(e.start, m.start); !d.After(earlier(e.end, m.end)); d = d.AddDate(0, 0, 1) {
-			m.days[d] = append(m.days[d], event{kind: "event", title: e.title, meta: meta})
+			m.days[d] = append(m.days[d], event{kind: "event", title: e.title, meta: meta, continued: d.After(e.start)})
 			m.counts["event"]++
 		}
 	}
+}
+
+// family is _calendar_event_family: the exported colour family of an
+// activity type, "activity" for a type the vocabulary does not know.
+func family(activityType string) string {
+	if f, ok := rules.EventFamilies[activityType]; ok {
+		return f
+	}
+	return "activity"
 }
 
 // sortDays puts each day's entries in the view's order: by kind, then title.
