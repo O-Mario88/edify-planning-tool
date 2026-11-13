@@ -309,3 +309,16 @@ GRANT SELECT (id, fy, country_id, status, rvp_review_note) ON country_annual_bud
 GRANT SELECT (staff_id, start_date, end_date, status) ON leave TO edify_gateway_ro;
 GRANT SELECT (date, name) ON public_holiday TO edify_gateway_ro;
 GRANT SELECT (block_type, is_active, country, start_date, end_date, title) ON calendar_block TO edify_gateway_ro;
+
+-- The Staff Activity Log (internal/staffactivity): who signed in and when,
+-- the active time by part of the platform, where each person is now (their
+-- last page and beat), and the meaningful actions the audit chain records.
+-- Of the audit chain only what counts and names an action, never its payload,
+-- hash, address or browser: a row whose school is named only in its payload
+-- passes the reader to the existing application. Of a sign-in, never its
+-- address or browser.
+GRANT SELECT (created_at, last_seen_at, last_seen_path, last_seen_action, last_seen_login_id) ON "user" TO edify_gateway_ro;
+GRANT SELECT (id, user_id, at, last_active_at, ended_at, device) ON login_event TO edify_gateway_ro;
+GRANT SELECT (user_id, day, section, seconds) ON presence_time TO edify_gateway_ro;
+GRANT SELECT (id, action, actor_id, success, created_at, correlation_id, subject_kind, subject_id) ON audit_log TO edify_gateway_ro;
+GRANT SELECT (status, subject_id) ON staff_usage_follow_up TO edify_gateway_ro;

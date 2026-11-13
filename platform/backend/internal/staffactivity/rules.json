@@ -1,0 +1,1857 @@
+{
+  "activity_subjects": [
+    "Activity",
+    "activity"
+  ],
+  "dashboard": {
+    "anchor": "staff-activity",
+    "param": "sa",
+    "path": "/staff-activity",
+    "role": "Program Lead"
+  },
+  "doors": {
+    "Accountant": {
+      "page": false
+    },
+    "Admin": {
+      "page": true
+    },
+    "BusinessTransformationOfficer": {
+      "page": false
+    },
+    "CCEO": {
+      "page": false
+    },
+    "ClusterLeader": {
+      "page": false
+    },
+    "CountryDirector": {
+      "page": true
+    },
+    "HumanResources": {
+      "page": false
+    },
+    "ImpactAssessment": {
+      "page": true
+    },
+    "MfiLoanOfficer": {
+      "page": false
+    },
+    "MfiPartnerAdmin": {
+      "page": false
+    },
+    "PartnerAdmin": {
+      "page": false
+    },
+    "PartnerFieldOfficer": {
+      "page": false
+    },
+    "Program Lead": {
+      "page": true
+    },
+    "ProjectCoordinator": {
+      "page": false
+    },
+    "RegionalProgramLead": {
+      "page": false
+    },
+    "RegionalVicePresident": {
+      "page": false
+    }
+  },
+  "failed_request_actions": [
+    "request_failed"
+  ],
+  "follow_up_open_statuses": [
+    "sent",
+    "acknowledged",
+    "support_scheduled",
+    "waiting_for_staff",
+    "returned",
+    "escalated"
+  ],
+  "holiday_country": "Uganda",
+  "internal_roles": [
+    "CCEO",
+    "Program Lead"
+  ],
+  "leave_approved": "approved",
+  "meaningful_actions": {
+    "accountability_submitted": {
+      "label": "Submitted accountability",
+      "module": "Fund Requests",
+      "school": false,
+      "secondary": false
+    },
+    "activity.cluster_meeting_added_to_my_plan": {
+      "label": "Added a cluster meeting to My Plan",
+      "module": "My Plan",
+      "school": false,
+      "secondary": false
+    },
+    "activity.facilitator_changed": {
+      "label": "Changed a training's facilitator",
+      "module": "Planning",
+      "school": true,
+      "secondary": false
+    },
+    "activity.planned": {
+      "label": "Planned an activity",
+      "module": "Planning",
+      "school": true,
+      "secondary": true
+    },
+    "activity.salesforce_id_entered": {
+      "label": "Entered a Salesforce ID",
+      "module": "My Plan",
+      "school": true,
+      "secondary": true
+    },
+    "activity.scheduled": {
+      "label": "Scheduled an activity",
+      "module": "Planning",
+      "school": true,
+      "secondary": true
+    },
+    "activity.training_changed": {
+      "label": "Changed an activity's training",
+      "module": "Planning",
+      "school": true,
+      "secondary": true
+    },
+    "advance_request.approve_accountability": {
+      "label": "Reconciled accountability",
+      "module": "Finance",
+      "school": false,
+      "secondary": false
+    },
+    "advance_request.submit_accountability": {
+      "label": "Submitted accountability",
+      "module": "Fund Requests",
+      "school": false,
+      "secondary": false
+    },
+    "bt.loan.amendment_approved": {
+      "label": "Approved a loan amendment",
+      "module": "Business Transformation",
+      "school": true,
+      "secondary": false
+    },
+    "bt.loan.impact_verified": {
+      "label": "Verified a loan's impact",
+      "module": "Business Transformation",
+      "school": true,
+      "secondary": false
+    },
+    "bt.loan.repayment_posted": {
+      "label": "Posted a loan repayment",
+      "module": "Business Transformation",
+      "school": true,
+      "secondary": false
+    },
+    "bt.ssa_recommendations_created": {
+      "label": "Created SSA recommendations",
+      "module": "Business Transformation",
+      "school": true,
+      "secondary": false
+    },
+    "cancel_activity": {
+      "label": "Cancelled an activity",
+      "module": "Planning",
+      "school": true,
+      "secondary": false
+    },
+    "cluster.facilitator_changed": {
+      "label": "Set a cluster's partner facilitator",
+      "module": "Clusters",
+      "school": false,
+      "secondary": false
+    },
+    "cluster.membership_changed": {
+      "label": "Changed a cluster's schools",
+      "module": "Clusters",
+      "school": true,
+      "secondary": false
+    },
+    "complete_partner_ssa_support": {
+      "label": "Completed partner SSA support",
+      "module": "SSA",
+      "school": true,
+      "secondary": false
+    },
+    "country_budget.submit_to_rvp": {
+      "label": "Submitted the country budget",
+      "module": "Budget",
+      "school": false,
+      "secondary": false
+    },
+    "data_quality_issue.resolve": {
+      "label": "Resolved a data-quality issue",
+      "module": "Data Quality",
+      "school": false,
+      "secondary": false
+    },
+    "documents.published": {
+      "label": "Published a policy or document",
+      "module": "Documents",
+      "school": false,
+      "secondary": false
+    },
+    "edit_activity": {
+      "label": "Edited an activity",
+      "module": "Planning",
+      "school": true,
+      "secondary": false
+    },
+    "escalation_acknowledge": {
+      "label": "Acknowledged an escalation",
+      "module": "Escalations",
+      "school": false,
+      "secondary": false
+    },
+    "escalation_raise": {
+      "label": "Raised an escalation",
+      "module": "Escalations",
+      "school": false,
+      "secondary": false
+    },
+    "escalation_resolve": {
+      "label": "Decided an escalation",
+      "module": "Escalations",
+      "school": false,
+      "secondary": false
+    },
+    "field_debrief_reviewed": {
+      "label": "Reviewed a field debrief",
+      "module": "Field Debrief",
+      "school": false,
+      "secondary": false
+    },
+    "finance.partner_paid": {
+      "label": "Paid a partner",
+      "module": "Finance",
+      "school": false,
+      "secondary": false
+    },
+    "fund_request.approved": {
+      "label": "Approved a fund request",
+      "module": "Finance",
+      "school": false,
+      "secondary": false
+    },
+    "fund_request.disburse": {
+      "label": "Disbursed funds",
+      "module": "Finance",
+      "school": false,
+      "secondary": false
+    },
+    "fy.planning_opened": {
+      "label": "Opened planning for the year",
+      "module": "Planning",
+      "school": false,
+      "secondary": false
+    },
+    "grant_partner_allowance": {
+      "label": "Granted a partner allowance",
+      "module": "Planning Oversight",
+      "school": false,
+      "secondary": false
+    },
+    "hr.candidate_hired": {
+      "label": "Hired a candidate",
+      "module": "HR",
+      "school": false,
+      "secondary": false
+    },
+    "hr.coverage_granted": {
+      "label": "Granted cover",
+      "module": "Leave",
+      "school": false,
+      "secondary": false
+    },
+    "hr.offboarding_completed": {
+      "label": "Completed an offboarding",
+      "module": "HR",
+      "school": false,
+      "secondary": false
+    },
+    "hr.performance_agreement_drafted": {
+      "label": "Drafted a performance agreement",
+      "module": "Performance",
+      "school": false,
+      "secondary": false
+    },
+    "hr.performance_window_activated": {
+      "label": "Opened a performance window",
+      "module": "Performance",
+      "school": false,
+      "secondary": false
+    },
+    "hr.priority_amended": {
+      "label": "Amended a priority",
+      "module": "Priorities",
+      "school": false,
+      "secondary": false
+    },
+    "hr.probation_confirmed": {
+      "label": "Confirmed a probation",
+      "module": "HR",
+      "school": false,
+      "secondary": false
+    },
+    "hr.strategic_priority_published": {
+      "label": "Published a strategic priority",
+      "module": "Priorities",
+      "school": false,
+      "secondary": false
+    },
+    "hr.uganda_master_milestone_confirmed": {
+      "label": "Confirmed a master milestone",
+      "module": "Priorities",
+      "school": false,
+      "secondary": false
+    },
+    "ia.finding.approved": {
+      "label": "Approved an impact finding",
+      "module": "Impact",
+      "school": false,
+      "secondary": false
+    },
+    "ia.school_evidence.discipleship_confirmed": {
+      "label": "Confirmed discipleship evidence",
+      "module": "Impact",
+      "school": true,
+      "secondary": false
+    },
+    "ia.school_evidence.learning_confirmed": {
+      "label": "Confirmed learning evidence",
+      "module": "Impact",
+      "school": true,
+      "secondary": false
+    },
+    "ia.school_evidence.learning_recorded": {
+      "label": "Recorded learning evidence",
+      "module": "Impact",
+      "school": true,
+      "secondary": false
+    },
+    "ia_return_completion": {
+      "label": "Returned an activity's evidence",
+      "module": "Verification",
+      "school": true,
+      "secondary": false
+    },
+    "ia_verify_completion": {
+      "label": "Verified an activity",
+      "module": "Verification",
+      "school": true,
+      "secondary": false
+    },
+    "leave.approved": {
+      "label": "Approved leave",
+      "module": "Leave",
+      "school": false,
+      "secondary": false
+    },
+    "leave.rejected": {
+      "label": "Declined leave",
+      "module": "Leave",
+      "school": false,
+      "secondary": false
+    },
+    "leave.returned": {
+      "label": "Returned a leave request",
+      "module": "Leave",
+      "school": false,
+      "secondary": false
+    },
+    "mscs.story_approved": {
+      "label": "Approved a change story",
+      "module": "Impact",
+      "school": false,
+      "secondary": false
+    },
+    "oversight.role_queue_nudged": {
+      "label": "Followed up a team queue",
+      "module": "Planning Oversight",
+      "school": false,
+      "secondary": false
+    },
+    "partner.assigned": {
+      "label": "Assigned a school to a partner",
+      "module": "Partners",
+      "school": true,
+      "secondary": false
+    },
+    "partner.assignment_return_resolved": {
+      "label": "Decided a returned partner assignment",
+      "module": "Partners",
+      "school": true,
+      "secondary": false
+    },
+    "partner.assignment_undone": {
+      "label": "Undid a partner assignment",
+      "module": "Partners",
+      "school": true,
+      "secondary": false
+    },
+    "partner.assignment_withdrawn": {
+      "label": "Withdrew a school from a partner",
+      "module": "Partners",
+      "school": true,
+      "secondary": false
+    },
+    "partner_oversight.reminder_sent": {
+      "label": "Sent a partner a reminder",
+      "module": "Partners",
+      "school": false,
+      "secondary": false
+    },
+    "partner_start_activity": {
+      "label": "Started a partner activity",
+      "module": "My Plan",
+      "school": true,
+      "secondary": false
+    },
+    "pd_hr_return": {
+      "label": "Returned a development request",
+      "module": "Professional Development",
+      "school": false,
+      "secondary": false
+    },
+    "pd_supervisor_approve": {
+      "label": "Approved a development request",
+      "module": "Professional Development",
+      "school": false,
+      "secondary": false
+    },
+    "pl_approve_completion": {
+      "label": "Confirmed a completed activity",
+      "module": "Planning Oversight",
+      "school": true,
+      "secondary": false
+    },
+    "pl_return_completion": {
+      "label": "Returned a completed activity",
+      "module": "Planning Oversight",
+      "school": true,
+      "secondary": false
+    },
+    "pl_review_confirm": {
+      "label": "Confirmed an activity",
+      "module": "Planning Oversight",
+      "school": true,
+      "secondary": true
+    },
+    "pl_review_return": {
+      "label": "Returned an activity",
+      "module": "Planning Oversight",
+      "school": true,
+      "secondary": true
+    },
+    "project.school_added": {
+      "label": "Added a school to a project",
+      "module": "Projects",
+      "school": true,
+      "secondary": false
+    },
+    "project.school_enrolment_undone": {
+      "label": "Undid adding a school to a project",
+      "module": "Projects",
+      "school": true,
+      "secondary": false
+    },
+    "project.school_withdrawn": {
+      "label": "Withdrew a school from a project",
+      "module": "Projects",
+      "school": true,
+      "secondary": false
+    },
+    "rate_card.operational.version.published": {
+      "label": "Published a rate card",
+      "module": "Budget",
+      "school": false,
+      "secondary": false
+    },
+    "rate_card.version.published": {
+      "label": "Published a rate card",
+      "module": "Budget",
+      "school": false,
+      "secondary": false
+    },
+    "reimbursement_receipt_confirmed": {
+      "label": "Paid a reimbursement",
+      "module": "Finance",
+      "school": false,
+      "secondary": false
+    },
+    "reschedule_activity": {
+      "label": "Rescheduled an activity",
+      "module": "Planning",
+      "school": true,
+      "secondary": false
+    },
+    "rvp_annual_approve": {
+      "label": "Approved the annual baseline",
+      "module": "Budget",
+      "school": false,
+      "secondary": false
+    },
+    "schedule_core_outreach_visit": {
+      "label": "Scheduled a core outreach visit",
+      "module": "Planning",
+      "school": true,
+      "secondary": false
+    },
+    "schedule_core_training": {
+      "label": "Scheduled a core training",
+      "module": "Planning",
+      "school": true,
+      "secondary": false
+    },
+    "schedule_core_visit": {
+      "label": "Scheduled a core school visit",
+      "module": "Planning",
+      "school": true,
+      "secondary": false
+    },
+    "school.owner_transferred": {
+      "label": "Handed a school to another officer",
+      "module": "Schools",
+      "school": true,
+      "secondary": false
+    },
+    "school.profile_updated": {
+      "label": "Updated a school record",
+      "module": "Schools",
+      "school": true,
+      "secondary": false
+    },
+    "school.updated": {
+      "label": "Updated a school record",
+      "module": "Schools",
+      "school": true,
+      "secondary": false
+    },
+    "school_action.sent": {
+      "label": "Sent a school to an officer",
+      "module": "Planning Oversight",
+      "school": true,
+      "secondary": false
+    },
+    "send_reminder": {
+      "label": "Sent a reminder",
+      "module": "Planning Oversight",
+      "school": false,
+      "secondary": false
+    },
+    "ssa_return": {
+      "label": "Returned an SSA record",
+      "module": "SSA",
+      "school": true,
+      "secondary": false
+    },
+    "ssa_verify": {
+      "label": "Confirmed an SSA record",
+      "module": "SSA",
+      "school": true,
+      "secondary": false
+    },
+    "staff_activity.follow_up_resolved": {
+      "label": "Resolved a staff follow-up",
+      "module": "Staff Activity",
+      "school": false,
+      "secondary": false
+    },
+    "staff_activity.follow_up_sent": {
+      "label": "Sent a follow-up to a team member",
+      "module": "Staff Activity",
+      "school": false,
+      "secondary": false
+    },
+    "start_activity": {
+      "label": "Started an activity",
+      "module": "My Plan",
+      "school": true,
+      "secondary": false
+    },
+    "strategic_reserve.activation.approved": {
+      "label": "Approved a strategic reserve activation",
+      "module": "Budget",
+      "school": false,
+      "secondary": false
+    },
+    "strategic_reserve.approved": {
+      "label": "Approved a strategic reserve",
+      "module": "Budget",
+      "school": false,
+      "secondary": false
+    },
+    "submit_for_review": {
+      "label": "Submitted an activity for review",
+      "module": "My Plan",
+      "school": true,
+      "secondary": false
+    },
+    "supervisor_approve": {
+      "label": "Approved a team request",
+      "module": "Planning Oversight",
+      "school": false,
+      "secondary": false
+    },
+    "supervisor_return": {
+      "label": "Returned a team request",
+      "module": "Planning Oversight",
+      "school": false,
+      "secondary": false
+    },
+    "targets.reconciliation_resolved": {
+      "label": "Resolved a target reconciliation",
+      "module": "Targets",
+      "school": false,
+      "secondary": false
+    },
+    "training_ceiling.removed": {
+      "label": "Removed a training ceiling",
+      "module": "Planning Oversight",
+      "school": false,
+      "secondary": false
+    },
+    "training_ceiling.set": {
+      "label": "Set a training ceiling",
+      "module": "Planning Oversight",
+      "school": false,
+      "secondary": false
+    },
+    "transport_payment.paid": {
+      "label": "Paid transport",
+      "module": "Finance",
+      "school": false,
+      "secondary": false
+    },
+    "upload_attendance": {
+      "label": "Uploaded attendance",
+      "module": "Evidence",
+      "school": true,
+      "secondary": false
+    },
+    "upload_evidence": {
+      "label": "Submitted activity evidence",
+      "module": "Evidence",
+      "school": true,
+      "secondary": false
+    },
+    "upload_ssa": {
+      "label": "Uploaded an SSA",
+      "module": "SSA",
+      "school": true,
+      "secondary": false
+    },
+    "verification_sample_graded": {
+      "label": "Graded a verification sample",
+      "module": "Verification",
+      "school": true,
+      "secondary": false
+    },
+    "verification_sample_resolved": {
+      "label": "Resolved a verification sample",
+      "module": "Verification",
+      "school": false,
+      "secondary": false
+    },
+    "visit_request_approve": {
+      "label": "Approved a visit request",
+      "module": "Planning Oversight",
+      "school": true,
+      "secondary": false
+    },
+    "visit_request_submitted": {
+      "label": "Requested a school visit",
+      "module": "Planning",
+      "school": true,
+      "secondary": false
+    },
+    "weekly_fund_request.approve": {
+      "label": "Approved a weekly fund request",
+      "module": "Fund Approvals",
+      "school": false,
+      "secondary": false
+    },
+    "weekly_fund_request.return": {
+      "label": "Returned a weekly fund request",
+      "module": "Fund Approvals",
+      "school": false,
+      "secondary": false
+    },
+    "weekly_fund_request.return_by_accountant": {
+      "label": "Returned a weekly fund request",
+      "module": "Finance",
+      "school": false,
+      "secondary": false
+    }
+  },
+  "page_size": 50,
+  "payload_school_keys": [
+    "school_id",
+    "schoolId"
+  ],
+  "periods": [
+    [
+      "day",
+      "Day"
+    ],
+    [
+      "week",
+      "Week"
+    ],
+    [
+      "month",
+      "Month"
+    ],
+    [
+      "quarter",
+      "Quarter"
+    ],
+    [
+      "fy",
+      "Financial year"
+    ]
+  ],
+  "query": {
+    "key_pattern": "^[a-z][a-z0-9_]{0,39}$",
+    "max_value": 128,
+    "not_passed": [
+      "csv",
+      "download",
+      "export",
+      "format",
+      "pdf",
+      "xlsx"
+    ]
+  },
+  "role_filter_labels": [
+    [
+      "CCEO",
+      "CCEO"
+    ],
+    [
+      "Program Lead",
+      "Program Lead"
+    ],
+    [
+      "RegionalProgramLead",
+      "Regional PL"
+    ],
+    [
+      "CountryDirector",
+      "Country Director"
+    ],
+    [
+      "RegionalVicePresident",
+      "RVP"
+    ],
+    [
+      "ImpactAssessment",
+      "Impact Assessment"
+    ],
+    [
+      "Accountant",
+      "Accountant"
+    ],
+    [
+      "HumanResources",
+      "HR"
+    ],
+    [
+      "ProjectCoordinator",
+      "Project Coordinator"
+    ],
+    [
+      "BusinessTransformationOfficer",
+      "BT Officer"
+    ]
+  ],
+  "role_titles": {
+    "Accountant": "Accountant",
+    "Admin": "Admin",
+    "BusinessTransformationOfficer": "BT Officer",
+    "CCEO": "CCEO",
+    "CountryDirector": "CD",
+    "HumanResources": "HR",
+    "ImpactAssessment": "IA",
+    "MfiLoanOfficer": "MFI Loan Officer",
+    "MfiPartnerAdmin": "MFI Admin",
+    "PartnerAdmin": "Partner Admin",
+    "PartnerFieldOfficer": "Partner Officer",
+    "Program Lead": "PL",
+    "ProjectCoordinator": "Project Coordinator",
+    "RegionalProgramLead": "RPL",
+    "RegionalVicePresident": "RVP"
+  },
+  "roles": {
+    "admin": "Admin",
+    "cceo": "CCEO",
+    "country_director": "CountryDirector",
+    "program_lead": "Program Lead"
+  },
+  "school_subjects": [
+    "School",
+    "school"
+  ],
+  "section_prefixes": [
+    [
+      "/planning",
+      "Planning"
+    ],
+    [
+      "/my-plan",
+      "My Plan"
+    ],
+    [
+      "/clusters",
+      "Clusters"
+    ],
+    [
+      "/core-schools",
+      "Core Schools"
+    ],
+    [
+      "/core-school-health",
+      "Core School Health"
+    ],
+    [
+      "/schools",
+      "Schools"
+    ],
+    [
+      "/partner-oversight",
+      "Partner Monitoring"
+    ],
+    [
+      "/partners",
+      "Partners"
+    ],
+    [
+      "/partner",
+      "Partner Workspace"
+    ],
+    [
+      "/dashboard",
+      "Dashboard"
+    ],
+    [
+      "/todos",
+      "To-Do"
+    ],
+    [
+      "/calendar",
+      "Calendar"
+    ],
+    [
+      "/work-plan",
+      "Work Plan"
+    ],
+    [
+      "/fund-requests",
+      "Fund Requests"
+    ],
+    [
+      "/fund-approvals",
+      "Fund Approvals"
+    ],
+    [
+      "/my-budget",
+      "My Budget"
+    ],
+    [
+      "/budget",
+      "Budget"
+    ],
+    [
+      "/analytics",
+      "Analytics"
+    ],
+    [
+      "/ssa",
+      "SSA"
+    ],
+    [
+      "/impact",
+      "Impact"
+    ],
+    [
+      "/reports",
+      "Reports"
+    ],
+    [
+      "/completed-activities",
+      "Completed Work"
+    ],
+    [
+      "/activities",
+      "Activities"
+    ],
+    [
+      "/evidence",
+      "Evidence"
+    ],
+    [
+      "/ia",
+      "Impact Assessment"
+    ],
+    [
+      "/team-planning-oversight",
+      "Planning Oversight"
+    ],
+    [
+      "/staff-activity",
+      "Staff Activity"
+    ],
+    [
+      "/priorities",
+      "Priorities"
+    ],
+    [
+      "/targets",
+      "Targets"
+    ],
+    [
+      "/messages",
+      "Messages"
+    ],
+    [
+      "/notifications",
+      "Notifications"
+    ],
+    [
+      "/hr",
+      "HR"
+    ],
+    [
+      "/leave",
+      "Leave"
+    ],
+    [
+      "/users",
+      "Users"
+    ],
+    [
+      "/admin-ops",
+      "Platform Operations"
+    ],
+    [
+      "/system-health",
+      "System Health"
+    ],
+    [
+      "/projects",
+      "Projects"
+    ],
+    [
+      "/search",
+      "Search"
+    ],
+    [
+      "/debriefs",
+      "Field Debrief"
+    ],
+    [
+      "/help",
+      "Help Center"
+    ],
+    [
+      "/profile",
+      "Profile"
+    ],
+    [
+      "/settings",
+      "Settings"
+    ],
+    [
+      "/professional-development",
+      "Professional Development"
+    ],
+    [
+      "/business-transformation",
+      "Business Transformation"
+    ],
+    [
+      "/mfi-portal",
+      "MFI Portal"
+    ],
+    [
+      "/login",
+      "Sign-in"
+    ],
+    [
+      "/",
+      "Dashboard"
+    ]
+  ],
+  "section_registry": [
+    [
+      "/business-transformation/business-accounting-finance",
+      "Business Accounting & Finance"
+    ],
+    [
+      "/business-transformation/government-requirements",
+      "Government Requirements"
+    ],
+    [
+      "/business-transformation/impact-reports",
+      "Impact & Reports"
+    ],
+    [
+      "/business-transformation/overview",
+      "Dashboard"
+    ],
+    [
+      "/admin-panel/data-quality-center",
+      "Data Quality"
+    ],
+    [
+      "/admin-panel/staff-setup-queue",
+      "Unassigned Schools"
+    ],
+    [
+      "/admin-panel/roles-permissions",
+      "Roles & Permissions"
+    ],
+    [
+      "/my-professional-development",
+      "My Professional Development"
+    ],
+    [
+      "/partner/assigned-activities",
+      "Assigned Activities"
+    ],
+    [
+      "/country-planning-oversight",
+      "Dashboard"
+    ],
+    [
+      "/cce-leadership/engagements",
+      "Engagement Log"
+    ],
+    [
+      "/mfi-portal/monthly-return",
+      "Monthly Portfolio Return"
+    ],
+    [
+      "/accounts/partner-payments",
+      "Partner Payments"
+    ],
+    [
+      "/accounts/approval-history",
+      "Approval History"
+    ],
+    [
+      "/analytics/closure-quality",
+      "Closure Quality"
+    ],
+    [
+      "/dashboard?view=operations",
+      "Operations"
+    ],
+    [
+      "/partner/assigned-schools",
+      "Dashboard"
+    ],
+    [
+      "/team-planning-oversight",
+      "Planning Oversight"
+    ],
+    [
+      "/cce-leadership/feedback",
+      "Training Feedback"
+    ],
+    [
+      "/leave/team-availability",
+      "Team Availability"
+    ],
+    [
+      "/accounts/batch-payments",
+      "Batch Payments"
+    ],
+    [
+      "/cce-leadership/coaching",
+      "Regional Lead Coaching"
+    ],
+    [
+      "/core-schools-oversight",
+      "Core School Oversight"
+    ],
+    [
+      "/cce-leadership/reports",
+      "CCE Reports"
+    ],
+    [
+      "/mfi-portal/data-issues",
+      "Data Issues"
+    ],
+    [
+      "/compensation-benefits",
+      "Compensation & Benefits"
+    ],
+    [
+      "/planning/fiscal-years",
+      "Fiscal Year Planning"
+    ],
+    [
+      "/admin-ops/maintenance",
+      "Maintenance Calendar"
+    ],
+    [
+      "/mfi-portal/dashboard",
+      "Dashboard"
+    ],
+    [
+      "/hr/performance-cycle",
+      "Performance Cycle"
+    ],
+    [
+      "/fund-requests/weekly",
+      "Weekly Advance Request"
+    ],
+    [
+      "/admin-ops/team-plans",
+      "Team Plans"
+    ],
+    [
+      "/analytics/publishing",
+      "Publishing"
+    ],
+    [
+      "/dashboard?view=today",
+      "Today"
+    ],
+    [
+      "/projects/monitoring",
+      "Project Monitoring"
+    ],
+    [
+      "/target-distribution",
+      "Priorities"
+    ],
+    [
+      "/performance-reviews",
+      "Performance Reviews"
+    ],
+    [
+      "/compliance-register",
+      "Employment Compliance"
+    ],
+    [
+      "/ia/lending-evidence",
+      "Lending Evidence"
+    ],
+    [
+      "/ia/partner-evidence",
+      "Partner Evidence"
+    ],
+    [
+      "/admin-ops/incidents",
+      "System Incidents"
+    ],
+    [
+      "/ownership-transfers",
+      "Ownership Transfers"
+    ],
+    [
+      "/mfi-portal/reports",
+      "MFI Reports"
+    ],
+    [
+      "/workforce-planning",
+      "Workforce Planning"
+    ],
+    [
+      "/candidate-pipeline",
+      "Candidate Pipeline"
+    ],
+    [
+      "/employee-relations",
+      "Employee Relations"
+    ],
+    [
+      "/admin-ops/planning",
+      "Admin Planning"
+    ],
+    [
+      "/ia/school-evidence",
+      "School Evidence"
+    ],
+    [
+      "/projects/analytics",
+      "Analytics"
+    ],
+    [
+      "/dashboard?view=map",
+      "Map"
+    ],
+    [
+      "/projects/planning",
+      "Planning"
+    ],
+    [
+      "/partner-oversight",
+      "Partner Oversight"
+    ],
+    [
+      "/cluster-oversight",
+      "Cluster Oversight"
+    ],
+    [
+      "/programme-schools",
+      "Programme Schools"
+    ],
+    [
+      "/priorities/master",
+      "Priorities"
+    ],
+    [
+      "/ia/impact-reports",
+      "Impact Reports"
+    ],
+    [
+      "/personal-time-off",
+      "Leave & Personal Time Off"
+    ],
+    [
+      "/acting-leadership",
+      "Acting Leadership"
+    ],
+    [
+      "/partner/completed",
+      "Completed & Payments"
+    ],
+    [
+      "/projects/capacity",
+      "Project Capacity"
+    ],
+    [
+      "/policy-compliance",
+      "Policy Compliance"
+    ],
+    [
+      "/cost-intelligence",
+      "Cost Intelligence"
+    ],
+    [
+      "/programme-rollout",
+      "Programme Rollout"
+    ],
+    [
+      "/admin-ops/my-plan",
+      "Admin My Plan"
+    ],
+    [
+      "/admin-ops/support",
+      "Support Tickets"
+    ],
+    [
+      "/admin-panel/users",
+      "Users"
+    ],
+    [
+      "/planning-monitor",
+      "Planning Monitor"
+    ],
+    [
+      "/projects/my-plan",
+      "My Plan"
+    ],
+    [
+      "/partner/evidence",
+      "Evidence"
+    ],
+    [
+      "/mfi-portal/loans",
+      "Loans"
+    ],
+    [
+      "/ssa/verification",
+      "SSA Verification"
+    ],
+    [
+      "/team-performance",
+      "Team Performance"
+    ],
+    [
+      "/leave/approvals",
+      "Leave Approvals"
+    ],
+    [
+      "/ia/verification",
+      "Verification Queue"
+    ],
+    [
+      "/pl/review-queue",
+      "Completion Reviews"
+    ],
+    [
+      "/public-holidays",
+      "Holidays & Blackouts"
+    ],
+    [
+      "/staff-activity",
+      "Staff Activity"
+    ],
+    [
+      "/schools/closed",
+      "Closed Schools"
+    ],
+    [
+      "/quality-checks",
+      "Quality Flags"
+    ],
+    [
+      "/my-performance",
+      "My Performance Agreement"
+    ],
+    [
+      "/recovery-plans",
+      "Recovery Plans"
+    ],
+    [
+      "/leave/policies",
+      "Leave Policies"
+    ],
+    [
+      "/fund-approvals",
+      "Fund Approvals"
+    ],
+    [
+      "/leave/coverage",
+      "Coverage"
+    ],
+    [
+      "/leave/tracker",
+      "Leave Tracker"
+    ],
+    [
+      "/partner/users",
+      "Users"
+    ],
+    [
+      "/org-structure",
+      "Organization Structure"
+    ],
+    [
+      "/pulse-surveys",
+      "Staff Pulse Surveys"
+    ],
+    [
+      "/health-safety",
+      "Health & Safety"
+    ],
+    [
+      "/disbursements",
+      "Weekly Advance Request"
+    ],
+    [
+      "/cost-settings",
+      "Cost Settings"
+    ],
+    [
+      "/ia/duplicates",
+      "Duplicate Review"
+    ],
+    [
+      "/team/coaching",
+      "Coaching"
+    ],
+    [
+      "/system-health",
+      "System Health"
+    ],
+    [
+      "/ssa/unmatched",
+      "Unmatched SSA"
+    ],
+    [
+      "/ia/dashboard",
+      "Dashboard"
+    ],
+    [
+      "/core-schools",
+      "Core Schools"
+    ],
+    [
+      "/actions/mine",
+      "My Actions"
+    ],
+    [
+      "/actions/sent",
+      "Actions Sent"
+    ],
+    [
+      "/hr-analytics",
+      "People Analytics"
+    ],
+    [
+      "/cpd-learning",
+      "CPD & Learning"
+    ],
+    [
+      "/hr-audit-log",
+      "HR Audit Log"
+    ],
+    [
+      "/ia/analytics",
+      "Verification Analytics"
+    ],
+    [
+      "/ia/framework",
+      "Measurement Framework"
+    ],
+    [
+      "/decision-log",
+      "Decision Log"
+    ],
+    [
+      "/country-map",
+      "Country Map"
+    ],
+    [
+      "/escalations",
+      "Escalations"
+    ],
+    [
+      "/my-coaching",
+      "My Coaching"
+    ],
+    [
+      "/recruitment",
+      "Recruitment"
+    ],
+    [
+      "/offboarding",
+      "Offboarding"
+    ],
+    [
+      "/recognition",
+      "Recognition"
+    ],
+    [
+      "/ia/returned",
+      "Returned Activities"
+    ],
+    [
+      "/ia/learning",
+      "Programme Learning"
+    ],
+    [
+      "/data-repair",
+      "Data Repair Center"
+    ],
+    [
+      "/priorities",
+      "Priorities"
+    ],
+    [
+      "/extra-work",
+      "Extra Work"
+    ],
+    [
+      "/my-targets",
+      "My Targets"
+    ],
+    [
+      "/onboarding",
+      "Onboarding"
+    ],
+    [
+      "/ia/compare",
+      "Evidence Compare"
+    ],
+    [
+      "/ia/history",
+      "Verification History"
+    ],
+    [
+      "/ia/samples",
+      "Sample Checks"
+    ],
+    [
+      "/ia/stories",
+      "Most Significant Change"
+    ],
+    [
+      "/ssa/upload",
+      "SSA Upload Center"
+    ],
+    [
+      "/dashboard",
+      "Dashboard"
+    ],
+    [
+      "/work-plan",
+      "Work Plan"
+    ],
+    [
+      "/planning",
+      "Planning"
+    ],
+    [
+      "/clusters",
+      "Clusters"
+    ],
+    [
+      "/calendar",
+      "Calendar"
+    ],
+    [
+      "/debriefs",
+      "Field Debrief"
+    ],
+    [
+      "/partners",
+      "Partners"
+    ],
+    [
+      "/projects",
+      "Projects"
+    ],
+    [
+      "/coverage",
+      "Coverage"
+    ],
+    [
+      "/hr-today",
+      "HR Today"
+    ],
+    [
+      "/policies",
+      "Policies & Documents"
+    ],
+    [
+      "/evidence",
+      "Evidence Review"
+    ],
+    [
+      "/my-plan",
+      "My Plan"
+    ],
+    [
+      "/schools",
+      "School Directory"
+    ],
+    [
+      "/uploads",
+      "Upload Center"
+    ],
+    [
+      "/my-team",
+      "My Team"
+    ],
+    [
+      "/reports",
+      "Reports"
+    ],
+    [
+      "/budget",
+      "Budget"
+    ],
+    [
+      "/todos",
+      "To-Do"
+    ],
+    [
+      "/loans",
+      "Loans"
+    ],
+    [
+      "/staff",
+      "People Directory"
+    ]
+  ],
+  "status_options": [
+    [
+      "online",
+      "Online"
+    ],
+    [
+      "idle",
+      "Idle"
+    ],
+    [
+      "offline",
+      "Offline"
+    ],
+    [
+      "no_login",
+      "No login"
+    ],
+    [
+      "on_leave",
+      "On approved leave"
+    ],
+    [
+      "follow_up",
+      "Follow-up suggested"
+    ]
+  ],
+  "strip_samples": [
+    {
+      "kpis": {
+        "active_share": null,
+        "meaningful_actions": 0,
+        "median_active_label": "0m",
+        "no_login": 0,
+        "open_follow_ups": 0,
+        "schools": 0,
+        "staff_active": 0,
+        "staff_expected": 0,
+        "staff_total": 0,
+        "suggested": 0,
+        "total_active_label": "0m"
+      },
+      "strip": {
+        "metrics": [
+          {
+            "helper": "of 0 listed",
+            "href": "",
+            "label": "Staff Expected",
+            "note": "",
+            "tone": "info",
+            "value": "0"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "Staff Active",
+            "note": "nobody expected",
+            "tone": "",
+            "value": "0"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "No Login",
+            "note": "expected, but did not sign in",
+            "tone": "",
+            "value": "0"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "Total Active Time",
+            "note": "deduplicated across tabs and devices",
+            "tone": "",
+            "value": "0m"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "Median Active Time",
+            "note": "per active staff member",
+            "tone": "",
+            "value": "0m"
+          },
+          {
+            "helper": "0 schools acted on",
+            "href": "",
+            "label": "Meaningful Actions",
+            "note": "",
+            "tone": "success",
+            "value": "0"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "Open Follow-ups",
+            "note": "none suggested",
+            "tone": "",
+            "value": "0"
+          }
+        ],
+        "title": "Staff activity at a glance"
+      }
+    },
+    {
+      "kpis": {
+        "active_share": 7,
+        "meaningful_actions": 10500,
+        "median_active_label": "<1m",
+        "no_login": 3,
+        "open_follow_ups": 2,
+        "schools": 1,
+        "staff_active": 1000,
+        "staff_expected": 1234,
+        "staff_total": 12345,
+        "suggested": 2,
+        "total_active_label": "21h 05m"
+      },
+      "strip": {
+        "metrics": [
+          {
+            "helper": "of 12345 listed",
+            "href": "",
+            "label": "Staff Expected",
+            "note": "",
+            "tone": "info",
+            "value": "1234"
+          },
+          {
+            "helper": "7% of expected",
+            "href": "",
+            "label": "Staff Active",
+            "note": "",
+            "tone": "success",
+            "value": "1000"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "No Login",
+            "note": "expected, but did not sign in",
+            "tone": "",
+            "value": "3"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "Total Active Time",
+            "note": "deduplicated across tabs and devices",
+            "tone": "",
+            "value": "21h 05m"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "Median Active Time",
+            "note": "per active staff member",
+            "tone": "",
+            "value": "<1m"
+          },
+          {
+            "helper": "1 school acted on",
+            "href": "",
+            "label": "Meaningful Actions",
+            "note": "",
+            "tone": "success",
+            "value": "10500"
+          },
+          {
+            "helper": "2 more suggested",
+            "href": "",
+            "label": "Open Follow-ups",
+            "note": "",
+            "tone": "warning",
+            "value": "2"
+          }
+        ],
+        "title": "Staff activity at a glance"
+      }
+    },
+    {
+      "kpis": {
+        "active_share": 100,
+        "meaningful_actions": 1,
+        "median_active_label": "1h 00m",
+        "no_login": 0,
+        "open_follow_ups": 0,
+        "schools": 2,
+        "staff_active": 1,
+        "staff_expected": 1,
+        "staff_total": 1,
+        "suggested": 1,
+        "total_active_label": "1h 00m"
+      },
+      "strip": {
+        "metrics": [
+          {
+            "helper": "of 1 listed",
+            "href": "",
+            "label": "Staff Expected",
+            "note": "",
+            "tone": "info",
+            "value": "1"
+          },
+          {
+            "helper": "100% of expected",
+            "href": "",
+            "label": "Staff Active",
+            "note": "",
+            "tone": "success",
+            "value": "1"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "No Login",
+            "note": "expected, but did not sign in",
+            "tone": "",
+            "value": "0"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "Total Active Time",
+            "note": "deduplicated across tabs and devices",
+            "tone": "",
+            "value": "1h 00m"
+          },
+          {
+            "helper": "",
+            "href": "",
+            "label": "Median Active Time",
+            "note": "per active staff member",
+            "tone": "",
+            "value": "1h 00m"
+          },
+          {
+            "helper": "2 schools acted on",
+            "href": "",
+            "label": "Meaningful Actions",
+            "note": "",
+            "tone": "success",
+            "value": "1"
+          },
+          {
+            "helper": "1 more suggested",
+            "href": "",
+            "label": "Open Follow-ups",
+            "note": "",
+            "tone": "warning",
+            "value": "0"
+          }
+        ],
+        "title": "Staff activity at a glance"
+      }
+    }
+  ],
+  "supervisor_roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "HumanResources"
+  ],
+  "thresholds": {
+    "excessive_time_factor": 3,
+    "excessive_time_floor_seconds": 7200,
+    "failed_actions_suggestion": 3,
+    "final_beat_seconds": 30,
+    "idle_seconds": 300,
+    "low_engagement_min_expected_days": 3,
+    "online_seconds": 120,
+    "session_cookie_age": 1800
+  },
+  "time_zone": "Africa/Nairobi",
+  "untracked_prefixes": [
+    "/login",
+    "/logout",
+    "/api/",
+    "/static/",
+    "/media/",
+    "/health",
+    "/favicon",
+    "/realtime",
+    "/sw.js",
+    "/manifest",
+    "/robots.txt",
+    "/support/client-defect",
+    "/staff-activity/beat"
+  ]
+}
