@@ -87,12 +87,16 @@ func filters(w workspace) *screensv1.PageBlock {
 	if w.programLead != "" {
 		hidden["program_lead"] = w.programLead
 	}
+	// Each select's caption is the short word partials/oversight/
+	// period_filter_bar.html draws beside it, which the feed reads
+	// (_filter_caption) when it differs from the select's name: Month's
+	// "Month" does not.
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{
 		Filters: []*screensv1.PageFilter{
-			{Name: "period", Label: "Time period", Value: periods[0][0], Options: options(periods)},
-			{Name: "fy", Label: "Financial year", Value: chosen(years, w.period.fy), Options: options(years)},
+			{Name: "period", Label: "Time period", Caption: "View", Value: periods[0][0], Options: options(periods)},
+			{Name: "fy", Label: "Financial year", Caption: "FY", Value: chosen(years, w.period.fy), Options: options(years)},
 			{Name: "month", Label: "Month", Value: chosen(months, strconv.Itoa(w.period.month)), Options: options(months)},
-			{Name: "quarter", Label: "Financial quarter", Value: chosen(quarterOptions, w.period.quarter), Options: options(quarterOptions)},
+			{Name: "quarter", Label: "Financial quarter", Caption: "Quarter", Value: chosen(quarterOptions, w.period.quarter), Options: options(quarterOptions)},
 			{Name: "status", Label: "Status", Value: chosen(statuses, w.status), Options: options(statuses)},
 		},
 		Hidden: hidden,
