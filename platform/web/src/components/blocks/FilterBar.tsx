@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { isEmptyFilter } from '@/lib/emptyFilter';
-import { arrangesRow, filterFields, filterSlots, UNMEASURED_SLOTS } from '@/lib/filterSlots';
+import { arrangesRow, filterSlots, foldFilters, UNMEASURED_SLOTS } from '@/lib/filterSlots';
 
 import { Icon } from '../shell/icons';
 
@@ -27,6 +27,8 @@ export interface Filter {
   readonly value: string;
   readonly options: readonly FilterOption[];
   readonly disabled?: boolean;
+  /** The page folds it under its own More filters whatever the width (PageFilter.more). */
+  readonly more?: boolean;
 }
 
 /** Below 48rem the existing web lays the row out as a phone's. */
@@ -119,9 +121,7 @@ export function FilterBar({
   }, [open]);
   const submit = () => form.current?.requestSubmit();
   // A page that keeps its own grid (the School Directory) folds only on a phone.
-  const fields = oneRow || layout.phone ? filterFields(shown.length, layout.slots, layout.phone) : shown.length;
-  const inRow = shown.slice(0, fields);
-  const folded = shown.slice(fields);
+  const { inRow, folded } = foldFilters(shown, layout.slots, layout.phone, Boolean(oneRow || layout.phone));
   const foldedApplied = folded.filter(applied).length;
   const columns = inRow.length + (folded.length ? 1 : 0);
   // Too few fields to share the row: each keeps its own width, as the existing page leaves them.

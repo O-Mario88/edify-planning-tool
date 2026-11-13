@@ -170,9 +170,10 @@ func row(s school, d Doors, support bool, fy string) *screensv1.PageRow {
 	}
 	cells := []*screensv1.PageCell{
 		{Text: collapse(s.Code)}, name, cluster,
-		{Text: clusterpage.JoinedChips(b.VisitChips())},
-		{Text: clusterpage.JoinedChips(b.TrainingChips(), b.ClusterMeetingChips())},
-		{Text: lock},
+		{Text: clusterpage.JoinedChips(b.VisitChips()), Pills: clusterpage.ChipPills(b.VisitChips())},
+		{Text: clusterpage.JoinedChips(b.TrainingChips(), b.ClusterMeetingChips()),
+			Pills: clusterpage.ChipPills(b.TrainingChips(), b.ClusterMeetingChips())},
+		{Text: lock, Pills: clusterpage.LockPills(s.gate, gates)},
 	}
 	if support {
 		who := "Staff"

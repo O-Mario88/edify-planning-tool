@@ -76,6 +76,7 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilt
                   name: filter.name,
                   label: filter.label,
                   caption: filter.caption,
+                  more: filter.more,
                   value: filter.value,
                   options: filter.options.map(({ value, label }) => ({ value, label })),
                 }))}

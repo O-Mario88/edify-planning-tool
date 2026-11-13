@@ -403,6 +403,9 @@ def _filters(form: Node) -> dict:
         caption = _filter_caption(select)
         if caption and caption != label:
             entry["caption"] = caption
+        # The page folds it under its own More filters (clusters/filters.html).
+        if _ancestor(select, lambda n: "data-edify-filter-more-panel" in n.attrs):
+            entry["more"] = True
         filters.append(entry)
     hidden = {
         node.get("name"): node.get("value")
@@ -484,6 +487,28 @@ def _row_actions(cell: Node) -> list[dict]:
     return actions
 
 
+#: A school's plan-status and Visit Lock chips (components/
+#: school_planning_badges.html, partials/planning/visit_lock_cell.html).
+PLANNING_CHIP = "school-planning-badge"
+
+
+def _planning_pills(cell: Node) -> list[dict]:
+    """The chips a cell draws side by side, each with the page's own
+    planning tone, the hover sentence and, on a Visit Lock chip, its padlock:
+    shut where the visit is held, open where it is not."""
+    pills = []
+    for chip in cell.find_all(lambda n: n.has(PLANNING_CHIP)):
+        pill = {
+            "text": chip.text(),
+            "tone": chip.get("data-planning-tone"),
+            "title": chip.get("title"),
+        }
+        if "data-visit-closed" in chip.attrs or chip.get("data-visit-lock"):
+            pill["icon"] = "unlock" if pill["tone"] == "open" else "lock"
+        pills.append(pill)
+    return pills
+
+
 def _cell(cell: Node) -> dict:
     if "data-record-action" in cell.attrs or cell.find(lambda n: n.has("row-menu")):
         note = cell.find(lambda n: n.has("row-menu__note"))
@@ -498,7 +523,7 @@ def _cell(cell: Node) -> dict:
     strong = cell.find(lambda n: n.tag in ("strong", "b"))
     text = cell.text()
     badge_tone, is_badge = _badge(cell)
-    return {
+    read = {
         "text": text,
         "href": _href(cell),
         "tone": badge_tone
@@ -507,6 +532,10 @@ def _cell(cell: Node) -> dict:
         "strong": bool(strong and strong.text() == text),
         "badge": is_badge,
     }
+    pills = _planning_pills(cell)
+    if pills:
+        read["pills"] = pills
+    return read
 
 
 def _pick(row: Node) -> dict:
@@ -597,6 +626,16 @@ def _scoped_pager(scope: Node) -> dict:
         holder.children = [size]
         pager["size"] = _filters(holder)["filters"][0]
     return pager
+
+
+def _ancestor(node: Node, test) -> Node | None:
+    """The nearest element around ``node`` that passes ``test``."""
+    holder = node.parent
+    while holder is not None:
+        if test(holder):
+            return holder
+        holder = holder.parent
+    return None
 
 
 def _inside(node: Node | None, ancestor: Node) -> bool:

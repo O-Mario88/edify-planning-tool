@@ -34,6 +34,7 @@ export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGEle
 /** Filled drawings a badge carries by name (PageBadge.icon), on the existing web's 16px grid. */
 const BADGE_PATHS: Readonly<Record<string, string>> = {
   lock: 'M4.5 7V5a3.5 3.5 0 1 1 7 0v2h.5A1.5 1.5 0 0 1 13.5 8.5v5A1.5 1.5 0 0 1 12 15H4a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 4 7h.5Zm1.5 0h4V5a2 2 0 1 0-4 0v2Z',
+  unlock: 'M10.5 1.5A3.5 3.5 0 0 0 7 5v2H4a1.5 1.5 0 0 0-1.5 1.5v5A1.5 1.5 0 0 0 4 15h8a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 12 7H8.5V5a2 2 0 1 1 4 0v.25a.75.75 0 0 0 1.5 0V5a3.5 3.5 0 0 0-3.5-3.5Z',
 };
 
 /** A badge's drawing, or nothing for a name the web does not draw. */
