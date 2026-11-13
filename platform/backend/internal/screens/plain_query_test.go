@@ -44,3 +44,29 @@ func TestPageQueryIsPlainQueryOnceTheQueryPasses(t *testing.T) {
 		t.Fatalf("pageQuery = %v, PlainQuery = %v", got, want)
 	}
 }
+
+// A page key is the feed's QUERY_KEY (apps.mobile_feed.views): a lower-case
+// letter, then letters, digits or underscores, at most 40 in all. A table
+// that pages on its own parameter names it by a record id
+// ("portfolio_cmw9p7bwp00t19mekheun_page"), so a key with digits is a page's
+// key; anything else is refused.
+func TestPageQueryTakesTheKeysTheFeedPasses(t *testing.T) {
+	cases := []struct {
+		key  string
+		pass bool
+	}{
+		{"page", true},
+		{"portfolio_cmw9p7bwp00t19mekheun_page", true},
+		{"g1_page", true},
+		{"1page", false},
+		{"Page", false},
+		{"page-2", false},
+		{"a2345678901234567890123456789012345678901", false},
+	}
+	for _, c := range cases {
+		_, err := pageQuery(context.Background(), map[string]string{c.key: "2"})
+		if (err == nil) != c.pass {
+			t.Errorf("pageQuery(%q): err = %v, want pass %v", c.key, err, c.pass)
+		}
+	}
+}
