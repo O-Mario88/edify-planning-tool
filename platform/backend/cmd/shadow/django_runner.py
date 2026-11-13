@@ -162,9 +162,46 @@ def confirm_advances(step: dict) -> dict:
     }
 
 
+def post_form(client: Client, step: dict) -> dict:
+    """A step whose form sits on a page rather than in a drawer: Today's
+    Snooze menu (partials/today/queue_row.html) is a form of three hidden
+    fields (todo, choice, title) per choice, so the step names them in "data"
+    and posts them to "post" with the page's htmx headers (docs/migration/50)."""
+    headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
+    data = {k: [v] for k, v in step["data"].items()}
+    answer = client.post(step["post"], data, **headers)
+    return {
+        "ok": answer.status_code < 400,
+        "status": answer.status_code,
+        "action": step["post"],
+        "retarget": answer.headers.get("HX-Retarget", ""),
+        "message": message(answer.content.decode()),
+        "posted": data,
+    }
+
+
+def read_page(client: Client, step: dict) -> dict:
+    """A step that only reads a page with the page's htmx headers: what the
+    existing application draws after a Go save whose answer is a redraw
+    (undoing a snooze answers with the Today panel, docs/migration/63)."""
+    headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
+    answer = client.get(step["get"], **headers)
+    return {
+        "ok": answer.status_code < 400,
+        "status": answer.status_code,
+        "action": step["get"],
+        "retarget": answer.headers.get("HX-Retarget", ""),
+        "message": message(answer.content.decode()),
+    }
+
+
 def play(client: Client, step: dict) -> dict:
     if "confirm_advance" in step:
         return confirm_advances(step)
+    if "post" in step:
+        return post_form(client, step)
+    if "get" in step:
+        return read_page(client, step)
     headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
     step = {**step, "open": resolve(step["open"]), "form": resolve(step["form"])}
     drawer = client.get(step["open"], **headers)

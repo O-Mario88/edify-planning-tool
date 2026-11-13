@@ -1,0 +1,83 @@
+{
+  "doors": {
+    "Accountant": {
+      "per_person": false,
+      "today": false
+    },
+    "Admin": {
+      "per_person": false,
+      "today": true
+    },
+    "BusinessTransformationOfficer": {
+      "per_person": false,
+      "today": false
+    },
+    "CCEO": {
+      "per_person": false,
+      "today": true
+    },
+    "ClusterLeader": {
+      "per_person": false,
+      "today": false
+    },
+    "CountryDirector": {
+      "per_person": false,
+      "today": false
+    },
+    "HumanResources": {
+      "per_person": false,
+      "today": false
+    },
+    "ImpactAssessment": {
+      "per_person": false,
+      "today": true
+    },
+    "MfiLoanOfficer": {
+      "per_person": false,
+      "today": false
+    },
+    "MfiPartnerAdmin": {
+      "per_person": false,
+      "today": false
+    },
+    "PartnerAdmin": {
+      "per_person": true,
+      "today": false
+    },
+    "PartnerFieldOfficer": {
+      "per_person": true,
+      "today": false
+    },
+    "Program Lead": {
+      "per_person": false,
+      "today": true
+    },
+    "ProjectCoordinator": {
+      "per_person": false,
+      "today": true
+    },
+    "RegionalProgramLead": {
+      "per_person": false,
+      "today": false
+    },
+    "RegionalVicePresident": {
+      "per_person": false,
+      "today": false
+    }
+  },
+  "lengths": {
+    "title": 255,
+    "todo_id": 128
+  },
+  "refusal": "Choose when the item comes back.",
+  "snooze_days": {
+    "next_week": 7,
+    "tomorrow": 1
+  },
+  "unsnooze": {
+    "redraw": "/today/panel",
+    "reswap": "outerHTML",
+    "retarget": "[data-dashboard-today]",
+    "section_field": "today_section"
+  }
+}

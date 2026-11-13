@@ -1,0 +1,159 @@
+[
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "act-cmwd2x84s00djhqhkdjwe",
+      "choice": "tomorrow",
+      "title": "[Go parity check] Snoozed"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "pdelay-cmw9p8gu100914oekhekt",
+      "choice": "next_week",
+      "title": "[Go parity check] Snoozed"
+    }
+  },
+  {
+    "who": "ia@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "act-cmwd2x84s00djhqhkdjwe",
+      "choice": "tomorrow",
+      "title": "[Go parity check] Snoozed"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "act-cmwd2x85x0009wxhkdjc8",
+      "choice": "next_week",
+      "title": "[Go parity check] Kept"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "act-cmwd2x84s00djhqhkdjwe"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "act-cmwd2x84s00djhqhkdjwe"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "nothing-snoozed"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": ""
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "act-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+  },
+  {
+    "who": "pl1@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "pl-analytics-ssa",
+      "choice": "tomorrow",
+      "title": "[Go parity check] Snoozed"
+    }
+  },
+  {
+    "who": "pl1@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "pl-analytics-ssa",
+      "today_section": "own"
+    }
+  },
+  {
+    "who": "pl1@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "pl-analytics-cluster-cmw9p8e4900p50wekhe46",
+      "choice": "next_week",
+      "title": "[Go parity check] Snoozed"
+    }
+  },
+  {
+    "who": "pl1@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "pl-analytics-cluster-cmw9p8e4900p50wekhe46"
+    }
+  },
+  {
+    "who": "admin@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "partner-user-setup",
+      "choice": "tomorrow",
+      "title": "[Go parity check] Snoozed"
+    }
+  },
+  {
+    "who": "admin@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "partner-user-setup"
+    }
+  },
+  {
+    "who": "coordinator@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "project-school-plan-cmw9p8dfv002v9aekhe5k",
+      "choice": "tomorrow",
+      "title": "[Go parity check] Snoozed"
+    }
+  },
+  {
+    "who": "coordinator@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "project-school-plan-cmw9p8dfv002v9aekhe5k"
+    }
+  },
+  {
+    "who": "cd@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "cd-anything"
+    }
+  },
+  {
+    "who": "business-transformation@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "bt-anything"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "pdelay-cmw9p8gu100914oekhekt"
+    }
+  }
+]

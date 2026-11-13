@@ -67,6 +67,10 @@ const (
 	activitiesRolesFile = "../../../deploy/db/activities_roles.sql"
 	// Cancelling a visit: the narrow function that withdraws its unmoved advances.
 	advanceWithdrawRolesFile = "../../../deploy/db/advance_withdraw_roles.sql"
+	// Snoozing a To-Do from Today: one table's insert and three updated columns.
+	todoRolesFile = "../../../deploy/db/todo_roles.sql"
+	// Undoing a snooze: the narrow function that removes that one row.
+	todoUnsnoozeRolesFile = "../../../deploy/db/todo_unsnooze_roles.sql"
 	// Where the loan portal's emails go in this run.
 	publicBaseURL = "http://127.0.0.1:9"
 )
@@ -237,6 +241,20 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(advanceWithdrawRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	todoRoles, err := os.ReadFile(filepath.FromSlash(todoRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(todoRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	todoUnsnoozeRoles, err := os.ReadFile(filepath.FromSlash(todoUnsnoozeRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(todoUnsnoozeRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)
@@ -514,6 +532,10 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"supersede a cost revision":     rw + `UPDATE activity_cost_snapshot SET is_current = is_current`,
 		"remove a cost revision":        rw + `DELETE FROM activity_cost_snapshot`,
 		"change how a session is given": rw + `UPDATE activity SET programme_delivery_mode = programme_delivery_mode`,
+		"undo a snooze for someone":     rw + `DELETE FROM command_center_todo_snooze`,
+		"hand a snooze to someone else": rw + `UPDATE command_center_todo_snooze SET user_id = user_id`,
+		"read a snooze's words":         `SELECT title FROM command_center_todo_snooze LIMIT 1`,
+		"write a Today decision":        rw + `INSERT INTO command_center_today_action (id) VALUES ('x')`,
 	}
 	for name, statement := range statements {
 		t.Run(name, func(t *testing.T) {
