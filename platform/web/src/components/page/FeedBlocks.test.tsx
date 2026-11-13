@@ -186,7 +186,7 @@ describe('record cards and kinds not drawn yet', () => {
   });
 
   it('says so for a kind it does not draw', () => {
-    expect(draw({ blocks: [{ chart: { title: 'x' } }] })).toContain('not drawn here yet');
+    expect(draw({ blocks: [{ chips: { name: 'cat', label: 'x' } }] })).toContain('not drawn here yet');
   });
 });
 
