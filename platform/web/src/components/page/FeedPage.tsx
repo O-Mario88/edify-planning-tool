@@ -21,7 +21,7 @@ import { FeedBlocks } from './FeedBlocks';
 import { NotMovedYet } from './NotMovedYet';
 import { SelectionBar } from './SelectionBar';
 
-async function ask(path: string, query: Record<string, string>): Promise<GetPageResponse | null> {
+export async function askPage(path: string, query: Record<string, string>): Promise<GetPageResponse | null> {
   return asReader(async (token) => {
     try {
       return await gatewayClient(PageScreenService, token).getPage({ path, query });
@@ -35,7 +35,7 @@ async function ask(path: string, query: Record<string, string>): Promise<GetPage
 
 export async function FeedPage({ path, query }: { path: string; query: Record<string, string> }) {
   const existingWebUrl = environment().existingWebUrl;
-  const answer = await ask(path, query);
+  const answer = await askPage(path, query);
   const existingHref = drawerPageHref(existingWebUrl, path, query);
   if (!answer) return <NotMovedYet href={existingHref} />;
   const pagePath = answer.webPath || path;
