@@ -35,6 +35,12 @@ const (
 
 var tools = []string{ToolPage, ToolProfile, ToolNavigation, ToolDirectory, ToolNotifications, ToolShadow}
 
+// AnyQuestion, as an entry's only question, matches every question on its
+// page: for a fix whose difference shows wherever the page opens on a given
+// state (the period in use, say). The field and both values must still match
+// exactly, and the entry's patterns should be as narrow as the defect.
+const AnyQuestion = "*"
+
 // ErrorField is the field a difference in whether (or how) a side refused
 // or failed is reported under; its values are the errors as text, "<nil>"
 // for a side that answered.
@@ -186,7 +192,8 @@ func (l *List) Match(a Answer, d Diff) (Entry, bool) {
 	}
 	for _, e := range l.entries {
 		if e.Tool == a.Tool && e.Where == a.Where &&
-			slices.Contains(e.Questions, a.Question) && slices.Contains(e.Fields, d.Field) &&
+			(slices.Contains(e.Questions, a.Question) || slices.Equal(e.Questions, []string{AnyQuestion})) &&
+			slices.Contains(e.Fields, d.Field) &&
 			e.existing.MatchString(d.Existing) && e.goValue.MatchString(d.Go) {
 			return e, true
 		}

@@ -2,7 +2,18 @@ package main
 
 import "context"
 
-func init() { pageQuestions["/team-planning-oversight/"] = trainingSummaryQuestions }
+// The page's other lenses register their questions too (init order is the
+// file names'), so the Training Summary's are added to theirs.
+func init() {
+	before := pageQuestions["/team-planning-oversight/"]
+	pageQuestions["/team-planning-oversight/"] = func(ctx context.Context, r *pageRun, token string) []map[string]string {
+		out := trainingSummaryQuestions(ctx, r, token)
+		if before != nil {
+			out = append(before(ctx, r, token), out...)
+		}
+		return out
+	}
+}
 
 // trainingSummaryQuestions are the Training Summary's (Team Oversight's
 // ?view=trainings, the lens Go draws): the lens as it opens, spelt with
