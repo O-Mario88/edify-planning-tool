@@ -1,0 +1,237 @@
+[
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8eij00hnodekheog&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] A only meeting at C makes a day",
+   "expected_outcome": "[shadow-cm] A only meeting at C makes a day outcome",
+   "scheduled_date": "2026-11-26"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8ffx00skniekhe0x&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "cluster_leaders",
+   "activity_goal": "[shadow-cm] B leaders meeting at I joins the day",
+   "expected_outcome": "[shadow-cm] B leaders meeting at I joins the day outcome",
+   "scheduled_date": "2026-11-26",
+   "focus_intervention": "leadership"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8eij00hnodekheog&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] C the same meeting again",
+   "expected_outcome": "[shadow-cm] C the same meeting again outcome",
+   "scheduled_date": "2026-11-26"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8fql00z5juekhetv&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] D in the submitted week",
+   "expected_outcome": "[shadow-cm] D in the submitted week outcome",
+   "scheduled_date": "2026-12-01"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8fql00z5juekhetv&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] E a past date",
+   "expected_outcome": "[shadow-cm] E a past date outcome",
+   "scheduled_date": "2026-11-10"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8fql00z5juekhetv&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] F no date",
+   "expected_outcome": "[shadow-cm] F no date outcome",
+   "scheduled_date": ""
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8fql00z5juekhetv&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "workshop",
+   "activity_goal": "[shadow-cm] G an unknown meeting type",
+   "expected_outcome": "[shadow-cm] G an unknown meeting type outcome",
+   "scheduled_date": "2026-11-27"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8fql00z5juekhetv&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "0",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] H nobody per school",
+   "expected_outcome": "[shadow-cm] H nobody per school outcome",
+   "scheduled_date": "2026-11-27"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8eys00chtyekheo0&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] I a Champion school ticked",
+   "expected_outcome": "[shadow-cm] I a Champion school ticked outcome",
+   "scheduled_date": "2026-11-27",
+   "invited_school_ids": "cmw9p7wnm0090h5ekher3"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8fwx00ct6aekhe9m&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] J focus named with a reason at L",
+   "expected_outcome": "[shadow-cm] J focus named with a reason at L outcome",
+   "scheduled_date": "2026-11-27",
+   "focus_intervention": "financial_health",
+   "ssa_deviation_reason": "[shadow-cm] the board asked"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8fql00z5juekhetv&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "2",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "training",
+   "activity_goal": "[shadow-cm] K a training meeting at K",
+   "expected_outcome": "[shadow-cm] K a training meeting at K outcome",
+   "scheduled_date": "2026-11-25",
+   "training_course_id": "cmw9p6zg600734ueihg0f"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8e4900p50wekhe46&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] L a cluster with Core schools",
+   "expected_outcome": "[shadow-cm] L a cluster with Core schools outcome",
+   "scheduled_date": "2026-11-25"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8eij00hnodekheog&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] M a partner facilitating at C",
+   "expected_outcome": "[shadow-cm] M a partner facilitating at C outcome",
+   "scheduled_date": "2026-11-24",
+   "facilitating_partner_id": "cmw9p8dcu00icqzekhe7r"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8fwx00ct6aekhe9m&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] N nobody ticked at L",
+   "expected_outcome": "[shadow-cm] N nobody ticked at L outcome",
+   "scheduled_date": "2026-11-24",
+   "invited_school_ids": ""
+  }
+ },
+ {
+  "who": "cceo1@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8eij00hnodekheog&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] O another officer opens C",
+   "expected_outcome": "[shadow-cm] O another officer opens C outcome",
+   "scheduled_date": "2026-11-27"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?cluster_id=cmw9p8eys00chtyekheo0&action=meeting",
+  "form": "/planning/schedule-action",
+  "set": {
+   "teachers_per_school": "0",
+   "leaders_per_school": "2",
+   "other_per_school": "0",
+   "meeting_kind": "only_meeting",
+   "activity_goal": "[shadow-cm] P one school ticked at F",
+   "expected_outcome": "[shadow-cm] P one school ticked at F outcome",
+   "scheduled_date": "2026-11-25",
+   "invited_school_ids": "cmw9p7tdc002vzuekhe55",
+   "printing_pages": "4",
+   "photocopy_pages": "2",
+   "photocopy_copies": "10"
+  }
+ }
+]

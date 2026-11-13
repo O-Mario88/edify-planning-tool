@@ -40,6 +40,10 @@ type GoSaves struct {
 	// through internal/activities where Go takes it; everything else is
 	// forwarded as before. Nothing in the app reaches it yet (38.1).
 	ScheduleGroupTraining bool
+	// ScheduleClusterMeeting: a cluster meeting (docs/migration/49) through
+	// internal/activities where Go takes it; everything else is forwarded
+	// as before. Nothing in the app reaches it yet (38.1).
+	ScheduleClusterMeeting bool
 }
 
 const (
@@ -62,11 +66,14 @@ const (
 	// SaveScheduleGroupTraining is the name EDIFY_GO_SAVES uses for a
 	// cluster's Group Training.
 	SaveScheduleGroupTraining = "schedule_group_training"
+	// SaveScheduleClusterMeeting is the name EDIFY_GO_SAVES uses for a
+	// cluster meeting.
+	SaveScheduleClusterMeeting = "schedule_cluster_meeting"
 )
 
 // knownGoSaves are the saves the switch can name.
 var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit, SaveScheduleTrainingPair,
-	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining}
+	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining, SaveScheduleClusterMeeting}
 
 // loadGoSaves reads EDIFY_GO_SAVES. A Go save asks the existing application
 // for the drawer's form and for the pricing (money stays Django's until
@@ -93,6 +100,7 @@ func loadGoSaves(env Environment, getenv func(string) string, existingApp, inter
 		out.GroupReschedule = out.GroupReschedule || name == SaveGroupReschedule
 		out.GroupCancel = out.GroupCancel || name == SaveGroupCancel
 		out.ScheduleGroupTraining = out.ScheduleGroupTraining || name == SaveScheduleGroupTraining
+		out.ScheduleClusterMeeting = out.ScheduleClusterMeeting || name == SaveScheduleClusterMeeting
 	}
 	if existingApp == "" || internalKey == "" {
 		return GoSaves{}, fmt.Errorf("config: %s needs %s and %s: the save asks the existing application for the form and the pricing",

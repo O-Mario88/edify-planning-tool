@@ -177,6 +177,7 @@ def rules() -> dict:
         # cluster, cluster_attendance.set_invited_schools and the cluster
         # recommendation engine).
         "group_training": group_training(),
+        "cluster_meeting": cluster_meeting(),
         "batch": {
             "field_roles": _values(districts.FIELD_ROLES),
             "field_role_aliases": _values(districts._FIELD_ROLE_ALIASES),
@@ -224,6 +225,19 @@ def group_training() -> dict:
         "country_scheduling_roles": sorted(COUNTRY_SCHEDULING_ROLES),
         "visit_only_roles": sorted(VISIT_ONLY_ROLES),
         "summary_only_roles": sorted(SUMMARY_ONLY_ROLES),
+    }
+
+
+def cluster_meeting() -> dict:
+    """The eighth save's vocabulary (docs/migration/49): a cluster meeting."""
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES
+    from apps.core.enums import ActivityType, MeetingKind
+
+    return {
+        "activity_type": str(ActivityType.CLUSTER_MEETING),
+        "meeting_types": [str(t) for t in CLUSTER_MEETING_TYPES],
+        "meeting_kinds": [str(k) for k in MeetingKind.values],
+        "training_kind": str(MeetingKind.TRAINING),
     }
 
 

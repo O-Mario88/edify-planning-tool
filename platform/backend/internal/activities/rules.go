@@ -117,6 +117,14 @@ type Rules struct {
 		SummaryRoles             []string `json:"summary_only_roles"`
 	} `json:"group_training"`
 
+	// The eighth save, a cluster meeting (docs/migration/49).
+	ClusterMeeting struct {
+		ActivityType string   `json:"activity_type"`
+		MeetingTypes []string `json:"meeting_types"`
+		MeetingKinds []string `json:"meeting_kinds"`
+		TrainingKind string   `json:"training_kind"`
+	} `json:"cluster_meeting"`
+
 	weights []weight
 	labels  map[string]string
 	order   []string
