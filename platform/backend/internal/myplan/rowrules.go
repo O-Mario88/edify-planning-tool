@@ -46,6 +46,7 @@ type RowRules struct {
 	EvidenceVisitKind       string            `json:"evidence_visit_kind"`
 	MissingBoth             string            `json:"missing_both"`
 	AwaitingSSALabel        string            `json:"awaiting_ssa_label"`
+	EnterSSAText            string            `json:"enter_ssa_text"`
 	FieldRoles              []string          `json:"field_roles"`
 	FieldRoleAliases        []string          `json:"field_role_aliases"`
 	HQPrimaryDistricts      []string          `json:"hq_primary_districts"`

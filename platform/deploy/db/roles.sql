@@ -265,3 +265,10 @@ GRANT SELECT (id, budget_line_id, status) ON advance_request TO edify_gateway_ro
 GRANT SELECT (staff_id, status, type, start_date, end_date, covering_staff_id) ON leave TO edify_gateway_ro;
 GRANT SELECT (title, description, start_date, end_date, block_type, is_active, country) ON calendar_block TO edify_gateway_ro;
 GRANT SELECT (date, name) ON public_holiday TO edify_gateway_ro;
+
+-- My Plan's attention cards (docs/migration/40-my-plan-rest.md): the
+-- reviewer's note on a returned activity (return_notes.note_for).
+GRANT SELECT (pl_review_note) ON activity TO edify_gateway_ro;
+-- compute_next_action's money branches: which advance comes first (newest),
+-- a reimbursement receipt confirmed, an accountability's NetSuite code in.
+GRANT SELECT (created_at, reimbursement_receipt_confirmed_at, accountability_netsuite_id) ON advance_request TO edify_gateway_ro;

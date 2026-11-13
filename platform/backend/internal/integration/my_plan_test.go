@@ -127,7 +127,7 @@ VALUES (now(), now(), $1, 'school_visit', $2, $3, 'staff', $4, 'none', 'none', '
 
 // Closed work is counted on the plan and listed nowhere; work with no date
 // is listed (it is still ahead), so its page is the existing application's.
-func TestMyPlanCountsClosedWorkAndLeavesListedWorkToTheExistingApplication(t *testing.T) {
+func TestMyPlanCountsClosedWorkAndDrawsWorkStillToDeliver(t *testing.T) {
 	ctx := context.Background()
 	var staffID string
 	if err := admin.QueryRow(ctx, `SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
@@ -153,9 +153,33 @@ WHERE u.email = 'ia@edify.org'`).Scan(&staffID); err != nil {
 	if last[3].GetValue() != "1 activities" {
 		t.Fatalf("breakdown %v", last)
 	}
+	// Work still to deliver and work sent back are Go's too (40-my-plan-rest):
+	// the undated visit is listed with Start, the returned one on its card.
 	myPlanActivity(t, "goparitymyplanundated", staffID, "scheduled", "")
-	if _, err := pageOf(token, "/my-plan", nil); err == nil || connect.CodeOf(err) == connect.CodeNotFound {
-		t.Fatalf("a page listing work was answered by Go (or refused): %v", err)
+	myPlanActivity(t, "goparitymyplanreturned", staffID, "returned_by_pl",
+		time.Now().In(time.FixedZone("EAT", 3*3600)).AddDate(0, 0, -2).Format(time.DateOnly))
+	page, err = pageOf(token, "/my-plan", nil)
+	if err != nil {
+		t.Fatalf("a page with work to deliver and work sent back: %v", err)
+	}
+	var started, returned bool
+	for _, block := range page.GetBlocks() {
+		table := block.GetTable()
+		for _, row := range table.GetRows() {
+			last := row.GetCells()[len(row.GetCells())-1]
+			for _, a := range last.GetActions() {
+				if a.GetLabel() == "Start Activity" && a.GetHref() == "/activities/goparitymyplanundated/start" {
+					started = true
+				}
+				if table.GetTitle() == "Returned — Needs Correction" && a.GetLabel() == "Fix Now" &&
+					a.GetHref() == "/activities/goparitymyplanreturned/complete" && row.GetCells()[3].GetText() == "Programme Lead" {
+					returned = true
+				}
+			}
+		}
+	}
+	if !started || !returned {
+		t.Fatalf("undated visit started %v, returned card %v: %v", started, returned, page.GetBlocks())
 	}
 }
 

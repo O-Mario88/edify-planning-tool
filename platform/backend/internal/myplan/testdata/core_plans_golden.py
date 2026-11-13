@@ -19,6 +19,7 @@ sets of schools and years, and writes each sheet as the page shows it
 """
 
 import json
+import re
 import os
 import random
 from datetime import datetime, time, timedelta, timezone as tz
@@ -46,7 +47,8 @@ from apps.partners.models import Partner
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord
 
-if connection.settings_dict["NAME"] != "edify_gorn_test":
+# The shared test database, or an agent's own copy of it (edify_gorn_aNN_test).
+if not re.fullmatch(r"edify_gorn(_a\d+)?_test", connection.settings_dict["NAME"]):
     raise SystemExit("core_plans_golden.py writes records: the test database only")
 
 P = "g7"

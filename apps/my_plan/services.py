@@ -590,6 +590,28 @@ _WORKED_STATUSES = (
 # moved; without it a moved visit sat under "Upcoming" on its own day.
 _DATED_AND_OPEN = ("scheduled", "rescheduled", "in_progress")
 
+#: The SSA collection types compute_next_action asks to upload the school's
+#: SSA for (branch 6).
+SSA_UPLOAD_TYPES = [
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection",
+    "cluster_training_ssa_collection",
+]
+
+#: The next actions that put a row on "Waiting on Me" (the loop's urgency
+#: sections).
+WAITING_ON_ME_ACTIONS = [
+    "evidence",
+    "sf_id",
+    "ssa",
+    "fix",
+    "accountability",
+]
+
+#: Payment states that put a row on Finance / Accountability Pending.
+FINANCE_PENDING_PAYMENT_STATUSES = ("disbursed", "netsuite_accountability")
+
 #: Work whose Submit waits for somebody to have attended (compute_next_action,
 #: branch 5).
 SUBMIT_NEEDS_PARTICIPANTS_TYPES = [
@@ -778,12 +800,7 @@ def compute_next_action(a, today, advances=None) -> dict:
             }
 
     # 6. SSA expected but not uploaded -> Upload SSA
-    if a.activity_type in [
-        "baseline_ssa_visit",
-        "school_visit_ssa_collection",
-        "partner_ssa_collection",
-        "cluster_training_ssa_collection",
-    ]:
+    if a.activity_type in SSA_UPLOAD_TYPES:
         if a.school and a.school.current_fy_ssa_status != "done":
             return {
                 "text": "Upload SSA",
@@ -1962,7 +1979,7 @@ def get_frontend_context(
         # (NetSuite expense ID) still outstanding, or payment mid-flight.
         # ("disbursed" is written by fund_requests.finance_services; the enum
         # value for the accountability stage is "netsuite_accountability".)
-        if a.payment_status in ("disbursed", "netsuite_accountability"):
+        if a.payment_status in FINANCE_PENDING_PAYMENT_STATUSES:
             finance_pending_list.append(activity_data)
 
         # Classification into 7 Urgency Sections
@@ -1974,13 +1991,7 @@ def get_frontend_context(
             returned_needs_correction_list.append(activity_data)
         elif a.delivery_type == "partner":
             partner_monitoring_list.append(activity_data)
-        elif next_act["action"] in [
-            "evidence",
-            "sf_id",
-            "ssa",
-            "fix",
-            "accountability",
-        ]:
+        elif next_act["action"] in WAITING_ON_ME_ACTIONS:
             waiting_on_me_list.append(activity_data)
         elif a.planned_date == today and a.status in _DATED_AND_OPEN:
             due_today_list.append(activity_data)

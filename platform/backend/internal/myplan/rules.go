@@ -80,6 +80,13 @@ type TableRules struct {
 	OpenHandoverStatuses         []string          `json:"open_handover_statuses"`
 	MoneyAwaitingStatuses        []string          `json:"money_awaiting_statuses"`
 	ProgrammeSchoolLabels        map[string]string `json:"programme_school_labels"`
+	// The attention cards: compute_next_action's lists, the loop's urgency
+	// sections, the Finance card's payment states and who sent work back.
+	DatedAndOpen                  []string          `json:"dated_and_open"`
+	SSAUploadTypes                []string          `json:"ssa_upload_types"`
+	WaitingOnMeActions            []string          `json:"waiting_on_me_actions"`
+	FinancePendingPaymentStatuses []string          `json:"finance_pending_payment_statuses"`
+	ReturnedBy                    map[string]string `json:"returned_by"`
 }
 
 // monthOption is one of the Month filter's choices.
