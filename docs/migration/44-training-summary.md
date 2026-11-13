@@ -87,4 +87,25 @@ and a Programme Lead; a CCEO is refused.
 
 ## 44.6 Parity numbers
 
-See the final section below.
+All 29 seed accounts, `-pause 20s`, 2026-11-13 (the first full run was cut at
+the eighteenth account when the shared PostgreSQL was shut down at 13:05; its
+first 17 accounts were 0 differing; the run was repeated in full once it was
+back). Last lines, as printed:
+
+```
+coordinator@edify.org              22 questions, 0 differing
+
+638 answers compared, 0 differing
+126 answers held rows with the same name, compared in School ID order (the existing page gives them none)
+```
+
+## 44.7 What is left
+
+- The By staff and Schools tabs (backlog item training-summary-2): Go passes
+  them on today.
+- `team_planning_oversight_view` reads `team_oversight_lenses` and
+  `team_available_lenses` (lifted out unchanged); nothing else in Django
+  changed.
+- The seed has no Country Ceiling, no officer ceiling and no project training
+  with a school, so those figures are proved by unit and integration tests,
+  not by parity.
