@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -48,7 +49,10 @@ WHERE u.email = 'cceo@edify.org' AND c.deleted_at IS NULL AND c.status = 'active
 	if err != nil {
 		t.Fatal(err)
 	}
-	if page.GetHeader().GetTitle() != "Clusters" || len(page.GetHeader().GetActions()) != 3 {
+	// The header band as the feed reads it (page-header-actions, proved by
+	// parity): Create Cluster, the two scheduling drawers, then Export.
+	if page.GetHeader().GetTitle() != "Clusters" || !slices.Equal(headerActionKeys(page),
+		[]string{"create_cluster", "schedule_group_training", "schedule_cluster_meeting", "export"}) {
 		t.Fatalf("the header: %v", page.GetHeader())
 	}
 	if total := page.GetBlocks()[1].GetStrip().GetMetrics()[0].GetValue(); total != fmt.Sprint(owned) {
@@ -123,4 +127,13 @@ WHERE u.email = 'cceo@edify.org' AND c.deleted_at IS NULL ORDER BY c.name LIMIT 
 	if _, err := pageOf(other, "/partials/clusters/"+clusterID+"/schools", nil); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Fatalf("another officer opening it: %v, want not found", err)
 	}
+}
+
+// headerActionKeys are the page header's action keys, in order.
+func headerActionKeys(page *screensv1.GetPageResponse) []string {
+	keys := []string{}
+	for _, a := range page.GetHeader().GetActions() {
+		keys = append(keys, a.GetKey())
+	}
+	return keys
 }
