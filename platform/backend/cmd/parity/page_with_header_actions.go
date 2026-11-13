@@ -15,7 +15,9 @@ import (
 func init() {
 	extra := []map[string]string{
 		{"export": "xlsx"},
-		{"format": "xlsx"},
+		// Not "format": the existing feed is a REST framework view, which
+		// reads ?format= as its own renderer switch and answers 404.
+		{"csv": "1"},
 		{"q": ""},
 		{"q": "a b&c/d"},
 		{"search": "x y", "tab": "core"},
