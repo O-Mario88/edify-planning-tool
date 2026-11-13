@@ -45,6 +45,7 @@ PATHS = (
     "/cce-leadership/reports",
     "/cce-leadership/feedback",
     "/cce-leadership/engagements",
+    "/my-coaching",
 )
 
 
@@ -179,6 +180,39 @@ def file_engagements():
         )
 
 
+def file_coaching():
+    pl = User.objects.get(email="pl1@edify.org")
+    officer = User.objects.get(email="cceo1@edify.org")
+    staff = StaffProfile.objects.get(user=officer)
+    today = dj_timezone.localdate()
+    now = dj_timezone.now()
+    kinds = [
+        "one_to_one",
+        "field_observation",
+        "recognition",
+        "regional_feedback",
+        "one_to_one",
+    ]
+    for i in range(7):
+        CceoCoaching.objects.create(
+            id=f"gclk{i:03d}",
+            author_id=pl.id,
+            cceo_staff_id=staff.id if i != 5 else "other-staff",
+            cceo_user_id=officer.id if i != 6 else "other-user",
+            kind=kinds[i % 5],
+            held_on=today - timedelta(days=3 * i + 1),
+            fy="2027",
+            country="Uganda",
+            subject=f"Golden coaching {i}",
+            follow_up_due=None
+            if i % 3 == 0
+            else today + timedelta(days=[-2, 0, 5][i % 3]),
+            shared_at=None if i == 4 else now - timedelta(days=i),
+            acknowledged_at=now if i in (1, 3) else None,
+            follow_up_done_at=now if i == 2 else None,
+        )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -203,6 +237,14 @@ QUESTIONS = {
     "ia@edify.org": [{}],
     "cd@edify.org": [{}],
     "pl1@edify.org": [{}, {"open": "gcle003"}, {"open": "nothing"}],
+    "cceo1@edify.org": [
+        {},
+        {"kind": "recognition"},
+        {"state": "awaiting"},
+        {"state": "acknowledged"},
+        {"state": "draft"},
+        {"kind": "nope"},
+    ],
 }
 
 
@@ -212,6 +254,7 @@ def main():
         file_rows()
         file_feedback()
         file_engagements()
+        file_coaching()
         rows = dump_rows()
         answers = []
         for email, asked in QUESTIONS.items():

@@ -113,6 +113,36 @@
       "overdue": "danger"
     }
   },
+  "coaching_kinds": [
+    [
+      "one_to_one",
+      "Monthly one-to-one"
+    ],
+    [
+      "field_observation",
+      "School visit observation"
+    ],
+    [
+      "training_observation",
+      "Training observation"
+    ],
+    [
+      "performance_checkin",
+      "Performance check-in"
+    ],
+    [
+      "debrief_feedback",
+      "Field debrief feedback"
+    ],
+    [
+      "recognition",
+      "Recognition"
+    ],
+    [
+      "regional_feedback",
+      "Regional Lead feedback passed on"
+    ]
+  ],
   "engagement_kinds": [
     [
       "pl_coaching",
@@ -161,8 +191,11 @@
   ],
   "helper_figure_chars": 28,
   "metric_labels": {
+    "Agreed Coaching Actions Open": "Agreed Coaching Actions Open",
     "Average Observation Rating": "Average Observation Rating",
+    "Coaching Awaiting My Acknowledgement": "Coaching Awaiting My Acknowledgement",
     "Coaching Conversations (30 Days)": "Coaching Conversations (30 Days)",
+    "Coaching I Have Acknowledged": "Coaching I Have Acknowledged",
     "Country Reviews This Quarter": "Country Reviews This Quarter",
     "Engagements Overdue": "Engagements Overdue",
     "Feedback Acknowledged": "Feedback Acknowledged",
@@ -455,6 +488,90 @@
             "/cce-leadership/reports/new"
           ],
           "page": true,
+          "strip": null
+        }
+      }
+    },
+    "/my-coaching": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
           "strip": null
         }
       }

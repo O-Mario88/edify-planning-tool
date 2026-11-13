@@ -489,3 +489,9 @@ GRANT SELECT (id, author_id, kind, subject, country, recommendation, held_on, fe
   activity_id, rating_biblical_integration, rating_need_alignment, rating_facilitation, rating_participation, rating_application, created_at)
   ON cce_regional_engagement TO edify_gateway_ro;
 GRANT SELECT (source_engagement_id) ON cce_cceo_coaching TO edify_gateway_ro;
+-- My Coaching: a coaching record's subject, kind, day, author, officer (by
+-- People record and account), country, follow-up day and the times it was
+-- shared, acknowledged and followed up. Not its strengths, growth areas,
+-- agreed actions or the officer's response.
+GRANT SELECT (id, subject, kind, held_on, author_id, cceo_staff_id, cceo_user_id, country, follow_up_due, follow_up_done_at,
+  shared_at, acknowledged_at, created_at) ON cce_cceo_coaching TO edify_gateway_ro;

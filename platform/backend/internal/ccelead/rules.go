@@ -43,6 +43,7 @@ var rules = func() (r struct {
 	ActivityTypes   map[string]string `json:"activity_types"`
 	EngagementKinds [][2]string       `json:"engagement_kinds"`
 	ShareableKinds  []string          `json:"shareable_kinds"`
+	CoachingKinds   [][2]string       `json:"coaching_kinds"`
 	Cadence         struct {
 		Rules []struct {
 			Kind, Label, Expectation, Per, Window string

@@ -56,6 +56,16 @@ PAGES = {
             "Engagements Overdue",
         ],
     },
+    "/my-coaching": {
+        "permission": "my_coaching",
+        "drawers": [],
+        "source": "apps.frontend.views.coaching_views:_metric",
+        "metrics": [
+            "Coaching Awaiting My Acknowledgement",
+            "Coaching I Have Acknowledged",
+            "Agreed Coaching Actions Open",
+        ],
+    },
     "/cce-leadership/feedback": {
         "permission": "cce_training_feedback",
         "drawers": [],
@@ -92,6 +102,7 @@ def rules() -> dict:
     from apps.activities.models import ActivityType
     from apps.cce_leadership.models import (
         OBSERVATION_CRITERIA,
+        CoachingKind,
         EngagementKind,
         ObservationRecommendation,
         ReportStatus,
@@ -108,7 +119,9 @@ def rules() -> dict:
     return {
         "pages": pages(),
         "metric_labels": {
-            label: source_label_for_key(key_for_source_label(METRIC_SOURCE, label))
+            label: source_label_for_key(
+                key_for_source_label(page.get("source", METRIC_SOURCE), label)
+            )
             for page in PAGES.values()
             for label in page["metrics"]
         },
@@ -122,6 +135,8 @@ def rules() -> dict:
         "activity_types": dict(ActivityType.choices),
         "engagement_kinds": [[str(k), str(v)] for k, v in EngagementKind.choices],
         "shareable_kinds": [str(k) for k in services.SHAREABLE_KINDS],
+        # A coaching record's kinds, as the My Coaching filter offers them.
+        "coaching_kinds": [[str(k), str(v)] for k, v in CoachingKind.choices],
         # The meeting rhythm the role description sets (cadence.py).
         "cadence": {
             "rules": [

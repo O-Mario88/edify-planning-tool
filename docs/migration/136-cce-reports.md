@@ -81,3 +81,22 @@ last), quarterly (this quarter) or yearly (before the next year's budget goes
 to the RVP: missed once `country_annual_budget` shows it submitted or
 approved), worst first, the twelve most urgent. The feed reads the card's
 three counts one place off (OWNER_DEFECTS); Go copies it.
+
+## 136.4 My Coaching
+
+`coaching_views.my_coaching_view` (`/my-coaching`), on the same workspace
+template: the coaching `coaching_visible_to` gives (Admin every record; of
+those shared, a CCEO's own by account or People record; the page opens to
+Admin, the CCEO and Impact Assessment, who reads none), narrowed by a kind it
+offers and by "awaiting" (shared, not acknowledged) or "acknowledged", the
+latest first, at most 500. Each row: the subject; for everyone but the
+officer, the officer's name; the kind's label; the day held; who it is from;
+the follow-up day; the state (`state_of`: "Follow-up due" once its day has
+come and it is not followed up, for everyone but the officer; Acknowledged;
+"Awaiting the officer", "your acknowledgement" for the officer; Not shared
+yet); and the record's drawer, "Acknowledge" for the officer's unacknowledged
+records, else "Open". Figures over everything visible, unfiltered: awaiting
+acknowledgement, acknowledged, agreed actions open (a follow-up day not yet
+followed up). `deploy/db/roles.sql` grants a coaching record's people, days,
+kind, subject and states — never its strengths, growth areas, agreed actions
+or the officer's response.
