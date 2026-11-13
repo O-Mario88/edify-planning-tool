@@ -245,6 +245,24 @@ _CALENDAR_STATUS_FAMILIES: dict[str, tuple[str, ...]] = {
     "cancelled": ("cancelled", "rejected"),
 }
 
+#: Never drawn unless "Cancelled / rejected" is asked for: called off, or a
+#: visit still waiting for its owner's approval.
+_CALENDAR_HIDDEN_STATUSES = ("cancelled", "rejected", "awaiting_owner_approval")
+#: The event-type rail's values (the page's x-data eventFilter).
+_CALENDAR_EVENT_KINDS = frozenset({"all", "activity", "leave", "holiday", "event"})
+#: The years a ?year= may name; any other opens the month that holds today.
+_CALENDAR_YEARS = (2000, 2100)
+_CALENDAR_WEEKDAY_LABELS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+#: Who adds a country-wide organization event (the CD owns the country
+#: calendar; Admin and Impact Assessment keep their operational override).
+_CALENDAR_EVENT_ROLES = frozenset(
+    {
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.ADMIN.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+    }
+)
+
 _CALENDAR_STATUS_OPTIONS = (
     ("scheduled", "Scheduled"),
     ("in_progress", "In progress"),
@@ -278,7 +296,7 @@ def calendar_view(request):
         year = int(request.GET.get("year", today.year))
     except (TypeError, ValueError):
         month, year = today.month, today.year
-    if not 1 <= month <= 12 or not 2000 <= year <= 2100:
+    if not 1 <= month <= 12 or not _CALENDAR_YEARS[0] <= year <= _CALENDAR_YEARS[1]:
         month, year = today.month, today.year
 
     view_mode = "agenda" if request.GET.get("view") == "agenda" else "month"
@@ -289,7 +307,7 @@ def calendar_view(request):
     if selected_status not in _CALENDAR_STATUS_FAMILIES:
         selected_status = ""
     selected_event_kind = request.GET.get("event_kind", "all")
-    if selected_event_kind not in {"all", "activity", "leave", "holiday", "event"}:
+    if selected_event_kind not in _CALENDAR_EVENT_KINDS:
         selected_event_kind = "all"
 
     month_start = date(year, month, 1)
@@ -328,9 +346,7 @@ def calendar_view(request):
     else:
         # A visit still waiting for its owner's approval is not on anyone's
         # calendar yet — it becomes scheduled the moment it is approved.
-        activities = activities.exclude(
-            status__in=["cancelled", "rejected", "awaiting_owner_approval"]
-        )
+        activities = activities.exclude(status__in=_CALENDAR_HIDDEN_STATUSES)
         activities = off_calendar_done(activities)
         if selected_status:
             activities = activities.filter(
@@ -792,7 +808,7 @@ def calendar_view(request):
         "today": today,
         "month_name": calendar.month_name[month],
         "month_last_day": month_end,
-        "weekday_labels": ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
+        "weekday_labels": _CALENDAR_WEEKDAY_LABELS,
         "event_counts": event_counts,
         "event_total": sum(event_counts.values()),
         "day_off_rows": sorted(day_off_rows, key=lambda row: row["date"]),
@@ -807,12 +823,7 @@ def calendar_view(request):
         # A country event is added from the reader's own calendar: on
         # somebody else's tab the form would read as an entry in theirs.
         "can_add_calendar_event": shown_person is None
-        and user.active_role
-        in {
-            EdifyRole.COUNTRY_DIRECTOR.value,
-            EdifyRole.ADMIN.value,
-            EdifyRole.IMPACT_ASSESSMENT.value,
-        },
+        and user.active_role in _CALENDAR_EVENT_ROLES,
         "filters_active": bool(
             selected_type or selected_status or selected_event_kind != "all"
         ),
@@ -914,11 +925,7 @@ def calendar_event_create_view(request):
     override. This is intentionally separate from Activity creation because a
     blocking event is context for the work plan, not completed programme work.
     """
-    if request.user.active_role not in {
-        EdifyRole.COUNTRY_DIRECTOR.value,
-        EdifyRole.ADMIN.value,
-        EdifyRole.IMPACT_ASSESSMENT.value,
-    }:
+    if request.user.active_role not in _CALENDAR_EVENT_ROLES:
         return HttpResponseForbidden(
             "Only the Country Director can add calendar events."
         )

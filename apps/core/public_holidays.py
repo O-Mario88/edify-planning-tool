@@ -247,6 +247,9 @@ def national_holidays(year: int) -> list[Holiday]:
 
 
 _LETTERS = re.compile(r"[^a-z]+")
+#: How a recorded title names each Eid, once only its letters are left.
+_FITR_SPELLINGS = ("fitr",)
+_ADHA_SPELLINGS = ("adha", "adhuha", "azha")
 _MEMO = "public_holidays"
 
 
@@ -254,9 +257,9 @@ def _eid_named(title: str) -> str | None:
     """Which Eid a recorded title names, however it is spelt: Eid al-Fitr,
     Idd el-Fitri, Eid ul-Adha, Idd Adhuha."""
     letters = _LETTERS.sub("", (title or "").casefold())
-    if "fitr" in letters:
+    if any(part in letters for part in _FITR_SPELLINGS):
         return EID_AL_FITR
-    if any(part in letters for part in ("adha", "adhuha", "azha")):
+    if any(part in letters for part in _ADHA_SPELLINGS):
         return EID_AL_ADHA
     return None
 

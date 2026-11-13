@@ -258,3 +258,10 @@ GRANT SELECT (catalogue_item_id) ON cost_setting TO edify_gateway_ro;
 -- listed activity's cost lines carry an advance request waiting on somebody
 -- (it would put the row on Waiting on Approval). Ids and status only.
 GRANT SELECT (id, budget_line_id, status) ON advance_request TO edify_gateway_ro;
+
+-- The Calendar (internal/calendarpage): approved and pending leave (whose,
+-- what kind, which days, who covers), organization events and recorded
+-- public holidays. No reason, notes, contact or attachment of a leave.
+GRANT SELECT (staff_id, status, type, start_date, end_date, covering_staff_id) ON leave TO edify_gateway_ro;
+GRANT SELECT (title, description, start_date, end_date, block_type, is_active, country) ON calendar_block TO edify_gateway_ro;
+GRANT SELECT (date, name) ON public_holiday TO edify_gateway_ro;
