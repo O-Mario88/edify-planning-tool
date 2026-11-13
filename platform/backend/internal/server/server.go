@@ -123,7 +123,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			escalations.NewService(pool, time.Now),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
-			myplan.NewService(pool, time.Now),
+			myplan.NewService(pool, time.Now).WithTrainingSummary(trainingsummary.OwnSummary),
 			calendarpage.NewService(pool, time.Now),
 			todos.NewService(pool, time.Now),
 			workplan.NewService(pool, time.Now),

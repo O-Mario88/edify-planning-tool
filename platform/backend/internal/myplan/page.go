@@ -1,6 +1,7 @@
 package myplan
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -170,13 +171,19 @@ func activityBar() *screensv1.PageSelection {
 }
 
 // pastDueNote is the line under Plan progress when planned work is past its
-// day and not delivered (partials/my_plan/kpi_cards.html): the feed reads
-// only its link, What needs you now on the Dashboard.
-func pastDueNote() *screensv1.PageBlock {
+// day and not delivered (partials/my_plan/kpi_cards.html): a warning note
+// whose words the feed reads, with its link, What needs you now on the
+// Dashboard.
+func pastDueNote(n int) *screensv1.PageBlock {
+	words := [3]string{"activities are", "their", "They are"}
+	if n == 1 {
+		words = [3]string{"activity is", "its", "It is"}
+	}
+	text := fmt.Sprintf("%d planned %s past %s date and not yet completed. %s counted above and listed under "+
+		"What needs you now on the Dashboard, not in the tables below.", n, words[0], words[1], words[2])
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
-		Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
-			Links: []*screensv1.PageLink{{Text: "What needs you now", Href: "/dashboard"}},
-		}}}},
+		Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{Text: text}, Tone: "warning",
+			TextLinks: []*screensv1.PageLink{{Text: "What needs you now", Href: "/dashboard"}}}},
 	}}}
 }
 
@@ -192,6 +199,8 @@ type pageParts struct {
 	// counted visits of the year.
 	target, planned int
 	tables          PlanTablesResult
+	// summary is the reader's own My Training Summary.
+	summary []TrainingSummaryRow
 }
 
 // emptyPage is My Plan for a reader with no target whose tables list
@@ -231,7 +240,7 @@ func planPage(parts pageParts) *screensv1.GetPageResponse {
 	}
 	blocks = append(blocks, progressStrip(parts.plan.Counts, parts.target))
 	if parts.plan.PastDue > 0 && status != "overdue" && status != "under_way" {
-		blocks = append(blocks, pastDueNote())
+		blocks = append(blocks, pastDueNote(parts.plan.PastDue))
 	}
 	// A planner's own Planned and remaining, loaded once the page is open
 	// (readiness_panel.html), and the schools behind a figure when asked.
@@ -240,6 +249,9 @@ func planPage(parts pageParts) *screensv1.GetPageResponse {
 		if key := readinessList(request); key != "" {
 			blocks = append(blocks, emptyReadinessList(key))
 		}
+	}
+	if len(parts.summary) > 0 {
+		blocks = append(blocks, summaryBlocks(parts.summary, p.FY)...)
 	}
 	blocks = append(blocks, planTablesBlocks(parts.tables, p)...)
 	blocks = append(blocks, breakdown(parts.plan.Counts))

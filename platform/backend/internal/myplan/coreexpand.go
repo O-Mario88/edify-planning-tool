@@ -13,6 +13,16 @@ type memberSchool struct {
 	code                 *string
 	clusterID            string
 	confirmed            bool
+	// district is the school's district's name ("Unknown" without one).
+	district string
+}
+
+// reach is one row a cluster session becomes: a copy of the session for a
+// school it reached (school set), or the session itself when it reached
+// none (the fallback row, at the cluster).
+type reach struct {
+	row    *row
+	school *memberSchool
 }
 
 // expandClusters is get_frontend_context's cluster invited-school
@@ -22,6 +32,26 @@ type memberSchool struct {
 // Only those rows are returned; the client and programme rows stay on the
 // tables Core School Oversight does not list.
 func (p *page) expandClusters(ctx context.Context, db schooldirectory.Querier, acts []*activity, trainings []*row) ([]*row, error) {
+	reached, err := p.expandSessions(ctx, db, trainings)
+	if err != nil {
+		return nil, err
+	}
+	var out []*row
+	for _, r := range trainings {
+		for _, x := range reached[r] {
+			if x.school != nil && x.school.schoolType == "core" {
+				out = append(out, x.row)
+			}
+		}
+	}
+	return out, nil
+}
+
+// expandSessions is the cluster invited-school expansion itself: for each
+// session among trainings (a row at a cluster with no School ID), the rows
+// it becomes, in the order the existing loop writes them. A row that is not
+// a session has no entry.
+func (p *page) expandSessions(ctx context.Context, db schooldirectory.Querier, trainings []*row) (map[*row][]reach, error) {
 	var sessions []*row
 	var sessionIDs, clusterIDs []string
 	for _, r := range trainings {
@@ -125,7 +155,7 @@ WHERE a.activity_id = ANY($1) AND (a.invited OR a.attended) ORDER BY s.name ASC`
 		return nil, err
 	}
 
-	var out []*row
+	out := map[*row][]reach{}
 	var fallback *int64
 	fallbackRead := false
 	for _, r := range sessions {
@@ -142,6 +172,15 @@ WHERE a.activity_id = ANY($1) AND (a.invited OR a.attended) ORDER BY s.name ASC`
 				targets = byCluster[r.clusterID]
 			}
 		}
+		if len(targets) == 0 {
+			// No school to split it over: the session itself, named by its
+			// cluster, with its own head count and cost.
+			c := r.copy()
+			c.schoolName = orDefault(r.clusterName, "Cluster Training")
+			c.placeURL = "/clusters/" + r.clusterID
+			out[r] = append(out[r], reach{row: c})
+			continue
+		}
 		var each *int
 		for _, v := range []*int{r.a.perSchool, r.a.teachersPerSchool} {
 			if v != nil && *v != 0 {
@@ -154,10 +193,8 @@ WHERE a.activity_id = ANY($1) AND (a.invited OR a.attended) ORDER BY s.name ASC`
 			n := max(1, pyFloorDiv(*r.expected, len(targets)))
 			each = &n
 		}
-		for _, s := range targets {
-			if s.schoolType != "core" {
-				continue
-			}
+		for i := range targets {
+			s := targets[i]
 			c := r.copy()
 			code := s.pk
 			if s.code != nil && *s.code != "" {
@@ -165,6 +202,8 @@ WHERE a.activity_id = ANY($1) AND (a.invited OR a.attended) ORDER BY s.name ASC`
 			}
 			c.schoolID = schoolID{value: code}
 			c.schoolName = s.name
+			c.schoolDistrict = s.district
+			c.placeURL = "/schools/" + code
 			c.isClusterInvited = true
 			c.expected = each
 			if n, ok := composition[key{act, s.pk}]; ok {
@@ -195,15 +234,20 @@ WHERE a.activity_id = ANY($1) AND (a.invited OR a.attended) ORDER BY s.name ASC`
 				v := int64(*c.expected) * rate
 				c.budgetTotal = &v
 			}
-			c.trainingNumber = ""
-			if seq, ok := slotOf[[2]string{act, str(s.code)}]; ok && s.code != nil && seq != nil && *seq != 0 {
-				c.trainingNumber = "T" + strconv.Itoa(*seq)
+			switch {
+			case in(rules.Rows.ProgrammeSchoolTypes, s.schoolType):
+				c.trainingNumber, c.coreProgress = "", ""
+			case s.schoolType == "core":
+				c.trainingNumber = ""
+				if seq, ok := slotOf[[2]string{act, str(s.code)}]; ok && s.code != nil && seq != nil && *seq != 0 {
+					c.trainingNumber = "T" + strconv.Itoa(*seq)
+				}
+				c.coreProgress = ""
+				if s.code != nil {
+					c.coreProgress = progress[*s.code]
+				}
 			}
-			c.coreProgress = ""
-			if s.code != nil {
-				c.coreProgress = progress[*s.code]
-			}
-			out = append(out, c)
+			out[r] = append(out[r], reach{row: c, school: &s})
 		}
 	}
 	return out, nil
@@ -220,8 +264,9 @@ func pyFloorDiv(a, b int) int {
 // readMembers reads schools in the School model's order (newest first).
 func readMembers(ctx context.Context, db schooldirectory.Querier, where string, arg []string) ([]memberSchool, error) {
 	rows, err := db.Query(ctx, `SELECT s.id, s.school_id, s.name, COALESCE(s.school_type, ''), COALESCE(s.cluster_id, ''),
-  COALESCE(s.cluster_status = 'clustered' AND (COALESCE(s.operational_status, '') = '' OR s.operational_status = ANY($2)), false)
-FROM school s WHERE `+where+` ORDER BY s.created_at DESC`, arg, rules.Rows.OperatingStatuses)
+  COALESCE(s.cluster_status = 'clustered' AND (COALESCE(s.operational_status, '') = '' OR s.operational_status = ANY($2)), false),
+  CASE WHEN s.district_id IS NULL THEN 'Unknown' ELSE COALESCE(d.name, '') END
+FROM school s LEFT JOIN district d ON d.id = s.district_id WHERE `+where+` ORDER BY s.created_at DESC`, arg, rules.Rows.OperatingStatuses)
 	if err != nil {
 		return nil, fmt.Errorf("myplan: schools reached: %w", err)
 	}
@@ -229,7 +274,7 @@ FROM school s WHERE `+where+` ORDER BY s.created_at DESC`, arg, rules.Rows.Opera
 	var out []memberSchool
 	for rows.Next() {
 		var s memberSchool
-		if err := rows.Scan(&s.pk, &s.code, &s.name, &s.schoolType, &s.clusterID, &s.confirmed); err != nil {
+		if err := rows.Scan(&s.pk, &s.code, &s.name, &s.schoolType, &s.clusterID, &s.confirmed, &s.district); err != nil {
 			return nil, err
 		}
 		out = append(out, s)

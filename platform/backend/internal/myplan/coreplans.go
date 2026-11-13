@@ -161,6 +161,12 @@ func (p *page) newRow(a *activity, isCore bool) *row {
 	}
 	switch {
 	case a.hasCluster:
+		r.placeURL = "/clusters/" + str(a.clusterID)
+	case a.hasSchool:
+		r.placeURL = "/schools/" + str(a.schoolPK)
+	}
+	switch {
+	case a.hasCluster:
 		r.clusterID, r.clusterName = str(a.clusterID), str(a.clusterName)
 	case a.hasSchool:
 		r.clusterName = str(a.schoolName)
