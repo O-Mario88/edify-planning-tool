@@ -6,6 +6,7 @@ import (
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -40,8 +41,10 @@ var statusOptions = []string{"scheduled", "upcoming", "under_way", "overdue", "c
 type extra struct {
 	evidence, payment, meetingKind *string
 	clusterDistrict, eventDistrict *string
-	// advances is whether an advance on its cost lines waits on somebody.
-	advances bool
+	endDate                        *time.Time
+	reviewNote, schoolSSAStatus    *string
+	// advances are the advances on its cost lines (_advances_of).
+	advances []advance
 }
 
 // planRow is one row of My Plan's own tables.
@@ -52,6 +55,13 @@ type planRow struct {
 	tone                    string
 	rowState, districtShown string
 	canPick, showsComplete  bool
+	// dayOff is the day-off mark of work still waiting for its day.
+	dayOff *calendarpage.DayOffMark
+	// inTable is whether the row is in one of the tables (a row in none
+	// reaches only the day-off card, with no tick box).
+	inTable bool
+	// next is compute_next_action's answer for the row.
+	next nextAction
 }
 
 // PlanTablesResult is what the tables of a served page hold.
@@ -64,21 +74,27 @@ type PlanTablesResult struct {
 	statusShown string
 	// overwritten is whether they did.
 	overwritten bool
+	// dayOff are the rows on a day off, in the loop's order (the
+	// Reschedule card); returned, waiting and finance the other cards'.
+	dayOff, returned, waiting, finance []*planRow
 }
 
-// readExtras reads the columns these rows need beyond 3a's.
+// readExtras reads the columns these rows need beyond 3a's, and each
+// activity's advances (compute_next_action).
 func readExtras(ctx context.Context, db schooldirectory.Querier, ids []string, lines costLines) (map[string]*extra, error) {
 	out := map[string]*extra{}
-	rows, err := db.Query(ctx, `SELECT a.id, a.evidence_status, a.payment_status, a.meeting_kind, cd.name, ed.name
+	rows, err := db.Query(ctx, `SELECT a.id, a.evidence_status, a.payment_status, a.meeting_kind, cd.name, ed.name, a.end_date,
+  a.pl_review_note, s.current_fy_ssa_status
 FROM activity a LEFT JOIN cluster c ON c.id = a.cluster_id LEFT JOIN district cd ON cd.id = c.district_id
-LEFT JOIN district ed ON ed.id = a.event_district_id WHERE a.id = ANY($1)`, ids)
+LEFT JOIN district ed ON ed.id = a.event_district_id LEFT JOIN school s ON s.id = a.school_id WHERE a.id = ANY($1)`, ids)
 	if err != nil {
 		return nil, fmt.Errorf("myplan: reading the rows' columns: %w", err)
 	}
 	for rows.Next() {
 		var id string
 		x := &extra{}
-		if err := rows.Scan(&id, &x.evidence, &x.payment, &x.meetingKind, &x.clusterDistrict, &x.eventDistrict); err != nil {
+		if err := rows.Scan(&id, &x.evidence, &x.payment, &x.meetingKind, &x.clusterDistrict, &x.eventDistrict, &x.endDate,
+			&x.reviewNote, &x.schoolSSAStatus); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("myplan: reading the rows' columns: %w", err)
 		}
@@ -88,36 +104,14 @@ LEFT JOIN district ed ON ed.id = a.event_district_id WHERE a.id = ANY($1)`, ids)
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	var lineIDs []string
-	activityOf := map[string]string{}
-	for activityID, ls := range lines {
-		for _, l := range ls {
-			lineIDs = append(lineIDs, l)
-			activityOf[l] = activityID
-		}
-	}
-	if len(lineIDs) == 0 {
-		return out, nil
-	}
-	// An advance or claim waiting on somebody (compute_next_action's
-	// "view_status" branches): the row is on Waiting on Approval. Other
-	// advances lead to actions the page does not draw.
-	rows, err = db.Query(ctx, `SELECT DISTINCT budget_line_id FROM advance_request
-WHERE budget_line_id = ANY($1) AND status = ANY($2)`, lineIDs, rules.Tables.MoneyAwaitingStatuses)
+	advs, err := readAdvances(ctx, db, lines)
 	if err != nil {
-		return nil, fmt.Errorf("myplan: reading the rows' advances: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var line string
-		if err := rows.Scan(&line); err != nil {
-			return nil, err
-		}
-		if x := out[activityOf[line]]; x != nil {
-			x.advances = true
-		}
+	for id, x := range out {
+		x.advances = advs[id]
 	}
-	return out, rows.Err()
+	return out, nil
 }
 
 // listedIDs are the activities the tables list, by planned date then made
@@ -144,14 +138,9 @@ func listedIDs(ctx context.Context, db schooldirectory.Querier, owners []string,
 // unportedRow is why the page with this activity listed is still the
 // existing application's, or "".
 func unportedRow(a *activity, x *extra, awaiting bool) string {
-	t := rules.Tables
 	switch {
-	case in(t.AwaitingDelivery, a.status):
-		return "work still to be delivered (day-off marks)"
-	case in(rules.Plan.ReturnedStatuses, a.status), in(t.HandedInStatuses, a.status), a.status == "ia_verified":
-		return "an attention card"
-	case in([]string{"disbursed", "netsuite_accountability"}, str(x.payment)), x.advances:
-		return "money awaiting somebody (an attention card)"
+	case str(a.delivery) == "partner":
+		return "a partner's delivery (compute_next_action's partner branches)"
 	case awaiting:
 		return "an SSA visit awaiting scores"
 	case str(x.meetingKind) == "training":
@@ -216,6 +205,10 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, owners []st
 	if err != nil {
 		return res, false, err
 	}
+	marks, known, err := dayOffMarks(ctx, db, acts, extras)
+	if err != nil || !known {
+		return res, false, err
+	}
 	var all []*planRow
 	core := false
 	for _, a := range acts {
@@ -229,12 +222,37 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, owners []st
 		if a.hasSchool && str(a.schoolType) == "core" {
 			core = true
 		}
+		isCore := table == tableCoreVisits
+		next, known := computeNextAction(a, x, x.advances, pg.today)
+		if !known {
+			return res, false, nil
+		}
+		r := &planRow{row: pg.newRow(a, isCore), x: *x, table: table, inTable: table >= 0, next: next}
+		r.tone = baseTone(a, r.statusLabel, isCore)
+		if r.awaitingSSA {
+			// Delivered, waiting for its school's SSA (visit_scores): its
+			// action is the SSA drawer, its pill amber. Only a row in no
+			// table reaches here (a table's is passed above).
+			r.tone = "amber"
+			r.next = nextAction{rules.Rows.EnterSSAText, "ssa", "/schools/" + str(a.schoolPK) + "/ssa-entry?activity=" + a.id, "SSA scores not entered"}
+			next = r.next
+		}
+		if m, ok := marks[a.id]; ok {
+			r.dayOff = &m
+			res.dayOff = append(res.dayOff, r)
+		}
+		if in(rules.Tables.FinancePendingPaymentStatuses, str(x.payment)) {
+			res.finance = append(res.finance, r)
+		}
+		switch {
+		case in(rules.Plan.ReturnedStatuses, a.status):
+			res.returned = append(res.returned, r)
+		case onWaitingCard(a, x, next, x.advances, pg.today):
+			res.waiting = append(res.waiting, r)
+		}
 		if table == -2 {
 			continue
 		}
-		isCore := table == tableCoreVisits
-		r := &planRow{row: pg.newRow(a, isCore), x: *x, table: table}
-		r.tone = baseTone(a, r.statusLabel, isCore)
 		all = append(all, r)
 		switch table {
 		case tableSchoolVisits:
@@ -301,6 +319,11 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, owners []st
 		}
 		for _, r := range rows {
 			r.settle(pg.today)
+		}
+	}
+	for _, card := range [][]*planRow{res.dayOff, res.returned, res.waiting, res.finance} {
+		if len(card) > planTablePageSize {
+			return res, false, nil
 		}
 	}
 	for _, rows := range res.programme {
@@ -405,37 +428,6 @@ func baseTone(a *activity, label string, isCore bool) string {
 	return "slate"
 }
 
-// nextIsSubmit is whether compute_next_action offers Submit for work none
-// of whose earlier branches applies (the rows this piece draws: no work
-// still to deliver, sent back, a partner's or awaiting its owner).
-func nextIsSubmit(a *activity, x extra) bool {
-	t := rules.Tables
-	evidence := str(x.evidence)
-	if a.status == "awaiting_owner_approval" || a.status == "in_progress" || !in(t.WorkedStatuses, a.status) {
-		return false
-	}
-	if evidence == "none" && a.status != "completed" {
-		return false
-	}
-	if evidence != "uploaded" && evidence != "none" {
-		return false
-	}
-	if !isSet(a.salesforce) {
-		return false
-	}
-	if in(t.SubmitNeedsParticipantsTypes, a.activityType) {
-		attended := 0
-		if a.teachersAttended != nil {
-			attended += *a.teachersAttended
-		}
-		if a.leadersAttended != nil {
-			attended += *a.leadersAttended
-		}
-		return attended > 0
-	}
-	return true
-}
-
 // actions is activity_row.html as the feed reads it: only buttons with an
 // hx-get reach the app, in order.
 func (r *planRow) actions() *screensv1.PageCell {
@@ -467,7 +459,7 @@ func (r *planRow) actions() *screensv1.PageCell {
 		if a.status != "completed" {
 			cell.Actions = append(cell.Actions, drawer("menu", "Complete Activity", "/my-plan/"+a.id+"/complete-drawer", false))
 		}
-		if nextIsSubmit(a, r.x) {
+		if r.next.action == "submit" {
 			cell.Actions = append(cell.Actions, drawer("menu", "Submit for Review", "/activities/"+a.id+"/submit", false))
 		}
 	}
@@ -477,4 +469,26 @@ func (r *planRow) actions() *screensv1.PageCell {
 		cell.Actions = append(cell.Actions, drawer("danger", "Cancel Activity", "/my-plan/"+a.id+"/cancel-drawer", false))
 	}
 	return cell
+}
+
+// dayOffMarks is day_off_marks over the listed activities: the days each
+// runs on (activity_span: its plan day to its end date, when that is
+// later). known is false when a day is in a year the national calendar
+// does not hold.
+func dayOffMarks(ctx context.Context, db schooldirectory.Querier, acts []*activity, extras map[string]*extra) (map[string]calendarpage.DayOffMark, bool, error) {
+	var work []calendarpage.DayOffWork
+	for _, a := range acts {
+		start := planDay(a.plannedDate, a.scheduledDate)
+		if start == nil {
+			continue
+		}
+		end := *start
+		if x := extras[a.id]; x != nil && x.endDate != nil {
+			if e := date(x.endDate); e.After(end) {
+				end = *e
+			}
+		}
+		work = append(work, calendarpage.DayOffWork{ID: a.id, Status: a.status, StaffID: str(a.staffID), Start: *start, End: end})
+	}
+	return calendarpage.DayOffMarks(ctx, db, work)
 }

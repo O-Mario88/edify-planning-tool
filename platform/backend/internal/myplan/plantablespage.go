@@ -83,6 +83,9 @@ func tailCells(r *planRow) []*screensv1.PageCell {
 // pageRow is a table row with its tint and tick box.
 func pageRow(r *planRow, name string, cells []*screensv1.PageCell) *screensv1.PageRow {
 	out := &screensv1.PageRow{Cells: cells, Tone: r.rowState}
+	if out.Tone == "" && r.dayOff != nil {
+		out.Tone = "dayoff"
+	}
 	if r.canPick {
 		label := "Select " + orDefault(str(r.activityTypeLabel), "activity")
 		if name != "" {
@@ -105,7 +108,7 @@ func schoolCells(r *planRow, district, activityDefault string) []*screensv1.Page
 		{Text: orDefault(r.schoolID.value, dash)}, name,
 		{Text: orDefault(district, dash)}, {Text: orDefault(r.districtType, dash)},
 		{Text: orDefault(str(r.activityTypeLabel), activityDefault)},
-		{Text: planned(r.row)}, {Text: completed(r.row)},
+		{Text: planned(r.row) + r.dayOffFlag()}, {Text: completed(r.row)},
 		{Text: orDefault(r.owner, "Staff")}, {Text: orDefault(r.purpose, dash)},
 		focusCell(r), {Text: cost(r.row, true)},
 	}
@@ -140,7 +143,7 @@ func meetingCells(r *planRow) []*screensv1.PageCell {
 	return []*screensv1.PageCell{
 		{Text: r.clusterName, Href: "/clusters/" + r.clusterID},
 		{Text: r.clusterDistrict()}, {Text: orDefault(r.districtType, dash)},
-		{Text: planned(r.row)}, {Text: completed(r.row)},
+		{Text: planned(r.row) + r.dayOffFlag()}, {Text: completed(r.row)},
 		{Text: orDefault(r.owner, "Staff")}, {Text: meetingPurpose(r)},
 		focusCell(r), {Text: people}, {Text: money(amount)},
 	}
@@ -217,10 +220,14 @@ func programmeBlocks(t PlanTablesResult) []*screensv1.PageBlock {
 			if r.a.hasCluster {
 				place = "/clusters/" + r.clusterID
 			}
-			rows = append(rows, &screensv1.PageRow{Tone: r.rowState, Cells: []*screensv1.PageCell{
+			tone := r.rowState
+			if tone == "" && r.dayOff != nil {
+				tone = "dayoff"
+			}
+			rows = append(rows, &screensv1.PageRow{Tone: tone, Cells: []*screensv1.PageCell{
 				{Text: code}, {Text: r.schoolName, Href: place},
 				{Text: orDefault(r.districtShown, dash)}, {Text: orDefault(r.districtType, dash)},
-				{Text: str(r.activityTypeLabel)}, {Text: when}, {Text: completed(r.row)},
+				{Text: str(r.activityTypeLabel)}, {Text: when + r.dayOffFlag()}, {Text: completed(r.row)},
 				sf, {Text: r.statusLabel}, r.actions(),
 			}})
 		}
@@ -256,4 +263,66 @@ func coreBlocks(t PlanTablesResult, words string, visitColumns []string) []*scre
 			EmptyAction:  &screensv1.PageAction{Key: "empty", Label: "Open Core Schools", Enabled: true, Href: "/core-schools"},
 		}}},
 	}
+}
+
+// dayOffFlag is day_off_flag.html as the feed reads it beside the planned
+// day: " <label>: reschedule" (the include opens on a line break, which the
+// feed reads as one space).
+func (r *planRow) dayOffFlag() string {
+	if r.dayOff == nil {
+		return ""
+	}
+	return " " + r.dayOff.Label + ": reschedule"
+}
+
+// dayOffCard is attention.html's first card, "Reschedule — On a Public
+// Holiday or Leave Day": the work on a day off, in the loop's order.
+func dayOffCard(rows []*planRow) *screensv1.PageBlock {
+	var out []*screensv1.PageRow
+	for _, r := range rows {
+		code := dash
+		if r.schoolID.truthy() {
+			// {% school_code %} is a token span the feed reads as nothing.
+			code = ""
+		}
+		place := &screensv1.PageCell{}
+		switch {
+		case r.schoolName != "" && r.schoolName != "Unknown School":
+			place.Text = r.schoolName
+			if r.schoolID.truthy() {
+				place.Href = "/schools/" + r.schoolID.value
+			}
+		case r.clusterID != "":
+			place.Text, place.Href = r.clusterName, "/clusters/"+r.clusterID
+		default:
+			place.Text = orDefault(r.clusterName, "General")
+		}
+		reschedule := &screensv1.PageAction{Key: "button", Label: "Reschedule", Primary: true, Enabled: true,
+			Href: "/my-plan/" + r.a.id + "/reschedule-drawer", Drawer: true}
+		action := &screensv1.PageCell{Actions: []*screensv1.PageAction{reschedule}}
+		if str(r.a.delivery) != "staff" {
+			// execution_role is "Partner" for any other delivery: "The
+			// partner reschedules", which the feed does not read.
+			action = &screensv1.PageCell{}
+		}
+		row := &screensv1.PageRow{Cells: []*screensv1.PageCell{
+			{Text: code}, place, {Text: str(r.activityTypeLabel)}, {Text: r.dayOff.Summary}, action,
+		}, Tone: "dayoff"}
+		if r.canPick {
+			label := "Select " + orDefault(str(r.activityTypeLabel), "activity")
+			if r.schoolName != "" {
+				label += " at " + r.schoolName
+			}
+			if d := date(r.a.plannedDate); d != nil {
+				label += " on " + shownDay(d)
+			}
+			row.PickId, row.PickLabel = r.a.id, label
+		}
+		out = append(out, row)
+	}
+	cols := columns("School ID", "School / Cluster", "Type", "Day Off", "Action")
+	cols[len(cols)-1].Numeric = true
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
+		Title: "Reschedule — On a Public Holiday or Leave Day", Columns: cols, Rows: out,
+	}}}
 }

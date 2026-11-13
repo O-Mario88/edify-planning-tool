@@ -322,3 +322,10 @@ GRANT SELECT (id, user_id, at, last_active_at, ended_at, device) ON login_event 
 GRANT SELECT (user_id, day, section, seconds) ON presence_time TO edify_gateway_ro;
 GRANT SELECT (id, action, actor_id, success, created_at, correlation_id, subject_kind, subject_id) ON audit_log TO edify_gateway_ro;
 GRANT SELECT (status, subject_id) ON staff_usage_follow_up TO edify_gateway_ro;
+
+-- My Plan's attention cards (docs/migration/40-my-plan-rest.md): the
+-- reviewer's note on a returned activity (return_notes.note_for).
+GRANT SELECT (pl_review_note) ON activity TO edify_gateway_ro;
+-- compute_next_action's money branches: which advance comes first (newest),
+-- a reimbursement receipt confirmed, an accountability's NetSuite code in.
+GRANT SELECT (created_at, reimbursement_receipt_confirmed_at, accountability_netsuite_id) ON advance_request TO edify_gateway_ro;

@@ -17,13 +17,13 @@ func TestUnportedRowsLeaveThePageToTheExistingApplication(t *testing.T) {
 	}{
 		{"completed", activity{status: "completed"}, extra{}, false, false},
 		{"cancelled", activity{status: "cancelled"}, extra{}, false, false},
-		{"still to deliver", activity{status: "scheduled"}, extra{}, false, true},
-		{"rescheduled", activity{status: "rescheduled"}, extra{}, false, true},
-		{"sent back", activity{status: "returned_by_pl"}, extra{}, false, true},
-		{"handed in", activity{status: "submitted_to_pl"}, extra{}, false, true},
-		{"verified by IA", activity{status: "ia_verified"}, extra{}, false, true},
-		{"disbursed", activity{status: "completed"}, extra{payment: sp("disbursed")}, false, true},
-		{"an advance", activity{status: "completed"}, extra{advances: true}, false, true},
+		{"still to deliver", activity{status: "scheduled"}, extra{}, false, false},
+		{"rescheduled", activity{status: "rescheduled"}, extra{}, false, false},
+		{"sent back", activity{status: "returned_by_pl"}, extra{}, false, false},
+		{"handed in", activity{status: "submitted_to_pl"}, extra{}, false, false},
+		{"verified by IA", activity{status: "ia_verified"}, extra{}, false, false},
+		{"disbursed", activity{status: "completed"}, extra{payment: sp("disbursed")}, false, false},
+		{"a partner's delivery", activity{status: "completed", delivery: sp("partner")}, extra{}, false, true},
 		{"awaiting SSA scores", activity{status: "completed"}, extra{}, true, true},
 		{"a training meeting", activity{status: "completed"}, extra{meetingKind: sp("training")}, false, true},
 	}
@@ -80,7 +80,8 @@ func TestNextIsSubmitWaitsForTheIDTheFormAndThePeople(t *testing.T) {
 		{"closed", activity{status: "closed", activityType: "school_visit", salesforce: sp("SVE-1")}, extra{evidence: sp("uploaded")}, false},
 	}
 	for _, c := range cases {
-		if got := nextIsSubmit(&c.a, c.x); got != c.want {
+		next, _ := computeNextAction(&c.a, &c.x, nil, time.Date(2026, 11, 12, 0, 0, 0, 0, time.UTC))
+		if got := next.action == "submit"; got != c.want {
 			t.Errorf("%s: %v, want %v", c.name, got, c.want)
 		}
 	}

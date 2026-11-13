@@ -120,7 +120,7 @@ def plan_tables() -> dict:
     that would list it (attention.html) and the outreach visits named beside
     the visit target."""
     from apps.activities import completion_columns as cc
-    from apps.activities import day_off, facilitation, group_actions
+    from apps.activities import day_off, facilitation, group_actions, return_notes
     from apps.activities.models import Activity
     from apps.my_plan import services
     from apps.core.enums import SchoolType
@@ -158,6 +158,15 @@ def plan_tables() -> dict:
         "programme_school_labels": {
             kind: str(dict(SchoolType.choices)[kind]) for kind in PROGRAMME_SCHOOL_TYPES
         },
+        # The attention cards (attention.html): compute_next_action's lists,
+        # the loop's urgency sections and awaits_approval.
+        "dated_and_open": list(services._DATED_AND_OPEN),
+        "ssa_upload_types": list(services.SSA_UPLOAD_TYPES),
+        "waiting_on_me_actions": list(services.WAITING_ON_ME_ACTIONS),
+        "finance_pending_payment_statuses": list(
+            services.FINANCE_PENDING_PAYMENT_STATUSES
+        ),
+        "returned_by": dict(return_notes.RETURNED_BY),
     }
 
 
@@ -249,6 +258,7 @@ def plan_rows() -> dict:
         )[0],
         "evidence_visit_kind": cc.expected_evidence("school_visit")[0],
         "awaiting_ssa_label": visit_scores.AWAITING_SSA_LABEL,
+        "enter_ssa_text": visit_scores.ENTER_SSA_TEXT,
         "field_roles": sorted(districts.FIELD_ROLES),
         "field_role_aliases": sorted(districts._FIELD_ROLE_ALIASES),
         "hq_primary_districts": list(districts.HQ_PRIMARY_DISTRICTS),

@@ -476,6 +476,7 @@
       "primary": "Primary District",
       "secondary": "Secondary District"
     },
+    "enter_ssa_text": "Enter SSA Scores",
     "evidence_attendance_kind": "attendance_form",
     "evidence_attendance_types": [
       "cluster_meeting",
@@ -703,6 +704,11 @@
       "partner_scheduled",
       "rescheduled"
     ],
+    "dated_and_open": [
+      "scheduled",
+      "rescheduled",
+      "in_progress"
+    ],
     "facilitator_editable_statuses": [
       "completion_started",
       "deferred",
@@ -721,6 +727,10 @@
       "in_school_training",
       "school_improvement_training",
       "training"
+    ],
+    "finance_pending_payment_statuses": [
+      "disbursed",
+      "netsuite_accountability"
     ],
     "handed_in_statuses": [
       "awaiting_ia_verification",
@@ -768,6 +778,17 @@
       "core_graduate": "Core Graduate",
       "core_trained": "Core Trained"
     },
+    "returned_by": {
+      "returned": "Impact Assessment",
+      "returned_by_ia": "Impact Assessment",
+      "returned_by_pl": "Programme Lead"
+    },
+    "ssa_upload_types": [
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection",
+      "cluster_training_ssa_collection"
+    ],
     "submit_needs_participants_types": [
       "training",
       "cluster_training",
@@ -796,6 +817,13 @@
       "partner_ssa_collection",
       "ssa_activity",
       "core_assessment_visit"
+    ],
+    "waiting_on_me_actions": [
+      "evidence",
+      "sf_id",
+      "ssa",
+      "fix",
+      "accountability"
     ],
     "worked_statuses": [
       "completed",

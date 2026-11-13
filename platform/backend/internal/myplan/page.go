@@ -215,7 +215,21 @@ func planPage(parts pageParts) *screensv1.GetPageResponse {
 			}
 		}
 	}
-	blocks := []*screensv1.PageBlock{p.Tabs(request), form, progressStrip(parts.plan.Counts, parts.target)}
+	blocks := []*screensv1.PageBlock{p.Tabs(request), form}
+	t := parts.tables
+	if len(t.dayOff) > 0 {
+		blocks = append(blocks, dayOffCard(t.dayOff))
+	}
+	if len(t.returned) > 0 {
+		blocks = append(blocks, returnedCard(t.returned))
+	}
+	if len(t.waiting) > 0 {
+		blocks = append(blocks, waitingCard(t.waiting))
+	}
+	if len(t.finance) > 0 {
+		blocks = append(blocks, financeCard(t.finance))
+	}
+	blocks = append(blocks, progressStrip(parts.plan.Counts, parts.target))
 	if parts.plan.PastDue > 0 && status != "overdue" && status != "under_way" {
 		blocks = append(blocks, pastDueNote())
 	}

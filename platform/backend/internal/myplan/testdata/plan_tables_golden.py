@@ -19,6 +19,7 @@ every record it filed.
 """
 
 import json
+import re
 import os
 import random
 from datetime import datetime, time, timedelta, timezone as tz
@@ -26,7 +27,7 @@ from datetime import datetime, time, timedelta, timezone as tz
 from django.db import connection, transaction
 from django.utils import timezone
 
-from apps.accounts.models import StaffProfile, User
+from apps.accounts.models import Leave, PublicHoliday, StaffProfile, User
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.clusters.models import Cluster
 from apps.core_schools.models import CoreActivitySlot, CorePlan
@@ -35,7 +36,8 @@ from apps.geography.models import District
 from apps.mobile_feed.views import read_page
 from apps.schools.models import School
 
-if connection.settings_dict["NAME"] != "edify_gorn_test":
+# The shared test database, or an agent's own copy of it (edify_gorn_aNN_test).
+if not re.fullmatch(r"edify_gorn(_a\d+)?_test", connection.settings_dict["NAME"]):
     raise SystemExit("plan_tables_golden.py writes records: the test database only")
 
 P = "g8"
@@ -44,6 +46,8 @@ P = "g8"
 def remove():
     with transaction.atomic():
         AdvanceRequest.objects.filter(id__startswith=P).delete()
+        Leave.objects.filter(id__startswith=P).delete()
+        PublicHoliday.objects.filter(id__startswith=P).delete()
         ActivityScheduleCostLine.objects.filter(id__startswith=P).delete()
         CoreActivitySlot.objects.filter(id__startswith=P).delete()
         CorePlan.objects.filter(id__startswith=P).delete()
@@ -64,6 +68,7 @@ TYPES = (
     "donor_visit",
     "cluster_meeting",
     "cluster_meeting",
+    "school_visit_ssa_collection",
 )
 STATUSES = (
     "completed",
@@ -83,6 +88,15 @@ STATUSES = (
     "scheduled",
     "submitted_to_pl",
     "returned_by_pl",
+    # Work still waiting for its day: its day-off marks and the card.
+    "planned",
+    "rescheduled",
+    "scheduled",
+    # Sent back and handed in: the attention cards.
+    "returned_by_ia",
+    "returned",
+    "awaiting_ia_verification",
+    "ia_verified",
 )
 QUERIES = [
     {},
@@ -93,6 +107,12 @@ QUERIES = [
     {"q": "G8 School 3"},
     {"activity_type": "cluster_meeting"},
     {"activity_type": "school_visit", "status": "completed"},
+    # Work still to deliver, narrowed so a page holds little else.
+    {"activity_type": "school_visit", "status": "scheduled"},
+    {"activity_type": "follow_up_visit", "status": "upcoming"},
+    {"activity_type": "core_visit", "status": "scheduled"},
+    {"activity_type": "donor_visit", "status": "upcoming", "period": "week"},
+    {"activity_type": "cluster_meeting", "status": "scheduled", "period": "month"},
 ] + [
     {"status": s}
     for s in (
@@ -112,6 +132,9 @@ QUERIES = [
         "under_way",
         "overdue",
         "scheduled",
+        "upcoming",
+        "submitted",
+        "returned_for_correction",
     )
 ]
 
@@ -192,6 +215,7 @@ def make(out_path):
                 cluster_id=clusters[i % 3].id,
                 cluster_status="clustered",
                 operational_status="active",
+                current_fy_ssa_status=("done", "not_done", "pending")[i % 3],
             )
         )
     # The first Core school's package: slots of no activity, statuses the
@@ -211,7 +235,28 @@ def make(out_path):
         id=nid("q"), school_id=schools[2].school_id, fy=fy
     )
 
-    days = (0, 3, 9, -2, -5, -40, None)
+    # A recorded public holiday, and approved leave (one spell with a cover,
+    # one without; a request still pending marks nothing).
+    PublicHoliday.objects.create(
+        id=nid("h"), name="G8 Holiday", date=today + timedelta(days=3)
+    )
+    for sp, start, length, status, cover in (
+        (officer_sp, 9, 2, "approved", lead_sp),
+        (lead_sp, 0, 1, "approved", None),
+        (staff_sp, 3, 9, "pending", None),
+    ):
+        Leave.objects.create(
+            id=nid("l"),
+            staff=sp,
+            type="annual",
+            start_date=(today + timedelta(days=start)).isoformat(),
+            end_date=(today + timedelta(days=start + length - 1)).isoformat(),
+            days=length,
+            status=status,
+            covering_staff=cover,
+        )
+
+    days = (0, 3, 9, -2, -5, -40, None, 10, 2)
     acts = []
     for n in range(320):
         person_ = people[n % 4]
@@ -248,6 +293,9 @@ def make(out_path):
                 event_district=rnd.choice((home, None)) if school is None else None,
                 responsible_staff_id=rnd.choice(owner_ids[person_.id]),
                 planned_date=planned,
+                end_date=planned + timedelta(days=rnd.choice((0, 0, 1)))
+                if planned
+                else None,
                 scheduled_date=scheduled,
                 salesforce_activity_id=rnd.choice(
                     (None, "", f" SVE-G8{n:04d} ", f"TS-G8{n:04d}")
@@ -264,8 +312,23 @@ def make(out_path):
                 other_participants=rnd.choice((None, 1)),
                 expected_participants=rnd.choice((None, 0, 9)),
                 evidence_status=rnd.choice(("none", "uploaded", "accepted")),
-                payment_status=rnd.choice(("none", "none", "paid")),
-                ia_verification_status=rnd.choice(("", "pending", "confirmed")),
+                payment_status=rnd.choice(
+                    (
+                        "none",
+                        "none",
+                        "paid",
+                        "disbursed",
+                        "netsuite_accountability",
+                        "pending_ia",
+                        "cleared",
+                    )
+                ),
+                ia_verification_status=rnd.choice(
+                    ("", "pending", "confirmed", "returned")
+                ),
+                pl_review_note=rnd.choice(
+                    ("", "Participants not entered in Salesforce", "  two   spaces ")
+                ),
                 actual_delivery_date=today + timedelta(days=rnd.choice((-6, 1)))
                 if rnd.random() < 0.3
                 else None,
@@ -302,10 +365,14 @@ def make(out_path):
                             "pending_responsible_confirmation",
                             "pending_responsible_confirmation",
                             "disbursed",
+                            "disbursed",
                             "accountability_pending",
+                            "accountability_pl_pending",
                             "reimbursement_submitted",
+                            "reimbursement_disbursed",
                         )
                     ),
+                    accountability_netsuite_id=rnd.choice((None, "", f"NS-{line.id}")),
                 )
     slotted = next(a for a in acts if a.school_id == schools[2].id)
     CoreActivitySlot.objects.create(

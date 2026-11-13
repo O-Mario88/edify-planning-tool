@@ -94,6 +94,19 @@ LEFT JOIN staff_profile sp ON sp.user_id = u.id AND sp.deleted_at IS NULL WHERE 
 		compared++
 		for _, b := range page.GetBlocks() {
 			table := b.GetTable()
+			switch table.GetTitle() {
+			case "Returned — Needs Correction", "Waiting on Approval", "Finance / Accountability Pending":
+				seen["card "+table.GetTitle()] += len(table.GetRows())
+				for _, r := range table.GetRows() {
+					seen["card cell "+r.GetCells()[len(r.GetCells())-1].GetText()]++
+				}
+			}
+			if strings.HasPrefix(table.GetTitle(), "Reschedule — ") {
+				seen["day-off card rows"] += len(table.GetRows())
+				for _, r := range table.GetRows() {
+					seen["day off "+r.GetCells()[3].GetText()]++
+				}
+			}
 			if !strings.Contains(table.GetTitle(), " Planned for ") && !strings.Contains(table.GetTitle(), "Trainings Planned (") {
 				continue
 			}
