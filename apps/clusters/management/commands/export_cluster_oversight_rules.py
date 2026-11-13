@@ -55,6 +55,10 @@ def doors() -> dict:
             "cluster": bool(can_open_url(user, "/clusters/0")),
             # workspace.load's may_read_loans.
             "loans": RolePermissionService.can_view_page(user, "loans"),
+            # The header's Download CSV (can_export) and Scoring
+            # (can_set_weights).
+            "export": RolePermissionService.can_export(user, PAGE_PATH),
+            "scoring": RolePermissionService.can_view_page(user, "cluster_scoring"),
         }
     return out
 
@@ -112,6 +116,8 @@ def rules() -> dict:
             for s in workspace.SECTIONS
         ],
         "default_section": workspace.DEFAULT_SECTION,
+        # The views the Download CSV link names (the first unless asked).
+        "impact_views": list(workspace.IMPACT_VIEWS),
         "command": {
             "title": workspace.COMMAND_TITLE,
             "columns": [[c["label"], c["numeric"]] for c in workspace.COMMAND_COLUMNS],

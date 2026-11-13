@@ -33,6 +33,10 @@ type Doors struct {
 	Cluster bool `json:"cluster"`
 	// Loans: the count of schools holding a loan opens the loans tab.
 	Loans bool `json:"loans"`
+	// Export: the header's Download CSV (can_export).
+	Export bool `json:"export"`
+	// Scoring: the header's Scoring (can_view_page "cluster_scoring").
+	Scoring bool `json:"scoring"`
 }
 
 // Section is one of the page's sections (workspace.SECTIONS).
@@ -124,6 +128,7 @@ type Rules struct {
 	TablePageSize      int              `json:"table_page_size"`
 	Sections           []Section        `json:"sections"`
 	DefaultSection     string           `json:"default_section"`
+	ImpactViews        []string         `json:"impact_views"`
 	Command            struct {
 		Title   string   `json:"title"`
 		Columns []Column `json:"columns"`
@@ -170,7 +175,7 @@ func mustLoad(raw []byte) Rules {
 	var r Rules
 	err := json.Unmarshal(raw, &r)
 	switch {
-	case err != nil, len(r.Doors) == 0, len(r.Sections) == 0, len(r.Command.Columns) != columnCount,
+	case err != nil, len(r.Doors) == 0, len(r.Sections) == 0, len(r.ImpactViews) == 0, len(r.Command.Columns) != columnCount,
 		len(r.SSAInterventions) == 0, len(r.Scores) != 4, len(r.Bands) != 4, r.TablePageSize < 1,
 		len(r.MaturityDefaults) == 0, r.Dash == "":
 		panic(fmt.Sprintf("clusteroversight: the embedded rules are unreadable: %v", err))

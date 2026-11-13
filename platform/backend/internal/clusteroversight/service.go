@@ -129,7 +129,7 @@ func page(r *records, who reader, fy string, years []string, today string, query
 	// My Clusters is for someone who holds one, among more than they hold.
 	showMine := len(ws.mine) > 0 && len(ws.mine) != len(ws.clusters)
 	return &screensv1.GetPageResponse{
-		Header: header(section),
+		Header: header(section, who.doors, fy, query),
 		Blocks: []*screensv1.PageBlock{
 			sectionTabs(section.Key, fy, who.doors, showMine),
 			yearFilter(fy, years),

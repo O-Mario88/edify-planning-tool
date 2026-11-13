@@ -9,21 +9,53 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 )
 
 // pageParam is the table's own page parameter ({% paginate table.rows
 // "rows_page" %}).
 const pageParam = "rows_page"
 
-// header is the page's header as the feed reads it: the section's name and
-// what it holds. Download CSV and Scoring are links, which the feed does
-// not offer.
-func header(section Section) *screensv1.PageHeader {
-	return &screensv1.PageHeader{
+// header is the section's title and description from workspace.SECTIONS,
+// with the header's buttons: Download CSV for a reader who may export (the
+// section's table in the year, SSA area and view shown, as a CSV), and
+// Scoring for a reader who may set the score weights.
+func header(section Section, d Doors, fy string, query url.Values) *screensv1.PageHeader {
+	h := &screensv1.PageHeader{
 		Eyebrow:     "Cluster Oversight",
 		Title:       collapse(section.Label),
 		Description: collapse(section.Description),
 	}
+	if d.Export && section.Key != "reports" {
+		h.Actions = append(h.Actions, pageheader.Download("Download CSV", pageheader.Href("/cluster-oversight/"+section.Key,
+			url.Values{"fy": {fy}, "area": {ssaArea(query)}, "view": {impactView(query)}, "format": {"csv"}})))
+	}
+	if d.Scoring {
+		h.Actions = append(h.Actions, pageheader.Link("Scoring", "/cluster-oversight/scoring"))
+	}
+	return h
+}
+
+// ssaArea is the view's ssa_area: the asked SSA area when it is one, else
+// none.
+func ssaArea(query url.Values) string {
+	area := strings.TrimSpace(query.Get("area"))
+	for _, iv := range rules.SSAInterventions {
+		if iv[0] == area {
+			return area
+		}
+	}
+	return ""
+}
+
+// impactView is the view's impact_view: the asked view when it is one of
+// IMPACT_VIEWS, else the first.
+func impactView(query url.Values) string {
+	view := strings.TrimSpace(query.Get("view"))
+	if in(rules.ImpactViews, view) {
+		return view
+	}
+	return rules.ImpactViews[0]
 }
 
 // sectionTabs is the strip of sections: each a link to its own address in

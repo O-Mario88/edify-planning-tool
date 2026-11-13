@@ -100,7 +100,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if pages > 1 {
 		blocks = append(blocks, pager(number, pages, len(listed)))
 	}
-	return &screensv1.GetPageResponse{Header: header(doors), Blocks: blocks, WebPath: Path}, true, nil
+	return &screensv1.GetPageResponse{Header: header(doors, query), Blocks: blocks, WebPath: Path}, true, nil
 }
 
 // keep is get_dashboard_data's filters on the figures: SSA complete or

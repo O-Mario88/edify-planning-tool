@@ -30,6 +30,8 @@ type Doors struct {
 	School bool `json:"school"`
 	// Review: a Potential Champion carries the Champion review.
 	Review bool `json:"review"`
+	// Export: the header's Download CSV and Download Excel (can_export).
+	Export bool `json:"export"`
 }
 
 // Champion is Champion readiness's words and the official rule's statuses.

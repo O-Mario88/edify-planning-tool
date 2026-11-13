@@ -1371,7 +1371,7 @@ def page_body(html: str, path: str, later=None) -> dict:
     feed saves each form it shows."""
     from apps.mobile_feed import page_blocks
 
-    body = page_blocks.read(html, later)
+    body = page_blocks.read(html, later, path)
     _mark_forms(body, path)
     return {**body, "webPath": path}
 

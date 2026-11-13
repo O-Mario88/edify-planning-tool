@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 )
 
 // The words the page's templates write (pages/oversight/team_planning.html,
@@ -225,8 +226,23 @@ func page(s summary, years []string, lens []LensTab) *screensv1.GetPageResponse 
 	}
 	blocks = append(blocks, filterBlock(s, years), entityTabs(s), tableBlock(s))
 	return &screensv1.GetPageResponse{
-		Header:  &screensv1.PageHeader{Title: title, Description: description},
+		Header:  &screensv1.PageHeader{Title: title, Description: description, Actions: ceilingButtons(s)},
 		Blocks:  blocks,
 		WebPath: Path,
 	}
+}
+
+// ceilingButtons are the header's ceiling doors (pages/oversight/
+// team_planning.html, the trainings view): a Programme Lead's Set Training
+// Capacity for the officers they supervise, and the Country Ceiling for the
+// roles that set it.
+func ceilingButtons(s summary) []*screensv1.PageAction {
+	out := []*screensv1.PageAction{}
+	if s.maySet {
+		out = append(out, pageheader.Drawer("+ Set Training Capacity", "/training-ceilings/set?fy="+s.fy, true))
+	}
+	if s.maySetCountry {
+		out = append(out, pageheader.Drawer("+ Set Country Ceiling", "/training-ceilings/country/set?fy="+s.fy, true))
+	}
+	return out
 }

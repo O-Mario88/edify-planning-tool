@@ -13,6 +13,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
@@ -216,12 +217,7 @@ func pageWith(r *records, who reader, fy string, years []string, operational str
 	}
 	blocks = append(blocks, panelBlock("", []*screensv1.PagePanelItem{textItem(closingNote)}))
 	return &screensv1.GetPageResponse{
-		Header: &screensv1.PageHeader{
-			Eyebrow: "Oversight",
-			Title:   "Core School Oversight",
-			Description: "Are the Core schools improving, is the package delivered, are schools taking part, and which need action: FY " +
-				fy + " against the year before.",
-		},
+		Header:  header(v, who.doors),
 		Blocks:  blocks,
 		WebPath: Path,
 	}, nil
@@ -840,3 +836,41 @@ func recommendationBlocks(v view, rows []*school, r *records) []*screensv1.PageB
 // minFallbackWords is page_blocks.MIN_FALLBACK_WORDS: a part the feed reads
 // as a plain panel needs this many words.
 const minFallbackWords = 2
+
+// header is the page's header with its downloads for a reader who may
+// export: the schools the filters keep as a CSV, and on a tab of planned
+// work that tab as an Excel workbook (the query without tab, page or format,
+// none the feed holds back).
+func header(v view, d Doors) *screensv1.PageHeader {
+	h := &screensv1.PageHeader{
+		Eyebrow: "Oversight",
+		Title:   "Core School Oversight",
+		Description: "Are the Core schools improving, is the package delivered, are schools taking part, and which need action: FY " +
+			v.fy + " against the year before.",
+	}
+	if !d.Export {
+		return h
+	}
+	own := url.Values{}
+	for key, values := range v.query {
+		if key != "tab" && key != pageParam && key != "format" && !in(rules.NotPassedQueryKeys, key) {
+			own[key] = values
+		}
+	}
+	with := func(pairs ...string) url.Values {
+		out := url.Values{}
+		for key, values := range own {
+			out[key] = values
+		}
+		for i := 0; i+1 < len(pairs); i += 2 {
+			out.Set(pairs[i], pairs[i+1])
+		}
+		return out
+	}
+	h.Actions = append(h.Actions, pageheader.Download("Download CSV", pageheader.Href(Path, with("format", "csv"))))
+	if in(rules.PlanTabs, v.tab) {
+		h.Actions = append(h.Actions,
+			pageheader.Download("Download Excel", pageheader.Href(Path, with("tab", v.tab, "format", "xlsx"))))
+	}
+	return h
+}

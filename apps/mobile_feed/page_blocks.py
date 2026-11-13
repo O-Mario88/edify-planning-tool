@@ -199,7 +199,74 @@ def _role_home(home: Node) -> dict:
     }
 
 
-def _header(main: Node) -> dict:
+#: The classes that draw a header control as a button (a link among them).
+HEADER_BUTTON_CLASSES = ("btn", "edify-action-button")
+#: A link whose path ends here downloads a file (Staff Activity's Export).
+DOWNLOAD_PATH_END = "/export"
+
+
+def _is_header_action(node: Node, in_controls: bool) -> bool:
+    """A control of the header band the app offers as an action. In the
+    controls slot every button is one; beside it (Planning's button row, a
+    page header's aside) only what is drawn as an action button."""
+    drawn = any(node.has(name) for name in HEADER_BUTTON_CLASSES)
+    if node.tag == "button":
+        return in_controls or drawn
+    return node.tag == "a" and drawn
+
+
+def _downloads(href: str) -> bool:
+    """Whether a header link downloads a file (an export) rather than opening
+    a page: its query names an export, which the feed never passes on."""
+    from urllib.parse import parse_qsl, urlparse
+
+    from apps.mobile_feed.views import NOT_PASSED
+
+    url = urlparse(href)
+    keys = {key for key, _ in parse_qsl(url.query, keep_blank_values=True)}
+    return bool(keys & NOT_PASSED) or url.path.endswith(DOWNLOAD_PATH_END)
+
+
+def _resolved(href: str, path: str) -> str:
+    """A header link as the app is given it: one written as a query alone
+    ({% querystring %}) resolved on the page's path, and its parameters in
+    name order without the blank ones, so it reads the same whatever order
+    the page was asked in (the gateway passes no blank parameter on)."""
+    from urllib.parse import parse_qsl, urlencode
+
+    if "?" not in href:
+        return href
+    base, _, query = href.partition("?")
+    if not base:
+        if not path:
+            return href
+        base = path
+    pairs = sorted(parse_qsl(query), key=lambda pair: pair[0])
+    return f"{base}?{urlencode(pairs)}" if pairs else base
+
+
+def _header_action(node: Node, path: str) -> dict:
+    from apps.mobile_feed import dialogs
+
+    label = node.text()
+    enabled = "disabled" not in node.attrs
+    # A button that opens one of the page's own dialogs opens its sheet.
+    opens = dialogs.opener_href(node)
+    href = _resolved(node.get("hx-get") or node.get("href") or opens, path)
+    return {
+        "key": _slug(label),
+        "label": label,
+        "primary": node.has("edify-primary-solid")
+        or (node.has("edify-action-button") and node.has("primary")),
+        "enabled": enabled,
+        "reason": "" if enabled else node.get("title"),
+        "href": href,
+        "drawer": _opens_drawer(node) or bool(opens),
+        "download": node.tag == "a" and ("download" in node.attrs or _downloads(href)),
+    }
+
+
+def _header(main: Node, path: str = "") -> dict:
     home = main.find(lambda n: "data-mobile-role-home" in n.attrs)
     if home is not None:
         return _role_home(home)
@@ -207,9 +274,21 @@ def _header(main: Node) -> dict:
     title = main.find(lambda n: n.tag == "h1")
     description = main.find(lambda n: n.has("edify-page-header__description"))
     controls = main.find(lambda n: n.has("edify-page-header__controls"))
+    band = main.find(lambda n: n.has("edify-page-header"))
+    lead = band.find(lambda n: n.has("edify-page-header__lead")) if band else None
+    # The band holds the controls slot; a page without the slot (Planning)
+    # draws its buttons beside the lead.
+    holder = (
+        band
+        if band is not None and (controls is None or _inside(controls, band))
+        else controls
+    )
     badges, actions = [], []
-    for node in controls.nodes() if controls else ():
-        if node.tag == "span" and node.has("rounded-pill"):
+    for node in holder.nodes() if holder else ():
+        if lead is not None and _inside(node, lead):
+            continue
+        in_controls = controls is not None and _inside(node, controls)
+        if in_controls and node.tag == "span" and node.has("rounded-pill"):
             badges.append(
                 {
                     "text": node.text(),
@@ -217,24 +296,8 @@ def _header(main: Node) -> dict:
                     "title": node.get("title"),
                 }
             )
-        elif node.tag == "button" or (node.tag == "a" and node.has("btn")):
-            from apps.mobile_feed import dialogs
-
-            label = node.text()
-            enabled = "disabled" not in node.attrs
-            # A button that opens one of the page's own dialogs opens its sheet.
-            opens = dialogs.opener_href(node)
-            actions.append(
-                {
-                    "key": _slug(label),
-                    "label": label,
-                    "primary": node.has("edify-primary-solid"),
-                    "enabled": enabled,
-                    "reason": "" if enabled else node.get("title"),
-                    "href": node.get("hx-get") or node.get("href") or opens,
-                    "drawer": _opens_drawer(node) or bool(opens),
-                }
-            )
+        elif _is_header_action(node, in_controls):
+            actions.append(_header_action(node, path))
     eyebrow = main.find(lambda n: n.has("edify-page-eyebrow"))
     return {
         "eyebrow": eyebrow.text() if eyebrow else "",
@@ -1875,7 +1938,7 @@ def _for_phone(node: Node) -> Node:
     return node
 
 
-def read(html: str, later=None) -> dict:
+def read(html: str, later=None, path: str = "") -> dict:
     """The page's header, tabs and blocks, in the order a phone draws them.
     ``later(path, headers)`` answers a part the page loads after it opens
     (with the headers its section sends), or None to leave it out."""
@@ -1891,7 +1954,7 @@ def read(html: str, later=None) -> dict:
     root = _for_phone(root)
     main = root.find(lambda n: n.tag == "main") or root
     page = {
-        "header": _header(main),
+        "header": _header(main, path),
         "tabs": _tabs(main),
         "dialogs": closed,
         "blocks": _blocks(main, [], later),
