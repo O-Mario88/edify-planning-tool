@@ -1,0 +1,20 @@
+-- Removes every row team_performance_rows.sql wrote (ids start "tpg").
+BEGIN;
+DELETE FROM country_report_target WHERE id LIKE 'tpg%';
+DELETE FROM hr_milestone_period_target WHERE id LIKE 'tpg%';
+DELETE FROM hr_milestone_allocation WHERE id LIKE 'tpg%';
+DELETE FROM hr_priority_milestone WHERE id LIKE 'tpg%';
+DELETE FROM hr_strategic_priority WHERE id LIKE 'tpg%';
+DELETE FROM mscs_story WHERE id LIKE 'tpg%';
+DELETE FROM school_enrollment_history WHERE id LIKE 'tpg%';
+DELETE FROM impact_learning_result WHERE id LIKE 'tpg%';
+DELETE FROM impact_discipleship_record WHERE id LIKE 'tpg%';
+DELETE FROM ssa_record WHERE id LIKE 'tpg%';
+DELETE FROM core_school_onboarding WHERE id LIKE 'tpg%';
+DELETE FROM core_activity_slot WHERE id LIKE 'tpg%';
+DELETE FROM core_plan WHERE id LIKE 'tpg%';
+DELETE FROM cluster_activity_attendance WHERE recorded_by = 'tpg';
+DELETE FROM activity WHERE id LIKE 'tpg%';
+DELETE FROM project WHERE id LIKE 'tpg%';
+DELETE FROM school WHERE id LIKE 'tpg%';
+COMMIT;
