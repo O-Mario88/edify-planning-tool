@@ -48,3 +48,17 @@ number.
 Found: the School ID column reads empty in the app for every school
 (`school_code` writes a token only the browser's middleware fills in);
 OWNER_DEFECTS.
+
+## 153.3 Verification History
+
+`ia_history_view` (`pages/ia/verification_history.html`): every verification
+of a live activity in the same IA reach, the latest first, 50 a page. Each
+row: "#" and the id's first eight characters with the type's label; the
+School ID (empty, as Returned Activities); the school's name ("Cluster-wide"
+without a school) followed by its cluster's; the partner as a badge ("—"
+without one); the owner; who verified it (an account's name, else the id as
+stored); the time (`M d, Y H:i`, Nairobi); "Certified" as a badge or
+"Excluded"; and the Actions menu ("Workspace" and "View audit timeline", read
+by the feed under the key "menu"). Nothing verified: the empty state's
+message. `deploy/db/roles.sql` grants a verification's activity, verifier,
+time and whether it counts in analytics (not its notes).

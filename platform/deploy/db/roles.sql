@@ -472,3 +472,6 @@ GRANT SELECT (id, activity_id, duplicate_of_id, status, reason, created_at) ON i
 -- reasons it gave for returning it. Not the checklist, comments or verifier.
 GRANT SELECT (id, activity_id) ON ia_verification TO edify_gateway_ro;
 GRANT SELECT (verification_id, reason) ON ia_returned_reason TO edify_gateway_ro;
+-- Verification History: each verification's activity, verifier, time and
+-- whether it counts in analytics. Not its notes.
+GRANT SELECT (activity_id, verified_by, verified_at, analytics_included) ON ia_verification_history TO edify_gateway_ro;

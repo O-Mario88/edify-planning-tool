@@ -5,6 +5,7 @@ import "context"
 func init() {
 	pageQuestions["/ia/duplicates/"] = iaDuplicatesQuestions
 	pageQuestions["/ia/returned/"] = iaReturnedQuestions
+	pageQuestions["/ia/history/"] = iaReturnedQuestions
 }
 
 // iaDuplicatesQuestions are Duplicate Review's: the page as it opens and with

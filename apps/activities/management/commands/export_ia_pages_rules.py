@@ -26,7 +26,11 @@ from apps.schools.management.commands.export_school_directory_rules import (
 EXPORT_PATH = Path("platform/backend/internal/iapages/rules.json")
 
 #: The pages Go answers and their page permission.
-PAGES = {"/ia/duplicates/": "ia_duplicates", "/ia/returned/": "ia_returned"}
+PAGES = {
+    "/ia/duplicates/": "ia_duplicates",
+    "/ia/returned/": "ia_returned",
+    "/ia/history/": "ia_history",
+}
 
 
 def rules() -> dict:

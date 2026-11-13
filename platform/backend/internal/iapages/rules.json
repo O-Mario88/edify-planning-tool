@@ -85,6 +85,58 @@
         }
       }
     },
+    "/ia/history/": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": true
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    },
     "/ia/returned/": {
       "roles": {
         "Accountant": {

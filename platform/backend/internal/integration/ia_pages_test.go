@@ -53,7 +53,7 @@ func TestTheIAPagesMatchTheExistingFeedOverFlagsTheSeedLacks(t *testing.T) {
 	}
 	ctx := context.Background()
 	// Children first; only the golden's own rows (ids starting "gia").
-	children := []string{"ia_duplicate_activity", "ia_returned_reason", "ia_verification"}
+	children := []string{"ia_verification_history", "ia_duplicate_activity", "ia_returned_reason", "ia_verification"}
 	// One transaction each way: a document and its current version name each
 	// other, and the foreign keys are checked when the transaction commits.
 	clear := func() {
@@ -79,7 +79,7 @@ func TestTheIAPagesMatchTheExistingFeedOverFlagsTheSeedLacks(t *testing.T) {
 		t.Fatalf("filing: %v", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	for _, table := range []string{"ia_duplicate_activity", "ia_verification", "ia_returned_reason"} {
+	for _, table := range []string{"ia_duplicate_activity", "ia_verification", "ia_returned_reason", "ia_verification_history"} {
 		for _, row := range golden.Rows[table] {
 			if _, err := tx.Exec(ctx, `INSERT INTO "`+table+`" SELECT * FROM json_populate_record(NULL::"`+table+`", $1::json)`, string(row)); err != nil {
 				t.Fatalf("filing a %s row: %v", table, err)

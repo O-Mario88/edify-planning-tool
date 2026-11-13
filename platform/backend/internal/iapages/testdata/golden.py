@@ -24,7 +24,12 @@ from django.utils import timezone as dj_timezone
 
 from datetime import datetime, timedelta, timezone
 
-from apps.activities.ia_models import DuplicateActivity, IAVerification, ReturnedReason
+from apps.activities.ia_models import (
+    DuplicateActivity,
+    IAVerification,
+    ReturnedReason,
+    VerificationHistory,
+)
 from apps.activities.models import Activity
 from apps.mobile_feed.views import read_page
 
@@ -32,8 +37,13 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
     raise SystemExit("golden.py runs only against a _test database")
 
 User = get_user_model()
-TABLES = ("ia_duplicate_activity", "ia_returned_reason", "ia_verification")
-PATHS = ("/ia/duplicates/", "/ia/returned/")
+TABLES = (
+    "ia_verification_history",
+    "ia_duplicate_activity",
+    "ia_returned_reason",
+    "ia_verification",
+)
+PATHS = ("/ia/duplicates/", "/ia/returned/", "/ia/history/")
 
 
 def clear():
@@ -93,6 +103,24 @@ def file_returned():
             )
 
 
+def file_history():
+    live = Activity.objects.filter(deleted_at__isnull=True).order_by("id")
+    with_partner = list(live.filter(assigned_partner_id__isnull=False)[:3])
+    others = list(live.filter(school__isnull=False)[70:120]) + list(
+        live.filter(school__isnull=True)[:2]
+    )
+    ia = User.objects.get(email="ia@edify.org")
+    at = datetime(2026, 11, 12, 8, 0, tzinfo=timezone.utc)
+    for i, a in enumerate(with_partner + others):
+        VerificationHistory.objects.create(
+            id=f"giah{i:03d}",
+            activity=a,
+            verified_by=[ia.id, "legacy-id", ia.id][i % 3],
+            verified_at=at - timedelta(hours=3 * i),
+            analytics_included=i % 4 != 1,
+        )
+
+
 def restore_returned():
     for activity_id, status, updated_at in RETURNED:
         Activity.objects.filter(id=activity_id).update(
@@ -116,6 +144,7 @@ def main():
     try:
         file_rows()
         file_returned()
+        file_history()
         rows = dump_rows()
         answers = []
         for email in (
