@@ -98,9 +98,7 @@ def fixed_doors() -> dict:
     ):
         corrected = doors()
     return {
-        role: corrected[role]
-        for role in corrected
-        if corrected[role] != existing[role]
+        role: corrected[role] for role in corrected if corrected[role] != existing[role]
     }
 
 
