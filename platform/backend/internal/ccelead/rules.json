@@ -29,18 +29,245 @@
     "training": "Training",
     "training_follow_up_visit": "Training Follow-up Visit"
   },
+  "cadence": {
+    "annual_window_opens_month": 4,
+    "due_soon_days": 7,
+    "quarter_due_soon_days": 21,
+    "rules": [
+      {
+        "every_days": 31,
+        "expectation": "Every month with each Programme Lead",
+        "kind": "pl_coaching",
+        "label": "Coaching conversation",
+        "per": "lead",
+        "window": "rolling"
+      },
+      {
+        "every_days": 14,
+        "expectation": "Every two weeks",
+        "kind": "vp_cce_checkin",
+        "label": "VP of CCE check-in",
+        "per": "region",
+        "window": "rolling"
+      },
+      {
+        "every_days": 31,
+        "expectation": "Every month",
+        "kind": "regional_leads_meeting",
+        "label": "Regional Leads and VP of CCE meeting",
+        "per": "region",
+        "window": "rolling"
+      },
+      {
+        "every_days": 31,
+        "expectation": "Every month",
+        "kind": "rvp_meeting",
+        "label": "Meeting with the RVP",
+        "per": "region",
+        "window": "rolling"
+      },
+      {
+        "every_days": null,
+        "expectation": "Every quarter",
+        "kind": "cross_region_convening",
+        "label": "Cross-region Programme Lead convening",
+        "per": "region",
+        "window": "quarter"
+      },
+      {
+        "every_days": null,
+        "expectation": "Every quarter with each country",
+        "kind": "cd_quarterly_review",
+        "label": "Country Director quarterly review",
+        "per": "country",
+        "window": "quarter"
+      },
+      {
+        "every_days": null,
+        "expectation": "Once a year with each country, before its next budget is submitted",
+        "kind": "cd_annual_planning",
+        "label": "Annual programming and budget input",
+        "per": "country",
+        "window": "year"
+      }
+    ],
+    "state_labels": {
+      "done": "Done",
+      "due_soon": "Due soon",
+      "missed": "Missed",
+      "open": "Not due yet",
+      "overdue": "Overdue"
+    },
+    "state_order": {
+      "done": 3,
+      "due_soon": 1,
+      "missed": 0,
+      "open": 2,
+      "overdue": 0
+    },
+    "state_tones": {
+      "done": "success",
+      "due_soon": "warning",
+      "missed": "danger",
+      "open": "neutral",
+      "overdue": "danger"
+    }
+  },
+  "engagement_kinds": [
+    [
+      "pl_coaching",
+      "Programme Lead coaching"
+    ],
+    [
+      "training_observation",
+      "Training observation"
+    ],
+    [
+      "cd_quarterly_review",
+      "Quarterly review with a Country Director"
+    ],
+    [
+      "cd_annual_planning",
+      "Annual programming and budget input"
+    ],
+    [
+      "vp_cce_checkin",
+      "Check-in with the VP of CCE"
+    ],
+    [
+      "regional_leads_meeting",
+      "Regional Leads and VP of CCE meeting"
+    ],
+    [
+      "rvp_meeting",
+      "Meeting with the RVP"
+    ],
+    [
+      "cross_region_convening",
+      "Cross-region Programme Lead convening"
+    ],
+    [
+      "site_visit",
+      "School site visit"
+    ],
+    [
+      "partner_network",
+      "Training partner or school network meeting"
+    ],
+    [
+      "prayer_event",
+      "Prayer event"
+    ]
+  ],
   "helper_figure_chars": 28,
   "metric_labels": {
     "Average Observation Rating": "Average Observation Rating",
+    "Coaching Conversations (30 Days)": "Coaching Conversations (30 Days)",
+    "Country Reviews This Quarter": "Country Reviews This Quarter",
+    "Engagements Overdue": "Engagements Overdue",
     "Feedback Acknowledged": "Feedback Acknowledged",
     "Feedback Awaiting Acknowledgement": "Feedback Awaiting Acknowledgement",
     "Report Drafts": "Report Drafts",
     "Reports Acknowledged": "Reports Acknowledged",
     "Reports Awaiting Review": "Reports Awaiting Review",
-    "Reports Returned": "Reports Returned"
+    "Reports Returned": "Reports Returned",
+    "Trainings Observed This Quarter": "Trainings Observed This Quarter"
   },
   "page_size": 50,
   "pages": {
+    "/cce-leadership/engagements": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/cce-leadership/engagements/new",
+            "/cce-leadership/engagements/new?kind=training_observation"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/cce-leadership/engagements/new",
+            "/cce-leadership/engagements/new?kind=training_observation"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [
+            "/cce-leadership/engagements/new",
+            "/cce-leadership/engagements/new?kind=training_observation"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/cce-leadership/feedback": {
       "roles": {
         "Accountant": {
@@ -266,5 +493,9 @@
     "returned": "danger",
     "submitted": "warning"
   },
-  "reporting_starts": "2026-09-01"
+  "reporting_starts": "2026-09-01",
+  "shareable_kinds": [
+    "training_observation",
+    "pl_coaching"
+  ]
 }

@@ -7,7 +7,8 @@ register Go answers, who may open it, the workspace strip each role is shown
 and which of its drawer buttons each role may open; the label each figure is
 drawn with; a monthly report's status labels and tones; the month reporting
 started; an observation's rating fields and recommendation labels and an
-activity type's labels; how long the line under a figure may stay; the register's page
+activity type's labels; an engagement's kinds and which are shared with a
+Programme Lead; the meeting rhythm's rules; how long the line under a figure may stay; the register's page
 size; and the query keys the feed never passes. A change to any of them must
 be exported again; apps/cce_leadership/test_cce_leadership_rules_export.py
 fails until it is.
@@ -42,6 +43,19 @@ PAGES = {
             "Reports Acknowledged",
         ],
     },
+    "/cce-leadership/engagements": {
+        "permission": "cce_engagements",
+        "drawers": [
+            "/cce-leadership/engagements/new",
+            "/cce-leadership/engagements/new?kind=training_observation",
+        ],
+        "metrics": [
+            "Coaching Conversations (30 Days)",
+            "Trainings Observed This Quarter",
+            "Country Reviews This Quarter",
+            "Engagements Overdue",
+        ],
+    },
     "/cce-leadership/feedback": {
         "permission": "cce_training_feedback",
         "drawers": [],
@@ -74,10 +88,11 @@ def pages() -> dict:
 
 
 def rules() -> dict:
-    from apps.cce_leadership import services
+    from apps.cce_leadership import cadence, services
     from apps.activities.models import ActivityType
     from apps.cce_leadership.models import (
         OBSERVATION_CRITERIA,
+        EngagementKind,
         ObservationRecommendation,
         ReportStatus,
     )
@@ -105,6 +120,28 @@ def rules() -> dict:
         "rating_fields": [field for field, _label, _help in OBSERVATION_CRITERIA],
         "recommendations": dict(ObservationRecommendation.choices),
         "activity_types": dict(ActivityType.choices),
+        "engagement_kinds": [[str(k), str(v)] for k, v in EngagementKind.choices],
+        "shareable_kinds": [str(k) for k in services.SHAREABLE_KINDS],
+        # The meeting rhythm the role description sets (cadence.py).
+        "cadence": {
+            "rules": [
+                {
+                    "kind": str(r.kind),
+                    "label": r.label,
+                    "expectation": r.expectation,
+                    "per": r.per,
+                    "window": r.window,
+                    "every_days": r.every_days,
+                }
+                for r in cadence.CADENCE_RULES
+            ],
+            "state_labels": cadence.STATE_LABELS,
+            "state_tones": cadence.STATE_TONES,
+            "state_order": cadence.STATE_ORDER,
+            "due_soon_days": cadence.DUE_SOON_DAYS,
+            "quarter_due_soon_days": cadence.QUARTER_DUE_SOON_DAYS,
+            "annual_window_opens_month": cadence.ANNUAL_WINDOW_OPENS_MONTH,
+        },
         "helper_figure_chars": HELPER_FIGURE_CHARS,
         "page_size": TABLE_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),

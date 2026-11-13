@@ -26,6 +26,10 @@ type register struct {
 	rowActions                                       [][]action
 	actions                                          []action
 	emptyTitle, emptyBody                            string
+	// filters are the register's own selects; after are the cards drawn
+	// under it (the Regional Lead's rhythm).
+	filters []*screensv1.PageFilter
+	after   []*screensv1.PageBlock
 }
 
 func text(t string) *screensv1.PagePanelItem {
@@ -115,12 +119,16 @@ func render(reg register, role Role, query url.Values) *screensv1.GetPageRespons
 		blocks = append(blocks, panel("", text(reg.notice)))
 	}
 	blocks = append(blocks, figures(reg.title, reg.metrics), panel(reg.registerTitle))
+	if len(reg.filters) > 0 {
+		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: reg.filters}}})
+	}
 	if len(reg.rows) == 0 {
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
 			EmptyMessage: reg.emptyTitle,
 			Rows: []*screensv1.PageRow{{Cells: []*screensv1.PageCell{
 				{Text: closedschools.Collapse(reg.title + " " + reg.emptyTitle + " " + reg.emptyBody)}}}},
 		}}})
+		blocks = append(blocks, reg.after...)
 		return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: reg.path}
 	}
 	number, pages := closedschools.PageOf(query.Get("register_page"), len(reg.rows), rules.PageSize)
@@ -156,5 +164,6 @@ func render(reg register, role Role, query url.Values) *screensv1.GetPageRespons
 	if pages > 1 {
 		blocks = append(blocks, closedschools.PagerPanel("register_page", number, pages, len(reg.rows), rules.PageSize, query, rules.QueryKeysNotPassed))
 	}
+	blocks = append(blocks, reg.after...)
 	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: reg.path}
 }

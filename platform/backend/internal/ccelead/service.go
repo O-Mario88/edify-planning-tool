@@ -35,7 +35,7 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 // Build answers path for p. served is false for a path this package does not
 // answer.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != ReportsPath && path != FeedbackPath {
+	if path != ReportsPath && path != FeedbackPath && path != EngagementsPath {
 		return nil, false, nil
 	}
 	role, ok := rules.Pages[path].Roles[p.ActiveRole]
@@ -45,6 +45,11 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	build := reports
 	if path == FeedbackPath {
 		build = feedback
+	}
+	if path == EngagementsPath {
+		build = func(ctx context.Context, db schooldirectory.Querier, p auth.Principal, now time.Time) (register, error) {
+			return engagements(ctx, db, p, now, query)
+		}
 	}
 	reg, err := build(ctx, s.db, p, s.now())
 	if err != nil {

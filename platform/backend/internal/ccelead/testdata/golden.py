@@ -41,7 +41,11 @@ TABLES = (
     "cce_regional_report",
     "activity",
 )
-PATHS = ("/cce-leadership/reports", "/cce-leadership/feedback")
+PATHS = (
+    "/cce-leadership/reports",
+    "/cce-leadership/feedback",
+    "/cce-leadership/engagements",
+)
 
 
 def clear():
@@ -146,6 +150,35 @@ def file_feedback():
         )
 
 
+def file_engagements():
+    lead = User.objects.get(email="regional-lead@edify.org")
+    pl = StaffProfile.objects.get(user__email="pl1@edify.org")
+    today = dj_timezone.localdate()
+    kinds = [
+        ("pl_coaching", [pl.id], 5, ""),
+        ("pl_coaching", [pl.id, "unknown-staff"], 40, ""),
+        ("vp_cce_checkin", [], 3, ""),
+        ("regional_leads_meeting", [], 45, ""),
+        ("rvp_meeting", [], 20, ""),
+        ("cd_quarterly_review", [], 10, "Uganda"),
+        ("cd_annual_planning", [], 60, "Uganda"),
+        ("site_visit", [], 2, "Kenya"),
+        ("pl_coaching", [pl.id], 1, ""),
+    ]
+    for i, (kind, leads, ago, country) in enumerate(kinds):
+        RegionalEngagement.objects.create(
+            id=f"gclg{i:03d}",
+            author_id=lead.id,
+            kind=kind,
+            held_on=today - timedelta(days=ago),
+            fy="2027",
+            country=country,
+            program_lead_ids=leads,
+            subject=f"Golden engagement {i}",
+            feedback_shared_at=dj_timezone.now() if i == 0 else None,
+        )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -158,7 +191,13 @@ def dump_rows():
 
 
 QUESTIONS = {
-    "regional-lead@edify.org": [{}],
+    "regional-lead@edify.org": [
+        {},
+        {"kind": "pl_coaching"},
+        {"kind": "bogus"},
+        {"country": "Uganda"},
+        {"country": "Atlantis"},
+    ],
     "rvp@edify.org": [{}, {"register_page": "2"}],
     "admin@edify.org": [{}, {"register_page": "2"}, {"register_page": "x"}],
     "ia@edify.org": [{}],
@@ -172,6 +211,7 @@ def main():
     try:
         file_rows()
         file_feedback()
+        file_engagements()
         rows = dump_rows()
         answers = []
         for email, asked in QUESTIONS.items():

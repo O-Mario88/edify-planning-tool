@@ -51,3 +51,33 @@ or the lead's response — and whether a coaching record passed it on.
 
 The golden files three training activities of its own (partner and staff
 delivery, one undated) for the observations to name, and nine observations.
+
+## 136.3 CCE Engagement Log
+
+`engagements_view` (`/cce-leadership/engagements`): the engagements
+`engagements_visible_to` gives (Admin every one, the Regional Lead their own,
+anyone else none), narrowed by `kind` when it names a kind and by `country`
+when it is in reach, the latest day first, at most 500. Each row: the
+subject, the kind's label, the day held, the Programme Leads it was with (by
+name among those in reach, else "Programme Lead"; else its country), where a
+shareable kind (training observation, PL coaching) stands with the lead; the
+"Open" drawer and, for the lead's own unshared shareable engagement with
+Programme Leads, "Share" (two actions read as the row's menu). The reach
+(`lead_reach`): Admin every country the regions name; the Regional Lead the
+countries of the regions assigned to them (through a district when no region
+is), else every country with the notice that none is assigned; anyone else
+none; the Programme Leads are the active accounts holding the role with a
+People record in those countries. The filters are a Kind select and, when the
+reach has countries, a Country select. Figures over the reader's own
+engagements, unfiltered: coaching conversations of the last 30 days ("with N
+Programme Lead(s) in reach"), trainings observed and country reviews this
+quarter ("of N countr(y|ies)"), and the rhythm's overdue or missed rows.
+
+The Regional Lead's page adds the Engagement rhythm card
+(`partials/dashboards/rpl/rhythm.html` over `cadence.evaluate`, ported in
+`ccelead/cadence.go` from the exported rules): each rule per region, per
+Programme Lead or per country, rolling (due a set number of days after the
+last), quarterly (this quarter) or yearly (before the next year's budget goes
+to the RVP: missed once `country_annual_budget` shows it submitted or
+approved), worst first, the twelve most urgent. The feed reads the card's
+three counts one place off (OWNER_DEFECTS); Go copies it.

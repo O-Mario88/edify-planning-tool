@@ -34,16 +34,30 @@ var rules = func() (r struct {
 	Pages map[string]struct {
 		Roles map[string]Role `json:"roles"`
 	} `json:"pages"`
-	MetricLabels       map[string]string `json:"metric_labels"`
-	ReportStatuses     map[string]string `json:"report_statuses"`
-	ReportTones        map[string]string `json:"report_tones"`
-	ReportingStarts    string            `json:"reporting_starts"`
-	RatingFields       []string          `json:"rating_fields"`
-	Recommendations    map[string]string `json:"recommendations"`
-	ActivityTypes      map[string]string `json:"activity_types"`
-	HelperFigureChars  int               `json:"helper_figure_chars"`
-	PageSize           int               `json:"page_size"`
-	QueryKeysNotPassed []string          `json:"query_keys_not_passed"`
+	MetricLabels    map[string]string `json:"metric_labels"`
+	ReportStatuses  map[string]string `json:"report_statuses"`
+	ReportTones     map[string]string `json:"report_tones"`
+	ReportingStarts string            `json:"reporting_starts"`
+	RatingFields    []string          `json:"rating_fields"`
+	Recommendations map[string]string `json:"recommendations"`
+	ActivityTypes   map[string]string `json:"activity_types"`
+	EngagementKinds [][2]string       `json:"engagement_kinds"`
+	ShareableKinds  []string          `json:"shareable_kinds"`
+	Cadence         struct {
+		Rules []struct {
+			Kind, Label, Expectation, Per, Window string
+			EveryDays                             *int `json:"every_days"`
+		} `json:"rules"`
+		StateLabels            map[string]string `json:"state_labels"`
+		StateTones             map[string]string `json:"state_tones"`
+		StateOrder             map[string]int    `json:"state_order"`
+		DueSoonDays            int               `json:"due_soon_days"`
+		QuarterDueSoonDays     int               `json:"quarter_due_soon_days"`
+		AnnualWindowOpensMonth int               `json:"annual_window_opens_month"`
+	} `json:"cadence"`
+	HelperFigureChars  int      `json:"helper_figure_chars"`
+	PageSize           int      `json:"page_size"`
+	QueryKeysNotPassed []string `json:"query_keys_not_passed"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Pages) == 0 || len(r.ReportStatuses) == 0 ||
 		r.ReportingStarts == "" || r.PageSize <= 0 {
