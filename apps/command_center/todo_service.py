@@ -95,6 +95,12 @@ WEEKLY_APPROVER_STATUS = {
     "Program Lead": "submitted_to_pl",
     "CountryDirector": "submitted_to_cd",
 }
+#: Fund accountability and self-funded claims waiting on the approver
+#: (_fund_request_todos).
+ADVANCE_APPROVER_PENDING_STATUSES = (
+    "accountability_pl_pending",
+    "reimbursement_pl_pending",
+)
 #: Monthly fund plans returned to the requester (_fund_request_todos).
 MONTHLY_RETURNED_STATUSES = ("returned_by_pl", "returned_by_accountant")
 #: Partner work past its date that no longer needs chasing
@@ -330,10 +336,7 @@ def _fund_request_todos(principal, role):
         from apps.fund_requests.models import AdvanceRequest
 
         acct_qs = AdvanceRequest.objects.filter(
-            status__in=(
-                "accountability_pl_pending",
-                "reimbursement_pl_pending",
-            )
+            status__in=ADVANCE_APPROVER_PENDING_STATUSES
         )
         if role == "Program Lead":
             acct_qs = acct_qs.filter(responsible_user_id__in=supervised)
