@@ -392,6 +392,7 @@ GRANT SELECT (facilitating_partner_id) ON activity TO edify_gateway_ro;
 GRANT SELECT (state, supervising_pl_id) ON partner_assignment_withdrawal TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
 GRANT SELECT (recommendation) ON cce_regional_engagement TO edify_gateway_ro;
+
 -- The To-Do page's Programme Lead builders (agent/todos-pl, docs/migration/55).
 GRANT SELECT (id, fy, status, due_date, created_at) ON hr_performance_review TO edify_gateway_ro;
 GRANT SELECT (id, fy, active_window) ON hr_performance_cycle TO edify_gateway_ro;
@@ -431,3 +432,12 @@ GRANT SELECT (returned_amount, return_verified_at) ON advance_request TO edify_g
 GRANT SELECT (status, archived_at) ON document_asset TO edify_gateway_ro;
 GRANT SELECT (probation_review_date) ON hr_onboarding_plan TO edify_gateway_ro;
 GRANT SELECT (uploaded_by) ON ssa_import_batch TO edify_gateway_ro;
+
+-- The To-Do page's Project Coordinator and Business Transformation builders (agent/todos-pc-bto,
+-- docs/migration/58-todos-pc-bto.md): loan submission days, the states and finding words that say whether
+-- a loan section has rows, and loan impact conclusions' due days, states and preparer. No notes or amounts.
+GRANT SELECT (submitted_at) ON bt_mfi_loan TO edify_gateway_ro;
+GRANT SELECT (id) ON bt_loan_verification_requirement TO edify_gateway_ro;
+GRANT SELECT (requirement_id, finding, concern_reviewed_at) ON bt_loan_use_result TO edify_gateway_ro;
+GRANT SELECT (status) ON bt_loan_purpose_proposal TO edify_gateway_ro;
+GRANT SELECT (loan_id, due_date, ia_status, prepared_by, prepared_at, updated_at) ON bt_loan_impact_assessment TO edify_gateway_ro;

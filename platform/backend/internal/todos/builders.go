@@ -754,9 +754,12 @@ func loanVerificationTodos(ctx context.Context, s *Service, r *reader) ([]todo, 
 		return passOnIf(len(r.scope.OwnSchoolIDs) > 0, nil)
 	}
 	if r.role == adminRole && contains(rules.Admin.BTVerificationSchedulingRoles, r.role) {
-		// The Admin's only desk of this builder; the BT officer's and the
-		// Country Director's have more and are not built yet.
+		// The Admin's only desk of this builder; the Country Director's has
+		// more and is not built yet (the BT officer's is btOfficerTodos).
 		return loanVerificationsToSchedule(ctx, s, r)
+	}
+	if r.role == btRole {
+		return btOfficerTodos(ctx, s, r)
 	}
 	if r.role != "CCEO" {
 		return nil, errPassOn
@@ -839,7 +842,7 @@ WHERE deleted_at IS NULL AND verification_status = 'returned' AND collected_by_u
 // them passes the reader on; delivered OneTest visits with no results
 // recorded are a row each (ten).
 func evidenceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if r.role != "CCEO" && r.role != leadRole {
+	if !contains(rules.PCBT.EvidenceFieldRoles, r.role) || contains(rules.PartnerScopeRoles, r.role) {
 		return nil, errPassOn
 	}
 	var parts []string
@@ -888,7 +891,7 @@ ORDER BY a.actual_delivery_date ASC, a.planned_date ASC, a.id ASC LIMIT 10`, r.o
 // fyPlanningTodos is fy_planning_todos for a planner: the nearest future
 // year open for planning, while nothing of theirs is planned in it.
 func fyPlanningTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if r.role != "CCEO" && r.role != leadRole {
+	if !contains(rules.PCBT.FYPlannerRoles, r.role) {
 		return nil, errPassOn
 	}
 	operational, _ := strconv.Atoi(r.fy)

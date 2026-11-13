@@ -94,8 +94,9 @@ func init() {
 		"_ia_todos": byRole(onlyRole(adminRole, plReviewGuard), iaVerificationTodos),
 		"apps.activities.ia_todos:ia_queue_todos":     onlyIA(iaQueueGuard),
 		"apps.impact.framework_todos:framework_todos": onlyIA(frameworkTodos),
-		"apps.impact.learning_todos:learning_todos":   onlyIA(learningGuard),
-		"apps.impact.report_todos:report_todos":       onlyIA(reportGuard),
+		// A Business Transformation officer's conclusions are built (pcbt.go).
+		"apps.impact.learning_todos:learning_todos": byRole(learningTodos, learningGuard),
+		"apps.impact.report_todos:report_todos":     onlyIA(reportGuard),
 		// A Programme Lead's portfolio passes them on (lead.go).
 		"apps.planning.coverage_todos:missing_training_todos": byRole(portfolioGuard, missingTrainingTodos),
 	} {
