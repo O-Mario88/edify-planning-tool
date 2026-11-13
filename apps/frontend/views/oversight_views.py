@@ -1921,19 +1921,20 @@ def _training_summary_context(request) -> dict:
     return context
 
 
-@require_any_page_permission("team_planning_oversight", "team_targets")
-def team_planning_oversight_view(request):
-    """One Team Oversight workspace for planning and target performance."""
+def team_oversight_lenses(user) -> dict:
+    """Which of Team Oversight's lenses this reader holds, by the page's own
+    gates: the one answer the view and the Go gateway's Training Summary
+    (export_training_summary_rules) both read."""
     can_view_planning = RolePermissionService.can_view_page(
-        request.user, "team_planning_oversight"
+        user, "team_planning_oversight"
     )
-    can_view_targets = RolePermissionService.can_view_page(request.user, "team_targets")
+    can_view_targets = RolePermissionService.can_view_page(user, "team_targets")
     # Who the school lens is for. The brief names the Programme Lead and
     # Impact Assessment as the people who act on schools with no cluster
     # training planned, and the Country Director and Regional VP read the same
     # table over them. The Accountant reaches Team Oversight for the money in
     # the plan, not for training coverage, and gets no tab for it.
-    can_view_coverage = can_view_planning and (request.user.active_role or "") in (
+    can_view_coverage = can_view_planning and (user.active_role or "") in (
         COVERAGE_LENS_ROLES
     )
     # The portfolio and cluster lenses go to the people the school coverage
@@ -1942,21 +1943,56 @@ def team_planning_oversight_view(request):
     # coverage tab gives them no portfolio or cluster tab: those are programme
     # questions. It also keeps their page at one lens, which is why it has no
     # strip at all and why its first table row stays above the fold.
-    can_view_portfolio = can_view_planning and (request.user.active_role or "") in (
+    can_view_portfolio = can_view_planning and (user.active_role or "") in (
         PORTFOLIO_LENS_ROLES
     )
     # IA reads the people monitors here, as tabs beside the Team Plan (owner,
     # 2026-09-30).
-    can_view_monitors = can_view_planning and monitors_on_oversight(request.user)
+    can_view_monitors = can_view_planning and monitors_on_oversight(user)
     # Staff and the summary of all their planned trainings (owner,
     # 2026-10-06): a Programme Lead reads their officers and sets the
     # numbers; the Country Director, Impact Assessment and Admin read every
     # officer and set nothing (apps.planning.training_summary).
     from apps.planning.training_summary import SUMMARY_ROLES
 
-    can_view_trainings = (
-        can_view_planning and (request.user.active_role or "") in SUMMARY_ROLES
-    )
+    can_view_trainings = can_view_planning and (user.active_role or "") in SUMMARY_ROLES
+    return {
+        "planning": can_view_planning,
+        "targets": can_view_targets,
+        "coverage": can_view_coverage,
+        "portfolio": can_view_portfolio,
+        "monitors": can_view_monitors,
+        "trainings": can_view_trainings,
+    }
+
+
+def team_available_lenses(lenses: dict) -> set[str]:
+    """The lens keys a reader's strip holds, from ``team_oversight_lenses``."""
+    return {
+        key
+        for key, allowed in (
+            ("planning", lenses["planning"]),
+            ("monitor", lenses["monitors"]),
+            ("trainings", lenses["trainings"]),
+            ("execution", lenses["monitors"]),
+            ("portfolio", lenses["portfolio"]),
+            ("coverage", lenses["coverage"]),
+            ("targets", lenses["targets"]),
+        )
+        if allowed
+    }
+
+
+@require_any_page_permission("team_planning_oversight", "team_targets")
+def team_planning_oversight_view(request):
+    """One Team Oversight workspace for planning and target performance."""
+    lenses = team_oversight_lenses(request.user)
+    can_view_planning = lenses["planning"]
+    can_view_targets = lenses["targets"]
+    can_view_coverage = lenses["coverage"]
+    can_view_portfolio = lenses["portfolio"]
+    can_view_monitors = lenses["monitors"]
+    can_view_trainings = lenses["trainings"]
     requested_view = (request.GET.get("view") or "planning").strip().lower()
     if requested_view == "projects":
         # Special Projects is the Project Monitoring page's, not a second copy
@@ -2006,19 +2042,7 @@ def team_planning_oversight_view(request):
     if active_view in ("planning", "coverage", "portfolio") and not can_view_planning:
         active_view = "targets"
 
-    available_lenses = {
-        key
-        for key, allowed in (
-            ("planning", can_view_planning),
-            ("monitor", can_view_monitors),
-            ("trainings", can_view_trainings),
-            ("execution", can_view_monitors),
-            ("portfolio", can_view_portfolio),
-            ("coverage", can_view_coverage),
-            ("targets", can_view_targets),
-        )
-        if allowed
-    }
+    available_lenses = team_available_lenses(lenses)
     country_reader = is_country_reader(request.user)
     lens_tabs = _lens_tabs(
         TEAM_OVERSIGHT_PATH, active_view, available_lenses, country=country_reader

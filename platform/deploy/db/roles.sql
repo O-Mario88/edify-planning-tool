@@ -295,3 +295,12 @@ GRANT SELECT (verification_status, recorded_by_user_id) ON impact_edtech_deploym
 GRANT SELECT (costing_profile) ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (execution_start) ON fiscal_year_planning_policy TO edify_gateway_ro;
 GRANT SELECT (reimbursement_receipt_confirmed_at, accountability_netsuite_id, created_at) ON advance_request TO edify_gateway_ro;
+
+-- Training Summary (internal/trainingsummary): what its figures count and who reads them.
+GRANT SELECT (partner_date_set_by, executor_type) ON activity TO edify_gateway_ro;
+GRANT SELECT (activity_type) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (catalogue_item_id, project_id, active) ON activity_project_mapping TO edify_gateway_ro;
+GRANT SELECT (source_activity_id, catalogue_item_id) ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (is_superuser) ON "user" TO edify_gateway_ro;
+GRANT SELECT (id, staff_id, training_id, ceiling, fy) ON training_ceiling TO edify_gateway_ro;
+GRANT SELECT (id, training_id, ceiling, fy, country) ON training_country_ceiling TO edify_gateway_ro;
