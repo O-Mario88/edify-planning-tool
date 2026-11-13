@@ -356,3 +356,9 @@ GRANT SELECT (id, priority_id, code, measurement_type, target_value, core_target
 GRANT SELECT (id, allocated_to_type, team_id, employee_id, milestone_id, allocated_target, core_target, client_target, status) ON hr_milestone_allocation TO edify_gateway_ro;
 GRANT SELECT (allocation_id, period_start, planned_value, period_type) ON hr_milestone_period_target TO edify_gateway_ro;
 GRANT SELECT (key, annual_target, monthly_targets, set_by_role, fy) ON country_report_target TO edify_gateway_ro;
+
+-- Project Monitoring (internal/projectmonitoring): the projects' codes and
+-- each enrolment's who-added-it, purpose, focus, start day, baseline and
+-- impact verdict.
+GRANT SELECT (code) ON project TO edify_gateway_ro;
+GRANT SELECT (assigned_by, participation_type, matched_intervention, support_area, impact_classification, start_date, baseline_score) ON project_school_assignment TO edify_gateway_ro;

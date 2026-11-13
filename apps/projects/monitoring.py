@@ -104,6 +104,12 @@ WHOLE_PROJECT_ROLES = frozenset(
 )
 
 
+#: The whole-project readers who may also take any school in view out of a
+#: project (``project_monitoring``'s ``may_withdraw``); the Country Director
+#: only watches.
+WITHDRAW_ANY_SCHOOL_ROLES = ("Admin", "ImpactAssessment")
+
+
 def sees_whole_project(principal) -> bool:
     return getattr(principal, "active_role", "") in WHOLE_PROJECT_ROLES
 
@@ -807,8 +813,7 @@ def project_monitoring(
     # added, which are the only ones they see. IA and the Country Director
     # watch. One pair of queries decides every row (capacity.withdrawal_blocks).
     may_withdraw = controls or (
-        getattr(principal, "active_role", "") in ("Admin", "ImpactAssessment")
-        or not whole
+        getattr(principal, "active_role", "") in WITHDRAW_ANY_SCHOOL_ROLES or not whole
     )
     blocks = (
         project_capacity.withdrawal_blocks(
