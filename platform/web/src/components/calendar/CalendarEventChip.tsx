@@ -35,7 +35,7 @@ const DAY_OFF_TONE = 'bg-[var(--edify-danger-light)] text-[var(--edify-danger-te
 /** A later day of a run: the same chip, carried over from the day before. */
 const CONTINUED = 'border-l-[3px] border-dotted border-current rounded-l-none';
 
-export function toneOf(event: Pick<CalendarEvent, 'kind' | 'family' | 'dayOff'>): string {
+function toneOf(event: Pick<CalendarEvent, 'kind' | 'family' | 'dayOff'>): string {
   if (event.dayOff) return DAY_OFF_TONE;
   return FAMILY_TONES[event.family || event.kind] ?? FAMILY_TONES.activity ?? '';
 }

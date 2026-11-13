@@ -14,8 +14,9 @@ import { mondayOffset, monthLinks, viewLink } from '@/lib/calendarPage';
 import { BUTTON_OUTLINE, BUTTON_PRIMARY } from '../blocks/buttons';
 import { Icon } from '../shell/icons';
 import { CalendarAgenda } from './CalendarAgenda';
-import { CalendarEventChip, toneOf } from './CalendarEventChip';
+import { CalendarEventChip } from './CalendarEventChip';
 import { CalendarPhone } from './CalendarPhone';
+import { CalendarSelectAll } from './CalendarPick';
 
 /** The page's weekday headings (extended_views._CALENDAR_WEEKDAY_LABELS). */
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
@@ -48,6 +49,8 @@ function Toolbar({ month, query, view }: Pick<CalendarMonthCardProps, 'month' | 
           <p className="text-[length:var(--edify-text-label-size)] font-semibold">{month.range}</p>
         </div>
       </div>
+      <div className="flex flex-wrap items-center gap-3">
+      {month.ticks ? <CalendarSelectAll /> : null}
       <nav className="flex flex-wrap items-center gap-2" aria-label="Calendar months">
         <Link href={links.previous} className={square} aria-label="Previous month"><Icon name="back" className="h-4 w-4 shrink-0" /></Link>
         <Link href={links.today} className={BUTTON_OUTLINE}>Today</Link>
@@ -59,6 +62,7 @@ function Toolbar({ month, query, view }: Pick<CalendarMonthCardProps, 'month' | 
           <Icon name="menu" className="h-4 w-4" />Agenda
         </Link>
       </nav>
+      </div>
     </header>
   );
 }
@@ -99,32 +103,29 @@ function Grid({ month, today }: { month: CalendarMonth; today: number }) {
   );
 }
 
-/** The page's legend (calendar/index.html, calendar-month__legend): each family's and kind's colour. */
+/** The page's legend (calendar/index.html, calendar-month__legend): each family's and kind's dot. */
 const LEGEND = [
-  { label: 'Visits', family: 'visit' },
-  { label: 'Trainings', family: 'training' },
-  { label: 'Cluster work', family: 'cluster' },
-  { label: 'Core schools', family: 'core' },
-  { label: 'Projects', family: 'project' },
-  { label: 'Programme events', family: 'programme' },
-  { label: 'Leave', family: 'leave' },
-  { label: 'Holidays', family: 'holiday' },
-  { label: 'Other events', family: 'event' },
+  { label: 'Visits', key: 'visit', dot: 'bg-[var(--brand-primary)]' },
+  { label: 'Trainings', key: 'training', dot: 'bg-[var(--edify-success)]' },
+  { label: 'Cluster work', key: 'cluster', dot: 'bg-[var(--edify-purple)]' },
+  { label: 'Core schools', key: 'core', dot: 'bg-[var(--edify-chart-orange)]' },
+  { label: 'Projects', key: 'project', dot: 'bg-[var(--edify-teal)]' },
+  { label: 'Programme events', key: 'programme', dot: 'bg-[var(--edify-chart-pink)]' },
+  { label: 'Leave', key: 'leave', dot: 'bg-[var(--edify-warning)]' },
+  { label: 'Holidays', key: 'holiday', dot: 'bg-[var(--edify-danger)]' },
+  { label: 'Other events', key: 'event', dot: 'bg-[var(--edify-purple)]' },
+  { label: 'On a holiday or leave day: reschedule', key: 'dayoff', dot: 'border-2 border-[var(--edify-danger)] bg-[var(--edify-danger-light)]' },
 ] as const;
 
 function Legend() {
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[var(--edify-border)] px-4 pt-3 text-[12.5px] font-medium sm:px-5" aria-label="Legend" data-block="calendar-legend">
+    <ul className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[var(--edify-border)] px-4 py-3 text-[12.5px] font-medium sm:px-5" aria-label="Legend" data-block="calendar-legend">
       {LEGEND.map((entry) => (
-        <li key={entry.family} className="flex items-center gap-1.5">
-          <span className={`h-3 w-3 rounded-[3px] ${toneOf({ kind: entry.family, family: entry.family, dayOff: false })}`} aria-hidden="true" />
+        <li key={entry.key} className="flex items-center gap-1.5">
+          <i className={`h-2.5 w-2.5 rounded-full ${entry.dot}`} aria-hidden="true" />
           {entry.label}
         </li>
       ))}
-      <li className="flex items-center gap-1.5">
-        <span className={`h-3 w-3 rounded-[3px] ${toneOf({ kind: 'activity', family: '', dayOff: true })}`} aria-hidden="true" />
-        On a holiday or leave day: reschedule
-      </li>
     </ul>
   );
 }

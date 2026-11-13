@@ -22,3 +22,22 @@ export function CalendarPick({ id, label }: { id: string; label: string }) {
     />
   );
 }
+
+/** "Select all" on the month card: ticks or clears every activity's box on the page. */
+export function CalendarSelectAll() {
+  return (
+    <label className="flex items-center gap-2 font-semibold">
+      <input
+        type="checkbox"
+        className="h-4 w-4 accent-[var(--edify-accent)]"
+        onChange={(change) => {
+          const checked = change.currentTarget.checked;
+          document.querySelectorAll<HTMLInputElement>('input[data-pick]').forEach((box) => {
+            box.checked = checked;
+          });
+        }}
+      />
+      Select all
+    </label>
+  );
+}
