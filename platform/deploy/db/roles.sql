@@ -258,3 +258,22 @@ GRANT SELECT (catalogue_item_id) ON cost_setting TO edify_gateway_ro;
 -- listed activity's cost lines carry an advance request waiting on somebody
 -- (it would put the row on Waiting on Approval). Ids and status only.
 GRANT SELECT (id, budget_line_id, status) ON advance_request TO edify_gateway_ro;
+
+-- The Team Performance page (docs/migration/37-team-performance.md): the
+-- report's records, the Uganda Master Priority Plan milestones and their
+-- approved allocations and phasing, and the country targets IA or Admin set.
+-- Figures, dates, statuses and ids only.
+GRANT SELECT (code) ON project TO edify_gateway_ro;
+GRANT SELECT (closed_at) ON school TO edify_gateway_ro;
+GRANT SELECT (delivery_method_snapshot) ON activity TO edify_gateway_ro;
+GRANT SELECT (stable_code, delivery_method) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (school_id, completed_at) ON core_activity_slot TO edify_gateway_ro;
+GRANT SELECT (school_id, fy) ON core_school_onboarding TO edify_gateway_ro;
+GRANT SELECT (school_id, observed_on, discipleship_groups_active, fy, deleted_at, verification_status) ON impact_discipleship_record TO edify_gateway_ro;
+GRANT SELECT (user_id) ON mscs_story TO edify_gateway_ro;
+GRANT SELECT (created_at) ON staff_supervisor_assignment TO edify_gateway_ro;
+GRANT SELECT (id, country_id, cycle_id, fy, level, sequence, title) ON hr_strategic_priority TO edify_gateway_ro;
+GRANT SELECT (id, priority_id, code, measurement_type, target_value, core_target, client_target, source_order) ON hr_priority_milestone TO edify_gateway_ro;
+GRANT SELECT (id, allocated_to_type, team_id, employee_id, milestone_id, allocated_target, core_target, client_target, status) ON hr_milestone_allocation TO edify_gateway_ro;
+GRANT SELECT (allocation_id, period_start, planned_value, period_type) ON hr_milestone_period_target TO edify_gateway_ro;
+GRANT SELECT (key, annual_target, monthly_targets, set_by_role, fy) ON country_report_target TO edify_gateway_ro;

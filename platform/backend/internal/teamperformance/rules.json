@@ -1,0 +1,3647 @@
+{
+  "activity_types": {
+    "cluster_meeting": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
+    "cluster_training": [
+      "cluster_training",
+      "cluster_training_ssa_collection"
+    ],
+    "programme_event": [
+      "programme_event"
+    ],
+    "training": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ],
+    "visit": [
+      "school_visit",
+      "follow_up_visit",
+      "coaching_visit",
+      "in_school_support",
+      "donor_visit",
+      "story_gathering_visit",
+      "school_invitation",
+      "social_visit",
+      "training_follow_up_visit",
+      "in_school_coaching_visit",
+      "core_visit",
+      "core_assessment_visit",
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection"
+    ]
+  },
+  "all_roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin",
+    "ClusterLeader"
+  ],
+  "breakdown_labels": {
+    "cceo": "CCEO",
+    "district": "District",
+    "lead": "Programme Lead",
+    "region": "Region"
+  },
+  "core_family": [
+    "core",
+    "champion"
+  ],
+  "country_id": "Uganda",
+  "dashboard_views": [
+    [
+      "cceos",
+      "CCEOs"
+    ],
+    [
+      "deep",
+      "Officer Deep-Dive"
+    ],
+    [
+      "milestones",
+      "Milestones"
+    ],
+    [
+      "leads",
+      "Programme Leads"
+    ],
+    [
+      "grid",
+      "Master Grid"
+    ]
+  ],
+  "delivery": [
+    [
+      "Non-Core School Visits (FY)",
+      "client_visit_total",
+      false
+    ],
+    [
+      "Partner School Visits (FY)",
+      "client_visit_partner",
+      false
+    ],
+    [
+      "Core School Recruitment (FY)",
+      "core_recruitment",
+      true
+    ],
+    [
+      "Client School SSA to Date",
+      "ssa_client",
+      true
+    ],
+    [
+      "MSC Data Collection",
+      "msc",
+      true
+    ],
+    [
+      "Discipleship Club Formation",
+      "dc_clubs",
+      true
+    ]
+  ],
+  "doors": {
+    "Accountant": {
+      "open_url": false,
+      "reach": "own",
+      "set_targets": false,
+      "view_page": false
+    },
+    "Admin": {
+      "open_url": true,
+      "reach": "all",
+      "set_targets": true,
+      "view_page": true
+    },
+    "BusinessTransformationOfficer": {
+      "open_url": false,
+      "reach": "own",
+      "set_targets": false,
+      "view_page": false
+    },
+    "CCEO": {
+      "open_url": true,
+      "reach": "own",
+      "set_targets": false,
+      "view_page": true
+    },
+    "ClusterLeader": {
+      "open_url": false,
+      "reach": "own",
+      "set_targets": false,
+      "view_page": false
+    },
+    "CountryDirector": {
+      "open_url": true,
+      "reach": "all",
+      "set_targets": false,
+      "view_page": true
+    },
+    "HumanResources": {
+      "open_url": true,
+      "reach": "all",
+      "set_targets": false,
+      "view_page": true
+    },
+    "ImpactAssessment": {
+      "open_url": true,
+      "reach": "all",
+      "set_targets": true,
+      "view_page": true
+    },
+    "MfiLoanOfficer": {
+      "open_url": false,
+      "reach": "own",
+      "set_targets": false,
+      "view_page": false
+    },
+    "MfiPartnerAdmin": {
+      "open_url": false,
+      "reach": "own",
+      "set_targets": false,
+      "view_page": false
+    },
+    "PartnerAdmin": {
+      "open_url": false,
+      "reach": "own",
+      "set_targets": false,
+      "view_page": false
+    },
+    "PartnerFieldOfficer": {
+      "open_url": false,
+      "reach": "own",
+      "set_targets": false,
+      "view_page": false
+    },
+    "Program Lead": {
+      "open_url": true,
+      "reach": "team",
+      "set_targets": false,
+      "view_page": true
+    },
+    "ProjectCoordinator": {
+      "open_url": false,
+      "reach": "own",
+      "set_targets": false,
+      "view_page": false
+    },
+    "RegionalProgramLead": {
+      "open_url": true,
+      "reach": "all",
+      "set_targets": false,
+      "view_page": true
+    },
+    "RegionalVicePresident": {
+      "open_url": true,
+      "reach": "all",
+      "set_targets": false,
+      "view_page": true
+    }
+  },
+  "eligible": "Eligible schools",
+  "evidence_sources": [
+    "dc_clubs",
+    "dc_clubs_core",
+    "dc_clubs_client",
+    "dc_data",
+    "onetest",
+    "core_exam_scores",
+    "metrics"
+  ],
+  "kept": [
+    "fy",
+    "period",
+    "month",
+    "quarter",
+    "week"
+  ],
+  "kinds": [
+    [
+      "week",
+      "Weekly"
+    ],
+    [
+      "month",
+      "Monthly"
+    ],
+    [
+      "quarter",
+      "Quarterly"
+    ],
+    [
+      "year",
+      "Annual"
+    ]
+  ],
+  "measures": [
+    {
+      "basis": "",
+      "key": "core_recruitment",
+      "label": "Core School Recruitment",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "CORE_SCHOOL_ORIENTATION"
+        ]
+      },
+      "milestone": "NEW_CORE_SCHOOLS",
+      "note": "Core schools whose Core School Orientation was completed this year.",
+      "people": "",
+      "section": "Program Growth",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "new_schools",
+      "label": "New Schools",
+      "match": null,
+      "milestone": "NEW_SCHOOLS",
+      "note": "Schools added to the platform this year, typed in or uploaded.",
+      "people": "",
+      "section": "Program Growth",
+      "slice": "",
+      "source": "new_schools",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "portfolio",
+      "key": "active_schools",
+      "label": "Active Schools",
+      "match": null,
+      "milestone": "",
+      "note": "Operating schools, of the portfolio.",
+      "people": "",
+      "section": "Program Growth",
+      "slice": "",
+      "source": "active",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "church_engagement",
+      "label": "Church Engagement",
+      "match": null,
+      "milestone": "CHURCH_PARTNERSHIPS",
+      "note": "",
+      "people": "",
+      "section": "Program Growth",
+      "slice": "",
+      "source": "",
+      "tracked": false,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "ssa_core_baseline",
+      "label": "SSA – Core Baseline",
+      "match": null,
+      "milestone": "NEW_CORE_SCHOOLS",
+      "note": "Core schools onboarded this year with an SSA uploaded.",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "ssa_core_baseline",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "core_continuing",
+      "key": "ssa_core_followup",
+      "label": "SSA – Core (Year 1–3)",
+      "match": null,
+      "milestone": "CORE_SSA_COVERAGE",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "ssa_core_followup",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "client",
+      "key": "ssa_client",
+      "label": "SSA – Client",
+      "match": null,
+      "milestone": "CLIENT_SSA_COVERAGE",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "ssa_client",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "onetest",
+      "label": "OneTest",
+      "match": null,
+      "milestone": "ONE_TEST_DATA",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "onetest",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "msc",
+      "label": "MSC Stories",
+      "match": null,
+      "milestone": "MSC_STORIES",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "msc",
+      "tracked": true,
+      "unit": "stories",
+      "weekly": true
+    },
+    {
+      "basis": "core",
+      "key": "core_exam_scores",
+      "label": "Core School Exam Scores",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "core_exam_scores",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "portfolio",
+      "key": "dc_clubs",
+      "label": "Discipleship Clubs",
+      "match": null,
+      "milestone": "SCHOOLS_WITH_DCS",
+      "note": "Schools whose uploaded DC record shows active groups.",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "dc_clubs",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "portfolio",
+      "key": "dc_data",
+      "label": "Discipleship Club Data Collected",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "dc_data",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "ssa_core",
+      "key": "ssa_review_core",
+      "label": "SSA Review – Core",
+      "match": {
+        "activity_type": "cluster_meeting_ssa_review",
+        "core": true,
+        "maker": "_meeting"
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "ssa_client",
+      "key": "ssa_review_client",
+      "label": "SSA Review – Client",
+      "match": {
+        "activity_type": "cluster_meeting_ssa_review",
+        "core": false,
+        "maker": "_meeting"
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "portfolio",
+      "key": "enrolment",
+      "label": "Enrolment",
+      "match": null,
+      "milestone": "DATA_METRICS",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "enrolment",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "parent_survey",
+      "label": "Parent Survey",
+      "match": null,
+      "milestone": "PARENT_SURVEY",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "",
+      "tracked": false,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "portfolio",
+      "key": "schools_with_metrics",
+      "label": "Schools with Metrics",
+      "match": null,
+      "milestone": "DATA_METRICS",
+      "note": "Enrolment, a Discipleship Club record or exam results this year.",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "metrics",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "core",
+      "key": "core_visit_1",
+      "label": "Core Visit 1",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "core_visit_1",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "core",
+      "key": "core_visit_2",
+      "label": "Core Visit 2",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "core_visit_2",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "core",
+      "key": "core_visit_3",
+      "label": "Core Visit 3",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "core_visit_3",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "core",
+      "key": "core_visit_4",
+      "label": "Core Visit 4",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "core_visit_4",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "core",
+      "key": "core_two_plus",
+      "label": "Core Schools with 2 or more Visits",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "core_visit_2",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "client",
+      "key": "client_visit_staff",
+      "label": "Client Visit – Staff",
+      "match": {
+        "core": false,
+        "maker": "_visit",
+        "partner": false
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "client",
+      "key": "client_visit_partner",
+      "label": "Client Visit – Partner",
+      "match": {
+        "core": false,
+        "maker": "_visit",
+        "partner": true
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "client",
+      "key": "client_visit_total",
+      "label": "Client Visit",
+      "match": {
+        "core": false,
+        "maker": "_visit",
+        "partner": null
+      },
+      "milestone": "CLIENT_VISIT_COVERAGE",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "edtech_loans",
+      "label": "EdTech Loans",
+      "match": null,
+      "milestone": "EDTECH_LOANS",
+      "note": "",
+      "people": "",
+      "section": "Loans",
+      "slice": "",
+      "source": "edtech_loans",
+      "tracked": true,
+      "unit": "loans",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "development_loans",
+      "label": "Development Loans",
+      "match": null,
+      "milestone": "",
+      "note": "Disbursed loans whose purpose is not EdTech.",
+      "people": "",
+      "section": "Loans",
+      "slice": "",
+      "source": "development_loans",
+      "tracked": true,
+      "unit": "loans",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "loans",
+      "label": "Loans (all)",
+      "match": null,
+      "milestone": "LOANS",
+      "note": "",
+      "people": "",
+      "section": "Loans",
+      "slice": "",
+      "source": "loans",
+      "tracked": true,
+      "unit": "loans",
+      "weekly": false
+    },
+    {
+      "basis": "core",
+      "key": "core_training_1",
+      "label": "Core Training 1",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "",
+      "source": "core_training_1",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "core",
+      "key": "core_training_2",
+      "label": "Core Training 2",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "",
+      "source": "core_training_2",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "core",
+      "key": "core_training_3",
+      "label": "Core Training 3",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "",
+      "source": "core_training_3",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "core",
+      "key": "core_training_4",
+      "label": "Core Training 4",
+      "match": null,
+      "milestone": "CORE_TRAINING_COMPLIANCE",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "",
+      "source": "core_training_4",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "edtech_integration_core",
+      "label": "EdTech Integration",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "EDTECH_INTEGRATION"
+        ]
+      },
+      "milestone": "EDTECH_INTEGRATION",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "core",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "edtech_foundation_core",
+      "label": "EdTech Foundation",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "EDTECH_FOUNDATIONS"
+        ]
+      },
+      "milestone": "EDTECH_FOUNDATIONS",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "core",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "skilling_core",
+      "label": "Skilling",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "TECH_SKILLS_EMPLOYABLE_FUTURE"
+        ]
+      },
+      "milestone": "EDTECH_SKILLING",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "core",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "government_core",
+      "label": "Government and Statutory Requirements",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "GOVERNMENT_STATUTORY_REQUIREMENTS"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "government_core_participants",
+      "label": "Government and Statutory Requirements – Participants",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "GOVERNMENT_STATUTORY_REQUIREMENTS"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "participants",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "ssa_leadership_core",
+      "label": "SSA & Leadership Trainings",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "SCHOOL_LEADERSHIP",
+          "SSA_TRAINING"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "cc_sel_core",
+      "label": "CC-SEL",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "CC_SEL"
+        ]
+      },
+      "milestone": "SEL_TRAINING",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "core",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "core_online",
+      "label": "Core Schools Trained Online",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": true,
+        "wanted": []
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "online_sessions",
+      "label": "Online Training Sessions",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": true,
+        "wanted": []
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Online Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "online_schools",
+      "label": "Schools Trained Online",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": true,
+        "wanted": []
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Online Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "tam_bi_online_sessions",
+      "label": "TAM / Biblical Integration Online – Sessions",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": true,
+        "wanted": [
+          "BIBLICAL_INTEGRATION",
+          "TAM_I",
+          "TAM_II"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Online Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "tam_bi_online_schools",
+      "label": "TAM / Biblical Integration Online – Schools",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": true,
+        "wanted": [
+          "BIBLICAL_INTEGRATION",
+          "TAM_I",
+          "TAM_II"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Online Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "ece",
+      "label": "Early Childhood Education",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "EARLY_CHILDHOOD_EDUCATION_PROJECT"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Online Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "ece_teachers",
+      "label": "Early Childhood Education – Teachers",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "EARLY_CHILDHOOD_EDUCATION_PROJECT"
+        ]
+      },
+      "milestone": "ECD_TEACHERS",
+      "note": "",
+      "people": "teachers",
+      "section": "Online Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "participants",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "ide",
+      "label": "IDE",
+      "match": null,
+      "milestone": "IDE_TEACHERS",
+      "note": "",
+      "people": "",
+      "section": "Online Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": false,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "client",
+      "key": "client_trained",
+      "label": "Client Schools Trained",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": null,
+        "wanted": []
+      },
+      "milestone": "CLIENT_TRAINING_COMPLIANCE",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "client_online",
+      "label": "Client Schools Trained Online",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": true,
+        "wanted": []
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "teacher_pedagogy",
+      "label": "Teacher Pedagogy/Professionalism",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "TEACHER_PEDAGOGY_PROFESSIONALISM"
+        ]
+      },
+      "milestone": "TEACHER_PEDAGOGY",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "client",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "discipleship_dynamics",
+      "label": "Discipleship Dynamics",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "DISCIPLESHIP_DYNAMICS"
+        ]
+      },
+      "milestone": "DC_TRAINING",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "client",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "christlike_character",
+      "label": "Christ-like Character Training",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "CLA_CHARACTER_DEVELOPMENT"
+        ]
+      },
+      "milestone": "CLA_TRAINING",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "client",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "literacy_numeracy",
+      "label": "Literacy/ Numeracy",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "LITERACY_NUMERACY_PROJECT"
+        ]
+      },
+      "milestone": "LITERACY_TRAINING",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "client",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "school_improvement",
+      "label": "School Improvement (SSA & Leadership)",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "SCHOOL_LEADERSHIP",
+          "SSA_TRAINING"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "cc_sel_client",
+      "label": "CC-SEL",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "CC_SEL"
+        ]
+      },
+      "milestone": "SEL_TRAINING",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "client",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "edtech_integration_client",
+      "label": "EdTech Integration",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "EDTECH_INTEGRATION"
+        ]
+      },
+      "milestone": "EDTECH_INTEGRATION",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "client",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "edtech_foundation_client",
+      "label": "EdTech Foundation",
+      "match": {
+        "core": false,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "EDTECH_FOUNDATIONS"
+        ]
+      },
+      "milestone": "EDTECH_FOUNDATIONS",
+      "note": "",
+      "people": "",
+      "section": "Client School Trainings",
+      "slice": "client",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "portfolio",
+      "key": "schools_in_clusters",
+      "label": "Schools in Clusters",
+      "match": null,
+      "milestone": "CLUSTER_COVERAGE",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "in_clusters",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "cluster_meetings",
+      "label": "Cluster Meetings Held",
+      "match": {
+        "activity_type": null,
+        "core": null,
+        "maker": "_meeting"
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "cluster_meeting_schools",
+      "label": "Cluster Meeting Attendance",
+      "match": {
+        "activity_type": null,
+        "core": null,
+        "maker": "_meeting"
+      },
+      "milestone": "",
+      "note": "Schools that attended a cluster meeting.",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "student_camps",
+      "label": "Student Conferences / Camps",
+      "match": {
+        "maker": "_topics",
+        "wanted": [
+          "STUDENT_CONFERENCE_CAMPS",
+          "STUDENT_LEADERSHIP_CAMPS",
+          "STUDENT_TRAINING_YOUTH_CAMPS"
+        ]
+      },
+      "milestone": "STUDENT_LEADER_CONFERENCES",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "ide_recruitment",
+      "label": "IDE School Recruitment",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": false,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "cluster_leaders_meetings",
+      "label": "Quarterly Cluster Leaders Meeting",
+      "match": {
+        "consts": [
+          "None",
+          "cluster_leaders"
+        ],
+        "maker": "<lambda>",
+        "names": [
+          "topic",
+          "DISTRICT_MEETING",
+          "meeting"
+        ]
+      },
+      "milestone": "",
+      "note": "District Meetings, and cluster meetings held as Cluster Leaders Meetings.",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "partner_review_meetings",
+      "label": "Partner Review Meetings",
+      "match": {
+        "maker": "_topics",
+        "wanted": [
+          "PARTNER_MEETINGS_ADMIN"
+        ]
+      },
+      "milestone": "PARTNER_REVIEW_MEETINGS",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "district_reports",
+      "label": "Quarterly District Reports",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": false,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "district_meetings",
+      "label": "District MOU Formalization (District Meetings)",
+      "match": {
+        "maker": "_topics",
+        "wanted": [
+          "FIELD_DISTRICT_MEETING"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": true
+    },
+    {
+      "basis": "portfolio",
+      "key": "alumni_data",
+      "label": "Alumni Data",
+      "match": {
+        "consts": [
+          "None"
+        ],
+        "maker": "<lambda>",
+        "names": [
+          "alumni"
+        ]
+      },
+      "milestone": "STUDENT_ALUMNI",
+      "note": "Schools reached by work under the Alumni project.",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "tam_training",
+      "label": "Schools Trained on TAM",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "TAM_I",
+          "TAM_II"
+        ]
+      },
+      "milestone": "TAM_TRAINING",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "biblical_integration",
+      "label": "Biblical Integration",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "BIBLICAL_INTEGRATION"
+        ]
+      },
+      "milestone": "BIBLICAL_INTEGRATION",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "sip_leaders",
+      "label": "Leaders Trained – SIP",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "SCHOOL_LEADERSHIP"
+        ]
+      },
+      "milestone": "SIP_LEADERS",
+      "note": "",
+      "people": "leaders",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "participants",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "accountants_training",
+      "label": "Accountants Training",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "BT_UG_ACCOUNTANT_TRAINING"
+        ]
+      },
+      "milestone": "ACCOUNTANTS_TRAINING",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "dc_training_core",
+      "label": "Discipleship Dynamics – Core",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "DISCIPLESHIP_DYNAMICS"
+        ]
+      },
+      "milestone": "DC_TRAINING",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "core",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "client_visits_staff_n",
+      "label": "Client School Visits by Staff",
+      "match": {
+        "core": false,
+        "maker": "_visit",
+        "partner": false
+      },
+      "milestone": "CLIENT_VISITS_STAFF",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "client_visits_partner_n",
+      "label": "Client School Visits by Partner",
+      "match": {
+        "core": false,
+        "maker": "_visit",
+        "partner": true
+      },
+      "milestone": "CLIENT_VISITS_PARTNER",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "core_visits_staff_n",
+      "label": "Core School Visits by Staff",
+      "match": {
+        "core": true,
+        "maker": "_visit",
+        "partner": false
+      },
+      "milestone": "CORE_VISITS_STAFF",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "core_visits_partner_n",
+      "label": "Core School Visits by Partner",
+      "match": {
+        "core": true,
+        "maker": "_visit",
+        "partner": true
+      },
+      "milestone": "CORE_VISITS_PARTNER",
+      "note": "",
+      "people": "",
+      "section": "Visits",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "sessions",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "core_trained",
+      "label": "Core Schools Trained",
+      "match": {
+        "core": true,
+        "maker": "_training",
+        "online": null,
+        "wanted": []
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Core School Trainings",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "ssa_all",
+      "label": "Schools with an SSA",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "ssa_all",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "dc_clubs_core",
+      "label": "Core Schools with DC",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "dc_clubs_core",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "dc_clubs_client",
+      "label": "Client Schools with DC",
+      "match": null,
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Data Gathering",
+      "slice": "",
+      "source": "dc_clubs_client",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "edtech_foundations_online",
+      "label": "EdTech Foundations – Online",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": true,
+        "wanted": [
+          "EDTECH_FOUNDATIONS"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "edtech_foundations_in_school",
+      "label": "EdTech Foundations – In-School",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": false,
+        "wanted": [
+          "EDTECH_FOUNDATIONS"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Clusters & Programmes",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": false
+    },
+    {
+      "basis": "",
+      "key": "course_teacher_pedagogy_professionalism",
+      "label": "Teacher Pedagogy/Professionalism",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "TEACHER_PEDAGOGY_PROFESSIONALISM"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_school_leadership",
+      "label": "Leadership",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "SCHOOL_LEADERSHIP"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_literacy_numeracy_project",
+      "label": "Literacy/ Numeracy",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "LITERACY_NUMERACY_PROJECT"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_learning_environment_training",
+      "label": "Learning environment",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "LEARNING_ENVIRONMENT_TRAINING"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_edtech_foundations",
+      "label": "EdTech Foundations Training",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "EDTECH_FOUNDATIONS"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_government_statutory_requirements",
+      "label": "Government and Statutory requirements",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "GOVERNMENT_STATUTORY_REQUIREMENTS"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_tam_i",
+      "label": "Teaching as Mission (TAM)",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "TAM_I"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_cla_character_development",
+      "label": "Christ-like Character Training",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "CLA_CHARACTER_DEVELOPMENT"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_financial_management",
+      "label": "Financial Management",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "FINANCIAL_MANAGEMENT"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_new_school_orientation",
+      "label": "New School Orientation",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "NEW_SCHOOL_ORIENTATION"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_discipleship_dynamics",
+      "label": "Discipleship Dynamics",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "DISCIPLESHIP_DYNAMICS"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_fees_enrolment_marketing",
+      "label": "Fees, Enrolment, and Marketing Management",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "FEES_ENROLMENT_MARKETING"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_accounting_financial_management",
+      "label": "Accounting and Financial Policies",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "ACCOUNTING_FINANCIAL_MANAGEMENT"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_early_childhood_education_project",
+      "label": "Early Childhood Education",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "EARLY_CHILDHOOD_EDUCATION_PROJECT"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_edtech_integration",
+      "label": "EdTech Integration",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "EDTECH_INTEGRATION"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_budgeting",
+      "label": "Budgeting",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "BUDGETING"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_tam_ii",
+      "label": "Teaching as Mission (TAM) II",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "TAM_II"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_tech_skills_employable_future",
+      "label": "Technology Skills for an Employable Future",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "TECH_SKILLS_EMPLOYABLE_FUTURE"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    },
+    {
+      "basis": "",
+      "key": "course_learner_centered_approaches",
+      "label": "Learner-centered Approaches",
+      "match": {
+        "core": null,
+        "maker": "_training",
+        "online": null,
+        "wanted": [
+          "LEARNER_CENTERED_APPROACHES"
+        ]
+      },
+      "milestone": "",
+      "note": "",
+      "people": "",
+      "section": "Trainings by Course",
+      "slice": "",
+      "source": "",
+      "tracked": true,
+      "unit": "schools",
+      "weekly": true
+    }
+  ],
+  "no_lead": "No Programme Lead",
+  "not_passed_query_keys": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "not_placed": "Not placed",
+  "not_set": "Not set",
+  "portfolio_sources": {
+    "active": "active",
+    "in_clusters": "clustered"
+  },
+  "rate_measurements": [
+    "percentage",
+    "ratio"
+  ],
+  "region_order": [
+    "Eastern",
+    "Northern",
+    "Central",
+    "Western"
+  ],
+  "roles": {
+    "cceo": "CCEO",
+    "lead": "Program Lead"
+  },
+  "sections": [
+    "Program Growth",
+    "Data Gathering",
+    "Visits",
+    "Loans",
+    "Core School Trainings",
+    "Online Trainings",
+    "Client School Trainings",
+    "Clusters & Programmes",
+    "Trainings by Course"
+  ],
+  "setters": {
+    "Admin": "Admin",
+    "ImpactAssessment": "Impact Assessment"
+  },
+  "sorts": [
+    [
+      "name",
+      "Name"
+    ],
+    [
+      "portfolio",
+      "Portfolio"
+    ],
+    [
+      "visits",
+      "School Visits"
+    ],
+    [
+      "trainings",
+      "Trainings"
+    ],
+    [
+      "recruitment",
+      "Recruitment"
+    ],
+    [
+      "ssa",
+      "SSA Reviews"
+    ]
+  ],
+  "status_tones": {
+    "Achieved": "success",
+    "Needs Attention": "warning",
+    "On Track": "success",
+    "Progressing": "info"
+  },
+  "status_words": {
+    "achieved": "Achieved",
+    "attention": "Needs Attention",
+    "on_track": "On Track",
+    "progressing": "Progressing"
+  },
+  "statuses": {
+    "achieved": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "ia_verified",
+      "submitted_to_pl"
+    ],
+    "active_school": [
+      "active",
+      "reopened"
+    ],
+    "core_slot_done": [
+      "accountant_confirmed",
+      "closed",
+      "completed",
+      "ia_verified"
+    ],
+    "disbursed_loan": [
+      "disbursed",
+      "active",
+      "repaid",
+      "defaulted"
+    ],
+    "planned": [
+      "accountant_confirmed",
+      "assigned_to_partner",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "completion_started",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "ia_verified",
+      "in_progress",
+      "partner_scheduled",
+      "planned",
+      "rescheduled",
+      "returned",
+      "returned_by_ia",
+      "returned_by_pl",
+      "salesforce_id_required",
+      "scheduled",
+      "submitted_to_pl"
+    ],
+    "uploaded": [
+      "pending",
+      "confirmed"
+    ]
+  },
+  "strategic": [
+    {
+      "basis": "",
+      "domain": "Program Quality",
+      "key": "strategic:core-schools-score-improvement-cohort-3-cohort-3-2027",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Cohort 3 (2027)",
+      "plan": "",
+      "slice": "",
+      "title": "Core schools score improvement Cohort 3"
+    },
+    {
+      "basis": "",
+      "domain": "Program Quality",
+      "key": "strategic:core-schools-score-improvement-cohort-4-cohort-4-2028",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Cohort 4 (2028)",
+      "plan": "",
+      "slice": "",
+      "title": "Core schools score improvement Cohort 4"
+    },
+    {
+      "basis": "",
+      "domain": "Program Quality",
+      "key": "strategic:core-schools-score-improvement-cohort-5-cohort-5-2029",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Cohort 5 (2029)",
+      "plan": "",
+      "slice": "",
+      "title": "Core schools score improvement Cohort 5"
+    },
+    {
+      "basis": "",
+      "domain": "Program Quality",
+      "key": "strategic:core-schools-score-improvement-cohort-6-cohort-6-2030",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Cohort 6 (2030)",
+      "plan": "",
+      "slice": "",
+      "title": "Core schools score improvement Cohort 6"
+    },
+    {
+      "basis": "",
+      "domain": "Program Quality",
+      "key": "strategic:client-schools-score-improvement-client-schools",
+      "kind": "score",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Client Schools",
+      "plan": "",
+      "slice": "",
+      "title": "Client schools score improvement"
+    },
+    {
+      "basis": "",
+      "domain": "Program Quality",
+      "key": "strategic:most-significant-change-stories-target-qualitative-impact-case-stories",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "msc"
+      ],
+      "mode": "Qualitative Impact Case Stories",
+      "plan": "MSC_STORIES",
+      "slice": "",
+      "title": "Most significant Change Stories target"
+    },
+    {
+      "basis": "",
+      "domain": "Program Quality",
+      "key": "strategic:engaging-champion-and-core-graduate-schools-champion-graduate-network",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Champion & Graduate Network",
+      "plan": "",
+      "slice": "",
+      "title": "Engaging Champion and Core Graduate Schools"
+    },
+    {
+      "basis": "core",
+      "domain": "Program Quality",
+      "key": "strategic:schools-with-dc-discipleship-curriculum-rollout-core",
+      "kind": "rate",
+      "lead": "Impact Assessment",
+      "measures": [
+        "dc_clubs_core"
+      ],
+      "mode": "Discipleship Curriculum Rollout – Core",
+      "plan": "SCHOOLS_WITH_DCS",
+      "slice": "",
+      "title": "Schools with DC"
+    },
+    {
+      "basis": "client",
+      "domain": "Program Quality",
+      "key": "strategic:schools-with-dc-discipleship-curriculum-rollout-client",
+      "kind": "rate",
+      "lead": "Impact Assessment",
+      "measures": [
+        "dc_clubs_client"
+      ],
+      "mode": "Discipleship Curriculum Rollout – Client",
+      "plan": "SCHOOLS_WITH_DCS",
+      "slice": "",
+      "title": "Schools with DC"
+    },
+    {
+      "basis": "",
+      "domain": "Program Quality",
+      "key": "strategic:core-schools-recruitment-core-school-orientation",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "core_recruitment"
+      ],
+      "mode": "Core School Orientation",
+      "plan": "NEW_CORE_SCHOOLS",
+      "slice": "",
+      "title": "Core Schools Recruitment"
+    },
+    {
+      "basis": "",
+      "domain": "Program Quality",
+      "key": "strategic:new-school-recruitment-school-scouting-ingestion",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "new_schools"
+      ],
+      "mode": "School Scouting & Ingestion",
+      "plan": "NEW_SCHOOLS",
+      "slice": "",
+      "title": "New School Recruitment"
+    },
+    {
+      "basis": "",
+      "domain": "School Visits",
+      "key": "strategic:client-school-visits-by-staff-in-person-monitoring-visits",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "client_visits_staff_n"
+      ],
+      "mode": "In-Person Monitoring Visits",
+      "plan": "CLIENT_VISITS_STAFF",
+      "slice": "",
+      "title": "Client School Visits by staff"
+    },
+    {
+      "basis": "",
+      "domain": "School Visits",
+      "key": "strategic:client-school-visits-by-partner-partner-joint-monitoring",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "client_visits_partner_n"
+      ],
+      "mode": "Partner Joint Monitoring",
+      "plan": "CLIENT_VISITS_PARTNER",
+      "slice": "",
+      "title": "Client School Visits by Partner"
+    },
+    {
+      "basis": "",
+      "domain": "School Visits",
+      "key": "strategic:core-school-visit-target-by-staff-in-person-staff-coaching",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "core_visits_staff_n"
+      ],
+      "mode": "In-Person Staff Coaching",
+      "plan": "CORE_VISITS_STAFF",
+      "slice": "",
+      "title": "Core school visit target by staff"
+    },
+    {
+      "basis": "",
+      "domain": "School Visits",
+      "key": "strategic:core-school-visit-target-by-partners-partner-coaching-mentoring",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "core_visits_partner_n"
+      ],
+      "mode": "Partner Coaching & Mentoring",
+      "plan": "CORE_VISITS_PARTNER",
+      "slice": "",
+      "title": "Core school visit target by Partners"
+    },
+    {
+      "basis": "client",
+      "domain": "Trainings",
+      "key": "strategic:client-school-training-target-capacity-building-workshops",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "client_trained"
+      ],
+      "mode": "Capacity Building Workshops",
+      "plan": "CLIENT_TRAINING_COMPLIANCE",
+      "slice": "",
+      "title": "Client school training Target"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:cluster-meeting-target-peer-learning-clusters",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "cluster_meetings"
+      ],
+      "mode": "Peer Learning Clusters",
+      "plan": "",
+      "slice": "",
+      "title": "Cluster meeting target"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:core-school-trainings-dedicated-core-school-training",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "core_trained"
+      ],
+      "mode": "Dedicated Core School Training",
+      "plan": "",
+      "slice": "",
+      "title": "Core school trainings"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:online-training-target-no-of-schools-digital-modules-webinars",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "online_schools"
+      ],
+      "mode": "Digital Modules & Webinars",
+      "plan": "",
+      "slice": "",
+      "title": "Online Training Target (No of schools)"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:edtech-foundations-training-online",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "edtech_foundations_online"
+      ],
+      "mode": "Online",
+      "plan": "",
+      "slice": "",
+      "title": "EdTech Foundations Training"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:edtech-foundations-training-in-school",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "edtech_foundations_in_school"
+      ],
+      "mode": "In-School",
+      "plan": "",
+      "slice": "",
+      "title": "EdTech Foundations Training"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:edtech-integration-in-school",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "course_edtech_integration"
+      ],
+      "mode": "In-School",
+      "plan": "EDTECH_INTEGRATION",
+      "slice": "",
+      "title": "EdTech Integration"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:student-skilling-edtech-conferences-in-school",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "course_tech_skills_employable_future"
+      ],
+      "mode": "In-School",
+      "plan": "EDTECH_SKILLING",
+      "slice": "",
+      "title": "Student Skilling & EdTech Conferences"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:elp-in-school",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "In-School",
+      "plan": "",
+      "slice": "",
+      "title": "ELP"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:bpv-in-school",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "In-School",
+      "plan": "",
+      "slice": "",
+      "title": "BPV"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:leadership-cluster-leaders-trained",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "sip_leaders"
+      ],
+      "mode": "Cluster (leaders trained)",
+      "plan": "SIP_LEADERS",
+      "slice": "",
+      "title": "Leadership"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:christ-like-character-training-cc-sel-in-school",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "cc_sel_core",
+        "cc_sel_client"
+      ],
+      "mode": "In-School",
+      "plan": "SEL_TRAINING",
+      "slice": "",
+      "title": "Christ-like Character Training – CC-SEL"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:new-school-orientation-group",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "course_new_school_orientation"
+      ],
+      "mode": "Group",
+      "plan": "NEW_SCHOOLS",
+      "slice": "",
+      "title": "New School Orientation"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:data-gathering-one-test-in-school",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "onetest"
+      ],
+      "mode": "In-school",
+      "plan": "ONE_TEST_DATA",
+      "slice": "",
+      "title": "Data Gathering – One test"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:teacher-pedagogyprofessionalism-academic-seminars-cluster",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "course_teacher_pedagogy_professionalism"
+      ],
+      "mode": "Cluster",
+      "plan": "TEACHER_PEDAGOGY",
+      "slice": "",
+      "title": "Teacher Pedagogy/Professionalism (Academic Seminars)"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:biblical-integration-in-school-online",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "biblical_integration"
+      ],
+      "mode": "In-School, Online",
+      "plan": "BIBLICAL_INTEGRATION",
+      "slice": "",
+      "title": "Biblical integration"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:teaching-as-a-mission-tam-i-online-in-school",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "course_tam_i"
+      ],
+      "mode": "Online, In-School",
+      "plan": "TAM_TRAINING",
+      "slice": "",
+      "title": "Teaching as a Mission (TAM) I"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:discipleship-dynamics-cluster-online",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "course_discipleship_dynamics"
+      ],
+      "mode": "Cluster, Online",
+      "plan": "DC_TRAINING",
+      "slice": "",
+      "title": "Discipleship Dynamics"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:christ-like-character-training-cla-in-school-online",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "course_cla_character_development"
+      ],
+      "mode": "In-School, Online",
+      "plan": "CLA_TRAINING",
+      "slice": "",
+      "title": "Christ-like Character Training – CLA"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:literacynumeracy-cluster-group",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "course_literacy_numeracy_project"
+      ],
+      "mode": "Cluster, Group",
+      "plan": "LITERACY_TRAINING",
+      "slice": "",
+      "title": "Literacy/Numeracy"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:early-childhood-education-online-teachers-trained",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "ece_teachers"
+      ],
+      "mode": "Online (teachers trained)",
+      "plan": "ECD_TEACHERS",
+      "slice": "",
+      "title": "Early Childhood Education"
+    },
+    {
+      "basis": "",
+      "domain": "Trainings",
+      "key": "strategic:certificate-training-ide-online",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Online",
+      "plan": "",
+      "slice": "",
+      "title": "Certificate Training (IDE)"
+    },
+    {
+      "basis": "",
+      "domain": "Data and Metrics",
+      "key": "strategic:data-gathering-asassa-in-school",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "ssa_all"
+      ],
+      "mode": "In-School",
+      "plan": "",
+      "slice": "",
+      "title": "Data Gathering – ASA/SSA"
+    },
+    {
+      "basis": "",
+      "domain": "Data and Metrics",
+      "key": "strategic:ssa-core-baseline-cohort-6-in-school",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "ssa_core_baseline"
+      ],
+      "mode": "In-School",
+      "plan": "NEW_CORE_SCHOOLS",
+      "slice": "",
+      "title": "SSA – Core Baseline Cohort 6"
+    },
+    {
+      "basis": "",
+      "domain": "Data and Metrics",
+      "key": "strategic:ssa-core-cohort-4-5-in-school",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "In-School",
+      "plan": "",
+      "slice": "",
+      "title": "SSA – Core Cohort 4 & 5"
+    },
+    {
+      "basis": "",
+      "domain": "Data and Metrics",
+      "key": "strategic:ssa-core-cohort-3-in-school",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "In-School",
+      "plan": "",
+      "slice": "",
+      "title": "SSA – Core Cohort 3"
+    },
+    {
+      "basis": "client",
+      "domain": "Data and Metrics",
+      "key": "strategic:ssa-client-in-school",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "ssa_client"
+      ],
+      "mode": "In-School",
+      "plan": "CLIENT_SSA_COVERAGE",
+      "slice": "",
+      "title": "SSA – Client"
+    },
+    {
+      "basis": "ssa_client",
+      "domain": "Data and Metrics",
+      "key": "strategic:client-schools-ssa-target-data-review-client-schools",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "ssa_review_client"
+      ],
+      "mode": "Client Schools",
+      "plan": "",
+      "slice": "",
+      "title": "Client Schools SSA target (Data review)"
+    },
+    {
+      "basis": "ssa_core",
+      "domain": "Data and Metrics",
+      "key": "strategic:core-school-ssa-target-data-review-core-schools",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "ssa_review_core"
+      ],
+      "mode": "Core Schools",
+      "plan": "",
+      "slice": "",
+      "title": "Core school SSA target (Data review)"
+    },
+    {
+      "basis": "portfolio",
+      "domain": "Data and Metrics",
+      "key": "strategic:enrollment-metrics-all-schools",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "schools_with_metrics"
+      ],
+      "mode": "All Schools",
+      "plan": "DATA_METRICS",
+      "slice": "",
+      "title": "Enrollment & metrics"
+    },
+    {
+      "basis": "core",
+      "domain": "Data and Metrics",
+      "key": "strategic:exam-scores-target-core-schools-core-schools",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "core_exam_scores"
+      ],
+      "mode": "Core Schools",
+      "plan": "",
+      "slice": "",
+      "title": "Exam Scores target (core schools)"
+    },
+    {
+      "basis": "",
+      "domain": "Stakeholders Engagement",
+      "key": "strategic:partner-engagement-strategic-partner-dialogues",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "partner_review_meetings"
+      ],
+      "mode": "Strategic Partner Dialogues",
+      "plan": "PARTNER_REVIEW_MEETINGS",
+      "slice": "",
+      "title": "Partner engagement"
+    },
+    {
+      "basis": "",
+      "domain": "Stakeholders Engagement",
+      "key": "strategic:district-mous-and-engagement-meetings-district-engagements",
+      "kind": "count",
+      "lead": "Impact Assessment",
+      "measures": [
+        "district_meetings"
+      ],
+      "mode": "District Engagements",
+      "plan": "",
+      "slice": "",
+      "title": "District MOUs and engagement Meetings"
+    },
+    {
+      "basis": "",
+      "domain": "Stakeholders Engagement",
+      "key": "strategic:church-engagement-church-forums",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Church Forums",
+      "plan": "",
+      "slice": "",
+      "title": "Church engagement"
+    },
+    {
+      "basis": "",
+      "domain": "Alumni",
+      "key": "strategic:schools-trained-on-alumni-program-alumni-program",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Alumni Program",
+      "plan": "",
+      "slice": "",
+      "title": "Schools trained on Alumni program"
+    },
+    {
+      "basis": "",
+      "domain": "Alumni",
+      "key": "strategic:schools-with-active-alumni-programs-active-chapters",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Active Chapters",
+      "plan": "",
+      "slice": "",
+      "title": "Schools with active Alumni programs"
+    },
+    {
+      "basis": "",
+      "domain": "Alumni",
+      "key": "strategic:alumni-program-initiative-target-cceo-direct-target",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "CCEO Direct Target",
+      "plan": "",
+      "slice": "",
+      "title": "Alumni Program initiative Target"
+    },
+    {
+      "basis": "",
+      "domain": "HR",
+      "key": "strategic:pdf-internal-staff",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Internal Staff",
+      "plan": "",
+      "slice": "",
+      "title": "PDF"
+    },
+    {
+      "basis": "",
+      "domain": "HR",
+      "key": "strategic:pto-personal-spiritual-retreat-day-staff-retreats",
+      "kind": "untracked",
+      "lead": "Impact Assessment",
+      "measures": [],
+      "mode": "Staff Retreats",
+      "plan": "",
+      "slice": "",
+      "title": "PTO & Personal spiritual retreat day"
+    }
+  ],
+  "strategic_kinds": {
+    "count": "count",
+    "rate": "rate",
+    "score": "score",
+    "untracked": "untracked"
+  },
+  "summary_groups": [
+    [
+      "Portfolio",
+      [
+        [
+          "portfolio",
+          "Total"
+        ],
+        [
+          "active",
+          "Active"
+        ],
+        [
+          "inactive",
+          "Inactive"
+        ],
+        [
+          "active_p",
+          "% Active"
+        ]
+      ]
+    ],
+    [
+      "Core Recruited This FY",
+      [
+        [
+          "recruit_t",
+          "Target"
+        ],
+        [
+          "recruit_a",
+          "Achieved"
+        ],
+        [
+          "recruit_ssa",
+          "Baseline SSA"
+        ],
+        [
+          "recruit_v",
+          "Var"
+        ],
+        [
+          "recruit_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Core SSA (Yr 1–3)",
+      [
+        [
+          "cohort_t",
+          "Target"
+        ],
+        [
+          "cohort_a",
+          "Achieved"
+        ],
+        [
+          "cohort_v",
+          "Var"
+        ]
+      ]
+    ],
+    [
+      "Client SSA to Date",
+      [
+        [
+          "ssa_t",
+          "Target"
+        ],
+        [
+          "ssa_a",
+          "Achieved"
+        ],
+        [
+          "ssa_v",
+          "Var"
+        ],
+        [
+          "ssa_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "New Schools This Month",
+      [
+        [
+          "new_m_t",
+          "Target"
+        ],
+        [
+          "new_m_a",
+          "Achieved"
+        ]
+      ]
+    ],
+    [
+      "Enrolment",
+      [
+        [
+          "enrol_base",
+          "Schools"
+        ],
+        [
+          "enrol_with",
+          "With"
+        ],
+        [
+          "enrol_without",
+          "Without"
+        ],
+        [
+          "enrol_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Metrics",
+      [
+        [
+          "metrics_base",
+          "Schools"
+        ],
+        [
+          "metrics_with",
+          "With"
+        ],
+        [
+          "metrics_without",
+          "Without"
+        ],
+        [
+          "metrics_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "New Schools This FY",
+      [
+        [
+          "new_t",
+          "Target"
+        ],
+        [
+          "new_a",
+          "Achieved"
+        ],
+        [
+          "new_v",
+          "Var"
+        ],
+        [
+          "new_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Core Visit 1",
+      [
+        [
+          "cv1_t",
+          "Target"
+        ],
+        [
+          "cv1_a",
+          "Achieved"
+        ],
+        [
+          "cv1_v",
+          "Var"
+        ],
+        [
+          "cv1_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Core Visit 2",
+      [
+        [
+          "cv2_t",
+          "Target"
+        ],
+        [
+          "cv2_a",
+          "Achieved"
+        ],
+        [
+          "cv2_v",
+          "Var"
+        ],
+        [
+          "cv2_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Core Visit 3",
+      [
+        [
+          "cv3_t",
+          "Target"
+        ],
+        [
+          "cv3_a",
+          "Achieved"
+        ],
+        [
+          "cv3_v",
+          "Var"
+        ],
+        [
+          "cv3_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Core Visit 4+",
+      [
+        [
+          "cv4_t",
+          "Target"
+        ],
+        [
+          "cv4_a",
+          "Achieved"
+        ],
+        [
+          "cv4_v",
+          "Var"
+        ],
+        [
+          "cv4_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Non-Core Visited FY – Staff or Partner",
+      [
+        [
+          "nc_t",
+          "Target"
+        ],
+        [
+          "nc_a",
+          "Visited"
+        ],
+        [
+          "nc_v",
+          "Var"
+        ],
+        [
+          "nc_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Non-Core Visited This Month – Staff",
+      [
+        [
+          "ncm_t",
+          "Schools"
+        ],
+        [
+          "ncm_a",
+          "Visited"
+        ],
+        [
+          "ncm_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Non-Core Visited FY – Partner",
+      [
+        [
+          "ncp_t",
+          "Target"
+        ],
+        [
+          "ncp_a",
+          "Visited"
+        ],
+        [
+          "ncp_v",
+          "Var"
+        ],
+        [
+          "ncp_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Pending Schools",
+      [
+        [
+          "pend_base",
+          "Non-Core"
+        ],
+        [
+          "pend_a",
+          "Visited"
+        ],
+        [
+          "pend_left",
+          "Not Visited"
+        ],
+        [
+          "pend_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Core Training 1",
+      [
+        [
+          "ct1_t",
+          "Target"
+        ],
+        [
+          "ct1_a",
+          "Achieved"
+        ],
+        [
+          "ct1_v",
+          "Var"
+        ],
+        [
+          "ct1_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Core Training 2",
+      [
+        [
+          "ct2_t",
+          "Target"
+        ],
+        [
+          "ct2_a",
+          "Achieved"
+        ],
+        [
+          "ct2_v",
+          "Var"
+        ],
+        [
+          "ct2_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Core Training 3",
+      [
+        [
+          "ct3_t",
+          "Target"
+        ],
+        [
+          "ct3_a",
+          "Achieved"
+        ],
+        [
+          "ct3_v",
+          "Var"
+        ],
+        [
+          "ct3_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Core Training 4",
+      [
+        [
+          "ct4_t",
+          "Target"
+        ],
+        [
+          "ct4_a",
+          "Achieved"
+        ],
+        [
+          "ct4_v",
+          "Var"
+        ],
+        [
+          "ct4_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Client School Trainings",
+      [
+        [
+          "cst_t",
+          "Target"
+        ],
+        [
+          "cst_a",
+          "Achieved"
+        ],
+        [
+          "cst_v",
+          "Var"
+        ],
+        [
+          "cst_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "Online Trainings",
+      [
+        [
+          "onl_a",
+          "Schools"
+        ],
+        [
+          "onl_s",
+          "Sessions"
+        ]
+      ]
+    ],
+    [
+      "TAM / BI Online",
+      [
+        [
+          "tam_a",
+          "Schools"
+        ],
+        [
+          "tam_s",
+          "Sessions"
+        ]
+      ]
+    ],
+    [
+      "ECE",
+      [
+        [
+          "ece_a",
+          "Schools"
+        ]
+      ]
+    ],
+    [
+      "MSC",
+      [
+        [
+          "msc_t",
+          "Target"
+        ],
+        [
+          "msc_a",
+          "Achieved"
+        ],
+        [
+          "msc_p",
+          "%"
+        ]
+      ]
+    ],
+    [
+      "DC Club",
+      [
+        [
+          "dc_t",
+          "Data Collected"
+        ],
+        [
+          "dc_a",
+          "With DC"
+        ],
+        [
+          "dc_none",
+          "No DC"
+        ],
+        [
+          "dc_p",
+          "%"
+        ]
+      ]
+    ]
+  ],
+  "summary_kept": [
+    "by",
+    "in_region",
+    "in_lead"
+  ],
+  "tabs": [
+    [
+      "summary",
+      "Executive Summary",
+      "period"
+    ],
+    [
+      "weekly",
+      "Detailed Country Report",
+      "month"
+    ],
+    [
+      "milestones",
+      "Strategic Milestones",
+      "period"
+    ],
+    [
+      "dashboard",
+      "CCEO Officer Performance & Milestones",
+      "month"
+    ],
+    [
+      "month",
+      "{month} Summary",
+      "month"
+    ],
+    [
+      "core",
+      "Core Visits & Training",
+      ""
+    ]
+  ],
+  "trackers": {
+    "core": [
+      "/core-schools-oversight/",
+      "Core School Oversight"
+    ],
+    "evidence": [
+      "/ia/school-evidence/",
+      "School Evidence"
+    ],
+    "loans": [
+      "/loans",
+      "Loan Register"
+    ],
+    "msc": [
+      "/my-targets",
+      "MSC Stories"
+    ],
+    "schools": [
+      "/schools",
+      "School Registry"
+    ],
+    "ssa": [
+      "/cluster-oversight/ssa",
+      "SSA Records"
+    ],
+    "work": [
+      "/country-planning-oversight/",
+      "Planning Oversight"
+    ]
+  }
+}
