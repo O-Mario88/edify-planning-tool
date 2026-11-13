@@ -48,7 +48,8 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	}
 	ctx := context.Background()
 	// Children first; only the golden's own rows (ids starting "ghr").
-	children := []string{"staff_supervisor_assignment", "staff_profile", "user"}
+	children := []string{"hr_onboarding_task", "hr_onboarding_plan", "hr_offboarding", "hr_safety_incident", "hr_staff_recognition",
+		"staff_supervisor_assignment", "staff_profile", "user"}
 	clear := func() {
 		for _, table := range children {
 			if _, err := admin.Exec(ctx, `DELETE FROM "`+table+`" WHERE id LIKE 'ghr%'`); err != nil {
@@ -58,7 +59,8 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	}
 	clear()
 	t.Cleanup(clear)
-	for _, table := range []string{"user", "staff_profile", "staff_supervisor_assignment"} {
+	for _, table := range []string{"user", "staff_profile", "staff_supervisor_assignment", "hr_staff_recognition", "hr_safety_incident",
+		"hr_offboarding", "hr_onboarding_plan", "hr_onboarding_task"} {
 		for _, row := range golden.Rows[table] {
 			if _, err := admin.Exec(ctx, `INSERT INTO "`+table+`" SELECT * FROM json_populate_record(NULL::"`+table+`", $1::json)`, string(row)); err != nil {
 				t.Fatalf("filing a %s row: %v", table, err)

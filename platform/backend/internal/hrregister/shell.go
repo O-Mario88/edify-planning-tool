@@ -31,8 +31,10 @@ type register struct {
 	metrics                           []metric
 	columns                           []string
 	rows                              [][]string
-	actions                           []action
-	emptyTitle, emptyBody             string
+	// rowActions are each row's own drawer buttons (none, or one list a row).
+	rowActions            [][]action
+	actions               []action
+	emptyTitle, emptyBody string
 }
 
 const (
@@ -121,10 +123,22 @@ func records(reg register, query url.Values) []*screensv1.PageBlock {
 	for _, c := range reg.columns {
 		t.Columns = append(t.Columns, &screensv1.PageColumn{Label: c})
 	}
-	for _, row := range reg.rows[(number-1)*rules.PageSize : min(number*rules.PageSize, len(reg.rows))] {
+	first, last := (number-1)*rules.PageSize, min(number*rules.PageSize, len(reg.rows))
+	withActions := false
+	for _, acts := range reg.rowActions[min(first, len(reg.rowActions)):min(last, len(reg.rowActions))] {
+		withActions = withActions || len(acts) > 0
+	}
+	if withActions {
+		// The actions column's heading is for screen readers only.
+		t.Columns = append(t.Columns, &screensv1.PageColumn{})
+	}
+	for i, row := range reg.rows[first:last] {
 		r := &screensv1.PageRow{}
 		for _, v := range row {
 			r.Cells = append(r.Cells, &screensv1.PageCell{Text: closedschools.Collapse(v)})
+		}
+		if withActions {
+			r.Cells = append(r.Cells, actionsCell(reg.rowActions, first+i))
 		}
 		t.Rows = append(t.Rows, r)
 	}
@@ -133,6 +147,20 @@ func records(reg register, query url.Values) []*screensv1.PageBlock {
 		out = append(out, pager(number, pages, query))
 	}
 	return out
+}
+
+// actionsCell is a record's own buttons as the feed reads its one button: a
+// primary drawer button under the key "button". (No register Go answers yet
+// gives a record two actions, which the template draws as a menu.)
+func actionsCell(all [][]action, row int) *screensv1.PageCell {
+	c := &screensv1.PageCell{}
+	if row >= len(all) {
+		return c
+	}
+	for _, a := range all[row] {
+		c.Actions = append(c.Actions, &screensv1.PageAction{Key: "button", Label: a.label, Primary: true, Enabled: true, Href: a.drawer, Drawer: true})
+	}
+	return c
 }
 
 // pager is the register's own pager (hcos-pagination) as the feed reads it:

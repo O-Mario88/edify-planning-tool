@@ -1,10 +1,34 @@
 {
+  "exit_reasons": {
+    "death_in_service": "Death in service",
+    "dismissal": "Dismissal",
+    "end_of_contract": "End of contract",
+    "other": "Other",
+    "probation_not_confirmed": "Probation not confirmed",
+    "redundancy": "Redundancy",
+    "resignation": "Resignation",
+    "retirement": "Retirement"
+  },
   "helper_figure_chars": 28,
   "metric_labels": {
     "Active": "Active",
+    "Awaiting supervisor": "Awaiting supervisor",
+    "Days lost": "Days lost",
     "Departments": "Departments",
+    "Handover gaps": "Handover gaps",
+    "In progress": "In progress",
+    "Near misses": "Near misses",
     "No reporting line": "No reporting line",
-    "People in scope": "People in scope"
+    "Open incidents": "Open incidents",
+    "Overdue": "Overdue",
+    "Past exit date, still active": "Past exit date, still active",
+    "People in scope": "People in scope",
+    "People recognised": "People recognised",
+    "Plans": "Plans",
+    "Ready for activation": "Ready for activation",
+    "Recognitions": "Recognitions",
+    "Serious incidents": "Serious incidents",
+    "Voluntary exits": "Voluntary exits"
   },
   "onboarding_states": {
     "active": "Active",
@@ -12,8 +36,279 @@
     "pending": "Pending",
     "suspended": "Suspended"
   },
+  "onboarding_statuses": {
+    "closed": "Closed",
+    "in_progress": "In progress",
+    "not_started": "Not started",
+    "ready_for_activation": "Ready for activation",
+    "supervisor_review": "Awaiting supervisor confirmation"
+  },
   "page_size": 50,
   "pages": {
+    "/health-safety": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/health-safety/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/health-safety/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/health-safety/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/offboarding": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/offboarding/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/offboarding/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/offboarding/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/onboarding": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/org-structure": {
       "roles": {
         "Accountant": {
@@ -97,6 +392,129 @@
           "strip": null
         }
       }
+    },
+    "/recognition": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/recognition/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/recognition/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/recognition/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
     }
-  }
+  },
+  "recognition_categories": {
+    "above_and_beyond": "Above and beyond",
+    "excellence": "Excellence in delivery",
+    "innovation": "Innovation",
+    "service_milestone": "Service milestone",
+    "teamwork": "Teamwork",
+    "values": "Living Edify's values"
+  },
+  "safety_categories": {
+    "hazard": "Hazard reported",
+    "illness": "Work-related illness",
+    "injury": "Injury",
+    "near_miss": "Near miss",
+    "other": "Other",
+    "road_traffic": "Road traffic incident",
+    "security": "Security incident"
+  },
+  "safety_statuses": {
+    "action": "Corrective action in progress",
+    "closed": "Closed",
+    "investigating": "Investigating",
+    "reported": "Reported"
+  },
+  "severities": {
+    "critical": "Critical",
+    "high": "High",
+    "low": "Low",
+    "medium": "Medium"
+  },
+  "voluntary_exit_reasons": [
+    "resignation",
+    "retirement"
+  ]
 }

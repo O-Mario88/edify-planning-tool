@@ -10,7 +10,11 @@ reach rule once; each register is added to it as it is ported.
 | Register | Path | State |
 |---|---|---|
 | Organization Structure | `/org-structure` | This document |
-| The other registers (onboarding, offboarding, recognition, pulse surveys, health and safety, employee relations, compliance, compensation, candidate pipeline, recruitment, workforce planning, performance reviews, policies, HR audit log, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| Recognition | `/recognition` | This document |
+| Health & Safety | `/health-safety` | This document |
+| Staff Onboarding | `/onboarding` | This document |
+| Staff Offboarding | `/offboarding` | This document |
+| The other registers (pulse surveys, employee relations, compliance, compensation, candidate pipeline, recruitment, workforce planning, performance reviews, policies, HR audit log, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -37,6 +41,56 @@ lifecycle state's label. Figures: People in scope, Active, Departments
 (distinct, not blank), No reporting line (no supervisor and not a Country
 Director, Regional Vice President or Admin).
 
+## 169.2b Recognition
+
+`recognition_view`: the recognitions of the reach's countries (none for a
+team's reach or none: `scope_by_country`) whose person's name, category code
+or citation holds the search, the latest award first. Each row: the person,
+country, the category's label, the citation's first 90 characters (and "…"
+past them) and the day awarded (`YYYY-MM-DD`). Figures, over the searched
+recognitions: Recognitions in the last quarter (awarded on or after today
+less 91 days) and the People they named, "of N staff, last quarter" where N
+counts the live, not exited People records in reach. One drawer button,
+"Recognise someone".
+
+## 169.2c Health & Safety
+
+`health_safety_view`: the incidents of the reach's countries whose category
+code, location, country or injured person's name holds the search, the
+latest first. Each row: the category's label and the person ("No one
+injured" when none), country, day, severity, days lost and status, and the
+record's own "Open" drawer button (read by the feed as one primary action on
+an unlabelled last column). Figures, over the searched incidents: Open (not
+closed), Serious (open, high or critical), Near misses and Days lost in the
+last 12 months (on or after today less 365 days). One drawer button, "Report
+an incident".
+
+## 169.2d Staff Onboarding
+
+`onboarding_view`: the onboarding plans of the live People records in reach
+(`_profile_scope`, exited or not) whose person's name, country or status
+code holds the search, the newest first. Each row: the person, their title
+(else their active role), country, start day, "done of all" checklist tasks,
+the status's label, and the record's "Manage" drawer button. Figures over the
+searched plans: Plans (not closed), Awaiting supervisor, Ready for
+activation; and Overdue over every plan in reach, searched or not
+(`overdue_onboarding`: not closed, target day before today). No header
+button.
+
+## 169.2e Staff Offboarding
+
+`offboarding_view`: the exits of the live People records in reach whose
+person's name, status, reason code or handover owner's name holds the
+search, by last working day (none last). Each row: the person, country, last
+working day, the reason's label ("Not recorded" when none), the handover
+owner ("Unassigned" when none), the status as stored, and the record's
+"Open" drawer button. Figures over the searched exits: In progress (not
+"Closed"), Handover gaps (in progress with no owner), Voluntary exits
+(resignation or retirement); and "Past exit date, still active" over every
+exit in reach (`accounts_past_last_working_day`: a last working day before
+today and a person not exited), danger when any. One drawer button, "Start an
+offboarding".
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -45,17 +99,26 @@ the figures' labels, the line length and the page size are exported to
 `apps/hr/test_hr_register_rules_export.py` fails when the two differ.
 
 `deploy/db/roles.sql` grants `edify_gateway_ro` a People record's title,
-department and lifecycle state (applied to `edify_gorn_dev` and
+department and lifecycle state; a recognition's person, country, category,
+citation and day (not who awarded it); a safety incident's country, person,
+day, place, category, severity, days lost and status (not its description
+or the actions taken); an onboarding plan's person, start and target days,
+status and age and whether each checklist task is done (not the probation
+decision); an exit's person, last working day, reason, handover owner and
+status (not its notes or clearances) (applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
-- `cmd/parity -screen page -path /org-structure` for all 29 seed accounts:
+- `cmd/parity -screen page -path` each register for all 29 seed accounts:
   the page as it opens, searches (that find people, by country, by role,
   nobody, with spaces, LIKE's own wildcards) and pages.
 - `internal/hrregister/testdata/golden.py` files 62 accounts and People
   records and 40 reporting lines in `edify_gorn_test` (two pages; every
   lifecycle state; titles, departments and none; two lines to one person;
-  another country; a deleted record and a deleted account), asks the
-  existing feed 14 questions as Admin, HR and Impact Assessment and deletes
+  another country; a deleted record and a deleted account; 12 recognitions
+  and 10 incidents either side of the quarter and the year, another
+  country, long citations, no injured person; 10 onboarding plans with
+  checklists and 10 exits around today), asks the existing feed 110
+  questions as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 

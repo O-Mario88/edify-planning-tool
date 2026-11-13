@@ -18,6 +18,7 @@ rows, asks Go the same questions and compares each answer as a whole message.
 
 import json
 import os
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -25,6 +26,13 @@ from django.db import connection
 from django.utils import timezone as dj_timezone
 
 from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+from apps.hr.models import (
+    OffboardingPlan,
+    OnboardingPlan,
+    OnboardingTask,
+    SafetyIncident,
+    StaffRecognition,
+)
 from apps.mobile_feed.views import read_page
 
 if not settings.DATABASES["default"]["NAME"].endswith("_test"):
@@ -32,8 +40,23 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 
 User = get_user_model()
 #: Deleted children first.
-TABLES = ("staff_supervisor_assignment", "staff_profile", "user")
-PATHS = ("/org-structure",)
+TABLES = (
+    "hr_onboarding_task",
+    "hr_onboarding_plan",
+    "hr_offboarding",
+    "hr_safety_incident",
+    "hr_staff_recognition",
+    "staff_supervisor_assignment",
+    "staff_profile",
+    "user",
+)
+PATHS = (
+    "/org-structure",
+    "/recognition",
+    "/health-safety",
+    "/onboarding",
+    "/offboarding",
+)
 
 
 def clear():
@@ -76,6 +99,78 @@ def file_rows():
     StaffSupervisorAssignment.objects.create(
         id="ghrs999", supervisee=profiles[1], supervisor=profiles[7]
     )
+    today = dj_timezone.localdate()
+    long = (
+        "Stayed late every night of the term to finish the cluster's training plan, "
+        * 2
+    )
+    categories = ["values", "excellence", "teamwork", "innovation", "above_and_beyond"]
+    for i in range(12):
+        StaffRecognition.objects.create(
+            id=f"ghrr{i:03d}",
+            staff=profiles[i % 7],
+            country="Kenya" if i == 11 else "Uganda",
+            category=categories[i % 5],
+            citation=long if i % 3 == 0 else f"Recognised for work {i}",
+            awarded_on=today
+            - timedelta(days=[1, 30, 90, 91, 92, 200, 2, 31, 89, 93, 0, 150][i]),
+        )
+    file_lifecycle(profiles, today)
+    kinds = ["injury", "road_traffic", "near_miss", "hazard", "security", "illness"]
+    for i in range(10):
+        SafetyIncident.objects.create(
+            id=f"ghri{i:03d}",
+            country="Kenya" if i == 9 else "Uganda",
+            affected_staff=profiles[i] if i % 3 else None,
+            incident_date=today
+            - timedelta(days=[3, 100, 364, 365, 366, 500, 4, 101, 363, 0][i]),
+            location=f"Site {i}",
+            category=kinds[i % 6],
+            severity=["low", "medium", "high", "critical"][i % 4],
+            description="What happened.",
+            days_lost=i,
+            status=["reported", "investigating", "action", "closed"][i % 4],
+        )
+
+
+def file_lifecycle(profiles, today):
+    statuses = [
+        "not_started",
+        "in_progress",
+        "supervisor_review",
+        "ready_for_activation",
+        "closed",
+    ]
+    for i in range(10):
+        plan = OnboardingPlan.objects.create(
+            id=f"ghro{i:03d}",
+            staff=profiles[10 + i],
+            status=statuses[i % 5],
+            start_date=None if i == 3 else today - timedelta(days=40 - i),
+            target_completion_date=None
+            if i == 4
+            else today + timedelta(days=[-5, -1, 0, 1, 9][i % 5]),
+        )
+        OnboardingPlan.objects.filter(id=plan.id).update(
+            created_at=dj_timezone.now() - timedelta(hours=i)
+        )
+        for k in range(i % 4):
+            OnboardingTask.objects.create(
+                id=f"ghrt{i:03d}{k}",
+                plan=plan,
+                name=f"Task {k}",
+                is_completed=k % 2 == 0,
+            )
+    reasons = ["resignation", "", "retirement", "dismissal", "end_of_contract"]
+    for i in range(10):
+        OffboardingPlan.objects.create(
+            id=f"ghrx{i:03d}",
+            staff=profiles[20 + i],
+            status=["Initiated", "Portfolio Reassigned", "Closed"][i % 3],
+            last_working_day=None if i == 5 else today + timedelta(days=i * 7 - 30),
+            handover_owner=profiles[i] if i % 2 else None,
+            exit_reason=reasons[i % 5],
+        )
 
 
 def dump_rows():
@@ -101,7 +196,19 @@ QUESTIONS = {
         {"q": "finance"},
         {"q": "kenya"},
     ],
-    "hr@edify.org": [{}, {"page": "2"}, {"q": "field officer"}],
+    "hr@edify.org": [
+        {},
+        {"page": "2"},
+        {"q": "field officer"},
+        {"q": "golden person 01"},
+        {"q": "near_miss"},
+        {"q": "site 1"},
+        {"q": "values"},
+        {"q": "nothing at all"},
+        {"q": "closed"},
+        {"q": "resignation"},
+        {"q": "golden person 03"},
+    ],
     "ia@edify.org": [{}, {"page": "2"}],
 }
 

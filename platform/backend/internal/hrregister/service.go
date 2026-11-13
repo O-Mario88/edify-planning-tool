@@ -5,8 +5,11 @@ import (
 	"net/url"
 	"time"
 
+	_ "time/tzdata" // the server's day is Nairobi's wherever the gateway runs
+
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -15,10 +18,34 @@ import (
 // existing feed answers as a page that is not there.
 var ErrNotAvailable = pagegate.ErrNotAvailable
 
-// builders are the registers Go answers, by path.
-var builders = map[string]func(context.Context, schooldirectory.Querier, reach, url.Values) (register, error){
-	"/org-structure": orgStructure,
+// input is what a register is built from.
+type input struct {
+	db    schooldirectory.Querier
+	reach reach
+	query url.Values
+	// search is the register's search, stripped.
+	search string
+	// today is date.today(): the server's day, Nairobi's.
+	today time.Time
 }
+
+// builders are the registers Go answers, by path.
+var builders = map[string]func(context.Context, input) (register, error){
+	"/org-structure": orgStructure,
+	"/recognition":   recognition,
+	"/health-safety": healthSafety,
+	"/onboarding":    onboarding,
+	"/offboarding":   offboarding,
+}
+
+// zone is settings.TIME_ZONE, the zone the server's day is read in.
+var zone = func() *time.Location {
+	z, err := time.LoadLocation("Africa/Nairobi")
+	if err != nil {
+		panic("hrregister: " + err.Error())
+	}
+	return z
+}()
 
 // Service builds the HR registers.
 type Service struct {
@@ -46,7 +73,10 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
-	reg, err := build(ctx, s.db, r, query)
+	now := s.now().In(zone)
+	in := input{db: s.db, reach: r, query: query, search: closedschools.StripSpace(query.Get("q")),
+		today: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)}
+	reg, err := build(ctx, in)
 	if err != nil {
 		return nil, true, err
 	}

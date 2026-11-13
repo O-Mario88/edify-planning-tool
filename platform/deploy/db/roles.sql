@@ -398,3 +398,17 @@ GRANT SELECT (recommendation) ON cce_regional_engagement TO edify_gateway_ro;
 -- with their title, department and lifecycle state. No staff number, Drive
 -- folder or any compensation column.
 GRANT SELECT (title, department, onboarding_state) ON staff_profile TO edify_gateway_ro;
+-- Recognition: who was recognised, where, for what (the category and the
+-- citation the register shows) and when. Not who awarded it.
+GRANT SELECT (staff_id, country, category, citation, awarded_on) ON hr_staff_recognition TO edify_gateway_ro;
+-- Health & Safety: each incident's country, the person affected, its day,
+-- place, category, severity, days lost and status. Not its description or
+-- the actions taken.
+GRANT SELECT (id, country, affected_staff_id, incident_date, location, category, severity, days_lost, status) ON hr_safety_incident TO edify_gateway_ro;
+-- Staff Onboarding: each plan's person, start and target days, status and
+-- age, and whether each checklist task is done. Not the probation decision.
+GRANT SELECT (id, staff_id, start_date, target_completion_date, status, created_at) ON hr_onboarding_plan TO edify_gateway_ro;
+GRANT SELECT (plan_id, is_completed) ON hr_onboarding_task TO edify_gateway_ro;
+-- Staff Offboarding: each exit's person, last working day, reason, handover
+-- owner and status. Not its notes or clearances.
+GRANT SELECT (id, staff_id, last_working_day, exit_reason, handover_owner_id, status) ON hr_offboarding TO edify_gateway_ro;

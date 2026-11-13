@@ -2,7 +2,11 @@ package main
 
 import "context"
 
-func init() { pageQuestions["/org-structure"] = hrRegisterQuestions }
+func init() {
+	for _, path := range []string{"/org-structure", "/recognition", "/health-safety", "/onboarding", "/offboarding"} {
+		pageQuestions[path] = hrRegisterQuestions
+	}
+}
 
 // hrRegisterQuestions are an HR register's: the page as it opens; a search
 // that finds people, one by country, one by role, one that finds nobody, one

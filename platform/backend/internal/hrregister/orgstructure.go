@@ -3,14 +3,12 @@ package hrregister
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"slices"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 // topRoles report outside the platform: no line recorded is no gap for them.
@@ -26,13 +24,19 @@ type person struct {
 // searched is _search_profiles: a name, email, title, department or country
 // holding the search, as a WHERE clause on staff_profile `sp` and user `u`.
 func searched(q string, args []any) (string, []any) {
+	return contains(q, args, "u.name", "u.email", "sp.title", "sp.department", "sp.country")
+}
+
+// contains is Django's icontains over any of cols, OR'd, as a WHERE clause;
+// TRUE without a search.
+func contains(q string, args []any, cols ...string) (string, []any) {
 	if q == "" {
 		return "TRUE", args
 	}
 	args = append(args, closedschools.LikeContains(q))
 	n := len(args)
 	parts := []string{}
-	for _, col := range []string{"u.name", "u.email", "sp.title", "sp.department", "sp.country"} {
+	for _, col := range cols {
 		parts = append(parts, fmt.Sprintf("UPPER(%s::text) LIKE UPPER($%d)", col, n))
 	}
 	return "(" + strings.Join(parts, " OR ") + ")", args
@@ -41,10 +45,10 @@ func searched(q string, args []any) (string, []any) {
 // orgStructure is org_structure_view: the People records in reach and
 // search, not exited, by department and name, each with whom they report to
 // and how many report to them.
-func orgStructure(ctx context.Context, db schooldirectory.Querier, r reach, query url.Values) (register, error) {
-	reachSQL, args := r.profiles(nil)
-	searchSQL, args := searched(closedschools.StripSpace(query.Get("q")), args)
-	rows, err := db.Query(ctx, fmt.Sprintf(`
+func orgStructure(ctx context.Context, in input) (register, error) {
+	reachSQL, args := in.reach.profiles(nil)
+	searchSQL, args := searched(in.search, args)
+	rows, err := in.db.Query(ctx, fmt.Sprintf(`
 WITH people AS (
   SELECT sp.id, u.name, COALESCE(sp.title, '') AS title, COALESCE(u.active_role, '') AS active_role,
          sp.department, COALESCE(sp.country, '') AS country, sp.onboarding_state

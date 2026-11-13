@@ -118,3 +118,17 @@ func (r reach) profiles(args []any) (string, []any) {
 	}
 	return "FALSE", args
 }
+
+// byCountry is scope_by_country: rows that carry their own country, read
+// whole by an organisation's reach, by the reach's countries otherwise, and
+// not at all by a team's reach or none.
+func (r reach) byCountry(col string, args []any) (string, []any) {
+	switch r.kind {
+	case reachAll:
+		return "TRUE", args
+	case reachCountries:
+		args = append(args, r.countries)
+		return fmt.Sprintf("%s = ANY($%d)", col, len(args)), args
+	}
+	return "FALSE", args
+}

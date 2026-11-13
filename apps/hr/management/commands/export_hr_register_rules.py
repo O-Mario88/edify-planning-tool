@@ -5,8 +5,10 @@ by `_render_workspace`: pages/hr/module_workspace.html and
 partials/hr/module_register.html) from the vocabularies this command writes
 to platform/backend/internal/hrregister/rules.json: for each register Go
 answers, who may open it, the workspace strip each role is shown above it and
-which of its drawer buttons each role is shown; a People record's
-lifecycle labels; the label each context figure
+which of its drawer buttons each role is shown; the labels of a People
+record's lifecycle, a recognition's category and a safety incident's
+category, severity and status, an onboarding plan's status and an exit's
+reason, and which reasons are voluntary; the label each context figure
 is drawn with; how long the line under a figure may stay; and the register's
 page size. A change to any of them must be exported again;
 apps/hr/test_hr_register_rules_export.py fails until it is, so the two can
@@ -47,6 +49,31 @@ PAGES = {
         "drawers": [],
         "metrics": ["People in scope", "Active", "Departments", "No reporting line"],
     },
+    "/recognition": {
+        "permission": "recognition",
+        "drawers": ["/recognition/new"],
+        "metrics": ["Recognitions", "People recognised"],
+    },
+    "/onboarding": {
+        "permission": "onboarding",
+        "drawers": [],
+        "metrics": ["Plans", "Overdue", "Awaiting supervisor", "Ready for activation"],
+    },
+    "/offboarding": {
+        "permission": "offboarding",
+        "drawers": ["/offboarding/new"],
+        "metrics": [
+            "In progress",
+            "Handover gaps",
+            "Voluntary exits",
+            "Past exit date, still active",
+        ],
+    },
+    "/health-safety": {
+        "permission": "health_safety",
+        "drawers": ["/health-safety/new"],
+        "metrics": ["Open incidents", "Serious incidents", "Near misses", "Days lost"],
+    },
 }
 
 
@@ -86,11 +113,27 @@ def metric_labels() -> dict:
 def rules() -> dict:
     from apps.accounts.models import StaffOnboardingState
     from apps.core.metrics.payload import HELPER_FIGURE_CHARS
+    from apps.hr.models import (
+        VOLUNTARY_EXIT_REASONS,
+        ERSeverity,
+        ExitReason,
+        OnboardingStatus,
+        RecognitionCategory,
+        SafetyIncidentCategory,
+        SafetyIncidentStatus,
+    )
     from apps.core.pagination import TABLE_PAGE_SIZE
 
     return {
         "pages": pages(),
         "onboarding_states": dict(StaffOnboardingState.choices),
+        "recognition_categories": dict(RecognitionCategory.choices),
+        "safety_categories": dict(SafetyIncidentCategory.choices),
+        "severities": dict(ERSeverity.choices),
+        "safety_statuses": dict(SafetyIncidentStatus.choices),
+        "onboarding_statuses": dict(OnboardingStatus.choices),
+        "exit_reasons": dict(ExitReason.choices),
+        "voluntary_exit_reasons": sorted(str(r) for r in VOLUNTARY_EXIT_REASONS),
         "metric_labels": metric_labels(),
         "helper_figure_chars": HELPER_FIGURE_CHARS,
         "page_size": TABLE_PAGE_SIZE,

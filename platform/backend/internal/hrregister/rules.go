@@ -40,20 +40,41 @@ type Page struct {
 
 // Rules are the registers' vocabularies.
 type Rules struct {
-	Pages             map[string]Page   `json:"pages"`
-	OnboardingStates  map[string]string `json:"onboarding_states"`
-	MetricLabels      map[string]string `json:"metric_labels"`
-	HelperFigureChars int               `json:"helper_figure_chars"`
-	PageSize          int               `json:"page_size"`
+	Pages            map[string]Page   `json:"pages"`
+	OnboardingStates map[string]string `json:"onboarding_states"`
+	// The labels of a recognition's category and a safety incident's
+	// category, severity and status.
+	RecognitionCategories map[string]string `json:"recognition_categories"`
+	SafetyCategories      map[string]string `json:"safety_categories"`
+	Severities            map[string]string `json:"severities"`
+	SafetyStatuses        map[string]string `json:"safety_statuses"`
+	// The labels of an onboarding plan's status and an exit's reason, and
+	// the reasons that are voluntary (VOLUNTARY_EXIT_REASONS).
+	OnboardingStatuses   map[string]string `json:"onboarding_statuses"`
+	ExitReasons          map[string]string `json:"exit_reasons"`
+	VoluntaryExitReasons []string          `json:"voluntary_exit_reasons"`
+	MetricLabels         map[string]string `json:"metric_labels"`
+	HelperFigureChars    int               `json:"helper_figure_chars"`
+	PageSize             int               `json:"page_size"`
 }
 
 var rules = mustLoad(rulesJSON)
 
 func mustLoad(raw []byte) Rules {
 	var r Rules
-	if err := json.Unmarshal(raw, &r); err != nil || len(r.Pages) == 0 || len(r.OnboardingStates) == 0 ||
+	if err := json.Unmarshal(raw, &r); err != nil || len(r.Pages) == 0 || len(r.OnboardingStates) == 0 || len(r.RecognitionCategories) == 0 || len(r.SafetyCategories) == 0 ||
+		len(r.Severities) == 0 || len(r.SafetyStatuses) == 0 || len(r.OnboardingStatuses) == 0 ||
+		len(r.ExitReasons) == 0 || len(r.VoluntaryExitReasons) == 0 ||
 		len(r.MetricLabels) == 0 || r.HelperFigureChars <= 0 || r.PageSize <= 0 {
 		panic(fmt.Sprintf("hrregister: the embedded rules are unreadable: %v", err))
 	}
 	return r
+}
+
+// labelOf is get_<field>_display: the value's label, else the value itself.
+func labelOf(labels map[string]string, value string) string {
+	if l, ok := labels[value]; ok {
+		return l
+	}
+	return value
 }
