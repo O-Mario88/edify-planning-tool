@@ -58,7 +58,7 @@ type PCBTRules struct {
 }
 
 func init() {
-	Handled["apps.projects.portfolio_todos:project_school_planning_todos"] = projectSchoolPlanningTodos
+	register("apps.projects.portfolio_todos:project_school_planning_todos", projectSchoolPlanningTodos)
 }
 
 // projectSchoolPlanningTodos is portfolio_todos.project_school_planning_todos

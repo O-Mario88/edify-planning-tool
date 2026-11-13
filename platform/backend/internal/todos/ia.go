@@ -100,7 +100,7 @@ func init() {
 		// A Programme Lead's portfolio passes them on (lead.go).
 		"apps.planning.coverage_todos:missing_training_todos": byRole(portfolioGuard, missingTrainingTodos),
 	} {
-		Handled[name] = build
+		register(name, build)
 	}
 }
 

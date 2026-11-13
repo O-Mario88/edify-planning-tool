@@ -42,7 +42,7 @@ func init() {
 		"apps.planning.fy_todos:fy_planning_todos":          fyPlanningTodos,
 		"apps.clusters.followups:attendance_todos":          attendanceTodos,
 	} {
-		Handled[name] = build
+		register(name, build)
 	}
 }
 

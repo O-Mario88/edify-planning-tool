@@ -60,7 +60,7 @@ func init() {
 		"apps.partners.engagement_todos:partner_engagement_todos": partnerEngagementGuard,
 		"apps.planning.country_oversight.todos:followup_todos":    planningFollowUpGuard,
 	} {
-		Handled[name] = build
+		register(name, build)
 	}
 }
 

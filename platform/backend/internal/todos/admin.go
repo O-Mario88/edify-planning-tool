@@ -46,7 +46,7 @@ func init() {
 		"_escalation_todos":     escalationGuard,
 		"apps.partners.user_setup_todos:partner_user_setup_todos": partnerUserSetupTodos,
 	} {
-		Handled[name] = build
+		register(name, build)
 	}
 }
 
