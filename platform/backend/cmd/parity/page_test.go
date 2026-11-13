@@ -1,7 +1,10 @@
 package main
 
 import (
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/parity"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -34,5 +37,33 @@ func TestExistingPageURLDropsBlankParametersAsTheGatewayDoes(t *testing.T) {
 				t.Fatalf("query = %q, want %q", values.Encode(), c.want.Encode())
 			}
 		})
+	}
+}
+
+func TestComparePagesSetsAsideOnlyAListedDifference(t *testing.T) {
+	list, err := parity.Load([]byte(`[{"id":"probe","tool":"page","where":"/p","questions":["(as it opens)"],
+		"fields":[".header.title"],"existing":"Old","go":"New","defect":"d","decision":"o","test":"cmd/parity.TestComparePagesSetsAsideOnlyAListedDifference"}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	saved := intended
+	intended = list
+	t.Cleanup(func() { intended = saved })
+	page := func(title, redirect string) *screensv1.GetPageResponse {
+		return &screensv1.GetPageResponse{Header: &screensv1.PageHeader{Title: title}, Redirect: redirect}
+	}
+	answer := parity.Answer{Tool: parity.ToolPage, Where: "/p", Question: "(as it opens)"}
+
+	text, accepted := comparePages(answer, page("New", ""), nil, page("Old", ""), nil)
+	if text != "" || len(accepted) != 1 || accepted[0].Entry != "probe" {
+		t.Fatalf("the listed difference: %q %v", text, accepted)
+	}
+	text, accepted = comparePages(answer, page("New", "/x"), nil, page("Old", ""), nil)
+	if !strings.Contains(text, ".redirect") || strings.Contains(text, ".header.title") || len(accepted) != 1 {
+		t.Fatalf("an unlisted difference beside it still fails: %q %v", text, accepted)
+	}
+	other := parity.Answer{Tool: parity.ToolPage, Where: "/p", Question: "tab=x"}
+	if text, _ := comparePages(other, page("New", ""), nil, page("Old", ""), nil); !strings.Contains(text, ".header.title") {
+		t.Fatalf("the same difference on another question still fails: %q", text)
 	}
 }

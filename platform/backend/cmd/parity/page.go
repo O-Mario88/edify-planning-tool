@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/parity"
 	"io"
 	"net/http"
 	"net/url"
@@ -95,12 +96,23 @@ func (r *pageRun) existingPage(token string, query map[string]string) (*screensv
 	return out, protojson.Unmarshal(body, out)
 }
 
-func comparePages(goAnswer *screensv1.GetPageResponse, goErr error, old *screensv1.GetPageResponse, oldErr error) string {
+// intended is the checked-in list of intended differences (internal/parity):
+// a difference it accepts is printed as intended and does not fail the run.
+var intended *parity.List
+
+// comparePages says how Go's answer differs from the existing one, as the
+// lines that fail the run and the differences the intended list accepts.
+func comparePages(answer parity.Answer, goAnswer *screensv1.GetPageResponse, goErr error, old *screensv1.GetPageResponse, oldErr error) (string, []parity.Accepted) {
 	if goErr != nil || oldErr != nil {
 		if (goErr == nil) != (oldErr == nil) || connect.CodeOf(goErr) != connect.CodeOf(oldErr) {
-			return fmt.Sprintf("  go error: %v\n  existing error: %v", goErr, oldErr)
+			text := fmt.Sprintf("  go error: %v\n  existing error: %v", goErr, oldErr)
+			d := parity.Diff{Field: parity.ErrorField, Go: fmt.Sprint(goErr), Existing: fmt.Sprint(oldErr), Text: text}
+			if e, ok := intended.Match(answer, d); ok {
+				return "", []parity.Accepted{{Diff: d, Entry: e.ID}}
+			}
+			return text, nil
 		}
-		return ""
+		return "", nil
 	}
 	goMap, oldMap := asMap(goAnswer), asMap(old)
 	// Both sides, always: a short-circuit here once left one side unsorted.
@@ -109,13 +121,10 @@ func comparePages(goAnswer *screensv1.GetPageResponse, goErr error, old *screens
 	if goTied || oldTied {
 		tiedAnswers++
 	}
-	diffs := []string{}
-	walk("", goMap, oldMap, &diffs)
-	sort.Strings(diffs)
-	if len(diffs) > 12 {
-		diffs = append(diffs[:12], fmt.Sprintf("… and %d more", len(diffs)-12))
-	}
-	return strings.Join(diffs, "\n")
+	found := []parity.Diff{}
+	diffWalk("", goMap, oldMap, &found)
+	unexpected, accepted := intended.Split(answer, found)
+	return parity.Lines(unexpected, 12), accepted
 }
 
 // each is the run once per id for a path with {id}, else the run itself.
@@ -136,6 +145,10 @@ func (r *pageRun) each() []*pageRun {
 // tiedAnswers counts the answers whose tables held rows the existing page
 // gives no order to: runs of rows with the same name.
 var tiedAnswers int
+
+// intendedAnswers counts the answers that held a difference the intended
+// list accepts.
+var intendedAnswers int
 
 // sortTies puts each run of consecutive table rows that share a name (the
 // second cell) in School ID order (the first cell), on both sides before
@@ -209,7 +222,13 @@ func runPages(ctx context.Context, signIn identityv1connect.SignInServiceClient,
 				oldAnswer, oldErr := one.existingPage(token, query)
 				compared++
 				mine++
-				if diff := comparePages(goAnswer, goErr, oldAnswer, oldErr); diff != "" {
+				answer := parity.Answer{Tool: parity.ToolPage, Where: one.path, Question: queryText(query)}
+				diff, accepted := comparePages(answer, goAnswer, goErr, oldAnswer, oldErr)
+				if len(accepted) > 0 {
+					intendedAnswers++
+					fmt.Printf("%-34s %-40s INTENDED\n%s\n", email, one.path+" "+queryText(query), parity.IntendedLines(accepted))
+				}
+				if diff != "" {
 					differing++
 					theirs++
 					fmt.Printf("%-34s %-40s DIFFERS\n%s\n", email, one.path+" "+queryText(query), diff)
@@ -219,6 +238,9 @@ func runPages(ctx context.Context, signIn identityv1connect.SignInServiceClient,
 		fmt.Printf("%-34s %d questions, %d differing\n", email, mine, theirs)
 	}
 	fmt.Printf("\n%d answers compared, %d differing\n", compared, differing)
+	if intendedAnswers > 0 {
+		fmt.Printf("%d answers held only intended differences (internal/parity/intended.json)\n", intendedAnswers)
+	}
 	if tiedAnswers > 0 {
 		fmt.Printf("%d answers held rows with the same name, compared in School ID order (the existing page gives them none)\n", tiedAnswers)
 	}
