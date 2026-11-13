@@ -5,8 +5,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 ## Summary
 
 - Routed product surfaces: **955**
-- All registered routes: **1468**
-- API routes: **395**
+- All registered routes: **1469**
+- API routes: **396**
 - Roles: **16**
 - Permission keys: **128**
 - Scheduled jobs: **41**

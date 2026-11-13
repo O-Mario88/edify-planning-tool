@@ -47,30 +47,45 @@ The code is under [`platform/`](../../platform/README.md).
 
 ## Where things stand
 
-Done on this branch (initial assignment):
+Updated 2026-11-13. Nothing on this branch is merged into `main`, deployed, or
+connected to production; every Go save below is behind `EDIFY_GO_SAVES`, off
+by default and refused in test and production.
 
-- Audit and baseline.
-- Contracts with lint, compatibility check and reproducible generation.
-- Go gateway: health checks, structured errors, request tracing, authentication
-  against the existing identity system, production-database guard, read-only
-  database role.
-- One vertical slice: an authenticated officer's own schools, read from the
-  existing `school` table, identical to what the existing API returns.
-- Python analytics worker called by the gateway over internal gRPC.
-- React Native (Expo) app foundation: sign-in, session, My Schools.
-- The first Go save (owner's staff school visit) proved in shadow, not wired
-  (27).
-- Web frontend decided (owner, 2026-11-12): Next.js, TypeScript and Tailwind CSS
-  for browsers, a client of the same Go gateway (02, 2.10; plan M15). Not
-  started yet.
-- Unit, integration, contract and parity tests; CI workflow.
+Done on this branch:
+
+- Foundation (M0): audit and baseline; contracts with lint, compatibility check
+  and reproducible generation; the Go gateway (health, structured errors,
+  tracing, the production-database guard, the read-only role); the Python
+  analytics worker; CI (`platform-ci.yml`).
+- Identity (M1): sign-in, accounts and roles, teams, acting leadership owned by
+  Go (08–11).
+- Pages read by Go, each proved for every seed account against the existing
+  feed: School Directory and School Profiles (12, 13); Clusters, Cluster
+  Oversight, Closed Schools, Programme Schools (14–17); Decision Log,
+  Escalations, My Actions and Actions Sent, Core Schools Oversight (18, 19, 21,
+  22); Planning (24); My Plan, in pieces (25).
+- Saves made by Go, each proved in shadow at the service and the app level
+  (0 steps and 0 changed tables differing, the audit chain verifying):
+  schedule, reschedule, cancel and edit a staff school visit (27, 29–31); an
+  In-school Training with its visit (32); group reschedule and group cancel
+  (33).
+- The audit seal fixed in Django on this branch: every decorated save is sealed
+  at its own commit (32.8). `main` keeps the defect until the owner approves it.
+- React Native app (`platform/mobile`) drawing every page from the gateway;
+  Next.js web foundation with the School Directory (28).
 
 Not done, and not claimed:
 
-- No signed iOS or Android release build has been produced.
-- No staging environment exists yet for the new services.
-- The CI workflow and the container images have not run on GitHub (the branch
-  has not been pushed).
-- Branch protection for the migration branch is specified, not applied.
-- Every domain other than the school slice is still served only by the
-  existing application.
+- Pages still served only by the existing application: most of the 264 full
+  pages (`docs/platform-page-inventory.json`), among them the Calendar, Work
+  Plan, To-Do, Team Performance, Field Debriefs (20), SSA, completion and
+  evidence, approvals, partners, notifications, budgets and reporting.
+- Saves still made only by the existing application: every save beyond the
+  seven above (group, online and cluster trainings and meetings, SSA,
+  completion, verification, partner work, money).
+- No replayed month on a sanitised restore (M5's exit) — it needs the owner's
+  way of getting sanitised data.
+- No signed iOS or Android release build; no staging environment for the new
+  services; branch protection specified, not applied.
+- No cutover: each needs the owner's explicit approval, verified data
+  reconciliation, recovery testing and a controlled deployment.
