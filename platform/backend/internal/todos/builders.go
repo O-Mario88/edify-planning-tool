@@ -753,6 +753,11 @@ func loanVerificationTodos(ctx context.Context, s *Service, r *reader) ([]todo, 
 	if r.role == leadRole {
 		return passOnIf(len(r.scope.OwnSchoolIDs) > 0, nil)
 	}
+	if r.role == adminRole && contains(rules.Admin.BTVerificationSchedulingRoles, r.role) {
+		// The Admin's only desk of this builder; the BT officer's and the
+		// Country Director's have more and are not built yet.
+		return loanVerificationsToSchedule(ctx, s, r)
+	}
 	if r.role != "CCEO" {
 		return nil, errPassOn
 	}
@@ -787,6 +792,12 @@ ORDER BY r.due_date ASC LIMIT 30`, r.scope.SchoolIDs, rules.LoanFieldVerificatio
 func returnedSSATodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role == leadRole {
 		if _, err := passOnIf(leadSSAConfirmGuard(ctx, s, r)); err != nil {
+			return nil, err
+		}
+	} else if r.role == adminRole {
+		// _blocked_rows: SSA rows the reader's uploads could not import.
+		// Any upload of theirs passes them on.
+		if _, err := passOnIf(s.exists(ctx, `SELECT 1 FROM ssa_import_batch WHERE uploaded_by = $1`, r.p.UserID)); err != nil {
 			return nil, err
 		}
 	} else if r.role != "CCEO" {

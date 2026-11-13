@@ -420,3 +420,14 @@ GRANT SELECT (status) ON ia_verification_sample TO edify_gateway_ro;
 GRANT SELECT (id) ON impact_finding TO edify_gateway_ro;
 GRANT SELECT (id) ON impact_report TO edify_gateway_ro;
 GRANT SELECT (assigned_to_user_id) ON cd_flag TO edify_gateway_ro;
+
+-- The To-Do page's Admin builders (agent/todos-cd-admin, docs/migration/57): the General Budget's desks,
+-- the cost catalogue, partner logins waiting, and the guards of the Accountant's and HR's desks. Months,
+-- statuses, dates and counts only; no amounts, notes or document contents.
+GRANT SELECT (id, month_key, country_id, status) ON monthly_work_plan_budget TO edify_gateway_ro;
+GRANT SELECT (created_at) ON fund_request TO edify_gateway_ro;
+GRANT SELECT (user_setup_status, created_at) ON partner TO edify_gateway_ro;
+GRANT SELECT (returned_amount, return_verified_at) ON advance_request TO edify_gateway_ro;
+GRANT SELECT (status, archived_at) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (probation_review_date) ON hr_onboarding_plan TO edify_gateway_ro;
+GRANT SELECT (uploaded_by) ON ssa_import_batch TO edify_gateway_ro;

@@ -71,6 +71,17 @@ func byRole(base, ia builder) builder {
 	}
 }
 
+// onlyRole is a builder Go has for one role alone; any other role that
+// reaches it is passed on.
+func onlyRole(role string, b builder) builder {
+	return func(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+		if r.role != role {
+			return nil, errPassOn
+		}
+		return b(ctx, s, r)
+	}
+}
+
 // onlyIA is a builder Go has for Impact Assessment alone; any other role
 // that reaches it is passed on.
 func onlyIA(ia builder) builder {
@@ -79,7 +90,8 @@ func onlyIA(ia builder) builder {
 
 func init() {
 	for name, build := range map[string]builder{
-		"_ia_todos": onlyIA(iaVerificationTodos),
+		// The Admin reaches it too: plReviewGuard stands for it (admin.go).
+		"_ia_todos": byRole(onlyRole(adminRole, plReviewGuard), iaVerificationTodos),
 		"apps.activities.ia_todos:ia_queue_todos":     onlyIA(iaQueueGuard),
 		"apps.impact.framework_todos:framework_todos": onlyIA(frameworkTodos),
 		"apps.impact.learning_todos:learning_todos":   onlyIA(learningGuard),

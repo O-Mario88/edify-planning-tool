@@ -122,6 +122,14 @@ LINK_SHAPES = {
     "/ia/framework/?tab=rules&status=required": (
         "/ia/framework/?tab=rules&status=required"
     ),
+    "/country-budget": "/country-budget",
+    "/budget": "/budget",
+    "/disbursements": "/disbursements",
+    "/cost-settings": "/cost-settings",
+    "/work-plan?view=fy": "/work-plan?view=fy",
+    "/admin-panel/users#partner-directory-title": (
+        "/admin-panel/users#partner-directory-title"
+    ),
 }
 
 #: The categories the row template draws an icon for; any other category is
@@ -474,6 +482,42 @@ def next_action_cases() -> list[str]:
     return cases
 
 
+def admin_rules() -> dict:
+    """What the Admin's builders Go has read (todo_service's finance, budget,
+    cost and loan desks, hr.hr_exceptions, partners.user_setup_todos)."""
+    from apps.command_center import todo_service as ts
+    from apps.core.rbac import EdifyRole
+    from apps.hr import hr_exceptions
+    from apps.partners.models import PartnerUserSetupStatus
+    from apps.partners.services import may_manage_partner_users
+
+    return {
+        "accountant_queue_statuses": dict(ts.ACCOUNTANT_QUEUE_STATUSES),
+        "country_budget": {
+            "country": ts.COUNTRY_BUDGET_COUNTRY,
+            "cd_roles": list(ts.COUNTRY_BUDGET_CD_ROLES),
+            "rvp_roles": list(ts.COUNTRY_BUDGET_RVP_ROLES),
+            "accountant_roles": list(ts.COUNTRY_BUDGET_ACCOUNTANT_ROLES),
+            "review_statuses": list(ts.COUNTRY_BUDGET_REVIEW_STATUSES),
+            "returned_status": ts.COUNTRY_BUDGET_RETURNED_STATUS,
+            "submitted_status": ts.COUNTRY_BUDGET_SUBMITTED_STATUS,
+            "approved_status": ts.COUNTRY_BUDGET_APPROVED_STATUS,
+            "team_request_status": ts.COUNTRY_BUDGET_TEAM_REQUEST_STATUS,
+        },
+        "cost_catalogue_settled_statuses": list(ts.COST_CATALOGUE_SETTLED_STATUSES),
+        "bt_verification_scheduling_roles": sorted(ts.BT_VERIFICATION_SCHEDULING_ROLES),
+        "policy_awaiting_publication_statuses": list(
+            hr_exceptions.POLICY_AWAITING_PUBLICATION_STATUSES
+        ),
+        "partner_user_setup_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if may_manage_partner_users(_role_user(role.value))
+        ),
+        "partner_user_setup_pending": PartnerUserSetupStatus.PENDING.value,
+    }
+
+
 def lead_rules() -> dict:
     """What the Programme Lead's builders Go has read (todo_service,
     cce_leadership.todos, hr.review_todos, pl_review, analytics, targets)."""
@@ -544,6 +588,7 @@ def rules() -> dict:
         ],
         "open_links": open_links(),
         "lead": lead_rules(),
+        "admin": admin_rules(),
         "category_tones": category_tones(),
         "priority_order": dict(ts.PRIORITY_ORDER),
         "priority_label": dict(ts.PRIORITY_LABEL),
