@@ -69,6 +69,11 @@ type Entry struct {
 	// that must match the whole value as text.
 	Existing string `json:"existing"`
 	Go       string `json:"go"`
+	// Relation, instead of the two patterns, names how Go's value must
+	// follow from the existing one: "deduplicated" (a JSON list, Go's is the
+	// existing list with its repeats removed, first-seen order). The
+	// existing value must actually hold a repeat.
+	Relation string `json:"relation,omitempty"`
 	// Defect is what is wrong in the existing application; Decision is the
 	// owner's decision (quoted, dated); Test is the unit test proving Go's
 	// corrected behaviour, as "<package dir>.<TestName>"
@@ -135,10 +140,14 @@ func (l *List) Entries() []Entry { return slices.Clone(l.entries) }
 
 func (e *Entry) check() error {
 	missing := []string{}
-	for name, value := range map[string]string{
-		"id": e.ID, "tool": e.Tool, "where": e.Where, "existing": e.Existing, "go": e.Go,
+	required := map[string]string{
+		"id": e.ID, "tool": e.Tool, "where": e.Where,
 		"defect": e.Defect, "decision": e.Decision, "test": e.Test,
-	} {
+	}
+	if e.Relation == "" {
+		required["existing"], required["go"] = e.Existing, e.Go
+	}
+	for name, value := range required {
 		if strings.TrimSpace(value) == "" {
 			missing = append(missing, name)
 		}
@@ -155,6 +164,18 @@ func (e *Entry) check() error {
 	}
 	if !slices.Contains(tools, e.Tool) {
 		return fmt.Errorf("unknown tool %q (one of %s)", e.Tool, strings.Join(tools, ", "))
+	}
+	if e.Relation != "" {
+		if _, known := relations[e.Relation]; !known {
+			return fmt.Errorf("unknown relation %q", e.Relation)
+		}
+		if e.Existing != "" || e.Go != "" {
+			return errors.New("an entry has a relation or two patterns, not both")
+		}
+		if !strings.Contains(e.Test, ".Test") {
+			return fmt.Errorf("test %q is not <package dir>.<TestName>", e.Test)
+		}
+		return nil
 	}
 	if e.Existing == e.Go {
 		return errors.New("the existing and go patterns are the same: that is not a difference")
@@ -193,8 +214,7 @@ func (l *List) Match(a Answer, d Diff) (Entry, bool) {
 	for _, e := range l.entries {
 		if e.Tool == a.Tool && e.Where == a.Where &&
 			(slices.Contains(e.Questions, a.Question) || slices.Equal(e.Questions, []string{AnyQuestion})) &&
-			slices.Contains(e.Fields, d.Field) &&
-			e.existing.MatchString(d.Existing) && e.goValue.MatchString(d.Go) {
+			slices.Contains(e.Fields, d.Field) && e.values(d) {
 			return e, true
 		}
 	}
@@ -236,4 +256,43 @@ func IntendedLines(accepted []Accepted) string {
 	}
 	slices.Sort(lines)
 	return strings.Join(lines, "\n")
+}
+
+// values says whether a difference's two values are the entry's: by its
+// relation, or each matching its pattern whole.
+func (e Entry) values(d Diff) bool {
+	if e.Relation != "" {
+		return relations[e.Relation](d.Existing, d.Go)
+	}
+	return e.existing.MatchString(d.Existing) && e.goValue.MatchString(d.Go)
+}
+
+// relations are the ways an entry may say Go's value follows from the
+// existing one.
+var relations = map[string]func(existing, goValue string) bool{
+	"deduplicated": deduplicated,
+}
+
+// deduplicated: both are JSON lists, the existing one holds a repeat, and
+// Go's is it with every repeat removed, in first-seen order.
+func deduplicated(existing, goValue string) bool {
+	var old, mine []any
+	if json.Unmarshal([]byte(existing), &old) != nil || json.Unmarshal([]byte(goValue), &mine) != nil {
+		return false
+	}
+	want := []any{}
+	seen := map[string]bool{}
+	for _, v := range old {
+		key, _ := json.Marshal(v)
+		if !seen[string(key)] {
+			seen[string(key)] = true
+			want = append(want, v)
+		}
+	}
+	if len(want) == len(old) {
+		return false
+	}
+	a, _ := json.Marshal(want)
+	b, _ := json.Marshal(mine)
+	return string(a) == string(b)
 }

@@ -172,6 +172,9 @@ func TestADeduplicatedRelationAcceptsOnlyTheSameListWithoutRepeats(t *testing.T)
 		if ok(pair[0], pair[1]) {
 			t.Fatalf("%s: accepted", name)
 		}
+	}
+}
+
 func TestAnyQuestionMatchesOnlyItsPageFieldAndValues(t *testing.T) {
 	l, err := Load([]byte(`[{"id":"p","tool":"page","where":"/p","questions":["*"],"fields":[".f"],"existing":"week","go":"month|fy","defect":"d","decision":"o","test":"internal/x.TestY"}]`))
 	if err != nil {
