@@ -79,6 +79,11 @@ PAGES = {
         "drawers": ["/compliance-register/new", "/compliance-register/requirement"],
         "metrics": ["Requirements", "Compliant", "Due soon", "Missing or expired"],
     },
+    "/hr-audit-log": {
+        "permission": "hr_audit_log",
+        "drawers": [],
+        "metrics": ["Events", "Refused actions", "Acting roles", "Showing"],
+    },
     "/health-safety": {
         "permission": "health_safety",
         "drawers": ["/health-safety/new"],

@@ -16,7 +16,8 @@ reach rule once; each register is added to it as it is ported.
 | Staff Offboarding | `/offboarding` | This document |
 | Candidate Pipeline | `/candidate-pipeline` | This document |
 | Employment Compliance | `/compliance-register` | This document |
-| The other registers (pulse surveys, employee relations, compensation, recruitment, workforce planning, performance reviews, policies, HR audit log, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| HR System Audit Log | `/hr-audit-log` | This document |
+| The other registers (pulse surveys, employee relations, compensation, recruitment, workforce planning, performance reviews, policies, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -127,6 +128,21 @@ reach's own, mandatory or not), Compliant and Due soon over the searched
 records, and Missing or expired over the searched records plus the searched
 gaps. Two drawer buttons: "Record evidence" and "Add a requirement".
 
+## 169.2h HR System Audit Log
+
+`hr_audit_log_view`: the HR trail of the tamper-evident audit chain (actions
+starting `hr.`, `pd.`, `pd_`, `leave.`, `documents.`, `admin.user` or
+`admin.supervisor`), not narrowed by reach: every reader of the page reads all
+of it. A search keeps events whose action, acting role, subject id or subject
+kind holds it. The latest 200, each: the action's label (its area, "HR",
+"Professional development", "Leave", "Policy", "Accounts" or the area in
+title case, then its name readable), the actor's name when a live People
+record names them (else their id, else "System"), the acting role, "kind ·
+id" of the subject, Success or Refused, and the time in UTC
+(`%d %b %Y, %H:%M`, as the view writes it). Figures over every matching
+event: Events, Refused actions, Acting roles (distinct, none counted as one),
+Showing (at most 200). Never a payload.
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -146,7 +162,9 @@ stage and last change, a candidate's name and email (the email only to
 search it), a vacancy's role and country (not a candidate's phone, CV or
 notes, nor a vacancy's salary band or budget); a compliance requirement's
 country, name and whether it is mandatory, and an employee's record's
-status, expiry day and verifier (not the evidence document) (applied to `edify_gorn_dev` and
+status, expiry day and verifier (not the evidence document); an audit
+event's acting role, beside its action, actor, success, time and subject
+already granted (never its payload) (applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -160,8 +178,8 @@ status, expiry day and verifier (not the evidence document) (applied to `edify_g
   country, long citations, no injured person; 10 onboarding plans with
   checklists and 10 exits around today; 12 applications at every stage on
   three vacancies; four requirements, mandatory and not, for every country,
-  Uganda and Kenya, and 14 records of every status), asks the existing feed
-  196 questions as Admin, HR and Impact Assessment and deletes
+  Uganda and Kenya, and 14 records of every status; the test database's own
+  555 HR audit events), asks the existing feed 248 questions as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 

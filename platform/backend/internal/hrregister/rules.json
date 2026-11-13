@@ -29,6 +29,7 @@
   },
   "helper_figure_chars": 28,
   "metric_labels": {
+    "Acting roles": "Acting roles",
     "Active": "Active",
     "Applications": "Applications",
     "Awaiting supervisor": "Awaiting supervisor",
@@ -36,6 +37,7 @@
     "Days lost": "Days lost",
     "Departments": "Departments",
     "Due soon": "Due soon",
+    "Events": "Events",
     "Handover gaps": "Handover gaps",
     "Hired": "Hired",
     "In progress": "In progress",
@@ -52,9 +54,11 @@
     "Plans": "Plans",
     "Ready for activation": "Ready for activation",
     "Recognitions": "Recognitions",
+    "Refused actions": "Refused actions",
     "Requirements": "Requirements",
     "Screening": "Screening",
     "Serious incidents": "Serious incidents",
+    "Showing": "Showing",
     "Voluntary exits": "Voluntary exits"
   },
   "onboarding_states": {
@@ -300,6 +304,90 @@
           "drawers": [
             "/health-safety/new"
           ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/hr-audit-log": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
           "page": true,
           "strip": null
         },

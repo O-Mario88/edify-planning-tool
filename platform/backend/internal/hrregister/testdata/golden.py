@@ -68,6 +68,7 @@ PATHS = (
     "/offboarding",
     "/candidate-pipeline",
     "/compliance-register",
+    "/hr-audit-log",
 )
 
 
@@ -290,6 +291,9 @@ QUESTIONS = {
         {"q": "nssf"},
         {"q": "iss"},
         {"q": "Due Soon"},
+        {"q": "leave"},
+        {"q": "admin.user"},
+        {"q": "Program Lead"},
     ],
     "ia@edify.org": [{}, {"page": "2"}],
 }

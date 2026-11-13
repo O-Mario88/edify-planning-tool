@@ -424,3 +424,6 @@ GRANT SELECT (id, role, country) ON hr_vacancy TO edify_gateway_ro;
 -- who verified it. Not the evidence document or a requirement's description.
 GRANT SELECT (id, country, name, is_mandatory) ON hr_compliance_requirement TO edify_gateway_ro;
 GRANT SELECT (id, staff_id, requirement_id, status, expiry_date, verified_by_id) ON hr_employee_compliance_record TO edify_gateway_ro;
+-- The HR System Audit Log: an HR event's acting role, beside the action,
+-- actor, success, time and subject already granted. Never its payload.
+GRANT SELECT (actor_role) ON audit_log TO edify_gateway_ro;
