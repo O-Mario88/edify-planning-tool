@@ -63,7 +63,9 @@ type Service struct {
 	directory   Directory
 	profile     Profile
 	pages       []Pages
-	visits      VisitSaver  // nil unless EDIFY_GO_SAVES names schedule_visit
+	visits      VisitSaver  // nil unless EDIFY_GO_SAVES names schedule_visit or schedule_training_pair
+	visitsInGo  bool        // schedule_visit: 27.3's visits
+	pairsInGo   bool        // schedule_training_pair: 32's In-school Training
 	moves       MoveSaver   // nil unless EDIFY_GO_SAVES names reschedule_visit
 	cancels     CancelSaver // nil unless EDIFY_GO_SAVES names cancel_visit
 	edits       EditSaver   // nil unless EDIFY_GO_SAVES names edit_visit

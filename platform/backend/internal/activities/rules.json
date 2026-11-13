@@ -257,6 +257,21 @@
     "active",
     "reopened"
   ],
+  "pair": {
+    "administrative_mode": "administrative",
+    "collects_ssa_purpose": "in_school_training_ssa",
+    "fixed_mode": "fixed",
+    "training_kind": "in_school_training",
+    "training_purpose": "in_school_training",
+    "training_shapes": [
+      "core_training",
+      "in_school_coaching_visit",
+      "in_school_training",
+      "school_improvement_training",
+      "training"
+    ],
+    "visit_kind": "school_visit"
+  },
   "purposes": {
     "activity_types": {
       "donor_visit": "donor_visit",

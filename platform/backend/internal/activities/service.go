@@ -54,6 +54,9 @@ type Request struct {
 type Answer struct {
 	ActivityID, Status, ActivityType, PlannedDate, FY string
 	Message, Notice, PlanURL, PlanLinkLabel           string
+	// PairedVisitID is the school visit an In-school Training wrote beside
+	// itself (32); empty for a visit.
+	PairedVisitID string
 }
 
 // Request facts the audit pipeline records (the existing request context).
@@ -104,6 +107,9 @@ type plan struct {
 // Schedule makes the save, or refuses it in the existing words, or hands it
 // on (ErrHandOn).
 func (s *Service) Schedule(ctx context.Context, p auth.Principal, req Request, origin Origin) (Answer, error) {
+	if IsPairPurpose(req.Purpose) {
+		return s.schedulePair(ctx, p, req, origin)
+	}
 	pl, err := s.prepare(ctx, p, req, origin)
 	if err != nil {
 		return Answer{}, err
@@ -194,12 +200,23 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 			itemID, recReason = resolved.ID, ""
 		}
 	}
-	// The school, resolved again on POST (2318–2338).
-	sc, err := schoolByIDOrCode(ctx, s.db, strings.TrimSpace(req.SchoolID))
+	sc, err := s.ownSchool(ctx, p, req.SchoolID, now)
 	if err != nil {
 		return nil, err
 	}
-	if sc == nil || sc.Code != strings.TrimSpace(req.SchoolID) || in(rules.Gate.CoreRuleTypes, sc.Type) {
+	return s.create(ctx, p, req, origin, now, today, day, *sc, itemID, recReason, purpose, activityType)
+}
+
+// ownSchool is the view's school (2318–2338) for the cases Go takes: the
+// person's own school by its code, not a Core school, still operating, and
+// owned by them. Anything else is handed on.
+func (s *Service) ownSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, error) {
+	// The school, resolved again on POST (2318–2338).
+	sc, err := schoolByIDOrCode(ctx, s.db, strings.TrimSpace(schoolID))
+	if err != nil {
+		return nil, err
+	}
+	if sc == nil || sc.Code != strings.TrimSpace(schoolID) || in(rules.Gate.CoreRuleTypes, sc.Type) {
 		// Not the owner's school by its code, or a Core school (the package
 		// route): handed on.
 		return nil, handOn("not a school code, or a Core school")
@@ -221,7 +238,7 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 	if owner != p.StaffProfileID {
 		return nil, handOn("the school's owner is someone else")
 	}
-	return s.create(ctx, p, req, origin, now, today, day, *sc, itemID, recReason, purpose, activityType)
+	return sc, nil
 }
 
 func dateOnly(t time.Time) time.Time {

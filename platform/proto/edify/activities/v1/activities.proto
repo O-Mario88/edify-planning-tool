@@ -56,7 +56,10 @@ message ScheduleSchoolVisitRequest {
   // the existing view resolves both).
   string school_id = 1;
   // purpose_of_visit: one of "training_follow_up", "ssa_support",
-  // "donor_visit", "story_gathering", "school_invitation", "social_visit".
+  // "donor_visit", "story_gathering", "school_invitation", "social_visit";
+  // or "in_school_training" / "in_school_training_ssa", which plan an
+  // In-school Training and its school visit together, the visit collecting
+  // the school's SSA for the second (docs/migration/32).
   string purpose_of_visit = 2;
   // scheduled_date: the planned day, "YYYY-MM-DD".
   string scheduled_date = 3;
@@ -71,6 +74,8 @@ message ScheduleSchoolVisitRequest {
   string ssa_deviation_reason = 6;
   // catalogue_item_id: the item the drawer pinned, if any. Empty: the item
   // is resolved from the purpose, as the drawer's require_catalogue=yes asks.
+  // For an In-school Training it is the Training Catalogue course chosen in
+  // the drawer's Training field, and may not be empty.
   string catalogue_item_id = 7;
   // recommendation_reason: the reason the drawer carries for the item it
   // pinned. Cleared when the pinned item is replaced by the purpose's own.
@@ -107,6 +112,10 @@ message ScheduledActivity {
   // and its label, "Open My Plan".
   string plan_url = 8;
   string plan_link_label = 9;
+  // For an In-school Training (the activity above): the id of the school
+  // visit saved beside it, the same day, which carries the visit's cost.
+  // Empty for a visit.
+  string paired_school_visit_id = 10;
 }
 
 // The Reschedule drawer's own fields, named as it posts them.

@@ -30,10 +30,28 @@ type VisitSaver interface {
 	Schedule(ctx context.Context, p auth.Principal, req activities.Request, origin activities.Origin) (activities.Answer, error)
 }
 
-// WithVisitSave makes the Schedule drawer's saves Go's where Go takes them.
+// WithVisitSave makes the Schedule drawer's visit saves (27.3) Go's where
+// Go takes them.
 func (s *Service) WithVisitSave(saver VisitSaver, logger *slog.Logger) *Service {
-	s.visits, s.logger = saver, logger
+	s.visits, s.logger, s.visitsInGo = saver, logger, true
 	return s
+}
+
+// WithTrainingPairSave makes the Schedule drawer's In-school Training saves
+// (docs/migration/32) Go's where Go takes them, behind its own switch
+// (EDIFY_GO_SAVES=schedule_training_pair).
+func (s *Service) WithTrainingPairSave(saver VisitSaver, logger *slog.Logger) *Service {
+	s.visits, s.logger, s.pairsInGo = saver, logger, true
+	return s
+}
+
+// switchedOn is whether the switch for this save is on: the pair's and the
+// visit's are separate, so naming one never moves the other.
+func (s *Service) switchedOn(req activities.Request) bool {
+	if activities.IsPairPurpose(req.Purpose) {
+		return s.pairsInGo
+	}
+	return s.visitsInGo
 }
 
 const scheduleKind = "schedule"
@@ -59,7 +77,7 @@ func (s *Service) scheduleInGo(
 		return nil, false, nil
 	}
 	req, taken := activities.RequestFromForm(form)
-	if !taken {
+	if !taken || !s.switchedOn(req) {
 		return nil, false, nil
 	}
 	saved, err := s.visits.Schedule(ctx, principal, req, origin)

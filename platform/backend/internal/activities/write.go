@@ -36,6 +36,18 @@ type activityRow struct {
 	sourceBand                                                    string
 	batchID                                                       string
 	recommendationID                                              string
+	// The In-school Training pair (docs/migration/32): the course a
+	// training delivers, the name it is saved under, and the visit beside it.
+	trainingCourseID, nameSnapshot, pairedVisitID string
+}
+
+// name is the activity_name_snapshot: the item's, or the course's for a
+// training (_create 3471–3478).
+func (r activityRow) name() string {
+	if r.nameSnapshot != "" {
+		return r.nameSnapshot
+	}
+	return r.item.DisplayName
 }
 
 type rowInput struct {
@@ -283,7 +295,7 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 		{"activity_purpose_text", r.goal}, {"expected_outcome", r.outcome},
 		{"ssa_collection_expected", r.collects}, {"attended_school_ids", []string{}},
 		{"salesforce_activity_type", r.salesforceType()}, {"catalogue_item_id", r.item.ID},
-		{"catalogue_version", r.version}, {"activity_name_snapshot", r.item.DisplayName},
+		{"catalogue_version", r.version}, {"activity_name_snapshot", r.name()},
 		{"activity_type_snapshot", r.item.ActivityType}, {"delivery_method_snapshot", r.item.DeliveryMethod},
 		{"evidence_profile_snapshot", optString(r.item.EvidenceProfile)},
 		{"costing_profile_snapshot", optString(r.item.CostingProfile)},
@@ -298,6 +310,7 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 		{"delivery_contact_name", ""}, {"approval_owner_id", ""}, {"owner_decision_note", ""},
 		{"visit_justification", ""}, {"partner_date_set_by", ""}, {"meeting_kind", ""},
 		{"daily_visit_batch_id", optString(r.batchID)},
+		{"training_course_id", optString(r.trainingCourseID)}, {"paired_school_visit_id", optString(r.pairedVisitID)},
 	}
 	names := make([]string, len(columns))
 	marks := make([]string, len(columns))

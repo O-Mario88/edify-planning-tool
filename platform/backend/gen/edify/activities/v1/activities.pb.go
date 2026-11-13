@@ -28,7 +28,10 @@ type ScheduleSchoolVisitRequest struct {
 	// the existing view resolves both).
 	SchoolId string `protobuf:"bytes,1,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
 	// purpose_of_visit: one of "training_follow_up", "ssa_support",
-	// "donor_visit", "story_gathering", "school_invitation", "social_visit".
+	// "donor_visit", "story_gathering", "school_invitation", "social_visit";
+	// or "in_school_training" / "in_school_training_ssa", which plan an
+	// In-school Training and its school visit together, the visit collecting
+	// the school's SSA for the second (docs/migration/32).
 	PurposeOfVisit string `protobuf:"bytes,2,opt,name=purpose_of_visit,json=purposeOfVisit,proto3" json:"purpose_of_visit,omitempty"`
 	// scheduled_date: the planned day, "YYYY-MM-DD".
 	ScheduledDate string `protobuf:"bytes,3,opt,name=scheduled_date,json=scheduledDate,proto3" json:"scheduled_date,omitempty"`
@@ -43,6 +46,8 @@ type ScheduleSchoolVisitRequest struct {
 	SsaDeviationReason string `protobuf:"bytes,6,opt,name=ssa_deviation_reason,json=ssaDeviationReason,proto3" json:"ssa_deviation_reason,omitempty"`
 	// catalogue_item_id: the item the drawer pinned, if any. Empty: the item
 	// is resolved from the purpose, as the drawer's require_catalogue=yes asks.
+	// For an In-school Training it is the Training Catalogue course chosen in
+	// the drawer's Training field, and may not be empty.
 	CatalogueItemId string `protobuf:"bytes,7,opt,name=catalogue_item_id,json=catalogueItemId,proto3" json:"catalogue_item_id,omitempty"`
 	// recommendation_reason: the reason the drawer carries for the item it
 	// pinned. Cleared when the pinned item is replaced by the purpose's own.
@@ -215,8 +220,12 @@ type ScheduledActivity struct {
 	// and its label, "Open My Plan".
 	PlanUrl       string `protobuf:"bytes,8,opt,name=plan_url,json=planUrl,proto3" json:"plan_url,omitempty"`
 	PlanLinkLabel string `protobuf:"bytes,9,opt,name=plan_link_label,json=planLinkLabel,proto3" json:"plan_link_label,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// For an In-school Training (the activity above): the id of the school
+	// visit saved beside it, the same day, which carries the visit's cost.
+	// Empty for a visit.
+	PairedSchoolVisitId string `protobuf:"bytes,10,opt,name=paired_school_visit_id,json=pairedSchoolVisitId,proto3" json:"paired_school_visit_id,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *ScheduledActivity) Reset() {
@@ -308,6 +317,13 @@ func (x *ScheduledActivity) GetPlanUrl() string {
 func (x *ScheduledActivity) GetPlanLinkLabel() string {
 	if x != nil {
 		return x.PlanLinkLabel
+	}
+	return ""
+}
+
+func (x *ScheduledActivity) GetPairedSchoolVisitId() string {
+	if x != nil {
+		return x.PairedSchoolVisitId
 	}
 	return ""
 }
@@ -986,7 +1002,7 @@ const file_edify_activities_v1_activities_proto_rawDesc = "" +
 	"\x15recommendation_reason\x18\b \x01(\tR\x14recommendationReason\"{\n" +
 	"\x1bScheduleSchoolVisitResponse\x12B\n" +
 	"\bactivity\x18\x01 \x01(\v2&.edify.activities.v1.ScheduledActivityR\bactivity\x12\x18\n" +
-	"\arefused\x18\x02 \x01(\tR\arefused\"\x88\x02\n" +
+	"\arefused\x18\x02 \x01(\tR\arefused\"\xbd\x02\n" +
 	"\x11ScheduledActivity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12#\n" +
@@ -996,7 +1012,9 @@ const file_edify_activities_v1_activities_proto_rawDesc = "" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x16\n" +
 	"\x06notice\x18\a \x01(\tR\x06notice\x12\x19\n" +
 	"\bplan_url\x18\b \x01(\tR\aplanUrl\x12&\n" +
-	"\x0fplan_link_label\x18\t \x01(\tR\rplanLinkLabel\"~\n" +
+	"\x0fplan_link_label\x18\t \x01(\tR\rplanLinkLabel\x123\n" +
+	"\x16paired_school_visit_id\x18\n" +
+	" \x01(\tR\x13pairedSchoolVisitId\"~\n" +
 	"\x1cRescheduleSchoolVisitRequest\x12\x1f\n" +
 	"\vactivity_id\x18\x01 \x01(\tR\n" +
 	"activityId\x12%\n" +

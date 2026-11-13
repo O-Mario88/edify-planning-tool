@@ -11,7 +11,7 @@ func TestGoSavesAreOffUnlessNamedAndOnlyInDevelopmentOrStaging(t *testing.T) {
 	tests := []struct {
 		name, env, saves, app, key string
 		want, wantMove, wantCancel bool
-		wantEdit                   bool
+		wantEdit, wantPair         bool
 		wantErr                    string
 	}{
 		{name: "off by default", env: "development", app: "http://localhost:8010", key: key},
@@ -33,6 +33,10 @@ func TestGoSavesAreOffUnlessNamedAndOnlyInDevelopmentOrStaging(t *testing.T) {
 		{name: "all four saves", env: "development", saves: "schedule_visit,reschedule_visit,cancel_visit,edit_visit", app: "http://localhost:8010", key: key, want: true, wantMove: true, wantCancel: true, wantEdit: true},
 		{name: "the edit refused in test", env: "test", saves: "edit_visit", app: "http://localhost:8010", key: key, wantErr: "refused in test"},
 		{name: "the edit without the internal key", env: "development", saves: "edit_visit", app: "http://localhost:8010", wantErr: "EDIFY_INTERNAL_KEY"},
+		{name: "the training pair alone", env: "development", saves: "schedule_training_pair", app: "http://localhost:8010", key: key, wantPair: true},
+		{name: "the training pair beside the visit", env: "development", saves: "schedule_visit,schedule_training_pair", app: "http://localhost:8010", key: key, want: true, wantPair: true},
+		{name: "the training pair refused in test", env: "test", saves: "schedule_training_pair", app: "http://localhost:8010", key: key, wantErr: "refused in test"},
+		{name: "the training pair without the existing application", env: "development", saves: "schedule_training_pair", key: key, wantErr: "EDIFY_EXISTING_APP_URL"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -54,7 +58,8 @@ func TestGoSavesAreOffUnlessNamedAndOnlyInDevelopmentOrStaging(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			if cfg.GoSaves.ScheduleVisit != test.want || cfg.GoSaves.RescheduleVisit != test.wantMove ||
-				cfg.GoSaves.CancelVisit != test.wantCancel || cfg.GoSaves.EditVisit != test.wantEdit {
+				cfg.GoSaves.CancelVisit != test.wantCancel || cfg.GoSaves.EditVisit != test.wantEdit ||
+				cfg.GoSaves.ScheduleTrainingPair != test.wantPair {
 				t.Fatalf("GoSaves = %+v, want schedule %v, move %v, cancel %v, edit %v", cfg.GoSaves, test.want, test.wantMove,
 					test.wantCancel, test.wantEdit)
 			}
