@@ -444,3 +444,6 @@ GRANT SELECT (loan_id, due_date, ia_status, prepared_by, prepared_at, updated_at
 -- The Training Summary's Schools tab (internal/trainingsummary, doc 44):
 -- training_coverage.uncovered leaves out a school marked a duplicate.
 GRANT SELECT (duplicate_status) ON school TO edify_gateway_ro;
+-- Planning Oversight's Team Plan (internal/planningoversight, doc 47.6):
+-- an undated activity sits in its month by planned_month (_in_month).
+GRANT SELECT (planned_month) ON activity TO edify_gateway_ro;

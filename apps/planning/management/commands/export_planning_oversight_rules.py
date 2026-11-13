@@ -69,6 +69,57 @@ def doors() -> dict:
     return out
 
 
+def team_plan() -> dict:
+    """What the Team Plan lens draws for a Programme Lead whose team has
+    nothing planned in the period, from the view's own builders."""
+    from apps.core.permissions import RolePermissionService
+    from apps.core.rbac import EdifyRole
+    from apps.frontend.views import oversight_views as views
+    from apps.mobile_feed.views import NOT_PASSED
+    from apps.planning import flagged_schools
+    from apps.planning import oversight_service as oversight
+
+    role = EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    user = _role_user(role)
+    lenses = views.team_oversight_lenses(user)
+    lens_tabs = views._lens_tabs(
+        views.TEAM_OVERSIGHT_PATH,
+        "planning",
+        views.team_available_lenses(lenses),
+        country=views.is_country_reader(user),
+    )
+    owner_tabs, _selected, _items = views._team_owner_tabs(
+        oversight.OversightScope(kind="pl"), [], views.WHOLE_TEAM_TAB
+    )
+    kpis = views._kpi_items(oversight.summarize([]), country=False, region=False)
+    return {
+        "lead_role": role,
+        "lens_tabs": [
+            {"label": t["label"], "href": t["href"], "active": t["is_active"]}
+            for t in lens_tabs
+        ],
+        "owner_tabs": [{"key": t["key"], "label": t["label"]} for t in owner_tabs],
+        "activity_tabs": [
+            {"key": t["key"], "label": t["label"]}
+            for t in oversight.activity_tabs([], "all")
+        ],
+        "zero_kpis": [
+            {
+                "label": k["label"],
+                "value": k["display_value"],
+                "helper": k["helper"],
+                "tone": k["tone"],
+            }
+            for k in kpis
+        ],
+        "evidence_link": RolePermissionService.can_view_page(user, "evidence_center"),
+        "live_activity_statuses": list(oversight.LIVE_ACTIVITY_STATUSES),
+        "not_planned_statuses": list(flagged_schools.NOT_PLANNED_STATUSES),
+        "filter_keys": list(oversight.FILTER_KEYS),
+        "query_keys_not_passed": sorted(NOT_PASSED),
+    }
+
+
 def rules() -> dict:
     from apps.mobile_feed.views import NATIVE_PAGES
 
@@ -78,6 +129,7 @@ def rules() -> dict:
             for key, (path, name, _pages) in PAGES.items()
         },
         "doors": doors(),
+        "team_plan": team_plan(),
     }
 
 
