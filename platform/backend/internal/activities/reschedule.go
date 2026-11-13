@@ -213,7 +213,7 @@ func movedVisit(ctx context.Context, q Querier, id string) (*moved, error) {
 	}
 	var a moved
 	var purpose, school, responsible, batch, itemID, name *string
-	var planned *time.Time
+	var planned, scheduled *time.Time
 	var other bool
 	err := q.QueryRow(ctx, `
 SELECT a.id, a.activity_type, a.status, a.purpose_type, a.school_id, a.responsible_staff_id,
@@ -225,8 +225,10 @@ SELECT a.id, a.activity_type, a.status, a.purpose_type, a.school_id, a.responsib
         OR EXISTS (SELECT 1 FROM activity o WHERE o.paired_school_visit_id = a.id))
 FROM activity a WHERE a.id = $1 AND a.deleted_at IS NULL`, id).Scan(
 		&a.id, &a.activityType, &a.status, &purpose, &school, &responsible, &batch, &itemID, &name,
-		&a.scheduled, &planned, &a.count, &other)
-	if errors.Is(err, pgx.ErrNoRows) || (err == nil && (other || school == nil || planned == nil)) {
+		&scheduled, &planned, &a.count, &other)
+	// An activity with no date (scheduled_date NULL) is not one a move or a
+	// cancel of a scheduled visit takes: handed on, as `other` says.
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && (other || school == nil || planned == nil || scheduled == nil)) {
 		return nil, nil
 	}
 	if err != nil {
@@ -234,7 +236,7 @@ FROM activity a WHERE a.id = $1 AND a.deleted_at IS NULL`, id).Scan(
 	}
 	a.purpose, a.schoolID, a.responsible = text(purpose), text(school), text(responsible)
 	a.batchID, a.itemID, a.nameSnapshot = text(batch), text(itemID), text(name)
-	a.plannedDate = *planned
+	a.plannedDate, a.scheduled = *planned, *scheduled
 	return &a, nil
 }
 
@@ -317,46 +319,8 @@ func (s *Service) writeMove(ctx context.Context, pl *movePlan) (int64, error) {
 		return 0, fmt.Errorf("activities: opening the move: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-
-	var status string
-	var batch *string
-	var scheduled time.Time
-	var count int
-	if err := tx.QueryRow(ctx, `SELECT status, daily_visit_batch_id, scheduled_date, reschedule_count
-FROM activity WHERE id = $1 FOR UPDATE`, pl.a.id).Scan(&status, &batch, &scheduled, &count); err != nil {
-		return 0, fmt.Errorf("activities: locking the visit: %w", err)
-	}
-	if status != pl.a.status || text(batch) != pl.a.batchID || !scheduled.Equal(pl.a.scheduled) || count != pl.a.count {
-		// Changed between the read and the lock: not what was decided on.
-		return 0, handOn("the visit changed before its lock")
-	}
-	if err := moveDuplicate(ctx, tx, pl); err != nil {
+	if _, err := s.moveInTx(ctx, tx, pl); err != nil {
 		return 0, err
-	}
-	// The day's refusal is met once the visit leaves and joins
-	// (_reprice_moved_activity, then _assert_days_can_follow).
-	if pl.verdict.Refusal != "" {
-		return 0, &Refusal{Message: pl.verdict.Refusal}
-	}
-	newBatch, err := s.joinMovedDay(ctx, tx, pl)
-	if err != nil {
-		return 0, err
-	}
-	pl.newBatch = newBatch
-	if _, err := tx.Exec(ctx, `UPDATE activity SET scheduled_date = $2, fy = $3, quarter = $4, planned_date = $5,
-  planned_month = $6, planned_week = $7, reschedule_count = reschedule_count + 1, last_reason = $8,
-  status = 'rescheduled', daily_visit_batch_id = $9, updated_at = $10 WHERE id = $1`,
-		pl.a.id, pl.scheduled, pl.fy, pl.quarter, pl.newDay.Format(time.DateOnly), pl.month, pl.week,
-		pl.reason, newBatch, pl.now); err != nil {
-		return 0, fmt.Errorf("activities: moving the visit: %w", err)
-	}
-	if !sameDay(pl.a.plannedDate, pl.newDay) {
-		if _, err := tx.Exec(ctx, `INSERT INTO activity_schedule_change (id, kind, from_day, to_day, from_status,
-  to_status, reason, changed_at, activity_id) VALUES ($1, 'rescheduled', $2, $3, $4, 'rescheduled', $5, $6, $7)`,
-			cuid.New(), pl.a.plannedDate.Format(time.DateOnly), pl.newDay.Format(time.DateOnly), pl.a.status,
-			truncateRunes(pl.reason, 512), pl.now, pl.a.id); err != nil {
-			return 0, fmt.Errorf("activities: writing the schedule trail: %w", err)
-		}
 	}
 	rowID, err := keepMoveCosts(ctx, tx, pl)
 	if err != nil {
@@ -366,6 +330,56 @@ FROM activity WHERE id = $1 FOR UPDATE`, pl.a.id).Scan(&status, &batch, &schedul
 		return 0, fmt.Errorf("activities: committing the move: %w", err)
 	}
 	return rowID, nil
+}
+
+// moveInTx is the move's writes inside a transaction it is given (5263–5393
+// up to the costs): the activity's lock, the duplicate test, the day's
+// refusal, the day joined, the row and the timeline row. stored says the
+// existing save would have stored the row before a refusal (the day's is met
+// after it), which a group's ledger marks follow (group.go).
+func (s *Service) moveInTx(ctx context.Context, tx pgx.Tx, pl *movePlan) (stored bool, err error) {
+	var status string
+	var batch *string
+	var scheduled time.Time
+	var count int
+	if err := tx.QueryRow(ctx, `SELECT status, daily_visit_batch_id, scheduled_date, reschedule_count
+FROM activity WHERE id = $1 FOR UPDATE`, pl.a.id).Scan(&status, &batch, &scheduled, &count); err != nil {
+		return false, fmt.Errorf("activities: locking the visit: %w", err)
+	}
+	if status != pl.a.status || text(batch) != pl.a.batchID || !scheduled.Equal(pl.a.scheduled) || count != pl.a.count {
+		// Changed between the read and the lock: not what was decided on.
+		return false, handOn("the visit changed before its lock")
+	}
+	if err := moveDuplicate(ctx, tx, pl); err != nil {
+		return false, err
+	}
+	// The day's refusal is met once the visit leaves and joins
+	// (_reprice_moved_activity, then _assert_days_can_follow).
+	if pl.verdict.Refusal != "" {
+		// The existing save has stored the row by then (5326, then 5379).
+		return true, &Refusal{Message: pl.verdict.Refusal}
+	}
+	newBatch, err := s.joinMovedDay(ctx, tx, pl)
+	if err != nil {
+		return false, err
+	}
+	pl.newBatch = newBatch
+	if _, err := tx.Exec(ctx, `UPDATE activity SET scheduled_date = $2, fy = $3, quarter = $4, planned_date = $5,
+  planned_month = $6, planned_week = $7, reschedule_count = reschedule_count + 1, last_reason = $8,
+  status = 'rescheduled', daily_visit_batch_id = $9, updated_at = $10 WHERE id = $1`,
+		pl.a.id, pl.scheduled, pl.fy, pl.quarter, pl.newDay.Format(time.DateOnly), pl.month, pl.week,
+		pl.reason, newBatch, pl.now); err != nil {
+		return false, fmt.Errorf("activities: moving the visit: %w", err)
+	}
+	if !sameDay(pl.a.plannedDate, pl.newDay) {
+		if _, err := tx.Exec(ctx, `INSERT INTO activity_schedule_change (id, kind, from_day, to_day, from_status,
+  to_status, reason, changed_at, activity_id) VALUES ($1, 'rescheduled', $2, $3, $4, 'rescheduled', $5, $6, $7)`,
+			cuid.New(), pl.a.plannedDate.Format(time.DateOnly), pl.newDay.Format(time.DateOnly), pl.a.status,
+			truncateRunes(pl.reason, 512), pl.now, pl.a.id); err != nil {
+			return false, fmt.Errorf("activities: writing the schedule trail: %w", err)
+		}
+	}
+	return true, nil
 }
 
 func sameDay(a, b time.Time) bool {

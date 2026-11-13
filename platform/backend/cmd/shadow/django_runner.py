@@ -179,7 +179,7 @@ def play(client: Client, step: dict) -> dict:
     for thread in list(after_save._running):
         thread.join(30)
     trigger = answer.headers.get("HX-Trigger", "")
-    return {
+    outcome = {
         "ok": answer.status_code < 400,
         "status": answer.status_code,
         "action": form["action"],
@@ -189,6 +189,23 @@ def play(client: Client, step: dict) -> dict:
         # make the same save with the same fields.
         "posted": data,
     }
+    # A save that reloads the page says what it did in a flash message
+    # (the group actions' "3 activities moved to …"), not in its answer.
+    flash = [str(m) for m in getattr(answer.wsgi_request, "_messages", [])]
+    if flash:
+        outcome["flash"] = flash
+    if "activity_ids" in data:
+        # The ticked activities by their purpose text, so another copy finds
+        # its own ids for them (each copy makes its own).
+        from apps.activities.models import Activity
+
+        texts = dict(
+            Activity.objects.filter(id__in=data["activity_ids"]).values_list(
+                "id", "activity_purpose_text"
+            )
+        )
+        outcome["posted_texts"] = [texts.get(i) or "" for i in data["activity_ids"]]
+    return outcome
 
 
 def main():

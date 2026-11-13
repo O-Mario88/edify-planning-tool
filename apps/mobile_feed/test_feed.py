@@ -1181,6 +1181,74 @@ class PageDrawerFeedTest(SchoolActionFeedTest):
         )
         self.assertEqual(statuses, {"cancelled"})
 
+    def _second_visit(self):
+        from apps.activities.models import Activity
+
+        return Activity.objects.create(
+            activity_type="school_visit",
+            status="scheduled",
+            school=self.school,
+            responsible_staff_id=self.profile.id,
+            delivery_type="staff",
+            planned_date=self.visit.planned_date,
+            fy=self.visit.fy,
+            quarter=self.visit.quarter,
+        )
+
+    def form_only(self, path, values):
+        return self.client.post(
+            "/api/mobile/v1/drawer?form_only=1",
+            {"path": path, "values": values},
+            format="json",
+            **self.auth,
+        )
+
+    def test_a_group_form_is_what_the_save_would_post_and_nothing_is_saved(self):
+        """docs/migration/33: the gateway's Go group asks for the form the
+        group drawer's save would post: every ticked id, the person's date
+        and reason, and the request facts its rows carry."""
+        from apps.activities.models import Activity
+
+        second = self._second_visit()
+        ticked = f"{self.visit.id},{second.id}"
+        for kind, values in (
+            ("reschedule", {"scheduled_date": "2099-01-05", "reason": "Exams"}),
+            ("cancel", {"reason": "Exams"}),
+        ):
+            with self.subTest(kind=kind):
+                body = self.form_only(
+                    f"/activity-selection/{kind}?ids={ticked}", values
+                ).json()
+
+                self.assertEqual(body["save"], f"/activity-selection/{kind}")
+                self.assertEqual(
+                    sorted(body["form"]["activity_ids"]),
+                    sorted([self.visit.id, second.id]),
+                )
+                for name, value in values.items():
+                    self.assertEqual(body["form"][name], value)
+                self.assertEqual(
+                    set(body["origin"]), {"ip", "agent", "correlation"}, body
+                )
+        self.assertEqual(
+            set(
+                Activity.objects.filter(id__in=[self.visit.id, second.id]).values_list(
+                    "status", flat=True
+                )
+            ),
+            {"scheduled"},
+        )
+
+    def test_a_group_form_keeps_the_drawers_refusals(self):
+        self.assertEqual(
+            self.form_only(
+                "/activity-selection/cancel?ids=x", "not a dict"
+            ).status_code,
+            400,
+        )
+        body = self.form_only(f"/my-plan/{self.visit.id}/start-drawer", {}).json()
+        self.assertNotIn("form", body)
+
     def test_a_drawer_opens_with_every_ticked_school(self):
         from apps.mobile_feed.views import _page_params
 

@@ -82,3 +82,35 @@ func TestGoSavesNeverLoadInProduction(t *testing.T) {
 		t.Fatal("the switch must be refused in production even past Load")
 	}
 }
+
+// The group saves (docs/migration/33): each off unless named, each switch
+// its own, refused outside development and staging, and needing the
+// existing application as every Go save does.
+func TestTheGroupSavesAreOffUnlessNamed(t *testing.T) {
+	const key = "0123456789abcdef0123456789abcdef"
+	app := "http://localhost:8010"
+	for _, c := range []struct {
+		env, saves, app string
+		move, cancel    bool
+		wantErr         string
+	}{
+		{env: "development", app: app},
+		{env: "development", saves: "group_reschedule", app: app, move: true},
+		{env: "development", saves: "group_cancel", app: app, cancel: true},
+		{env: "staging", saves: "group_reschedule,group_cancel", app: app, move: true, cancel: true},
+		{env: "test", saves: "group_cancel", app: app, wantErr: "refused in test"},
+		{env: "development", saves: "group_reschedule", wantErr: "EDIFY_EXISTING_APP_URL"},
+	} {
+		saves, err := loadGoSaves(Environment(c.env), env(map[string]string{"EDIFY_GO_SAVES": c.saves}), c.app, key)
+		if c.wantErr != "" {
+			if err == nil || !strings.Contains(err.Error(), c.wantErr) {
+				t.Errorf("%s %q: want %q, got %v", c.env, c.saves, c.wantErr, err)
+			}
+			continue
+		}
+		if err != nil || saves.GroupReschedule != c.move || saves.GroupCancel != c.cancel ||
+			saves.RescheduleVisit || saves.CancelVisit {
+			t.Errorf("%s %q: %+v, %v", c.env, c.saves, saves, err)
+		}
+	}
+}

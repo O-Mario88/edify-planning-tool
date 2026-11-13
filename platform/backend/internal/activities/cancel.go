@@ -190,39 +190,8 @@ func (s *Service) writeCancel(ctx context.Context, pl *cancelPlan) (int64, error
 		return 0, fmt.Errorf("activities: opening the cancel: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-
-	var status string
-	var batch *string
-	if err := tx.QueryRow(ctx, `SELECT status, daily_visit_batch_id FROM activity WHERE id = $1 FOR UPDATE`,
-		pl.a.id).Scan(&status, &batch); err != nil {
-		return 0, fmt.Errorf("activities: locking the visit: %w", err)
-	}
-	if status != pl.a.status || text(batch) != pl.a.batchID {
-		return 0, handOn("the visit changed before its lock")
-	}
-	if _, err := tx.Exec(ctx, `UPDATE activity SET status = 'cancelled', last_reason = $2, updated_at = $3 WHERE id = $1`,
-		pl.a.id, pl.reason, pl.now); err != nil {
-		return 0, fmt.Errorf("activities: cancelling the visit: %w", err)
-	}
-	if !in(offPlanStatuses, pl.a.status) {
-		day := pl.a.plannedDate.Format(time.DateOnly)
-		if _, err := tx.Exec(ctx, `INSERT INTO activity_schedule_change (id, kind, from_day, to_day, from_status,
-  to_status, reason, changed_at, activity_id) VALUES ($1, 'cancelled', $2, $2, $3, 'cancelled', '', $4, $5)`,
-			cuid.New(), day, pl.a.status, pl.now, pl.a.id); err != nil {
-			return 0, fmt.Errorf("activities: writing the schedule trail: %w", err)
-		}
-	}
-	// remove_school: the day is left unless its week has left draft, when
-	// the visit is kept on it (_detach_from_daily_visit_batch).
-	if pl.a.batchID != "" && !pl.verdict.LeftFrozen {
-		if _, err := tx.Exec(ctx, `UPDATE activity SET daily_visit_batch_id = NULL, updated_at = $2 WHERE id = $1`,
-			pl.a.id, s.now()); err != nil {
-			return 0, fmt.Errorf("activities: leaving the day: %w", err)
-		}
-	}
-	var withdrawn int
-	if err := tx.QueryRow(ctx, `SELECT gateway_money.withdraw_unmoved_advances($1)`, pl.a.id).Scan(&withdrawn); err != nil {
-		return 0, fmt.Errorf("activities: withdrawing the advances: %w", err)
+	if err := s.cancelInTx(ctx, tx, pl); err != nil {
+		return 0, err
 	}
 	rowID, err := keepCancelCosts(ctx, tx, pl)
 	if err != nil {
@@ -232,6 +201,46 @@ func (s *Service) writeCancel(ctx context.Context, pl *cancelPlan) (int64, error
 		return 0, fmt.Errorf("activities: committing the cancel: %w", err)
 	}
 	return rowID, nil
+}
+
+// cancelInTx is the cancel's writes inside a transaction it is given
+// (6601–6658, up to the costs): the activity's lock, its row, the timeline
+// row, the day it leaves and the advances withdrawn.
+func (s *Service) cancelInTx(ctx context.Context, tx pgx.Tx, pl *cancelPlan) error {
+	var status string
+	var batch *string
+	if err := tx.QueryRow(ctx, `SELECT status, daily_visit_batch_id FROM activity WHERE id = $1 FOR UPDATE`,
+		pl.a.id).Scan(&status, &batch); err != nil {
+		return fmt.Errorf("activities: locking the visit: %w", err)
+	}
+	if status != pl.a.status || text(batch) != pl.a.batchID {
+		return handOn("the visit changed before its lock")
+	}
+	if _, err := tx.Exec(ctx, `UPDATE activity SET status = 'cancelled', last_reason = $2, updated_at = $3 WHERE id = $1`,
+		pl.a.id, pl.reason, pl.now); err != nil {
+		return fmt.Errorf("activities: cancelling the visit: %w", err)
+	}
+	if !in(offPlanStatuses, pl.a.status) {
+		day := pl.a.plannedDate.Format(time.DateOnly)
+		if _, err := tx.Exec(ctx, `INSERT INTO activity_schedule_change (id, kind, from_day, to_day, from_status,
+  to_status, reason, changed_at, activity_id) VALUES ($1, 'cancelled', $2, $2, $3, 'cancelled', '', $4, $5)`,
+			cuid.New(), day, pl.a.status, pl.now, pl.a.id); err != nil {
+			return fmt.Errorf("activities: writing the schedule trail: %w", err)
+		}
+	}
+	// remove_school: the day is left unless its week has left draft, when
+	// the visit is kept on it (_detach_from_daily_visit_batch).
+	if pl.a.batchID != "" && !pl.verdict.LeftFrozen {
+		if _, err := tx.Exec(ctx, `UPDATE activity SET daily_visit_batch_id = NULL, updated_at = $2 WHERE id = $1`,
+			pl.a.id, s.now()); err != nil {
+			return fmt.Errorf("activities: leaving the day: %w", err)
+		}
+	}
+	var withdrawn int
+	if err := tx.QueryRow(ctx, `SELECT gateway_money.withdraw_unmoved_advances($1)`, pl.a.id).Scan(&withdrawn); err != nil {
+		return fmt.Errorf("activities: withdrawing the advances: %w", err)
+	}
+	return nil
 }
 
 // keepCancelCosts is costs_follow._hand_over's row for a cancel: what the

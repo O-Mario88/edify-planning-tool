@@ -30,6 +30,12 @@ type GoSaves struct {
 	// Training and its school visit through internal/activities
 	// (docs/migration/32); everything else is forwarded as before.
 	ScheduleTrainingPair bool
+	// GroupReschedule and GroupCancel: the app's group Reschedule and group
+	// Cancel drawers (the bar for ticked rows) change 33.1's groups through
+	// internal/activities (docs/migration/33); any other group is forwarded
+	// whole, as before.
+	GroupReschedule bool
+	GroupCancel     bool
 }
 
 const (
@@ -45,10 +51,15 @@ const (
 	// SaveScheduleTrainingPair is the name EDIFY_GO_SAVES uses for the
 	// In-school Training and its school visit.
 	SaveScheduleTrainingPair = "schedule_training_pair"
+	// SaveGroupReschedule is the name EDIFY_GO_SAVES uses for the group move.
+	SaveGroupReschedule = "group_reschedule"
+	// SaveGroupCancel is the name EDIFY_GO_SAVES uses for the group cancel.
+	SaveGroupCancel = "group_cancel"
 )
 
 // knownGoSaves are the saves the switch can name.
-var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit, SaveScheduleTrainingPair}
+var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit, SaveScheduleTrainingPair,
+	SaveGroupReschedule, SaveGroupCancel}
 
 // loadGoSaves reads EDIFY_GO_SAVES. A Go save asks the existing application
 // for the drawer's form and for the pricing (money stays Django's until
@@ -72,6 +83,8 @@ func loadGoSaves(env Environment, getenv func(string) string, existingApp, inter
 		out.CancelVisit = out.CancelVisit || name == SaveCancelVisit
 		out.EditVisit = out.EditVisit || name == SaveEditVisit
 		out.ScheduleTrainingPair = out.ScheduleTrainingPair || name == SaveScheduleTrainingPair
+		out.GroupReschedule = out.GroupReschedule || name == SaveGroupReschedule
+		out.GroupCancel = out.GroupCancel || name == SaveGroupCancel
 	}
 	if existingApp == "" || internalKey == "" {
 		return GoSaves{}, fmt.Errorf("config: %s needs %s and %s: the save asks the existing application for the form and the pricing",

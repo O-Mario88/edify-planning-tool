@@ -56,6 +56,10 @@ type outcome struct {
 	Message  string              `json:"message"`
 	HandedOn bool                `json:"handed_on,omitempty"`
 	Posted   map[string][]string `json:"posted,omitempty"`
+	// Flash is a reloading save's flash message (the group actions'), and
+	// PostedTexts the posted activity_ids' purpose texts (django_runner.py).
+	Flash       []string `json:"flash,omitempty"`
+	PostedTexts []string `json:"posted_texts,omitempty"`
 }
 
 type outcomes struct {
@@ -143,7 +147,7 @@ func run(dsn, scenarioPath, aOut, out, django, key, runner, repo string) error {
 			}
 			o.HandedOn = true
 		} else {
-			o, err = play(ctx, svc, accounts, pool, s, url.Values(posted))
+			o, err = play(ctx, svc, accounts, pool, s, url.Values(posted), a.Outcomes[i].PostedTexts)
 			if err != nil {
 				return fmt.Errorf("step %d: %w", i+1, err)
 			}
@@ -166,7 +170,10 @@ func run(dsn, scenarioPath, aOut, out, django, key, runner, repo string) error {
 }
 
 func play(ctx context.Context, svc *activities.Service, accounts *identity.Store, pool *pgxpool.Pool,
-	s step, form url.Values) (outcome, error) {
+	s step, form url.Values, texts []string) (outcome, error) {
+	if m := groupDrawer.FindStringSubmatch(s.Open); m != nil {
+		return playGroup(ctx, svc, accounts, pool, s, m[1], form, texts)
+	}
 	if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
 		return playMove(ctx, svc, accounts, pool, s, m[1], form)
 	}
@@ -389,12 +396,74 @@ func handOn(rawStep json.RawMessage, dsn, runner, repo string) (outcome, error) 
 	return o, nil
 }
 
+// groupDrawer is the bar for ticked rows' group drawers (docs/migration/33).
+var groupDrawer = regexp.MustCompile(`^/activity-selection/(reschedule|cancel)\?ids=`)
+
+// playGroup makes a group step through Go's group: the activities copy A's
+// drawer posted, found on copy B by their purpose text as the runner finds
+// a step's activity (a seed activity keeps its id on both copies), with the
+// posted date and reason.
+func playGroup(ctx context.Context, svc *activities.Service, accounts *identity.Store, pool *pgxpool.Pool,
+	s step, kind string, form url.Values, texts []string) (outcome, error) {
+	ids := []string{}
+	for i, id := range form["activity_ids"] {
+		if i < len(texts) && strings.HasPrefix(texts[i], "[shadow") {
+			found, err := findActivity(ctx, pool, "{activity:"+texts[i]+"}")
+			if err != nil {
+				return outcome{}, err
+			}
+			id = found
+		}
+		ids = append(ids, id)
+	}
+	var userID string
+	if err := pool.QueryRow(ctx, `SELECT id FROM "user" WHERE email = $1`, s.Who).Scan(&userID); err != nil {
+		return outcome{}, fmt.Errorf("finding %s: %w", s.Who, err)
+	}
+	account, err := accounts.LoadAccount(ctx, userID)
+	if err != nil {
+		return outcome{}, err
+	}
+	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
+	req := activities.GroupRequest{ActivityIDs: ids, Date: form.Get("scheduled_date"), Reason: form.Get("reason")}
+	origin := activities.Origin{IP: "127.0.0.1", CorrelationID: newCorrelation()}
+	var answer activities.GroupAnswer
+	verb := "moved"
+	if kind == "cancel" {
+		answer, err = svc.GroupCancel(ctx, auth.Principal{Account: account}, req, origin)
+		verb = "cancelled"
+	} else {
+		answer, err = svc.GroupReschedule(ctx, auth.Principal{Account: account}, req, origin)
+	}
+	var refusal *activities.Refusal
+	switch {
+	case errors.Is(err, activities.ErrHandOn):
+		fmt.Fprintln(os.Stderr, "goplay:", s.Who, "→", err)
+		return outcome{HandedOn: true}, nil
+	case errors.As(err, &refusal):
+		return outcome{OK: false, Status: 400, Message: strings.TrimSpace(refusal.Message)}, nil
+	case err != nil:
+		return outcome{}, err
+	}
+	if len(answer.Done) > 0 {
+		return outcome{OK: true, Status: 204, Message: answer.Message}, nil
+	}
+	// The drawer's outcome partial as the runner reads it (its tags turned
+	// to spaces): "Nothing was moved. {title} · {where} : {why} …".
+	said := "Nothing was " + verb + "."
+	for _, pick := range answer.Refused {
+		said += " " + pick.Title + " · " + pick.Where + " : " + pick.Refusal
+	}
+	return outcome{OK: true, Status: 200, Message: strings.Join(strings.Fields(said), " ")}, nil
+}
+
 // compare holds Go's outcomes to the existing application's, step by step:
 // the same answer, and Go's words inside the words the web painted.
 func compare(a, b outcomes) error {
 	differing := 0
 	for i := range a.Outcomes {
 		x, y := a.Outcomes[i], b.Outcomes[i]
+		x.Message, y.Message = withFlash(x), withFlash(y)
 		x.Message, y.Message = html.UnescapeString(x.Message), html.UnescapeString(y.Message)
 		how := "Go"
 		if y.HandedOn {
@@ -416,6 +485,14 @@ func compare(a, b outcomes) error {
 		return errors.New("the outcomes differ")
 	}
 	return nil
+}
+
+// withFlash is what a step said: its flash message, then its answer.
+func withFlash(o outcome) string {
+	if len(o.Flash) == 0 {
+		return o.Message
+	}
+	return strings.TrimSpace(strings.Join(o.Flash, " ") + " " + o.Message)
 }
 
 func tail(s string) string {

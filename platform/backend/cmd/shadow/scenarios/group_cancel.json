@@ -1,0 +1,305 @@
+[
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7vrk008fvxekheps",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-11-17",
+   "activity_purpose_text": "[shadow-gc] A",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7ugn00b7crekhe2v",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "ssa_support",
+   "scheduled_date": "2026-11-18",
+   "activity_purpose_text": "[shadow-gc] B",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7wf5008ft3ekheff",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "story_gathering",
+   "scheduled_date": "2026-11-18",
+   "activity_purpose_text": "[shadow-gc] C",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7grv003oz8ekher8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "school_invitation",
+   "scheduled_date": "2026-11-19",
+   "activity_purpose_text": "[shadow-gc] D",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7p1600jp11ekhe2r",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "social_visit",
+   "scheduled_date": "2026-11-20",
+   "activity_purpose_text": "[shadow-gc] E",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7n6j00ld8hekhej6",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "training_follow_up",
+   "scheduled_date": "2026-11-24",
+   "activity_purpose_text": "[shadow-gc] F",
+   "expected_outcome": "[shadow-gc] outcome",
+   "catalogue_item_id": ""
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7vrk008fvxekheps",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-11-26",
+   "activity_purpose_text": "[shadow-gc] G",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7ugn00b7crekhe2v",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "story_gathering",
+   "scheduled_date": "2026-11-26",
+   "activity_purpose_text": "[shadow-gc] H",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7wf5008ft3ekheff",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "social_visit",
+   "scheduled_date": "2026-11-27",
+   "activity_purpose_text": "[shadow-gc] I",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7grv003oz8ekher8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-11-27",
+   "activity_purpose_text": "[shadow-gc] J",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7p1600jp11ekhe2r",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "story_gathering",
+   "scheduled_date": "2026-11-27",
+   "activity_purpose_text": "[shadow-gc] K",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7n6j00ld8hekhej6",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "social_visit",
+   "scheduled_date": "2026-11-26",
+   "activity_purpose_text": "[shadow-gc] L",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7grv003oz8ekher8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "social_visit",
+   "scheduled_date": "2026-11-26",
+   "activity_purpose_text": "[shadow-gc] M",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-gc] E}/reschedule-drawer",
+  "form": "/my-plan/{activity:[shadow-gc] E}/reschedule",
+  "set": {
+   "scheduled_date": "2026-12-01",
+   "reason": "[shadow-gc] into the sent week"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] A},{activity:[shadow-gc] B}",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": "[shadow-gc] two"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] F}",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": "[shadow-gc] one alone"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] A},{activity:[shadow-gc] C},{activity:[shadow-gc] D}",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": "[shadow-gc] one already cancelled"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] G},{activity:[shadow-gc] H}",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": ""
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] E},{activity:[shadow-gc] G}",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": "[shadow-gc] one in the sent week"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] H},cmwclue57008yjsdhhc9v",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": "[shadow-gc] with the pair"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] H},cmwd518kt00mo8bdhhc6v",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": "[shadow-gc] with a Core visit"
+  }
+ },
+ {
+  "who": "cceo1@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] H},{activity:[shadow-gc] I}",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": "[shadow-gc] not mine"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] I},{activity:[shadow-gc] J},{activity:[shadow-gc] K},{activity:[shadow-gc] L},{activity:[shadow-gc] M}",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": "[shadow-gc] all five"
+  }
+ }
+]

@@ -70,6 +70,8 @@ func main() {
 	out := flag.String("out", "", "where the answers are written")
 	compare := flag.String("compare", "", "a.json,b.json: compare two runs")
 	flag.StringVar(&copyDSN, "db", "", "the copy the gateway serves, read to find a step's activity by its purpose text")
+	flag.DurationVar(&settle, "settle", 0, "a pause after each step: the existing application prices a save in a thread after its answer, "+
+		"and the app's next request does not wait for it as the web's does (its cookie)")
 	flag.Parse()
 	var err error
 	if *compare != "" {
@@ -118,7 +120,9 @@ func play(gateway, scenarioPath, out, password string) error {
 		}
 		var a answer
 		var err error
-		if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
+		if m := groupDrawer.FindStringSubmatch(s.Open); m != nil {
+			a, err = playGroup(ctx, pageDrawers, token, m[1], m[2], s)
+		} else if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
 			a, err = playMove(ctx, pageDrawers, token, m[1], m[2], s)
 		} else if m := editDrawer.FindStringSubmatch(s.Open); m != nil {
 			a, err = playEdit(ctx, pageDrawers, token, m[1], s)
@@ -129,6 +133,7 @@ func play(gateway, scenarioPath, out, password string) error {
 			return fmt.Errorf("step %d: %w", i+1, err)
 		}
 		result.Answers = append(result.Answers, a)
+		time.Sleep(settle)
 	}
 	result.To = time.Now().UTC().Format(time.RFC3339Nano)
 	encoded, _ := json.MarshalIndent(result, "", "  ")
@@ -279,6 +284,9 @@ func said(a answer) string {
 // copyDSN is the copy a run's gateway serves (-db).
 var copyDSN string
 
+// settle is the pause after each step (-settle).
+var settle time.Duration
+
 // moveDrawer is My Plan's Reschedule drawer (docs/migration/29) or its
 // Cancel drawer (30); its
 // activity may be named by its purpose text, `{activity:<text>}`, since each
@@ -297,6 +305,44 @@ func playMove(ctx context.Context, drawers screensv1connect.PageDrawerServiceCli
 		return answer{}, err
 	}
 	path := "/my-plan/" + activityID + "/" + kind + "-drawer"
+	got, err := drawers.GetDrawer(ctx, withToken(&screensv1.GetDrawerRequest{Path: path}, token))
+	if err != nil {
+		return failed(err), nil
+	}
+	if got.Msg.GetDrawer() == nil {
+		return answer{Error: "(no drawer) " + got.Msg.GetRefusal()}, nil
+	}
+	values := map[string]string{"scheduled_date": s.Set["scheduled_date"], "reason": s.Set["reason"]}
+	if kind == "cancel" {
+		values = map[string]string{"reason": s.Set["reason"]}
+	}
+	saved, err := drawers.SaveDrawer(ctx, withToken(&screensv1.SaveDrawerRequest{Path: path, Values: values}, token))
+	if err != nil {
+		a := failed(err)
+		a.Values = values
+		return a, nil
+	}
+	m := saved.Msg
+	return answer{Saved: m.GetSaved(), Message: m.GetMessage(), Redirect: m.GetRedirect(), Error: m.GetError(), Values: values}, nil
+}
+
+// groupDrawer is the bar for ticked rows' group drawers (docs/migration/33).
+var groupDrawer = regexp.MustCompile(`^/activity-selection/(reschedule|cancel)\?ids=(.*)$`)
+
+// playGroup plays a group step as the app does (selectionPath, then the
+// drawer saved with the fields the person fills): the ticked activities found
+// on the run's own copy, the drawer read, then saved with the new date and
+// the reason (for a cancel, the reason).
+func playGroup(ctx context.Context, drawers screensv1connect.PageDrawerServiceClient, token, kind, ticked string, s step) (answer, error) {
+	ids := []string{}
+	for _, target := range strings.Split(ticked, ",") {
+		id, err := findActivity(ctx, target)
+		if err != nil {
+			return answer{}, err
+		}
+		ids = append(ids, id)
+	}
+	path := "/activity-selection/" + kind + "?ids=" + strings.Join(ids, ",")
 	got, err := drawers.GetDrawer(ctx, withToken(&screensv1.GetDrawerRequest{Path: path}, token))
 	if err != nil {
 		return failed(err), nil

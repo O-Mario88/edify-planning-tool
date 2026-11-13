@@ -69,7 +69,11 @@ type Service struct {
 	moves       MoveSaver   // nil unless EDIFY_GO_SAVES names reschedule_visit
 	cancels     CancelSaver // nil unless EDIFY_GO_SAVES names cancel_visit
 	edits       EditSaver   // nil unless EDIFY_GO_SAVES names edit_visit
-	logger      *slog.Logger
+	// groupMoves and groupCancels: nil unless EDIFY_GO_SAVES names
+	// group_reschedule or group_cancel (docs/migration/33).
+	groupMoves   GroupMoveSaver
+	groupCancels GroupCancelSaver
+	logger       *slog.Logger
 }
 
 // NewService wires the service. existingApp may be nil.

@@ -146,6 +146,12 @@ func (s *Service) SaveDrawer(
 			}
 			return connect.NewResponse(answer), nil
 		}
+		if answer, served, err := s.groupInGo(ctx, forwarded); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
 		if answer, served, err := s.editInGo(ctx, forwarded); served {
 			if err != nil {
 				return nil, err
