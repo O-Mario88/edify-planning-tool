@@ -23,3 +23,17 @@ export function filterFields(count: number, slots: number, phone: boolean): numb
   const folds = count > (phone ? PHONE_FIELDS : slots);
   return folds ? Math.min(count, slots - 1) : count;
 }
+
+/** The fewest fields micro-ux.js lays out as a shared row: fewer keep their own width. */
+const ROW_FIELDS = 3;
+const PHONE_ROW_FIELDS = 2;
+
+/**
+ * Whether a bar of `count` fields is laid out as the shared filter row
+ * (micro-ux.js arrangeFilterRows leaves a bar of fewer than two fields on a
+ * phone, three wider, as it is); such a bar, the school profile's Fiscal year
+ * and Period, keeps each select as wide as its words.
+ */
+export function arrangesRow(count: number, phone: boolean): boolean {
+  return count >= (phone ? PHONE_ROW_FIELDS : ROW_FIELDS);
+}

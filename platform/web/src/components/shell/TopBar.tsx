@@ -5,6 +5,7 @@
  */
 import type { ReactNode } from 'react';
 
+import { badgeCount } from '@/lib/badgeCount';
 import { dateChip } from '@/lib/today';
 
 import { Icon } from './icons';
@@ -21,19 +22,41 @@ export interface PageSearch {
   readonly keep: Readonly<Record<string, string>>;
 }
 
+/** The unread figures the top bar's Messages and Notifications carry. */
+export interface TopBarCounts {
+  readonly messages: number;
+  readonly notifications: number;
+}
+
+/** A count over its icon (components.css .notification-badge, placed by .edify-topbar__icon-control). */
+function CountBadge({ count }: { count: number }) {
+  const text = badgeCount(count);
+  if (!text) return null;
+  return (
+    <span
+      data-count-badge
+      className="absolute left-[52%] top-0 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-[var(--edify-surface)] bg-[var(--edify-notification)] px-1 text-[length:var(--edify-text-micro-size)] font-bold leading-none tabular-nums text-[var(--edify-notification-text)] shadow-[0_3px_10px_var(--edify-notification-glow)]"
+    >
+      {text}
+    </span>
+  );
+}
+
 const ICON_LINK =
-  'grid h-9 w-9 place-items-center rounded-full text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)] hover:text-[var(--edify-text)]';
+  'relative grid h-9 w-9 place-items-center rounded-full text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)] hover:text-[var(--edify-text)]';
 
 export function TopBar({
   search,
   account,
   menu,
   existingWebUrl,
+  counts = { messages: 0, notifications: 0 },
 }: {
   search: PageSearch;
   account: AccountMenuProps;
   menu: ReactNode;
   existingWebUrl: string;
+  counts?: TopBarCounts;
 }) {
   const today = dateChip(new Date());
   const route = encodeURIComponent(account.path.split('?')[0] ?? '/');
@@ -75,9 +98,11 @@ export function TopBar({
         </span>
         <a href={`${existingWebUrl}/messages`} className={`${ICON_LINK} hidden sm:grid`} aria-label="Messages">
           <Icon name="messages" className="h-5 w-5" />
+          <CountBadge count={counts.messages} />
         </a>
         <a href={`${existingWebUrl}/notifications`} className={ICON_LINK} aria-label="Notifications">
           <Icon name="bell" className="h-5 w-5" />
+          <CountBadge count={counts.notifications} />
         </a>
         <a href={`${existingWebUrl}/support?route=${route}`} className={`${ICON_LINK} hidden sm:grid`} aria-label="Report a problem with this page">
           <Icon name="alert" className="h-5 w-5" />

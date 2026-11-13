@@ -27,7 +27,10 @@ type PageBadge struct {
 	// good, caution, alert, info or plain.
 	Tone string `protobuf:"bytes,2,opt,name=tone,proto3" json:"tone,omitempty"`
 	// The hover text, e.g. "Source: Recorded · Confirmed".
-	Title         string `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Title string `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	// The small drawing before the words, by name: "lock" (a school's support
+	// visit for the year is taken). Empty for a badge of words only.
+	Icon          string `protobuf:"bytes,4,opt,name=icon,proto3" json:"icon,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -79,6 +82,13 @@ func (x *PageBadge) GetTone() string {
 func (x *PageBadge) GetTitle() string {
 	if x != nil {
 		return x.Title
+	}
+	return ""
+}
+
+func (x *PageBadge) GetIcon() string {
+	if x != nil {
+		return x.Icon
 	}
 	return ""
 }
@@ -3569,11 +3579,12 @@ var File_edify_screens_v1_page_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\n" +
-	"\x1bedify/screens/v1/page.proto\x12\x10edify.screens.v1\x1a\x1bedify/screens/v1/form.proto\"I\n" +
+	"\x1bedify/screens/v1/page.proto\x12\x10edify.screens.v1\x1a\x1bedify/screens/v1/form.proto\"]\n" +
 	"\tPageBadge\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x12\n" +
 	"\x04tone\x18\x02 \x01(\tR\x04tone\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\"\xc8\x01\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x12\n" +
+	"\x04icon\x18\x04 \x01(\tR\x04icon\"\xc8\x01\n" +
 	"\n" +
 	"PageAction\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

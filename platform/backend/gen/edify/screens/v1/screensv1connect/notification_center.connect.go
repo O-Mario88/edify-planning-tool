@@ -37,12 +37,19 @@ const (
 	// NotificationCenterServiceGetNotificationCenterProcedure is the fully-qualified name of the
 	// NotificationCenterService's GetNotificationCenter RPC.
 	NotificationCenterServiceGetNotificationCenterProcedure = "/edify.screens.v1.NotificationCenterService/GetNotificationCenter"
+	// NotificationCenterServiceGetUnreadNotificationCountProcedure is the fully-qualified name of the
+	// NotificationCenterService's GetUnreadNotificationCount RPC.
+	NotificationCenterServiceGetUnreadNotificationCountProcedure = "/edify.screens.v1.NotificationCenterService/GetUnreadNotificationCount"
 )
 
 // NotificationCenterServiceClient is a client for the edify.screens.v1.NotificationCenterService
 // service.
 type NotificationCenterServiceClient interface {
 	GetNotificationCenter(context.Context, *connect.Request[v1.GetNotificationCenterRequest]) (*connect.Response[v1.GetNotificationCenterResponse], error)
+	// The top bar's bell: how many of the caller's notifications are unread and
+	// not resolved (apps.core.context_processors.sidebar_counts). Every signed-in
+	// role has the bell, so no role is refused.
+	GetUnreadNotificationCount(context.Context, *connect.Request[v1.GetUnreadNotificationCountRequest]) (*connect.Response[v1.GetUnreadNotificationCountResponse], error)
 }
 
 // NewNotificationCenterServiceClient constructs a client for the
@@ -62,12 +69,19 @@ func NewNotificationCenterServiceClient(httpClient connect.HTTPClient, baseURL s
 			connect.WithSchema(notificationCenterServiceMethods.ByName("GetNotificationCenter")),
 			connect.WithClientOptions(opts...),
 		),
+		getUnreadNotificationCount: connect.NewClient[v1.GetUnreadNotificationCountRequest, v1.GetUnreadNotificationCountResponse](
+			httpClient,
+			baseURL+NotificationCenterServiceGetUnreadNotificationCountProcedure,
+			connect.WithSchema(notificationCenterServiceMethods.ByName("GetUnreadNotificationCount")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // notificationCenterServiceClient implements NotificationCenterServiceClient.
 type notificationCenterServiceClient struct {
-	getNotificationCenter *connect.Client[v1.GetNotificationCenterRequest, v1.GetNotificationCenterResponse]
+	getNotificationCenter      *connect.Client[v1.GetNotificationCenterRequest, v1.GetNotificationCenterResponse]
+	getUnreadNotificationCount *connect.Client[v1.GetUnreadNotificationCountRequest, v1.GetUnreadNotificationCountResponse]
 }
 
 // GetNotificationCenter calls edify.screens.v1.NotificationCenterService.GetNotificationCenter.
@@ -75,10 +89,20 @@ func (c *notificationCenterServiceClient) GetNotificationCenter(ctx context.Cont
 	return c.getNotificationCenter.CallUnary(ctx, req)
 }
 
+// GetUnreadNotificationCount calls
+// edify.screens.v1.NotificationCenterService.GetUnreadNotificationCount.
+func (c *notificationCenterServiceClient) GetUnreadNotificationCount(ctx context.Context, req *connect.Request[v1.GetUnreadNotificationCountRequest]) (*connect.Response[v1.GetUnreadNotificationCountResponse], error) {
+	return c.getUnreadNotificationCount.CallUnary(ctx, req)
+}
+
 // NotificationCenterServiceHandler is an implementation of the
 // edify.screens.v1.NotificationCenterService service.
 type NotificationCenterServiceHandler interface {
 	GetNotificationCenter(context.Context, *connect.Request[v1.GetNotificationCenterRequest]) (*connect.Response[v1.GetNotificationCenterResponse], error)
+	// The top bar's bell: how many of the caller's notifications are unread and
+	// not resolved (apps.core.context_processors.sidebar_counts). Every signed-in
+	// role has the bell, so no role is refused.
+	GetUnreadNotificationCount(context.Context, *connect.Request[v1.GetUnreadNotificationCountRequest]) (*connect.Response[v1.GetUnreadNotificationCountResponse], error)
 }
 
 // NewNotificationCenterServiceHandler builds an HTTP handler from the service implementation. It
@@ -94,10 +118,18 @@ func NewNotificationCenterServiceHandler(svc NotificationCenterServiceHandler, o
 		connect.WithSchema(notificationCenterServiceMethods.ByName("GetNotificationCenter")),
 		connect.WithHandlerOptions(opts...),
 	)
+	notificationCenterServiceGetUnreadNotificationCountHandler := connect.NewUnaryHandler(
+		NotificationCenterServiceGetUnreadNotificationCountProcedure,
+		svc.GetUnreadNotificationCount,
+		connect.WithSchema(notificationCenterServiceMethods.ByName("GetUnreadNotificationCount")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.screens.v1.NotificationCenterService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case NotificationCenterServiceGetNotificationCenterProcedure:
 			notificationCenterServiceGetNotificationCenterHandler.ServeHTTP(w, r)
+		case NotificationCenterServiceGetUnreadNotificationCountProcedure:
+			notificationCenterServiceGetUnreadNotificationCountHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -109,4 +141,8 @@ type UnimplementedNotificationCenterServiceHandler struct{}
 
 func (UnimplementedNotificationCenterServiceHandler) GetNotificationCenter(context.Context, *connect.Request[v1.GetNotificationCenterRequest]) (*connect.Response[v1.GetNotificationCenterResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.screens.v1.NotificationCenterService.GetNotificationCenter is not implemented"))
+}
+
+func (UnimplementedNotificationCenterServiceHandler) GetUnreadNotificationCount(context.Context, *connect.Request[v1.GetUnreadNotificationCountRequest]) (*connect.Response[v1.GetUnreadNotificationCountResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.screens.v1.NotificationCenterService.GetUnreadNotificationCount is not implemented"))
 }

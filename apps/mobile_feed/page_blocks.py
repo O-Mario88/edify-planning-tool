@@ -289,13 +289,15 @@ def _header(main: Node, path: str = "") -> dict:
             continue
         in_controls = controls is not None and _inside(node, controls)
         if in_controls and node.tag == "span" and node.has("rounded-pill"):
-            badges.append(
-                {
-                    "text": node.text(),
-                    "tone": _badge_tone(node),
-                    "title": node.get("title"),
-                }
-            )
+            badge = {
+                "text": node.text(),
+                "tone": _badge_tone(node),
+                "title": node.get("title"),
+            }
+            # The year's support visit is taken: the page draws a lock.
+            if "data-visit-closed" in node.attrs:
+                badge["icon"] = "lock"
+            badges.append(badge)
         elif _is_header_action(node, in_controls):
             actions.append(_header_action(node, path))
     eyebrow = main.find(lambda n: n.has("edify-page-eyebrow"))

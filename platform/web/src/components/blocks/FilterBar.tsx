@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { isEmptyFilter } from '@/lib/emptyFilter';
-import { filterFields, filterSlots, UNMEASURED_SLOTS } from '@/lib/filterSlots';
+import { arrangesRow, filterFields, filterSlots, UNMEASURED_SLOTS } from '@/lib/filterSlots';
 
 import { Icon } from '../shell/icons';
 
@@ -38,7 +38,11 @@ function applied(filter: Filter): boolean {
   return !filter.disabled && !all(filter.value.trim()) && filter.options.some((option) => all(option.value));
 }
 
-function Field({ filter, onChange }: { filter: Filter; onChange: () => void }) {
+const SELECT_WIDE = 'w-full px-[22px]';
+/** A select as wide as its words, the chevron in its own lane (the existing profile's 10px / 30px). */
+const SELECT_OWN_WIDTH = 'w-auto max-w-full [field-sizing:content] pl-[10px] pr-[30px]';
+
+function Field({ filter, onChange, ownWidth = false }: { filter: Filter; onChange: () => void; ownWidth?: boolean }) {
   return (
     <label className="block min-w-0">
       <span className="mb-1 block truncate text-[length:var(--edify-text-micro-size)] font-medium text-[var(--edify-text-muted)]" aria-hidden={filter.caption ? true : undefined}>
@@ -50,7 +54,7 @@ function Field({ filter, onChange }: { filter: Filter; onChange: () => void }) {
         defaultValue={filter.value}
         disabled={filter.disabled}
         onChange={onChange}
-        className="edify-select h-8 w-full truncate rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-[22px] text-center text-[14px] font-medium text-[var(--edify-text)] focus:border-[var(--brand-primary)] focus:outline-none disabled:bg-[var(--edify-surface-muted)] disabled:text-[var(--edify-text-subtle)]"
+        className={`edify-select h-8 ${ownWidth ? SELECT_OWN_WIDTH : SELECT_WIDE} truncate rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] text-center text-[14px] font-medium text-[var(--edify-text)] focus:border-[var(--brand-primary)] focus:outline-none disabled:bg-[var(--edify-surface-muted)] disabled:text-[var(--edify-text-subtle)]`}
       >
         {filter.options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -73,7 +77,8 @@ export function FilterBar({
   action: string;
   filters: readonly Filter[];
   hidden: Readonly<Record<string, string>>;
-  clearHref: string;
+  /** Where the row's × leads; a page without a Clear (the school profile) has no ×. */
+  clearHref?: string;
   label?: string;
   /** On a wide screen every filter shares one row with the × (owner, 2026-09-27). */
   oneRow?: boolean;
@@ -119,6 +124,9 @@ export function FilterBar({
   const folded = shown.slice(fields);
   const foldedApplied = folded.filter(applied).length;
   const columns = inRow.length + (folded.length ? 1 : 0);
+  // Too few fields to share the row: each keeps its own width, as the existing page leaves them.
+  const ownWidth = !arrangesRow(shown.length, layout.phone);
+  const shared = (oneRow || layout.phone) && !ownWidth;
   return (
     <form
       ref={form}
@@ -126,8 +134,13 @@ export function FilterBar({
       action={action}
       aria-label={label}
       data-block="filters"
-      style={oneRow || layout.phone ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr)) auto` } : undefined}
-      className={`grid items-end gap-2 sm:gap-3 ${oneRow ? '' : 'grid-cols-[repeat(4,minmax(0,1fr))_auto] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]'}`}
+      data-own-width={ownWidth || undefined}
+      style={shared ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr)) auto` } : undefined}
+      className={
+        ownWidth
+          ? 'flex flex-wrap items-end gap-2 sm:gap-3'
+          : `grid items-end gap-2 sm:gap-3 ${oneRow ? '' : 'grid-cols-[repeat(4,minmax(0,1fr))_auto] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]'}`
+      }
     >
       {Object.entries(hidden).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
@@ -136,7 +149,7 @@ export function FilterBar({
         <input key={filter.name} type="hidden" name={filter.name} value={filter.value} />
       ))}
       {inRow.map((filter) => (
-        <Field key={filter.name} filter={filter} onChange={submit} />
+        <Field key={filter.name} filter={filter} onChange={submit} ownWidth={ownWidth} />
       ))}
       {folded.length ? (
         <div className="relative min-w-0" data-filter-more>
@@ -164,14 +177,16 @@ export function FilterBar({
           </div>
         </div>
       ) : null}
-      <a
-        href={clearHref}
-        aria-label="Clear Filters"
-        title="Clear Filters"
-        className="grid h-8 w-8 place-items-center rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] text-[var(--edify-text)] hover:bg-[var(--brand-primary-soft)]"
-      >
-        <Icon name="close" className="h-4 w-4" />
-      </a>
+      {clearHref ? (
+        <a
+          href={clearHref}
+          aria-label="Clear Filters"
+          title="Clear Filters"
+          className="grid h-8 w-8 place-items-center rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] text-[var(--edify-text)] hover:bg-[var(--brand-primary-soft)]"
+        >
+          <Icon name="close" className="h-4 w-4" />
+        </a>
+      ) : null}
       <noscript>
         <button type="submit">Apply</button>
       </noscript>

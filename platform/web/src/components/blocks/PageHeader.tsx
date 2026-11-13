@@ -6,12 +6,14 @@ import type { PageAction, PageHeader as PageHeaderMessage } from '@/gen/edify/sc
 
 import { Icon } from '../shell/icons';
 import type { IconName } from '../shell/icons';
+import { Badge } from './Badge';
 import { BUTTON_OUTLINE, BUTTON_PRIMARY } from './buttons';
 
 const ACTION_ICONS: Readonly<Record<string, IconName>> = {
   add_school: 'plus',
   export: 'download',
   create_cluster: 'plus',
+  edit_details: 'edit',
   plan_field_event: 'plus',
   schedule_group_training: 'calendar',
   schedule_cluster_meeting: 'calendar',
@@ -42,7 +44,42 @@ export function HeaderAction({ action, href }: { action: PageAction; href: strin
   );
 }
 
+function BackLink({ header }: { header: PageHeaderMessage }) {
+  if (!header.backLabel || !header.backHref.startsWith('/') || header.backHref.startsWith('//')) return null;
+  return (
+    <a href={header.backHref} className="mb-1 inline-flex items-center gap-1 text-[length:var(--edify-text-micro-size)] font-semibold uppercase text-[var(--brand-primary-text)] hover:underline dark:text-[var(--edify-accent-text)]">
+      <Icon name="back" className="h-3.5 w-3.5" />
+      <span>{header.backLabel}</span>
+    </a>
+  );
+}
+
+/**
+ * A record's header (the school profile: templates/pages/schools/detail.html):
+ * back link, name and ID, then its badges with the buttons on one wrapping row.
+ */
+function RecordHeader({ header, hrefOf }: { header: PageHeaderMessage; hrefOf: (action: PageAction) => string }) {
+  return (
+    <div className="flex flex-col gap-3" data-block="header">
+      <div className="min-w-0">
+        <BackLink header={header} />
+        <h1 className="text-[length:var(--edify-text-display-size)] font-bold leading-[1.15] text-[var(--edify-text)]">{header.title}</h1>
+        {header.description ? <p className="text-[length:var(--edify-text-label-size)] font-medium text-[var(--edify-text-muted)]">{header.description}</p> : null}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {header.badges.map((badge) => (
+          <Badge key={badge.text} tone={badge.tone} title={badge.title || undefined} icon={badge.icon}>{badge.text}</Badge>
+        ))}
+        {header.actions.map((action) => (
+          <HeaderAction key={action.key} action={action} href={hrefOf(action)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function PageHeader({ header, hrefOf }: { header: PageHeaderMessage; hrefOf: (action: PageAction) => string }) {
+  if (header.badges.length || header.backLabel) return <RecordHeader header={header} hrefOf={hrefOf} />;
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" data-block="header">
       <div className="min-w-0">

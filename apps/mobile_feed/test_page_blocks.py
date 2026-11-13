@@ -15,6 +15,7 @@ HEADER = """
   <div class="edify-page-header__controls">
     <span class="rounded-pill bg-slate-100 text-slate-500">Readiness: Ready</span>
     <span class="rounded-pill bg-emerald-50 text-emerald-700" title="Source: Recorded">SSA FY2027: 6.0<span class="sr-only"> · Source: Recorded</span></span>
+    <span class="rounded-pill bg-slate-100 text-slate-500" title="Taken by a visit" data-visit-closed><svg><path d="M4.5 7V5"/></svg>Staff visit scheduled<span class="sr-only">: Taken by a visit</span></span>
     <button type="button" hx-get="/schools/s1/edit-drawer" class="edify-primary-solid"><svg></svg> Edit Details</button>
     <button type="button" disabled title="SSA already entered for FY2027">Enter SSA Score</button>
   </div>
@@ -90,8 +91,12 @@ class PageBlocksTest(SimpleTestCase):
         self.assertEqual(header["title"], "Feed School")
         self.assertEqual(header["description"], "School ID: FEED-1")
         self.assertEqual(
-            [(b["text"], b["tone"]) for b in header["badges"]],
-            [("Readiness: Ready", "plain"), ("SSA FY2027: 6.0", "good")],
+            [(b["text"], b["tone"], b.get("icon", "")) for b in header["badges"]],
+            [
+                ("Readiness: Ready", "plain", ""),
+                ("SSA FY2027: 6.0", "good", ""),
+                ("Staff visit scheduled", "plain", "lock"),
+            ],
         )
         edit, ssa = header["actions"]
         self.assertEqual(
