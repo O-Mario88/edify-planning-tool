@@ -395,7 +395,8 @@ ORDER BY pa.returned_at DESC LIMIT 10`, rules.ReturnedToStaffStatus, r.owners)
 			ActionURL: "/partner-oversight/?partner=" + partnerID + "&status=returned",
 			Shape:     "/partner-oversight/?partner={id}&status=returned"}
 		if returned != nil {
-			t.Due = dateOf(returned.UTC())
+			day := localDate(*returned)
+			t.Due = &day
 		}
 		return t, err
 	})

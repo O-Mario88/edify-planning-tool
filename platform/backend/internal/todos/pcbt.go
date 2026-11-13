@@ -223,7 +223,8 @@ func thousands(n int) string {
 }
 
 // btSalesforceTodos is the officer's "Confirm loan in Salesforce" rows: due
-// three days after submission (the UTC day), critical a week past that.
+// three days after submission (Kampala's day; the existing builder takes
+// the UTC day), critical a week past that.
 func btSalesforceTodos(ctx context.Context, s *Service, r *reader, schools []string) ([]todo, error) {
 	rows, err := s.db.Query(ctx, `
 SELECT l.id, l.submitted_at, l.created_at, m.name, p.label
@@ -244,7 +245,7 @@ ORDER BY l.submitted_at ASC, l.created_at ASC LIMIT $3`, schools, rules.PCBT.BTS
 		if submittedAt != nil {
 			at = *submittedAt
 		}
-		return salesforceRow(id, mfi, purpose, *dateOf(at.UTC()), r.today), nil
+		return salesforceRow(id, mfi, purpose, localDate(at), r.today), nil
 	})
 }
 
