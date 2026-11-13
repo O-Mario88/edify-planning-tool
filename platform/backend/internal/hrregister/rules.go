@@ -66,6 +66,10 @@ type Rules struct {
 	RecoveryPlanTypes map[string]string `json:"recovery_plan_types"`
 	RecoveryCauses    map[string]string `json:"recovery_causes"`
 	RecoveryStatuses  map[string]string `json:"recovery_statuses"`
+	// The labels of a performance review's stage, type and rating.
+	ReviewStages       map[string]string `json:"review_stages"`
+	ReviewTypes        map[string]string `json:"review_types"`
+	PerformanceRatings map[string]string `json:"performance_ratings"`
 	// Reviews are the roles each role is the performance reviewer for.
 	Reviews           map[string][]string `json:"reviews"`
 	MetricLabels      map[string]string   `json:"metric_labels"`
@@ -81,6 +85,7 @@ func mustLoad(raw []byte) Rules {
 		len(r.Severities) == 0 || len(r.SafetyStatuses) == 0 || len(r.OnboardingStatuses) == 0 ||
 		len(r.ExitReasons) == 0 || len(r.VoluntaryExitReasons) == 0 || len(r.ApplicationStages) == 0 || len(r.ComplianceStatuses) == 0 || len(r.DocumentTypes) == 0 || len(r.DocumentStatuses) == 0 ||
 		len(r.RecoveryPlanTypes) == 0 || len(r.RecoveryCauses) == 0 || len(r.RecoveryStatuses) == 0 || len(r.Reviews) == 0 ||
+		len(r.ReviewStages) == 0 || len(r.ReviewTypes) == 0 || len(r.PerformanceRatings) == 0 ||
 		len(r.MetricLabels) == 0 || r.HelperFigureChars <= 0 || r.PageSize <= 0 {
 		panic(fmt.Sprintf("hrregister: the embedded rules are unreadable: %v", err))
 	}

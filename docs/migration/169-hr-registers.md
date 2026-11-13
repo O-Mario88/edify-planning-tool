@@ -20,7 +20,8 @@ reach rule once; each register is added to it as it is ported.
 | Workforce Planning | `/workforce-planning` | This document |
 | Policies & Documents | `/policies` | This document |
 | Performance Recovery Plans | `/recovery-plans` | This document |
-| The other registers (pulse surveys, employee relations, compensation, recruitment, performance reviews, HR analytics, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| Performance Reviews (everyone but a Programme Lead) | `/performance-reviews` | This document; a Programme Lead's reviewer's view (`_team_performance_reviews`, built on `performance_engine.team_review_rows`) is passed on until native-performance-reviews-2 |
+| The other registers (pulse surveys, employee relations, compensation, recruitment, HR analytics, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -202,6 +203,20 @@ button. Figures over the searched plans: Awaiting authorisation (draft),
 Active (live), Ending in 30 days (live, review day today to 30 days ahead),
 Escalated. One drawer button, "Recommend a formal plan".
 
+## 169.2l Performance Reviews
+
+`performance_reviews_view` for every role but a Programme Lead: the reviews
+of the People records in reach for the year asked for (`fy`, stripped; else
+the operational year) or for no year, whose person's name, period, type code
+or stage code holds the search, by due day and name. Each row: the person,
+"type · period", the manager's name ("Not recorded"), the due day, for HR and
+Admin the manager's rating, the final rating (the rating's label, else as
+stored), and the stage's label ("Overdue" for one not done and past due).
+Figures: Reviews ("FY <year>"), Completed (closed, acknowledged or archived),
+Overdue, Awaiting calibration (calibration, HR quality review, ready for SLT
+calibration). No header button read by the feed (the Performance Cycle link
+is a link).
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -229,7 +244,9 @@ acknowledgement is required and its current version, that version's number
 and review day, and who acknowledged which version and how (not the file,
 owner, audience or comments); a recovery plan's person,
 type, cause, start and review days and status (not its evidence, action plan,
-support or outcome note) (applied to `edify_gorn_dev` and
+support or outcome note); a performance review's period,
+year, due day, manager and its two ratings (not the reflection, feedback,
+evidence or calibration note) (applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -246,8 +263,8 @@ support or outcome note) (applied to `edify_gorn_dev` and
   Uganda and Kenya, and 14 records of every status; the test database's own
   555 HR audit events; five vacancies of every status; six documents of
   every kind and status with 35 acknowledgements; 11 recovery plans, five of
-  them on Programme Lead 1's team and one on the Lead), asks the existing feed
-  407 questions as Admin, HR, Impact Assessment, the Country Director and a Programme Lead as Admin, HR and Impact Assessment and deletes
+  them on Programme Lead 1's team and one on the Lead; 12 reviews of every
+  kind, this year, last year and none), asks the existing feed 468 questions as Admin, HR, Impact Assessment, the Country Director and a Programme Lead as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 

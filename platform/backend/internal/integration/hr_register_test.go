@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -54,7 +55,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	}
 	ctx := context.Background()
 	// Children first; only the golden's own rows (ids starting "ghr").
-	children := []string{"hr_pip_plan", "document_acknowledgement", "document_version", "document_asset", "hr_employee_compliance_record", "hr_compliance_requirement", "hr_application", "hr_candidate", "hr_vacancy", "hr_onboarding_task", "hr_onboarding_plan", "hr_offboarding", "hr_safety_incident", "hr_staff_recognition",
+	children := []string{"hr_performance_review", "hr_pip_plan", "document_acknowledgement", "document_version", "document_asset", "hr_employee_compliance_record", "hr_compliance_requirement", "hr_application", "hr_candidate", "hr_vacancy", "hr_onboarding_task", "hr_onboarding_plan", "hr_offboarding", "hr_safety_incident", "hr_staff_recognition",
 		"staff_supervisor_assignment", "staff_profile", "user"}
 	// One transaction each way: a document and its current version name each
 	// other, and the foreign keys are checked when the transaction commits.
@@ -83,7 +84,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	defer func() { _ = tx.Rollback(ctx) }()
 	for _, table := range []string{"user", "staff_profile", "staff_supervisor_assignment", "hr_staff_recognition", "hr_safety_incident",
 		"hr_offboarding", "hr_onboarding_plan", "hr_onboarding_task", "hr_vacancy", "hr_candidate", "hr_application",
-		"hr_compliance_requirement", "hr_employee_compliance_record", "document_asset", "document_version", "document_acknowledgement", "hr_pip_plan"} {
+		"hr_compliance_requirement", "hr_employee_compliance_record", "document_asset", "document_version", "document_acknowledgement", "hr_pip_plan", "hr_performance_review"} {
 		for _, row := range golden.Rows[table] {
 			if _, err := tx.Exec(ctx, `INSERT INTO "`+table+`" SELECT * FROM json_populate_record(NULL::"`+table+`", $1::json)`, string(row)); err != nil {
 				t.Fatalf("filing a %s row: %v", table, err)
@@ -96,7 +97,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	// Each account signs in once for every register (signing in is rate
 	// limited).
 	tokens := map[string]string{}
-	compared, differing := 0, 0
+	compared, differing, passedOn := 0, 0, 0
 	for _, answer := range golden.Answers {
 		token, ok := tokens[answer.Email]
 		if !ok {
@@ -110,6 +111,12 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 				differing++
 				t.Errorf("%s %s %v: %v, want not found", answer.Email, answer.Path, answer.Query, err)
 			}
+			continue
+		}
+		if connect.CodeOf(err) == connect.CodeUnavailable && strings.Contains(err.Error(), "not available here yet") {
+			// A reader whose register Go does not build yet (a Programme
+			// Lead's Performance Reviews) is passed on, as the gateway does.
+			passedOn++
 			continue
 		}
 		if err != nil {
@@ -131,7 +138,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 				g[max(at-200, 0):min(at+200, len(g))], w[max(at-200, 0):min(at+200, len(w))])
 		}
 	}
-	t.Logf("%d answers of %d accounts compared, %d differing", compared, len(tokens), differing)
+	t.Logf("%d answers of %d accounts compared, %d differing, %d passed on", compared, len(tokens), differing, passedOn)
 	if compared == 0 {
 		t.Fatal("no answer was compared")
 	}

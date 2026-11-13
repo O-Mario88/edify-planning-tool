@@ -2,6 +2,7 @@ package hrregister
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"time"
 
@@ -13,6 +14,10 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
+
+// errPassOn is a reader whose register Go does not build yet: the page
+// service passes them on to the existing application.
+var errPassOn = errors.New("hrregister: not built for this reader yet")
 
 // ErrNotAvailable is a register refused to the reader's role, which the
 // existing feed answers as a page that is not there.
@@ -46,6 +51,7 @@ var builders = map[string]func(context.Context, input) (register, error){
 	"/workforce-planning":  workforcePlanning,
 	"/policies":            policies,
 	"/recovery-plans":      recoveryPlans,
+	"/performance-reviews": performanceReviews,
 }
 
 // zone is settings.TIME_ZONE, the zone the server's day is read in.
@@ -87,6 +93,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	in := input{db: s.db, reach: r, query: query, search: closedschools.StripSpace(query.Get("q")),
 		today: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC), now: now, principal: p}
 	reg, err := build(ctx, in)
+	if errors.Is(err, errPassOn) {
+		return nil, false, nil
+	}
 	if err != nil {
 		return nil, true, err
 	}

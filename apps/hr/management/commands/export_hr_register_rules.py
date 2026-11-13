@@ -9,7 +9,7 @@ which of its drawer buttons each role is shown; the labels of a People
 record's lifecycle, a recognition's category and a safety incident's
 category, severity and status, an onboarding plan's status and an exit's
 reason, and which reasons are voluntary, an application's stage an employee's compliance status, a document's type and status, and a recovery plan's type, cause and
-status; whom each role reviews; which
+status, and a performance review's stage, type and rating; whom each role reviews; which
 of its link buttons each role may open; the label each context figure
 is drawn with; how long the line under a figure may stay; and the register's
 page size. A change to any of them must be exported again;
@@ -118,6 +118,11 @@ PAGES = {
             "Escalated",
         ],
     },
+    "/performance-reviews": {
+        "permission": "performance_reviews",
+        "drawers": [],
+        "metrics": ["Reviews", "Completed", "Overdue", "Awaiting calibration"],
+    },
     "/health-safety": {
         "permission": "health_safety",
         "drawers": ["/health-safety/new"],
@@ -185,6 +190,9 @@ def rules() -> dict:
         RecoveryCause,
         RecoveryPlanType,
         RecoveryStatus,
+        ReviewStage,
+        ReviewType,
+        PerformanceRating,
         SafetyIncidentCategory,
         SafetyIncidentStatus,
     )
@@ -206,6 +214,9 @@ def rules() -> dict:
         "recovery_plan_types": dict(RecoveryPlanType.choices),
         "recovery_causes": dict(RecoveryCause.choices),
         "recovery_statuses": dict(RecoveryStatus.choices),
+        "review_stages": dict(ReviewStage.choices),
+        "review_types": dict(ReviewType.choices),
+        "performance_ratings": dict(PerformanceRating.choices),
         # Whom each role reviews (review_authority.REVIEWER_ROLE_FOR,
         # inverted): a Programme Lead's recovery register lists the plans of
         # the people they supervise in these roles.

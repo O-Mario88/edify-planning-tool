@@ -31,8 +31,10 @@ from apps.documents.models import (
     DocumentAsset,
     DocumentVersion,
 )
+from apps.core.fy import get_operational_fy
 from apps.hr.models import (
     Application,
+    PerformanceReview,
     PerformanceImprovementPlan,
     Candidate,
     ComplianceRequirement,
@@ -52,6 +54,7 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 User = get_user_model()
 #: Deleted children first.
 TABLES = (
+    "hr_performance_review",
     "hr_pip_plan",
     "document_acknowledgement",
     "document_version",
@@ -82,6 +85,7 @@ PATHS = (
     "/workforce-planning",
     "/policies",
     "/recovery-plans",
+    "/performance-reviews",
 )
 
 
@@ -149,6 +153,7 @@ def file_rows():
     file_compliance(profiles, today)
     file_documents(profiles, today)
     file_recovery(profiles, today)
+    file_reviews(profiles, today)
     kinds = ["injury", "road_traffic", "near_miss", "hazard", "security", "illness"]
     for i in range(10):
         SafetyIncident.objects.create(
@@ -345,6 +350,34 @@ def file_recovery(profiles, today):
         )
 
 
+def file_reviews(profiles, today):
+    fy = get_operational_fy()
+    stages = [
+        "not_started",
+        "manager_assessment",
+        "calibration",
+        "closed",
+        "employee_acknowledged",
+        "hr_quality_review",
+        "priorities_agreed",
+    ]
+    for i in range(12):
+        PerformanceReview.objects.create(
+            id=f"ghre{i:03d}",
+            staff=profiles[36 + i],
+            period=["Q1", "Q2", "H1", "FY"][i % 4],
+            fy=[fy, fy, None, str(int(fy) - 1)][i % 4],
+            review_type=["annual_priorities", "mid_year", "year_end", "quarterly"][
+                i % 4
+            ],
+            stage=stages[i % 7],
+            due_date=today + timedelta(days=[-10, -1, 0, 3, 20, -30][i % 6] + i),
+            manager=profiles[i % 6] if i % 3 else None,
+            manager_rating=["far_exceeds", None, "legacy-text"][i % 3],
+            rating=[None, "far_exceeds", "unknown"][i % 3],
+        )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -393,7 +426,7 @@ QUESTIONS = {
         {"q": "safety"},
     ],
     "ia@edify.org": [{}, {"page": "2"}],
-    "cd@edify.org": [{}, {"q": "finance"}],
+    "cd@edify.org": [{}, {"q": "finance"}, {"fy": "2026"}, {"fy": " 2027 "}],
     "pl1@edify.org": [{}, {"q": "workload"}],
 }
 

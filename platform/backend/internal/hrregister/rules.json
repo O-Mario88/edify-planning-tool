@@ -52,7 +52,9 @@
     "Active": "Active",
     "Applications": "Applications",
     "Awaiting authorisation": "Awaiting authorisation",
+    "Awaiting calibration": "Awaiting calibration",
     "Awaiting supervisor": "Awaiting supervisor",
+    "Completed": "Completed",
     "Compliant": "Compliant",
     "Days lost": "Days lost",
     "Departments": "Departments",
@@ -85,6 +87,7 @@
     "Recognitions": "Recognitions",
     "Refused actions": "Refused actions",
     "Requirements": "Requirements",
+    "Reviews": "Reviews",
     "Screening": "Screening",
     "Serious incidents": "Serious incidents",
     "Showing": "Showing",
@@ -833,6 +836,136 @@
         }
       }
     },
+    "/performance-reviews": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": {
+            "label": "Performance & Coaching",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/team/coaching",
+                "label": "Coaching"
+              },
+              {
+                "active": true,
+                "href": "/performance-reviews",
+                "label": "Performance Reviews"
+              },
+              {
+                "active": false,
+                "href": "/recovery-plans",
+                "label": "Recovery Plans"
+              },
+              {
+                "active": false,
+                "href": "/cpd-learning",
+                "label": "Professional Development"
+              },
+              {
+                "active": false,
+                "href": "/policy-compliance",
+                "label": "Policy Compliance"
+              }
+            ]
+          }
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/policies": {
       "roles": {
         "Accountant": {
@@ -1296,6 +1429,13 @@
       }
     }
   },
+  "performance_ratings": {
+    "did_not_meet": "Did Not Meet Priority",
+    "exceeds": "Exceeds Priority",
+    "far_exceeds": "Far Exceeds Priority",
+    "met": "Met Priority",
+    "met_some": "Met Some Priority"
+  },
   "recognition_categories": {
     "above_and_beyond": "Above and beyond",
     "excellence": "Excellence in delivery",
@@ -1326,6 +1466,32 @@
     "escalated": "Escalated to a conduct case",
     "extended": "Extended",
     "progress_review": "Progress review"
+  },
+  "review_stages": {
+    "awaiting_acknowledgement": "Awaiting employee acknowledgement",
+    "calibration": "Calibration",
+    "closed": "Closed",
+    "employee_acknowledged": "Employee acknowledged",
+    "employee_reflection": "Employee reflection",
+    "final_rating_confirmed": "Final rating confirmed",
+    "functional_manager_complete": "Functional manager complete",
+    "hr_quality_review": "HR quality review",
+    "manager_assessment": "Manager assessment",
+    "manager_review_complete": "Manager review complete",
+    "not_started": "Not started",
+    "priorities_agreed": "Priorities agreed",
+    "priorities_draft": "Employee drafting priorities",
+    "priorities_manager_review": "Manager reviewing priorities",
+    "ready_for_slt_calibration": "Ready for SLT calibration",
+    "signed_and_archived": "Signed and archived",
+    "slt_calibrated": "SLT calibrated"
+  },
+  "review_types": {
+    "annual_priorities": "Annual priorities",
+    "mid_year": "Mid-year review",
+    "probation": "Probation review",
+    "quarterly": "Quarterly review",
+    "year_end": "Year-end review"
   },
   "reviews": {
     "Admin": [
