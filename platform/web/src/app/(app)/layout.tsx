@@ -8,7 +8,7 @@ import { TopBar } from '@/components/shell/TopBar';
 import { PhoneMenu } from '@/components/shell/TopBarControls';
 import { asReader, currentPath } from '@/lib/auth';
 import { environment } from '@/lib/environment';
-import { gatewayClient } from '@/lib/gateway';
+import { gatewayClient, isUnavailable } from '@/lib/gateway';
 import { pageSearch } from '@/lib/pageSearch';
 import { initialsOf } from '@/lib/today';
 
@@ -22,7 +22,14 @@ export default async function ShellLayout({ children }: { children: ReactNode })
   const [session, navigation] = await asReader((token) =>
     Promise.all([
       gatewayClient(IdentityService, token).getSession({}),
-      gatewayClient(NavigationService, token).getNavigation({}),
+      gatewayClient(NavigationService, token)
+        .getNavigation({})
+        .catch((error: unknown) => {
+          // The navigation is still the existing application's: a gateway with
+          // nothing behind it has none, and the shell is drawn without links.
+          if (isUnavailable(error)) return { sections: [], bottom: [] };
+          throw error;
+        }),
     ]),
   );
   const person = session.session;

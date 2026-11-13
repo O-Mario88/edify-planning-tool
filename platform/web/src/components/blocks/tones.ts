@@ -10,7 +10,28 @@ const BASE_BADGE = {
   info: 'border-[var(--brand-primary-border)] bg-[var(--brand-primary-soft)] text-[var(--brand-primary-text)]',
   neutral: 'border-[var(--edify-border)] bg-[var(--edify-surface-muted)] text-[var(--edify-text)]',
 } as const;
-const BADGE: Readonly<Record<string, string>> = { ...BASE_BADGE, positive: BASE_BADGE.success, attention: BASE_BADGE.warning };
+/**
+ * The page feed's own tone words (PageBadge / PageFact: good, caution, alert,
+ * plain; PageCell badges: the existing web's colour names) drawn as the same
+ * five.
+ */
+const BADGE: Readonly<Record<string, string>> = {
+  ...BASE_BADGE,
+  positive: BASE_BADGE.success,
+  attention: BASE_BADGE.warning,
+  good: BASE_BADGE.success,
+  green: BASE_BADGE.success,
+  lime: BASE_BADGE.success,
+  caution: BASE_BADGE.warning,
+  amber: BASE_BADGE.warning,
+  alert: BASE_BADGE.danger,
+  rose: BASE_BADGE.danger,
+  blue: BASE_BADGE.info,
+  primary: BASE_BADGE.info,
+  purple: BASE_BADGE.info,
+  plain: BASE_BADGE.neutral,
+  slate: BASE_BADGE.neutral,
+};
 
 export function badgeClasses(tone: string): string {
   return BADGE[tone] ?? BASE_BADGE.neutral;
@@ -23,6 +44,10 @@ const TEXT: Readonly<Record<string, string>> = {
   success: 'text-[#047857] dark:text-[var(--edify-success)]',
   positive: 'text-[#047857] dark:text-[var(--edify-success)]',
   info: 'text-[var(--brand-primary-text)]',
+  good: 'text-[#047857] dark:text-[var(--edify-success)]',
+  lime: 'text-[#047857] dark:text-[var(--edify-success)]',
+  caution: 'text-[var(--edify-warning-text)]',
+  alert: 'text-[#be123c] dark:text-[var(--edify-danger)]',
 };
 
 export function textTone(tone: string): string {

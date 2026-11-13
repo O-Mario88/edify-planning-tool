@@ -7,6 +7,8 @@
  */
 import { useRef, useState } from 'react';
 
+import { isEmptyFilter } from '@/lib/emptyFilter';
+
 import { Icon } from '../shell/icons';
 
 export interface FilterOption {
@@ -30,22 +32,30 @@ export function FilterBar({
   hidden,
   clearHref,
   label = 'Filters',
+  oneRow = false,
 }: {
   action: string;
   filters: readonly Filter[];
   hidden: Readonly<Record<string, string>>;
   clearHref: string;
   label?: string;
+  /** On a wide screen every filter shares one row with the × (owner, 2026-09-27). */
+  oneRow?: boolean;
 }) {
   const form = useRef<HTMLFormElement>(null);
   const [more, setMore] = useState(false);
-  const folded = filters.length > PHONE_FILTERS;
+  const shown = filters.filter((filter) => !isEmptyFilter(filter));
+  const quiet = filters.filter((filter) => isEmptyFilter(filter) && filter.value && !filter.disabled);
+  const folded = shown.length > PHONE_FILTERS;
   return (
-    <form ref={form} method="get" action={action} aria-label={label} data-block="filters" className="grid grid-cols-[repeat(4,minmax(0,1fr))_auto] items-end gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]">
+    <form ref={form} method="get" action={action} aria-label={label} data-block="filters" className={`grid grid-cols-[repeat(4,minmax(0,1fr))_auto] items-end gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4 ${oneRow ? 'lg:flex lg:[&>label]:min-w-0 lg:[&>label]:flex-1 lg:[&>a]:shrink-0' : 'lg:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]'}`}>
       {Object.entries(hidden).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}
-      {filters.map((filter, index) => (
+      {quiet.map((filter) => (
+        <input key={filter.name} type="hidden" name={filter.name} value={filter.value} />
+      ))}
+      {shown.map((filter, index) => (
         <label key={filter.name} className={`block min-w-0 ${index >= PHONE_FILTERS && !more ? 'max-sm:hidden' : ''}`}>
           <span className="mb-1 block truncate text-[length:var(--edify-text-micro-size)] font-medium text-[var(--edify-text-muted)]">{filter.label}</span>
           <select
