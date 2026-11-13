@@ -3,6 +3,7 @@ package todos
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -109,7 +110,7 @@ func countryBudgetTodos(ctx context.Context, s *Service, r *reader) ([]todo, err
 			continue
 		}
 		keys, err := s.strings(ctx, `SELECT month_key FROM monthly_work_plan_budget WHERE country_id = $1 AND status = $2
-ORDER BY month_key DESC LIMIT 5`, cb.Country, desk.status)
+ORDER BY month_key DESC LIMIT 5`, budgetCountry(r), desk.status)
 		if err != nil {
 			return nil, err
 		}
@@ -130,7 +131,7 @@ func (s *Service) cdBudgetRows(ctx context.Context, r *reader) ([]todo, error) {
 	// lowest id.
 	month := fmt.Sprintf("%d-%02d", r.today.Year(), int(r.today.Month()))
 	current, err := s.strings(ctx, `SELECT month_key FROM monthly_work_plan_budget
-WHERE country_id = $1 AND month_key = $2 AND status = ANY($3) ORDER BY id ASC LIMIT 1`, cb.Country, month, cb.ReviewStatuses)
+WHERE country_id = $1 AND month_key = $2 AND status = ANY($3) ORDER BY id ASC LIMIT 1`, budgetCountry(r), month, cb.ReviewStatuses)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +141,7 @@ WHERE country_id = $1 AND month_key = $2 AND status = ANY($3) ORDER BY id ASC LI
 			ActionURL: "/country-budget", Shape: "/country-budget"})
 	}
 	returned, err := s.strings(ctx, `SELECT month_key FROM monthly_work_plan_budget WHERE country_id = $1 AND status = $2
-ORDER BY month_key DESC LIMIT 5`, cb.Country, cb.ReturnedStatus)
+ORDER BY month_key DESC LIMIT 5`, budgetCountry(r), cb.ReturnedStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +151,7 @@ ORDER BY month_key DESC LIMIT 5`, cb.Country, cb.ReturnedStatus)
 			ActionURL: "/country-budget", Shape: "/country-budget", Due: &r.today})
 	}
 	fys, err := s.strings(ctx, `SELECT fy FROM country_annual_budget WHERE country_id = $1 AND status = $2
-ORDER BY fy DESC LIMIT 3`, cb.Country, cb.ReturnedStatus)
+ORDER BY fy DESC LIMIT 3`, budgetCountry(r), cb.ReturnedStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -262,4 +263,15 @@ func (s *Service) strings(ctx context.Context, sql string, args ...any) ([]strin
 		return nil, err
 	}
 	return pgx.CollectRows(rows, pgx.RowTo[string])
+}
+
+// budgetCountry is the country whose General Budget the reader's desks hold:
+// the reader's own. The existing builder reads one hard-coded country for
+// every desk; Go falls back to it only for a reader with no country (the
+// Admin) (owner, 2026-11-13: "Can you fix those from the go side").
+func budgetCountry(r *reader) string {
+	if c := strings.TrimSpace(r.scope.Country); c != "" {
+		return c
+	}
+	return rules.Admin.CountryBudget.Country
 }
