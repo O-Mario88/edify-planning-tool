@@ -177,8 +177,19 @@ differing; 108 passed to the existing application` and 25.8's Core sheets
 `78 sheets (589 rows) compared, 0 differing` (the expansion they read was
 generalised).
 
-**Against the existing feed, the seed accounts.** See the report's parity
-lines; `cceo@edify.org` is still passed (700 schools held: pieces 4 and 5).
+**Against the existing feed, the seed accounts.** The 67 questions of
+25.4 for all 29 accounts, a gateway with no existing application behind it
+(8085), my own Django (8185) as the existing feed:
+
+```
+1943 answers compared, 65 differing
+1495 answers held rows with the same name, compared in School ID order (the existing page gives them none)
+```
+
+The 65 are all `cceo@edify.org`'s, still passed by Go (700 schools held:
+pieces 4 and 5) and answered "not available here yet" by the Go-only
+gateway; the other 28 accounts are 0 differing. The seed has no account
+this piece newly opens (its trainings are `cceo@`'s and a partner's).
 
 Unit tests: `trainings_test.go` (the place and Planned From cells, the
 Group Training name, the summary's cells and links, the past-due words),
