@@ -1,0 +1,125 @@
+{
+  "helper_figure_chars": 28,
+  "metric_labels": {
+    "Report Drafts": "Report Drafts",
+    "Reports Acknowledged": "Reports Acknowledged",
+    "Reports Awaiting Review": "Reports Awaiting Review",
+    "Reports Returned": "Reports Returned"
+  },
+  "page_size": 50,
+  "pages": {
+    "/cce-leadership/reports": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/cce-leadership/reports/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/cce-leadership/reports/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [
+            "/cce-leadership/reports/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [
+            "/cce-leadership/reports/new"
+          ],
+          "page": true,
+          "strip": null
+        }
+      }
+    }
+  },
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "report_statuses": {
+    "acknowledged": "Acknowledged",
+    "draft": "Draft",
+    "returned": "Returned for revision",
+    "submitted": "Submitted"
+  },
+  "report_tones": {
+    "acknowledged": "success",
+    "draft": "neutral",
+    "returned": "danger",
+    "submitted": "warning"
+  },
+  "reporting_starts": "2026-09-01"
+}

@@ -475,3 +475,9 @@ GRANT SELECT (verification_id, reason) ON ia_returned_reason TO edify_gateway_ro
 -- Verification History: each verification's activity, verifier, time and
 -- whether it counts in analytics. Not its notes.
 GRANT SELECT (activity_id, verified_by, verified_at, analytics_included) ON ia_verification_history TO edify_gateway_ro;
+
+-- CCE monthly reports (internal/ccelead, docs/migration/136-cce-reports.md):
+-- each report's author, month, countries, status and when it was submitted
+-- and reviewed, and by whom. Not its written sections, figures or the
+-- review note.
+GRANT SELECT (id, author_id, status, period, countries, submitted_at, reviewed_at, reviewed_by_id, created_at) ON cce_regional_report TO edify_gateway_ro;
