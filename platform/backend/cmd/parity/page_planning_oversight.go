@@ -3,7 +3,9 @@ package main
 import "context"
 
 func init() {
-	pageQuestions["/team-planning-oversight/"] = planningOversightQuestions
+	pageQuestions["/team-planning-oversight/"] = func(ctx context.Context, run *pageRun, who string) []map[string]string {
+		return append(planningOversightQuestions(ctx, run, who), teamPlanQuestions()...)
+	}
 	pageQuestions["/country-planning-oversight/"] = planningOversightQuestions
 }
 
@@ -27,6 +29,31 @@ func planningOversightQuestions(_ context.Context, _ *pageRun, _ string) []map[s
 		{"program_lead", "nobody"}, {"format", "json"}, {"format", "xml"},
 	} {
 		out = append(out, map[string]string{kv[0]: kv[1]})
+	}
+	return out
+}
+
+// teamPlanQuestions are the Team Plan lens's (piece 2): each owner tab (a
+// seed officer by StaffProfile id and by User id, one nobody holds), each
+// activity family and one the page does not know, every period in each year
+// the selector offers, weeks either side of 1 October, months and quarters,
+// an advanced filter (blank and set) and a follow-up link.
+func teamPlanQuestions() []map[string]string {
+	out := []map[string]string{
+		{"owner": "team"}, {"owner": "cmw9p7e5q00hglnekhe9h"}, {"owner": "cmw9p7g4j00dkkpekheur"},
+		{"owner": "nobody"}, {"owner": "mine", "activity": "trainings"},
+		{"activity": "meetings"}, {"activity": "trainings"}, {"activity": "other"},
+		{"view": "planning", "period": "week"},
+		{"period": "week", "week": "2026-W40"}, {"period": "week", "week": "2025-W10"},
+		{"period": "week", "week": "2026-W53"},
+		{"period": "month", "month": "10"}, {"period": "month", "month": "3"}, {"month": "6"},
+		{"period": "quarter", "quarter": "Q2"}, {"quarter": "Q4"},
+		{"district_id": "nowhere"}, {"risk": "any"}, {"followup": "x"},
+	}
+	for _, fy := range []string{"2025", "2027", "2028"} {
+		for _, period := range []string{"week", "month", "quarter", "fy"} {
+			out = append(out, map[string]string{"fy": fy, "period": period})
+		}
 	}
 	return out
 }

@@ -42,9 +42,10 @@ func pageFor(path string) string {
 // Build answers /team-planning-oversight/ and /country-planning-oversight/
 // for p. A reader the page refuses gets pagegate.ErrNotAvailable, as the
 // feed answers 404 before the view runs; a ?format= the feed has no renderer
-// for is refused for everyone. Every reader the page opens for is handed to
-// the existing application (served=false): the lenses are not Go's yet.
-func (s *Service) Build(_ context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+// for is refused for everyone. A reader the page opens for is handed to the
+// existing application (served=false), except the Team Plan a Programme
+// Lead's team has nothing planned on (teamplan.go).
+func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	key := pageFor(path)
 	if key == "" {
 		return nil, false, nil
@@ -53,6 +54,9 @@ func (s *Service) Build(_ context.Context, p auth.Principal, path string, query 
 		return nil, true, pagegate.ErrNotAvailable
 	}
 	if !refused(p.ActiveRole, key) {
+		if key == teamKey {
+			return s.buildTeamPlan(ctx, p, query)
+		}
 		return nil, false, nil
 	}
 	return nil, true, pagegate.ErrNotAvailable

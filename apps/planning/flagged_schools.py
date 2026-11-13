@@ -31,6 +31,10 @@ from datetime import date
 from apps.planning.oversight_service import resolve_oversight_scope
 
 
+#: The statuses of an activity that is not planned work: it leaves the
+#: month's planned schools.
+NOT_PLANNED_STATUSES = ("cancelled", "rejected", "deferred")
+
 #: What is read from each planned activity here, in `urgent_attention` and by
 #: `_StaffDirectory`, plus the school join.
 _ACTIVITY_FIELDS = (
@@ -85,7 +89,7 @@ def team_flagged_schools(principal, *, fy: str, month: int | None = None) -> dic
             planned_date__lt=end,
             deleted_at__isnull=True,
         )
-        .exclude(status__in=("cancelled", "rejected", "deferred"))
+        .exclude(status__in=NOT_PLANNED_STATUSES)
         .select_related("school", "school__district")
         # The activity columns this module and the classifier read; the school
         # and its district load whole. A country month is thousands of

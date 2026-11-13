@@ -403,3 +403,7 @@ GRANT SELECT (id) ON partner_invoice TO edify_gateway_ro;
 GRANT SELECT (program_lead_user_id) ON planning_oversight_follow_up TO edify_gateway_ro;
 GRANT SELECT (pl_user_id) ON target_catchup_plan TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
+
+-- Planning Oversight's Team Plan (internal/planningoversight, doc 47.6):
+-- an undated activity sits in its month by planned_month (_in_month).
+GRANT SELECT (planned_month) ON activity TO edify_gateway_ro;
