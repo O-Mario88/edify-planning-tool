@@ -1,0 +1,532 @@
+{
+  "catalogue_modes": {
+    "admin": "Admin",
+    "cluster_meeting": "Group Training",
+    "cluster_training": "Group Training",
+    "group": "Group Training",
+    "in_school_training": "In-School Training",
+    "online": "Online",
+    "programme_event": "Programme Event",
+    "school_visit": "In-School Training"
+  },
+  "catalogue_training_type": "training",
+  "cceo_role": "CCEO",
+  "certified_partner_agency": "certified_partner_agency",
+  "country_reader_roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+  ],
+  "dated_by_partner": "partner",
+  "default_country": "Uganda",
+  "doors": {
+    "Accountant": {
+      "country_reader": true,
+      "feed_opens": true,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": true,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "Admin": {
+      "country_reader": true,
+      "feed_opens": true,
+      "lens_tabs_country": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=trainings",
+          "label": "Training Summary"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Country Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "lens_tabs_team": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=trainings",
+          "label": "Training Summary"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Team Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "page": true,
+      "reads_country": true,
+      "sets_country_ceiling": true,
+      "trainings": true
+    },
+    "BusinessTransformationOfficer": {
+      "country_reader": true,
+      "feed_opens": false,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": false,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "CCEO": {
+      "country_reader": false,
+      "feed_opens": false,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": false,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "ClusterLeader": {
+      "country_reader": false,
+      "feed_opens": false,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": false,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "CountryDirector": {
+      "country_reader": true,
+      "feed_opens": true,
+      "lens_tabs_country": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=trainings",
+          "label": "Training Summary"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Country Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "lens_tabs_team": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=trainings",
+          "label": "Training Summary"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Team Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "page": true,
+      "reads_country": true,
+      "sets_country_ceiling": false,
+      "trainings": true
+    },
+    "HumanResources": {
+      "country_reader": false,
+      "feed_opens": true,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": true,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "ImpactAssessment": {
+      "country_reader": true,
+      "feed_opens": true,
+      "lens_tabs_country": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=monitor",
+          "label": "Planning Monitor"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=execution",
+          "label": "Execution & Completion"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=trainings",
+          "label": "Training Summary"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Country Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "lens_tabs_team": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=monitor",
+          "label": "Planning Monitor"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=execution",
+          "label": "Execution & Completion"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=trainings",
+          "label": "Training Summary"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Team Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "page": true,
+      "reads_country": true,
+      "sets_country_ceiling": true,
+      "trainings": true
+    },
+    "MfiLoanOfficer": {
+      "country_reader": false,
+      "feed_opens": false,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": false,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "MfiPartnerAdmin": {
+      "country_reader": false,
+      "feed_opens": false,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": false,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "PartnerAdmin": {
+      "country_reader": false,
+      "feed_opens": false,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": false,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "PartnerFieldOfficer": {
+      "country_reader": false,
+      "feed_opens": false,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": false,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "Program Lead": {
+      "country_reader": false,
+      "feed_opens": true,
+      "lens_tabs_country": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=trainings",
+          "label": "Training Summary"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Country Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "lens_tabs_team": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=trainings",
+          "label": "Training Summary"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Team Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "page": true,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": true
+    },
+    "ProjectCoordinator": {
+      "country_reader": false,
+      "feed_opens": false,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": false,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "RegionalProgramLead": {
+      "country_reader": false,
+      "feed_opens": true,
+      "lens_tabs_country": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Country Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "lens_tabs_team": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Team Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=targets",
+          "label": "Target Performance"
+        }
+      ],
+      "page": true,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    },
+    "RegionalVicePresident": {
+      "country_reader": false,
+      "feed_opens": true,
+      "lens_tabs_country": [],
+      "lens_tabs_team": [],
+      "page": true,
+      "reads_country": false,
+      "sets_country_ceiling": false,
+      "trainings": false
+    }
+  },
+  "live_project_statuses": [
+    "active",
+    "paused",
+    "proposed",
+    "scaling",
+    "under_review"
+  ],
+  "max_query_value": 128,
+  "meeting_kind_training": "training",
+  "meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "mode_group": "Group Training",
+  "mode_in_school": "In-School Training",
+  "mode_partner_in_school": "Partner In-School Training",
+  "partner_delivery_type": "partner",
+  "planned_states": [
+    "accountant_confirmed",
+    "awaiting_ia_verification",
+    "closed",
+    "completed",
+    "completion_started",
+    "evidence_accepted",
+    "evidence_uploaded",
+    "ia_verified",
+    "in_progress",
+    "partner_scheduled",
+    "planned",
+    "rescheduled",
+    "returned_by_ia",
+    "returned_by_pl",
+    "salesforce_id_required",
+    "scheduled",
+    "submitted_to_pl"
+  ],
+  "program_lead_role": "Program Lead",
+  "query_key_pattern": "^[a-z][a-z0-9_]{0,39}$",
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "released_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "not_planned"
+  ],
+  "tones": {
+    "cell": {
+      "above": "danger",
+      "below": "warning",
+      "reached": "success",
+      "unset": ""
+    },
+    "country": {
+      "above": "danger",
+      "below": "",
+      "reached": "success",
+      "unset": ""
+    }
+  },
+  "training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+    "cluster_training_ssa_collection"
+  ],
+  "unscheduled_handover_statuses": [
+    "assigned",
+    "pending_scheduling"
+  ]
+}

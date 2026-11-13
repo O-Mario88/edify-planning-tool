@@ -52,6 +52,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teams"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workplan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trainingsummary"
 )
 
 const maxRequestBytes = 1 << 20
@@ -117,6 +118,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			todos.NewService(pool, time.Now),
 			workplan.NewService(pool, time.Now),
 			staffactivity.NewService(pool, time.Now),
+			trainingsummary.NewService(pool, time.Now),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
 		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel ||

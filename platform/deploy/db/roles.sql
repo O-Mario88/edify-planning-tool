@@ -329,3 +329,12 @@ GRANT SELECT (pl_review_note) ON activity TO edify_gateway_ro;
 -- compute_next_action's money branches: which advance comes first (newest),
 -- a reimbursement receipt confirmed, an accountability's NetSuite code in.
 GRANT SELECT (created_at, reimbursement_receipt_confirmed_at, accountability_netsuite_id) ON advance_request TO edify_gateway_ro;
+
+-- Training Summary (internal/trainingsummary): what its figures count and who reads them.
+GRANT SELECT (partner_date_set_by, executor_type) ON activity TO edify_gateway_ro;
+GRANT SELECT (activity_type) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (catalogue_item_id, project_id, active) ON activity_project_mapping TO edify_gateway_ro;
+GRANT SELECT (source_activity_id, catalogue_item_id) ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (is_superuser) ON "user" TO edify_gateway_ro;
+GRANT SELECT (id, staff_id, training_id, ceiling, fy) ON training_ceiling TO edify_gateway_ro;
+GRANT SELECT (id, training_id, ceiling, fy, country) ON training_country_ceiling TO edify_gateway_ro;
