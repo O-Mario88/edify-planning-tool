@@ -45,6 +45,16 @@ COUNTRY_OVERSIGHT_PATH = "/country-planning-oversight/"
 PLANNING_MONITOR_PATH = "/planning-monitor/"
 COUNTRY_MAP_PATH = "/country-map/"
 PARTNER_OVERSIGHT_PATH = "/partner-oversight/"
+#: Partner Monitoring's Status filter, in its order: each delivery phase a
+#: Partner's row can be in (PartnerOversightItem.delivery_phase).
+PARTNER_STATUS_FILTER_KEYS = (
+    "awaiting_schedule",
+    "scheduled",
+    "in_progress",
+    "verification",
+    "completed",
+    "returned",
+)
 
 
 def may_delegate(user, *, country: bool, region: bool = False) -> bool:
@@ -3620,14 +3630,7 @@ def partner_oversight_view(request):
                 "key": key,
                 "count": sum(1 for i in typed_items if i.delivery_phase == key),
             }
-            for key in (
-                "awaiting_schedule",
-                "scheduled",
-                "in_progress",
-                "verification",
-                "completed",
-                "returned",
-            )
+            for key in PARTNER_STATUS_FILTER_KEYS
         ],
         # One kind of work a tab (owner, 2026-10-02): the tables of the open
         # tab alone, with every tab's count on the strip.

@@ -45,6 +45,24 @@ AUTOLOAD_PARAMS = ("engagement", "step", "record", "source")
 # Rows per register page.
 PAGE_PARAM = "engagement_page"
 
+#: The register's tiles: each one's label and the line under it ({fy} is the
+#: page's FY). The Regional Lead observations tile is the Programme Lead's.
+ENGAGEMENT_METRIC_WORDS = {
+    "recorded": (
+        "Partner Engagements This FY",
+        "FY{fy} · meetings, orientations and follow-ups",
+    ),
+    "partners_engaged": (
+        "Partners Engaged This FY",
+        "organisations with at least one engagement",
+    ),
+    "follow_ups_due": ("Partner Follow-Ups Due", "agreed improvements to check on"),
+    "observations": (
+        "Regional Lead Observations Awaiting Partner Follow-Up",
+        "strengthen or replace, no engagement since",
+    ),
+}
+
 
 def _metric(label: str, value, helper: str, tone="info") -> dict:
     return render_precomputed_metric_for_source(
@@ -193,30 +211,31 @@ def engagement_register(
         for entry in services.open_observation_follow_ups(user)
         if not partner_id or entry["partner_id"] == partner_id
     ]
+    words = ENGAGEMENT_METRIC_WORDS
     metrics = [
         _metric(
-            "Partner Engagements This FY",
+            words["recorded"][0],
             counts["recorded"],
-            f"FY{fy} · meetings, orientations and follow-ups",
+            words["recorded"][1].format(fy=fy),
         ),
         _metric(
-            "Partners Engaged This FY",
+            words["partners_engaged"][0],
             counts["partners_engaged"],
-            "organisations with at least one engagement",
+            words["partners_engaged"][1],
         ),
         _metric(
-            "Partner Follow-Ups Due",
+            words["follow_ups_due"][0],
             counts["follow_ups_due"],
-            "agreed improvements to check on",
+            words["follow_ups_due"][1],
             "danger" if counts["follow_ups_due"] else "info",
         ),
     ]
     if services._role(user) == services.PROGRAM_LEAD:
         metrics.append(
             _metric(
-                "Regional Lead Observations Awaiting Partner Follow-Up",
+                words["observations"][0],
                 len(open_observations),
-                "strengthen or replace, no engagement since",
+                words["observations"][1],
                 "warning" if open_observations else "info",
             )
         )

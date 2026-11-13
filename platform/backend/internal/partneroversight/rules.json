@@ -1,0 +1,315 @@
+{
+  "core_work_tab": "core",
+  "engagement_autoload_params": [
+    "engagement",
+    "step",
+    "record",
+    "source"
+  ],
+  "engagement_metric_words": {
+    "follow_ups_due": [
+      "Partner Follow-Ups Due",
+      "agreed improvements to check on"
+    ],
+    "observations": [
+      "Regional Lead Observations Awaiting Partner Follow-Up",
+      "strengthen or replace, no engagement since"
+    ],
+    "partners_engaged": [
+      "Partners Engaged This FY",
+      "organisations with at least one engagement"
+    ],
+    "recorded": [
+      "Partner Engagements This FY",
+      "FY{fy} · meetings, orientations and follow-ups"
+    ]
+  },
+  "engagement_page_param": "engagement_page",
+  "left_partner_statuses": [
+    "returned",
+    "cancelled"
+  ],
+  "partner_action_recommendations": [
+    "strengthen",
+    "replace"
+  ],
+  "partner_delivery": "partner",
+  "planning_cceo_role": "CCEO",
+  "planning_lead_role": "Program Lead",
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "returned_to_staff": "returned_to_staff",
+  "roles": {
+    "Accountant": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "country",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": true,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "Admin": {
+      "create_partner": true,
+      "engagement_register": true,
+      "lens": "country",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": true,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "BusinessTransformationOfficer": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "team",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": false,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "CCEO": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "team",
+      "observations_tile": false,
+      "own_work_only": true,
+      "page": true,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "ClusterLeader": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "team",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": false,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "CountryDirector": {
+      "create_partner": true,
+      "engagement_register": true,
+      "lens": "country",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": true,
+      "reads_own_engagements": false,
+      "records_engagements": true
+    },
+    "HumanResources": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "team",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": false,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "ImpactAssessment": {
+      "create_partner": true,
+      "engagement_register": true,
+      "lens": "country",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": true,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "MfiLoanOfficer": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "team",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": false,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "MfiPartnerAdmin": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "team",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": false,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "PartnerAdmin": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "team",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": false,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "PartnerFieldOfficer": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "team",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": false,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "Program Lead": {
+      "create_partner": false,
+      "engagement_register": true,
+      "lens": "team",
+      "observations_tile": true,
+      "own_work_only": false,
+      "page": true,
+      "reads_own_engagements": true,
+      "records_engagements": true
+    },
+    "ProjectCoordinator": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "team",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": false,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "RegionalProgramLead": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "region",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": true,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    },
+    "RegionalVicePresident": {
+      "create_partner": false,
+      "engagement_register": false,
+      "lens": "country",
+      "observations_tile": false,
+      "own_work_only": false,
+      "page": true,
+      "reads_own_engagements": false,
+      "records_engagements": false
+    }
+  },
+  "roster_lead_role": "Program Lead",
+  "status_filter_keys": [
+    "awaiting_schedule",
+    "scheduled",
+    "in_progress",
+    "verification",
+    "completed",
+    "returned"
+  ],
+  "withdrawal_requested": "requested",
+  "work_tabs": [
+    "schools",
+    "core",
+    "visits",
+    "trainings",
+    "clusters"
+  ],
+  "zero_tiles": [
+    {
+      "helper": "0 schools assigned",
+      "label": "Active Partners",
+      "note": "",
+      "tone": "neutral",
+      "value": "0"
+    },
+    {
+      "helper": "",
+      "label": "Handovers Yet To Schedule",
+      "note": "No cost until a partner schedules",
+      "tone": "",
+      "value": "0"
+    },
+    {
+      "helper": "0 in progress",
+      "label": "Partner Work Scheduled",
+      "note": "",
+      "tone": "neutral",
+      "value": "0"
+    },
+    {
+      "helper": "0 returned to staff",
+      "label": "Partner Work Needing Attention",
+      "note": "",
+      "tone": "neutral",
+      "value": "0"
+    },
+    {
+      "helper": "",
+      "label": "Scheduled Partner Budget",
+      "note": "Scheduled work only",
+      "tone": "",
+      "value": "UGX 0"
+    },
+    {
+      "helper": "",
+      "label": "Partner Payments Pending",
+      "note": "Verified and awaiting payment",
+      "tone": "",
+      "value": "0"
+    }
+  ],
+  "zero_tiles_with_target": [
+    {
+      "helper": "0 schools assigned",
+      "label": "Active Partners",
+      "note": "0 schools assigned · Partner target 0 visits (0 Core + 0 beyond staff capacity), 0 with a Partner",
+      "tone": "neutral",
+      "value": "0"
+    },
+    {
+      "helper": "",
+      "label": "Handovers Yet To Schedule",
+      "note": "No cost until a partner schedules",
+      "tone": "",
+      "value": "0"
+    },
+    {
+      "helper": "0 in progress",
+      "label": "Partner Work Scheduled",
+      "note": "",
+      "tone": "neutral",
+      "value": "0"
+    },
+    {
+      "helper": "0 returned to staff",
+      "label": "Partner Work Needing Attention",
+      "note": "",
+      "tone": "neutral",
+      "value": "0"
+    },
+    {
+      "helper": "",
+      "label": "Scheduled Partner Budget",
+      "note": "Scheduled work only",
+      "tone": "",
+      "value": "UGX 0"
+    },
+    {
+      "helper": "",
+      "label": "Partner Payments Pending",
+      "note": "Verified and awaiting payment",
+      "tone": "",
+      "value": "0"
+    }
+  ]
+}

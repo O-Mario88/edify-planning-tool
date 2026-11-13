@@ -41,6 +41,7 @@ import (
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myactions"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmeschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -113,6 +114,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			myplan.NewService(pool, time.Now),
 			calendarpage.NewService(pool, time.Now),
 			todos.NewService(pool, time.Now),
+			partneroversight.NewService(pool, time.Now),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
 		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel ||

@@ -295,3 +295,12 @@ GRANT SELECT (verification_status, recorded_by_user_id) ON impact_edtech_deploym
 GRANT SELECT (costing_profile) ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (execution_start) ON fiscal_year_planning_policy TO edify_gateway_ro;
 GRANT SELECT (reimbursement_receipt_confirmed_at, accountability_netsuite_id, created_at) ON advance_request TO edify_gateway_ro;
+
+-- Partner Monitoring (internal/partneroversight, docs/migration/46-partner-oversight.md): whether a reader's
+-- workspace holds partner work — a group training a Partner facilitates, a withdrawal waiting on the reader, an
+-- engagement the reader recorded, a Regional Lead observation asking for work with a partner. Ids, states and the
+-- recommendation word only; no withdrawal reasons, notes or engagement text.
+GRANT SELECT (facilitating_partner_id) ON activity TO edify_gateway_ro;
+GRANT SELECT (state, supervising_pl_id) ON partner_assignment_withdrawal TO edify_gateway_ro;
+GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
+GRANT SELECT (recommendation) ON cce_regional_engagement TO edify_gateway_ro;
