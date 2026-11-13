@@ -149,6 +149,11 @@ def returned_unresolved_q(prefix: str = "") -> Q:
     )
 
 
+#: The hand-over statuses that have left the Partner outright (left_partner_q);
+#: a hand-back staff have decided ("returned_to_staff", resolved) has too.
+LEFT_PARTNER_STATUSES = ("returned", "cancelled")
+
+
 def left_partner_q(prefix: str = "") -> Q:
     """A hand-over the Partner no longer holds, with nothing left to decide.
 
@@ -161,7 +166,7 @@ def left_partner_q(prefix: str = "") -> Q:
     update the counts, and summaries where they are counted").
     """
     p = prefix
-    return Q(**{f"{p}status__in": ("returned", "cancelled")}) | (
+    return Q(**{f"{p}status__in": LEFT_PARTNER_STATUSES}) | (
         Q(**{f"{p}status": "returned_to_staff"})
         & Q(**{f"{p}resolved_at__isnull": False})
     )

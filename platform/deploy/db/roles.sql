@@ -383,3 +383,12 @@ GRANT SELECT (thread_id, user_id, recipient_type, last_read_at, archived_at, sta
 GRANT SELECT (id, subject, context_type, context_id, context_label, priority, created_by, last_reply_at, updated_at, is_system_generated) ON messaging_messagethread TO edify_gateway_ro;
 GRANT SELECT (thread_id, sender_id, body, created_at) ON message TO edify_gateway_ro;
 GRANT SELECT (id) ON leave TO edify_gateway_ro;
+
+-- Partner Monitoring (internal/partneroversight, docs/migration/46-partner-oversight.md): whether a reader's
+-- workspace holds partner work — a group training a Partner facilitates, a withdrawal waiting on the reader, an
+-- engagement the reader recorded, a Regional Lead observation asking for work with a partner. Ids, states and the
+-- recommendation word only; no withdrawal reasons, notes or engagement text.
+GRANT SELECT (facilitating_partner_id) ON activity TO edify_gateway_ro;
+GRANT SELECT (state, supervising_pl_id) ON partner_assignment_withdrawal TO edify_gateway_ro;
+GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
+GRANT SELECT (recommendation) ON cce_regional_engagement TO edify_gateway_ro;
