@@ -45,6 +45,12 @@ urlpatterns = [
         gateway_relay.visit_cancel_check,
         name="visit-cancel-check",
     ),
+    # What a group reschedule or cancel would do (docs/migration/33).
+    path(
+        "internal/visit-group-check",
+        gateway_relay.visit_group_check,
+        name="visit-group-check",
+    ),
     # An activity Go saved with no costs to follow, said on the realtime
     # stream (docs/migration/31).
     path(

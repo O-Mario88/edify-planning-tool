@@ -140,7 +140,31 @@ def resolve(path: str) -> str:
     return re.sub(r"\{activity:([^}]*)\}", one, path)
 
 
+def confirm_advances(step: dict) -> dict:
+    """A step that is not a drawer: the person confirms the advance of one of
+    their visits (advance_service.confirm_advance, the money page's door), so
+    a later step meets a day whose money has moved. Played by the existing
+    application on every copy alike."""
+    from apps.fund_requests import advance_service
+    from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
+
+    user = get_user_model().objects.get(email=step["who"])
+    activity_id = resolve(step["confirm_advance"])
+    pending = AdvanceRequest.objects.filter(
+        budget_line__activity_id=activity_id,
+        status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
+    ).values_list("id", flat=True)
+    confirmed = [advance_service.confirm_advance(i, user)["status"] for i in pending]
+    return {
+        "ok": bool(confirmed),
+        "status": 200,
+        "message": f"{len(confirmed)} confirmed",
+    }
+
+
 def play(client: Client, step: dict) -> dict:
+    if "confirm_advance" in step:
+        return confirm_advances(step)
     headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
     step = {**step, "open": resolve(step["open"]), "form": resolve(step["form"])}
     drawer = client.get(step["open"], **headers)

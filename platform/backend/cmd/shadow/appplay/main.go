@@ -21,9 +21,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -45,6 +48,10 @@ type step struct {
 	Who  string            `json:"who"`
 	Open string            `json:"open"`
 	Set  map[string]string `json:"set"`
+	// ConfirmAdvance is a step that is not a drawer (django_runner.py
+	// confirm_advances): played by the existing application on the run's
+	// own copy, alike on both.
+	ConfirmAdvance string `json:"confirm_advance"`
 }
 
 // answer is one step's SavePlanningDrawerResponse, or the error the app got.
@@ -70,6 +77,8 @@ func main() {
 	out := flag.String("out", "", "where the answers are written")
 	compare := flag.String("compare", "", "a.json,b.json: compare two runs")
 	flag.StringVar(&copyDSN, "db", "", "the copy the gateway serves, read to find a step's activity by its purpose text")
+	flag.StringVar(&runnerPython, "python", "", "the Python that runs manage.py shell (for a step that is not a drawer)")
+	flag.StringVar(&runnerRepo, "repo", ".", "the worktree that Python runs in")
 	flag.DurationVar(&settle, "settle", 0, "a pause after each step: the existing application prices a save in a thread after its answer, "+
 		"and the app's next request does not wait for it as the web's does (its cookie)")
 	flag.Parse()
@@ -101,6 +110,10 @@ func play(gateway, scenarioPath, out, password string) error {
 	if err := readJSON(scenarioPath, &steps); err != nil {
 		return err
 	}
+	var raw []json.RawMessage
+	if err := readJSON(scenarioPath, &raw); err != nil {
+		return err
+	}
 	ctx := context.Background()
 	client := &http.Client{Timeout: 2 * time.Minute}
 	signIn := identityv1connect.NewSignInServiceClient(client, gateway)
@@ -120,7 +133,9 @@ func play(gateway, scenarioPath, out, password string) error {
 		}
 		var a answer
 		var err error
-		if m := groupDrawer.FindStringSubmatch(s.Open); m != nil {
+		if s.ConfirmAdvance != "" {
+			a, err = playOutside(raw[i])
+		} else if m := groupDrawer.FindStringSubmatch(s.Open); m != nil {
 			a, err = playGroup(ctx, pageDrawers, token, m[1], m[2], s)
 		} else if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
 			a, err = playMove(ctx, pageDrawers, token, m[1], m[2], s)
@@ -286,6 +301,48 @@ var copyDSN string
 
 // settle is the pause after each step (-settle).
 var settle time.Duration
+
+// runnerPython and runnerRepo run django_runner.py for a step that is not a
+// drawer (-python, -repo).
+var runnerPython, runnerRepo string
+
+// playOutside plays one step through django_runner.py on the run's own copy
+// (-db), as the existing application makes it on both copies alike.
+func playOutside(rawStep json.RawMessage) (answer, error) {
+	if runnerPython == "" || !strings.HasPrefix(copyDSN, "postgresql://localhost:5432/edify_shadow_") {
+		return answer{}, errors.New("a step that is not a drawer needs -python and a shadow -db")
+	}
+	dir, err := os.MkdirTemp("", "appplay-")
+	if err != nil {
+		return answer{}, err
+	}
+	defer os.RemoveAll(dir)
+	scenario, result := filepath.Join(dir, "step.json"), filepath.Join(dir, "out.json")
+	if err := os.WriteFile(scenario, []byte("["+string(rawStep)+"]"), 0o600); err != nil {
+		return answer{}, err
+	}
+	script, err := os.Open(filepath.Join(runnerRepo, "platform/backend/cmd/shadow/django_runner.py"))
+	if err != nil {
+		return answer{}, err
+	}
+	defer script.Close()
+	cmd := exec.Command(runnerPython, "manage.py", "shell") // #nosec G204 -- the operator's own Python
+	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = runnerRepo, script, io.Discard, os.Stderr
+	cmd.Env = append(os.Environ(), "DATABASE_URL="+copyDSN, "SCENARIO="+scenario, "OUT="+result)
+	if err := cmd.Run(); err != nil {
+		return answer{}, err
+	}
+	var played struct {
+		Outcomes []struct {
+			OK      bool   `json:"ok"`
+			Message string `json:"message"`
+		} `json:"outcomes"`
+	}
+	if err := readJSON(result, &played); err != nil || len(played.Outcomes) != 1 {
+		return answer{}, fmt.Errorf("the runner's outcome: %v", err)
+	}
+	return answer{Saved: played.Outcomes[0].OK, Message: played.Outcomes[0].Message}, nil
+}
 
 // moveDrawer is My Plan's Reschedule drawer (docs/migration/29) or its
 // Cancel drawer (30); its

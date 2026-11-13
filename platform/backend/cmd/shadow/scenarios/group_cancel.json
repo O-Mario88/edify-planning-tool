@@ -301,5 +301,68 @@
   "set": {
    "reason": "[shadow-gc] all five"
   }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7vrk008fvxekheps",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-12-08",
+   "activity_purpose_text": "[shadow-gc] N",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7ugn00b7crekhe2v",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "story_gathering",
+   "scheduled_date": "2026-12-08",
+   "activity_purpose_text": "[shadow-gc] O",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7wf5008ft3ekheff",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "social_visit",
+   "scheduled_date": "2026-12-09",
+   "activity_purpose_text": "[shadow-gc] P",
+   "expected_outcome": "[shadow-gc] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "confirm_advance": "{activity:[shadow-gc] N}"
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/cancel?ids={activity:[shadow-gc] O},{activity:[shadow-gc] P}",
+  "form": "/activity-selection/cancel",
+  "set": {
+   "reason": "[shadow-gc] the day N's money holds"
+  }
  }
 ]

@@ -176,6 +176,15 @@
  },
  {
   "who": "cceo@edify.org",
+  "open": "/activity-selection/reschedule?ids={activity:[shadow-g] C},{activity:[shadow-g] D}",
+  "form": "/activity-selection/reschedule",
+  "set": {
+   "scheduled_date": "2026-11-26",
+   "reason": "[shadow-g] two onto a new day"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
   "open": "/activity-selection/reschedule?ids={activity:[shadow-g] C},cmwclue57008yjsdhhc9v",
   "form": "/activity-selection/reschedule",
   "set": {
@@ -226,6 +235,36 @@
   "set": {
    "scheduled_date": "2026-11-25",
    "reason": "[shadow-g] all five move"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7vrk008fvxekheps",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-11-27",
+   "activity_purpose_text": "[shadow-g] G",
+   "expected_outcome": "[shadow-g] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "confirm_advance": "{activity:[shadow-g] F}"
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/activity-selection/reschedule?ids={activity:[shadow-g] A},{activity:[shadow-g] G}",
+  "form": "/activity-selection/reschedule",
+  "set": {
+   "scheduled_date": "2026-11-26",
+   "reason": "[shadow-g] the day F's money holds"
   }
  }
 ]

@@ -107,22 +107,63 @@ func pick(id, title, where string, day string) groupPick {
 	return groupPick{GroupPick: GroupPick{ActivityID: id, Title: title, Where: where, Day: d}}
 }
 
-// selection's order: day, place casefolded, title; ties keep the tick order.
-func TestThePicksAreOrderedAsTheDrawerListsThem(t *testing.T) {
-	picks := []groupPick{
-		pick("5", "Donor Visit", "b school", "2026-11-18"),
-		pick("1", "Social Visit", "B School", "2026-11-17"),
-		pick("2", "Donor Visit", "a school", "2026-11-17"),
-		pick("3", "Donor Visit", "B school", "2026-11-17"),
-		pick("4", "Donor Visit", "b school", "2026-11-17"),
+type fakeGroupPricing struct {
+	verdict GroupVerdict
+	asked   []GroupQuestion
+}
+
+func (f *fakeGroupPricing) DayCheck(context.Context, map[string]any) (DayVerdict, error) {
+	return DayVerdict{}, nil
+}
+func (f *fakeGroupPricing) Settle(context.Context, []int64, string) error { return nil }
+func (f *fakeGroupPricing) GroupCheck(_ context.Context, q GroupQuestion) (GroupVerdict, error) {
+	f.asked = append(f.asked, q)
+	return f.verdict, nil
+}
+
+// The group check puts the picks in `selection`'s order, and Go takes its
+// answer only where Go's own reading agrees with it: the same activities,
+// the ones Go has already left left in the same words, and a group changed
+// one at a time only because its pricing refused.
+func TestTheGroupCheckOrdersThePicksAndMustAgreeWithGo(t *testing.T) {
+	picks := func() []groupPick {
+		left := pick("b", "T", "W", "2026-11-17")
+		left.Refusal = groupAlreadyOnDay
+		return []groupPick{pick("a", "T", "W", "2026-11-18"), left, pick("c", "T", "W", "2026-11-16")}
 	}
-	sortPicks(picks)
-	got := []string{}
-	for _, p := range picks {
-		got = append(got, p.ActivityID)
+	agreeing := GroupVerdict{Together: true, Picks: []VerdictPick{
+		{ID: "c", Done: true}, {ID: "b", Refusal: groupAlreadyOnDay}, {ID: "a", Done: true}}}
+	pricing := &fakeGroupPricing{verdict: agreeing}
+	s := &Service{pricing: pricing}
+	got := picks()
+	door, verdict, err := s.askGroup(context.Background(), GroupQuestion{Kind: "reschedule", ActivityIDs: []string{"a", "b", "c"}}, got, 2)
+	if err != nil || !verdict.Together || len(door) != 3 {
+		t.Fatalf("askGroup: %v %+v", err, verdict)
 	}
-	if !slices.Equal(got, []string{"2", "3", "4", "1", "5"}) {
-		t.Fatalf("order %v", got)
+	order := []string{}
+	for _, p := range got {
+		order = append(order, p.ActivityID)
+	}
+	if !slices.Equal(order, []string{"c", "b", "a"}) || len(pricing.asked) != 1 {
+		t.Fatalf("order %v, asked %v", order, pricing.asked)
+	}
+	for name, verdict := range map[string]GroupVerdict{
+		"the group refused":     {Refusal: groupMoveReason},
+		"another activity":      {Together: true, Picks: []VerdictPick{{ID: "c", Done: true}, {ID: "b", Refusal: groupAlreadyOnDay}, {ID: "z", Done: true}}},
+		"a pick Go left, moved": {Together: true, Picks: []VerdictPick{{ID: "c", Done: true}, {ID: "b", Done: true}, {ID: "a", Done: true}}},
+		"left in other words":   {Together: true, Picks: []VerdictPick{{ID: "c", Done: true}, {ID: "b", Refusal: "x"}, {ID: "a", Done: true}}},
+		"apart with no reason":  {Picks: agreeing.Picks},
+	} {
+		s := &Service{pricing: &fakeGroupPricing{verdict: verdict}}
+		if _, _, err := s.askGroup(context.Background(), GroupQuestion{}, picks(), 2); !errors.Is(err, ErrHandOn) {
+			t.Errorf("%s: %v, want a hand-on", name, err)
+		}
+	}
+	// Changed one at a time because its pricing refused: taken.
+	apart := GroupVerdict{GroupRefusal: "The accountant holds Monday.", Picks: agreeing.Picks}
+	s = &Service{pricing: &fakeGroupPricing{verdict: apart}}
+	if _, v, err := s.askGroup(context.Background(), GroupQuestion{}, picks(), 2); err != nil || v.Together {
+		t.Fatalf("one at a time: %v %+v", err, v)
 	}
 }
 
@@ -196,13 +237,5 @@ func TestTheGroupAnswersInTheViewsWords(t *testing.T) {
 	}
 	if names := groupNames([]GroupPick{{Title: "T", Where: "W", Refusal: "Gone..."}}); names != "T at W (Gone)" {
 		t.Fatalf("rstrip: %q", names)
-	}
-}
-
-// A place beyond ASCII would be casefolded by Python: handed on rather than
-// ordered by another rule.
-func TestOnlyASCIIPlacesAreOrderedInGo(t *testing.T) {
-	if !isASCII("Kasawo Church of Uganda Primary") || isASCII("Straße Primary") {
-		t.Fatal("isASCII")
 	}
 }

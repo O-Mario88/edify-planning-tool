@@ -35,6 +35,15 @@ sign-in security-events relay and behind the same internal key:
   the cancel on the activity inside a transaction it rolls back, so it writes
   nothing.
 
+* ``visit-group-check`` (docs/migration/33) plays a group reschedule or a
+  group cancel of the ticked activities exactly as ``group_actions`` makes it
+  (each activity in the group's order, each meeting what the ones before it
+  left: a day the first made, a visit the first moved; then the group's
+  pricing asked once over every day, ``together``; and, when that refuses,
+  the group again one activity at a time), inside a transaction it rolls
+  back, and answers what became of each activity, in which way, and the
+  group's own refusal. It writes nothing.
+
 * ``activity-changed`` (docs/migration/31) says ``plan.changed`` for an
   activity Go saved when no costs follow it (an edit of a visit's goal or
   expected outcome), as the existing save's commit says it.
@@ -532,6 +541,161 @@ def visit_cancel_check(request):
     ):
         return JsonResponse({"ok": False, "reason": "bad_fields"}, status=400)
     return JsonResponse({"ok": True, **_cancel_probe(activity_id, reason)})
+
+
+#: The two group actions the group check plays.
+GROUP_KINDS = ("reschedule", "cancel")
+
+
+def _group_picks(kind: str, ids: list, raw_day: str, reason: str, principal):
+    """``group_actions.reschedule`` / ``cancel`` up to ``_apply``: the group's
+    own refusals, the selection, and for a move the picks already on the day;
+    with the act, skip and change they hand to ``_apply``."""
+    from apps.activities import group_actions, services
+
+    reason = str(reason or "").strip()
+    if kind == "cancel":
+        if not reason:
+            raise BadRequest("Give the reason these activities are being cancelled.")
+
+        def call_off(activity):
+            services.cancel(activity.id, {"reason": reason}, principal)
+
+        picks = group_actions.selection(ids, principal, action=group_actions.CANCEL)
+        return picks, call_off, None, None
+    try:
+        day = date.fromisoformat(str(raw_day or "").strip())
+    except ValueError:
+        raise BadRequest("Choose the date these activities move to.") from None
+    if not reason:
+        raise BadRequest("Give the reason these activities are moving.")
+    payload = {
+        "scheduledDate": day.isoformat(),
+        "reason": reason,
+        "plannedMonth": day.month,
+        "plannedWeek": min(5, (day.day - 1) // 7 + 1),
+    }
+
+    def move(activity):
+        services.reschedule(activity.id, payload, principal)
+
+    picks = group_actions.selection(ids, principal, action=group_actions.RESCHEDULE)
+    by_id = {p.id: p for p in picks}
+    for pick in picks:
+        if not pick.refusal and all(by_id[i].day == day for i in pick.unit):
+            pick.refusal = "Already on this date."
+
+    def one_change(count: int):
+        from apps.fund_requests.plan_changes import planner_change
+
+        return planner_change(principal, what=f"{count} activities")
+
+    return picks, move, (lambda pick: pick.day == day), one_change
+
+
+def _group_probe(kind: str, ids: list, raw_day: str, reason: str, principal) -> dict:
+    """Play the group as ``group_actions._apply`` plays it and say what it
+    did: each pick done or left with its words, ``together`` when the group
+    was changed in one transaction and priced once, ``groupRefusal`` when
+    that pricing refused and the group was changed one activity at a time.
+    Always rolled back."""
+    from django.conf import settings
+
+    from apps.activities import group_actions
+    from apps.core.htmx_errors import error_message
+
+    answer = {"refusal": "", "together": False, "groupRefusal": "", "picks": []}
+    try:
+        with transaction.atomic():
+            try:
+                picks, act, skip, within = _group_picks(
+                    kind, ids, raw_day, reason, principal
+                )
+            except BadRequest as refused:
+                raise _Probe({**answer, "refusal": error_message(refused)}) from refused
+            changing = len(
+                {
+                    p.unit
+                    for p in picks
+                    if not any(m.refusal for m in group_actions._unit(p, picks))
+                }
+            )
+            outcome = None
+            together = changing > 1 and getattr(
+                settings, "PRICE_A_DAY_ONCE_PER_SAVE", True
+            )
+            if together:
+                said = {p.id: p.refusal for p in picks}
+                try:
+                    outcome = group_actions._together(
+                        picks, act=act, skip=skip, within=within, count=changing
+                    )
+                except Exception as exc:  # noqa: BLE001 — as _apply answers for it
+                    answer["groupRefusal"] = error_message(exc)
+                    together = False
+                    for pick in picks:
+                        pick.refusal = said[pick.id]
+            if outcome is None:
+                outcome = group_actions._one_at_a_time(picks, act=act, skip=skip)
+            done = {p.id for p in outcome.done}
+            raise _Probe(
+                {
+                    **answer,
+                    "together": together,
+                    "picks": [
+                        {
+                            "id": p.id,
+                            "done": p.id in done,
+                            "refusal": "" if p.id in done else p.refusal,
+                        }
+                        for p in picks
+                    ],
+                }
+            )
+    except _Probe as probed:
+        return probed.answer
+
+
+@csrf_exempt  # A server's key, never a browser's session.
+@require_POST
+def visit_group_check(request):
+    refusal = internal_key_refusal(request)
+    if refusal is not None:
+        return refusal
+    body = _body(request)
+    if body is None:
+        return JsonResponse({"ok": False, "reason": "not_an_object"}, status=400)
+    kind, ids = body.get("kind"), body.get("activityIds")
+    user_id, role = body.get("userId"), body.get("role")
+    raw_day, reason = body.get("scheduledDate", ""), body.get("reason", "")
+    if (
+        kind not in GROUP_KINDS
+        or not isinstance(ids, list)
+        or not 0 < len(ids) <= MAX_GROUP
+        or not all(isinstance(i, str) and 0 < len(i) <= 30 for i in ids)
+        or not isinstance(user_id, str)
+        or not 0 < len(user_id) <= 30
+        or not isinstance(role, str)
+        or not isinstance(raw_day, str)
+        or len(raw_day) > 10
+        or not isinstance(reason, str)
+        or len(reason) > MAX_REASON
+    ):
+        return JsonResponse({"ok": False, "reason": "bad_fields"}, status=400)
+    from apps.accounts.models import User
+
+    principal = User.objects.filter(id=user_id, is_active=True).first()
+    if principal is None or role not in (principal.roles or []):
+        return JsonResponse({"ok": False, "reason": "bad_principal"}, status=400)
+    # The role the person is working in, as their request carries it.
+    principal.active_role = role
+    return JsonResponse(
+        {"ok": True, **_group_probe(kind, ids, raw_day, reason, principal)}
+    )
+
+
+#: The most activities a group takes (group_actions.MAX_SELECTION).
+MAX_GROUP = 100
 
 
 @csrf_exempt  # A server's key, never a browser's session.

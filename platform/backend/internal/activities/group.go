@@ -125,31 +125,35 @@ func (s *Service) GroupReschedule(ctx context.Context, p auth.Principal, req Gro
 	if err != nil {
 		return GroupAnswer{}, err
 	}
-	if changing > 1 && len(plans) > 1 {
-		// Two visits joining a day nobody has yet: the second meets the
-		// day the first made, and whether its week has left draft is a read
-		// the writer role does not have (33.4 §2).
-		has, err := ownerHasDay(ctx, s.db, plans[0].ownerUID, day)
-		if err != nil {
-			return GroupAnswer{}, err
-		}
-		if !has {
-			return GroupAnswer{}, handOn("several visits joining a day that has none yet")
-		}
+	// The group as the existing application plays it (33.9): the second
+	// visit meeting the day the first made, and its pricing once over all.
+	door, verdict, err := s.askGroup(ctx, GroupQuestion{Kind: "reschedule", ActivityIDs: ids, Date: posted,
+		Reason: reason, UserID: p.UserID, Role: p.ActiveRole}, picks, changing)
+	if err != nil {
+		return GroupAnswer{}, err
 	}
+	byID := map[string]*movePlan{}
+	for _, pl := range plans {
+		byID[pl.a.id] = pl
+	}
+	plans = inOrder(picks, byID)
 	var rowID int64
+	var settled string
 	var marked []time.Time
-	if changing > 1 {
-		rowID, marked, err = s.writeGroupMove(ctx, p, picks, plans, changing, origin)
-	} else {
-		rowID, marked, err = s.writeOneMove(ctx, picks, plans)
+	switch {
+	case changing > 1 && verdict.Together:
+		rowID, marked, err = s.writeGroupMove(ctx, p, picks, plans, changing, origin, door)
+	case changing > 1:
+		rowID, settled = s.writeEachMove(ctx, picks, plans, door)
+	default:
+		rowID, marked, err = s.writeOneMove(ctx, picks, plans, door)
 	}
 	if err != nil {
 		return GroupAnswer{}, err
 	}
 	answer := groupOutcome(picks)
 	s.afterGroup(ctx, p, origin, groupMoveAuditName, answer,
-		map[string]any{"new_date": posted, "reason": reason, "group": true}, marked, rowID)
+		map[string]any{"new_date": posted, "reason": reason, "group": true}, marked, rowID, settled)
 	count := len(answer.Done)
 	answer.Message = fmt.Sprintf("%d %s moved to %s.", count, activityWord(count), longDate(day))
 	finishAnswer(&answer, groupMovedVerb)
@@ -184,42 +188,68 @@ func (s *Service) GroupCancel(ctx context.Context, p auth.Principal, req GroupRe
 			picks[i].Refusal = groupAlreadyOff
 		}
 	}
-	plans := []*cancelPlan{}
+	changing := 0
+	plans := map[string]*cancelPlan{}
 	for i := range picks {
 		if picks[i].Refusal != "" {
 			continue
 		}
+		changing++
+		// A refusal of the pricing on this one alone is the check's to
+		// place (33.9): left alone it is the visit's, priced together the
+		// group's.
 		pl, err := s.prepareCancel(ctx, p, CancelRequest{ActivityID: picks[i].ActivityID, Reason: reason}, origin)
 		var refusal *Refusal
-		if errors.As(err, &refusal) {
-			// What pricing the day would refuse: met for the group as a
-			// whole, which Go does not ask (33.4 §1).
-			return GroupAnswer{}, handOn("the pricing would refuse a cancel of the group")
-		}
-		if err != nil {
+		if err != nil && !(errors.As(err, &refusal) && pl != nil) {
 			return GroupAnswer{}, err
 		}
-		plans = append(plans, pl)
+		plans[picks[i].ActivityID] = pl
 	}
+	door, verdict, err := s.askGroup(ctx, GroupQuestion{Kind: "cancel", ActivityIDs: ids, Reason: reason,
+		UserID: p.UserID, Role: p.ActiveRole}, picks, changing)
+	if err != nil {
+		return GroupAnswer{}, err
+	}
+	ordered := inOrder(picks, plans)
 	var rowID int64
-	var err2 error
-	switch {
-	case len(plans) > 1:
-		rowID, err2 = s.writeGroupCancel(ctx, p, plans, origin)
-	case len(plans) == 1:
-		rowID, err2 = s.writeCancel(ctx, plans[0])
-	}
-	if err2 != nil {
-		return GroupAnswer{}, err2
-	}
+	var settled string
 	marked := []time.Time{}
-	for _, pl := range plans {
-		if in(rules.LedgerCreditedTypes, pl.a.activityType) {
-			marked = append(marked, pl.a.plannedDate)
+	switch {
+	case changing > 1 && verdict.Together:
+		for _, pl := range ordered {
+			if !door[pl.a.id].Done {
+				// Nothing a cancel of 30.1's case meets refuses it inside a
+				// group: not ported.
+				return GroupAnswer{}, handOn("the group check leaves a cancel Go would make")
+			}
+			if in(rules.LedgerCreditedTypes, pl.a.activityType) {
+				marked = append(marked, pl.a.plannedDate)
+			}
+		}
+		rowID, err = s.writeGroupCancel(ctx, p, ordered, origin)
+	case changing > 1:
+		rowID, settled = s.writeEachCancel(ctx, picks, ordered, door)
+	case changing == 1:
+		pl := ordered[0]
+		v := door[pl.a.id]
+		switch {
+		case !v.Done:
+			pickOf(picks, pl.a.id).Refusal = v.Refusal
+		case pl.verdict.Refusal != "":
+			return GroupAnswer{}, handOn("the group check cancels one Go's check refuses")
+		default:
+			rowID, err = s.writeCancel(ctx, pl)
+			if in(rules.LedgerCreditedTypes, pl.a.activityType) {
+				marked = append(marked, pl.a.plannedDate)
+			}
 		}
 	}
+	if err != nil {
+		return GroupAnswer{}, err
+	}
 	answer := groupOutcome(picks)
-	s.afterGroup(ctx, p, origin, groupCancelAuditName, answer, map[string]any{"reason": reason, "group": true}, marked, rowID)
+	s.afterGroup(ctx, p, origin, groupCancelAuditName, answer, map[string]any{"reason": reason, "group": true},
+		marked, rowID, settled)
 	count := len(answer.Done)
 	answer.Message = fmt.Sprintf("%d %s cancelled.", count, activityWord(count))
 	finishAnswer(&answer, groupCancelledVerb)
@@ -244,8 +274,8 @@ func groupIDs(raw []string) ([]string, error) {
 
 // groupPicks reads every ticked activity and hands the group on unless each
 // is one Go's single save takes (prepareMove's and prepareCancel's doors
-// that do not turn on the date or the reason), then orders them as
-// `selection` does: by day, place (casefolded) and title.
+// that do not turn on the date or the reason). The group check puts them in
+// `selection`'s order (askGroup).
 func (s *Service) groupPicks(ctx context.Context, p auth.Principal, ids []string, statuses []string, move bool) ([]groupPick, error) {
 	now := s.now()
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
@@ -291,41 +321,12 @@ func (s *Service) groupPicks(ctx context.Context, p auth.Principal, ids []string
 		if where == "" {
 			where = groupProgrammeWork
 		}
-		if !isASCII(where) && len(ids) > 1 {
-			// str.casefold beyond ASCII orders the drawer: not ported.
-			return nil, handOn("a place name the ordering would casefold")
-		}
 		picks = append(picks, groupPick{
 			GroupPick: GroupPick{ActivityID: a.id, Title: a.nameSnapshot, Where: where, Day: a.plannedDate},
 			a:         *a, ownerID: ownerUID,
 		})
 	}
-	sortPicks(picks)
 	return picks, nil
-}
-
-func isASCII(text string) bool {
-	for i := 0; i < len(text); i++ {
-		if text[i] >= utf8.RuneSelf {
-			return false
-		}
-	}
-	return true
-}
-
-// sortPicks is `picks.sort(key=lambda p: (p.day, p.where.casefold(), p.title))`:
-// stable, the place lowered (ASCII only reaches here), the title by code point.
-func sortPicks(picks []groupPick) {
-	sort.SliceStable(picks, func(i, j int) bool {
-		x, y := picks[i], picks[j]
-		if !sameDay(x.Day, y.Day) {
-			return x.Day.Before(y.Day)
-		}
-		if xw, yw := strings.ToLower(x.Where), strings.ToLower(y.Where); xw != yw {
-			return xw < yw
-		}
-		return x.Title < y.Title
-	})
 }
 
 // groupMovePlans prepares each pick that is to move through the single
@@ -355,24 +356,9 @@ func (s *Service) groupMovePlans(ctx context.Context, p auth.Principal, picks []
 		case err != nil:
 			return nil, 0, err
 		}
-		if changing > 1 && pl.verdict.Refusal != "" && pl.verdict.Stage != "day" {
-			// _assert_days_can_follow is met for the whole group when it
-			// ends, and a refusal then changes the group one at a time.
-			return nil, 0, handOn("the pricing would refuse the group as a whole")
-		}
 		plans = append(plans, pl)
 	}
 	return plans, changing, nil
-}
-
-func ownerHasDay(ctx context.Context, q Querier, ownerUID string, day time.Time) (bool, error) {
-	var has bool
-	err := q.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM daily_visit_batch WHERE responsible_user = $1 AND visit_date = $2)`,
-		ownerUID, day.Format(time.DateOnly)).Scan(&has)
-	if err != nil {
-		return false, fmt.Errorf("activities: reading the owner's day: %w", err)
-	}
-	return has, nil
 }
 
 // pickOf finds a plan's pick.
@@ -386,17 +372,27 @@ func pickOf(picks []groupPick, id string) *groupPick {
 }
 
 // writeOneMove is `_one_at_a_time` when one pick is left to move: the single
-// move as it is made alone, its own transaction and costs row.
-func (s *Service) writeOneMove(ctx context.Context, picks []groupPick, plans []*movePlan) (int64, []time.Time, error) {
+// move as it is made alone, its own transaction and costs row. The check's
+// answer decides it: left with its words, or moved; Go's own check refusing
+// a move the check makes hands the group on, as does Go's save refusing it
+// (nothing has been written).
+func (s *Service) writeOneMove(ctx context.Context, picks []groupPick, plans []*movePlan,
+	door map[string]VerdictPick) (int64, []time.Time, error) {
 	if len(plans) == 0 {
 		return 0, nil, nil
 	}
 	pl := plans[0]
+	if v := door[pl.a.id]; !v.Done {
+		pickOf(picks, pl.a.id).Refusal = v.Refusal
+		return 0, nil, nil
+	}
+	if pl.verdict.Refusal != "" {
+		return 0, nil, handOn("the group check moves one Go's check refuses")
+	}
 	rowID, err := s.writeMove(ctx, pl)
 	var refusal *Refusal
 	if errors.As(err, &refusal) {
-		pickOf(picks, pl.a.id).Refusal = refusal.Message
-		return 0, nil, nil
+		return 0, nil, handOn("the group check moves one Go's save refuses")
 	}
 	if err != nil {
 		return 0, nil, err
@@ -446,7 +442,7 @@ func (k *keptCosts) empty() bool {
 // change the group is ("3 activities", planner_change's `what`). It answers
 // the row's id and the days whose years the ledger marks on commit.
 func (s *Service) writeGroupMove(ctx context.Context, p auth.Principal, picks []groupPick, plans []*movePlan,
-	changing int, origin Origin) (int64, []time.Time, error) {
+	changing int, origin Origin, door map[string]VerdictPick) (int64, []time.Time, error) {
 	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite, IsoLevel: pgx.ReadCommitted})
 	if err != nil {
 		return 0, nil, fmt.Errorf("activities: opening the group: %w", err)
@@ -459,9 +455,19 @@ func (s *Service) writeGroupMove(ctx context.Context, p auth.Principal, picks []
 		if err != nil {
 			return 0, nil, fmt.Errorf("activities: opening the visit's savepoint: %w", err)
 		}
-		stored, err := s.moveInTx(ctx, point, pl)
+		// The check's answer for this one, met where the existing save
+		// meets it: a refusal Go reads itself (the duplicate test) before the
+		// row, any other (the day the one before it made) after it.
+		v := door[pl.a.id]
+		played := *pl
+		played.verdict.Refusal = v.Refusal
+		stored, err := s.moveInTx(ctx, point, &played)
+		pl.newBatch = played.newBatch
 		var refusal *Refusal
 		if errors.As(err, &refusal) {
+			if v.Done || refusal.Message != v.Refusal {
+				return 0, nil, handOn("the group check and Go's save leave a visit otherwise")
+			}
 			if err := point.Rollback(ctx); err != nil {
 				return 0, nil, fmt.Errorf("activities: undoing the visit: %w", err)
 			}
@@ -639,7 +645,7 @@ func groupOutcome(picks []groupPick) GroupAnswer {
 // marks (on commit), the view's audit rows (`_audit`: every pick changed,
 // then every pick left with its reason), then the pricing.
 func (s *Service) afterGroup(ctx context.Context, p auth.Principal, origin Origin, action string, answer GroupAnswer,
-	payload map[string]any, marked []time.Time, rowID int64) {
+	payload map[string]any, marked []time.Time, rowID int64, settled string) {
 	if len(marked) > 0 {
 		if err := s.markOwnerYears(ctx, p.StaffProfileID, marked...); err != nil {
 			s.logger.Warn("activities: the target ledger was not marked", "group", action, "err", err)
@@ -654,7 +660,10 @@ func (s *Service) afterGroup(ctx context.Context, p auth.Principal, origin Origi
 	if rowID == 0 || len(answer.Done) == 0 {
 		return
 	}
-	if err := s.pricing.Settle(ctx, []int64{rowID}, answer.Done[0].ActivityID); err != nil {
+	if settled == "" {
+		settled = answer.Done[0].ActivityID
+	}
+	if err := s.pricing.Settle(ctx, []int64{rowID}, settled); err != nil {
 		s.logger.Warn("activities: the group's costs to follow were not settled; the sweep takes them",
 			"row", rowID, "err", err)
 	}

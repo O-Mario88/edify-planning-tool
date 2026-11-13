@@ -155,3 +155,21 @@ func (h *HTTPPricing) Announce(ctx context.Context, activityID string) error {
 	}
 	return nil
 }
+
+// GroupCheck asks /api/auth/internal/visit-group-check (docs/migration/33).
+func (h *HTTPPricing) GroupCheck(ctx context.Context, q GroupQuestion) (GroupVerdict, error) {
+	var answer struct {
+		OK bool `json:"ok"`
+		GroupVerdict
+	}
+	if err := h.post(ctx, "/api/auth/internal/visit-group-check", map[string]any{
+		"kind": q.Kind, "activityIds": q.ActivityIDs, "scheduledDate": q.Date, "reason": q.Reason,
+		"userId": q.UserID, "role": q.Role,
+	}, &answer); err != nil {
+		return GroupVerdict{}, err
+	}
+	if !answer.OK {
+		return GroupVerdict{}, fmt.Errorf("activities: the group check was not answered")
+	}
+	return answer.GroupVerdict, nil
+}

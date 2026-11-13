@@ -41,7 +41,7 @@ deployed, or connected to production.
 | [30-third-save-cancel-visit.md](30-third-save-cancel-visit.md) | The third save in Go, cancelling a school visit; the narrow function that withdraws its unmoved advance |
 | [31-fourth-save-edit-visit.md](31-fourth-save-edit-visit.md) | The fourth save in Go, editing a scheduled school visit's goal and expected outcome; the app's Edit drawer reason field |
 | [32-fifth-save-training-pair.md](32-fifth-save-training-pair.md) | The fifth save in Go, an In-school Training and its school visit as one save; the audit-seal defect found by its proof and fixed in Django |
-| [33-sixth-save-group-actions.md](33-sixth-save-group-actions.md) | The sixth save in Go, group reschedule and group cancel from the bar for ticked rows; a group Go cannot take whole is forwarded whole; groups onto a day with no visits yet wait on a writer-role read |
+| [33-sixth-save-group-actions.md](33-sixth-save-group-actions.md) | The sixth save in Go, group reschedule and group cancel from the bar for ticked rows; a group Go cannot take whole is forwarded whole; the group check door (33.9) lets Go take groups onto a new day and groups its pricing refuses |
 
 The code is under [`platform/`](../../platform/README.md).
 

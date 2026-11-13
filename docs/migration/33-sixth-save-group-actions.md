@@ -18,6 +18,14 @@ proved in shadow at the service and the app level for both saves, and the
 single reschedule's and cancel's scenarios re-proved on this code (33.6).
 Nothing is switched on outside this proof's own processes.
 
+**Closed by the coordinator (2026-11-13), built and proved (33.9).** The
+two decisions of 33.4 are decided by the pattern 27.8 already set: no read
+of `weekly_fund_request` for the writer role; instead one more read-only
+door in Django, `visit-group-check`, which plays the whole group as
+`group_actions` does and writes nothing. Go asks it before its transaction
+and now takes both cases it forwarded: several visits onto a day with none
+yet, and a group whose own pricing refuses (changed one activity at a time).
+
 ## 33.1 Scope
 
 Go takes a group only when **every** ticked activity (every `activity_ids`
@@ -27,8 +35,9 @@ first save's kind, owned by the person, at a school in their own portfolio
 that is not a Core school, still a plan (`scheduled`/`rescheduled`; a
 cancel also takes `cancelled`, which the group leaves "Already
 cancelled."), with no open overdue reminder or day-off notice. Then the
-group's own rules are Go's (33.3), and each activity's money is asked of the
-same read-only check its single save asks.
+group's own rules are Go's (33.3), each activity's money is asked of the
+same read-only check its single save asks, and the whole group of the group
+check (33.9), whose answer Go makes.
 
 **Handed on whole** (the gateway forwards the original request unchanged;
 nothing is written by Go): a ticked activity Go's single save would hand on
@@ -36,14 +45,16 @@ nothing is written by Go): a ticked activity Go's single save would hand on
 In-school Training pair, an activity with no date, …); no tick, or more than
 100; a person in an acting seat or an asking role; a date in another form
 than `YYYY-MM-DD` (Python's `date.fromisoformat` reads more); a cancel reason
-longer than 512; a place name beyond ASCII when there are several picks (the
-drawer's order casefolds it); any activity whose check says its money has
-moved (a sent week taken back, a frozen day left, a milestone credit, a
-frozen week, a cancel priced inside the save, lines in two weeks or months);
-any pricing refusal the group meets as a whole (33.4 §1); and **two or more
-visits moving onto a day the owner has no visits on yet** (33.4 §2). A group
-is never split between the two applications, and no activity is saved by
-both.
+longer than 512; any activity whose check says its money has moved (a sent
+week taken back, a frozen day left, a milestone credit, a frozen week, a
+cancel priced inside the save, lines in two weeks or months); and any group
+the group check reads otherwise than Go (other activities, a pick Go leaves
+that it changes or leaves in other words, a group changed one at a time
+with no refusal of its pricing, a pick Go's own save refuses where the check
+changes it). A group is never split between the two applications, and no
+activity is saved by both. (Until 33.9 a place name beyond ASCII, any
+pricing refusal the group meets as a whole, and several visits onto a day
+with none yet were handed on too.)
 
 ## 33.2 What one group writes (measured, 2026-11-13)
 
@@ -103,22 +114,22 @@ single `change`), with the group's audit rows.
 | Date, reason | 192–198 (reschedule), 233–235 (cancel) | `date.fromisoformat` fails → "Choose the date these activities move to."; blank reason → "Give the reason these activities are moving." / "… are being cancelled." | the same, in that order; another date form is handed on |
 | Ids | 130–145 | strip, once each, in order; none → "Tick at least one activity first."; more than 100 → "Tick at most 100 …" | none or > 100 → hand on |
 | Selection | 148–185 | found, not deleted, `can_view_record`; an unseen id dropped; pairs joined (`_units`); `_refusal` (cancel: "Already cancelled." / "Already completed. …"; reschedule: carried out, a partner's, the services' scope, awaiting the owner) | every id must be Go's single save's case (33.1), so none is dropped or joined; "Already cancelled." for a cancelled visit; the services' doors pass for own work |
-| Order | 184 | by (day, place casefolded, title), stable | `sortPicks` (ASCII place names; others handed on) |
+| Order | 184 | by (day, place casefolded, title), stable | the group check's order (33.9) |
 | On the day | 209–216 | a pick already on the new date → "Already on this date." | same |
 | Count | 271–275 | `changing`: the picks the group did not leave; more than one (and `PRICE_A_DAY_ONCE_PER_SAVE`, default on) → `_together`, else `_one_at_a_time` | the same count; the setting is assumed on, as the single saves assume `SAVES_ANSWER_FIRST` |
 | Together | 299–330 | one `transaction.atomic`; reschedule: `planner_change(what="{count} activities")`; `costs_follow()`, `fund_requests_follow_once()`, `each_day_priced_once(leaving_too=True)` (`kept.together`); each unit in its own savepoint (`_change` 354–375), a refusal undone to it (`priced_once_back_to`) and kept as the pick's reason (`_message`: the exception's words) | one read-write transaction, a savepoint per visit, Go's single in-transaction writes (`moveInTx`, `cancelInTx`) in the group's order; the kept days, weeks, months and notes folded as the blocks fold them; one costs row |
 | Each move | `services.reschedule` | 29.3 in its order: closed school, past date, the lock, the duplicate test (it sees the visits moved before it), the day's refusals, the row, the money kept | `prepareMove` for each pick before the transaction (its refusals become the pick's reason; its hand-ons hand the group on), `moveInTx` inside |
 | Each cancel | `services.cancel` | 30.3 in its order | `prepareCancel` before, `cancelInTx` inside |
-| End | `costs_follow._hand_over` | `_assert_days_can_follow(days, together=True)` on every day; a refusal undoes the whole group and `_apply` changes it again one unit at a time | not ported: a group any of whose checks refuses is handed on (33.4 §1) |
+| End | `costs_follow._hand_over` | `_assert_days_can_follow(days, together=True)` on every day; a refusal undoes the whole group and `_apply` changes it again one unit at a time | asked of the group check (33.9); one at a time, each activity is moved or cancelled as alone (its own transaction and costs row, the one before settled first, its own ledger mark) |
 | Commit | | the ledger's one callback; the settling thread | the marks in one statement, then the audit rows, then Django settles the one row |
 | Partner notices, money moved | `_refusal`, `money_moved_ids` 243–258 | a partner's work and its notice; the drawer's count of disbursed advances | out of scope: partner work is handed on, and a disbursed advance stays (30.1) |
 
 ## 33.4 Decisions
 
 Covered by 27.8, 29.4 and 30.4 and kept. Three choices made here, none a
-rule change; the second needs a decision before Go can take more.
+rule change. §1 and §2 are closed by the group check (33.9).
 
-1. **The group's own pricing check is not asked.** Django meets
+1. **The group's own pricing check is not asked** (closed, 33.9). Django meets
    `_assert_days_can_follow` once for the whole group when its block ends
    (`together=True`, each day read as the others will be priced), and a
    refusal there changes the group again one unit at a time, each with its
@@ -130,8 +141,8 @@ rule change; the second needs a decision before Go can take more.
    day could meet (a paid day's transport that one more school leaves as it
    is but several change) is not reachable with the seed and is not proved.
    A group-shaped read-only check door would make it exact.
-2. **Several visits onto a day with none yet are handed on** (needs a
-   decision to go further). The first visit makes the day; the second then
+2. **Several visits onto a day with none yet are handed on** (closed,
+   33.9: the coordinator chose a check door over a read for the role). The first visit makes the day; the second then
    meets it, and is refused "This date's visits have already left draft
    status." if the day's week has left draft (`_day_to_join`: only a day that
    exists is asked). Measured: B and C moved together onto 1 December (the
@@ -325,11 +336,188 @@ tests`, `OK`.
 
 Switching the group off in Django in the same release (03 §3.7) and any
 cutover wait for the owner; the switches are on nowhere but this proof's
-processes. 33.4 §2 (groups onto a new day) waits for a decision on the
-writer role's read. The group's whole-day pricing refusal (33.4 §1) is not
-ported. Not reachable with the seed data, so covered by the code path and
-the hand-on rule only: a closed school in a group, a duplicate refusal met
+processes. 33.4 §1 and §2 are closed by the group check (33.9). Not
+reachable with the seed data, so covered by the code path and the hand-on
+rule only: a closed school in a group, a duplicate refusal met
 because of an earlier visit in the same group, a school with no district (a
 day refusal after the row, which the ledger's savepoint rule follows), an
 open notice on a ticked visit, lines in two weeks. No replayed month on a
 sanitised restore. The web (Next.js) does not call this path.
+
+## 33.9 The group check (coordinator, 2026-11-13): both decisions closed
+
+**Decided** (the pattern 27.8 set, no owner call needed): the writer role
+gets no read of `weekly_fund_request`; one more read-only door in Django
+answers what the whole group would do, and Go makes that answer.
+
+**The door.** `POST /api/auth/internal/visit-group-check`
+(`apps/daily_visit_batches/gateway_relay.py` `visit_group_check`, route in
+`apps/accounts/urls.py`; the internal key, csrf-exempt, beside the move and
+cancel checks). Body: `kind` (`reschedule` / `cancel`), the ticked
+`activityIds` (1–100), `scheduledDate`, `reason`, and the person (`userId`,
+the `role` they work in, which must be one of theirs). Inside a transaction
+it always rolls back it plays the group exactly as `group_actions._apply`
+does (`_group_picks` is `reschedule()`/`cancel()` up to `_apply`; then
+`_together`, and on its refusal the same picks again through
+`_one_at_a_time`): each activity in the group's order meets what the ones
+before it left (the day the first made, so the 1 December case refuses the
+second visit "left draft"), and the group's pricing is asked once over every
+day (`together`). It answers `refusal` (the group's own words, before
+anything), `together`, `groupRefusal` (the words its pricing refused with,
+when it then changed the group one at a time) and each pick in the group's
+order (`id`, `done`, `refusal`). It writes nothing.
+
+**Go** (`internal/activities/group_check.go`, `group.go`) asks it after its
+own reading (every pick in its single save's scope, its own refusals, each
+activity's single money check) and before its transaction, and holds the
+two together: the same activities, every pick Go has already left (on the
+day, called off, a closed school, a past date) left by the check in the same
+words, a group changed one at a time only with a refusal of its pricing;
+otherwise the whole group is handed on. Then:
+
+- **Together:** one transaction, a savepoint each, as before (33.5), each
+  pick changed or left as the check says. A refusal Go reads itself (the
+  duplicate test) is met before the row and must be the check's words; any
+  other the check gives (the day the one before made) is met after the row,
+  where the existing save meets it, which the ledger's savepoint rule
+  follows. A pick the check changes and Go's save refuses hands the group on
+  (nothing is committed).
+- **One at a time** (the group's pricing refused): each pick the check
+  changes is changed as it is alone (Go's single move or cancel: its own
+  transaction and costs row, its own ledger mark on its commit), the costs
+  the one before kept settled first, as the next save in the same request
+  settles them (`_settle_what_this_request_asked`); the picks it leaves are
+  left in its words. Only the last costs row is settled after the audit
+  rows, as for a single save.
+- **One pick changing:** as before (33.2), now also left in the check's
+  words when the check leaves it; a pick the check changes and Go's own
+  money check refuses hands the group on.
+
+The check also gives the group's order, so Go no longer sorts the picks
+itself and no longer hands on a place name beyond ASCII.
+
+**Tests** (Django, `apps/daily_visit_batches/test_group_check.py`, on a
+private test database, `TEST_DATABASE_NAME=edify_test_agent17`, with the
+relay doors' tests: `Ran 14 tests`, `OK`): the door takes only what it was
+built for (a kind, 1–100 ids, the person in one of their roles); a group
+moved together writes nothing (every table compared before and after) and
+answers as the real group then does on the same records; the group's own
+refusals come before anything; **the second visit meets the day the first
+made** (two visits onto a day with none yet in a week whose request has been
+sent: the first moves, the second is refused "This date's visits have
+already left draft status. Choose another date."); **when the group's
+pricing refuses it is changed one at a time** (a visit staying on Monday with
+its advance at the accountant: `together` false, the refusal named, Monday's
+refused and Wednesday's moved, as the real group); **a refusal only the whole
+group meets** (the together pricing made to refuse, each alone not): every
+activity changed alone, as the real group; a group cancel the same. Go:
+`TestTheGroupCheckOrdersThePicksAndMustAgreeWithGo` (the order taken from
+the check; each disagreement handed on; one at a time taken only with a
+refusal of the pricing).
+
+**The scenarios extended.** `group_reschedule.json` (24 steps): C and D
+together onto 26 Nov, a day with no visits yet (step 15, now Go's); B and C
+onto 1 Dec, the submitted week with no visits yet (step 12, now Go's: B
+moves, C is refused "left draft"); a visit G scheduled, then F's advance
+confirmed by its owner (a step that is not a drawer:
+`django_runner.py` `confirm_advances`, `advance_service.confirm_advance`, played by the
+existing application on both copies alike; `appplay -python -repo` runs it on
+its own copy), then A and G to 26 Nov: A leaves F's day, so the group's
+pricing refuses ("This activity's advance is already confirmed and sitting
+in the accountant's queue. …") and the group is changed one at a time: A
+refused, G moved (step 24, Go's). `group_cancel.json` (28 steps): N, O, P
+scheduled, N's advance confirmed, then O and P cancelled together: O leaves
+N's day, the group's pricing refuses, O is refused and P cancelled alone
+(step 28, Go's). On the service runs Go's log of the check's answer reads
+`kind=reschedule together=true` 8 times and `together=false` twice (step
+9's single pick, step 24's pricing refusal), `kind=cancel together=true` 4
+times and `together=false` twice (step 16's single pick, step 28's).
+
+**The runs** (`agent17_all2.sh`; app runs with `appplay -settle 3s`), last
+lines exactly as printed. Group reschedule, service (`agent17_run11.txt`):
+
+```
+24 steps on edify_shadow_a: 21 answered ok, 3 refused
+0 of 24 steps answered differently
+goplay exit 0
+366 tables, 20 changed by the runs
+0 of 20 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 16053, 'fromSeq': None}
+```
+
+Group reschedule, app, `EDIFY_GO_SAVES=group_reschedule` (`agent17_run12.txt`):
+
+```
+0 of 24 steps answered differently
+compare exit 0
+366 tables, 19 changed by the runs
+0 of 19 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 16053, 'fromSeq': None}
+form-only requests on B: 16
+forwarded drawer saves on B: 4
+forwarded schedule saves on B: 7
+```
+
+Group cancel, service (`agent17_run13.txt`):
+
+```
+28 steps on edify_shadow_a: 26 answered ok, 2 refused
+0 of 28 steps answered differently
+goplay exit 0
+366 tables, 18 changed by the runs
+0 of 18 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 16008, 'fromSeq': None}
+```
+
+Group cancel, app, `EDIFY_GO_SAVES=group_cancel` (`agent17_run14.txt`):
+
+```
+0 of 28 steps answered differently
+compare exit 0
+366 tables, 17 changed by the runs
+0 of 17 changed tables differ
+shadow exit 0
+verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 16008, 'fromSeq': None}
+form-only requests on B: 10
+forwarded drawer saves on B: 4
+forwarded schedule saves on B: 16
+```
+
+On B Go made 12 group reschedules (16 forms asked, 4 forwarded: the pair,
+the Core visit, cceo1's empty form, the undated activity) and 7 group
+cancels (10 forms, 3 forwarded; the fourth forwarded drawer save is the
+single move, whose switch was off); the schedules were forwarded (their
+switches off).
+
+The single saves re-run on this code: reschedule, service
+(`agent17_run15.txt`): `19 steps on edify_shadow_a: 14 answered ok, 5
+refused`, `0 of 19 steps answered differently`, `goplay exit 0`, `366
+tables, 22 changed by the runs`, `0 of 22 changed tables differ`, `shadow
+exit 0`, `verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 15978,
+'fromSeq': None}`; reschedule, app, `EDIFY_GO_SAVES=reschedule_visit`
+(`agent17_run16.txt`): `0 of 19 steps answered differently`, `compare exit
+0`, `366 tables, 19 changed by the runs`, `0 of 19 changed tables differ`,
+`shadow exit 0`, `verify_chain {'ok': True, 'brokenAt': None,
+'checkedRows': 15976, 'fromSeq': None}`, `form-only requests on B: 12`,
+`forwarded drawer saves on B: 3`, `forwarded schedule saves on B: 6`;
+cancel, service (`agent17_run17.txt`): `19 steps on edify_shadow_a: 17
+answered ok, 2 refused`, `0 of 19 steps answered differently`, `goplay exit
+0`, `366 tables, 17 changed by the runs`, `0 of 17 changed tables differ`,
+`shadow exit 0`, `verify_chain {'ok': True, 'brokenAt': None,
+'checkedRows': 15972, 'fromSeq': None}`; cancel, app,
+`EDIFY_GO_SAVES=cancel_visit` (`agent17_run18.txt`): `0 of 19 steps answered
+differently`, `compare exit 0`, `366 tables, 14 changed by the runs`, `0 of
+14 changed tables differ`, `shadow exit 0`, `verify_chain {'ok': True,
+'brokenAt': None, 'checkedRows': 15970, 'fromSeq': None}`, `form-only
+requests on B: 10`, `forwarded drawer saves on B: 4`, `forwarded schedule
+saves on B: 6`.
+
+**Not proved.** A pick the check changes that Go's own save then refuses
+while the group is changed one at a time (Go keeps the ones before it, as
+the existing application does, and logs it) is a disagreement no run met. A
+refusal only the whole group meets is proved by the Django test, not in
+shadow: the seed reaches the group's pricing refusal only where each
+activity's own also refuses.
