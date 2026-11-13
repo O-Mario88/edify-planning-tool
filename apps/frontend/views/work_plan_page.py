@@ -117,6 +117,31 @@ _NO_ACTION_ROLES = {
 }
 
 
+#: The drill-down flags the strip's tiles open, and the chip that names one.
+FLAG_LABELS = {
+    "pending_approval": "Pending approval",
+    "cost_missing": "Cost setup required",
+    "at_risk": "At risk",
+}
+
+#: The period tabs.
+VIEW_TAB_LABELS = {"month": "Monthly", "quarter": "Quarterly", "fy": "FY"}
+
+#: A Program Lead's two audiences.
+SCOPE_TAB_LABELS = (("own", "My Activity Plan"), ("team", "My Plan + Team"))
+
+#: The summary's line under its title: whose plan it is.
+SCOPE_LABELS = {
+    EdifyRole.COUNTRY_DIRECTOR.value: "Country activity plan",
+    EdifyRole.ADMIN.value: "Country activity plan",
+    EdifyRole.PROGRAM_ACCOUNTANT.value: "Country activity plan",
+    EdifyRole.REGIONAL_VICE_PRESIDENT.value: "Regional activity plan",
+    EdifyRole.PROJECT_COORDINATOR.value: "Project activity plan",
+}
+TEAM_SCOPE_LABEL = "My plan and team consolidated"
+OWN_SCOPE_LABEL = "My activity plan"
+
+
 def _month_year(fy: int, month: int) -> int:
     """Calendar year of a month within an Oct–Sep fiscal year."""
     return fy - 1 if month >= 10 else fy
@@ -370,7 +395,7 @@ def build_work_plan_context(user, params) -> dict:
     activity_type = (params.get("activity_type") or "").strip()
     executor = (params.get("executor") or "").strip()
     flag = (params.get("flag") or "").strip()
-    if flag not in ("pending_approval", "cost_missing", "at_risk"):
+    if flag not in FLAG_LABELS:
         flag = ""
 
     is_pl = user.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
@@ -938,7 +963,7 @@ def build_work_plan_context(user, params) -> dict:
     view_tabs = [
         {
             "key": "month",
-            "label": "Monthly",
+            "label": VIEW_TAB_LABELS["month"],
             "url": _query_string(
                 query_state,
                 view="month",
@@ -949,7 +974,7 @@ def build_work_plan_context(user, params) -> dict:
         },
         {
             "key": "quarter",
-            "label": "Quarterly",
+            "label": VIEW_TAB_LABELS["quarter"],
             "url": _query_string(
                 query_state,
                 view="quarter",
@@ -960,7 +985,7 @@ def build_work_plan_context(user, params) -> dict:
         },
         {
             "key": "fy",
-            "label": "FY",
+            "label": VIEW_TAB_LABELS["fy"],
             "url": _query_string(query_state, view="fy", period=None, flag=None),
             "active": view == "fy",
         },
@@ -977,18 +1002,15 @@ def build_work_plan_context(user, params) -> dict:
             for a in activities
             if a.responsible_staff_id
         },
-        key=lambda pair: pair[1],
+        # By name, and by id where two ids carry one name (a person's staff
+        # profile id and their account id): the set has no order of its own,
+        # so the tie came out differently from one process to the next.
+        key=lambda pair: (pair[1], pair[0]),
     )
 
     from apps.projects.scoping import scoped_projects
 
     project_options = list(scoped_projects(user).values("id", "name"))
-
-    flag_labels = {
-        "pending_approval": "Pending approval",
-        "cost_missing": "Cost setup required",
-        "at_risk": "At risk",
-    }
 
     filters_active = any(
         (status, responsible, project_filter, activity_type, executor, flag)
@@ -1003,22 +1025,14 @@ def build_work_plan_context(user, params) -> dict:
                 "url": _query_string(query_state, scope=key, responsible=None),
                 "active": plan_scope == key,
             }
-            for key, label in (("own", "My Activity Plan"), ("team", "My Plan + Team"))
+            for key, label in SCOPE_TAB_LABELS
         ]
         if is_pl
         else []
     )
-    scope_label = {
-        EdifyRole.COUNTRY_DIRECTOR.value: "Country activity plan",
-        EdifyRole.ADMIN.value: "Country activity plan",
-        EdifyRole.PROGRAM_ACCOUNTANT.value: "Country activity plan",
-        EdifyRole.REGIONAL_VICE_PRESIDENT.value: "Regional activity plan",
-        EdifyRole.PROJECT_COORDINATOR.value: "Project activity plan",
-    }.get(
+    scope_label = SCOPE_LABELS.get(
         user.active_role,
-        "My plan and team consolidated"
-        if is_pl and plan_scope == "team"
-        else "My activity plan",
+        TEAM_SCOPE_LABEL if is_pl and plan_scope == "team" else OWN_SCOPE_LABEL,
     )
 
     return {
@@ -1045,7 +1059,7 @@ def build_work_plan_context(user, params) -> dict:
         "selected_activity_type": activity_type,
         "selected_executor": executor,
         "flag": flag,
-        "flag_label": flag_labels.get(flag, ""),
+        "flag_label": FLAG_LABELS.get(flag, ""),
         "clear_flag_url": _query_string(query_state, flag=None),
         "clear_filters_url": _query_string(
             {

@@ -138,6 +138,9 @@ var tiedAnswers int
 // so Postgres may return equal names either way. It says whether any run
 // was found.
 func sortTies(page map[string]any) bool {
+	if path, _ := page["webPath"].(string); exactOrder[path] {
+		return false
+	}
 	found := false
 	blocks, _ := page["blocks"].([]any)
 	for _, b := range blocks {

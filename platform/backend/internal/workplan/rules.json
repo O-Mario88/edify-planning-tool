@@ -1,0 +1,3872 @@
+{
+  "activity_types": [
+    [
+      "school_visit",
+      "School Visit"
+    ],
+    [
+      "follow_up_visit",
+      "Follow-up Visit"
+    ],
+    [
+      "coaching_visit",
+      "Coaching Visit"
+    ],
+    [
+      "in_school_support",
+      "In-school Support"
+    ],
+    [
+      "donor_visit",
+      "Donor Visit"
+    ],
+    [
+      "story_gathering_visit",
+      "Gathering Story"
+    ],
+    [
+      "school_invitation",
+      "School Invitation"
+    ],
+    [
+      "social_visit",
+      "Social Visit"
+    ],
+    [
+      "training_follow_up_visit",
+      "Training Follow-up Visit"
+    ],
+    [
+      "in_school_coaching_visit",
+      "In-school Coaching Visit"
+    ],
+    [
+      "training",
+      "Training"
+    ],
+    [
+      "in_school_training",
+      "In-school Training"
+    ],
+    [
+      "school_improvement_training",
+      "School Improvement Training"
+    ],
+    [
+      "cluster_meeting",
+      "Cluster Meeting"
+    ],
+    [
+      "cluster_training",
+      "Cluster Training"
+    ],
+    [
+      "ssa_activity",
+      "SSA Activity"
+    ],
+    [
+      "project_activity",
+      "Project Activity"
+    ],
+    [
+      "partner_activity",
+      "Partner Activity"
+    ],
+    [
+      "core_visit",
+      "Core Visit"
+    ],
+    [
+      "core_training",
+      "Core Training"
+    ],
+    [
+      "baseline_ssa_visit",
+      "SSA Visit"
+    ],
+    [
+      "school_visit_ssa_collection",
+      "School Visit + SSA Collection"
+    ],
+    [
+      "cluster_training_ssa_collection",
+      "Cluster Training + SSA Collection"
+    ],
+    [
+      "cluster_meeting_ssa_review",
+      "Cluster Meeting + SSA Review"
+    ],
+    [
+      "partner_ssa_collection",
+      "Partner SSA Collection"
+    ],
+    [
+      "core_assessment_visit",
+      "Core Assessment Visit"
+    ],
+    [
+      "programme_event",
+      "Programme Event"
+    ],
+    [
+      "field_event",
+      "Field Event"
+    ]
+  ],
+  "approval": {
+    "country": "Uganda",
+    "excluded_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred"
+    ],
+    "issues": {
+      "cost_missing": "Resolve all missing CD Cost Catalogue rates before submission.",
+      "no_activity": "Add at least one Activity before submitting the Work Plan.",
+      "unassigned": "Every Activity must have a responsible Staff member or Partner.",
+      "undated": "Every Activity must have a planned date."
+    },
+    "statuses": [
+      [
+        "draft",
+        "Draft"
+      ],
+      [
+        "submitted_to_rvp",
+        "Submitted to RVP"
+      ],
+      [
+        "approved_by_rvp",
+        "RVP Approved"
+      ],
+      [
+        "returned_by_rvp",
+        "Returned by RVP"
+      ]
+    ]
+  },
+  "at_risk_open_statuses": [
+    "planned",
+    "scheduled",
+    "assigned_to_partner",
+    "partner_scheduled",
+    "rescheduled",
+    "in_progress",
+    "completion_started"
+  ],
+  "cluster_meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "completed_work_statuses": [
+    "ia_verified",
+    "closed",
+    "accountant_confirmed",
+    "completed"
+  ],
+  "day_off": {
+    "awaiting_delivery": [
+      "planned",
+      "scheduled",
+      "assigned_to_partner",
+      "partner_scheduled",
+      "rescheduled"
+    ],
+    "eid_al_adha": "Eid al-Adha",
+    "eid_al_fitr": "Eid al-Fitr",
+    "eid_reach_days": 7,
+    "holiday_years": [
+      2015,
+      2045
+    ],
+    "holidays": [
+      {
+        "date": "2015-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2015-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2015-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2015-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2015-04-03",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2015-04-06",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2015-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2015-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2015-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2015-07-18",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2015-09-24",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2015-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2015-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2015-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2016-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2016-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2016-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2016-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2016-03-25",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2016-03-28",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2016-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2016-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2016-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2016-07-07",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2016-09-13",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2016-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2016-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2016-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2017-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2017-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2017-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2017-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2017-04-14",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2017-04-17",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2017-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2017-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2017-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2017-06-26",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2017-09-02",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2017-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2017-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2017-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2018-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2018-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2018-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2018-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2018-03-30",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2018-04-02",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2018-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2018-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2018-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2018-06-15",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2018-08-22",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2018-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2018-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2018-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2019-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2019-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2019-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2019-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2019-04-19",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2019-04-22",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2019-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2019-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2019-06-05",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2019-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2019-08-12",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2019-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2019-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2019-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2020-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2020-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2020-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2020-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2020-04-10",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2020-04-13",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2020-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2020-05-24",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2020-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2020-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2020-07-31",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2020-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2020-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2020-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2021-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2021-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2021-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2021-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2021-04-02",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2021-04-05",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2021-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2021-05-13",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2021-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2021-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2021-07-20",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2021-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2021-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2021-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2022-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2022-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2022-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2022-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2022-04-15",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2022-04-18",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2022-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2022-05-03",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2022-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2022-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2022-07-10",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2022-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2022-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2022-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2023-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2023-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2023-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2023-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2023-04-07",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2023-04-10",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2023-04-22",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2023-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2023-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2023-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2023-06-29",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2023-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2023-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2023-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2024-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2024-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2024-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2024-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2024-03-29",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2024-04-01",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2024-04-10",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2024-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2024-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2024-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2024-06-17",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2024-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2024-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2024-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2025-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2025-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2025-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2025-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2025-03-30",
+        "expected": false,
+        "label": "Eid al-Fitr",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2025-04-18",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2025-04-21",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2025-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2025-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2025-06-06",
+        "expected": false,
+        "label": "Eid al-Adha",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2025-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2025-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2025-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2025-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2026-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2026-01-15",
+        "expected": false,
+        "label": "General Election Day",
+        "name": "General Election Day"
+      },
+      {
+        "date": "2026-01-16",
+        "expected": false,
+        "label": "General Election Holiday",
+        "name": "General Election Holiday"
+      },
+      {
+        "date": "2026-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2026-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2026-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2026-03-20",
+        "expected": false,
+        "label": "Eid al-Fitr",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2026-04-03",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2026-04-06",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2026-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2026-05-12",
+        "expected": false,
+        "label": "Presidential Inauguration Day",
+        "name": "Presidential Inauguration Day"
+      },
+      {
+        "date": "2026-05-27",
+        "expected": false,
+        "label": "Eid al-Adha",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2026-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2026-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2026-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2026-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2026-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2027-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2027-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2027-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2027-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2027-03-09",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2027-03-26",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2027-03-29",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2027-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2027-05-16",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2027-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2027-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2027-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2027-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2027-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2028-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2028-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2028-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2028-02-26",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2028-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2028-04-14",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2028-04-17",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2028-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2028-05-05",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2028-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2028-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2028-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2028-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2028-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2029-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2029-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2029-02-14",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2029-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2029-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2029-03-30",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2029-04-02",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2029-04-24",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2029-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2029-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2029-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2029-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2029-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2029-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2030-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2030-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2030-02-04",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2030-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2030-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2030-04-13",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2030-04-19",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2030-04-22",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2030-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2030-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2030-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2030-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2030-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2030-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2031-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2031-01-25",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2031-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2031-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2031-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2031-04-03",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2031-04-11",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2031-04-14",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2031-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2031-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2031-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2031-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2031-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2031-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2032-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2032-01-14",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2032-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2032-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2032-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2032-03-22",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2032-03-26",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2032-03-29",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2032-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2032-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2032-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2032-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2032-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2032-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2033-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2033-01-03",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2033-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2033-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2033-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2033-03-12",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2033-04-15",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2033-04-18",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2033-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2033-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2033-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2033-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2033-12-23",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2033-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2033-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2034-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2034-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2034-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2034-03-01",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2034-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2034-04-07",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2034-04-10",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2034-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2034-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2034-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2034-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2034-12-12",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2034-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2034-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2035-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2035-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2035-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2035-02-18",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2035-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2035-03-23",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2035-03-26",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2035-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2035-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2035-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2035-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2035-12-02",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2035-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2035-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2036-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2036-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2036-02-08",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2036-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2036-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2036-04-11",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2036-04-14",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2036-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2036-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2036-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2036-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2036-11-20",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2036-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2036-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2037-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2037-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2037-01-27",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2037-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2037-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2037-04-03",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2037-04-06",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2037-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2037-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2037-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2037-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2037-11-10",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2037-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2037-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2038-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2038-01-17",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2038-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2038-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2038-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2038-04-23",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2038-04-26",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2038-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2038-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2038-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2038-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2038-10-30",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2038-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2038-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2039-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2039-01-06",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2039-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2039-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2039-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2039-04-08",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2039-04-11",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2039-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2039-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2039-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2039-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2039-10-19",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2039-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2039-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2039-12-26",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2040-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2040-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2040-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2040-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2040-03-30",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2040-04-02",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2040-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2040-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2040-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2040-10-08",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2040-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2040-12-15",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2040-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2040-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2041-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2041-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2041-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2041-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2041-04-19",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2041-04-22",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2041-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2041-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2041-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2041-09-27",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2041-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2041-12-04",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2041-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2041-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2042-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2042-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2042-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2042-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2042-04-04",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2042-04-07",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2042-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2042-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2042-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2042-09-16",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2042-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2042-11-23",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2042-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2042-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2043-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2043-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2043-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2043-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2043-03-27",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2043-03-30",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2043-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2043-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2043-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2043-09-06",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2043-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2043-11-13",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2043-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2043-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2044-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2044-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2044-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2044-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2044-04-15",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2044-04-18",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2044-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2044-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2044-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2044-08-25",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2044-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2044-11-01",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2044-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2044-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      },
+      {
+        "date": "2045-01-01",
+        "expected": false,
+        "label": "New Year's Day",
+        "name": "New Year's Day"
+      },
+      {
+        "date": "2045-01-26",
+        "expected": false,
+        "label": "NRM Liberation Day",
+        "name": "NRM Liberation Day"
+      },
+      {
+        "date": "2045-02-16",
+        "expected": false,
+        "label": "Archbishop Janani Luwum Day",
+        "name": "Archbishop Janani Luwum Day"
+      },
+      {
+        "date": "2045-03-08",
+        "expected": false,
+        "label": "International Women's Day",
+        "name": "International Women's Day"
+      },
+      {
+        "date": "2045-04-07",
+        "expected": false,
+        "label": "Good Friday",
+        "name": "Good Friday"
+      },
+      {
+        "date": "2045-04-10",
+        "expected": false,
+        "label": "Easter Monday",
+        "name": "Easter Monday"
+      },
+      {
+        "date": "2045-05-01",
+        "expected": false,
+        "label": "Labour Day",
+        "name": "Labour Day"
+      },
+      {
+        "date": "2045-06-03",
+        "expected": false,
+        "label": "Uganda Martyrs' Day",
+        "name": "Uganda Martyrs' Day"
+      },
+      {
+        "date": "2045-06-09",
+        "expected": false,
+        "label": "National Heroes' Day",
+        "name": "National Heroes' Day"
+      },
+      {
+        "date": "2045-08-15",
+        "expected": true,
+        "label": "Eid al-Fitr (expected date)",
+        "name": "Eid al-Fitr"
+      },
+      {
+        "date": "2045-10-09",
+        "expected": false,
+        "label": "Independence Day",
+        "name": "Independence Day"
+      },
+      {
+        "date": "2045-10-22",
+        "expected": true,
+        "label": "Eid al-Adha (expected date)",
+        "name": "Eid al-Adha"
+      },
+      {
+        "date": "2045-12-25",
+        "expected": false,
+        "label": "Christmas Day",
+        "name": "Christmas Day"
+      },
+      {
+        "date": "2045-12-26",
+        "expected": false,
+        "label": "Boxing Day",
+        "name": "Boxing Day"
+      }
+    ],
+    "national_country": "Uganda"
+  },
+  "delivery_types": [
+    [
+      "staff",
+      "Staff"
+    ],
+    [
+      "partner",
+      "Partner"
+    ]
+  ],
+  "doors": {
+    "Accountant": {
+      "actions_enabled": false,
+      "add_activity": false,
+      "export": true,
+      "opens": {
+        "accountability": true,
+        "complete": true,
+        "evidence": true,
+        "message": true,
+        "partner_evidence": false,
+        "record": true,
+        "reimbursement_receipt": true,
+        "reschedule": true,
+        "salesforce_id": true,
+        "school_profile": false,
+        "start": true,
+        "submit": true,
+        "visit_requests": true
+      },
+      "operational_admin": false,
+      "page": true,
+      "workspace": null
+    },
+    "Admin": {
+      "actions_enabled": true,
+      "add_activity": true,
+      "export": true,
+      "opens": {
+        "accountability": true,
+        "complete": true,
+        "evidence": true,
+        "message": true,
+        "partner_evidence": true,
+        "record": true,
+        "reimbursement_receipt": true,
+        "reschedule": true,
+        "salesforce_id": true,
+        "school_profile": true,
+        "start": true,
+        "submit": true,
+        "visit_requests": true
+      },
+      "operational_admin": true,
+      "page": true,
+      "workspace": null
+    },
+    "BusinessTransformationOfficer": {
+      "actions_enabled": true,
+      "add_activity": false,
+      "export": true,
+      "opens": {
+        "accountability": false,
+        "complete": false,
+        "evidence": false,
+        "message": true,
+        "partner_evidence": false,
+        "record": false,
+        "reimbursement_receipt": false,
+        "reschedule": false,
+        "salesforce_id": false,
+        "school_profile": true,
+        "start": false,
+        "submit": false,
+        "visit_requests": false
+      },
+      "operational_admin": false,
+      "page": false,
+      "workspace": null
+    },
+    "CCEO": {
+      "actions_enabled": true,
+      "add_activity": true,
+      "export": false,
+      "opens": {
+        "accountability": true,
+        "complete": true,
+        "evidence": true,
+        "message": true,
+        "partner_evidence": false,
+        "record": true,
+        "reimbursement_receipt": true,
+        "reschedule": true,
+        "salesforce_id": true,
+        "school_profile": true,
+        "start": true,
+        "submit": true,
+        "visit_requests": true
+      },
+      "operational_admin": false,
+      "page": true,
+      "workspace": null
+    },
+    "ClusterLeader": {
+      "actions_enabled": true,
+      "add_activity": false,
+      "export": false,
+      "opens": {
+        "accountability": false,
+        "complete": false,
+        "evidence": false,
+        "message": false,
+        "partner_evidence": false,
+        "record": false,
+        "reimbursement_receipt": false,
+        "reschedule": false,
+        "salesforce_id": false,
+        "school_profile": false,
+        "start": false,
+        "submit": false,
+        "visit_requests": false
+      },
+      "operational_admin": false,
+      "page": false,
+      "workspace": null
+    },
+    "CountryDirector": {
+      "actions_enabled": true,
+      "add_activity": true,
+      "export": true,
+      "opens": {
+        "accountability": true,
+        "complete": true,
+        "evidence": true,
+        "message": true,
+        "partner_evidence": false,
+        "record": true,
+        "reimbursement_receipt": true,
+        "reschedule": true,
+        "salesforce_id": true,
+        "school_profile": true,
+        "start": true,
+        "submit": true,
+        "visit_requests": true
+      },
+      "operational_admin": false,
+      "page": true,
+      "workspace": null
+    },
+    "HumanResources": {
+      "actions_enabled": true,
+      "add_activity": true,
+      "export": false,
+      "opens": {
+        "accountability": false,
+        "complete": false,
+        "evidence": false,
+        "message": true,
+        "partner_evidence": false,
+        "record": false,
+        "reimbursement_receipt": false,
+        "reschedule": false,
+        "salesforce_id": false,
+        "school_profile": false,
+        "start": false,
+        "submit": false,
+        "visit_requests": false
+      },
+      "operational_admin": false,
+      "page": true,
+      "workspace": null
+    },
+    "ImpactAssessment": {
+      "actions_enabled": true,
+      "add_activity": true,
+      "export": true,
+      "opens": {
+        "accountability": true,
+        "complete": true,
+        "evidence": true,
+        "message": true,
+        "partner_evidence": true,
+        "record": true,
+        "reimbursement_receipt": true,
+        "reschedule": true,
+        "salesforce_id": true,
+        "school_profile": true,
+        "start": true,
+        "submit": true,
+        "visit_requests": true
+      },
+      "operational_admin": true,
+      "page": true,
+      "workspace": null
+    },
+    "MfiLoanOfficer": {
+      "actions_enabled": true,
+      "add_activity": false,
+      "export": false,
+      "opens": {
+        "accountability": false,
+        "complete": false,
+        "evidence": false,
+        "message": true,
+        "partner_evidence": false,
+        "record": false,
+        "reimbursement_receipt": false,
+        "reschedule": false,
+        "salesforce_id": false,
+        "school_profile": false,
+        "start": false,
+        "submit": false,
+        "visit_requests": false
+      },
+      "operational_admin": false,
+      "page": false,
+      "workspace": null
+    },
+    "MfiPartnerAdmin": {
+      "actions_enabled": true,
+      "add_activity": false,
+      "export": false,
+      "opens": {
+        "accountability": false,
+        "complete": false,
+        "evidence": false,
+        "message": true,
+        "partner_evidence": false,
+        "record": false,
+        "reimbursement_receipt": false,
+        "reschedule": false,
+        "salesforce_id": false,
+        "school_profile": false,
+        "start": false,
+        "submit": false,
+        "visit_requests": false
+      },
+      "operational_admin": false,
+      "page": false,
+      "workspace": null
+    },
+    "PartnerAdmin": {
+      "actions_enabled": true,
+      "add_activity": false,
+      "export": false,
+      "opens": {
+        "accountability": true,
+        "complete": true,
+        "evidence": true,
+        "message": true,
+        "partner_evidence": true,
+        "record": true,
+        "reimbursement_receipt": true,
+        "reschedule": true,
+        "salesforce_id": true,
+        "school_profile": false,
+        "start": true,
+        "submit": true,
+        "visit_requests": false
+      },
+      "operational_admin": false,
+      "page": false,
+      "workspace": null
+    },
+    "PartnerFieldOfficer": {
+      "actions_enabled": true,
+      "add_activity": false,
+      "export": false,
+      "opens": {
+        "accountability": true,
+        "complete": true,
+        "evidence": true,
+        "message": true,
+        "partner_evidence": true,
+        "record": true,
+        "reimbursement_receipt": true,
+        "reschedule": true,
+        "salesforce_id": true,
+        "school_profile": false,
+        "start": true,
+        "submit": true,
+        "visit_requests": false
+      },
+      "operational_admin": false,
+      "page": false,
+      "workspace": null
+    },
+    "Program Lead": {
+      "actions_enabled": true,
+      "add_activity": true,
+      "export": true,
+      "opens": {
+        "accountability": true,
+        "complete": true,
+        "evidence": true,
+        "message": true,
+        "partner_evidence": false,
+        "record": true,
+        "reimbursement_receipt": true,
+        "reschedule": true,
+        "salesforce_id": true,
+        "school_profile": true,
+        "start": true,
+        "submit": true,
+        "visit_requests": true
+      },
+      "operational_admin": false,
+      "page": true,
+      "workspace": null
+    },
+    "ProjectCoordinator": {
+      "actions_enabled": true,
+      "add_activity": true,
+      "export": true,
+      "opens": {
+        "accountability": true,
+        "complete": true,
+        "evidence": true,
+        "message": true,
+        "partner_evidence": false,
+        "record": true,
+        "reimbursement_receipt": true,
+        "reschedule": true,
+        "salesforce_id": true,
+        "school_profile": true,
+        "start": true,
+        "submit": true,
+        "visit_requests": true
+      },
+      "operational_admin": false,
+      "page": true,
+      "workspace": {
+        "key": "finance",
+        "label": "Finance",
+        "sections": [
+          {
+            "active": false,
+            "label": "Budget",
+            "starts_cluster": false,
+            "url": "/budget"
+          },
+          {
+            "active": false,
+            "label": "Weekly Advance Request",
+            "starts_cluster": false,
+            "url": "/fund-requests/weekly"
+          },
+          {
+            "active": true,
+            "label": "Work Plan",
+            "starts_cluster": false,
+            "url": "/work-plan"
+          }
+        ]
+      }
+    },
+    "RegionalProgramLead": {
+      "actions_enabled": true,
+      "add_activity": false,
+      "export": true,
+      "opens": {
+        "accountability": false,
+        "complete": false,
+        "evidence": false,
+        "message": true,
+        "partner_evidence": false,
+        "record": false,
+        "reimbursement_receipt": false,
+        "reschedule": false,
+        "salesforce_id": false,
+        "school_profile": false,
+        "start": false,
+        "submit": false,
+        "visit_requests": false
+      },
+      "operational_admin": false,
+      "page": false,
+      "workspace": null
+    },
+    "RegionalVicePresident": {
+      "actions_enabled": false,
+      "add_activity": false,
+      "export": true,
+      "opens": {
+        "accountability": false,
+        "complete": false,
+        "evidence": false,
+        "message": true,
+        "partner_evidence": false,
+        "record": false,
+        "reimbursement_receipt": false,
+        "reschedule": false,
+        "salesforce_id": false,
+        "school_profile": false,
+        "start": false,
+        "submit": false,
+        "visit_requests": false
+      },
+      "operational_admin": false,
+      "page": true,
+      "workspace": null
+    }
+  },
+  "field_choices": {
+    "activity_type": [
+      [
+        "school_visit",
+        "School Visit"
+      ],
+      [
+        "follow_up_visit",
+        "Follow-up Visit"
+      ],
+      [
+        "coaching_visit",
+        "Coaching Visit"
+      ],
+      [
+        "in_school_support",
+        "In-school Support"
+      ],
+      [
+        "donor_visit",
+        "Donor Visit"
+      ],
+      [
+        "story_gathering_visit",
+        "Gathering Story"
+      ],
+      [
+        "school_invitation",
+        "School Invitation"
+      ],
+      [
+        "social_visit",
+        "Social Visit"
+      ],
+      [
+        "training_follow_up_visit",
+        "Training Follow-up Visit"
+      ],
+      [
+        "in_school_coaching_visit",
+        "In-school Coaching Visit"
+      ],
+      [
+        "training",
+        "Training"
+      ],
+      [
+        "in_school_training",
+        "In-school Training"
+      ],
+      [
+        "school_improvement_training",
+        "School Improvement Training"
+      ],
+      [
+        "cluster_meeting",
+        "Cluster Meeting"
+      ],
+      [
+        "cluster_training",
+        "Cluster Training"
+      ],
+      [
+        "ssa_activity",
+        "SSA Activity"
+      ],
+      [
+        "project_activity",
+        "Project Activity"
+      ],
+      [
+        "partner_activity",
+        "Partner Activity"
+      ],
+      [
+        "core_visit",
+        "Core Visit"
+      ],
+      [
+        "core_training",
+        "Core Training"
+      ],
+      [
+        "baseline_ssa_visit",
+        "SSA Visit"
+      ],
+      [
+        "school_visit_ssa_collection",
+        "School Visit + SSA Collection"
+      ],
+      [
+        "cluster_training_ssa_collection",
+        "Cluster Training + SSA Collection"
+      ],
+      [
+        "cluster_meeting_ssa_review",
+        "Cluster Meeting + SSA Review"
+      ],
+      [
+        "partner_ssa_collection",
+        "Partner SSA Collection"
+      ],
+      [
+        "core_assessment_visit",
+        "Core Assessment Visit"
+      ],
+      [
+        "programme_event",
+        "Programme Event"
+      ],
+      [
+        "field_event",
+        "Field Event"
+      ]
+    ],
+    "delivery_type": [
+      [
+        "staff",
+        "Staff"
+      ],
+      [
+        "partner",
+        "Partner"
+      ]
+    ],
+    "focus_intervention": [
+      [
+        "christlike_behaviour",
+        "Christlike Behaviour"
+      ],
+      [
+        "exposure_to_word_of_god",
+        "Exposure to the Word of God"
+      ],
+      [
+        "financial_health",
+        "Financial Health"
+      ],
+      [
+        "leadership",
+        "Leadership"
+      ],
+      [
+        "government_requirement",
+        "Government Requirements"
+      ],
+      [
+        "learning_environment",
+        "Learning Environment"
+      ],
+      [
+        "teaching_environment",
+        "Teacher's Environment"
+      ],
+      [
+        "enrolment",
+        "Enrolment"
+      ]
+    ],
+    "programme_activity_type": [
+      [
+        "edtech_for_schools",
+        "EdTech for Schools"
+      ],
+      [
+        "school_leadership_training",
+        "School Leadership Training"
+      ],
+      [
+        "student_activities",
+        "Student Activities"
+      ],
+      [
+        "teacher_training",
+        "Teacher Training"
+      ],
+      [
+        "alumni",
+        "Alumni"
+      ],
+      [
+        "training",
+        "Training"
+      ],
+      [
+        "school_visit",
+        "School Visit"
+      ],
+      [
+        "field_event",
+        "Field Event"
+      ],
+      [
+        "youth_camp",
+        "Youth Camp"
+      ],
+      [
+        "admin",
+        "Admin"
+      ],
+      [
+        "programme_event",
+        "Programme Event"
+      ]
+    ],
+    "programme_delivery_mode": [
+      [
+        "group",
+        "Group"
+      ],
+      [
+        "cluster",
+        "Cluster"
+      ],
+      [
+        "in_school",
+        "In-school Training"
+      ],
+      [
+        "online",
+        "Online"
+      ],
+      [
+        "visit",
+        "School Visit"
+      ],
+      [
+        "admin",
+        "Admin"
+      ]
+    ],
+    "status": [
+      [
+        "not_planned",
+        "Not Planned"
+      ],
+      [
+        "awaiting_owner_approval",
+        "Awaiting Owner Approval"
+      ],
+      [
+        "planned",
+        "Planned"
+      ],
+      [
+        "scheduled",
+        "Scheduled"
+      ],
+      [
+        "assigned_to_partner",
+        "Assigned to Partner"
+      ],
+      [
+        "partner_scheduled",
+        "Partner Scheduled"
+      ],
+      [
+        "in_progress",
+        "In Progress"
+      ],
+      [
+        "completion_started",
+        "Completion Started"
+      ],
+      [
+        "evidence_uploaded",
+        "Evidence Uploaded"
+      ],
+      [
+        "evidence_accepted",
+        "Evidence Accepted"
+      ],
+      [
+        "salesforce_id_required",
+        "Salesforce ID Required"
+      ],
+      [
+        "submitted_to_pl",
+        "Submitted to PL"
+      ],
+      [
+        "returned_by_pl",
+        "Returned by PL"
+      ],
+      [
+        "awaiting_ia_verification",
+        "Awaiting IA Verification"
+      ],
+      [
+        "ia_verified",
+        "IA Verified"
+      ],
+      [
+        "accountant_confirmed",
+        "Accountant Confirmed"
+      ],
+      [
+        "completed",
+        "Completed"
+      ],
+      [
+        "returned",
+        "Returned"
+      ],
+      [
+        "returned_by_ia",
+        "Returned by IA"
+      ],
+      [
+        "closed",
+        "Closed"
+      ],
+      [
+        "rejected",
+        "Rejected"
+      ],
+      [
+        "rescheduled",
+        "Rescheduled"
+      ],
+      [
+        "cancelled",
+        "Cancelled"
+      ],
+      [
+        "deferred",
+        "Deferred"
+      ]
+    ]
+  },
+  "flag_labels": {
+    "at_risk": "At risk",
+    "cost_missing": "Cost setup required",
+    "pending_approval": "Pending approval"
+  },
+  "hidden_terminal_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "awaiting_owner_approval"
+  ],
+  "next_action": {
+    "submit_needs_participants_types": [
+      "training",
+      "cluster_training",
+      "cluster_meeting",
+      "core_training"
+    ],
+    "worked_statuses": [
+      "completed",
+      "completion_started",
+      "in_progress",
+      "evidence_uploaded",
+      "evidence_accepted",
+      "salesforce_id_required"
+    ]
+  },
+  "non_school_group_label": "Non-School Activities",
+  "own_scope_label": "My activity plan",
+  "pair_bucket_suffix": {
+    "(captured in the in-school training cost)": " (with In-school Training)",
+    "(captured in the school visit cost)": " (with School Visit)"
+  },
+  "pairs": {
+    "captured_in_training_note": "(captured in the in-school training cost)",
+    "captured_in_visit_note": "(captured in the school visit cost)",
+    "companion_gone_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred"
+    ],
+    "online_free_note": "(online training: no cost)",
+    "online_mode": "online",
+    "online_training_types": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ]
+  },
+  "pending_approval_wfr_statuses": [
+    "submitted_to_pl",
+    "submitted_to_cd"
+  ],
+  "planning_country": "Uganda",
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "school_group_label": "School Activities",
+  "scope_labels": {
+    "Accountant": "Country activity plan",
+    "Admin": "Country activity plan",
+    "CountryDirector": "Country activity plan",
+    "ProjectCoordinator": "Project activity plan",
+    "RegionalVicePresident": "Regional activity plan"
+  },
+  "scope_tab_labels": [
+    [
+      "own",
+      "My Activity Plan"
+    ],
+    [
+      "team",
+      "My Plan + Team"
+    ]
+  ],
+  "ssa_alignment_labels": [
+    [
+      "priority",
+      "Targets an SSA priority"
+    ],
+    [
+      "off_priority",
+      "Targets an intervention the SSA does not prioritise"
+    ],
+    [
+      "no_focus",
+      "Names no SSA intervention"
+    ],
+    [
+      "no_ssa",
+      "No verified SSA to inform it"
+    ],
+    [
+      "stale_ssa",
+      "The verified SSA is out of date"
+    ],
+    [
+      "ssa_collection",
+      "Collects the SSA"
+    ],
+    [
+      "not_applicable",
+      "Not school-improvement work"
+    ]
+  ],
+  "statuses": [
+    [
+      "not_planned",
+      "Not Planned"
+    ],
+    [
+      "awaiting_owner_approval",
+      "Awaiting Owner Approval"
+    ],
+    [
+      "planned",
+      "Planned"
+    ],
+    [
+      "scheduled",
+      "Scheduled"
+    ],
+    [
+      "assigned_to_partner",
+      "Assigned to Partner"
+    ],
+    [
+      "partner_scheduled",
+      "Partner Scheduled"
+    ],
+    [
+      "in_progress",
+      "In Progress"
+    ],
+    [
+      "completion_started",
+      "Completion Started"
+    ],
+    [
+      "evidence_uploaded",
+      "Evidence Uploaded"
+    ],
+    [
+      "evidence_accepted",
+      "Evidence Accepted"
+    ],
+    [
+      "salesforce_id_required",
+      "Salesforce ID Required"
+    ],
+    [
+      "submitted_to_pl",
+      "Submitted to PL"
+    ],
+    [
+      "returned_by_pl",
+      "Returned by PL"
+    ],
+    [
+      "awaiting_ia_verification",
+      "Awaiting IA Verification"
+    ],
+    [
+      "ia_verified",
+      "IA Verified"
+    ],
+    [
+      "accountant_confirmed",
+      "Accountant Confirmed"
+    ],
+    [
+      "completed",
+      "Completed"
+    ],
+    [
+      "returned",
+      "Returned"
+    ],
+    [
+      "returned_by_ia",
+      "Returned by IA"
+    ],
+    [
+      "closed",
+      "Closed"
+    ],
+    [
+      "rejected",
+      "Rejected"
+    ],
+    [
+      "rescheduled",
+      "Rescheduled"
+    ],
+    [
+      "cancelled",
+      "Cancelled"
+    ],
+    [
+      "deferred",
+      "Deferred"
+    ]
+  ],
+  "strip": [
+    {
+      "key": "work_plan_activities_planned",
+      "label": "Activities Planned",
+      "unit": "count"
+    },
+    {
+      "key": "work_plan_activities_this_month",
+      "label": "Activities This Month",
+      "unit": "count"
+    },
+    {
+      "key": "work_plan_plan_derived_budget",
+      "label": "Plan-Derived Budget",
+      "unit": "money_ugx"
+    },
+    {
+      "key": "work_plan_pending_approval",
+      "label": "Pending Approval",
+      "unit": "count"
+    },
+    {
+      "key": "work_plan_cost_setup_required",
+      "label": "Cost Setup Required",
+      "unit": "count"
+    },
+    {
+      "key": "work_plan_activities_at_risk",
+      "label": "Activities At Risk",
+      "unit": "count"
+    }
+  ],
+  "table": {
+    "cluster_meeting": "Cluster Meeting",
+    "companion_visit_purpose": "in_school_training_delivery_visit",
+    "detail_cluster_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review",
+      "cluster_training",
+      "cluster_training_ssa_collection"
+    ],
+    "detail_page_param": "wp_page",
+    "general": "General",
+    "group_training": "Group Training",
+    "in_school_training": "In-school Training",
+    "not_recorded": "\u2014",
+    "online_training_label": "Online Training",
+    "open_to_its_owner": [
+      "draft",
+      "planned",
+      "scheduled",
+      "rescheduled"
+    ],
+    "school_visit": "School Visit"
+  },
+  "team_scope_label": "My plan and team consolidated",
+  "training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+    "cluster_training_ssa_collection"
+  ],
+  "view_tab_labels": {
+    "fy": "FY",
+    "month": "Monthly",
+    "quarter": "Quarterly"
+  },
+  "visit_purpose_labels": {
+    "donor_visit": "Donor Visit",
+    "in_school_coaching": "In-school Coaching Visit",
+    "in_school_training": "In-school Training",
+    "in_school_training_delivery_visit": "In-school Training Delivery Visit",
+    "in_school_training_ssa": "In-school Training + SSA Collection",
+    "school_invitation": "School Invitation",
+    "social_visit": "Social Visit",
+    "ssa_support": "SSA Support",
+    "story_gathering": "Content/Story Collection",
+    "training_follow_up": "Training Follow Up"
+  },
+  "visit_types": [
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
+    "core_visit",
+    "core_assessment_visit",
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection"
+  ],
+  "wfr_labels": {
+    "confirmed_for_advance": "Ready for disbursement",
+    "disbursed": "Disbursed",
+    "pending_responsible_confirmation": "In weekly request",
+    "returned_by_accountant": "Returned by Accountant",
+    "returned_by_cd": "Returned by CD",
+    "returned_by_pl": "Returned by PL",
+    "submitted_to_cd": "Awaiting CD approval",
+    "submitted_to_pl": "Awaiting PL approval"
+  }
+}

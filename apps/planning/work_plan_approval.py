@@ -19,6 +19,12 @@ from apps.core.rbac import EdifyRole
 EXCLUDED_STATUSES = ("cancelled", "rejected", "deferred")
 FY_MONTH_ORDER = (10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 
+#: What keeps a plan from being submitted, in the order they are checked.
+NO_ACTIVITY_ISSUE = "Add at least one Activity before submitting the Work Plan."
+UNDATED_ISSUE = "Every Activity must have a planned date."
+UNASSIGNED_ISSUE = "Every Activity must have a responsible Staff member or Partner."
+COST_MISSING_ISSUE = "Resolve all missing CD Cost Catalogue rates before submission."
+
 
 def _plan_queryset(fy: str):
     return Activity.objects.filter(
@@ -30,19 +36,19 @@ def _plan_queryset(fy: str):
 def readiness_issues(fy: str) -> list[str]:
     qs = _plan_queryset(fy)
     if not qs.exists():
-        return ["Add at least one Activity before submitting the Work Plan."]
+        return [NO_ACTIVITY_ISSUE]
     issues: list[str] = []
     if qs.filter(planned_date__isnull=True, scheduled_date__isnull=True).exists():
-        issues.append("Every Activity must have a planned date.")
+        issues.append(UNDATED_ISSUE)
     if qs.filter(
         Q(delivery_type="staff", responsible_staff_id__isnull=True)
         | Q(delivery_type="staff", responsible_staff_id="")
         | Q(delivery_type="partner", assigned_partner_id__isnull=True)
         | Q(delivery_type="partner", assigned_partner_id="")
     ).exists():
-        issues.append("Every Activity must have a responsible Staff member or Partner.")
+        issues.append(UNASSIGNED_ISSUE)
     if qs.filter(cost_missing=True).exists():
-        issues.append("Resolve all missing CD Cost Catalogue rates before submission.")
+        issues.append(COST_MISSING_ISSUE)
     return issues
 
 
