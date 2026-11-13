@@ -90,6 +90,37 @@ class CommitTimeSealTest(TransactionTestCase):
         self.assertEqual(rows.values("seq").distinct().count(), 2)
         self.assertTrue(verify_chain(full=True)["ok"])
 
+    def test_every_call_of_a_decorated_save_is_chained_when_it_commits(self):
+        """A decorated function reuses one atomic block for every call.
+
+        The seal used to be marked on that block, so after the first call
+        each later call's rows waited unsealed for some other commit.
+        """
+
+        @transaction.atomic
+        def decorated_save(n):
+            log(action="audit.decorated_save", subject_id=str(n))
+
+        for n in range(3):
+            decorated_save(n)
+            row = AuditLog.objects.get(action="audit.decorated_save", subject_id=str(n))
+            self.assertIsNotNone(row.seq, f"call {n + 1} was chained at its commit")
+        self.assertTrue(verify_chain(full=True)["ok"])
+
+    def test_a_seal_lost_with_a_rolled_back_savepoint_is_registered_again(self):
+        with transaction.atomic():
+            try:
+                with transaction.atomic():
+                    log(action="audit.undone_probe")
+                    raise RuntimeError("the inner step failed")
+            except RuntimeError:
+                pass
+            log(action="audit.kept_probe")
+        self.assertFalse(AuditLog.objects.filter(action="audit.undone_probe").exists())
+        kept = AuditLog.objects.get(action="audit.kept_probe")
+        self.assertIsNotNone(kept.seq, "the kept row was chained at the commit")
+        self.assertTrue(verify_chain(full=True)["ok"])
+
     def test_the_scheduled_seal_chains_rows_whose_commit_seal_never_ran(self):
         log(action="audit.chained_first")
         AuditLog.objects.create(action="audit.orphaned_unsealed", subject_id="x")

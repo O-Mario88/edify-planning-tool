@@ -421,15 +421,19 @@ def _chain_tail(*, for_update: bool = False):
 
 
 def _seal_after_commit(using: str = DEFAULT_DB_ALIAS) -> None:
-    """Register one seal for the caller's outermost transaction."""
-    conn = connections[using]
-    outermost = next(
-        (b for b in conn.atomic_blocks if not getattr(b, "_from_testcase", False)),
-        None,
-    )
-    if outermost is None or getattr(outermost, "_edify_audit_seal", False):
+    """Register one seal for the caller's open transaction.
+
+    Asks Django's own list of what to run at this commit, not a mark on the
+    atomic block: a decorated function reuses one block for every call, so a
+    mark outlived the first call's commit and later calls went unsealed. The
+    list also drops a seal registered inside a savepoint that rolled back, so
+    the next row registers it again.
+    """
+    if not _inside_callers_transaction(using):
         return
-    outermost._edify_audit_seal = True
+    queued = connections[using].run_on_commit
+    if any(entry[1] is _seal_committed_rows for entry in queued):
+        return
     transaction.on_commit(_seal_committed_rows, using=using)
 
 
