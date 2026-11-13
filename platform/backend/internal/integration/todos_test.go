@@ -101,7 +101,8 @@ func TestTodosPassAReaderOnWhenAGuardedRecordIsTheirs(t *testing.T) {
 	if _, err := pageOf(token, "/todos", nil); connect.CodeOf(err) != connect.CodeUnavailable {
 		t.Fatalf("with a school action: %v, want it passed to the existing application", err)
 	}
-	// A role Go has not built (the Programme Lead's) is passed on too.
+	// pl1 is passed on here too: one of the Programme Lead's guards finds a
+	// record in this database (docs/migration/55-todos-pl.md).
 	borrowAccount(t, "pl1@edify.org")
 	leadToken := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
 	if _, err := pageOf(leadToken, "/todos", nil); connect.CodeOf(err) != connect.CodeUnavailable {

@@ -35,8 +35,8 @@ func init() {
 		"_field_debrief_todos":                              fieldDebriefGuard,
 		"_business_transformation_todos":                    loanVerificationTodos,
 		"apps.staff_activity.todos:follow_up_todos":         followUpGuard,
-		"apps.cce_leadership.todos:coaching_todos":          coachingGuard,
-		"apps.cce_leadership.guidance_todos:guidance_todos": guidanceGuard,
+		"apps.cce_leadership.todos:coaching_todos":          coachingTodos,
+		"apps.cce_leadership.guidance_todos:guidance_todos": guidanceTodos,
 		"apps.ssa.collection_todos:collection_todos":        returnedSSATodos,
 		"apps.impact.evidence_todos:evidence_todos":         evidenceTodos,
 		"apps.planning.fy_todos:fy_planning_todos":          fyPlanningTodos,
@@ -406,8 +406,13 @@ ORDER BY pa.returned_at DESC LIMIT 10`, rules.ReturnedToStaffStatus, r.owners)
 // monthly plans, and disbursed funds to confirm. An approver's queue is
 // passed on.
 func fundRequestTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if _, approves := rules.WeeklyApproverStatus[r.role]; approves {
-		return nil, errPassOn
+	if status, approves := rules.WeeklyApproverStatus[r.role]; approves {
+		if r.role != leadRole {
+			return nil, errPassOn
+		}
+		if _, err := passOnIf(leadApprovalsGuard(ctx, s, status)); err != nil {
+			return nil, err
+		}
 	}
 	uid := r.p.UserID
 	var out []todo
@@ -604,6 +609,9 @@ func guidanceGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 // school in their scope, its returned slots (two) and the next unscheduled
 // slot of each kind, twelve rows at most.
 func coreSchoolTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	if r.role == leadRole {
+		return leadCoreGuard(ctx, s, r)
+	}
 	if r.role != "CCEO" {
 		return nil, errPassOn
 	}
@@ -742,6 +750,9 @@ func corePlanGaps(slots []coreSlot) ([]coreSlot, []coreGap) {
 // loanVerificationTodos is _business_transformation_todos for a field
 // officer: loan-use verification visits to plan at their schools.
 func loanVerificationTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	if r.role == leadRole {
+		return passOnIf(len(r.scope.OwnSchoolIDs) > 0, nil)
+	}
 	if r.role != "CCEO" {
 		return nil, errPassOn
 	}
@@ -774,7 +785,11 @@ ORDER BY r.due_date ASC LIMIT 30`, r.scope.SchoolIDs, rules.LoanFieldVerificatio
 // returnedSSATodos is collection_todos for a field officer: SSA records a
 // verifier returned to them, as one row due a week after the oldest return.
 func returnedSSATodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if r.role != "CCEO" {
+	if r.role == leadRole {
+		if _, err := passOnIf(leadSSAConfirmGuard(ctx, s, r)); err != nil {
+			return nil, err
+		}
+	} else if r.role != "CCEO" {
 		return nil, errPassOn
 	}
 	if len(r.owners) == 0 {
@@ -807,7 +822,7 @@ WHERE deleted_at IS NULL AND verification_status = 'returned' AND collected_by_u
 // them passes the reader on; delivered OneTest visits with no results
 // recorded are a row each (ten).
 func evidenceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if r.role != "CCEO" {
+	if r.role != "CCEO" && r.role != leadRole {
 		return nil, errPassOn
 	}
 	var parts []string
@@ -856,7 +871,7 @@ ORDER BY a.actual_delivery_date ASC, a.planned_date ASC, a.id ASC LIMIT 10`, r.o
 // fyPlanningTodos is fy_planning_todos for a planner: the nearest future
 // year open for planning, while nothing of theirs is planned in it.
 func fyPlanningTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if r.role != "CCEO" {
+	if r.role != "CCEO" && r.role != leadRole {
 		return nil, errPassOn
 	}
 	operational, _ := strconv.Atoi(r.fy)

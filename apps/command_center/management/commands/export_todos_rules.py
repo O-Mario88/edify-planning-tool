@@ -101,6 +101,12 @@ LINK_SHAPES = {
     "/clusters/{id}/profile?tab=attendance&show=missing": (
         "/clusters/cmw0000000000000000000001/profile?tab=attendance&show=missing"
     ),
+    "/team/coaching?open=new&cceo={id}&kind=one_to_one": (
+        "/team/coaching?open=new&cceo=cmw0000000000000000000001&kind=one_to_one"
+    ),
+    "/performance-conversation?staff={id}": (
+        "/performance-conversation?staff=cmw0000000000000000000001"
+    ),
 }
 
 #: The categories the row template draws an icon for; any other category is
@@ -453,6 +459,50 @@ def next_action_cases() -> list[str]:
     return cases
 
 
+def lead_rules() -> dict:
+    """What the Programme Lead's builders Go has read (todo_service,
+    cce_leadership.todos, hr.review_todos, pl_review, analytics, targets)."""
+    from apps.analytics import pl_analytics_service as analytics
+    from apps.cce_leadership import coaching
+    from apps.cce_leadership import todos as coaching_todos
+    from apps.command_center import todo_service as ts
+    from apps.hr import performance_engine as perf
+    from apps.hr import review_todos
+    from apps.cce_leadership.models import CoachingKind
+    from apps.hr.models import ReviewStage
+    from apps.hr.review_authority import REVIEWER_ROLE_FOR
+    from apps.pl_review.services import LEAD_REVIEWABLE_STATUSES
+    from apps.ssa.services import VerificationStatus
+    from apps.targets import team_targets
+
+    return {
+        "reviewer_roles": {
+            reviewee: list(reviewers)
+            for reviewee, reviewers in REVIEWER_ROLE_FOR.items()
+        },
+        "review_category": review_todos.CATEGORY,
+        "review_stage_manager_review": ReviewStage.PRIORITIES_MANAGER_REVIEW.value,
+        "review_stages_before_conversation": [
+            ReviewStage.NOT_STARTED.value,
+            ReviewStage.PRIORITIES_DRAFT.value,
+            ReviewStage.PRIORITIES_MANAGER_REVIEW.value,
+        ],
+        "review_done_stages": list(perf.REVIEW_DONE_STAGES),
+        "review_closed_statuses": list(perf.REVIEW_CLOSED_STATUSES),
+        "conversation_windows": list(perf.CONVERSATION_WINDOWS),
+        "coaching_category": coaching_todos.LEAD_CATEGORY,
+        "coaching_row_limit": coaching_todos.ROW_LIMIT,
+        "one_to_one_kind": CoachingKind.ONE_TO_ONE.value,
+        "one_to_one_due_day": coaching.ONE_TO_ONE_DUE_DAY,
+        "lead_reviewable_statuses": list(LEAD_REVIEWABLE_STATUSES),
+        "advance_approver_pending_statuses": list(ts.ADVANCE_APPROVER_PENDING_STATUSES),
+        "cceo_backlog_statuses": list(analytics.CCEO_BACKLOG_STATUSES),
+        "ssa_pending_status": VerificationStatus.PENDING.value,
+        "analytics_completed_statuses": list(analytics.COMPLETED_STATUSES),
+        "team_targets_completed_statuses": list(team_targets.COMPLETED_STATUSES),
+    }
+
+
 def rules() -> dict:
     from apps.activities.models import Activity, ActivityType
     from apps.business_transformation.models import VerificationRequirementStatus
@@ -478,6 +528,7 @@ def rules() -> dict:
             EdifyRole.PARTNER_FIELD_OFFICER.value,
         ],
         "open_links": open_links(),
+        "lead": lead_rules(),
         "category_tones": category_tones(),
         "priority_order": dict(ts.PRIORITY_ORDER),
         "priority_label": dict(ts.PRIORITY_LABEL),

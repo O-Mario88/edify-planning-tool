@@ -160,11 +160,13 @@ func TestEveryBuilderGoHasIsOneOfTheQueues(t *testing.T) {
 			t.Errorf("Go builds %s, which the queue no longer has", name)
 		}
 	}
-	if !Served("CCEO") {
-		t.Errorf("the field officer's queue needs a builder Go does not have: %v", rules.Roles["CCEO"].Builders)
+	for _, role := range PortedRoles {
+		if !Served(role) {
+			t.Errorf("%s's queue needs a builder Go does not have: %v", role, rules.Roles[role].Builders)
+		}
 	}
 	for role := range rules.Roles {
-		if role != "CCEO" && Served(role) {
+		if !contains(PortedRoles, role) && Served(role) {
 			t.Errorf("%s is served", role)
 		}
 	}
@@ -198,7 +200,7 @@ func TestAReaderIsPassedOnByAGuardOrAnApprovalTheyGive(t *testing.T) {
 	if got, err := partnerAssignmentGuard(context.Background(), nil, &reader{role: "CCEO"}); err != nil || got != nil {
 		t.Errorf("an officer: %v %v", got, err)
 	}
-	if _, err := fundRequestTodos(context.Background(), nil, &reader{role: "Program Lead"}); err != errPassOn {
+	if _, err := fundRequestTodos(context.Background(), nil, &reader{role: "CountryDirector"}); err != errPassOn {
 		t.Errorf("a fund approver: %v", err)
 	}
 }
