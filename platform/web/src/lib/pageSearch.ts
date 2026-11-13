@@ -24,6 +24,8 @@ const PAGE_SEARCHES: Readonly<Record<string, PageSearchSpec>> = {
     placeholder: 'Search my plan…',
     label: 'Search my plan by school, School ID, cluster, district or purpose',
   },
+  // notifications_page_view's topbar_search.
+  '/notifications': { placeholder: 'Search notifications…', label: 'Search notifications' },
 };
 
 const PLATFORM_SEARCH: PageSearchSpec = { placeholder: 'Search schools, staff, districts…', label: 'Search' };

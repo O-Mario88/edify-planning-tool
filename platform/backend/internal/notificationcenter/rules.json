@@ -1,0 +1,74 @@
+{
+  "critical_priority": "urgent",
+  "default_status": "all",
+  "email_key_env": "RESEND_API_KEY",
+  "email_provider": "resend",
+  "email_provider_env": "EMAIL_PROVIDER",
+  "page_size": 50,
+  "priority_values": [
+    "low",
+    "normal",
+    "high",
+    "urgent"
+  ],
+  "roles": {
+    "Accountant": {
+      "page": true
+    },
+    "Admin": {
+      "page": true
+    },
+    "BusinessTransformationOfficer": {
+      "page": true
+    },
+    "CCEO": {
+      "page": true
+    },
+    "ClusterLeader": {
+      "page": false
+    },
+    "CountryDirector": {
+      "page": true
+    },
+    "HumanResources": {
+      "page": true
+    },
+    "ImpactAssessment": {
+      "page": true
+    },
+    "MfiLoanOfficer": {
+      "page": true
+    },
+    "MfiPartnerAdmin": {
+      "page": true
+    },
+    "PartnerAdmin": {
+      "page": true
+    },
+    "PartnerFieldOfficer": {
+      "page": true
+    },
+    "Program Lead": {
+      "page": true
+    },
+    "ProjectCoordinator": {
+      "page": true
+    },
+    "RegionalProgramLead": {
+      "page": true
+    },
+    "RegionalVicePresident": {
+      "page": true
+    }
+  },
+  "status_values": [
+    "unread",
+    "read",
+    "archived"
+  ],
+  "statuses": {
+    "archived": "archived",
+    "read": "read",
+    "unread": "unread"
+  }
+}
