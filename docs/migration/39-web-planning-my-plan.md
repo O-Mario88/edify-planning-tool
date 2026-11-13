@@ -162,7 +162,10 @@ and moved the Calendar and the Decision Log; the rule now needs an element
 with words of its own, and neither moves.
 
 **Parity (Go vs the existing feed, my Django 8185 behind gateway 8085):**
-PARITY_PLACEHOLDER
+`/planning`, all 29 accounts: 26 in one run ("1282 answers compared, 0
+differing") and pl3, pl4 and coordinator again after a database outage cut
+the first run ("149 answers compared, 0 differing"); `/my-plan`, all 29
+accounts: "1943 answers compared, 0 differing".
 
 **Re-shot** (both apps, 1440 and 390 px, `cceo`, `cceo1`, `admin`, `pl1`;
 `/planning`, `?tab=clusters`, `/my-plan`, `/clusters`: 64 screenshots,
