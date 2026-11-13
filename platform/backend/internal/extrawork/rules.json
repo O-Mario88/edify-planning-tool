@@ -1,0 +1,138 @@
+{
+  "cuts": {
+    "evidence": 160,
+    "instruction": 140,
+    "outcome": 220,
+    "return_reason": 110
+  },
+  "limits": {
+    "assigned_by_me": 100,
+    "mine": 100,
+    "monitoring": 50,
+    "to_review": 50
+  },
+  "open_statuses": [
+    "assigned",
+    "acknowledged",
+    "in_progress",
+    "returned"
+  ],
+  "page_param": "extra_work_mine_page",
+  "page_size": 50,
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "roles": {
+    "Accountant": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "Admin": {
+      "can_assign": false,
+      "page": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "CCEO": {
+      "can_assign": false,
+      "page": true,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "can_assign": true,
+      "page": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "can_assign": false,
+      "page": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "can_assign": true,
+      "page": true,
+      "strip": {
+        "label": "Team Assignments",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/actions/sent",
+            "label": "Actions Sent"
+          },
+          {
+            "active": true,
+            "href": "/extra-work",
+            "label": "Extra Work"
+          }
+        ]
+      }
+    },
+    "ProjectCoordinator": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "can_assign": false,
+      "page": false,
+      "strip": null
+    }
+  },
+  "status_labels": {
+    "acknowledged": "Acknowledged",
+    "assigned": "Assigned",
+    "cancelled": "Cancelled",
+    "draft": "Draft",
+    "in_progress": "In Progress",
+    "returned": "Returned for Correction",
+    "submitted": "Submitted",
+    "verified": "Completed & Verified"
+  },
+  "summary_shows": 25
+}
