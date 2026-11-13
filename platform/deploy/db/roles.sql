@@ -295,3 +295,17 @@ GRANT SELECT (verification_status, recorded_by_user_id) ON impact_edtech_deploym
 GRANT SELECT (costing_profile) ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (execution_start) ON fiscal_year_planning_policy TO edify_gateway_ro;
 GRANT SELECT (reimbursement_receipt_confirmed_at, accountability_netsuite_id, created_at) ON advance_request TO edify_gateway_ro;
+-- The Work Plan (docs/migration/35-work-plan.md): the columns its Detailed
+-- Activity Plan, summary and month bands show (the month an undated row is
+-- filed under, the programme type and delivery method, the SSA score and the
+-- planner's reason), each cost line's label and service month, whether an
+-- advance waits on its owner (compute_next_action), the year's CD → RVP
+-- approval status and note, and the approved leave and recorded holidays the
+-- day-off marks read. No payload, and nothing of a leave but its dates.
+GRANT SELECT (month, programme_activity_type, delivery_method_snapshot, source_score, ssa_deviation_reason) ON activity TO edify_gateway_ro;
+GRANT SELECT (label, planned_date, month, fiscal_year) ON activity_schedule_cost_line TO edify_gateway_ro;
+GRANT SELECT (reimbursement_receipt_confirmed_at, accountability_netsuite_id, created_at) ON advance_request TO edify_gateway_ro;
+GRANT SELECT (id, fy, country_id, status, rvp_review_note) ON country_annual_budget TO edify_gateway_ro;
+GRANT SELECT (staff_id, start_date, end_date, status) ON leave TO edify_gateway_ro;
+GRANT SELECT (date, name) ON public_holiday TO edify_gateway_ro;
+GRANT SELECT (block_type, is_active, country, start_date, end_date, title) ON calendar_block TO edify_gateway_ro;
