@@ -51,8 +51,8 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffactivity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teams"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trainingsummary"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workplan"
 )
 
 const maxRequestBytes = 1 << 20
