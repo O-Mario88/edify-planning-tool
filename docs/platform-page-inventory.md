@@ -5,15 +5,15 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 ## Summary
 
 - Routed product surfaces: **955**
-- All registered routes: **1440**
-- API routes: **367**
-- Roles: **15**
+- All registered routes: **1468**
+- API routes: **395**
+- Roles: **16**
 - Permission keys: **128**
 - Scheduled jobs: **41**
 - Activity states: **24**
 - Shared component templates: **669**
 - Full pages: **264**
-- Partials and drawers: **340**
+- Partials and drawers: **338**
 - Permission-gated surfaces: **936**
 - Referenced by automated tests: **864**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
@@ -846,8 +846,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-4F342574B1 | /rvp/strategy-note | Rvp Strategy Note | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9DCE536863 | /schools | Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DBD42E0288 | /schools/<str:school_id> | School 360 | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-FD7106249F | /schools/<str:school_id>/add-to-cluster | Add To Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-7B23BF68B2 | /schools/<str:school_id>/assign-to-project | Assign To Project Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-FD7106249F | /schools/<str:school_id>/add-to-cluster | Add To Cluster Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-7B23BF68B2 | /schools/<str:school_id>/assign-to-project | Assign To Project Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-BA8419773F | /schools/<str:school_id>/change-type | School Change Type | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-F6CF008C33 | /schools/<str:school_id>/close | School Close | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-C4F1D739DE | /schools/<str:school_id>/close-drawer | School Close Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

@@ -4,8 +4,8 @@
  "summary": {
   "by_evidence": {
    "browser-rendered": 865,
-   "none": 235,
-   "page-tested": 1609,
+   "none": 250,
+   "page-tested": 1594,
    "request-tested": 1421
   },
   "by_kind": {
@@ -20,7 +20,7 @@
   "state_changing": 483,
   "templates_scanned": 696,
   "unresolved_destinations": 0,
-  "untested": 235,
+  "untested": 250,
   "untested_state_changing": 18
  },
  "templates": {
@@ -754,8 +754,6 @@
     "/recruitment/<str:vacancy_id>",
     "/recruitment/new",
     "/rvp/approvals",
-    "/schools/<str:school_id>/add-to-cluster",
-    "/schools/<str:school_id>/assign-to-project",
     "/schools/<str:school_id>/close-drawer",
     "/schools/<str:school_id>/edit-drawer",
     "/schools/<str:school_id>/ssa-entry",
@@ -10200,9 +10198,7 @@
     "/analytics/schedule-report",
     "/clusters/<str:cluster_id>/bulk-assign-drawer",
     "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
-    "/projects/<str:project_id>/schools/bulk-assign-drawer",
-    "/schools/<str:school_id>/add-to-cluster",
-    "/schools/<str:school_id>/assign-to-project"
+    "/projects/<str:project_id>/schools/bulk-assign-drawer"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -11037,32 +11033,12 @@
    ]
   },
   "partials/schools/add_to_cluster_drawer.html": {
-   "pages": [
-    "/schools/<str:school_id>/add-to-cluster"
-   ],
-   "roles": [
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RPL"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/schools/assign_to_project_drawer.html": {
-   "pages": [
-    "/schools/<str:school_id>/assign-to-project"
-   ],
-   "roles": [
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RPL"
-   ]
+   "pages": [],
+   "roles": []
   },
   "partials/schools/bulk_assign_project_drawer.html": {
    "pages": [
@@ -11171,8 +11147,6 @@
     "/planning/schedule-modal",
     "/projects/<str:project_id>/schools/bulk-assign-drawer",
     "/projects/planning/bulk-partner",
-    "/schools/<str:school_id>/add-to-cluster",
-    "/schools/<str:school_id>/assign-to-project",
     "/schools/bulk-assign-project-drawer"
    ],
    "roles": [
@@ -11277,9 +11251,7 @@
     "/analytics/schedule-report",
     "/clusters/<str:cluster_id>/bulk-assign-drawer",
     "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
-    "/projects/<str:project_id>/schools/bulk-assign-drawer",
-    "/schools/<str:school_id>/add-to-cluster",
-    "/schools/<str:school_id>/assign-to-project"
+    "/projects/<str:project_id>/schools/bulk-assign-drawer"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -15674,23 +15646,23 @@
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-EA338118612F", "kind": "button", "line": 185, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/_onboard_form.html"},
   {"accessible_name": "Save and add SSA score", "destination": "/schools/create-drawer", "destination_route": "/schools/create-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-1D97211829C5", "kind": "button", "line": 188, "method": "POST", "selector": "button[name=next]", "state_changing": true, "tag": "button", "template": "partials/schools/_onboard_form.html"},
   {"accessible_name": "Create school", "destination": "/schools/create-drawer", "destination_route": "/schools/create-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-0A8C1819B294", "kind": "button", "line": 190, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/_onboard_form.html"},
-  {"accessible_name": "Owner’s clusters", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C789385159AB", "kind": "button", "line": 36, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/add_to_cluster_drawer.html"},
-  {"accessible_name": "Create new cluster", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-53A8530AC951", "kind": "button", "line": 41, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/add_to_cluster_drawer.html"},
-  {"accessible_name": "Select a cluster {{ cluster.name }} · {{ cluster.district.name }} (current) · Cross-District Cluster (approved neighbouring district) · {{ cluster.schools_count", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-CF2DB0241257", "kind": "field", "line": 51, "method": "", "selector": "#owner_cluster_id", "state_changing": false, "tag": "select", "template": "partials/schools/add_to_cluster_drawer.html"},
-  {"accessible_name": "e.g. Cluster", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AC2A406DC7A4", "kind": "field", "line": 74, "method": "", "selector": "#new_cluster_name", "state_changing": false, "tag": "input", "template": "partials/schools/add_to_cluster_drawer.html"},
-  {"accessible_name": "{{ posted_reason }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6942CB88BF1C", "kind": "field", "line": 84, "method": "", "selector": "#cluster_reason", "state_changing": false, "tag": "textarea", "template": "partials/schools/add_to_cluster_drawer.html"},
-  {"accessible_name": "yes", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-57E5D0E18001", "kind": "field", "line": 91, "method": "", "selector": "input[name=confirm_change]", "state_changing": false, "tag": "input", "template": "partials/schools/add_to_cluster_drawer.html"},
-  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3DB915FA7B72", "kind": "button", "line": 97, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/add_to_cluster_drawer.html"},
+  {"accessible_name": "Owner’s clusters", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-C789385159AB", "kind": "button", "line": 36, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/add_to_cluster_drawer.html"},
+  {"accessible_name": "Create new cluster", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-53A8530AC951", "kind": "button", "line": 41, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/add_to_cluster_drawer.html"},
+  {"accessible_name": "Select a cluster {{ cluster.name }} · {{ cluster.district.name }} (current) · Cross-District Cluster (approved neighbouring district) · {{ cluster.schools_count", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-CF2DB0241257", "kind": "field", "line": 51, "method": "", "selector": "#owner_cluster_id", "state_changing": false, "tag": "select", "template": "partials/schools/add_to_cluster_drawer.html"},
+  {"accessible_name": "e.g. Cluster", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-AC2A406DC7A4", "kind": "field", "line": 74, "method": "", "selector": "#new_cluster_name", "state_changing": false, "tag": "input", "template": "partials/schools/add_to_cluster_drawer.html"},
+  {"accessible_name": "{{ posted_reason }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-6942CB88BF1C", "kind": "field", "line": 84, "method": "", "selector": "#cluster_reason", "state_changing": false, "tag": "textarea", "template": "partials/schools/add_to_cluster_drawer.html"},
+  {"accessible_name": "yes", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-57E5D0E18001", "kind": "field", "line": 91, "method": "", "selector": "input[name=confirm_change]", "state_changing": false, "tag": "input", "template": "partials/schools/add_to_cluster_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-3DB915FA7B72", "kind": "button", "line": 97, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/add_to_cluster_drawer.html"},
   {"accessible_name": "Change cluster Add to cluster", "destination": "/schools/{{ school.id }}/add-to-cluster", "destination_route": "/schools/<str:school_id>/add-to-cluster", "evidence": "request-tested", "high_consequence": false, "id": "INT-005FB7DADE35", "kind": "button", "line": 98, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/add_to_cluster_drawer.html"},
   {"accessible_name": "Create project", "destination": "/projects", "destination_route": "/projects", "evidence": "request-tested", "high_consequence": false, "id": "INT-5950E3AC8979", "kind": "link", "line": 15, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/assign_to_project_drawer.html"},
-  {"accessible_name": "Project ID", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-60FFC7E81646", "kind": "field", "line": 34, "method": "", "selector": "#project-id", "state_changing": false, "tag": "select", "template": "partials/schools/assign_to_project_drawer.html"},
-  {"accessible_name": "e.g. Curriculum support", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-44EEE6A488B8", "kind": "field", "line": 59, "method": "", "selector": "#project-type", "state_changing": false, "tag": "input", "template": "partials/schools/assign_to_project_drawer.html"},
-  {"accessible_name": "Participation type", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-180F34090FAA", "kind": "field", "line": 70, "method": "", "selector": "#project-participation-type", "state_changing": false, "tag": "select", "template": "partials/schools/assign_to_project_drawer.html"},
-  {"accessible_name": "Coordinator ID", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-864228DADF09", "kind": "field", "line": 86, "method": "", "selector": "#project-coordinator-id", "state_changing": false, "tag": "select", "template": "partials/schools/assign_to_project_drawer.html"},
-  {"accessible_name": "Support area", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D290B5D52453", "kind": "field", "line": 99, "method": "", "selector": "#project-support-area", "state_changing": false, "tag": "select", "template": "partials/schools/assign_to_project_drawer.html"},
-  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-BDEC49331962", "kind": "field", "line": 112, "method": "", "selector": "#project-start-date", "state_changing": false, "tag": "input", "template": "partials/schools/assign_to_project_drawer.html"},
-  {"accessible_name": "Objectives for this school", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-DA6067972C98", "kind": "field", "line": 117, "method": "", "selector": "#project-notes", "state_changing": false, "tag": "textarea", "template": "partials/schools/assign_to_project_drawer.html"},
-  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C0B19E9310DD", "kind": "button", "line": 127, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/assign_to_project_drawer.html"},
+  {"accessible_name": "Project ID", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-60FFC7E81646", "kind": "field", "line": 34, "method": "", "selector": "#project-id", "state_changing": false, "tag": "select", "template": "partials/schools/assign_to_project_drawer.html"},
+  {"accessible_name": "e.g. Curriculum support", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-44EEE6A488B8", "kind": "field", "line": 59, "method": "", "selector": "#project-type", "state_changing": false, "tag": "input", "template": "partials/schools/assign_to_project_drawer.html"},
+  {"accessible_name": "Participation type", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-180F34090FAA", "kind": "field", "line": 70, "method": "", "selector": "#project-participation-type", "state_changing": false, "tag": "select", "template": "partials/schools/assign_to_project_drawer.html"},
+  {"accessible_name": "Coordinator ID", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-864228DADF09", "kind": "field", "line": 86, "method": "", "selector": "#project-coordinator-id", "state_changing": false, "tag": "select", "template": "partials/schools/assign_to_project_drawer.html"},
+  {"accessible_name": "Support area", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-D290B5D52453", "kind": "field", "line": 99, "method": "", "selector": "#project-support-area", "state_changing": false, "tag": "select", "template": "partials/schools/assign_to_project_drawer.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-BDEC49331962", "kind": "field", "line": 112, "method": "", "selector": "#project-start-date", "state_changing": false, "tag": "input", "template": "partials/schools/assign_to_project_drawer.html"},
+  {"accessible_name": "Objectives for this school", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-DA6067972C98", "kind": "field", "line": 117, "method": "", "selector": "#project-notes", "state_changing": false, "tag": "textarea", "template": "partials/schools/assign_to_project_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-C0B19E9310DD", "kind": "button", "line": 127, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/assign_to_project_drawer.html"},
   {"accessible_name": "Assign to project", "destination": "/schools/{{ school.id }}/assign-to-project", "destination_route": "/schools/<str:school_id>/assign-to-project", "evidence": "request-tested", "high_consequence": false, "id": "INT-C52E2819A150", "kind": "button", "line": 128, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/schools/assign_to_project_drawer.html"},
   {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E2DB0111959C", "kind": "button", "line": 27, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/bulk_assign_project_drawer.html"},
   {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D6D739848117", "kind": "button", "line": 30, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/bulk_assign_project_drawer.html"},

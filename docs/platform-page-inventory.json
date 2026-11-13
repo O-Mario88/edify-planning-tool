@@ -12921,9 +12921,7 @@
         "/analytics/schedule-report",
         "/clusters/<str:cluster_id>/bulk-assign-drawer",
         "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
-        "/projects/<str:project_id>/schools/bulk-assign-drawer",
-        "/schools/<str:school_id>/add-to-cluster",
-        "/schools/<str:school_id>/assign-to-project"
+        "/projects/<str:project_id>/schools/bulk-assign-drawer"
       ],
       "findings": [],
       "forms": 0,
@@ -14851,9 +14849,7 @@
       ],
       "bytes": 6672,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/schools/<str:school_id>/add-to-cluster"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -14884,9 +14880,7 @@
       ],
       "bytes": 5865,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/schools/<str:school_id>/assign-to-project"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -15109,8 +15103,7 @@
         "/planning/schedule-modal",
         "/projects/<str:project_id>/schools/bulk-assign-drawer",
         "/projects/planning/bulk-partner",
-        "/schools/<str:school_id>/add-to-cluster",
-        "/schools/<str:school_id>/assign-to-project"
+        "/schools/bulk-assign-project-drawer"
       ],
       "findings": [],
       "forms": 0,
@@ -15515,9 +15508,7 @@
         "/analytics/schedule-report",
         "/clusters/<str:cluster_id>/bulk-assign-drawer",
         "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
-        "/projects/<str:project_id>/schools/bulk-assign-drawer",
-        "/schools/<str:school_id>/add-to-cluster",
-        "/schools/<str:school_id>/assign-to-project"
+        "/projects/<str:project_id>/schools/bulk-assign-drawer"
       ],
       "findings": [],
       "forms": 0,
@@ -89960,48 +89951,43 @@
       ]
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.add_to_cluster_drawer_view",
       "card_count": 0,
       "charts": false,
       "drawers": true,
       "evidence": [
-        "template:partials/schools/drawer_error.html",
-        "template:partials/schools/add_to_cluster_drawer.html",
-        "template:partials/schools/toast_success.html",
         "test:referenced-by-automated-test",
         "permission:school_directory"
       ],
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /schools/{{ school.id }}/add-to-cluster"
-      ],
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
-      "notifications": true,
+      "notifications": false,
       "page_id": "UI-PAGE-FD7106249F",
       "page_title": "Add To Cluster Drawer",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Owner&rsquo;s clusters",
+      "primary_action": "Add To Cluster Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Add a school to one of its owner's clusters, or change its cluster.",
+      "purpose": "Operate add to cluster drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -90014,9 +90000,7 @@
       "route": "/schools/<str:school_id>/add-to-cluster",
       "route_name": "add_to_cluster_drawer",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/schools/{{ school.id }}/add-to-cluster"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -90035,80 +90019,67 @@
         "apps.schools.services"
       ],
       "shared_layout": [
-        "components/drawers/base_drawer.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
-        "disabled": true,
-        "empty": true,
-        "error": true,
+        "disabled": false,
+        "empty": false,
+        "error": false,
         "loading": false
       },
-      "surface_kind": "drawer",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "partials/schools/drawer_error.html",
-        "partials/schools/add_to_cluster_drawer.html",
-        "partials/schools/toast_success.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[16px]"
-      ]
+      "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.assign_to_project_drawer_view",
       "card_count": 0,
       "charts": false,
       "drawers": true,
       "evidence": [
-        "template:partials/schools/drawer_error.html",
-        "template:partials/schools/assign_to_project_drawer.html",
-        "template:partials/schools/toast_success.html",
         "test:referenced-by-automated-test",
         "permission:school_directory"
       ],
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /schools/{{ school.id }}/assign-to-project"
-      ],
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
-      "notifications": true,
+      "notifications": false,
       "page_id": "UI-PAGE-7B23BF68B2",
       "page_title": "Assign To Project Drawer",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Create project",
+      "primary_action": "Assign To Project Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate assign to project drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -90121,9 +90092,7 @@
       "route": "/schools/<str:school_id>/assign-to-project",
       "route_name": "assign_to_project_drawer",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/schools/{{ school.id }}/assign-to-project"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -90142,34 +90111,28 @@
         "apps.schools.services"
       ],
       "shared_layout": [
-        "components/drawers/base_drawer.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
-        "disabled": true,
+        "disabled": false,
         "empty": false,
-        "error": true,
+        "error": false,
         "loading": false
       },
-      "surface_kind": "drawer",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "partials/schools/drawer_error.html",
-        "partials/schools/assign_to_project_drawer.html",
-        "partials/schools/toast_success.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -101999,6 +101962,7 @@
       "apps.integrations",
       "apps.leadership",
       "apps.messaging",
+      "apps.mobile_feed",
       "apps.monthly_work_plan",
       "apps.my_plan",
       "apps.notifications",
@@ -102166,7 +102130,8 @@
       "BusinessTransformationOfficer",
       "MfiPartnerAdmin",
       "MfiLoanOfficer",
-      "Admin"
+      "Admin",
+      "ClusterLeader"
     ],
     "scheduled_jobs": [
       {
@@ -106690,6 +106655,90 @@
       "templates": []
     },
     {
+      "callback": "apps.accounts.account_event_relay.relay",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/auth(?:/|)internal/account-events",
+      "route_name": "account-events",
+      "templates": []
+    },
+    {
+      "callback": "apps.daily_visit_batches.gateway_relay.activity_changed",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/auth(?:/|)internal/activity-changed",
+      "route_name": "activity-changed",
+      "templates": []
+    },
+    {
+      "callback": "apps.daily_visit_batches.gateway_relay.costs_to_follow",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/auth(?:/|)internal/costs-to-follow",
+      "route_name": "costs-to-follow",
+      "templates": []
+    },
+    {
+      "callback": "apps.accounts.security_event_relay.relay",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/auth(?:/|)internal/security-events",
+      "route_name": "security-events",
+      "templates": []
+    },
+    {
+      "callback": "apps.daily_visit_batches.gateway_relay.visit_cancel_check",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/auth(?:/|)internal/visit-cancel-check",
+      "route_name": "visit-cancel-check",
+      "templates": []
+    },
+    {
+      "callback": "apps.daily_visit_batches.gateway_relay.visit_day_check",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/auth(?:/|)internal/visit-day-check",
+      "route_name": "visit-day-check",
+      "templates": []
+    },
+    {
+      "callback": "apps.daily_visit_batches.gateway_relay.visit_move_check",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/auth(?:/|)internal/visit-move-check",
+      "route_name": "visit-move-check",
+      "templates": []
+    },
+    {
       "callback": "apps.accounts.views.view",
       "kind": "api",
       "methods": [
@@ -108447,6 +108496,23 @@
       ],
       "route": "/api/clusters(?:/|)<str:cluster_id>/intervention-summary",
       "route_name": "intervention-summary",
+      "templates": []
+    },
+    {
+      "callback": "apps.clusters.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/clusters(?:/|)<str:cluster_id>/leaders",
+      "route_name": "leader-onboard",
       "templates": []
     },
     {
@@ -110414,6 +110480,329 @@
       "templates": []
     },
     {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)drawer",
+      "route_name": "mobile-feed-drawer",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)drawers/options",
+      "route_name": "mobile-feed-drawer-options",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.exports.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)exports/<str:job_id>",
+      "route_name": "mobile-feed-export",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.exports.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)exports/<str:job_id>/file",
+      "route_name": "mobile-feed-export-file",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)home",
+      "route_name": "mobile-feed-home",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)home/queue",
+      "route_name": "mobile-feed-home-queue",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)home/todo-figures",
+      "route_name": "mobile-feed-home-todo-figures",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)my-plan",
+      "route_name": "mobile-feed-my-plan",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)navigation",
+      "route_name": "mobile-feed-navigation",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)page",
+      "route_name": "mobile-feed-page",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)planning/training-capacity",
+      "route_name": "mobile-feed-training-capacity",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)school-directory",
+      "route_name": "mobile-feed-school-directory",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/add-to-cluster",
+      "route_name": "mobile-feed-add-to-cluster",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/add-to-project",
+      "route_name": "mobile-feed-add-to-project",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/drawers/<str:kind>",
+      "route_name": "mobile-feed-school-drawer",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/planning/<str:kind>",
+      "route_name": "mobile-feed-planning-drawer",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/profile",
+      "route_name": "mobile-feed-school-profile",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)schools/bulk-assign-cluster",
+      "route_name": "mobile-feed-bulk-assign-cluster",
+      "templates": []
+    },
+    {
+      "callback": "apps.mobile_feed.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/mobile/v1(?:/|)schools/bulk-assign-project",
+      "route_name": "mobile-feed-bulk-assign-project",
+      "templates": []
+    },
+    {
       "callback": "apps.monthly_work_plan.views.view",
       "kind": "api",
       "methods": [
@@ -110663,6 +111052,18 @@
       "required_permissions": [],
       "route": "/api/notifications(?:/|)email/events",
       "route_name": "email-provider-events",
+      "templates": []
+    },
+    {
+      "callback": "apps.notifications.cluster_action_relay.relay",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/notifications(?:/|)internal/cluster-action-notices",
+      "route_name": "cluster-action-notices",
       "templates": []
     },
     {
@@ -122010,37 +122411,27 @@
     },
     {
       "callback": "apps.frontend.views.school_views.add_to_cluster_drawer_view",
-      "kind": "drawer",
+      "kind": "action",
       "methods": [
-        "GET",
-        "POST"
+        "GET"
       ],
       "page_permission": "school_directory",
       "required_permissions": [],
       "route": "/schools/<str:school_id>/add-to-cluster",
       "route_name": "add_to_cluster_drawer",
-      "templates": [
-        "partials/schools/drawer_error.html",
-        "partials/schools/add_to_cluster_drawer.html",
-        "partials/schools/toast_success.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.school_views.assign_to_project_drawer_view",
-      "kind": "drawer",
+      "kind": "action",
       "methods": [
-        "GET",
-        "POST"
+        "GET"
       ],
       "page_permission": "school_directory",
       "required_permissions": [],
       "route": "/schools/<str:school_id>/assign-to-project",
       "route_name": "assign_to_project_drawer",
-      "templates": [
-        "partials/schools/drawer_error.html",
-        "partials/schools/assign_to_project_drawer.html",
-        "partials/schools/toast_success.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.school_views.school_change_type_view",
@@ -124035,14 +124426,14 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 607,
+    "accessibility_contract_pass": 605,
     "activity_states": 24,
-    "all_routes": 1440,
-    "api_routes": 367,
+    "all_routes": 1468,
+    "api_routes": 395,
     "component_templates": 669,
     "full_pages": 264,
-    "mobile_contract_pass": 607,
-    "nonvisual_actions": 310,
+    "mobile_contract_pass": 605,
+    "nonvisual_actions": 312,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 7,
@@ -124054,10 +124445,10 @@
       "record-detail": 30,
       "report": 49
     },
-    "partials_and_drawers": 340,
+    "partials_and_drawers": 338,
     "permission_gated": 936,
     "permission_keys": 128,
-    "roles": 15,
+    "roles": 16,
     "routed_surfaces": 955,
     "scheduled_jobs": 41,
     "severity_counts": {
@@ -124066,8 +124457,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 607,
+    "tablet_contract_pass": 605,
     "test_referenced": 864,
-    "theme_contract_pass": 607
+    "theme_contract_pass": 605
   }
 }

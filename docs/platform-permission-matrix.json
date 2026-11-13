@@ -20490,13 +20490,15 @@
   "BusinessTransformationOfficer",
   "MfiPartnerAdmin",
   "MfiLoanOfficer",
-  "Admin"
+  "Admin",
+  "ClusterLeader"
  ],
  "routes_reachable_by_role": {
   "Accountant": 472,
   "Admin": 1134,
   "BusinessTransformationOfficer": 248,
   "CCEO": 601,
+  "ClusterLeader": 0,
   "CountryDirector": 860,
   "HumanResources": 338,
   "ImpactAssessment": 1115,
@@ -20513,8 +20515,8 @@
   "page_keys_declared": 190,
   "page_keys_in_navigation": 207,
   "routes_guarded": 1231,
-  "routes_total": 1440,
-  "routes_unguarded": 209,
+  "routes_total": 1468,
+  "routes_unguarded": 237,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -21172,6 +21174,55 @@
   {
    "page_permission": "",
    "required_permissions": [],
+   "route": "/api/auth(?:/|)internal/account-events",
+   "route_name": "account-events",
+   "view": "apps.accounts.account_event_relay.relay"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/auth(?:/|)internal/activity-changed",
+   "route_name": "activity-changed",
+   "view": "apps.daily_visit_batches.gateway_relay.activity_changed"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/auth(?:/|)internal/costs-to-follow",
+   "route_name": "costs-to-follow",
+   "view": "apps.daily_visit_batches.gateway_relay.costs_to_follow"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/auth(?:/|)internal/security-events",
+   "route_name": "security-events",
+   "view": "apps.accounts.security_event_relay.relay"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/auth(?:/|)internal/visit-cancel-check",
+   "route_name": "visit-cancel-check",
+   "view": "apps.daily_visit_batches.gateway_relay.visit_cancel_check"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/auth(?:/|)internal/visit-day-check",
+   "route_name": "visit-day-check",
+   "view": "apps.daily_visit_batches.gateway_relay.visit_day_check"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/auth(?:/|)internal/visit-move-check",
+   "route_name": "visit-move-check",
+   "view": "apps.daily_visit_batches.gateway_relay.visit_move_check"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
    "route": "/api/auth(?:/|)invite/validate",
    "route_name": "invite-validate",
    "view": "apps.accounts.views.view"
@@ -21272,6 +21323,13 @@
    "required_permissions": [],
    "route": "/api/clusters(?:/|)",
    "route_name": "list",
+   "view": "apps.clusters.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/clusters(?:/|)<str:cluster_id>/leaders",
+   "route_name": "leader-onboard",
    "view": "apps.clusters.views.view"
   },
   {
@@ -21494,6 +21552,139 @@
   {
    "page_permission": "",
    "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)drawer",
+   "route_name": "mobile-feed-drawer",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)drawers/options",
+   "route_name": "mobile-feed-drawer-options",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)exports/<str:job_id>",
+   "route_name": "mobile-feed-export",
+   "view": "apps.mobile_feed.exports.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)exports/<str:job_id>/file",
+   "route_name": "mobile-feed-export-file",
+   "view": "apps.mobile_feed.exports.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)home",
+   "route_name": "mobile-feed-home",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)home/queue",
+   "route_name": "mobile-feed-home-queue",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)home/todo-figures",
+   "route_name": "mobile-feed-home-todo-figures",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)my-plan",
+   "route_name": "mobile-feed-my-plan",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)navigation",
+   "route_name": "mobile-feed-navigation",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)page",
+   "route_name": "mobile-feed-page",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)planning/training-capacity",
+   "route_name": "mobile-feed-training-capacity",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)school-directory",
+   "route_name": "mobile-feed-school-directory",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/add-to-cluster",
+   "route_name": "mobile-feed-add-to-cluster",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/add-to-project",
+   "route_name": "mobile-feed-add-to-project",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/drawers/<str:kind>",
+   "route_name": "mobile-feed-school-drawer",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/planning/<str:kind>",
+   "route_name": "mobile-feed-planning-drawer",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)schools/<str:school_id>/profile",
+   "route_name": "mobile-feed-school-profile",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)schools/bulk-assign-cluster",
+   "route_name": "mobile-feed-bulk-assign-cluster",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/mobile/v1(?:/|)schools/bulk-assign-project",
+   "route_name": "mobile-feed-bulk-assign-project",
+   "view": "apps.mobile_feed.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
    "route": "/api/notifications(?:/|)",
    "route_name": "list",
    "view": "apps.notifications.views.view"
@@ -21525,6 +21716,13 @@
    "route": "/api/notifications(?:/|)email/events",
    "route_name": "email-provider-events",
    "view": "apps.notifications.views.email_provider_events"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/notifications(?:/|)internal/cluster-action-notices",
+   "route_name": "cluster-action-notices",
+   "view": "apps.notifications.cluster_action_relay.relay"
   },
   {
    "page_permission": "",

@@ -602,9 +602,18 @@ def _classify(keys: set[str]) -> str:
     return "other"
 
 
+#: Packages that read KPI tiles rather than build them. The app's feed
+#: (apps/mobile_feed) turns the web's rendered page into the app's blocks, so
+#: its label/value dicts copy tiles the web already built (through
+#: render_metric where migrated); counting them would count each tile twice.
+_READERS_OF_RENDERED_TILES = ("apps/mobile_feed/",)
+
+
 def _is_scanned(path: Path) -> bool:
     parts = path.as_posix()
     if "__pycache__" in parts or "/migrations/" in parts:
+        return False
+    if any(f"/{reader}" in parts for reader in _READERS_OF_RENDERED_TILES):
         return False
     return not path.name.startswith("test_")
 

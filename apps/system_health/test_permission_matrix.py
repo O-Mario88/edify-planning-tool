@@ -37,6 +37,16 @@ MARKDOWN_PATH = DOCS / "platform-permission-matrix.md"
 #: SEC-01 shape and must be looked at.
 MIN_GUARDED_ROUTES = 845
 
+#: Roles that hold no web permission on purpose, with the reason. Every other
+#: role reaching nothing is the unused-or-mis-declared case the test catches.
+WEB_LESS_ROLES = {
+    EdifyRole.CLUSTER_LEADER.value: (
+        "a Cluster Leader's portal is served by the Go gateway from its own "
+        "cluster_leadership assignments (apps/core/rbac.py); the web grants "
+        "the role nothing"
+    ),
+}
+
 
 class MatrixMatchesTheLiveSourceTest(SimpleTestCase):
     def setUp(self):
@@ -83,6 +93,9 @@ class MatrixMatchesTheLiveSourceTest(SimpleTestCase):
         self.assertEqual(roles, {r.value for r in EdifyRole})
         for role, count in self.matrix["routes_reachable_by_role"].items():
             with self.subTest(role):
+                if role in WEB_LESS_ROLES:
+                    self.assertEqual(count, 0, f"{role} reaches the web now")
+                    continue
                 self.assertGreater(
                     count,
                     0,

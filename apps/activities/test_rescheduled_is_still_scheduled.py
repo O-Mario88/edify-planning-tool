@@ -176,6 +176,9 @@ _OTHER_VOCABULARIES = {
     "apps/frontend/views/partner_views.py": 1,
     "apps/frontend/views/planning_views.py": 1,
     "apps/messaging/services.py": 1,
+    # The training-capacity answer's field name (how many trainings are
+    # scheduled under the ceiling), not an activity status.
+    "apps/mobile_feed/views.py": 1,
     "apps/partners/models.py": 2,
     "apps/planning/country_execution/stages.py": 1,
     "apps/planning/partner_oversight_service.py": 1,

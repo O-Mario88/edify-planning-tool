@@ -47,6 +47,12 @@ PERMITTED_EXCEPTIONS = {
         "Demo/dev seeding. Never runs against production data, and is gated by "
         "the environment stamp."
     ),
+    "apps/daily_visit_batches/gateway_relay.py": (
+        "The Go gateway's read-only pricing checks (docs/migration/27, 29, 30): "
+        "the visit is created inside a transaction every path rolls back, to "
+        "ask what the pricing would refuse. Nothing it creates is kept; the "
+        "save itself is made elsewhere."
+    ),
 }
 
 #: Operational exceptions are forbidden. Keep this explicit empty mapping so
