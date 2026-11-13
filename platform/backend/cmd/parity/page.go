@@ -18,6 +18,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1/identityv1connect"
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
 )
 
 // pageRun compares one page the app draws from its components (GetPage)
@@ -59,14 +60,18 @@ func (r *pageRun) goPage(ctx context.Context, token string, query map[string]str
 	return answer.Msg, nil
 }
 
+// existingPageURL asks the existing feed for the page with the query the
+// gateway's pages see (screens.PlainQuery: a blank value is dropped).
+func (r *pageRun) existingPageURL(query map[string]string) string {
+	values := screens.PlainQuery(query)
+	values.Set("path", r.path)
+	return r.existing + "/api/mobile/v1/page?" + values.Encode()
+}
+
 // existingPage is the existing feed of the same page; a refusal is put in
 // the gateway's terms.
 func (r *pageRun) existingPage(token string, query map[string]string) (*screensv1.GetPageResponse, error) {
-	values := url.Values{"path": {r.path}}
-	for k, v := range query {
-		values.Set(k, v)
-	}
-	request, err := http.NewRequest(http.MethodGet, r.existing+"/api/mobile/v1/page?"+values.Encode(), nil)
+	request, err := http.NewRequest(http.MethodGet, r.existingPageURL(query), nil)
 	if err != nil {
 		return nil, err
 	}

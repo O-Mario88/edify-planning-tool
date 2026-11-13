@@ -70,7 +70,6 @@ func pageQuery(ctx context.Context, given map[string]string) (url.Values, error)
 	if len(given) > maxQueryKeys {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This view cannot be opened.")
 	}
-	query := url.Values{}
 	for key, value := range given {
 		fits := len(value) <= maxQueryValueLen
 		if isIDList(key) {
@@ -79,9 +78,6 @@ func pageQuery(ctx context.Context, given map[string]string) (url.Values, error)
 		if !queryKey.MatchString(key) || !fits {
 			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This view cannot be opened.")
 		}
-		if value != "" {
-			query.Set(key, value)
-		}
 	}
-	return query, nil
+	return PlainQuery(given), nil
 }
