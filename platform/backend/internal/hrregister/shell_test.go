@@ -88,7 +88,7 @@ func TestRolesWithoutARegisterAreRefusedBeforeAnythingIsRead(t *testing.T) {
 			}
 		}
 	}
-	if _, served, _ := s.Build(context.Background(), auth.Principal{}, "/pulse-surveys", nil); served {
+	if _, served, _ := s.Build(context.Background(), auth.Principal{}, "/employee-relations", nil); served {
 		t.Error("a register Go does not build yet was answered")
 	}
 }

@@ -80,6 +80,7 @@
     "In progress": "In progress",
     "In review": "In review",
     "Interviews": "Interviews",
+    "Latest morale score": "Latest morale score",
     "Leaving in 90 days": "Leaving in 90 days",
     "Missing or expired": "Missing or expired",
     "Missing profiles": "Missing profiles",
@@ -88,6 +89,7 @@
     "Offers": "Offers",
     "Open incidents": "Open incidents",
     "Open roles": "Open roles",
+    "Open surveys": "Open surveys",
     "Overdue": "Overdue",
     "Past exit date, still active": "Past exit date, still active",
     "Pay reviews due": "Pay reviews due",
@@ -1196,6 +1198,112 @@
         }
       }
     },
+    "/pulse-surveys": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/pulse-surveys/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/pulse-surveys/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/pulse-surveys/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/recognition": {
       "roles": {
         "Accountant": {
@@ -1555,6 +1663,18 @@
     "far_exceeds": "Far Exceeds Priority",
     "met": "Met Priority",
     "met_some": "Met Some Priority"
+  },
+  "pulse_min_responses": 5,
+  "pulse_questions": [
+    "purpose",
+    "support",
+    "workload",
+    "recognition",
+    "growth"
+  ],
+  "pulse_statuses": {
+    "closed": "Closed",
+    "open": "Open"
   },
   "recognition_categories": {
     "above_and_beyond": "Above and beyond",

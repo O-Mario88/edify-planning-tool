@@ -21,8 +21,9 @@ reach rule once; each register is added to it as it is ported.
 | Policies & Documents | `/policies` | This document |
 | Performance Recovery Plans | `/recovery-plans` | This document |
 | Compensation & Benefits | `/compensation-benefits` | This document |
+| Staff Pulse Surveys | `/pulse-surveys` | This document |
 | Performance Reviews (everyone but a Programme Lead) | `/performance-reviews` | This document; a Programme Lead's reviewer's view (`_team_performance_reviews`, built on `performance_engine.team_review_rows`) is passed on until native-performance-reviews-2 |
-| The other registers (pulse surveys, employee relations, recruitment, HR analytics, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| The other registers (employee relations, which writes an audit record on every read and waits for Go to write the audit chain, recruitment, HR analytics, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -231,6 +232,20 @@ the live, not exited People records in reach with no record. One drawer
 button, "Add a record". Go never reads a salary, allowance, currency or bank
 detail: the register does not show them and the gateway is not granted them.
 
+## 169.2n Staff Pulse Surveys
+
+`pulse_surveys_view`: every survey whose countries the reach all allows (a
+survey of no country is everyone's; a team's reach, or none, allows no
+country), the latest opening first; the register has no search. Each row: the
+title, its countries joined, "dd Mon to dd Mon YYYY", how many answered, the
+score ("N of 5" once five have answered: `survey_results`, each statement's
+mean of its non-zero answers to one decimal, then their mean to one decimal,
+Python's half-to-even rounding of the exact value, written as Python writes a
+float; "Too few to show" under five), the status's label and a "Results"
+drawer button. Figures: Open surveys, Latest morale score (the first listed
+survey with a result shown, else "—"). One drawer button, "Open a survey". Go
+reads only the answers' scores, never who answered or what they wrote.
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -261,8 +276,9 @@ type, cause, start and review days and status (not its evidence, action plan,
 support or outcome note); a performance review's period,
 year, due day, manager and its two ratings (not the reflection, feedback,
 evidence or calibration note); a compensation record's band,
-cover, pension, review day and status (NEVER an amount or a bank detail)
-(applied to `edify_gorn_dev` and
+cover, pension, review day and status (NEVER an amount or a bank detail);
+a pulse survey's title, countries, window and status and its answers' scores
+(never who answered, their key or comment) (applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -280,8 +296,8 @@ cover, pension, review day and status (NEVER an amount or a bank detail)
   555 HR audit events; five vacancies of every status; six documents of
   every kind and status with 35 acknowledgements; 11 recovery plans, five of
   them on Programme Lead 1's team and one on the Lead; 12 reviews of every
-  kind, this year, last year and none; 9 compensation records), asks the
-  existing feed 520 questions as Admin, HR, Impact Assessment, the Country Director and a Programme Lead as Admin, HR and Impact Assessment and deletes
+  kind, this year, last year and none; 9 compensation records; five pulse surveys
+  under and over the anonymity floor), asks the existing feed 560 questions as Admin, HR, Impact Assessment, the Country Director and a Programme Lead as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 

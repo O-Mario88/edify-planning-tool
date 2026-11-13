@@ -53,6 +53,7 @@ var builders = map[string]func(context.Context, input) (register, error){
 	"/recovery-plans":        recoveryPlans,
 	"/performance-reviews":   performanceReviews,
 	"/compensation-benefits": compensationBenefits,
+	"/pulse-surveys":         pulseSurveys,
 }
 
 // zone is settings.TIME_ZONE, the zone the server's day is read in.

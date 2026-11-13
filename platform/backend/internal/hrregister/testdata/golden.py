@@ -34,6 +34,8 @@ from apps.documents.models import (
 from apps.core.fy import get_operational_fy
 from apps.hr.models import (
     Application,
+    PulseResponse,
+    PulseSurvey,
     CompensationRecord,
     PerformanceReview,
     PerformanceImprovementPlan,
@@ -55,6 +57,8 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 User = get_user_model()
 #: Deleted children first.
 TABLES = (
+    "hr_pulse_response",
+    "hr_pulse_survey",
     "hr_compensation",
     "hr_performance_review",
     "hr_pip_plan",
@@ -89,6 +93,7 @@ PATHS = (
     "/recovery-plans",
     "/performance-reviews",
     "/compensation-benefits",
+    "/pulse-surveys",
 )
 
 
@@ -158,6 +163,7 @@ def file_rows():
     file_recovery(profiles, today)
     file_reviews(profiles, today)
     file_compensation(profiles, today)
+    file_pulse(today)
     kinds = ["injury", "road_traffic", "near_miss", "hazard", "security", "illness"]
     for i in range(10):
         SafetyIncident.objects.create(
@@ -395,6 +401,40 @@ def file_compensation(profiles, today):
             else today + timedelta(days=[-5, 0, 30, 31, 90][i % 5]),
             status=["HR Review", "Approved", "Draft"][i % 3],
         )
+
+
+def file_pulse(today):
+    keys = ["purpose", "support", "workload", "recognition", "growth"]
+    patterns = [
+        [4, 3, 5, 2, 4, 3],
+        [5, 5, 4, 0, 3, 4],
+        [3, 4, 3, 4, 3, 4, 3],
+        [1, 2],
+    ]
+    countries = [[], ["Uganda"], ["Uganda", "Kenya"], ["Kenya"], ["Uganda"]]
+    for i in range(5):
+        survey = PulseSurvey.objects.create(
+            id=f"ghru{i}",
+            title=f"Golden Pulse {i}",
+            countries=countries[i],
+            opens_on=today - timedelta(days=100 - i * 20),
+            closes_on=today - timedelta(days=80 - i * 20),
+            status=["closed", "open", "closed", "open", "open"][i],
+        )
+        answers = 4 if i == 3 else [6, 7, 5, 2, 0][i % 5]
+        for k in range(answers):
+            scores = {
+                key: patterns[(i + j) % 4][k % len(patterns[(i + j) % 4])]
+                for j, key in enumerate(keys)
+                if not (i == 1 and key == "growth")
+            }
+            PulseResponse.objects.create(
+                id=f"ghrs{i}{k:02d}",
+                survey=survey,
+                respondent_key=f"key-{i}-{k}",
+                country="Uganda",
+                scores=scores,
+            )
 
 
 def dump_rows():

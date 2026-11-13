@@ -55,7 +55,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	}
 	ctx := context.Background()
 	// Children first; only the golden's own rows (ids starting "ghr").
-	children := []string{"hr_compensation", "hr_performance_review", "hr_pip_plan", "document_acknowledgement", "document_version", "document_asset", "hr_employee_compliance_record", "hr_compliance_requirement", "hr_application", "hr_candidate", "hr_vacancy", "hr_onboarding_task", "hr_onboarding_plan", "hr_offboarding", "hr_safety_incident", "hr_staff_recognition",
+	children := []string{"hr_pulse_response", "hr_pulse_survey", "hr_compensation", "hr_performance_review", "hr_pip_plan", "document_acknowledgement", "document_version", "document_asset", "hr_employee_compliance_record", "hr_compliance_requirement", "hr_application", "hr_candidate", "hr_vacancy", "hr_onboarding_task", "hr_onboarding_plan", "hr_offboarding", "hr_safety_incident", "hr_staff_recognition",
 		"staff_supervisor_assignment", "staff_profile", "user"}
 	// One transaction each way: a document and its current version name each
 	// other, and the foreign keys are checked when the transaction commits.
@@ -84,7 +84,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	defer func() { _ = tx.Rollback(ctx) }()
 	for _, table := range []string{"user", "staff_profile", "staff_supervisor_assignment", "hr_staff_recognition", "hr_safety_incident",
 		"hr_offboarding", "hr_onboarding_plan", "hr_onboarding_task", "hr_vacancy", "hr_candidate", "hr_application",
-		"hr_compliance_requirement", "hr_employee_compliance_record", "document_asset", "document_version", "document_acknowledgement", "hr_pip_plan", "hr_performance_review", "hr_compensation"} {
+		"hr_compliance_requirement", "hr_employee_compliance_record", "document_asset", "document_version", "document_acknowledgement", "hr_pip_plan", "hr_performance_review", "hr_compensation", "hr_pulse_survey", "hr_pulse_response"} {
 		for _, row := range golden.Rows[table] {
 			if _, err := tx.Exec(ctx, `INSERT INTO "`+table+`" SELECT * FROM json_populate_record(NULL::"`+table+`", $1::json)`, string(row)); err != nil {
 				t.Fatalf("filing a %s row: %v", table, err)

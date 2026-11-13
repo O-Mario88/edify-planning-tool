@@ -9,8 +9,9 @@ which of its drawer buttons each role is shown; the labels of a People
 record's lifecycle, a recognition's category and a safety incident's
 category, severity and status, an onboarding plan's status and an exit's
 reason, and which reasons are voluntary, an application's stage an employee's compliance status, a document's type and status, and a recovery plan's type, cause and
-status, a performance review's stage, type and rating, and a compensation
-record's status and medical cover; whom each role reviews; which
+status, a performance review's stage, type and rating, a compensation
+record's status and medical cover, and a pulse survey's status; a pulse
+survey's statements and its anonymity floor; whom each role reviews; which
 of its link buttons each role may open; the label each context figure
 is drawn with; how long the line under a figure may stay; and the register's
 page size. A change to any of them must be exported again;
@@ -135,6 +136,11 @@ PAGES = {
             "Missing profiles",
         ],
     },
+    "/pulse-surveys": {
+        "permission": "pulse_surveys",
+        "drawers": ["/pulse-surveys/new"],
+        "metrics": ["Open surveys", "Latest morale score"],
+    },
     "/health-safety": {
         "permission": "health_safety",
         "drawers": ["/health-safety/new"],
@@ -192,6 +198,8 @@ def rules() -> dict:
     from apps.core.metrics.payload import HELPER_FIGURE_CHARS
     from apps.documents.models import DocumentStatus, DocumentType
     from apps.hr.models import (
+        PULSE_MIN_RESPONSES,
+        PULSE_QUESTIONS,
         VOLUNTARY_EXIT_REASONS,
         ApplicationStage,
         CompensationStatus,
@@ -200,6 +208,7 @@ def rules() -> dict:
         ExitReason,
         MedicalCover,
         OnboardingStatus,
+        PulseSurveyStatus,
         RecognitionCategory,
         RecoveryCause,
         RecoveryPlanType,
@@ -230,6 +239,11 @@ def rules() -> dict:
         "recovery_statuses": dict(RecoveryStatus.choices),
         "review_stages": dict(ReviewStage.choices),
         "compensation_statuses": dict(CompensationStatus.choices),
+        "pulse_statuses": dict(PulseSurveyStatus.choices),
+        # The statements a pulse survey asks, in order, and the fewest
+        # answers before any result is shown (the anonymity floor).
+        "pulse_questions": [key for key, _ in PULSE_QUESTIONS],
+        "pulse_min_responses": PULSE_MIN_RESPONSES,
         "medical_covers": dict(MedicalCover.choices),
         "review_types": dict(ReviewType.choices),
         "performance_ratings": dict(PerformanceRating.choices),

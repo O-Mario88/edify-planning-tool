@@ -452,3 +452,8 @@ GRANT SELECT (period, fy, due_date, manager_id, manager_rating, rating) ON hr_pe
 -- currency, other benefits or bank details, which the register does not
 -- show either.
 GRANT SELECT (id, staff_id, salary_band, medical_cover, pension_scheme, next_review_date, status) ON hr_compensation TO edify_gateway_ro;
+-- Staff Pulse Surveys: a survey's title, countries, window and status; each
+-- anonymous answer's scores, which Go only averages (no result under five
+-- answers). Never who answered, their key or their comment.
+GRANT SELECT (id, title, countries, opens_on, closes_on, status) ON hr_pulse_survey TO edify_gateway_ro;
+GRANT SELECT (survey_id, scores) ON hr_pulse_response TO edify_gateway_ro;
