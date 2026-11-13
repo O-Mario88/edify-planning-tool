@@ -63,6 +63,7 @@ type Service struct {
 	directory   Directory
 	profile     Profile
 	pages       []Pages
+	navigation  Navigation // nil unless the navigation is built in Go (internal/navigation)
 	visits      VisitSaver // nil unless EDIFY_GO_SAVES names schedule_visit or schedule_training_pair
 	visitsInGo  bool       // schedule_visit: 27.3's visits
 	pairsInGo   bool       // schedule_training_pair: 32's In-school Training
@@ -140,13 +141,6 @@ func (s *Service) GetHomeTodoFigures(
 	ctx context.Context, _ *connect.Request[screensv1.GetHomeTodoFiguresRequest],
 ) (*connect.Response[screensv1.GetHomeTodoFiguresResponse], error) {
 	return fetch[screensv1.GetHomeTodoFiguresResponse](ctx, s, pathHomeTodoFigures)
-}
-
-// GetNavigation returns the caller's bottom bar and menu.
-func (s *Service) GetNavigation(
-	ctx context.Context, _ *connect.Request[screensv1.GetNavigationRequest],
-) (*connect.Response[screensv1.GetNavigationResponse], error) {
-	return fetch[screensv1.GetNavigationResponse](ctx, s, pathNavigation)
 }
 
 // GetSchoolDirectory returns the School Directory for the page's own query.
