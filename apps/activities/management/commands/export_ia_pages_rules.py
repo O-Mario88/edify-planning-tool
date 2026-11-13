@@ -5,8 +5,8 @@ from what this command writes to
 platform/backend/internal/iapages/rules.json: for each page Go answers, who
 may open it (the pages draw no workspace strip); which
 roles hold the IA verification permission (without it a reader sees only the
-work an Impact Assessment officer ran, `_ia_reach_q`); and each activity
-type's label. A change to any of them must be exported again;
+work an Impact Assessment officer ran, `_ia_reach_q`); each activity
+type's label; and who may open a school's profile. A change to any of them must be exported again;
 apps/activities/test_ia_pages_rules_export.py fails until it is.
 
     python manage.py export_ia_pages_rules
@@ -26,7 +26,7 @@ from apps.schools.management.commands.export_school_directory_rules import (
 EXPORT_PATH = Path("platform/backend/internal/iapages/rules.json")
 
 #: The pages Go answers and their page permission.
-PAGES = {"/ia/duplicates/": "ia_duplicates"}
+PAGES = {"/ia/duplicates/": "ia_duplicates", "/ia/returned/": "ia_returned"}
 
 
 def rules() -> dict:
@@ -38,6 +38,7 @@ def rules() -> dict:
         has_permission,
     )
     from apps.core.rbac import EdifyRole
+    from apps.mobile_feed.views import NOT_PASSED
 
     pages = {}
     for path, permission in PAGES.items():
@@ -57,6 +58,14 @@ def rules() -> dict:
             if has_permission(_role_user(role.value), Permission.IA_VERIFY.value)
         ),
         "activity_types": dict(ActivityType.choices),
+        "query_keys_not_passed": sorted(NOT_PASSED),
+        # Who may open a school's profile, so a school's name is a link
+        # (apps.frontend.templatetags.school_links._may_open_profiles).
+        "school_profile_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if can_open_url(_role_user(role.value), "/schools/0")
+        ),
     }
 
 

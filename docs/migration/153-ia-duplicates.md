@@ -22,3 +22,29 @@ Proof: `cmd/parity -screen page -path /ia/duplicates/` for all 29 accounts;
 `internal/iapages/testdata/golden.py` flags pairs of the test database's own
 activities and `internal/integration/ia_pages_test.go` compares Go's answers
 whole (`EDIFY_IA_PAGES_GOLDEN`, the same day).
+
+## 153.2 Returned Activities
+
+`ia_returned_view` (`pages/ia/returned_activities.html`), in the same package:
+the live activities in the same IA reach whose status is "returned by IA", the
+last changed first, 50 a page (`page`, the shared table pager). Each row: "#"
+and the id's first eight characters with the type's label; the School ID (the
+`{% school_code %}` token the response middleware fills in, which the feed's
+render never runs, so the app reads it empty — "—" without a school); the
+school's name as a link to its profile for a reader who may open one (else
+"Cluster"); the owner (`_staff_names`, as Duplicate Review); the reasons the
+verification gave, joined ("None Specified"); the day and time returned
+(`M d, Y H:i`, Nairobi); "Awaiting CCEO" as a badge; and an "Inspect" link to
+`/ia/verification/<id>/`. Nothing returned: the empty state's message. The
+export button and its download stay with the existing application (the feed
+never passes an export key). `deploy/db/roles.sql` grants which activity a
+verification belongs to and the reasons it gave.
+
+Proof: `cmd/parity -screen page -path /ia/returned/` for all 29 accounts; the
+same golden returns 55 of the test database's activities (each put back as it
+was) and compares both pages, two pages of the table and a page that is not a
+number.
+
+Found: the School ID column reads empty in the app for every school
+(`school_code` writes a token only the browser's middleware fills in);
+OWNER_DEFECTS.

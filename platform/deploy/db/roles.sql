@@ -468,3 +468,7 @@ GRANT SELECT (label, leave_type) ON leave_type_policy TO edify_gateway_ro;
 -- Duplicate Review (internal/iapages, docs/migration/153-ia-duplicates.md):
 -- each flag's two activities, status, reason and when it was raised.
 GRANT SELECT (id, activity_id, duplicate_of_id, status, reason, created_at) ON ia_duplicate_activity TO edify_gateway_ro;
+-- Returned Activities: which activity a verification belongs to and the
+-- reasons it gave for returning it. Not the checklist, comments or verifier.
+GRANT SELECT (id, activity_id) ON ia_verification TO edify_gateway_ro;
+GRANT SELECT (verification_id, reason) ON ia_returned_reason TO edify_gateway_ro;

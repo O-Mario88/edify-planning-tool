@@ -57,8 +57,8 @@ func text(t string) *screensv1.PagePanelItem {
 
 // Build answers path for p. served is false for a path this package does not
 // answer.
-func (s *Service) Build(ctx context.Context, p auth.Principal, path string, _ url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != DuplicatesPath {
+func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path != DuplicatesPath && path != ReturnedPath {
 		return nil, false, nil
 	}
 	role, ok := rules.Pages[path].Roles[p.ActiveRole]
@@ -68,6 +68,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, _ ur
 	where, args, err := reach(ctx, s.db, p, s.now(), nil)
 	if err != nil {
 		return nil, true, err
+	}
+	if path == ReturnedPath {
+		return s.returned(ctx, p, query, where, args)
 	}
 	// DuplicateActivity has no order of its own; the view reads it unordered.
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`

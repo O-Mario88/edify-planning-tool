@@ -22,7 +22,9 @@ from django.contrib.auth import get_user_model
 from django.db import connection
 from django.utils import timezone as dj_timezone
 
-from apps.activities.ia_models import DuplicateActivity
+from datetime import datetime, timedelta, timezone
+
+from apps.activities.ia_models import DuplicateActivity, IAVerification, ReturnedReason
 from apps.activities.models import Activity
 from apps.mobile_feed.views import read_page
 
@@ -30,8 +32,8 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
     raise SystemExit("golden.py runs only against a _test database")
 
 User = get_user_model()
-TABLES = ("ia_duplicate_activity",)
-PATHS = ("/ia/duplicates/",)
+TABLES = ("ia_duplicate_activity", "ia_returned_reason", "ia_verification")
+PATHS = ("/ia/duplicates/", "/ia/returned/")
 
 
 def clear():
@@ -64,6 +66,40 @@ def file_rows():
         )
 
 
+#: The activities the golden marks returned by IA: (id, status, updated_at)
+#: before, to put back.
+RETURNED: list = []
+
+
+def file_returned():
+    live = Activity.objects.filter(deleted_at__isnull=True).order_by("id")
+    picked = list(live.filter(school__isnull=False)[10:64]) + list(
+        live.filter(school__isnull=True)[2:3]
+    )
+    at = datetime(2026, 11, 10, 9, 15, tzinfo=timezone.utc)
+    for i, a in enumerate(picked):
+        RETURNED.append((a.id, a.status, a.updated_at))
+        Activity.objects.filter(id=a.id).update(
+            status="returned_by_ia", updated_at=at - timedelta(hours=5 * i)
+        )
+        if i == 3:
+            continue
+        verification = IAVerification.objects.create(id=f"giav{i}", activity=a)
+        for k in range(i % 3):
+            ReturnedReason.objects.create(
+                id=f"giar{i}{k}",
+                verification=verification,
+                reason=["Missing evidence", "Wrong school", "Date mismatch"][k],
+            )
+
+
+def restore_returned():
+    for activity_id, status, updated_at in RETURNED:
+        Activity.objects.filter(id=activity_id).update(
+            status=status, updated_at=updated_at
+        )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -79,6 +115,7 @@ def main():
     clear()
     try:
         file_rows()
+        file_returned()
         rows = dump_rows()
         answers = []
         for email in (
@@ -89,18 +126,29 @@ def main():
         ):
             user = User.objects.get(email=email)
             for path in PATHS:
-                status, body = read_page(user, path, {})
-                answers.append(
-                    {
-                        "email": email,
-                        "path": path,
-                        "query": {},
-                        "status": status,
-                        "body": body,
-                    }
-                )
+                for query in ({}, {"page": "2"}, {"page": "abc"}):
+                    status, body = read_page(user, path, query)
+                    answers.append(
+                        {
+                            "email": email,
+                            "path": path,
+                            "query": query,
+                            "status": status,
+                            "body": body,
+                        }
+                    )
+        rows["activity_status"] = [
+            {"id": i, "status": "returned_by_ia", "updated_at": u}
+            for i, u in Activity.objects.filter(id__in=[r[0] for r in RETURNED])
+            .values_list("id", "updated_at")
+            .order_by("id")
+        ]
+        rows["activity_restore"] = [
+            {"id": i, "status": st, "updated_at": u} for i, st, u in RETURNED
+        ]
     finally:
         clear()
+        restore_returned()
     with open(os.environ["GOLDEN_OUT"], "w") as handle:
         json.dump(
             {

@@ -53,7 +53,7 @@ func TestTheIAPagesMatchTheExistingFeedOverFlagsTheSeedLacks(t *testing.T) {
 	}
 	ctx := context.Background()
 	// Children first; only the golden's own rows (ids starting "gia").
-	children := []string{"ia_duplicate_activity"}
+	children := []string{"ia_duplicate_activity", "ia_returned_reason", "ia_verification"}
 	// One transaction each way: a document and its current version name each
 	// other, and the foreign keys are checked when the transaction commits.
 	clear := func() {
@@ -79,16 +79,44 @@ func TestTheIAPagesMatchTheExistingFeedOverFlagsTheSeedLacks(t *testing.T) {
 		t.Fatalf("filing: %v", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	for _, table := range []string{"ia_duplicate_activity"} {
+	for _, table := range []string{"ia_duplicate_activity", "ia_verification", "ia_returned_reason"} {
 		for _, row := range golden.Rows[table] {
 			if _, err := tx.Exec(ctx, `INSERT INTO "`+table+`" SELECT * FROM json_populate_record(NULL::"`+table+`", $1::json)`, string(row)); err != nil {
 				t.Fatalf("filing a %s row: %v", table, err)
 			}
 		}
 	}
+	// Some of the database's own activities are returned by IA for the
+	// golden, then put back as they were.
+	type activityState struct {
+		ID        string `json:"id"`
+		Status    string `json:"status"`
+		UpdatedAt string `json:"updated_at"`
+	}
+	setStates := func(exec func(context.Context, string, ...any) error, key string) {
+		for _, raw := range golden.Rows[key] {
+			var a activityState
+			if err := json.Unmarshal(raw, &a); err != nil {
+				t.Fatalf("reading %s: %v", key, err)
+			}
+			if err := exec(ctx, `UPDATE activity SET status = $2, updated_at = $3::timestamptz WHERE id = $1`, a.ID, a.Status, a.UpdatedAt); err != nil {
+				t.Fatalf("setting an activity's state: %v", err)
+			}
+		}
+	}
+	setStates(func(ctx context.Context, sql string, args ...any) error {
+		_, err := tx.Exec(ctx, sql, args...)
+		return err
+	}, "activity_status")
 	if err := tx.Commit(ctx); err != nil {
 		t.Fatalf("filing: %v", err)
 	}
+	t.Cleanup(func() {
+		setStates(func(ctx context.Context, sql string, args ...any) error {
+			_, err := admin.Exec(ctx, sql, args...)
+			return err
+		}, "activity_restore")
+	})
 	// Each account signs in once for every register (signing in is rate
 	// limited).
 	tokens := map[string]string{}
