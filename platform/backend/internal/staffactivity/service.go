@@ -42,6 +42,9 @@ func isAlpha(r rune) bool { return unicode.IsLetter(r) }
 // path this package does not answer, and for a reader it cannot answer
 // exactly.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if id, ok := personID(path); ok {
+		return s.personPage(ctx, p, id, query)
+	}
 	if path != Path {
 		return nil, false, nil
 	}

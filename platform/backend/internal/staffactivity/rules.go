@@ -58,7 +58,8 @@ type StripSample struct {
 // Rules are the page's vocabularies.
 type Rules struct {
 	Doors map[string]struct {
-		Page bool `json:"page"`
+		Page   bool `json:"page"`
+		Person bool `json:"person"`
 	} `json:"doors"`
 	Roles struct {
 		ProgramLead     string `json:"program_lead"`
@@ -90,6 +91,14 @@ type Rules struct {
 		FinalBeatSeconds             int64 `json:"final_beat_seconds"`
 		SessionCookieAge             int64 `json:"session_cookie_age"`
 	} `json:"thresholds"`
+	Person struct {
+		SessionsShown     int               `json:"sessions_shown"`
+		ActionsShown      int               `json:"actions_shown"`
+		FollowUpsShown    int               `json:"follow_ups_shown"`
+		SuggestionReasons map[string]string `json:"suggestion_reasons"`
+		FollowUpTriggers  [][2]string       `json:"follow_up_triggers"`
+		FollowUpStatuses  [][2]string       `json:"follow_up_statuses"`
+	} `json:"person"`
 	TimeZone             string            `json:"time_zone"`
 	PageSize             int               `json:"page_size"`
 	MeaningfulActions    map[string]Action `json:"meaningful_actions"`

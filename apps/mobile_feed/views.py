@@ -1279,6 +1279,7 @@ LATER_PARTS = frozenset(
         "my_plan_readiness",
         "today_panel",
         "staff_activity",
+        "staff_activity_person",
         "planning_monitor",
         "cpo_schools",
         "cluster_schools_partial",

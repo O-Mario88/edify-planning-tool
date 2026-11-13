@@ -95,7 +95,8 @@ func TestTheStaffActivityLogCountsAnOfficersDay(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if page.GetHeader().GetTitle() != "Staff Activity Log" || len(page.GetHeader().GetActions()) != 1 {
+	// Export and the Country Director's Follow-up Queue (page header actions).
+	if page.GetHeader().GetTitle() != "Staff Activity Log" || len(page.GetHeader().GetActions()) != 2 {
 		t.Fatalf("the header: %v", page.GetHeader())
 	}
 	cells := officerRow(t, page)

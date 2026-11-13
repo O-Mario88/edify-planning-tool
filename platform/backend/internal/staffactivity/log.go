@@ -27,6 +27,7 @@ type person struct {
 	openFollowUps                             int
 	usageKey, usageLabel                      string
 	suggestions                               int
+	reasons                                   []string // the suggestions' triggers, in order
 	lead                                      *lead
 }
 
@@ -261,6 +262,7 @@ func judgeUsage(people []*person, p period) {
 	t := rules.Thresholds
 	for _, x := range people {
 		suggestions := 0
+		var reasons []string
 		switch {
 		case p.isFuture:
 			x.usageKey, x.usageLabel = "not_expected", "Not yet"
@@ -271,25 +273,29 @@ func judgeUsage(people []*person, p period) {
 		case x.logins == 0 && x.seconds == 0:
 			x.usageKey, x.usageLabel = "no_login", "No login"
 			suggestions++
+			reasons = append(reasons, "no_login")
 		default:
 			x.usageKey, x.usageLabel = "normal", "Normal"
 		}
 		if x.usageKey == "normal" {
 			if x.actions == 0 && x.expected >= t.LowEngagementMinExpectedDays {
 				suggestions++
+				reasons = append(reasons, "low_engagement")
 			}
 			if x.failed >= t.FailedActionsSuggestion {
 				suggestions++
+				reasons = append(reasons, "repeated_errors")
 			}
 			if m, ok := roleMedian[x.role]; ok && m != 0 && x.seconds >= t.ExcessiveTimeFloorSeconds &&
 				float64(x.seconds) >= float64(t.ExcessiveTimeFactor)*m {
 				suggestions++
+				reasons = append(reasons, "excessive_time")
 			}
 			if suggestions > 0 {
 				x.usageKey, x.usageLabel = "follow_up", "Follow-up suggested"
 			}
 		}
-		x.suggestions = suggestions
+		x.suggestions, x.reasons = suggestions, reasons
 	}
 }
 

@@ -105,6 +105,12 @@ LOW_ENGAGEMENT_MIN_EXPECTED_DAYS = 3
 # Detail panes stay short; each lists its total beside the rows it shows.
 SESSIONS_SHOWN = 10
 ACTIONS_SHOWN = 12
+FOLLOW_UPS_SHOWN = 5
+# The follow-up suggestions' reasons (``_judge_usage``; excessive time's is
+# written there, beside the figures it carries).
+NO_LOGIN_REASON = "No sign-in on an expected working day"
+LOW_ENGAGEMENT_REASON = "Signed in, but no meaningful action in the period"
+REPEATED_ERRORS_REASON = "{} failed actions in the period"
 
 
 # ── Who may read whom ────────────────────────────────────────────────────────
@@ -586,7 +592,7 @@ def _judge_usage(people: list[dict], chosen: dict) -> None:
             )
         elif p["logins"] == 0 and p["active_seconds"] == 0:
             usage = ("no_login", "No login", "alarm")
-            suggestions.append(("no_login", "No sign-in on an expected working day"))
+            suggestions.append(("no_login", NO_LOGIN_REASON))
         else:
             usage = ("normal", "Normal", "good")
         if usage[0] == "normal":
@@ -594,15 +600,10 @@ def _judge_usage(people: list[dict], chosen: dict) -> None:
                 p["actions"] == 0
                 and p["expected_days"] >= LOW_ENGAGEMENT_MIN_EXPECTED_DAYS
             ):
-                suggestions.append(
-                    (
-                        "low_engagement",
-                        "Signed in, but no meaningful action in the period",
-                    )
-                )
+                suggestions.append(("low_engagement", LOW_ENGAGEMENT_REASON))
             if p["failed"] >= FAILED_ACTIONS_SUGGESTION:
                 suggestions.append(
-                    ("repeated_errors", f"{p['failed']} failed actions in the period")
+                    ("repeated_errors", REPEATED_ERRORS_REASON.format(p["failed"]))
                 )
             median = role_median.get(p["active_role"])
             if (
@@ -1211,7 +1212,7 @@ def person_detail(viewer, person_id: str, *, period=None, on=None, now=None) -> 
     follow_ups = list(
         StaffUsageFollowUp.objects.filter(subject_id=person_id)
         .select_related("created_by", "assignee")
-        .order_by("-created_at")[:5]
+        .order_by("-created_at")[:FOLLOW_UPS_SHOWN]
     )
     return {
         "person": person,

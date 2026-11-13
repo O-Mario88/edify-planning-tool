@@ -403,3 +403,10 @@ GRANT SELECT (id) ON partner_invoice TO edify_gateway_ro;
 GRANT SELECT (program_lead_user_id) ON planning_oversight_follow_up TO edify_gateway_ro;
 GRANT SELECT (pl_user_id) ON target_catchup_plan TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
+
+-- Staff Activity Log, a person's detail (docs/migration/41-staff-activity.md
+-- §41.6): each session's active time, the number of tasks a person worked on,
+-- and their follow-ups' kind, state and due day.
+GRANT SELECT (active_seconds) ON login_event TO edify_gateway_ro;
+GRANT SELECT (working_on) ON presence_time TO edify_gateway_ro;
+GRANT SELECT (id, trigger, due_date, created_at) ON staff_usage_follow_up TO edify_gateway_ro;
