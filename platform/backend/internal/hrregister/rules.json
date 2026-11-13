@@ -1,4 +1,16 @@
 {
+  "application_stages": {
+    "accepted": "Offer accepted",
+    "applied": "Applied",
+    "assessment": "Assessment",
+    "hired": "Hired",
+    "interview": "Interview",
+    "offer": "Offer",
+    "reference_check": "Reference check",
+    "rejected": "Rejected",
+    "screening": "Screening",
+    "withdrawn": "Withdrawn"
+  },
   "exit_reasons": {
     "death_in_service": "Death in service",
     "dismissal": "Dismissal",
@@ -12,13 +24,17 @@
   "helper_figure_chars": 28,
   "metric_labels": {
     "Active": "Active",
+    "Applications": "Applications",
     "Awaiting supervisor": "Awaiting supervisor",
     "Days lost": "Days lost",
     "Departments": "Departments",
     "Handover gaps": "Handover gaps",
+    "Hired": "Hired",
     "In progress": "In progress",
+    "Interviews": "Interviews",
     "Near misses": "Near misses",
     "No reporting line": "No reporting line",
+    "Offers": "Offers",
     "Open incidents": "Open incidents",
     "Overdue": "Overdue",
     "Past exit date, still active": "Past exit date, still active",
@@ -27,6 +43,7 @@
     "Plans": "Plans",
     "Ready for activation": "Ready for activation",
     "Recognitions": "Recognitions",
+    "Screening": "Screening",
     "Serious incidents": "Serious incidents",
     "Voluntary exits": "Voluntary exits"
   },
@@ -45,6 +62,96 @@
   },
   "page_size": 50,
   "pages": {
+    "/candidate-pipeline": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/candidate-pipeline/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/candidate-pipeline/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/candidate-pipeline/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/health-safety": {
       "roles": {
         "Accountant": {

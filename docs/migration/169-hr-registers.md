@@ -14,7 +14,8 @@ reach rule once; each register is added to it as it is ported.
 | Health & Safety | `/health-safety` | This document |
 | Staff Onboarding | `/onboarding` | This document |
 | Staff Offboarding | `/offboarding` | This document |
-| The other registers (pulse surveys, employee relations, compliance, compensation, candidate pipeline, recruitment, workforce planning, performance reviews, policies, HR audit log, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| Candidate Pipeline | `/candidate-pipeline` | This document |
+| The other registers (pulse surveys, employee relations, compliance, compensation, recruitment, workforce planning, performance reviews, policies, HR audit log, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -91,6 +92,20 @@ exit in reach (`accounts_past_last_working_day`: a last working day before
 today and a person not exited), danger when any. One drawer button, "Start an
 offboarding".
 
+## 169.2f Candidate Pipeline
+
+`candidate_pipeline_view`: the applications to vacancies of the reach's
+countries (`scope_by_country` on the vacancy's country) whose candidate's
+name or email, the vacancy's role or the stage code holds the search, the
+last changed first. Each row: the candidate, the vacancy's role and country,
+the stage's label and the UTC day it last changed (`updated_at.date()`); an
+application still in selection carries its drawer button, "Hire" once the
+offer is accepted, "Next step" before; a finished one (hired, rejected,
+withdrawn) an empty actions cell. Figures over the searched applications:
+Applications in selection, Screening, Interviews (interview, assessment or
+reference check), Offers (made or accepted), Hired. One drawer button,
+"Record a candidate".
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -105,7 +120,10 @@ day, place, category, severity, days lost and status (not its description
 or the actions taken); an onboarding plan's person, start and target days,
 status and age and whether each checklist task is done (not the probation
 decision); an exit's person, last working day, reason, handover owner and
-status (not its notes or clearances) (applied to `edify_gorn_dev` and
+status (not its notes or clearances); an application's candidate, vacancy,
+stage and last change, a candidate's name and email (the email only to
+search it), a vacancy's role and country (not a candidate's phone, CV or
+notes, nor a vacancy's salary band or budget) (applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -117,8 +135,8 @@ status (not its notes or clearances) (applied to `edify_gorn_dev` and
   another country; a deleted record and a deleted account; 12 recognitions
   and 10 incidents either side of the quarter and the year, another
   country, long citations, no injured person; 10 onboarding plans with
-  checklists and 10 exits around today), asks the existing feed 110
-  questions as Admin, HR and Impact Assessment and deletes
+  checklists and 10 exits around today; 12 applications at every stage on
+  three vacancies), asks the existing feed 150 questions as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 

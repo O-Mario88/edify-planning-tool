@@ -53,9 +53,11 @@ type Rules struct {
 	OnboardingStatuses   map[string]string `json:"onboarding_statuses"`
 	ExitReasons          map[string]string `json:"exit_reasons"`
 	VoluntaryExitReasons []string          `json:"voluntary_exit_reasons"`
-	MetricLabels         map[string]string `json:"metric_labels"`
-	HelperFigureChars    int               `json:"helper_figure_chars"`
-	PageSize             int               `json:"page_size"`
+	// The labels of an application's stage.
+	ApplicationStages map[string]string `json:"application_stages"`
+	MetricLabels      map[string]string `json:"metric_labels"`
+	HelperFigureChars int               `json:"helper_figure_chars"`
+	PageSize          int               `json:"page_size"`
 }
 
 var rules = mustLoad(rulesJSON)
@@ -64,7 +66,7 @@ func mustLoad(raw []byte) Rules {
 	var r Rules
 	if err := json.Unmarshal(raw, &r); err != nil || len(r.Pages) == 0 || len(r.OnboardingStates) == 0 || len(r.RecognitionCategories) == 0 || len(r.SafetyCategories) == 0 ||
 		len(r.Severities) == 0 || len(r.SafetyStatuses) == 0 || len(r.OnboardingStatuses) == 0 ||
-		len(r.ExitReasons) == 0 || len(r.VoluntaryExitReasons) == 0 ||
+		len(r.ExitReasons) == 0 || len(r.VoluntaryExitReasons) == 0 || len(r.ApplicationStages) == 0 ||
 		len(r.MetricLabels) == 0 || r.HelperFigureChars <= 0 || r.PageSize <= 0 {
 		panic(fmt.Sprintf("hrregister: the embedded rules are unreadable: %v", err))
 	}

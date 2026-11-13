@@ -412,3 +412,10 @@ GRANT SELECT (plan_id, is_completed) ON hr_onboarding_task TO edify_gateway_ro;
 -- Staff Offboarding: each exit's person, last working day, reason, handover
 -- owner and status. Not its notes or clearances.
 GRANT SELECT (id, staff_id, last_working_day, exit_reason, handover_owner_id, status) ON hr_offboarding TO edify_gateway_ro;
+-- Candidate Pipeline: each application's candidate, vacancy, stage and when
+-- it last changed; a candidate's name, and their email only to search it; a
+-- vacancy's role and country. Not a candidate's phone, CV or notes, nor a
+-- vacancy's salary band or budget.
+GRANT SELECT (id, candidate_id, vacancy_id, stage, updated_at) ON hr_application TO edify_gateway_ro;
+GRANT SELECT (id, name, email) ON hr_candidate TO edify_gateway_ro;
+GRANT SELECT (id, role, country) ON hr_vacancy TO edify_gateway_ro;

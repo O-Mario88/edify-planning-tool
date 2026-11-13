@@ -31,11 +31,12 @@ type input struct {
 
 // builders are the registers Go answers, by path.
 var builders = map[string]func(context.Context, input) (register, error){
-	"/org-structure": orgStructure,
-	"/recognition":   recognition,
-	"/health-safety": healthSafety,
-	"/onboarding":    onboarding,
-	"/offboarding":   offboarding,
+	"/org-structure":      orgStructure,
+	"/recognition":        recognition,
+	"/health-safety":      healthSafety,
+	"/onboarding":         onboarding,
+	"/offboarding":        offboarding,
+	"/candidate-pipeline": candidatePipeline,
 }
 
 // zone is settings.TIME_ZONE, the zone the server's day is read in.

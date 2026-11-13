@@ -48,7 +48,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	}
 	ctx := context.Background()
 	// Children first; only the golden's own rows (ids starting "ghr").
-	children := []string{"hr_onboarding_task", "hr_onboarding_plan", "hr_offboarding", "hr_safety_incident", "hr_staff_recognition",
+	children := []string{"hr_application", "hr_candidate", "hr_vacancy", "hr_onboarding_task", "hr_onboarding_plan", "hr_offboarding", "hr_safety_incident", "hr_staff_recognition",
 		"staff_supervisor_assignment", "staff_profile", "user"}
 	clear := func() {
 		for _, table := range children {
@@ -60,7 +60,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	clear()
 	t.Cleanup(clear)
 	for _, table := range []string{"user", "staff_profile", "staff_supervisor_assignment", "hr_staff_recognition", "hr_safety_incident",
-		"hr_offboarding", "hr_onboarding_plan", "hr_onboarding_task"} {
+		"hr_offboarding", "hr_onboarding_plan", "hr_onboarding_task", "hr_vacancy", "hr_candidate", "hr_application"} {
 		for _, row := range golden.Rows[table] {
 			if _, err := admin.Exec(ctx, `INSERT INTO "`+table+`" SELECT * FROM json_populate_record(NULL::"`+table+`", $1::json)`, string(row)); err != nil {
 				t.Fatalf("filing a %s row: %v", table, err)

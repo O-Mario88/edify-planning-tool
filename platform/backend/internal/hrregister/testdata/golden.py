@@ -27,11 +27,14 @@ from django.utils import timezone as dj_timezone
 
 from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
 from apps.hr.models import (
+    Application,
+    Candidate,
     OffboardingPlan,
     OnboardingPlan,
     OnboardingTask,
     SafetyIncident,
     StaffRecognition,
+    Vacancy,
 )
 from apps.mobile_feed.views import read_page
 
@@ -41,6 +44,9 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 User = get_user_model()
 #: Deleted children first.
 TABLES = (
+    "hr_application",
+    "hr_candidate",
+    "hr_vacancy",
     "hr_onboarding_task",
     "hr_onboarding_plan",
     "hr_offboarding",
@@ -56,6 +62,7 @@ PATHS = (
     "/health-safety",
     "/onboarding",
     "/offboarding",
+    "/candidate-pipeline",
 )
 
 
@@ -116,6 +123,7 @@ def file_rows():
             - timedelta(days=[1, 30, 90, 91, 92, 200, 2, 31, 89, 93, 0, 150][i]),
         )
     file_lifecycle(profiles, today)
+    file_candidates()
     kinds = ["injury", "road_traffic", "near_miss", "hazard", "security", "illness"]
     for i in range(10):
         SafetyIncident.objects.create(
@@ -173,6 +181,45 @@ def file_lifecycle(profiles, today):
         )
 
 
+def file_candidates():
+    vacancies = [
+        Vacancy.objects.create(
+            id=f"ghrv{i}",
+            country=["Uganda", "Uganda", "Kenya"][i],
+            department="Programmes",
+            role=["Field Officer", "Accountant", "Driver"][i],
+        )
+        for i in range(3)
+    ]
+    stages = [
+        "applied",
+        "screening",
+        "interview",
+        "assessment",
+        "reference_check",
+        "offer",
+        "accepted",
+        "hired",
+        "rejected",
+        "withdrawn",
+    ]
+    for i in range(12):
+        candidate = Candidate.objects.create(
+            id=f"ghrc{i:03d}",
+            name=f"Golden Candidate {i:02d}",
+            email=f"candidate{i:02d}@example.org",
+        )
+        application = Application.objects.create(
+            id=f"ghra{i:03d}",
+            vacancy=vacancies[i % 3],
+            candidate=candidate,
+            stage=stages[i % 10],
+        )
+        Application.objects.filter(id=application.id).update(
+            updated_at=dj_timezone.now() - timedelta(hours=7 * i + 1)
+        )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -208,6 +255,9 @@ QUESTIONS = {
         {"q": "closed"},
         {"q": "resignation"},
         {"q": "golden person 03"},
+        {"q": "candidate07@example"},
+        {"q": "accountant"},
+        {"q": "reference"},
     ],
     "ia@edify.org": [{}, {"page": "2"}],
 }
