@@ -1,0 +1,283 @@
+{
+  "abbreviations": {
+    "christlike_behaviour": "CB",
+    "enrolment": "ENR",
+    "exposure_to_word_of_god": "WOG",
+    "financial_health": "FH",
+    "government_requirement": "GR",
+    "leadership": "LSHIP",
+    "learning_environment": "LE",
+    "teaching_environment": "TE"
+  },
+  "confirmed": "confirmed",
+  "coordinator_role": "ProjectCoordinator",
+  "doors": {
+    "Accountant": {
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "profiles": true,
+      "strip": null
+    },
+    "CCEO": {
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": true,
+      "profiles": true,
+      "strip": {
+        "label": "Project Monitoring",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": true,
+            "href": "/projects/monitoring",
+            "label": "Monitoring"
+          },
+          {
+            "active": false,
+            "href": "/projects/analytics",
+            "label": "Analytics"
+          }
+        ]
+      }
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": false,
+      "profiles": false,
+      "strip": null
+    }
+  },
+  "exec_labels": {
+    "delivered": "Delivered",
+    "none": "No activity",
+    "returned": "Returned",
+    "scheduled": "Not yet delivered",
+    "verified": "Verified"
+  },
+  "general": "General",
+  "general_intervention": "general",
+  "impact_labels": {
+    "declined": "Declined",
+    "improved": "Improved",
+    "maintained_strong": "Maintained strong",
+    "no_change": "No change",
+    "not_yet_measurable": "Window not open"
+  },
+  "interventions": [
+    [
+      "christlike_behaviour",
+      "Christlike Behaviour"
+    ],
+    [
+      "exposure_to_word_of_god",
+      "Exposure to the Word of God"
+    ],
+    [
+      "financial_health",
+      "Financial Health"
+    ],
+    [
+      "leadership",
+      "Leadership"
+    ],
+    [
+      "government_requirement",
+      "Government Requirements"
+    ],
+    [
+      "learning_environment",
+      "Learning Environment"
+    ],
+    [
+      "teaching_environment",
+      "Teacher's Environment"
+    ],
+    [
+      "enrolment",
+      "Enrolment"
+    ]
+  ],
+  "live_statuses": [
+    "active",
+    "paused",
+    "proposed",
+    "scaling",
+    "under_review"
+  ],
+  "measured": [
+    "improved",
+    "no_change",
+    "declined",
+    "maintained_strong"
+  ],
+  "open_statuses": [
+    "active",
+    "proposed",
+    "scaling",
+    "under_review"
+  ],
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "page_size": 50,
+  "plan_labels": {
+    "not_planned": "Not planned",
+    "partner_awaiting": "Awaiting partner",
+    "partner_returned": "Returned by partner",
+    "partner_scheduled": "Partner scheduled",
+    "staff_planned": "Coordinator planned"
+  },
+  "project_handovers_past_school_rules": true,
+  "row_filters": [
+    [
+      "district",
+      "District",
+      "All districts"
+    ],
+    [
+      "partner",
+      "Partner",
+      "All partners"
+    ],
+    [
+      "training",
+      "Training",
+      "All trainings"
+    ],
+    [
+      "purpose",
+      "Purpose",
+      "All purposes"
+    ],
+    [
+      "activity",
+      "Activity status",
+      "All activity statuses"
+    ]
+  ],
+  "score_max": 10.0,
+  "score_min": 0.0,
+  "stage_filters": [
+    [
+      "",
+      "All schools"
+    ],
+    [
+      "not_planned",
+      "Not planned"
+    ],
+    [
+      "partner_awaiting",
+      "Awaiting partner schedule"
+    ],
+    [
+      "partner_returned",
+      "Returned by partner"
+    ],
+    [
+      "partner_scheduled",
+      "Scheduled by partner"
+    ],
+    [
+      "staff_planned",
+      "Planned by coordinator or staff"
+    ],
+    [
+      "delivered",
+      "Delivered, awaiting verification"
+    ],
+    [
+      "verified",
+      "Delivered and verified"
+    ]
+  ],
+  "status_labels": {
+    "active": "Active",
+    "closed": "Closed",
+    "paused": "Paused",
+    "proposed": "Proposed",
+    "scaling": "Scaling",
+    "under_review": "Under Review"
+  },
+  "status_labels_row": {
+    "awaiting_coordinator": "Awaiting Project Coordinator Action",
+    "awaiting_partner": "Awaiting Partner Schedule",
+    "awaiting_verification": "Awaiting Verification",
+    "completed": "Completed",
+    "in_progress": "In Progress",
+    "partner_returned": "Returned by Partner",
+    "returned": "Returned",
+    "scheduled": "Scheduled"
+  },
+  "whole_project_roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+  ],
+  "withdraw_any_school_roles": [
+    "Admin",
+    "ImpactAssessment"
+  ]
+}

@@ -295,3 +295,9 @@ GRANT SELECT (verification_status, recorded_by_user_id) ON impact_edtech_deploym
 GRANT SELECT (costing_profile) ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (execution_start) ON fiscal_year_planning_policy TO edify_gateway_ro;
 GRANT SELECT (reimbursement_receipt_confirmed_at, accountability_netsuite_id, created_at) ON advance_request TO edify_gateway_ro;
+
+-- Project Monitoring (internal/projectmonitoring): the projects' codes and
+-- each enrolment's who-added-it, purpose, focus, start day, baseline and
+-- impact verdict.
+GRANT SELECT (code) ON project TO edify_gateway_ro;
+GRANT SELECT (assigned_by, participation_type, matched_intervention, support_area, impact_classification, start_date, baseline_score) ON project_school_assignment TO edify_gateway_ro;
