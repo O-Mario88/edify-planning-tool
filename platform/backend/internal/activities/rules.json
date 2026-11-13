@@ -223,6 +223,73 @@
       "partner_ssa_collection"
     ]
   },
+  "group_training": {
+    "active_support_statuses": [
+      "planned",
+      "scheduled",
+      "assigned_to_partner",
+      "partner_scheduled",
+      "in_progress",
+      "completion_started",
+      "evidence_uploaded",
+      "evidence_accepted",
+      "salesforce_id_required",
+      "submitted_to_pl",
+      "awaiting_ia_verification"
+    ],
+    "activity_type": "cluster_training",
+    "admin_catalogue_type": "admin",
+    "champion_types": [
+      "champion"
+    ],
+    "completed_support_statuses": [
+      "completed",
+      "ia_verified",
+      "accountant_confirmed",
+      "closed"
+    ],
+    "country_scheduling_roles": [
+      "Admin",
+      "CountryDirector",
+      "ImpactAssessment"
+    ],
+    "follow_up_mode": "inherit_from_source_activity",
+    "operating_statuses": [
+      "active",
+      "reopened"
+    ],
+    "participant_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review",
+      "cluster_training",
+      "cluster_training_ssa_collection"
+    ],
+    "per_school_mode": "per_school",
+    "ranked_modes": [
+      "fixed",
+      "multiple_allowed"
+    ],
+    "summary_only_roles": [
+      "RegionalVicePresident"
+    ],
+    "training_types": [
+      "cluster_training",
+      "cluster_training_ssa_collection",
+      "core_training",
+      "in_school_training",
+      "school_improvement_training",
+      "training"
+    ],
+    "ungated_modes": [
+      "administrative",
+      "ssa_completion_prerequisite"
+    ],
+    "visit_only_roles": [
+      "Accountant",
+      "CountryDirector",
+      "ImpactAssessment"
+    ]
+  },
   "ledger_credited_types": [
     "baseline_ssa_visit",
     "cluster_meeting",

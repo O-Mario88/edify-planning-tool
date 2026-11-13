@@ -41,3 +41,24 @@ func TestRowsAreCountedNotJustSeen(t *testing.T) {
 		t.Errorf("an id the other copy holds was updated, not made: %v", got)
 	}
 }
+
+// A group training's invitations carry a serial id handed out in an order
+// that differs between processes: they are compared by session and school,
+// and a different school or count still differs.
+func TestInvitationsAreComparedBySessionAndSchoolNotTheirSerialID(t *testing.T) {
+	a := []map[string]any{{"id": 41.0, "activity_id": "a1", "school_id": "s1", "teachers": 2.0},
+		{"id": 42.0, "activity_id": "a1", "school_id": "s2", "teachers": 2.0}}
+	b := []map[string]any{{"id": 42.0, "activity_id": "b1", "school_id": "s1", "teachers": 2.0},
+		{"id": 41.0, "activity_id": "b1", "school_id": "s2", "teachers": 2.0}}
+	table := "cluster_activity_attendance"
+	if d := minusStrings(normalised(a, table, map[string]bool{"a1": true}, w), normalised(b, table, map[string]bool{"b1": true}, w)); len(d) != 0 {
+		t.Errorf("the same invitations in another order: %v", d)
+	}
+	b[1]["school_id"] = "s3"
+	if len(minusStrings(normalised(a, table, map[string]bool{"a1": true}, w), normalised(b, table, map[string]bool{"b1": true}, w))) == 0 {
+		t.Error("an invitation to another school must differ")
+	}
+	if got := normalised([]map[string]any{{"id": 7.0}}, "activity_schedule_change", nil, w)[0]; got != `{"id":7}` {
+		t.Errorf("another table's serial id is kept: %s", got)
+	}
+}

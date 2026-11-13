@@ -57,6 +57,14 @@ var noise = map[string]bool{
 	"refresh_token": true,
 }
 
+// serialIDs are tables whose id is a database serial the existing
+// application hands out in an order Go cannot match: a group training's
+// invitations are inserted in a Python set's order (cluster_attendance
+// _clean_ids), which differs between processes (docs/migration/38 §38.5).
+// A row the run wrote there is compared by what it says (its session, its
+// school, its counts), its id read as <new>.
+var serialIDs = map[string]bool{"cluster_activity_attendance": true}
+
 func main() {
 	a := flag.String("a", "", "the first copy (the existing application's saves)")
 	b := flag.String("b", "", "the second copy (Go's saves, or the existing application's again)")
@@ -316,6 +324,10 @@ func normalised(rows []map[string]any, table string, made map[string]bool, w win
 		for column, v := range r {
 			if chainColumns[table][column] {
 				n[column] = "<chain>"
+				continue
+			}
+			if serialIDs[table] && column == "id" {
+				n[column] = "<new>"
 				continue
 			}
 			n[column] = settle(v, made, w)

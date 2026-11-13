@@ -161,6 +161,7 @@ func reasonFor(e evidence) string {
 		pending = fmt.Sprintf(" A newer SSA (%s) is waiting for verification.", d)
 	}
 	school, _ := e.Data["school"].(map[string]any)
+	cluster, _ := e.Data["cluster"].(map[string]any)
 	switch e.Alignment {
 	case "ssa_collection":
 		return "Collects the SSA this school's support will be planned from."
@@ -175,9 +176,16 @@ func reasonFor(e evidence) string {
 		}
 		return fmt.Sprintf("The verified SSA%s is out of date: collect this year's assessment before planning support from it.", when) + pending
 	case "no_focus":
-		return fmt.Sprintf("Names no intervention although the SSA ranks %s first.", topLabel(school, "a need"))
+		top := school
+		if _, ok := school["top"].(map[string]any); !ok {
+			top = cluster
+		}
+		return fmt.Sprintf("Names no intervention although the SSA ranks %s first.", topLabel(top, "a need"))
 	}
 	if school == nil {
+		if cluster != nil {
+			return clusterReason(e, cluster)
+		}
 		return ""
 	}
 	where := "not scored"

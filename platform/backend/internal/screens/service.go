@@ -63,12 +63,14 @@ type Service struct {
 	directory   Directory
 	profile     Profile
 	pages       []Pages
-	visits      VisitSaver  // nil unless EDIFY_GO_SAVES names schedule_visit or schedule_training_pair
-	visitsInGo  bool        // schedule_visit: 27.3's visits
-	pairsInGo   bool        // schedule_training_pair: 32's In-school Training
-	moves       MoveSaver   // nil unless EDIFY_GO_SAVES names reschedule_visit
-	cancels     CancelSaver // nil unless EDIFY_GO_SAVES names cancel_visit
-	edits       EditSaver   // nil unless EDIFY_GO_SAVES names edit_visit
+	visits      VisitSaver // nil unless EDIFY_GO_SAVES names schedule_visit or schedule_training_pair
+	visitsInGo  bool       // schedule_visit: 27.3's visits
+	pairsInGo   bool       // schedule_training_pair: 32's In-school Training
+	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
+	groupTrainings GroupTrainingSaver
+	moves          MoveSaver   // nil unless EDIFY_GO_SAVES names reschedule_visit
+	cancels        CancelSaver // nil unless EDIFY_GO_SAVES names cancel_visit
+	edits          EditSaver   // nil unless EDIFY_GO_SAVES names edit_visit
 	// groupMoves and groupCancels: nil unless EDIFY_GO_SAVES names
 	// group_reschedule or group_cancel (docs/migration/33).
 	groupMoves   GroupMoveSaver
