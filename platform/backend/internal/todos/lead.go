@@ -58,7 +58,6 @@ func init() {
 		"apps.hr.review_todos:reviewer_todos":                     reviewerTodos,
 		"apps.hr.distribution_todos:distribution_todos":           distributionGuard,
 		"apps.partners.engagement_todos:partner_engagement_todos": partnerEngagementGuard,
-		"apps.planning.coverage_todos:missing_training_todos":     portfolioGuard,
 		"apps.planning.country_oversight.todos:followup_todos":    planningFollowUpGuard,
 	} {
 		Handled[name] = build
@@ -130,7 +129,9 @@ func leaveGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM leave`))
 }
 
-// cdFlagGuard stands for _cd_flag_todos: a flag assigned to the reader.
+// cdFlagGuard stands for _cd_flag_todos for a Programme Lead and Impact
+// Assessment: a flag assigned to the reader (whatever its status, so the
+// guard never misses one).
 func cdFlagGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM cd_flag WHERE assigned_to_user_id = $1`, r.p.UserID))
 }

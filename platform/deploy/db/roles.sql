@@ -403,3 +403,20 @@ GRANT SELECT (id) ON partner_invoice TO edify_gateway_ro;
 GRANT SELECT (program_lead_user_id) ON planning_oversight_follow_up TO edify_gateway_ro;
 GRANT SELECT (pl_user_id) ON target_catchup_plan TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
+
+-- Impact Assessment's To-Do queue (docs/migration/56): what IA's own
+-- builders read and the guards that pass a reader on.
+GRANT SELECT (updated_at, ssa_not_collected_reason) ON activity TO edify_gateway_ro;
+GRANT SELECT (collector_type) ON ssa_record TO edify_gateway_ro;
+GRANT SELECT (id, status, batch_id) ON ssa_import_row TO edify_gateway_ro;
+GRANT SELECT (id, uploaded_by, created_at) ON ssa_import_batch TO edify_gateway_ro;
+GRANT SELECT (requires_school) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (catalogue_item_id, is_primary, reviewed_at) ON activity_intervention_mapping TO edify_gateway_ro;
+GRANT SELECT (status) ON impact_outcome_area TO edify_gateway_ro;
+GRANT SELECT (status) ON impact_indicator_definition TO edify_gateway_ro;
+GRANT SELECT (status) ON unmatched_ssa_record TO edify_gateway_ro;
+GRANT SELECT (status) ON ia_duplicate_activity TO edify_gateway_ro;
+GRANT SELECT (status) ON ia_verification_sample TO edify_gateway_ro;
+GRANT SELECT (id) ON impact_finding TO edify_gateway_ro;
+GRANT SELECT (id) ON impact_report TO edify_gateway_ro;
+GRANT SELECT (assigned_to_user_id) ON cd_flag TO edify_gateway_ro;

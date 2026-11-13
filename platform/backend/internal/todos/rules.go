@@ -78,6 +78,8 @@ type Rules struct {
 	TargetReviewStagesNotAgreed []string            `json:"target_review_stages_not_agreed"`
 
 	Lead LeadRules `json:"lead"`
+	// IA is what Impact Assessment's own builders read (ia.go).
+	IA iaRules `json:"ia"`
 }
 
 var rules = mustLoad(rulesJSON)
