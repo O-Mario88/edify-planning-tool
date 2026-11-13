@@ -94,46 +94,119 @@ staging environment is approved.
 
 **Infrastructure** (separate from production in every respect):
 
-1. A staging PostgreSQL cluster. The existing `.do/staging.yaml` already
-   names one (`edify-staging-pg-fra`); the new services use it, never the
-   production cluster.
-2. The existing application deployed to staging from its `staging` branch, as
-   today. It is staging's identity system and it runs staging's migrations.
-3. Two new components on the same private network:
-   - `edify-gateway` from `platform/backend/Dockerfile`, public over HTTPS.
-   - `edify-analytics` from `platform/workers/analytics/Dockerfile`, internal
-     only, no public route.
+Rewritten 2026-11-13 for what the gateway now is: it writes (sign-in,
+accounts, teams, acting leadership, the Loan and Cluster Leader portals, and
+the seven visit and training saves behind `EDIFY_GO_SAVES`), it forwards every
+page it does not build to the existing application's feed
+(`apps.mobile_feed`), and its saves call the existing application's pricing
+and group check. None of that existed when the first version of this section
+was written.
 
-**Database role**, run once by an operator with the staging owner credentials:
+**What exists today.** A staging app for the existing application,
+`edify-staging-fra`, was built from `.do/staging.yaml` on 2026-08-28 with its
+own PostgreSQL and Valkey clusters (`edify-staging-pg-fra`,
+`edify-staging-cache-fra`) and a Spaces key scoped to a staging bucket
+([docs/release-validation-2026-08-28/11](../release-validation-2026-08-28/11-rollout-infrastructure-closure.md)).
+On 2026-11-13 its host (`edify-staging-fra-gzbvn.ondigitalocean.app`) no
+longer resolved, and the `staging` branch has not moved since 2026-08-29, so
+the app has been taken down. Whether its two clusters still exist, and are
+still billed, shows only in the DigitalOcean console. Nothing below reuses
+them: they are the release-candidate staging for `main`.
 
-```bash
-EDIFY_ENV=staging EDIFY_ADMIN_DATABASE_URL=<staging owner URL> \
-  platform/deploy/db/apply-roles.sh
-psql <staging owner URL> -c "ALTER ROLE edify_gateway PASSWORD '<generated>'"
-```
+**Shape.** Two App Platform apps on one new database cluster, all in `fra`:
 
-**Gateway configuration** (staging secret store):
+| App | Spec | Components | Branch |
+|---|---|---|---|
+| `edify-migration-staging-fra` | [`.do/migration-staging.yaml`](../../.do/migration-staging.yaml) | the existing application: `migrate` (pre-deploy job), `web`, `scheduler` | `feature/edify-go-rn-migration` |
+| `edify-migration-gateway-staging-fra` | [`.do/migration-gateway-staging.yaml`](../../.do/migration-gateway-staging.yaml) | `gateway` (public), `analytics` (internal port 50061, no route) | `feature/edify-go-rn-migration` |
+| database cluster `edify-migration-staging-pg-fra` | created by hand | PostgreSQL 16, smallest size | |
 
-| Variable | Value |
-|---|---|
-| `EDIFY_ENV` | `staging` |
-| `EDIFY_DATABASE_URL` | staging cluster, user `edify_gateway`, `sslmode=require` |
-| `EDIFY_DB_ALLOWED_HOSTS` | the staging cluster's hostname, exactly |
-| `EDIFY_DB_PRODUCTION_MARKERS` | the production cluster's hostname |
-| `EDIFY_JWT_SECRET` | staging's `JWT_SECRET` (not production's) |
-| `EDIFY_ANALYTICS_ADDR` | the worker's internal address |
-| `EDIFY_HTTP_ADDR` | `0.0.0.0:8090` |
+Why these choices:
 
-The gateway refuses to start in staging if the host is not the listed one, the
-connection is not TLS, the role is a superuser, or the role can write to the
-existing tables. Health check path: `/readyz`.
+- **The migration branch, not `staging`.** The app's feed, the group check
+  and the pricing door exist only on the migration branch, and the branch adds
+  Django migrations, so its database must not be one `main` migrates.
+- **Two apps.** The mobile app takes the gateway as a bare host (a path is
+  refused by `platform/mobile/src/config/environment.ts`), and an app has one
+  domain routed by path, with Django on `/`.
+- **Production's shape, smallest sizes.** One web instance, no cache cluster,
+  one scheduler, as `.do/app.yaml`, so what staging proves holds for
+  production; the smallest instance and database sizes, because it carries
+  demo data and testers, not load. Load testing stays with the August staging
+  shape.
+- **Seeded, never cloned.** `seed --demo`; no real school, staff or money
+  record leaves production. A sanitised restore is a later, separate decision.
+- **No object storage.** `SPACES_*` are unset, so nothing on staging can reach
+  production's bucket. Uploads fail on staging (the inherited production
+  settings keep Spaces on); boot and `/api/health/ready` do not probe storage.
+  Evidence (M8) needs a staging bucket and key first (the August staging key
+  is one candidate).
+- **The Next.js web app is not in it yet.** It needs its own host for the same
+  reason as the gateway; it is added when its pages are worth testing.
 
-**Worker configuration**: `EDIFY_ANALYTICS_ADDR=0.0.0.0:50061` and nothing
-else. It refuses to start if given database settings.
+**Procedure**, in this order. Steps 1, 2, 3 and 6 are DigitalOcean console
+work for the owner; the database steps need a machine with `psql` and Go
+whose address is in the cluster's trusted sources.
 
-**App**: an EAS `preview` build with `EXPO_PUBLIC_EDIFY_ENV=staging` and the
-staging URLs, distributed to testers through TestFlight and an internal
-Android track.
+1. **Cluster.** DO console → Databases → Create → PostgreSQL 16, region
+   Frankfurt, the smallest size, name `edify-migration-staging-pg-fra`.
+2. **Part 1.** Apps → Create → from the spec
+   (`doctl apps create --spec .do/migration-staging.yaml`). Before the first
+   deploy, set its five secrets in the environment editor, each fresh:
+   `SECRET_KEY` and `JWT_SECRET` (`openssl rand -hex 40`),
+   `FIELD_ENCRYPTION_KEY` and `EDIFY_INTERNAL_KEY` (`openssl rand -hex 32`),
+   `SUPER_ADMIN_PASSWORD`. Keep the last four to hand for part 2.
+3. **Seed.** When part 1 is green, from the `web` component's console:
+   `python manage.py stamp_environment --to staging` (type `STAMP staging`),
+   then `python manage.py seed --demo`.
+4. **Database roles and Go's own schemas**, with the cluster's `doadmin`
+   connection string from its page (`sslmode=require`):
+
+   ```bash
+   ADMIN_URL='postgresql://doadmin:<password>@<host>:25060/defaultdb?sslmode=require'
+   EDIFY_ENV=staging EDIFY_ADMIN_DATABASE_URL="$ADMIN_URL" platform/deploy/db/apply-roles.sh
+   GATEWAY_PASSWORD=$(openssl rand -hex 24)
+   psql "$ADMIN_URL" -c "ALTER ROLE edify_gateway PASSWORD '$GATEWAY_PASSWORD'"
+   cd platform/backend
+   EDIFY_ENV=staging EDIFY_DB_ALLOWED_HOSTS=<host> EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" \
+     go run ./cmd/schemactl migrate --schema=school_loans --confirm-database=defaultdb
+   EDIFY_ENV=staging EDIFY_DB_ALLOWED_HOSTS=<host> EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" \
+     go run ./cmd/clusterctl migrate --confirm-database=defaultdb
+   ```
+
+   Then take the machine's address out of the cluster's trusted sources.
+5. **Gateway connection string**:
+   `postgresql://edify_gateway:<GATEWAY_PASSWORD>@<host>:25060/defaultdb?sslmode=require`,
+   with the same `<host>` the cluster's page shows (the gateway checks it
+   against `EDIFY_DB_ALLOWED_HOSTS`, which the spec binds to `${db.HOSTNAME}`).
+6. **Part 2.** `doctl apps create --spec .do/migration-gateway-staging.yaml`,
+   then its five secrets: `EDIFY_DATABASE_URL` (step 5), `EDIFY_JWT_SECRET`,
+   `EDIFY_FIELD_ENCRYPTION_KEY` and `EDIFY_INTERNAL_KEY` (part 1's values),
+   and `EDIFY_EXISTING_APP_URL` (part 1's `https://…ondigitalocean.app`).
+7. **App build.** An EAS `preview` build with `EXPO_PUBLIC_EDIFY_ENV=staging`,
+   `EXPO_PUBLIC_EDIFY_GATEWAY_URL` = part 2's URL and
+   `EXPO_PUBLIC_EDIFY_IDENTITY_URL` = part 1's, to testers through TestFlight
+   and an internal Android track.
+
+Deploys after that: neither spec deploys on push and the Deploy workflow
+releases `main` only. A new build of the branch is a **Deploy** in each app's
+console (or `doctl apps create-deployment <app-id>`), part 1 before part 2,
+and only from a commit whose Platform CI is green.
+
+**The saves.** Part 2 turns on all seven proved saves (`schedule_visit`,
+`reschedule_visit`, `cancel_visit`, `edit_visit`, `schedule_training_pair`,
+`group_reschedule`, `group_cancel`). On staging that makes Go the writer of
+those saves for the app's users while the web's users keep saving through
+Django on the same tables: the two-writer state the production cutover (03,
+§3.7) is meant to avoid, accepted here because staging holds demo data and is
+where that cutover is rehearsed. Removing a name from `EDIFY_GO_SAVES` and
+redeploying part 2 hands that save back.
+
+**Not yet checked against DigitalOcean** (nothing was created to check it):
+that a service with only `internal_ports` and no `http_port` passes App
+Platform's validation, that `${analytics.PRIVATE_DOMAIN}` and `${db.HOSTNAME}`
+resolve as written, and the monthly price, which the console shows before
+each create.
 
 **Before staging is called ready**:
 
@@ -160,23 +233,30 @@ branch. It has no deploy job and no secret.
 | Python analytics worker | ruff, format, tests, pip-audit |
 | React Native app | type check, tests, expo-doctor, npm audit, JavaScript bundle for iOS and Android |
 | Container images build | both images build and neither runs as root |
+| Next.js web app | install, type check, lint, unit tests |
 
-The workflow has not yet run on GitHub. Each of its commands was run locally
-except the two image builds (no Docker on the development machine) and
-`zizmor` on the workflow file.
+The workflow runs on GitHub. From its first runs until 2026-11-13 every push
+of the migration branch failed it: first the React Native app and the Go
+gateway's module tidiness (both fixed 2026-11-13), then the Go gateway's
+`govulncheck`, which flagged GO-2026-6859 in Go 1.27.3's `net/http`. The
+toolchain is now Go 1.27.4 in the workflow, both `go.mod` files and the
+gateway image; run 43396618456 on `feature/migration/go-toolchain-1-27-4`
+passed all seven jobs.
 
 ## 5.5 Branch protection
 
 **Current state** (read from GitHub on 2026-11-09): `main` is protected with
 four required checks, administrators included, force pushes and deletion off.
-It requires no approving review. The migration branch does not exist on
-GitHub yet and has no protection.
+It requires no approving review. The migration branch is on GitHub and, as
+read on 2026-11-13, has no protection. Applying the settings below requires
+a pull request for every change, so it waits until the branch's own work
+stops being merged into it directly.
 
 **Required for `feature/edify-go-rn-migration`**, to apply once the branch is
 pushed and the workflow has run once (GitHub only offers checks it has seen):
 
 - Require a pull request before merging.
-- Require status checks, with the six Platform CI jobs above.
+- Require status checks, with the seven Platform CI jobs above.
 - Require branches to be up to date before merging.
 - Include administrators.
 - Block force pushes and deletion.
@@ -193,7 +273,8 @@ gh api -X PUT repos/O-Mario88/edify-planning-tool/branches/feature%2Fedify-go-rn
       "Gateway against the existing schema",
       "Python analytics worker",
       "React Native app",
-      "Container images build"
+      "Container images build",
+      "Next.js web app"
     ]
   },
   "enforce_admins": true,

@@ -1,0 +1,133 @@
+# DigitalOcean App Platform specification — the MIGRATION's staging, part 2
+# of 2: the Go gateway and the Python analytics worker.
+#
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ Create part 1 (.do/migration-staging.yaml) first, seed it, and run the   │
+# │ database steps in docs/migration/05-environments-and-staging.md 5.3.     │
+# │                                                                          │
+# │   doctl apps create --spec .do/migration-gateway-staging.yaml            │
+# └──────────────────────────────────────────────────────────────────────────┘
+#
+# Why a second app: the mobile app takes the gateway as a bare host
+# (platform/mobile/src/config/environment.ts refuses a path), and an app has
+# one domain routed by path, where Django already holds "/". So the gateway
+# gets its own app and its own *.ondigitalocean.app host.
+#
+# The gateway refuses to start unless: EDIFY_ENV is staging; the database
+# host is the one EDIFY_DB_ALLOWED_HOSTS names; the connection is TLS; the
+# role is edify_gateway, not a superuser, and cannot change what
+# deploy/db/*.sql keeps from it; EDIFY_EXISTING_APP_URL is https and not the
+# production site; and the secrets are generated, not placeholders.
+#
+# ── Secrets you set yourself (DO console, environment editor, encrypted) ────
+#   EDIFY_DATABASE_URL          postgresql://edify_gateway:<password>@<host>:25060/defaultdb?sslmode=require
+#                               (<password> is the one set in 5.3 step 4;
+#                               <host> is the cluster's, as on its page)
+#   EDIFY_JWT_SECRET            part 1's JWT_SECRET, the same value
+#   EDIFY_FIELD_ENCRYPTION_KEY  part 1's FIELD_ENCRYPTION_KEY, the same value
+#   EDIFY_INTERNAL_KEY          part 1's EDIFY_INTERNAL_KEY, the same value
+#   EDIFY_EXISTING_APP_URL      part 1's URL, https://edify-migration-staging-fra-xxxxx.ondigitalocean.app
+
+name: edify-migration-gateway-staging-fra
+region: fra
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+
+databases:
+  # The same cluster as part 1. Attaching it adds this app to the cluster's
+  # trusted sources; no bindable URL is used, because the gateway connects as
+  # edify_gateway (created by apply-roles.sh), never as doadmin.
+  - name: db
+    engine: PG
+    version: "16"
+    production: true
+    cluster_name: edify-migration-staging-pg-fra
+
+services:
+  - name: gateway
+    dockerfile_path: platform/backend/Dockerfile
+    # The Dockerfile copies backend/ from platform/.
+    source_dir: platform
+    github:
+      repo: O-Mario88/edify-planning-tool
+      branch: feature/edify-go-rn-migration
+      deploy_on_push: false
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 8090
+    health_check:
+      http_path: /readyz
+      initial_delay_seconds: 10
+      period_seconds: 15
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 5
+    alerts:
+      - rule: RESTART_COUNT
+        disabled: false
+        operator: GREATER_THAN
+        value: 1
+        window: FIVE_MINUTES
+    envs:
+      - key: EDIFY_ENV
+        value: staging
+      - key: EDIFY_HTTP_ADDR
+        value: 0.0.0.0:8090
+      - key: EDIFY_RELEASE
+        scope: RUN_TIME
+        value: ${_self.COMMIT_HASH}
+      - key: EDIFY_DB_ALLOWED_HOSTS
+        scope: RUN_TIME
+        value: ${db.HOSTNAME}
+      - key: EDIFY_DB_PRODUCTION_MARKERS
+        value: edify-production-db,edifyplanning.app
+      - key: EDIFY_ANALYTICS_ADDR
+        scope: RUN_TIME
+        value: ${analytics.PRIVATE_DOMAIN}:50061
+      - key: EDIFY_TRUST_PROXY_HEADERS
+        value: "true"
+      - key: EDIFY_PUBLIC_BASE_URL
+        scope: RUN_TIME
+        value: ${APP_URL}
+      # The saves proved in shadow (docs/migration/27-33). Each name is one
+      # save; remove a name to hand that save back to the existing
+      # application. The gateway refuses this outside development and staging.
+      - key: EDIFY_GO_SAVES
+        value: schedule_visit,reschedule_visit,cancel_visit,edit_visit,schedule_training_pair,group_reschedule,group_cancel
+      - key: EDIFY_DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_edify_gateway_connection_url
+      - key: EDIFY_JWT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_part_1_jwt_secret
+      - key: EDIFY_FIELD_ENCRYPTION_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_part_1_field_encryption_key
+      - key: EDIFY_INTERNAL_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_part_1_internal_key
+      - key: EDIFY_EXISTING_APP_URL
+        scope: RUN_TIME
+        value: REPLACE_ME_part_1_https_url
+
+  # Internal only: no route, reachable from the gateway on the app's private
+  # network. It refuses to start if given database settings.
+  - name: analytics
+    dockerfile_path: platform/workers/analytics/Dockerfile
+    source_dir: platform
+    github:
+      repo: O-Mario88/edify-planning-tool
+      branch: feature/edify-go-rn-migration
+      deploy_on_push: false
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    internal_ports:
+      - 50061
+    envs:
+      - key: EDIFY_ANALYTICS_ADDR
+        value: 0.0.0.0:50061
