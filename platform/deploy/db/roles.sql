@@ -464,3 +464,7 @@ GRANT SELECT (survey_id, scores) ON hr_pulse_response TO edify_gateway_ro;
 -- already granted. Not the entitlements or approvers, which only the page's
 -- forms show.
 GRANT SELECT (label, leave_type) ON leave_type_policy TO edify_gateway_ro;
+
+-- Duplicate Review (internal/iapages, docs/migration/153-ia-duplicates.md):
+-- each flag's two activities, status, reason and when it was raised.
+GRANT SELECT (id, activity_id, duplicate_of_id, status, reason, created_at) ON ia_duplicate_activity TO edify_gateway_ro;
