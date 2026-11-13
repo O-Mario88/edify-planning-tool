@@ -16,6 +16,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/clusters/v1/clustersv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1/identityv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/loans/v1/loansv1connect"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/messaging/v1/messagingv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/schools/v1/schoolsv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accounts"
@@ -39,6 +40,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/messaging"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myactions"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/navigation"
@@ -170,6 +172,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNotificationCenterServiceHandler(notificationcenter.NewHandler(notificationcenter.NewService(pool, notificationcenter.EmailConfigured(nil)), logger), options...))
+	mux.Handle(messagingv1connect.NewMessagingServiceHandler(messaging.NewService(pool, time.Now, logger), options...))
 	clusterStore := clusterlead.NewStore(pool)
 	leadership := clusterlead.NewService(clusterStore, time.Now, clusterSchemaReady(pool), logger).
 		WithOnboarder(clusterlead.NewHTTPOnboarder(cfg.ExistingAppURL), cfg.ExistingAppURL)

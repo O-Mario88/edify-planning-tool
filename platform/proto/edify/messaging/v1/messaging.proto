@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package edify.messaging.v1;
+
+// The Messages inbox (/messages) for the web app, as the existing page
+// draws it (apps.frontend.views.message_views.messages_list_view,
+// apps.messaging.services.threads_for_user and the page's templates). Every
+// label and line is the page's own text.
+//
+// Reading the list opens no conversation, so nothing is marked read here:
+// the existing page marks the conversation it opens read, and that is a
+// separate step (docs/migration/42-messages.md).
+service MessagingService {
+  // The inbox's tabs, sort, list and pager for the reader.
+  rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse);
+  // The conversations the top bar's Messages badge counts
+  // (services.unread_thread_count).
+  rpc GetUnreadCount(GetUnreadCountRequest) returns (GetUnreadCountResponse);
+}
+
+// The page's query, as typed: each value is read the way the page reads it.
+message ListThreadsRequest {
+  // all, unread, assigned, sent, archived, partner, finance or ia_review;
+  // empty is all.
+  string tab = 1;
+  // The top bar's search; matched against a thread's subject and record.
+  string q = 2;
+  // newest or oldest; empty is newest.
+  string sort = 3;
+  // The page number as typed; unreadable is the first page.
+  string page = 4;
+  // The conversation the page opens; empty is the first one listed.
+  string thread = 5;
+}
+
+message InboxTab {
+  string key = 1;
+  string label = 2;
+  // All, Unread and Assigned to Me carry a count.
+  bool has_count = 3;
+  int32 count = 4;
+  bool active = 5;
+}
+
+message SortOption {
+  string value = 1;
+  string label = 2;
+  bool selected = 3;
+}
+
+message ThreadRow {
+  string id = 1;
+  // The latest message's sender, or "System".
+  string sender_name = 2;
+  // The avatar's letters; a system thread shows a gear instead.
+  string initials = 3;
+  bool is_system = 4;
+  // When the thread last moved, RFC 3339, and as the page writes it
+  // ("Nov 3, 14:05", East Africa Time).
+  string last_at = 5;
+  string last_at_label = 6;
+  string subject = 7;
+  // The first 90 characters of the latest message.
+  string snippet = 8;
+  bool unread = 9;
+  // The conversation the page has open.
+  bool selected = 10;
+  string context_type = 11;
+  // The record kind's badge ("School", "Fund Request" …), empty for none.
+  string context_badge = 12;
+  // finance, leave, verification, evidence or primary.
+  string context_tone = 13;
+  // "High" or "Low"; empty for a normal thread.
+  string priority_badge = 14;
+  // alert (High) or plain (Low).
+  string priority_tone = 15;
+  bool starred = 16;
+  // The web path that opens the conversation.
+  string href = 17;
+}
+
+message PagerLink {
+  // A page number, or "…" for the gap.
+  string label = 1;
+  int32 page = 2;
+  bool current = 3;
+  bool gap = 4;
+  string href = 5;
+}
+
+message InboxPager {
+  // The page draws a pager only past one page.
+  bool shown = 1;
+  int32 page = 2;
+  int32 pages = 3;
+  int32 total = 4;
+  int32 showing_start = 5;
+  int32 showing_end = 6;
+  // "Showing 1–8 of 12".
+  string summary = 7;
+  repeated PagerLink links = 8;
+  // The next-page arrow's target, when there is a next page.
+  string next_href = 9;
+}
+
+message ListThreadsResponse {
+  string eyebrow = 1;
+  string title = 2;
+  string description = 3;
+  repeated InboxTab tabs = 4;
+  // The tab as asked, even one the page does not list.
+  string active_tab = 5;
+  // The sort as asked.
+  string sort = 6;
+  repeated SortOption sorts = 7;
+  // The search as the list read it (trimmed).
+  string search = 8;
+  string search_placeholder = 9;
+  repeated ThreadRow threads = 10;
+  // Empty when no conversation is open (none listed, or the one asked for
+  // is not the reader's to open).
+  string selected_thread_id = 11;
+  InboxPager pager = 12;
+  // Shown in place of the list when it is empty.
+  string empty_title = 13;
+  string empty_message = 14;
+  // The Message Rules card.
+  repeated string message_rules = 15;
+}
+
+message GetUnreadCountRequest {}
+
+message GetUnreadCountResponse {
+  int32 unread = 1;
+}

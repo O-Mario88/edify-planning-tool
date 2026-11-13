@@ -100,6 +100,20 @@ _STAGE_CONTEXTS = {
     "core_school": {"CCEO", "PL", "CD", "RVP", "IA", "ADMIN"},
 }
 
+# can_access_context's role rules, by the record a context resolves to (or
+# fails to): module constants so the Go gateway's copy is exported, not
+# restated (apps/messaging/management/commands/export_messaging_rules.py).
+#: An IA context whose activity no longer resolves.
+_IA_UNRESOLVED_ROLES = frozenset({"IA", "CCEO", "PL", "PARTNER", "PROJECT_COORDINATOR"})
+#: Read every weekly fund request.
+_FUND_REQUEST_READERS = frozenset({"ACCOUNTANT", "CD", "RVP", "IA"})
+#: Read every leave request.
+_LEAVE_READERS = frozenset({"HR", "CD", "RVP"})
+#: Read the partner hand-overs in their Partner Oversight scope only.
+_PARTNER_ASSIGNMENT_SCOPED = frozenset({"CCEO", "PL"})
+#: Read every partner hand-over.
+_PARTNER_ASSIGNMENT_READERS = frozenset({"IA", "PROJECT_COORDINATOR", "CD"})
+
 # The compose picker tabs: (key, label). Order mirrors the approved design —
 # Schedule leads, then School, Cluster, Partner, Activity, Field Debrief, then
 # the finance/planning contexts. Generic types accept a free record id.
@@ -418,7 +432,7 @@ def can_access_context(user, context_type: str | None, context_id: str | None) -
         # `resolve_context_record` also swallows exceptions and returns None, so
         # a transient DB error read as "allow" rather than "deny".
         if context_type in IA_CONTEXTS:
-            return role in {"IA", "CCEO", "PL", "PARTNER", "PROJECT_COORDINATOR"}
+            return role in _IA_UNRESOLVED_ROLES
         # Workflow-stage keys carry no record of their own; they are typed by
         # role, and no one outside the stage's participants may open them.
         if context_type in _STAGE_CONTEXTS:
@@ -429,7 +443,7 @@ def can_access_context(user, context_type: str | None, context_id: str | None) -
     if cls in ("School", "Cluster", "Activity"):
         return RolePermissionService.can_view_record(user, record)
     if cls == "WeeklyFundRequest":
-        if role in {"ACCOUNTANT", "CD", "RVP", "IA"}:
+        if role in _FUND_REQUEST_READERS:
             return True
         if record.responsible_user == user.id:
             return True
@@ -440,7 +454,7 @@ def can_access_context(user, context_type: str | None, context_id: str | None) -
             return record.responsible_user in _team_user_ids(user)
         return False
     if cls == "Leave":
-        if role in {"HR", "CD", "RVP"}:
+        if role in _LEAVE_READERS:
             return True
         # A Programme Lead approves their team's leave; they are not an HR
         # function, so another team's leave is not theirs to message about —
@@ -453,7 +467,7 @@ def can_access_context(user, context_type: str | None, context_id: str | None) -
         if role == "PARTNER":
             partner = getattr(user, "partner", None)
             return bool(partner and record.partner_id == partner.id)
-        if role in {"CCEO", "PL"}:
+        if role in _PARTNER_ASSIGNMENT_SCOPED:
             # Only the handovers in their Partner Oversight scope.
             from apps.partners.models import PartnerAssignment
 
@@ -461,7 +475,7 @@ def can_access_context(user, context_type: str | None, context_id: str | None) -
             if q is None:
                 return True
             return PartnerAssignment.objects.filter(q, id=record.id).exists()
-        return role in {"IA", "PROJECT_COORDINATOR", "CD"}
+        return role in _PARTNER_ASSIGNMENT_READERS
     return True
 
 

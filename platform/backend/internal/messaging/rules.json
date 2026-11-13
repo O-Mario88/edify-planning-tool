@@ -1,0 +1,261 @@
+{
+  "activity_contexts": [
+    "accountability_confirmation",
+    "activity",
+    "evidence",
+    "evidence_upload",
+    "execution",
+    "field_debrief",
+    "ia_return",
+    "my_plan",
+    "planning",
+    "ssa_verification",
+    "verification"
+  ],
+  "allow_cd_operational_planning": true,
+  "context_labels": {
+    "accountability_confirmation": "Accountability",
+    "accountant_disbursement": "Disbursement",
+    "activity": "Activity",
+    "budget": "Budget",
+    "budget_line": "Budget Line",
+    "cluster": "Cluster",
+    "core_school": "Core School",
+    "evidence_upload": "Evidence Upload",
+    "execution": "Execution",
+    "field_debrief": "Field Debrief",
+    "finance": "Finance",
+    "fund_request": "Fund Request",
+    "ia_return": "IA Return",
+    "leave": "Leave",
+    "monthly_request": "Monthly Request",
+    "partner_assignment": "Partner",
+    "planning": "Planning",
+    "project": "Project",
+    "schedule": "Schedule",
+    "school": "School",
+    "ssa_verification": "SSA Verification",
+    "system": "System Issue",
+    "verification": "Verification"
+  },
+  "field_roles": [
+    "CCEO",
+    "Program Lead"
+  ],
+  "finance_contexts": [
+    "accountant_disbursement",
+    "budget",
+    "budget_line",
+    "finance",
+    "fund_request",
+    "monthly_request"
+  ],
+  "fund_request_readers": [
+    "ACCOUNTANT",
+    "CD",
+    "IA",
+    "RVP"
+  ],
+  "ia_contexts": [
+    "evidence",
+    "evidence_upload",
+    "ia_return",
+    "ssa_verification",
+    "verification"
+  ],
+  "ia_unresolved_roles": [
+    "CCEO",
+    "IA",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR"
+  ],
+  "leave_readers": [
+    "CD",
+    "HR",
+    "RVP"
+  ],
+  "message_rules": [
+    "Context required for all new messages",
+    "Replies inherit context automatically",
+    "Only registered users can be selected",
+    "Suggested recipients are based on context and geography",
+    "You cannot message about records you cannot access",
+    "Workflow decisions must still use workflow actions"
+  ],
+  "page_size": 8,
+  "partner_assignment_readers": [
+    "CD",
+    "IA",
+    "PROJECT_COORDINATOR"
+  ],
+  "partner_assignment_scoped": [
+    "CCEO",
+    "PL"
+  ],
+  "partner_roles": [
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+  ],
+  "recipient_to": "to",
+  "roles": {
+    "Accountant": {
+      "page": true,
+      "slug": "ACCOUNTANT"
+    },
+    "Admin": {
+      "page": true,
+      "slug": "ADMIN"
+    },
+    "BusinessTransformationOfficer": {
+      "page": true,
+      "slug": "BUSINESS_TRANSFORMATION"
+    },
+    "CCEO": {
+      "page": true,
+      "slug": "CCEO"
+    },
+    "ClusterLeader": {
+      "page": false,
+      "slug": "CLUSTERLEADER"
+    },
+    "CountryDirector": {
+      "page": true,
+      "slug": "CD"
+    },
+    "HumanResources": {
+      "page": true,
+      "slug": "HR"
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "slug": "IA"
+    },
+    "MfiLoanOfficer": {
+      "page": true,
+      "slug": "MFI_OFFICER"
+    },
+    "MfiPartnerAdmin": {
+      "page": true,
+      "slug": "MFI_ADMIN"
+    },
+    "PartnerAdmin": {
+      "page": true,
+      "slug": "PARTNER"
+    },
+    "PartnerFieldOfficer": {
+      "page": true,
+      "slug": "PARTNER"
+    },
+    "Program Lead": {
+      "page": true,
+      "slug": "PL"
+    },
+    "ProjectCoordinator": {
+      "page": true,
+      "slug": "PROJECT_COORDINATOR"
+    },
+    "RegionalProgramLead": {
+      "page": true,
+      "slug": "RPL"
+    },
+    "RegionalVicePresident": {
+      "page": true,
+      "slug": "RVP"
+    }
+  },
+  "stage_contexts": {
+    "accountability_confirmation": [
+      "ACCOUNTANT",
+      "ADMIN",
+      "CCEO",
+      "CD",
+      "PL"
+    ],
+    "budget": [
+      "ACCOUNTANT",
+      "ADMIN",
+      "CD",
+      "PL",
+      "RVP"
+    ],
+    "budget_line": [
+      "ACCOUNTANT",
+      "ADMIN",
+      "CCEO",
+      "CD",
+      "PL",
+      "PROJECT_COORDINATOR",
+      "RVP"
+    ],
+    "core_school": [
+      "ADMIN",
+      "CCEO",
+      "CD",
+      "IA",
+      "PL",
+      "RVP"
+    ],
+    "finance": [
+      "ACCOUNTANT",
+      "ADMIN",
+      "CD",
+      "PL",
+      "RVP"
+    ],
+    "monthly_request": [
+      "ACCOUNTANT",
+      "ADMIN",
+      "CD",
+      "PL",
+      "RVP"
+    ],
+    "system": [
+      "ACCOUNTANT",
+      "ADMIN",
+      "CCEO",
+      "CD",
+      "HR",
+      "IA",
+      "PARTNER",
+      "PL",
+      "PROJECT_COORDINATOR",
+      "RVP"
+    ]
+  },
+  "tabs": [
+    [
+      "all",
+      "All"
+    ],
+    [
+      "unread",
+      "Unread"
+    ],
+    [
+      "assigned",
+      "Assigned to Me"
+    ],
+    [
+      "sent",
+      "Sent"
+    ],
+    [
+      "archived",
+      "Archived"
+    ],
+    [
+      "partner",
+      "Partner"
+    ],
+    [
+      "finance",
+      "Finance"
+    ],
+    [
+      "ia_review",
+      "IA Review"
+    ]
+  ],
+  "time_zone": "Africa/Nairobi"
+}
