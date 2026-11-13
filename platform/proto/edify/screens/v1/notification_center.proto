@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+import "edify/common/v1/common.proto";
+
+// The notification centre, as the existing web page builds it for the
+// signed-in person (apps.frontend.views.staff_views.notifications_page_view
+// and pages/notifications/index.html): the same figures, filters,
+// notifications in order, pages and delivery settings. Only ever the
+// caller's own notifications: nothing in the request names whose they are.
+service NotificationCenterService {
+  rpc GetNotificationCenter(GetNotificationCenterRequest) returns (GetNotificationCenterResponse);
+}
+
+// The page's own query parameters. Empty means the page's default.
+message GetNotificationCenterRequest {
+  // all (the default: everything but archived and resolved) | unread | read
+  // | archived, or any other value (an empty one too), which matches
+  // nothing. Absent is the default.
+  optional string status = 1;
+  string priority = 2;
+  string category = 3;
+  // The "Action Required Only" box (action_required=true).
+  bool action_required = 4;
+  // The top bar's search: title or body contains it, any case.
+  string q = 5;
+  // As the address gives it ("2"); read the way the existing page reads
+  // it, anything unreadable being the first page.
+  string page = 6;
+  // The page was reached after saving the delivery settings (settings=saved).
+  bool settings_saved = 7;
+}
+
+message GetNotificationCenterResponse {
+  NotificationKpis kpis = 1;
+  NotificationFilters filters = 2;
+  repeated NotificationItem notifications = 3;
+  // The page shown (out-of-range pages clamp to the last), 50 to a page.
+  edify.common.v1.PageInfo page = 4;
+  NotificationDelivery delivery = 5;
+  // The pager's page numbers as the existing pager lists them
+  // (apps.core.pagination.make_pagination_window, one page either side), 0
+  // for a gap; empty when there is a single page (no pager is drawn).
+  repeated int32 page_numbers = 6;
+}
+
+// Over the live notifications (neither archived nor resolved), the two the
+// page shows.
+message NotificationKpis {
+  // Unread and needing a response.
+  int32 action_required = 1;
+  // Unread at the highest priority.
+  int32 critical = 2;
+}
+
+message NotificationFilters {
+  // As asked ("all" when not asked).
+  string status = 1;
+  string priority = 2;
+  string category = 3;
+  bool action_required = 4;
+  string q = 5;
+  // The Category select's options in the page's order (as the existing page
+  // lists them, which can repeat a category).
+  repeated NotificationOption categories = 6;
+}
+
+message NotificationOption {
+  string value = 1;
+  // As the page words it (Django's |title).
+  string label = 2;
+}
+
+message NotificationItem {
+  string id = 1;
+  string title = 2;
+  string body = 3;
+  string category = 4;
+  string category_label = 5;
+  // low | normal | high | urgent (or whatever is stored).
+  string priority = 6;
+  // "Critical" for urgent, otherwise the priority as the page words it.
+  string priority_label = 7;
+  string status = 8;
+  bool unread = 9;
+  // The Action Required badge: action required and still unread.
+  bool action_required = 10;
+  // When it was raised, as the page writes it ("Nov 3, 2026 14:05",
+  // East Africa Time).
+  string created_label = 11;
+  // Who asked, when a person did; empty otherwise.
+  string sender_name = 12;
+  // The linked record, when there is one ("Link: TYPE (id)").
+  string context_type = 13;
+  string context_id = 14;
+  // The record's address and the button's words ("Open Record" when the
+  // notification names none); empty when there is no record to open.
+  string target_route = 15;
+  string action_label = 16;
+  bool can_mark_read = 17;
+  bool can_archive = 18;
+}
+
+// How the person is told beyond the bell.
+message NotificationDelivery {
+  bool email_enabled = 1;
+  bool push_enabled = 2;
+  // The account's own email address.
+  string address = 3;
+  // False while the server sends no email (the page then says so).
+  bool email_configured = 4;
+  // The "Don't email me about" boxes, sorted.
+  repeated NotificationCategoryChoice categories = 5;
+  bool saved = 6;
+}
+
+message NotificationCategoryChoice {
+  string value = 1;
+  string label = 2;
+  bool muted = 3;
+}

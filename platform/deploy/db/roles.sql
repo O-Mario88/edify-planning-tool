@@ -295,3 +295,15 @@ GRANT SELECT (verification_status, recorded_by_user_id) ON impact_edtech_deploym
 GRANT SELECT (costing_profile) ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (execution_start) ON fiscal_year_planning_policy TO edify_gateway_ro;
 GRANT SELECT (reimbursement_receipt_confirmed_at, accountability_netsuite_id, created_at) ON advance_request TO edify_gateway_ro;
+
+-- The notification centre (internal/notificationcenter, docs/migration/43):
+-- the reader's own notifications as the page shows and filters them, and
+-- their delivery settings. Not the provenance, reminder or expiry columns,
+-- and not a notice's words (body), which this role is refused on purpose:
+-- until the coordinator decides how the page reads them, the gateway does
+-- not answer the page (notificationcenter.ErrBodiesWithheld).
+GRANT SELECT (id, recipient_id, sender_id, title, category, context_type, context_id,
+  target_route, action_label, action_required, priority, status, created_at, resolved_at)
+  ON notification TO edify_gateway_ro;
+GRANT SELECT (id, user_id, email_enabled, push_enabled, email_muted_categories)
+  ON notification_preference TO edify_gateway_ro;
