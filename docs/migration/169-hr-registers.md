@@ -20,8 +20,9 @@ reach rule once; each register is added to it as it is ported.
 | Workforce Planning | `/workforce-planning` | This document |
 | Policies & Documents | `/policies` | This document |
 | Performance Recovery Plans | `/recovery-plans` | This document |
+| Compensation & Benefits | `/compensation-benefits` | This document |
 | Performance Reviews (everyone but a Programme Lead) | `/performance-reviews` | This document; a Programme Lead's reviewer's view (`_team_performance_reviews`, built on `performance_engine.team_review_rows`) is passed on until native-performance-reviews-2 |
-| The other registers (pulse surveys, employee relations, compensation, recruitment, HR analytics, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| The other registers (pulse surveys, employee relations, recruitment, HR analytics, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -217,6 +218,19 @@ Overdue, Awaiting calibration (calibration, HR quality review, ready for SLT
 calibration). No header button read by the feed (the Performance Cycle link
 is a link).
 
+## 169.2m Compensation & Benefits
+
+`compensation_benefits_view`: the compensation records of the People records
+in reach whose person's name, salary band, pension scheme or status holds the
+search, by name. Each row: the person, their country, the salary band, the
+medical cover's label, the pension scheme ("None recorded"), the next review
+day, the status's label and an "Update" drawer button. Figures over the
+searched records: Compensation profiles, Approved, In review, Pay reviews due
+(a review day within 30 days, past ones included); and Missing profiles over
+the live, not exited People records in reach with no record. One drawer
+button, "Add a record". Go never reads a salary, allowance, currency or bank
+detail: the register does not show them and the gateway is not granted them.
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -246,7 +260,9 @@ owner, audience or comments); a recovery plan's person,
 type, cause, start and review days and status (not its evidence, action plan,
 support or outcome note); a performance review's period,
 year, due day, manager and its two ratings (not the reflection, feedback,
-evidence or calibration note) (applied to `edify_gorn_dev` and
+evidence or calibration note); a compensation record's band,
+cover, pension, review day and status (NEVER an amount or a bank detail)
+(applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -264,7 +280,8 @@ evidence or calibration note) (applied to `edify_gorn_dev` and
   555 HR audit events; five vacancies of every status; six documents of
   every kind and status with 35 acknowledgements; 11 recovery plans, five of
   them on Programme Lead 1's team and one on the Lead; 12 reviews of every
-  kind, this year, last year and none), asks the existing feed 468 questions as Admin, HR, Impact Assessment, the Country Director and a Programme Lead as Admin, HR and Impact Assessment and deletes
+  kind, this year, last year and none; 9 compensation records), asks the
+  existing feed 520 questions as Admin, HR, Impact Assessment, the Country Director and a Programme Lead as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 

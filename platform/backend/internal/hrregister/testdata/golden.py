@@ -34,6 +34,7 @@ from apps.documents.models import (
 from apps.core.fy import get_operational_fy
 from apps.hr.models import (
     Application,
+    CompensationRecord,
     PerformanceReview,
     PerformanceImprovementPlan,
     Candidate,
@@ -54,6 +55,7 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 User = get_user_model()
 #: Deleted children first.
 TABLES = (
+    "hr_compensation",
     "hr_performance_review",
     "hr_pip_plan",
     "document_acknowledgement",
@@ -86,6 +88,7 @@ PATHS = (
     "/policies",
     "/recovery-plans",
     "/performance-reviews",
+    "/compensation-benefits",
 )
 
 
@@ -154,6 +157,7 @@ def file_rows():
     file_documents(profiles, today)
     file_recovery(profiles, today)
     file_reviews(profiles, today)
+    file_compensation(profiles, today)
     kinds = ["injury", "road_traffic", "near_miss", "hazard", "security", "illness"]
     for i in range(10):
         SafetyIncident.objects.create(
@@ -378,6 +382,21 @@ def file_reviews(profiles, today):
         )
 
 
+def file_compensation(profiles, today):
+    for i in range(9):
+        CompensationRecord.objects.create(
+            id=f"ghrm{i:03d}",
+            staff=profiles[40 + i],
+            salary_band=[None, "B2", "C1"][i % 3],
+            medical_cover=["none", "individual", "family"][i % 3],
+            pension_scheme=["", "NSSF", "Private"][i % 3],
+            next_review_date=None
+            if i == 4
+            else today + timedelta(days=[-5, 0, 30, 31, 90][i % 5]),
+            status=["HR Review", "Approved", "Draft"][i % 3],
+        )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -424,6 +443,7 @@ QUESTIONS = {
         {"q": "Program Lead"},
         {"q": "golden policy"},
         {"q": "safety"},
+        {"q": "nssf"},
     ],
     "ia@edify.org": [{}, {"page": "2"}],
     "cd@edify.org": [{}, {"q": "finance"}, {"fy": "2026"}, {"fy": " 2027 "}],

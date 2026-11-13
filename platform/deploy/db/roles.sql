@@ -447,3 +447,8 @@ GRANT SELECT (id, staff_id, plan_type, cause, start_date, end_date, status) ON h
 -- its person, type and stage already granted. Not the reflection,
 -- feedback, evidence or calibration note.
 GRANT SELECT (period, fy, due_date, manager_id, manager_rating, rating) ON hr_performance_review TO edify_gateway_ro;
+-- Compensation & Benefits: a record's person, salary band, medical cover,
+-- pension scheme, next review day and status. NEVER the salary, allowances,
+-- currency, other benefits or bank details, which the register does not
+-- show either.
+GRANT SELECT (id, staff_id, salary_band, medical_cover, pension_scheme, next_review_date, status) ON hr_compensation TO edify_gateway_ro;

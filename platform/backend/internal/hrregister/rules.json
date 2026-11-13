@@ -11,6 +11,10 @@
     "screening": "Screening",
     "withdrawn": "Withdrawn"
   },
+  "compensation_statuses": {
+    "Approved": "Approved",
+    "HR Review": "In HR review"
+  },
   "compliance_statuses": {
     "Compliant": "Compliant",
     "Due Soon": "Due soon",
@@ -46,14 +50,21 @@
     "retirement": "Retirement"
   },
   "helper_figure_chars": 28,
+  "medical_covers": {
+    "family": "Employee and family",
+    "individual": "Individual",
+    "none": "No medical cover"
+  },
   "metric_labels": {
     "Acknowledgement rate": "Acknowledgement rate",
     "Acting roles": "Acting roles",
     "Active": "Active",
     "Applications": "Applications",
+    "Approved": "Approved",
     "Awaiting authorisation": "Awaiting authorisation",
     "Awaiting calibration": "Awaiting calibration",
     "Awaiting supervisor": "Awaiting supervisor",
+    "Compensation profiles": "Compensation profiles",
     "Completed": "Completed",
     "Compliant": "Compliant",
     "Days lost": "Days lost",
@@ -67,9 +78,11 @@
     "Headcount": "Headcount",
     "Hired": "Hired",
     "In progress": "In progress",
+    "In review": "In review",
     "Interviews": "Interviews",
     "Leaving in 90 days": "Leaving in 90 days",
     "Missing or expired": "Missing or expired",
+    "Missing profiles": "Missing profiles",
     "Near misses": "Near misses",
     "No reporting line": "No reporting line",
     "Offers": "Offers",
@@ -77,6 +90,7 @@
     "Open roles": "Open roles",
     "Overdue": "Overdue",
     "Past exit date, still active": "Past exit date, still active",
+    "Pay reviews due": "Pay reviews due",
     "People in scope": "People in scope",
     "People recognised": "People recognised",
     "Plans": "Plans",
@@ -160,6 +174,112 @@
         "ImpactAssessment": {
           "drawers": [
             "/candidate-pipeline/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/compensation-benefits": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/compensation-benefits/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/compensation-benefits/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/compensation-benefits/new"
           ],
           "links": [],
           "page": true,
