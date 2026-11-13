@@ -146,3 +146,20 @@ func TestTheCheckedInListLoadsAndEveryEntryHasItsTest(t *testing.T) {
 		}
 	}
 }
+
+func TestAnyQuestionMatchesOnlyItsPageFieldAndValues(t *testing.T) {
+	l, err := Load([]byte(`[{"id":"p","tool":"page","where":"/p","questions":["*"],"fields":[".f"],"existing":"week","go":"month|fy","defect":"d","decision":"o","test":"internal/x.TestY"}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ok := func(where, field, old, new string) bool {
+		_, matched := l.Match(Answer{ToolPage, where, "anything=1"}, Diff{Field: field, Existing: old, Go: new})
+		return matched
+	}
+	if !ok("/p", ".f", "week", "fy") {
+		t.Fatal("any question on its page")
+	}
+	if ok("/q", ".f", "week", "fy") || ok("/p", ".g", "week", "fy") || ok("/p", ".f", "week", "quarter") {
+		t.Fatal("matched outside its page, field or values")
+	}
+}
