@@ -392,3 +392,9 @@ GRANT SELECT (facilitating_partner_id) ON activity TO edify_gateway_ro;
 GRANT SELECT (state, supervising_pl_id) ON partner_assignment_withdrawal TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
 GRANT SELECT (recommendation) ON cce_regional_engagement TO edify_gateway_ro;
+
+-- The HR registers (internal/hrregister, docs/migration/169-hr-registers.md):
+-- Organization Structure lists the People records in the viewer's reach
+-- with their title, department and lifecycle state. No staff number, Drive
+-- folder or any compensation column.
+GRANT SELECT (title, department, onboarding_state) ON staff_profile TO edify_gateway_ro;

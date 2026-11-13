@@ -1,0 +1,102 @@
+{
+  "helper_figure_chars": 28,
+  "metric_labels": {
+    "Active": "Active",
+    "Departments": "Departments",
+    "No reporting line": "No reporting line",
+    "People in scope": "People in scope"
+  },
+  "onboarding_states": {
+    "active": "Active",
+    "exited": "Exited",
+    "pending": "Pending",
+    "suspended": "Suspended"
+  },
+  "page_size": 50,
+  "pages": {
+    "/org-structure": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    }
+  }
+}

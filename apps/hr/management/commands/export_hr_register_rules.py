@@ -1,0 +1,110 @@
+"""Write the HR registers' rules for the Go gateway.
+
+Go builds the HR programme registers (apps.frontend.views.hr_views pages drawn
+by `_render_workspace`: pages/hr/module_workspace.html and
+partials/hr/module_register.html) from the vocabularies this command writes
+to platform/backend/internal/hrregister/rules.json: for each register Go
+answers, who may open it, the workspace strip each role is shown above it and
+which of its drawer buttons each role is shown; a People record's
+lifecycle labels; the label each context figure
+is drawn with; how long the line under a figure may stay; and the register's
+page size. A change to any of them must be exported again;
+apps/hr/test_hr_register_rules_export.py fails until it is, so the two can
+never drift.
+
+The doors, the strip and the buttons are not restated: each role's answer is
+computed here by the gates the page itself asks (`require_page_permission`,
+the feed's `can_open_url` and the template's `can_open` for every button),
+and the strip is the workspace template rendered for that role and read by
+the feed's own reader.
+
+    python manage.py export_hr_register_rules
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from django.core.management.base import BaseCommand
+
+from apps.audit.management.commands.export_decision_log_rules import strip
+from apps.schools.management.commands.export_school_directory_rules import (
+    _role_user,
+)
+
+EXPORT_PATH = Path("platform/backend/internal/hrregister/rules.json")
+
+#: The metric source every register's figures are registered under.
+METRIC_SOURCE = "apps.frontend.views.hr_views:_metric"
+
+#: The registers Go answers: their path, page permission, the drawers their
+#: header buttons open and the labels of their context figures, as the views
+#: write them.
+PAGES = {
+    "/org-structure": {
+        "permission": "org_structure",
+        "drawers": [],
+        "metrics": ["People in scope", "Active", "Departments", "No reporting line"],
+    },
+}
+
+
+def pages() -> dict:
+    from apps.core.permissions import RolePermissionService, can_open_url
+    from apps.core.rbac import EdifyRole
+
+    out = {}
+    for path, page in PAGES.items():
+        roles = {}
+        for role in EdifyRole:
+            user = _role_user(role.value)
+            roles[role.value] = {
+                "page": RolePermissionService.can_view_page(user, page["permission"])
+                and bool(can_open_url(user, path)),
+                "strip": strip(user, path, "partials/_section_nav.html"),
+                "drawers": [d for d in page["drawers"] if can_open_url(user, d)],
+            }
+        out[path] = {"roles": roles}
+    return out
+
+
+def metric_labels() -> dict:
+    """The label each figure is drawn with (the registry's source label)."""
+    from apps.core.metrics.reconciled_registry import (
+        key_for_source_label,
+        source_label_for_key,
+    )
+
+    return {
+        label: source_label_for_key(key_for_source_label(METRIC_SOURCE, label))
+        for page in PAGES.values()
+        for label in page["metrics"]
+    }
+
+
+def rules() -> dict:
+    from apps.accounts.models import StaffOnboardingState
+    from apps.core.metrics.payload import HELPER_FIGURE_CHARS
+    from apps.core.pagination import TABLE_PAGE_SIZE
+
+    return {
+        "pages": pages(),
+        "onboarding_states": dict(StaffOnboardingState.choices),
+        "metric_labels": metric_labels(),
+        "helper_figure_chars": HELPER_FIGURE_CHARS,
+        "page_size": TABLE_PAGE_SIZE,
+    }
+
+
+def rendered() -> str:
+    return json.dumps(rules(), indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+class Command(BaseCommand):
+    help = "Write the HR registers' rules for the Go gateway."
+
+    def handle(self, *args, **options):
+        EXPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        EXPORT_PATH.write_text(rendered(), encoding="utf-8")
+        self.stdout.write(f"Wrote {EXPORT_PATH}")
