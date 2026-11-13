@@ -481,3 +481,11 @@ GRANT SELECT (activity_id, verified_by, verified_at, analytics_included) ON ia_v
 -- and reviewed, and by whom. Not its written sections, figures or the
 -- review note.
 GRANT SELECT (id, author_id, status, period, countries, submitted_at, reviewed_at, reviewed_by_id, created_at) ON cce_regional_report TO edify_gateway_ro;
+-- Training Feedback: each observation's author, kind, subject, country,
+-- recommendation, day, sharing and acknowledgement times, the Programme Leads
+-- it is shared with, its training and its five ratings; whether a coaching
+-- record passed it on. Not the notes, feedback or the lead's response.
+GRANT SELECT (id, author_id, kind, subject, country, recommendation, held_on, feedback_shared_at, acknowledged_at, program_lead_ids,
+  activity_id, rating_biblical_integration, rating_need_alignment, rating_facilitation, rating_participation, rating_application, created_at)
+  ON cce_regional_engagement TO edify_gateway_ro;
+GRANT SELECT (source_engagement_id) ON cce_cceo_coaching TO edify_gateway_ro;

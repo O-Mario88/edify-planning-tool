@@ -12,8 +12,9 @@ import (
 // metric is one figure as a view hands it to _metric.
 type metric struct{ label, value, helper, tone string }
 
-// action is a drawer button (a header's, or a record's own).
-type action struct{ label, drawer string }
+// action is a drawer button (a header's, or a record's own), or with href a
+// link to a page.
+type action struct{ label, drawer, href string }
 
 // register is everything _render is given.
 type register struct {
@@ -135,8 +136,18 @@ func render(reg register, role Role, query url.Values) *screensv1.GetPageRespons
 			r.Cells = append(r.Cells, &screensv1.PageCell{Text: closedschools.Collapse(v)})
 		}
 		cell := &screensv1.PageCell{}
-		for _, a := range reg.rowActions[first+i] {
-			cell.Actions = append(cell.Actions, &screensv1.PageAction{Key: "button", Label: a.label, Primary: true, Enabled: true, Href: a.drawer, Drawer: true})
+		acts := reg.rowActions[first+i]
+		for _, a := range acts {
+			// One action is the record's button; two or more are its Actions
+			// menu.
+			pa := &screensv1.PageAction{Key: "button", Label: a.label, Primary: true, Enabled: true, Href: a.drawer, Drawer: true}
+			if a.href != "" {
+				pa.Href, pa.Drawer = a.href, false
+			}
+			if len(acts) > 1 {
+				pa.Key, pa.Primary = "menu", false
+			}
+			cell.Actions = append(cell.Actions, pa)
 		}
 		r.Cells = append(r.Cells, cell)
 		t.Rows = append(t.Rows, r)

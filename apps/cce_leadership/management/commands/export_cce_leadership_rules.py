@@ -6,7 +6,8 @@ this command writes to platform/backend/internal/ccelead/rules.json: for each
 register Go answers, who may open it, the workspace strip each role is shown
 and which of its drawer buttons each role may open; the label each figure is
 drawn with; a monthly report's status labels and tones; the month reporting
-started; how long the line under a figure may stay; the register's page
+started; an observation's rating fields and recommendation labels and an
+activity type's labels; how long the line under a figure may stay; the register's page
 size; and the query keys the feed never passes. A change to any of them must
 be exported again; apps/cce_leadership/test_cce_leadership_rules_export.py
 fails until it is.
@@ -41,6 +42,15 @@ PAGES = {
             "Reports Acknowledged",
         ],
     },
+    "/cce-leadership/feedback": {
+        "permission": "cce_training_feedback",
+        "drawers": [],
+        "metrics": [
+            "Feedback Awaiting Acknowledgement",
+            "Feedback Acknowledged",
+            "Average Observation Rating",
+        ],
+    },
 }
 
 
@@ -65,7 +75,12 @@ def pages() -> dict:
 
 def rules() -> dict:
     from apps.cce_leadership import services
-    from apps.cce_leadership.models import ReportStatus
+    from apps.activities.models import ActivityType
+    from apps.cce_leadership.models import (
+        OBSERVATION_CRITERIA,
+        ObservationRecommendation,
+        ReportStatus,
+    )
     from apps.core.metrics.payload import HELPER_FIGURE_CHARS
     from apps.core.metrics.reconciled_registry import (
         key_for_source_label,
@@ -85,6 +100,11 @@ def rules() -> dict:
         "report_statuses": dict(ReportStatus.choices),
         "report_tones": {str(k): v for k, v in STATUS_TONES.items()},
         "reporting_starts": services.REPORTING_STARTS.isoformat(),
+        # An observation's rating fields (averaged, the empty ones left out)
+        # and its recommendation's labels; an activity type's labels.
+        "rating_fields": [field for field, _label, _help in OBSERVATION_CRITERIA],
+        "recommendations": dict(ObservationRecommendation.choices),
+        "activity_types": dict(ActivityType.choices),
         "helper_figure_chars": HELPER_FIGURE_CHARS,
         "page_size": TABLE_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),

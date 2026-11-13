@@ -2,7 +2,10 @@ package main
 
 import "context"
 
-func init() { pageQuestions["/cce-leadership/reports"] = cceReportsQuestions }
+func init() {
+	pageQuestions["/cce-leadership/reports"] = cceReportsQuestions
+	pageQuestions["/cce-leadership/feedback"] = cceReportsQuestions
+}
 
 // cceReportsQuestions are the monthly CCE reports': the page as it opens,
 // the register's page in and out of range and not a number, and a key it

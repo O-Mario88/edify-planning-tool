@@ -38,6 +38,9 @@ var rules = func() (r struct {
 	ReportStatuses     map[string]string `json:"report_statuses"`
 	ReportTones        map[string]string `json:"report_tones"`
 	ReportingStarts    string            `json:"reporting_starts"`
+	RatingFields       []string          `json:"rating_fields"`
+	Recommendations    map[string]string `json:"recommendations"`
+	ActivityTypes      map[string]string `json:"activity_types"`
 	HelperFigureChars  int               `json:"helper_figure_chars"`
 	PageSize           int               `json:"page_size"`
 	QueryKeysNotPassed []string          `json:"query_keys_not_passed"`

@@ -1,6 +1,39 @@
 {
+  "activity_types": {
+    "baseline_ssa_visit": "SSA Visit",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+    "cluster_training": "Cluster Training",
+    "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+    "coaching_visit": "Coaching Visit",
+    "core_assessment_visit": "Core Assessment Visit",
+    "core_training": "Core Training",
+    "core_visit": "Core Visit",
+    "donor_visit": "Donor Visit",
+    "field_event": "Field Event",
+    "follow_up_visit": "Follow-up Visit",
+    "in_school_coaching_visit": "In-school Coaching Visit",
+    "in_school_support": "In-school Support",
+    "in_school_training": "In-school Training",
+    "partner_activity": "Partner Activity",
+    "partner_ssa_collection": "Partner SSA Collection",
+    "programme_event": "Programme Event",
+    "project_activity": "Project Activity",
+    "school_improvement_training": "School Improvement Training",
+    "school_invitation": "School Invitation",
+    "school_visit": "School Visit",
+    "school_visit_ssa_collection": "School Visit + SSA Collection",
+    "social_visit": "Social Visit",
+    "ssa_activity": "SSA Activity",
+    "story_gathering_visit": "Gathering Story",
+    "training": "Training",
+    "training_follow_up_visit": "Training Follow-up Visit"
+  },
   "helper_figure_chars": 28,
   "metric_labels": {
+    "Average Observation Rating": "Average Observation Rating",
+    "Feedback Acknowledged": "Feedback Acknowledged",
+    "Feedback Awaiting Acknowledgement": "Feedback Awaiting Acknowledgement",
     "Report Drafts": "Report Drafts",
     "Reports Acknowledged": "Reports Acknowledged",
     "Reports Awaiting Review": "Reports Awaiting Review",
@@ -8,6 +41,105 @@
   },
   "page_size": 50,
   "pages": {
+    "/cce-leadership/feedback": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": true,
+          "strip": {
+            "label": "Regional Lead",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": true,
+                "href": "/cce-leadership/feedback",
+                "label": "Training Feedback"
+              },
+              {
+                "active": false,
+                "href": "/cce-leadership/coaching",
+                "label": "Regional Lead Coaching"
+              }
+            ]
+          }
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/cce-leadership/reports": {
       "roles": {
         "Accountant": {
@@ -109,6 +241,19 @@
     "pdf",
     "xlsx"
   ],
+  "rating_fields": [
+    "rating_biblical_integration",
+    "rating_need_alignment",
+    "rating_facilitation",
+    "rating_participation",
+    "rating_application"
+  ],
+  "recommendations": {
+    "continue": "Continue as delivered",
+    "economize": "Economize the delivery",
+    "replace": "Replace the training",
+    "strengthen": "Strengthen with the training partner"
+  },
   "report_statuses": {
     "acknowledged": "Acknowledged",
     "draft": "Draft",

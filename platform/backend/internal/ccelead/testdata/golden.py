@@ -22,15 +22,26 @@ from django.contrib.auth import get_user_model
 from django.db import connection
 from django.utils import timezone as dj_timezone
 
-from apps.cce_leadership.models import RegionalCceReport
+from apps.accounts.models import StaffProfile
+from apps.activities.models import Activity
+from apps.cce_leadership.models import (
+    CceoCoaching,
+    RegionalCceReport,
+    RegionalEngagement,
+)
 from apps.mobile_feed.views import read_page
 
 if not settings.DATABASES["default"]["NAME"].endswith("_test"):
     raise SystemExit("golden.py runs only against a _test database")
 
 User = get_user_model()
-TABLES = ("cce_regional_report",)
-PATHS = ("/cce-leadership/reports",)
+TABLES = (
+    "cce_cceo_coaching",
+    "cce_regional_engagement",
+    "cce_regional_report",
+    "activity",
+)
+PATHS = ("/cce-leadership/reports", "/cce-leadership/feedback")
 
 
 def clear():
@@ -70,6 +81,71 @@ def file_rows():
         )
 
 
+def file_feedback():
+    lead = User.objects.get(email="regional-lead@edify.org")
+    pl = StaffProfile.objects.get(user__email="pl1@edify.org")
+    pl2 = StaffProfile.objects.get(user__email="pl2@edify.org")
+    from apps.partners.models import Partner
+    from apps.schools.models import School
+
+    school = School.objects.filter(deleted_at__isnull=True).order_by("id").first()
+    partner = Partner.objects.order_by("id").first()
+    officer_staff = StaffProfile.objects.filter(supervisor_links__supervisor=pl).first()
+    trainings = []
+    for k, (delivery, planned) in enumerate(
+        [("partner", date(2026, 10, 3)), ("staff", date(2026, 9, 21)), ("staff", None)]
+    ):
+        trainings.append(
+            Activity.objects.create(
+                id=f"gcla{k}",
+                activity_type="in_school_training",
+                activity_name_snapshot="" if k else "Golden Phonics Training",
+                school=school if k != 2 else None,
+                fy="2027",
+                planned_date=planned,
+                status="scheduled",
+                delivery_type=delivery,
+                assigned_partner_id=partner.id
+                if delivery == "partner" and partner
+                else None,
+                responsible_staff_id=officer_staff.id if officer_staff else None,
+            )
+        )
+    at = datetime(2026, 11, 1, 10, 0, tzinfo=timezone.utc)
+    for i in range(9):
+        activity = trainings[i % 3] if i < 7 else None
+        RegionalEngagement.objects.create(
+            id=f"gcle{i:03d}",
+            author_id=lead.id,
+            kind="training_observation",
+            held_on=date(2026, 10, 1 + i * 3),
+            fy="2027",
+            country=["Uganda", "Uganda", "Kenya", ""][i % 4],
+            program_lead_ids=[pl.id] if i % 3 else [pl2.id, pl.id],
+            subject=f"Golden observation {i}",
+            activity=activity,
+            rating_biblical_integration=[4, None, 3][i % 3],
+            rating_need_alignment=[3, 2, None][i % 3],
+            rating_facilitation=[4, 3, 3][i % 3],
+            recommendation=["continue", "strengthen", ""][i % 3],
+            feedback_shared_at=None if i in (0, 5) else at + timedelta(days=i),
+            acknowledged_at=at + timedelta(days=i + 1) if i % 2 else None,
+        )
+    officer = StaffProfile.objects.filter(supervisor_links__supervisor=pl).first()
+    if officer is not None:
+        CceoCoaching.objects.create(
+            id="gclc001",
+            author_id=pl.user_id,
+            cceo_staff_id=officer.id,
+            cceo_user_id=officer.user_id,
+            kind="training_observation",
+            held_on=date(2026, 11, 5),
+            fy="2027",
+            subject="Passed on",
+            source_engagement_id="gcle003",
+        )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -87,6 +163,7 @@ QUESTIONS = {
     "admin@edify.org": [{}, {"register_page": "2"}, {"register_page": "x"}],
     "ia@edify.org": [{}],
     "cd@edify.org": [{}],
+    "pl1@edify.org": [{}, {"open": "gcle003"}, {"open": "nothing"}],
 }
 
 
@@ -94,6 +171,7 @@ def main():
     clear()
     try:
         file_rows()
+        file_feedback()
         rows = dump_rows()
         answers = []
         for email, asked in QUESTIONS.items():

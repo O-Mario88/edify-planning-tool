@@ -24,3 +24,30 @@ Proof: `cmd/parity -screen page -path /cce-leadership/reports` for all 29
 accounts; `internal/ccelead/testdata/golden.py` files 58 reports and
 `internal/integration/cce_leadership_test.go` compares Go's answers whole
 (`EDIFY_CCE_LEADERSHIP_GOLDEN`, the same day).
+
+## 136.2 Training Feedback
+
+`feedback_view` (`/cce-leadership/feedback`), in the same package and shell:
+the training observations `feedback_visible_to` gives the reader — Admin
+every one, the Regional Lead their own, and of those shared, a Programme
+Lead's those shared with them (`program_lead_ids`), a Country Director's and
+Impact Assessment's those of their own country (none without a country on
+file) — the latest day first, at most 500. Each row: the training
+(`training_label`: "%-d %b" of its day or "Undated", its name or type, its
+school or cluster) or the observation's subject; the day observed; for the
+Programme Lead who delivered it (`delivered_by`: "<partner> · partner",
+"Training partner", or the officer's name), for anyone else the country; the
+Regional Lead; the rating (the non-empty ratings' mean, Python's half-to-even
+rounding, "N.N of 4"); the recommendation's label; the state (Not shared yet;
+Awaiting the Programme Lead, or "your acknowledgement" for the PL;
+Acknowledged, and "· passed to the officer" once a coaching record carries it
+on). The record's "Open" drawer, and for the Programme Lead also "Open
+training": two actions, which the feed reads as the row's menu. Figures:
+Awaiting Acknowledgement, Acknowledged, and the mean of the ratings shown
+("N.N / 4", "across N observation(s)"). A `?open=` record link changes nothing
+the feed reads. `deploy/db/roles.sql` grants an observation's people, day,
+place, recommendation, ratings and sharing times — never its notes, feedback
+or the lead's response — and whether a coaching record passed it on.
+
+The golden files three training activities of its own (partner and staff
+delivery, one undated) for the observations to name, and nine observations.

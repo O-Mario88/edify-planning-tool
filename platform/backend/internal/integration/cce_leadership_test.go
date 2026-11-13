@@ -23,7 +23,7 @@ func TestTheCCEReportsMatchTheExistingFeedOverReportsTheSeedLacks(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	var golden calendarGolden
+	var golden hrRegisterGolden
 	if err := json.Unmarshal(raw, &golden); err != nil {
 		t.Fatal(err)
 	}
@@ -31,21 +31,29 @@ func TestTheCCEReportsMatchTheExistingFeedOverReportsTheSeedLacks(t *testing.T) 
 		t.Skipf("the golden answers were written on %s", golden.Today)
 	}
 	ctx := context.Background()
+	// Only the golden's own rows (ids starting "gcl"), children first.
+	children := []string{"cce_cceo_coaching", "cce_regional_engagement", "cce_regional_report", "activity"}
 	clear := func() {
-		if _, err := admin.Exec(ctx, `DELETE FROM cce_regional_report WHERE id LIKE 'gcl%'`); err != nil {
-			t.Errorf("clearing the reports: %v", err)
+		for _, table := range children {
+			if _, err := admin.Exec(ctx, `DELETE FROM "`+table+`" WHERE id LIKE 'gcl%'`); err != nil {
+				t.Errorf("clearing %s: %v", table, err)
+			}
 		}
 	}
 	clear()
 	t.Cleanup(clear)
-	for _, row := range golden.Rows["cce_regional_report"] {
-		if _, err := admin.Exec(ctx, `INSERT INTO cce_regional_report SELECT * FROM json_populate_record(NULL::cce_regional_report, $1::json)`, string(row)); err != nil {
-			t.Fatalf("filing a report: %v", err)
+	for _, table := range []string{"activity", "cce_regional_report", "cce_regional_engagement", "cce_cceo_coaching"} {
+		for _, row := range golden.Rows[table] {
+			if _, err := admin.Exec(ctx, `INSERT INTO "`+table+`" SELECT * FROM json_populate_record(NULL::"`+table+`", $1::json)`, string(row)); err != nil {
+				t.Fatalf("filing a %s row: %v", table, err)
+			}
 		}
 	}
-	answers := []goldenAnswer{}
+	byPath := map[string][]goldenAnswer{}
 	for _, a := range golden.Answers {
-		answers = append(answers, goldenAnswer{Email: a.Email, Query: a.Query, Status: a.Status, Body: a.Body})
+		byPath[a.Path] = append(byPath[a.Path], goldenAnswer{Email: a.Email, Query: a.Query, Status: a.Status, Body: a.Body})
 	}
-	compareGolden(t, "/cce-leadership/reports", answers)
+	for path, answers := range byPath {
+		compareGolden(t, path, answers)
+	}
 }

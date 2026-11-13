@@ -136,7 +136,7 @@ FROM cce_regional_report r WHERE %s ORDER BY r.period DESC, r.created_at DESC LI
 	if lead {
 		reg.title = "Monthly CCE Reports"
 		reg.emptyBody = "Start this month's report; the region's figures are added when you submit it."
-		reg.actions = []action{{"Start a monthly report", ReportsPath + "/new"}}
+		reg.actions = []action{{label: "Start a monthly report", drawer: ReportsPath + "/new"}}
 	} else {
 		reg.columns = append(reg.columns, "Regional Lead")
 	}
@@ -169,7 +169,7 @@ FROM cce_regional_report r WHERE %s ORDER BY r.period DESC, r.created_at DESC LI
 			label = "Review"
 		}
 		reg.rows = append(reg.rows, cells)
-		reg.rowActions = append(reg.rowActions, []action{{label, ReportsPath + "/" + x.id}})
+		reg.rowActions = append(reg.rowActions, []action{{label: label, drawer: ReportsPath + "/" + x.id}})
 	}
 	awaiting := "for you to acknowledge or return"
 	if lead {
