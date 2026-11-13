@@ -735,6 +735,16 @@ func (it *items) name(r *school, who reader) {
 	}
 }
 
+// caption is the line beside a school's name. A reader who cannot open the
+// school sees its name as plain text, which the feed reads together with the
+// caption that follows it (the reader joins words around an element).
+func caption(r *school, who reader, text string) string {
+	if schoolHref(r, who) == "" {
+		return r.name + " " + text
+	}
+	return text
+}
+
 func attentionBlocks(rows []*school, who reader) []*screensv1.PageBlock {
 	out := []*screensv1.PageBlock{}
 	for _, reason := range rules.Attention.Order {
@@ -746,7 +756,7 @@ func attentionBlocks(rows []*school, who reader) []*screensv1.PageBlock {
 			}
 			count++
 			body.name(r, who)
-			body.text(r.code + " · " + orDashText(r.district) + " · " + r.owner)
+			body.text(caption(r, who, r.code+" · "+orDashText(r.district)+" · "+r.owner))
 			body.text("Latest SSA " + orDash(r.ssaNow) + " · " + r.trajectoryLabel() + " · Package " + r.packageLabel())
 		}
 		out = append(out, listSection(reason, count, body)...)
@@ -765,7 +775,7 @@ func championBlocks(rows []*school, who reader) []*screensv1.PageBlock {
 			}
 			count++
 			body.name(r, who)
-			body.text(r.code + " · " + r.owner)
+			body.text(caption(r, who, r.code+" · "+r.owner))
 			weakest := dash
 			if r.weakest != "" {
 				weakest = r.weakestLabel + " (" + orDash(r.weakestScore) + ")"
@@ -809,16 +819,7 @@ func recommendationBlocks(v view, rows []*school, r *records) []*screensv1.PageB
 		out = append(out, panelBlock(row.name+" "+row.code+" · "+row.owner, head))
 		body := items{}
 		for _, rec := range recs {
-			line := interventionDisplay(rec.Intervention)
-			if rec.Score != nil {
-				line += " (" + decimalOne(*rec.Score)
-				if rec.Band != "" {
-					line += ", " + rec.Band
-				}
-				line += ")"
-			}
-			body.text(line)
-			body.text(rec.Reason)
+			body.text(recommendationText(rec))
 			state, ok := rules.RecommendationStates[rec.State]
 			if !ok {
 				state = rec.State
@@ -873,4 +874,29 @@ func header(v view, d Doors) *screensv1.PageHeader {
 			pageheader.Download("Download Excel", pageheader.Href(Path, with("tab", v.tab, "format", "xlsx"))))
 	}
 	return h
+}
+
+// recommendationText is one recommendation's line as the feed reads the
+// template's span: the intervention (score, band), " · ", the recommended
+// training or "No mapped training[: why]", then the reason, joined with no
+// separator as the feed joins adjacent inline text.
+func recommendationText(rec recommendationRow) string {
+	line := interventionDisplay(rec.Intervention)
+	if rec.Score != nil {
+		line += " (" + decimalOne(*rec.Score)
+		if rec.Band != "" {
+			line += ", " + rec.Band
+		}
+		line += ")"
+	}
+	line += " · "
+	if rec.HasItem {
+		line += rec.Item
+	} else {
+		line += "No mapped training"
+		if rec.Unmapped != "" {
+			line += ": " + rec.Unmapped
+		}
+	}
+	return line + rec.Reason
 }

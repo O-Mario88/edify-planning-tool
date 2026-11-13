@@ -312,6 +312,12 @@ def make(seed, *, schools, fy="2027", operational="2027", rules=True):
                 "score": rnd.choice([None, "6.10", "4.25", "7.05", "3.95"]),
                 "band": rnd.choice(["", "Improving", "Critical"]),
                 "reason": rnd.choice(["", "  ", f"{area} scored low twice."]), "state": rnd.choice(STATES),
+                # The recommended training, or why none is mapped: from the
+                # position, so the seeded stream (and every other record) is
+                # unchanged.
+                "item": ["Business Planning Support", "", ""][(k + len(area)) % 3],
+                "has_item": (k + len(area)) % 3 == 0,
+                "unmapped": ["", "No course covers it", ""][(k + len(area)) % 3],
             })  # fmt: skip
     # The statements' orders.
     world["schools"].sort(key=lambda s: s["created"], reverse=True)
@@ -544,7 +550,8 @@ def answer(rec, world, user, query, operational):
         states = {str(s) for s in (kw(calls, "state__in") or [])}
         return [
             NS(school_id=r["school_id"], rank=0, intervention=r["intervention"], score=Decimal(r["score"]) if r["score"] else None,
-               score_band=r["band"], reason=r["reason"], recommended_item=None, unmapped_reason="",
+               score_band=r["band"], reason=r["reason"],
+               recommended_item=NS(display_name=r["item"]) if r["has_item"] else None, unmapped_reason=r["unmapped"],
                get_intervention_display=(lambda v=r["intervention"]: dict(SsaIntervention.choices).get(v, v)),
                get_state_display=(lambda v=r["state"]: STATE_LABELS[v]))
             for r in rec["recommendations"]

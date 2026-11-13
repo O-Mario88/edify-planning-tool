@@ -444,3 +444,7 @@ GRANT SELECT (loan_id, due_date, ia_status, prepared_by, prepared_at, updated_at
 -- The Training Summary's Schools tab (internal/trainingsummary, doc 44):
 -- training_coverage.uncovered leaves out a school marked a duplicate.
 GRANT SELECT (duplicate_status) ON school TO edify_gateway_ro;
+
+-- Core School Oversight's recommendations (backlog core-recommendations): the
+-- recommended training each names, or why none is mapped.
+GRANT SELECT (recommended_item_id, unmapped_reason) ON ssa_recommendation TO edify_gateway_ro;
