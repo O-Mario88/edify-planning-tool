@@ -392,3 +392,15 @@ GRANT SELECT (facilitating_partner_id) ON activity TO edify_gateway_ro;
 GRANT SELECT (state, supervising_pl_id) ON partner_assignment_withdrawal TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
 GRANT SELECT (recommendation) ON cce_regional_engagement TO edify_gateway_ro;
+
+-- The To-Do page's Programme Lead builders (agent/todos-pl, docs/migration/55).
+GRANT SELECT (id, fy, status, due_date, created_at) ON hr_performance_review TO edify_gateway_ro;
+GRANT SELECT (id, fy, active_window) ON hr_performance_cycle TO edify_gateway_ro;
+GRANT SELECT (kind, held_on, author_id) ON cce_cceo_coaching TO edify_gateway_ro;
+GRANT SELECT (id) ON cce_regional_engagement TO edify_gateway_ro;
+GRANT SELECT (author_id) ON cce_team_guidance TO edify_gateway_ro;
+GRANT SELECT (assigned_to_user_id) ON cd_flag TO edify_gateway_ro;
+GRANT SELECT (id) ON partner_invoice TO edify_gateway_ro;
+GRANT SELECT (program_lead_user_id) ON planning_oversight_follow_up TO edify_gateway_ro;
+GRANT SELECT (pl_user_id) ON target_catchup_plan TO edify_gateway_ro;
+GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;

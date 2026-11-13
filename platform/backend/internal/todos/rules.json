@@ -264,6 +264,95 @@
   "returned"
  ],
  "group_min": 3,
+ "lead": {
+  "advance_approver_pending_statuses": [
+   "accountability_pl_pending",
+   "reimbursement_pl_pending"
+  ],
+  "analytics_completed_statuses": [
+   "completed",
+   "closed",
+   "ia_verified",
+   "accountant_confirmed",
+   "salesforce_id_required",
+   "awaiting_ia_verification",
+   "submitted_to_pl",
+   "evidence_accepted"
+  ],
+  "cceo_backlog_statuses": [
+   "returned_by_pl",
+   "returned_by_ia",
+   "salesforce_id_required",
+   "awaiting_ia_verification"
+  ],
+  "coaching_category": "Performance & Coaching",
+  "coaching_row_limit": 8,
+  "conversation_windows": [
+   "q1",
+   "mid_year",
+   "q3",
+   "year_end"
+  ],
+  "lead_reviewable_statuses": [
+   "submitted_to_pl",
+   "awaiting_ia_verification"
+  ],
+  "one_to_one_due_day": 10,
+  "one_to_one_kind": "one_to_one",
+  "review_category": "Performance & coaching",
+  "review_closed_statuses": [
+   "Completed",
+   "Closed"
+  ],
+  "review_done_stages": [
+   "closed",
+   "employee_acknowledged",
+   "signed_and_archived"
+  ],
+  "review_stage_manager_review": "priorities_manager_review",
+  "review_stages_before_conversation": [
+   "not_started",
+   "priorities_draft",
+   "priorities_manager_review"
+  ],
+  "reviewer_roles": {
+   "Accountant": [
+    "CountryDirector"
+   ],
+   "CCEO": [
+    "Program Lead"
+   ],
+   "CountryDirector": [
+    "RegionalVicePresident"
+   ],
+   "HumanResources": [
+    "CountryDirector"
+   ],
+   "ImpactAssessment": [
+    "CountryDirector"
+   ],
+   "Program Lead": [
+    "CountryDirector"
+   ],
+   "ProjectCoordinator": [
+    "CountryDirector"
+   ],
+   "RegionalVicePresident": [
+    "Admin"
+   ]
+  },
+  "ssa_pending_status": "pending",
+  "team_targets_completed_statuses": [
+   "completed",
+   "closed",
+   "ia_verified",
+   "accountant_confirmed",
+   "salesforce_id_required",
+   "awaiting_ia_verification",
+   "submitted_to_pl",
+   "evidence_accepted"
+  ]
+ },
  "loan_field_verification_statuses": [
   "needs_scheduling",
   "overdue"
@@ -609,6 +698,24 @@
    "RegionalProgramLead": false,
    "RegionalVicePresident": false
   },
+  "/performance-conversation?staff={id}": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": true,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": true,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
+  },
   "/planning": {
    "Accountant": true,
    "Admin": true,
@@ -716,6 +823,24 @@
    "ProjectCoordinator": false,
    "RegionalProgramLead": false,
    "RegionalVicePresident": true
+  },
+  "/team/coaching?open=new&cceo={id}&kind=one_to_one": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": true,
+   "RegionalVicePresident": false
   }
  },
  "operating_statuses": [

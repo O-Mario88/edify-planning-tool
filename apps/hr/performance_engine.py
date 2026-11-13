@@ -1662,6 +1662,8 @@ def conversation_progress(reviews, window: str) -> dict:
 # rather than to hold a conversation.
 CONVERSATION_WINDOWS = ("q1", "mid_year", "q3", "year_end")
 REVIEW_DONE_STAGES = ("closed", "employee_acknowledged", "signed_and_archived")
+#: Review statuses that are finished whatever the stage (team_review_rows).
+REVIEW_CLOSED_STATUSES = ("Completed", "Closed")
 
 
 def team_review_rows(principal, *, fy: str | None = None, today=None) -> list[dict]:
@@ -1736,7 +1738,7 @@ def team_review_rows(principal, *, fy: str | None = None, today=None) -> list[di
             if r.due_date
             and r.due_date < today
             and r.stage not in REVIEW_DONE_STAGES
-            and r.status not in ("Completed", "Closed")
+            and r.status not in REVIEW_CLOSED_STATUSES
         ]
         rows.append(
             {
