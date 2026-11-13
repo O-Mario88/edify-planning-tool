@@ -407,6 +407,48 @@
       "portfolio": false
     }
   },
+  "fixed_doors": {
+    "RegionalVicePresident": {
+      "country_reader": false,
+      "feed_opens": true,
+      "lens_tabs_country": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Country Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        }
+      ],
+      "lens_tabs_team": [
+        {
+          "active": false,
+          "href": "/team-planning-oversight/",
+          "label": "Team Plan"
+        },
+        {
+          "active": true,
+          "href": "/team-planning-oversight/?view=portfolio",
+          "label": "Team Portfolio"
+        },
+        {
+          "active": false,
+          "href": "/team-planning-oversight/?view=coverage",
+          "label": "Schools & Coverage"
+        }
+      ],
+      "page": true,
+      "portfolio": true
+    }
+  },
   "max_query_value": 128,
   "no_lead_key": "__no_lead__",
   "no_lead_label": "No Programme Lead",

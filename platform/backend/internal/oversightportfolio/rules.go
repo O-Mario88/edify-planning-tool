@@ -48,7 +48,11 @@ type Doors struct {
 
 // Rules is rules.json.
 type Rules struct {
-	Doors              map[string]Doors `json:"doors"`
+	Doors map[string]Doors `json:"doors"`
+	// FixedDoors are the doors of each role COVERAGE_LENS_ROLES misses by a
+	// misspelt name, as the export computes them with the name corrected:
+	// what Go draws instead of the existing page (go-fix-rvp-lens).
+	FixedDoors         map[string]Doors `json:"fixed_doors"`
 	VisitTypes         []string         `json:"visit_types"`
 	TrainingTypes      []string         `json:"training_types"`
 	DeadStatuses       []string         `json:"dead_statuses"`
@@ -78,4 +82,13 @@ func mustRules(raw []byte) Rules {
 		panic("oversightportfolio: rules.json is incomplete")
 	}
 	return r
+}
+
+// doorsFor is the doors Go draws for a role: the corrected ones where the
+// existing page's role list misspells the role, else the existing page's.
+func doorsFor(role string) Doors {
+	if d, fixed := rules.FixedDoors[role]; fixed {
+		return d
+	}
+	return rules.Doors[role]
 }

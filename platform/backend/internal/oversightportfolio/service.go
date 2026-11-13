@@ -95,7 +95,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !ok || strings.ToLower(pyStrip(query, "view")) != "portfolio" || query.Get("followup") != "" {
 		return nil, false, nil
 	}
-	doors, known := rules.Doors[p.ActiveRole]
+	_, known := rules.Doors[p.ActiveRole]
+	doors := doorsFor(p.ActiveRole)
 	if !known {
 		return nil, false, nil
 	}

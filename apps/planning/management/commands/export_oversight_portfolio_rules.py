@@ -73,6 +73,37 @@ def doors() -> dict:
     return out
 
 
+#: The role COVERAGE_LENS_ROLES means and the name it misspells (owner,
+#: 2026-11-13: "Can you fix those from the go side"; Go draws the corrected
+#: doors, internal/parity/intended.json go-fix-rvp-lens).
+_MISSPELT_ROLE, _MEANT_ROLE = "RegionalVP", "RegionalVicePresident"
+
+
+def fixed_doors() -> dict:
+    """The doors of every role whose doors change once COVERAGE_LENS_ROLES
+    (and PORTFOLIO_LENS_ROLES, the same set) names the Regional Vice
+    President as it means to: what Go draws instead of the existing page."""
+    from unittest import mock
+
+    from apps.frontend.views import oversight_views
+
+    meant = frozenset(
+        _MEANT_ROLE if role == _MISSPELT_ROLE else role
+        for role in oversight_views.COVERAGE_LENS_ROLES
+    )
+    existing = doors()
+    with (
+        mock.patch.object(oversight_views, "COVERAGE_LENS_ROLES", meant),
+        mock.patch.object(oversight_views, "PORTFOLIO_LENS_ROLES", meant),
+    ):
+        corrected = doors()
+    return {
+        role: corrected[role]
+        for role in corrected
+        if corrected[role] != existing[role]
+    }
+
+
 def rules() -> dict:
     from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
     from apps.core.pagination import TABLE_PAGE_SIZE
@@ -84,6 +115,7 @@ def rules() -> dict:
 
     return {
         "doors": doors(),
+        "fixed_doors": fixed_doors(),
         "visit_types": sorted(VISIT_TYPES),
         "training_types": sorted(TRAINING_TYPES),
         "dead_statuses": sorted(DEAD_STATUSES),
