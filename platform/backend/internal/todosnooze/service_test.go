@@ -62,10 +62,10 @@ func TestDecideMakesTheExistingSnooze(t *testing.T) {
 		until, message, title string
 		storedTitle, storedID string
 	}{
-		{"tomorrow", Request{"act-1", "tomorrow", "Visit X"}, "2026-11-14", "snoozed until Sat 14 Nov", "Visit X", "Visit X", "act-1"},
-		{"next week", Request{"act-1", "next_week", "Visit X"}, "2026-11-20", "snoozed until Fri 20 Nov", "Visit X", "Visit X", "act-1"},
-		{"an empty title", Request{"a", "next_week", ""}, "2026-11-20", "snoozed until Fri 20 Nov", "", "", "a"},
-		{"a long title is cut by characters", Request{longID, "tomorrow", long}, "2026-11-14", "snoozed until Sat 14 Nov",
+		{"tomorrow", Request{"act-1", "tomorrow", "Visit X", ""}, "2026-11-14", "snoozed until Sat 14 Nov", "Visit X", "Visit X", "act-1"},
+		{"next week", Request{"act-1", "next_week", "Visit X", ""}, "2026-11-20", "snoozed until Fri 20 Nov", "Visit X", "Visit X", "act-1"},
+		{"an empty title", Request{"a", "next_week", "", ""}, "2026-11-20", "snoozed until Fri 20 Nov", "", "", "a"},
+		{"a long title is cut by characters", Request{longID, "tomorrow", long, ""}, "2026-11-14", "snoozed until Sat 14 Nov",
 			strings.Repeat("é", 120), strings.Repeat("é", 255), strings.Repeat("x", 128)},
 	}
 	for _, test := range tests {
@@ -91,7 +91,7 @@ func TestDecideMakesTheExistingSnooze(t *testing.T) {
 }
 
 func TestDecideCrossesTheMonthAndYear(t *testing.T) {
-	plan, err := Decide(person("CCEO"), Request{"a", "next_week", ""}, time.Date(2026, 12, 28, 9, 0, 0, 0, time.UTC))
+	plan, err := Decide(person("CCEO"), Request{"a", "next_week", "", ""}, time.Date(2026, 12, 28, 9, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func TestDecideCrossesTheMonthAndYear(t *testing.T) {
 }
 
 func TestDecideRefusesAsTheExistingSnooze(t *testing.T) {
-	for _, r := range []Request{{"", "tomorrow", "t"}, {"act-1", "", "t"}, {"act-1", "someday", "t"}, {"act-1", "Tomorrow", "t"}} {
+	for _, r := range []Request{{"", "tomorrow", "t", ""}, {"act-1", "", "t", ""}, {"act-1", "someday", "t", ""}, {"act-1", "Tomorrow", "t", ""}} {
 		_, err := Decide(person("CCEO"), r, time.Now())
 		var refusal *Refusal
 		if !errors.As(err, &refusal) || refusal.Message != "Choose when the item comes back." {
@@ -111,10 +111,10 @@ func TestDecideRefusesAsTheExistingSnooze(t *testing.T) {
 }
 
 func TestDecideHandsOn(t *testing.T) {
-	if _, err := Decide(person("CountryDirector"), Request{"a", "tomorrow", ""}, time.Now()); !errors.Is(err, ErrHandOn) {
+	if _, err := Decide(person("CountryDirector"), Request{"a", "tomorrow", "", ""}, time.Now()); !errors.Is(err, ErrHandOn) {
 		t.Fatalf("a refused reader: %v", err)
 	}
-	if _, err := Decide(person("CCEO"), Request{"a\x00", "tomorrow", ""}, time.Now()); !errors.Is(err, ErrHandOn) {
+	if _, err := Decide(person("CCEO"), Request{"a\x00", "tomorrow", "", ""}, time.Now()); !errors.Is(err, ErrHandOn) {
 		t.Fatalf("a NUL: %v", err)
 	}
 	// The reader is asked before the form: a refused reader with an empty

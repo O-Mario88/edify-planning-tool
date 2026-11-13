@@ -71,6 +71,8 @@ const (
 	todoRolesFile = "../../../deploy/db/todo_roles.sql"
 	// Undoing a snooze: the narrow function that removes that one row.
 	todoUnsnoozeRolesFile = "../../../deploy/db/todo_unsnooze_roles.sql"
+	// The presence stamp for requests Go answers: one narrow function.
+	presenceRolesFile = "../../../deploy/db/presence_roles.sql"
 	// Where the loan portal's emails go in this run.
 	publicBaseURL = "http://127.0.0.1:9"
 )
@@ -255,6 +257,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(todoUnsnoozeRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	presenceRoles, err := os.ReadFile(filepath.FromSlash(presenceRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(presenceRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)
@@ -534,8 +543,16 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"change how a session is given": rw + `UPDATE activity SET programme_delivery_mode = programme_delivery_mode`,
 		"undo a snooze for someone":     rw + `DELETE FROM command_center_todo_snooze`,
 		"hand a snooze to someone else": rw + `UPDATE command_center_todo_snooze SET user_id = user_id`,
-		"read a snooze's words":         `SELECT title FROM command_center_todo_snooze LIMIT 1`,
-		"write a Today decision":        rw + `INSERT INTO command_center_today_action (id) VALUES ('x')`,
+		// The presence stamp (65) goes through gateway_presence.beat only.
+		"stamp someone's presence directly": rw + `UPDATE "user" SET last_seen_at = last_seen_at`,
+		"rename someone's page":             rw + `UPDATE "user" SET last_seen_path = last_seen_path`,
+		"credit someone's time directly":    rw + `UPDATE presence_time SET seconds = seconds`,
+		"invent time on a page":             rw + `INSERT INTO presence_time (id, user_id, day, section, working_on, seconds) VALUES ('x', 'x', current_date, 'x', 'x', 1)`,
+		"remove time on a page":             rw + "DELETE FROM presence_time",
+		"lengthen a sign-in":                rw + `UPDATE login_event SET active_seconds = active_seconds`,
+		"become the presence owner":         rw + `SET ROLE edify_presence_owner`,
+		"read a snooze's words":             `SELECT title FROM command_center_todo_snooze LIMIT 1`,
+		"write a Today decision":            rw + `INSERT INTO command_center_today_action (id) VALUES ('x')`,
 	}
 	for name, statement := range statements {
 		t.Run(name, func(t *testing.T) {
