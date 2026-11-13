@@ -439,7 +439,7 @@ func teamsInOrder(officers []profile, leadOf map[string]string, leadIDs []string
 
 // forReader is training_summary.for_reader for a Programme Lead or a reader
 // of the country.
-func forReader(ctx context.Context, q schooldirectory.Querier, role, userID, staffProfileID, fy, lead string, doors Doors, now time.Time) (summary, error) {
+func forReader(ctx context.Context, q schooldirectory.Querier, role, userID, staffProfileID, fy, lead string, doors Doors, now time.Time, withRows bool) (summary, error) {
 	country, err := readerCountry(ctx, q, userID)
 	if err != nil {
 		return summary{}, err
@@ -495,6 +495,11 @@ func forReader(ctx context.Context, q schooldirectory.Querier, role, userID, sta
 		}
 		s.staff = teamsInOrder(officers, leadOf, s.leadIDs)
 		s.maySetCountry, s.leads, s.lead, s.countryLinks = doors.SetsCountryCeiling, leads, lead, true
+	}
+	if !withRows {
+		// with_rows=False: the readers and columns alone, for a tab that
+		// draws another table of the same people.
+		return s, nil
 	}
 	s.rows, err = buildRows(ctx, q, s.staff, fy, country, now)
 	return s, err

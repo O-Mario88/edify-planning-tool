@@ -9,9 +9,10 @@
 // apps.planning.training_ceilings), as the app's feed reads it
 // (apps.mobile_feed).
 //
-// Its Summary tab is Go's; the By staff and Schools tabs, every other lens
-// of the page, and a page opened from a planning follow-up are still
-// answered by the existing application.
+// Its Summary, By staff and Schools tabs are Go's (the last two read
+// training_ceilings.summary_for_staff and training_coverage.table); every
+// other lens of the page and a page opened from a planning follow-up are
+// still answered by the existing application.
 //
 // The vocabularies are the existing ones, exported to rules.json by
 // `manage.py export_training_summary_rules`;
@@ -52,6 +53,27 @@ type Doors struct {
 	// may_read_country); SetsCountryCeiling: Admin and Impact Assessment.
 	ReadsCountry       bool `json:"reads_country"`
 	SetsCountryCeiling bool `json:"sets_country_ceiling"`
+	// OpensStaffProfile is the staff_link tag's _may_open: a staff name
+	// links to the person's profile.
+	OpensStaffProfile bool `json:"opens_staff_profile"`
+}
+
+// Coverage are the By staff and Schools tabs' vocabularies
+// (apps.planning.training_coverage and training_ceilings.SummaryRow).
+type Coverage struct {
+	RouteLabels               map[string]string `json:"route_labels"`
+	StatusLabels              map[string]string `json:"status_labels"`
+	StatusOrder               []string          `json:"status_order"`
+	StatusTones               map[string]string `json:"status_tones"`
+	ShowOptions               [][2]string       `json:"show_options"`
+	Figures                   []string          `json:"figures"`
+	CompletedStatuses         []string          `json:"completed_statuses"`
+	UnderWayStatuses          []string          `json:"under_way_statuses"`
+	TrainedTypes              []string          `json:"trained_types"`
+	ExcludedDuplicateStatuses []string          `json:"excluded_duplicate_statuses"`
+	OperatingStatuses         []string          `json:"operating_statuses"`
+	TablePageSize             int               `json:"table_page_size"`
+	SummaryFlagTones          map[string]string `json:"summary_flag_tones"`
 }
 
 // Rules are the lens's vocabularies.
@@ -61,6 +83,7 @@ type Rules struct {
 		Cell    map[string]string `json:"cell"`
 		Country map[string]string `json:"country"`
 	} `json:"tones"`
+	Coverage                    Coverage          `json:"coverage"`
 	TrainingTypes               []string          `json:"training_types"`
 	MeetingTypes                []string          `json:"meeting_types"`
 	MeetingKindTraining         string            `json:"meeting_kind_training"`
@@ -94,7 +117,8 @@ func mustLoad(raw []byte) Rules {
 	if err := json.Unmarshal(raw, &r); err != nil {
 		panic(fmt.Sprintf("trainingsummary: rules.json: %v", err))
 	}
-	if len(r.Doors) == 0 || len(r.TrainingTypes) == 0 || r.QueryKeyPattern == "" || r.MaxQueryValue == 0 {
+	if len(r.Doors) == 0 || len(r.TrainingTypes) == 0 || r.QueryKeyPattern == "" || r.MaxQueryValue == 0 ||
+		r.Coverage.TablePageSize == 0 || len(r.Coverage.StatusOrder) == 0 || len(r.Coverage.ShowOptions) == 0 {
 		panic("trainingsummary: rules.json is incomplete")
 	}
 	return r

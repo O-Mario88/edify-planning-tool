@@ -392,3 +392,7 @@ GRANT SELECT (facilitating_partner_id) ON activity TO edify_gateway_ro;
 GRANT SELECT (state, supervising_pl_id) ON partner_assignment_withdrawal TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
 GRANT SELECT (recommendation) ON cce_regional_engagement TO edify_gateway_ro;
+
+-- The Training Summary's Schools tab (internal/trainingsummary, doc 44):
+-- training_coverage.uncovered leaves out a school marked a duplicate.
+GRANT SELECT (duplicate_status) ON school TO edify_gateway_ro;
