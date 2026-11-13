@@ -365,12 +365,12 @@ GRANT SELECT (assigned_by, participation_type, matched_intervention, support_are
 
 -- The notification centre (internal/notificationcenter, docs/migration/43):
 -- the reader's own notifications as the page shows and filters them, and
--- their delivery settings. Not the provenance, reminder or expiry columns,
--- and not a notice's words (body), which this role is refused on purpose:
--- until the coordinator decides how the page reads them, the gateway does
--- not answer the page (notificationcenter.ErrBodiesWithheld).
+-- their delivery settings, and a notice's words (body), which the page shows
+-- and searches (coordinator, 2026-11-13: the words are ordinary text to their
+-- recipient, no token, code or link was found in them, and Go reads only the
+-- reader's own). Not the provenance, reminder or expiry columns.
 GRANT SELECT (id, recipient_id, sender_id, title, category, context_type, context_id,
-  target_route, action_label, action_required, priority, status, created_at, resolved_at)
+  target_route, action_label, action_required, priority, status, created_at, resolved_at, body)
   ON notification TO edify_gateway_ro;
 GRANT SELECT (id, user_id, email_enabled, push_enabled, email_muted_categories)
   ON notification_preference TO edify_gateway_ro;

@@ -477,13 +477,15 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"give a day to someone else":            rw + `UPDATE daily_visit_batch SET responsible_user = responsible_user`,
 		"rewrite the schedule trail":            rw + `UPDATE activity_schedule_change SET reason = reason`,
 		"remove the schedule trail":             rw + `DELETE FROM activity_schedule_change`,
-		"read a notice's words":                 `SELECT body FROM notification LIMIT 1`,
-		"write a notice":                        rw + `UPDATE notification SET resolved_at = resolved_at`,
-		"change a day's figures":                rw + `UPDATE daily_visit_batch SET daily_pool_amount = daily_pool_amount`,
-		"delete a day":                          rw + `DELETE FROM daily_visit_batch`,
-		"write a cost line":                     rw + `INSERT INTO activity_schedule_cost_line (id) VALUES ('x')`,
-		"delete the costs to follow":            rw + `DELETE FROM daily_visit_costs_to_follow`,
-		"read the costs' provenance":            `SELECT provenance FROM daily_visit_costs_to_follow LIMIT 1`,
+		// A notice's words (notification.body) are read by the notification
+		// centre since 2026-11-13 (deploy/db/roles.sql), so they are no longer
+		// refused to this login.
+		"write a notice":             rw + `UPDATE notification SET resolved_at = resolved_at`,
+		"change a day's figures":     rw + `UPDATE daily_visit_batch SET daily_pool_amount = daily_pool_amount`,
+		"delete a day":               rw + `DELETE FROM daily_visit_batch`,
+		"write a cost line":          rw + `INSERT INTO activity_schedule_cost_line (id) VALUES ('x')`,
+		"delete the costs to follow": rw + `DELETE FROM daily_visit_costs_to_follow`,
+		"read the costs' provenance": `SELECT provenance FROM daily_visit_costs_to_follow LIMIT 1`,
 		// The Group Training (docs/migration/38): invitations are added,
 		// never changed or removed, and no cluster is written.
 		"change an invitation":             rw + `UPDATE cluster_activity_attendance SET invited = invited`,
