@@ -45,7 +45,8 @@ STRIP_KEYS = (
 def doors() -> dict:
     """What each role may do on the page, by the page's own gates."""
     from apps.core.permissions import RolePermissionService, can_open_url
-    from apps.core.rbac import EdifyRole
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import EdifyRole, Permission
 
     out = {}
     for role in EdifyRole:
@@ -61,6 +62,10 @@ def doors() -> dict:
             "bulk_schedule": RolePermissionService.can_schedule_activity(user),
             # The row's "Open … school profile" link.
             "open_school": bool(can_open_url(user, "/schools/0")),
+            # The header's Plan Field Event (can_add_non_school_activity).
+            "field_event": has_permission(
+                user, Permission.MANUAL_ACTIVITY_CREATE.value
+            ),
         }
     return out
 
@@ -106,6 +111,7 @@ def rules() -> dict:
     )
     from apps.core.enums import PlanningReadiness, SsaStatus
     from apps.core.metrics.reconciled_registry import source_label_for_key
+    from apps.mobile_feed.views import NOT_PASSED
     from apps.planning import planning_service as service
     from apps.planning.planning_support import PLANNING_SUPPORT_FILTERS
     from apps.planning.visit_gate import OWN_TABLE_SCHOOL_TYPES
@@ -134,6 +140,9 @@ def rules() -> dict:
         "support_filters": [list(pair) for pair in PLANNING_SUPPORT_FILTERS],
         "strip_labels": [source_label_for_key(key) for key in STRIP_KEYS],
         "counted_visits": counted_visits(),
+        # The parameters the feed never passes to the page, which the
+        # header's Export link therefore never carries.
+        "not_passed_query_keys": sorted(NOT_PASSED),
         # active_catalogue: the country's live published operational card.
         "catalogue": {
             "country": getattr(settings, "COUNTRY", "Uganda"),

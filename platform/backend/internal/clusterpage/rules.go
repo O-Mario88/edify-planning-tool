@@ -57,13 +57,14 @@ type Rules struct {
 	SupportRule                 SupportRule      `json:"support_rule"`
 	VisitTypes                  []string         `json:"visit_types"`
 	TrainingTypes               []string         `json:"training_types"`
+	NotPassedQueryKeys          []string         `json:"not_passed_query_keys"`
 }
 
 var rules = mustLoad(rulesJSON)
 
 func mustLoad(raw []byte) Rules {
 	var r Rules
-	if err := json.Unmarshal(raw, &r); err != nil || len(r.Doors) == 0 || len(r.StripLabels) != 8 || len(r.SSAInterventions) == 0 {
+	if err := json.Unmarshal(raw, &r); err != nil || len(r.Doors) == 0 || len(r.StripLabels) != 8 || len(r.SSAInterventions) == 0 || len(r.NotPassedQueryKeys) == 0 {
 		panic(fmt.Sprintf("clusterpage: the embedded rules are unreadable: %v", err))
 	}
 	return r

@@ -35,7 +35,8 @@ export function HeaderAction({ action, href }: { action: PageAction; href: strin
     );
   }
   return (
-    <a href={href} className={className} data-action={action.key}>
+    // An export downloads its file (PageAction.download); the rest open a page.
+    <a href={href} className={className} data-action={action.key} download={action.download || undefined}>
       {content}
     </a>
   );

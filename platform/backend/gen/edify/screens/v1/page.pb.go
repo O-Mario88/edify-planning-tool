@@ -95,7 +95,10 @@ type PageAction struct {
 	// The web path the button opens (its drawer).
 	Href string `protobuf:"bytes,6,opt,name=href,proto3" json:"href,omitempty"`
 	// Opens as a drawer (the web fetches it into its drawer).
-	Drawer        bool `protobuf:"varint,7,opt,name=drawer,proto3" json:"drawer,omitempty"`
+	Drawer bool `protobuf:"varint,7,opt,name=drawer,proto3" json:"drawer,omitempty"`
+	// Downloads a file (an export) instead of opening a page: the web sends
+	// the reader to href, the app hands it to the system.
+	Download      bool `protobuf:"varint,8,opt,name=download,proto3" json:"download,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -175,6 +178,13 @@ func (x *PageAction) GetHref() string {
 func (x *PageAction) GetDrawer() bool {
 	if x != nil {
 		return x.Drawer
+	}
+	return false
+}
+
+func (x *PageAction) GetDownload() bool {
+	if x != nil {
+		return x.Download
 	}
 	return false
 }
@@ -3563,7 +3573,7 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\tPageBadge\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x12\n" +
 	"\x04tone\x18\x02 \x01(\tR\x04tone\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\"\xac\x01\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\"\xc8\x01\n" +
 	"\n" +
 	"PageAction\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -3572,7 +3582,8 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\aenabled\x18\x04 \x01(\bR\aenabled\x12\x16\n" +
 	"\x06reason\x18\x05 \x01(\tR\x06reason\x12\x12\n" +
 	"\x04href\x18\x06 \x01(\tR\x04href\x12\x16\n" +
-	"\x06drawer\x18\a \x01(\bR\x06drawer\"\x87\x02\n" +
+	"\x06drawer\x18\a \x01(\bR\x06drawer\x12\x1a\n" +
+	"\bdownload\x18\b \x01(\bR\bdownload\"\x87\x02\n" +
 	"\n" +
 	"PageHeader\x12\x1d\n" +
 	"\n" +

@@ -30,6 +30,9 @@ message PageAction {
   string href = 6;
   // Opens as a drawer (the web fetches it into its drawer).
   bool drawer = 7;
+  // Downloads a file (an export) instead of opening a page: the web sends
+  // the reader to href, the app hands it to the system.
+  bool download = 8;
 }
 
 message PageHeader {

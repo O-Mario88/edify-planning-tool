@@ -57,6 +57,8 @@ def doors() -> dict:
             # may_review_champions: the Champion review is the Core Schools
             # page's.
             "review": RolePermissionService.can_view_page(user, "core_schools"),
+            # The header's Download CSV and Download Excel (can_export).
+            "export": RolePermissionService.can_export(user, PAGE_PATH),
         }
     return out
 

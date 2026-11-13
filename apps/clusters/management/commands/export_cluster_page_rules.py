@@ -92,6 +92,7 @@ def rules() -> dict:
     )
     from apps.core.enums import SsaIntervention
     from apps.core.metrics.reconciled_registry import source_label_for_key
+    from apps.mobile_feed.views import NOT_PASSED
     from apps.planning.visit_gate import OWN_TABLE_SCHOOL_TYPES
     from apps.schools.lifecycle_models import OPERATING_STATUSES
 
@@ -118,6 +119,9 @@ def rules() -> dict:
         # and Last Training read.
         "visit_types": [str(t) for t in VISIT_TYPES],
         "training_types": [str(t) for t in TRAINING_TYPES],
+        # The parameters the feed never passes to the page, which the
+        # header's Export link therefore never carries.
+        "not_passed_query_keys": sorted(NOT_PASSED),
     }
 
 

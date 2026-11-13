@@ -1432,6 +1432,25 @@ WHOLE_SENTENCES = """
 """
 
 
+#: Planning's header: its buttons sit beside the lead, not in a controls slot.
+BAND_HEADER = """
+<main>
+<div class="edify-page-header !mb-0">
+  <div class="edify-page-header__lead">
+    <p class="edify-page-eyebrow">Planning</p>
+    <h1 class="edify-page-title">Planning</h1>
+    <a href="/help" class="edify-action-button secondary">Not an action: in the lead</a>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="?tab=core&amp;district=&amp;search=a+b&amp;export=csv" class="edify-action-button secondary h-9"><svg></svg> Export</a>
+    <button type="button" hx-get="/work-plan/add" hx-target="#drawer-container" class="edify-action-button secondary h-9"><svg></svg> Plan Field Event</button>
+    <button type="button" class="context-metrics__next">Swipe for more →</button>
+  </div>
+</div>
+</main>
+"""
+
+
 class WholeSentencesTest(SimpleTestCase):
     def setUp(self):
         self.blocks = page_blocks.read(WHOLE_SENTENCES)["blocks"]
@@ -1477,3 +1496,109 @@ class WholeSentencesTest(SimpleTestCase):
             "<p>Two words here</p></div></main>"
         )["blocks"]
         self.assertNotIn("lead", str(blocks))
+
+
+#: A controls slot whose links are drawn as action buttons.
+LINK_HEADER = """
+<main>
+<div class="edify-page-header">
+  <div class="edify-page-header__lead"><h1 class="edify-page-title">Cluster Oversight</h1></div>
+  <div class="edify-page-header__controls">
+    <a href="/cluster-oversight/command?fy=2027&amp;area=&amp;view=clusters&amp;format=csv" class="edify-action-button secondary h-9">Download CSV</a>
+    <a href="/cluster-oversight/scoring" class="edify-action-button secondary h-9">Scoring</a>
+    <a href="/staff-activity/export?" class="edify-action-button secondary h-9" download>Export</a>
+    <a href="/team-performance/export-help" class="edify-action-button secondary h-9">Read me</a>
+    <button type="button" hx-get="/clusters/create-drawer" hx-target="#drawer-container" class="edify-action-button primary h-9">Create Cluster</button>
+  </div>
+</div>
+</main>
+"""
+
+
+def _actions(page: dict) -> list[tuple]:
+    return [
+        (a["key"], a["label"], a["primary"], a["href"], a["drawer"], a["download"])
+        for a in page["header"]["actions"]
+    ]
+
+
+class HeaderActionsTest(SimpleTestCase):
+    def test_buttons_beside_the_lead_are_the_headers_actions(self):
+        page = page_blocks.read(BAND_HEADER, path="/planning")
+
+        self.assertEqual(
+            _actions(page),
+            [
+                (
+                    "export",
+                    "Export",
+                    False,
+                    "/planning?export=csv&search=a+b&tab=core",
+                    False,
+                    True,
+                ),
+                (
+                    "plan_field_event",
+                    "Plan Field Event",
+                    False,
+                    "/work-plan/add",
+                    True,
+                    False,
+                ),
+            ],
+        )
+
+    def test_links_drawn_as_action_buttons_are_actions(self):
+        page = page_blocks.read(LINK_HEADER, path="/cluster-oversight/")
+
+        self.assertEqual(
+            _actions(page),
+            [
+                (
+                    "download_csv",
+                    "Download CSV",
+                    False,
+                    "/cluster-oversight/command?format=csv&fy=2027&view=clusters",
+                    False,
+                    True,
+                ),
+                (
+                    "scoring",
+                    "Scoring",
+                    False,
+                    "/cluster-oversight/scoring",
+                    False,
+                    False,
+                ),
+                ("export", "Export", False, "/staff-activity/export", False, True),
+                (
+                    "read_me",
+                    "Read me",
+                    False,
+                    "/team-performance/export-help",
+                    False,
+                    False,
+                ),
+                (
+                    "create_cluster",
+                    "Create Cluster",
+                    True,
+                    "/clusters/create-drawer",
+                    True,
+                    False,
+                ),
+            ],
+        )
+
+    def test_a_page_without_a_path_keeps_a_relative_link_as_written(self):
+        page = page_blocks.read(BAND_HEADER)
+
+        self.assertEqual(
+            page["header"]["actions"][0]["href"],
+            "?tab=core&district=&search=a+b&export=csv",
+        )
+
+    def test_the_header_band_is_never_read_again_as_a_block(self):
+        page = page_blocks.read(BAND_HEADER, path="/planning")
+
+        self.assertEqual(page["blocks"], [])
