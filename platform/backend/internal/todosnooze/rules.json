@@ -69,6 +69,10 @@
     "title": 255,
     "todo_id": 128
   },
+  "posts": {
+    "snooze": "/today/snooze",
+    "unsnooze": "/today/unsnooze"
+  },
   "refusal": "Choose when the item comes back.",
   "snooze_days": {
     "next_week": 7,

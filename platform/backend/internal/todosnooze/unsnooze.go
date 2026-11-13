@@ -18,12 +18,17 @@ import (
 type UnsnoozeRequest struct {
 	TodoID  string
 	Section string
+	// Page is the page the Undo was posted from (HX-Current-URL), which the
+	// presence stamp names; empty when unknown.
+	Page string
 }
 
 // Redraw is what undoing a snooze answers (today_unsnooze): the Today panel,
 // drawn again by the existing application at Path (today_panel, which renders
 // the same partial from the same context), put in Retarget's place with
-// Reswap. Removed is how many rows the undo took away (0 or 1).
+// Reswap. Removed is how many rows the undo took away (0 or 1). The redraw
+// is read in the background (presence.BackgroundHeader): the person's post
+// is stamped by Go, and the read the gateway makes is not theirs.
 type Redraw struct {
 	Path     string
 	Retarget string
@@ -67,6 +72,12 @@ func DecideUnsnooze(p auth.Principal, r UnsnoozeRequest) (UnsnoozePlan, error) {
 // (deploy/db/todo_unsnooze_roles.sql), in one read-write transaction. The
 // answer names the panel the existing application draws again.
 func (s *Service) Unsnooze(ctx context.Context, p auth.Principal, r UnsnoozeRequest) (Redraw, error) {
+	redraw, err := s.unsnooze(ctx, p, r)
+	s.stamp(ctx, p, rules.Posts.Unsnooze, r.Page, err)
+	return redraw, err
+}
+
+func (s *Service) unsnooze(ctx context.Context, p auth.Principal, r UnsnoozeRequest) (Redraw, error) {
 	plan, err := DecideUnsnooze(p, r)
 	if err != nil {
 		return Redraw{}, err

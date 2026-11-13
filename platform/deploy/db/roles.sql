@@ -441,3 +441,6 @@ GRANT SELECT (id) ON bt_loan_verification_requirement TO edify_gateway_ro;
 GRANT SELECT (requirement_id, finding, concern_reviewed_at) ON bt_loan_use_result TO edify_gateway_ro;
 GRANT SELECT (status) ON bt_loan_purpose_proposal TO edify_gateway_ro;
 GRANT SELECT (loan_id, due_date, ia_status, prepared_by, prepared_at, updated_at) ON bt_loan_impact_assessment TO edify_gateway_ro;
+-- The Training Summary's Schools tab (internal/trainingsummary, doc 44):
+-- training_coverage.uncovered leaves out a school marked a duplicate.
+GRANT SELECT (duplicate_status) ON school TO edify_gateway_ro;

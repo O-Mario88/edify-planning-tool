@@ -1,27 +1,43 @@
 /**
- * The Calendar page's answer read back into a month (docs/migration/54).
- * The gateway answers /calendar as the feed reads the existing page: each
- * event tab carries the page's month grid as one panel whose items run in
- * the grid's order — the day's number, then that day's events, the next
- * day's number … — then the month's agenda list and the page's note. A
- * short label that ends one cell is read joined to the next cell's number
- * ("Observance" + "22" arrives as one row), so a row whose value is the day
- * expected next starts that day and its label ends the cell before.
+ * The Calendar page's answer read into a month (docs/migration/54). The
+ * gateway answers /calendar with a month block (PageCalendar): each day of
+ * the month with entries, each entry's kind, colour family, words, link,
+ * tick box, multi-day run and day-off mark, and the event-type tabs with
+ * their keys and counts. The month card's toolbar words (title, range, date
+ * badge, empty sentence, note) are the grid panel's own fields.
  * Presentation only: every event, link and word is the gateway's.
  */
-import type { PageLink, PagePanel, PagePanelItem } from '@/gen/edify/screens/v1/page_pb';
+import type { PageCalendar, PageCalendarEvent, PagePanel } from '@/gen/edify/screens/v1/page_pb';
 
 export interface CalendarEvent {
+  /** "activity", "leave", "holiday" or "event". */
+  readonly kind: string;
+  /** An activity's colour family ("visit", "training", "cluster", "core", "project", "programme", "activity"). */
+  readonly family: string;
   readonly title: string;
-  /** The line under the title: the school, cluster, or a holiday's kind. */
+  /** The line under the title: the place, the run's day, a holiday's kind. */
   readonly caption: string;
   /** The event's page ("/my-plan/<id>"), or '' for leave, holidays and events. */
   readonly href: string;
+  /** The activity its tick box ticks, or ''. */
+  readonly pickId: string;
+  /** A later day of a run over several days. */
+  readonly continued: boolean;
+  /** Planned on a public holiday or its owner's leave: to reschedule. */
+  readonly dayOff: boolean;
 }
 
 export interface CalendarDay {
   readonly day: number;
   readonly events: readonly CalendarEvent[];
+  readonly dayOff: boolean;
+}
+
+export interface EventTab {
+  /** The kind the tab shows ("all", "activity" …). */
+  readonly kind: string;
+  readonly label: string;
+  readonly count: string;
 }
 
 export interface CalendarMonth {
@@ -33,11 +49,17 @@ export interface CalendarMonth {
   readonly range: string;
   /** The date badge: "NOV" over "01". */
   readonly badge: { readonly label: string; readonly value: string } | null;
+  /** Every day of the month, with the open tab's events. */
   readonly days: readonly CalendarDay[];
   /** What the month's agenda says when it has nothing ("No events in November 2026."). */
   readonly empty: string;
   /** The page's note under the grid. */
   readonly note: string;
+  readonly tabs: readonly EventTab[];
+  /** The open tab's kind ("all" for every kind). */
+  readonly kind: string;
+  /** Any entry is ticked for the page's bar. */
+  readonly ticks: boolean;
 }
 
 export function daysInMonth(year: number, month: number): number {
@@ -49,93 +71,66 @@ export function mondayOffset(year: number, month: number): number {
   return (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7;
 }
 
-function dayNumberOf(item: PagePanelItem, expected: number): { label: string } | null {
-  const kind = item.kind;
-  if (kind.case === 'text' && kind.value === String(expected)) return { label: '' };
-  if (kind.case === 'rows' && kind.value.rows.length === 1 && kind.value.rows[0]?.value === String(expected)) {
-    return { label: kind.value.rows[0]?.label ?? '' };
-  }
-  return null;
-}
-
-function eventOfLink(link: PageLink): CalendarEvent {
-  return { title: link.text, caption: link.caption, href: link.href };
-}
-
-/** A cell's closing label (a holiday's "Public holiday") under its last event that has none. */
-function withClosingLabel(events: readonly CalendarEvent[], label: string): readonly CalendarEvent[] {
-  const last = events[events.length - 1];
-  if (!label || label === 'Today' || !last || last.href || last.caption) return events;
-  return [...events.slice(0, -1), { ...last, caption: label }];
-}
-
-function eventsOf(items: readonly PagePanelItem[]): readonly CalendarEvent[] {
-  let events: readonly CalendarEvent[] = [];
-  for (const item of items) {
-    const kind = item.kind;
-    if (kind.case === 'links') events = [...events, ...kind.value.links.map(eventOfLink)];
-    else if (kind.case === 'text' && kind.value) events = [...events, { title: kind.value, caption: '', href: '' }];
-  }
-  return events;
-}
-
-function textsOf(items: readonly PagePanelItem[]): readonly string[] {
-  return items.flatMap((item) => (item.kind.case === 'text' && item.kind.value ? [item.kind.value] : []));
-}
-
-/**
- * The month in a tab's grid panel, or null when the panel is not a month
- * grid (its days do not run 1 … the month's last day).
- */
-export function readMonth(panel: PagePanel, year: number, month: number): CalendarMonth | null {
-  const last = daysInMonth(year, month);
-  const cells: PagePanelItem[][] = [];
-  const closing: string[] = [];
-  let badge: CalendarMonth['badge'] = null;
-  let current: PagePanelItem[] | null = null;
-  for (const item of panel.items) {
-    const number = cells.length < last ? dayNumberOf(item, cells.length + 1) : null;
-    if (number) {
-      closing.push(number.label);
-      current = [];
-      cells.push(current);
-      continue;
-    }
-    if (current) current.push(item);
-    else if (!badge && item.kind.case === 'rows' && item.kind.value.rows.length === 1) {
-      const row = item.kind.value.rows[0];
-      badge = row ? { label: row.label, value: row.value } : null;
-    }
-  }
-  if (cells.length !== last) return null;
-  // After the last day's number: its events, then the agenda list (the last
-  // list of links, present whenever the month has an event), then the notes.
-  const tail = cells[last - 1] ?? [];
-  const agenda = tail.map((item) => item.kind.case).lastIndexOf('links');
-  const lastDay = agenda >= 0 ? tail.slice(0, agenda) : [];
-  const after = agenda >= 0 ? tail.slice(agenda + 1) : tail;
-  const notes = textsOf(after);
-  const days = cells.map((items, index) => {
-    const own = index === last - 1 ? lastDay : items;
-    // A cell's closing label arrives with the next day's number.
-    return { day: index + 1, events: withClosingLabel(eventsOf(own), closing[index + 1] ?? '') };
-  });
+function eventOf(event: PageCalendarEvent): CalendarEvent {
   return {
-    year,
-    month,
-    title: panel.title,
-    range: panel.subtitle,
-    badge,
-    days,
-    empty: notes.length > 1 ? notes.slice(0, -1).join(' ') : '',
-    note: notes[notes.length - 1] ?? '',
+    kind: event.kind,
+    family: event.family,
+    title: event.title,
+    caption: event.meta,
+    href: event.href,
+    pickId: event.pickId,
+    continued: event.continued,
+    dayOff: event.dayOff,
   };
 }
 
-/** "All events11" → "All events", "11": the tab's label and its count, read joined. */
-export function splitCount(label: string): { label: string; count: string } {
-  const match = /^(.*?\D)(\d+)$/.exec(label);
-  return match ? { label: (match[1] ?? '').trim(), count: match[2] ?? '' } : { label, count: '' };
+/** "No events in November 2026." / the note: the grid panel's sentences. */
+function sentencesOf(panel: PagePanel | undefined): { empty: string; note: string } {
+  const texts = (panel?.items ?? []).flatMap((item) => (item.kind.case === 'text' && item.kind.value ? [item.kind.value] : []));
+  return { empty: texts.find((text) => text.startsWith('No events in ')) ?? '', note: texts.at(-1) ?? '' };
+}
+
+function badgeOf(panel: PagePanel | undefined): CalendarMonth['badge'] {
+  const first = panel?.items[0];
+  const row = first?.kind.case === 'rows' && first.kind.value.rows.length === 1 ? first.kind.value.rows[0] : undefined;
+  return row ? { label: row.label, value: row.value } : null;
+}
+
+/**
+ * The month of the answer's calendar block, the open tab's entries on each
+ * of its days; `panel` is the month card's own panel (its title, range,
+ * badge and sentences).
+ */
+export function monthOf(calendar: PageCalendar, panel: PagePanel | undefined): CalendarMonth {
+  const { year, month, kind } = calendar;
+  const byDate = new Map(calendar.days.map((day) => [day.date, day]));
+  const shown = (event: PageCalendarEvent) => kind === 'all' || !kind || event.kind === kind;
+  const days = Array.from({ length: daysInMonth(year, month) }, (_, index) => {
+    const date = `${year}-${String(month).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`;
+    const events = (byDate.get(date)?.events ?? []).filter(shown).map(eventOf);
+    return { day: index + 1, events, dayOff: events.some((event) => event.dayOff) };
+  });
+  const { empty, note } = sentencesOf(panel);
+  return {
+    year,
+    month,
+    title: panel?.title ?? '',
+    range: panel?.subtitle ?? '',
+    badge: badgeOf(panel),
+    days,
+    empty,
+    note,
+    tabs: calendar.kinds.map((chip) => ({ kind: chip.value, label: chip.label, count: chip.count })),
+    kind: kind || 'all',
+    ticks: calendar.days.some((day) => day.events.some((event) => event.pickId)),
+  };
+}
+
+/** The same calendar on another event-type tab (`?event_kind=`, dropped for every kind). */
+export function kindLink(query: Readonly<Record<string, string>>, kind: string): string {
+  const rest = Object.fromEntries(Object.entries(query).filter(([key]) => key !== 'event_kind'));
+  const params = new URLSearchParams(kind === 'all' ? rest : { ...rest, event_kind: kind }).toString();
+  return params ? `/calendar?${params}` : '/calendar';
 }
 
 export interface PeopleTab {
@@ -191,35 +186,6 @@ export function viewLink(query: Readonly<Record<string, string>>, view: 'month' 
   const rest = Object.fromEntries(Object.entries(query).filter(([key]) => key !== 'view'));
   const params = new URLSearchParams(view === 'agenda' ? { ...rest, view } : rest).toString();
   return params ? `/calendar?${params}` : '/calendar';
-}
-
-/** The page's event tabs and the kind each shows (index.html; extended_views._CALENDAR_EVENT_KINDS). */
-const EVENT_KINDS: Readonly<Record<string, string>> = {
-  'All events': 'all',
-  Activities: 'activity',
-  Leave: 'leave',
-  Holidays: 'holiday',
-  'Other events': 'event',
-};
-
-export interface EventTab {
-  readonly label: string;
-  readonly count: string;
-  /** The kind the tab shows; '' for a tab the page does not name. */
-  readonly kind: string;
-}
-
-/**
- * The event tabs with their counts. The answer carries every tab's events
- * unsorted by kind (the page sorts them in the browser by a kind the feed
- * does not read), so only All events is drawn here; the others open the
- * existing page on that kind (`?event_kind=`, which it opens on).
- */
-export function eventTabs(labels: readonly string[]): readonly EventTab[] {
-  return labels.map((text) => {
-    const { label, count } = splitCount(text);
-    return { label, count, kind: EVENT_KINDS[label] ?? '' };
-  });
 }
 
 /** Today's day in this month on Kampala's calendar (timezone.localdate()), or 0. */

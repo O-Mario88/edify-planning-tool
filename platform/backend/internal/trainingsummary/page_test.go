@@ -188,7 +188,7 @@ func TestTeamsAreEachLeadThenTheirOfficersThenTheRest(t *testing.T) {
 	}
 }
 
-func TestOnlyTheSummaryLensIsGosAndOthersPassOn(t *testing.T) {
+func TestOnlyTheTrainingsLensIsGosAndOthersPassOn(t *testing.T) {
 	s := NewService(nil, time.Now)
 	lead := auth.Principal{Account: auth.Account{ActiveRole: rules.ProgramLeadRole}}
 	cceo := auth.Principal{Account: auth.Account{ActiveRole: rules.CCEORole}}
@@ -201,8 +201,6 @@ func TestOnlyTheSummaryLensIsGosAndOthersPassOn(t *testing.T) {
 		{lead, "/team-planning-oversight", url.Values{"view": {"trainings"}}, false},
 		{lead, Path, url.Values{}, false},
 		{lead, Path, url.Values{"view": {"portfolio"}}, false},
-		{lead, Path, url.Values{"view": {"trainings"}, "tab": {"staff"}}, false},
-		{lead, Path, url.Values{"view": {"trainings"}, "tab": {" Schools "}}, false},
 		{lead, Path, url.Values{"view": {"trainings"}, "followup": {"f1"}}, false},
 		{cceo, Path, url.Values{"view": {"trainings"}}, true},
 	} {

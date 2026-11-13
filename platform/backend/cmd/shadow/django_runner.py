@@ -31,6 +31,8 @@ from html.parser import HTMLParser
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import update_last_login
+from django.contrib.auth.signals import user_logged_in
 from django.test import Client
 
 NAME = settings.DATABASES["default"]["NAME"]
@@ -183,8 +185,13 @@ def post_form(client: Client, step: dict) -> dict:
 def read_page(client: Client, step: dict) -> dict:
     """A step that only reads a page with the page's htmx headers: what the
     existing application draws after a Go save whose answer is a redraw
-    (undoing a snooze answers with the Today panel, docs/migration/63)."""
+    (undoing a snooze answers with the Today panel, docs/migration/63).
+    "background": the gateway's own read, marked as one nobody made
+    (X-Edify-Background), so the person's presence is the save's stamp, not
+    the redraw's (docs/migration/65)."""
     headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
+    if step.get("background"):
+        headers["HTTP_X_EDIFY_BACKGROUND"] = "1"
     answer = client.get(step["get"], **headers)
     return {
         "ok": answer.status_code < 400,
@@ -272,6 +279,13 @@ def play(client: Client, step: dict) -> dict:
 def main():
     steps = json.load(open(os.environ["SCENARIO"]))
     User = get_user_model()
+    # Each step stands for a request in the session the person already has:
+    # the runner's force_login is a stand-in for that session, not a sign-in,
+    # so it must not write the sign-in's last_login (django.contrib.auth's
+    # update_last_login). A Go save makes no sign-in either, so a person whose
+    # steps were all Go's read differently on that column alone
+    # (docs/migration/65).
+    user_logged_in.disconnect(update_last_login, dispatch_uid="update_last_login")
     started = datetime.now(timezone.utc).isoformat()
     outcomes = []
     for step in steps:

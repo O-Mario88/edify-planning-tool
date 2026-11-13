@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log/slog"
+	"net/http"
 	"strings"
 	"time"
 
@@ -15,6 +17,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/presence"
 )
 
 // ErrHandOn means Go does not take this snooze: the existing application
@@ -39,6 +42,9 @@ type Request struct {
 	TodoID string
 	Choice string
 	Title  string
+	// Page is the page the menu was posted from (HX-Current-URL), which the
+	// presence stamp names; empty when unknown (the post's own path).
+	Page string
 }
 
 // Answer is what the view draws in the row's place
@@ -55,9 +61,35 @@ type Answer struct {
 
 // Service makes the save.
 type Service struct {
-	db      *pgxpool.Pool
-	now     func() time.Time
-	kampala *time.Location
+	db       *pgxpool.Pool
+	now      func() time.Time
+	kampala  *time.Location
+	presence *presence.Stamper
+	logger   *slog.Logger
+}
+
+// WithPresence stamps the person's presence after every save Go makes, as
+// the existing application's middleware stamps the post it answers
+// (docs/migration/65). A handed-on save is stamped by the existing
+// application.
+func (s *Service) WithPresence(stamper *presence.Stamper, logger *slog.Logger) *Service {
+	s.presence, s.logger = stamper, logger
+	return s
+}
+
+// stamp writes the beat for the post Go answered (a refusal included). A
+// failure is logged and never changes the answer, as touch_presence
+// swallows database errors.
+func (s *Service) stamp(ctx context.Context, p auth.Principal, path, page string, outcome error) {
+	if s.presence == nil || errors.Is(outcome, ErrHandOn) {
+		return
+	}
+	_, err := s.presence.Stamp(ctx, p.UserID, presence.Request{
+		Method: http.MethodPost, Path: path, HTMX: true, CurrentURL: page,
+	})
+	if err != nil && s.logger != nil {
+		s.logger.ErrorContext(ctx, "the presence stamp failed", slog.String("error", err.Error()))
+	}
 }
 
 // NewService returns the save over the gateway's pool.
@@ -139,6 +171,12 @@ func Decide(p auth.Principal, r Request, today time.Time) (Plan, error) {
 // row gets a fresh id and both stamps; an existing one keeps its id and
 // created_at and takes the new until, title and updated_at.
 func (s *Service) Snooze(ctx context.Context, p auth.Principal, r Request) (Answer, error) {
+	answer, err := s.snooze(ctx, p, r)
+	s.stamp(ctx, p, rules.Posts.Snooze, r.Page, err)
+	return answer, err
+}
+
+func (s *Service) snooze(ctx context.Context, p auth.Principal, r Request) (Answer, error) {
 	now := s.now()
 	plan, err := Decide(p, r, now.In(s.kampala))
 	if err != nil {

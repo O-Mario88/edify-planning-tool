@@ -90,6 +90,17 @@ def unsnooze() -> dict:
     }
 
 
+def posts() -> dict:
+    """Where the Today row's menu and its Undo post: the request a Go save
+    stands for, which the presence stamp names (docs/migration/65)."""
+    from django.urls import reverse
+
+    return {
+        "snooze": reverse("frontend:today_snooze"),
+        "unsnooze": reverse("frontend:today_unsnooze"),
+    }
+
+
 def rules() -> dict:
     from apps.command_center.today_actions import SNOOZE_DAYS
 
@@ -99,6 +110,7 @@ def rules() -> dict:
         "refusal": refusal(),
         "lengths": lengths(),
         "unsnooze": unsnooze(),
+        "posts": posts(),
     }
 
 

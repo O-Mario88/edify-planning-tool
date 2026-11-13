@@ -2,9 +2,9 @@ import { create } from '@bufbuild/protobuf';
 import type { MessageInitShape } from '@bufbuild/protobuf';
 import { describe, expect, it } from 'vitest';
 
-import { PagePanelSchema } from '@/gen/edify/screens/v1/page_pb';
+import { PageCalendarSchema, PagePanelSchema } from '@/gen/edify/screens/v1/page_pb';
 
-import { daysInMonth, eventTabs, mondayOffset, monthLinks, peopleStrips, readMonth, splitCount, todayIn, viewLink } from './calendarPage';
+import { daysInMonth, kindLink, mondayOffset, monthLinks, monthOf, peopleStrips, todayIn, viewLink } from './calendarPage';
 
 type Item = NonNullable<MessageInitShape<typeof PagePanelSchema>['items']>[number];
 
@@ -13,61 +13,53 @@ const row = (label: string, value: string): Item => ({ kind: { case: 'rows', val
 const links = (...items: { text: string; href?: string; caption?: string }[]): Item => ({ kind: { case: 'links', value: { links: items } } });
 const panel = (items: Item[], title = 'February 2026', subtitle = 'February 1, 2026 – February 28, 2026') => create(PagePanelSchema, { title, subtitle, items });
 
-/** A month's days as the gateway reads them: day 1 joined to the last weekday heading. */
-function days(last: number, between: Readonly<Record<number, Item[]>> = {}, joined: Readonly<Record<number, string>> = {}): Item[] {
-  const items: Item[] = [];
-  for (let day = 1; day <= last; day += 1) {
-    const label = day === 1 ? 'Sun' : joined[day];
-    items.push(label ? row(label, String(day)) : text(String(day)));
-    items.push(...(between[day] ?? []));
-  }
-  return items;
-}
-
 const NOTE = 'Leave, holidays, and organization events are overlays and never count as activities.';
 
-describe('readMonth', () => {
-  it('puts each event under the day number before it, with its school', () => {
-    const visit = { text: 'Donor Visit', href: '/my-plan/a1', caption: 'Kimenyedde Primary' };
-    const items = [row('FEB', '01'), text('Select all'), text('Today'), text('Mon'), ...days(28, { 3: [links(visit)] }), links({ text: 'Donor VisitKimenyedde Primary', href: '/my-plan/a1' }), text(NOTE)];
-    const month = readMonth(panel(items), 2026, 2);
-    expect(month?.badge).toEqual({ label: 'FEB', value: '01' });
-    expect(month?.days).toHaveLength(28);
-    expect(month?.days[2]?.events).toEqual([{ title: 'Donor Visit', caption: 'Kimenyedde Primary', href: '/my-plan/a1' }]);
-    expect(month?.days.filter((day) => day.events.length)).toHaveLength(1);
-    expect(month?.note).toBe(NOTE);
-    expect(month?.empty).toBe('');
+const CALENDAR = create(PageCalendarSchema, {
+  year: 2026,
+  month: 2,
+  today: '2026-02-03',
+  kind: 'all',
+  kinds: [
+    { value: 'all', label: 'All events', count: '4' },
+    { value: 'activity', label: 'Activities', count: '3' },
+    { value: 'holiday', label: 'Holidays', count: '1' },
+  ],
+  days: [
+    {
+      date: '2026-02-03',
+      today: true,
+      events: [
+        { kind: 'holiday', title: 'Janani Luwum Day', meta: 'Public holiday' },
+        { kind: 'activity', family: 'core', title: 'Core Visit', meta: 'Reschedule: public holiday · Kimenyedde · 3–4 February 2026', href: '/my-plan/a1', pickId: 'a1', dayOff: true },
+      ],
+    },
+    { date: '2026-02-04', events: [{ kind: 'activity', family: 'core', title: 'Core Visit', meta: 'Kimenyedde · Day 2 of 2', href: '/my-plan/a1', pickId: 'a1', continued: true }] },
+  ],
+});
+
+describe('monthOf', () => {
+  it('puts each entry on its day with its kind, family, tick and marks', () => {
+    const month = monthOf(CALENDAR, panel([row('FEB', '01'), text('No events in February 2026.'), text(NOTE)]));
+    expect(month.days).toHaveLength(28);
+    expect(month.days[2]?.dayOff).toBe(true);
+    expect(month.days[2]?.events.map((event) => [event.kind, event.family, event.pickId, event.dayOff])).toEqual([
+      ['holiday', '', '', false],
+      ['activity', 'core', 'a1', true],
+    ]);
+    expect(month.days[3]?.events[0]).toMatchObject({ title: 'Core Visit', caption: 'Kimenyedde · Day 2 of 2', continued: true, dayOff: false });
+    expect(month.days[3]?.dayOff).toBe(false);
+    expect(month.days[0]?.events).toEqual([]);
+    expect(month).toMatchObject({ title: 'February 2026', badge: { label: 'FEB', value: '01' }, empty: 'No events in February 2026.', note: NOTE, kind: 'all', ticks: true });
+    expect(month.tabs[1]).toEqual({ kind: 'activity', label: 'Activities', count: '3' });
   });
 
-  it('gives a holiday the label that arrives joined to the next day number', () => {
-    const items = [...days(28, { 16: [text('Archbishop Janani Luwum Day')] }, { 17: 'Public holiday' }), links({ text: 'Monday 16 February …' }), text(NOTE)];
-    const month = readMonth(panel(items), 2026, 2);
-    expect(month?.days[15]?.events).toEqual([{ title: 'Archbishop Janani Luwum Day', caption: 'Public holiday', href: '' }]);
-    expect(month?.days[16]?.events).toEqual([]);
-  });
-
-  it('ignores the Today label that ends today’s cell', () => {
-    const month = readMonth(panel([...days(28, {}, { 14: 'Today' }), text(NOTE)]), 2026, 2);
-    expect(month?.days.every((day) => day.events.length === 0)).toBe(true);
-  });
-
-  it('tells the last day’s events from the agenda list after them', () => {
-    const last = { text: 'School Visit', href: '/my-plan/z', caption: 'Cluster E' };
-    const items = [...days(28, { 28: [links(last), links({ text: 'School VisitCluster E', href: '/my-plan/z' })] }), text(NOTE)];
-    const month = readMonth(panel(items), 2026, 2);
-    expect(month?.days[27]?.events).toEqual([{ title: 'School Visit', caption: 'Cluster E', href: '/my-plan/z' }]);
-  });
-
-  it('keeps an empty month’s sentence apart from the note', () => {
-    const month = readMonth(panel([...days(28), text('No events in February 2026.'), text(NOTE)]), 2026, 2);
-    expect(month?.empty).toBe('No events in February 2026.');
-    expect(month?.note).toBe(NOTE);
-    expect(month?.days.every((day) => day.events.length === 0)).toBe(true);
-  });
-
-  it('is not a month when the days do not run to the month’s end', () => {
-    expect(readMonth(panel([...days(27), text(NOTE)]), 2026, 2)).toBeNull();
-    expect(readMonth(panel([links({ text: 'Donor VisitKimenyedde', href: '/my-plan/a' })]), 2026, 2)).toBeNull();
+  it('keeps only the open tab’s kind', () => {
+    const month = monthOf(create(PageCalendarSchema, { ...CALENDAR, kind: 'holiday' }), undefined);
+    expect(month.days[2]?.events.map((event) => event.kind)).toEqual(['holiday']);
+    expect(month.days[2]?.dayOff).toBe(false);
+    expect(month.days[3]?.events).toEqual([]);
+    expect(month.ticks).toBe(true);
   });
 });
 
@@ -77,14 +69,6 @@ describe('month arithmetic', () => {
     expect(daysInMonth(2028, 2)).toBe(29);
     expect(mondayOffset(2026, 11)).toBe(6);
     expect(mondayOffset(2026, 12)).toBe(1);
-  });
-});
-
-describe('splitCount', () => {
-  it('reads a tab’s label and its joined count', () => {
-    expect(splitCount('All events11')).toEqual({ label: 'All events', count: '11' });
-    expect(splitCount('Leave0')).toEqual({ label: 'Leave', count: '0' });
-    expect(splitCount('Leave')).toEqual({ label: 'Leave', count: '' });
   });
 });
 
@@ -136,13 +120,10 @@ describe('month and view links', () => {
   });
 });
 
-describe('eventTabs and todayIn', () => {
-  it('names each tab’s kind', () => {
-    expect(eventTabs(['All events11', 'Holidays0', 'Something2'])).toEqual([
-      { label: 'All events', count: '11', kind: 'all' },
-      { label: 'Holidays', count: '0', kind: 'holiday' },
-      { label: 'Something', count: '2', kind: '' },
-    ]);
+describe('kindLink and todayIn', () => {
+  it('opens the calendar on a kind, dropping it for every kind', () => {
+    expect(kindLink({ year: '2026', month: '2', event_kind: 'leave' }, 'holiday')).toBe('/calendar?year=2026&month=2&event_kind=holiday');
+    expect(kindLink({ event_kind: 'leave' }, 'all')).toBe('/calendar');
   });
 
   it('reads today on Kampala’s calendar', () => {

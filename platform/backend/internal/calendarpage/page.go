@@ -30,6 +30,7 @@ type view struct {
 	memberTabs      []tab
 	hidden          map[string]string
 	kind, status    string
+	eventKind       string
 	filtersActive   bool
 	leave, addEvent bool
 	strip           *Strip
@@ -292,13 +293,9 @@ func (v *view) filters() *screensv1.PageBlock {
 // control, so each holds the same two panels.
 func (v *view) rail() *screensv1.PageBlock {
 	parts := func() []*screensv1.PageBlock { return []*screensv1.PageBlock{v.mobilePanel(), v.monthPanel()} }
-	c := v.m.counts
 	segments := []*screensv1.PageSegment{}
-	for _, s := range []struct {
-		label string
-		n     int
-	}{{"All events", v.m.total()}, {"Activities", c["activity"]}, {"Leave", c["leave"]}, {"Holidays", c["holiday"]}, {"Other events", c["event"]}} {
-		segments = append(segments, &screensv1.PageSegment{Label: s.label + itoa(s.n), Blocks: parts()})
+	for _, t := range kindTabs {
+		segments = append(segments, &screensv1.PageSegment{Label: t.label + itoa(v.kindCount(t.key)), Blocks: parts()})
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Segments{Segments: &screensv1.PageSegments{
 		Caption: "Operations calendar", Segments: segments}}}
@@ -336,7 +333,7 @@ func (v *view) page() *screensv1.GetPageResponse {
 		it.heading("Add other event")
 		blocks = append(blocks, panel("Add an organization event", "Country calendar", it))
 	}
-	blocks = append(blocks, v.filters(), v.rail())
+	blocks = append(blocks, v.filters(), v.rail(), v.calendar())
 	out := &screensv1.GetPageResponse{
 		Header:  header(v.leave && v.person == nil),
 		Blocks:  blocks,

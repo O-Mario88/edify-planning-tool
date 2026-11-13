@@ -6,13 +6,14 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
-import type { PageBlock, PageFacts, PageSegments } from '../../gen/edify/screens/v1/page_pb';
+import type { PageBlock, PageFacts, PagePanel, PageSegments } from '../../gen/edify/screens/v1/page_pb';
 import { fonts, useTheme } from '../../theme';
 import { PageChartView } from './PageChartView';
 import { PageFilterBar } from './PageFilterBar';
 import { PageFormView } from './PageFormView';
 import { PageLinkTabsView } from './PageLinkTabsView';
 import { PageListView } from './PageListView';
+import { PageCalendarView } from './PageCalendarView';
 import { PageChipsView } from './PageChipsView';
 import { PagePanelView } from './PagePanelView';
 import { PageRailView } from './PageRailView';
@@ -40,6 +41,11 @@ export function PageBlocksView({ blocks, onFilter, isRaised = true }: PageBlocks
     [blocks],
   );
   const [chosen, setChosen] = useState<Record<string, string>>(opening);
+  // The page filter form's hidden values (the Calendar's year, month and tab).
+  const hidden = useMemo(() => {
+    const filters = blocks.find((block) => block.kind.case === 'filters');
+    return filters?.kind.case === 'filters' ? filters.kind.value.hidden : {};
+  }, [blocks]);
   const chips = useMemo(
     () => ({ chosen: { ...opening, ...chosen }, choose: (name: string, value: string) => setChosen((now) => ({ ...now, [name]: value })) }),
     [chosen, opening],
@@ -47,9 +53,27 @@ export function PageBlocksView({ blocks, onFilter, isRaised = true }: PageBlocks
   return (
     <ChipContext.Provider value={chips}>
       <View style={styles.stack}>
-        {blocks.map((block, index) => (
-          <Block key={index} block={block} onFilter={onFilter} isRaised={isRaised} />
-        ))}
+        {blocks.map((block, index) => {
+          const next = blocks[index + 1];
+          // The calendar's month block stands in for the event-type segments
+          // before it, which carry the same month as text (docs/migration/54.5).
+          if (block.kind.case === 'segments' && next?.kind.case === 'calendar') {
+            return null;
+          }
+          if (block.kind.case === 'calendar') {
+            const before = blocks[index - 1];
+            return (
+              <PageCalendarView
+                key={index}
+                calendar={block.kind.value}
+                panels={before?.kind.case === 'segments' ? segmentPanels(before.kind.value) : []}
+                hidden={hidden}
+                onFilter={onFilter}
+              />
+            );
+          }
+          return <Block key={index} block={block} onFilter={onFilter} isRaised={isRaised} />;
+        })}
       </View>
     </ChipContext.Provider>
   );
@@ -119,6 +143,11 @@ function Block({ block, onFilter, isRaised = true }: BlockProps) {
     default:
       return null;
   }
+}
+
+/** The panels of a segments card's first part (the Calendar's phone month and month card). */
+function segmentPanels(segments: PageSegments): readonly PagePanel[] {
+  return (segments.segments[0]?.blocks ?? []).flatMap((block) => (block.kind.case === 'panel' ? [block.kind.value] : []));
 }
 
 /** The profile's identity card: its facts, "Label: value". */
