@@ -22,8 +22,9 @@ func count(n int) string { return strconv.Itoa(n) }
 // cell is _cell: a value, or a dash for nothing.
 type cell struct{ label, value string }
 
-// action is a header button that opens a drawer ({"label", "drawer"}).
-type action struct{ label, drawer string }
+// action is a button that opens a drawer ({"label", "drawer"}), or with
+// href a link to a page ({"label", "href"}).
+type action struct{ label, drawer, href string }
 
 // register is everything _render_workspace is given.
 type register struct {
@@ -158,6 +159,10 @@ func actionsCell(all [][]action, row int) *screensv1.PageCell {
 		return c
 	}
 	for _, a := range all[row] {
+		if a.href != "" {
+			c.Actions = append(c.Actions, &screensv1.PageAction{Key: "button", Label: a.label, Primary: true, Enabled: true, Href: a.href})
+			continue
+		}
 		c.Actions = append(c.Actions, &screensv1.PageAction{Key: "button", Label: a.label, Primary: true, Enabled: true, Href: a.drawer, Drawer: true})
 	}
 	return c
@@ -200,6 +205,11 @@ func urlencode(value string) string {
 func render(reg register, role Role, query url.Values) *screensv1.GetPageResponse {
 	header := &screensv1.PageHeader{Eyebrow: reg.eyebrow, Title: reg.title, Description: reg.description}
 	for _, a := range reg.actions {
+		if a.href != "" {
+			// A link button is drawn for a role that may open its page; the
+			// feed does not read it (only drawer buttons).
+			continue
+		}
 		for _, allowed := range role.Drawers {
 			if allowed == a.drawer {
 				header.Actions = append(header.Actions, &screensv1.PageAction{

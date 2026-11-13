@@ -430,3 +430,11 @@ GRANT SELECT (actor_role) ON audit_log TO edify_gateway_ro;
 -- Workforce Planning: a vacancy's department and status, beside its role and
 -- country already granted.
 GRANT SELECT (department, status) ON hr_vacancy TO edify_gateway_ro;
+-- Policies & Documents: a policy or manual's slug, title, type, category,
+-- country, status, whether acknowledgement is required and its current
+-- version; that version's number and review day; who acknowledged which
+-- version and how. Not a document's file, owner or audience, nor an
+-- acknowledgement's comment.
+GRANT SELECT (id, slug, title, document_type, category, country, status, acknowledgement_required, current_version_id) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (id, version_number, review_date) ON document_version TO edify_gateway_ro;
+GRANT SELECT (id, document_id, version_id, user_id, state) ON document_acknowledgement TO edify_gateway_ro;

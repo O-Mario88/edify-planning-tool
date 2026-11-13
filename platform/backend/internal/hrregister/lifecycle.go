@@ -76,7 +76,7 @@ WHERE p.status <> 'closed' AND p.target_completion_date < $%d::date AND p.staff_
 			dash(p.name), dash(p.role), dash(p.country), dash(deref(p.start)), fmt.Sprintf("%d of %d", p.done, p.tasks),
 			dash(labelOf(rules.OnboardingStatuses, p.status)),
 		})
-		reg.rowActions = append(reg.rowActions, []action{{"Manage", "/onboarding/" + p.id}})
+		reg.rowActions = append(reg.rowActions, []action{{label: "Manage", drawer: "/onboarding/" + p.id}})
 	}
 	reg.metrics = []metric{
 		{"Plans", count(open), "onboarding in progress", "info"},
@@ -128,7 +128,7 @@ WHERE p.last_working_day IS NOT NULL AND p.last_working_day < $%d::date AND NOT 
 		path: "/offboarding", title: "Staff Offboarding", eyebrow: "Staffing and recruiting",
 		description: "Exits across the countries you oversee: the reason for leaving, the handover, and the account closed on the last working day.",
 		columns:     []string{"Team member", "Country", "Last working day", "Reason", "Handover owner", "Status"},
-		actions:     []action{{"Start an offboarding", "/offboarding/new"}},
+		actions:     []action{{label: "Start an offboarding", drawer: "/offboarding/new"}},
 		emptyTitle:  "No offboarding in this scope",
 		emptyBody:   "Start an offboarding when someone resigns, retires or is leaving.",
 	}
@@ -152,7 +152,7 @@ WHERE p.last_working_day IS NOT NULL AND p.last_working_day < $%d::date AND NOT 
 			owner = *e.owner
 		}
 		reg.rows = append(reg.rows, []string{dash(e.name), dash(e.country), dash(deref(e.lastDay)), reason, dash(owner), dash(e.status)})
-		reg.rowActions = append(reg.rowActions, []action{{"Open", "/offboarding/" + e.id}})
+		reg.rowActions = append(reg.rowActions, []action{{label: "Open", drawer: "/offboarding/" + e.id}})
 	}
 	overdueTone := "success"
 	if overdue > 0 {

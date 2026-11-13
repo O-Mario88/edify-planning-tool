@@ -40,7 +40,7 @@ WHERE %s AND %s ORDER BY a.updated_at DESC`, scopeSQL, searchSQL), args...)
 		path: "/candidate-pipeline", title: "Candidate Pipeline", eyebrow: "Staffing and recruiting",
 		description: "Every candidate against the vacancies you oversee, by selection stage, from application to hire.",
 		columns:     []string{"Candidate", "Vacancy", "Country", "Stage", "Updated"},
-		actions:     []action{{"Record a candidate", "/candidate-pipeline/new"}},
+		actions:     []action{{label: "Record a candidate", drawer: "/candidate-pipeline/new"}},
 		emptyTitle:  "No candidate applications yet",
 		emptyBody:   "Record a candidate against an open vacancy to start selection.",
 	}
@@ -63,7 +63,7 @@ WHERE %s AND %s ORDER BY a.updated_at DESC`, scopeSQL, searchSQL), args...)
 			if a.stage == "accepted" {
 				label = "Hire"
 			}
-			next = []action{{label, "/candidate-pipeline/" + a.id}}
+			next = []action{{label: label, drawer: "/candidate-pipeline/" + a.id}}
 		}
 		reg.rows = append(reg.rows, []string{dash(a.candidate), dash(a.role), dash(a.country), dash(labelOf(rules.ApplicationStages, a.stage)), dash(a.updated)})
 		reg.rowActions = append(reg.rowActions, next)

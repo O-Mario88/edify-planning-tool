@@ -17,6 +17,24 @@
     "Expired": "Expired",
     "Missing": "Missing"
   },
+  "document_statuses": {
+    "approved": "Approved",
+    "archived": "Archived",
+    "blocked": "Publication Blocked",
+    "draft": "Draft",
+    "effective": "Effective",
+    "expired": "Expired",
+    "published": "Published",
+    "returned": "Returned for Correction",
+    "superseded": "Superseded",
+    "under_review": "Under Review"
+  },
+  "document_types": {
+    "manual": "Organisational Manual",
+    "policy": "Organisational Policy",
+    "training_manual": "Training Manual",
+    "training_presentation": "Training Presentation"
+  },
   "exit_reasons": {
     "death_in_service": "Death in service",
     "dismissal": "Dismissal",
@@ -29,6 +47,7 @@
   },
   "helper_figure_chars": 28,
   "metric_labels": {
+    "Acknowledgement rate": "Acknowledgement rate",
     "Acting roles": "Acting roles",
     "Active": "Active",
     "Applications": "Applications",
@@ -36,6 +55,7 @@
     "Compliant": "Compliant",
     "Days lost": "Days lost",
     "Departments": "Departments",
+    "Disagreements": "Disagreements",
     "Due soon": "Due soon",
     "Events": "Events",
     "Handover gaps": "Handover gaps",
@@ -55,6 +75,9 @@
     "People in scope": "People in scope",
     "People recognised": "People recognised",
     "Plans": "Plans",
+    "Policies in review": "Policies in review",
+    "Policy reviews due": "Policy reviews due",
+    "Published policies": "Published policies",
     "Ready for activation": "Ready for activation",
     "Recognitions": "Recognitions",
     "Refused actions": "Refused actions",
@@ -84,6 +107,7 @@
       "roles": {
         "Accountant": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -91,26 +115,31 @@
           "drawers": [
             "/candidate-pipeline/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ClusterLeader": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CountryDirector": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -118,6 +147,7 @@
           "drawers": [
             "/candidate-pipeline/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
@@ -125,46 +155,55 @@
           "drawers": [
             "/candidate-pipeline/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         }
@@ -174,6 +213,7 @@
       "roles": {
         "Accountant": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -182,26 +222,31 @@
             "/compliance-register/new",
             "/compliance-register/requirement"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ClusterLeader": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CountryDirector": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -210,6 +255,7 @@
             "/compliance-register/new",
             "/compliance-register/requirement"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
@@ -218,46 +264,55 @@
             "/compliance-register/new",
             "/compliance-register/requirement"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         }
@@ -267,6 +322,7 @@
       "roles": {
         "Accountant": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -274,26 +330,31 @@
           "drawers": [
             "/health-safety/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ClusterLeader": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CountryDirector": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -301,6 +362,7 @@
           "drawers": [
             "/health-safety/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
@@ -308,46 +370,55 @@
           "drawers": [
             "/health-safety/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         }
@@ -357,81 +428,97 @@
       "roles": {
         "Accountant": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Admin": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ClusterLeader": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CountryDirector": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "HumanResources": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         },
         "ImpactAssessment": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         }
@@ -441,6 +528,7 @@
       "roles": {
         "Accountant": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -448,26 +536,31 @@
           "drawers": [
             "/offboarding/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ClusterLeader": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CountryDirector": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -475,6 +568,7 @@
           "drawers": [
             "/offboarding/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
@@ -482,46 +576,55 @@
           "drawers": [
             "/offboarding/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         }
@@ -531,81 +634,97 @@
       "roles": {
         "Accountant": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Admin": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ClusterLeader": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CountryDirector": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "HumanResources": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         },
         "ImpactAssessment": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         }
@@ -615,81 +734,207 @@
       "roles": {
         "Accountant": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Admin": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ClusterLeader": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CountryDirector": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "HumanResources": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         },
         "ImpactAssessment": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/policies": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "links": [
+            "/uploads/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [
+            "/uploads/new"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "links": [
+            "/uploads/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "links": [
+            "/uploads/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [
+            "/uploads/new"
+          ],
           "page": false,
           "strip": null
         }
@@ -699,6 +944,7 @@
       "roles": {
         "Accountant": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -706,26 +952,31 @@
           "drawers": [
             "/recognition/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ClusterLeader": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CountryDirector": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -733,6 +984,7 @@
           "drawers": [
             "/recognition/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
@@ -740,46 +992,55 @@
           "drawers": [
             "/recognition/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         }
@@ -789,6 +1050,7 @@
       "roles": {
         "Accountant": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -796,21 +1058,25 @@
           "drawers": [
             "/recruitment/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ClusterLeader": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
@@ -818,6 +1084,7 @@
           "drawers": [
             "/recruitment/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
@@ -825,6 +1092,7 @@
           "drawers": [
             "/recruitment/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
@@ -832,46 +1100,55 @@
           "drawers": [
             "/recruitment/new"
           ],
+          "links": [],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
+          "links": [],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [],
           "page": true,
           "strip": null
         }

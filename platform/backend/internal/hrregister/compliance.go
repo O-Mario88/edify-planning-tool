@@ -67,14 +67,14 @@ ORDER BY CASE c.status WHEN 'Expired' THEN 0 WHEN 'Missing' THEN 1 WHEN 'Due Soo
 		description: "Country employment-law requirements (contracts, work permits, statutory registrations) and the evidence each " +
 			"employee holds. A status follows its document and expiry date.",
 		columns:    []string{"Team member", "Requirement", "Country", "Expiry", "Verified by", "Status"},
-		actions:    []action{{"Record evidence", "/compliance-register/new"}, {"Add a requirement", "/compliance-register/requirement"}},
+		actions:    []action{{label: "Record evidence", drawer: "/compliance-register/new"}, {label: "Add a requirement", drawer: "/compliance-register/requirement"}},
 		emptyTitle: "No employee compliance records yet",
 		emptyBody:  "Add the employment-law requirements for your countries, then record each employee's evidence.",
 	}
 	for _, g := range gaps {
 		reg.rows = append(reg.rows, []string{dash(g.person), dash(g.requirement), dash(g.country), "—", "No evidence on file",
 			labelOf(rules.ComplianceStatuses, "Missing")})
-		reg.rowActions = append(reg.rowActions, []action{{"Record", "/compliance-register/new?staff=" + g.staff + "&requirement=" + g.requirementID}})
+		reg.rowActions = append(reg.rowActions, []action{{label: "Record", drawer: "/compliance-register/new?staff=" + g.staff + "&requirement=" + g.requirementID}})
 	}
 	compliant, dueSoon, remediation := 0, 0, len(gaps)
 	for _, r := range records {
@@ -92,7 +92,7 @@ ORDER BY CASE c.status WHEN 'Expired' THEN 0 WHEN 'Missing' THEN 1 WHEN 'Due Soo
 		}
 		reg.rows = append(reg.rows, []string{dash(r.person), dash(r.requirement), dash(r.country), dash(deref(r.expiry)), dash(verifier),
 			dash(labelOf(rules.ComplianceStatuses, r.status))})
-		reg.rowActions = append(reg.rowActions, []action{{"Update", "/compliance-register/" + r.id}})
+		reg.rowActions = append(reg.rowActions, []action{{label: "Update", drawer: "/compliance-register/" + r.id}})
 	}
 	reg.metrics = []metric{
 		{"Requirements", count(requirements), "configured for your countries", "info"},

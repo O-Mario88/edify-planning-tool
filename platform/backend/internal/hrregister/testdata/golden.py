@@ -22,10 +22,15 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import connection
+from django.db import connection, transaction
 from django.utils import timezone as dj_timezone
 
 from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+from apps.documents.models import (
+    DocumentAcknowledgement,
+    DocumentAsset,
+    DocumentVersion,
+)
 from apps.hr.models import (
     Application,
     Candidate,
@@ -46,6 +51,9 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 User = get_user_model()
 #: Deleted children first.
 TABLES = (
+    "document_acknowledgement",
+    "document_version",
+    "document_asset",
     "hr_employee_compliance_record",
     "hr_compliance_requirement",
     "hr_application",
@@ -70,11 +78,13 @@ PATHS = (
     "/compliance-register",
     "/hr-audit-log",
     "/workforce-planning",
+    "/policies",
 )
 
 
 def clear():
-    with connection.cursor() as cursor:
+    # One transaction: a document and its current version name each other.
+    with transaction.atomic(), connection.cursor() as cursor:
         for table in TABLES:
             cursor.execute(f"DELETE FROM \"{table}\" WHERE id LIKE 'ghr%%'")  # noqa: S608  # nosec B608
 
@@ -134,6 +144,7 @@ def file_rows():
     file_lifecycle(profiles, today)
     file_candidates()
     file_compliance(profiles, today)
+    file_documents(profiles, today)
     kinds = ["injury", "road_traffic", "near_miss", "hazard", "security", "illness"]
     for i in range(10):
         SafetyIncident.objects.create(
@@ -254,6 +265,51 @@ def file_compliance(profiles, today):
         )
 
 
+def file_documents(profiles, today):
+    kinds = ["policy", "manual", "policy", "training_manual", "policy", "manual"]
+    statuses = ["published", "effective", "draft", "published", "archived", "returned"]
+    for i in range(6):
+        document = DocumentAsset.objects.create(
+            id=f"ghrd{i}",
+            slug=f"golden-policy-{i}",
+            title=f"Golden Policy {i}",
+            document_type=kinds[i],
+            category=["HR", "Finance", "HR", "Training", "HR", "Safety"][i],
+            country=["", "Uganda", "Kenya", "", "Uganda", "Uganda"][i],
+            status=statuses[i],
+            acknowledgement_required=i != 1,
+        )
+        if i == 5:
+            continue
+        version = DocumentVersion.objects.create(
+            id=f"ghrw{i}",
+            document=document,
+            version_number=i + 1,
+            uri=f"/files/{i}",
+            original_filename=f"policy-{i}.pdf",
+            review_date=None
+            if i == 2
+            else today + timedelta(days=[10, 60, 0, 61, 5][i]),
+        )
+        DocumentAsset.objects.filter(id=document.id).update(current_version=version)
+        for k in range(7):
+            DocumentAcknowledgement.objects.create(
+                id=f"ghrn{i}{k}",
+                document=document,
+                version=version,
+                user_id=profiles[k + i].user_id,
+                state=[
+                    "agreed",
+                    "pending",
+                    "disagreed",
+                    "agreed",
+                    "superseded",
+                    "agreed",
+                    "agreed",
+                ][k],
+            )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -298,6 +354,8 @@ QUESTIONS = {
         {"q": "leave"},
         {"q": "admin.user"},
         {"q": "Program Lead"},
+        {"q": "golden policy"},
+        {"q": "safety"},
     ],
     "ia@edify.org": [{}, {"page": "2"}],
     "cd@edify.org": [{}, {"q": "finance"}],

@@ -31,6 +31,8 @@ type Role struct {
 	Strip *decisionlog.Strip `json:"strip"`
 	// Drawers are the header buttons' drawers the role may open.
 	Drawers []string `json:"drawers"`
+	// Links are the header link buttons' pages the role may open.
+	Links []string `json:"links"`
 }
 
 // Page is one register's doors.
@@ -57,9 +59,12 @@ type Rules struct {
 	ApplicationStages map[string]string `json:"application_stages"`
 	// The labels of an employee's compliance status.
 	ComplianceStatuses map[string]string `json:"compliance_statuses"`
-	MetricLabels       map[string]string `json:"metric_labels"`
-	HelperFigureChars  int               `json:"helper_figure_chars"`
-	PageSize           int               `json:"page_size"`
+	// The labels of a document's type and status.
+	DocumentTypes     map[string]string `json:"document_types"`
+	DocumentStatuses  map[string]string `json:"document_statuses"`
+	MetricLabels      map[string]string `json:"metric_labels"`
+	HelperFigureChars int               `json:"helper_figure_chars"`
+	PageSize          int               `json:"page_size"`
 }
 
 var rules = mustLoad(rulesJSON)
@@ -68,7 +73,7 @@ func mustLoad(raw []byte) Rules {
 	var r Rules
 	if err := json.Unmarshal(raw, &r); err != nil || len(r.Pages) == 0 || len(r.OnboardingStates) == 0 || len(r.RecognitionCategories) == 0 || len(r.SafetyCategories) == 0 ||
 		len(r.Severities) == 0 || len(r.SafetyStatuses) == 0 || len(r.OnboardingStatuses) == 0 ||
-		len(r.ExitReasons) == 0 || len(r.VoluntaryExitReasons) == 0 || len(r.ApplicationStages) == 0 || len(r.ComplianceStatuses) == 0 ||
+		len(r.ExitReasons) == 0 || len(r.VoluntaryExitReasons) == 0 || len(r.ApplicationStages) == 0 || len(r.ComplianceStatuses) == 0 || len(r.DocumentTypes) == 0 || len(r.DocumentStatuses) == 0 ||
 		len(r.MetricLabels) == 0 || r.HelperFigureChars <= 0 || r.PageSize <= 0 {
 		panic(fmt.Sprintf("hrregister: the embedded rules are unreadable: %v", err))
 	}

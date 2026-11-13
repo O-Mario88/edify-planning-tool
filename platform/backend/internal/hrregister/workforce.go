@@ -150,7 +150,7 @@ SELECT v.country, COALESCE(v.department, ''), lower(COALESCE(v.status, '')) FROM
 		description: "Staffing by country and department: headcount, who has left and who is leaving, and the roles open or " +
 			"awaiting approval to replace or grow.",
 		columns:    []string{"Department", "Country", "Headcount", "Pending activation", "Left this FY", "Leaving in 90 days", "Open roles", "Awaiting approval"},
-		actions:    []action{{"Request a vacancy", "/recruitment/new"}},
+		actions:    []action{{label: "Request a vacancy", drawer: "/recruitment/new"}},
 		emptyTitle: "No workforce profiles in this scope",
 		emptyBody:  defaultEmptyBody,
 	}

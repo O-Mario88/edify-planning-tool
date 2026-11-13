@@ -18,7 +18,8 @@ reach rule once; each register is added to it as it is ported.
 | Employment Compliance | `/compliance-register` | This document |
 | HR System Audit Log | `/hr-audit-log` | This document |
 | Workforce Planning | `/workforce-planning` | This document |
-| The other registers (pulse surveys, employee relations, compensation, recruitment, performance reviews, policies, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| Policies & Documents | `/policies` | This document |
+| The other registers (pulse surveys, employee relations, compensation, recruitment, performance reviews, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -167,6 +168,24 @@ and keeps only the last group, so people vanish; Go counts them as one
 "Unassigned" unit (OWNER_DEFECTS; an intended difference once that list is
 merged). The golden keeps the two apart to compare like with like.
 
+## 169.2j Policies & Documents
+
+`policies_view`: the policies and manuals, not archived, of every country
+("" as stored) and, for a reach short of the organisation, of the reach's
+countries, whose title, category or country holds the search, by title. Each
+row: the title, the type's label, the country ("All countries" for every
+one), the current version ("vN", "No version yet"), its review day, "agreed of
+asked" acknowledgements of the current version (asked = agreed, pending and
+disagreed; by the People records in reach, everyone's for the organisation)
+or "Not required", the status's label, and a "Manage" link to
+`/documents/<slug>/manage` (read by the feed as a primary button under the key
+"button", with no drawer). Figures: Published policies (published or
+effective), Policies in review (draft, under review or returned),
+Acknowledgement rate (agreed over asked, rounded half to even, "—" with none
+asked), Policy reviews due (a review day within 60 days, overdue included),
+Disagreements (danger when any). The header's "Publish a policy" is a link,
+which the feed does not read.
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -188,8 +207,11 @@ notes, nor a vacancy's salary band or budget); a compliance requirement's
 country, name and whether it is mandatory, and an employee's record's
 status, expiry day and verifier (not the evidence document); an audit
 event's acting role, beside its action, actor, success, time and subject
-already granted (never its payload); a vacancy's department and status
-(applied to `edify_gorn_dev` and
+already granted (never its payload); a vacancy's department and status; a
+policy's slug, title, type, category, country, status, whether
+acknowledgement is required and its current version, that version's number
+and review day, and who acknowledged which version and how (not the file,
+owner, audience or comments) (applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -204,8 +226,9 @@ already granted (never its payload); a vacancy's department and status
   checklists and 10 exits around today; 12 applications at every stage on
   three vacancies; four requirements, mandatory and not, for every country,
   Uganda and Kenya, and 14 records of every status; the test database's own
-  555 HR audit events; five vacancies of every status), asks the existing
-  feed 297 questions as Admin, HR, Impact Assessment and the Country Director as Admin, HR and Impact Assessment and deletes
+  555 HR audit events; five vacancies of every status; six documents of
+  every kind and status with 35 acknowledgements), asks the existing feed 350
+  questions as Admin, HR, Impact Assessment and the Country Director as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 

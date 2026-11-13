@@ -45,7 +45,7 @@ WHERE %s AND %s ORDER BY i.incident_date DESC`, since, scopeSQL, searchSQL), arg
 		description: "Occupational health and safety across the countries you oversee: incidents, near misses and hazards, " +
 			"and the corrective action taken.",
 		columns:    []string{"Incident", "Country", "Date", "Severity", "Days lost", "Status"},
-		actions:    []action{{"Report an incident", "/health-safety/new"}},
+		actions:    []action{{label: "Report an incident", drawer: "/health-safety/new"}},
 		emptyTitle: "No incidents recorded",
 		emptyBody:  "Report injuries, road traffic incidents, near misses and hazards so their causes can be fixed.",
 	}
@@ -71,7 +71,7 @@ WHERE %s AND %s ORDER BY i.incident_date DESC`, since, scopeSQL, searchSQL), arg
 			labelOf(rules.SafetyCategories, i.category) + " · " + who, dash(i.country), dash(i.date),
 			dash(labelOf(rules.Severities, i.severity)), count(i.daysLost), dash(labelOf(rules.SafetyStatuses, i.status)),
 		})
-		reg.rowActions = append(reg.rowActions, []action{{"Open", "/health-safety/" + i.id}})
+		reg.rowActions = append(reg.rowActions, []action{{label: "Open", drawer: "/health-safety/" + i.id}})
 	}
 	reg.metrics = []metric{
 		{"Open incidents", count(open), "not yet closed", "warning"},

@@ -8,7 +8,8 @@ answers, who may open it, the workspace strip each role is shown above it and
 which of its drawer buttons each role is shown; the labels of a People
 record's lifecycle, a recognition's category and a safety incident's
 category, severity and status, an onboarding plan's status and an exit's
-reason, and which reasons are voluntary, an application's stage and an employee's compliance status; the label each context figure
+reason, and which reasons are voluntary, an application's stage an employee's compliance status, and a document's type and status; which
+of its link buttons each role may open; the label each context figure
 is drawn with; how long the line under a figure may stay; and the register's
 page size. A change to any of them must be exported again;
 apps/hr/test_hr_register_rules_export.py fails until it is, so the two can
@@ -94,6 +95,18 @@ PAGES = {
             "Turnover this FY",
         ],
     },
+    "/policies": {
+        "permission": "policies",
+        "drawers": [],
+        "links": ["/uploads/new"],
+        "metrics": [
+            "Published policies",
+            "Policies in review",
+            "Acknowledgement rate",
+            "Policy reviews due",
+            "Disagreements",
+        ],
+    },
     "/health-safety": {
         "permission": "health_safety",
         "drawers": ["/health-safety/new"],
@@ -116,6 +129,7 @@ def pages() -> dict:
                 and bool(can_open_url(user, path)),
                 "strip": strip(user, path, "partials/_section_nav.html"),
                 "drawers": [d for d in page["drawers"] if can_open_url(user, d)],
+                "links": [h for h in page.get("links", []) if can_open_url(user, h)],
             }
         out[path] = {"roles": roles}
     return out
@@ -138,6 +152,7 @@ def metric_labels() -> dict:
 def rules() -> dict:
     from apps.accounts.models import StaffOnboardingState
     from apps.core.metrics.payload import HELPER_FIGURE_CHARS
+    from apps.documents.models import DocumentStatus, DocumentType
     from apps.hr.models import (
         VOLUNTARY_EXIT_REASONS,
         ApplicationStage,
@@ -163,6 +178,8 @@ def rules() -> dict:
         "voluntary_exit_reasons": sorted(str(r) for r in VOLUNTARY_EXIT_REASONS),
         "application_stages": dict(ApplicationStage.choices),
         "compliance_statuses": dict(ComplianceStatus.choices),
+        "document_types": dict(DocumentType.choices),
+        "document_statuses": dict(DocumentStatus.choices),
         "metric_labels": metric_labels(),
         "helper_figure_chars": HELPER_FIGURE_CHARS,
         "page_size": TABLE_PAGE_SIZE,

@@ -61,7 +61,7 @@ WHERE %s AND %s ORDER BY r.awarded_on DESC`, since, scopeSQL, searchSQL), args..
 		path: "/recognition", title: "Recognition", eyebrow: "Rewards and wellbeing",
 		description: "Recognition given to staff across the countries you oversee, so good work is named and nobody goes a year unrecognised.",
 		columns:     []string{"Team member", "Country", "Recognised for", "Citation", "Awarded"},
-		actions:     []action{{"Recognise someone", "/recognition/new"}},
+		actions:     []action{{label: "Recognise someone", drawer: "/recognition/new"}},
 		emptyTitle:  "No recognition recorded yet",
 		emptyBody:   "Recognise someone to record what they did and why it mattered.",
 	}
