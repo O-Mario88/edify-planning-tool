@@ -438,3 +438,7 @@ GRANT SELECT (department, status) ON hr_vacancy TO edify_gateway_ro;
 GRANT SELECT (id, slug, title, document_type, category, country, status, acknowledgement_required, current_version_id) ON document_asset TO edify_gateway_ro;
 GRANT SELECT (id, version_number, review_date) ON document_version TO edify_gateway_ro;
 GRANT SELECT (id, document_id, version_id, user_id, state) ON document_acknowledgement TO edify_gateway_ro;
+-- Performance Recovery Plans: each plan's person, type, cause code, start
+-- and review days and status. Not the evidence, the action plan, the support
+-- or the outcome note.
+GRANT SELECT (id, staff_id, plan_type, cause, start_date, end_date, status) ON hr_pip_plan TO edify_gateway_ro;

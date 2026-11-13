@@ -36,6 +36,9 @@ type register struct {
 	rowActions            [][]action
 	actions               []action
 	emptyTitle, emptyBody string
+	// teamView is a Programme Lead's team register, which sits under My Team
+	// rather than Human Capital.
+	teamView bool
 }
 
 const (
@@ -51,12 +54,16 @@ func panel(title string, items ...*screensv1.PagePanelItem) *screensv1.PageBlock
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Title: title, Items: items}}}
 }
 
-// breadcrumb is the register's breadcrumb as the feed reads it.
-func breadcrumb(title string) *screensv1.PageBlock {
+// breadcrumb is the register's breadcrumb as the feed reads it: Human
+// Capital, or My Team for a team register.
+func breadcrumb(reg register) *screensv1.PageBlock {
+	home := &screensv1.PageLink{Text: "Human Capital", Href: "/dashboard"}
+	if reg.teamView {
+		home = &screensv1.PageLink{Text: "My Team", Href: "/my-team"}
+	}
 	return panel("",
-		&screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
-			Links: []*screensv1.PageLink{{Text: "Human Capital", Href: "/dashboard"}}}}},
-		text("/"), text(title))
+		&screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: []*screensv1.PageLink{home}}}},
+		text("/"), text(reg.title))
 }
 
 func strip(r Role) *screensv1.PageBlock {
@@ -218,7 +225,7 @@ func render(reg register, role Role, query url.Values) *screensv1.GetPageRespons
 			}
 		}
 	}
-	blocks := []*screensv1.PageBlock{breadcrumb(reg.title)}
+	blocks := []*screensv1.PageBlock{breadcrumb(reg)}
 	if role.Strip != nil {
 		blocks = append(blocks, strip(role))
 	}

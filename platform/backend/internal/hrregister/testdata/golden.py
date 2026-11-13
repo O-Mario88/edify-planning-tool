@@ -33,6 +33,7 @@ from apps.documents.models import (
 )
 from apps.hr.models import (
     Application,
+    PerformanceImprovementPlan,
     Candidate,
     ComplianceRequirement,
     EmployeeComplianceRecord,
@@ -51,6 +52,7 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 User = get_user_model()
 #: Deleted children first.
 TABLES = (
+    "hr_pip_plan",
     "document_acknowledgement",
     "document_version",
     "document_asset",
@@ -79,6 +81,7 @@ PATHS = (
     "/hr-audit-log",
     "/workforce-planning",
     "/policies",
+    "/recovery-plans",
 )
 
 
@@ -145,6 +148,7 @@ def file_rows():
     file_candidates()
     file_compliance(profiles, today)
     file_documents(profiles, today)
+    file_recovery(profiles, today)
     kinds = ["injury", "road_traffic", "near_miss", "hazard", "security", "illness"]
     for i in range(10):
         SafetyIncident.objects.create(
@@ -310,6 +314,37 @@ def file_documents(profiles, today):
             )
 
 
+def file_recovery(profiles, today):
+    lead = StaffProfile.objects.get(user__email="pl1@edify.org")
+    team = list(
+        StaffProfile.objects.filter(
+            supervisor_links__supervisor=lead, user__active_role="CCEO"
+        ).order_by("id")[:4]
+    )
+    statuses = [
+        "draft",
+        "active",
+        "progress_review",
+        "extended",
+        "escalated",
+        "completed",
+    ]
+    causes = ["capacity", "workload"]
+    people = [*profiles[30:36], *team, lead]
+    for i, staff in enumerate(people):
+        PerformanceImprovementPlan.objects.create(
+            id=f"ghrz{i:03d}",
+            staff=staff,
+            plan_type=["informal", "formal"][i % 2],
+            status=statuses[i % 6],
+            cause=causes[i % 2],
+            action_plan="Agreed steps.",
+            start_date=today - timedelta(days=60 + i),
+            end_date=today
+            + timedelta(days=[-3, 0, 12, 30, 31, -40, 5, 45, -1, 2, 7][i]),
+        )
+
+
 def dump_rows():
     rows = {}
     with connection.cursor() as cursor:
@@ -359,6 +394,7 @@ QUESTIONS = {
     ],
     "ia@edify.org": [{}, {"page": "2"}],
     "cd@edify.org": [{}, {"q": "finance"}],
+    "pl1@edify.org": [{}, {"q": "workload"}],
 }
 
 

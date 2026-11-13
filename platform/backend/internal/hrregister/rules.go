@@ -60,11 +60,17 @@ type Rules struct {
 	// The labels of an employee's compliance status.
 	ComplianceStatuses map[string]string `json:"compliance_statuses"`
 	// The labels of a document's type and status.
-	DocumentTypes     map[string]string `json:"document_types"`
-	DocumentStatuses  map[string]string `json:"document_statuses"`
-	MetricLabels      map[string]string `json:"metric_labels"`
-	HelperFigureChars int               `json:"helper_figure_chars"`
-	PageSize          int               `json:"page_size"`
+	DocumentTypes    map[string]string `json:"document_types"`
+	DocumentStatuses map[string]string `json:"document_statuses"`
+	// The labels of a recovery plan's type, cause and status.
+	RecoveryPlanTypes map[string]string `json:"recovery_plan_types"`
+	RecoveryCauses    map[string]string `json:"recovery_causes"`
+	RecoveryStatuses  map[string]string `json:"recovery_statuses"`
+	// Reviews are the roles each role is the performance reviewer for.
+	Reviews           map[string][]string `json:"reviews"`
+	MetricLabels      map[string]string   `json:"metric_labels"`
+	HelperFigureChars int                 `json:"helper_figure_chars"`
+	PageSize          int                 `json:"page_size"`
 }
 
 var rules = mustLoad(rulesJSON)
@@ -74,6 +80,7 @@ func mustLoad(raw []byte) Rules {
 	if err := json.Unmarshal(raw, &r); err != nil || len(r.Pages) == 0 || len(r.OnboardingStates) == 0 || len(r.RecognitionCategories) == 0 || len(r.SafetyCategories) == 0 ||
 		len(r.Severities) == 0 || len(r.SafetyStatuses) == 0 || len(r.OnboardingStatuses) == 0 ||
 		len(r.ExitReasons) == 0 || len(r.VoluntaryExitReasons) == 0 || len(r.ApplicationStages) == 0 || len(r.ComplianceStatuses) == 0 || len(r.DocumentTypes) == 0 || len(r.DocumentStatuses) == 0 ||
+		len(r.RecoveryPlanTypes) == 0 || len(r.RecoveryCauses) == 0 || len(r.RecoveryStatuses) == 0 || len(r.Reviews) == 0 ||
 		len(r.MetricLabels) == 0 || r.HelperFigureChars <= 0 || r.PageSize <= 0 {
 		panic(fmt.Sprintf("hrregister: the embedded rules are unreadable: %v", err))
 	}

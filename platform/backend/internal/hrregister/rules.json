@@ -51,12 +51,15 @@
     "Acting roles": "Acting roles",
     "Active": "Active",
     "Applications": "Applications",
+    "Awaiting authorisation": "Awaiting authorisation",
     "Awaiting supervisor": "Awaiting supervisor",
     "Compliant": "Compliant",
     "Days lost": "Days lost",
     "Departments": "Departments",
     "Disagreements": "Disagreements",
     "Due soon": "Due soon",
+    "Ending in 30 days": "Ending in 30 days",
+    "Escalated": "Escalated",
     "Events": "Events",
     "Handover gaps": "Handover gaps",
     "Headcount": "Headcount",
@@ -1046,6 +1049,144 @@
         }
       }
     },
+    "/recovery-plans": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/recovery-plans/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/recovery-plans/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/recovery-plans/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [
+            "/recovery-plans/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": {
+            "label": "Performance & Coaching",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/team/coaching",
+                "label": "Coaching"
+              },
+              {
+                "active": false,
+                "href": "/performance-reviews",
+                "label": "Performance Reviews"
+              },
+              {
+                "active": true,
+                "href": "/recovery-plans",
+                "label": "Recovery Plans"
+              },
+              {
+                "active": false,
+                "href": "/cpd-learning",
+                "label": "Professional Development"
+              },
+              {
+                "active": false,
+                "href": "/policy-compliance",
+                "label": "Policy Compliance"
+              }
+            ]
+          }
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/workforce-planning": {
       "roles": {
         "Accountant": {
@@ -1162,6 +1303,47 @@
     "service_milestone": "Service milestone",
     "teamwork": "Teamwork",
     "values": "Living Edify's values"
+  },
+  "recovery_causes": {
+    "availability": "Availability — leave or absence",
+    "capacity": "Capacity — portfolio beyond capacity",
+    "conduct": "Conduct",
+    "data_quality": "Data quality — work done but not credited",
+    "manager_support": "Manager support",
+    "other": "Other",
+    "skill": "Skill gap",
+    "workload": "Workload — competing demands"
+  },
+  "recovery_plan_types": {
+    "formal": "Formal performance improvement plan",
+    "informal": "Informal recovery plan"
+  },
+  "recovery_statuses": {
+    "active": "Active",
+    "closed": "Closed",
+    "completed": "Successfully completed",
+    "draft": "Draft",
+    "escalated": "Escalated to a conduct case",
+    "extended": "Extended",
+    "progress_review": "Progress review"
+  },
+  "reviews": {
+    "Admin": [
+      "RegionalVicePresident"
+    ],
+    "CountryDirector": [
+      "Accountant",
+      "HumanResources",
+      "ImpactAssessment",
+      "Program Lead",
+      "ProjectCoordinator"
+    ],
+    "Program Lead": [
+      "CCEO"
+    ],
+    "RegionalVicePresident": [
+      "CountryDirector"
+    ]
   },
   "safety_categories": {
     "hazard": "Hazard reported",

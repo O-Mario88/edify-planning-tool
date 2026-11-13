@@ -8,7 +8,8 @@ answers, who may open it, the workspace strip each role is shown above it and
 which of its drawer buttons each role is shown; the labels of a People
 record's lifecycle, a recognition's category and a safety incident's
 category, severity and status, an onboarding plan's status and an exit's
-reason, and which reasons are voluntary, an application's stage an employee's compliance status, and a document's type and status; which
+reason, and which reasons are voluntary, an application's stage an employee's compliance status, a document's type and status, and a recovery plan's type, cause and
+status; whom each role reviews; which
 of its link buttons each role may open; the label each context figure
 is drawn with; how long the line under a figure may stay; and the register's
 page size. A change to any of them must be exported again;
@@ -107,6 +108,16 @@ PAGES = {
             "Disagreements",
         ],
     },
+    "/recovery-plans": {
+        "permission": "recovery_plans",
+        "drawers": ["/recovery-plans/new"],
+        "metrics": [
+            "Awaiting authorisation",
+            "Active",
+            "Ending in 30 days",
+            "Escalated",
+        ],
+    },
     "/health-safety": {
         "permission": "health_safety",
         "drawers": ["/health-safety/new"],
@@ -149,6 +160,16 @@ def metric_labels() -> dict:
     }
 
 
+def reviews() -> dict:
+    from apps.hr.review_authority import REVIEWER_ROLE_FOR
+
+    out: dict[str, list[str]] = {}
+    for reviewee, reviewers in REVIEWER_ROLE_FOR.items():
+        for reviewer in reviewers:
+            out.setdefault(str(reviewer), []).append(str(reviewee))
+    return {role: sorted(roles) for role, roles in sorted(out.items())}
+
+
 def rules() -> dict:
     from apps.accounts.models import StaffOnboardingState
     from apps.core.metrics.payload import HELPER_FIGURE_CHARS
@@ -161,6 +182,9 @@ def rules() -> dict:
         ExitReason,
         OnboardingStatus,
         RecognitionCategory,
+        RecoveryCause,
+        RecoveryPlanType,
+        RecoveryStatus,
         SafetyIncidentCategory,
         SafetyIncidentStatus,
     )
@@ -179,6 +203,13 @@ def rules() -> dict:
         "application_stages": dict(ApplicationStage.choices),
         "compliance_statuses": dict(ComplianceStatus.choices),
         "document_types": dict(DocumentType.choices),
+        "recovery_plan_types": dict(RecoveryPlanType.choices),
+        "recovery_causes": dict(RecoveryCause.choices),
+        "recovery_statuses": dict(RecoveryStatus.choices),
+        # Whom each role reviews (review_authority.REVIEWER_ROLE_FOR,
+        # inverted): a Programme Lead's recovery register lists the plans of
+        # the people they supervise in these roles.
+        "reviews": reviews(),
         "document_statuses": dict(DocumentStatus.choices),
         "metric_labels": metric_labels(),
         "helper_figure_chars": HELPER_FIGURE_CHARS,

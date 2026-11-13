@@ -29,6 +29,8 @@ type input struct {
 	today time.Time
 	// now is the moment of the request (get_operational_fy reads it in UTC).
 	now time.Time
+	// principal is the reader.
+	principal auth.Principal
 }
 
 // builders are the registers Go answers, by path.
@@ -43,6 +45,7 @@ var builders = map[string]func(context.Context, input) (register, error){
 	"/hr-audit-log":        hrAuditLog,
 	"/workforce-planning":  workforcePlanning,
 	"/policies":            policies,
+	"/recovery-plans":      recoveryPlans,
 }
 
 // zone is settings.TIME_ZONE, the zone the server's day is read in.
@@ -82,7 +85,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	now := s.now().In(zone)
 	in := input{db: s.db, reach: r, query: query, search: closedschools.StripSpace(query.Get("q")),
-		today: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC), now: now}
+		today: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC), now: now, principal: p}
 	reg, err := build(ctx, in)
 	if err != nil {
 		return nil, true, err

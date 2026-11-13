@@ -8,6 +8,12 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"connectrpc.com/connect"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 )
 
 // hrRegisterGolden is what internal/hrregister/testdata/golden.py writes: the
@@ -48,7 +54,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	}
 	ctx := context.Background()
 	// Children first; only the golden's own rows (ids starting "ghr").
-	children := []string{"document_acknowledgement", "document_version", "document_asset", "hr_employee_compliance_record", "hr_compliance_requirement", "hr_application", "hr_candidate", "hr_vacancy", "hr_onboarding_task", "hr_onboarding_plan", "hr_offboarding", "hr_safety_incident", "hr_staff_recognition",
+	children := []string{"hr_pip_plan", "document_acknowledgement", "document_version", "document_asset", "hr_employee_compliance_record", "hr_compliance_requirement", "hr_application", "hr_candidate", "hr_vacancy", "hr_onboarding_task", "hr_onboarding_plan", "hr_offboarding", "hr_safety_incident", "hr_staff_recognition",
 		"staff_supervisor_assignment", "staff_profile", "user"}
 	// One transaction each way: a document and its current version name each
 	// other, and the foreign keys are checked when the transaction commits.
@@ -77,7 +83,7 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	defer func() { _ = tx.Rollback(ctx) }()
 	for _, table := range []string{"user", "staff_profile", "staff_supervisor_assignment", "hr_staff_recognition", "hr_safety_incident",
 		"hr_offboarding", "hr_onboarding_plan", "hr_onboarding_task", "hr_vacancy", "hr_candidate", "hr_application",
-		"hr_compliance_requirement", "hr_employee_compliance_record", "document_asset", "document_version", "document_acknowledgement"} {
+		"hr_compliance_requirement", "hr_employee_compliance_record", "document_asset", "document_version", "document_acknowledgement", "hr_pip_plan"} {
 		for _, row := range golden.Rows[table] {
 			if _, err := tx.Exec(ctx, `INSERT INTO "`+table+`" SELECT * FROM json_populate_record(NULL::"`+table+`", $1::json)`, string(row)); err != nil {
 				t.Fatalf("filing a %s row: %v", table, err)
@@ -87,14 +93,46 @@ func TestTheHRRegistersMatchTheExistingFeedOverPeopleTheSeedLacks(t *testing.T) 
 	if err := tx.Commit(ctx); err != nil {
 		t.Fatalf("filing: %v", err)
 	}
-	byPath := map[string][]goldenAnswer{}
-	for _, a := range golden.Answers {
-		byPath[a.Path] = append(byPath[a.Path], goldenAnswer{Email: a.Email, Query: a.Query, Status: a.Status, Body: a.Body})
+	// Each account signs in once for every register (signing in is rate
+	// limited).
+	tokens := map[string]string{}
+	compared, differing := 0, 0
+	for _, answer := range golden.Answers {
+		token, ok := tokens[answer.Email]
+		if !ok {
+			borrowAccount(t, answer.Email)
+			token = sessionOf(t, answer.Email, seededPassword).GetAccessToken()
+			tokens[answer.Email] = token
+		}
+		got, err := pageOf(token, answer.Path, answer.Query)
+		if answer.Status != 200 {
+			if connect.CodeOf(err) != connect.CodeNotFound {
+				differing++
+				t.Errorf("%s %s %v: %v, want not found", answer.Email, answer.Path, answer.Query, err)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatalf("%s %s %v: %v", answer.Email, answer.Path, answer.Query, err)
+		}
+		want := &screensv1.GetPageResponse{}
+		if err := protojson.Unmarshal(answer.Body, want); err != nil {
+			t.Fatalf("the golden answer: %v", err)
+		}
+		compared++
+		if !proto.Equal(got, want) {
+			differing++
+			g, w := protojson.Format(got), protojson.Format(want)
+			at := 0
+			for at < len(g) && at < len(w) && g[at] == w[at] {
+				at++
+			}
+			t.Errorf("%s %s %v differs at byte %d:\n go:       …%s\n existing: …%s", answer.Email, answer.Path, answer.Query, at,
+				g[max(at-200, 0):min(at+200, len(g))], w[max(at-200, 0):min(at+200, len(w))])
+		}
 	}
-	if len(byPath) == 0 {
-		t.Fatal("no answer to compare")
-	}
-	for path, answers := range byPath {
-		compareGolden(t, path, answers)
+	t.Logf("%d answers of %d accounts compared, %d differing", compared, len(tokens), differing)
+	if compared == 0 {
+		t.Fatal("no answer was compared")
 	}
 }

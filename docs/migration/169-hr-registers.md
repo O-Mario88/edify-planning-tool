@@ -19,7 +19,8 @@ reach rule once; each register is added to it as it is ported.
 | HR System Audit Log | `/hr-audit-log` | This document |
 | Workforce Planning | `/workforce-planning` | This document |
 | Policies & Documents | `/policies` | This document |
-| The other registers (pulse surveys, employee relations, compensation, recruitment, performance reviews, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| Performance Recovery Plans | `/recovery-plans` | This document |
+| The other registers (pulse surveys, employee relations, compensation, recruitment, performance reviews, HR analytics, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -186,6 +187,21 @@ asked), Policy reviews due (a review day within 60 days, overdue included),
 Disagreements (danger when any). The header's "Publish a policy" is a link,
 which the feed does not read.
 
+## 169.2k Performance Recovery Plans
+
+`recovery_plans_view`: the recovery plans of the People records in reach; for
+a Programme Lead (`team_view`), the plans of the people they review
+(`reviewees_of`: those they supervise whose active role is one the Lead
+reviews, `REVIEWER_ROLE_FOR` inverted and exported), never their own, under a
+"My Team" breadcrumb with its own empty text. A search keeps plans whose
+person's name, cause code or status code holds it; by status code and review
+day. Each row: the person, the plan type's and cause's labels, start and
+review days, the status's label ("Past review date" for a live plan, active,
+in progress review or extended, past its review day), and an "Open" drawer
+button. Figures over the searched plans: Awaiting authorisation (draft),
+Active (live), Ending in 30 days (live, review day today to 30 days ahead),
+Escalated. One drawer button, "Recommend a formal plan".
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -211,7 +227,9 @@ already granted (never its payload); a vacancy's department and status; a
 policy's slug, title, type, category, country, status, whether
 acknowledgement is required and its current version, that version's number
 and review day, and who acknowledged which version and how (not the file,
-owner, audience or comments) (applied to `edify_gorn_dev` and
+owner, audience or comments); a recovery plan's person,
+type, cause, start and review days and status (not its evidence, action plan,
+support or outcome note) (applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -227,8 +245,9 @@ owner, audience or comments) (applied to `edify_gorn_dev` and
   three vacancies; four requirements, mandatory and not, for every country,
   Uganda and Kenya, and 14 records of every status; the test database's own
   555 HR audit events; five vacancies of every status; six documents of
-  every kind and status with 35 acknowledgements), asks the existing feed 350
-  questions as Admin, HR, Impact Assessment and the Country Director as Admin, HR and Impact Assessment and deletes
+  every kind and status with 35 acknowledgements; 11 recovery plans, five of
+  them on Programme Lead 1's team and one on the Lead), asks the existing feed
+  407 questions as Admin, HR, Impact Assessment, the Country Director and a Programme Lead as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 
