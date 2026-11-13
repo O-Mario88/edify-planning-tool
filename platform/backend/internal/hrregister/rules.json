@@ -39,14 +39,17 @@
     "Due soon": "Due soon",
     "Events": "Events",
     "Handover gaps": "Handover gaps",
+    "Headcount": "Headcount",
     "Hired": "Hired",
     "In progress": "In progress",
     "Interviews": "Interviews",
+    "Leaving in 90 days": "Leaving in 90 days",
     "Missing or expired": "Missing or expired",
     "Near misses": "Near misses",
     "No reporting line": "No reporting line",
     "Offers": "Offers",
     "Open incidents": "Open incidents",
+    "Open roles": "Open roles",
     "Overdue": "Overdue",
     "Past exit date, still active": "Past exit date, still active",
     "People in scope": "People in scope",
@@ -59,6 +62,7 @@
     "Screening": "Screening",
     "Serious incidents": "Serious incidents",
     "Showing": "Showing",
+    "Turnover this FY": "Turnover this FY",
     "Voluntary exits": "Voluntary exits"
   },
   "onboarding_states": {
@@ -777,6 +781,98 @@
         "RegionalVicePresident": {
           "drawers": [],
           "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/workforce-planning": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/recruitment/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [
+            "/recruitment/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/recruitment/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/recruitment/new"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": true,
           "strip": null
         }
       }

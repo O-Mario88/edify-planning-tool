@@ -69,6 +69,7 @@ PATHS = (
     "/candidate-pipeline",
     "/compliance-register",
     "/hr-audit-log",
+    "/workforce-planning",
 )
 
 
@@ -97,7 +98,9 @@ def file_rows():
                 id=f"ghrp{i:03d}",
                 user=user,
                 title=["", "Field Officer", None][i % 3],
-                department=["Programmes", "", None, "Finance"][i % 4],
+                department=None
+                if i == 60
+                else ["Programmes", "Logistics", "Finance", "Finance"][i % 4],
                 country="Kenya" if i == 60 else "Uganda",
                 onboarding_state=["active", "active", "pending", "suspended", "exited"][
                     i % 5
@@ -192,11 +195,12 @@ def file_candidates():
     vacancies = [
         Vacancy.objects.create(
             id=f"ghrv{i}",
-            country=["Uganda", "Uganda", "Kenya"][i],
-            department="Programmes",
-            role=["Field Officer", "Accountant", "Driver"][i],
+            country=["Uganda", "Uganda", "Kenya", "Uganda", "Uganda"][i],
+            department=["Programmes", "Finance", "Programmes", "Logistics", "Admin"][i],
+            role=["Field Officer", "Accountant", "Driver", "Officer", "Clerk"][i],
+            status=["open", "pending_approval", "open", "draft", "PENDING_APPROVAL"][i],
         )
-        for i in range(3)
+        for i in range(5)
     ]
     stages = [
         "applied",
@@ -296,6 +300,7 @@ QUESTIONS = {
         {"q": "Program Lead"},
     ],
     "ia@edify.org": [{}, {"page": "2"}],
+    "cd@edify.org": [{}, {"q": "finance"}],
 }
 
 

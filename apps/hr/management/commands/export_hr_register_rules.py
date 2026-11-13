@@ -84,6 +84,16 @@ PAGES = {
         "drawers": [],
         "metrics": ["Events", "Refused actions", "Acting roles", "Showing"],
     },
+    "/workforce-planning": {
+        "permission": "workforce_planning",
+        "drawers": ["/recruitment/new"],
+        "metrics": [
+            "Headcount",
+            "Open roles",
+            "Leaving in 90 days",
+            "Turnover this FY",
+        ],
+    },
     "/health-safety": {
         "permission": "health_safety",
         "drawers": ["/health-safety/new"],

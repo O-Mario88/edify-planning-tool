@@ -427,3 +427,6 @@ GRANT SELECT (id, staff_id, requirement_id, status, expiry_date, verified_by_id)
 -- The HR System Audit Log: an HR event's acting role, beside the action,
 -- actor, success, time and subject already granted. Never its payload.
 GRANT SELECT (actor_role) ON audit_log TO edify_gateway_ro;
+-- Workforce Planning: a vacancy's department and status, beside its role and
+-- country already granted.
+GRANT SELECT (department, status) ON hr_vacancy TO edify_gateway_ro;

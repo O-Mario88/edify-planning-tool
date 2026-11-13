@@ -17,7 +17,8 @@ reach rule once; each register is added to it as it is ported.
 | Candidate Pipeline | `/candidate-pipeline` | This document |
 | Employment Compliance | `/compliance-register` | This document |
 | HR System Audit Log | `/hr-audit-log` | This document |
-| The other registers (pulse surveys, employee relations, compensation, recruitment, workforce planning, performance reviews, policies, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| Workforce Planning | `/workforce-planning` | This document |
+| The other registers (pulse surveys, employee relations, compensation, recruitment, performance reviews, policies, HR analytics, recovery plans, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -143,6 +144,29 @@ id" of the subject, Success or Refused, and the time in UTC
 event: Events, Refused actions, Acting roles (distinct, none counted as one),
 Showing (at most 200). Never a payload.
 
+## 169.2i Workforce Planning
+
+`workforce_planning_view`: the People records in reach and in the search, not
+exited, grouped by country and department ("Unassigned" for none), with the
+active headcount and those pending activation; the exits of the searched
+people (exited or not) with a last working day, counted as leaving when it is
+today to 90 days ahead and the exit is not "Closed", and as left when it is
+from the operational year's first day (1 October, the year read in UTC) to
+today; and the vacancies of the reach's countries whose status (in lower
+case) is open or pending approval. A unit is listed when it has people,
+someone leaving, open roles or roles awaiting approval, in country then
+department order; one with only leavers is counted but not listed, as the
+view does. Figures: Headcount, Open roles ("N awaiting approval"), Leaving in
+90 days (warning when any), Turnover this FY (leavers over headcount plus
+leavers, to one decimal, "—" with nobody; "N left since Oct YYYY"). One drawer
+button, "Request a vacancy" (the Regional Vice President, who reads the
+register without Recruitment, is not shown it).
+
+Found: the view groups a department stored as none and one stored as "" apart
+and keeps only the last group, so people vanish; Go counts them as one
+"Unassigned" unit (OWNER_DEFECTS; an intended difference once that list is
+merged). The golden keeps the two apart to compare like with like.
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -164,7 +188,8 @@ notes, nor a vacancy's salary band or budget); a compliance requirement's
 country, name and whether it is mandatory, and an employee's record's
 status, expiry day and verifier (not the evidence document); an audit
 event's acting role, beside its action, actor, success, time and subject
-already granted (never its payload) (applied to `edify_gorn_dev` and
+already granted (never its payload); a vacancy's department and status
+(applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -179,7 +204,8 @@ already granted (never its payload) (applied to `edify_gorn_dev` and
   checklists and 10 exits around today; 12 applications at every stage on
   three vacancies; four requirements, mandatory and not, for every country,
   Uganda and Kenya, and 14 records of every status; the test database's own
-  555 HR audit events), asks the existing feed 248 questions as Admin, HR and Impact Assessment and deletes
+  555 HR audit events; five vacancies of every status), asks the existing
+  feed 297 questions as Admin, HR, Impact Assessment and the Country Director as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 
