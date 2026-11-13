@@ -106,3 +106,56 @@ class GatewayRelayDoorsTest(SimpleTestCase):
             answer = _post(gateway_relay.activity_changed, body)
             self.assertEqual(answer.status_code, 400, body)
             self.assertEqual(json.loads(answer.content)["reason"], "bad_fields", body)
+
+
+class ClusterPreviewInputsTest(SimpleTestCase):
+    """A cluster Group Training's day check (docs/migration/38) asks the cost
+    preview what `_create` asks it: the cluster's district for the officer,
+    the head count the save derived, and its materials with a blank as 0."""
+
+    def test_the_probe_takes_the_sessions_own_columns(self):
+        for field in (
+            "cluster_id",
+            "expected_participants",
+            "schools_invited",
+            "printing_pages",
+            "photocopy_copies",
+        ):
+            self.assertIn(field, gateway_relay.PROBE_FIELDS)
+        self.assertNotIn("est_cost_cents", gateway_relay.PROBE_FIELDS)
+
+    def test_the_preview_reads_the_cluster_and_the_head_count(self):
+        from types import SimpleNamespace
+        from unittest import mock
+
+        district = SimpleNamespace(id="d1")
+        cluster = SimpleNamespace(district_id="d1", district=district)
+        activity = SimpleNamespace(
+            cluster_id="c1",
+            responsible_staff_id="s1",
+            expected_participants=9,
+            printing_pages=None,
+            photocopy_pages=12,
+            photocopy_copies=None,
+        )
+        with (
+            mock.patch("apps.clusters.models.Cluster.objects") as clusters,
+            mock.patch(
+                "apps.daily_visit_batches.districts.district_type_for_staff",
+                return_value="secondary",
+            ) as district_type,
+        ):
+            clusters.select_related.return_value.filter.return_value.first.return_value = cluster
+            inputs = gateway_relay._cluster_preview_inputs(activity)
+
+        district_type.assert_called_once_with("s1", district)
+        self.assertEqual(
+            inputs,
+            {
+                "districtType": "secondary",
+                "expectedParticipants": 9,
+                "printingPages": 0,
+                "photocopyPages": 12,
+                "photocopyCopies": 0,
+            },
+        )

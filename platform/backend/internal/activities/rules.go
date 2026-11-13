@@ -98,6 +98,25 @@ type Rules struct {
 		AdministrativeMode string   `json:"administrative_mode"`
 	} `json:"pair"`
 
+	// The seventh save, a cluster Group Training (docs/migration/38).
+	GroupTraining struct {
+		ActivityType             string   `json:"activity_type"`
+		ParticipantTypes         []string `json:"participant_types"`
+		TrainingTypes            []string `json:"training_types"`
+		PerSchoolMode            string   `json:"per_school_mode"`
+		ChampionTypes            []string `json:"champion_types"`
+		OperatingStatuses        []string `json:"operating_statuses"`
+		ActiveSupportStatuses    []string `json:"active_support_statuses"`
+		CompletedSupportStatuses []string `json:"completed_support_statuses"`
+		AdminCatalogueType       string   `json:"admin_catalogue_type"`
+		RankedModes              []string `json:"ranked_modes"`
+		FollowUpMode             string   `json:"follow_up_mode"`
+		UngatedModes             []string `json:"ungated_modes"`
+		CountryRoles             []string `json:"country_scheduling_roles"`
+		VisitOnlyRoles           []string `json:"visit_only_roles"`
+		SummaryRoles             []string `json:"summary_only_roles"`
+	} `json:"group_training"`
+
 	weights []weight
 	labels  map[string]string
 	order   []string

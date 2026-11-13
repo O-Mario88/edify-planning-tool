@@ -114,3 +114,35 @@ func TestTheGroupSavesAreOffUnlessNamed(t *testing.T) {
 		}
 	}
 }
+
+// A cluster's Group Training (docs/migration/38): off unless named, its
+// switch its own, refused outside development and staging.
+func TestTheGroupTrainingSaveIsOffUnlessNamed(t *testing.T) {
+	const key = "0123456789abcdef0123456789abcdef"
+	app := "http://localhost:8010"
+	for _, c := range []struct {
+		env, saves, app string
+		on              bool
+		wantErr         string
+	}{
+		{env: "development", app: app},
+		{env: "development", saves: "schedule_training_pair", app: app},
+		{env: "development", saves: "schedule_group_training", app: app, on: true},
+		{env: "staging", saves: "schedule_visit,schedule_group_training", app: app, on: true},
+		{env: "test", saves: "schedule_group_training", app: app, wantErr: "refused in test"},
+		{env: "production", saves: "schedule_group_training", app: app, wantErr: "refused in production"},
+		{env: "development", saves: "schedule_group_training", wantErr: "EDIFY_EXISTING_APP_URL"},
+	} {
+		saves, err := loadGoSaves(Environment(c.env), env(map[string]string{"EDIFY_GO_SAVES": c.saves}), c.app, key)
+		if c.wantErr != "" {
+			if err == nil || !strings.Contains(err.Error(), c.wantErr) {
+				t.Errorf("%s %q: want %q, got %v", c.env, c.saves, c.wantErr, err)
+			}
+			continue
+		}
+		if err != nil || saves.ScheduleGroupTraining != c.on ||
+			saves.ScheduleTrainingPair != strings.Contains(c.saves, "schedule_training_pair") {
+			t.Errorf("%s %q: %+v, %v", c.env, c.saves, saves, err)
+		}
+	}
+}

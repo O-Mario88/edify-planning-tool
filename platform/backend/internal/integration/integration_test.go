@@ -484,10 +484,18 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"write a cost line":                     rw + `INSERT INTO activity_schedule_cost_line (id) VALUES ('x')`,
 		"delete the costs to follow":            rw + `DELETE FROM daily_visit_costs_to_follow`,
 		"read the costs' provenance":            `SELECT provenance FROM daily_visit_costs_to_follow LIMIT 1`,
-		"delete a ledger mark":                  rw + `DELETE FROM target_ledger_dirty`,
-		"delete domain events":                  rw + `DELETE FROM domain_event_log`,
-		"rescore an SSA recommendation":         rw + `UPDATE ssa_recommendation SET score = score`,
-		"lock a school":                         rw + `SELECT id FROM school LIMIT 1 FOR UPDATE`,
+		// The Group Training (docs/migration/38): invitations are added,
+		// never changed or removed, and no cluster is written.
+		"change an invitation":             rw + `UPDATE cluster_activity_attendance SET invited = invited`,
+		"record an attendance":             rw + `UPDATE cluster_activity_attendance SET attended = attended`,
+		"remove an invitation":             rw + `DELETE FROM cluster_activity_attendance`,
+		"re-cluster a session":             rw + `UPDATE activity SET cluster_id = cluster_id`,
+		"change a session's invited count": rw + `UPDATE activity SET schools_invited = schools_invited`,
+		"write a cluster":                  rw + `UPDATE cluster SET responsible_staff_id = responsible_staff_id`,
+		"delete a ledger mark":             rw + `DELETE FROM target_ledger_dirty`,
+		"delete domain events":             rw + `DELETE FROM domain_event_log`,
+		"rescore an SSA recommendation":    rw + `UPDATE ssa_recommendation SET score = score`,
+		"lock a school":                    rw + `SELECT id FROM school LIMIT 1 FOR UPDATE`,
 		// Cancelling a visit (30): advances are withdrawn only through
 		// gateway_money.withdraw_unmoved_advances.
 		"delete an advance":        rw + `DELETE FROM advance_request`,

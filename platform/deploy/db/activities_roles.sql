@@ -203,3 +203,61 @@ GRANT SELECT (staff_delivery_allowed, universal_training, training_category, ssa
 GRANT SELECT (intervention) ON activity_intervention_mapping TO edify_activities_rw;
 GRANT SELECT (staff_id, training_id, fy) ON training_ceiling TO edify_activities_rw;
 GRANT INSERT (training_course_id, paired_school_visit_id) ON activity TO edify_activities_rw;
+
+-- ── The seventh save: a cluster Group Training (docs/migration/38) ──
+-- Granted by the coordinator's decision (38.5 §1), production at cutover
+-- with the owner's approval like every role change. Exactly what the save
+-- inserts and reads: the session's cluster, participant and materials
+-- columns on insert; one invitation per ticked school (its serial id from
+-- the table's own sequence); the cluster, its members' clustering, the
+-- catalogue's cluster delivery and the cluster's sessions that the
+-- recommendation engine and the duplicate guard read. No UPDATE of anything
+-- new, and nothing of the money, lifecycle, evidence, verification or
+-- ownership columns (dbguard.protectedColumns keeps refusing them).
+GRANT INSERT (cluster_id, expected_participants, participants_per_school, cluster_school_count_snapshot,
+              schools_invited, teachers_per_school, leaders_per_school, other_per_school, printing_pages,
+              photocopy_pages, photocopy_copies)
+  ON activity TO edify_activities_rw;
+GRANT INSERT (created_at, updated_at, invited, attended, is_guest, teachers, leaders, other, recorded_by,
+              activity_id, school_id)
+  ON cluster_activity_attendance TO edify_activities_rw;
+GRANT USAGE ON SEQUENCE cluster_activity_attendance_id_seq TO edify_activities_rw;
+GRANT SELECT (id, deleted_at, responsible_staff_id, district_id) ON cluster TO edify_activities_rw;
+GRANT SELECT (cluster_status) ON school TO edify_activities_rw;
+GRANT SELECT (cluster_delivery_allowed) ON activity_catalogue_item TO edify_activities_rw;
+GRANT SELECT (cluster_id, fy, focus_intervention, created_at) ON activity TO edify_activities_rw;
+
+-- The cluster row lock (38.5 §2): `_create` holds SELECT … FOR UPDATE on the
+-- cluster (3232) so two saves cannot both pass the duplicate guard. As for
+-- the school, the lock is taken by gateway_lock.lock_cluster(id), a
+-- SECURITY DEFINER function owned by edify_cluster_lock_owner, a NOLOGIN
+-- role no one is a member of that holds UPDATE (updated_at) on cluster and
+-- nothing else of it. The function writes nothing. The gateway gets EXECUTE
+-- on it and nothing else. A new database object: production needs the
+-- owner's approval at cutover.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edify_cluster_lock_owner') THEN
+    CREATE ROLE edify_cluster_lock_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT;
+  END IF;
+END
+$$;
+GRANT USAGE ON SCHEMA public TO edify_cluster_lock_owner;
+GRANT SELECT (id) ON cluster TO edify_cluster_lock_owner;
+GRANT UPDATE (updated_at) ON cluster TO edify_cluster_lock_owner;
+GRANT USAGE, CREATE ON SCHEMA gateway_lock TO edify_cluster_lock_owner;
+
+SET ROLE edify_cluster_lock_owner;
+CREATE OR REPLACE FUNCTION gateway_lock.lock_cluster(target_id varchar) RETURNS boolean
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  PERFORM 1 FROM public.cluster c WHERE c.id = target_id FOR UPDATE;
+  RETURN FOUND;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_lock.lock_cluster(varchar) FROM PUBLIC;
+RESET ROLE;
+-- The function made, its owner keeps no right to add others.
+REVOKE CREATE ON SCHEMA gateway_lock FROM edify_cluster_lock_owner;
+
+GRANT EXECUTE ON FUNCTION gateway_lock.lock_cluster(varchar) TO edify_activities_rw;

@@ -111,7 +111,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			myplan.NewService(pool, time.Now),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
-		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel {
+		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel ||
+		cfg.GoSaves.ScheduleGroupTraining {
 		save := visitSave(cfg, pool, logger)
 		if cfg.GoSaves.ScheduleVisit {
 			screenService.WithVisitSave(save, logger)
@@ -133,6 +134,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		}
 		if cfg.GoSaves.GroupCancel {
 			screenService.WithGroupCancelSave(save, logger)
+		}
+		if cfg.GoSaves.ScheduleGroupTraining {
+			screenService.WithGroupTrainingSave(save, logger)
 		}
 	}
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))

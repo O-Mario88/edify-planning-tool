@@ -183,6 +183,9 @@ func play(ctx context.Context, svc *activities.Service, accounts *identity.Store
 	if m := editDrawer.FindStringSubmatch(s.Open); m != nil {
 		return playEdit(ctx, svc, accounts, pool, s, m[1], form)
 	}
+	if activities.IsGroupTrainingForm(form) {
+		return playGroupTraining(ctx, svc, accounts, pool, s, form)
+	}
 	req, taken := activities.RequestFromForm(form)
 	if !taken {
 		return outcome{HandedOn: true}, nil
@@ -199,6 +202,46 @@ func play(ctx context.Context, svc *activities.Service, accounts *identity.Store
 	correlation := newCorrelation()
 	answer, err := svc.Schedule(ctx, auth.Principal{Account: account}, req,
 		activities.Origin{IP: "127.0.0.1", CorrelationID: correlation})
+	var refusal *activities.Refusal
+	switch {
+	case errors.Is(err, activities.ErrHandOn):
+		fmt.Fprintln(os.Stderr, "goplay:", s.Who, "→", err)
+		return outcome{HandedOn: true}, nil
+	case errors.As(err, &refusal):
+		status := 400
+		if refusal.Forbidden {
+			status = 403
+		}
+		return outcome{OK: false, Status: status, Message: refusal.Message}, nil
+	case err != nil:
+		return outcome{}, err
+	}
+	message := answer.Message
+	if answer.Notice != "" {
+		message += " " + answer.Notice
+	}
+	return outcome{OK: true, Status: 200, Message: message + " " + answer.PlanLinkLabel}, nil
+}
+
+// playGroupTraining makes a cluster's Group Training through Go's save
+// (docs/migration/38): the drawer's posted form, the schools ticked by name.
+func playGroupTraining(ctx context.Context, svc *activities.Service, accounts *identity.Store, pool *pgxpool.Pool,
+	s step, form url.Values) (outcome, error) {
+	req, taken := activities.GroupTrainingRequestFromForm(form)
+	if !taken {
+		return outcome{HandedOn: true}, nil
+	}
+	var userID string
+	if err := pool.QueryRow(ctx, `SELECT id FROM "user" WHERE email = $1`, s.Who).Scan(&userID); err != nil {
+		return outcome{}, fmt.Errorf("finding %s: %w", s.Who, err)
+	}
+	account, err := accounts.LoadAccount(ctx, userID)
+	if err != nil {
+		return outcome{}, err
+	}
+	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
+	answer, err := svc.ScheduleGroupTraining(ctx, auth.Principal{Account: account}, req,
+		activities.Origin{IP: "127.0.0.1", CorrelationID: newCorrelation()})
 	var refusal *activities.Refusal
 	switch {
 	case errors.Is(err, activities.ErrHandOn):

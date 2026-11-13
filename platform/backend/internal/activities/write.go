@@ -39,6 +39,56 @@ type activityRow struct {
 	// The In-school Training pair (docs/migration/32): the course a
 	// training delivers, the name it is saved under, and the visit beside it.
 	trainingCourseID, nameSnapshot, pairedVisitID string
+	// A cluster session (docs/migration/38): its planning source and
+	// context ("school_planning" / "school" when blank), and its cluster
+	// and head count.
+	planningSource, contextType string
+	group                       *groupColumns
+}
+
+// groupColumns are the cluster session's own columns (_create 3371–3442).
+// A material of 0 is stored as NULL ("or None").
+type groupColumns struct {
+	clusterID                                 string
+	expected, perSchool, schoolCount, invited int
+	teachers, leaders, other                  int
+	printing, photocopyPages, photocopyCopies int
+}
+
+func (r activityRow) planning() (string, string) {
+	if r.planningSource == "" {
+		return "school_planning", "school"
+	}
+	return r.planningSource, r.contextType
+}
+
+func zeroAsNull(n int) any {
+	if n == 0 {
+		return nil
+	}
+	return n
+}
+
+// groupFields are the session's columns by name, for the insert and the
+// day check; none for a school's work.
+func (r activityRow) groupFields() []struct {
+	name  string
+	value any
+} {
+	g := r.group
+	if g == nil {
+		return nil
+	}
+	return []struct {
+		name  string
+		value any
+	}{
+		{"cluster_id", g.clusterID}, {"expected_participants", g.expected}, {"participants_per_school", g.perSchool},
+		{"cluster_school_count_snapshot", g.schoolCount}, {"schools_invited", g.invited},
+		{"teachers_per_school", g.teachers}, {"leaders_per_school", g.leaders}, {"other_per_school", g.other},
+		{"printing_pages", zeroAsNull(g.printing)}, {"photocopy_pages", zeroAsNull(g.photocopyPages)},
+		{"photocopy_copies", zeroAsNull(g.photocopyCopies)},
+	}
 }
 
 // name is the activity_name_snapshot: the item's, or the course's for a
@@ -116,7 +166,8 @@ func (r activityRow) salesforceType() any {
 
 // probe is the activity as the day check plays it (gateway_relay.PROBE_FIELDS).
 func (r activityRow) probe() map[string]any {
-	return map[string]any{
+	source, context := r.planning()
+	probe := map[string]any{
 		"activity_type": r.activityType, "fy": r.fy, "quarter": r.quarter, "delivery_type": "staff",
 		"executor_type": "staff", "status": "scheduled", "school_id": r.schoolID,
 		"responsible_staff_id": r.responsible, "scheduled_date": r.scheduled.Format(time.RFC3339),
@@ -129,8 +180,15 @@ func (r activityRow) probe() map[string]any {
 		"delivery_method_snapshot": r.item.DeliveryMethod, "evidence_profile_snapshot": optString(r.item.EvidenceProfile),
 		"costing_profile_snapshot":        optString(r.item.CostingProfile),
 		"salesforce_record_type_snapshot": optString(r.item.SalesforceRecordType),
-		"planning_source":                 "school_planning", "activity_context_type": "school",
+		"planning_source":                 source, "activity_context_type": context,
 	}
+	if r.group != nil {
+		probe["school_id"] = nil
+		for _, f := range r.groupFields() {
+			probe[f.name] = f.value
+		}
+	}
+	return probe
 }
 
 // write is `_create`'s transaction (3207–3561): the school's lock, the
@@ -278,6 +336,7 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 	if r.sourceBand != "" {
 		band = r.sourceBand
 	}
+	planningSource, contextType := r.planning()
 	// Every column the row sets, the model defaults among them.
 	columns := []struct {
 		name  string
@@ -287,7 +346,7 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 		{"fy", r.fy}, {"quarter", r.quarter}, {"delivery_type", "staff"}, {"executor_type", "staff"},
 		{"status", "scheduled"}, {"evidence_status", "none"}, {"ia_verification_status", "pending"},
 		{"payment_status", "none"}, {"reschedule_count", 0}, {"est_cost_cents", 0}, {"cost_missing", false},
-		{"environment", "production"}, {"source", "manual_upload"}, {"school_id", r.schoolID},
+		{"environment", "production"}, {"source", "manual_upload"}, {"school_id", optString(r.schoolID)},
 		{"responsible_staff_id", r.responsible}, {"scheduled_date", r.scheduled},
 		{"planned_date", r.plannedDate.Format(time.DateOnly)}, {"planned_month", r.plannedMonth},
 		{"planned_week", r.plannedWeek}, {"purpose_type", r.purpose}, {"purpose_intervention", optString(r.focus)},
@@ -304,14 +363,15 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 		{"source_ssa_id", sourceSSA}, {"source_ssa_verification_state", sourceState},
 		{"source_score", r.sourceScore}, {"source_classification", band},
 		{"ssa_recommendation_id", optString(r.recommendationID)}, {"ssa_alignment", r.alignment},
-		{"ssa_deviation_reason", r.deviation}, {"planning_source", "school_planning"},
-		{"activity_context_type", "school"}, {"support_rationale", ""}, {"venue", ""},
+		{"ssa_deviation_reason", r.deviation}, {"planning_source", planningSource},
+		{"activity_context_type", contextType}, {"support_rationale", ""}, {"venue", ""},
 		{"primary_driver_type", ""}, {"primary_driver_id", ""}, {"driver_reason", ""},
 		{"delivery_contact_name", ""}, {"approval_owner_id", ""}, {"owner_decision_note", ""},
 		{"visit_justification", ""}, {"partner_date_set_by", ""}, {"meeting_kind", ""},
 		{"daily_visit_batch_id", optString(r.batchID)},
 		{"training_course_id", optString(r.trainingCourseID)}, {"paired_school_visit_id", optString(r.pairedVisitID)},
 	}
+	columns = append(columns, r.groupFields()...)
 	names := make([]string, len(columns))
 	marks := make([]string, len(columns))
 	values := make([]any, len(columns))
@@ -427,9 +487,12 @@ func (s *Service) auditScheduled(ctx context.Context, pl *plan) error {
 	r := pl.row
 	payload := map[string]any{
 		"activity_type": r.activityType, "catalogue_item": r.item.ID, "catalogue_version": r.version,
-		"school_id": r.schoolID, "cluster_id": nil, "project_id": nil, "fy": r.fy,
+		"school_id": optString(r.schoolID), "cluster_id": nil, "project_id": nil, "fy": r.fy,
 		"planned_date": r.plannedDate.Format(time.DateOnly), "delivery_type": "staff",
 		"executor_type": "staff", "focus_intervention": r.focus,
+	}
+	if r.group != nil {
+		payload["cluster_id"] = r.group.clusterID
 	}
 	role := pl.p.ActiveRole
 	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})

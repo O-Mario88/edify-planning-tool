@@ -11,6 +11,9 @@ sign-in security-events relay and behind the same internal key:
   ``attach_activity_to_batch``'s own refusals and ``_assert_days_can_follow``
   (stage "day", met inside it), with their own words. It plays the visit as
   Go will insert it inside a transaction it rolls back, so it writes nothing.
+  A cluster Group Training (docs/migration/38) is played the same way, its
+  preview asked with the cluster's district and the session's head count and
+  materials, as ``_create`` asks it.
 * ``costs-to-follow`` settles the costs-to-follow rows Go wrote, once Go's
   save has committed, with the existing ``costs_follow.settle``, and then
   says ``plan.changed`` for the visit on the realtime stream exactly as the
@@ -99,6 +102,26 @@ PROBE_FIELDS = (
     "salesforce_record_type_snapshot",
     "planning_source",
     "activity_context_type",
+    # A cluster Group Training (docs/migration/38): the cluster, the head
+    # count the save derived and the materials it validated.
+    "cluster_id",
+    "expected_participants",
+    "participants_per_school",
+    "cluster_school_count_snapshot",
+    "schools_invited",
+    "teachers_per_school",
+    "leaders_per_school",
+    "other_per_school",
+    "printing_pages",
+    "photocopy_pages",
+    "photocopy_copies",
+)
+
+#: The materials the cost preview reads, by the activity's own column.
+_MATERIAL_COLUMNS = (
+    ("printingPages", "printing_pages"),
+    ("photocopyPages", "photocopy_pages"),
+    ("photocopyCopies", "photocopy_copies"),
 )
 
 #: How many rows one settle may name: one save writes one.
@@ -121,6 +144,30 @@ def _body(request):
     return body if isinstance(body, dict) else None
 
 
+def _cluster_preview_inputs(activity) -> dict:
+    """What `_create` hands the cost preview for a cluster session with no
+    school (2423–2461, 2716–2725): the district type where the cluster is,
+    for the officer running it; the head count it derived (per school x
+    schools invited); the materials it validated, a blank read as 0."""
+    from apps.clusters.models import Cluster
+    from apps.daily_visit_batches.districts import district_type_for_staff
+
+    cluster = (
+        Cluster.objects.select_related("district")
+        .filter(pk=activity.cluster_id)
+        .first()
+    )
+    return {
+        "districtType": (
+            district_type_for_staff(activity.responsible_staff_id, cluster.district)
+            if cluster is not None and cluster.district_id
+            else None
+        ),
+        "expectedParticipants": activity.expected_participants,
+        **{key: getattr(activity, column) or 0 for key, column in _MATERIAL_COLUMNS},
+    }
+
+
 def _preview_refusal(activity, catalogue) -> str:
     """The cost preview's refusal, worded as `_create` words it (3137–3165)."""
     from apps.activities.services import _accommodation_key_for
@@ -133,21 +180,30 @@ def _preview_refusal(activity, catalogue) -> str:
         if school is not None and school.district_id
         else None
     )
+    inputs = {
+        "districtType": district_type,
+        "expectedParticipants": None,
+        "printingPages": 0,
+        "photocopyPages": 0,
+        "photocopyCopies": 0,
+    }
+    if school is None and activity.cluster_id:
+        inputs = _cluster_preview_inputs(activity)
     check = preview(
         {
             "activityType": activity.activity_type,
             "costingProfile": catalogue.costing_profile if catalogue else None,
             "catalogueItemId": catalogue.id if catalogue else None,
             "deliveryType": "staff",
-            "districtType": district_type,
+            "districtType": inputs["districtType"],
             "accommodationKey": _accommodation_key_for(activity.responsible_staff_id),
             "teachersAttended": None,
             "leadersAttended": None,
             "otherParticipants": None,
-            "expectedParticipants": None,
-            "printingPages": 0,
-            "photocopyPages": 0,
-            "photocopyCopies": 0,
+            "expectedParticipants": inputs["expectedParticipants"],
+            "printingPages": inputs["printingPages"],
+            "photocopyPages": inputs["photocopyPages"],
+            "photocopyCopies": inputs["photocopyCopies"],
             "projectId": None,
             "fy": activity.fy,
         }

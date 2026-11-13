@@ -57,6 +57,9 @@ var undeletableTables = []string{
 	// unmoved advances only through gateway_money.withdraw_unmoved_advances;
 	// a role that can delete advances itself is refused.
 	"advance_request",
+	// The seventh save (a cluster Group Training, docs/migration/38) adds
+	// one invitation per school; un-inviting is the existing application's.
+	"cluster_activity_attendance",
 }
 
 // protectedColumns ("table.column") are what Go's saves may insert but never
@@ -80,6 +83,13 @@ var protectedColumns = []string{
 	"activity_schedule_change.from_day", "activity_schedule_change.to_day",
 	"activity_schedule_change.reason", "activity_schedule_change.kind",
 	"audit_log.hash", "audit_log.prev_hash", "audit_log.seq", "audit_log.payload",
+	// A cluster session's head count is what it is priced for, and its
+	// invitations are who it counts (docs/migration/38).
+	"activity.expected_participants", "activity.participants_per_school", "activity.schools_invited",
+	"activity.cluster_school_count_snapshot",
+	"cluster_activity_attendance.activity_id", "cluster_activity_attendance.school_id",
+	"cluster_activity_attendance.invited", "cluster_activity_attendance.attended",
+	"cluster_activity_attendance.is_guest",
 }
 
 // ErrRefused wraps every refusal, so callers can tell a guard decision from

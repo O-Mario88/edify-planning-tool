@@ -171,6 +171,12 @@ def rules() -> dict:
             "fixed_mode": str(MappingMode.FIXED),
             "administrative_mode": str(MappingMode.ADMINISTRATIVE),
         },
+        # The seventh save, a cluster Group Training (docs/migration/38,
+        # schedule_action_view's cluster branch, planning.services
+        # .schedule_cluster_activity, activities.services._create for a
+        # cluster, cluster_attendance.set_invited_schools and the cluster
+        # recommendation engine).
+        "group_training": group_training(),
         "batch": {
             "field_roles": _values(districts.FIELD_ROLES),
             "field_role_aliases": _values(districts._FIELD_ROLE_ALIASES),
@@ -179,6 +185,45 @@ def rules() -> dict:
             "pool_extra_types": _values(DAY_POOL_EXTRA_TYPES),
             "non_fundable_statuses": _values(NON_FUNDABLE_ACTIVITY_STATUSES),
         },
+    }
+
+
+def group_training() -> dict:
+    from apps.activities.services import CLUSTER_PARTICIPANT_ACTIVITY_TYPES
+    from apps.activity_catalogue.models import CatalogueActivityType, MappingMode
+    from apps.activity_catalogue.services import (
+        ACTIVE_SUPPORT_STATUSES,
+        COMPLETED_SUPPORT_STATUSES,
+    )
+    from apps.core.activity_types import TRAINING_TYPES
+    from apps.core.enums import ActivityType, ParticipantMode
+    from apps.core.scoping import (
+        COUNTRY_SCHEDULING_ROLES,
+        SUMMARY_ONLY_ROLES,
+        VISIT_ONLY_ROLES,
+    )
+    from apps.planning import visit_gate
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    return {
+        "activity_type": str(ActivityType.CLUSTER_TRAINING),
+        "participant_types": _values(CLUSTER_PARTICIPANT_ACTIVITY_TYPES),
+        "training_types": _values(TRAINING_TYPES),
+        "per_school_mode": str(ParticipantMode.PER_SCHOOL),
+        "champion_types": [str(t) for t in visit_gate.OWN_TABLE_SCHOOL_TYPES],
+        "operating_statuses": [str(s) for s in OPERATING_STATUSES],
+        "active_support_statuses": [str(s) for s in ACTIVE_SUPPORT_STATUSES],
+        "completed_support_statuses": [str(s) for s in COMPLETED_SUPPORT_STATUSES],
+        "admin_catalogue_type": str(CatalogueActivityType.ADMIN),
+        "ranked_modes": [str(MappingMode.FIXED), str(MappingMode.MULTIPLE_ALLOWED)],
+        "follow_up_mode": str(MappingMode.INHERIT_FROM_SOURCE_ACTIVITY),
+        "ungated_modes": [
+            str(MappingMode.ADMINISTRATIVE),
+            str(MappingMode.SSA_COMPLETION_PREREQUISITE),
+        ],
+        "country_scheduling_roles": sorted(COUNTRY_SCHEDULING_ROLES),
+        "visit_only_roles": sorted(VISIT_ONLY_ROLES),
+        "summary_only_roles": sorted(SUMMARY_ONLY_ROLES),
     }
 
 
