@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"time"
 
@@ -116,20 +117,36 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, _ ur
 		return nil, true, err
 	}
 	r.scope = scope
-	var rows []todo
-	for _, name := range role.Builders {
-		got, err := Handled[name](ctx, s, r)
-		switch {
-		case errors.Is(err, errPassOn):
-			return nil, false, nil
-		case err != nil:
-			return nil, true, fmt.Errorf("todos: %s: %w", name, err)
-		}
-		rows = append(rows, got...)
+	rows, served, err := collect(ctx, s, r, role.Builders)
+	if !served || err != nil {
+		return nil, served, err
 	}
 	q, err := buildQueue(r.role, rows)
 	if err != nil {
 		return nil, true, err
 	}
 	return page(q), true, nil
+}
+
+// collect runs the reader's builders in order. A builder that needs what Go
+// has not ported passes the reader on. So does one that fails: the existing
+// queue skips a failing builder and still shows the page, which Go cannot
+// copy row for row, so the existing application answers instead. A request
+// that was cancelled or timed out is still an error.
+func collect(ctx context.Context, s *Service, r *reader, names []string) ([]todo, bool, error) {
+	var rows []todo
+	for _, name := range names {
+		got, err := Handled[name](ctx, s, r)
+		switch {
+		case errors.Is(err, errPassOn):
+			return nil, false, nil
+		case err != nil && ctx.Err() != nil:
+			return nil, true, fmt.Errorf("todos: %s: %w", name, err)
+		case err != nil:
+			slog.WarnContext(ctx, "todos: a builder failed; the existing application answers", "builder", name, "error", err)
+			return nil, false, nil
+		}
+		rows = append(rows, got...)
+	}
+	return rows, true, nil
 }
