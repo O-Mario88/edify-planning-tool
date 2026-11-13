@@ -1,0 +1,161 @@
+[
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "act-cmwd2x84s00djhqhkdjwe",
+      "choice": "tomorrow",
+      "title": "Complete the visit at the school"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "act-cmwd2x84s00djhqhkdjwe",
+      "choice": "next_week",
+      "title": "Complete the visit at the school again"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "pdelay-cmw9p8gu100914oekhekt",
+      "choice": "next_week",
+      "title": "Partner delay"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "act-cmwd2x85s004pxahkdjk8",
+      "choice": "someday",
+      "title": "Unknown choice"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "",
+      "choice": "tomorrow",
+      "title": "No item"
+    }
+  },
+  {
+    "who": "cceo1@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "wfr-cmw9p93gw000higekhe1d",
+      "choice": "next_week",
+      "title": "Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é Café visit é C"
+    }
+  },
+  {
+    "who": "cceo1@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "act-cmwd2x84s00djhqhkdjwe",
+      "choice": "tomorrow",
+      "title": "The same item for another person"
+    }
+  },
+  {
+    "who": "ia@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "ia-ssa-pending-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "choice": "tomorrow",
+      "title": "An id longer than the column"
+    }
+  },
+  {
+    "who": "pl1@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "review-overdue-cmw9qrf3p00y954ldjk86",
+      "choice": "tomorrow",
+      "title": "Overdue review"
+    }
+  },
+  {
+    "who": "admin@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "partner-user-setup",
+      "choice": "next_week",
+      "title": "Set up partner users"
+    }
+  },
+  {
+    "who": "coordinator@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "sch-cmw9p7wzy00hw99ekhex8-ssa",
+      "choice": "tomorrow",
+      "title": "SSA due"
+    }
+  },
+  {
+    "who": "cd@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "cd-anything",
+      "choice": "tomorrow",
+      "title": "The page refuses the Country Director"
+    }
+  },
+  {
+    "who": "business-transformation@edify.org",
+    "post": "/today/snooze",
+    "data": {
+      "todo": "bt-anything",
+      "choice": "next_week",
+      "title": "The page refuses Business Transformation"
+    }
+  },
+  {
+    "who": "cceo@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "pdelay-cmw9p8gu100914oekhekt"
+    }
+  },
+  {
+    "who": "cceo1@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "nothing-snoozed"
+    }
+  },
+  {
+    "who": "ia@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "nothing-snoozed"
+    }
+  },
+  {
+    "who": "pl1@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "nothing-snoozed"
+    }
+  },
+  {
+    "who": "admin@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "nothing-snoozed"
+    }
+  },
+  {
+    "who": "coordinator@edify.org",
+    "post": "/today/unsnooze",
+    "data": {
+      "todo": "nothing-snoozed"
+    }
+  }
+]
