@@ -45,6 +45,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/navigation"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightportfolio"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
@@ -131,6 +132,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			teamperformance.NewService(pool, time.Now),
 			projectmonitoring.NewService(pool, time.Now),
 			planningoversight.NewService(pool, time.Now),
+			oversightportfolio.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
