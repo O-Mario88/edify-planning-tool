@@ -1,0 +1,12078 @@
+{
+ "activity_types": [
+  [
+   "school_visit",
+   "School Visit"
+  ],
+  [
+   "follow_up_visit",
+   "Follow-up Visit"
+  ],
+  [
+   "coaching_visit",
+   "Coaching Visit"
+  ],
+  [
+   "in_school_support",
+   "In-school Support"
+  ],
+  [
+   "donor_visit",
+   "Donor Visit"
+  ],
+  [
+   "story_gathering_visit",
+   "Gathering Story"
+  ],
+  [
+   "school_invitation",
+   "School Invitation"
+  ],
+  [
+   "social_visit",
+   "Social Visit"
+  ],
+  [
+   "training_follow_up_visit",
+   "Training Follow-up Visit"
+  ],
+  [
+   "in_school_coaching_visit",
+   "In-school Coaching Visit"
+  ],
+  [
+   "training",
+   "Training"
+  ],
+  [
+   "in_school_training",
+   "In-school Training"
+  ],
+  [
+   "school_improvement_training",
+   "School Improvement Training"
+  ],
+  [
+   "cluster_meeting",
+   "Cluster Meeting"
+  ],
+  [
+   "cluster_training",
+   "Cluster Training"
+  ],
+  [
+   "ssa_activity",
+   "SSA Activity"
+  ],
+  [
+   "project_activity",
+   "Project Activity"
+  ],
+  [
+   "partner_activity",
+   "Partner Activity"
+  ],
+  [
+   "core_visit",
+   "Core Visit"
+  ],
+  [
+   "core_training",
+   "Core Training"
+  ],
+  [
+   "baseline_ssa_visit",
+   "SSA Visit"
+  ],
+  [
+   "school_visit_ssa_collection",
+   "School Visit + SSA Collection"
+  ],
+  [
+   "cluster_training_ssa_collection",
+   "Cluster Training + SSA Collection"
+  ],
+  [
+   "cluster_meeting_ssa_review",
+   "Cluster Meeting + SSA Review"
+  ],
+  [
+   "partner_ssa_collection",
+   "Partner SSA Collection"
+  ],
+  [
+   "core_assessment_visit",
+   "Core Assessment Visit"
+  ],
+  [
+   "programme_event",
+   "Programme Event"
+  ],
+  [
+   "field_event",
+   "Field Event"
+  ]
+ ],
+ "admin_role": "Admin",
+ "allow_cd_operational_planning": true,
+ "api_formats": [
+  "json"
+ ],
+ "awaiting_delivery": [
+  "planned",
+  "scheduled",
+  "assigned_to_partner",
+  "partner_scheduled",
+  "rescheduled"
+ ],
+ "coordinator_role": "ProjectCoordinator",
+ "director_role": "CountryDirector",
+ "event_kinds": [
+  "activity",
+  "all",
+  "event",
+  "holiday",
+  "leave"
+ ],
+ "hidden_statuses": [
+  "cancelled",
+  "rejected",
+  "awaiting_owner_approval"
+ ],
+ "holidays": {
+  "adha_spellings": [
+   "adha",
+   "adhuha",
+   "azha"
+  ],
+  "eid_al_adha": "Eid al-Adha",
+  "eid_al_fitr": "Eid al-Fitr",
+  "eid_reach_days": 7,
+  "fitr_spellings": [
+   "fitr"
+  ],
+  "national": {
+   "1998": [
+    [
+     "1998-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "1998-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "1998-01-30",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "1998-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "1998-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "1998-04-08",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "1998-04-10",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "1998-04-12",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "1998-04-13",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "1998-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "1998-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "1998-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "1998-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "1998-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "1998-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "1998-12-20",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "1998-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "1998-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "1999": [
+    [
+     "1999-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "1999-01-19",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "1999-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "1999-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "1999-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "1999-03-28",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "1999-04-02",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "1999-04-04",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "1999-04-05",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "1999-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "1999-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "1999-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "1999-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "1999-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "1999-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "1999-12-09",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "1999-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "1999-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2000": [
+    [
+     "2000-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2000-01-08",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2000-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2000-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2000-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2000-03-16",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2000-04-21",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2000-04-23",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2000-04-24",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2000-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2000-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2000-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2000-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2000-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2000-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2000-11-28",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2000-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2000-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ],
+    [
+     "2000-12-28",
+     "Eid al-Fitr",
+     "public",
+     true
+    ]
+   ],
+   "2001": [
+    [
+     "2001-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2001-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2001-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2001-03-06",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2001-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2001-04-13",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2001-04-15",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2001-04-16",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2001-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2001-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2001-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2001-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2001-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2001-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2001-11-17",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2001-12-17",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2001-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2001-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2002": [
+    [
+     "2002-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2002-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2002-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2002-02-23",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2002-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2002-03-29",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2002-03-31",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2002-04-01",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2002-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2002-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2002-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2002-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2002-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2002-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2002-11-06",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2002-12-06",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2002-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2002-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2003": [
+    [
+     "2003-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2003-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2003-02-12",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2003-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2003-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2003-04-18",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2003-04-20",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2003-04-21",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2003-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2003-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2003-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2003-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2003-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2003-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2003-10-27",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2003-11-26",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2003-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2003-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2004": [
+    [
+     "2004-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2004-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2004-02-02",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2004-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2004-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2004-04-09",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2004-04-11",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2004-04-12",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2004-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2004-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2004-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2004-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2004-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2004-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2004-10-15",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2004-11-14",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2004-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2004-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2005": [
+    [
+     "2005-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2005-01-21",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2005-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2005-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2005-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2005-03-25",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2005-03-27",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2005-03-28",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2005-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2005-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2005-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2005-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2005-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2005-10-04",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2005-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2005-11-03",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2005-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2005-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2006": [
+    [
+     "2006-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2006-01-10",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2006-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2006-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2006-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2006-04-14",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2006-04-16",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2006-04-17",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2006-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2006-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2006-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2006-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2006-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2006-09-24",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2006-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2006-10-24",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2006-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2006-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ],
+    [
+     "2006-12-31",
+     "Eid al-Adha",
+     "public",
+     true
+    ]
+   ],
+   "2007": [
+    [
+     "2007-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2007-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2007-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2007-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2007-04-06",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2007-04-08",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2007-04-09",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2007-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2007-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2007-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2007-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2007-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2007-09-13",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2007-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2007-10-13",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2007-12-20",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2007-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2007-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2008": [
+    [
+     "2008-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2008-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2008-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2008-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2008-03-21",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2008-03-23",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2008-03-24",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2008-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2008-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2008-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2008-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2008-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2008-09-02",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2008-10-02",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2008-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2008-12-09",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2008-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2008-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2009": [
+    [
+     "2009-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2009-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2009-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2009-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2009-04-10",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2009-04-12",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2009-04-13",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2009-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2009-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2009-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2009-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2009-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2009-08-22",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2009-09-21",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2009-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2009-11-28",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2009-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2009-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2010": [
+    [
+     "2010-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2010-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2010-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2010-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2010-04-02",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2010-04-04",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2010-04-05",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2010-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2010-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2010-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2010-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2010-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2010-08-11",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2010-09-10",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2010-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2010-11-17",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2010-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2010-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2011": [
+    [
+     "2011-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2011-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2011-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2011-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2011-04-22",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2011-04-24",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2011-04-25",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2011-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2011-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2011-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2011-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2011-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2011-08-01",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2011-08-31",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2011-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2011-11-07",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2011-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2011-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2012": [
+    [
+     "2012-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2012-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2012-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2012-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2012-04-06",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2012-04-08",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2012-04-09",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2012-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2012-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2012-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2012-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2012-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2012-07-20",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2012-08-19",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2012-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2012-10-26",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2012-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2012-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2013": [
+    [
+     "2013-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2013-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2013-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2013-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2013-03-29",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2013-03-31",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2013-04-01",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2013-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2013-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2013-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2013-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2013-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2013-07-09",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2013-08-08",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2013-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2013-10-15",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2013-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2013-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2014": [
+    [
+     "2014-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2014-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2014-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2014-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2014-04-18",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2014-04-20",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2014-04-21",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2014-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2014-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2014-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2014-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2014-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2014-06-29",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2014-07-29",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2014-10-05",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2014-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2014-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2014-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2015": [
+    [
+     "2015-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2015-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2015-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2015-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2015-04-03",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2015-04-05",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2015-04-06",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2015-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2015-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2015-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2015-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2015-06-18",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2015-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2015-07-18",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2015-09-24",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2015-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2015-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2015-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2016": [
+    [
+     "2016-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2016-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2016-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2016-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2016-03-25",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2016-03-27",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2016-03-28",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2016-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2016-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2016-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2016-06-07",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2016-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2016-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2016-07-07",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2016-09-13",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2016-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2016-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2016-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2017": [
+    [
+     "2017-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2017-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2017-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2017-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2017-04-14",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2017-04-16",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2017-04-17",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2017-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2017-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2017-05-27",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2017-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2017-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2017-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2017-06-26",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2017-09-02",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2017-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2017-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2017-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2018": [
+    [
+     "2018-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2018-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2018-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2018-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2018-03-30",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2018-04-01",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2018-04-02",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2018-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2018-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2018-05-16",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2018-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2018-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2018-06-15",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2018-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2018-08-22",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2018-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2018-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2018-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2019": [
+    [
+     "2019-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2019-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2019-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2019-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2019-04-19",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2019-04-21",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2019-04-22",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2019-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2019-05-06",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2019-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2019-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2019-06-05",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2019-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2019-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2019-08-12",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2019-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2019-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2019-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2020": [
+    [
+     "2020-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2020-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2020-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2020-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2020-04-10",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2020-04-12",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2020-04-13",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2020-04-24",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2020-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2020-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2020-05-24",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2020-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2020-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2020-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2020-07-31",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2020-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2020-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2020-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2021": [
+    [
+     "2021-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2021-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2021-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2021-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2021-04-02",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2021-04-04",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2021-04-05",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2021-04-13",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2021-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2021-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2021-05-13",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2021-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2021-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2021-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2021-07-20",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2021-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2021-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2021-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2022": [
+    [
+     "2022-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2022-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2022-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2022-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2022-04-03",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2022-04-15",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2022-04-17",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2022-04-18",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2022-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2022-05-03",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2022-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2022-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2022-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2022-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2022-07-10",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2022-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2022-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2022-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2023": [
+    [
+     "2023-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2023-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2023-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2023-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2023-03-23",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2023-04-07",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2023-04-09",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2023-04-10",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2023-04-22",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2023-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2023-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2023-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2023-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2023-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2023-06-29",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2023-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2023-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2023-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2024": [
+    [
+     "2024-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2024-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2024-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2024-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2024-03-11",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2024-03-29",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2024-03-31",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2024-04-01",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2024-04-10",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2024-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2024-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2024-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2024-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2024-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2024-06-17",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2024-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2024-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2024-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2025": [
+    [
+     "2025-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2025-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2025-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2025-03-01",
+     "Ramadan Start",
+     "observance",
+     false
+    ],
+    [
+     "2025-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2025-03-30",
+     "Eid al-Fitr",
+     "public",
+     false
+    ],
+    [
+     "2025-04-18",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2025-04-20",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2025-04-21",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2025-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2025-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2025-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2025-06-06",
+     "Eid al-Adha",
+     "public",
+     false
+    ],
+    [
+     "2025-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2025-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2025-09-22",
+     "September Equinox",
+     "observance",
+     false
+    ],
+    [
+     "2025-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2025-12-21",
+     "December Solstice",
+     "observance",
+     false
+    ],
+    [
+     "2025-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2025-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2026": [
+    [
+     "2026-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2026-01-15",
+     "General Election Day",
+     "public",
+     false
+    ],
+    [
+     "2026-01-16",
+     "General Election Holiday",
+     "public",
+     false
+    ],
+    [
+     "2026-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2026-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2026-02-18",
+     "Ramadan Start",
+     "observance",
+     false
+    ],
+    [
+     "2026-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2026-03-20",
+     "Eid al-Fitr",
+     "public",
+     false
+    ],
+    [
+     "2026-04-03",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2026-04-05",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2026-04-06",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2026-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2026-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2026-05-12",
+     "Presidential Inauguration Day",
+     "public",
+     false
+    ],
+    [
+     "2026-05-27",
+     "Eid al-Adha",
+     "public",
+     false
+    ],
+    [
+     "2026-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2026-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2026-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2026-09-23",
+     "September Equinox",
+     "observance",
+     false
+    ],
+    [
+     "2026-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2026-12-21",
+     "December Solstice",
+     "observance",
+     false
+    ],
+    [
+     "2026-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2026-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2027": [
+    [
+     "2027-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2027-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2027-02-08",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2027-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2027-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2027-03-09",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2027-03-26",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2027-03-28",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2027-03-29",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2027-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2027-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2027-05-16",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2027-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2027-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2027-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2027-09-23",
+     "September Equinox",
+     "observance",
+     false
+    ],
+    [
+     "2027-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2027-12-22",
+     "December Solstice",
+     "observance",
+     false
+    ],
+    [
+     "2027-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2027-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2028": [
+    [
+     "2028-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2028-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2028-01-28",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2028-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2028-02-26",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2028-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2028-04-14",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2028-04-16",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2028-04-17",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2028-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2028-05-05",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2028-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2028-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2028-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2028-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2028-09-22",
+     "September Equinox",
+     "observance",
+     false
+    ],
+    [
+     "2028-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2028-12-21",
+     "December Solstice",
+     "observance",
+     false
+    ],
+    [
+     "2028-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2028-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2029": [
+    [
+     "2029-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2029-01-16",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2029-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2029-02-14",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2029-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2029-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2029-03-30",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2029-04-01",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2029-04-02",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2029-04-24",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2029-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2029-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2029-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2029-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2029-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2029-09-22",
+     "September Equinox",
+     "observance",
+     false
+    ],
+    [
+     "2029-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2029-12-21",
+     "December Solstice",
+     "observance",
+     false
+    ],
+    [
+     "2029-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2029-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2030": [
+    [
+     "2030-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2030-01-05",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2030-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2030-02-04",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2030-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2030-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2030-04-13",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2030-04-19",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2030-04-21",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2030-04-22",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2030-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2030-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2030-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2030-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2030-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2030-09-23",
+     "September Equinox",
+     "observance",
+     false
+    ],
+    [
+     "2030-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2030-12-21",
+     "December Solstice",
+     "observance",
+     false
+    ],
+    [
+     "2030-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2030-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ],
+    [
+     "2030-12-26",
+     "Ramadan Start",
+     "observance",
+     true
+    ]
+   ],
+   "2031": [
+    [
+     "2031-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2031-01-25",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2031-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2031-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2031-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2031-04-03",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2031-04-11",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2031-04-13",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2031-04-14",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2031-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2031-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2031-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2031-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2031-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2031-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2031-12-15",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2031-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2031-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2032": [
+    [
+     "2032-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2032-01-14",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2032-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2032-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2032-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2032-03-22",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2032-03-26",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2032-03-28",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2032-03-29",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2032-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2032-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2032-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2032-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2032-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2032-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2032-12-04",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2032-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2032-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2033": [
+    [
+     "2033-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2033-01-03",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2033-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2033-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2033-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2033-03-12",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2033-04-15",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2033-04-17",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2033-04-18",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2033-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2033-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2033-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2033-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2033-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2033-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2033-11-23",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2033-12-23",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2033-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2033-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2034": [
+    [
+     "2034-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2034-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2034-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2034-03-01",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2034-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2034-04-07",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2034-04-09",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2034-04-10",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2034-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2034-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2034-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2034-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2034-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2034-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2034-11-12",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2034-12-12",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2034-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2034-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2035": [
+    [
+     "2035-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2035-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2035-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2035-02-18",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2035-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2035-03-23",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2035-03-25",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2035-03-26",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2035-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2035-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2035-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2035-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2035-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2035-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2035-11-02",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2035-12-02",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2035-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2035-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2036": [
+    [
+     "2036-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2036-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2036-02-08",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2036-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2036-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2036-04-11",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2036-04-13",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2036-04-14",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2036-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2036-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2036-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2036-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2036-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2036-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2036-10-21",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2036-11-20",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2036-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2036-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2037": [
+    [
+     "2037-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2037-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2037-01-27",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2037-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2037-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2037-04-03",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2037-04-05",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2037-04-06",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2037-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2037-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2037-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2037-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2037-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2037-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2037-10-11",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2037-11-10",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2037-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2037-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2038": [
+    [
+     "2038-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2038-01-17",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2038-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2038-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2038-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2038-04-23",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2038-04-25",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2038-04-26",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2038-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2038-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2038-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2038-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2038-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2038-09-30",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2038-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2038-10-30",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2038-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2038-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2039": [
+    [
+     "2039-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2039-01-06",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2039-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2039-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2039-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2039-04-08",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2039-04-10",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2039-04-11",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2039-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2039-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2039-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2039-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2039-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2039-09-19",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2039-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2039-10-19",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2039-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2039-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ],
+    [
+     "2039-12-26",
+     "Eid al-Adha",
+     "public",
+     true
+    ]
+   ],
+   "2040": [
+    [
+     "2040-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2040-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2040-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2040-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2040-03-30",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2040-04-01",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2040-04-02",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2040-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2040-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2040-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2040-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2040-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2040-09-08",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2040-10-08",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2040-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2040-12-15",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2040-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2040-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2041": [
+    [
+     "2041-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2041-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2041-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2041-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2041-04-19",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2041-04-21",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2041-04-22",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2041-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2041-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2041-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2041-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2041-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2041-08-28",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2041-09-27",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2041-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2041-12-04",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2041-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2041-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2042": [
+    [
+     "2042-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2042-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2042-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2042-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2042-04-04",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2042-04-06",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2042-04-07",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2042-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2042-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2042-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2042-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2042-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2042-08-17",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2042-09-16",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2042-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2042-11-23",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2042-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2042-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2043": [
+    [
+     "2043-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2043-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2043-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2043-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2043-03-27",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2043-03-29",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2043-03-30",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2043-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2043-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2043-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2043-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2043-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2043-08-07",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2043-09-06",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2043-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2043-11-13",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2043-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2043-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2044": [
+    [
+     "2044-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2044-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2044-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2044-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2044-04-15",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2044-04-17",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2044-04-18",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2044-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2044-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2044-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2044-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2044-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2044-07-26",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2044-08-25",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2044-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2044-11-01",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2044-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2044-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2045": [
+    [
+     "2045-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2045-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2045-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2045-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2045-04-07",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2045-04-09",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2045-04-10",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2045-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2045-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2045-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2045-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2045-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2045-07-16",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2045-08-15",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2045-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2045-10-22",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2045-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2045-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2046": [
+    [
+     "2046-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2046-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2046-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2046-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2046-03-23",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2046-03-25",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2046-03-26",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2046-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2046-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2046-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2046-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2046-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2046-07-05",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2046-08-04",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2046-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2046-10-11",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2046-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2046-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2047": [
+    [
+     "2047-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2047-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2047-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2047-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2047-04-12",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2047-04-14",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2047-04-15",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2047-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2047-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2047-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2047-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2047-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2047-06-24",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2047-07-24",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2047-09-30",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2047-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2047-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2047-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2048": [
+    [
+     "2048-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2048-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2048-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2048-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2048-04-03",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2048-04-05",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2048-04-06",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2048-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2048-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2048-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2048-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2048-06-13",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2048-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2048-07-13",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2048-09-19",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2048-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2048-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2048-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2049": [
+    [
+     "2049-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2049-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2049-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2049-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2049-04-16",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2049-04-18",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2049-04-19",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2049-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2049-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2049-06-02",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2049-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2049-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2049-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2049-07-02",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2049-09-08",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2049-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2049-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2049-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2050": [
+    [
+     "2050-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2050-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2050-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2050-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2050-04-08",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2050-04-10",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2050-04-11",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2050-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2050-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2050-05-22",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2050-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2050-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2050-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2050-06-21",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2050-08-28",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2050-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2050-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2050-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2051": [
+    [
+     "2051-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2051-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2051-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2051-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2051-03-31",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2051-04-02",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2051-04-03",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2051-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2051-05-12",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2051-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2051-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2051-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2051-06-11",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2051-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2051-08-18",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2051-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2051-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2051-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2052": [
+    [
+     "2052-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2052-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2052-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2052-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2052-04-19",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2052-04-21",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2052-04-22",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2052-04-30",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2052-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2052-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2052-05-30",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2052-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2052-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2052-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2052-08-06",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2052-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2052-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2052-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2053": [
+    [
+     "2053-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2053-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2053-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2053-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2053-04-04",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2053-04-06",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2053-04-07",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2053-04-19",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2053-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2053-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2053-05-19",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2053-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2053-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2053-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2053-07-26",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2053-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2053-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2053-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2054": [
+    [
+     "2054-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2054-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2054-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2054-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2054-03-27",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2054-03-29",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2054-03-30",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2054-04-09",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2054-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2054-05-09",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2054-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2054-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2054-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2054-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2054-07-16",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2054-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2054-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2054-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2055": [
+    [
+     "2055-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2055-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2055-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2055-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2055-03-29",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2055-04-16",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2055-04-18",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2055-04-19",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2055-04-28",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2055-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2055-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2055-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2055-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2055-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2055-07-05",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2055-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2055-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2055-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2056": [
+    [
+     "2056-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2056-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2056-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2056-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2056-03-18",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2056-03-31",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2056-04-02",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2056-04-03",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2056-04-17",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2056-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2056-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2056-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2056-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2056-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2056-06-24",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2056-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2056-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2056-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2057": [
+    [
+     "2057-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2057-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2057-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2057-03-07",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2057-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2057-04-06",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2057-04-20",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2057-04-22",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2057-04-23",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2057-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2057-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2057-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2057-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2057-06-13",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2057-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2057-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2057-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2057-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2058": [
+    [
+     "2058-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2058-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2058-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2058-02-24",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2058-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2058-03-26",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2058-04-12",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2058-04-14",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2058-04-15",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2058-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2058-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2058-06-02",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2058-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2058-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2058-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2058-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2058-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2058-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2059": [
+    [
+     "2059-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2059-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2059-02-14",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2059-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2059-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2059-03-16",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2059-03-28",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2059-03-30",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2059-03-31",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2059-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2059-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2059-05-23",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2059-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2059-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2059-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2059-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2059-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2059-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2060": [
+    [
+     "2060-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2060-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2060-02-03",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2060-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2060-03-04",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2060-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2060-04-16",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2060-04-18",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2060-04-19",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2060-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2060-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2060-05-11",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2060-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2060-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2060-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2060-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2060-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2060-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2061": [
+    [
+     "2061-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2061-01-22",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2061-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2061-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2061-02-21",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2061-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2061-04-08",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2061-04-10",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2061-04-11",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2061-04-30",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2061-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2061-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2061-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2061-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2061-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2061-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2061-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2061-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2062": [
+    [
+     "2062-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2062-01-12",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2062-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2062-02-11",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2062-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2062-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2062-03-24",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2062-03-26",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2062-03-27",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2062-04-20",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2062-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2062-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2062-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2062-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2062-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2062-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2062-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2062-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2063": [
+    [
+     "2063-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2063-01-01",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2063-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2063-01-31",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2063-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2063-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2063-04-09",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2063-04-13",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2063-04-15",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2063-04-16",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2063-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2063-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2063-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2063-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2063-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2063-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2063-12-21",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2063-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2063-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2064": [
+    [
+     "2064-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2064-01-20",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2064-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2064-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2064-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2064-03-28",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2064-04-04",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2064-04-06",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2064-04-07",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2064-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2064-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2064-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2064-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2064-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2064-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2064-12-10",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2064-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2064-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2065": [
+    [
+     "2065-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2065-01-09",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2065-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2065-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2065-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2065-03-18",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2065-03-27",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2065-03-29",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2065-03-30",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2065-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2065-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2065-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2065-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2065-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2065-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2065-11-29",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2065-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2065-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ],
+    [
+     "2065-12-29",
+     "Eid al-Fitr",
+     "public",
+     true
+    ]
+   ],
+   "2066": [
+    [
+     "2066-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2066-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2066-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2066-03-07",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2066-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2066-04-09",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2066-04-11",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2066-04-12",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2066-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2066-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2066-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2066-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2066-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2066-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2066-11-19",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2066-12-19",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2066-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2066-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2067": [
+    [
+     "2067-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2067-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2067-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2067-02-25",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2067-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2067-04-01",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2067-04-03",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2067-04-04",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2067-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2067-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2067-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2067-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2067-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2067-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2067-11-08",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2067-12-08",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2067-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2067-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2068": [
+    [
+     "2068-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2068-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2068-02-14",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2068-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2068-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2068-04-20",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2068-04-22",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2068-04-23",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2068-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2068-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2068-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2068-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2068-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2068-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2068-10-27",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2068-11-26",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2068-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2068-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2069": [
+    [
+     "2069-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2069-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2069-02-02",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2069-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2069-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2069-04-12",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2069-04-14",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2069-04-15",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2069-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2069-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2069-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2069-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2069-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2069-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2069-10-17",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2069-11-16",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2069-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2069-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2070": [
+    [
+     "2070-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2070-01-23",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2070-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2070-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2070-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2070-03-28",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2070-03-30",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2070-03-31",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2070-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2070-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2070-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2070-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2070-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2070-10-06",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2070-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2070-11-05",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2070-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2070-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2071": [
+    [
+     "2071-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2071-01-12",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2071-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2071-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2071-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2071-04-17",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2071-04-19",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2071-04-20",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2071-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2071-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2071-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2071-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2071-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2071-09-25",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2071-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2071-10-25",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2071-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2071-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2072": [
+    [
+     "2072-01-01",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2072-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2072-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2072-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2072-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2072-04-08",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2072-04-10",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2072-04-11",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2072-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2072-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2072-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2072-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2072-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2072-09-14",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2072-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2072-10-14",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2072-12-21",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2072-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2072-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2073": [
+    [
+     "2073-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2073-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2073-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2073-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2073-03-24",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2073-03-26",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2073-03-27",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2073-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2073-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2073-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2073-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2073-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2073-09-03",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2073-10-03",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2073-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2073-12-10",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2073-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2073-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2074": [
+    [
+     "2074-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2074-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2074-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2074-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2074-04-13",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2074-04-15",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2074-04-16",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2074-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2074-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2074-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2074-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2074-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2074-08-24",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2074-09-23",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2074-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2074-11-30",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2074-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2074-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2075": [
+    [
+     "2075-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2075-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2075-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2075-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2075-04-05",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2075-04-07",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2075-04-08",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2075-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2075-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2075-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2075-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2075-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2075-08-13",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2075-09-12",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2075-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2075-11-19",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2075-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2075-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2076": [
+    [
+     "2076-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2076-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2076-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2076-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2076-04-17",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2076-04-19",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2076-04-20",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2076-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2076-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2076-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2076-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2076-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2076-08-01",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2076-08-31",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2076-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2076-11-07",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2076-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2076-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2077": [
+    [
+     "2077-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2077-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2077-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2077-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2077-04-09",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2077-04-11",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2077-04-12",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2077-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2077-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2077-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2077-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2077-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2077-07-22",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2077-08-21",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2077-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2077-10-28",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2077-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2077-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2078": [
+    [
+     "2078-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2078-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2078-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2078-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2078-04-01",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2078-04-03",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2078-04-04",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2078-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2078-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2078-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2078-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2078-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2078-07-11",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2078-08-10",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2078-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2078-10-17",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2078-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2078-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2079": [
+    [
+     "2079-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2079-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2079-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2079-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2079-04-21",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2079-04-23",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2079-04-24",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2079-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2079-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2079-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2079-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2079-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2079-06-30",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2079-07-30",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2079-10-06",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2079-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2079-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2079-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2080": [
+    [
+     "2080-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2080-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2080-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2080-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2080-04-05",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2080-04-07",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2080-04-08",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2080-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2080-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2080-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2080-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2080-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2080-06-19",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2080-07-19",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2080-09-25",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2080-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2080-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2080-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2081": [
+    [
+     "2081-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2081-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2081-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2081-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2081-03-28",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2081-03-30",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2081-03-31",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2081-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2081-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2081-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2081-06-08",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2081-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2081-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2081-07-08",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2081-09-14",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2081-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2081-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2081-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2082": [
+    [
+     "2082-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2082-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2082-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2082-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2082-04-17",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2082-04-19",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2082-04-20",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2082-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2082-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2082-05-28",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2082-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2082-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2082-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2082-06-27",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2082-09-03",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2082-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2082-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2082-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2083": [
+    [
+     "2083-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2083-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2083-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2083-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2083-04-02",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2083-04-04",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2083-04-05",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2083-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2083-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2083-05-18",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2083-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2083-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2083-06-17",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2083-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2083-08-24",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2083-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2083-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2083-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2084": [
+    [
+     "2084-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2084-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2084-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2084-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2084-03-24",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2084-03-26",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2084-03-27",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2084-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2084-05-06",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2084-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2084-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2084-06-05",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2084-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2084-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2084-08-12",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2084-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2084-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2084-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2085": [
+    [
+     "2085-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2085-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2085-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2085-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2085-04-13",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2085-04-15",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2085-04-16",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2085-04-26",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2085-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2085-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2085-05-26",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2085-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2085-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2085-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2085-08-02",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2085-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2085-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2085-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2086": [
+    [
+     "2086-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2086-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2086-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2086-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2086-03-29",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2086-03-31",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2086-04-01",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2086-04-15",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2086-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2086-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2086-05-15",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2086-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2086-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2086-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2086-07-22",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2086-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2086-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2086-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2087": [
+    [
+     "2087-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2087-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2087-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2087-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2087-04-04",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2087-04-18",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2087-04-20",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2087-04-21",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2087-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2087-05-04",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2087-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2087-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2087-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2087-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2087-07-11",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2087-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2087-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2087-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2088": [
+    [
+     "2088-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2088-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2088-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2088-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2088-03-24",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2088-04-09",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2088-04-11",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2088-04-12",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2088-04-23",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2088-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2088-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2088-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2088-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2088-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2088-06-30",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2088-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2088-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2088-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2089": [
+    [
+     "2089-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2089-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2089-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2089-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2089-03-13",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2089-04-01",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2089-04-03",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2089-04-04",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2089-04-12",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2089-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2089-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2089-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2089-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2089-06-19",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2089-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2089-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2089-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2089-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2090": [
+    [
+     "2090-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2090-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2090-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2090-03-02",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2090-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2090-04-01",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2090-04-14",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2090-04-16",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2090-04-17",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2090-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2090-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2090-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2090-06-08",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2090-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2090-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2090-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2090-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2090-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2091": [
+    [
+     "2091-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2091-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2091-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2091-02-20",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2091-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2091-03-22",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2091-04-06",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2091-04-08",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2091-04-09",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2091-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2091-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2091-05-29",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2091-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2091-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2091-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2091-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2091-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2091-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2092": [
+    [
+     "2092-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2092-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2092-02-09",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2092-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2092-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2092-03-10",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2092-03-28",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2092-03-30",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2092-03-31",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2092-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2092-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2092-05-17",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2092-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2092-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2092-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2092-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2092-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2092-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2093": [
+    [
+     "2093-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2093-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2093-01-28",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2093-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2093-02-27",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2093-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2093-04-10",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2093-04-12",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2093-04-13",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2093-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2093-05-06",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2093-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2093-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2093-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2093-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2093-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2093-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2093-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2094": [
+    [
+     "2094-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2094-01-18",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2094-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2094-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2094-02-17",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2094-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2094-04-02",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2094-04-04",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2094-04-05",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2094-04-26",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2094-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2094-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2094-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2094-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2094-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2094-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2094-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2094-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2095": [
+    [
+     "2095-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2095-01-07",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2095-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2095-02-06",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2095-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2095-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2095-04-15",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2095-04-22",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2095-04-24",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2095-04-25",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2095-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2095-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2095-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2095-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2095-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2095-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2095-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2095-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ],
+    [
+     "2095-12-28",
+     "Ramadan Start",
+     "observance",
+     true
+    ]
+   ],
+   "2096": [
+    [
+     "2096-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2096-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2096-01-27",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2096-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2096-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2096-04-04",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2096-04-13",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2096-04-15",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2096-04-16",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2096-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2096-05-13",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2096-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2096-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2096-06-17",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2096-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2096-12-16",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2096-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2096-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2097": [
+    [
+     "2097-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2097-01-15",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2097-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2097-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2097-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2097-03-24",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2097-03-29",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2097-03-31",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2097-04-01",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2097-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2097-05-12",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2097-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2097-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2097-06-16",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2097-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2097-12-05",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2097-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2097-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2098": [
+    [
+     "2098-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2098-01-04",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2098-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2098-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2098-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2098-03-13",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2098-04-18",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2098-04-20",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2098-04-21",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2098-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2098-05-11",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2098-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2098-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2098-06-15",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2098-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2098-11-25",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2098-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2098-12-25",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2098-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2099": [
+    [
+     "2099-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2099-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2099-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2099-03-03",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2099-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2099-04-10",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2099-04-12",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2099-04-13",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2099-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2099-05-10",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2099-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2099-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2099-06-21",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2099-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2099-11-14",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2099-12-14",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2099-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2099-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2100": [
+    [
+     "2100-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2100-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2100-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2100-02-20",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2100-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2100-03-26",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2100-03-28",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2100-03-29",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2100-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2100-05-09",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2100-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2100-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2100-06-20",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2100-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2100-11-03",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2100-12-03",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2100-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2100-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2101": [
+    [
+     "2101-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2101-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2101-02-09",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2101-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2101-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2101-04-15",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2101-04-17",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2101-04-18",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2101-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2101-05-08",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2101-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2101-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2101-06-19",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2101-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2101-10-24",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2101-11-23",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2101-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2101-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ],
+   "2102": [
+    [
+     "2102-01-01",
+     "New Year's Day",
+     "public",
+     false
+    ],
+    [
+     "2102-01-26",
+     "NRM Liberation Day",
+     "public",
+     false
+    ],
+    [
+     "2102-01-30",
+     "Eid al-Adha",
+     "public",
+     true
+    ],
+    [
+     "2102-02-16",
+     "Archbishop Janani Luwum Day",
+     "public",
+     false
+    ],
+    [
+     "2102-03-08",
+     "International Women's Day",
+     "public",
+     false
+    ],
+    [
+     "2102-04-07",
+     "Good Friday",
+     "public",
+     false
+    ],
+    [
+     "2102-04-09",
+     "Easter Sunday",
+     "observance",
+     false
+    ],
+    [
+     "2102-04-10",
+     "Easter Monday",
+     "public",
+     false
+    ],
+    [
+     "2102-05-01",
+     "Labour Day",
+     "public",
+     false
+    ],
+    [
+     "2102-05-14",
+     "Mother's Day",
+     "observance",
+     false
+    ],
+    [
+     "2102-06-03",
+     "Uganda Martyrs' Day",
+     "public",
+     false
+    ],
+    [
+     "2102-06-09",
+     "National Heroes' Day",
+     "public",
+     false
+    ],
+    [
+     "2102-06-18",
+     "Father's Day",
+     "observance",
+     false
+    ],
+    [
+     "2102-10-09",
+     "Independence Day",
+     "public",
+     false
+    ],
+    [
+     "2102-10-13",
+     "Ramadan Start",
+     "observance",
+     true
+    ],
+    [
+     "2102-11-12",
+     "Eid al-Fitr",
+     "public",
+     true
+    ],
+    [
+     "2102-12-25",
+     "Christmas Day",
+     "public",
+     false
+    ],
+    [
+     "2102-12-26",
+     "Boxing Day",
+     "public",
+     false
+    ]
+   ]
+  },
+  "national_country": "Uganda",
+  "public": "public",
+  "recorded_block_type": "PUBLIC_HOLIDAY"
+ },
+ "lead_role": "Program Lead",
+ "no_lead_key": "__no_lead__",
+ "no_lead_label": "No Programme Lead",
+ "not_passed_query_keys": [
+  "csv",
+  "download",
+  "export",
+  "format",
+  "pdf",
+  "xlsx"
+ ],
+ "officer_completed_statuses": [
+  "accountant_confirmed",
+  "awaiting_ia_verification",
+  "closed",
+  "completed",
+  "ia_verified",
+  "submitted_to_pl"
+ ],
+ "own_label": "My calendar",
+ "partner_role_bridge": false,
+ "partner_roles": [
+  "PartnerAdmin",
+  "PartnerFieldOfficer"
+ ],
+ "planning_cceo_role": "CCEO",
+ "planning_lead_role": "Program Lead",
+ "programme_event_type": "programme_event",
+ "roles": {
+  "Accountant": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": true,
+   "page": true,
+   "strip": null
+  },
+  "Admin": {
+   "add_event": true,
+   "leave": true,
+   "my_plan": true,
+   "page": true,
+   "strip": null
+  },
+  "BusinessTransformationOfficer": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": false,
+   "page": true,
+   "strip": null
+  },
+  "CCEO": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": true,
+   "page": true,
+   "strip": null
+  },
+  "ClusterLeader": {
+   "add_event": false,
+   "leave": false,
+   "my_plan": false,
+   "page": false,
+   "strip": null
+  },
+  "CountryDirector": {
+   "add_event": true,
+   "leave": true,
+   "my_plan": true,
+   "page": true,
+   "strip": null
+  },
+  "HumanResources": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": false,
+   "page": true,
+   "strip": null
+  },
+  "ImpactAssessment": {
+   "add_event": true,
+   "leave": true,
+   "my_plan": true,
+   "page": true,
+   "strip": null
+  },
+  "MfiLoanOfficer": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": false,
+   "page": true,
+   "strip": null
+  },
+  "MfiPartnerAdmin": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": false,
+   "page": true,
+   "strip": null
+  },
+  "PartnerAdmin": {
+   "add_event": false,
+   "leave": false,
+   "my_plan": true,
+   "page": true,
+   "strip": null
+  },
+  "PartnerFieldOfficer": {
+   "add_event": false,
+   "leave": false,
+   "my_plan": true,
+   "page": true,
+   "strip": null
+  },
+  "Program Lead": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": true,
+   "page": true,
+   "strip": null
+  },
+  "ProjectCoordinator": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": true,
+   "page": true,
+   "strip": {
+    "label": "My Plan",
+    "scrolls": true,
+    "tabs": [
+     {
+      "active": false,
+      "href": "/projects/my-plan",
+      "label": "My Plan"
+     },
+     {
+      "active": true,
+      "href": "/calendar",
+      "label": "Calendar"
+     }
+    ]
+   }
+  },
+  "RegionalProgramLead": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": false,
+   "page": true,
+   "strip": null
+  },
+  "RegionalVicePresident": {
+   "add_event": false,
+   "leave": true,
+   "my_plan": false,
+   "page": true,
+   "strip": null
+  }
+ },
+ "status_families": {
+  "cancelled": [
+   "cancelled",
+   "rejected"
+  ],
+  "in_progress": [
+   "in_progress",
+   "completion_started",
+   "evidence_uploaded",
+   "evidence_accepted",
+   "salesforce_id_required",
+   "returned_by_pl",
+   "returned",
+   "returned_by_ia"
+  ],
+  "scheduled": [
+   "not_planned",
+   "planned",
+   "scheduled",
+   "assigned_to_partner",
+   "partner_scheduled",
+   "rescheduled",
+   "deferred"
+  ]
+ },
+ "status_options": [
+  [
+   "scheduled",
+   "Scheduled"
+  ],
+  [
+   "in_progress",
+   "In progress"
+  ],
+  [
+   "cancelled",
+   "Cancelled / rejected"
+  ]
+ ],
+ "time_zone": "Africa/Nairobi",
+ "untickable": [
+  "accountant_confirmed",
+  "cancelled",
+  "closed",
+  "completed",
+  "ia_verified",
+  "rejected"
+ ],
+ "weekday_labels": [
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat",
+  "Sun"
+ ],
+ "years": [
+  2000,
+  2100
+ ]
+}
