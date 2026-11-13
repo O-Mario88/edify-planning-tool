@@ -1,7 +1,9 @@
 /*
  * The Calendar page's parts in the answer's order: the header, the people
  * strips (a Lead's officers; the Director's teams and members), the Add
- * other event button, the filters, the event tabs and the month card.
+ * other event button, the filters, the event tabs (each opens this page on
+ * its kind, `?event_kind=`) and the month card drawn from the answer's month
+ * block, with the bar for ticked activities.
  * Parts the feed reads generically (the day-off notice, the Coordinator's
  * workspace strip) are drawn by FeedBlocks as on every page.
  */
@@ -9,14 +11,15 @@ import { create } from '@bufbuild/protobuf';
 
 import type { GetPageResponse } from '@/gen/edify/screens/v1/page_screen_pb';
 import { PageLinkTabsSchema } from '@/gen/edify/screens/v1/page_pb';
-import type { PageAction, PageBlock, PagePanel, PageSegments } from '@/gen/edify/screens/v1/page_pb';
-import { eventTabs, peopleStrips, readMonth, todayIn } from '@/lib/calendarPage';
-import { actionHref, queryString } from '@/lib/feedPage';
+import type { PageAction, PageBlock, PageCalendar, PagePanel, PageSegments, PageSelection } from '@/gen/edify/screens/v1/page_pb';
+import { kindLink, monthOf, peopleStrips, todayIn } from '@/lib/calendarPage';
+import { actionHref } from '@/lib/feedPage';
 
 import { BUTTON_OUTLINE } from '../blocks/buttons';
 import { PageHeader } from '../blocks/PageHeader';
 import { TabRail } from '../blocks/TabRail';
 import { FeedBlocks } from '../page/FeedBlocks';
+import { SelectionBar } from '../page/SelectionBar';
 import { Icon } from '../shell/icons';
 import { CalendarMonthCard } from './CalendarMonthCard';
 
@@ -39,40 +42,29 @@ function composerOf(panel: PagePanel): string {
   return !rest.length && item?.kind.case === 'heading' ? item.kind.value : '';
 }
 
-function withExistingKind(href: string, kind: string): string {
-  const url = new URL(href);
-  url.searchParams.set('event_kind', kind);
-  return url.toString();
-}
-
-function Segments({ segments, hidden, query, view, existingHref, now }: { segments: PageSegments; hidden: Readonly<Record<string, string>> } & Omit<CalendarBodyProps, 'answer'>) {
-  const tabs = eventTabs(segments.segments.map((segment) => segment.label));
-  const year = Number(hidden.year);
-  const month = Number(hidden.month);
+function Segments({ segments, calendar, query, view, existingHref, now, selection }: { segments: PageSegments; calendar: PageCalendar | null } & Omit<CalendarBodyProps, 'answer'> & { selection: PageSelection | undefined }) {
   const all = segments.segments[0];
   const panels = (all?.blocks ?? []).flatMap((block) => (block.kind.case === 'panel' ? [block.kind.value] : []));
-  // The tab draws the phone's small month first, then the grid: the grid is the last month read.
-  const grid = panels.map((panel) => readMonth(panel, year, month)).filter((read) => read !== null).at(-1) ?? null;
+  // The tab draws the phone's small month first, then the month card.
   const phone = panels[0];
+  const card = panels.at(-1);
+  if (!calendar) return <FeedBlocks blocks={all?.blocks ?? []} pagePath={PAGE} drawerHref={existingHref} selectable={false} />;
+  const month = monthOf(calendar, card);
   // A chosen day with nothing: the sentence after the phone's day list, which the page writes only when the
   // month has events; otherwise its script's own words (index.html, calendar-agenda__empty).
   const afterList = phone ? phone.items.slice(phone.items.map((item) => item.kind.case).lastIndexOf('links') + 1) : [];
   const sentence = phone?.items.some((item) => item.kind.case === 'links') ? afterList.flatMap((item) => (item.kind.case === 'text' ? [item.kind.value] : [])).at(-1) : '';
   const dayEmpty = sentence || NO_EVENTS_FOR_DATE;
-  const here = `${PAGE}${queryString(query)}`;
   const rail = create(PageLinkTabsSchema, {
     label: segments.caption,
     scrolls: true,
-    tabs: tabs.map((tab, index) => ({ label: tab.label, active: index === 0, href: index === 0 || !tab.kind ? here : withExistingKind(existingHref, tab.kind) })),
+    tabs: month.tabs.map((tab) => ({ label: tab.label, active: tab.kind === month.kind, href: kindLink(query, tab.kind) })),
   });
   return (
     <>
-      <TabRail rail={rail} counts={tabs.map((tab) => Number(tab.count || 0))} />
-      {grid ? (
-        <CalendarMonthCard month={grid} query={query} view={view} today={todayIn(now, year, month)} eyebrow={phone?.subtitle ?? ''} dayEmpty={dayEmpty} />
-      ) : (
-        <FeedBlocks blocks={all?.blocks ?? []} pagePath={PAGE} drawerHref={existingHref} selectable={false} />
-      )}
+      <TabRail rail={rail} counts={month.tabs.map((tab) => Number(tab.count || 0))} />
+      <CalendarMonthCard month={month} query={query} view={view} today={todayIn(now, month.year, month.month)} eyebrow={phone?.subtitle ?? ''} dayEmpty={dayEmpty} />
+      {selection?.actions.length && month.ticks ? <SelectionBar selection={selection} pageHref={existingHref} /> : null}
     </>
   );
 }
@@ -109,19 +101,18 @@ function Block({ block, ...props }: { block: PageBlock } & Omit<CalendarBodyProp
 }
 
 export function CalendarBody({ answer, ...props }: CalendarBodyProps) {
-  const filters = answer.blocks.find((block) => block.kind.case === 'filters');
-  const hidden = filters?.kind.case === 'filters' ? filters.kind.value.hidden : {};
+  // The month block that follows the event tabs carries each entry's kind, family, tick and marks.
+  const block = answer.blocks.find((each) => each.kind.case === 'calendar');
+  const calendar = block?.kind.case === 'calendar' ? block.kind.value : null;
   const hrefOf = (action: PageAction) => actionHref(action, PAGE, props.existingHref);
   return (
     <div className="mx-auto flex max-w-[1500px] flex-col gap-4 px-4 pb-24 pt-5 sm:px-6 lg:pb-8" data-page={PAGE}>
       {answer.header ? <PageHeader header={answer.header} hrefOf={hrefOf} /> : null}
-      {answer.blocks.map((block, index) =>
-        block.kind.case === 'segments' ? (
-          <Segments key={index} segments={block.kind.value} hidden={hidden} {...props} />
-        ) : (
-          <Block key={index} block={block} {...props} />
-        ),
-      )}
+      {answer.blocks.map((each, index) => {
+        if (each.kind.case === 'calendar') return null;
+        if (each.kind.case === 'segments') return <Segments key={index} segments={each.kind.value} calendar={calendar} selection={answer.selection} {...props} />;
+        return <Block key={index} block={each} {...props} />;
+      })}
     </div>
   );
 }

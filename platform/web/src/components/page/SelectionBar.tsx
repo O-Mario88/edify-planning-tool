@@ -23,7 +23,8 @@ export function SelectionBar({ selection, pageHref, scopeId }: { selection: Page
       const ticked = root ? Array.from(root.querySelectorAll<HTMLInputElement>('input[data-pick]:checked')) : [];
       // The page's bar leaves an opened card's ticks to that card's own bar.
       const boxes = scopeId ? ticked : ticked.filter((box) => !box.closest('[data-record-open]'));
-      setIds(boxes.map((box) => box.dataset.pick ?? '').filter(Boolean));
+      // A calendar run draws one box a day, all the one tick: each id counts once.
+      setIds([...new Set(boxes.map((box) => box.dataset.pick ?? '').filter(Boolean))]);
     };
     document.addEventListener('change', read);
     return () => document.removeEventListener('change', read);
