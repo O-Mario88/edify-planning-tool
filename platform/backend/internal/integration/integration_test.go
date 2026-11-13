@@ -508,6 +508,12 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"re-aim a visit at another intervention": rw + `UPDATE activity SET focus_intervention = focus_intervention`,
 		"change what a visit is for":             rw + `UPDATE activity SET purpose_type = purpose_type`,
 		"rewrite a visit's SSA verdict":          rw + `UPDATE activity SET ssa_alignment = ssa_alignment`,
+		// An online Group Training (48) inserts its cost revision and changes
+		// nothing of it, nor how the session is delivered.
+		"reprice a cost revision":       rw + `UPDATE activity_cost_snapshot SET operational_cost = operational_cost`,
+		"supersede a cost revision":     rw + `UPDATE activity_cost_snapshot SET is_current = is_current`,
+		"remove a cost revision":        rw + `DELETE FROM activity_cost_snapshot`,
+		"change how a session is given": rw + `UPDATE activity SET programme_delivery_mode = programme_delivery_mode`,
 	}
 	for name, statement := range statements {
 		t.Run(name, func(t *testing.T) {

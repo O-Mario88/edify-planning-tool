@@ -53,6 +53,8 @@ type groupColumns struct {
 	expected, perSchool, schoolCount, invited int
 	teachers, leaders, other                  int
 	printing, photocopyPages, photocopyCopies int
+	// Delivered online (docs/migration/48): free, in no day.
+	online bool
 }
 
 func (r activityRow) planning() (string, string) {
@@ -79,7 +81,7 @@ func (r activityRow) groupFields() []struct {
 	if g == nil {
 		return nil
 	}
-	return []struct {
+	fields := []struct {
 		name  string
 		value any
 	}{
@@ -89,6 +91,13 @@ func (r activityRow) groupFields() []struct {
 		{"printing_pages", zeroAsNull(g.printing)}, {"photocopy_pages", zeroAsNull(g.photocopyPages)},
 		{"photocopy_copies", zeroAsNull(g.photocopyCopies)},
 	}
+	if g.online {
+		fields = append(fields, struct {
+			name  string
+			value any
+		}{"programme_delivery_mode", onlineDelivery})
+	}
+	return fields
 }
 
 // name is the activity_name_snapshot: the item's, or the course's for a
@@ -372,6 +381,7 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 		{"training_course_id", optString(r.trainingCourseID)}, {"paired_school_visit_id", optString(r.pairedVisitID)},
 	}
 	columns = append(columns, r.groupFields()...)
+	columns = append(columns, r.onlineFields()...)
 	names := make([]string, len(columns))
 	marks := make([]string, len(columns))
 	values := make([]any, len(columns))

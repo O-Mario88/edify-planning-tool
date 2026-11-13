@@ -71,6 +71,9 @@ type DayVerdict struct {
 	Refusal string `json:"refusal"`
 	Stage   string `json:"stage"`
 	Pooled  bool   `json:"pooled"`
+	// Online is the cost revision of a Group Training delivered online
+	// (docs/migration/48), which asks no preview and joins no day.
+	Online *OnlineCost `json:"online,omitempty"`
 }
 
 // DayCheck asks /api/auth/internal/visit-day-check.

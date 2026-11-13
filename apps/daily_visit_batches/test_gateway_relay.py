@@ -159,3 +159,75 @@ class ClusterPreviewInputsTest(SimpleTestCase):
                 "photocopyCopies": 0,
             },
         )
+
+
+class OnlineCostTest(SimpleTestCase):
+    """An online Group Training's day check (docs/migration/48) asks no
+    preview: it answers the UGX 0 cost revision `_price_activity` writes,
+    from the input `_costing_input` builds with what `_create` holds."""
+
+    def test_the_probe_takes_the_delivery_mode(self):
+        self.assertIn("programme_delivery_mode", gateway_relay.PROBE_FIELDS)
+
+    def test_the_revision_is_free_and_read_from_calculate_dual(self):
+        from types import SimpleNamespace
+        from unittest import mock
+
+        activity = SimpleNamespace(
+            fy="2027",
+            responsible_staff_id="s1",
+            expected_participants=9,
+            printing_pages=None,
+            photocopy_pages=None,
+            photocopy_copies=None,
+        )
+        card = SimpleNamespace(id="card", version=3)
+        dual = {
+            "operationalCard": card,
+            "referenceCard": None,
+            "reference": None,
+            "inputs": {"fy": "2027", "expectedParticipants": 9},
+            "warnings": [
+                "Regional Standard Funding Rate Card has not been configured."
+            ],
+        }
+        with (
+            mock.patch(
+                "apps.activities.services._costing_input",
+                return_value={"fy": "2027"},
+            ) as costing_input,
+            mock.patch(
+                "apps.budget.costing_service.calculate_dual", return_value=dual
+            ) as calculate,
+            mock.patch("apps.activities.services._funding_owner_id", return_value="u1"),
+        ):
+            answer = gateway_relay._online_cost(activity)
+
+        costing_input.assert_called_once_with(
+            activity,
+            {
+                "expectedParticipants": 9,
+                "printingPages": 0,
+                "photocopyPages": 0,
+                "photocopyCopies": 0,
+            },
+        )
+        calculate.assert_called_once_with({"fy": "2027"})
+        self.assertEqual(
+            answer,
+            {
+                "operationalCardId": "card",
+                "operationalCardVersion": 3,
+                "referenceCardId": None,
+                "referenceCardVersion": None,
+                "referenceCost": None,
+                "referenceBreakdown": [],
+                "operationalCost": 0,
+                "operationalBreakdown": [],
+                "calculationInputs": dual["inputs"],
+                "warnings": dual["warnings"],
+                "missingConfiguration": [],
+                "costMissing": False,
+                "calculatedBy": "u1",
+            },
+        )

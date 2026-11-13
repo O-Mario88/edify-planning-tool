@@ -30,7 +30,7 @@ func TestTheGroupTrainingFormIsTakenOnlyForTheOwnersStaffSession(t *testing.T) {
 	handedOn := map[string]func(url.Values){
 		"a partner facilitates":      func(f url.Values) { f.Set("facilitating_partner_id", "p1") },
 		"no Facilitated by field":    func(f url.Values) { f.Del("facilitating_partner_id") },
-		"online delivery":            func(f url.Values) { f.Set("delivery_mode", "online") },
+		"another delivery mode":      func(f url.Values) { f.Set("delivery_mode", "hybrid") },
 		"a responsible person named": func(f url.Values) { f.Set("responsible_staff_id", "x") },
 		"a focus the planner names":  func(f url.Values) { f.Set("focus_intervention", "leadership") },
 		"a project":                  func(f url.Values) { f.Set("project_id", "p") },

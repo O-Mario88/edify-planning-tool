@@ -60,6 +60,9 @@ var undeletableTables = []string{
 	// The seventh save (a cluster Group Training, docs/migration/38) adds
 	// one invitation per school; un-inviting is the existing application's.
 	"cluster_activity_attendance",
+	// The eighth save (an online Group Training, docs/migration/48) writes
+	// its cost revision; superseding one is the existing pricing's.
+	"activity_cost_snapshot",
 }
 
 // protectedColumns ("table.column") are what Go's saves may insert but never
@@ -90,6 +93,13 @@ var protectedColumns = []string{
 	"cluster_activity_attendance.activity_id", "cluster_activity_attendance.school_id",
 	"cluster_activity_attendance.invited", "cluster_activity_attendance.attended",
 	"cluster_activity_attendance.is_guest",
+	// An online session is free because it is online, and its cost
+	// revision is what it was priced at (docs/migration/48).
+	"activity.programme_delivery_mode",
+	"activity_cost_snapshot.operational_cost", "activity_cost_snapshot.reference_cost",
+	"activity_cost_snapshot.is_current", "activity_cost_snapshot.activity_id",
+	"activity_cost_snapshot.calculation_inputs", "activity_cost_snapshot.operational_breakdown",
+	"activity_cost_snapshot.amount_disbursed", "activity_cost_snapshot.actual_accounted_spend",
 }
 
 // ErrRefused wraps every refusal, so callers can tell a guard decision from

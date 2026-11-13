@@ -168,7 +168,7 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// cluster's Group Training (docs/migration/38): its invitations.
 		filepath.Join(root, "internal", "activities") + sep: {
 			"activity", "daily_visit_batch", "daily_visit_costs_to_follow", "target_ledger_dirty", "ssa_recommendation",
-			"activity_schedule_change", "cluster_activity_attendance",
+			"activity_schedule_change", "cluster_activity_attendance", "activity_cost_snapshot",
 		},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
