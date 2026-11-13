@@ -55,8 +55,8 @@ func lowered(query url.Values, key string) string {
 	return strings.ToLower(strings.TrimSpace(query.Get(key)))
 }
 
-// Build answers the Training Summary's Summary tab. served is false for any
-// other path, lens or tab, for a reader whose page answers in another way,
+// Build answers the Training Summary's Summary, By staff and Schools tabs.
+// served is false for any other path or lens, for a reader whose page answers in another way,
 // and for a page opened from a planning follow-up.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if path != Path {
@@ -79,8 +79,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !doors.Page || !doors.Trainings || !(p.ActiveRole == rules.ProgramLeadRole || doors.ReadsCountry) {
 		return nil, false, nil
 	}
-	if tab := lowered(query, "tab"); tab == "staff" || tab == "schools" {
-		return nil, false, nil
+	tab := lowered(query, "tab")
+	if tab != tabStaff && tab != tabSchools {
+		tab = tabSummary
 	}
 	now := s.now()
 	years := schooldirectory.FYOptions(now)
@@ -89,7 +90,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		fy = schooldirectory.OperationalFY(now)
 	}
 	summary, err := forReader(ctx, s.db, p.ActiveRole, p.UserID, p.StaffProfileID, fy,
-		strings.TrimSpace(query.Get("program_lead")), doors, now)
+		strings.TrimSpace(query.Get("program_lead")), doors, now, tab == tabSummary)
 	if err != nil {
 		return nil, true, err
 	}
@@ -103,5 +104,47 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if country {
 		lens = doors.LensTabsCountry
 	}
-	return page(summary, years, lens), true, nil
+	var filters, table *screensv1.PageBlock
+	switch tab {
+	case tabStaff:
+		rows, err := summaryForStaff(ctx, s.db, summary.staff, fy, now)
+		if err != nil {
+			return nil, true, err
+		}
+		filters, table = filterBlock(summary, years, tab), byStaffTable(rows, fy, query, doors.OpensStaffProfile)
+	case tabSchools:
+		filters, table, err = s.schoolsTab(ctx, p, summary, years, query, doors, now)
+		if err != nil {
+			return nil, true, err
+		}
+	default:
+		filters, table = filterBlock(summary, years, tab), tableBlock(summary)
+	}
+	return page(summary, lens, filters, table, tab), true, nil
+}
+
+// schoolsTab is the Schools tab: training_coverage.table over
+// coverage_profiles, and the filters it adds.
+func (s *Service) schoolsTab(ctx context.Context, p auth.Principal, summary summary, years []string, query url.Values,
+	doors Doors, now time.Time) (*screensv1.PageBlock, *screensv1.PageBlock, error) {
+	country, err := readerCountry(ctx, s.db, p.UserID)
+	if err != nil {
+		return nil, nil, err
+	}
+	staff, err := coverageProfiles(ctx, s.db, summary, country)
+	if err != nil {
+		return nil, nil, err
+	}
+	training := strings.TrimSpace(query.Get("training"))
+	staffID := strings.TrimSpace(query.Get("staff"))
+	c, err := coverageTable(ctx, s.db, staff, summary.fy, training, staffID, strings.TrimSpace(query.Get("show")), now)
+	if err != nil {
+		return nil, nil, err
+	}
+	trainings, err := trainingsCommitted(ctx, s.db, staff, summary.fy, now)
+	if err != nil {
+		return nil, nil, err
+	}
+	filters := filterBlock(summary, years, tabSchools, schoolsFilters(summary, trainings, training, staffID, c.show)...)
+	return filters, coverageBlock(c, summary.fy, query, doors.OpensStaffProfile), nil
 }

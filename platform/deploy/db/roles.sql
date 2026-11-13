@@ -403,3 +403,7 @@ GRANT SELECT (id) ON partner_invoice TO edify_gateway_ro;
 GRANT SELECT (program_lead_user_id) ON planning_oversight_follow_up TO edify_gateway_ro;
 GRANT SELECT (pl_user_id) ON target_catchup_plan TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
+
+-- The Training Summary's Schools tab (internal/trainingsummary, doc 44):
+-- training_coverage.uncovered leaves out a school marked a duplicate.
+GRANT SELECT (duplicate_status) ON school TO edify_gateway_ro;
