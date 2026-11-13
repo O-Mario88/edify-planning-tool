@@ -7,7 +7,7 @@ import type { PageSearch } from '@/components/shell/TopBar';
 
 interface PageSearchSpec {
   readonly placeholder: string;
-  readonly label: string;
+  readonly label?: string;
 }
 
 const PAGE_SEARCHES: Readonly<Record<string, PageSearchSpec>> = {
@@ -15,11 +15,20 @@ const PAGE_SEARCHES: Readonly<Record<string, PageSearchSpec>> = {
     placeholder: 'Search schools, School IDs, districts, sub-counties…',
     label: 'Search schools by name, School ID, district, sub-county, cluster or assigned owner',
   },
+  // cluster_views.py: the placeholder only, no label.
+  '/clusters': { placeholder: 'Search clusters…' },
+  // planning_views.py: the placeholder only, no label.
+  '/planning': { placeholder: 'Search planning schools…' },
+  // my_plan_views.py
+  '/my-plan': {
+    placeholder: 'Search my plan…',
+    label: 'Search my plan by school, School ID, cluster, district or purpose',
+  },
 };
 
 const PLATFORM_SEARCH: PageSearchSpec = { placeholder: 'Search schools, staff, districts…', label: 'Search' };
 
-export function pageSearch(path: string): PageSearch & { label: string } {
+export function pageSearch(path: string): PageSearch {
   const url = new URL(path, 'http://web.invalid');
   const spec = PAGE_SEARCHES[url.pathname];
   if (!spec) return { action: '/search', value: '', keep: {}, ...PLATFORM_SEARCH };

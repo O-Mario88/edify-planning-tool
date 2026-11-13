@@ -1,0 +1,22 @@
+import { describe, expect, it } from 'vitest';
+
+import { filterFields, filterSlots, UNMEASURED_SLOTS } from './filterSlots';
+
+describe('filterSlots and filterFields (micro-ux.js)', () => {
+  it('fits one 144px slot and a 12px gap a filter, at least three', () => {
+    expect(filterSlots(1120, false)).toBe(7);
+    expect(filterSlots(300, false)).toBe(3);
+    expect(filterSlots(0, false)).toBe(UNMEASURED_SLOTS);
+  });
+
+  it('folds the filters past the last slot under More, which takes that slot', () => {
+    expect(filterFields(8, 7, false)).toBe(6);
+    expect(filterFields(6, 7, false)).toBe(6);
+    expect(filterFields(7, 7, false)).toBe(7);
+  });
+
+  it('keeps three on a phone and folds the rest', () => {
+    expect(filterFields(8, filterSlots(360, true), true)).toBe(3);
+    expect(filterFields(3, filterSlots(360, true), true)).toBe(3);
+  });
+});

@@ -45,6 +45,12 @@ func selectOf(name, label, selected string, options []option) *screensv1.PageFil
 	return f
 }
 
+// captioned gives a select the short word the page draws beside it.
+func captioned(f *screensv1.PageFilter, caption string) *screensv1.PageFilter {
+	f.Caption = caption
+	return f
+}
+
 // formFilters are the filter form's selects in page order; the form's
 // state is what the tabs link to.
 func formFilters(f filterState, years []string, districts, staff []option, support bool) []*screensv1.PageFilter {
@@ -66,21 +72,21 @@ func formFilters(f filterState, years []string, districts, staff []option, suppo
 		group = "owner"
 	}
 	list := []*screensv1.PageFilter{
-		selectOf("fy", "Fiscal year", f.fy, fy),
+		captioned(selectOf("fy", "Fiscal year", f.fy, fy), "FY"),
 		selectOf("quarter", "Quarter", f.quarter, quarters),
 		selectOf("district", "District", f.district, append([]option{{"All", "All Districts"}}, districts...)),
 		selectOf("staff", "Staff", f.staff, append([]option{{"All", "All Staff"}}, staff...)),
-		selectOf("group", "Group schools", group, []option{{"owner", "By PL & CCEO"}, {"name", "By name"}}),
-		selectOf("planning_readiness", "Planning readiness", f.readiness, readiness),
+		captioned(selectOf("group", "Group schools", group, []option{{"owner", "By PL & CCEO"}, {"name", "By name"}}), "Group"),
+		captioned(selectOf("planning_readiness", "Planning readiness", f.readiness, readiness), "Readiness"),
 	}
 	if support {
 		menu := []option{}
 		for _, pair := range rules.SupportFilters {
 			menu = append(menu, option{pair[0], pair[1]})
 		}
-		list = append(list, selectOf("support", "Support and planning status", f.support, menu))
+		list = append(list, captioned(selectOf("support", "Support and planning status", f.support, menu), "Show"))
 	}
-	return append(list, selectOf("ssa_status", "SSA status", f.ssaStatus, ssa))
+	return append(list, captioned(selectOf("ssa_status", "SSA status", f.ssaStatus, ssa), "SSA"))
 }
 
 // tabs are partials/planning/tabs.html as links: the form's values as they
@@ -346,43 +352,50 @@ func pager(f filterState, total, pages int, noun string) (summary string, out []
 	return summary, out
 }
 
-// emptyPanel is the list's empty card and the pager below it, read
-// together as one panel: only the parts written in their own elements reach
-// it (the sentence before a link does not).
-func emptyPanel(anyClustered bool, summary string, pages []*screensv1.PagePagerPage) *screensv1.PageBlock {
-	if anyClustered {
-		return footerPanel([]*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{Text: "Clear filters or adjust your search."}}}, summary, pages)
+// pageSizes are the pager's rows-a-page chooser (school_table.html).
+var pageSizes = []string{"15", "20", "50"}
+
+// pagerBlock is the list's pager strip: "Showing …", its pages and the
+// "15 / page" chooser (the one selected, else the first).
+func pagerBlock(f filterState, summary string, pages []*screensv1.PagePagerPage) *screensv1.PageBlock {
+	size := []option{}
+	for _, n := range pageSizes {
+		size = append(size, option{n, n + " / page"})
 	}
-	return footerPanel([]*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
-		Links: []*screensv1.PageLink{{Text: "School Directory", Href: "/schools"}},
-	}}}}, summary, pages)
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Pager{Pager: &screensv1.PagePager{
+		Summary: summary, Pages: pages, Size: selectOf("per_page", "Per page", itoa(f.perPage), size),
+	}}}
 }
 
-// emptyMessagePanel is a tab's empty card whose message stands alone
-// (Assigned to Partner's, the Clusters tab's), read with the footer.
-func emptyMessagePanel(message, summary string, pages []*screensv1.PagePagerPage) *screensv1.PageBlock {
-	return footerPanel([]*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{Text: message}}}, summary, pages)
+// emptyBlocks are the list's empty card, read whole (its message and the
+// sentence around its link), and the pager strip under it.
+func emptyBlocks(f filterState, anyClustered bool, summary string, pages []*screensv1.PagePagerPage) []*screensv1.PageBlock {
+	items := []*screensv1.PagePanelItem{
+		{Kind: &screensv1.PagePanelItem_Text{Text: "No planning records match your filters."}},
+		{Kind: &screensv1.PagePanelItem_Text{Text: "Clear filters or adjust your search."}},
+	}
+	if !anyClustered {
+		items = []*screensv1.PagePanelItem{
+			{Kind: &screensv1.PagePanelItem_Text{Text: "No schools have been clustered yet."}},
+			{
+				Kind:      &screensv1.PagePanelItem_Text{Text: "Planning works on clustered schools. Every school is still in the School Directory — add them to a cluster and they appear here."},
+				TextLinks: []*screensv1.PageLink{{Text: "School Directory", Href: "/schools"}},
+			},
+		}
+	}
+	return []*screensv1.PageBlock{panelOf(items), pagerBlock(f, summary, pages)}
 }
 
-// footerPanel is an empty card's items and the pager's footer read with it.
-func footerPanel(items []*screensv1.PagePanelItem, summary string, pages []*screensv1.PagePagerPage) *screensv1.PageBlock {
-	items = append(items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: summary}})
-	links := []*screensv1.PageLink{}
-	for _, p := range pages {
-		if p.GetHref() == "" {
-			continue
-		}
-		// A page button is read as a link by its own text: the arrows are
-		// "‹" and "›" there, not their names.
-		label := map[string]string{"Prev": "‹", "Next": "›"}[p.GetLabel()]
-		if label == "" {
-			label = p.GetLabel()
-		}
-		links = append(links, &screensv1.PageLink{Text: label, Href: p.GetHref()})
+// emptyMessageBlocks are a tab's empty card whose message stands alone
+// (Assigned to Partner's, the Clusters tab's) and the pager strip.
+func emptyMessageBlocks(f filterState, message, summary string, pages []*screensv1.PagePagerPage) []*screensv1.PageBlock {
+	return []*screensv1.PageBlock{
+		panelOf([]*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{Text: message}}}),
+		pagerBlock(f, summary, pages),
 	}
-	if len(links) > 0 {
-		items = append(items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: links}}})
-	}
+}
+
+func panelOf(items []*screensv1.PagePanelItem) *screensv1.PageBlock {
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Items: items}}}
 }
 

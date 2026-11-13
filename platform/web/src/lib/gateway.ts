@@ -44,6 +44,14 @@ export function isNotFound(error: unknown): boolean {
   return error instanceof ConnectError && (error.code === Code.NotFound || error.code === Code.PermissionDenied);
 }
 
+/**
+ * The gateway has no answer for this page yet (Go does not serve it and no
+ * existing application stands behind the gateway).
+ */
+export function isUnavailable(error: unknown): boolean {
+  return error instanceof ConnectError && error.code === Code.Unavailable;
+}
+
 /** The gateway's message for a person, never a stack or a code. */
 export function messageOf(error: unknown, fallback: string): string {
   if (error instanceof ConnectError && error.rawMessage) return error.rawMessage;

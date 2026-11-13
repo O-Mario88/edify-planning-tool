@@ -56,11 +56,11 @@ func (s *Service) clustersTab(ctx context.Context, p auth.Principal, scope schoo
 	pages := (total + f.perPage - 1) / f.perPage
 	summary, pageLinks := pager(f, total, pages, "clusters")
 	if len(records) == 0 {
-		return []*screensv1.PageBlock{emptyMessagePanel("No clusters ready to be scheduled.", summary, pageLinks)}, nil
+		return emptyMessageBlocks(f, "No clusters ready to be scheduled.", summary, pageLinks), nil
 	}
 	out := []*screensv1.PageBlock{}
 	for _, r := range records {
 		out = append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Record{Record: r}})
 	}
-	return append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Pager{Pager: &screensv1.PagePager{Summary: summary, Pages: pageLinks}}}), nil
+	return append(out, pagerBlock(f, summary, pageLinks)), nil
 }

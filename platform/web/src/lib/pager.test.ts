@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { elidedPageNumbers, hrefWith, showingSummary } from './pager';
+import { elidedPageNumbers, hrefWith, showingSummary, withPageSize } from './pager';
 
 describe('elidedPageNumbers (Django get_elided_page_range, 1 each side, 1 at the ends)', () => {
   it.each([
@@ -29,5 +29,12 @@ describe('hrefWith', () => {
   it('sets and drops keys', () => {
     expect(hrefWith('/schools', { tab: 'clustered', page: '2' }, { page: '' })).toBe('/schools?tab=clustered');
     expect(hrefWith('/schools', {}, {})).toBe('/schools');
+  });
+});
+
+describe('withPageSize', () => {
+  it('keeps the other choices and starts again at page one', () => {
+    expect(withPageSize('tab=core&page=3&per_page=15', 'per_page', '50')).toBe('?tab=core&page=1&per_page=50');
+    expect(withPageSize('', 'per_page', '20')).toBe('?per_page=20&page=1');
   });
 });

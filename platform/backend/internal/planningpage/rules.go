@@ -48,6 +48,11 @@ type CountedVisits struct {
 	CCEORole               string         `json:"cceo_role"`
 	VisitTargets           map[string]int `json:"visit_targets"`
 	CoreTypes              []string       `json:"core_types"`
+	OperatingStatuses      []string       `json:"operating_statuses"`
+	CoreType               string         `json:"core_type"`
+	ClientRuleTypes        []string       `json:"client_rule_types"`
+	CoreStaffVisits        int            `json:"core_staff_visits"`
+	CorePartnerVisits      int            `json:"core_partner_visits"`
 }
 
 // Rules are the page's vocabularies.

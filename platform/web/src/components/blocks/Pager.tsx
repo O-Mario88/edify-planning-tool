@@ -1,18 +1,27 @@
 /*
  * The pager under a list: "Showing 1 to 50 of 699 schools", Prev, the page
  * numbers with gaps (the current one solid blue), Next. 50 rows a page is the
- * gateway's (owner, 2026-10-02).
+ * gateway's (owner, 2026-10-02). A list with a rows-a-page chooser has it at
+ * the end (wider than a phone, as the existing page).
  */
 import Link from 'next/link';
 
 import type { PagePager } from '@/gen/edify/screens/v1/page_pb';
 
+import { PageSize } from './PageSize';
+
 const CONTROL = 'grid h-8 min-w-8 place-items-center rounded-[var(--radius-control)] px-2 text-[12px] font-bold';
 
+/** The page feed writes Prev and Next as pages of their own (PagePagerPage). */
+const PREV = 'Prev';
+const NEXT = 'Next';
+
 export function Pager({ pager }: { pager: PagePager }) {
-  const currentIndex = pager.pages.findIndex((page) => page.current);
-  const previous = currentIndex > 0 ? pager.pages[currentIndex - 1] : undefined;
-  const next = currentIndex >= 0 ? pager.pages[currentIndex + 1] : undefined;
+  const labelled = pager.pages.some((page) => page.label === PREV || page.label === NEXT);
+  const numbers = pager.pages.filter((page) => page.label !== PREV && page.label !== NEXT);
+  const currentIndex = numbers.findIndex((page) => page.current);
+  const previous = labelled ? pager.pages.find((page) => page.label === PREV) : currentIndex > 0 ? numbers[currentIndex - 1] : undefined;
+  const next = labelled ? pager.pages.find((page) => page.label === NEXT) : currentIndex >= 0 ? numbers[currentIndex + 1] : undefined;
   return (
     <nav aria-label="Pages" data-block="pager" className="flex flex-col gap-3 border-t border-[var(--edify-border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="whitespace-nowrap text-[12px] font-semibold text-[var(--edify-text-muted)]">{pager.summary}</p>
@@ -22,7 +31,7 @@ export function Pager({ pager }: { pager: PagePager }) {
             Prev
           </Link>
         ) : null}
-        {pager.pages.map((page, index) =>
+        {numbers.map((page, index) =>
           page.current ? (
             <span key={index} aria-current="page" aria-label={`Page ${page.label}, current page`} className={`${CONTROL} bg-[var(--brand-primary)] text-white shadow-sm`}>
               {page.label}
@@ -41,6 +50,11 @@ export function Pager({ pager }: { pager: PagePager }) {
           <Link href={next.href} aria-label="Next page" className={`${CONTROL} border border-[var(--edify-border)] px-3 text-[var(--edify-text)] hover:bg-[var(--brand-primary-soft)]`}>
             Next
           </Link>
+        ) : null}
+        {pager.size ? (
+          <span className="ml-2 max-sm:hidden">
+            <PageSize size={pager.size} />
+          </span>
         ) : null}
       </div>
     </nav>

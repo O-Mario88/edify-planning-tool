@@ -4,6 +4,7 @@ package integration
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -30,14 +31,27 @@ WHERE u.email = 'cceo@edify.org' AND s.deleted_at IS NULL AND s.operational_stat
 	if page.GetHeader().GetTitle() != "Planning" || page.GetBlocks()[0].GetFilters().GetHidden()["tab"] != "client" {
 		t.Fatalf("header %v, filters %v", page.GetHeader(), page.GetBlocks()[0])
 	}
-	var table bool
+	var table, note, sized bool
 	for _, b := range page.GetBlocks() {
+		if item := b.GetPanel().GetItems(); len(item) == 1 && item[0].GetLead() != "" {
+			// The workload line read whole: its bold opening, then the share-out.
+			note = strings.HasPrefix(item[0].GetText(), item[0].GetLead()+" Core ") && strings.Contains(item[0].GetText(), " · Client ")
+		}
+		if b.GetPager().GetSize().GetName() == "per_page" {
+			sized = true
+		}
+		if b.GetFilters() != nil && b.GetFilters().GetFilters()[0].GetCaption() != "FY" {
+			t.Errorf("the year filter's short word: %v", b.GetFilters().GetFilters()[0])
+		}
 		if tb := b.GetTable(); tb != nil {
 			table = true
 			if want := min(listed, 15); len(tb.GetRows()) != want {
 				t.Fatalf("%d rows on the first page, want %d", len(tb.GetRows()), want)
 			}
 		}
+	}
+	if !note || !sized {
+		t.Errorf("workload line read whole %v, pager's rows-a-page chooser %v", note, sized)
 	}
 	if !table || page.GetSelection().GetNoun() != "schools selected" {
 		t.Fatalf("table %v, selection %v", table, page.GetSelection())
