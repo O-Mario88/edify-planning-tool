@@ -106727,6 +106727,18 @@
       "templates": []
     },
     {
+      "callback": "apps.daily_visit_batches.gateway_relay.visit_group_check",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/auth(?:/|)internal/visit-group-check",
+      "route_name": "visit-group-check",
+      "templates": []
+    },
+    {
       "callback": "apps.daily_visit_batches.gateway_relay.visit_move_check",
       "kind": "api",
       "methods": [
@@ -124428,8 +124440,8 @@
   "summary": {
     "accessibility_contract_pass": 605,
     "activity_states": 24,
-    "all_routes": 1468,
-    "api_routes": 395,
+    "all_routes": 1469,
+    "api_routes": 396,
     "component_templates": 669,
     "full_pages": 264,
     "mobile_contract_pass": 605,
