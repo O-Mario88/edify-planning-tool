@@ -105,6 +105,16 @@ STATES: dict[str, tuple[str, str, str, int]] = {
 
 WORK_STATES = tuple(key for key in STATES if key != UP_TO_DATE)
 
+#: The record and delivery values the states are read from.
+RECORD_RETURNED = "returned"
+RECORD_PENDING = "pending"
+RECORD_CONFIRMED = "confirmed"
+PARTNER = "partner"
+
+#: The operating statuses of a school that needs collection (closed schools
+#: need none).
+COLLECTION_OPERATING_STATUSES = ("active", "reopened")
+
 #: Collection activities still ahead of their visit.
 OPEN_COLLECTION_STATUSES = (
     "awaiting_owner_approval",
@@ -181,7 +191,7 @@ def collection_schools(principal):
 
     scope = resolve_user_scope(principal)
     base = School.objects.filter(
-        deleted_at__isnull=True, operational_status__in=("active", "reopened")
+        deleted_at__isnull=True, operational_status__in=COLLECTION_OPERATING_STATUSES
     )
     schools = scoped_school_queryset(scope, base=base)
     return schools if schools is not None else School.objects.none()
@@ -212,16 +222,16 @@ def annotate_states(schools, *, fy: str | None = None):
         _latest_status=latest_status,
         _latest_collector=latest_collector,
         _confirmed_this_fy=Exists(
-            records.filter(verification_status="confirmed", fy=fy)
+            records.filter(verification_status=RECORD_CONFIRMED, fy=fy)
         ),
-        _confirmed_ever=Exists(records.filter(verification_status="confirmed")),
+        _confirmed_ever=Exists(records.filter(verification_status=RECORD_CONFIRMED)),
         _partner_open=Exists(
             collection.filter(
-                delivery_type="partner", status__in=OPEN_COLLECTION_STATUSES
+                delivery_type=PARTNER, status__in=OPEN_COLLECTION_STATUSES
             )
         ),
         _staff_open=Exists(
-            collection.exclude(delivery_type="partner").filter(
+            collection.exclude(delivery_type=PARTNER).filter(
                 status__in=OPEN_COLLECTION_STATUSES,
                 ssa_not_collected_reason__isnull=True,
             )
@@ -233,12 +243,12 @@ def annotate_states(schools, *, fy: str | None = None):
         ),
     )
     state = Case(
-        When(_latest_status="returned", then=Value(RETURNED)),
+        When(_latest_status=RECORD_RETURNED, then=Value(RETURNED)),
         When(
-            Q(_latest_status="pending") & Q(_latest_collector="partner"),
+            Q(_latest_status=RECORD_PENDING) & Q(_latest_collector=PARTNER),
             then=Value(PARTNER_PENDING),
         ),
-        When(_latest_status="pending", then=Value(PENDING_VERIFICATION)),
+        When(_latest_status=RECORD_PENDING, then=Value(PENDING_VERIFICATION)),
         When(_confirmed_this_fy=True, then=Value(UP_TO_DATE)),
         When(_partner_open=True, then=Value(PARTNER_PENDING)),
         When(_staff_open=True, then=Value(COLLECTION_SCHEDULED)),

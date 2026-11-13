@@ -24,6 +24,12 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
+#: The records the queue counts, by their status.
+SSA_PENDING_STATUS = "pending"
+UNMATCHED_OPEN_STATUSES = ("pending", "hold")
+DUPLICATE_OPEN_STATUS = "potential"
+SAMPLE_PENDING_STATUS = "pending"
+
 #: How long returned work may wait for its correction before IA chases it.
 RETURNED_CHASE_DAYS = 7
 
@@ -42,7 +48,7 @@ def unmatched_ssa_for_scope(scope):
     from apps.core.scoping import country_bound, country_user_ids
     from apps.schools.models import UnmatchedSSARecord
 
-    rows = UnmatchedSSARecord.objects.filter(status__in=("pending", "hold"))
+    rows = UnmatchedSSARecord.objects.filter(status__in=UNMATCHED_OPEN_STATUSES)
     if country_bound(scope):
         rows = rows.filter(
             Q(batch__uploaded_by__in=country_user_ids(scope))
@@ -62,7 +68,9 @@ def pending_ssa_for_verifier(principal, scope):
         scope, School.objects.filter(deleted_at__isnull=True)
     )
     records = SsaRecord.objects.filter(
-        deleted_at__isnull=True, verification_status="pending", school__in=schools
+        deleted_at__isnull=True,
+        verification_status=SSA_PENDING_STATUS,
+        school__in=schools,
     )
     own = [str(i) for i in owner_ids(principal) if i]
     if own:
@@ -186,7 +194,7 @@ def _ia_queue_todos(principal, today) -> list[dict]:
         )
 
     duplicates = DuplicateActivity.objects.filter(
-        status="potential", activity_id__in=reach.values("id")
+        status=DUPLICATE_OPEN_STATUS, activity_id__in=reach.values("id")
     ).aggregate(n=Count("activity_id", distinct=True), oldest=Min("created_at"))
     if duplicates["n"]:
         out.append(
@@ -209,7 +217,7 @@ def _ia_queue_todos(principal, today) -> list[dict]:
     schools = scoped_school_queryset(
         scope, School.objects.filter(deleted_at__isnull=True)
     )
-    samples = VerificationSample.objects.filter(status="pending").filter(
+    samples = VerificationSample.objects.filter(status=SAMPLE_PENDING_STATUS).filter(
         Q(activity_id__in=reach.values("id")) | Q(ssa_record__school__in=schools)
     )
     if uid:

@@ -101,6 +101,21 @@ LINK_SHAPES = {
     "/clusters/{id}/profile?tab=attendance&show=missing": (
         "/clusters/cmw0000000000000000000001/profile?tab=attendance&show=missing"
     ),
+    # Impact Assessment's queue (docs/migration/56).
+    "/ia/verification/{id}/": "/ia/verification/cmw0000000000000000000001/",
+    "/ia/partner-evidence/{id}/": "/ia/partner-evidence/cmw0000000000000000000001/",
+    "/ia/dashboard/?view=collection": "/ia/dashboard/?view=collection",
+    "/ia/dashboard/?view=collection&owner={id}": (
+        "/ia/dashboard/?view=collection&owner=cmw0000000000000000000001"
+    ),
+    "/ia/dashboard/?view=collection&district={id}": (
+        "/ia/dashboard/?view=collection&district=cmw0000000000000000000001"
+    ),
+    "/ssa/upload/history/?has_blocked=1": "/ssa/upload/history/?has_blocked=1",
+    "/team-planning-oversight/?view=coverage": "/team-planning-oversight/?view=coverage",
+    "/ia/framework/?tab=rules&status=required": (
+        "/ia/framework/?tab=rules&status=required"
+    ),
 }
 
 #: The categories the row template draws an icon for; any other category is
@@ -526,6 +541,59 @@ def rules() -> dict:
             ReviewStage.PRIORITIES_DRAFT.value,
             ReviewStage.PRIORITIES_MANAGER_REVIEW.value,
         ],
+        "ia": ia_rules(),
+    }
+
+
+def ia_rules() -> dict:
+    """What Impact Assessment's own builders read (docs/migration/56)."""
+    from apps.activities import ia_todos
+    from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
+    from apps.activity_catalogue.models import MappingStatus
+    from apps.analytics import ia_collection
+    from apps.command_center import todo_service as ts
+    from apps.impact import evidence_services as ev
+    from apps.impact import framework_todos
+    from apps.impact.models import DefinitionStatus
+    from apps.planning import coverage_todos
+    from apps.planning.country_oversight import rules as oversight
+    from apps.schools import school_status
+    from apps.ssa import collection_todos
+    from apps.targets.models import MSCSStatus
+
+    return {
+        "waiting_status": ts.IA_TODO_WAITING_STATUS,
+        "category": ts.IA_TODO_CATEGORY,
+        "collection_category": collection_todos.CATEGORY,
+        "collection_max_owner_rows": collection_todos.MAX_OWNER_ROWS,
+        "collection_blocked_rows_days": collection_todos.BLOCKED_ROWS_DAYS,
+        "collection_blocked_status": collection_todos.BLOCKED_ROW_STATUS,
+        "collection_operating_statuses": list(
+            ia_collection.COLLECTION_OPERATING_STATUSES
+        ),
+        "collection_open_statuses": list(ia_collection.OPEN_COLLECTION_STATUSES),
+        "collection_delivered_statuses": list(ia_collection.DELIVERED_STATUSES),
+        "collection_record_returned": ia_collection.RECORD_RETURNED,
+        "collection_record_pending": ia_collection.RECORD_PENDING,
+        "collection_record_confirmed": ia_collection.RECORD_CONFIRMED,
+        "collection_partner": ia_collection.PARTNER,
+        "coverage_roles": list(coverage_todos.RESPONSIBLE_ROLES),
+        "coverage_url": coverage_todos.COVERAGE_URL,
+        "coverage_session_types": sorted(school_status.CLUSTER_SESSION_TYPES),
+        "coverage_dead_statuses": sorted(school_status.DEAD_STATUSES),
+        "coverage_school_training_types": [str(t) for t in SCHOOL_TRAINING_TYPES],
+        "coverage_trained_types": list(oversight.TRAINED_TYPES),
+        "framework_category": framework_todos.CATEGORY,
+        "framework_in_review": MappingStatus.IN_REVIEW.value,
+        "framework_draft": MappingStatus.DRAFT.value,
+        "definition_in_review": DefinitionStatus.IN_REVIEW.value,
+        "definition_returned": DefinitionStatus.RETURNED.value,
+        "evidence_pending": ev.PENDING,
+        "story_submitted": MSCSStatus.SUBMITTED.value,
+        "queue_ssa_pending": ia_todos.SSA_PENDING_STATUS,
+        "queue_unmatched_open": list(ia_todos.UNMATCHED_OPEN_STATUSES),
+        "queue_duplicate_open": ia_todos.DUPLICATE_OPEN_STATUS,
+        "queue_sample_pending": ia_todos.SAMPLE_PENDING_STATUS,
     }
 
 

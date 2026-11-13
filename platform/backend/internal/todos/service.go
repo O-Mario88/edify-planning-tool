@@ -70,7 +70,7 @@ var Handled = map[string]func(ctx context.Context, s *Service, r *reader) ([]tod
 
 // PortedRoles are the roles whose queue Go builds; every other role is
 // passed on, whatever the builders it reaches.
-var PortedRoles = []string{"CCEO"}
+var PortedRoles = []string{"CCEO", roleIA}
 
 // Served is whether Go answers a role at all: Go has built the role's queue
 // and has every builder the role reaches.

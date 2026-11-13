@@ -33,12 +33,12 @@ func init() {
 		"_core_school_todos":                                coreSchoolTodos,
 		"_pd_todos":                                         pdGuard,
 		"_field_debrief_todos":                              fieldDebriefGuard,
-		"_business_transformation_todos":                    loanVerificationTodos,
+		"_business_transformation_todos":                    byRole(loanVerificationTodos, loanGuardIA),
 		"apps.staff_activity.todos:follow_up_todos":         followUpGuard,
 		"apps.cce_leadership.todos:coaching_todos":          coachingGuard,
 		"apps.cce_leadership.guidance_todos:guidance_todos": guidanceGuard,
-		"apps.ssa.collection_todos:collection_todos":        returnedSSATodos,
-		"apps.impact.evidence_todos:evidence_todos":         evidenceTodos,
+		"apps.ssa.collection_todos:collection_todos":        byRole(returnedSSATodos, collectionIA),
+		"apps.impact.evidence_todos:evidence_todos":         byRole(evidenceTodos, evidenceGuardIA),
 		"apps.planning.fy_todos:fy_planning_todos":          fyPlanningTodos,
 		"apps.clusters.followups:attendance_todos":          attendanceTodos,
 	} {
@@ -777,6 +777,12 @@ func returnedSSATodos(ctx context.Context, s *Service, r *reader) ([]todo, error
 	if r.role != "CCEO" {
 		return nil, errPassOn
 	}
+	return returnedSSARows(ctx, s, r)
+}
+
+// returnedSSARows is collection_todos._returned_rows, for every role that
+// keys SSA scores.
+func returnedSSARows(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if len(r.owners) == 0 {
 		return nil, nil
 	}

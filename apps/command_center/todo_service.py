@@ -691,7 +691,7 @@ def _ia_todos(principal, role):
         waiting = (
             Activity.objects.filter(
                 deleted_at__isnull=True,
-                status="awaiting_ia_verification",
+                status=IA_TODO_WAITING_STATUS,
             )
             .filter(activity_country_q(scope))
             .filter(
@@ -766,6 +766,8 @@ def _ia_todos(principal, role):
 #: The category every Impact Assessment verification and data-quality row
 #: carries: the sidebar group those pages sit in (IA review, 2026-09-13).
 IA_TODO_CATEGORY = "Data Quality & Verification"
+#: The status of work waiting on an Impact Assessment verifier (_ia_todos).
+IA_TODO_WAITING_STATUS = "awaiting_ia_verification"
 
 
 def _partner_assignment_todos(principal, scope, today):

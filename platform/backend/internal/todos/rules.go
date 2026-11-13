@@ -76,6 +76,9 @@ type Rules struct {
 	PlanningCountry             string              `json:"planning_country"`
 	TargetReviewType            string              `json:"target_review_type"`
 	TargetReviewStagesNotAgreed []string            `json:"target_review_stages_not_agreed"`
+
+	// IA is what Impact Assessment's own builders read (ia.go).
+	IA iaRules `json:"ia"`
 }
 
 var rules = mustLoad(rulesJSON)
