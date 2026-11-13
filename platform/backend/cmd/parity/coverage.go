@@ -77,19 +77,27 @@ type inventoryRoute struct {
 	Kind  string `json:"surface_kind"`
 }
 
-// notInGo are the inventory's full pages that no Go page answers yet.
+// ownScreens are full pages Go answers through a screen of its own rather
+// than the page contract: the school profile (SchoolProfileService).
+var ownScreens = []string{"/schools/<str:school_id>"}
+
+// notInGo are the inventory's full pages that no Go page answers yet, each
+// once (a route with and without its trailing slash is one page).
 func notInGo(inventory []inventoryRoute, served []string) (pages []string, total int) {
 	have := map[string]bool{}
-	for _, p := range served {
+	for _, p := range append(append([]string{}, served...), ownScreens...) {
 		have[strings.TrimSuffix(p, "/")] = true
 	}
+	seen := map[string]bool{}
 	for _, r := range inventory {
-		if r.Kind != "page" {
+		key := strings.TrimSuffix(r.Route, "/")
+		if r.Kind != "page" || seen[key] {
 			continue
 		}
+		seen[key] = true
 		total++
-		if !have[strings.TrimSuffix(r.Route, "/")] {
-			pages = append(pages, r.Route)
+		if !have[key] {
+			pages = append(pages, key)
 		}
 	}
 	sort.Strings(pages)

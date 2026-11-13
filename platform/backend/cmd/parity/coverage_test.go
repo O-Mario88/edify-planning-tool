@@ -32,3 +32,14 @@ func TestCoverageListsTheFullPagesNoGoPageAnswers(t *testing.T) {
 		t.Fatalf("total %d, missing %v", total, missing)
 	}
 }
+
+func TestCoverageCountsEachPageOnceAndKnowsGosOwnScreens(t *testing.T) {
+	inventory := []inventoryRoute{
+		{"/budget", "page"}, {"/budget/", "page"},
+		{"/schools/<str:school_id>", "page"}, {"/reports", "page"},
+	}
+	missing, total := notInGo(inventory, nil)
+	if total != 3 || !reflect.DeepEqual(missing, []string{"/budget", "/reports"}) {
+		t.Fatalf("total %d, missing %v", total, missing)
+	}
+}
