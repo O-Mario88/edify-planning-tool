@@ -9,10 +9,8 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/visitgate"
 )
 
 func count(ctx context.Context, q schooldirectory.Querier, what, sql string, args ...any) (int, error) {
@@ -144,55 +142,4 @@ SELECT count(*) FROM (%s) c WHERE c.cluster_id NOT IN (
 		figure(l[7], costBlocked, "Missing Cost Catalogue"),
 		figure(l[8], cleanup, "Missing operational fields"),
 	}), nil
-}
-
-// workload is staff_plan.own_workload as the page's line shows it: the
-// year, the counted visits the person has planned and their ceiling; nil
-// for a role that plans no visits.
-func workload(ctx context.Context, q schooldirectory.Querier, p auth.Principal, fy string) (*screensv1.PageBlock, error) {
-	cv := rules.CountedVisits
-	held := map[string]bool{p.ActiveRole: p.ActiveRole != ""}
-	for _, r := range p.Roles {
-		held[r] = true
-	}
-	role := ""
-	switch {
-	case held[cv.ProgramLeadRole]:
-		role = cv.ProgramLeadRole
-	case held[cv.CCEORole]:
-		role = cv.CCEORole
-	}
-	ceiling := cv.VisitTargets[role]
-	if ceiling == 0 {
-		return nil, nil
-	}
-	ids := []string{}
-	for _, id := range []string{p.UserID, p.StaffProfileID} {
-		if id != "" {
-			ids = append(ids, id)
-		}
-	}
-	outside, err := visitgate.ProjectsOutsideSSA(ctx, q, schoolprofile.GateRules())
-	if err != nil {
-		return nil, err
-	}
-	planned, err := count(ctx, q, "counted visits", `
-SELECT count(*) FROM activity a WHERE a.responsible_staff_id = ANY($1) AND a.fy = $2 AND a.deleted_at IS NULL
-  AND a.status = ANY($3) AND (a.planned_date IS NOT NULL OR a.scheduled_date IS NOT NULL)
-  AND a.activity_type = ANY($4) AND a.school_id IS NOT NULL AND a.cluster_id IS NULL
-  AND a.purpose_type IS DISTINCT FROM $5 AND NOT COALESCE(a.purpose_type = ANY($6), false)
-  AND NOT COALESCE(a.project_id = ANY($7), false)
-  AND (NOT (COALESCE(a.purpose_type = ANY($8), false)
-        OR (a.activity_type = ANY($9) AND NOT COALESCE(a.purpose_type = ANY($10), false)))
-       OR a.delivery_type IS DISTINCT FROM 'partner')
-  AND a.delivery_type IS DISTINCT FROM 'partner'`,
-		ids, fy, cv.PlannedStates, cv.VisitShapeTypes, cv.CompanionPurpose, cv.OutreachPurposes, nonNil(outside),
-		cv.DataCollectionPurposes, cv.DataCollectionTypes, cv.KindPurposes)
-	if err != nil {
-		return nil, err
-	}
-	text := fmt.Sprintf("Your FY%s visits: %d of %d planned.", fy, planned, ceiling)
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
-		Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{Text: text}}},
-	}}}, nil
 }

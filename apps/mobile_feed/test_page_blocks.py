@@ -1391,3 +1391,89 @@ class StripRowTest(SimpleTestCase):
         blocks = page_blocks.read(page)["blocks"]
 
         self.assertIn("strip", [list(b)[0] for b in blocks])
+
+
+#: Planning's parts whose words ran around their elements: the workload note,
+#: the empty list (a sentence around a link) and its pager strip with the
+#: rows-a-page chooser, and a filter with its short visible word.
+WHOLE_SENTENCES = """
+<main>
+<form id="filters-form" hx-get="/planning" class="flex">
+<div class="flex"><span class="text-slate-400">FY</span>
+<select aria-label="Fiscal year" name="fy"><option value="2027" selected>FY 2027</option><option value="2026">FY 2026</option></select></div>
+<div class="flex"><span class="text-slate-400">Quarter</span>
+<select aria-label="Quarter" name="quarter"><option value="Q1">Q1</option><option value="Q2">Q2</option></select></div>
+</form>
+<p class="edify-note" data-tone="info" role="status">
+  <strong>Your FY2027 visits: 7 of 560 planned.</strong>
+  Core 2 of 204 · Client 5 of 356.
+</p>
+<div class="edify-surface rounded-surface border" id="schools-table-container">
+  <div class="planning-school-list-wrap">
+    <div class="px-6 py-12 text-center">
+      No schools have been clustered yet.
+      <div class="mt-1">
+        Planning works on clustered schools. Every school is still in the
+        <a href="/schools" class="underline">School Directory</a> —
+        add them to a cluster and they appear here.
+      </div>
+    </div>
+  </div>
+  <div class="edify-pagination-scope px-4">
+    <span>Showing 0–0 of 0 schools</span>
+    <div class="flex"><div class="flex"></div>
+      <div class="flex"><select aria-label="Per page" name="per_page" hx-get="/planning?page=1">
+        <option value="15">15 / page</option><option value="20" selected>20 / page</option>
+      </select></div>
+    </div>
+  </div>
+</div>
+</main>
+"""
+
+
+class WholeSentencesTest(SimpleTestCase):
+    def setUp(self):
+        self.blocks = page_blocks.read(WHOLE_SENTENCES)["blocks"]
+
+    def test_a_filter_keeps_the_word_the_page_draws_beside_it(self):
+        fy, quarter = self.blocks[0]["filters"]["filters"]
+        self.assertEqual((fy["label"], fy["caption"]), ("Fiscal year", "FY"))
+        self.assertNotIn("caption", quarter)
+
+    def test_a_note_is_read_whole_with_its_bold_opening_and_tone(self):
+        item = self.blocks[1]["panel"]["items"][0]
+        self.assertEqual(
+            item,
+            {
+                "text": "Your FY2027 visits: 7 of 560 planned. Core 2 of 204 · Client 5 of 356.",
+                "lead": "Your FY2027 visits: 7 of 560 planned.",
+                "tone": "info",
+            },
+        )
+
+    def test_an_empty_list_keeps_the_sentence_around_its_link(self):
+        items = self.blocks[2]["panel"]["items"]
+        self.assertEqual(items[0], {"text": "No schools have been clustered yet."})
+        self.assertEqual(
+            items[1]["text"],
+            "Planning works on clustered schools. Every school is still in the "
+            "School Directory — add them to a cluster and they appear here.",
+        )
+        self.assertEqual(items[1]["textLinks"][0]["href"], "/schools")
+
+    def test_the_pager_strip_keeps_its_rows_a_page_chooser(self):
+        pager = self.blocks[3]["pager"]
+        self.assertEqual(pager["summary"], "Showing 0–0 of 0 schools")
+        self.assertEqual(pager["size"]["value"], "20")
+        self.assertEqual(
+            [o["label"] for o in pager["size"]["options"]], ["15 / page", "20 / page"]
+        )
+
+    def test_words_beside_an_icon_alone_stay_one_line(self):
+        blocks = page_blocks.read(
+            '<main><div class="edify-surface rounded-surface">'
+            '<a href="/x" class="btn">Month <svg></svg></a>'
+            "<p>Two words here</p></div></main>"
+        )["blocks"]
+        self.assertNotIn("lead", str(blocks))

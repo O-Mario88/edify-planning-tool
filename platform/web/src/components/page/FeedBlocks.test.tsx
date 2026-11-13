@@ -6,7 +6,7 @@
 import { fromJson } from '@bufbuild/protobuf';
 import type { JsonValue } from '@bufbuild/protobuf';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { GetPageResponseSchema } from '@/gen/edify/screens/v1/page_screen_pb';
 
@@ -187,5 +187,64 @@ describe('record cards and kinds not drawn yet', () => {
 
   it('says so for a kind it does not draw', () => {
     expect(draw({ blocks: [{ chart: { title: 'x' } }] })).toContain('not drawn here yet');
+  });
+});
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/planning',
+  useRouter: () => ({ push: () => undefined }),
+  useSearchParams: () => new URLSearchParams('tab=client'),
+}));
+
+describe('Planning read whole (the coordinator review, 2026-11-13)', () => {
+  const EMPTY: JsonValue = {
+    blocks: [
+      {
+        filters: {
+          filters: [{ name: 'fy', label: 'Fiscal year', caption: 'FY', value: '2027', options: [{ value: '2026', label: 'FY 2026' }, { value: '2027', label: 'FY 2027' }] }],
+        },
+      },
+      { panel: { items: [{ text: 'Your FY2027 visits: 0 of 280 planned. Core 0 of 0 · Client 0 of 0.', lead: 'Your FY2027 visits: 0 of 280 planned.', tone: 'info' }] } },
+      {
+        panel: {
+          items: [
+            { text: 'No schools have been clustered yet.' },
+            {
+              text: 'Planning works on clustered schools. Every school is still in the School Directory — add them to a cluster and they appear here.',
+              textLinks: [{ text: 'School Directory', href: '/schools' }],
+            },
+          ],
+        },
+      },
+      {
+        pager: {
+          summary: 'Showing 0–0 of 0 schools',
+          size: { name: 'per_page', label: 'Per page', value: '15', options: [{ value: '15', label: '15 / page' }, { value: '20', label: '20 / page' }] },
+        },
+      },
+    ],
+  };
+
+  it('draws the short word over a filter and keeps its name for a screen reader', () => {
+    const html = draw(EMPTY);
+    expect(html).toContain('>FY</span>');
+    expect(html).toContain('aria-label="Fiscal year"');
+  });
+
+  it('draws the workload line as a note with its bold opening and the rest', () => {
+    const html = draw(EMPTY);
+    expect(html).toContain('data-block="note"');
+    expect(html).toContain('<strong class="font-bold">Your FY2027 visits: 0 of 280 planned.</strong> Core 0 of 0 · Client 0 of 0.');
+  });
+
+  it('keeps the empty state sentence whole around its link, with the pager and its size in the same card', () => {
+    const html = draw(EMPTY);
+    expect(html).toContain('No schools have been clustered yet.');
+    expect(html).toMatch(/Every school is still in the <a [^>]*href="\/schools">School Directory<\/a>/);
+    expect(html).toContain('School Directory</a> — add them to a cluster and they appear here.');
+    const card = html.slice(html.indexOf('data-empty'));
+    expect(card).toContain('Showing 0–0 of 0 schools');
+    expect(card).toContain('15 / page');
+    expect(html.match(/data-block="pager"/g)).toHaveLength(1);
   });
 });

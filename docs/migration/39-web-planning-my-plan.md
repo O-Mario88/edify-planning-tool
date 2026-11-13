@@ -103,7 +103,7 @@ and a kind not drawn yet). `vitest.config.ts` now also runs `*.test.tsx`.
 
 ## 39.5 What is left
 
-- **Contract gaps, Planning:** the header's Export, Plan Field Event and Recent
+- **Contract gaps, Planning** (see 39.6 for what agent 26 closed): the header's Export, Plan Field Event and Recent
   changes buttons are not in the answer (the existing page draws them); the
   workload line carries only its first sentence ("the rest of the note never
   reaches the app", 24.1); the Visit and Training plan statuses and the visit
@@ -125,3 +125,62 @@ and a kind not drawn yet). `vitest.config.ts` now also runs `*.test.tsx`.
   sidebar and the phone's bottom bar are empty until navigation moves to Go.
 - **Not compared:** dark theme, an opened row's details against the existing
   page's, the Actions menus' contents, filters with values chosen.
+
+## 39.6 The coordinator's review, fixed (agent 26, 2026-11-13)
+
+The owner's bar is "the UI looks the same or better". Comparing the two pages
+side by side found five things this app drew worse than the existing page.
+Three were the answer's fault (the feed reader lost words, so the contract
+carried less than the page shows), two were drawing.
+
+| Finding | Cause | Fix |
+|---|---|---|
+| The Client Schools empty state showed only "School Directory" | The feed reader (`page_blocks._panel_items`) walked element children only: a part whose own words run around its elements ("No schools have been clustered yet." around a block; "…still in the `<a>School Directory</a>` — add them…") lost every word outside an element | `_sentences`: a part with words of its own beside an element that has words is read whole, one text item per run, its links as `textLinks` at their words. Go writes the same (`emptyBlocks`). The other empty state now carries its first line too ("No planning records match your filters.") |
+| The workload line: a plain card with the first sentence | The same loss: `<p class="edify-note"><strong>…</strong> Core 0 of 0 · Client 0 of 0. …</p>` kept only the `<strong>` | Read whole with `lead` (the bold opening) and the note's `tone` (info, or warning past the ceiling / Core-only). Go now computes the whole of `staff_plan.own_workload` (`workload.go`: held operating schools by type, counted visits Core/Client, the share-out sentences); the share-out numbers are exported (`counted_visits.core_staff_visits`, `core_partner_visits`, `core_type`, `client_rule_types`, `operating_statuses`). The web draws it as the existing note (tinted, 3px tone edge, bold opening) |
+| Filter labels "Fiscal year", "Group schools", … | The reader used the select's accessible name; the page draws a short word beside it | Additive `PageFilter.caption` ("FY", "Group", "Readiness", "Show", "SSA"): the span drawn before the select in its holder, when it differs from the name. The web shows the caption and keeps the name for a screen reader |
+| The strip wrapped labels and had no rail | Drawing | `StripRail` (static/js/kpi-strips.js): one row, track and thumb, "1–8 of 10", "Swipe for more →" / "Back to start ←", shown only while the cells overflow; the range is counted in first-cell widths as there |
+| No "15 / page" chooser | The answer lacked it | Additive `PagePager.size` (the `per_page` select of `edify-pagination-scope`); the pagination strip of an empty list is now a pager block of its own after the empty card (it was folded into the empty panel as text). The web draws the pager as the foot of the table or empty card before it, as the page does, with the chooser (wider than a phone) |
+
+Also drawn now: filters past the row's last slot fold under "More filters"
+(micro-ux.js `filterSlots`: 144px a slot, at least three; a phone keeps three
+and "More"), its panel opening below the button, with the count of narrowing
+filters inside it; header buttons keep one row on a wide screen.
+
+**Contract change (additive, `page.proto`):** `PageFilter.caption = 5`,
+`PagePager.size = 3`, `PagePanelItem.lead = 8`, `PagePanelItem.text_links = 9`.
+Go and web contracts regenerated; the app's (`platform/mobile/src/gen`) and
+the worker's were not (this piece does not touch platform/mobile): `make
+proto` there is still to run.
+
+**What else the reader change moved.** Every Go-served page was read for all
+29 seed accounts before and after the reader change (21 addresses each, 667
+answers; the script compares JSON). Only Planning (every tab, all 28 readers
+who may open it) and the existing My Plan of `cceo@` (its past-due note, now
+read whole with its link; that reader's My Plan is not Go's) moved. A first
+version also read words beside an icon alone (`Month <svg>`) as a sentence
+and moved the Calendar and the Decision Log; the rule now needs an element
+with words of its own, and neither moves.
+
+**Parity (Go vs the existing feed, my Django 8185 behind gateway 8085):**
+PARITY_PLACEHOLDER
+
+**Re-shot** (both apps, 1440 and 390 px, `cceo`, `cceo1`, `admin`, `pl1`;
+`/planning`, `?tab=clusters`, `/my-plan`, `/clusters`: 64 screenshots,
+`agent26_{django,next}_*.png` in the run's scratch folder). Same text, labels
+and order for every pair. Differences left, each with its reason:
+
+- **Sidebar, header buttons on Planning, notification badge:** not in the
+  answer. Navigation (`GetNavigation`) is forwarded to the existing
+  application, which a Go-only gateway does not have; Planning's header
+  buttons sit outside `edify-page-header__controls`, so the reader never
+  reads them. These are BACKLOG items `navigation-go` (59) and
+  `page-header-actions` (60); not done here.
+- **Plan-status and lock pills** (red "Not Planned", the lock): the answer
+  carries them as text (39.5).
+- **School names** are whole here; the existing table truncates them with an
+  ellipsis (kept: better).
+- **Clusters page's filter fold:** the existing template authors five filters
+  and "More filters"; the answer does not say which are folded, so this app
+  folds by width (six and More at 1440). Same filters, same values.
+- **The empty card's words** are one weight lighter than the existing page's
+  slate-400 semibold (same words, same centring).

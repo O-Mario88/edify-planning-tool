@@ -17,7 +17,15 @@
   ],
   "counted_visits": {
     "cceo_role": "CCEO",
+    "client_rule_types": [
+      "client",
+      "core_trained",
+      "core_graduate"
+    ],
     "companion_purpose": "in_school_training_delivery_visit",
+    "core_partner_visits": 2,
+    "core_staff_visits": 2,
+    "core_type": "core",
     "core_types": [
       "core"
     ],
@@ -35,6 +43,10 @@
       "in_school_coaching",
       "in_school_training",
       "training_follow_up"
+    ],
+    "operating_statuses": [
+      "active",
+      "reopened"
     ],
     "outreach_purposes": [
       "donor_visit",

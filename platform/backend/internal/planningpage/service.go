@@ -218,14 +218,14 @@ func (s *Service) schoolsTab(ctx context.Context, scope schooldirectory.Scope, d
 	pages := (total + f.perPage - 1) / f.perPage
 	summary, pageLinks := pager(f, total, pages, "schools")
 	if len(list) == 0 && f.tab == "partner" {
-		blocks = append(blocks, emptyMessagePanel("No partner assignments pending.", summary, pageLinks))
+		blocks = append(blocks, emptyMessageBlocks(f, "No partner assignments pending.", summary, pageLinks)...)
 	} else if len(list) == 0 {
 		anyClustered, err := count(ctx, s.db, "clustered schools", `SELECT count(*) FROM (SELECT 1 FROM school s WHERE `+base+`
   AND s.cluster_status = 'clustered' AND s.cluster_id IS NOT NULL AND s.cluster_id <> '' LIMIT 1) x`, baseArgs...)
 		if err != nil {
 			return nil, err
 		}
-		blocks = append(blocks, emptyPanel(anyClustered > 0, summary, pageLinks))
+		blocks = append(blocks, emptyBlocks(f, anyClustered > 0, summary, pageLinks)...)
 	} else {
 		columns := []string{"ID", "School Name", "Cluster", "Visit Plan Status", "Training Plan Status", "Visit Lock"}
 		if support {
@@ -244,8 +244,7 @@ func (s *Service) schoolsTab(ctx context.Context, scope schooldirectory.Scope, d
 			}
 			table.Rows = append(table.Rows, row(sc, doors, support, f.fy))
 		}
-		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: table}},
-			&screensv1.PageBlock{Kind: &screensv1.PageBlock_Pager{Pager: &screensv1.PagePager{Summary: summary, Pages: pageLinks}}})
+		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: table}}, pagerBlock(f, summary, pageLinks))
 	}
 	return blocks, nil
 }

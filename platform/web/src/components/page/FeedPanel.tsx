@@ -4,11 +4,36 @@
  * Planning page's workload line and its empty states arrive as panels.
  */
 import Link from 'next/link';
+import { Fragment } from 'react';
+import type { ReactNode } from 'react';
 
 import type { PagePanel, PagePanelItem } from '@/gen/edify/screens/v1/page_pb';
+import { noteTone, sentenceParts } from '@/lib/sentence';
 
 import { Badge } from '../blocks/Badge';
 import { textTone } from '../blocks/tones';
+
+/** A paragraph read whole: its bold opening, its links at their words. */
+function Sentence({ item, text, resolve }: { item: PagePanelItem; text: string; resolve: (href: string) => string }) {
+  const parts = sentenceParts(text, item.lead, item.textLinks);
+  const plain = Boolean(item.lead || item.textLinks.length);
+  return (
+    <p className={`text-[length:var(--edify-text-label-size)] font-medium ${plain ? '' : textTone(item.tone)}`}>
+      {parts.map((part, index) => {
+        if (part.kind === 'lead') return <strong key={index} className="font-bold">{part.text}</strong>;
+        const href = part.kind === 'link' ? resolve(part.href) : '';
+        if (href) {
+          return (
+            <Link key={index} href={href} className="font-semibold text-[var(--brand-primary-text)] underline underline-offset-2 dark:text-[var(--edify-accent-text)]">
+              {part.text}
+            </Link>
+          );
+        }
+        return <Fragment key={index}>{part.text}</Fragment>;
+      })}
+    </p>
+  );
+}
 
 function Item({ item, resolve, drawerHref }: { item: PagePanelItem; resolve: (href: string) => string; drawerHref: string }) {
   const kind = item.kind;
@@ -16,7 +41,7 @@ function Item({ item, resolve, drawerHref }: { item: PagePanelItem; resolve: (hr
     case 'heading':
       return <h3 className="mt-2 text-[length:var(--edify-text-micro-size)] font-semibold text-[var(--edify-text-muted)] first:mt-0">{kind.value}</h3>;
     case 'text':
-      return <p className={`text-[length:var(--edify-text-label-size)] font-medium ${textTone(item.tone)}`}>{kind.value}</p>;
+      return <Sentence item={item} text={kind.value} resolve={resolve} />;
     case 'fields':
       return (
         <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-3">
@@ -79,7 +104,47 @@ function Item({ item, resolve, drawerHref }: { item: PagePanelItem; resolve: (hr
   }
 }
 
-export function FeedPanel({ panel, resolve, drawerHref = '', nested = false }: { panel: PagePanel; resolve: (href: string) => string; drawerHref?: string; nested?: boolean }) {
+/** A note's tint and accent edge, by its tone (the existing .edify-note). */
+const NOTE: Readonly<Record<string, string>> = {
+  info: '[--note:var(--edify-accent)]',
+  warning: '[--note:var(--edify-warning-text)]',
+  danger: '[--note:var(--edify-danger-text)]',
+  success: '[--note:var(--edify-success-text)]',
+};
+
+export interface FeedPanelProps {
+  readonly panel: PagePanel;
+  readonly resolve: (href: string) => string;
+  readonly drawerHref?: string;
+  readonly nested?: boolean;
+  /** The list's pager strip, drawn at the card's foot when the panel is a list's empty state. */
+  readonly footer?: ReactNode;
+}
+
+export function FeedPanel({ panel, resolve, drawerHref = '', nested = false, footer }: FeedPanelProps) {
+  const items = panel.items.map((item, index) => <Item key={index} item={item} resolve={resolve} drawerHref={drawerHref} />);
+  const note = noteTone(panel);
+  if (note && !footer) {
+    // A note (the workload line, My Plan's past-due line): tinted, with a tone edge.
+    return (
+      <section
+        data-block="note"
+        role="status"
+        className={`${NOTE[note] ?? NOTE.info} rounded-[var(--radius-control)] border border-[color-mix(in_srgb,var(--note)_28%,transparent)] border-l-[3px] border-l-[color-mix(in_srgb,var(--note)_62%,transparent)] bg-[color-mix(in_srgb,var(--note)_7%,var(--edify-surface))] px-4 py-3`}
+      >
+        <div className="space-y-1.5">{items}</div>
+      </section>
+    );
+  }
+  if (footer) {
+    // A list's empty state: its message centred over the pager strip, in one card.
+    return (
+      <section data-block="panel" data-empty className="overflow-hidden rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[var(--edify-shadow-sm)]">
+        <div className="space-y-1 px-6 py-8 text-center font-semibold text-[var(--edify-text-muted)] [&>p:first-child]:text-[var(--edify-text)] [&>p+p]:font-medium">{items}</div>
+        {footer}
+      </section>
+    );
+  }
   return (
     <section
       aria-label={panel.title || undefined}
@@ -95,11 +160,7 @@ export function FeedPanel({ panel, resolve, drawerHref = '', nested = false }: {
           ))}
         </header>
       ) : null}
-      <div className="space-y-1.5">
-        {panel.items.map((item, index) => (
-          <Item key={index} item={item} resolve={resolve} drawerHref={drawerHref} />
-        ))}
-      </div>
+      <div className="space-y-1.5">{items}</div>
     </section>
   );
 }

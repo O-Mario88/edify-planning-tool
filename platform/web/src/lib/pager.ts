@@ -40,3 +40,11 @@ export function hrefWith(path: string, query: Readonly<Record<string, string>>, 
   const text = params.toString();
   return text ? `${path}?${text}` : path;
 }
+
+/** The page's query with a new rows-a-page value, back on the first page. */
+export function withPageSize(search: string, name: string, value: string): string {
+  const params = new URLSearchParams(search);
+  params.set(name, value);
+  params.set('page', '1');
+  return `?${params.toString()}`;
+}

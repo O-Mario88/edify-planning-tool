@@ -94,8 +94,12 @@ drawer.
 
 ## 52.5 What is left
 
-- The existing filter row folds the filters that do not fit into "More
-  filters" (five shown at 1440 pixels); this one shows all eight in one row.
+- The existing filter row authors five filters and "More filters"; this one
+  now folds by width as micro-ux.js does elsewhere (six and More at 1440
+  pixels, three and More on a phone; 39.6). Which filters the template folds
+  is not in the answer.
+- The strip keeps one row on its rail ("1–8 of 8", 39.6), as the existing
+  page.
 - The existing card's name opens the card and its profile link sits inside
   it ("Open Cluster A cluster profile"); here the name links to the profile
   (owner, 2026-10-09: names link to profiles) and the chevron opens the card.

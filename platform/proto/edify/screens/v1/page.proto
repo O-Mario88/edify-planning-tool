@@ -74,6 +74,9 @@ message PageFilter {
   string label = 2;
   string value = 3;
   repeated PageFilterOption options = 4;
+  // The short word the page draws beside the select ("FY" for "Fiscal
+  // year"), when it differs from the name.
+  string caption = 5;
 }
 
 message PageFilters {
@@ -151,6 +154,8 @@ message PagePager {
   // "Showing 1–50 of 51".
   string summary = 1;
   repeated PagePagerPage pages = 2;
+  // The rows-a-page chooser beside the pages ("15 / page"), when there is one.
+  PageFilter size = 3;
 }
 
 message PageTable {
@@ -270,6 +275,12 @@ message PagePanelItem {
   }
   // The tone of a text item's own status words.
   string tone = 7;
+  // The bold words a text item opens with ("Your FY2027 visits: 7 of 560
+  // planned."), the start of its text.
+  string lead = 8;
+  // The links inside a text item's sentence, each at the words it carries
+  // ("School Directory" in "Every school is still in the School Directory").
+  repeated PageLink text_links = 9;
 }
 
 // A titled card of record details (the Details tab's panels, SSA history).

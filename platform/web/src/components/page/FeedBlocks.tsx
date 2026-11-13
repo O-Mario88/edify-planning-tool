@@ -39,13 +39,23 @@ function LinkTabsBlock({ rail, pagePath, hrefOf }: { rail: PageLinkTabs; pagePat
   );
 }
 
+/** A pager strip that follows a table or a list's empty state is that card's foot, as on the page. */
+function joinsPrevious(blocks: readonly PageBlock[], index: number): boolean {
+  const before = blocks[index - 1]?.kind.case;
+  return blocks[index]?.kind.case === 'pager' && (before === 'table' || before === 'panel');
+}
+
 export function FeedBlocks({ blocks, pagePath, drawerHref, selectable }: FeedBlocksProps) {
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
+  const pagerOf = (block: PageBlock | undefined) =>
+    block?.kind.case === 'pager' ? <Pager pager={{ ...block.kind.value, pages: block.kind.value.pages.map((page) => ({ ...page, href: resolve(page.href) })) }} /> : undefined;
   return (
     <>
       {blocks.map((block, index) => {
         const kind = block.kind;
+        if (joinsPrevious(blocks, index)) return null;
+        const footer = joinsPrevious(blocks, index + 1) ? pagerOf(blocks[index + 1]) : undefined;
         switch (kind.case) {
           case 'filters':
             return (
@@ -58,6 +68,7 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable }: FeedBlo
                 filters={kind.value.filters.map((filter) => ({
                   name: filter.name,
                   label: filter.label,
+                  caption: filter.caption,
                   value: filter.value,
                   options: filter.options.map(({ value, label }) => ({ value, label })),
                 }))}
@@ -66,17 +77,17 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable }: FeedBlo
           case 'strip':
             return <FeedStrip key={index} strip={kind.value} resolve={resolve} />;
           case 'panel':
-            return <FeedPanel key={index} panel={kind.value} resolve={resolve} drawerHref={drawerHref} />;
+            return <FeedPanel key={index} panel={kind.value} resolve={resolve} drawerHref={drawerHref} footer={footer} />;
           case 'linkTabs':
             return <LinkTabsBlock key={index} rail={kind.value} pagePath={pagePath} hrefOf={hrefOf} />;
           case 'table':
-            return <FeedTable key={index} table={kind.value} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />;
+            return <FeedTable key={index} table={kind.value} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} footer={footer} />;
           case 'record':
             return <FeedRecord key={index} record={kind.value} pagePath={pagePath} drawerHref={drawerHref} />;
           case 'pager':
             return (
               <div key={index} className="overflow-hidden rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)]">
-                <Pager pager={{ ...kind.value, pages: kind.value.pages.map((page) => ({ ...page, href: resolve(page.href) })) }} />
+                {pagerOf(block)}
               </div>
             );
           case 'section':

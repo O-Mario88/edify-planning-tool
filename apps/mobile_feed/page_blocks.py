@@ -296,6 +296,27 @@ def _filter_label(form: Node, select: Node) -> str:
     return select.get("aria-label")
 
 
+def _filter_caption(select: Node) -> str:
+    """The short word the page draws beside a select, in the same holder and
+    before it ("FY" beside the "Fiscal year" select), when the select is named
+    for a screen reader by something longer."""
+    holder = select.parent
+    if holder is None:
+        return ""
+    for child in holder.children:
+        if child is select:
+            return ""
+        if (
+            isinstance(child, Node)
+            and child.tag == "span"
+            and not child.has("sr-only")
+            and not child.has("edify-filter-label")
+            and child.text()
+        ):
+            return child.text()
+    return ""
+
+
 def _filters(form: Node) -> dict:
     filters = []
     for select in form.find_all(lambda n: n.tag == "select"):
@@ -304,17 +325,20 @@ def _filters(form: Node) -> dict:
             (option.get("value") for option in options if "selected" in option.attrs),
             options[0].get("value") if options else "",
         )
-        filters.append(
-            {
-                "name": select.get("name"),
-                "label": _filter_label(form, select),
-                "value": chosen,
-                "options": [
-                    {"value": option.get("value"), "label": option.text()}
-                    for option in options
-                ],
-            }
-        )
+        label = _filter_label(form, select)
+        entry = {
+            "name": select.get("name"),
+            "label": label,
+            "value": chosen,
+            "options": [
+                {"value": option.get("value"), "label": option.text()}
+                for option in options
+            ],
+        }
+        caption = _filter_caption(select)
+        if caption and caption != label:
+            entry["caption"] = caption
+        filters.append(entry)
     hidden = {
         node.get("name"): node.get("value")
         for node in form.find_all(
@@ -500,7 +524,14 @@ def _scoped_pager(scope: Node) -> dict:
                 "current": node.get("aria-current") == "page",
             }
         )
-    return {"summary": summary.text() if summary else "", "pages": pages}
+    pager = {"summary": summary.text() if summary else "", "pages": pages}
+    size = scope.find(lambda n: n.tag == "select" and n.get("name") == "per_page")
+    if size is not None:
+        # The chooser read as a filter form of its own.
+        holder = Node("form", {}, None)
+        holder.children = [size]
+        pager["size"] = _filters(holder)["filters"][0]
+    return pager
 
 
 def _inside(node: Node | None, ancestor: Node) -> bool:
@@ -837,8 +868,75 @@ def _tone_of(node: Node) -> str:
 HEADINGS = ("h2", "h3", "h4", "h5", "summary")
 
 
+#: Elements a sentence runs through; anything else starts a part of its own.
+INLINE = {
+    "a", "abbr", "b", "br", "button", "code", "em", "i", "mark", "small",
+    "span", "strong", "sub", "sup", "time", "u",
+}  # fmt: skip
+
+
+def _mixed(node: Node) -> bool:
+    """Whether ``node`` holds words of its own beside its elements (a sentence
+    around a link, a bold opening before the rest of the line)."""
+    return any(isinstance(c, str) and c.strip() for c in node.children) and any(
+        isinstance(c, Node) and c.tag not in SILENT and c.text() for c in node.children
+    )
+
+
+def _sentences(node: Node, skip: set[int], out: list[dict]) -> list[dict]:
+    """A part whose own words run around its elements, read whole: each run of
+    words and inline elements one text item (its bold opening as ``lead``, its
+    links as ``textLinks`` at their words), each block inside it read in turn."""
+    parts: list[str] = []
+    links: list[dict] = []
+    lead = ""
+
+    def flush() -> None:
+        nonlocal lead
+        text = " ".join("".join(parts).split())
+        if text:
+            item = {"text": text}
+            tone = node.get("data-edify-tone") or node.get("data-tone")
+            if tone:
+                item["tone"] = tone
+            if lead:
+                item["lead"] = lead
+            if links:
+                item["textLinks"] = list(links)
+            out.append(item)
+        parts.clear()
+        links.clear()
+        lead = ""
+
+    for child in node.children:
+        if isinstance(child, str):
+            parts.append(child)
+            continue
+        if child.tag in SILENT or child.has("sr-only") or id(child) in skip:
+            continue
+        if child.tag not in INLINE:
+            flush()
+            _panel_parts([child], skip, out)
+            continue
+        if child.tag == "br":
+            parts.append(" ")
+            continue
+        if child.tag in ("strong", "b") and not "".join(parts).strip():
+            lead = child.text()
+        if _is_link(child) and child.text():
+            links.append(_link_item(child))
+        child._collect(parts, True)
+    flush()
+    return out
+
+
 def _panel_items(node: Node, skip: set[int], out: list[dict]) -> list[dict]:
-    children = [c for c in node.children if isinstance(c, Node)]
+    if _mixed(node):
+        return _sentences(node, skip, out)
+    return _panel_parts([c for c in node.children if isinstance(c, Node)], skip, out)
+
+
+def _panel_parts(children: list[Node], skip: set[int], out: list[dict]) -> list[dict]:
     for index, child in enumerate(children):
         if id(child) in skip or child.tag in SILENT or child.has("sr-only"):
             continue
@@ -1688,6 +1786,7 @@ def _holds_blocks(node: Node) -> bool:
             or n.has("edify-data-chart")
             or n.has("edify-table-titlebar")
             or n.tag == "table"
+            or n.has("edify-pagination-scope")
             or "data-insight-rail" in n.attrs
             or (n.has("edify-surface") and n.has("rounded-surface"))
             # A chart the card sets up in its own script (inline_charts).

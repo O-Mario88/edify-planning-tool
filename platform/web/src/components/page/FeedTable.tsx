@@ -11,6 +11,7 @@
  */
 import Link from 'next/link';
 import { Fragment, useState } from 'react';
+import type { ReactNode } from 'react';
 
 import type { PageAction, PageCell, PageRow, PageTable } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, isActionsCell, isHeadingRow, resolveHref, splitActions } from '@/lib/feedPage';
@@ -30,6 +31,8 @@ export interface FeedTableProps {
   readonly drawerHref: string;
   /** The page has a bar for ticked rows. */
   readonly selectable: boolean;
+  /** The list's pager strip when it arrives as a block of its own after the table. */
+  readonly footer?: ReactNode;
 }
 
 const ROW_TONES: Readonly<Record<string, string>> = {
@@ -112,7 +115,7 @@ function RowDetails({ row, columns, resolve, id, subject, drawerHref }: { row: P
   );
 }
 
-export function FeedTable({ table, pagePath, drawerHref, selectable }: FeedTableProps) {
+export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: FeedTableProps) {
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const [open, setOpen] = useState<number | null>(null);
@@ -228,6 +231,7 @@ export function FeedTable({ table, pagePath, drawerHref, selectable }: FeedTable
       )}
       {table.footnote ? <p className="border-t border-[var(--edify-table-divider)] px-4 py-3 text-[length:var(--edify-text-label-size)] font-medium">{table.footnote}</p> : null}
       {table.pager ? <Pager pager={{ ...table.pager, pages: table.pager.pages.map((page) => ({ ...page, href: resolve(page.href) })) }} /> : null}
+      {footer}
     </section>
   );
 }

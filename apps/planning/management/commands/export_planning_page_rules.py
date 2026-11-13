@@ -69,8 +69,10 @@ def counted_visits() -> dict:
     """staff_plan.own_workload's count: a person's counted visits of the year
     (country_oversight.rules.counted_visit_q, planned_q, staff_delivery_q)
     against the visit target of the planning role they hold."""
+    from apps.core.enums import SchoolType
     from apps.planning import staff_plan
     from apps.planning.country_oversight import policy, rules
+    from apps.schools.lifecycle_service import OPERATING_STATUSES
 
     return {
         "visit_shape_types": [str(t) for t in rules.VISIT_SHAPE_TYPES],
@@ -84,6 +86,13 @@ def counted_visits() -> dict:
         "cceo_role": rules.CCEO_ROLE,
         "visit_targets": dict(rules.VISIT_TARGETS),
         "core_types": list(staff_plan.CORE_TYPES),
+        # own_workload's share-out (rules.workload): the schools a person
+        # holds, operating (active_schools), Core and the Client rule types.
+        "operating_statuses": sorted(str(s) for s in OPERATING_STATUSES),
+        "core_type": SchoolType.CORE.value,
+        "client_rule_types": list(rules.CLIENT_RULE_TYPES),
+        "core_staff_visits": rules.REQUIREMENTS[SchoolType.CORE.value].staff_visits,
+        "core_partner_visits": rules.REQUIREMENTS[SchoolType.CORE.value].partner_visits,
     }
 
 

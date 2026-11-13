@@ -8,7 +8,15 @@ import { Icon } from '../shell/icons';
 import type { IconName } from '../shell/icons';
 import { BUTTON_OUTLINE, BUTTON_PRIMARY } from './buttons';
 
-const ACTION_ICONS: Readonly<Record<string, IconName>> = { add_school: 'plus', export: 'download' };
+const ACTION_ICONS: Readonly<Record<string, IconName>> = {
+  add_school: 'plus',
+  export: 'download',
+  create_cluster: 'plus',
+  plan_field_event: 'plus',
+  schedule_group_training: 'calendar',
+  schedule_cluster_meeting: 'calendar',
+  recent_changes: 'back',
+};
 
 export function HeaderAction({ action, href }: { action: PageAction; href: string }) {
   const icon = ACTION_ICONS[action.key];
@@ -48,7 +56,7 @@ export function PageHeader({ header, hrefOf }: { header: PageHeaderMessage; href
         ) : null}
       </div>
       {header.actions.length ? (
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end lg:shrink-0 lg:flex-nowrap">
           {header.actions.map((action) => (
             <HeaderAction key={action.key} action={action} href={hrefOf(action)} />
           ))}

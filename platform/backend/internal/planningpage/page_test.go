@@ -3,6 +3,7 @@ package planningpage
 import (
 	"net/url"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -127,14 +128,60 @@ func TestARowNamesWhatTheSchoolLacks(t *testing.T) {
 	}
 }
 
-func TestAnEmptyListSaysWhyAndKeepsItsFooter(t *testing.T) {
-	items := emptyPanel(false, "Showing 0–0 of 0 schools", nil).GetPanel().GetItems()
-	if len(items) != 2 || items[0].GetLinks().GetLinks()[0].GetText() != "School Directory" || items[1].GetText() != "Showing 0–0 of 0 schools" {
+func TestAnEmptyListSaysWhyWholeAndKeepsItsPager(t *testing.T) {
+	f := filterState{page: 1, perPage: 20}
+	blocks := emptyBlocks(f, false, "Showing 0–0 of 0 schools", nil)
+	items := blocks[0].GetPanel().GetItems()
+	if len(items) != 2 || items[0].GetText() != "No schools have been clustered yet." ||
+		items[1].GetText() != "Planning works on clustered schools. Every school is still in the School Directory — add them to a cluster and they appear here." ||
+		items[1].GetTextLinks()[0].GetHref() != "/schools" {
 		t.Errorf("nothing clustered: %v", items)
 	}
-	items = emptyPanel(true, "Showing 0–0 of 0 schools", []*screensv1.PagePagerPage{{Label: "Prev", Href: "/planning?page=1"}}).GetPanel().GetItems()
-	if items[0].GetText() != "Clear filters or adjust your search." || items[2].GetLinks().GetLinks()[0].GetText() != "‹" {
-		t.Errorf("filters matched nothing on page 2: %v", items)
+	pager := blocks[1].GetPager()
+	if pager.GetSummary() != "Showing 0–0 of 0 schools" || pager.GetSize().GetValue() != "20" || len(pager.GetSize().GetOptions()) != 3 {
+		t.Errorf("pager: %v", pager)
+	}
+	blocks = emptyBlocks(filterState{page: 2, perPage: 30}, true, "Showing 0–0 of 0 schools", []*screensv1.PagePagerPage{{Label: "Prev", Href: "/planning?page=1"}})
+	if blocks[0].GetPanel().GetItems()[0].GetText() != "No planning records match your filters." || blocks[1].GetPager().GetPages()[0].GetLabel() != "Prev" {
+		t.Errorf("filters matched nothing on page 2: %v", blocks)
+	}
+	if got := blocks[1].GetPager().GetSize().GetValue(); got != "15" {
+		t.Errorf("a size the chooser lacks selects its first: %q", got)
+	}
+}
+
+func TestTheWorkloadLineSharesTheYearOut(t *testing.T) {
+	base := ownWorkload{fy: "2027", ceiling: 560, coreStaffVisits: 2, corePartnerVisits: 2}
+	for _, c := range []struct {
+		name       string
+		w          ownWorkload
+		text, tone string
+	}{
+		{"nothing held", base, "Your FY2027 visits: 0 of 560 planned. Core 0 of 0 · Client 0 of 0.", "info"},
+		{"one beyond", func() ownWorkload {
+			w := base
+			w.coreSchools, w.clientSchools, w.corePlanned, w.clientPlanned = 100, 361, 2, 5
+			return w
+		}(),
+			"Your FY2027 visits: 7 of 560 planned. Core 2 of 200 · Client 5 of 360. 1 of your Client schools is beyond your 560 and is the Partner's to visit: assign it to a Partner. The Partner also takes two visits and two trainings at each of your Core schools.", "info"},
+		{"core only, over", func() ownWorkload {
+			w := base
+			w.ceiling, w.coreSchools, w.clientSchools, w.corePlanned = 280, 150, 3, 290
+			return w
+		}(),
+			"Your FY2027 visits: 290 of 280 planned. Core 290 of 300 · Client 0 of 0. 3 of your Client schools are beyond your 280 and are the Partner's to visit: assign them to a Partner. The Partner also takes two visits and two trainings at each of your Core schools. Your Core schools alone take your whole 280 (20 over), so every other school you hold is the Partner's. You are 10 past your 280. Nothing was refused; the visits past it are the Partner's share.", "warning"},
+		{"core exactly fills it", func() ownWorkload { w := base; w.ceiling, w.coreSchools = 280, 140; return w }(),
+			"Your FY2027 visits: 0 of 280 planned. Core 0 of 280 · Client 0 of 0. The Partner also takes two visits and two trainings at each of your Core schools. Your Core schools alone take your whole 280, so every other school you hold is the Partner's.", "warning"},
+	} {
+		if got := c.w.text(); got != c.text {
+			t.Errorf("%s:\n got %q\nwant %q", c.name, got, c.text)
+		}
+		if got := c.w.tone(); got != c.tone {
+			t.Errorf("%s: tone %q, want %q", c.name, got, c.tone)
+		}
+		if !strings.HasPrefix(c.w.text(), c.w.lead()) {
+			t.Errorf("%s: the lead opens the line", c.name)
+		}
 	}
 }
 

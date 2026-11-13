@@ -1,11 +1,14 @@
 /*
  * The pager under a list: "Showing 1 to 50 of 699 schools", Prev, the page
  * numbers with gaps (the current one solid blue), Next. 50 rows a page is the
- * gateway's (owner, 2026-10-02).
+ * gateway's (owner, 2026-10-02). A list with a rows-a-page chooser has it at
+ * the end (wider than a phone, as the existing page).
  */
 import Link from 'next/link';
 
 import type { PagePager } from '@/gen/edify/screens/v1/page_pb';
+
+import { PageSize } from './PageSize';
 
 const CONTROL = 'grid h-8 min-w-8 place-items-center rounded-[var(--radius-control)] px-2 text-[12px] font-bold';
 
@@ -47,6 +50,11 @@ export function Pager({ pager }: { pager: PagePager }) {
           <Link href={next.href} aria-label="Next page" className={`${CONTROL} border border-[var(--edify-border)] px-3 text-[var(--edify-text)] hover:bg-[var(--brand-primary-soft)]`}>
             Next
           </Link>
+        ) : null}
+        {pager.size ? (
+          <span className="ml-2 max-sm:hidden">
+            <PageSize size={pager.size} />
+          </span>
         ) : null}
       </div>
     </nav>
