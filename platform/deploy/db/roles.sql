@@ -444,9 +444,10 @@ GRANT SELECT (id, document_id, version_id, user_id, state) ON document_acknowled
 GRANT SELECT (id, staff_id, plan_type, cause, start_date, end_date, status) ON hr_pip_plan TO edify_gateway_ro;
 -- Performance Reviews: a review's period, year, due day, manager and the two
 -- ratings the register shows (the manager's to HR and Admin only), beside
--- its person, type and stage already granted. Not the reflection,
+-- its person, type and stage already granted, and its legacy status (HR
+-- Analytics counts the reviews not yet "Completed" or "Closed"). Not the reflection,
 -- feedback, evidence or calibration note.
-GRANT SELECT (period, fy, due_date, manager_id, manager_rating, rating) ON hr_performance_review TO edify_gateway_ro;
+GRANT SELECT (period, fy, due_date, manager_id, manager_rating, rating, status) ON hr_performance_review TO edify_gateway_ro;
 -- Compensation & Benefits: a record's person, salary band, medical cover,
 -- pension scheme, next review day and status. NEVER the salary, allowances,
 -- currency, other benefits or bank details, which the register does not

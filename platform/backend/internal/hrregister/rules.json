@@ -66,7 +66,9 @@
     "Awaiting supervisor": "Awaiting supervisor",
     "Compensation profiles": "Compensation profiles",
     "Completed": "Completed",
+    "Compliance gaps": "Compliance gaps",
     "Compliant": "Compliant",
+    "Countries": "Countries",
     "Days lost": "Days lost",
     "Departments": "Departments",
     "Disagreements": "Disagreements",
@@ -104,6 +106,7 @@
     "Refused actions": "Refused actions",
     "Requirements": "Requirements",
     "Reviews": "Reviews",
+    "Reviews due": "Reviews due",
     "Screening": "Screening",
     "Serious incidents": "Serious incidents",
     "Showing": "Showing",
@@ -548,6 +551,106 @@
           "drawers": [],
           "links": [],
           "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/hr-analytics": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [],
+          "page": true,
           "strip": null
         }
       }

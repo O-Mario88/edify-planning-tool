@@ -141,6 +141,11 @@ PAGES = {
         "drawers": ["/pulse-surveys/new"],
         "metrics": ["Open surveys", "Latest morale score"],
     },
+    "/hr-analytics": {
+        "permission": "hr_analytics",
+        "drawers": [],
+        "metrics": ["Headcount", "Countries", "Reviews due", "Compliance gaps"],
+    },
     "/health-safety": {
         "permission": "health_safety",
         "drawers": ["/health-safety/new"],

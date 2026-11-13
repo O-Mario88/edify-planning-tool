@@ -94,6 +94,7 @@ PATHS = (
     "/performance-reviews",
     "/compensation-benefits",
     "/pulse-surveys",
+    "/hr-analytics",
 )
 
 
@@ -385,6 +386,7 @@ def file_reviews(profiles, today):
             manager=profiles[i % 6] if i % 3 else None,
             manager_rating=["far_exceeds", None, "legacy-text"][i % 3],
             rating=[None, "far_exceeds", "unknown"][i % 3],
+            status=["Not Started", "Completed", "Closed", "In Progress"][i % 4],
         )
 
 

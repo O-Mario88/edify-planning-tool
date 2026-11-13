@@ -22,8 +22,9 @@ reach rule once; each register is added to it as it is ported.
 | Performance Recovery Plans | `/recovery-plans` | This document |
 | Compensation & Benefits | `/compensation-benefits` | This document |
 | Staff Pulse Surveys | `/pulse-surveys` | This document |
+| HR Analytics & Workforce Insights | `/hr-analytics` | This document (its second home, the Analytics workspace's `/analytics/people`, is a web page) |
 | Performance Reviews (everyone but a Programme Lead) | `/performance-reviews` | This document; a Programme Lead's reviewer's view (`_team_performance_reviews`, built on `performance_engine.team_review_rows`) is passed on until native-performance-reviews-2 |
-| The other registers (employee relations, which writes an audit record on every read and waits for Go to write the audit chain, recruitment, HR analytics, …) | | Still the existing application's; each is a backlog item that adds a builder |
+| The other registers (employee relations, which writes an audit record on every read and waits for Go to write the audit chain, recruitment, …) | | Still the existing application's; each is a backlog item that adds a builder |
 | Every save a register's buttons open | | Still the existing application's |
 
 ## 169.1 The shell
@@ -246,6 +247,18 @@ drawer button. Figures: Open surveys, Latest morale score (the first listed
 survey with a result shown, else "—"). One drawer button, "Open a survey". Go
 reads only the answers' scores, never who answered or what they wrote.
 
+## 169.2o HR Analytics & Workforce Insights
+
+`hr_analytics_view` (`_hr_analytics_workspace`): the People records in reach
+and in the search, exited ones included, grouped by country and department in
+that order (a department stored as none and one stored as "" are two groups,
+both "Unassigned", as the view's GROUP BY keeps them). Each row: country,
+department, headcount, active, pending, and the activation rate (active over
+headcount, rounded half to even, "0%" with nobody). Figures: Headcount,
+Countries (distinct), Reviews due (the people's reviews whose legacy status
+is not "Completed" or "Closed"), Compliance gaps (their missing or expired
+records). The eyebrow is the shell's default, "Human Capital Operations".
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
@@ -278,7 +291,8 @@ year, due day, manager and its two ratings (not the reflection, feedback,
 evidence or calibration note); a compensation record's band,
 cover, pension, review day and status (NEVER an amount or a bank detail);
 a pulse survey's title, countries, window and status and its answers' scores
-(never who answered, their key or comment) (applied to `edify_gorn_dev` and
+(never who answered, their key or comment); a review's legacy
+status (applied to `edify_gorn_dev` and
 `edify_gorn_test`; production needs the owner's approval at cutover).
 
 - `cmd/parity -screen page -path` each register for all 29 seed accounts:
@@ -297,7 +311,7 @@ a pulse survey's title, countries, window and status and its answers' scores
   every kind and status with 35 acknowledgements; 11 recovery plans, five of
   them on Programme Lead 1's team and one on the Lead; 12 reviews of every
   kind, this year, last year and none; 9 compensation records; five pulse surveys
-  under and over the anonymity floor), asks the existing feed 560 questions as Admin, HR, Impact Assessment, the Country Director and a Programme Lead as Admin, HR and Impact Assessment and deletes
+  under and over the anonymity floor), asks the existing feed 600 questions as Admin, HR, Impact Assessment, the Country Director and a Programme Lead as Admin, HR and Impact Assessment and deletes
   the rows; `internal/integration/hr_register_test.go` compares Go's answers
   whole (`EDIFY_HR_REGISTER_GOLDEN`).
 
