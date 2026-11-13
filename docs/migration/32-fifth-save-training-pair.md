@@ -16,11 +16,13 @@ what the save writes.
 **Where it stands (2026-11-13).** Mapped (32.3) and measured (32.2); the
 contract, the writer role's additions, the Go save and the app's switch are
 built; the shadow proofs at the service and the app level answer every step
-the same and leave every changed table the same **but one**: the pair's
-domain events, whose audit sequence the existing application drops (32.6, a
-defect in the existing code, put to the coordinator). The first save's
-scenarios, re-run on this code, pass at both levels. Nothing is switched on
-outside this proof's own processes.
+the same and leave every changed table the same, the audit chain verifying
+(32.6). The first proofs differed in one field, the pair's domain events'
+audit sequence, which the existing application dropped: a defect in its
+audit seal, fixed in Django on this branch (owner, 2026-11-13, "Yes, fix
+it"; 32.8). Every save's scenarios, re-run together on the merged branch,
+pass at both levels. Nothing is switched on outside this proof's own
+processes.
 
 ## 32.1 Scope
 
@@ -232,7 +234,18 @@ publishes `auditSeq: null`, and the rows are sealed later by someone else's
 commit or the scheduled seal. The first pair each process makes keeps its
 sequence (on copy A the runner's first pair has 15938/15939; on B the
 handed-on steps 16–18, each played by a fresh process, keep theirs). Go writes the sequence the seal gives, as the projection is designed
-to. **Decision needed** (32.8).
+to. Fixed in Django on this branch (32.8).
+
+**After the seal fix (32.8), re-run on the merged branch** (`m20_all.sh`,
+every save's scenarios one after the other; `m20_run9.txt`, `m20_run10.txt`),
+the pair's last lines exactly as printed: service level `0 of 18 steps
+answered differently`, `0 of 20 changed tables differ`, `shadow exit 0`,
+`verify_chain {'ok': True, 'brokenAt': None, 'checkedRows': 15976,
+'fromSeq': None}`; app level `0 of 18 steps answered differently`, `0 of 19
+changed tables differ`, `shadow exit 0`, the same `verify_chain`,
+`form-only requests on B: 18`, `forwarded drawer saves on B: 4`. On copy A
+(the existing application) every one of the run's 19 `activity.scheduled`
+events now carries its `auditSeq`.
 
 **The first save, re-run on this code** (it shares `prepare`, now
 `ownSchool`, and the activity insert, now two columns longer): service level
@@ -272,19 +285,27 @@ a hand-on before this save); `TestGatewayRoleCanNeitherWriteNorReadSecrets`,
 `go vet ./...`, `go test -race ./...`, ruff, format, bandit and the rules
 drift test pass.
 
-## 32.8 Decision needed, and not done
+## 32.8 The seal defect: decided and fixed
 
-**Decision (for the coordinator, then the owner): the pair's domain events.**
-The existing application publishes `auditSeq: null` for an In-school
-Training pair's events after each worker process's first pair (32.6), a
-defect of the shared seal flag on a decorator's `Atomic`. Either (a) Go
-keeps writing the sequence and the defect is fixed in Django (for instance
-the seal mark kept per transaction rather than on the reused `Atomic`) —
-a Django behaviour change, outside this piece — or (b) Go reproduces
-`null` for the pair's events, which matches a warmed worker but not a
-process's first pair. Until then the shadow proof stands at one table
-differing in that one field. Nothing else was found that needs a rule or
-right beyond 27.8, 29.4 and 30.4.
+**Owner, 2026-11-13: "Yes, fix it".** The existing application published
+`auditSeq: null` for an In-school Training pair's events after each worker
+process's first pair (32.6). The defect was not the pair's: every save
+decorated `@transaction.atomic` reuses one `Atomic` for the life of the
+process, so `_seal_after_commit`'s mark on it outlived the first call's
+commit and each later call's audit rows waited unsealed for someone else's
+commit or the scheduled seal. Fixed in `apps/audit/services.py` on this
+branch: the seal is registered once per open transaction by asking Django's
+own list of what runs at this commit (`connection.run_on_commit`), not a mark
+on the block. The list also drops a seal registered inside a savepoint that
+rolled back, so the next row registers it again (a second case the mark
+missed). Tests first, red then green, in `apps/audit/test_commit_time_seal.py`:
+`test_every_call_of_a_decorated_save_is_chained_when_it_commits`,
+`test_a_seal_lost_with_a_rolled_back_savepoint_is_registered_again`; the
+audit suite (25) passes. The chain's rules, the rows written and the seal's
+order are unchanged; only *when* a decorated save's rows are sealed moves, to
+their own commit. Production keeps the defect until the owner approves this
+change for `main` (it is not merged there). Go writes the sequence the seal
+gives, as before.
 
 **Not done.** Switching the pair off in Django in the same release (03 §3.7)
 and any cutover wait for the owner; the switch is on nowhere but this proof's

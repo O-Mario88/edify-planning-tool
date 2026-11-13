@@ -37,6 +37,10 @@ deployed, or connected to production.
 | [26-shadow-writes.md](26-shadow-writes.md) | The harness every save is proved with before Go writes it: two copies, the existing app's drawers played on one, a table-by-table comparison; proved against itself |
 | [27-first-save-schedule-visit.md](27-first-save-schedule-visit.md) | The first save in Go, scheduling a school visit: what one save writes (measured), the split (Go saves, money stays until M12), the first piece's scope, contract, writer role and proof; one owner decision |
 | [28-web-foundation.md](28-web-foundation.md) | The Next.js web foundation (M15): sign-in through the gateway, httpOnly session cookies, the shell, the existing web's tokens copied and checked, generated Connect clients, the School Directory from Go's answer, compared with Django at 1440 and 390 pixels |
+| [29-second-save-reschedule-visit.md](29-second-save-reschedule-visit.md) | The second save in Go, rescheduling a school visit; the owner's decision on `activity.status` and the day's batch |
+| [30-third-save-cancel-visit.md](30-third-save-cancel-visit.md) | The third save in Go, cancelling a school visit; the narrow function that withdraws its unmoved advance |
+| [31-fourth-save-edit-visit.md](31-fourth-save-edit-visit.md) | The fourth save in Go, editing a scheduled school visit's goal and expected outcome; the app's Edit drawer reason field |
+| [32-fifth-save-training-pair.md](32-fifth-save-training-pair.md) | The fifth save in Go, an In-school Training and its school visit as one save; the audit-seal defect found by its proof and fixed in Django |
 
 The code is under [`platform/`](../../platform/README.md).
 

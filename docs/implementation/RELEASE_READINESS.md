@@ -389,6 +389,18 @@ existing application's.
 | Go and Django checks | Pass | `go vet`, `gofmt`, `go test -race ./...`, the integration suite; ruff, format, bandit; the my_plan and my_actions drift tests |
 | iOS / Android Release | Not run | not checked on a device |
 
+## The fifth save and the audit-seal fix (2026-11-13)
+
+| Check | Result | Evidence |
+|---|---|---|
+| In-school Training pair, service level ([32.6](../migration/32-fifth-save-training-pair.md)) | Pass | 0 of 18 steps answered differently, 0 of 20 changed tables differ, verify_chain ok over 15,976 rows |
+| In-school Training pair, app level | Pass | 0 of 18 steps answered differently, 0 of 19 changed tables differ, verify_chain ok; 18 form-only requests and 4 forwarded saves on B |
+| Every earlier save re-proved on the merged branch | Pass | schedule, reschedule, cancel, edit at both levels: 0 steps and 0 changed tables differing, verify_chain ok on each run that checks it |
+| Audit seal at each decorated save's own commit ([32.8](../migration/32-fifth-save-training-pair.md)) | Pass | `apps/audit/test_commit_time_seal.py`, two new tests red before the fix and green after; the audit suite (25) passes |
+| Django save suites (activities, daily_visit_batches, mobile_feed, realtime, system_health) | 18 failures, none from this change | 1,603 tests; the same 18 inventory and ratchet checks (KPI, page and interaction manifests, permission and traceability matrices, two source ratchets) fail on the pushed commit 8b790bc42 without the change: stale generated artefacts on the migration branch, not regenerated here |
+| Go checks | Pass | `go build`, `go vet`, `go test -race` (activities, screens, config, shadow), the integration suite |
+| Production | Not changed | the fix is on the migration branch only; `main` keeps the defect until the owner approves it |
+
 ## Open items
 
 - Measure cold and warm start on physical iPhones and Android phones.
