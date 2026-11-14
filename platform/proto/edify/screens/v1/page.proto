@@ -16,6 +16,10 @@ message PageBadge {
   string tone = 2;
   // The hover text, e.g. "Source: Recorded · Confirmed".
   string title = 3;
+  // The small drawing before the words, by name: "lock" (a school's support
+  // visit for the year is taken), "unlock" (it is still open). Empty for a
+  // badge of words only.
+  string icon = 4;
 }
 
 message PageAction {
@@ -30,6 +34,9 @@ message PageAction {
   string href = 6;
   // Opens as a drawer (the web fetches it into its drawer).
   bool drawer = 7;
+  // Downloads a file (an export) instead of opening a page: the web sends
+  // the reader to href, the app hands it to the system.
+  bool download = 8;
 }
 
 message PageHeader {
@@ -77,6 +84,9 @@ message PageFilter {
   // The short word the page draws beside the select ("FY" for "Fiscal
   // year"), when it differs from the name.
   string caption = 5;
+  // The page folds it under its own "More filters" (the Clusters page
+  // authors the last three there), whatever the width.
+  bool more = 6;
 }
 
 message PageFilters {
@@ -123,6 +133,14 @@ message PageCell {
   // The row's own buttons and its Actions menu, in order. A button's key is
   // "button", a menu item's "menu", a red menu item's "danger".
   repeated PageAction actions = 6;
+  // The chips the cell draws side by side (a school's Visit and Training
+  // plan statuses, its Visit Lock), each in its own colour; the cell's text
+  // is still their words run together. A chip's tone is the page's own
+  // planning tone: none (red, Not Planned), planned (orange), awaiting
+  // (blue), verified (green), replan (amber), closed (grey, a held visit) or
+  // open (outlined, an unlocked one); its icon "lock" or "unlock"; its title
+  // the sentence the page shows on hover.
+  repeated PageBadge pills = 7;
 }
 
 message PageRow {
@@ -377,7 +395,61 @@ message PageBlock {
     // A heading between a page's sections ("Program Growth"), drawn as a
     // section title rather than as a card of its own.
     string section = 17;
+    // A month calendar (the Calendar page), beside the event-type tabs that
+    // draw it as text.
+    PageCalendar calendar = 18;
   }
+}
+
+// One entry of a calendar day: a piece of work, a leave day, a holiday or an
+// organization event, as the page's chip draws it.
+message PageCalendarEvent {
+  // "activity", "leave", "holiday" or "event": the event-type tab it is
+  // counted under (PageCalendar.kinds).
+  string kind = 1;
+  // An activity's colour family on the grid and legend ("visit",
+  // "training", "cluster", "core", "project", "programme", "activity");
+  // '' for the other kinds.
+  string family = 2;
+  string title = 3;
+  // The line under the title: the place, the run's dates or "Day 2 of 3",
+  // the reason to reschedule, a leave's type, a holiday's kind.
+  string meta = 4;
+  // What it opens, or ''.
+  string href = 5;
+  // What its tick box ticks for the page's bar (PageSelection), or '' for
+  // none. Every day of a multi-day activity carries the same one.
+  string pick_id = 6;
+  // A later day of an entry that runs over several days: it carries on the
+  // previous day's chip.
+  bool continued = 7;
+  // Work planned on a public holiday or its owner's leave: to reschedule.
+  bool day_off = 8;
+}
+
+// One day of the month that has entries.
+message PageCalendarDay {
+  // The day, "2026-11-26".
+  string date = 1;
+  bool today = 2;
+  // Any of its entries is to be rescheduled.
+  bool day_off = 3;
+  // In the page's order: events, holidays, leave, work, each by title.
+  repeated PageCalendarEvent events = 4;
+}
+
+message PageCalendar {
+  int32 year = 1;
+  int32 month = 2;
+  // Today ("2026-11-13") when it falls in this month, else ''.
+  string today = 3;
+  // The event-type tabs: each one's key ("all", "activity", "leave",
+  // "holiday", "event"), label and count.
+  repeated PageChip kinds = 4;
+  // The tab the page opens on (?event_kind=), "all" for every kind.
+  string kind = 5;
+  // The days of the month with entries, in order.
+  repeated PageCalendarDay days = 6;
 }
 
 // One part of a form on a page, in the order the form draws them.

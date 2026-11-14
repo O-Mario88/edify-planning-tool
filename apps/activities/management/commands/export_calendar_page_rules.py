@@ -125,6 +125,10 @@ def rules() -> dict:
         "activity_types": [
             [value, str(label)] for value, label in ActivityType.choices
         ],
+        "event_families": {
+            value: ev._calendar_event_family(value)
+            for value, _label in ActivityType.choices
+        },
         "status_families": {
             k: list(v) for k, v in ev._CALENDAR_STATUS_FAMILIES.items()
         },

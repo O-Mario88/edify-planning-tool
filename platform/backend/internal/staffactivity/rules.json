@@ -11,52 +11,68 @@
   },
   "doors": {
     "Accountant": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "Admin": {
-      "page": true
+      "page": true,
+      "person": true
     },
     "BusinessTransformationOfficer": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "CCEO": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "ClusterLeader": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "CountryDirector": {
-      "page": true
+      "page": true,
+      "person": true
     },
     "HumanResources": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "ImpactAssessment": {
-      "page": true
+      "page": true,
+      "person": true
     },
     "MfiLoanOfficer": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "MfiPartnerAdmin": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "PartnerAdmin": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "PartnerFieldOfficer": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "Program Lead": {
-      "page": true
+      "page": true,
+      "person": true
     },
     "ProjectCoordinator": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "RegionalProgramLead": {
-      "page": false
+      "page": false,
+      "person": false
     },
     "RegionalVicePresident": {
-      "page": false
+      "page": false,
+      "person": false
     }
   },
   "failed_request_actions": [
@@ -717,6 +733,96 @@
       "Financial year"
     ]
   ],
+  "person": {
+    "actions_shown": 12,
+    "follow_up_statuses": [
+      [
+        "sent",
+        "Sent"
+      ],
+      [
+        "acknowledged",
+        "Acknowledged"
+      ],
+      [
+        "support_scheduled",
+        "Support scheduled"
+      ],
+      [
+        "waiting_for_staff",
+        "Waiting for staff"
+      ],
+      [
+        "resolved_by_activity",
+        "Resolved by activity"
+      ],
+      [
+        "resolved_by_manager",
+        "Resolved by manager"
+      ],
+      [
+        "returned",
+        "Returned for clarification"
+      ],
+      [
+        "escalated",
+        "Escalated"
+      ],
+      [
+        "closed",
+        "Closed"
+      ],
+      [
+        "canceled",
+        "Canceled"
+      ]
+    ],
+    "follow_up_triggers": [
+      [
+        "no_login",
+        "No login"
+      ],
+      [
+        "low_engagement",
+        "Low platform engagement"
+      ],
+      [
+        "planning_not_done",
+        "Required planning not completed"
+      ],
+      [
+        "evidence_not_done",
+        "Evidence work not completed"
+      ],
+      [
+        "repeated_errors",
+        "Repeated system errors"
+      ],
+      [
+        "workflow_support",
+        "Workflow support required"
+      ],
+      [
+        "excessive_time",
+        "Excessive time / possible usability problem"
+      ],
+      [
+        "training",
+        "Training required"
+      ],
+      [
+        "other",
+        "Other"
+      ]
+    ],
+    "follow_ups_shown": 5,
+    "sessions_shown": 10,
+    "suggestion_reasons": {
+      "low_engagement": "Signed in, but no meaningful action in the period",
+      "no_login": "No sign-in on an expected working day",
+      "repeated_errors": "{} failed actions in the period"
+    }
+  },
   "query": {
     "key_pattern": "^[a-z][a-z0-9_]{0,39}$",
     "max_value": 128,

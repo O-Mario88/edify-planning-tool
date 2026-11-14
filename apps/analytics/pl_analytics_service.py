@@ -83,6 +83,13 @@ COMPLETED_STATUSES = (
     "submitted_to_pl",
     "evidence_accepted",
 )
+#: An officer's work waiting on a fix or a check (cceo_performance's backlog).
+CCEO_BACKLOG_STATUSES = (
+    "returned_by_pl",
+    "returned_by_ia",
+    "salesforce_id_required",
+    "awaiting_ia_verification",
+)
 PLANNED_STATUSES = (
     "planned",
     "scheduled",
@@ -1596,14 +1603,7 @@ class PLAnalyticsService:
         # per officer on the team.
         measures = {
             "completed": Q(status__in=COMPLETED_STATUSES),
-            "backlog": Q(
-                status__in=(
-                    "returned_by_pl",
-                    "returned_by_ia",
-                    "salesforce_id_required",
-                    "awaiting_ia_verification",
-                )
-            ),
+            "backlog": Q(status__in=CCEO_BACKLOG_STATUSES),
             "evidence_total": Q(activity_type__in=VISIT_TYPES + TRAINING_TYPES),
             "evidence_done": Q(evidence_status="accepted"),
         }

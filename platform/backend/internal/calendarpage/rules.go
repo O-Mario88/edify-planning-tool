@@ -69,6 +69,7 @@ type Rules struct {
 	TimeZone                 string              `json:"time_zone"`
 	Years                    [2]int              `json:"years"`
 	ActivityTypes            [][2]string         `json:"activity_types"`
+	EventFamilies            map[string]string   `json:"event_families"`
 	StatusFamilies           map[string][]string `json:"status_families"`
 	StatusOptions            [][2]string         `json:"status_options"`
 	HiddenStatuses           []string            `json:"hidden_statuses"`

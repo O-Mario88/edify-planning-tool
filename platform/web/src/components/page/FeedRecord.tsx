@@ -21,7 +21,7 @@ import { isPagePart, pagePartUrl } from '@/lib/pagePart';
 
 import { Badge } from '../blocks/Badge';
 import { RowActions } from '../blocks/RowActions';
-import { textTone } from '../blocks/tones';
+import { recordFactTone } from '../blocks/tones';
 import { Icon } from '../shell/icons';
 import { FeedPanel } from './FeedPanel';
 import { FeedTable } from './FeedTable';
@@ -126,7 +126,7 @@ export function FeedRecord({ record, pagePath, drawerHref }: FeedRecordProps) {
             return (
               <div key={fact.label} className="flex min-w-0 gap-1">
                 <dt className="font-medium text-[var(--edify-text-muted)]">{fact.label}:</dt>
-                <dd className={`font-semibold ${textTone(fact.tone)}`}>{factHref ? <Link href={factHref} className="hover:underline">{fact.value}</Link> : fact.value}</dd>
+                <dd className={`font-semibold ${recordFactTone(fact.tone)}`}>{factHref ? <Link href={factHref} className="hover:underline">{fact.value}</Link> : fact.value}</dd>
               </div>
             );
           })}

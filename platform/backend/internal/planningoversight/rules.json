@@ -170,5 +170,145 @@
       "feed_opens_page": true,
       "path": "/team-planning-oversight/"
     }
+  },
+  "team_plan": {
+    "activity_tabs": [
+      {
+        "key": "all",
+        "label": "All Activities"
+      },
+      {
+        "key": "visits",
+        "label": "School Visits"
+      },
+      {
+        "key": "meetings",
+        "label": "Cluster Meetings"
+      },
+      {
+        "key": "trainings",
+        "label": "Group Trainings"
+      }
+    ],
+    "evidence_link": true,
+    "filter_keys": [
+      "activity_type",
+      "executor_type",
+      "partner_id",
+      "district_id",
+      "status",
+      "risk",
+      "context"
+    ],
+    "lead_role": "Program Lead",
+    "lens_tabs": [
+      {
+        "active": true,
+        "href": "/team-planning-oversight/",
+        "label": "Team Plan"
+      },
+      {
+        "active": false,
+        "href": "/team-planning-oversight/?view=trainings",
+        "label": "Training Summary"
+      },
+      {
+        "active": false,
+        "href": "/team-planning-oversight/?view=portfolio",
+        "label": "Team Portfolio"
+      },
+      {
+        "active": false,
+        "href": "/team-planning-oversight/?view=coverage",
+        "label": "Schools & Coverage"
+      },
+      {
+        "active": false,
+        "href": "/team-planning-oversight/?view=targets",
+        "label": "Target Performance"
+      }
+    ],
+    "live_activity_statuses": [
+      "planned",
+      "scheduled",
+      "assigned_to_partner",
+      "partner_scheduled",
+      "in_progress",
+      "completion_started",
+      "evidence_uploaded",
+      "evidence_accepted",
+      "salesforce_id_required",
+      "submitted_to_pl",
+      "returned_by_pl",
+      "awaiting_ia_verification",
+      "ia_verified",
+      "accountant_confirmed",
+      "completed",
+      "returned",
+      "returned_by_ia",
+      "rescheduled",
+      "closed"
+    ],
+    "not_planned_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred"
+    ],
+    "owner_tabs": [
+      {
+        "key": "team",
+        "label": "Whole team"
+      },
+      {
+        "key": "mine",
+        "label": "My Work"
+      }
+    ],
+    "query_keys_not_passed": [
+      "csv",
+      "download",
+      "export",
+      "format",
+      "pdf",
+      "xlsx"
+    ],
+    "zero_kpis": [
+      {
+        "helper": "0 staff · 0 partner",
+        "label": "Team Activities Planned",
+        "tone": "neutral",
+        "value": "0"
+      },
+      {
+        "helper": "No cost until the partner schedules",
+        "label": "Partner Awaiting Schedule",
+        "tone": "neutral",
+        "value": "0"
+      },
+      {
+        "helper": "0 scheduled without a cost",
+        "label": "Team Work Needing Attention",
+        "tone": "neutral",
+        "value": "0"
+      },
+      {
+        "helper": "From 0 scheduled",
+        "label": "Planned Team Budget",
+        "tone": "neutral",
+        "value": "UGX 0"
+      },
+      {
+        "helper": "Nothing due yet",
+        "label": "Plan Execution Progress",
+        "tone": "neutral",
+        "value": "Nothing due yet"
+      },
+      {
+        "helper": "0 verified and unpaid",
+        "label": "Awaiting Verification",
+        "tone": "neutral",
+        "value": "0"
+      }
+    ]
   }
 }

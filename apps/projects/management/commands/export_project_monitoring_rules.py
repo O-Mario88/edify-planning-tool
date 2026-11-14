@@ -4,9 +4,9 @@ Go builds Project Monitoring (/projects/monitoring, apps.frontend.views.
 extended_views.project_monitoring_view, apps.projects.monitoring and
 pages/projects/monitoring.html) from the vocabularies this command writes to
 platform/backend/internal/projectmonitoring/rules.json: who may open the page
-and what each role is given on it (a school's profile link and the
-workspace strip; the header's export and consolidated-tables links are
-plain links the feed does not read), whose lens reads a project
+and what each role is given on it (a school's profile link, the
+workspace strip, and the header's consolidated-tables and export links,
+which the feed reads as the header's actions), whose lens reads a project
 whole, the live and open project statuses, the table's words and tones, the
 filters, the SSA interventions and their abbreviations, the impact engine's
 thresholds and the shared table page size. A change to
@@ -67,6 +67,13 @@ def doors() -> dict:
             # {% school_link %}: a name is a link for a reader of profiles.
             "profiles": bool(can_open_url(user, "/schools/0")),
             "strip": strip(user),
+            # The header's Consolidated tables link: for whoever reads
+            # Country Planning Oversight.
+            "consolidated": RolePermissionService.can_view_page(
+                user, "country_planning_oversight"
+            ),
+            # The header's two exports (with a project open).
+            "export": RolePermissionService.can_export(user, PAGE_PATH),
         }
     return out
 

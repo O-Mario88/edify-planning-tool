@@ -187,3 +187,45 @@ and order for every pair. Differences left, each with its reason:
   folds by width (six and More at 1440). Same filters, same values.
 - **The empty card's words** are one weight lighter than the existing page's
   slate-400 semibold (same words, same centring).
+
+## 39.7 What web-fixes-2 closed (agent 54, 2026-11-13)
+
+Three gaps agent 26 left (BACKLOG `web-fixes-2`). Each was the answer's
+fault, so each is an additive contract field, read by the feed reader and
+built by Go, then drawn by the web.
+
+| Finding | Cause | Fix |
+|---|---|---|
+| Planning's Visit Plan Status, Training Plan Status and Visit Lock drawn as plain text (no red "Not Planned", no padlock) | The cell's chips (`components/school_planning_badges.html`, `partials/planning/visit_lock_cell.html`) arrived as their words run together | Additive `PageCell.pills` (7): one `PageBadge` a chip, `tone` the page's own `data-planning-tone` (none, planned, awaiting, verified, replan, closed, open), `title` the lock's sentence, `icon` "lock" or "unlock" (new name on `PageBadge.icon`). Reader `page_blocks._planning_pills`; Go `clusterpage.ChipPills` / `LockPills` (new `pills.go`) used by the Planning list and a cluster's schools list. The cell's `text` is unchanged. The web draws them as the existing chips (`blocks/PlanningChips.tsx`, the colours of `static/css/components.css`) |
+| Clusters' filter row: the existing page shows five filters and More; this app folded by width (six and More) | The template authors SSA status, Cluster risk and Activity status under its own More filters (`partials/clusters/filters.html`); the answer did not say so | Additive `PageFilter.more` (6), set by the reader for a select inside `[data-edify-filter-more-panel]` and by Go for those three. The web's `foldFilters` (lib/filterSlots.ts) keeps authored filters under More and still moves the row's last fields in front of them when the row is narrow, as micro-ux.js does (three and More on a phone) |
+| A cluster card's Next Action drawn red here, blue on the existing page | The card's CSS names a risk colour (`.cluster-card__metadata-action--critical :where(dt, dd)`) but `.school-record-row__metadata dd` (higher specificity) wins, so the page draws it as every plain value; the reader took the class word "critical" as alert | Reader skips `cluster-card__metadata-action*` classes (`records.UNSHOWN_TONE_CLASSES`); Go's Next Action fact has no tone. The web also draws a record card's plain values in the accent blue and its toned ones in `--edify-danger/-warning/-success`, as the existing card does (`recordFactTone`) |
+
+Measured in the browser (Playwright, cceo, first card, before the fix):
+the existing page's Next Action value `rgb(7, 57, 98)`, this app's
+`rgb(190, 18, 60)`; plain values `rgb(7, 57, 98)` there, `rgb(23, 35, 43)`
+here. After: both blue.
+
+**Owner question.** The Next Action risk colour looks intended by the CSS
+but has not shown since `e3a4faf90` (2026-08-09). The app now follows what
+the page shows (plain). If the owner wants the colour, the fix is the
+Django CSS specificity, then the reader and Go follow.
+
+**Parity** (Go-only gateway 127.0.0.1:8094 against Django 127.0.0.1:8125,
+all 29 accounts, after the reader change):
+
+- `/planning`: "1605 answers compared, 0 differing"
+- `/clusters`: "1044 answers compared, 0 differing"
+- `/partials/clusters/{id}/schools`, 22 clusters: "2552 answers compared, 0 differing"
+
+Every answer compared is Go's own (no existing application behind the
+gateway). The dev data reaches every tone: cceo's Planning carries none,
+open, planned, awaiting, verified, replan and closed (with a sentence) chips.
+
+Re-shot cceo `/planning` and `/clusters` at 1440 and 390
+(`agent54_{django,next}_cceo_{planning,clusters}_{1440,390}.png`): the chips
+match in colour and padlock; Clusters shows five filters and More at 1440
+and three and More at 390 on both.
+
+Not done here: the Country Oversight page hides filters with its own
+`x-show` toggle ("More filters"/"Fewer filters"), a different pattern the
+reader does not mark; it is not Go's yet (planning-oversight-4).

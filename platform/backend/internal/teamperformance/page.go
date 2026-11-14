@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
@@ -103,7 +104,12 @@ func (v *pageView) header() *screensv1.PageHeader {
 	case v.r.roster.narrowed():
 		desc += " Your team: you and the CCEOs you supervise."
 	}
-	return &screensv1.PageHeader{Eyebrow: eyebrow, Title: title, Description: strings.Join(strings.Fields(desc), " ")}
+	h := &screensv1.PageHeader{Eyebrow: eyebrow, Title: title, Description: strings.Join(strings.Fields(desc), " ")}
+	if v.setter {
+		// can_set_targets: the year's country targets, on their own page.
+		h.Actions = []*screensv1.PageAction{pageheader.Link("Set Country Targets", "/team-performance/country-targets/?fy="+v.per.fy)}
+	}
+	return h
 }
 
 type option struct{ value, label string }

@@ -12,7 +12,37 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/screens/v1/notification_center.proto.
  */
 export const file_edify_screens_v1_notification_center: GenFile = /*@__PURE__*/
-  fileDesc("CiplZGlmeS9zY3JlZW5zL3YxL25vdGlmaWNhdGlvbl9jZW50ZXIucHJvdG8SEGVkaWZ5LnNjcmVlbnMudjEirAEKHEdldE5vdGlmaWNhdGlvbkNlbnRlclJlcXVlc3QSEwoGc3RhdHVzGAEgASgJSACIAQESEAoIcHJpb3JpdHkYAiABKAkSEAoIY2F0ZWdvcnkYAyABKAkSFwoPYWN0aW9uX3JlcXVpcmVkGAQgASgIEgkKAXEYBSABKAkSDAoEcGFnZRgGIAEoCRIWCg5zZXR0aW5nc19zYXZlZBgHIAEoCEIJCgdfc3RhdHVzIr0CCh1HZXROb3RpZmljYXRpb25DZW50ZXJSZXNwb25zZRIwCgRrcGlzGAEgASgLMiIuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25LcGlzEjYKB2ZpbHRlcnMYAiABKAsyJS5lZGlmeS5zY3JlZW5zLnYxLk5vdGlmaWNhdGlvbkZpbHRlcnMSOQoNbm90aWZpY2F0aW9ucxgDIAMoCzIiLmVkaWZ5LnNjcmVlbnMudjEuTm90aWZpY2F0aW9uSXRlbRInCgRwYWdlGAQgASgLMhkuZWRpZnkuY29tbW9uLnYxLlBhZ2VJbmZvEjgKCGRlbGl2ZXJ5GAUgASgLMiYuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25EZWxpdmVyeRIUCgxwYWdlX251bWJlcnMYBiADKAUiPQoQTm90aWZpY2F0aW9uS3BpcxIXCg9hY3Rpb25fcmVxdWlyZWQYASABKAUSEAoIY3JpdGljYWwYAiABKAUipwEKE05vdGlmaWNhdGlvbkZpbHRlcnMSDgoGc3RhdHVzGAEgASgJEhAKCHByaW9yaXR5GAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEhcKD2FjdGlvbl9yZXF1aXJlZBgEIAEoCBIJCgFxGAUgASgJEjgKCmNhdGVnb3JpZXMYBiADKAsyJC5lZGlmeS5zY3JlZW5zLnYxLk5vdGlmaWNhdGlvbk9wdGlvbiIyChJOb3RpZmljYXRpb25PcHRpb24SDQoFdmFsdWUYASABKAkSDQoFbGFiZWwYAiABKAki9gIKEE5vdGlmaWNhdGlvbkl0ZW0SCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDAoEYm9keRgDIAEoCRIQCghjYXRlZ29yeRgEIAEoCRIWCg5jYXRlZ29yeV9sYWJlbBgFIAEoCRIQCghwcmlvcml0eRgGIAEoCRIWCg5wcmlvcml0eV9sYWJlbBgHIAEoCRIOCgZzdGF0dXMYCCABKAkSDgoGdW5yZWFkGAkgASgIEhcKD2FjdGlvbl9yZXF1aXJlZBgKIAEoCBIVCg1jcmVhdGVkX2xhYmVsGAsgASgJEhMKC3NlbmRlcl9uYW1lGAwgASgJEhQKDGNvbnRleHRfdHlwZRgNIAEoCRISCgpjb250ZXh0X2lkGA4gASgJEhQKDHRhcmdldF9yb3V0ZRgPIAEoCRIUCgxhY3Rpb25fbGFiZWwYECABKAkSFQoNY2FuX21hcmtfcmVhZBgRIAEoCBITCgtjYW5fYXJjaGl2ZRgSIAEoCCK/AQoUTm90aWZpY2F0aW9uRGVsaXZlcnkSFQoNZW1haWxfZW5hYmxlZBgBIAEoCBIUCgxwdXNoX2VuYWJsZWQYAiABKAgSDwoHYWRkcmVzcxgDIAEoCRIYChBlbWFpbF9jb25maWd1cmVkGAQgASgIEkAKCmNhdGVnb3JpZXMYBSADKAsyLC5lZGlmeS5zY3JlZW5zLnYxLk5vdGlmaWNhdGlvbkNhdGVnb3J5Q2hvaWNlEg0KBXNhdmVkGAYgASgIIkkKGk5vdGlmaWNhdGlvbkNhdGVnb3J5Q2hvaWNlEg0KBXZhbHVlGAEgASgJEg0KBWxhYmVsGAIgASgJEg0KBW11dGVkGAMgASgIMpUBChlOb3RpZmljYXRpb25DZW50ZXJTZXJ2aWNlEngKFUdldE5vdGlmaWNhdGlvbkNlbnRlchIuLmVkaWZ5LnNjcmVlbnMudjEuR2V0Tm90aWZpY2F0aW9uQ2VudGVyUmVxdWVzdBovLmVkaWZ5LnNjcmVlbnMudjEuR2V0Tm90aWZpY2F0aW9uQ2VudGVyUmVzcG9uc2VC6wEKFGNvbS5lZGlmeS5zY3JlZW5zLnYxQhdOb3RpZmljYXRpb25DZW50ZXJQcm90b1ABWlhnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L3NjcmVlbnMvdjE7c2NyZWVuc3YxogIDRVNYqgIQRWRpZnkuU2NyZWVucy5WMcoCEEVkaWZ5XFNjcmVlbnNcVjHiAhxFZGlmeVxTY3JlZW5zXFYxXEdQQk1ldGFkYXRh6gISRWRpZnk6OlNjcmVlbnM6OlYxYgZwcm90bzM", [file_edify_common_v1_common]);
+  fileDesc("CiplZGlmeS9zY3JlZW5zL3YxL25vdGlmaWNhdGlvbl9jZW50ZXIucHJvdG8SEGVkaWZ5LnNjcmVlbnMudjEiIwohR2V0VW5yZWFkTm90aWZpY2F0aW9uQ291bnRSZXF1ZXN0IjQKIkdldFVucmVhZE5vdGlmaWNhdGlvbkNvdW50UmVzcG9uc2USDgoGdW5yZWFkGAEgASgFIqwBChxHZXROb3RpZmljYXRpb25DZW50ZXJSZXF1ZXN0EhMKBnN0YXR1cxgBIAEoCUgAiAEBEhAKCHByaW9yaXR5GAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEhcKD2FjdGlvbl9yZXF1aXJlZBgEIAEoCBIJCgFxGAUgASgJEgwKBHBhZ2UYBiABKAkSFgoOc2V0dGluZ3Nfc2F2ZWQYByABKAhCCQoHX3N0YXR1cyK9AgodR2V0Tm90aWZpY2F0aW9uQ2VudGVyUmVzcG9uc2USMAoEa3BpcxgBIAEoCzIiLmVkaWZ5LnNjcmVlbnMudjEuTm90aWZpY2F0aW9uS3BpcxI2CgdmaWx0ZXJzGAIgASgLMiUuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25GaWx0ZXJzEjkKDW5vdGlmaWNhdGlvbnMYAyADKAsyIi5lZGlmeS5zY3JlZW5zLnYxLk5vdGlmaWNhdGlvbkl0ZW0SJwoEcGFnZRgEIAEoCzIZLmVkaWZ5LmNvbW1vbi52MS5QYWdlSW5mbxI4CghkZWxpdmVyeRgFIAEoCzImLmVkaWZ5LnNjcmVlbnMudjEuTm90aWZpY2F0aW9uRGVsaXZlcnkSFAoMcGFnZV9udW1iZXJzGAYgAygFIj0KEE5vdGlmaWNhdGlvbktwaXMSFwoPYWN0aW9uX3JlcXVpcmVkGAEgASgFEhAKCGNyaXRpY2FsGAIgASgFIqcBChNOb3RpZmljYXRpb25GaWx0ZXJzEg4KBnN0YXR1cxgBIAEoCRIQCghwcmlvcml0eRgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCRIXCg9hY3Rpb25fcmVxdWlyZWQYBCABKAgSCQoBcRgFIAEoCRI4CgpjYXRlZ29yaWVzGAYgAygLMiQuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25PcHRpb24iMgoSTm90aWZpY2F0aW9uT3B0aW9uEg0KBXZhbHVlGAEgASgJEg0KBWxhYmVsGAIgASgJIvYCChBOb3RpZmljYXRpb25JdGVtEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBGJvZHkYAyABKAkSEAoIY2F0ZWdvcnkYBCABKAkSFgoOY2F0ZWdvcnlfbGFiZWwYBSABKAkSEAoIcHJpb3JpdHkYBiABKAkSFgoOcHJpb3JpdHlfbGFiZWwYByABKAkSDgoGc3RhdHVzGAggASgJEg4KBnVucmVhZBgJIAEoCBIXCg9hY3Rpb25fcmVxdWlyZWQYCiABKAgSFQoNY3JlYXRlZF9sYWJlbBgLIAEoCRITCgtzZW5kZXJfbmFtZRgMIAEoCRIUCgxjb250ZXh0X3R5cGUYDSABKAkSEgoKY29udGV4dF9pZBgOIAEoCRIUCgx0YXJnZXRfcm91dGUYDyABKAkSFAoMYWN0aW9uX2xhYmVsGBAgASgJEhUKDWNhbl9tYXJrX3JlYWQYESABKAgSEwoLY2FuX2FyY2hpdmUYEiABKAgivwEKFE5vdGlmaWNhdGlvbkRlbGl2ZXJ5EhUKDWVtYWlsX2VuYWJsZWQYASABKAgSFAoMcHVzaF9lbmFibGVkGAIgASgIEg8KB2FkZHJlc3MYAyABKAkSGAoQZW1haWxfY29uZmlndXJlZBgEIAEoCBJACgpjYXRlZ29yaWVzGAUgAygLMiwuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25DYXRlZ29yeUNob2ljZRINCgVzYXZlZBgGIAEoCCJJChpOb3RpZmljYXRpb25DYXRlZ29yeUNob2ljZRINCgV2YWx1ZRgBIAEoCRINCgVsYWJlbBgCIAEoCRINCgVtdXRlZBgDIAEoCDKfAgoZTm90aWZpY2F0aW9uQ2VudGVyU2VydmljZRJ4ChVHZXROb3RpZmljYXRpb25DZW50ZXISLi5lZGlmeS5zY3JlZW5zLnYxLkdldE5vdGlmaWNhdGlvbkNlbnRlclJlcXVlc3QaLy5lZGlmeS5zY3JlZW5zLnYxLkdldE5vdGlmaWNhdGlvbkNlbnRlclJlc3BvbnNlEocBChpHZXRVbnJlYWROb3RpZmljYXRpb25Db3VudBIzLmVkaWZ5LnNjcmVlbnMudjEuR2V0VW5yZWFkTm90aWZpY2F0aW9uQ291bnRSZXF1ZXN0GjQuZWRpZnkuc2NyZWVucy52MS5HZXRVbnJlYWROb3RpZmljYXRpb25Db3VudFJlc3BvbnNlQusBChRjb20uZWRpZnkuc2NyZWVucy52MUIXTm90aWZpY2F0aW9uQ2VudGVyUHJvdG9QAVpYZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9zY3JlZW5zL3YxO3NjcmVlbnN2MaICA0VTWKoCEEVkaWZ5LlNjcmVlbnMuVjHKAhBFZGlmeVxTY3JlZW5zXFYx4gIcRWRpZnlcU2NyZWVuc1xWMVxHUEJNZXRhZGF0YeoCEkVkaWZ5OjpTY3JlZW5zOjpWMWIGcHJvdG8z", [file_edify_common_v1_common]);
+
+/**
+ * @generated from message edify.screens.v1.GetUnreadNotificationCountRequest
+ */
+export type GetUnreadNotificationCountRequest = Message<"edify.screens.v1.GetUnreadNotificationCountRequest"> & {
+};
+
+/**
+ * Describes the message edify.screens.v1.GetUnreadNotificationCountRequest.
+ * Use `create(GetUnreadNotificationCountRequestSchema)` to create a new message.
+ */
+export const GetUnreadNotificationCountRequestSchema: GenMessage<GetUnreadNotificationCountRequest> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_notification_center, 0);
+
+/**
+ * @generated from message edify.screens.v1.GetUnreadNotificationCountResponse
+ */
+export type GetUnreadNotificationCountResponse = Message<"edify.screens.v1.GetUnreadNotificationCountResponse"> & {
+  /**
+   * @generated from field: int32 unread = 1;
+   */
+  unread: number;
+};
+
+/**
+ * Describes the message edify.screens.v1.GetUnreadNotificationCountResponse.
+ * Use `create(GetUnreadNotificationCountResponseSchema)` to create a new message.
+ */
+export const GetUnreadNotificationCountResponseSchema: GenMessage<GetUnreadNotificationCountResponse> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_notification_center, 1);
 
 /**
  * The page's own query parameters. Empty means the page's default.
@@ -74,7 +104,7 @@ export type GetNotificationCenterRequest = Message<"edify.screens.v1.GetNotifica
  * Use `create(GetNotificationCenterRequestSchema)` to create a new message.
  */
 export const GetNotificationCenterRequestSchema: GenMessage<GetNotificationCenterRequest> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_notification_center, 0);
+  messageDesc(file_edify_screens_v1_notification_center, 2);
 
 /**
  * @generated from message edify.screens.v1.GetNotificationCenterResponse
@@ -122,7 +152,7 @@ export type GetNotificationCenterResponse = Message<"edify.screens.v1.GetNotific
  * Use `create(GetNotificationCenterResponseSchema)` to create a new message.
  */
 export const GetNotificationCenterResponseSchema: GenMessage<GetNotificationCenterResponse> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_notification_center, 1);
+  messageDesc(file_edify_screens_v1_notification_center, 3);
 
 /**
  * Over the live notifications (neither archived nor resolved), the two the
@@ -151,7 +181,7 @@ export type NotificationKpis = Message<"edify.screens.v1.NotificationKpis"> & {
  * Use `create(NotificationKpisSchema)` to create a new message.
  */
 export const NotificationKpisSchema: GenMessage<NotificationKpis> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_notification_center, 2);
+  messageDesc(file_edify_screens_v1_notification_center, 4);
 
 /**
  * @generated from message edify.screens.v1.NotificationFilters
@@ -198,7 +228,7 @@ export type NotificationFilters = Message<"edify.screens.v1.NotificationFilters"
  * Use `create(NotificationFiltersSchema)` to create a new message.
  */
 export const NotificationFiltersSchema: GenMessage<NotificationFilters> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_notification_center, 3);
+  messageDesc(file_edify_screens_v1_notification_center, 5);
 
 /**
  * @generated from message edify.screens.v1.NotificationOption
@@ -222,7 +252,7 @@ export type NotificationOption = Message<"edify.screens.v1.NotificationOption"> 
  * Use `create(NotificationOptionSchema)` to create a new message.
  */
 export const NotificationOptionSchema: GenMessage<NotificationOption> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_notification_center, 4);
+  messageDesc(file_edify_screens_v1_notification_center, 6);
 
 /**
  * @generated from message edify.screens.v1.NotificationItem
@@ -340,7 +370,7 @@ export type NotificationItem = Message<"edify.screens.v1.NotificationItem"> & {
  * Use `create(NotificationItemSchema)` to create a new message.
  */
 export const NotificationItemSchema: GenMessage<NotificationItem> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_notification_center, 5);
+  messageDesc(file_edify_screens_v1_notification_center, 7);
 
 /**
  * How the person is told beyond the bell.
@@ -390,7 +420,7 @@ export type NotificationDelivery = Message<"edify.screens.v1.NotificationDeliver
  * Use `create(NotificationDeliverySchema)` to create a new message.
  */
 export const NotificationDeliverySchema: GenMessage<NotificationDelivery> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_notification_center, 6);
+  messageDesc(file_edify_screens_v1_notification_center, 8);
 
 /**
  * @generated from message edify.screens.v1.NotificationCategoryChoice
@@ -417,7 +447,7 @@ export type NotificationCategoryChoice = Message<"edify.screens.v1.NotificationC
  * Use `create(NotificationCategoryChoiceSchema)` to create a new message.
  */
 export const NotificationCategoryChoiceSchema: GenMessage<NotificationCategoryChoice> = /*@__PURE__*/
-  messageDesc(file_edify_screens_v1_notification_center, 7);
+  messageDesc(file_edify_screens_v1_notification_center, 9);
 
 /**
  * The notification centre, as the existing web page builds it for the
@@ -436,6 +466,18 @@ export const NotificationCenterService: GenService<{
     methodKind: "unary";
     input: typeof GetNotificationCenterRequestSchema;
     output: typeof GetNotificationCenterResponseSchema;
+  },
+  /**
+   * The top bar's bell: how many of the caller's notifications are unread and
+   * not resolved (apps.core.context_processors.sidebar_counts). Every signed-in
+   * role has the bell, so no role is refused.
+   *
+   * @generated from rpc edify.screens.v1.NotificationCenterService.GetUnreadNotificationCount
+   */
+  getUnreadNotificationCount: {
+    methodKind: "unary";
+    input: typeof GetUnreadNotificationCountRequestSchema;
+    output: typeof GetUnreadNotificationCountResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_screens_v1_notification_center, 0);

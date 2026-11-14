@@ -94,81 +94,97 @@
   ],
   "doors": {
     "Accountant": {
+      "export": true,
       "page": false,
       "review": true,
       "school": false
     },
     "Admin": {
+      "export": true,
       "page": true,
       "review": true,
       "school": true
     },
     "BusinessTransformationOfficer": {
+      "export": true,
       "page": false,
       "review": false,
       "school": true
     },
     "CCEO": {
+      "export": false,
       "page": true,
       "review": true,
       "school": true
     },
     "ClusterLeader": {
+      "export": false,
       "page": false,
       "review": false,
       "school": false
     },
     "CountryDirector": {
+      "export": true,
       "page": true,
       "review": true,
       "school": true
     },
     "HumanResources": {
+      "export": false,
       "page": false,
       "review": false,
       "school": false
     },
     "ImpactAssessment": {
+      "export": true,
       "page": true,
       "review": true,
       "school": true
     },
     "MfiLoanOfficer": {
+      "export": false,
       "page": false,
       "review": false,
       "school": false
     },
     "MfiPartnerAdmin": {
+      "export": false,
       "page": false,
       "review": false,
       "school": false
     },
     "PartnerAdmin": {
+      "export": false,
       "page": false,
       "review": false,
       "school": false
     },
     "PartnerFieldOfficer": {
+      "export": false,
       "page": false,
       "review": false,
       "school": false
     },
     "Program Lead": {
+      "export": true,
       "page": true,
       "review": true,
       "school": true
     },
     "ProjectCoordinator": {
+      "export": true,
       "page": false,
       "review": false,
       "school": true
     },
     "RegionalProgramLead": {
+      "export": true,
       "page": true,
       "review": false,
       "school": false
     },
     "RegionalVicePresident": {
+      "export": true,
       "page": true,
       "review": false,
       "school": false

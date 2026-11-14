@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -95,7 +96,9 @@ func TestTheStaffActivityLogCountsAnOfficersDay(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if page.GetHeader().GetTitle() != "Staff Activity Log" || len(page.GetHeader().GetActions()) != 1 {
+	// The header band as the feed reads it: Export first, then the
+	// Follow-up Queue.
+	if page.GetHeader().GetTitle() != "Staff Activity Log" || !slices.Equal(headerActionKeys(page), []string{"export", "follow_up_queue"}) {
 		t.Fatalf("the header: %v", page.GetHeader())
 	}
 	cells := officerRow(t, page)

@@ -188,4 +188,9 @@ type recommendationRow struct {
 	Band   string  `json:"band"`
 	Reason string  `json:"reason"`
 	State  string  `json:"state"`
+	// Item is the recommended catalogue training's name (HasItem when one is
+	// linked); Unmapped is why none is mapped.
+	Item     string `json:"item"`
+	HasItem  bool   `json:"has_item"`
+	Unmapped string `json:"unmapped"`
 }

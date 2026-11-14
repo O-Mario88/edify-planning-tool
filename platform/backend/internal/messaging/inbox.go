@@ -165,7 +165,7 @@ FROM messaging_messagethread t WHERE t.id = $1`, threadID, p.UserID).Scan(&conte
 		return false, nil
 	}
 	if contextType == "" || contextID == "" {
-		return true, nil
+		return openWithoutRecord(), nil
 	}
 	return g.allows(ctx, contextType, contextID)
 }
@@ -233,14 +233,21 @@ func pager(page, pages, total, start int, tab, sortBy, search string) *messaging
 	if !out.Shown {
 		return out
 	}
+	// One gap for every run of hidden pages. The existing pager drew one only
+	// before the fourth page, so page 5 of 9 hid the run before the last
+	// (owner, 2026-11-13: "Can you fix those from the go side").
+	gap := false
 	for p := 1; p <= pages; p++ {
 		switch {
 		case p == page:
 			out.Links = append(out.Links, &messagingv1.PagerLink{Label: strconv.Itoa(p), Page: int32(p), Current: true})
+			gap = false
 		case p <= pagerLead || p == pages || p == page+1 || p == page-1:
 			out.Links = append(out.Links, &messagingv1.PagerLink{Label: strconv.Itoa(p), Page: int32(p), Href: pageHref(tab, sortBy, search, p)})
-		case p == pagerLead+1 && pages > 5:
+			gap = false
+		case !gap:
 			out.Links = append(out.Links, &messagingv1.PagerLink{Label: "…", Gap: true})
+			gap = true
 		}
 	}
 	if page < pages {
@@ -256,3 +263,8 @@ func pageHref(tab, sortBy, search string, page int) string {
 	}
 	return "/messages?" + values.Encode()
 }
+
+// openWithoutRecord is whether a participant may open a conversation that is
+// about no record. The list never shows one, yet the existing page opened it
+// by ?thread=; Go refuses it as the list does (owner, 2026-11-13).
+func openWithoutRecord() bool { return false }

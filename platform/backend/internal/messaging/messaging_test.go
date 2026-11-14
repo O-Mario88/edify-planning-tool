@@ -52,7 +52,7 @@ func TestRoleGateBeforeAnyRecordIsRead(t *testing.T) {
 		{"PartnerAdmin", "budget", false, true},
 		{"PartnerFieldOfficer", "accountant_disbursement", false, false},
 		{"PartnerAdmin", "school", false, false},
-		{"CCEO", "evidence", false, true}, // an IA kind with no label is no context
+		{"CCEO", "evidence", false, false}, // labelled by Go (fixedContextLabels): its record decides
 		{"CCEO", "my_plan", false, true},
 		{"CCEO", "bogus", false, true},
 		{"CCEO", "system", false, false},
@@ -215,9 +215,9 @@ func TestThePagerWindow(t *testing.T) {
 		want        string
 	}{
 		{1, 2, "[1] 2"},
-		{1, 5, "[1] 2 3 5"},
+		{1, 5, "[1] 2 3 … 5"}, // Go draws the gap the template left out
 		{1, 6, "[1] 2 3 … 6"},
-		{5, 9, "1 2 3 4 [5] 6 9"}, // the template draws no gap past the fourth
+		{5, 9, "1 2 3 4 [5] 6 … 9"}, // Go draws the gap the template left out
 		{9, 9, "1 2 3 … 8 [9]"},
 	}
 	for _, c := range cases {

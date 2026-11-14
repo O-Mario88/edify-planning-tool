@@ -17,9 +17,6 @@ func sortStable[T any](list []T, less func(a, b T) bool) {
 // more sessions in a row, the most such schools first, at most
 // AttendanceMaxRows.
 func attendanceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if r.role != "CCEO" {
-		return nil, errPassOn
-	}
 	if len(r.owners) == 0 {
 		return nil, nil
 	}
@@ -63,7 +60,7 @@ WHERE deleted_at IS NULL AND responsible_staff_id = ANY($1)`, r.owners)
 	var out []todo
 	for _, f := range list[:min(rules.AttendanceMaxRows, len(list))] {
 		url := "/clusters/" + f.c.id + "/profile?tab=attendance&show=missing"
-		out = append(out, todo{Title: "Follow Up Schools Missing Cluster Sessions", Category: "Planning", Priority: "high",
+		out = append(out, todo{Title: "Follow Up Schools Missing Cluster Sessions", Category: attendanceCategory(r.role), Priority: "high",
 			StatusKey: "waiting_me", Actionable: true, Linked: f.c.name, ActionLabel: "Open Schools", ActionURL: url,
 			Shape: idShape(url, f.c.id), Due: &r.today})
 	}

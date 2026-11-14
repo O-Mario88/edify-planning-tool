@@ -63,6 +63,9 @@ var undeletableTables = []string{
 	// The eighth save (an online Group Training, docs/migration/48) writes
 	// its cost revision; superseding one is the existing pricing's.
 	"activity_cost_snapshot",
+	// The presence stamp (docs/migration/65) credits time to a page and a
+	// sign-in only through gateway_presence.beat; nobody's time is removed.
+	"presence_time",
 }
 
 // protectedColumns ("table.column") are what Go's saves may insert but never
@@ -100,6 +103,14 @@ var protectedColumns = []string{
 	"activity_cost_snapshot.is_current", "activity_cost_snapshot.activity_id",
 	"activity_cost_snapshot.calculation_inputs", "activity_cost_snapshot.operational_breakdown",
 	"activity_cost_snapshot.amount_disbursed", "activity_cost_snapshot.actual_accounted_spend",
+	// A person's presence, and the time credited to their pages and
+	// sign-ins, are written only by gateway_presence.beat, the one function
+	// that stamps a beat at the database's clock (docs/migration/65).
+	"user.last_seen_at", "user.online_since", "user.last_seen_path", "user.last_seen_action",
+	"user.last_seen_login_id",
+	"presence_time.seconds", "presence_time.user_id", "presence_time.day",
+	"presence_time.section", "presence_time.working_on",
+	"login_event.active_seconds", "login_event.last_active_at",
 }
 
 // ErrRefused wraps every refusal, so callers can tell a guard decision from

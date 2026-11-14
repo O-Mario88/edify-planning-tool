@@ -133,6 +133,61 @@
   "training": "Training",
   "training_follow_up_visit": "Training Follow-up Visit"
  },
+ "admin": {
+  "accountant_queue_statuses": {
+   "accountability": "accountability_pending",
+   "disbursed": "disbursed",
+   "monthly_request": "sent_to_accountant",
+   "partner_clearance": "ia_verified",
+   "partner_payable": "ia_confirmed",
+   "reimbursement": "reimbursement_submitted",
+   "weekly_request": "confirmed_for_advance"
+  },
+  "bt_verification_scheduling_roles": [
+   "Admin",
+   "BusinessTransformationOfficer",
+   "CountryDirector"
+  ],
+  "cost_catalogue_settled_statuses": [
+   "cancelled",
+   "rejected",
+   "deferred",
+   "closed"
+  ],
+  "country_budget": {
+   "accountant_roles": [
+    "Accountant",
+    "Admin"
+   ],
+   "approved_status": "approved_by_rvp",
+   "cd_roles": [
+    "CountryDirector",
+    "Admin"
+   ],
+   "country": "Uganda",
+   "returned_status": "returned_by_rvp",
+   "review_statuses": [
+    "draft_generated",
+    "cd_review",
+    "admin_plan_added"
+   ],
+   "rvp_roles": [
+    "RegionalVicePresident",
+    "Admin"
+   ],
+   "submitted_status": "submitted_to_rvp",
+   "team_request_status": "submitted_to_cd"
+  },
+  "partner_user_setup_pending": "pending",
+  "partner_user_setup_roles": [
+   "Admin"
+  ],
+  "policy_awaiting_publication_statuses": [
+   "approved",
+   "under_review",
+   "returned"
+  ]
+ },
  "attendance_max_rows": 10,
  "builders": [
   "_activity_todos",
@@ -264,6 +319,178 @@
   "returned"
  ],
  "group_min": 3,
+ "ia": {
+  "category": "Data Quality & Verification",
+  "collection_blocked_rows_days": 30,
+  "collection_blocked_status": "blocked",
+  "collection_category": "Baseline & Field Data",
+  "collection_delivered_statuses": [
+   "evidence_uploaded",
+   "evidence_accepted",
+   "salesforce_id_required",
+   "submitted_to_pl",
+   "awaiting_ia_verification",
+   "ia_verified",
+   "accountant_confirmed",
+   "completed",
+   "closed"
+  ],
+  "collection_max_owner_rows": 8,
+  "collection_open_statuses": [
+   "awaiting_owner_approval",
+   "planned",
+   "scheduled",
+   "rescheduled",
+   "assigned_to_partner",
+   "partner_scheduled",
+   "in_progress",
+   "completion_started",
+   "evidence_uploaded"
+  ],
+  "collection_operating_statuses": [
+   "active",
+   "reopened"
+  ],
+  "collection_partner": "partner",
+  "collection_record_confirmed": "confirmed",
+  "collection_record_pending": "pending",
+  "collection_record_returned": "returned",
+  "coverage_dead_statuses": [
+   "cancelled",
+   "deferred",
+   "not_planned",
+   "rejected",
+   "returned",
+   "returned_by_ia"
+  ],
+  "coverage_roles": [
+   "Program Lead",
+   "ImpactAssessment"
+  ],
+  "coverage_school_training_types": [
+   "training",
+   "in_school_training",
+   "school_improvement_training",
+   "core_training"
+  ],
+  "coverage_session_types": [
+   "cluster_meeting",
+   "cluster_meeting_ssa_review",
+   "cluster_training",
+   "cluster_training_ssa_collection"
+  ],
+  "coverage_trained_types": [
+   "core",
+   "client",
+   "core_trained",
+   "core_graduate"
+  ],
+  "coverage_url": "/team-planning-oversight/?view=coverage",
+  "definition_in_review": "in_review",
+  "definition_returned": "returned",
+  "evidence_pending": "pending",
+  "framework_category": "Framework & Strategy",
+  "framework_draft": "draft",
+  "framework_in_review": "in_review",
+  "queue_duplicate_open": "potential",
+  "queue_sample_pending": "pending",
+  "queue_ssa_pending": "pending",
+  "queue_unmatched_open": [
+   "pending",
+   "hold"
+  ],
+  "story_submitted": "submitted",
+  "waiting_status": "awaiting_ia_verification"
+ },
+ "lead": {
+  "advance_approver_pending_statuses": [
+   "accountability_pl_pending",
+   "reimbursement_pl_pending"
+  ],
+  "analytics_completed_statuses": [
+   "completed",
+   "closed",
+   "ia_verified",
+   "accountant_confirmed",
+   "salesforce_id_required",
+   "awaiting_ia_verification",
+   "submitted_to_pl",
+   "evidence_accepted"
+  ],
+  "cceo_backlog_statuses": [
+   "returned_by_pl",
+   "returned_by_ia",
+   "salesforce_id_required",
+   "awaiting_ia_verification"
+  ],
+  "coaching_category": "Performance & Coaching",
+  "coaching_row_limit": 8,
+  "conversation_windows": [
+   "q1",
+   "mid_year",
+   "q3",
+   "year_end"
+  ],
+  "lead_reviewable_statuses": [
+   "submitted_to_pl",
+   "awaiting_ia_verification"
+  ],
+  "one_to_one_due_day": 10,
+  "one_to_one_kind": "one_to_one",
+  "review_category": "Performance & coaching",
+  "review_closed_statuses": [
+   "Completed",
+   "Closed"
+  ],
+  "review_done_stages": [
+   "closed",
+   "employee_acknowledged",
+   "signed_and_archived"
+  ],
+  "review_stage_manager_review": "priorities_manager_review",
+  "review_stages_before_conversation": [
+   "not_started",
+   "priorities_draft",
+   "priorities_manager_review"
+  ],
+  "reviewer_roles": {
+   "Accountant": [
+    "CountryDirector"
+   ],
+   "CCEO": [
+    "Program Lead"
+   ],
+   "CountryDirector": [
+    "RegionalVicePresident"
+   ],
+   "HumanResources": [
+    "CountryDirector"
+   ],
+   "ImpactAssessment": [
+    "CountryDirector"
+   ],
+   "Program Lead": [
+    "CountryDirector"
+   ],
+   "ProjectCoordinator": [
+    "CountryDirector"
+   ],
+   "RegionalVicePresident": [
+    "Admin"
+   ]
+  },
+  "ssa_pending_status": "pending",
+  "team_targets_completed_statuses": [
+   "completed",
+   "closed",
+   "ia_verified",
+   "accountant_confirmed",
+   "salesforce_id_required",
+   "awaiting_ia_verification",
+   "submitted_to_pl",
+   "evidence_accepted"
+  ]
+ },
  "loan_field_verification_statuses": [
   "needs_scheduling",
   "overdue"
@@ -375,6 +602,78 @@
    "RegionalProgramLead": false,
    "RegionalVicePresident": false
   },
+  "/admin-panel/users#partner-directory-title": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": false,
+   "HumanResources": false,
+   "ImpactAssessment": false,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/budget": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": true,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
+  },
+  "/business-transformation": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": true,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": true,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": true,
+   "PartnerFieldOfficer": true,
+   "Program Lead": false,
+   "ProjectCoordinator": true,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
+  },
+  "/business-transformation/impact-reports": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": true,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": true,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": true,
+   "PartnerFieldOfficer": true,
+   "Program Lead": false,
+   "ProjectCoordinator": true,
+   "RegionalProgramLead": true,
+   "RegionalVicePresident": true
+  },
   "/clusters": {
    "Accountant": false,
    "Admin": true,
@@ -425,6 +724,60 @@
    "PartnerAdmin": false,
    "PartnerFieldOfficer": false,
    "Program Lead": true,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/cost-settings": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/country-budget": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
+  },
+  "/disbursements": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": false,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
    "ProjectCoordinator": false,
    "RegionalProgramLead": false,
    "RegionalVicePresident": false
@@ -482,6 +835,132 @@
    "ProjectCoordinator": true,
    "RegionalProgramLead": false,
    "RegionalVicePresident": false
+  },
+  "/ia/dashboard/?view=collection": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/ia/dashboard/?view=collection&district={id}": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/ia/dashboard/?view=collection&owner={id}": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/ia/framework/?tab=rules&status=required": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/ia/partner-evidence/{id}/": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": false,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/ia/verification/{id}/": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/loans?open={id}#loan-register-title": {
+   "Accountant": false,
+   "Admin": false,
+   "BusinessTransformationOfficer": true,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": true,
+   "MfiPartnerAdmin": true,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
   },
   "/my-plan": {
    "Accountant": true,
@@ -609,6 +1088,24 @@
    "RegionalProgramLead": false,
    "RegionalVicePresident": false
   },
+  "/performance-conversation?staff={id}": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": true,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": true,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
+  },
   "/planning": {
    "Accountant": true,
    "Admin": true,
@@ -629,6 +1126,24 @@
   },
   "/planning/visit-requests": {
    "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": true,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/projects/planning?project={id}": {
+   "Accountant": false,
    "Admin": true,
    "BusinessTransformationOfficer": false,
    "CCEO": true,
@@ -699,6 +1214,24 @@
    "RegionalProgramLead": false,
    "RegionalVicePresident": false
   },
+  "/ssa/upload/history/?has_blocked=1": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": false,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
   "/ssa/verification/?status=returned&mine=1": {
    "Accountant": false,
    "Admin": true,
@@ -714,6 +1247,60 @@
    "PartnerFieldOfficer": false,
    "Program Lead": true,
    "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
+  },
+  "/team-planning-oversight/?view=coverage": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": true,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": true,
+   "RegionalVicePresident": true
+  },
+  "/team/coaching?open=new&cceo={id}&kind=one_to_one": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": true,
+   "RegionalVicePresident": false
+  },
+  "/work-plan?view=fy": {
+   "Accountant": true,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": true,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": true,
+   "ProjectCoordinator": true,
    "RegionalProgramLead": false,
    "RegionalVicePresident": true
   }
@@ -734,6 +1321,81 @@
   "PartnerAdmin",
   "PartnerFieldOfficer"
  ],
+ "pc_bt": {
+  "bt_concern_findings": [
+   "partly_approved",
+   "delayed",
+   "purpose_changed",
+   "possible_diversion",
+   "asset_not_delivered",
+   "asset_not_operational",
+   "insufficient_evidence",
+   "not_completed"
+  ],
+  "bt_disbursed_loan_statuses": [
+   "disbursed",
+   "active",
+   "repaid",
+   "defaulted"
+  ],
+  "bt_eligible_school_statuses": [
+   "active",
+   "reopened"
+  ],
+  "bt_ia_pending": "pending",
+  "bt_ia_returned": "returned",
+  "bt_ia_verified": "verified",
+  "bt_impact_country_bound_roles": [
+   "BusinessTransformationOfficer",
+   "CountryDirector",
+   "ImpactAssessment"
+  ],
+  "bt_impact_country_roles": [
+   "BusinessTransformationOfficer",
+   "CountryDirector",
+   "ImpactAssessment",
+   "RegionalVicePresident"
+  ],
+  "bt_legacy_preparer": "server-evidence-compiler",
+  "bt_loan_roles": [
+   "Admin",
+   "BusinessTransformationOfficer",
+   "CountryDirector",
+   "ImpactAssessment",
+   "RegionalVicePresident"
+  ],
+  "bt_purpose_requested": "requested",
+  "bt_repayment_risk_statuses": [
+   "overdue_31_90",
+   "overdue_90_plus"
+  ],
+  "bt_salesforce_pending": "pending",
+  "evidence_field_roles": [
+   "CCEO",
+   "Program Lead",
+   "PartnerAdmin",
+   "PartnerFieldOfficer",
+   "ProjectCoordinator"
+  ],
+  "fy_planner_roles": [
+   "CCEO",
+   "Program Lead",
+   "ProjectCoordinator"
+  ],
+  "open_project_statuses": [
+   "active",
+   "proposed",
+   "scaling",
+   "under_review"
+  ],
+  "project_not_planned_statuses": [
+   "cancelled",
+   "rejected",
+   "not_planned"
+  ],
+  "project_row_limit": 8,
+  "project_scan_factor": 5
+ },
  "planning_country": "Uganda",
  "priority_label": {
   "critical": "Critical",
@@ -769,7 +1431,8 @@
     "apps.staff_activity.todos:follow_up_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "Admin": {
    "builders": [
@@ -801,7 +1464,8 @@
     "apps.partners.user_setup_todos:partner_user_setup_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "BusinessTransformationOfficer": {
    "builders": [
@@ -821,7 +1485,8 @@
     "apps.impact.learning_todos:learning_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "CCEO": {
    "builders": [
@@ -848,7 +1513,8 @@
     "apps.planning.fy_todos:fy_planning_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "ClusterLeader": {
    "builders": [
@@ -866,7 +1532,8 @@
     "apps.staff_activity.todos:follow_up_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": false
+   "page": false,
+   "strip": null
   },
   "CountryDirector": {
    "builders": [
@@ -901,7 +1568,8 @@
     "apps.planning.country_oversight.todos:followup_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "HumanResources": {
    "builders": [
@@ -921,7 +1589,8 @@
     "apps.staff_activity.todos:follow_up_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "ImpactAssessment": {
    "builders": [
@@ -949,7 +1618,8 @@
     "apps.planning.coverage_todos:missing_training_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "MfiLoanOfficer": {
    "builders": [
@@ -968,7 +1638,8 @@
     "apps.staff_activity.todos:follow_up_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "MfiPartnerAdmin": {
    "builders": [
@@ -987,7 +1658,8 @@
     "apps.staff_activity.todos:follow_up_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "PartnerAdmin": {
    "builders": [
@@ -1008,7 +1680,8 @@
     "apps.impact.evidence_todos:evidence_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "PartnerFieldOfficer": {
    "builders": [
@@ -1029,7 +1702,8 @@
     "apps.impact.evidence_todos:evidence_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "Program Lead": {
    "builders": [
@@ -1069,7 +1743,8 @@
     "apps.planning.country_oversight.todos:followup_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "ProjectCoordinator": {
    "builders": [
@@ -1091,7 +1766,38 @@
     "apps.projects.portfolio_todos:project_school_planning_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": {
+    "label": "Dashboard",
+    "scrolls": true,
+    "tabs": [
+     {
+      "active": false,
+      "href": "/dashboard?view=today",
+      "label": "Today"
+     },
+     {
+      "active": false,
+      "href": "/dashboard?view=operations",
+      "label": "Operations"
+     },
+     {
+      "active": false,
+      "href": "/dashboard?view=map",
+      "label": "Map"
+     },
+     {
+      "active": true,
+      "href": "/todos",
+      "label": "To-Do"
+     },
+     {
+      "active": false,
+      "href": "/actions/mine",
+      "label": "My Actions"
+     }
+    ]
+   }
   },
   "RegionalProgramLead": {
    "builders": [
@@ -1110,7 +1816,8 @@
     "apps.staff_activity.todos:follow_up_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   },
   "RegionalVicePresident": {
    "builders": [
@@ -1133,7 +1840,8 @@
     "apps.impact.report_todos:report_todos",
     "apps.clusters.followups:attendance_todos"
    ],
-   "page": true
+   "page": true,
+   "strip": null
   }
  },
  "target_review_stages_not_agreed": [

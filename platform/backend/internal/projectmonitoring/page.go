@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
@@ -69,7 +70,29 @@ func header(v view) *screensv1.PageHeader {
 	if v.period != "" {
 		text += " Activities read for " + v.period + "."
 	}
-	return &screensv1.PageHeader{Eyebrow: "Special Projects", Title: "Project Monitoring", Description: text}
+	return &screensv1.PageHeader{Eyebrow: "Special Projects", Title: "Project Monitoring", Description: text, Actions: headerActions(v)}
+}
+
+// headerActions are the header's links as the feed reads them: Consolidated
+// tables for a reader of Country Planning Oversight, then, while a project
+// is open and the reader may export, every project and the open one, each
+// keeping the year, the stage and the column filters.
+func headerActions(v view) []*screensv1.PageAction {
+	actions := []*screensv1.PageAction{}
+	if v.doors.Consolidated {
+		actions = append(actions, pageheader.Link("Consolidated tables",
+			pageheader.Href("/country-planning-oversight/table/projects", url.Values{"fy": {v.fy}})))
+	}
+	if !v.doors.Export || v.open == nil {
+		return actions
+	}
+	kept := url.Values{"fy": {v.fy}, "stage": {v.stage}}
+	for name, value := range v.picks {
+		kept.Set(name, value)
+	}
+	return append(actions,
+		pageheader.Download("Export all projects", pageheader.Href("/projects/export", kept)),
+		pageheader.Download("Export this project", pageheader.Href("/projects/"+v.open.p.ID+"/export", kept)))
 }
 
 func panel(text string) *screensv1.PageBlock {

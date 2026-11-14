@@ -70,7 +70,7 @@ var Handled = map[string]func(ctx context.Context, s *Service, r *reader) ([]tod
 
 // PortedRoles are the roles whose queue Go builds; every other role is
 // passed on, whatever the builders it reaches.
-var PortedRoles = []string{"CCEO"}
+var PortedRoles = []string{"CCEO", leadRole, roleIA, adminRole, coordinatorRole, btRole}
 
 // Served is whether Go answers a role at all: Go has built the role's queue
 // and has every builder the role reaches.
@@ -105,7 +105,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, _ ur
 	}
 	now := s.now()
 	local := now.In(zone)
-	r := &reader{p: p, role: p.ActiveRole, now: now, fy: schooldirectory.OperationalFY(now),
+	r := &reader{p: p, role: p.ActiveRole, now: now, fy: readerYear(now),
 		today: time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)}
 	for _, id := range []string{p.UserID, p.StaffProfileID} {
 		if id != "" && !contains(r.owners, id) {
@@ -149,4 +149,20 @@ func collect(ctx context.Context, s *Service, r *reader, names []string) ([]todo
 		rows = append(rows, got...)
 	}
 	return rows, true, nil
+}
+
+// localDate is a moment's day in Kampala, at midnight UTC as the builders
+// hold days. The existing builders sometimes take the UTC day instead, which
+// is a day behind from 21:00 UTC; Go takes Kampala's (owner, 2026-11-13:
+// "Can you fix those from the go side").
+func localDate(t time.Time) time.Time {
+	local := t.In(zone)
+	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+// readerYear is the operational year of Kampala's day. The existing queue
+// reads get_operational_fy() on the UTC day, a year behind from 21:00 UTC on
+// 30 September.
+func readerYear(now time.Time) string {
+	return schooldirectory.OperationalFY(localDate(now))
 }

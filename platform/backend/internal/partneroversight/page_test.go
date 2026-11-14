@@ -153,7 +153,9 @@ func TestPageForALeadWithNoPartnerWork(t *testing.T) {
 	for _, filter := range f.GetFilters() {
 		values[filter.GetName()] = filter.GetValue()
 	}
-	want := map[string]string{"period": "week", "fy": "2027", "month": "11", "quarter": "Q1", "status": "returned"}
+	// The period select shows the period in use (the lead's is the FY), not
+	// the existing feed's stuck "week" (intended.json go-fix-period-select-partner).
+	want := map[string]string{"period": "fy", "fy": "2027", "month": "11", "quarter": "Q1", "status": "returned"}
 	for k, v := range want {
 		if values[k] != v {
 			t.Errorf("filter %s: got %q want %q", k, values[k], v)
@@ -199,5 +201,18 @@ func TestPageForAnOfficerAndForAReaderWhoAddsPartners(t *testing.T) {
 	w.role = rules.Roles["ImpactAssessment"]
 	if table := page(w).GetBlocks()[6].GetTable(); table.GetEmptyMessage() != readerEmpty || len(page(w).GetBlocks()[5].GetStrip().GetMetrics()) != 3 {
 		t.Errorf("reader register %v", table)
+	}
+}
+
+// The existing page's period select marks no option, so its feed always reads
+// "week" whatever period is shown. Go marks the period in use (owner,
+// 2026-11-13: "Can you fix those from the go side"; intended.json
+// go-fix-period-select-partner).
+func TestThePeriodSelectShowsThePeriodInUse(t *testing.T) {
+	for _, kind := range []string{"week", "month", "quarter", "fy"} {
+		block := filters(workspace{period: period{fy: "2027", kind: kind, quarter: "Q1", month: 11}})
+		if got := block.GetFilters().GetFilters()[0]; got.GetName() != "period" || got.GetValue() != kind {
+			t.Fatalf("period %s: the select shows %q", kind, got.GetValue())
+		}
 	}
 }

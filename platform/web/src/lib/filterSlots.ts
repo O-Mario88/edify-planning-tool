@@ -23,3 +23,38 @@ export function filterFields(count: number, slots: number, phone: boolean): numb
   const folds = count > (phone ? PHONE_FIELDS : slots);
   return folds ? Math.min(count, slots - 1) : count;
 }
+
+/**
+ * Which filters stay in the row and which sit under More (micro-ux.js
+ * arrangeFilterRows). A filter the page itself authors under its More
+ * filters (PageFilter.more: the Clusters page's last three) is always
+ * folded; then, where the row folds by width, More takes the last slot and
+ * the row's last fields that do not fit move under it, in front of the
+ * authored ones. A page that keeps its own grid folds only what it authors.
+ */
+export function foldFilters<T extends { readonly more?: boolean }>(
+  shown: readonly T[],
+  slots: number,
+  phone: boolean,
+  byWidth: boolean,
+): { inRow: T[]; folded: T[] } {
+  const row = shown.filter((filter) => !filter.more);
+  const authored = shown.filter((filter) => filter.more);
+  if (!byWidth) return { inRow: row, folded: authored };
+  const fields = authored.length ? Math.min(row.length, slots - 1) : filterFields(row.length, slots, phone);
+  return { inRow: row.slice(0, fields), folded: [...row.slice(fields), ...authored] };
+}
+
+/** The fewest fields micro-ux.js lays out as a shared row: fewer keep their own width. */
+const ROW_FIELDS = 3;
+const PHONE_ROW_FIELDS = 2;
+
+/**
+ * Whether a bar of `count` fields is laid out as the shared filter row
+ * (micro-ux.js arrangeFilterRows leaves a bar of fewer than two fields on a
+ * phone, three wider, as it is); such a bar, the school profile's Fiscal year
+ * and Period, keeps each select as wide as its words.
+ */
+export function arrangesRow(count: number, phone: boolean): boolean {
+  return count >= (phone ? PHONE_ROW_FIELDS : ROW_FIELDS);
+}

@@ -31,6 +31,22 @@ var rulesJSON []byte
 type Role struct {
 	Page     bool     `json:"page"`
 	Builders []string `json:"builders"`
+	Strip    *Strip   `json:"strip"`
+}
+
+// StripTab is one link of a workspace strip, as the feed reads it.
+type StripTab struct {
+	Label  string `json:"label"`
+	Href   string `json:"href"`
+	Active bool   `json:"active"`
+}
+
+// Strip is the workspace strip (partials/_section_nav.html) the page shows
+// a role below its header, as the feed reads it; nil for none.
+type Strip struct {
+	Tabs    []StripTab `json:"tabs"`
+	Label   string     `json:"label"`
+	Scrolls bool       `json:"scrolls"`
 }
 
 // Rules are the page's vocabularies.
@@ -76,6 +92,12 @@ type Rules struct {
 	PlanningCountry             string              `json:"planning_country"`
 	TargetReviewType            string              `json:"target_review_type"`
 	TargetReviewStagesNotAgreed []string            `json:"target_review_stages_not_agreed"`
+
+	Lead  LeadRules  `json:"lead"`
+	Admin AdminRules `json:"admin"`
+	PCBT  PCBTRules  `json:"pc_bt"`
+	// IA is what Impact Assessment's own builders read (ia.go).
+	IA iaRules `json:"ia"`
 }
 
 var rules = mustLoad(rulesJSON)
@@ -85,7 +107,9 @@ func mustLoad(raw []byte) Rules {
 	if err := json.Unmarshal(raw, &r); err != nil || len(r.Roles) == 0 || len(r.Builders) == 0 ||
 		len(r.OpenLinks) == 0 || len(r.PriorityOrder) == 0 || len(r.ActionMeta) == 0 || r.GroupMin <= 0 ||
 		len(r.ActivityTypeLabels) == 0 || len(r.CoreKinds) == 0 || r.MissedInARowAlert <= 0 ||
-		r.AttendanceMaxRows <= 0 || r.PlanningCountry == "" || len(r.EvidenceTables) == 0 {
+		r.AttendanceMaxRows <= 0 || r.Lead.OneToOneDueDay <= 0 || r.Lead.CoachingRowLimit <= 0 || r.Lead.SSAPendingStatus == "" || r.PlanningCountry == "" || len(r.EvidenceTables) == 0 ||
+		r.Admin.CountryBudget.Country == "" || len(r.Admin.AccountantQueueStatuses) == 0 || r.Admin.PartnerUserSetupPending == "" ||
+		r.PCBT.ProjectRowLimit <= 0 || r.PCBT.ProjectScanFactor <= 0 || len(r.PCBT.BTLoanRoles) == 0 || r.PCBT.BTIAVerified == "" {
 		panic(fmt.Sprintf("todos: the embedded rules are unreadable: %v", err))
 	}
 	return r

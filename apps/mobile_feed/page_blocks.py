@@ -199,7 +199,74 @@ def _role_home(home: Node) -> dict:
     }
 
 
-def _header(main: Node) -> dict:
+#: The classes that draw a header control as a button (a link among them).
+HEADER_BUTTON_CLASSES = ("btn", "edify-action-button")
+#: A link whose path ends here downloads a file (Staff Activity's Export).
+DOWNLOAD_PATH_END = "/export"
+
+
+def _is_header_action(node: Node, in_controls: bool) -> bool:
+    """A control of the header band the app offers as an action. In the
+    controls slot every button is one; beside it (Planning's button row, a
+    page header's aside) only what is drawn as an action button."""
+    drawn = any(node.has(name) for name in HEADER_BUTTON_CLASSES)
+    if node.tag == "button":
+        return in_controls or drawn
+    return node.tag == "a" and drawn
+
+
+def _downloads(href: str) -> bool:
+    """Whether a header link downloads a file (an export) rather than opening
+    a page: its query names an export, which the feed never passes on."""
+    from urllib.parse import parse_qsl, urlparse
+
+    from apps.mobile_feed.views import NOT_PASSED
+
+    url = urlparse(href)
+    keys = {key for key, _ in parse_qsl(url.query, keep_blank_values=True)}
+    return bool(keys & NOT_PASSED) or url.path.endswith(DOWNLOAD_PATH_END)
+
+
+def _resolved(href: str, path: str) -> str:
+    """A header link as the app is given it: one written as a query alone
+    ({% querystring %}) resolved on the page's path, and its parameters in
+    name order without the blank ones, so it reads the same whatever order
+    the page was asked in (the gateway passes no blank parameter on)."""
+    from urllib.parse import parse_qsl, urlencode
+
+    if "?" not in href:
+        return href
+    base, _, query = href.partition("?")
+    if not base:
+        if not path:
+            return href
+        base = path
+    pairs = sorted(parse_qsl(query), key=lambda pair: pair[0])
+    return f"{base}?{urlencode(pairs)}" if pairs else base
+
+
+def _header_action(node: Node, path: str) -> dict:
+    from apps.mobile_feed import dialogs
+
+    label = node.text()
+    enabled = "disabled" not in node.attrs
+    # A button that opens one of the page's own dialogs opens its sheet.
+    opens = dialogs.opener_href(node)
+    href = _resolved(node.get("hx-get") or node.get("href") or opens, path)
+    return {
+        "key": _slug(label),
+        "label": label,
+        "primary": node.has("edify-primary-solid")
+        or (node.has("edify-action-button") and node.has("primary")),
+        "enabled": enabled,
+        "reason": "" if enabled else node.get("title"),
+        "href": href,
+        "drawer": _opens_drawer(node) or bool(opens),
+        "download": node.tag == "a" and ("download" in node.attrs or _downloads(href)),
+    }
+
+
+def _header(main: Node, path: str = "") -> dict:
     home = main.find(lambda n: "data-mobile-role-home" in n.attrs)
     if home is not None:
         return _role_home(home)
@@ -207,34 +274,32 @@ def _header(main: Node) -> dict:
     title = main.find(lambda n: n.tag == "h1")
     description = main.find(lambda n: n.has("edify-page-header__description"))
     controls = main.find(lambda n: n.has("edify-page-header__controls"))
+    band = main.find(lambda n: n.has("edify-page-header"))
+    lead = band.find(lambda n: n.has("edify-page-header__lead")) if band else None
+    # The band holds the controls slot; a page without the slot (Planning)
+    # draws its buttons beside the lead.
+    holder = (
+        band
+        if band is not None and (controls is None or _inside(controls, band))
+        else controls
+    )
     badges, actions = [], []
-    for node in controls.nodes() if controls else ():
-        if node.tag == "span" and node.has("rounded-pill"):
-            badges.append(
-                {
-                    "text": node.text(),
-                    "tone": _badge_tone(node),
-                    "title": node.get("title"),
-                }
-            )
-        elif node.tag == "button" or (node.tag == "a" and node.has("btn")):
-            from apps.mobile_feed import dialogs
-
-            label = node.text()
-            enabled = "disabled" not in node.attrs
-            # A button that opens one of the page's own dialogs opens its sheet.
-            opens = dialogs.opener_href(node)
-            actions.append(
-                {
-                    "key": _slug(label),
-                    "label": label,
-                    "primary": node.has("edify-primary-solid"),
-                    "enabled": enabled,
-                    "reason": "" if enabled else node.get("title"),
-                    "href": node.get("hx-get") or node.get("href") or opens,
-                    "drawer": _opens_drawer(node) or bool(opens),
-                }
-            )
+    for node in holder.nodes() if holder else ():
+        if lead is not None and _inside(node, lead):
+            continue
+        in_controls = controls is not None and _inside(node, controls)
+        if in_controls and node.tag == "span" and node.has("rounded-pill"):
+            badge = {
+                "text": node.text(),
+                "tone": _badge_tone(node),
+                "title": node.get("title"),
+            }
+            # The year's support visit is taken: the page draws a lock.
+            if "data-visit-closed" in node.attrs:
+                badge["icon"] = "lock"
+            badges.append(badge)
+        elif _is_header_action(node, in_controls):
+            actions.append(_header_action(node, path))
     eyebrow = main.find(lambda n: n.has("edify-page-eyebrow"))
     return {
         "eyebrow": eyebrow.text() if eyebrow else "",
@@ -338,6 +403,9 @@ def _filters(form: Node) -> dict:
         caption = _filter_caption(select)
         if caption and caption != label:
             entry["caption"] = caption
+        # The page folds it under its own More filters (clusters/filters.html).
+        if _ancestor(select, lambda n: "data-edify-filter-more-panel" in n.attrs):
+            entry["more"] = True
         filters.append(entry)
     hidden = {
         node.get("name"): node.get("value")
@@ -419,6 +487,28 @@ def _row_actions(cell: Node) -> list[dict]:
     return actions
 
 
+#: A school's plan-status and Visit Lock chips (components/
+#: school_planning_badges.html, partials/planning/visit_lock_cell.html).
+PLANNING_CHIP = "school-planning-badge"
+
+
+def _planning_pills(cell: Node) -> list[dict]:
+    """The chips a cell draws side by side, each with the page's own
+    planning tone, the hover sentence and, on a Visit Lock chip, its padlock:
+    shut where the visit is held, open where it is not."""
+    pills = []
+    for chip in cell.find_all(lambda n: n.has(PLANNING_CHIP)):
+        pill = {
+            "text": chip.text(),
+            "tone": chip.get("data-planning-tone"),
+            "title": chip.get("title"),
+        }
+        if "data-visit-closed" in chip.attrs or chip.get("data-visit-lock"):
+            pill["icon"] = "unlock" if pill["tone"] == "open" else "lock"
+        pills.append(pill)
+    return pills
+
+
 def _cell(cell: Node) -> dict:
     if "data-record-action" in cell.attrs or cell.find(lambda n: n.has("row-menu")):
         note = cell.find(lambda n: n.has("row-menu__note"))
@@ -433,7 +523,7 @@ def _cell(cell: Node) -> dict:
     strong = cell.find(lambda n: n.tag in ("strong", "b"))
     text = cell.text()
     badge_tone, is_badge = _badge(cell)
-    return {
+    read = {
         "text": text,
         "href": _href(cell),
         "tone": badge_tone
@@ -442,6 +532,10 @@ def _cell(cell: Node) -> dict:
         "strong": bool(strong and strong.text() == text),
         "badge": is_badge,
     }
+    pills = _planning_pills(cell)
+    if pills:
+        read["pills"] = pills
+    return read
 
 
 def _pick(row: Node) -> dict:
@@ -532,6 +626,16 @@ def _scoped_pager(scope: Node) -> dict:
         holder.children = [size]
         pager["size"] = _filters(holder)["filters"][0]
     return pager
+
+
+def _ancestor(node: Node, test) -> Node | None:
+    """The nearest element around ``node`` that passes ``test``."""
+    holder = node.parent
+    while holder is not None:
+        if test(holder):
+            return holder
+        holder = holder.parent
+    return None
 
 
 def _inside(node: Node | None, ancestor: Node) -> bool:
@@ -1874,6 +1978,7 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
         if (beside := sibling_switch(child)) is not None:
             out.append({"segments": beside[0]})
             taken |= beside[1]
+            _calendar_after(child.parent, out)
             continue
         if later is not None and _loads_later(child):
             # A part the page loads once it is open (My Plan's readiness):
@@ -1888,11 +1993,22 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
         block = _block(child)
         if block is not None:
             out.append(block)
+            if "segments" in block:
+                _calendar_after(child, out)
         elif _holds_blocks(child) or _holds_known(child):
             _blocks(child, out, later)
         elif (fallback := _fallback(child)) is not None:
             out.append(fallback)
     return out
+
+
+def _calendar_after(holder: Node, out: list[dict]) -> None:
+    """The Calendar's month as a block of its own, right after the
+    event-type tabs that draw it as text (calendar_block)."""
+    from apps.mobile_feed import calendar_block
+
+    if (month := calendar_block.read(holder)) is not None:
+        out.append({"calendar": month})
 
 
 def _several_blocks(node: Node) -> list[dict] | None:
@@ -1974,7 +2090,7 @@ def _for_phone(node: Node) -> Node:
     return node
 
 
-def read(html: str, later=None) -> dict:
+def read(html: str, later=None, path: str = "") -> dict:
     """The page's header, tabs and blocks, in the order a phone draws them.
     ``later(path, headers)`` answers a part the page loads after it opens
     (with the headers its section sends), or None to leave it out."""
@@ -1990,7 +2106,7 @@ def read(html: str, later=None) -> dict:
     root = _for_phone(root)
     main = root.find(lambda n: n.tag == "main") or root
     page = {
-        "header": _header(main),
+        "header": _header(main, path),
         "tabs": _tabs(main),
         "dialogs": closed,
         "blocks": _blocks(main, [], later),

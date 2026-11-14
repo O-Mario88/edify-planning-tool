@@ -137,6 +137,8 @@ check_made() { # db
   expect_owner "$1" fn 'gateway_lock.lock_school(character varying)' edify_school_lock_owner
   expect_owner "$1" fn 'gateway_lock.lock_cluster(character varying)' edify_cluster_lock_owner
   expect_owner "$1" fn 'gateway_money.withdraw_unmoved_advances(character varying)' edify_advance_withdraw_owner
+  expect_owner "$1" fn 'gateway_todos.unsnooze(character varying,character varying)' edify_todo_unsnooze_owner
+  expect_owner "$1" fn 'gateway_presence.beat(character varying,character varying,character varying,character varying,timestamp with time zone,character varying,character varying,character varying,character varying,integer,integer,integer,text)' edify_presence_owner
   expect_grant "$1" "has_table_privilege('edify_gateway_ro', 'gateway_read.decision_audit', 'SELECT')" "gateway_ro reads gateway_read.decision_audit"
   expect_grant "$1" "has_table_privilege('edify_gateway_ro', 'public.school', 'SELECT') OR has_any_column_privilege('edify_gateway_ro', 'public.school', 'SELECT')" "gateway_ro reads school columns"
   expect_grant "$1" "NOT has_table_privilege('edify_gateway_ro', 'public.school', 'UPDATE')" "gateway_ro cannot UPDATE school"

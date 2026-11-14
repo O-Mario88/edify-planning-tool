@@ -138,7 +138,7 @@ func TestACardNamesItsPlaceLeaderAndFacilitator(t *testing.T) {
 		"Cluster Leader Phone": {"Not Entered", ""}, "Facilitated by": {"Staff", ""},
 		"Avg SSA": {"5.5/10", "caution"}, "Last Meeting": {"22 Apr 2026", ""}, "Last Training": {"Never", ""},
 		"SSA Coverage": {"5/7 (62.5%)", ""}, "Without SSA": {"3 schools", "caution"},
-		"SSA Required": {"2", "alert"}, "Ready for Planning": {"5", "good"}, "Next Action": {"Monitor progress", "caution"},
+		"SSA Required": {"2", "alert"}, "Ready for Planning": {"5", "good"}, "Next Action": {"Monitor progress", ""},
 	}
 	for label, w := range want {
 		if got[label] != w {

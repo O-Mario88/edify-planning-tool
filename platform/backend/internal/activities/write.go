@@ -44,6 +44,8 @@ type activityRow struct {
 	// and head count.
 	planningSource, contextType string
 	group                       *groupColumns
+	// A cluster meeting's kind (docs/migration/49); blank for other work.
+	meetingKind string
 }
 
 // groupColumns are the cluster session's own columns (_create 3371–3442).
@@ -376,7 +378,7 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 		{"activity_context_type", contextType}, {"support_rationale", ""}, {"venue", ""},
 		{"primary_driver_type", ""}, {"primary_driver_id", ""}, {"driver_reason", ""},
 		{"delivery_contact_name", ""}, {"approval_owner_id", ""}, {"owner_decision_note", ""},
-		{"visit_justification", ""}, {"partner_date_set_by", ""}, {"meeting_kind", ""},
+		{"visit_justification", ""}, {"partner_date_set_by", ""}, {"meeting_kind", r.meetingKind},
 		{"daily_visit_batch_id", optString(r.batchID)},
 		{"training_course_id", optString(r.trainingCourseID)}, {"paired_school_visit_id", optString(r.pairedVisitID)},
 	}
@@ -464,6 +466,9 @@ func (s *Service) afterCommit(ctx context.Context, pl *plan, rowID int64) {
 	}
 	if err := s.auditScheduled(ctx, pl); err != nil {
 		s.logger.Warn("activities: the scheduled audit row was not written", "activity", pl.row.id, "err", err)
+	}
+	if err := s.auditMeetingAdded(ctx, pl); err != nil {
+		s.logger.Warn("activities: the meeting's audit row was not written", "activity", pl.row.id, "err", err)
 	}
 	if err := s.pricing.Settle(ctx, []int64{rowID}, pl.row.id); err != nil {
 		s.logger.Warn("activities: the costs to follow were not settled; the sweep takes them",

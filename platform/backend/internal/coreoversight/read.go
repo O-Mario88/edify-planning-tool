@@ -205,11 +205,14 @@ SELECT c.id, c.name FROM cluster c WHERE c.deleted_at IS NULL AND c.id = ANY($1)
 	// intelligence.recommendations: open or planned, by school, rank and
 	// intervention.
 	return out, each(ctx, q, "the SSA recommendations", `
-SELECT r.school_id, r.intervention, r.score::text, r.score_band, r.reason, r.state
-FROM ssa_recommendation r WHERE r.school_id = ANY($1) AND r.state = ANY($2)
+SELECT r.school_id, r.intervention, r.score::text, r.score_band, r.reason, r.state,
+  COALESCE(i.display_name, ''), i.id IS NOT NULL, COALESCE(r.unmapped_reason, '')
+FROM ssa_recommendation r LEFT JOIN activity_catalogue_item i ON i.id = r.recommended_item_id
+WHERE r.school_id = ANY($1) AND r.state = ANY($2)
 ORDER BY r.school_id ASC, r.rank ASC, r.intervention ASC`, func(rows pgx.Rows) error {
 		var row recommendationRow
-		if err := rows.Scan(&row.SchoolID, &row.Intervention, &row.Score, &row.Band, &row.Reason, &row.State); err != nil {
+		if err := rows.Scan(&row.SchoolID, &row.Intervention, &row.Score, &row.Band, &row.Reason, &row.State,
+			&row.Item, &row.HasItem, &row.Unmapped); err != nil {
 			return err
 		}
 		out.Recommendations = append(out.Recommendations, row)

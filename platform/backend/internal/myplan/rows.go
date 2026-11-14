@@ -117,10 +117,14 @@ func (s schoolID) truthy() bool { return !s.null && s.value != "" }
 // row is one row of a plan table: the activity_data dict, with the fields
 // the post-loop pass adds.
 type row struct {
-	a                                         *activity
-	schoolID                                  schoolID
-	schoolName, schoolDistrict                string
-	clusterID, clusterName                    string
+	a                          *activity
+	schoolID                   schoolID
+	schoolName, schoolDistrict string
+	clusterID, clusterName     string
+	// placeURL is the row's place: its cluster's profile, else its
+	// school's (by primary key, by School ID for a school a session
+	// reached), else "".
+	placeURL                                  string
 	isClusterInvited                          bool
 	expected                                  *int
 	activityTypeLabel                         *string

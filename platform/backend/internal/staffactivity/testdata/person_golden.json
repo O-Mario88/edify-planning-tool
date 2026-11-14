@@ -1,0 +1,335 @@
+{
+ "busy": {
+  "blocks": [
+   {
+    "panel": {
+     "badges": [],
+     "items": [
+      {
+       "text": "GO"
+      },
+      {
+       "rows": {
+        "rows": [
+         {
+          "label": "Logins",
+          "meta": "",
+          "tone": "",
+          "value": "12"
+         }
+        ]
+       }
+      },
+      {
+       "text": "Active time"
+      },
+      {
+       "text": "2h 05m"
+      },
+      {
+       "rows": {
+        "rows": [
+         {
+          "label": "Meaningful actions",
+          "meta": "",
+          "tone": "",
+          "value": "0"
+         },
+         {
+          "label": "Schools acted on",
+          "meta": "",
+          "tone": "",
+          "value": "0"
+         }
+        ]
+       }
+      },
+      {
+       "links": {
+        "links": [
+         {
+          "caption": "",
+          "drawer": true,
+          "href": "/staff-activity/people/gpsa-p1/follow-up?period=week&on=2026-11-11",
+          "text": "Follow up"
+         }
+        ]
+       }
+      },
+      {
+       "text": "×"
+      }
+     ],
+     "subtitle": "CCEO · Central · Reports to Ruth Lead",
+     "title": "Grace A. Okello Online"
+    }
+   },
+   {
+    "panel": {
+     "badges": [],
+     "items": [
+      {
+       "lead": "Follow-up suggested:",
+       "text": "Follow-up suggested: Signed in, but no meaningful action in the period; 4 failed actions in the period. A suggestion is an offer to talk, not a judgement of performance."
+      }
+     ],
+     "subtitle": "",
+     "title": ""
+    }
+   },
+   {
+    "panel": {
+     "badges": [],
+     "items": [
+      {
+       "heading": "Sign-in history"
+      },
+      {
+       "text": "Latest 2 of 12 sessions · Week of 9 Nov 2026"
+      },
+      {
+       "links": {
+        "links": [
+         {
+          "caption": "",
+          "href": "",
+          "text": "Wed 11 Nov 2026, 08:05 · Phone Active 1h 00m · Idle <1m · Span 1h 00m Current session"
+         },
+         {
+          "caption": "",
+          "href": "",
+          "text": "Tue 10 Nov 2026, 17:30 · Unknown Active 0m · Idle 5m · Span 5m Signed out 10/11 17:35"
+         }
+        ]
+       }
+      },
+      {
+       "heading": "Time by module"
+      },
+      {
+       "text": "1 task across 2 parts of the platform"
+      },
+      {
+       "links": {
+        "links": [
+         {
+          "caption": "",
+          "href": "",
+          "text": "ModuleShareActiveActions"
+         },
+         {
+          "caption": "",
+          "href": "",
+          "text": "Planning1h 05m1 action"
+         },
+         {
+          "caption": "",
+          "href": "",
+          "text": "Clusters0m2 actions"
+         }
+        ]
+       }
+      },
+      {
+       "heading": "Meaningful actions"
+      },
+      {
+       "text": "Latest 2 of 3 · 0 done, 4 failed · page views are not actions"
+      },
+      {
+       "links": {
+        "links": [
+         {
+          "caption": "",
+          "href": "/activities/gpsa-a1",
+          "text": "Scheduled a visit"
+         },
+         {
+          "caption": "",
+          "href": "",
+          "text": "10/11 17:31 Set a cluster's partner facilitator Clusters"
+         }
+        ]
+       }
+      },
+      {
+       "heading": "Period trend"
+      },
+      {
+       "text": "Signed in on 1 day · active time and actions"
+      },
+      {
+       "links": {
+        "links": [
+         {
+          "caption": "",
+          "href": "",
+          "text": "Mon"
+         },
+         {
+          "caption": "",
+          "href": "",
+          "text": "Tue"
+         },
+         {
+          "caption": "",
+          "href": "",
+          "text": "Wed"
+         }
+        ]
+       }
+      },
+      {
+       "heading": "Manager follow-up"
+      },
+      {
+       "links": {
+        "links": [
+         {
+          "caption": "",
+          "href": "/staff-activity/follow-ups/gpsa-f1",
+          "text": "Repeated system errors"
+         },
+         {
+          "caption": "",
+          "href": "/staff-activity/follow-ups/gpsa-f2",
+          "text": "Excessive time / possible usability problem"
+         }
+        ]
+       }
+      }
+     ],
+     "subtitle": "",
+     "title": ""
+    }
+   }
+  ],
+  "dialogs": [],
+  "header": {
+   "actions": [],
+   "backHref": "",
+   "backLabel": "",
+   "badges": [],
+   "description": "",
+   "eyebrow": "",
+   "title": ""
+  },
+  "tabs": [],
+  "webPath": "/staff-activity/people/gpsa-p1"
+ },
+ "quiet": {
+  "blocks": [
+   {
+    "panel": {
+     "badges": [],
+     "items": [
+      {
+       "text": "A"
+      },
+      {
+       "rows": {
+        "rows": [
+         {
+          "label": "Logins",
+          "meta": "",
+          "tone": "",
+          "value": "0"
+         }
+        ]
+       }
+      },
+      {
+       "text": "Active time"
+      },
+      {
+       "text": "0m"
+      },
+      {
+       "rows": {
+        "rows": [
+         {
+          "label": "Meaningful actions",
+          "meta": "",
+          "tone": "",
+          "value": "0"
+         },
+         {
+          "label": "Schools acted on",
+          "meta": "",
+          "tone": "",
+          "value": "0"
+         }
+        ]
+       }
+      },
+      {
+       "text": "×"
+      }
+     ],
+     "subtitle": "Programme Lead",
+     "title": "Ann On approved leave"
+    }
+   },
+   {
+    "panel": {
+     "badges": [],
+     "items": [
+      {
+       "heading": "Sign-in history"
+      },
+      {
+       "text": "Latest 0 of 1 sessions · Week of 9 Nov 2026"
+      },
+      {
+       "text": "No sessions in this period."
+      },
+      {
+       "heading": "Time by module"
+      },
+      {
+       "text": "0 tasks across 0 parts of the platform"
+      },
+      {
+       "text": "No active time in this period."
+      },
+      {
+       "heading": "Meaningful actions"
+      },
+      {
+       "text": "0 in the period · 0 done · page views are not actions"
+      },
+      {
+       "text": "No meaningful actions in this period."
+      },
+      {
+       "heading": "Period trend"
+      },
+      {
+       "text": "Signed in on 0 days · active time and actions"
+      },
+      {
+       "heading": "Manager follow-up"
+      },
+      {
+       "text": "No follow-ups."
+      }
+     ],
+     "subtitle": "",
+     "title": ""
+    }
+   }
+  ],
+  "dialogs": [],
+  "header": {
+   "actions": [],
+   "backHref": "",
+   "backLabel": "",
+   "badges": [],
+   "description": "",
+   "eyebrow": "",
+   "title": ""
+  },
+  "tabs": [],
+  "webPath": "/staff-activity/people/gpsa-p2"
+ }
+}

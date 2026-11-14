@@ -1,0 +1,381 @@
+{
+  "action_interval_seconds": 15,
+  "action_patterns": [
+    [
+      "staff-activity/.*follow-up",
+      "Following up with staff"
+    ],
+    [
+      "whos-online|staff-activity/people",
+      "Reviewing staff activity"
+    ],
+    [
+      "reschedul",
+      "Rescheduling an activity"
+    ],
+    [
+      "schedul",
+      "Scheduling an activity"
+    ],
+    [
+      "assign-partner|assign_partner|partner-modal",
+      "Assigning a school to a partner"
+    ],
+    [
+      "add-to-cluster|bulk-assign|assign-cluster",
+      "Adding schools to a cluster"
+    ],
+    [
+      "return",
+      "Returning an assignment"
+    ],
+    [
+      "cancel",
+      "Cancelling an activity"
+    ],
+    [
+      "complet",
+      "Completing an activity"
+    ],
+    [
+      "evidence",
+      "Working on evidence"
+    ],
+    [
+      "verif",
+      "Verifying work"
+    ],
+    [
+      "approv|decline|reject",
+      "Reviewing an approval"
+    ],
+    [
+      "onboard",
+      "Onboarding a school"
+    ],
+    [
+      "upload|import",
+      "Uploading data"
+    ],
+    [
+      "export|download",
+      "Exporting data"
+    ],
+    [
+      "fund|budget|request",
+      "Working on a fund request"
+    ],
+    [
+      "debrief",
+      "Writing a field debrief"
+    ],
+    [
+      "message",
+      "Messaging"
+    ],
+    [
+      "search",
+      "Searching"
+    ],
+    [
+      "password|profile|settings|mfa",
+      "Updating their account"
+    ],
+    [
+      "login|logout",
+      "Signing in"
+    ],
+    [
+      "delete|remove|close",
+      "Removing a record"
+    ],
+    [
+      "create|new|add",
+      "Creating a record"
+    ],
+    [
+      "edit|update|save|drawer|form",
+      "Editing a record"
+    ]
+  ],
+  "background_header": "X-Edify-Background",
+  "describe_samples": [
+    {
+      "action": "",
+      "page": "/dashboard",
+      "section": "Dashboard",
+      "working_on": "Viewing Dashboard"
+    },
+    {
+      "action": "",
+      "page": "/",
+      "section": "Dashboard",
+      "working_on": "Viewing Dashboard"
+    },
+    {
+      "action": "POST /today/snooze",
+      "page": "/today/snooze",
+      "section": "Today",
+      "working_on": "Viewing Today · snooze"
+    },
+    {
+      "action": "POST /today/unsnooze",
+      "page": "/today/unsnooze",
+      "section": "Today",
+      "working_on": "Viewing Today · unsnooze"
+    },
+    {
+      "action": "GET /today/panel",
+      "page": "/dashboard",
+      "section": "Dashboard",
+      "working_on": "Viewing Dashboard"
+    },
+    {
+      "action": "GET /home/queue",
+      "page": "/home",
+      "section": "Home",
+      "working_on": "Viewing Home"
+    },
+    {
+      "action": "",
+      "page": "/my-plan/",
+      "section": "My Plan",
+      "working_on": "Viewing My Plan"
+    },
+    {
+      "action": "",
+      "page": "/clusters/cmwf2o25u0029zxghjecr",
+      "section": "Clusters",
+      "working_on": "Viewing a cluster record"
+    },
+    {
+      "action": "",
+      "page": "/schools/123/profile",
+      "section": "School Directory",
+      "working_on": "Viewing a school directory record"
+    },
+    {
+      "action": "",
+      "page": "/schools/SV-12",
+      "section": "School Directory",
+      "working_on": "Viewing a school directory record"
+    },
+    {
+      "action": "GET /planning/schedule-modal?school_id=1",
+      "page": "/planning/schedule-modal",
+      "section": "Planning",
+      "working_on": "Scheduling an activity"
+    },
+    {
+      "action": "POST /calendar/reschedule",
+      "page": "/calendar/",
+      "section": "Calendar",
+      "working_on": "Rescheduling an activity"
+    },
+    {
+      "action": "GET /staff-activity/people/abc/follow-up",
+      "page": "/staff-activity/people/abc",
+      "section": "Staff Activity",
+      "working_on": "Following up with staff"
+    },
+    {
+      "action": "",
+      "page": "/unknown-place/sub_page",
+      "section": "Unknown Place",
+      "working_on": "Viewing Unknown Place · sub page"
+    },
+    {
+      "action": "POST /activities/x/complete",
+      "page": "/activities",
+      "section": "Activities",
+      "working_on": "Completing an activity"
+    },
+    {
+      "action": "POST",
+      "page": "/settings",
+      "section": "Settings",
+      "working_on": "Viewing Settings"
+    },
+    {
+      "action": "POST /partner-oversight/assign-partner",
+      "page": "/partner-oversight/",
+      "section": "Partner Oversight",
+      "working_on": "Assigning a school to a partner"
+    },
+    {
+      "action": "",
+      "page": "/categories/one",
+      "section": "Categories",
+      "working_on": "Viewing Categories · one"
+    }
+  ],
+  "final_beat_seconds": 30,
+  "footprint_samples": [
+    {
+      "current_url": "",
+      "footprint": [
+        "/clusters/",
+        ""
+      ],
+      "htmx": false,
+      "method": "GET",
+      "path": "/clusters/"
+    },
+    {
+      "current_url": "",
+      "footprint": [
+        "/today/snooze",
+        "POST /today/snooze"
+      ],
+      "htmx": true,
+      "method": "POST",
+      "path": "/today/snooze"
+    },
+    {
+      "current_url": "http://localhost/dashboard?today_section=own",
+      "footprint": [
+        "/dashboard",
+        "POST /today/unsnooze"
+      ],
+      "htmx": true,
+      "method": "POST",
+      "path": "/today/unsnooze"
+    },
+    {
+      "current_url": "https://edify.example/my-plan/#top",
+      "footprint": [
+        "/my-plan/",
+        "GET /today/panel"
+      ],
+      "htmx": true,
+      "method": "GET",
+      "path": "/today/panel"
+    },
+    {
+      "current_url": "",
+      "footprint": [
+        "/today/panel",
+        "GET /today/panel"
+      ],
+      "htmx": true,
+      "method": "GET",
+      "path": "/today/panel"
+    },
+    {
+      "current_url": "",
+      "footprint": [
+        "/planning/",
+        ""
+      ],
+      "htmx": false,
+      "method": "HEAD",
+      "path": "/planning/"
+    },
+    {
+      "current_url": "/calendar/",
+      "footprint": [
+        "/calendar/",
+        "OPTIONS /planning/"
+      ],
+      "htmx": true,
+      "method": "OPTIONS",
+      "path": "/planning/"
+    },
+    {
+      "current_url": "",
+      "footprint": [
+        "/messages/abc",
+        "DELETE /messages/abc"
+      ],
+      "htmx": false,
+      "method": "DELETE",
+      "path": "/messages/abc"
+    },
+    {
+      "current_url": "",
+      "footprint": null,
+      "htmx": false,
+      "method": "GET",
+      "path": "/api/mobile/v1/page"
+    },
+    {
+      "current_url": "",
+      "footprint": null,
+      "htmx": false,
+      "method": "POST",
+      "path": "/api/mobile/v1/drawer"
+    },
+    {
+      "current_url": "",
+      "footprint": null,
+      "htmx": false,
+      "method": "GET",
+      "path": "/static/app.js"
+    },
+    {
+      "current_url": "",
+      "footprint": null,
+      "htmx": false,
+      "method": "GET",
+      "path": "/schools/report.pdf"
+    },
+    {
+      "current_url": "/dashboard",
+      "footprint": null,
+      "htmx": true,
+      "method": "POST",
+      "path": "/staff-activity/beat"
+    },
+    {
+      "current_url": "",
+      "footprint": [
+        "/",
+        ""
+      ],
+      "htmx": false,
+      "method": "GET",
+      "path": ""
+    },
+    {
+      "current_url": "",
+      "footprint": [
+        "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "POST /xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "htmx": true,
+      "method": "POST",
+      "path": "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+  ],
+  "id_segment": "^(?:[a-z0-9]{20,}|\\d+|[A-Za-z]{1,4}-\\d+)$",
+  "idle_seconds": 300,
+  "lengths": {
+    "action": 255,
+    "login_id": 30,
+    "page": 255,
+    "section": 64,
+    "working_on": 128
+  },
+  "online_window_seconds": 600,
+  "read_methods": [
+    "GET",
+    "HEAD",
+    "OPTIONS"
+  ],
+  "time_zone": "Africa/Nairobi",
+  "untracked_prefixes": [
+    "/login",
+    "/logout",
+    "/api/",
+    "/static/",
+    "/media/",
+    "/health",
+    "/favicon",
+    "/realtime",
+    "/sw.js",
+    "/manifest",
+    "/robots.txt",
+    "/support/client-defect",
+    "/staff-activity/beat"
+  ]
+}

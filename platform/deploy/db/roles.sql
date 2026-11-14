@@ -495,3 +495,78 @@ GRANT SELECT (source_engagement_id) ON cce_cceo_coaching TO edify_gateway_ro;
 -- agreed actions or the officer's response.
 GRANT SELECT (id, subject, kind, held_on, author_id, cceo_staff_id, cceo_user_id, country, follow_up_due, follow_up_done_at,
   shared_at, acknowledged_at, created_at) ON cce_cceo_coaching TO edify_gateway_ro;
+-- The To-Do page's Programme Lead builders (agent/todos-pl, docs/migration/55).
+GRANT SELECT (id, fy, status, due_date, created_at) ON hr_performance_review TO edify_gateway_ro;
+GRANT SELECT (id, fy, active_window) ON hr_performance_cycle TO edify_gateway_ro;
+GRANT SELECT (kind, held_on, author_id) ON cce_cceo_coaching TO edify_gateway_ro;
+GRANT SELECT (id) ON cce_regional_engagement TO edify_gateway_ro;
+GRANT SELECT (author_id) ON cce_team_guidance TO edify_gateway_ro;
+GRANT SELECT (assigned_to_user_id) ON cd_flag TO edify_gateway_ro;
+GRANT SELECT (id) ON partner_invoice TO edify_gateway_ro;
+GRANT SELECT (program_lead_user_id) ON planning_oversight_follow_up TO edify_gateway_ro;
+GRANT SELECT (pl_user_id) ON target_catchup_plan TO edify_gateway_ro;
+GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
+
+-- Impact Assessment's To-Do queue (docs/migration/56): what IA's own
+-- builders read and the guards that pass a reader on.
+GRANT SELECT (updated_at, ssa_not_collected_reason) ON activity TO edify_gateway_ro;
+GRANT SELECT (collector_type) ON ssa_record TO edify_gateway_ro;
+GRANT SELECT (id, status, batch_id) ON ssa_import_row TO edify_gateway_ro;
+GRANT SELECT (id, uploaded_by, created_at) ON ssa_import_batch TO edify_gateway_ro;
+GRANT SELECT (requires_school) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (catalogue_item_id, is_primary, reviewed_at) ON activity_intervention_mapping TO edify_gateway_ro;
+GRANT SELECT (status) ON impact_outcome_area TO edify_gateway_ro;
+GRANT SELECT (status) ON impact_indicator_definition TO edify_gateway_ro;
+GRANT SELECT (status) ON unmatched_ssa_record TO edify_gateway_ro;
+GRANT SELECT (status) ON ia_duplicate_activity TO edify_gateway_ro;
+GRANT SELECT (status) ON ia_verification_sample TO edify_gateway_ro;
+GRANT SELECT (id) ON impact_finding TO edify_gateway_ro;
+GRANT SELECT (id) ON impact_report TO edify_gateway_ro;
+GRANT SELECT (assigned_to_user_id) ON cd_flag TO edify_gateway_ro;
+
+-- The To-Do page's Admin builders (agent/todos-cd-admin, docs/migration/57): the General Budget's desks,
+-- the cost catalogue, partner logins waiting, and the guards of the Accountant's and HR's desks. Months,
+-- statuses, dates and counts only; no amounts, notes or document contents.
+GRANT SELECT (id, month_key, country_id, status) ON monthly_work_plan_budget TO edify_gateway_ro;
+GRANT SELECT (created_at) ON fund_request TO edify_gateway_ro;
+GRANT SELECT (user_setup_status, created_at) ON partner TO edify_gateway_ro;
+GRANT SELECT (returned_amount, return_verified_at) ON advance_request TO edify_gateway_ro;
+GRANT SELECT (status, archived_at) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (probation_review_date) ON hr_onboarding_plan TO edify_gateway_ro;
+GRANT SELECT (uploaded_by) ON ssa_import_batch TO edify_gateway_ro;
+
+-- The To-Do page's Project Coordinator and Business Transformation builders (agent/todos-pc-bto,
+-- docs/migration/58-todos-pc-bto.md): loan submission days, the states and finding words that say whether
+-- a loan section has rows, and loan impact conclusions' due days, states and preparer. No notes or amounts.
+GRANT SELECT (submitted_at) ON bt_mfi_loan TO edify_gateway_ro;
+GRANT SELECT (id) ON bt_loan_verification_requirement TO edify_gateway_ro;
+GRANT SELECT (requirement_id, finding, concern_reviewed_at) ON bt_loan_use_result TO edify_gateway_ro;
+GRANT SELECT (status) ON bt_loan_purpose_proposal TO edify_gateway_ro;
+GRANT SELECT (loan_id, due_date, ia_status, prepared_by, prepared_at, updated_at) ON bt_loan_impact_assessment TO edify_gateway_ro;
+-- The Training Summary's Schools tab (internal/trainingsummary, doc 44):
+-- training_coverage.uncovered leaves out a school marked a duplicate.
+GRANT SELECT (duplicate_status) ON school TO edify_gateway_ro;
+-- Planning Oversight's Team Plan (internal/planningoversight, doc 47.6):
+-- an undated activity sits in its month by planned_month (_in_month).
+GRANT SELECT (planned_month) ON activity TO edify_gateway_ro;
+-- Staff Activity Log, a person's detail (docs/migration/41-staff-activity.md
+-- §41.6): each session's active time, the number of tasks a person worked on,
+-- and their follow-ups' kind, state and due day.
+GRANT SELECT (active_seconds) ON login_event TO edify_gateway_ro;
+GRANT SELECT (working_on) ON presence_time TO edify_gateway_ro;
+GRANT SELECT (id, trigger, due_date, created_at) ON staff_usage_follow_up TO edify_gateway_ro;
+
+-- Core School Oversight's recommendations (backlog core-recommendations): the
+-- recommended training each names, or why none is mapped.
+GRANT SELECT (recommended_item_id, unmapped_reason) ON ssa_recommendation TO edify_gateway_ro;
+-- Extra Assigned Work (internal/extrawork, docs/migration/114-extra-work.md):
+-- the reader's assignments of a year as assignee, assigner, reviewer and
+-- supervising Programme Lead, the words the page shows of each (title,
+-- instruction, return reason, outcome and evidence note) and the points the
+-- verified ones earned; whether the year's scoring policy is approved. The
+-- evidence link's address is read only to know there is one; Go never shows
+-- it. No category, link to a priority, reason or verifier.
+GRANT SELECT (id, fy, title, instruction, assigner_id, assigner_role, assignee_id, assignee_role, supervising_pl_id,
+  reviewer_id, due_date, status, return_reason, outcome, evidence_note, evidence_uri, contribution_points, submitted_at)
+  ON hr_extra_assignment TO edify_gateway_ro;
+GRANT SELECT (fy, status) ON hr_extra_work_scoring_policy TO edify_gateway_ro;

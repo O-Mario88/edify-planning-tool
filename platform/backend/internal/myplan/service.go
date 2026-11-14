@@ -21,8 +21,9 @@ const Path = "/my-plan"
 
 // Service builds My Plan.
 type Service struct {
-	db  schooldirectory.Querier
-	now func() time.Time
+	db      schooldirectory.Querier
+	now     func() time.Time
+	summary TrainingSummaryReader
 }
 
 // NewService wires the service to the database it reads.
@@ -76,8 +77,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !readable {
 		return nil, false, nil
 	}
-	held, err := holdsAnything(ctx, s.db, p)
-	if err != nil || held {
+	held, trains, err := holdsAnything(ctx, s.db, p)
+	if err != nil || held || (trains && s.summary == nil) {
 		return nil, false, err
 	}
 	// A planner's Planned and remaining is Go's only while it reads no
@@ -126,12 +127,22 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			return nil, false, err
 		}
 	}
+	var summary []TrainingSummaryRow
+	if trains {
+		if summary, err = s.summary(ctx, s.db, p.StaffProfileID, p.UserID, "", period.FY, now); err != nil {
+			return nil, false, err
+		}
+		// The summary pages by the table's page size (my_training_page).
+		if len(summary) > planTablePageSize {
+			return nil, false, nil
+		}
+	}
 	choices, err := s.choices(ctx)
 	if err != nil {
 		return nil, true, err
 	}
 	return planPage(pageParts{period: period, years: schooldirectory.FYOptions(now), choices: choices, request: request,
-		plan: plan, filters: f, target: target, planned: planned, tables: tables}), true, nil
+		plan: plan, filters: f, target: target, planned: planned, tables: tables, summary: summary}), true, nil
 }
 
 // choices are the District and Staff member selects' options: every

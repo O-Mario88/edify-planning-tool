@@ -17,6 +17,7 @@ import type { PageAction, PageCell, PageRow, PageTable } from '@/gen/edify/scree
 import { actionHref, isActionsCell, isHeadingRow, resolveHref, splitActions } from '@/lib/feedPage';
 
 import { Badge } from '../blocks/Badge';
+import { PlanningChips } from '../blocks/PlanningChips';
 import { RowActions } from '../blocks/RowActions';
 import { textTone } from '../blocks/tones';
 import { Icon } from '../shell/icons';
@@ -45,6 +46,7 @@ const CELL = 'whitespace-nowrap px-3 py-2 align-middle first:pl-4 last:pr-4';
 
 function CellText({ cell, resolve }: { cell: PageCell; resolve: (href: string) => string }) {
   const href = resolve(cell.href);
+  if (cell.pills.length) return <PlanningChips pills={cell.pills} />;
   if (cell.badge) return <Badge tone={cell.tone}>{cell.text}</Badge>;
   const text = <span className={`${cell.strong ? 'font-semibold' : ''} ${textTone(cell.tone)}`}>{cell.text}</span>;
   return href ? (

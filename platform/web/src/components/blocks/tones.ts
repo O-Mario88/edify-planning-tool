@@ -53,3 +53,21 @@ const TEXT: Readonly<Record<string, string>> = {
 export function textTone(tone: string): string {
   return TEXT[tone] ?? '';
 }
+
+/**
+ * A record card's fact values (`.school-record-row__metadata dd`,
+ * static/css/platform.css): plain values in the accent blue, the card's
+ * danger, warning and success colours for its toned ones.
+ */
+const RECORD_FACT: Readonly<Record<string, string>> = {
+  alert: 'text-[var(--edify-danger)]',
+  danger: 'text-[var(--edify-danger)]',
+  caution: 'text-[var(--edify-warning)]',
+  warning: 'text-[var(--edify-warning)]',
+  good: 'text-[var(--edify-success)]',
+  success: 'text-[var(--edify-success)]',
+};
+
+export function recordFactTone(tone: string): string {
+  return RECORD_FACT[tone] ?? (textTone(tone) || 'text-[var(--edify-accent-text)]');
+}
