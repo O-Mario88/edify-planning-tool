@@ -1,0 +1,234 @@
+{
+  "canonical_rates": [
+    [
+      "onetest",
+      "OneTest"
+    ],
+    [
+      "client_partner_visit",
+      "Client Partner Visit"
+    ],
+    [
+      "core_partner_visit",
+      "Core Partner Visit"
+    ],
+    [
+      "partner_meetings",
+      "Partner Meetings"
+    ],
+    [
+      "tot_trainings",
+      "TOT trainings"
+    ],
+    [
+      "tot_trainings_meals",
+      "TOT trainings - Meals"
+    ],
+    [
+      "cluster_meetings_trainings_meals",
+      "Cluster Meeting - Participant Meals"
+    ],
+    [
+      "group_training_meals",
+      "Group Training - Participant Meals"
+    ],
+    [
+      "student_conference",
+      "Student Conference"
+    ],
+    [
+      "proprietor_conference",
+      "Proprietor Conference"
+    ],
+    [
+      "printing_training_materials",
+      "Printing training materials"
+    ],
+    [
+      "photocopying_training_materials",
+      "Photocopying training materials"
+    ],
+    [
+      "group_training_venue_cost",
+      "Venue Fee"
+    ],
+    [
+      "group_training_facilitation_fee",
+      "Facilitation Fee"
+    ],
+    [
+      "primary_transport_per_day",
+      "Transport Primary District"
+    ],
+    [
+      "secondary_transport_per_day",
+      "Transport Secondary District"
+    ],
+    [
+      "lunch_per_day",
+      "Lunch"
+    ],
+    [
+      "secondary_breakfast_per_day",
+      "Breakfast"
+    ],
+    [
+      "secondary_overnight_dinner_per_day",
+      "Dinner"
+    ],
+    [
+      "secondary_accommodation_per_night",
+      "Accommodation - CCEO"
+    ],
+    [
+      "management_accommodation_per_night",
+      "Accommodation - PL, CD, IA, Accountant and other staff"
+    ]
+  ],
+  "day": {
+    "accommodation_key": "secondary_accommodation_per_night",
+    "accommodation_keys": [
+      "management_accommodation_per_night",
+      "secondary_accommodation_per_night"
+    ],
+    "dinner_key": "secondary_overnight_dinner_per_day",
+    "labels": {
+      "lunch_per_day": "Lunch",
+      "management_accommodation_per_night": "Accommodation",
+      "primary_transport_per_day": "Transport Primary District",
+      "secondary_accommodation_per_night": "Accommodation",
+      "secondary_breakfast_per_day": "Breakfast",
+      "secondary_overnight_dinner_per_day": "Dinner",
+      "secondary_transport_per_day": "Transport Secondary District"
+    },
+    "optional": {
+      "primary": [],
+      "secondary": []
+    },
+    "required": {
+      "primary": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "secondary": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day",
+        "secondary_overnight_dinner_per_day",
+        "secondary_accommodation_per_night"
+      ]
+    },
+    "return_day_dropped": [
+      "management_accommodation_per_night",
+      "secondary_accommodation_per_night",
+      "secondary_overnight_dinner_per_day"
+    ]
+  },
+  "meals_rate_keys": [
+    "tot_trainings_meals",
+    "cluster_meetings_trainings_meals",
+    "group_training_meals"
+  ],
+  "optional_rate_keys": [
+    "cluster_meetings_trainings_meals",
+    "group_training_meals",
+    "onetest",
+    "photocopying_training_materials",
+    "printing_training_materials",
+    "proprietor_conference",
+    "student_conference",
+    "tot_trainings"
+  ],
+  "rate_aliases": [
+    [
+      "management_accommodation_per_night",
+      [
+        "secondary_accommodation_per_night"
+      ]
+    ],
+    [
+      "lunch_per_day",
+      [
+        "primary_lunch_per_day",
+        "secondary_lunch_per_day"
+      ]
+    ],
+    [
+      "client_partner_visit",
+      [
+        "partner_visit_lump_sum"
+      ]
+    ],
+    [
+      "core_partner_visit",
+      [
+        "partner_visit_lump_sum"
+      ]
+    ],
+    [
+      "partner_meetings",
+      [
+        "partner_visit_lump_sum"
+      ]
+    ],
+    [
+      "tot_trainings_meals",
+      [
+        "group_training_participant_meal_cost_per_head"
+      ]
+    ],
+    [
+      "cluster_meetings_trainings_meals",
+      [
+        "cluster_meeting_participant_meal_cost_per_head",
+        "meals_per_participant"
+      ]
+    ]
+  ],
+  "types": {
+    "cluster_meeting": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
+    "cluster_training": [
+      "cluster_training",
+      "cluster_training_ssa_collection"
+    ],
+    "core_work": [
+      "core_assessment_visit",
+      "core_training",
+      "core_visit"
+    ],
+    "ssa_work": [
+      "baseline_ssa_visit",
+      "partner_ssa_collection",
+      "school_visit_ssa_collection",
+      "ssa_activity"
+    ],
+    "training": [
+      "cluster_training",
+      "cluster_training_ssa_collection",
+      "core_training",
+      "in_school_training",
+      "school_improvement_training",
+      "training"
+    ],
+    "visit": [
+      "baseline_ssa_visit",
+      "coaching_visit",
+      "core_assessment_visit",
+      "core_visit",
+      "donor_visit",
+      "follow_up_visit",
+      "in_school_coaching_visit",
+      "in_school_support",
+      "partner_ssa_collection",
+      "school_invitation",
+      "school_visit",
+      "school_visit_ssa_collection",
+      "social_visit",
+      "story_gathering_visit",
+      "training_follow_up_visit"
+    ]
+  }
+}
