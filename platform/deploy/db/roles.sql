@@ -695,3 +695,13 @@ GRANT SELECT (fy, target_type, target_value, is_active) ON target_setting TO edi
 GRANT SELECT (days_charged, coverage_notes) ON leave TO edify_gateway_ro;
 GRANT SELECT (staff_id, year, leave_type, remaining) ON leave_balance TO edify_gateway_ro;
 GRANT SELECT (leave_request_id) ON temporary_coverage_assignment TO edify_gateway_ro;
+
+-- Leave Approvals (internal/leaveapprovals): a request's reason (shown only
+-- to an authorised approver, as the existing page does), whether it carries a
+-- document (the page is passed on when it does), its cover's state, length,
+-- decision and when it was made; each leave type's approval floor; a
+-- balance's entitlement; and the monthly-plan items a leave falls on.
+GRANT SELECT (reason, attachment, coverage_status, days, reviewed_by_user_id, reviewed_at, created_at) ON leave TO edify_gateway_ro;
+GRANT SELECT (id, approver_role) ON leave_type_policy TO edify_gateway_ro;
+GRANT SELECT (id, entitlement) ON leave_balance TO edify_gateway_ro;
+GRANT SELECT (assignee_id, scheduled_date) ON monthly_plan_activity TO edify_gateway_ro;
