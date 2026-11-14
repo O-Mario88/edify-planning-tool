@@ -1,0 +1,51 @@
+{
+  "cluster_scope_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "training"
+  ],
+  "page_roles": {
+    "/partner/assigned-activities": [
+      "Admin",
+      "ImpactAssessment",
+      "PartnerAdmin",
+      "PartnerFieldOfficer"
+    ],
+    "/partner/assigned-schools": [
+      "Admin",
+      "ImpactAssessment",
+      "PartnerAdmin",
+      "PartnerFieldOfficer"
+    ]
+  },
+  "page_size": 50,
+  "partner_role_bridge": false,
+  "purpose_labels": {
+    "donor_visit": "Donor Visit",
+    "in_school_coaching": "In-school Coaching Visit",
+    "in_school_training": "In-school Training",
+    "in_school_training_delivery_visit": "In-school Training Delivery Visit",
+    "in_school_training_ssa": "In-school Training + SSA Collection",
+    "school_invitation": "School Invitation",
+    "social_visit": "Social Visit",
+    "ssa_support": "SSA Support",
+    "story_gathering": "Content/Story Collection",
+    "training_follow_up": "Training Follow Up"
+  },
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "queue_limit": 300,
+  "queue_statuses": [
+    "assigned",
+    "pending_scheduling",
+    "returned"
+  ]
+}

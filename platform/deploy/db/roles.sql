@@ -596,3 +596,5 @@ GRANT SELECT (id, fy, title, instruction, assigner_id, assigner_role, assignee_i
 GRANT SELECT (fy, status) ON hr_extra_work_scoring_policy TO edify_gateway_ro;
 -- Staff Setup Queue: whether a school's uploaded owner is matched yet.
 GRANT SELECT (account_owner_status) ON school TO edify_gateway_ro;
+-- The partner's intake queues: an assignment's free-text purpose, shown when no coded one exists.
+GRANT SELECT (purpose) ON partner_assignment TO edify_gateway_ro;
