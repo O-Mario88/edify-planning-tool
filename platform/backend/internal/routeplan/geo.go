@@ -41,6 +41,12 @@ func check(lat, lng float64, status string) (LatLng, string) {
 	return LatLng{lat, lng}, status
 }
 
+// checkPoint is whether a point is a usable one in Uganda.
+func checkPoint(lat, lng float64) (LatLng, bool) {
+	at, status := check(lat, lng, LocationRecorded)
+	return at, status == LocationRecorded
+}
+
 // Placed is whether the status has a point.
 func Placed(status string) bool { return status == LocationVerified || status == LocationRecorded }
 

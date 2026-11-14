@@ -68,8 +68,9 @@ func (s *Service) measure(ctx context.Context, placed []school, start *LatLng) (
 	if start != nil {
 		m.points, m.offset = append(m.points, *start), 1
 	}
+	// Road figures go to each school's entrance when it has one.
 	for _, sc := range placed {
-		m.points = append(m.points, sc.at)
+		m.points = append(m.points, sc.road())
 	}
 	if len(m.points) < 2 {
 		return m, ProviderNote{}
@@ -129,7 +130,7 @@ func (s *Service) build(ctx context.Context, t trip) (*routesv1.Itinerary, Provi
 		ordered = append(ordered, *t.start)
 	}
 	for _, i := range plan.Order {
-		ordered = append(ordered, placed[i].at)
+		ordered = append(ordered, placed[i].road())
 	}
 	var route Route
 	if m.road != nil && len(ordered) > 1 {

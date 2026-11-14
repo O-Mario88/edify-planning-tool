@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/routes/v1/routes.proto.
  */
 export const file_edify_routes_v1_routes: GenFile = /*@__PURE__*/
-  fileDesc("ChxlZGlmeS9yb3V0ZXMvdjEvcm91dGVzLnByb3RvEg9lZGlmeS5yb3V0ZXMudjEiIQoFUG9pbnQSCwoDbGF0GAEgASgBEgsKA2xuZxgCIAEoASKEAgoJU2Nob29sUGluEhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRjb2RlGAIgASgJEgwKBG5hbWUYAyABKAkSEAoIZGlzdHJpY3QYBCABKAkSDwoHY2x1c3RlchgFIAEoCRIOCgZzdGF0dXMYBiABKAkSEAoIY2F0ZWdvcnkYByABKAkSFwoPbG9jYXRpb25fc3RhdHVzGAggASgJEiUKBXBvaW50GAkgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC2FjdGl2aXR5X2lkGAogASgJEhQKDHBsYW5uZWRfdGltZRgLIAEoCRIYChBjYW5fb3Blbl9wcm9maWxlGAwgASgIIuoBCghSb3V0ZUxlZxISCgpmcm9tX2xhYmVsGAEgASgJEhQKDHRvX3NjaG9vbF9pZBgCIAEoCRIcChRzdHJhaWdodF9saW5lX21ldGVycxgDIAEoAxIWCg5yb2FkX2F2YWlsYWJsZRgEIAEoCBITCgtyb2FkX21ldGVycxgFIAEoAxIUCgxyb2FkX3NlY29uZHMYBiABKAMSGAoQZXN0aW1hdGVfc2Vjb25kcxgHIAEoAxIkCgRwYXRoGAggAygLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC3JvYWRfc3RhdHVzGAkgASgJIuwBCg1JdGluZXJhcnlTdG9wEg0KBW9yZGVyGAEgASgFEioKBnNjaG9vbBgCIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SJgoDbGVnGAMgASgLMhkuZWRpZnkucm91dGVzLnYxLlJvdXRlTGVnEg8KB2Fycml2YWwYBCABKAkSEQoJZGVwYXJ0dXJlGAUgASgJEhUKDXZpc2l0X21pbnV0ZXMYBiABKAUSDgoGbG9ja2VkGAcgASgIEg0KBWZpeGVkGAggASgIEhAKCGNvbmZsaWN0GAkgASgJEgwKBGtpbmQYCiABKAki2QEKC1JvdXRlVG90YWxzEhwKFHN0cmFpZ2h0X2xpbmVfbWV0ZXJzGAEgASgDEhMKC3JvYWRfbWV0ZXJzGAIgASgDEhQKDHJvYWRfc2Vjb25kcxgDIAEoAxIVCg1yb2FkX2NvbXBsZXRlGAQgASgIEhgKEGVzdGltYXRlX3NlY29uZHMYBSABKAMSFQoNdmlzaXRfbWludXRlcxgGIAEoBRIVCg1maWVsZF9taW51dGVzGAcgASgFEhAKCHNlbGVjdGVkGAggASgFEhAKCGZlYXNpYmxlGAkgASgFIogCCglJdGluZXJhcnkSDAoEbW9kZRgBIAEoCRITCgtzdGFydF9sYWJlbBgCIAEoCRIlCgVzdGFydBgDIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBItCgVzdG9wcxgEIAMoCzIeLmVkaWZ5LnJvdXRlcy52MS5JdGluZXJhcnlTdG9wEiwKBnRvdGFscxgFIAEoCzIcLmVkaWZ5LnJvdXRlcy52MS5Sb3V0ZVRvdGFscxIRCgljb25mbGljdHMYBiADKAkSEwoLZXhwbGFuYXRpb24YByABKAkSLAoIdW5wbGFjZWQYCCADKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluIrkBCgpTdWdnZXN0aW9uEioKBnNjaG9vbBgBIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SFAoMYWRkZWRfbWV0ZXJzGAIgASgDEhUKDWFkZGVkX3NlY29uZHMYAyABKAMSDwoHbWVhc3VyZRgEIAEoCRIOCgZyZWFzb24YBSABKAkSDQoFbGFiZWwYBiABKAkSEAoIZWxpZ2libGUYByABKAgSEAoIZml0c19kYXkYCCABKAgiQwoOUHJvdmlkZXJTdGF0dXMSDAoEbmFtZRgBIAEoCRISCgpjb25maWd1cmVkGAIgASgIEg8KB21lc3NhZ2UYAyABKAkiLAoMRmlsdGVyT3B0aW9uEg0KBXZhbHVlGAEgASgJEg0KBWxhYmVsGAIgASgJImMKEkdldEZpZWxkRGF5UmVxdWVzdBIMCgRkYXRlGAEgASgJEhMKC2Rpc3RyaWN0X2lkGAIgASgJEhIKCmNsdXN0ZXJfaWQYAyABKAkSFgoObmVhcl9zY2hvb2xfaWQYBCABKAkinAMKE0dldEZpZWxkRGF5UmVzcG9uc2USDAoEZGF0ZRgBIAEoCRISCgpkYXRlX2xhYmVsGAIgASgJEisKB3BsYW5uZWQYAyADKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEi8KC3JlY29tbWVuZGVkGAQgASgLMhouZWRpZnkucm91dGVzLnYxLkl0aW5lcmFyeRIwCgtzdWdnZXN0aW9ucxgFIAMoCzIbLmVkaWZ5LnJvdXRlcy52MS5TdWdnZXN0aW9uEjEKCHByb3ZpZGVyGAYgASgLMh8uZWRpZnkucm91dGVzLnYxLlByb3ZpZGVyU3RhdHVzEjAKCWRpc3RyaWN0cxgHIAMoCzIdLmVkaWZ5LnJvdXRlcy52MS5GaWx0ZXJPcHRpb24SLwoIY2x1c3RlcnMYCCADKAsyHS5lZGlmeS5yb3V0ZXMudjEuRmlsdGVyT3B0aW9uEhIKCmFyZWFfbGFiZWwYCSABKAkSKQoFZm9jdXMYCiABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluIpkBChBQbGFuUm91dGVSZXF1ZXN0EgwKBGRhdGUYASABKAkSEgoKc2Nob29sX2lkcxgCIAMoCRIMCgRtb2RlGAMgASgJEhkKEWxvY2tlZF9zY2hvb2xfaWRzGAQgAygJEiUKBXN0YXJ0GAUgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC3N0YXJ0X2xhYmVsGAYgASgJInUKEVBsYW5Sb3V0ZVJlc3BvbnNlEi0KCWl0aW5lcmFyeRgBIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5JdGluZXJhcnkSMQoIcHJvdmlkZXIYAiABKAsyHy5lZGlmeS5yb3V0ZXMudjEuUHJvdmlkZXJTdGF0dXMipQEKFEdldFNjaG9vbFBpbnNSZXF1ZXN0EioKCnNvdXRoX3dlc3QYASABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSKgoKbm9ydGhfZWFzdBgCIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBITCgtkaXN0cmljdF9pZBgDIAEoCRISCgpjbHVzdGVyX2lkGAQgASgJEgwKBGRhdGUYBSABKAkiVAoVR2V0U2Nob29sUGluc1Jlc3BvbnNlEigKBHBpbnMYASADKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEhEKCXRydW5jYXRlZBgCIAEoCCJIChhHZXRTY2hvb2xEaXN0YW5jZVJlcXVlc3QSFgoOZnJvbV9zY2hvb2xfaWQYASABKAkSFAoMdG9fc2Nob29sX2lkGAIgASgJIt8BChlHZXRTY2hvb2xEaXN0YW5jZVJlc3BvbnNlEiYKA2xlZxgBIAEoCzIZLmVkaWZ5LnJvdXRlcy52MS5Sb3V0ZUxlZxIoCgRmcm9tGAIgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhImCgJ0bxgDIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SMQoIcHJvdmlkZXIYBCABKAsyHy5lZGlmeS5yb3V0ZXMudjEuUHJvdmlkZXJTdGF0dXMSFQoNY2FsY3VsYXRlZF9hdBgFIAEoCSItChhHZXRTY2hvb2xMb2NhdGlvblJlcXVlc3QSEQoJc2Nob29sX2lkGAEgASgJIoECChlHZXRTY2hvb2xMb2NhdGlvblJlc3BvbnNlEioKBnNjaG9vbBgBIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SFgoObmVhcmJ5X3NjaG9vbHMYAiABKAUSGAoQbmVhcmJ5X3JhZGl1c19rbRgDIAEoARIQCghjYW5fcGxhbhgEIAEoCBISCgpjYW5fcmVwb3J0GAUgASgIEjcKDnBlbmRpbmdfcmVwb3J0GAYgASgLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0EhMKC2FjY2Vzc19ub3RlGAcgASgJEhIKCmNhbl9yZXZpZXcYCCABKAgioAMKDkxvY2F0aW9uUmVwb3J0EgoKAmlkGAEgASgJEioKBnNjaG9vbBgCIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SDAoEa2luZBgDIAEoCRIoCghwcm9wb3NlZBgEIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBIUCgxwb2ludF9zb3VyY2UYBSABKAkSEgoKYWNjdXJhY3lfbRgGIAEoARITCgthY2Nlc3Nfbm90ZRgHIAEoCRIMCgRub3RlGAggASgJEigKCHByZXZpb3VzGAkgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhQKDG1vdmVkX21ldGVycxgKIAEoAxIOCgZzdGF0dXMYCyABKAkSGAoQcmVwb3J0ZWRfYnlfbmFtZRgMIAEoCRITCgtyZXBvcnRlZF9hdBgNIAEoCRIYChByZXZpZXdlZF9ieV9uYW1lGA4gASgJEhMKC3Jldmlld2VkX2F0GA8gASgJEhMKC3Jldmlld19ub3RlGBAgASgJEg4KBmlzX293bhgRIAEoCCLOAQobUmVwb3J0U2Nob29sTG9jYXRpb25SZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRraW5kGAIgASgJEigKCHByb3Bvc2VkGAMgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhQKDHBvaW50X3NvdXJjZRgEIAEoCRISCgphY2N1cmFjeV9tGAUgASgBEhMKC2FjY2Vzc19ub3RlGAYgASgJEgwKBG5vdGUYByABKAkSFwoPaWRlbXBvdGVuY3lfa2V5GAggASgJIk8KHFJlcG9ydFNjaG9vbExvY2F0aW9uUmVzcG9uc2USLwoGcmVwb3J0GAEgASgLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0IiwKGkxpc3RMb2NhdGlvblJlcG9ydHNSZXF1ZXN0Eg4KBnN0YXR1cxgBIAEoCSJPChtMaXN0TG9jYXRpb25SZXBvcnRzUmVzcG9uc2USMAoHcmVwb3J0cxgBIAMoCzIfLmVkaWZ5LnJvdXRlcy52MS5Mb2NhdGlvblJlcG9ydCJQChtSZXZpZXdMb2NhdGlvblJlcG9ydFJlcXVlc3QSEQoJcmVwb3J0X2lkGAEgASgJEhAKCGRlY2lzaW9uGAIgASgJEgwKBG5vdGUYAyABKAkiTwocUmV2aWV3TG9jYXRpb25SZXBvcnRSZXNwb25zZRIvCgZyZXBvcnQYASABKAsyHy5lZGlmeS5yb3V0ZXMudjEuTG9jYXRpb25SZXBvcnQy1wYKE1JvdXRlUGxhbm5lclNlcnZpY2USWAoLR2V0RmllbGREYXkSIy5lZGlmeS5yb3V0ZXMudjEuR2V0RmllbGREYXlSZXF1ZXN0GiQuZWRpZnkucm91dGVzLnYxLkdldEZpZWxkRGF5UmVzcG9uc2USUgoJUGxhblJvdXRlEiEuZWRpZnkucm91dGVzLnYxLlBsYW5Sb3V0ZVJlcXVlc3QaIi5lZGlmeS5yb3V0ZXMudjEuUGxhblJvdXRlUmVzcG9uc2USXgoNR2V0U2Nob29sUGlucxIlLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xQaW5zUmVxdWVzdBomLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xQaW5zUmVzcG9uc2USagoRR2V0U2Nob29sRGlzdGFuY2USKS5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sRGlzdGFuY2VSZXF1ZXN0GiouZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbERpc3RhbmNlUmVzcG9uc2USagoRR2V0U2Nob29sTG9jYXRpb24SKS5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sTG9jYXRpb25SZXF1ZXN0GiouZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbExvY2F0aW9uUmVzcG9uc2UScwoUUmVwb3J0U2Nob29sTG9jYXRpb24SLC5lZGlmeS5yb3V0ZXMudjEuUmVwb3J0U2Nob29sTG9jYXRpb25SZXF1ZXN0Gi0uZWRpZnkucm91dGVzLnYxLlJlcG9ydFNjaG9vbExvY2F0aW9uUmVzcG9uc2UScAoTTGlzdExvY2F0aW9uUmVwb3J0cxIrLmVkaWZ5LnJvdXRlcy52MS5MaXN0TG9jYXRpb25SZXBvcnRzUmVxdWVzdBosLmVkaWZ5LnJvdXRlcy52MS5MaXN0TG9jYXRpb25SZXBvcnRzUmVzcG9uc2UScwoUUmV2aWV3TG9jYXRpb25SZXBvcnQSLC5lZGlmeS5yb3V0ZXMudjEuUmV2aWV3TG9jYXRpb25SZXBvcnRSZXF1ZXN0Gi0uZWRpZnkucm91dGVzLnYxLlJldmlld0xvY2F0aW9uUmVwb3J0UmVzcG9uc2VC2AEKE2NvbS5lZGlmeS5yb3V0ZXMudjFCC1JvdXRlc1Byb3RvUAFaVmdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvcm91dGVzL3YxO3JvdXRlc3YxogIDRVJYqgIPRWRpZnkuUm91dGVzLlYxygIPRWRpZnlcUm91dGVzXFYx4gIbRWRpZnlcUm91dGVzXFYxXEdQQk1ldGFkYXRh6gIRRWRpZnk6OlJvdXRlczo6VjFiBnByb3RvMw");
+  fileDesc("ChxlZGlmeS9yb3V0ZXMvdjEvcm91dGVzLnByb3RvEg9lZGlmeS5yb3V0ZXMudjEiIQoFUG9pbnQSCwoDbGF0GAEgASgBEgsKA2xuZxgCIAEoASLIAgoJU2Nob29sUGluEhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRjb2RlGAIgASgJEgwKBG5hbWUYAyABKAkSEAoIZGlzdHJpY3QYBCABKAkSDwoHY2x1c3RlchgFIAEoCRIOCgZzdGF0dXMYBiABKAkSEAoIY2F0ZWdvcnkYByABKAkSFwoPbG9jYXRpb25fc3RhdHVzGAggASgJEiUKBXBvaW50GAkgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC2FjdGl2aXR5X2lkGAogASgJEhQKDHBsYW5uZWRfdGltZRgLIAEoCRIYChBjYW5fb3Blbl9wcm9maWxlGAwgASgIEhgKEGxvY2F0aW9uX3ZlcnNpb24YDSABKAUSKAoIZW50cmFuY2UYDiABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQi6gEKCFJvdXRlTGVnEhIKCmZyb21fbGFiZWwYASABKAkSFAoMdG9fc2Nob29sX2lkGAIgASgJEhwKFHN0cmFpZ2h0X2xpbmVfbWV0ZXJzGAMgASgDEhYKDnJvYWRfYXZhaWxhYmxlGAQgASgIEhMKC3JvYWRfbWV0ZXJzGAUgASgDEhQKDHJvYWRfc2Vjb25kcxgGIAEoAxIYChBlc3RpbWF0ZV9zZWNvbmRzGAcgASgDEiQKBHBhdGgYCCADKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSEwoLcm9hZF9zdGF0dXMYCSABKAki7AEKDUl0aW5lcmFyeVN0b3ASDQoFb3JkZXIYASABKAUSKgoGc2Nob29sGAIgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhImCgNsZWcYAyABKAsyGS5lZGlmeS5yb3V0ZXMudjEuUm91dGVMZWcSDwoHYXJyaXZhbBgEIAEoCRIRCglkZXBhcnR1cmUYBSABKAkSFQoNdmlzaXRfbWludXRlcxgGIAEoBRIOCgZsb2NrZWQYByABKAgSDQoFZml4ZWQYCCABKAgSEAoIY29uZmxpY3QYCSABKAkSDAoEa2luZBgKIAEoCSLZAQoLUm91dGVUb3RhbHMSHAoUc3RyYWlnaHRfbGluZV9tZXRlcnMYASABKAMSEwoLcm9hZF9tZXRlcnMYAiABKAMSFAoMcm9hZF9zZWNvbmRzGAMgASgDEhUKDXJvYWRfY29tcGxldGUYBCABKAgSGAoQZXN0aW1hdGVfc2Vjb25kcxgFIAEoAxIVCg12aXNpdF9taW51dGVzGAYgASgFEhUKDWZpZWxkX21pbnV0ZXMYByABKAUSEAoIc2VsZWN0ZWQYCCABKAUSEAoIZmVhc2libGUYCSABKAUiiAIKCUl0aW5lcmFyeRIMCgRtb2RlGAEgASgJEhMKC3N0YXJ0X2xhYmVsGAIgASgJEiUKBXN0YXJ0GAMgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50Ei0KBXN0b3BzGAQgAygLMh4uZWRpZnkucm91dGVzLnYxLkl0aW5lcmFyeVN0b3ASLAoGdG90YWxzGAUgASgLMhwuZWRpZnkucm91dGVzLnYxLlJvdXRlVG90YWxzEhEKCWNvbmZsaWN0cxgGIAMoCRITCgtleHBsYW5hdGlvbhgHIAEoCRIsCgh1bnBsYWNlZBgIIAMoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4iuQEKClN1Z2dlc3Rpb24SKgoGc2Nob29sGAEgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIUCgxhZGRlZF9tZXRlcnMYAiABKAMSFQoNYWRkZWRfc2Vjb25kcxgDIAEoAxIPCgdtZWFzdXJlGAQgASgJEg4KBnJlYXNvbhgFIAEoCRINCgVsYWJlbBgGIAEoCRIQCghlbGlnaWJsZRgHIAEoCBIQCghmaXRzX2RheRgIIAEoCCJDCg5Qcm92aWRlclN0YXR1cxIMCgRuYW1lGAEgASgJEhIKCmNvbmZpZ3VyZWQYAiABKAgSDwoHbWVzc2FnZRgDIAEoCSIsCgxGaWx0ZXJPcHRpb24SDQoFdmFsdWUYASABKAkSDQoFbGFiZWwYAiABKAkiYwoSR2V0RmllbGREYXlSZXF1ZXN0EgwKBGRhdGUYASABKAkSEwoLZGlzdHJpY3RfaWQYAiABKAkSEgoKY2x1c3Rlcl9pZBgDIAEoCRIWCg5uZWFyX3NjaG9vbF9pZBgEIAEoCSKcAwoTR2V0RmllbGREYXlSZXNwb25zZRIMCgRkYXRlGAEgASgJEhIKCmRhdGVfbGFiZWwYAiABKAkSKwoHcGxhbm5lZBgDIAMoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SLwoLcmVjb21tZW5kZWQYBCABKAsyGi5lZGlmeS5yb3V0ZXMudjEuSXRpbmVyYXJ5EjAKC3N1Z2dlc3Rpb25zGAUgAygLMhsuZWRpZnkucm91dGVzLnYxLlN1Z2dlc3Rpb24SMQoIcHJvdmlkZXIYBiABKAsyHy5lZGlmeS5yb3V0ZXMudjEuUHJvdmlkZXJTdGF0dXMSMAoJZGlzdHJpY3RzGAcgAygLMh0uZWRpZnkucm91dGVzLnYxLkZpbHRlck9wdGlvbhIvCghjbHVzdGVycxgIIAMoCzIdLmVkaWZ5LnJvdXRlcy52MS5GaWx0ZXJPcHRpb24SEgoKYXJlYV9sYWJlbBgJIAEoCRIpCgVmb2N1cxgKIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4imQEKEFBsYW5Sb3V0ZVJlcXVlc3QSDAoEZGF0ZRgBIAEoCRISCgpzY2hvb2xfaWRzGAIgAygJEgwKBG1vZGUYAyABKAkSGQoRbG9ja2VkX3NjaG9vbF9pZHMYBCADKAkSJQoFc3RhcnQYBSABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSEwoLc3RhcnRfbGFiZWwYBiABKAkidQoRUGxhblJvdXRlUmVzcG9uc2USLQoJaXRpbmVyYXJ5GAEgASgLMhouZWRpZnkucm91dGVzLnYxLkl0aW5lcmFyeRIxCghwcm92aWRlchgCIAEoCzIfLmVkaWZ5LnJvdXRlcy52MS5Qcm92aWRlclN0YXR1cyKlAQoUR2V0U2Nob29sUGluc1JlcXVlc3QSKgoKc291dGhfd2VzdBgBIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBIqCgpub3J0aF9lYXN0GAIgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC2Rpc3RyaWN0X2lkGAMgASgJEhIKCmNsdXN0ZXJfaWQYBCABKAkSDAoEZGF0ZRgFIAEoCSJUChVHZXRTY2hvb2xQaW5zUmVzcG9uc2USKAoEcGlucxgBIAMoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SEQoJdHJ1bmNhdGVkGAIgASgIIkgKGEdldFNjaG9vbERpc3RhbmNlUmVxdWVzdBIWCg5mcm9tX3NjaG9vbF9pZBgBIAEoCRIUCgx0b19zY2hvb2xfaWQYAiABKAki3wEKGUdldFNjaG9vbERpc3RhbmNlUmVzcG9uc2USJgoDbGVnGAEgASgLMhkuZWRpZnkucm91dGVzLnYxLlJvdXRlTGVnEigKBGZyb20YAiABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEiYKAnRvGAMgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIxCghwcm92aWRlchgEIAEoCzIfLmVkaWZ5LnJvdXRlcy52MS5Qcm92aWRlclN0YXR1cxIVCg1jYWxjdWxhdGVkX2F0GAUgASgJIi0KGEdldFNjaG9vbExvY2F0aW9uUmVxdWVzdBIRCglzY2hvb2xfaWQYASABKAkiywMKGUdldFNjaG9vbExvY2F0aW9uUmVzcG9uc2USKgoGc2Nob29sGAEgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIWCg5uZWFyYnlfc2Nob29scxgCIAEoBRIYChBuZWFyYnlfcmFkaXVzX2ttGAMgASgBEhAKCGNhbl9wbGFuGAQgASgIEhIKCmNhbl9yZXBvcnQYBSABKAgSNwoOcGVuZGluZ19yZXBvcnQYBiABKAsyHy5lZGlmeS5yb3V0ZXMudjEuTG9jYXRpb25SZXBvcnQSEwoLYWNjZXNzX25vdGUYByABKAkSEgoKY2FuX3JldmlldxgIIAEoCBIPCgd2ZXJzaW9uGAkgASgFEhMKC3ZlcmlmaWVkX2F0GAogASgJEhgKEHZlcmlmaWVkX2J5X25hbWUYCyABKAkSKAoIZW50cmFuY2UYDCABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSLgoGcG9saWN5GA0gASgLMh4uZWRpZnkucm91dGVzLnYxLkNhcHR1cmVQb2xpY3kSEwoLY2FuX2NhcHR1cmUYDiABKAgSGQoRbGFzdF9jb25maXJtZWRfYXQYDyABKAkiXwoNQ2FwdHVyZVBvbGljeRIOCgZnb29kX20YASABKAESEQoJY29uZmlybV9tGAIgASgBEhUKDWZyZXNoX3NlY29uZHMYAyABKAUSFAoMbGFyZ2VfbW92ZV9tGAQgASgFIsAECg5Mb2NhdGlvblJlcG9ydBIKCgJpZBgBIAEoCRIqCgZzY2hvb2wYAiABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEgwKBGtpbmQYAyABKAkSKAoIcHJvcG9zZWQYBCABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSFAoMcG9pbnRfc291cmNlGAUgASgJEhIKCmFjY3VyYWN5X20YBiABKAESEwoLYWNjZXNzX25vdGUYByABKAkSDAoEbm90ZRgIIAEoCRIoCghwcmV2aW91cxgJIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBIUCgxtb3ZlZF9tZXRlcnMYCiABKAMSDgoGc3RhdHVzGAsgASgJEhgKEHJlcG9ydGVkX2J5X25hbWUYDCABKAkSEwoLcmVwb3J0ZWRfYXQYDSABKAkSGAoQcmV2aWV3ZWRfYnlfbmFtZRgOIAEoCRITCgtyZXZpZXdlZF9hdBgPIAEoCRITCgtyZXZpZXdfbm90ZRgQIAEoCRIOCgZpc19vd24YESABKAgSDgoGdGFyZ2V0GBIgASgJEg0KBWZsYWdzGBMgAygJEhMKC2NhcHR1cmVkX2F0GBQgASgJEhYKDnJlc3VsdF92ZXJzaW9uGBUgASgFEhQKDGNhcHR1cmVfa2luZBgWIAEoCRIUCgxzYW1wbGVfY291bnQYFyABKAUSEAoIc3ByZWFkX20YGCABKAESFAoMYmFzZV92ZXJzaW9uGBkgASgFIqwCChxTdWJtaXRMb2NhdGlvbkNhcHR1cmVSZXF1ZXN0EhIKCmNhcHR1cmVfaWQYASABKAkSEQoJc2Nob29sX2lkGAIgASgJEg4KBnRhcmdldBgDIAEoCRIMCgRraW5kGAQgASgJEiUKBXBvaW50GAUgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhQKDHBvaW50X3NvdXJjZRgGIAEoCRISCgphY2N1cmFjeV9tGAcgASgBEhMKC2NhcHR1cmVkX2F0GAggASgJEhQKDHNhbXBsZV9jb3VudBgJIAEoBRIQCghzcHJlYWRfbRgKIAEoARIUCgxiYXNlX3ZlcnNpb24YCyABKAUSDgoGcmVhc29uGAwgASgJEhMKC2FjY2Vzc19ub3RlGA0gASgJIrABCh1TdWJtaXRMb2NhdGlvbkNhcHR1cmVSZXNwb25zZRIwCgdjYXB0dXJlGAEgASgLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0Eg8KB291dGNvbWUYAiABKAkSDwoHdmVyc2lvbhgDIAEoBRIqCgZzY2hvb2wYBCABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEg8KB21lc3NhZ2UYBSABKAkiJQoVR2V0T2ZmbGluZVBhY2tSZXF1ZXN0EgwKBGRheXMYASABKAUilQEKDU9mZmxpbmVTY2hvb2wSKgoGc2Nob29sGAEgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhITCgt2ZXJpZmllZF9hdBgCIAEoCRITCgthY2Nlc3Nfbm90ZRgDIAEoCRITCgtoYXNfcGVuZGluZxgEIAEoCBIZChFsYXN0X2NvbmZpcm1lZF9hdBgFIAEoCSJECgxQbGFubmVkVmlzaXQSDAoEZGF0ZRgBIAEoCRIRCglzY2hvb2xfaWQYAiABKAkSEwoLYWN0aXZpdHlfaWQYAyABKAki+wEKFkdldE9mZmxpbmVQYWNrUmVzcG9uc2USLwoHc2Nob29scxgBIAMoCzIeLmVkaWZ5LnJvdXRlcy52MS5PZmZsaW5lU2Nob29sEi4KB3BsYW5uZWQYAiADKAsyHS5lZGlmeS5yb3V0ZXMudjEuUGxhbm5lZFZpc2l0EhQKDGdlbmVyYXRlZF9hdBgDIAEoCRIuCgZwb2xpY3kYBCABKAsyHi5lZGlmeS5yb3V0ZXMudjEuQ2FwdHVyZVBvbGljeRITCgtjYW5fY2FwdHVyZRgFIAEoCBIRCgl0cnVuY2F0ZWQYBiABKAgSEgoKY2FuX3JldmlldxgHIAEoCCJ/Cg5Mb2NhdGlvbkNoYW5nZRIRCglzY2hvb2xfaWQYASABKAkSDgoGdGFyZ2V0GAIgASgJEg8KB3ZlcnNpb24YAyABKAUSJQoFcG9pbnQYBCABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSEgoKY2hhbmdlZF9hdBgFIAEoCSIrChpMaXN0TG9jYXRpb25DaGFuZ2VzUmVxdWVzdBINCgVzaW5jZRgBIAEoCSJcChtMaXN0TG9jYXRpb25DaGFuZ2VzUmVzcG9uc2USMAoHY2hhbmdlcxgBIAMoCzIfLmVkaWZ5LnJvdXRlcy52MS5Mb2NhdGlvbkNoYW5nZRILCgNub3cYAiABKAkiLgoZR2V0TG9jYXRpb25IaXN0b3J5UmVxdWVzdBIRCglzY2hvb2xfaWQYASABKAkiegoaR2V0TG9jYXRpb25IaXN0b3J5UmVzcG9uc2USKgoGc2Nob29sGAEgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIwCgdlbnRyaWVzGAIgAygLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0Is4BChtSZXBvcnRTY2hvb2xMb2NhdGlvblJlcXVlc3QSEQoJc2Nob29sX2lkGAEgASgJEgwKBGtpbmQYAiABKAkSKAoIcHJvcG9zZWQYAyABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSFAoMcG9pbnRfc291cmNlGAQgASgJEhIKCmFjY3VyYWN5X20YBSABKAESEwoLYWNjZXNzX25vdGUYBiABKAkSDAoEbm90ZRgHIAEoCRIXCg9pZGVtcG90ZW5jeV9rZXkYCCABKAkiTwocUmVwb3J0U2Nob29sTG9jYXRpb25SZXNwb25zZRIvCgZyZXBvcnQYASABKAsyHy5lZGlmeS5yb3V0ZXMudjEuTG9jYXRpb25SZXBvcnQiLAoaTGlzdExvY2F0aW9uUmVwb3J0c1JlcXVlc3QSDgoGc3RhdHVzGAEgASgJIk8KG0xpc3RMb2NhdGlvblJlcG9ydHNSZXNwb25zZRIwCgdyZXBvcnRzGAEgAygLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0IlAKG1Jldmlld0xvY2F0aW9uUmVwb3J0UmVxdWVzdBIRCglyZXBvcnRfaWQYASABKAkSEAoIZGVjaXNpb24YAiABKAkSDAoEbm90ZRgDIAEoCSJPChxSZXZpZXdMb2NhdGlvblJlcG9ydFJlc3BvbnNlEi8KBnJlcG9ydBgBIAEoCzIfLmVkaWZ5LnJvdXRlcy52MS5Mb2NhdGlvblJlcG9ydDKTCgoTUm91dGVQbGFubmVyU2VydmljZRJYCgtHZXRGaWVsZERheRIjLmVkaWZ5LnJvdXRlcy52MS5HZXRGaWVsZERheVJlcXVlc3QaJC5lZGlmeS5yb3V0ZXMudjEuR2V0RmllbGREYXlSZXNwb25zZRJSCglQbGFuUm91dGUSIS5lZGlmeS5yb3V0ZXMudjEuUGxhblJvdXRlUmVxdWVzdBoiLmVkaWZ5LnJvdXRlcy52MS5QbGFuUm91dGVSZXNwb25zZRJeCg1HZXRTY2hvb2xQaW5zEiUuZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbFBpbnNSZXF1ZXN0GiYuZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbFBpbnNSZXNwb25zZRJqChFHZXRTY2hvb2xEaXN0YW5jZRIpLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xEaXN0YW5jZVJlcXVlc3QaKi5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sRGlzdGFuY2VSZXNwb25zZRJqChFHZXRTY2hvb2xMb2NhdGlvbhIpLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xMb2NhdGlvblJlcXVlc3QaKi5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sTG9jYXRpb25SZXNwb25zZRJzChRSZXBvcnRTY2hvb2xMb2NhdGlvbhIsLmVkaWZ5LnJvdXRlcy52MS5SZXBvcnRTY2hvb2xMb2NhdGlvblJlcXVlc3QaLS5lZGlmeS5yb3V0ZXMudjEuUmVwb3J0U2Nob29sTG9jYXRpb25SZXNwb25zZRJwChNMaXN0TG9jYXRpb25SZXBvcnRzEisuZWRpZnkucm91dGVzLnYxLkxpc3RMb2NhdGlvblJlcG9ydHNSZXF1ZXN0GiwuZWRpZnkucm91dGVzLnYxLkxpc3RMb2NhdGlvblJlcG9ydHNSZXNwb25zZRJzChRSZXZpZXdMb2NhdGlvblJlcG9ydBIsLmVkaWZ5LnJvdXRlcy52MS5SZXZpZXdMb2NhdGlvblJlcG9ydFJlcXVlc3QaLS5lZGlmeS5yb3V0ZXMudjEuUmV2aWV3TG9jYXRpb25SZXBvcnRSZXNwb25zZRJ2ChVTdWJtaXRMb2NhdGlvbkNhcHR1cmUSLS5lZGlmeS5yb3V0ZXMudjEuU3VibWl0TG9jYXRpb25DYXB0dXJlUmVxdWVzdBouLmVkaWZ5LnJvdXRlcy52MS5TdWJtaXRMb2NhdGlvbkNhcHR1cmVSZXNwb25zZRJhCg5HZXRPZmZsaW5lUGFjaxImLmVkaWZ5LnJvdXRlcy52MS5HZXRPZmZsaW5lUGFja1JlcXVlc3QaJy5lZGlmeS5yb3V0ZXMudjEuR2V0T2ZmbGluZVBhY2tSZXNwb25zZRJwChNMaXN0TG9jYXRpb25DaGFuZ2VzEisuZWRpZnkucm91dGVzLnYxLkxpc3RMb2NhdGlvbkNoYW5nZXNSZXF1ZXN0GiwuZWRpZnkucm91dGVzLnYxLkxpc3RMb2NhdGlvbkNoYW5nZXNSZXNwb25zZRJtChJHZXRMb2NhdGlvbkhpc3RvcnkSKi5lZGlmeS5yb3V0ZXMudjEuR2V0TG9jYXRpb25IaXN0b3J5UmVxdWVzdBorLmVkaWZ5LnJvdXRlcy52MS5HZXRMb2NhdGlvbkhpc3RvcnlSZXNwb25zZULYAQoTY29tLmVkaWZ5LnJvdXRlcy52MUILUm91dGVzUHJvdG9QAVpWZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9yb3V0ZXMvdjE7cm91dGVzdjGiAgNFUliqAg9FZGlmeS5Sb3V0ZXMuVjHKAg9FZGlmeVxSb3V0ZXNcVjHiAhtFZGlmeVxSb3V0ZXNcVjFcR1BCTWV0YWRhdGHqAhFFZGlmeTo6Um91dGVzOjpWMWIGcHJvdG8z");
 
 /**
  * @generated from message edify.routes.v1.Point
@@ -114,6 +114,22 @@ export type SchoolPin = Message<"edify.routes.v1.SchoolPin"> & {
    * @generated from field: bool can_open_profile = 12;
    */
   canOpenProfile: boolean;
+
+  /**
+   * The location's version: 0 for the School Directory's own point, then
+   * one more for each accepted change.
+   *
+   * @generated from field: int32 location_version = 13;
+   */
+  locationVersion: number;
+
+  /**
+   * The school's verified entrance / road access point, if it has one;
+   * navigation goes there.
+   *
+   * @generated from field: edify.routes.v1.Point entrance = 14;
+   */
+  entrance?: Point | undefined;
 };
 
 /**
@@ -864,6 +880,49 @@ export type GetSchoolLocationResponse = Message<"edify.routes.v1.GetSchoolLocati
    * @generated from field: bool can_review = 8;
    */
   canReview: boolean;
+
+  /**
+   * The location's version, and when and by whom it was last verified.
+   *
+   * @generated from field: int32 version = 9;
+   */
+  version: number;
+
+  /**
+   * @generated from field: string verified_at = 10;
+   */
+  verifiedAt: string;
+
+  /**
+   * @generated from field: string verified_by_name = 11;
+   */
+  verifiedByName: string;
+
+  /**
+   * The verified entrance / road access point, if any.
+   *
+   * @generated from field: edify.routes.v1.Point entrance = 12;
+   */
+  entrance?: Point | undefined;
+
+  /**
+   * @generated from field: edify.routes.v1.CapturePolicy policy = 13;
+   */
+  policy?: CapturePolicy | undefined;
+
+  /**
+   * The reader may capture this school's location by GPS.
+   *
+   * @generated from field: bool can_capture = 14;
+   */
+  canCapture: boolean;
+
+  /**
+   * When someone last said the location on record is right (RFC 3339).
+   *
+   * @generated from field: string last_confirmed_at = 15;
+   */
+  lastConfirmedAt: string;
 };
 
 /**
@@ -872,6 +931,47 @@ export type GetSchoolLocationResponse = Message<"edify.routes.v1.GetSchoolLocati
  */
 export const GetSchoolLocationResponseSchema: GenMessage<GetSchoolLocationResponse> = /*@__PURE__*/
   messageDesc(file_edify_routes_v1_routes, 18);
+
+/**
+ * The thresholds a capture is judged by; the device shows the same.
+ *
+ * @generated from message edify.routes.v1.CapturePolicy
+ */
+export type CapturePolicy = Message<"edify.routes.v1.CapturePolicy"> & {
+  /**
+   * At or better than good_m a fix is Good; up to confirm_m it needs the
+   * person's confirmation; beyond, recapture is recommended.
+   *
+   * @generated from field: double good_m = 1;
+   */
+  goodM: number;
+
+  /**
+   * @generated from field: double confirm_m = 2;
+   */
+  confirmM: number;
+
+  /**
+   * A fix older than this when taken is stale.
+   *
+   * @generated from field: int32 fresh_seconds = 3;
+   */
+  freshSeconds: number;
+
+  /**
+   * A correction moving the school further than this is flagged.
+   *
+   * @generated from field: int32 large_move_m = 4;
+   */
+  largeMoveM: number;
+};
+
+/**
+ * Describes the message edify.routes.v1.CapturePolicy.
+ * Use `create(CapturePolicySchema)` to create a new message.
+ */
+export const CapturePolicySchema: GenMessage<CapturePolicy> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 19);
 
 /**
  * @generated from message edify.routes.v1.LocationReport
@@ -975,6 +1075,60 @@ export type LocationReport = Message<"edify.routes.v1.LocationReport"> & {
    * @generated from field: bool is_own = 17;
    */
   isOwn: boolean;
+
+  /**
+   * school or entrance.
+   *
+   * @generated from field: string target = 18;
+   */
+  target: string;
+
+  /**
+   * Why it waits for review: large_move, accuracy_fair, accuracy_poor,
+   * version_conflict, competing, typed_point, no_point, far_from_district,
+   * stale_capture, clock_skew, correction, entrance.
+   *
+   * @generated from field: repeated string flags = 19;
+   */
+  flags: string[];
+
+  /**
+   * When the device took the fix (RFC 3339).
+   *
+   * @generated from field: string captured_at = 20;
+   */
+  capturedAt: string;
+
+  /**
+   * The version this made, once accepted or approved.
+   *
+   * @generated from field: int32 result_version = 21;
+   */
+  resultVersion: number;
+
+  /**
+   * new, correction or confirm.
+   *
+   * @generated from field: string capture_kind = 22;
+   */
+  captureKind: string;
+
+  /**
+   * @generated from field: int32 sample_count = 23;
+   */
+  sampleCount: number;
+
+  /**
+   * @generated from field: double spread_m = 24;
+   */
+  spreadM: number;
+
+  /**
+   * The version the device knew when it captured.
+   *
+   * @generated from field: int32 base_version = 25;
+   */
+  baseVersion: number;
 };
 
 /**
@@ -982,7 +1136,401 @@ export type LocationReport = Message<"edify.routes.v1.LocationReport"> & {
  * Use `create(LocationReportSchema)` to create a new message.
  */
 export const LocationReportSchema: GenMessage<LocationReport> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 19);
+  messageDesc(file_edify_routes_v1_routes, 20);
+
+/**
+ * @generated from message edify.routes.v1.SubmitLocationCaptureRequest
+ */
+export type SubmitLocationCaptureRequest = Message<"edify.routes.v1.SubmitLocationCaptureRequest"> & {
+  /**
+   * The device's id for this capture (a UUID); a retry sends the same.
+   *
+   * @generated from field: string capture_id = 1;
+   */
+  captureId: string;
+
+  /**
+   * @generated from field: string school_id = 2;
+   */
+  schoolId: string;
+
+  /**
+   * school or entrance.
+   *
+   * @generated from field: string target = 3;
+   */
+  target: string;
+
+  /**
+   * new, correction or confirm.
+   *
+   * @generated from field: string kind = 4;
+   */
+  kind: string;
+
+  /**
+   * @generated from field: edify.routes.v1.Point point = 5;
+   */
+  point?: Point | undefined;
+
+  /**
+   * none, typed or device.
+   *
+   * @generated from field: string point_source = 6;
+   */
+  pointSource: string;
+
+  /**
+   * @generated from field: double accuracy_m = 7;
+   */
+  accuracyM: number;
+
+  /**
+   * When the device took the fix (RFC 3339).
+   *
+   * @generated from field: string captured_at = 8;
+   */
+  capturedAt: string;
+
+  /**
+   * @generated from field: int32 sample_count = 9;
+   */
+  sampleCount: number;
+
+  /**
+   * @generated from field: double spread_m = 10;
+   */
+  spreadM: number;
+
+  /**
+   * The location version the device showed when capturing.
+   *
+   * @generated from field: int32 base_version = 11;
+   */
+  baseVersion: number;
+
+  /**
+   * @generated from field: string reason = 12;
+   */
+  reason: string;
+
+  /**
+   * @generated from field: string access_note = 13;
+   */
+  accessNote: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.SubmitLocationCaptureRequest.
+ * Use `create(SubmitLocationCaptureRequestSchema)` to create a new message.
+ */
+export const SubmitLocationCaptureRequestSchema: GenMessage<SubmitLocationCaptureRequest> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 21);
+
+/**
+ * @generated from message edify.routes.v1.SubmitLocationCaptureResponse
+ */
+export type SubmitLocationCaptureResponse = Message<"edify.routes.v1.SubmitLocationCaptureResponse"> & {
+  /**
+   * @generated from field: edify.routes.v1.LocationReport capture = 1;
+   */
+  capture?: LocationReport | undefined;
+
+  /**
+   * accepted (the location changed now), pending (waits for review) or
+   * noted (a confirmation).
+   *
+   * @generated from field: string outcome = 2;
+   */
+  outcome: string;
+
+  /**
+   * The school's location version after this.
+   *
+   * @generated from field: int32 version = 3;
+   */
+  version: number;
+
+  /**
+   * @generated from field: edify.routes.v1.SchoolPin school = 4;
+   */
+  school?: SchoolPin | undefined;
+
+  /**
+   * One sentence for the person.
+   *
+   * @generated from field: string message = 5;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.SubmitLocationCaptureResponse.
+ * Use `create(SubmitLocationCaptureResponseSchema)` to create a new message.
+ */
+export const SubmitLocationCaptureResponseSchema: GenMessage<SubmitLocationCaptureResponse> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 22);
+
+/**
+ * @generated from message edify.routes.v1.GetOfflinePackRequest
+ */
+export type GetOfflinePackRequest = Message<"edify.routes.v1.GetOfflinePackRequest"> & {
+  /**
+   * How many days of planned visits to include (default 14, at most 31).
+   *
+   * @generated from field: int32 days = 1;
+   */
+  days: number;
+};
+
+/**
+ * Describes the message edify.routes.v1.GetOfflinePackRequest.
+ * Use `create(GetOfflinePackRequestSchema)` to create a new message.
+ */
+export const GetOfflinePackRequestSchema: GenMessage<GetOfflinePackRequest> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 23);
+
+/**
+ * @generated from message edify.routes.v1.OfflineSchool
+ */
+export type OfflineSchool = Message<"edify.routes.v1.OfflineSchool"> & {
+  /**
+   * @generated from field: edify.routes.v1.SchoolPin school = 1;
+   */
+  school?: SchoolPin | undefined;
+
+  /**
+   * @generated from field: string verified_at = 2;
+   */
+  verifiedAt: string;
+
+  /**
+   * @generated from field: string access_note = 3;
+   */
+  accessNote: string;
+
+  /**
+   * A capture or report on it waits for review.
+   *
+   * @generated from field: bool has_pending = 4;
+   */
+  hasPending: boolean;
+
+  /**
+   * @generated from field: string last_confirmed_at = 5;
+   */
+  lastConfirmedAt: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.OfflineSchool.
+ * Use `create(OfflineSchoolSchema)` to create a new message.
+ */
+export const OfflineSchoolSchema: GenMessage<OfflineSchool> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 24);
+
+/**
+ * @generated from message edify.routes.v1.PlannedVisit
+ */
+export type PlannedVisit = Message<"edify.routes.v1.PlannedVisit"> & {
+  /**
+   * "YYYY-MM-DD".
+   *
+   * @generated from field: string date = 1;
+   */
+  date: string;
+
+  /**
+   * @generated from field: string school_id = 2;
+   */
+  schoolId: string;
+
+  /**
+   * @generated from field: string activity_id = 3;
+   */
+  activityId: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.PlannedVisit.
+ * Use `create(PlannedVisitSchema)` to create a new message.
+ */
+export const PlannedVisitSchema: GenMessage<PlannedVisit> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 25);
+
+/**
+ * @generated from message edify.routes.v1.GetOfflinePackResponse
+ */
+export type GetOfflinePackResponse = Message<"edify.routes.v1.GetOfflinePackResponse"> & {
+  /**
+   * @generated from field: repeated edify.routes.v1.OfflineSchool schools = 1;
+   */
+  schools: OfflineSchool[];
+
+  /**
+   * @generated from field: repeated edify.routes.v1.PlannedVisit planned = 2;
+   */
+  planned: PlannedVisit[];
+
+  /**
+   * RFC 3339.
+   *
+   * @generated from field: string generated_at = 3;
+   */
+  generatedAt: string;
+
+  /**
+   * @generated from field: edify.routes.v1.CapturePolicy policy = 4;
+   */
+  policy?: CapturePolicy | undefined;
+
+  /**
+   * @generated from field: bool can_capture = 5;
+   */
+  canCapture: boolean;
+
+  /**
+   * More schools are in reach than were sent.
+   *
+   * @generated from field: bool truncated = 6;
+   */
+  truncated: boolean;
+
+  /**
+   * @generated from field: bool can_review = 7;
+   */
+  canReview: boolean;
+};
+
+/**
+ * Describes the message edify.routes.v1.GetOfflinePackResponse.
+ * Use `create(GetOfflinePackResponseSchema)` to create a new message.
+ */
+export const GetOfflinePackResponseSchema: GenMessage<GetOfflinePackResponse> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 26);
+
+/**
+ * @generated from message edify.routes.v1.LocationChange
+ */
+export type LocationChange = Message<"edify.routes.v1.LocationChange"> & {
+  /**
+   * @generated from field: string school_id = 1;
+   */
+  schoolId: string;
+
+  /**
+   * @generated from field: string target = 2;
+   */
+  target: string;
+
+  /**
+   * @generated from field: int32 version = 3;
+   */
+  version: number;
+
+  /**
+   * @generated from field: edify.routes.v1.Point point = 4;
+   */
+  point?: Point | undefined;
+
+  /**
+   * RFC 3339.
+   *
+   * @generated from field: string changed_at = 5;
+   */
+  changedAt: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.LocationChange.
+ * Use `create(LocationChangeSchema)` to create a new message.
+ */
+export const LocationChangeSchema: GenMessage<LocationChange> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 27);
+
+/**
+ * @generated from message edify.routes.v1.ListLocationChangesRequest
+ */
+export type ListLocationChangesRequest = Message<"edify.routes.v1.ListLocationChangesRequest"> & {
+  /**
+   * RFC 3339; empty is the last day.
+   *
+   * @generated from field: string since = 1;
+   */
+  since: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.ListLocationChangesRequest.
+ * Use `create(ListLocationChangesRequestSchema)` to create a new message.
+ */
+export const ListLocationChangesRequestSchema: GenMessage<ListLocationChangesRequest> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 28);
+
+/**
+ * @generated from message edify.routes.v1.ListLocationChangesResponse
+ */
+export type ListLocationChangesResponse = Message<"edify.routes.v1.ListLocationChangesResponse"> & {
+  /**
+   * @generated from field: repeated edify.routes.v1.LocationChange changes = 1;
+   */
+  changes: LocationChange[];
+
+  /**
+   * The server's time, to send as the next since.
+   *
+   * @generated from field: string now = 2;
+   */
+  now: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.ListLocationChangesResponse.
+ * Use `create(ListLocationChangesResponseSchema)` to create a new message.
+ */
+export const ListLocationChangesResponseSchema: GenMessage<ListLocationChangesResponse> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 29);
+
+/**
+ * @generated from message edify.routes.v1.GetLocationHistoryRequest
+ */
+export type GetLocationHistoryRequest = Message<"edify.routes.v1.GetLocationHistoryRequest"> & {
+  /**
+   * @generated from field: string school_id = 1;
+   */
+  schoolId: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.GetLocationHistoryRequest.
+ * Use `create(GetLocationHistoryRequestSchema)` to create a new message.
+ */
+export const GetLocationHistoryRequestSchema: GenMessage<GetLocationHistoryRequest> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 30);
+
+/**
+ * @generated from message edify.routes.v1.GetLocationHistoryResponse
+ */
+export type GetLocationHistoryResponse = Message<"edify.routes.v1.GetLocationHistoryResponse"> & {
+  /**
+   * @generated from field: edify.routes.v1.SchoolPin school = 1;
+   */
+  school?: SchoolPin | undefined;
+
+  /**
+   * Newest first.
+   *
+   * @generated from field: repeated edify.routes.v1.LocationReport entries = 2;
+   */
+  entries: LocationReport[];
+};
+
+/**
+ * Describes the message edify.routes.v1.GetLocationHistoryResponse.
+ * Use `create(GetLocationHistoryResponseSchema)` to create a new message.
+ */
+export const GetLocationHistoryResponseSchema: GenMessage<GetLocationHistoryResponse> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 31);
 
 /**
  * @generated from message edify.routes.v1.ReportSchoolLocationRequest
@@ -1040,7 +1588,7 @@ export type ReportSchoolLocationRequest = Message<"edify.routes.v1.ReportSchoolL
  * Use `create(ReportSchoolLocationRequestSchema)` to create a new message.
  */
 export const ReportSchoolLocationRequestSchema: GenMessage<ReportSchoolLocationRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 20);
+  messageDesc(file_edify_routes_v1_routes, 32);
 
 /**
  * @generated from message edify.routes.v1.ReportSchoolLocationResponse
@@ -1057,7 +1605,7 @@ export type ReportSchoolLocationResponse = Message<"edify.routes.v1.ReportSchool
  * Use `create(ReportSchoolLocationResponseSchema)` to create a new message.
  */
 export const ReportSchoolLocationResponseSchema: GenMessage<ReportSchoolLocationResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 21);
+  messageDesc(file_edify_routes_v1_routes, 33);
 
 /**
  * @generated from message edify.routes.v1.ListLocationReportsRequest
@@ -1076,7 +1624,7 @@ export type ListLocationReportsRequest = Message<"edify.routes.v1.ListLocationRe
  * Use `create(ListLocationReportsRequestSchema)` to create a new message.
  */
 export const ListLocationReportsRequestSchema: GenMessage<ListLocationReportsRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 22);
+  messageDesc(file_edify_routes_v1_routes, 34);
 
 /**
  * @generated from message edify.routes.v1.ListLocationReportsResponse
@@ -1093,7 +1641,7 @@ export type ListLocationReportsResponse = Message<"edify.routes.v1.ListLocationR
  * Use `create(ListLocationReportsResponseSchema)` to create a new message.
  */
 export const ListLocationReportsResponseSchema: GenMessage<ListLocationReportsResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 23);
+  messageDesc(file_edify_routes_v1_routes, 35);
 
 /**
  * @generated from message edify.routes.v1.ReviewLocationReportRequest
@@ -1124,7 +1672,7 @@ export type ReviewLocationReportRequest = Message<"edify.routes.v1.ReviewLocatio
  * Use `create(ReviewLocationReportRequestSchema)` to create a new message.
  */
 export const ReviewLocationReportRequestSchema: GenMessage<ReviewLocationReportRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 24);
+  messageDesc(file_edify_routes_v1_routes, 36);
 
 /**
  * @generated from message edify.routes.v1.ReviewLocationReportResponse
@@ -1141,7 +1689,7 @@ export type ReviewLocationReportResponse = Message<"edify.routes.v1.ReviewLocati
  * Use `create(ReviewLocationReportResponseSchema)` to create a new message.
  */
 export const ReviewLocationReportResponseSchema: GenMessage<ReviewLocationReportResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 25);
+  messageDesc(file_edify_routes_v1_routes, 37);
 
 /**
  * The Smart Route Planner (owner, 2026-11-14): a field day's schools on a
@@ -1244,6 +1792,51 @@ export const RoutePlannerService: GenService<{
     methodKind: "unary";
     input: typeof ReviewLocationReportRequestSchema;
     output: typeof ReviewLocationReportResponseSchema;
+  },
+  /**
+   * A capture from the field (GPS, typed, or "the location is correct"),
+   * sent when the device has a connection. A retry with the same capture id
+   * returns the first answer. A first location by GPS at the policy's
+   * accuracy is accepted at once; anything else waits for review.
+   *
+   * @generated from rpc edify.routes.v1.RoutePlannerService.SubmitLocationCapture
+   */
+  submitLocationCapture: {
+    methodKind: "unary";
+    input: typeof SubmitLocationCaptureRequestSchema;
+    output: typeof SubmitLocationCaptureResponseSchema;
+  },
+  /**
+   * The reader's schools and planned visits for working without a
+   * connection: the least the capture screen needs.
+   *
+   * @generated from rpc edify.routes.v1.RoutePlannerService.GetOfflinePack
+   */
+  getOfflinePack: {
+    methodKind: "unary";
+    input: typeof GetOfflinePackRequestSchema;
+    output: typeof GetOfflinePackResponseSchema;
+  },
+  /**
+   * Location changes accepted since a time, so clients refresh pins and
+   * cached schools.
+   *
+   * @generated from rpc edify.routes.v1.RoutePlannerService.ListLocationChanges
+   */
+  listLocationChanges: {
+    methodKind: "unary";
+    input: typeof ListLocationChangesRequestSchema;
+    output: typeof ListLocationChangesResponseSchema;
+  },
+  /**
+   * One school's location history: every capture and report and its decision.
+   *
+   * @generated from rpc edify.routes.v1.RoutePlannerService.GetLocationHistory
+   */
+  getLocationHistory: {
+    methodKind: "unary";
+    input: typeof GetLocationHistoryRequestSchema;
+    output: typeof GetLocationHistoryResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_routes_v1_routes, 0);

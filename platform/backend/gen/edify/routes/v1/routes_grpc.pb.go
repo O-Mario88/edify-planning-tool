@@ -19,14 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RoutePlannerService_GetFieldDay_FullMethodName          = "/edify.routes.v1.RoutePlannerService/GetFieldDay"
-	RoutePlannerService_PlanRoute_FullMethodName            = "/edify.routes.v1.RoutePlannerService/PlanRoute"
-	RoutePlannerService_GetSchoolPins_FullMethodName        = "/edify.routes.v1.RoutePlannerService/GetSchoolPins"
-	RoutePlannerService_GetSchoolDistance_FullMethodName    = "/edify.routes.v1.RoutePlannerService/GetSchoolDistance"
-	RoutePlannerService_GetSchoolLocation_FullMethodName    = "/edify.routes.v1.RoutePlannerService/GetSchoolLocation"
-	RoutePlannerService_ReportSchoolLocation_FullMethodName = "/edify.routes.v1.RoutePlannerService/ReportSchoolLocation"
-	RoutePlannerService_ListLocationReports_FullMethodName  = "/edify.routes.v1.RoutePlannerService/ListLocationReports"
-	RoutePlannerService_ReviewLocationReport_FullMethodName = "/edify.routes.v1.RoutePlannerService/ReviewLocationReport"
+	RoutePlannerService_GetFieldDay_FullMethodName           = "/edify.routes.v1.RoutePlannerService/GetFieldDay"
+	RoutePlannerService_PlanRoute_FullMethodName             = "/edify.routes.v1.RoutePlannerService/PlanRoute"
+	RoutePlannerService_GetSchoolPins_FullMethodName         = "/edify.routes.v1.RoutePlannerService/GetSchoolPins"
+	RoutePlannerService_GetSchoolDistance_FullMethodName     = "/edify.routes.v1.RoutePlannerService/GetSchoolDistance"
+	RoutePlannerService_GetSchoolLocation_FullMethodName     = "/edify.routes.v1.RoutePlannerService/GetSchoolLocation"
+	RoutePlannerService_ReportSchoolLocation_FullMethodName  = "/edify.routes.v1.RoutePlannerService/ReportSchoolLocation"
+	RoutePlannerService_ListLocationReports_FullMethodName   = "/edify.routes.v1.RoutePlannerService/ListLocationReports"
+	RoutePlannerService_ReviewLocationReport_FullMethodName  = "/edify.routes.v1.RoutePlannerService/ReviewLocationReport"
+	RoutePlannerService_SubmitLocationCapture_FullMethodName = "/edify.routes.v1.RoutePlannerService/SubmitLocationCapture"
+	RoutePlannerService_GetOfflinePack_FullMethodName        = "/edify.routes.v1.RoutePlannerService/GetOfflinePack"
+	RoutePlannerService_ListLocationChanges_FullMethodName   = "/edify.routes.v1.RoutePlannerService/ListLocationChanges"
+	RoutePlannerService_GetLocationHistory_FullMethodName    = "/edify.routes.v1.RoutePlannerService/GetLocationHistory"
 )
 
 // RoutePlannerServiceClient is the client API for RoutePlannerService service.
@@ -67,6 +71,19 @@ type RoutePlannerServiceClient interface {
 	ListLocationReports(ctx context.Context, in *ListLocationReportsRequest, opts ...grpc.CallOption) (*ListLocationReportsResponse, error)
 	// Approve (the point becomes the school's verified location) or reject.
 	ReviewLocationReport(ctx context.Context, in *ReviewLocationReportRequest, opts ...grpc.CallOption) (*ReviewLocationReportResponse, error)
+	// A capture from the field (GPS, typed, or "the location is correct"),
+	// sent when the device has a connection. A retry with the same capture id
+	// returns the first answer. A first location by GPS at the policy's
+	// accuracy is accepted at once; anything else waits for review.
+	SubmitLocationCapture(ctx context.Context, in *SubmitLocationCaptureRequest, opts ...grpc.CallOption) (*SubmitLocationCaptureResponse, error)
+	// The reader's schools and planned visits for working without a
+	// connection: the least the capture screen needs.
+	GetOfflinePack(ctx context.Context, in *GetOfflinePackRequest, opts ...grpc.CallOption) (*GetOfflinePackResponse, error)
+	// Location changes accepted since a time, so clients refresh pins and
+	// cached schools.
+	ListLocationChanges(ctx context.Context, in *ListLocationChangesRequest, opts ...grpc.CallOption) (*ListLocationChangesResponse, error)
+	// One school's location history: every capture and report and its decision.
+	GetLocationHistory(ctx context.Context, in *GetLocationHistoryRequest, opts ...grpc.CallOption) (*GetLocationHistoryResponse, error)
 }
 
 type routePlannerServiceClient struct {
@@ -157,6 +174,46 @@ func (c *routePlannerServiceClient) ReviewLocationReport(ctx context.Context, in
 	return out, nil
 }
 
+func (c *routePlannerServiceClient) SubmitLocationCapture(ctx context.Context, in *SubmitLocationCaptureRequest, opts ...grpc.CallOption) (*SubmitLocationCaptureResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitLocationCaptureResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_SubmitLocationCapture_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *routePlannerServiceClient) GetOfflinePack(ctx context.Context, in *GetOfflinePackRequest, opts ...grpc.CallOption) (*GetOfflinePackResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetOfflinePackResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_GetOfflinePack_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *routePlannerServiceClient) ListLocationChanges(ctx context.Context, in *ListLocationChangesRequest, opts ...grpc.CallOption) (*ListLocationChangesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListLocationChangesResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_ListLocationChanges_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *routePlannerServiceClient) GetLocationHistory(ctx context.Context, in *GetLocationHistoryRequest, opts ...grpc.CallOption) (*GetLocationHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetLocationHistoryResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_GetLocationHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoutePlannerServiceServer is the server API for RoutePlannerService service.
 // All implementations must embed UnimplementedRoutePlannerServiceServer
 // for forward compatibility.
@@ -195,6 +252,19 @@ type RoutePlannerServiceServer interface {
 	ListLocationReports(context.Context, *ListLocationReportsRequest) (*ListLocationReportsResponse, error)
 	// Approve (the point becomes the school's verified location) or reject.
 	ReviewLocationReport(context.Context, *ReviewLocationReportRequest) (*ReviewLocationReportResponse, error)
+	// A capture from the field (GPS, typed, or "the location is correct"),
+	// sent when the device has a connection. A retry with the same capture id
+	// returns the first answer. A first location by GPS at the policy's
+	// accuracy is accepted at once; anything else waits for review.
+	SubmitLocationCapture(context.Context, *SubmitLocationCaptureRequest) (*SubmitLocationCaptureResponse, error)
+	// The reader's schools and planned visits for working without a
+	// connection: the least the capture screen needs.
+	GetOfflinePack(context.Context, *GetOfflinePackRequest) (*GetOfflinePackResponse, error)
+	// Location changes accepted since a time, so clients refresh pins and
+	// cached schools.
+	ListLocationChanges(context.Context, *ListLocationChangesRequest) (*ListLocationChangesResponse, error)
+	// One school's location history: every capture and report and its decision.
+	GetLocationHistory(context.Context, *GetLocationHistoryRequest) (*GetLocationHistoryResponse, error)
 	mustEmbedUnimplementedRoutePlannerServiceServer()
 }
 
@@ -228,6 +298,18 @@ func (UnimplementedRoutePlannerServiceServer) ListLocationReports(context.Contex
 }
 func (UnimplementedRoutePlannerServiceServer) ReviewLocationReport(context.Context, *ReviewLocationReportRequest) (*ReviewLocationReportResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReviewLocationReport not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) SubmitLocationCapture(context.Context, *SubmitLocationCaptureRequest) (*SubmitLocationCaptureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitLocationCapture not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) GetOfflinePack(context.Context, *GetOfflinePackRequest) (*GetOfflinePackResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOfflinePack not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) ListLocationChanges(context.Context, *ListLocationChangesRequest) (*ListLocationChangesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListLocationChanges not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) GetLocationHistory(context.Context, *GetLocationHistoryRequest) (*GetLocationHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLocationHistory not implemented")
 }
 func (UnimplementedRoutePlannerServiceServer) mustEmbedUnimplementedRoutePlannerServiceServer() {}
 func (UnimplementedRoutePlannerServiceServer) testEmbeddedByValue()                             {}
@@ -394,6 +476,78 @@ func _RoutePlannerService_ReviewLocationReport_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoutePlannerService_SubmitLocationCapture_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitLocationCaptureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).SubmitLocationCapture(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_SubmitLocationCapture_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).SubmitLocationCapture(ctx, req.(*SubmitLocationCaptureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoutePlannerService_GetOfflinePack_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOfflinePackRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).GetOfflinePack(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_GetOfflinePack_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).GetOfflinePack(ctx, req.(*GetOfflinePackRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoutePlannerService_ListLocationChanges_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListLocationChangesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).ListLocationChanges(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_ListLocationChanges_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).ListLocationChanges(ctx, req.(*ListLocationChangesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoutePlannerService_GetLocationHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLocationHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).GetLocationHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_GetLocationHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).GetLocationHistory(ctx, req.(*GetLocationHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RoutePlannerService_ServiceDesc is the grpc.ServiceDesc for RoutePlannerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -432,6 +586,22 @@ var RoutePlannerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReviewLocationReport",
 			Handler:    _RoutePlannerService_ReviewLocationReport_Handler,
+		},
+		{
+			MethodName: "SubmitLocationCapture",
+			Handler:    _RoutePlannerService_SubmitLocationCapture_Handler,
+		},
+		{
+			MethodName: "GetOfflinePack",
+			Handler:    _RoutePlannerService_GetOfflinePack_Handler,
+		},
+		{
+			MethodName: "ListLocationChanges",
+			Handler:    _RoutePlannerService_ListLocationChanges_Handler,
+		},
+		{
+			MethodName: "GetLocationHistory",
+			Handler:    _RoutePlannerService_GetLocationHistory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

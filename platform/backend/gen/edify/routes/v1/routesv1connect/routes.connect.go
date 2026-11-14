@@ -57,6 +57,18 @@ const (
 	// RoutePlannerServiceReviewLocationReportProcedure is the fully-qualified name of the
 	// RoutePlannerService's ReviewLocationReport RPC.
 	RoutePlannerServiceReviewLocationReportProcedure = "/edify.routes.v1.RoutePlannerService/ReviewLocationReport"
+	// RoutePlannerServiceSubmitLocationCaptureProcedure is the fully-qualified name of the
+	// RoutePlannerService's SubmitLocationCapture RPC.
+	RoutePlannerServiceSubmitLocationCaptureProcedure = "/edify.routes.v1.RoutePlannerService/SubmitLocationCapture"
+	// RoutePlannerServiceGetOfflinePackProcedure is the fully-qualified name of the
+	// RoutePlannerService's GetOfflinePack RPC.
+	RoutePlannerServiceGetOfflinePackProcedure = "/edify.routes.v1.RoutePlannerService/GetOfflinePack"
+	// RoutePlannerServiceListLocationChangesProcedure is the fully-qualified name of the
+	// RoutePlannerService's ListLocationChanges RPC.
+	RoutePlannerServiceListLocationChangesProcedure = "/edify.routes.v1.RoutePlannerService/ListLocationChanges"
+	// RoutePlannerServiceGetLocationHistoryProcedure is the fully-qualified name of the
+	// RoutePlannerService's GetLocationHistory RPC.
+	RoutePlannerServiceGetLocationHistoryProcedure = "/edify.routes.v1.RoutePlannerService/GetLocationHistory"
 )
 
 // RoutePlannerServiceClient is a client for the edify.routes.v1.RoutePlannerService service.
@@ -80,6 +92,19 @@ type RoutePlannerServiceClient interface {
 	ListLocationReports(context.Context, *connect.Request[v1.ListLocationReportsRequest]) (*connect.Response[v1.ListLocationReportsResponse], error)
 	// Approve (the point becomes the school's verified location) or reject.
 	ReviewLocationReport(context.Context, *connect.Request[v1.ReviewLocationReportRequest]) (*connect.Response[v1.ReviewLocationReportResponse], error)
+	// A capture from the field (GPS, typed, or "the location is correct"),
+	// sent when the device has a connection. A retry with the same capture id
+	// returns the first answer. A first location by GPS at the policy's
+	// accuracy is accepted at once; anything else waits for review.
+	SubmitLocationCapture(context.Context, *connect.Request[v1.SubmitLocationCaptureRequest]) (*connect.Response[v1.SubmitLocationCaptureResponse], error)
+	// The reader's schools and planned visits for working without a
+	// connection: the least the capture screen needs.
+	GetOfflinePack(context.Context, *connect.Request[v1.GetOfflinePackRequest]) (*connect.Response[v1.GetOfflinePackResponse], error)
+	// Location changes accepted since a time, so clients refresh pins and
+	// cached schools.
+	ListLocationChanges(context.Context, *connect.Request[v1.ListLocationChangesRequest]) (*connect.Response[v1.ListLocationChangesResponse], error)
+	// One school's location history: every capture and report and its decision.
+	GetLocationHistory(context.Context, *connect.Request[v1.GetLocationHistoryRequest]) (*connect.Response[v1.GetLocationHistoryResponse], error)
 }
 
 // NewRoutePlannerServiceClient constructs a client for the edify.routes.v1.RoutePlannerService
@@ -141,19 +166,47 @@ func NewRoutePlannerServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(routePlannerServiceMethods.ByName("ReviewLocationReport")),
 			connect.WithClientOptions(opts...),
 		),
+		submitLocationCapture: connect.NewClient[v1.SubmitLocationCaptureRequest, v1.SubmitLocationCaptureResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceSubmitLocationCaptureProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("SubmitLocationCapture")),
+			connect.WithClientOptions(opts...),
+		),
+		getOfflinePack: connect.NewClient[v1.GetOfflinePackRequest, v1.GetOfflinePackResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceGetOfflinePackProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("GetOfflinePack")),
+			connect.WithClientOptions(opts...),
+		),
+		listLocationChanges: connect.NewClient[v1.ListLocationChangesRequest, v1.ListLocationChangesResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceListLocationChangesProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("ListLocationChanges")),
+			connect.WithClientOptions(opts...),
+		),
+		getLocationHistory: connect.NewClient[v1.GetLocationHistoryRequest, v1.GetLocationHistoryResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceGetLocationHistoryProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("GetLocationHistory")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // routePlannerServiceClient implements RoutePlannerServiceClient.
 type routePlannerServiceClient struct {
-	getFieldDay          *connect.Client[v1.GetFieldDayRequest, v1.GetFieldDayResponse]
-	planRoute            *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
-	getSchoolPins        *connect.Client[v1.GetSchoolPinsRequest, v1.GetSchoolPinsResponse]
-	getSchoolDistance    *connect.Client[v1.GetSchoolDistanceRequest, v1.GetSchoolDistanceResponse]
-	getSchoolLocation    *connect.Client[v1.GetSchoolLocationRequest, v1.GetSchoolLocationResponse]
-	reportSchoolLocation *connect.Client[v1.ReportSchoolLocationRequest, v1.ReportSchoolLocationResponse]
-	listLocationReports  *connect.Client[v1.ListLocationReportsRequest, v1.ListLocationReportsResponse]
-	reviewLocationReport *connect.Client[v1.ReviewLocationReportRequest, v1.ReviewLocationReportResponse]
+	getFieldDay           *connect.Client[v1.GetFieldDayRequest, v1.GetFieldDayResponse]
+	planRoute             *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
+	getSchoolPins         *connect.Client[v1.GetSchoolPinsRequest, v1.GetSchoolPinsResponse]
+	getSchoolDistance     *connect.Client[v1.GetSchoolDistanceRequest, v1.GetSchoolDistanceResponse]
+	getSchoolLocation     *connect.Client[v1.GetSchoolLocationRequest, v1.GetSchoolLocationResponse]
+	reportSchoolLocation  *connect.Client[v1.ReportSchoolLocationRequest, v1.ReportSchoolLocationResponse]
+	listLocationReports   *connect.Client[v1.ListLocationReportsRequest, v1.ListLocationReportsResponse]
+	reviewLocationReport  *connect.Client[v1.ReviewLocationReportRequest, v1.ReviewLocationReportResponse]
+	submitLocationCapture *connect.Client[v1.SubmitLocationCaptureRequest, v1.SubmitLocationCaptureResponse]
+	getOfflinePack        *connect.Client[v1.GetOfflinePackRequest, v1.GetOfflinePackResponse]
+	listLocationChanges   *connect.Client[v1.ListLocationChangesRequest, v1.ListLocationChangesResponse]
+	getLocationHistory    *connect.Client[v1.GetLocationHistoryRequest, v1.GetLocationHistoryResponse]
 }
 
 // GetFieldDay calls edify.routes.v1.RoutePlannerService.GetFieldDay.
@@ -196,6 +249,26 @@ func (c *routePlannerServiceClient) ReviewLocationReport(ctx context.Context, re
 	return c.reviewLocationReport.CallUnary(ctx, req)
 }
 
+// SubmitLocationCapture calls edify.routes.v1.RoutePlannerService.SubmitLocationCapture.
+func (c *routePlannerServiceClient) SubmitLocationCapture(ctx context.Context, req *connect.Request[v1.SubmitLocationCaptureRequest]) (*connect.Response[v1.SubmitLocationCaptureResponse], error) {
+	return c.submitLocationCapture.CallUnary(ctx, req)
+}
+
+// GetOfflinePack calls edify.routes.v1.RoutePlannerService.GetOfflinePack.
+func (c *routePlannerServiceClient) GetOfflinePack(ctx context.Context, req *connect.Request[v1.GetOfflinePackRequest]) (*connect.Response[v1.GetOfflinePackResponse], error) {
+	return c.getOfflinePack.CallUnary(ctx, req)
+}
+
+// ListLocationChanges calls edify.routes.v1.RoutePlannerService.ListLocationChanges.
+func (c *routePlannerServiceClient) ListLocationChanges(ctx context.Context, req *connect.Request[v1.ListLocationChangesRequest]) (*connect.Response[v1.ListLocationChangesResponse], error) {
+	return c.listLocationChanges.CallUnary(ctx, req)
+}
+
+// GetLocationHistory calls edify.routes.v1.RoutePlannerService.GetLocationHistory.
+func (c *routePlannerServiceClient) GetLocationHistory(ctx context.Context, req *connect.Request[v1.GetLocationHistoryRequest]) (*connect.Response[v1.GetLocationHistoryResponse], error) {
+	return c.getLocationHistory.CallUnary(ctx, req)
+}
+
 // RoutePlannerServiceHandler is an implementation of the edify.routes.v1.RoutePlannerService
 // service.
 type RoutePlannerServiceHandler interface {
@@ -218,6 +291,19 @@ type RoutePlannerServiceHandler interface {
 	ListLocationReports(context.Context, *connect.Request[v1.ListLocationReportsRequest]) (*connect.Response[v1.ListLocationReportsResponse], error)
 	// Approve (the point becomes the school's verified location) or reject.
 	ReviewLocationReport(context.Context, *connect.Request[v1.ReviewLocationReportRequest]) (*connect.Response[v1.ReviewLocationReportResponse], error)
+	// A capture from the field (GPS, typed, or "the location is correct"),
+	// sent when the device has a connection. A retry with the same capture id
+	// returns the first answer. A first location by GPS at the policy's
+	// accuracy is accepted at once; anything else waits for review.
+	SubmitLocationCapture(context.Context, *connect.Request[v1.SubmitLocationCaptureRequest]) (*connect.Response[v1.SubmitLocationCaptureResponse], error)
+	// The reader's schools and planned visits for working without a
+	// connection: the least the capture screen needs.
+	GetOfflinePack(context.Context, *connect.Request[v1.GetOfflinePackRequest]) (*connect.Response[v1.GetOfflinePackResponse], error)
+	// Location changes accepted since a time, so clients refresh pins and
+	// cached schools.
+	ListLocationChanges(context.Context, *connect.Request[v1.ListLocationChangesRequest]) (*connect.Response[v1.ListLocationChangesResponse], error)
+	// One school's location history: every capture and report and its decision.
+	GetLocationHistory(context.Context, *connect.Request[v1.GetLocationHistoryRequest]) (*connect.Response[v1.GetLocationHistoryResponse], error)
 }
 
 // NewRoutePlannerServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -275,6 +361,30 @@ func NewRoutePlannerServiceHandler(svc RoutePlannerServiceHandler, opts ...conne
 		connect.WithSchema(routePlannerServiceMethods.ByName("ReviewLocationReport")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routePlannerServiceSubmitLocationCaptureHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceSubmitLocationCaptureProcedure,
+		svc.SubmitLocationCapture,
+		connect.WithSchema(routePlannerServiceMethods.ByName("SubmitLocationCapture")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routePlannerServiceGetOfflinePackHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceGetOfflinePackProcedure,
+		svc.GetOfflinePack,
+		connect.WithSchema(routePlannerServiceMethods.ByName("GetOfflinePack")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routePlannerServiceListLocationChangesHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceListLocationChangesProcedure,
+		svc.ListLocationChanges,
+		connect.WithSchema(routePlannerServiceMethods.ByName("ListLocationChanges")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routePlannerServiceGetLocationHistoryHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceGetLocationHistoryProcedure,
+		svc.GetLocationHistory,
+		connect.WithSchema(routePlannerServiceMethods.ByName("GetLocationHistory")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.routes.v1.RoutePlannerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RoutePlannerServiceGetFieldDayProcedure:
@@ -293,6 +403,14 @@ func NewRoutePlannerServiceHandler(svc RoutePlannerServiceHandler, opts ...conne
 			routePlannerServiceListLocationReportsHandler.ServeHTTP(w, r)
 		case RoutePlannerServiceReviewLocationReportProcedure:
 			routePlannerServiceReviewLocationReportHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceSubmitLocationCaptureProcedure:
+			routePlannerServiceSubmitLocationCaptureHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceGetOfflinePackProcedure:
+			routePlannerServiceGetOfflinePackHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceListLocationChangesProcedure:
+			routePlannerServiceListLocationChangesHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceGetLocationHistoryProcedure:
+			routePlannerServiceGetLocationHistoryHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -332,4 +450,20 @@ func (UnimplementedRoutePlannerServiceHandler) ListLocationReports(context.Conte
 
 func (UnimplementedRoutePlannerServiceHandler) ReviewLocationReport(context.Context, *connect.Request[v1.ReviewLocationReportRequest]) (*connect.Response[v1.ReviewLocationReportResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.ReviewLocationReport is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) SubmitLocationCapture(context.Context, *connect.Request[v1.SubmitLocationCaptureRequest]) (*connect.Response[v1.SubmitLocationCaptureResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.SubmitLocationCapture is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) GetOfflinePack(context.Context, *connect.Request[v1.GetOfflinePackRequest]) (*connect.Response[v1.GetOfflinePackResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.GetOfflinePack is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) ListLocationChanges(context.Context, *connect.Request[v1.ListLocationChangesRequest]) (*connect.Response[v1.ListLocationChangesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.ListLocationChanges is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) GetLocationHistory(context.Context, *connect.Request[v1.GetLocationHistoryRequest]) (*connect.Response[v1.GetLocationHistoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.GetLocationHistory is not implemented"))
 }

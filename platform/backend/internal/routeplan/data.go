@@ -27,21 +27,34 @@ var kampala = func() *time.Location {
 type school struct {
 	pin *routesv1.SchoolPin
 	at  LatLng
+	// entrance is the verified entrance / road access point, if any.
+	entrance *LatLng
 }
 
 func (s school) placed() bool { return Placed(s.pin.GetLocationStatus()) }
+
+// road is where a road route goes: the entrance when there is one, else
+// the school. Straight-line figures stay school to school.
+func (s school) road() LatLng {
+	if s.entrance != nil {
+		return *s.entrance
+	}
+	return s.at
+}
 
 // verifiedLocations is whether field_routes (the reviewed locations) is
 // there to read; the gateway sets it once it has checked the schema.
 var verifiedLocations atomic.Bool
 
-// schoolCols and schoolFrom read a school with its best point: a verified
-// location (field_routes), a corrected point (school_geo_point), then the
-// directory's own.
+// schoolCols and schoolFrom read a school with its best point: its current
+// location in field_routes (school_location, else a 0001 verified
+// location), a corrected point (school_geo_point), then the directory's
+// own; with the location's version and the entrance point.
 func schoolCols() string {
-	verified := "NULL::float8, NULL::float8"
+	verified := "NULL::float8, NULL::float8, 0, NULL::float8, NULL::float8"
 	if verifiedLocations.Load() {
-		verified = "vl.lat, vl.lng"
+		verified = `COALESCE(sl.lat, vl.lat), COALESCE(sl.lng, vl.lng),
+  COALESCE(sl.version, CASE WHEN vl.school_id IS NULL THEN 0 ELSE 1 END), se.lat, se.lng`
 	}
 	return `s.id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(d.name, ''), COALESCE(c.name, ''),
   COALESCE(s.school_type, ''), ` + verified + `, gp.latitude, gp.longitude, s.latitude, s.longitude`
@@ -51,7 +64,9 @@ func schoolFrom() string {
 	from := `school s LEFT JOIN school_geo_point gp ON gp.school_id = s.id
   LEFT JOIN district d ON d.id = s.district_id LEFT JOIN cluster c ON c.id = s.cluster_id`
 	if verifiedLocations.Load() {
-		from += ` LEFT JOIN field_routes.verified_location vl ON vl.school_id = s.id`
+		from += ` LEFT JOIN field_routes.verified_location vl ON vl.school_id = s.id
+  LEFT JOIN field_routes.school_location sl ON sl.school_id = s.id AND sl.target = 'school'
+  LEFT JOIN field_routes.school_location se ON se.school_id = s.id AND se.target = 'entrance'`
 	}
 	return from
 }
@@ -59,14 +74,14 @@ func schoolFrom() string {
 // latExpr and lngExpr are a school's best point in SQL, for viewport filters.
 func latExpr() string {
 	if verifiedLocations.Load() {
-		return "COALESCE(vl.lat, gp.latitude, s.latitude)"
+		return "COALESCE(sl.lat, vl.lat, gp.latitude, s.latitude)"
 	}
 	return "COALESCE(gp.latitude, s.latitude)"
 }
 
 func lngExpr() string {
 	if verifiedLocations.Load() {
-		return "COALESCE(vl.lng, gp.longitude, s.longitude)"
+		return "COALESCE(sl.lng, vl.lng, gp.longitude, s.longitude)"
 	}
 	return "COALESCE(gp.longitude, s.longitude)"
 }
@@ -94,9 +109,12 @@ func reach(ctx context.Context, db schooldirectory.Querier, p auth.Principal, no
 func scanSchool(r pgx.CollectableRow, extra ...any) (school, error) {
 	var (
 		id, code, name, district, cluster, kind string
-		vLat, vLng, geoLat, geoLng, lat, lng    *float64
+		vLat, vLng, eLat, eLng                  *float64
+		geoLat, geoLng, lat, lng                *float64
+		version                                 int32
 	)
-	if err := r.Scan(append([]any{&id, &code, &name, &district, &cluster, &kind, &vLat, &vLng, &geoLat, &geoLng, &lat, &lng}, extra...)...); err != nil {
+	if err := r.Scan(append([]any{&id, &code, &name, &district, &cluster, &kind, &vLat, &vLng, &version, &eLat, &eLng,
+		&geoLat, &geoLng, &lat, &lng}, extra...)...); err != nil {
 		return school{}, err
 	}
 	// A reviewed location stands before the directory's; it is a corrected point too.
@@ -110,10 +128,18 @@ func scanSchool(r pgx.CollectableRow, extra ...any) (school, error) {
 	}
 	pin := &routesv1.SchoolPin{SchoolId: id, Code: code, Name: name, District: district, Cluster: cluster,
 		Status: "other", Category: label, LocationStatus: status}
+	pin.LocationVersion = version
 	if Placed(status) {
 		pin.Point = &routesv1.Point{Lat: at.Lat, Lng: at.Lng}
 	}
-	return school{pin: pin, at: at}, nil
+	out := school{pin: pin, at: at}
+	if eLat != nil && eLng != nil {
+		if e, ok := checkPoint(*eLat, *eLng); ok {
+			out.entrance = &e
+			pin.Entrance = &routesv1.Point{Lat: e.Lat, Lng: e.Lng}
+		}
+	}
+	return out, nil
 }
 
 // plannedDay is the reader's school visits on the day, in the order they

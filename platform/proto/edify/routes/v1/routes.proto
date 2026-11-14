@@ -36,6 +36,19 @@ service RoutePlannerService {
   rpc ListLocationReports(ListLocationReportsRequest) returns (ListLocationReportsResponse);
   // Approve (the point becomes the school's verified location) or reject.
   rpc ReviewLocationReport(ReviewLocationReportRequest) returns (ReviewLocationReportResponse);
+  // A capture from the field (GPS, typed, or "the location is correct"),
+  // sent when the device has a connection. A retry with the same capture id
+  // returns the first answer. A first location by GPS at the policy's
+  // accuracy is accepted at once; anything else waits for review.
+  rpc SubmitLocationCapture(SubmitLocationCaptureRequest) returns (SubmitLocationCaptureResponse);
+  // The reader's schools and planned visits for working without a
+  // connection: the least the capture screen needs.
+  rpc GetOfflinePack(GetOfflinePackRequest) returns (GetOfflinePackResponse);
+  // Location changes accepted since a time, so clients refresh pins and
+  // cached schools.
+  rpc ListLocationChanges(ListLocationChangesRequest) returns (ListLocationChangesResponse);
+  // One school's location history: every capture and report and its decision.
+  rpc GetLocationHistory(GetLocationHistoryRequest) returns (GetLocationHistoryResponse);
 }
 
 message Point {
@@ -65,6 +78,12 @@ message SchoolPin {
   // The planned time of that activity, "HH:MM", if it has one.
   string planned_time = 11;
   bool can_open_profile = 12;
+  // The location's version: 0 for the School Directory's own point, then
+  // one more for each accepted change.
+  int32 location_version = 13;
+  // The school's verified entrance / road access point, if it has one;
+  // navigation goes there.
+  Point entrance = 14;
 }
 
 message RouteLeg {
@@ -250,6 +269,29 @@ message GetSchoolLocationResponse {
   string access_note = 7;
   // The reader may review reports.
   bool can_review = 8;
+  // The location's version, and when and by whom it was last verified.
+  int32 version = 9;
+  string verified_at = 10;
+  string verified_by_name = 11;
+  // The verified entrance / road access point, if any.
+  Point entrance = 12;
+  CapturePolicy policy = 13;
+  // The reader may capture this school's location by GPS.
+  bool can_capture = 14;
+  // When someone last said the location on record is right (RFC 3339).
+  string last_confirmed_at = 15;
+}
+
+// The thresholds a capture is judged by; the device shows the same.
+message CapturePolicy {
+  // At or better than good_m a fix is Good; up to confirm_m it needs the
+  // person's confirmation; beyond, recapture is recommended.
+  double good_m = 1;
+  double confirm_m = 2;
+  // A fix older than this when taken is stale.
+  int32 fresh_seconds = 3;
+  // A correction moving the school further than this is flagged.
+  int32 large_move_m = 4;
 }
 
 message LocationReport {
@@ -277,6 +319,119 @@ message LocationReport {
   string review_note = 16;
   // The reader reported it, so may not review it.
   bool is_own = 17;
+  // school or entrance.
+  string target = 18;
+  // Why it waits for review: large_move, accuracy_fair, accuracy_poor,
+  // version_conflict, competing, typed_point, no_point, far_from_district,
+  // stale_capture, clock_skew, correction, entrance.
+  repeated string flags = 19;
+  // When the device took the fix (RFC 3339).
+  string captured_at = 20;
+  // The version this made, once accepted or approved.
+  int32 result_version = 21;
+  // new, correction or confirm.
+  string capture_kind = 22;
+  int32 sample_count = 23;
+  double spread_m = 24;
+  // The version the device knew when it captured.
+  int32 base_version = 25;
+}
+
+message SubmitLocationCaptureRequest {
+  // The device's id for this capture (a UUID); a retry sends the same.
+  string capture_id = 1;
+  string school_id = 2;
+  // school or entrance.
+  string target = 3;
+  // new, correction or confirm.
+  string kind = 4;
+  Point point = 5;
+  // none, typed or device.
+  string point_source = 6;
+  double accuracy_m = 7;
+  // When the device took the fix (RFC 3339).
+  string captured_at = 8;
+  int32 sample_count = 9;
+  double spread_m = 10;
+  // The location version the device showed when capturing.
+  int32 base_version = 11;
+  string reason = 12;
+  string access_note = 13;
+}
+
+message SubmitLocationCaptureResponse {
+  LocationReport capture = 1;
+  // accepted (the location changed now), pending (waits for review) or
+  // noted (a confirmation).
+  string outcome = 2;
+  // The school's location version after this.
+  int32 version = 3;
+  SchoolPin school = 4;
+  // One sentence for the person.
+  string message = 5;
+}
+
+message GetOfflinePackRequest {
+  // How many days of planned visits to include (default 14, at most 31).
+  int32 days = 1;
+}
+
+message OfflineSchool {
+  SchoolPin school = 1;
+  string verified_at = 2;
+  string access_note = 3;
+  // A capture or report on it waits for review.
+  bool has_pending = 4;
+  string last_confirmed_at = 5;
+}
+
+message PlannedVisit {
+  // "YYYY-MM-DD".
+  string date = 1;
+  string school_id = 2;
+  string activity_id = 3;
+}
+
+message GetOfflinePackResponse {
+  repeated OfflineSchool schools = 1;
+  repeated PlannedVisit planned = 2;
+  // RFC 3339.
+  string generated_at = 3;
+  CapturePolicy policy = 4;
+  bool can_capture = 5;
+  // More schools are in reach than were sent.
+  bool truncated = 6;
+  bool can_review = 7;
+}
+
+message LocationChange {
+  string school_id = 1;
+  string target = 2;
+  int32 version = 3;
+  Point point = 4;
+  // RFC 3339.
+  string changed_at = 5;
+}
+
+message ListLocationChangesRequest {
+  // RFC 3339; empty is the last day.
+  string since = 1;
+}
+
+message ListLocationChangesResponse {
+  repeated LocationChange changes = 1;
+  // The server's time, to send as the next since.
+  string now = 2;
+}
+
+message GetLocationHistoryRequest {
+  string school_id = 1;
+}
+
+message GetLocationHistoryResponse {
+  SchoolPin school = 1;
+  // Newest first.
+  repeated LocationReport entries = 2;
 }
 
 message ReportSchoolLocationRequest {

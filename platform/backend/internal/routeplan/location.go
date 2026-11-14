@@ -48,13 +48,20 @@ func (s *Service) GetSchoolLocation(ctx context.Context, req *connect.Request[ro
 		out.NearbySchools = int32(len(near))
 	}
 	if verify {
-		pending, access, err := s.pendingFor(ctx, p, sc.pin.GetSchoolId())
+		pending, err := s.pendingFor(ctx, p, sc.pin.GetSchoolId())
 		if err != nil {
 			return nil, s.fail(ctx, err)
 		}
-		out.PendingReport, out.AccessNote = pending, access
+		f, err := s.facts(ctx, sc.pin.GetSchoolId())
+		if err != nil {
+			return nil, s.fail(ctx, err)
+		}
+		out.PendingReport, out.AccessNote = pending, f.accessNote
 		out.CanReport = MayOpenProfile(p.ActiveRole) && pending == nil
 		out.CanReview = MayReview(p.ActiveRole)
+		out.CanCapture = MayCapture(p.ActiveRole)
+		out.Version, out.VerifiedAt, out.VerifiedByName = sc.pin.GetLocationVersion(), f.verifiedAt, f.verifiedByName
+		out.LastConfirmedAt, out.Entrance, out.Policy = f.lastConfirmedAt, sc.pin.GetEntrance(), policyOf(DefaultPolicy)
 	}
 	return connect.NewResponse(out), nil
 }
