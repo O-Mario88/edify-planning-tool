@@ -141,7 +141,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	if cfg.ExistingAppURL != "" {
 		existingApp = feed.NewClient(cfg.ExistingAppURL, logger)
 	}
-	screenService := screens.NewService(existingApp).
+	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
 		WithProfile(schoolprofile.NewService(pool, time.Now), logger).
 		WithNavigation(navigation.NewService(pool)).
@@ -190,7 +190,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			planningoversight.NewService(pool, time.Now),
 			oversightportfolio.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
-			hrregister.NewService(pool, time.Now),
+			hrregister.NewService(pool, time.Now).WithAccessLog(pool, logger),
 			leavepolicies.NewService(pool, time.Now),
 			iapages.NewService(pool, time.Now),
 			ccelead.NewService(pool, time.Now),

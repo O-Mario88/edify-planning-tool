@@ -11,7 +11,9 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/origin"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trace"
 )
 
 // Any page the app draws from its components, read by the existing
@@ -40,6 +42,9 @@ func (s *Service) GetPage(
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This page cannot be opened.")
 	}
 	if principal, ok := auth.PrincipalFrom(ctx); ok && !principal.InActingAppointment {
+		// A page whose reading is itself audited records who read it from
+		// where (Employee Relations).
+		ctx = origin.With(ctx, origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID))
 		for _, pages := range s.pages {
 			response, served, err := pages.Build(ctx, principal, message.GetPath(), query)
 			switch {

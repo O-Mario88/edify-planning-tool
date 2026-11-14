@@ -759,3 +759,14 @@ GRANT SELECT (submission_id, row_number, code, message, status) ON bt_portfolio_
 GRANT SELECT (contact_person, phone, region_name, region_names, ssa_intervention, ssa_interventions, activity_codes) ON partner TO edify_gateway_ro;
 GRANT SELECT (scheduled_date) ON partner_assignment TO edify_gateway_ro;
 GRANT SELECT (est_cost_cents) ON activity TO edify_gateway_ro;
+
+-- Employee Relations (internal/hrregister/employeerelations.go): which case
+-- it is, its type, country, severity and status, whom it concerns, who owns
+-- and investigates it, whether it is confidential (a confidential case is
+-- listed only to its owner and investigator) and its dates. Never what was
+-- said: the description, findings, action taken, appeal note, hearing,
+-- sanction and complainant stay unreadable. Each read of the register is
+-- itself audited, appended through the audit chain's own grants
+-- (activities_roles.sql, edify_activities_rw).
+GRANT SELECT (id, case_type, country, severity, status, subject_staff_id, case_owner_id, investigator_id,
+              is_confidential, opened_at, created_at, updated_at) ON hr_relations_case TO edify_gateway_ro;

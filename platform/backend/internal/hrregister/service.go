@@ -3,6 +3,7 @@ package hrregister
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/url"
 	"time"
 
@@ -56,6 +57,7 @@ var builders = map[string]func(context.Context, input) (register, error){
 	"/compensation-benefits": compensationBenefits,
 	"/pulse-surveys":         pulseSurveys,
 	"/hr-analytics":          hrAnalytics,
+	"/employee-relations":    employeeRelations,
 }
 
 // zone is settings.TIME_ZONE, the zone the server's day is read in.
@@ -71,6 +73,10 @@ var zone = func() *time.Location {
 type Service struct {
 	db  schooldirectory.Querier
 	now func() time.Time
+	// writer appends the audit row of a register whose reading is audited
+	// (WithAccessLog); nil leaves those registers with the existing page.
+	writer TxBeginner
+	logger *slog.Logger
 }
 
 // NewService wires the service to the database it reads.
@@ -88,6 +94,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	role, ok := rules.Pages[path].Roles[p.ActiveRole]
 	if !ok || !role.Page {
 		return nil, true, ErrNotAvailable
+	}
+	if view, audited := auditedReads[path]; audited {
+		if s.writer == nil {
+			return nil, false, nil
+		}
+		s.recordAccess(ctx, p, view)
 	}
 	r, err := peopleReach(ctx, s.db, p)
 	if err != nil {
