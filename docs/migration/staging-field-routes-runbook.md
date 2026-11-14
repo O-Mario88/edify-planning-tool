@@ -12,6 +12,7 @@ Brief and decisions: `next-offline-gps-capture.md`. Test results: `offline-gps-c
 | Creates the `NOLOGIN` role `edify_routes_rw` and grants it to `edify_gateway` | existing roles' rights on existing tables |
 | Migration `0001_location_verification`: `location_report`, `verified_location` | School IDs, Activity IDs, coordinates of record |
 | Migration `0002_location_capture`: `location_capture`, `school_location`, `location_change` | the existing application's migrations |
+| Migration `0003_ledger_read`: lets `edify_routes_rw` read the schema's migration ledger, so the gateway's readiness check passes under its own role | |
 | Grants on those five tables to `edify_routes_rw` only | |
 
 The migration lint (run in CI and at apply time) refuses any `DROP`, `DELETE`, `TRUNCATE`, role change, code, or reference outside `field_routes`. Each migration runs in its own transaction as `edify_routes_owner`, which holds no right on the existing tables; the ledger `field_routes.schema_migration` records each with its checksum.
@@ -59,7 +60,7 @@ platform/deploy/db/apply-roles.sh
 cd platform/backend && go run ./cmd/schemactl status
 ```
 
-Expected for `field_routes`: `applied version 0, this build needs 2`.
+Expected for `field_routes`: `applied version 0, this build needs 3`.
 
 **4. Apply the migrations:**
 
@@ -72,6 +73,7 @@ Expected:
 ```
 applied field_routes 0001 0001_location_verification
 applied field_routes 0002 0002_location_capture
+applied field_routes 0003 0003_ledger_read
 ```
 
 It refuses (and changes nothing) if `--confirm-database` is not the database it is connected to, if the schema is not owned by `edify_routes_owner`, or if a recorded checksum differs from the build's.
@@ -81,16 +83,18 @@ It refuses (and changes nothing) if `--confirm-database` is not the database it 
 ```bash
 psql "$EDIFY_ADMIN_DATABASE_URL" -Atc "SELECT version, name FROM field_routes.schema_migration ORDER BY version"
 psql "$EDIFY_ADMIN_DATABASE_URL" -Atc "SELECT tablename FROM pg_tables WHERE schemaname = 'field_routes' ORDER BY 1"
+psql "$EDIFY_ADMIN_DATABASE_URL" -Atc "SELECT has_table_privilege('edify_gateway','field_routes.schema_migration','SELECT')"
 psql "$EDIFY_ADMIN_DATABASE_URL" -Atc "SELECT has_table_privilege('edify_gateway','field_routes.location_capture','INSERT'), has_table_privilege('edify_gateway','public.school','UPDATE'), has_table_privilege('edify_gateway','public.school_geo_point','INSERT'), has_table_privilege('edify_routes_owner','public.school','SELECT')"
 ```
 
-Expected: versions 1 and 2; tables `location_capture, location_change, location_report, schema_migration, school_location, verified_location`; privileges `t|f|f|f` (the gateway writes only `field_routes`; the owner role cannot even read `school`).
+Expected: versions 1, 2 and 3; tables `location_capture, location_change, location_report, schema_migration, school_location, verified_location`; the ledger line `t` (the gateway may read what is applied), then privileges `t|f|f|f` (the gateway writes only `field_routes`; the owner role cannot even read `school`).
 
 **6. Prove nothing else moved:** run the two step-1 queries again; both lines must be identical.
 
 **7. Deploy the gateway build** (per §5.3), then:
 
 - [ ] `/readyz` is green.
+- [ ] Platform Health (`/platform-health`, as Admin) lists `field_routes` as Ready.
 - [ ] The gateway log shows no `field routes schema not ready` warning after the first location request.
 - [ ] With a **staging test account** (never a real staff account's real schools without the owner's say): open a school profile, see Location & Directions with its version and verified facts; capture a test school's location from the staging app build; see it pending or accepted per the policy; review it as a staging Program Lead; see the planner use the new point.
 - [ ] Re-run step 6: the existing application's coordinates are unchanged.
@@ -109,6 +113,8 @@ Expected: versions 1 and 2; tables `location_capture, location_change, location_
 - [ ] Routing provider on staging (OSRM or Google) is a separate decision; without one the planner shows straight-line figures, labelled as such.
 
 ## Rehearsal (2026-11-14, local copy, not staging)
+
+(Before migration 0003 existed: the rehearsal applied 0001–0002. 0003 was added the same day after Platform Health showed the gateway could not read the ledger under its own role; it is a single GRANT and has been applied to the local test and development databases.)
 
 Run on a throwaway local database holding only the existing application's `public` schema copied from the test database (700 schools), as `EDIFY_ENV=development` because staging insists on TLS, which a local database lacks. Every step as written:
 
