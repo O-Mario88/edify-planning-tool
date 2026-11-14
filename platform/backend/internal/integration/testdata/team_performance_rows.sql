@@ -15,21 +15,65 @@
 
 BEGIN;
 
+-- The seed's own records, found by what stays the same from one seeding to
+-- the next (an account's email, a district's name, a catalogue item's
+-- stable code, a school's code) rather than by their ids, which every
+-- seeding draws afresh: CI seeds its own database. A template row (an
+-- activity, an SSA record) only lends its columns, every one that matters
+-- written over below.
+CREATE TEMP TABLE tpg_seed (token text PRIMARY KEY, id text) ON COMMIT DROP;
+INSERT INTO tpg_seed VALUES
+ ('cmw9p53r100v09heihgm7', (SELECT id FROM district WHERE name = 'Buikwe' ORDER BY id LIMIT 1)),
+ ('cmw9p53sh00eaheeihgjo', (SELECT id FROM district WHERE name = 'Bukomansimbi' ORDER BY id LIMIT 1)),
+ ('cmw9p54dy0004o4eihgg2', (SELECT id FROM district WHERE name = 'Amuria' ORDER BY id LIMIT 1)),
+ ('cmw9p54es00owi5eihgiy', (SELECT id FROM district WHERE name = 'Budaka' ORDER BY id LIMIT 1)),
+ ('cmw9p55ge00e766eihg9v', (SELECT id FROM district WHERE name = 'Abim' ORDER BY id LIMIT 1)),
+ ('cmw9p55h300a2o1eihgzn', (SELECT id FROM district WHERE name = 'Adjumani' ORDER BY id LIMIT 1)),
+ ('cmw9p566x001kjbeihg6q', (SELECT id FROM district WHERE name = 'Buhweju' ORDER BY id LIMIT 1)),
+ ('cmw9p567j00vplqeihgoy', (SELECT id FROM district WHERE name = 'Buliisa' ORDER BY id LIMIT 1)),
+ ('cmw9p6zeg00klpueihg7a', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'EDTECH_FOUNDATIONS')),
+ ('cmw9p6zg600734ueihg0f', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'SCHOOL_LEADERSHIP')),
+ ('cmw9p6zhh00nfwoeihg2u', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'GOVERNMENT_STATUTORY_REQUIREMENTS')),
+ ('cmw9p6zle0025h0eihgln', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'TAM_I')),
+ ('cmw9p6zqd0082gueihgtv', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'EARLY_CHILDHOOD_EDUCATION_PROJECT')),
+ ('cmw9p6zs60036xueihght', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'PARTNER_MEETINGS_ADMIN')),
+ ('cmw9p6ztj0007xxeihg3z', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'STUDENT_CONFERENCE_CAMPS')),
+ ('cmw9p6ztu007g68eihg3z', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'TEACHER_PEDAGOGY_PROFESSIONALISM')),
+ ('cmw9p6zui00zapceihg6m', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'CC_SEL')),
+ ('cmw9p6zvd00u8dgeihgqm', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'CORE_SCHOOL_ORIENTATION')),
+ ('cmw9p705z00slcbeihg2k', (SELECT id FROM activity_catalogue_item WHERE stable_code = 'FIELD_DISTRICT_MEETING')),
+ ('cmw9p70ap00h2fieihgfk', (SELECT id FROM hr_strategic_priority_cycle WHERE financial_year = '2027' AND scope_type = 'regional' ORDER BY created_at, id LIMIT 1)),
+ ('cmw9p7b6a00e4s8ekhefr', (SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id WHERE u.email = 'pl2@edify.org' ORDER BY sp.deleted_at NULLS FIRST LIMIT 1)),
+ ('cmw9p7bf200eymgekhexn', (SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id WHERE u.email = 'pl3@edify.org' ORDER BY sp.deleted_at NULLS FIRST LIMIT 1)),
+ ('cmw9p7bws00c2f9ekherh', (SELECT id FROM "user" WHERE email = 'cceo1@edify.org')),
+ ('cmw9p7c6000iqchekhe36', (SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id WHERE u.email = 'cceo1@edify.org' ORDER BY sp.deleted_at NULLS FIRST LIMIT 1)),
+ ('cmw9p7d6600vvj2ekheu3', (SELECT id FROM "user" WHERE email = 'cceo6@edify.org')),
+ ('cmw9p7dez0031o9ekhee5', (SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id WHERE u.email = 'cceo6@edify.org' ORDER BY sp.deleted_at NULLS FIRST LIMIT 1)),
+ ('cmw9p7gp700mkgcekhefg', (SELECT id FROM school WHERE school_id = '1000' ORDER BY id LIMIT 1)),
+ ('cmw9p8gmw004ge6ekhe0g', (SELECT id FROM activity WHERE activity_type = 'school_visit' AND status = 'completed' ORDER BY created_at, id LIMIT 1)),
+ ('cmw9p7xaj00derkekhe6q', (SELECT id FROM ssa_record ORDER BY created_at, id LIMIT 1));
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM tpg_seed WHERE id IS NULL) THEN
+    RAISE EXCEPTION 'the seed lacks: %', (SELECT string_agg(token, ', ') FROM tpg_seed WHERE id IS NULL);
+  END IF;
+END $$;
+
+
 -- ── Schools ────────────────────────────────────────────────────────────────
-CREATE TEMP TABLE tpg_school ON COMMIT DROP AS SELECT * FROM school WHERE id = 'cmw9p7gp700mkgcekhefg';
+CREATE TEMP TABLE tpg_school ON COMMIT DROP AS SELECT * FROM school WHERE id = (SELECT id FROM tpg_seed WHERE token = 'cmw9p7gp700mkgcekhefg');
 CREATE TEMP TABLE tpg_school_spec (id text, code text, name text, owner text, kind text, status text, created timestamptz,
   closes date, closed_at timestamptz, cluster text, region text, district text, enrollment int, enrolled date) ON COMMIT DROP;
 INSERT INTO tpg_school_spec VALUES
- ('tpgs01', 'TPG-001', 'Tpg Alpha Primary', 'cmw9p7c6000iqchekhe36', 'client', 'active', '2026-10-05 09:00+03', NULL, NULL, 'x', 'cmw9p54dy0004o4eihgg2', 'cmw9p54dy0004o4eihgg2', 410, '2026-10-20'),
- ('tpgs02', 'TPG-002', 'Tpg Beta Primary', 'cmw9p7c6000iqchekhe36', 'core', 'active', '2025-03-01 09:00+03', NULL, NULL, NULL, 'cmw9p54dy0004o4eihgg2', 'cmw9p54es00owi5eihgiy', NULL, NULL),
- ('tpgs03', 'TPG-003', 'Tpg Gamma Primary', 'cmw9p7bws00c2f9ekherh', 'champion', 'reopened', '2024-01-10 09:00+03', NULL, NULL, 'x', 'cmw9p55ge00e766eihg9v', 'cmw9p55ge00e766eihg9v', 220, '2026-09-15'),
- ('tpgs04', 'TPG-004', 'Tpg Delta Primary', 'cmw9p7c6000iqchekhe36', 'client', 'closed', '2024-06-01 09:00+03', '2026-11-01', '2026-10-31 20:00+03', NULL, 'cmw9p55ge00e766eihg9v', 'cmw9p55h300a2o1eihgzn', NULL, NULL),
- ('tpgs05', 'TPG-005', 'Tpg Epsilon Primary', 'cmw9p7dez0031o9ekhee5', 'client', 'active', '2026-11-02 09:00+03', NULL, NULL, 'x', 'cmw9p566x001kjbeihg6q', 'cmw9p566x001kjbeihg6q', NULL, NULL),
- ('tpgs06', 'TPG-006', 'Tpg Zeta Primary', 'cmw9p7dez0031o9ekhee5', 'core', 'active', '2023-02-01 09:00+03', NULL, NULL, NULL, 'cmw9p566x001kjbeihg6q', 'cmw9p567j00vplqeihgoy', 90, '2026-11-03'),
- ('tpgs07', 'TPG-007', 'Tpg Eta Primary', 'cmw9p7dez0031o9ekhee5', 'core_trained', 'active', '2023-02-02 09:00+03', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
- ('tpgs08', 'TPG-008', 'Tpg Theta Primary', 'cmw9p7b6a00e4s8ekhefr', 'client', 'active', '2026-10-12 09:00+03', NULL, NULL, 'x', 'cmw9p53r100v09heihgm7', 'cmw9p53r100v09heihgm7', NULL, NULL),
- ('tpgs09', 'TPG-009', 'Tpg Iota Primary', NULL, 'client', 'active', '2026-10-13 09:00+03', NULL, NULL, NULL, 'cmw9p55ge00e766eihg9v', 'cmw9p55ge00e766eihg9v', NULL, NULL),
- ('tpgs10', 'TPG-010', 'Tpg Kappa Primary', 'cmw9p7c6000iqchekhe36', 'core', 'closed', '2022-02-02 09:00+03', NULL, '2026-10-10 10:00+03', NULL, 'cmw9p53r100v09heihgm7', 'cmw9p53sh00eaheeihgjo', NULL, NULL);
+ ('tpgs01', 'TPG-001', 'Tpg Alpha Primary', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), 'client', 'active', '2026-10-05 09:00+03', NULL, NULL, 'x', (SELECT id FROM tpg_seed WHERE token = 'cmw9p54dy0004o4eihgg2'), (SELECT id FROM tpg_seed WHERE token = 'cmw9p54dy0004o4eihgg2'), 410, '2026-10-20'),
+ ('tpgs02', 'TPG-002', 'Tpg Beta Primary', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), 'core', 'active', '2025-03-01 09:00+03', NULL, NULL, NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p54dy0004o4eihgg2'), (SELECT id FROM tpg_seed WHERE token = 'cmw9p54es00owi5eihgiy'), NULL, NULL),
+ ('tpgs03', 'TPG-003', 'Tpg Gamma Primary', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7bws00c2f9ekherh'), 'champion', 'reopened', '2024-01-10 09:00+03', NULL, NULL, 'x', (SELECT id FROM tpg_seed WHERE token = 'cmw9p55ge00e766eihg9v'), (SELECT id FROM tpg_seed WHERE token = 'cmw9p55ge00e766eihg9v'), 220, '2026-09-15'),
+ ('tpgs04', 'TPG-004', 'Tpg Delta Primary', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), 'client', 'closed', '2024-06-01 09:00+03', '2026-11-01', '2026-10-31 20:00+03', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p55ge00e766eihg9v'), (SELECT id FROM tpg_seed WHERE token = 'cmw9p55h300a2o1eihgzn'), NULL, NULL),
+ ('tpgs05', 'TPG-005', 'Tpg Epsilon Primary', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), 'client', 'active', '2026-11-02 09:00+03', NULL, NULL, 'x', (SELECT id FROM tpg_seed WHERE token = 'cmw9p566x001kjbeihg6q'), (SELECT id FROM tpg_seed WHERE token = 'cmw9p566x001kjbeihg6q'), NULL, NULL),
+ ('tpgs06', 'TPG-006', 'Tpg Zeta Primary', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), 'core', 'active', '2023-02-01 09:00+03', NULL, NULL, NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p566x001kjbeihg6q'), (SELECT id FROM tpg_seed WHERE token = 'cmw9p567j00vplqeihgoy'), 90, '2026-11-03'),
+ ('tpgs07', 'TPG-007', 'Tpg Eta Primary', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), 'core_trained', 'active', '2023-02-02 09:00+03', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+ ('tpgs08', 'TPG-008', 'Tpg Theta Primary', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7b6a00e4s8ekhefr'), 'client', 'active', '2026-10-12 09:00+03', NULL, NULL, 'x', (SELECT id FROM tpg_seed WHERE token = 'cmw9p53r100v09heihgm7'), (SELECT id FROM tpg_seed WHERE token = 'cmw9p53r100v09heihgm7'), NULL, NULL),
+ ('tpgs09', 'TPG-009', 'Tpg Iota Primary', NULL, 'client', 'active', '2026-10-13 09:00+03', NULL, NULL, NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p55ge00e766eihg9v'), (SELECT id FROM tpg_seed WHERE token = 'cmw9p55ge00e766eihg9v'), NULL, NULL),
+ ('tpgs10', 'TPG-010', 'Tpg Kappa Primary', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), 'core', 'closed', '2022-02-02 09:00+03', NULL, '2026-10-10 10:00+03', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p53r100v09heihgm7'), (SELECT id FROM tpg_seed WHERE token = 'cmw9p53sh00eaheeihgjo'), NULL, NULL);
 INSERT INTO school
 SELECT (jsonb_populate_record(null::school, to_jsonb(t) || jsonb_build_object(
   'id', s.id, 'school_id', s.code, 'name', s.name, 'account_owner_id', s.owner, 'school_type', s.kind,
@@ -47,40 +91,40 @@ INSERT INTO project SELECT (jsonb_populate_record(null::project, to_jsonb(t) || 
   'id', 'tpgp01', 'code', 'TPG-ALUMNI', 'name', 'Tpg Alumni Programme', 'deleted_at', NULL))).* FROM tpg_project t;
 
 -- ── Work ───────────────────────────────────────────────────────────────────
-CREATE TEMP TABLE tpg_activity ON COMMIT DROP AS SELECT * FROM activity WHERE id = 'cmw9p8gmw004ge6ekhe0g';
+CREATE TEMP TABLE tpg_activity ON COMMIT DROP AS SELECT * FROM activity WHERE id = (SELECT id FROM tpg_seed WHERE token = 'cmw9p8gmw004ge6ekhe0g');
 CREATE TEMP TABLE tpg_work (id text, kind text, status text, school text, item text, course text, method text, delivery text,
   actual date, planned date, scheduled timestamptz, teachers int, leaders int, meeting text, project text, attended text[], staff text, created timestamptz) ON COMMIT DROP;
 INSERT INTO tpg_work VALUES
  -- client visits: staff completed, partner submitted, staff planned ahead, cancelled, sent back
- ('tpga01', 'school_visit', 'completed', 'tpgs01', NULL, NULL, '', 'staff', '2026-10-20', '2026-10-18', NULL, 0, 0, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-01 08:00+03'),
- ('tpga02', 'school_visit', 'submitted_to_pl', 'tpgs05', NULL, NULL, '', 'partner', NULL, '2026-11-04', NULL, 0, 0, '', NULL, '{}', 'cmw9p7dez0031o9ekhee5', '2026-10-02 08:00+03'),
- ('tpga03', 'school_visit', 'scheduled', 'tpgs08', NULL, NULL, '', 'staff', NULL, '2027-01-12', NULL, 0, 0, '', NULL, '{}', 'cmw9p7b6a00e4s8ekhefr', '2026-10-03 08:00+03'),
- ('tpga04', 'school_visit', 'cancelled', 'tpgs01', NULL, NULL, '', 'staff', NULL, '2026-10-25', NULL, 0, 0, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-04 08:00+03'),
- ('tpga05', 'follow_up_visit', 'returned_by_pl', 'tpgs09', NULL, NULL, '', 'staff', NULL, NULL, '2026-11-05 10:00+03', 0, 0, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-05 08:00+03'),
+ ('tpga01', 'school_visit', 'completed', 'tpgs01', NULL, NULL, '', 'staff', '2026-10-20', '2026-10-18', NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-01 08:00+03'),
+ ('tpga02', 'school_visit', 'submitted_to_pl', 'tpgs05', NULL, NULL, '', 'partner', NULL, '2026-11-04', NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), '2026-10-02 08:00+03'),
+ ('tpga03', 'school_visit', 'scheduled', 'tpgs08', NULL, NULL, '', 'staff', NULL, '2027-01-12', NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7b6a00e4s8ekhefr'), '2026-10-03 08:00+03'),
+ ('tpga04', 'school_visit', 'cancelled', 'tpgs01', NULL, NULL, '', 'staff', NULL, '2026-10-25', NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-04 08:00+03'),
+ ('tpga05', 'follow_up_visit', 'returned_by_pl', 'tpgs09', NULL, NULL, '', 'staff', NULL, NULL, '2026-11-05 10:00+03', 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-05 08:00+03'),
  -- Core visits and trainings
- ('tpga06', 'core_visit', 'completed', 'tpgs02', NULL, NULL, '', 'staff', '2026-10-09', '2026-10-08', NULL, 0, 0, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-06 08:00+03'),
- ('tpga07', 'core_visit', 'ia_verified', 'tpgs02', NULL, NULL, '', 'partner', '2026-11-03', NULL, NULL, 0, 0, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-07 08:00+03'),
- ('tpga08', 'core_visit', 'planned', 'tpgs02', NULL, NULL, '', 'staff', NULL, '2027-02-10', NULL, 0, 0, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-08 08:00+03'),
+ ('tpga06', 'core_visit', 'completed', 'tpgs02', NULL, NULL, '', 'staff', '2026-10-09', '2026-10-08', NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-06 08:00+03'),
+ ('tpga07', 'core_visit', 'ia_verified', 'tpgs02', NULL, NULL, '', 'partner', '2026-11-03', NULL, NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-07 08:00+03'),
+ ('tpga08', 'core_visit', 'planned', 'tpgs02', NULL, NULL, '', 'staff', NULL, '2027-02-10', NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-08 08:00+03'),
  -- trainings: Core orientation (a recruit), CC-SEL online at a Core school,
  -- teacher pedagogy at a client school, ECE with teachers, leadership with leaders
- ('tpga09', 'in_school_training', 'completed', 'tpgs06', 'cmw9p6zvd00u8dgeihgqm', NULL, '', 'staff', '2026-10-22', NULL, NULL, 4, 2, '', NULL, '{}', 'cmw9p7dez0031o9ekhee5', '2026-10-09 08:00+03'),
- ('tpga10', 'in_school_training', 'awaiting_ia_verification', 'tpgs02', NULL, 'cmw9p6zui00zapceihg6m', 'online', 'staff', '2026-11-06', NULL, NULL, 6, 1, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-10 08:00+03'),
- ('tpga11', 'in_school_training', 'completed', 'tpgs01', 'cmw9p6ztu007g68eihg3z', NULL, '', 'staff', '2026-10-28', NULL, NULL, 9, 0, '', 'tpgp01', '{}', 'cmw9p7c6000iqchekhe36', '2026-10-11 08:00+03'),
- ('tpga12', 'training', 'completed', 'tpgs05', 'cmw9p6zqd0082gueihgtv', NULL, '', 'staff', '2026-11-07', NULL, NULL, 12, 3, '', NULL, '{}', 'cmw9p7dez0031o9ekhee5', '2026-10-12 08:00+03'),
- ('tpga13', 'school_improvement_training', 'in_progress', 'tpgs03', 'cmw9p6zg600734ueihg0f', NULL, '', 'staff', NULL, '2026-12-02', NULL, 0, 5, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-13 08:00+03'),
+ ('tpga09', 'in_school_training', 'completed', 'tpgs06', (SELECT id FROM tpg_seed WHERE token = 'cmw9p6zvd00u8dgeihgqm'), NULL, '', 'staff', '2026-10-22', NULL, NULL, 4, 2, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), '2026-10-09 08:00+03'),
+ ('tpga10', 'in_school_training', 'awaiting_ia_verification', 'tpgs02', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p6zui00zapceihg6m'), 'online', 'staff', '2026-11-06', NULL, NULL, 6, 1, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-10 08:00+03'),
+ ('tpga11', 'in_school_training', 'completed', 'tpgs01', (SELECT id FROM tpg_seed WHERE token = 'cmw9p6ztu007g68eihg3z'), NULL, '', 'staff', '2026-10-28', NULL, NULL, 9, 0, '', 'tpgp01', '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-11 08:00+03'),
+ ('tpga12', 'training', 'completed', 'tpgs05', (SELECT id FROM tpg_seed WHERE token = 'cmw9p6zqd0082gueihgtv'), NULL, '', 'staff', '2026-11-07', NULL, NULL, 12, 3, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), '2026-10-12 08:00+03'),
+ ('tpga13', 'school_improvement_training', 'in_progress', 'tpgs03', (SELECT id FROM tpg_seed WHERE token = 'cmw9p6zg600734ueihg0f'), NULL, '', 'staff', NULL, '2026-12-02', NULL, 0, 5, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-13 08:00+03'),
  -- a cluster meeting held as a training, at no school, with a register
- ('tpga14', 'cluster_meeting', 'completed', NULL, 'cmw9p6zle0025h0eihgln', NULL, '', 'staff', '2026-10-30', NULL, NULL, 10, 4, 'training', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-14 08:00+03'),
+ ('tpga14', 'cluster_meeting', 'completed', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p6zle0025h0eihgln'), NULL, '', 'staff', '2026-10-30', NULL, NULL, 10, 4, 'training', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-14 08:00+03'),
  -- an SSA review meeting at a client school
- ('tpga15', 'cluster_meeting_ssa_review', 'completed', 'tpgs08', NULL, NULL, '', 'staff', '2026-11-10', NULL, NULL, 0, 0, '', NULL, '{}', 'cmw9p7b6a00e4s8ekhefr', '2026-10-15 08:00+03'),
+ ('tpga15', 'cluster_meeting_ssa_review', 'completed', 'tpgs08', NULL, NULL, '', 'staff', '2026-11-10', NULL, NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7b6a00e4s8ekhefr'), '2026-10-15 08:00+03'),
  -- a cluster training recorded on the legacy attended list
- ('tpga16', 'cluster_training', 'completed', NULL, 'cmw9p6zhh00nfwoeihg2u', NULL, '', 'staff', '2026-10-16', NULL, NULL, 7, 7, '', NULL, '{tpgs01,tpgs03,tpgs04}', 'cmw9p7c6000iqchekhe36', '2026-10-16 08:00+03'),
+ ('tpga16', 'cluster_training', 'completed', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p6zhh00nfwoeihg2u'), NULL, '', 'staff', '2026-10-16', NULL, NULL, 7, 7, '', NULL, '{tpgs01,tpgs03,tpgs04}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-16 08:00+03'),
  -- work at no school: a District Meeting, a camp, a meeting as Cluster Leaders, partner review
- ('tpga17', 'programme_event', 'completed', NULL, 'cmw9p705z00slcbeihg2k', NULL, '', 'staff', '2026-10-21', NULL, NULL, 0, 0, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-17 08:00+03'),
- ('tpga18', 'programme_event', 'planned', NULL, 'cmw9p6ztj0007xxeihg3z', NULL, '', 'staff', NULL, '2027-03-03', NULL, 0, 0, '', NULL, '{}', 'cmw9p7dez0031o9ekhee5', '2026-10-18 08:00+03'),
- ('tpga19', 'cluster_meeting', 'completed', NULL, NULL, NULL, '', 'staff', '2026-11-02', NULL, NULL, 0, 0, 'cluster_leaders', NULL, '{}', 'cmw9p7b6a00e4s8ekhefr', '2026-10-19 08:00+03'),
- ('tpga20', 'programme_event', 'submitted_to_pl', NULL, 'cmw9p6zs60036xueihght', NULL, '', 'staff', '2026-11-11', NULL, NULL, 0, 0, '', NULL, '{}', 'cmw9p7dez0031o9ekhee5', '2026-10-20 08:00+03'),
+ ('tpga17', 'programme_event', 'completed', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p705z00slcbeihg2k'), NULL, '', 'staff', '2026-10-21', NULL, NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-17 08:00+03'),
+ ('tpga18', 'programme_event', 'planned', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p6ztj0007xxeihg3z'), NULL, '', 'staff', NULL, '2027-03-03', NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), '2026-10-18 08:00+03'),
+ ('tpga19', 'cluster_meeting', 'completed', NULL, NULL, NULL, '', 'staff', '2026-11-02', NULL, NULL, 0, 0, 'cluster_leaders', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7b6a00e4s8ekhefr'), '2026-10-19 08:00+03'),
+ ('tpga20', 'programme_event', 'submitted_to_pl', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p6zs60036xueihght'), NULL, '', 'staff', '2026-11-11', NULL, NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), '2026-10-20 08:00+03'),
  -- a session invited but not attended: planned for its schools only
- ('tpga21', 'cluster_training', 'scheduled', NULL, 'cmw9p6zeg00klpueihg7a', NULL, 'online', 'staff', NULL, '2026-12-15', NULL, 0, 0, '', NULL, '{}', 'cmw9p7c6000iqchekhe36', '2026-10-21 08:00+03');
+ ('tpga21', 'cluster_training', 'scheduled', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p6zeg00klpueihg7a'), NULL, 'online', 'staff', NULL, '2026-12-15', NULL, 0, 0, '', NULL, '{}', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), '2026-10-21 08:00+03');
 INSERT INTO activity
 SELECT (jsonb_populate_record(null::activity, to_jsonb(t) || jsonb_build_object(
   'id', w.id, 'activity_type', w.kind, 'fy', '2027', 'status', w.status, 'school_id', w.school,
@@ -115,7 +159,7 @@ INSERT INTO core_school_onboarding (created_at, updated_at, id, school_id, fy, p
  (now(), now(), 'tpgo01', 'tpgs06', '2027', 'client', '', 0, 'tpg', 'tpg', '2026-10-22 09:00+03', 'completed', 'tpgc02');
 
 -- ── SSAs ───────────────────────────────────────────────────────────────────
-CREATE TEMP TABLE tpg_ssa ON COMMIT DROP AS SELECT * FROM ssa_record WHERE id = 'cmw9p7xaj00derkekhe6q';
+CREATE TEMP TABLE tpg_ssa ON COMMIT DROP AS SELECT * FROM ssa_record WHERE id = (SELECT id FROM tpg_seed WHERE token = 'cmw9p7xaj00derkekhe6q');
 CREATE TEMP TABLE tpg_ssa_spec (id text, school text, at timestamptz, status text, score float8) ON COMMIT DROP;
 INSERT INTO tpg_ssa_spec VALUES
  ('tpgq01', 'tpgs01', '2026-10-15 10:00+03', 'confirmed', 6.25),
@@ -143,14 +187,14 @@ INSERT INTO school_enrollment_history (created_at, updated_at, id, fy, enrollmen
 
 -- ── Stories ────────────────────────────────────────────────────────────────
 INSERT INTO mscs_story (created_at, updated_at, id, user_id, title, narrative, story_date, status, country, intervention, outcome_area, school_id) VALUES
- (now(), now(), 'tpgm01', 'cmw9p7bws00c2f9ekherh', 'Tpg one', '', '2026-10-19', 'approved', 'Uganda', '', '', 'tpgs01'),
- (now(), now(), 'tpgm02', 'cmw9p7bws00c2f9ekherh', 'Tpg two', '', '2026-11-04', 'approved', 'Uganda', '', '', NULL),
- (now(), now(), 'tpgm03', 'cmw9p7d6600vvj2ekheu3', 'Tpg three', '', '2026-11-05', 'submitted', 'Uganda', '', '', 'tpgs05');
+ (now(), now(), 'tpgm01', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7bws00c2f9ekherh'), 'Tpg one', '', '2026-10-19', 'approved', 'Uganda', '', '', 'tpgs01'),
+ (now(), now(), 'tpgm02', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7bws00c2f9ekherh'), 'Tpg two', '', '2026-11-04', 'approved', 'Uganda', '', '', NULL),
+ (now(), now(), 'tpgm03', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7d6600vvj2ekheu3'), 'Tpg three', '', '2026-11-05', 'submitted', 'Uganda', '', '', 'tpgs05');
 
 -- ── The Uganda Master Priority Plan for FY 2027, its allocations and phasing ─
 INSERT INTO hr_strategic_priority (created_at, updated_at, id, fy, level, title, strategic_purpose, weight_min, weight_max, is_mandatory, status, sequence,
   source_document, source_reference, source_title, version, country_id, cycle_id, code)
-VALUES (now(), now(), 'tpgh01', '2027', 'country', 'Tpg Uganda Master Priorities', '', 0, 100, false, 'published', 1, '', '', '', 1, 'Uganda', 'cmw9p70ap00h2fieihgfk', 'TPG');
+VALUES (now(), now(), 'tpgh01', '2027', 'country', 'Tpg Uganda Master Priorities', '', 0, 100, false, 'published', 1, '', '', '', 1, 'Uganda', (SELECT id FROM tpg_seed WHERE token = 'cmw9p70ap00h2fieihgfk'), 'TPG');
 CREATE TEMP TABLE tpg_milestone (id text, code text, kind text, value numeric, core numeric, client numeric, n int) ON COMMIT DROP;
 INSERT INTO tpg_milestone VALUES
  ('tpgi01', 'NEW_SCHOOLS', 'count', 50, 20, 30, 1),
@@ -170,16 +214,16 @@ SELECT now(), now(), id, code, code, '', '', 'output', kind, 'system', '', '', '
   'tpgh01', 'manual', false, '', false, '', value, core, client FROM tpg_milestone;
 CREATE TEMP TABLE tpg_alloc (id text, milestone text, kind text, team text, employee text, allocated numeric, core numeric, client numeric) ON COMMIT DROP;
 INSERT INTO tpg_alloc VALUES
- ('tpgn01', 'tpgi03', 'team', 'cmw9p7b6a00e4s8ekhefr', NULL, 30, 10, 20),
- ('tpgn02', 'tpgi03', 'employee', NULL, 'cmw9p7c6000iqchekhe36', 12, 5, 7),
- ('tpgn03', 'tpgi03', 'employee', NULL, 'cmw9p7dez0031o9ekhee5', 9, NULL, 9),
- ('tpgn04', 'tpgi01', 'employee', NULL, 'cmw9p7c6000iqchekhe36', 7, NULL, NULL),
- ('tpgn05', 'tpgi01', 'employee', NULL, 'cmw9p7dez0031o9ekhee5', 9, NULL, NULL),
- ('tpgn06', 'tpgi02', 'employee', NULL, 'cmw9p7c6000iqchekhe36', 80, NULL, NULL),
- ('tpgn07', 'tpgi04', 'employee', NULL, 'cmw9p7c6000iqchekhe36', 4, NULL, NULL),
- ('tpgn08', 'tpgi06', 'employee', NULL, 'cmw9p7dez0031o9ekhee5', 2, NULL, NULL),
- ('tpgn09', 'tpgi05', 'team', 'cmw9p7bf200eymgekhexn', NULL, 70, NULL, NULL),
- ('tpgn10', 'tpgi01', 'employee', NULL, 'cmw9p7b6a00e4s8ekhefr', 3, NULL, NULL);
+ ('tpgn01', 'tpgi03', 'team', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7b6a00e4s8ekhefr'), NULL, 30, 10, 20),
+ ('tpgn02', 'tpgi03', 'employee', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), 12, 5, 7),
+ ('tpgn03', 'tpgi03', 'employee', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), 9, NULL, 9),
+ ('tpgn04', 'tpgi01', 'employee', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), 7, NULL, NULL),
+ ('tpgn05', 'tpgi01', 'employee', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), 9, NULL, NULL),
+ ('tpgn06', 'tpgi02', 'employee', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), 80, NULL, NULL),
+ ('tpgn07', 'tpgi04', 'employee', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p7c6000iqchekhe36'), 4, NULL, NULL),
+ ('tpgn08', 'tpgi06', 'employee', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p7dez0031o9ekhee5'), 2, NULL, NULL),
+ ('tpgn09', 'tpgi05', 'team', (SELECT id FROM tpg_seed WHERE token = 'cmw9p7bf200eymgekhexn'), NULL, 70, NULL, NULL),
+ ('tpgn10', 'tpgi01', 'employee', NULL, (SELECT id FROM tpg_seed WHERE token = 'cmw9p7b6a00e4s8ekhefr'), 3, NULL, NULL);
 INSERT INTO hr_milestone_allocation (created_at, updated_at, id, allocated_to_type, weight, allocation_reason, allocated_by, effective_date, status, version,
   milestone_id, quarter_distribution, quarter_status, component_split, team_id, employee_id, allocated_target, core_target, client_target, country_id)
 SELECT now(), now(), id, kind, 1, '', 'tpg', '2026-10-01', 'approved', 1, milestone, '{}', 'draft', '{}', team, employee, allocated, core, client, 'Uganda' FROM tpg_alloc;
