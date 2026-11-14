@@ -334,3 +334,25 @@ exactly like that."
 The figures in the designs (km, minutes, school names, dates) are illustrations only: the
 built screens show real Edify schools and real provider results, and an unavailable state
 where the provider gives none.
+
+---
+
+# Addendum 2 (owner, 2026-11-14): no map login
+
+Owner: "I want the universal map api that does not require logging in or it should use the
+staff login to automatically use any map, google, apple or anyother".
+
+Decision taken from it:
+
+- Map display, web and mobile: MapLibre GL with OpenFreeMap vector tiles — open source, no
+  key, no account. Mobile shows the same map inside the app, so Android needs no Google key.
+- Road distance and time: OSRM (open source) on OpenStreetMap's Uganda road data, run by
+  Edify (no key, no per-request fee, school coordinates stay in-house). Google Routes stays
+  an optional provider behind the same Go interface, off unless a key is configured.
+  Public demo OSRM servers are for light development testing only, with synthetic
+  coordinates.
+- Get Directions hands the destination to the phone's own maps app (Google Maps, Apple
+  Maps, Waze — whichever the staff member uses and is signed in to) through standard
+  keyless links.
+- With no routing server reachable, the planner still works on straight-line distances,
+  labelled as such, and says road figures are unavailable.
