@@ -41,7 +41,7 @@ func main() {
 	existing := flag.String("existing", "http://localhost:8010", "the existing application")
 	users := flag.String("users", "", "comma-separated accounts to sign in as")
 	pause := flag.Duration("pause", 0, "wait between sign-ins, under the gateway's sign-in rate limit")
-	screen := flag.String("screen", "directory", "what to compare: directory, profile, page or navigation")
+	screen := flag.String("screen", "directory", "what to compare: directory, profile, page or navigation; coverage counts what Go answers itself")
 	pagePath := flag.String("path", "/clusters", "page: the page's web path, {id} filled from -ids")
 	pageIDs := flag.String("ids", "", "page: comma-separated ids for a path with {id}")
 	tab := flag.String("tab", "details", "profile: the tab to compare")
@@ -49,6 +49,8 @@ func main() {
 	period := flag.String("period", "", "profile: the part of the year asked (Q1…Q4, M1…M12)")
 	probe := flag.String("probe", "admin@edify.org", "profile: the account whose schools are sampled for every account")
 	sample := flag.Int("sample", 40, "profile: how many of the probe's schools each account is also asked")
+	inventory := flag.String("inventory", "", "coverage: docs/platform-page-inventory.json, to list the pages not in Go yet")
+	coverageOut := flag.String("out", "", "coverage: write the report here (docs/migration/coverage.md)")
 	flag.Parse()
 	list, err := parity.CheckedIn()
 	if err != nil {
@@ -79,6 +81,10 @@ func main() {
 	if *screen == "navigation" {
 		os.Exit(runNavigation(ctx, signIn, screensv1connect.NewNavigationServiceClient(http.DefaultClient, *gateway),
 			*existing, password, strings.Split(*users, ","), *pause))
+	}
+	if *screen == "coverage" {
+		os.Exit(runCoverage(ctx, signIn, screensv1connect.NewPageScreenServiceClient(http.DefaultClient, *gateway),
+			*existing, password, strings.Split(*users, ","), *pause, *inventory, *coverageOut))
 	}
 	if *screen == "page" {
 		os.Exit(runPages(ctx, signIn, &pageRun{
