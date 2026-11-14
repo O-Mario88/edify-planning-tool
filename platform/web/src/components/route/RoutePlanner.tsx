@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   GetFieldDayResponseSchema,
   GetSchoolDistanceResponseSchema,
+  ListLocationChangesResponseSchema,
   GetSchoolPinsResponseSchema,
   PlanRouteRequestSchema,
   PlanRouteResponseSchema,
@@ -29,7 +30,7 @@ import { RouteIcon } from './RouteIcons';
 
 const card = 'rounded-[16px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]';
 
-async function ask(op: 'plan' | 'pins' | 'distance', request: JsonValue): Promise<JsonValue> {
+async function ask(op: 'plan' | 'pins' | 'distance' | 'changes', request: JsonValue): Promise<JsonValue> {
   const res = await fetch('/route-planner', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -41,6 +42,9 @@ async function ask(op: 'plan' | 'pins' | 'distance', request: JsonValue): Promis
 }
 
 const savedKey = (date: string) => `edify.route.${date}`;
+
+/** How often an open planner checks for location changes. */
+const LOCATION_CHANGES_EVERY_MS = 60_000;
 
 export interface RoutePlannerProps {
   day: JsonValue;
@@ -69,6 +73,31 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const lastSelected = useRef<SchoolPin | null>(null);
   const viewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // A school's location accepted elsewhere (a capture in the field, a
+  // review) refreshes the day, so pins and distances use the new point.
+  useEffect(() => {
+    const shown = new Set([
+      ...day.planned.map((p) => p.schoolId),
+      ...day.suggestions.map((s) => s.school?.schoolId ?? ''),
+      ...(day.focus ? [day.focus.schoolId] : []),
+    ]);
+    let since = new Date().toISOString();
+    const timer = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      ask('changes', { since })
+        .then((json) => {
+          const answer = fromJson(ListLocationChangesResponseSchema, json);
+          if (answer.now) since = answer.now;
+          if (answer.changes.some((c) => shown.has(c.schoolId))) {
+            setMessage('A school’s location was updated. The map now uses the new point.');
+            router.refresh();
+          }
+        })
+        .catch(() => undefined);
+    }, LOCATION_CHANGES_EVERY_MS);
+    return () => clearInterval(timer);
+  }, [day, router]);
 
   const go = useCallback(
     (next: Record<string, string>) => {

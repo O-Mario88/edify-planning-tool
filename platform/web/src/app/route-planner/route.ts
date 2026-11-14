@@ -9,6 +9,8 @@ import {
   GetSchoolDistanceResponseSchema,
   GetSchoolPinsRequestSchema,
   GetSchoolPinsResponseSchema,
+  ListLocationChangesRequestSchema,
+  ListLocationChangesResponseSchema,
   PlanRouteRequestSchema,
   PlanRouteResponseSchema,
   RoutePlannerService,
@@ -45,6 +47,10 @@ export async function POST(request: NextRequest) {
       case 'distance': {
         const answer = await client.getSchoolDistance(fromJson(GetSchoolDistanceRequestSchema, body.request ?? {}));
         return NextResponse.json(toJson(GetSchoolDistanceResponseSchema, answer), { headers });
+      }
+      case 'changes': {
+        const answer = await client.listLocationChanges(fromJson(ListLocationChangesRequestSchema, body.request ?? {}));
+        return NextResponse.json(toJson(ListLocationChangesResponseSchema, answer), { headers });
       }
       default:
         return NextResponse.json({ error: 'not_found' }, { status: 404 });

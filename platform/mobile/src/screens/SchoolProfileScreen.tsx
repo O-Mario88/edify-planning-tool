@@ -18,6 +18,9 @@ import { ApiError } from '../api/connect';
 import { describe, useSession } from '../auth/SessionContext';
 import { SchoolLoanHistory, canSeeSchoolLoans } from './loans/SchoolLoanHistory';
 import { LocationCard } from './route/LocationCard';
+import { LocationPanel } from '../offline/LocationPanel';
+import { useCachedSchool } from '../offline/useCachedSchool';
+import { SchoolVisitPrompt } from '../offline/VisitPrompt';
 import type { PageAction } from '../gen/edify/screens/v1/page_pb';
 import type { GetSchoolProfileResponse } from '../gen/edify/screens/v1/school_profile_pb';
 import { fonts, useTheme } from '../theme';
@@ -74,6 +77,7 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool, backLabel,
   const [query, setQuery] = useState<ProfileQuery>(START);
   const [data, setData] = useState<GetSchoolProfileResponse | null>(null);
   const [error, setError] = useState('');
+  const cached = useCachedSchool(schoolId);
   const [isBusy, setIsBusy] = useState(false);
   const [isProjectOpen, setIsProjectOpen] = useState(false);
   const [webDrawer, setWebDrawer] = useState<string | null>(null);
@@ -193,6 +197,7 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool, backLabel,
                 </Text>
                 <Description text={header.description} />
               </View>
+              <SchoolVisitPrompt schoolId={schoolId} />
               <View style={styles.controls}>
                 {header.badges.map((badge, index) => (
                   <Badge key={badge.text} badge={badge} isWide={index === 0} />
@@ -219,6 +224,18 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool, backLabel,
               {canSeeSchoolLoans(activeRole) && (!query.tab || query.tab === 'overview') ? (
                 <SchoolLoanHistory schoolId={schoolId} />
               ) : null}
+            </>
+          ) : error && cached ? (
+            // No connection: the phone's own copy of the school, with Capture.
+            <>
+              <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+                {cached.name}
+              </Text>
+              <Text style={[styles.error, { color: colors.textMuted }]}>
+                School ID {cached.code || '—'} · {cached.district || 'No district'} · Offline: showing what this phone saved.
+              </Text>
+              <SchoolVisitPrompt schoolId={schoolId} />
+              <LocationPanel school={cached} />
             </>
           ) : error ? (
             <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">

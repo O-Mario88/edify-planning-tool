@@ -14,10 +14,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { GetSchoolLocationResponseSchema, ItineraryStopSchema } from '@/gen/edify/routes/v1/routes_pb';
+import { GetSchoolLocationResponseSchema, ItineraryStopSchema, SchoolPinSchema } from '@/gen/edify/routes/v1/routes_pb';
 import type { LocationReport } from '@/gen/edify/routes/v1/routes_pb';
+import { dayText } from '@/lib/locationReport';
 import { directionsUrl } from '@/lib/routePlanner';
 
+import { LocationHistory } from './LocationHistory';
 import { ReportDetails, ReportForm, ReviewControls } from './LocationReport';
 import { RouteIcon } from './RouteIcons';
 import { RouteMap } from './RouteMap';
@@ -35,11 +37,13 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
   const [pending, setPending] = useState<LocationReport | undefined>(answer.pendingReport);
   const [isReporting, setIsReporting] = useState(false);
   const [notice, setNotice] = useState('');
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const school = answer.school;
   const stops = useMemo(() => (school?.point ? [create(ItineraryStopSchema, { order: 0, school, kind: 'location' })] : []), [school]);
   if (!school) return null;
   const point = school.point;
-  const directions = directionsUrl([school]);
+  // Directions go to the entrance when the school has one.
+  const directions = directionsUrl([answer.entrance ? create(SchoolPinSchema, { ...school, point: answer.entrance }) : school]);
   return (
     <section className="rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] p-4" aria-labelledby="location-title" data-block="school-location">
       <h2 id="location-title" className="flex items-center gap-2 text-[16px] font-semibold">
@@ -59,8 +63,31 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
             </div>
             <div>
               <dt className="text-[var(--edify-text-muted)]">Location status</dt>
-              <dd className="font-medium">{STATUS[school.locationStatus] ?? school.locationStatus}</dd>
+              <dd className="font-medium">
+                {STATUS[school.locationStatus] ?? school.locationStatus}
+                {answer.version ? ` · version ${answer.version}` : ''}
+              </dd>
             </div>
+            <div>
+              <dt className="text-[var(--edify-text-muted)]">Date last verified</dt>
+              <dd className="font-medium">
+                {answer.verifiedAt ? `${dayText(answer.verifiedAt)}${answer.verifiedByName ? ` by ${answer.verifiedByName}` : ''}` : 'Not yet verified in the field'}
+              </dd>
+            </div>
+            {answer.lastConfirmedAt ? (
+              <div>
+                <dt className="text-[var(--edify-text-muted)]">Last checked on a visit</dt>
+                <dd className="font-medium">{dayText(answer.lastConfirmedAt)}</dd>
+              </div>
+            ) : null}
+            {answer.entrance ? (
+              <div>
+                <dt className="text-[var(--edify-text-muted)]">Entrance</dt>
+                <dd className="font-medium tabular-nums">
+                  {answer.entrance.lat.toFixed(6)}, {answer.entrance.lng.toFixed(6)}
+                </dd>
+              </div>
+            ) : null}
             <div>
               <dt className="text-[var(--edify-text-muted)]">Nearby</dt>
               <dd className="font-medium">
@@ -82,10 +109,13 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
           </dl>
         </div>
       ) : (
-        <p className="mt-2 rounded-[8px] bg-amber-50 px-3 py-2 text-[14px] text-amber-900" role="status">
-          {STATUS[school.locationStatus]}. Directions and route planning need a location; the school still appears in every list
-          and plan.
-        </p>
+        <div className="mt-2 rounded-[8px] bg-amber-50 px-3 py-2 text-[14px] text-amber-900" role="status">
+          <p className="font-semibold">GPS Location Not Captured</p>
+          <p>
+            {school.locationStatus === 'invalid' ? 'The recorded location looks wrong. ' : ''}Directions and route planning need a location;
+            the school still appears in every list and plan. Capture it with the Edify app at the school.
+          </p>
+        </div>
       )}
       {answer.accessNote ? (
         <p className="mt-3 text-[14px]">
@@ -137,6 +167,15 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
           }}
         />
       ) : null}
+      <button
+        type="button"
+        aria-expanded={isHistoryOpen}
+        className="mt-1 ml-3 inline-flex h-10 items-center gap-2 rounded-[8px] px-1 font-semibold text-[#1d6fe0]"
+        onClick={() => setIsHistoryOpen((open) => !open)}
+      >
+        <RouteIcon name="clock" className="h-4 w-4" /> {isHistoryOpen ? 'Hide location history' : 'Location history'}
+      </button>
+      {isHistoryOpen && school ? <LocationHistory schoolId={school.schoolId} /> : null}
     </section>
   );
 }

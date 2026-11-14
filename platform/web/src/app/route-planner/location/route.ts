@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 import {
+  GetLocationHistoryRequestSchema,
+  GetLocationHistoryResponseSchema,
   ListLocationReportsRequestSchema,
   ListLocationReportsResponseSchema,
   ReportSchoolLocationRequestSchema,
@@ -45,6 +47,10 @@ export async function POST(request: NextRequest) {
       case 'list': {
         const answer = await client.listLocationReports(fromJson(ListLocationReportsRequestSchema, body.request ?? {}));
         return NextResponse.json(toJson(ListLocationReportsResponseSchema, answer), { headers });
+      }
+      case 'history': {
+        const answer = await client.getLocationHistory(fromJson(GetLocationHistoryRequestSchema, body.request ?? {}));
+        return NextResponse.json(toJson(GetLocationHistoryResponseSchema, answer), { headers });
       }
       case 'review': {
         const answer = await client.reviewLocationReport(fromJson(ReviewLocationReportRequestSchema, body.request ?? {}));

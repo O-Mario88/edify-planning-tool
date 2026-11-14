@@ -15,6 +15,9 @@ import { useRef, useState } from 'react';
 import { ReportSchoolLocationResponseSchema, ReviewLocationReportResponseSchema } from '@/gen/edify/routes/v1/routes_pb';
 import type { LocationReport, SchoolPin } from '@/gen/edify/routes/v1/routes_pb';
 import {
+  DECISION_TEXT,
+  captureKindText,
+  flagsText,
   DEVICE_ACCURACY_MAX_M,
   LOCATE_TIMEOUT_MS,
   kindFor,
@@ -33,7 +36,7 @@ const primary = 'inline-flex h-10 items-center gap-2 rounded-[8px] bg-[#1d6fe0] 
 const secondary = 'inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#1d6fe0] px-4 font-semibold text-[#1d6fe0] disabled:opacity-60';
 const field = 'mt-1 w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-3 py-2 text-[14px]';
 
-export async function askLocation(op: 'report' | 'list' | 'review', request: JsonValue): Promise<JsonValue> {
+export async function askLocation(op: 'report' | 'list' | 'review' | 'history', request: JsonValue): Promise<JsonValue> {
   const res = await fetch('/route-planner/location', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -217,7 +220,7 @@ export function ReportDetails({ report }: { readonly report: LocationReport }) {
       <div>
         <dt className="text-[var(--edify-text-muted)]">Reported</dt>
         <dd className="font-medium">
-          {report.kind === 'missing' ? 'No location' : 'Wrong location'} · {reportedText(report)}
+          {captureKindText(report)} · {reportedText(report)}
         </dd>
       </div>
       <div>
@@ -242,12 +245,19 @@ export function ReportDetails({ report }: { readonly report: LocationReport }) {
           <dd className="font-medium">{report.accessNote}</dd>
         </div>
       ) : null}
+      {report.flags.length ? (
+        <div className="sm:col-span-2">
+          <dt className="text-[var(--edify-text-muted)]">Why it needs review</dt>
+          <dd className="font-medium">{flagsText(report.flags)}</dd>
+        </div>
+      ) : null}
       {report.status !== 'pending' ? (
         <div className="sm:col-span-2">
-          <dt className="text-[var(--edify-text-muted)]">{report.status === 'approved' ? 'Approved by' : 'Rejected by'}</dt>
+          <dt className="text-[var(--edify-text-muted)]">{DECISION_TEXT[report.status] ?? report.status}</dt>
           <dd className="font-medium">
-            {report.reviewedByName}
+            {report.reviewedByName || (report.status === 'accepted' ? 'By the capture policy' : '')}
             {report.reviewNote ? ` · ${report.reviewNote}` : ''}
+            {report.resultVersion ? ` · version ${report.resultVersion}` : ''}
           </dd>
         </div>
       ) : null}

@@ -33,7 +33,9 @@ import { LoansRoute } from './src/screens/loans/LoansRoute';
 import { isLoansUrl, loansSection } from './src/screens/loans/loanRoutes';
 import { RouteFlow } from './src/screens/route/RouteFlow';
 import { LocationReportsScreen } from './src/screens/route/LocationReportsScreen';
-import { LOCATION_REPORTS_URL, isRouteUrl, routeSection } from './src/screens/route/routeData';
+import { LOCATION_REPORTS_URL, OFFLINE_QUEUE_URL, isRouteUrl, routeSection } from './src/screens/route/routeData';
+import { OfflineProvider, useOffline } from './src/offline/OfflineContext';
+import { OfflineFieldApp, SyncQueueScreen } from './src/offline/OfflineScreens';
 import { AppShell, MENU_URL } from './src/shell/AppShell';
 import { ThemeProvider, signInPalette, spacing, useTheme } from './src/theme';
 import { DropdownLayer } from './src/ui/Dropdown';
@@ -135,6 +137,39 @@ function hideLaunchScreen() {
 }
 
 function Root() {
+  const { state, retry, signOut, api } = useSession();
+  const signedIn = useMemo(
+    () => (state.status === 'signedIn' ? { userId: state.session.userId, name: state.session.name, role: state.session.activeRole } : null),
+    [state],
+  );
+  return (
+    <OfflineProvider signedIn={signedIn} api={api} isUnreachable={state.status === 'unreachable'} onReconnect={() => void retry()}>
+      <RootScreens />
+    </OfflineProvider>
+  );
+}
+
+/** The saved sign-in could not be checked: the offline field app when the phone holds the person's schools. */
+function Unreachable({ notice }: { readonly notice: string }) {
+  const { retry, signOut } = useSession();
+  const { account } = useOffline();
+  if (account) {
+    return (
+      <>
+        <OfflineFieldApp notice={notice} onRetry={() => void retry()} onSignOut={() => void signOut()} />
+        <StatusBar style="light" />
+      </>
+    );
+  }
+  return (
+    <>
+      <LaunchView problem={notice} onRetry={() => void retry()} onSignOut={() => void signOut()} />
+      <StatusBar style="light" />
+    </>
+  );
+}
+
+function RootScreens() {
   const { state, retry, signOut } = useSession();
   // Hide the native launch screen once the app knows what to open; a slow
   // check hands over to the identical LaunchView, which then says so.
@@ -156,12 +191,7 @@ function Root() {
     );
   }
   if (state.status === 'unreachable') {
-    return (
-      <>
-        <LaunchView problem={state.notice} onRetry={() => void retry()} onSignOut={() => void signOut()} />
-        <StatusBar style="light" />
-      </>
-    );
+    return <Unreachable notice={state.notice} />;
   }
   if (state.status === 'signedOut') {
     return (
@@ -211,6 +241,14 @@ const PARTNER_ADMIN = 'PartnerAdmin';
 function SignedIn({ session }: { readonly session: Session }) {
   const { api } = useSession();
   const { isDark } = useTheme();
+  const { pendingCount, isOnline } = useOffline();
+  // Offline, or captures waiting: say so in the top bar, leading to the queue.
+  const shellStatus =
+    pendingCount > 0
+      ? { label: `${pendingCount} to sync`, url: OFFLINE_QUEUE_URL, isWarning: true }
+      : !isOnline
+        ? { label: 'Offline', url: OFFLINE_QUEUE_URL, isWarning: false }
+        : null;
   const [route, setRoute] = useState<Route>(HOME);
   const [searchSignal, setSearchSignal] = useState(0);
   const [navigation, setNavigation] = useState<GetNavigationResponse | null>(null);
@@ -252,6 +290,7 @@ function SignedIn({ session }: { readonly session: Session }) {
       isLoansUrl(url) ||
       isRouteUrl(url) ||
       url === LOCATION_REPORTS_URL ||
+      url === OFFLINE_QUEUE_URL ||
       OWN_SCREENS.includes(pathOf(url)) ||
       pages.has(pathOf(url)) ||
       schoolOf(url) !== null,
@@ -305,6 +344,8 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <ActingLeadershipScreen />;
   } else if (isLoansUrl(route.url)) {
     screen = <LoansRoute key={route.url} url={route.url} />;
+  } else if (route.url === OFFLINE_QUEUE_URL) {
+    screen = <SyncQueueScreen />;
   } else if (route.url === LOCATION_REPORTS_URL) {
     screen = <LocationReportsScreen onOpenSchool={openSchool} />;
   } else if (isRouteUrl(route.url)) {
@@ -349,6 +390,7 @@ function SignedIn({ session }: { readonly session: Session }) {
       onOpen={open}
       initials={initialsOf(session.name)}
       onSearch={handleSearch}
+      status={shellStatus}
     >
       {screen}
       <StatusBar style={isDark ? 'light' : 'dark'} />

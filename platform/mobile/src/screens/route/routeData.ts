@@ -14,6 +14,8 @@ export const ROUTE_URL = 'route:planner';
 export const ROUTE_DETAILS_URL = 'route:details';
 /** The reviewer's list of location reports (Verify Location). */
 export const LOCATION_REPORTS_URL = 'route:location-reports';
+/** Offline schools and the capture sync queue. */
+export const OFFLINE_QUEUE_URL = 'offline:queue';
 
 /** The design's dark teal (the planner's chosen controls). */
 export const ROUTE_TEAL = '#0f4f52';
@@ -52,11 +54,15 @@ export function isRouteUrl(url: string): boolean {
 /** Who reviews location reports (routeplan.ReviewerRoles); the gateway decides. */
 const REVIEWER_ROLES = new Set(['Program Lead', 'CountryDirector', 'Admin']);
 
+/** Who captures school locations by GPS (routeplan.CaptureRoles); the gateway decides. */
+export const CAPTURE_ROLES = new Set(['CCEO', 'Program Lead']);
+
 /** The planner's menu section, or null for a role that neither plans nor reviews locations. */
 export function routeSection(role: string): NavSection | null {
   const items = [
     ...(PLANNER_ROLES.has(role) ? [create(NavItemSchema, { label: 'Smart Route Planner', url: ROUTE_URL, native: true })] : []),
     ...(REVIEWER_ROLES.has(role) ? [create(NavItemSchema, { label: 'Location Reports', url: LOCATION_REPORTS_URL, native: true })] : []),
+    ...(CAPTURE_ROLES.has(role) ? [create(NavItemSchema, { label: 'Offline schools & sync', url: OFFLINE_QUEUE_URL, native: true })] : []),
   ];
   return items.length ? create(NavSectionSchema, { label: 'Field Routes', items }) : null;
 }

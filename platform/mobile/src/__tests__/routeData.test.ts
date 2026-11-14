@@ -1,18 +1,19 @@
 import { create } from '@bufbuild/protobuf';
 
 import { RouteLegSchema, RouteTotalsSchema, SchoolPinSchema } from '../gen/edify/routes/v1/routes_pb';
-import { LOCATION_REPORTS_URL, ROUTE_URL, dateOf, directionsUrl, nearOf, routeUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
+import { LOCATION_REPORTS_URL, OFFLINE_QUEUE_URL, ROUTE_URL, dateOf, directionsUrl, nearOf, routeUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
 
 describe('the route planner in the app', () => {
   it('is listed for field staff only, natively', () => {
-    expect(routeSection('CCEO')?.items.map((i) => [i.url, i.native])).toEqual([[ROUTE_URL, true]]);
+    expect(routeSection('CCEO')?.items.map((i) => [i.url, i.native])).toEqual([[ROUTE_URL, true], [OFFLINE_QUEUE_URL, true]]);
     expect(routeSection('MfiLoanOfficer')).toBeNull();
     expect(isRouteUrl('route:planner?date=2026-11-17')).toBe(true);
     expect(isRouteUrl('/my-plan')).toBe(false);
   });
 
   it('lists Location Reports for the reviewers only', () => {
-    expect(routeSection('Program Lead')?.items.map((i) => i.url)).toEqual([ROUTE_URL, LOCATION_REPORTS_URL]);
+    expect(routeSection('Program Lead')?.items.map((i) => i.url)).toEqual([ROUTE_URL, LOCATION_REPORTS_URL, OFFLINE_QUEUE_URL]);
+    expect(routeSection('PartnerAdmin')?.items.map((i) => i.url)).not.toContain(OFFLINE_QUEUE_URL);
     expect(routeSection('CountryDirector')?.items.map((i) => i.label)).toEqual(['Smart Route Planner', 'Location Reports']);
     expect(routeSection('CCEO')?.items.map((i) => i.url)).not.toContain(LOCATION_REPORTS_URL);
     expect(isRouteUrl(LOCATION_REPORTS_URL)).toBe(false);

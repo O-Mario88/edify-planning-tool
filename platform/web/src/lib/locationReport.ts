@@ -70,3 +70,45 @@ export function reportKey(): string {
 export const LOCATE_TIMEOUT_MS = 20_000;
 /** A device reading coarser than this is refused, as the gateway refuses it. */
 export const DEVICE_ACCURACY_MAX_M = 200;
+
+/** Why a capture waits for review, in words (routeplan.Decide's flags). */
+export const FLAG_TEXT: Record<string, string> = {
+  entrance: 'Entrance point',
+  correction: 'Replaces the point on record',
+  version_conflict: 'The location changed after this was captured',
+  reporter_role: 'Sent by a role that does not capture locations',
+  competing: 'Another report on this school is waiting',
+  no_point: 'No point given',
+  typed_point: 'Typed, not captured by GPS',
+  accuracy_poor: 'Poor GPS accuracy',
+  accuracy_fair: 'GPS accuracy needed confirming',
+  unstable: 'Readings did not agree',
+  stale_capture: 'Captured long before it was sent',
+  clock_skew: 'The phone’s clock was ahead',
+  large_move: 'Moves the school a long way',
+  far_from_district: 'Far from the district’s other schools',
+};
+
+export const flagsText = (flags: readonly string[]): string => flags.map((f) => FLAG_TEXT[f] ?? f).join(' · ');
+
+/** What happened to a capture or report, in words. */
+export const DECISION_TEXT: Record<string, string> = {
+  accepted: 'Accepted at once (first location, good GPS)',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  pending: 'Waiting for review',
+  noted: 'Confirmed correct on a visit',
+};
+
+/** "First location", "Correction", "Entrance point", "Location confirmed". */
+export function captureKindText(report: Pick<LocationReport, 'captureKind' | 'kind' | 'target'>): string {
+  if (report.captureKind === 'confirm') return 'Location confirmed';
+  const first = report.captureKind === 'new' || report.kind === 'missing';
+  if (report.target === 'entrance') return first ? 'Entrance point (first)' : 'Entrance point (correction)';
+  return first ? 'First location' : 'Correction';
+}
+
+/** "14 Nov 2026", or "". */
+export function dayText(iso: string): string {
+  return iso ? DATE.format(new Date(iso)) : '';
+}
