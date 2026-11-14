@@ -1,0 +1,155 @@
+{
+  "activity_types": {
+    "baseline_ssa_visit": "SSA Visit",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+    "cluster_training": "Cluster Training",
+    "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+    "coaching_visit": "Coaching Visit",
+    "core_assessment_visit": "Core Assessment Visit",
+    "core_training": "Core Training",
+    "core_visit": "Core Visit",
+    "donor_visit": "Donor Visit",
+    "field_event": "Field Event",
+    "follow_up_visit": "Follow-up Visit",
+    "in_school_coaching_visit": "In-school Coaching Visit",
+    "in_school_support": "In-school Support",
+    "in_school_training": "In-school Training",
+    "partner_activity": "Partner Activity",
+    "partner_ssa_collection": "Partner SSA Collection",
+    "programme_event": "Programme Event",
+    "project_activity": "Project Activity",
+    "school_improvement_training": "School Improvement Training",
+    "school_invitation": "School Invitation",
+    "school_visit": "School Visit",
+    "school_visit_ssa_collection": "School Visit + SSA Collection",
+    "social_visit": "Social Visit",
+    "ssa_activity": "SSA Activity",
+    "story_gathering_visit": "Gathering Story",
+    "training": "Training",
+    "training_follow_up_visit": "Training Follow-up Visit"
+  },
+  "capability_groups": {
+    "group:any": "Any SSA intervention",
+    "group:unmapped": "Not mapped to an intervention",
+    "loan": "Loan"
+  },
+  "complete_statuses": [
+    "closed",
+    "completed",
+    "ia_verified",
+    "payment_approved"
+  ],
+  "completed_work_statuses": [
+    "ia_verified",
+    "closed",
+    "accountant_confirmed",
+    "completed"
+  ],
+  "interventions": {
+    "christlike_behaviour": "Christlike Behaviour",
+    "enrolment": "Enrolment",
+    "exposure_to_word_of_god": "Exposure to the Word of God",
+    "financial_health": "Financial Health",
+    "government_requirement": "Government Requirements",
+    "leadership": "Leadership",
+    "learning_environment": "Learning Environment",
+    "teaching_environment": "Teacher's Environment"
+  },
+  "kpi_labels": {
+    "partner_activities_yet_to_schedule": "Partner Activities Yet to Schedule",
+    "partner_assigned_schools": "Schools Assigned to Partners",
+    "partner_high_risk_delays": "High-Risk Partner Delays",
+    "partner_scheduled_activities": "Partner Activities Scheduled",
+    "partner_scheduled_activity_cost": "Partner Scheduled Activity Cost",
+    "partner_total_partners": "Partners in Current View"
+  },
+  "non_fundable_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "awaiting_owner_approval"
+  ],
+  "oversight_roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+  ],
+  "own_organisation_roles": [
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+  ],
+  "page_roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+  ],
+  "page_size": 50,
+  "partner_role_bridge": false,
+  "partner_roles": {
+    "delivery": "Delivery Partner",
+    "loan": "Loan Partner"
+  },
+  "profile_link_roles": {
+    "partners": [
+      "Accountant",
+      "Admin",
+      "BusinessTransformationOfficer",
+      "CCEO",
+      "CountryDirector",
+      "HumanResources",
+      "ImpactAssessment",
+      "MfiLoanOfficer",
+      "MfiPartnerAdmin",
+      "PartnerAdmin",
+      "PartnerFieldOfficer",
+      "Program Lead",
+      "ProjectCoordinator",
+      "RegionalProgramLead",
+      "RegionalVicePresident"
+    ],
+    "schools": [
+      "Admin",
+      "BusinessTransformationOfficer",
+      "CCEO",
+      "CountryDirector",
+      "ImpactAssessment",
+      "Program Lead",
+      "ProjectCoordinator"
+    ]
+  },
+  "purpose_labels": {
+    "donor_visit": "Donor Visit",
+    "in_school_coaching": "In-school Coaching Visit",
+    "in_school_training": "In-school Training",
+    "in_school_training_delivery_visit": "In-school Training Delivery Visit",
+    "in_school_training_ssa": "In-school Training + SSA Collection",
+    "school_invitation": "School Invitation",
+    "social_visit": "Social Visit",
+    "ssa_support": "SSA Support",
+    "story_gathering": "Content/Story Collection",
+    "training_follow_up": "Training Follow Up"
+  },
+  "released_statuses": [
+    "returned_to_staff",
+    "returned",
+    "cancelled"
+  ]
+}

@@ -89,7 +89,7 @@ func (s *Service) impactPipeline(ctx context.Context, p auth.Principal, f btport
 	}
 	rows, err := s.db.Query(ctx, `SELECT i.id, COALESCE(s.id, ''), COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(m.name, ''), COALESCE(p.label, ''),
   i.classification, i.ia_status, i.due_date
-FROM bt_loan_impact_assessment i JOIN (SELECT l.* FROM `+btportfolio.LoanFrom+` WHERE `+where+`) l ON l.id = i.loan_id
+FROM bt_loan_impact_assessment i JOIN (SELECT l.id, l.school_id, l.mfi_id, l.purpose_id FROM `+btportfolio.LoanFrom+` WHERE `+where+`) l ON l.id = i.loan_id
   LEFT JOIN school s ON s.id = l.school_id LEFT JOIN bt_mfi_organization m ON m.id = l.mfi_id LEFT JOIN bt_loan_purpose p ON p.id = l.purpose_id
 ORDER BY i.due_date, i.id LIMIT `+strconv.Itoa(btportfolio.Rules.Loans.RowLimit), *a...)
 	if err != nil {

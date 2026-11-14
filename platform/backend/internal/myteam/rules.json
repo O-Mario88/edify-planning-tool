@@ -1,0 +1,110 @@
+{
+  "awaiting_pl_status": "submitted_to_pl",
+  "closed_review_statuses": [
+    "Completed",
+    "Closed"
+  ],
+  "closed_stages": [
+    "closed",
+    "signed_and_archived"
+  ],
+  "coaching_kinds": {
+    "debrief_feedback": "Field debrief feedback",
+    "field_observation": "School visit observation",
+    "one_to_one": "Monthly one-to-one",
+    "performance_checkin": "Performance check-in",
+    "recognition": "Recognition",
+    "regional_feedback": "Regional Lead feedback passed on",
+    "training_observation": "Training observation"
+  },
+  "escalation_resolved": "resolved",
+  "high_risk_bands": [
+    "High Risk",
+    "Critical"
+  ],
+  "leave_decision_days": 3,
+  "manager_stages": [
+    "priorities_manager_review",
+    "manager_assessment"
+  ],
+  "not_in_plan_statuses": [
+    "cancelled",
+    "deferred",
+    "not_planned",
+    "rejected"
+  ],
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "page_roles": [
+    "Admin",
+    "ImpactAssessment",
+    "Program Lead"
+  ],
+  "page_size": 50,
+  "pd_supervisor_status": "submitted_to_supervisor",
+  "pending_acknowledgement": "pending",
+  "readable_document_statuses": [
+    "effective",
+    "published"
+  ],
+  "review_overdue_days": 0,
+  "review_stages": {
+    "awaiting_acknowledgement": "Awaiting employee acknowledgement",
+    "calibration": "Calibration",
+    "closed": "Closed",
+    "employee_acknowledged": "Employee acknowledged",
+    "employee_reflection": "Employee reflection",
+    "final_rating_confirmed": "Final rating confirmed",
+    "functional_manager_complete": "Functional manager complete",
+    "hr_quality_review": "HR quality review",
+    "manager_assessment": "Manager assessment",
+    "manager_review_complete": "Manager review complete",
+    "not_started": "Not started",
+    "priorities_agreed": "Priorities agreed",
+    "priorities_draft": "Employee drafting priorities",
+    "priorities_manager_review": "Manager reviewing priorities",
+    "ready_for_slt_calibration": "Ready for SLT calibration",
+    "signed_and_archived": "Signed and archived",
+    "slt_calibrated": "SLT calibrated"
+  },
+  "risk_words": {
+    "Complete": [
+      "Low",
+      "success"
+    ],
+    "Critical": [
+      "Critical",
+      "danger"
+    ],
+    "Exceeded": [
+      "Low",
+      "success"
+    ],
+    "High Risk": [
+      "High",
+      "danger"
+    ],
+    "On Track": [
+      "Low",
+      "success"
+    ],
+    "Slightly Behind": [
+      "Watch",
+      "warning"
+    ]
+  },
+  "tile_labels": {
+    "Officers On Pace for FY Targets": "Officers On Pace for FY Targets",
+    "Officers at Target Risk This Month": "Officers at Target Risk This Month",
+    "Officers on My Team": "Officers on My Team",
+    "Team Exceptions Needing Your Action": "Team Exceptions Needing Your Action",
+    "Team Handoffs Waiting on You": "Team Handoffs Waiting on You",
+    "Team Portfolio SSA Coverage This FY": "Team Portfolio SSA Coverage This FY"
+  },
+  "verified_statuses": [
+    "ia_verified",
+    "closed"
+  ]
+}

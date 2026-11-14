@@ -8,7 +8,8 @@ answers, who may open it, the workspace strip each role is shown above it and
 which of its drawer buttons each role is shown; the labels of a People
 record's lifecycle, a recognition's category and a safety incident's
 category, severity and status, an onboarding plan's status and an exit's
-reason, and which reasons are voluntary, an application's stage, a vacancy's status and type, an employee's compliance status, a document's type and status, and a recovery plan's type, cause and
+reason, and which reasons are voluntary, an employee-relations case's type
+and status and who sees the cases, an application's stage, a vacancy's status and type, an employee's compliance status, a document's type and status, and a recovery plan's type, cause and
 status, a performance review's stage, type and rating, a compensation
 record's status and medical cover, and a pulse survey's status; a pulse
 survey's statements and its anonymity floor; whom each role reviews; which
@@ -158,6 +159,18 @@ PAGES = {
         "drawers": ["/health-safety/new"],
         "metrics": ["Open incidents", "Serious incidents", "Near misses", "Days lost"],
     },
+    "/employee-relations": {
+        "permission": "employee_relations",
+        "drawers": ["/employee-relations/new"],
+        "metrics": [
+            "Open cases",
+            "Awaiting triage",
+            "Under investigation",
+            "Disciplinary matters",
+            "Critical",
+            "Resolved",
+        ],
+    },
 }
 
 
@@ -222,6 +235,8 @@ def rules() -> dict:
         VacancyStatus,
         CompensationStatus,
         ComplianceStatus,
+        ERCaseStatus,
+        ERCaseType,
         ERSeverity,
         ExitReason,
         MedicalCover,
@@ -238,6 +253,7 @@ def rules() -> dict:
         SafetyIncidentStatus,
     )
     from apps.core.pagination import TABLE_PAGE_SIZE
+    from apps.hr.employee_relations_service import _HR_ROLES
     from apps.hr.models import Vacancy
 
     return {
@@ -275,6 +291,13 @@ def rules() -> dict:
         # the people they supervise in these roles.
         "reviews": reviews(),
         "document_statuses": dict(DocumentStatus.choices),
+        # An employee-relations case's type and status labels, and the roles
+        # that see the cases themselves (visible_cases): Admin every case,
+        # the others their reach's, a confidential one only when they own or
+        # investigate it.
+        "er_case_types": dict(ERCaseType.choices),
+        "er_case_statuses": dict(ERCaseStatus.choices),
+        "er_case_roles": sorted(_HR_ROLES),
         "metric_labels": metric_labels(),
         "helper_figure_chars": HELPER_FIGURE_CHARS,
         "page_size": TABLE_PAGE_SIZE,

@@ -79,11 +79,21 @@ type Service struct {
 	groupMoves   GroupMoveSaver
 	groupCancels GroupCancelSaver
 	logger       *slog.Logger
+	// trustProxy reads a page reader's address from X-Forwarded-For, for an
+	// audited read behind the platform's load balancer.
+	trustProxy bool
 }
 
 // NewService wires the service. existingApp may be nil.
 func NewService(existingApp Fetcher) *Service {
 	return &Service{existingApp: existingApp}
+}
+
+// TrustProxyHeaders reads a page reader's address from X-Forwarded-For (the
+// platform's load balancer sets it), as sign-in does.
+func (s *Service) TrustProxyHeaders(trust bool) *Service {
+	s.trustProxy = trust
+	return s
 }
 
 // WithDirectory answers the School Directory in Go for anyone working in

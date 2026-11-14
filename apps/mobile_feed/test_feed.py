@@ -925,6 +925,25 @@ class PageFeedTest(SchoolActionFeedTest):
         # The directory has its own screen, not the page screen.
         self.assertFalse(items["/schools"]["native"])
 
+    def test_a_page_says_the_name_its_own_address_gives_it(self):
+        # One register, two doors: the RVP reads the Cost Catalogue as Cost
+        # Intelligence, and the app said "Cost Catalogue" because the page's
+        # request carried no URL match.
+        from apps.mobile_feed.views import read_page
+
+        rvp = User.objects.create(
+            email="rvp-feed@example.org",
+            name="Regional Lead",
+            roles=["RVP"],
+            active_role="RVP",
+            status="active",
+            is_active=True,
+        )
+        status, body = read_page(rvp, "/cost-intelligence", {})
+
+        self.assertEqual(status, 200)
+        self.assertEqual(body["header"]["title"], "Cost Intelligence")
+
     def test_a_page_the_readers_role_cannot_open_is_refused(self):
         from apps.mobile_feed.views import NATIVE_PAGES
 

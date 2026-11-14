@@ -346,7 +346,7 @@ func (s *Service) reportTiles(ctx context.Context, reach string, args []any, fy 
 	a := append(slices.Clone(args), fy, rules.ReportOpenRecommendations, s.now().In(zone).Format(time.DateOnly))
 	n := len(args)
 	err := s.db.QueryRow(ctx, fmt.Sprintf(`
-WITH visible AS (SELECT * FROM impact_report r WHERE %s)
+WITH visible AS (SELECT r.id, r.status, r.fy FROM impact_report r WHERE %s)
 SELECT (SELECT count(*) FROM visible WHERE status = 'submitted'), (SELECT count(*) FROM visible WHERE status = 'returned'),
   (SELECT count(*) FROM visible WHERE status = 'released' AND fy = $%[2]d),
   (SELECT count(*) FROM impact_report_recommendation m WHERE m.report_id IN (SELECT id FROM visible WHERE status = 'released') AND m.status = 'proposed'),

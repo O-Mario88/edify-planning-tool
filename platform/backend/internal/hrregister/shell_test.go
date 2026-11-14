@@ -88,7 +88,20 @@ func TestRolesWithoutARegisterAreRefusedBeforeAnythingIsRead(t *testing.T) {
 			}
 		}
 	}
-	if _, served, _ := s.Build(context.Background(), auth.Principal{}, "/employee-relations", nil); served {
+	if _, served, _ := s.Build(context.Background(), auth.Principal{}, "/wellness", nil); served {
 		t.Error("a register Go does not build yet was answered")
+	}
+}
+
+func TestAnAuditedRegisterStaysWithTheExistingPageUntilItsReadCanBeRecorded(t *testing.T) {
+	s := NewService(nil, time.Now)
+	for role, r := range rules.Pages["/employee-relations"].Roles {
+		if !r.Page {
+			continue
+		}
+		resp, served, err := s.Build(context.Background(), auth.Principal{Account: auth.Account{UserID: "u", ActiveRole: role}}, "/employee-relations", url.Values{})
+		if resp != nil || served || err != nil {
+			t.Errorf("%s: got (%v, %v, %v), want it passed on", role, resp, served, err)
+		}
 	}
 }

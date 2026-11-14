@@ -1,0 +1,63 @@
+{
+  "agreement_review_type": "annual_priorities",
+  "annual_fallback": {
+    "cluster_meetings": [
+      "cluster_meetings_target"
+    ],
+    "cluster_trainings": [
+      "group_trainings_target",
+      "trainings_target"
+    ],
+    "mscs": [],
+    "school_visits": [
+      "visits_target"
+    ],
+    "ssa_completed": [
+      "ssa_target"
+    ]
+  },
+  "bands": {
+    "high_risk": 30,
+    "on_track": 5,
+    "slight": 15
+  },
+  "metric_to_area": {
+    "cluster_meetings": "cluster_meetings",
+    "direct_visits": "school_visits",
+    "mscs": "mscs",
+    "ssa_coverage": "ssa_completed",
+    "trainings": "cluster_trainings"
+  },
+  "month_labels": [
+    "Oct",
+    "Nov",
+    "Dec",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep"
+  ],
+  "official_areas": [
+    "school_visits",
+    "cluster_meetings",
+    "cluster_trainings",
+    "ssa_completed",
+    "mscs"
+  ],
+  "quarters": [
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4"
+  ],
+  "unagreed_stages": [
+    "not_started",
+    "priorities_draft",
+    "priorities_manager_review"
+  ]
+}

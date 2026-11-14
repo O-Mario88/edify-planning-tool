@@ -39,6 +39,30 @@
     "training_manual": "Training Manual",
     "training_presentation": "Training Presentation"
   },
+  "er_case_roles": [
+    "Admin",
+    "HumanResources"
+  ],
+  "er_case_statuses": {
+    "action": "Action decided",
+    "appeal": "Under appeal",
+    "closed": "Closed",
+    "findings": "Findings recorded",
+    "investigation": "Investigation",
+    "resolved": "Resolved",
+    "submitted": "Submitted",
+    "triage": "Restricted triage"
+  },
+  "er_case_types": {
+    "conduct": "Conduct concern",
+    "conflict": "Conflict",
+    "disciplinary": "Disciplinary matter",
+    "dispute": "Dispute between staff",
+    "grievance": "Grievance",
+    "harassment": "Harassment concern",
+    "safeguarding": "Safeguarding referral",
+    "whistleblowing": "Whistleblowing"
+  },
   "exit_reasons": {
     "death_in_service": "Death in service",
     "dismissal": "Dismissal",
@@ -64,14 +88,17 @@
     "Awaiting authorisation": "Awaiting authorisation",
     "Awaiting calibration": "Awaiting calibration",
     "Awaiting supervisor": "Awaiting supervisor",
+    "Awaiting triage": "Awaiting triage",
     "Compensation profiles": "Compensation profiles",
     "Completed": "Completed",
     "Compliance gaps": "Compliance gaps",
     "Compliant": "Compliant",
     "Countries": "Countries",
+    "Critical": "Critical",
     "Days lost": "Days lost",
     "Departments": "Departments",
     "Disagreements": "Disagreements",
+    "Disciplinary matters": "Disciplinary matters",
     "Due soon": "Due soon",
     "Ending in 30 days": "Ending in 30 days",
     "Escalated": "Escalated",
@@ -90,6 +117,7 @@
     "No reporting line": "No reporting line",
     "Offers": "Offers",
     "Open": "Open",
+    "Open cases": "Open cases",
     "Open incidents": "Open incidents",
     "Open roles": "Open roles",
     "Open surveys": "Open surveys",
@@ -108,12 +136,14 @@
     "Refused actions": "Refused actions",
     "Replacements": "Replacements",
     "Requirements": "Requirements",
+    "Resolved": "Resolved",
     "Reviews": "Reviews",
     "Reviews due": "Reviews due",
     "Screening": "Screening",
     "Serious incidents": "Serious incidents",
     "Showing": "Showing",
     "Turnover this FY": "Turnover this FY",
+    "Under investigation": "Under investigation",
     "Voluntary exits": "Voluntary exits"
   },
   "onboarding_states": {
@@ -397,6 +427,112 @@
           "drawers": [
             "/compliance-register/new",
             "/compliance-register/requirement"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/employee-relations": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/employee-relations/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/employee-relations/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/employee-relations/new"
           ],
           "links": [],
           "page": true,

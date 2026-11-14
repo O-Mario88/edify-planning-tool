@@ -1,9 +1,13 @@
 package perfcycle
 
 import (
+	"context"
 	"net/url"
+	"slices"
 	"testing"
 	"time"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
 func TestTheQuarterEndsAsTheReadinessCheckCountsIt(t *testing.T) {
@@ -61,5 +65,18 @@ func TestTheAgreementsTableKeepsOnlyTheConversationLink(t *testing.T) {
 	empty := page("2027", false, "none", readiness{}, nil, url.Values{})
 	if rows := empty.Blocks[7].GetTable().Rows; len(rows) != 1 || rows[0].Cells[0].Text != "No agreements yet — open the cycle to draft them." {
 		t.Errorf("empty: %v", rows)
+	}
+}
+
+func TestARoleWithoutTheConsoleIsSentToTheDashboard(t *testing.T) {
+	for _, role := range rules.PageRoles {
+		if slices.Contains(rules.ConsoleRoles, role) {
+			continue
+		}
+		resp, served, err := NewService(nil, time.Now).Build(context.Background(),
+			auth.Principal{Account: auth.Account{UserID: "u", ActiveRole: role}}, Path, url.Values{})
+		if err != nil || !served || resp.GetRedirect() != "/dashboard" {
+			t.Errorf("%s: got (%v, %v, %v), want a redirect to the dashboard", role, resp, served, err)
+		}
 	}
 }

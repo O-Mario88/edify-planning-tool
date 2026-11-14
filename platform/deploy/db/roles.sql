@@ -750,3 +750,79 @@ GRANT SELECT (status, learner_count, created_at) ON bt_enrolment_snapshot TO edi
 -- monthly portfolio returns and their open row-level data issues.
 GRANT SELECT (id, reporting_month, source_type, valid_rows, total_rows, exception_rows, status, mfi_id) ON bt_portfolio_submission TO edify_gateway_ro;
 GRANT SELECT (submission_id, row_number, code, message, status) ON bt_portfolio_data_exception TO edify_gateway_ro;
+
+-- Partner Activities (internal/partnerworkspace): each organisation card's
+-- contact person and phone, the regions and interventions it works in (the
+-- first of each and every one) and how many catalogue activities it is
+-- recorded for; a hand-over's delivery date; and a partner activity's
+-- planned cost.
+GRANT SELECT (contact_person, phone, region_name, region_names, ssa_intervention, ssa_interventions, activity_codes) ON partner TO edify_gateway_ro;
+GRANT SELECT (scheduled_date) ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (est_cost_cents) ON activity TO edify_gateway_ro;
+
+-- Employee Relations (internal/hrregister/employeerelations.go): which case
+-- it is, its type, country, severity and status, whom it concerns, who owns
+-- and investigates it, whether it is confidential (a confidential case is
+-- listed only to its owner and investigator) and its dates. Never what was
+-- said: the description, findings, action taken, appeal note, hearing,
+-- sanction and complainant stay unreadable. Each read of the register is
+-- itself audited, appended through the audit chain's own grants
+-- (activities_roles.sql, edify_activities_rw).
+GRANT SELECT (id, case_type, country, severity, status, subject_staff_id, case_owner_id, investigator_id,
+              is_confidential, opened_at, created_at, updated_at) ON hr_relations_case TO edify_gateway_ro;
+
+-- The target engine (internal/targets), for the pages that show a person's
+-- targets and progress: the target areas; an agreed review's priorities
+-- (which measured area, its annual figure, words, weight and order) and when
+-- the review changed; the explicit monthly targets; the target profile's
+-- annual figures the areas fall back on; the validated ledger's monthly
+-- quantities; and whether a ledger is marked for rebuilding (Go then hands the
+-- reader on: the existing engine rebuilds on that read).
+GRANT SELECT (id, key, label, weight, sort_order, active) ON target_area TO edify_gateway_ro;
+GRANT SELECT (updated_at) ON hr_performance_review TO edify_gateway_ro;
+GRANT SELECT (review_id, metric_key, target_number, outcome_statement, weight, sequence, created_at) ON hr_performance_priority TO edify_gateway_ro;
+GRANT SELECT (user_id, fy, month_of_fy, target, area_id) ON monthly_personal_target TO edify_gateway_ro;
+GRANT SELECT (staff_id, fy, visits_target, trainings_target, group_trainings_target, cluster_meetings_target, ssa_target) ON staff_target_profile TO edify_gateway_ro;
+GRANT SELECT (user_id, fy, validation_status, area_id, credited_month, quantity) ON target_achievement_ledger TO edify_gateway_ro;
+GRANT SELECT (owner_id, fy) ON target_ledger_dirty TO edify_gateway_ro;
+
+-- My Performance (internal/myperformance): the reader's own commitments
+-- (each value's words, kind, the behaviour agreed, their reflection and the
+-- manager's observation) and development items, their development requests'
+-- year and order, whether a review holds conversation snapshots or
+-- amendments (Go passes those readers on), and whether the year has an
+-- approved allocation on a live, approved milestone (Go passes those on too,
+-- until the allocations engine is in Go).
+GRANT SELECT (review_id, kind, value_name, agreed_behaviour, employee_reflection, manager_evidence) ON hr_value_commitment TO edify_gateway_ro;
+GRANT SELECT (review_id, description) ON hr_development_plan_item TO edify_gateway_ro;
+GRANT SELECT (fy, created_at) ON pd_request TO edify_gateway_ro;
+GRANT SELECT (review_id) ON hr_performance_snapshot TO edify_gateway_ro;
+GRANT SELECT (priority_id) ON hr_priority_amendment TO edify_gateway_ro;
+GRANT SELECT (active, definition_status) ON hr_priority_milestone TO edify_gateway_ro;
+
+-- The approved priority contract (internal/allocations): an allocation's
+-- parent, denominator and weight; a milestone's title, unit, weight and cap;
+-- each activity rule's milestone, counting basis and the activities it
+-- matches; and each progress credit's rule, activity, value and reversal.
+GRANT SELECT (parent_id, denominator, weight) ON hr_milestone_allocation TO edify_gateway_ro;
+GRANT SELECT (title, target_unit, weight, cap_at_100) ON hr_priority_milestone TO edify_gateway_ro;
+GRANT SELECT (id, milestone_id, counting_basis, catalogue_item_id, project_id, required_executor_type, required_delivery_method,
+              school_type, target_intervention, active) ON hr_milestone_activity_rule TO edify_gateway_ro;
+GRANT SELECT (rule_id, activity_id, reversed_at, credited_value) ON hr_milestone_progress_credit TO edify_gateway_ro;
+
+-- The Cost Catalogue and Cost Intelligence (internal/costsettings): whether
+-- the published card is provisional; each rate's label, unit and version;
+-- each governed activity's workflow and the dates it is in force; and the
+-- cost review queue (its reason, amounts and status, newest first).
+GRANT SELECT (is_provisional) ON cost_catalogue TO edify_gateway_ro;
+GRANT SELECT (id, label, unit, version) ON cost_setting TO edify_gateway_ro;
+GRANT SELECT (workflow_kind, effective_from, effective_to) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (id, activity_id, reason_code, status, current_operational_cost, proposed_operational_cost, created_at)
+  ON activity_cost_review TO edify_gateway_ro;
+
+-- Budget (internal/budgetpage): each planned cost line's catalogue key,
+-- rate, quantity, kind, partner and owner, and the rates the day a line
+-- shares was priced at.
+GRANT SELECT (cost_setting_key, unit_cost, quantity, line_item_type, partner_id, responsible_user)
+  ON activity_schedule_cost_line TO edify_gateway_ro;
+GRANT SELECT (rate_snapshot) ON daily_visit_batch TO edify_gateway_ro;

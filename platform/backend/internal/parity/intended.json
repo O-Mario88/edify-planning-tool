@@ -45,5 +45,21 @@
     "defect": "The notification centre's Category select lists a category once for every moment it was raised: values_list('category').distinct() under the model's ordering is distinct on category and time (admin@ saw 'Availability' 95 times; agent 33).",
     "decision": "Owner, 2026-11-13: 'Can you fix those from the go side'.",
     "test": "internal/notificationcenter.TestTheCategorySelectListsEachCategoryOnce"
+  },
+  {
+    "id": "go-allocations-plan-order",
+    "tool": "page",
+    "where": "/my-performance",
+    "questions": [
+      "*"
+    ],
+    "fields": [
+      ".blocks[3].table.rows",
+      ".blocks[5].table.rows"
+    ],
+    "relation": "reordered",
+    "defect": "Priorities' distributed priorities come from a queryset with no order (apps.hr.accountability._allocation_priorities), so the rows follow the database planner, which moves with the select list and the data; the same contract can list in different orders.",
+    "decision": "Owner, 2026-11-14: 'Yes, plan order' (milestones in the plan's order: the priority's sequence, then the milestone's).",
+    "test": "internal/allocations.TestTheContractListsMilestonesInThePlansOrder"
   }
 ]

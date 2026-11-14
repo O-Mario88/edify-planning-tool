@@ -191,3 +191,34 @@ func TestAnyQuestionMatchesOnlyItsPageFieldAndValues(t *testing.T) {
 		t.Fatal("matched outside its page, field or values")
 	}
 }
+
+func TestAReorderedListIsAcceptedWholeOnlyWithTheSameItems(t *testing.T) {
+	list, err := Load([]byte(`[{"id": "r", "tool": "page", "where": "/p", "questions": ["*"], "fields": [".blocks[0].table.rows"],
+	  "relation": "reordered", "defect": "d", "decision": "o", "test": "internal/x.TestY"}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := func(rows ...string) map[string]any {
+		items := []any{}
+		for _, r := range rows {
+			items = append(items, map[string]any{"cells": []any{map[string]any{"text": r}}})
+		}
+		return map[string]any{"blocks": []any{map[string]any{"table": map[string]any{"rows": items}}}}
+	}
+	answer := Answer{Tool: "page", Where: "/p", Question: "(as it opens)"}
+	mine, old := page("b", "a"), page("a", "b")
+	if got := list.AcceptReordered(answer, mine, old); len(got) != 1 || got[0].Entry != "r" {
+		t.Fatalf("reordered: %v", got)
+	}
+	if rows, _, _ := listAt(mine, ".blocks[0].table.rows"); rows[0].(map[string]any)["cells"].([]any)[0].(map[string]any)["text"] != "a" {
+		t.Error("Go's list was not replaced by the existing one")
+	}
+	for _, c := range [][2]map[string]any{{page("a", "c"), page("a", "b")}, {page("a", "b"), page("a", "b")}, {page("a"), page("a", "b")}} {
+		if got := list.AcceptReordered(answer, c[0], c[1]); len(got) != 0 {
+			t.Errorf("not a reordering, accepted: %v", got)
+		}
+	}
+	if got := list.AcceptReordered(Answer{Tool: "page", Where: "/q", Question: "x"}, page("b", "a"), page("a", "b")); len(got) != 0 {
+		t.Error("another page's list was accepted")
+	}
+}

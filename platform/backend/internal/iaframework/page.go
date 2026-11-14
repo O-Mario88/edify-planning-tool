@@ -149,7 +149,8 @@ func (s *Service) counts(ctx context.Context) ([5]int, error) {
 	var c [5]int
 	err := s.db.QueryRow(ctx, `
 WITH items AS (SELECT id FROM activity_catalogue_item WHERE status = 'active' AND (requires_school OR cluster_delivery_allowed OR is_training_course)),
-published AS (SELECT * FROM activity_intervention_mapping WHERE active AND status = 'published' AND NOT COALESCE(not_ssa_measured_reason > '', FALSE))
+published AS (SELECT follow_up_min_days, follow_up_expected_days, follow_up_max_days FROM activity_intervention_mapping
+           WHERE active AND status = 'published' AND NOT COALESCE(not_ssa_measured_reason > '', FALSE))
 SELECT (SELECT count(*) FROM items WHERE id NOT IN (SELECT catalogue_item_id FROM activity_intervention_mapping WHERE active AND is_primary)),
   (SELECT count(*) FROM published),
   (SELECT count(*) FROM published WHERE follow_up_min_days IS NULL AND follow_up_expected_days IS NULL AND follow_up_max_days IS NULL),
