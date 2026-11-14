@@ -32,7 +32,8 @@ func TestBuildAnswersTheDoorsAndHandsOpenReadersOn(t *testing.T) {
 		{"the Project Coordinator is refused either", "ProjectCoordinator", team, nil, true, true},
 		{"a refusal holds for every lens", "CCEO", team, url.Values{"view": {"trainings"}}, true, true},
 		{"a role unknown to the rules is refused", "", team, nil, true, true},
-		{"a Programme Lead's Team Plan is the existing application's", "Program Lead", team, nil, false, false},
+		{"a Programme Lead's other lens is the existing application's", "Program Lead", team, url.Values{"view": {"targets"}}, false, false},
+		{"an acting Programme Lead's Team Plan is the existing application's", "Program Lead", team, nil, false, false},
 		{"the Country Director's Country Oversight is the existing application's", "CountryDirector", country, nil, false, false},
 		{"a lens the reader may open is the existing application's", "ImpactAssessment", team, url.Values{"view": {"monitor"}}, false, false},
 		{"a format the feed cannot render is refused even to an opener", "Admin", team, url.Values{"format": {"xml"}}, true, true},
@@ -43,7 +44,11 @@ func TestBuildAnswersTheDoorsAndHandsOpenReadersOn(t *testing.T) {
 	s := NewService(nil, time.Now)
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			page, served, err := s.Build(context.Background(), principal(tc.role), tc.path, tc.query)
+			p := principal(tc.role)
+			if tc.name == "an acting Programme Lead's Team Plan is the existing application's" {
+				p.InActingAppointment = true
+			}
+			page, served, err := s.Build(context.Background(), p, tc.path, tc.query)
 			if served != tc.wantServed {
 				t.Fatalf("served = %v, want %v", served, tc.wantServed)
 			}
@@ -51,7 +56,7 @@ func TestBuildAnswersTheDoorsAndHandsOpenReadersOn(t *testing.T) {
 				t.Fatalf("err = %v, want refused %v", err, tc.wantRefuse)
 			}
 			if page != nil {
-				t.Fatalf("page = %v, want none in piece 1", page)
+				t.Fatalf("page = %v, want none before the database is read", page)
 			}
 		})
 	}

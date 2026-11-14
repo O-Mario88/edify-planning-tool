@@ -143,3 +143,42 @@ func TestTheNotificationCentreTurnsAwayAClusterLeader(t *testing.T) {
 		t.Fatalf("no session: %v, want unauthenticated", err)
 	}
 }
+
+func unreadNotificationsOf(token string) (int32, error) {
+	answer, err := screensv1connect.NewNotificationCenterServiceClient(http.DefaultClient, baseURL).
+		GetUnreadNotificationCount(context.Background(), authed(&screensv1.GetUnreadNotificationCountRequest{}, token))
+	if err != nil {
+		return 0, err
+	}
+	return answer.Msg.GetUnread(), nil
+}
+
+func TestTheBellCountsTheReadersUnreadNotificationsLeavingOutTheResolved(t *testing.T) {
+	fileNotifications(t)
+	borrowAccount(t, "hr@edify.org")
+	token := sessionOf(t, "hr@edify.org", seededPassword).GetAccessToken()
+	// gpn901 is unread; gpn904 is unread but resolved; the others are read or archived.
+	if n, err := unreadNotificationsOf(token); err != nil || n != 1 {
+		t.Fatalf("hr@'s bell: %d %v, want 1", n, err)
+	}
+}
+
+func TestTheBellIsCountedForARoleTheNotificationCentreTurnsAway(t *testing.T) {
+	email := "cceo19@edify.org"
+	restoreAccount(t, email)
+	borrowAccount(t, email)
+	if _, err := admin.Exec(context.Background(),
+		`UPDATE "user" SET roles = ARRAY['ClusterLeader'], active_role = 'ClusterLeader' WHERE email = $1`, email); err != nil {
+		t.Fatal(err)
+	}
+	var want int32
+	if err := admin.QueryRow(context.Background(), `
+SELECT COUNT(*) FROM notification n JOIN "user" u ON u.id = n.recipient_id
+ WHERE u.email = $1 AND n.status = 'unread' AND n.resolved_at IS NULL`, email).Scan(&want); err != nil {
+		t.Fatal(err)
+	}
+	token := sessionOf(t, email, seededPassword).GetAccessToken()
+	if n, err := unreadNotificationsOf(token); err != nil || n != want {
+		t.Fatalf("a Cluster Leader's bell: %d %v, want %d", n, err, want)
+	}
+}

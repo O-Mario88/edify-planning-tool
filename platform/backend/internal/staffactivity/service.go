@@ -14,6 +14,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -41,6 +42,9 @@ func isAlpha(r rune) bool { return unicode.IsLetter(r) }
 // path this package does not answer, and for a reader it cannot answer
 // exactly.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if id, ok := personID(path); ok {
+		return s.personPage(ctx, p, id, query)
+	}
 	if path != Path {
 		return nil, false, nil
 	}
@@ -62,8 +66,25 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
-	return page(l, gs), true, nil
+	out := page(l, gs)
+	out.Header.Actions = append([]*screensv1.PageAction{exportAction(query)}, out.Header.Actions...)
+	return out, true, nil
 }
+
+// exportAction is the header's Export: the log as a file, for the page's own
+// query without its pages (_query), none the feed holds back.
+func exportAction(query url.Values) *screensv1.PageAction {
+	own := url.Values{}
+	for key, values := range query {
+		if key != "page" && key != "staff_page" && !slices.Contains(rules.Query.NotPassed, key) {
+			own[key] = values
+		}
+	}
+	return pageheader.Download("Export", pageheader.Href(exportPath, own))
+}
+
+// exportPath is the log's export (staff_activity_export).
+const exportPath = "/staff-activity/export"
 
 var queryKey = regexp.MustCompile(rules.Query.KeyPattern)
 

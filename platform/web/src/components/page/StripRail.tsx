@@ -5,7 +5,7 @@
  * one row and scroll sideways; under them a track whose thumb is the part in
  * view, the range in view ("1–8 of 10") and "Swipe for more →", which moves
  * on by a screen (and back to the start from the end). Shown only while the
- * cells do not all fit. A phone draws the cells two a row instead.
+ * cells do not all fit. Below 48rem the cells sit in a grid instead.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -60,11 +60,11 @@ export function StripRail({ count, children }: { count: number; children: ReactN
   };
   return (
     <div>
-      <div ref={rail} tabIndex={view.overflow ? 0 : -1} className="overflow-hidden rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[var(--edify-shadow-sm)] sm:overflow-x-auto sm:[scrollbar-width:none] sm:[&::-webkit-scrollbar]:hidden">
+      <div ref={rail} tabIndex={view.overflow ? 0 : -1} className="overflow-hidden rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[var(--edify-shadow-sm)] md:overflow-x-auto md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden">
         {children}
       </div>
       {view.overflow ? (
-        <div data-strip-rail className="max-sm:hidden">
+        <div data-strip-rail className="max-md:hidden">
           <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--edify-border)]">
             <span className="block h-full rounded-full bg-[var(--edify-text-subtle)]" style={{ width: `${view.thumbWidth * 100}%`, transform: `translateX(${view.thumbOffset * 100}%)` }} />
           </div>

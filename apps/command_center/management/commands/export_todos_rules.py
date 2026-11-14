@@ -43,6 +43,7 @@ from types import SimpleNamespace
 
 from django.core.management.base import BaseCommand
 
+from apps.audit.management.commands.export_decision_log_rules import strip
 from apps.schools.management.commands.export_school_directory_rules import (
     _role_user,
 )
@@ -101,6 +102,45 @@ LINK_SHAPES = {
     "/clusters/{id}/profile?tab=attendance&show=missing": (
         "/clusters/cmw0000000000000000000001/profile?tab=attendance&show=missing"
     ),
+    "/team/coaching?open=new&cceo={id}&kind=one_to_one": (
+        "/team/coaching?open=new&cceo=cmw0000000000000000000001&kind=one_to_one"
+    ),
+    "/performance-conversation?staff={id}": (
+        "/performance-conversation?staff=cmw0000000000000000000001"
+    ),
+    # Impact Assessment's queue (docs/migration/56).
+    "/ia/verification/{id}/": "/ia/verification/cmw0000000000000000000001/",
+    "/ia/partner-evidence/{id}/": "/ia/partner-evidence/cmw0000000000000000000001/",
+    "/ia/dashboard/?view=collection": "/ia/dashboard/?view=collection",
+    "/ia/dashboard/?view=collection&owner={id}": (
+        "/ia/dashboard/?view=collection&owner=cmw0000000000000000000001"
+    ),
+    "/ia/dashboard/?view=collection&district={id}": (
+        "/ia/dashboard/?view=collection&district=cmw0000000000000000000001"
+    ),
+    "/ssa/upload/history/?has_blocked=1": "/ssa/upload/history/?has_blocked=1",
+    "/team-planning-oversight/?view=coverage": "/team-planning-oversight/?view=coverage",
+    "/ia/framework/?tab=rules&status=required": (
+        "/ia/framework/?tab=rules&status=required"
+    ),
+    "/country-budget": "/country-budget",
+    "/budget": "/budget",
+    "/disbursements": "/disbursements",
+    "/cost-settings": "/cost-settings",
+    "/work-plan?view=fy": "/work-plan?view=fy",
+    "/admin-panel/users#partner-directory-title": (
+        "/admin-panel/users#partner-directory-title"
+    ),
+    "/projects/planning?project={id}": (
+        "/projects/planning?project=cmw0000000000000000000001"
+    ),
+    "/loans?open={id}#loan-register-title": (
+        "/loans?open=cmw0000000000000000000001#loan-register-title"
+    ),
+    "/business-transformation/impact-reports": (
+        "/business-transformation/impact-reports"
+    ),
+    "/business-transformation": "/business-transformation",
 }
 
 #: The categories the row template draws an icon for; any other category is
@@ -243,6 +283,8 @@ def roles() -> dict:
             "page": RolePermissionService.can_view_page(user, "todos")
             and bool(can_open_url(user, PAGE_PATH)),
             "builders": reached_builders(role.value),
+            # The workspace strip the page shows the role (_section_nav).
+            "strip": strip(user, PAGE_PATH, "partials/_section_nav.html"),
         }
     return out
 
@@ -453,6 +495,130 @@ def next_action_cases() -> list[str]:
     return cases
 
 
+def admin_rules() -> dict:
+    """What the Admin's builders Go has read (todo_service's finance, budget,
+    cost and loan desks, hr.hr_exceptions, partners.user_setup_todos)."""
+    from apps.command_center import todo_service as ts
+    from apps.core.rbac import EdifyRole
+    from apps.hr import hr_exceptions
+    from apps.partners.models import PartnerUserSetupStatus
+    from apps.partners.services import may_manage_partner_users
+
+    return {
+        "accountant_queue_statuses": dict(ts.ACCOUNTANT_QUEUE_STATUSES),
+        "country_budget": {
+            "country": ts.COUNTRY_BUDGET_COUNTRY,
+            "cd_roles": list(ts.COUNTRY_BUDGET_CD_ROLES),
+            "rvp_roles": list(ts.COUNTRY_BUDGET_RVP_ROLES),
+            "accountant_roles": list(ts.COUNTRY_BUDGET_ACCOUNTANT_ROLES),
+            "review_statuses": list(ts.COUNTRY_BUDGET_REVIEW_STATUSES),
+            "returned_status": ts.COUNTRY_BUDGET_RETURNED_STATUS,
+            "submitted_status": ts.COUNTRY_BUDGET_SUBMITTED_STATUS,
+            "approved_status": ts.COUNTRY_BUDGET_APPROVED_STATUS,
+            "team_request_status": ts.COUNTRY_BUDGET_TEAM_REQUEST_STATUS,
+        },
+        "cost_catalogue_settled_statuses": list(ts.COST_CATALOGUE_SETTLED_STATUSES),
+        "bt_verification_scheduling_roles": sorted(ts.BT_VERIFICATION_SCHEDULING_ROLES),
+        "policy_awaiting_publication_statuses": list(
+            hr_exceptions.POLICY_AWAITING_PUBLICATION_STATUSES
+        ),
+        "partner_user_setup_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if may_manage_partner_users(_role_user(role.value))
+        ),
+        "partner_user_setup_pending": PartnerUserSetupStatus.PENDING.value,
+    }
+
+
+def lead_rules() -> dict:
+    """What the Programme Lead's builders Go has read (todo_service,
+    cce_leadership.todos, hr.review_todos, pl_review, analytics, targets)."""
+    from apps.analytics import pl_analytics_service as analytics
+    from apps.cce_leadership import coaching
+    from apps.cce_leadership import todos as coaching_todos
+    from apps.command_center import todo_service as ts
+    from apps.hr import performance_engine as perf
+    from apps.hr import review_todos
+    from apps.cce_leadership.models import CoachingKind
+    from apps.hr.models import ReviewStage
+    from apps.hr.review_authority import REVIEWER_ROLE_FOR
+    from apps.pl_review.services import LEAD_REVIEWABLE_STATUSES
+    from apps.ssa.services import VerificationStatus
+    from apps.targets import team_targets
+
+    return {
+        "reviewer_roles": {
+            reviewee: list(reviewers)
+            for reviewee, reviewers in REVIEWER_ROLE_FOR.items()
+        },
+        "review_category": review_todos.CATEGORY,
+        "review_stage_manager_review": ReviewStage.PRIORITIES_MANAGER_REVIEW.value,
+        "review_stages_before_conversation": [
+            ReviewStage.NOT_STARTED.value,
+            ReviewStage.PRIORITIES_DRAFT.value,
+            ReviewStage.PRIORITIES_MANAGER_REVIEW.value,
+        ],
+        "review_done_stages": list(perf.REVIEW_DONE_STAGES),
+        "review_closed_statuses": list(perf.REVIEW_CLOSED_STATUSES),
+        "conversation_windows": list(perf.CONVERSATION_WINDOWS),
+        "coaching_category": coaching_todos.LEAD_CATEGORY,
+        "coaching_row_limit": coaching_todos.ROW_LIMIT,
+        "one_to_one_kind": CoachingKind.ONE_TO_ONE.value,
+        "one_to_one_due_day": coaching.ONE_TO_ONE_DUE_DAY,
+        "lead_reviewable_statuses": list(LEAD_REVIEWABLE_STATUSES),
+        "advance_approver_pending_statuses": list(ts.ADVANCE_APPROVER_PENDING_STATUSES),
+        "cceo_backlog_statuses": list(analytics.CCEO_BACKLOG_STATUSES),
+        "ssa_pending_status": VerificationStatus.PENDING.value,
+        "analytics_completed_statuses": list(analytics.COMPLETED_STATUSES),
+        "team_targets_completed_statuses": list(team_targets.COMPLETED_STATUSES),
+    }
+
+
+def pc_bt_rules() -> dict:
+    """What the Project Coordinator's and Business Transformation's builders
+    Go has read (evidence_todos, fy_todos, portfolio_todos, the BT part of
+    _business_transformation_todos, learning_todos)."""
+    from apps.business_transformation import lending_impact as li
+    from apps.business_transformation import services as bt_services
+    from apps.business_transformation.models import (
+        DISBURSED_LOAN_STATUSES,
+        IAValidationStatus,
+        LoanPurposeProposalStatus,
+        LoanUseFinding,
+        SalesforceStatus,
+    )
+    from apps.command_center import todo_service as ts
+    from apps.impact import evidence_todos
+    from apps.planning import fy_todos
+    from apps.projects import portfolio, portfolio_todos
+    from apps.projects.models import OPEN_PROJECT_STATUSES
+
+    return {
+        "evidence_field_roles": list(evidence_todos.FIELD_ROLES),
+        "fy_planner_roles": list(fy_todos.PLANNER_ROLES),
+        "open_project_statuses": sorted(s.value for s in OPEN_PROJECT_STATUSES),
+        "project_row_limit": portfolio_todos.ROW_LIMIT,
+        "project_scan_factor": portfolio.ENROLMENT_SCAN_FACTOR,
+        "project_not_planned_statuses": list(portfolio.NOT_PLANNED_STATUSES),
+        "bt_loan_roles": sorted(bt_services.UGANDA_WIDE_ROLES),
+        "bt_impact_country_bound_roles": sorted(li.COUNTRY_BOUND_ROLES),
+        "bt_impact_country_roles": sorted(li.COUNTRY_ROLES),
+        "bt_salesforce_pending": SalesforceStatus.PENDING.value,
+        "bt_repayment_risk_statuses": list(ts.BT_REPAYMENT_RISK_STATUSES),
+        "bt_concern_findings": [
+            v for v in LoanUseFinding.values if v != LoanUseFinding.FULLY_APPROVED
+        ],
+        "bt_purpose_requested": LoanPurposeProposalStatus.REQUESTED.value,
+        "bt_eligible_school_statuses": list(ts.BT_ELIGIBLE_SCHOOL_STATUSES),
+        "bt_disbursed_loan_statuses": [str(v) for v in DISBURSED_LOAN_STATUSES],
+        "bt_ia_pending": IAValidationStatus.PENDING.value,
+        "bt_ia_returned": IAValidationStatus.RETURNED.value,
+        "bt_ia_verified": IAValidationStatus.VERIFIED.value,
+        "bt_legacy_preparer": li.LEGACY_PREPARER,
+    }
+
+
 def rules() -> dict:
     from apps.activities.models import Activity, ActivityType
     from apps.business_transformation.models import VerificationRequirementStatus
@@ -478,6 +644,9 @@ def rules() -> dict:
             EdifyRole.PARTNER_FIELD_OFFICER.value,
         ],
         "open_links": open_links(),
+        "lead": lead_rules(),
+        "admin": admin_rules(),
+        "pc_bt": pc_bt_rules(),
         "category_tones": category_tones(),
         "priority_order": dict(ts.PRIORITY_ORDER),
         "priority_label": dict(ts.PRIORITY_LABEL),
@@ -526,6 +695,59 @@ def rules() -> dict:
             ReviewStage.PRIORITIES_DRAFT.value,
             ReviewStage.PRIORITIES_MANAGER_REVIEW.value,
         ],
+        "ia": ia_rules(),
+    }
+
+
+def ia_rules() -> dict:
+    """What Impact Assessment's own builders read (docs/migration/56)."""
+    from apps.activities import ia_todos
+    from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
+    from apps.activity_catalogue.models import MappingStatus
+    from apps.analytics import ia_collection
+    from apps.command_center import todo_service as ts
+    from apps.impact import evidence_services as ev
+    from apps.impact import framework_todos
+    from apps.impact.models import DefinitionStatus
+    from apps.planning import coverage_todos
+    from apps.planning.country_oversight import rules as oversight
+    from apps.schools import school_status
+    from apps.ssa import collection_todos
+    from apps.targets.models import MSCSStatus
+
+    return {
+        "waiting_status": ts.IA_TODO_WAITING_STATUS,
+        "category": ts.IA_TODO_CATEGORY,
+        "collection_category": collection_todos.CATEGORY,
+        "collection_max_owner_rows": collection_todos.MAX_OWNER_ROWS,
+        "collection_blocked_rows_days": collection_todos.BLOCKED_ROWS_DAYS,
+        "collection_blocked_status": collection_todos.BLOCKED_ROW_STATUS,
+        "collection_operating_statuses": list(
+            ia_collection.COLLECTION_OPERATING_STATUSES
+        ),
+        "collection_open_statuses": list(ia_collection.OPEN_COLLECTION_STATUSES),
+        "collection_delivered_statuses": list(ia_collection.DELIVERED_STATUSES),
+        "collection_record_returned": ia_collection.RECORD_RETURNED,
+        "collection_record_pending": ia_collection.RECORD_PENDING,
+        "collection_record_confirmed": ia_collection.RECORD_CONFIRMED,
+        "collection_partner": ia_collection.PARTNER,
+        "coverage_roles": list(coverage_todos.RESPONSIBLE_ROLES),
+        "coverage_url": coverage_todos.COVERAGE_URL,
+        "coverage_session_types": sorted(school_status.CLUSTER_SESSION_TYPES),
+        "coverage_dead_statuses": sorted(school_status.DEAD_STATUSES),
+        "coverage_school_training_types": [str(t) for t in SCHOOL_TRAINING_TYPES],
+        "coverage_trained_types": list(oversight.TRAINED_TYPES),
+        "framework_category": framework_todos.CATEGORY,
+        "framework_in_review": MappingStatus.IN_REVIEW.value,
+        "framework_draft": MappingStatus.DRAFT.value,
+        "definition_in_review": DefinitionStatus.IN_REVIEW.value,
+        "definition_returned": DefinitionStatus.RETURNED.value,
+        "evidence_pending": ev.PENDING,
+        "story_submitted": MSCSStatus.SUBMITTED.value,
+        "queue_ssa_pending": ia_todos.SSA_PENDING_STATUS,
+        "queue_unmatched_open": list(ia_todos.UNMATCHED_OPEN_STATUSES),
+        "queue_duplicate_open": ia_todos.DUPLICATE_OPEN_STATUS,
+        "queue_sample_pending": ia_todos.SAMPLE_PENDING_STATUS,
     }
 
 

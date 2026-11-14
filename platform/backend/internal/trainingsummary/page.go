@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 )
 
 // The words the page's templates write (pages/oversight/team_planning.html,
@@ -173,7 +174,7 @@ func tableBlock(s summary) *screensv1.PageBlock {
 
 // filterBlock is the workspace's filter_bar: the year, and a reader of the
 // country's Programme Lead.
-func filterBlock(s summary, years []string) *screensv1.PageBlock {
+func filterBlock(s summary, years []string, tab string, extra ...*screensv1.PageFilter) *screensv1.PageBlock {
 	options := []*screensv1.PageFilterOption{}
 	for _, year := range years {
 		options = append(options, &screensv1.PageFilterOption{Value: year, Label: "FY " + year})
@@ -186,20 +187,21 @@ func filterBlock(s summary, years []string) *screensv1.PageBlock {
 		}
 		filters = append(filters, &screensv1.PageFilter{Name: "program_lead", Label: "Programme Lead", Value: s.lead, Options: leads})
 	}
+	filters = append(filters, extra...)
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{
-		Filters: filters, Hidden: map[string]string{"view": "trainings", "tab": "summary"},
+		Filters: filters, Hidden: map[string]string{"view": "trainings", "tab": tab},
 	}}}
 }
 
 // entityTabs is the Summary / By staff / Schools strip.
-func entityTabs(s summary) *screensv1.PageBlock {
+func entityTabs(s summary, tab string) *screensv1.PageBlock {
 	base := "/team-planning-oversight/?view=trainings"
 	tail := "fy=" + s.fy + "&program_lead=" + s.lead
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{
 		Tabs: []*screensv1.PageLinkTab{
-			{Label: "Summary", Href: base + "&" + tail, Active: true},
-			{Label: "By staff", Href: base + "&tab=staff&" + tail},
-			{Label: "Schools", Href: base + "&tab=schools&" + tail},
+			{Label: "Summary", Href: base + "&" + tail, Active: tab == tabSummary},
+			{Label: "By staff", Href: base + "&tab=staff&" + tail, Active: tab == tabStaff},
+			{Label: "Schools", Href: base + "&tab=schools&" + tail, Active: tab == tabSchools},
 		},
 		Scrolls: true,
 	}}}
@@ -217,16 +219,39 @@ func lensBlock(tabs []LensTab) *screensv1.PageBlock {
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: out}}
 }
 
-// page is the lens as the feed reads it.
-func page(s summary, years []string, lens []LensTab) *screensv1.GetPageResponse {
+// The workspace's tabs (training_tab).
+const (
+	tabSummary = "summary"
+	tabStaff   = "staff"
+	tabSchools = "schools"
+)
+
+// page is the lens as the feed reads it: the strip, the filters, the tabs
+// and the tab's table.
+func page(s summary, lens []LensTab, filters, table *screensv1.PageBlock, tab string) *screensv1.GetPageResponse {
 	blocks := []*screensv1.PageBlock{}
 	if b := lensBlock(lens); b != nil {
 		blocks = append(blocks, b)
 	}
-	blocks = append(blocks, filterBlock(s, years), entityTabs(s), tableBlock(s))
+	blocks = append(blocks, filters, entityTabs(s, tab), table)
 	return &screensv1.GetPageResponse{
-		Header:  &screensv1.PageHeader{Title: title, Description: description},
+		Header:  &screensv1.PageHeader{Title: title, Description: description, Actions: ceilingButtons(s)},
 		Blocks:  blocks,
 		WebPath: Path,
 	}
+}
+
+// ceilingButtons are the header's ceiling doors (pages/oversight/
+// team_planning.html, the trainings view): a Programme Lead's Set Training
+// Capacity for the officers they supervise, and the Country Ceiling for the
+// roles that set it.
+func ceilingButtons(s summary) []*screensv1.PageAction {
+	out := []*screensv1.PageAction{}
+	if s.maySet {
+		out = append(out, pageheader.Drawer("+ Set Training Capacity", "/training-ceilings/set?fy="+s.fy, true))
+	}
+	if s.maySetCountry {
+		out = append(out, pageheader.Drawer("+ Set Country Ceiling", "/training-ceilings/country/set?fy="+s.fy, true))
+	}
+	return out
 }

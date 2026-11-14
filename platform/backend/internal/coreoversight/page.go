@@ -13,6 +13,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
@@ -216,12 +217,7 @@ func pageWith(r *records, who reader, fy string, years []string, operational str
 	}
 	blocks = append(blocks, panelBlock("", []*screensv1.PagePanelItem{textItem(closingNote)}))
 	return &screensv1.GetPageResponse{
-		Header: &screensv1.PageHeader{
-			Eyebrow: "Oversight",
-			Title:   "Core School Oversight",
-			Description: "Are the Core schools improving, is the package delivered, are schools taking part, and which need action: FY " +
-				fy + " against the year before.",
-		},
+		Header:  header(v, who.doors),
 		Blocks:  blocks,
 		WebPath: Path,
 	}, nil
@@ -739,6 +735,16 @@ func (it *items) name(r *school, who reader) {
 	}
 }
 
+// caption is the line beside a school's name. A reader who cannot open the
+// school sees its name as plain text, which the feed reads together with the
+// caption that follows it (the reader joins words around an element).
+func caption(r *school, who reader, text string) string {
+	if schoolHref(r, who) == "" {
+		return r.name + " " + text
+	}
+	return text
+}
+
 func attentionBlocks(rows []*school, who reader) []*screensv1.PageBlock {
 	out := []*screensv1.PageBlock{}
 	for _, reason := range rules.Attention.Order {
@@ -750,7 +756,7 @@ func attentionBlocks(rows []*school, who reader) []*screensv1.PageBlock {
 			}
 			count++
 			body.name(r, who)
-			body.text(r.code + " · " + orDashText(r.district) + " · " + r.owner)
+			body.text(caption(r, who, r.code+" · "+orDashText(r.district)+" · "+r.owner))
 			body.text("Latest SSA " + orDash(r.ssaNow) + " · " + r.trajectoryLabel() + " · Package " + r.packageLabel())
 		}
 		out = append(out, listSection(reason, count, body)...)
@@ -769,7 +775,7 @@ func championBlocks(rows []*school, who reader) []*screensv1.PageBlock {
 			}
 			count++
 			body.name(r, who)
-			body.text(r.code + " · " + r.owner)
+			body.text(caption(r, who, r.code+" · "+r.owner))
 			weakest := dash
 			if r.weakest != "" {
 				weakest = r.weakestLabel + " (" + orDash(r.weakestScore) + ")"
@@ -813,16 +819,7 @@ func recommendationBlocks(v view, rows []*school, r *records) []*screensv1.PageB
 		out = append(out, panelBlock(row.name+" "+row.code+" · "+row.owner, head))
 		body := items{}
 		for _, rec := range recs {
-			line := interventionDisplay(rec.Intervention)
-			if rec.Score != nil {
-				line += " (" + decimalOne(*rec.Score)
-				if rec.Band != "" {
-					line += ", " + rec.Band
-				}
-				line += ")"
-			}
-			body.text(line)
-			body.text(rec.Reason)
+			body.text(recommendationText(rec))
 			state, ok := rules.RecommendationStates[rec.State]
 			if !ok {
 				state = rec.State
@@ -840,3 +837,66 @@ func recommendationBlocks(v view, rows []*school, r *records) []*screensv1.PageB
 // minFallbackWords is page_blocks.MIN_FALLBACK_WORDS: a part the feed reads
 // as a plain panel needs this many words.
 const minFallbackWords = 2
+
+// header is the page's header with its downloads for a reader who may
+// export: the schools the filters keep as a CSV, and on a tab of planned
+// work that tab as an Excel workbook (the query without tab, page or format,
+// none the feed holds back).
+func header(v view, d Doors) *screensv1.PageHeader {
+	h := &screensv1.PageHeader{
+		Eyebrow: "Oversight",
+		Title:   "Core School Oversight",
+		Description: "Are the Core schools improving, is the package delivered, are schools taking part, and which need action: FY " +
+			v.fy + " against the year before.",
+	}
+	if !d.Export {
+		return h
+	}
+	own := url.Values{}
+	for key, values := range v.query {
+		if key != "tab" && key != pageParam && key != "format" && !in(rules.NotPassedQueryKeys, key) {
+			own[key] = values
+		}
+	}
+	with := func(pairs ...string) url.Values {
+		out := url.Values{}
+		for key, values := range own {
+			out[key] = values
+		}
+		for i := 0; i+1 < len(pairs); i += 2 {
+			out.Set(pairs[i], pairs[i+1])
+		}
+		return out
+	}
+	h.Actions = append(h.Actions, pageheader.Download("Download CSV", pageheader.Href(Path, with("format", "csv"))))
+	if in(rules.PlanTabs, v.tab) {
+		h.Actions = append(h.Actions,
+			pageheader.Download("Download Excel", pageheader.Href(Path, with("tab", v.tab, "format", "xlsx"))))
+	}
+	return h
+}
+
+// recommendationText is one recommendation's line as the feed reads the
+// template's span: the intervention (score, band), " · ", the recommended
+// training or "No mapped training[: why]", then the reason, joined with no
+// separator as the feed joins adjacent inline text.
+func recommendationText(rec recommendationRow) string {
+	line := interventionDisplay(rec.Intervention)
+	if rec.Score != nil {
+		line += " (" + decimalOne(*rec.Score)
+		if rec.Band != "" {
+			line += ", " + rec.Band
+		}
+		line += ")"
+	}
+	line += " · "
+	if rec.HasItem {
+		line += rec.Item
+	} else {
+		line += "No mapped training"
+		if rec.Unmapped != "" {
+			line += ": " + rec.Unmapped
+		}
+	}
+	return line + rec.Reason
+}

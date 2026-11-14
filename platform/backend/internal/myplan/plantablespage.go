@@ -3,6 +3,7 @@ package myplan
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 )
@@ -149,6 +150,85 @@ func meetingCells(r *planRow) []*screensv1.PageCell {
 	}
 }
 
+// people is the Participants cell: the head count, "—" for none.
+func people(r *planRow) string {
+	if r.expected != nil && *r.expected != 0 {
+		return strconv.Itoa(*r.expected)
+	}
+	return dash
+}
+
+// shownName is the School / Cluster cell's words: the school's name unless
+// it is "Unknown School", else the cluster's, else the School ID.
+func shownName(r *planRow, cluster bool) string {
+	switch {
+	case r.schoolName != "" && r.schoolName != "Unknown School":
+		return r.schoolName
+	case cluster && r.clusterName != "":
+		return r.clusterName
+	}
+	return r.schoolID.value
+}
+
+// trainingTableCells are cluster_trainings.html's cells up to the Cost.
+func trainingTableCells(r *planRow) []*screensv1.PageCell {
+	var name *screensv1.PageCell
+	switch {
+	case r.placeURL != "":
+		name = &screensv1.PageCell{Text: shownName(r, true), Href: r.placeURL}
+	case r.schoolID.truthy():
+		name = &screensv1.PageCell{Text: shownName(r, false), Href: "/schools/" + r.schoolID.value}
+	case r.schoolName != "" && r.schoolName != "Unknown School":
+		name = &screensv1.PageCell{Text: r.schoolName}
+	default:
+		// {% cluster_link row.cluster_name row.cluster_id empty="—" %}: no
+		// cluster here, so the name alone.
+		name = &screensv1.PageCell{Text: orDefault(r.clusterName, dash)}
+	}
+	var from *screensv1.PageCell
+	switch {
+	case r.isClusterInvited && r.clusterID != "":
+		from = &screensv1.PageCell{Text: orDefault(r.clusterName, dash) + " Invited", Href: "/clusters/" + r.clusterID}
+	case r.isClusterInvited:
+		from = &screensv1.PageCell{Text: orDefault(r.clusterName, dash) + " Invited"}
+	// row.delivery_type == "in-school": the row carries no delivery_type,
+	// so only the type decides.
+	case strings.Contains(r.a.activityType, "in_school"):
+		from = &screensv1.PageCell{Text: "School Visit"}
+	case r.clusterID != "":
+		from = &screensv1.PageCell{Text: orDefault(r.clusterName, dash), Href: "/clusters/" + r.clusterID}
+	default:
+		from = &screensv1.PageCell{Text: orDefault(r.clusterName, dash)}
+	}
+	return []*screensv1.PageCell{
+		{Text: orDefault(r.schoolID.value, dash)}, name,
+		{Text: orDefault(r.districtShown, dash)}, {Text: orDefault(r.districtType, dash)},
+		from, {Text: orDefault(r.owner, "Staff")}, {Text: orDefault(r.trainingName, "Not yet named")},
+		{Text: planned(r.row) + r.dayOffFlag()}, {Text: completed(r.row)},
+		focusCell(r), {Text: people(r)}, {Text: orDefault(r.trainingMode, dash)}, {Text: cost(r.row, true)},
+	}
+}
+
+// groupTableCells are group_trainings.html's cells up to the Cost.
+func groupTableCells(r *planRow) []*screensv1.PageCell {
+	name := &screensv1.PageCell{Text: r.clusterName}
+	if r.clusterID != "" {
+		name.Href = "/clusters/" + r.clusterID
+	}
+	training := r.trainingName
+	for _, v := range []string{str(r.x.activityName), r.purpose, "Group Training"} {
+		if training == "" {
+			training = v
+		}
+	}
+	return []*screensv1.PageCell{
+		name, {Text: r.clusterDistrict()}, {Text: orDefault(r.districtType, dash)},
+		{Text: planned(r.row) + r.dayOffFlag()}, {Text: completed(r.row)},
+		{Text: orDefault(r.owner, "Staff")}, {Text: training},
+		focusCell(r), {Text: people(r)}, {Text: cost(r.row, false)},
+	}
+}
+
 // planTablesBlocks are the four always-drawn tables, then the Core tables
 // when there is Core work, in the page's order.
 func planTablesBlocks(t PlanTablesResult, p Period) []*screensv1.PageBlock {
@@ -171,7 +251,29 @@ func planTablesBlocks(t PlanTablesResult, p Period) []*screensv1.PageBlock {
 		}
 		blocks = append(blocks, full(PlanTables[0].Title, visitColumns, rows))
 	}
-	blocks = append(blocks, emptyTable(PlanTables[1], p), emptyTable(PlanTables[2], p))
+	if len(t.trainings) == 0 {
+		blocks = append(blocks, emptyTable(PlanTables[1], p))
+	} else {
+		var rows []*screensv1.PageRow
+		for _, r := range t.trainings {
+			rows = append(rows, pageRow(r, r.clusterName, append(trainingTableCells(r), tailCells(r)...)))
+		}
+		blocks = append(blocks, full(PlanTables[1].Title, []string{"School ID", "School / Cluster", "District",
+			"District Type", "Cluster Planned From", "Executor", "Training Name", "Planned Date", "Completed Date",
+			"SSA Intervention", "Participants", "Mode of Delivery", "Cost", "Budget status", "Verification",
+			"Salesforce ID", "Status", "Actions"}, rows))
+	}
+	if len(t.group) == 0 {
+		blocks = append(blocks, emptyTable(PlanTables[2], p))
+	} else {
+		var rows []*screensv1.PageRow
+		for _, r := range t.group {
+			rows = append(rows, pageRow(r, r.clusterName, append(groupTableCells(r), tailCells(r)...)))
+		}
+		blocks = append(blocks, full(PlanTables[2].Title, []string{"Cluster Name", "District", "District Type",
+			"Planned Date", "Completed Date", "Executor", "Training", "SSA Intervention", "Participants", "Cost",
+			"Budget status", "Verification", "Salesforce ID", "Status", "Actions"}, rows))
+	}
 	if len(t.meetings) == 0 {
 		blocks = append(blocks, emptyTable(PlanTables[3], p))
 	} else {
@@ -215,11 +317,9 @@ func programmeBlocks(t PlanTablesResult) []*screensv1.PageBlock {
 			if r.salesforceID != "" {
 				sf = &screensv1.PageCell{Text: r.salesforceID}
 			}
-			// place_url: the cluster's profile for work at a cluster, else the school's.
-			place := "/schools/" + str(r.a.schoolPK)
-			if r.a.hasCluster {
-				place = "/clusters/" + r.clusterID
-			}
+			// place_url: the cluster's profile for work at a cluster, else the
+			// school's (a session's row: the school it reached).
+			place := r.placeURL
 			tone := r.rowState
 			if tone == "" && r.dayOff != nil {
 				tone = "dayoff"

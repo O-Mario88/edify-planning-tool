@@ -57,6 +57,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, false, nil
 	}
 	page, err := s.page(ctx, p, scope, doors, f, operational, now)
+	if page != nil {
+		page.Header = header(doors, query)
+	}
 	return page, true, err
 }
 
@@ -123,7 +126,7 @@ WHERE d.id IN (SELECT s.district_id FROM school s WHERE `+base+`) ORDER BY d.nam
 	if f.tab == "scheduled" {
 		bar = activityBar()
 	}
-	return &screensv1.GetPageResponse{Header: header(), Blocks: blocks, WebPath: Path, Selection: bar}, nil
+	return &screensv1.GetPageResponse{Blocks: blocks, WebPath: Path, Selection: bar}, nil
 }
 
 // schoolsTab is a tab of schools (Client, Core, Assigned to Partner,

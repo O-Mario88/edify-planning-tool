@@ -32,6 +32,8 @@ type Doors struct {
 	AssignPartner bool `json:"assign_partner"`
 	BulkSchedule  bool `json:"bulk_schedule"`
 	OpenSchool    bool `json:"open_school"`
+	// FieldEvent is the header's Plan Field Event (can_add_non_school_activity).
+	FieldEvent bool `json:"field_event"`
 }
 
 // CountedVisits are the rules a person's counted visits are read by
@@ -77,6 +79,7 @@ type Rules struct {
 	SupportFilters            [][2]string      `json:"support_filters"`
 	StripLabels               []string         `json:"strip_labels"`
 	CountedVisits             CountedVisits    `json:"counted_visits"`
+	NotPassedQueryKeys        []string         `json:"not_passed_query_keys"`
 	Catalogue                 struct {
 		Country string `json:"country"`
 		Kind    string `json:"kind"`
@@ -88,7 +91,7 @@ var rules = mustLoad(rulesJSON)
 
 func mustLoad(raw []byte) Rules {
 	var r Rules
-	if err := json.Unmarshal(raw, &r); err != nil || len(r.Doors) == 0 || len(r.StripLabels) != 9 || len(r.SupportFilters) == 0 {
+	if err := json.Unmarshal(raw, &r); err != nil || len(r.Doors) == 0 || len(r.StripLabels) != 9 || len(r.SupportFilters) == 0 || len(r.NotPassedQueryKeys) == 0 {
 		panic(fmt.Sprintf("planningpage: the embedded rules are unreadable: %v", err))
 	}
 	return r

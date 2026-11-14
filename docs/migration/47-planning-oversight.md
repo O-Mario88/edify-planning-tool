@@ -88,3 +88,55 @@ strips, KPI strips (`_kpi_items`), the period reader (`_period_filters`,
 `_plan_period` with `planning_horizon`), the per-person chart, Flagged schools
 (`team_flagged_schools`) and, for Country Oversight, the coverage dashboard;
 each is its own piece.
+
+## 47.6 Piece 2, first slice: the Team Plan over a team with nothing planned
+
+Backlog `planning-oversight-2`. The Team Plan lens (`/team-planning-oversight/`
+with no `view`, or `view=planning`) is drawn by Go for a **Programme Lead in
+their own role** (not acting, not in an acting appointment) when nothing the
+lens could list is in the period, and handed on otherwise. Package
+`internal/planningoversight` (`teamplan.go`, `teampage.go`).
+
+| Part | Existing rule it ports |
+|---|---|
+| Who | `resolve_oversight_scope`: the `pl` kind; the reader's both ids (`owner_ids`, `_both_id_spaces`) and their supervisees' (`resolve_user_scope().supervised_staff_ids`, both id spaces, less their own) |
+| The period | `_period_filters` (the shared `partneroversight.ReadPeriod`) and `_plan_period`: a year reads its planning horizon (`schoolplanning.Horizon`), a month or quarter the page year, a week the years its first and last day fall in; `_plan_period_label` / `horizon_label` name it |
+| Nothing planned | `build_items` → `_activity_queryset` with `_activity_scope_q`: no live activity (`LIVE_ACTIVITY_STATUSES`) of the period's years whose responsible or monitoring officer, school owner or cluster owner is on the team, by `_in_month` / `quarter` / `_dated_between` (the scheduled day read in Africa/Kampala). Partner work counts here though the lens drops it, so Go's test is wider than the page's; unscheduled hand-overs are partner work only and never reach the lens |
+| No flagged school | `team_flagged_schools`: no activity of the team's (responsible officer) at a school in the page year's month (the chosen month, else today's), not `NOT_PLANNED_STATUSES` (lifted from a literal to a module constant, no behaviour change) |
+| Tabs | `_team_owner_tabs` (Whole team, My Work, one per supervised live profile by name; an officer's User id finds their tab; anything else is Whole team), `activity_tabs`, every count 0 |
+| The panel | `_team_roster` (`program_lead_members`: the Lead's live profile holding the role, then the reporting line by name) narrowed to the tab; one person's group is drawn under their name, more under the tab's; a tab whose person is not on the roster is handed on |
+| Tiles | `_kpi_items(summarize([]))` exported, through `schoolprofile.Strip` (helper/note split); a helper line carries the tile's tone (`components/context_metrics.html`) |
+| Lens strip, Evidence gaps | `_lens_tabs` over `team_oversight_lenses` and `can_view_page(evidence_center)` for the role, exported |
+| Header | `_export_menu.html`'s drawer link as the feed resolves it (parameters in name order) |
+| Handed on | any other role or lens (including `view=nonsense`, which the view reads as the Team Plan), an advanced filter (`FILTER_KEYS`) that is not blank, the Export drawer's custom period, `followup`, a week or year `ReadPeriod` does not copy, non-ASCII text, an acting reader, an empty team or roster |
+
+Exported in `rules.json` → `team_plan` by the same command (lead role, lens
+tabs, owner and activity tabs, zero tiles, evidence link, live and not-planned
+statuses, filter keys, the keys the feed does not pass). Grant added:
+`activity.planned_month` (an undated activity sits in its month by it).
+
+What was found: the feed's period select always reads `week` (the template
+marks no option; Alpine picks it after load), so the "odd" value agent 31
+noted is the reader's, and Go copies it; the Month filter carries no caption.
+The parity tool's `/team-planning-oversight/` questions were overwritten by
+the Training Summary's file (init order); `page_training_summary.go` now adds
+its questions to the others.
+
+### Parity (piece 2, first slice)
+
+Go-only gateway on 127.0.0.1:8083 against the existing application on
+127.0.0.1:8183, both over `edify_gorn_dev`, 29 accounts, pause 20s, 80
+questions each (the doors' 24, the Team Plan's 32 in
+`teamPlanQuestions`, the Training Summary's 24):
+
+`2320 answers compared, 247 differing` — all 247 are "not available here
+yet" (handed on): admin, cd, ia 53 each (the country lens and the lenses Go
+does not draw), pl1 43, pl2–pl4 15 each; the 22 refused accounts 0
+differing. Nothing Go built differs.
+
+Of the 43 questions a Programme Lead's Team Plan could be drawn for, Go drew
+37 for each of pl2–pl4 (handed on: `fy=2026`, where their teams have 40
+staff items; `fy=abc`; week 53; an advanced filter set; `followup`) and 10
+for pl1 (FY 2025 and FY 2028 in every period, and the months of March and
+June; pl1's team has work in FY 2026 and FY 2027): 121 Team Plan answers
+built by Go, every one the same as the feed's.

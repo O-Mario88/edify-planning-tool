@@ -56,7 +56,7 @@ ORDER BY a.updated_at DESC`, where), args...)
 	if err != nil {
 		return nil, true, err
 	}
-	header := &screensv1.PageHeader{Eyebrow: "Verification", Title: "Returned Activities",
+	header := &screensv1.PageHeader{Eyebrow: "Verification", Title: "Returned Activities", Actions: exportActions(p, ReturnedPath, query),
 		Description: "Work sent back for correction, the reasons given, and whether it has come back yet."}
 	if len(items) == 0 {
 		return &screensv1.GetPageResponse{Header: header, WebPath: ReturnedPath, Blocks: []*screensv1.PageBlock{

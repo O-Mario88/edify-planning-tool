@@ -36,6 +36,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/extrawork"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fyplanning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
@@ -51,6 +52,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/navigation"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightportfolio"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
@@ -136,7 +138,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			policycompliance.NewService(pool, time.Now),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
-			myplan.NewService(pool, time.Now),
+			myplan.NewService(pool, time.Now).WithTrainingSummary(trainingsummary.OwnSummary),
 			calendarpage.NewService(pool, time.Now),
 			todos.NewService(pool, time.Now),
 			workplan.NewService(pool, time.Now),
@@ -145,15 +147,17 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			teamperformance.NewService(pool, time.Now),
 			projectmonitoring.NewService(pool, time.Now),
 			planningoversight.NewService(pool, time.Now),
+			oversightportfolio.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
 			hrregister.NewService(pool, time.Now),
 			leavepolicies.NewService(pool, time.Now),
 			iapages.NewService(pool, time.Now),
 			ccelead.NewService(pool, time.Now),
+			extrawork.NewService(pool, time.Now),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
 		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel ||
-		cfg.GoSaves.ScheduleGroupTraining {
+		cfg.GoSaves.ScheduleGroupTraining || cfg.GoSaves.ScheduleClusterMeeting {
 		save := visitSave(cfg, pool, logger)
 		if cfg.GoSaves.ScheduleVisit {
 			screenService.WithVisitSave(save, logger)
@@ -178,6 +182,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		}
 		if cfg.GoSaves.ScheduleGroupTraining {
 			screenService.WithGroupTrainingSave(save, logger)
+		}
+		if cfg.GoSaves.ScheduleClusterMeeting {
+			screenService.WithClusterMeetingSave(save, logger)
 		}
 	}
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))

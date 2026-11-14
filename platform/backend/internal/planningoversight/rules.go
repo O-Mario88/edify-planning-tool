@@ -45,6 +45,50 @@ type Rules struct {
 	Pages map[string]Page `json:"pages"`
 	// Doors by role, then by page key.
 	Doors map[string]map[string]Door `json:"doors"`
+	// TeamPlan is what the Team Plan lens draws for a Programme Lead whose
+	// team has nothing planned in the period.
+	TeamPlan TeamPlan `json:"team_plan"`
+}
+
+// Tab is one tab or link of a strip.
+type Tab struct {
+	Key    string `json:"key"`
+	Label  string `json:"label"`
+	Href   string `json:"href"`
+	Active bool   `json:"active"`
+}
+
+// KPI is one headline tile as _kpi_items builds it over no work.
+type KPI struct {
+	Label  string `json:"label"`
+	Value  string `json:"value"`
+	Helper string `json:"helper"`
+	Tone   string `json:"tone"`
+}
+
+// TeamPlan is the Team Plan lens's vocabulary (oversight_views,
+// oversight_service, flagged_schools).
+type TeamPlan struct {
+	// LeadRole is the role whose team lens this piece draws.
+	LeadRole string `json:"lead_role"`
+	// LensTabs is the lens strip the role holds, on the Team Plan.
+	LensTabs []Tab `json:"lens_tabs"`
+	// OwnerTabs are the two tabs before the officers: Whole team, My Work.
+	OwnerTabs []Tab `json:"owner_tabs"`
+	// ActivityTabs is the activity family strip.
+	ActivityTabs []Tab `json:"activity_tabs"`
+	// ZeroKPIs are the headline tiles over no work.
+	ZeroKPIs []KPI `json:"zero_kpis"`
+	// EvidenceLink: the role may open the Evidence Centre.
+	EvidenceLink bool `json:"evidence_link"`
+	// LiveActivityStatuses are the statuses build_items reads.
+	LiveActivityStatuses []string `json:"live_activity_statuses"`
+	// NotPlannedStatuses leave the month's planned schools (flagged).
+	NotPlannedStatuses []string `json:"not_planned_statuses"`
+	// FilterKeys are the advanced filters (read_filters).
+	FilterKeys []string `json:"filter_keys"`
+	// QueryKeysNotPassed are the keys the feed never passes to a page.
+	QueryKeysNotPassed []string `json:"query_keys_not_passed"`
 }
 
 var rules = mustRules(rulesJSON)
@@ -58,6 +102,9 @@ func mustRules(raw []byte) Rules {
 		if r.Pages[key].Path == "" {
 			panic("planningoversight: rules.json has no " + key + " page")
 		}
+	}
+	if r.TeamPlan.LeadRole == "" || len(r.TeamPlan.OwnerTabs) != 2 || len(r.TeamPlan.ActivityTabs) == 0 || len(r.TeamPlan.LiveActivityStatuses) == 0 {
+		panic("planningoversight: rules.json has no team plan")
 	}
 	return r
 }

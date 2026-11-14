@@ -129,7 +129,7 @@ func roleGate(role, contextType string) (allowed, decided bool) {
 	case role == slugPartner && finance && contextType != "accountant_disbursement":
 		return false, true
 	}
-	if _, defined := rules.ContextLabels[contextType]; !defined {
+	if contextLabel(contextType) == "" {
 		return false, true
 	}
 	return false, false
@@ -282,4 +282,18 @@ func (g *gate) teamUserIDs(ctx context.Context) ([]string, error) {
 	}
 	g.teamUse = append(users, g.p.UserID)
 	return g.teamUse, nil
+}
+
+// fixedContextLabels are labels the existing page lacks for contexts it
+// lists: an "evidence" thread had none, so the page refused it to everyone
+// but the Admin; Go labels it as its list's Impact Assessment context
+// (owner, 2026-11-13: "Can you fix those from the go side").
+var fixedContextLabels = map[string]string{"evidence": "Evidence"}
+
+// contextLabel is a context's label: the existing page's, else Go's fix.
+func contextLabel(contextType string) string {
+	if label, ok := rules.ContextLabels[contextType]; ok {
+		return label
+	}
+	return fixedContextLabels[contextType]
 }

@@ -282,7 +282,7 @@ func page(l *theLog, gs []*group) *screensv1.GetPageResponse {
 		if l.followUpCount > 0 {
 			label = fmt.Sprintf("%s %d", label, l.followUpCount)
 		}
-		header.Actions = []*screensv1.PageAction{{Key: slug(label), Label: label, Enabled: true, Href: followUpQueueURL, Drawer: true}}
+		header.Actions = []*screensv1.PageAction{{Key: slug(label), Label: label, Primary: true, Enabled: true, Href: followUpQueueURL, Drawer: true}}
 	}
 	var first *group
 	if len(gs) > 0 {

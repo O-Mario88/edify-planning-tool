@@ -23,11 +23,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/parity"
 	"net/http"
 	"net/url"
 	"os"
 	"reflect"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -63,6 +65,12 @@ func main() {
 	pause := flag.Duration("pause", 0, "wait between sign-ins, under the gateway's sign-in rate limit")
 	emailConfigured := flag.Bool("email-configured", false, "-db: whether the existing server sends email")
 	flag.Parse()
+	list, err := parity.CheckedIn()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "notificationparity:", err)
+		os.Exit(2)
+	}
+	intended = list
 	for _, address := range []string{*gateway, *database} {
 		if address == "" {
 			continue
@@ -135,7 +143,12 @@ func run(ctx context.Context, entries []entry, open func(string) (asker, error),
 			fmt.Printf("%-34s %-44s DIFFERS: go failed: %v\n", e.Email, label, err)
 			continue
 		}
-		if diff := compare(view(answer), e.Page); diff != "" {
+		var accepted []parity.Accepted
+		diff := compare(parity.Answer{Tool: parity.ToolNotifications, Where: "/notifications", Question: label}, &accepted, view(answer), e.Page)
+		if len(accepted) > 0 {
+			fmt.Printf("%-34s %-44s INTENDED\n%s\n", e.Email, label, parity.IntendedLines(accepted))
+		}
+		if diff != "" {
 			differing++
 			fmt.Printf("%-34s %-44s DIFFERS\n%s\n", e.Email, label, diff)
 		} else {
@@ -322,7 +335,7 @@ func tone(priority string) string {
 }
 
 // compare is "" when the two pages are the same, key by key, rows in order.
-func compare(goView map[string]any, existing json.RawMessage) string {
+func compare(answer parity.Answer, accepted *[]parity.Accepted, goView map[string]any, existing json.RawMessage) string {
 	encoded, _ := json.Marshal(goView)
 	var goPage, oldPage map[string]any
 	_ = json.Unmarshal(encoded, &goPage)
@@ -330,10 +343,40 @@ func compare(goView map[string]any, existing json.RawMessage) string {
 		return "  the existing page is unreadable: " + err.Error()
 	}
 	diffs := []string{}
-	for _, key := range []string{"kpis", "filters", "empty", "pager", "delivery"} {
+	for _, key := range []string{"kpis", "empty", "pager", "delivery"} {
 		if !reflect.DeepEqual(goPage[key], oldPage[key]) {
 			diffs = append(diffs, fmt.Sprintf("  %s\n    go:       %v\n    existing: %v", key, goPage[key], oldPage[key]))
 		}
+	}
+	// The filters, field by field, so a difference the intended list names
+	// (internal/parity) is set aside alone.
+	goFilters, _ := goPage["filters"].(map[string]any)
+	oldFilters, _ := oldPage["filters"].(map[string]any)
+	fields := map[string]bool{}
+	for k := range goFilters {
+		fields[k] = true
+	}
+	for k := range oldFilters {
+		fields[k] = true
+	}
+	names := make([]string, 0, len(fields))
+	for k := range fields {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	for _, k := range names {
+		if reflect.DeepEqual(goFilters[k], oldFilters[k]) {
+			continue
+		}
+		goText, _ := json.Marshal(goFilters[k])
+		oldText, _ := json.Marshal(oldFilters[k])
+		d := parity.Diff{Field: "filters." + k, Go: string(goText), Existing: string(oldText),
+			Text: fmt.Sprintf("  filters.%s\n    go:       %s\n    existing: %s", k, goText, oldText)}
+		if e, ok := intended.Match(answer, d); ok {
+			*accepted = append(*accepted, parity.Accepted{Diff: d, Entry: e.ID})
+			continue
+		}
+		diffs = append(diffs, d.Text)
 	}
 	goRows, _ := goPage["notifications"].([]any)
 	oldRows, _ := oldPage["notifications"].([]any)
@@ -356,3 +399,6 @@ func compare(goView map[string]any, existing json.RawMessage) string {
 	}
 	return strings.Join(diffs, "\n")
 }
+
+// intended is the checked-in list of intended differences (internal/parity).
+var intended *parity.List

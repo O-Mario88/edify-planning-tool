@@ -23,7 +23,7 @@ const (
 	maxQueryValueLen = 128
 )
 
-var queryKey = regexp.MustCompile(`^[a-z][a-z_]{0,39}$`)
+var queryKey = regexp.MustCompile(`^[a-z][a-z0-9_]{0,39}$`)
 
 // The ticked rows a drawer opens with ("ids", "school_ids"): up to
 // maxTickedIDs plain ids, comma-joined, as the web's bar for ticked rows
@@ -70,7 +70,6 @@ func pageQuery(ctx context.Context, given map[string]string) (url.Values, error)
 	if len(given) > maxQueryKeys {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This view cannot be opened.")
 	}
-	query := url.Values{}
 	for key, value := range given {
 		fits := len(value) <= maxQueryValueLen
 		if isIDList(key) {
@@ -79,9 +78,6 @@ func pageQuery(ctx context.Context, given map[string]string) (url.Values, error)
 		if !queryKey.MatchString(key) || !fits {
 			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This view cannot be opened.")
 		}
-		if value != "" {
-			query.Set(key, value)
-		}
 	}
-	return query, nil
+	return PlainQuery(given), nil
 }

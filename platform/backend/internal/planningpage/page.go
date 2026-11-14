@@ -7,6 +7,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
@@ -14,13 +15,22 @@ import (
 
 func collapse(text string) string { return strings.Join(strings.Fields(text), " ") }
 
-// header is pages/planning/index.html's header as the feed reads it: its
-// buttons sit outside the controls the feed reads, so it offers none.
-func header() *screensv1.PageHeader {
+// header is pages/planning/index.html's header as the feed reads it: the
+// buttons beside the lead, Export (the page's own query, as a CSV), Plan
+// Field Event for a role that may add a field event, and Recent changes.
+func header(doors Doors, query url.Values) *screensv1.PageHeader {
+	actions := []*screensv1.PageAction{
+		pageheader.Download("Export", pageheader.QueryHref(Path, query, rules.NotPassedQueryKeys, "export", "csv")),
+	}
+	if doors.FieldEvent {
+		actions = append(actions, pageheader.Drawer("Plan Field Event", "/work-plan/add", false))
+	}
+	actions = append(actions, pageheader.Drawer("Recent changes", "/planning/recent-changes", false))
 	return &screensv1.PageHeader{
 		Eyebrow:     "Planning",
 		Title:       "Planning",
 		Description: "Plan school visits, cluster activities, and partner assignments based on SSA readiness and school needs.",
+		Actions:     actions,
 	}
 }
 
@@ -160,9 +170,10 @@ func row(s school, d Doors, support bool, fy string) *screensv1.PageRow {
 	}
 	cells := []*screensv1.PageCell{
 		{Text: collapse(s.Code)}, name, cluster,
-		{Text: clusterpage.JoinedChips(b.VisitChips())},
-		{Text: clusterpage.JoinedChips(b.TrainingChips(), b.ClusterMeetingChips())},
-		{Text: lock},
+		{Text: clusterpage.JoinedChips(b.VisitChips()), Pills: clusterpage.ChipPills(b.VisitChips())},
+		{Text: clusterpage.JoinedChips(b.TrainingChips(), b.ClusterMeetingChips()),
+			Pills: clusterpage.ChipPills(b.TrainingChips(), b.ClusterMeetingChips())},
+		{Text: lock, Pills: clusterpage.LockPills(s.gate, gates)},
 	}
 	if support {
 		who := "Staff"

@@ -394,9 +394,9 @@ func schoolRow(c clusterRef, sc listedSchool, b *schoolplanning.Badges, isPartne
 	cells := []*screensv1.PageCell{
 		{Text: collapse(sc.Code)},
 		nameCell,
-		{Text: joinedChips(b.VisitChips())},
-		{Text: joinedChips(b.TrainingChips(), b.ClusterMeetingChips())},
-		{Text: lock},
+		{Text: joinedChips(b.VisitChips()), Pills: ChipPills(b.VisitChips())},
+		{Text: joinedChips(b.TrainingChips(), b.ClusterMeetingChips()), Pills: ChipPills(b.TrainingChips(), b.ClusterMeetingChips())},
+		{Text: lock, Pills: LockPills(sc.gate, gates)},
 	}
 	if support {
 		who := "Staff"

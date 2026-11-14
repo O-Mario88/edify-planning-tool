@@ -73,7 +73,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	case ReturnedPath:
 		return s.returned(ctx, p, query, where, args)
 	case HistoryPath:
-		return s.history(ctx, query, where, args)
+		return s.history(ctx, p, query, where, args)
 	}
 	// DuplicateActivity has no order of its own; the view reads it unordered.
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`

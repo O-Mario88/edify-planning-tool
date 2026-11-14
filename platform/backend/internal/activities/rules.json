@@ -93,6 +93,19 @@
     "temporarily_closed",
     "permanently_closed"
   ],
+  "cluster_meeting": {
+    "activity_type": "cluster_meeting",
+    "meeting_kinds": [
+      "training",
+      "only_meeting",
+      "cluster_leaders"
+    ],
+    "meeting_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
+    "training_kind": "training"
+  },
   "costed_as": {
     "core_assessment_visit": "school_visit",
     "ssa_activity": "school_visit_ssa_collection"

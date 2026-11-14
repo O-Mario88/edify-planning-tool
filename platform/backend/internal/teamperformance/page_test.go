@@ -283,16 +283,43 @@ func TestAPanelPairsALabelWithItsFigure(t *testing.T) {
 	if p.Title != "Alex M." {
 		t.Fatalf("title %q", p.Title)
 	}
-	rows := []string{}
+	// As the feed reads the same HTML (page_blocks.read): the footer's
+	// "Enrollment: " runs around its bold figure, so it is one sentence and
+	// "Core: 0" is left without a figure to pair with.
+	got := []string{}
 	for _, item := range p.Items {
 		if r := item.GetRows(); r != nil {
 			for _, row := range r.Rows {
-				rows = append(rows, row.Label+"="+row.Value)
+				got = append(got, row.Label+"="+row.Value)
 			}
+		} else {
+			got = append(got, item.GetText())
 		}
 	}
-	if !reflect.DeepEqual(rows, []string{"Visits=0", "Core: 0=—"}) {
-		t.Errorf("rows %v", rows)
+	if !reflect.DeepEqual(got, []string{"Portfolio: 0 schools", "Visits=0", "Core: 0", "Enrollment: —"}) {
+		t.Errorf("items %v", got)
+	}
+}
+
+func TestASentenceKeepsItsLeadItsLinksAndItsBlocks(t *testing.T) {
+	// page_blocks._sentences on
+	// <div data-tone="caution"><strong>Note</strong> see <a href="/x">the list</a>.<p>Apart</p>tail</div>
+	n := el("div", "", el("strong", "", "Note"), " see ", el("a", "", "the list").attr("href", "/x"), ".",
+		para("", "Apart"), "tail").attr("data-tone", "caution")
+	items := panelItems(n, map[*node]bool{}, nil)
+	if len(items) != 3 {
+		t.Fatalf("%d items", len(items))
+	}
+	first := items[0]
+	if first.GetText() != "Note see the list." || first.Lead != "Note" || first.Tone != "caution" ||
+		len(first.TextLinks) != 1 || first.TextLinks[0].Href != "/x" || first.TextLinks[0].Text != "the list" {
+		t.Errorf("first %+v", first)
+	}
+	if items[1].GetText() != "Apart" || items[1].Tone != "" || items[2].GetText() != "tail" || items[2].Tone != "caution" {
+		t.Errorf("rest %+v %+v", items[1], items[2])
+	}
+	if _, ok := plainText(first); ok {
+		t.Error("a sentence with a lead is never paired")
 	}
 }
 

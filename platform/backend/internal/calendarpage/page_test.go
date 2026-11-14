@@ -264,3 +264,48 @@ func TestTheNationalCalendarCoversEveryYear(t *testing.T) {
 		}
 	}
 }
+
+// The month block carries what the text segments cannot: each entry's
+// kind and family, the activity a tick box ticks on every day of its run,
+// a later day of a run (an activity's or an organization event's), the
+// day-off mark on the entry and its day, and today only within the month.
+func TestTheMonthBlock(t *testing.T) {
+	m := newMonth(day(2026, 11, 1), day(2026, 11, 30))
+	run := &activity{id: "a1", kind: "core_visit", name: "Core Visit", hasSchool: true, schoolName: "Kimenyedde"}
+	odd := &activity{id: "a2", kind: "no_such_type", name: "Other"}
+	sp := map[string]span{"a1": {day(2026, 10, 31), day(2026, 11, 2)}, "a2": {day(2026, 11, 5), day(2026, 11, 5)}}
+	marks := map[string]dayOffMark{"a1": {days: []dayOff{{day: day(2026, 11, 1), name: "Paul N."}}}}
+	m.addActivities([]*activity{run, odd}, sp, marks, map[string]bool{"a1": true}, map[string]bool{})
+	m.addEvents([]orgEvent{{title: "Retreat", start: day(2026, 11, 2), end: day(2026, 11, 3)}})
+	m.sortDays()
+	v := &view{year: 2026, mon: time.November, m: m, today: day(2026, 12, 1), eventKind: "leave"}
+	c := v.calendar().GetCalendar()
+	if c.GetToday() != "" || c.GetKind() != "leave" || c.GetYear() != 2026 || c.GetMonth() != 11 {
+		t.Fatalf("%v", c)
+	}
+	if k := c.GetKinds(); len(k) != 5 || k[0].GetValue() != "all" || k[0].GetCount() != "4" || k[1].GetCount() != "2" || k[4].GetCount() != "2" {
+		t.Errorf("kinds %v", k)
+	}
+	days := c.GetDays()
+	if len(days) != 4 || days[0].GetDate() != "2026-11-01" || !days[0].GetDayOff() {
+		t.Fatalf("days %v", days)
+	}
+	first := days[0].GetEvents()[0]
+	if first.GetFamily() != "core" || first.GetPickId() != "a1" || !first.GetContinued() || !first.GetDayOff() || first.GetHref() != "/my-plan/a1" {
+		t.Errorf("first %v", first)
+	}
+	second := days[1].GetEvents()
+	if len(second) != 2 || second[0].GetKind() != "event" || second[0].GetContinued() || second[0].GetFamily() != "" {
+		t.Errorf("2 Nov %v", second)
+	}
+	if e := days[2].GetEvents()[0]; e.GetKind() != "event" || !e.GetContinued() {
+		t.Errorf("3 Nov %v", e)
+	}
+	if e := days[3].GetEvents()[0]; e.GetFamily() != "activity" || e.GetPickId() != "" || e.GetContinued() || e.GetDayOff() {
+		t.Errorf("5 Nov %v", e)
+	}
+	v.today = day(2026, 11, 5)
+	if c := v.calendar().GetCalendar(); c.GetToday() != "2026-11-05" || !c.GetDays()[3].GetToday() || c.GetDays()[0].GetToday() {
+		t.Errorf("today %v", c)
+	}
+}

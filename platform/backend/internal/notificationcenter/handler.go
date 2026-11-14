@@ -46,3 +46,20 @@ func (h *Handler) GetNotificationCenter(
 	}
 	return connect.NewResponse(response), nil
 }
+
+// GetUnreadNotificationCount is the top bar's bell for the signed-in caller.
+// Every signed-in role has the bell (apps.core.context_processors), so no role
+// is refused here.
+func (h *Handler) GetUnreadNotificationCount(
+	ctx context.Context, _ *connect.Request[screensv1.GetUnreadNotificationCountRequest],
+) (*connect.Response[screensv1.GetUnreadNotificationCountResponse], error) {
+	principal, ok := auth.PrincipalFrom(ctx)
+	if !ok {
+		return nil, apierr.New(ctx, connect.CodeUnauthenticated, apierr.ReasonAuthMissing, "sign in first")
+	}
+	unread, err := h.service.UnreadCount(ctx, principal.UserID)
+	if err != nil {
+		return nil, apierr.Internal(ctx, h.logger, err)
+	}
+	return connect.NewResponse(&screensv1.GetUnreadNotificationCountResponse{Unread: unread}), nil
+}

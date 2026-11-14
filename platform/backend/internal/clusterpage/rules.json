@@ -188,6 +188,14 @@
       "schools_list": false
     }
   },
+  "not_passed_query_keys": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
   "operating_statuses": [
     "active",
     "reopened"

@@ -11,6 +11,16 @@ import "edify/common/v1/common.proto";
 // caller's own notifications: nothing in the request names whose they are.
 service NotificationCenterService {
   rpc GetNotificationCenter(GetNotificationCenterRequest) returns (GetNotificationCenterResponse);
+  // The top bar's bell: how many of the caller's notifications are unread and
+  // not resolved (apps.core.context_processors.sidebar_counts). Every signed-in
+  // role has the bell, so no role is refused.
+  rpc GetUnreadNotificationCount(GetUnreadNotificationCountRequest) returns (GetUnreadNotificationCountResponse);
+}
+
+message GetUnreadNotificationCountRequest {}
+
+message GetUnreadNotificationCountResponse {
+  int32 unread = 1;
 }
 
 // The page's own query parameters. Empty means the page's default.

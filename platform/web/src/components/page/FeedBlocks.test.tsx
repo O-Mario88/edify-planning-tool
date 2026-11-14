@@ -186,7 +186,7 @@ describe('record cards and kinds not drawn yet', () => {
   });
 
   it('says so for a kind it does not draw', () => {
-    expect(draw({ blocks: [{ chart: { title: 'x' } }] })).toContain('not drawn here yet');
+    expect(draw({ blocks: [{ chips: { name: 'cat', label: 'x' } }] })).toContain('not drawn here yet');
   });
 });
 
@@ -246,5 +246,83 @@ describe('Planning read whole (the coordinator review, 2026-11-13)', () => {
     expect(card).toContain('Showing 0–0 of 0 schools');
     expect(card).toContain('15 / page');
     expect(html.match(/data-block="pager"/g)).toHaveLength(1);
+  });
+});
+
+describe('plan-status and Visit Lock chips (web-fixes-2)', () => {
+  const CHIPS: JsonValue = {
+    blocks: [
+      {
+        table: {
+          columns: [{ label: 'ID' }, { label: 'Visit Plan Status' }, { label: 'Training Plan Status' }, { label: 'Visit Lock' }],
+          rows: [
+            {
+              cells: [
+                { text: '1546' },
+                { text: '1 Planned1 Complete', pills: [{ text: '1 Planned', tone: 'planned' }, { text: '1 Complete', tone: 'verified' }] },
+                { text: 'Not Planned', pills: [{ text: 'Not Planned', tone: 'none' }] },
+                { text: 'Staff visit scheduled', pills: [{ text: 'Staff visit scheduled', tone: 'closed', title: 'Kasawo has had its visit.', icon: 'lock' }] },
+              ],
+            },
+            { cells: [{ text: '1598' }, { text: 'Not Planned', pills: [{ text: 'Not Planned', tone: 'none' }] }, { text: '—' }, { text: 'Unlocked', pills: [{ text: 'Unlocked', tone: 'open', icon: 'unlock' }] }] },
+          ],
+        },
+      },
+    ],
+  };
+
+  it('draws each chip in its own colour, never the words run together', () => {
+    const html = draw(CHIPS);
+    expect(html).not.toContain('1 Planned1 Complete');
+    expect(html).toMatch(/data-planning-tone="planned"[^>]*bg-\[#fbbf24\][^>]*>1 Planned</);
+    expect(html).toMatch(/data-planning-tone="verified"[^>]*success-light[^>]*>1 Complete</);
+    expect(html.match(/data-planning-tone="none"[^>]*danger-light/g)).toHaveLength(2);
+  });
+
+  it('gives a held visit a shut padlock and its sentence, an unlocked one an open padlock', () => {
+    const html = draw(CHIPS);
+    expect(html).toMatch(/title="Kasawo has had its visit\." data-planning-tone="closed"[^>]*><svg[^>]*><path d="M4\.5 7V5/);
+    expect(html).toMatch(/data-planning-tone="open"[^>]*bg-transparent[^>]*><svg[^>]*><path d="M10\.5 1\.5/);
+  });
+});
+
+describe('filters the page folds under its own More filters (web-fixes-2)', () => {
+  it('puts the Clusters page’s authored three under More and keeps the five in the row', () => {
+    const select = (name: string, more = false) => ({ name, label: name, value: '', more, options: [{ value: '', label: 'All' }, { value: 'x', label: 'X' }] });
+    const html = draw({
+      blocks: [{ filters: { filters: [...['fy', 'quarter', 'district', 'sub_county', 'staff'].map((n) => select(n)), ...['ssa_status', 'cluster_risk', 'activity_status'].map((n) => select(n, true))] } }],
+    }, '/clusters');
+    const [row, more] = html.split('aria-label="More filters"');
+    for (const name of ['fy', 'quarter', 'district', 'sub_county', 'staff']) expect(row).toContain(`name="${name}"`);
+    for (const name of ['ssa_status', 'cluster_risk', 'activity_status']) {
+      expect(row).not.toContain(`name="${name}"`);
+      expect(more).toContain(`name="${name}"`);
+    }
+  });
+});
+
+describe('a record card’s facts in the existing card’s colours (web-fixes-2)', () => {
+  it('draws plain values in the accent blue and toned ones in the card’s red, amber and green', () => {
+    const html = draw({
+      blocks: [
+        {
+          record: {
+            title: 'Cluster A',
+            facts: [
+              { label: 'Schools', value: '7' },
+              { label: 'SSA Required', value: '2', tone: 'alert' },
+              { label: 'Without SSA', value: '2 schools', tone: 'caution' },
+              { label: 'Ready for Planning', value: '5', tone: 'good' },
+              { label: 'Next Action', value: 'Schedule training' },
+            ],
+          },
+        },
+      ],
+    }, '/clusters');
+    expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-accent-text\)\][^"]*">7</);
+    expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-danger\)\][^"]*">2</);
+    expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-warning\)\][^"]*">2 schools</);
+    expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-success\)\][^"]*">5</);
+    expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-accent-text\)\][^"]*">Schedule training</);
   });
 });

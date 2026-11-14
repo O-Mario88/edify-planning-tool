@@ -1,0 +1,38 @@
+[
+  {
+    "id": "fixture-period-select",
+    "tool": "page",
+    "where": "/team-plan",
+    "questions": ["(as it opens)", "period=month"],
+    "fields": [".blocks[1].filters[0].options[1].selected"],
+    "existing": "false",
+    "go": "true",
+    "defect": "Test fixture only: the period select marks no option, so the feed reads the first (Week).",
+    "decision": "Test fixture only: 'Can you fix those from the go side' (owner, 2026-11-13).",
+    "test": "internal/parity.TestAnEntryAcceptsOnlyAnExactMatch"
+  },
+  {
+    "id": "fixture-staff-activity-far-day",
+    "tool": "page",
+    "where": "/staff-activity",
+    "questions": ["on=9999-12-31"],
+    "fields": ["error"],
+    "existing": "status 500",
+    "go": "<nil>",
+    "defect": "Test fixture only: a far-future day is a server error.",
+    "decision": "Test fixture only: Go treats an out-of-range day as today.",
+    "test": "internal/parity.TestAnEntryAcceptsOnlyAnExactMatch"
+  },
+  {
+    "id": "fixture-snooze-id",
+    "tool": "shadow",
+    "where": "snooze_todo",
+    "questions": ["todo_snooze"],
+    "fields": ["todo_id"],
+    "existing": "x{200}",
+    "go": "x{128}",
+    "defect": "Test fixture only: the id is stored cut to 128 characters on one side.",
+    "decision": "Test fixture only.",
+    "test": "internal/parity.TestShadowRowsPairOnlyWhenEveryDifferingColumnIsIntended"
+  }
+]

@@ -43,6 +43,12 @@ EXCEPTION_LIMIT = 6
 TEAM_TODAY_LIMIT = 12
 # Work that was never going to happen is not on anyone's day.
 _RELEASED_STATUSES = ("cancelled", "rejected", "deferred", "not_planned")
+# The field the Programme Lead's This Week Me tab sends with every request
+# made inside it (see _include_team).
+TODAY_SECTION_FIELD = "today_section"
+# Where an undone snooze's answer goes: the whole Today panel, drawn again.
+UNSNOOZE_RETARGET = "[data-dashboard-today]"
+UNSNOOZE_RESWAP = "outerHTML"
 
 
 def _staff_guard(view):
@@ -306,7 +312,9 @@ def _include_team(request) -> bool:
     """False inside the Programme Lead's This Week Me tab, which sends
     `today_section=own` with every request made from within it (hx-vals on
     the tab), so a redraw after an undo stays the lead's own day."""
-    asked = request.GET.get("today_section") or request.POST.get("today_section")
+    asked = request.GET.get(TODAY_SECTION_FIELD) or request.POST.get(
+        TODAY_SECTION_FIELD
+    )
     return asked != "own"
 
 
@@ -482,6 +490,6 @@ def today_unsnooze(request):
         "partials/today/dashboard_view.html",
         {"today": build_today_context(request, include_team=_include_team(request))},
     )
-    response["HX-Retarget"] = "[data-dashboard-today]"
-    response["HX-Reswap"] = "outerHTML"
+    response["HX-Retarget"] = UNSNOOZE_RETARGET
+    response["HX-Reswap"] = UNSNOOZE_RESWAP
     return response

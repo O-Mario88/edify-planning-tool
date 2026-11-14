@@ -15,6 +15,7 @@ HEADER = """
   <div class="edify-page-header__controls">
     <span class="rounded-pill bg-slate-100 text-slate-500">Readiness: Ready</span>
     <span class="rounded-pill bg-emerald-50 text-emerald-700" title="Source: Recorded">SSA FY2027: 6.0<span class="sr-only"> · Source: Recorded</span></span>
+    <span class="rounded-pill bg-slate-100 text-slate-500" title="Taken by a visit" data-visit-closed><svg><path d="M4.5 7V5"/></svg>Staff visit scheduled<span class="sr-only">: Taken by a visit</span></span>
     <button type="button" hx-get="/schools/s1/edit-drawer" class="edify-primary-solid"><svg></svg> Edit Details</button>
     <button type="button" disabled title="SSA already entered for FY2027">Enter SSA Score</button>
   </div>
@@ -90,8 +91,12 @@ class PageBlocksTest(SimpleTestCase):
         self.assertEqual(header["title"], "Feed School")
         self.assertEqual(header["description"], "School ID: FEED-1")
         self.assertEqual(
-            [(b["text"], b["tone"]) for b in header["badges"]],
-            [("Readiness: Ready", "plain"), ("SSA FY2027: 6.0", "good")],
+            [(b["text"], b["tone"], b.get("icon", "")) for b in header["badges"]],
+            [
+                ("Readiness: Ready", "plain", ""),
+                ("SSA FY2027: 6.0", "good", ""),
+                ("Staff visit scheduled", "plain", "lock"),
+            ],
         )
         edit, ssa = header["actions"]
         self.assertEqual(
@@ -649,6 +654,8 @@ CLUSTER_CARDS = """
    <div class="school-record-row__ssa is-danger"><dt>Avg SSA:</dt><dd>4.6/10</dd></div>
    <div class="cluster-card__metadata-warning"><dt>Without SSA:</dt><dd>2 schools</dd></div>
    <div><dt>Owner:</dt><dd><a href="/staff/p1">Paul N.</a></dd></div>
+   <div class="cluster-card__metadata-action cluster-card__metadata-action--critical">
+    <dt>Next Action:</dt><dd>Schedule training</dd></div>
   </dl>
  </div>
  <div id="cluster-details-c1" x-show="cardExpanded" x-cloak class="cluster-card__details">
@@ -685,6 +692,9 @@ class RecordCardTest(SimpleTestCase):
                 ("Avg SSA", "4.6/10", "alert", ""),
                 ("Without SSA", "2 schools", "caution", ""),
                 ("Owner", "Paul N.", "", "/staff/p1"),
+                # The risk colour the card's CSS names for Next Action loses
+                # to `.school-record-row__metadata dd`: the page draws it plain.
+                ("Next Action", "Schedule training", "", ""),
             ],
         )
 
@@ -1432,6 +1442,25 @@ WHOLE_SENTENCES = """
 """
 
 
+#: Planning's header: its buttons sit beside the lead, not in a controls slot.
+BAND_HEADER = """
+<main>
+<div class="edify-page-header !mb-0">
+  <div class="edify-page-header__lead">
+    <p class="edify-page-eyebrow">Planning</p>
+    <h1 class="edify-page-title">Planning</h1>
+    <a href="/help" class="edify-action-button secondary">Not an action: in the lead</a>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="?tab=core&amp;district=&amp;search=a+b&amp;export=csv" class="edify-action-button secondary h-9"><svg></svg> Export</a>
+    <button type="button" hx-get="/work-plan/add" hx-target="#drawer-container" class="edify-action-button secondary h-9"><svg></svg> Plan Field Event</button>
+    <button type="button" class="context-metrics__next">Swipe for more →</button>
+  </div>
+</div>
+</main>
+"""
+
+
 class WholeSentencesTest(SimpleTestCase):
     def setUp(self):
         self.blocks = page_blocks.read(WHOLE_SENTENCES)["blocks"]
@@ -1477,3 +1506,218 @@ class WholeSentencesTest(SimpleTestCase):
             "<p>Two words here</p></div></main>"
         )["blocks"]
         self.assertNotIn("lead", str(blocks))
+
+
+#: A controls slot whose links are drawn as action buttons.
+LINK_HEADER = """
+<main>
+<div class="edify-page-header">
+  <div class="edify-page-header__lead"><h1 class="edify-page-title">Cluster Oversight</h1></div>
+  <div class="edify-page-header__controls">
+    <a href="/cluster-oversight/command?fy=2027&amp;area=&amp;view=clusters&amp;format=csv" class="edify-action-button secondary h-9">Download CSV</a>
+    <a href="/cluster-oversight/scoring" class="edify-action-button secondary h-9">Scoring</a>
+    <a href="/staff-activity/export?" class="edify-action-button secondary h-9" download>Export</a>
+    <a href="/team-performance/export-help" class="edify-action-button secondary h-9">Read me</a>
+    <button type="button" hx-get="/clusters/create-drawer" hx-target="#drawer-container" class="edify-action-button primary h-9">Create Cluster</button>
+  </div>
+</div>
+</main>
+"""
+
+
+def _actions(page: dict) -> list[tuple]:
+    return [
+        (a["key"], a["label"], a["primary"], a["href"], a["drawer"], a["download"])
+        for a in page["header"]["actions"]
+    ]
+
+
+class HeaderActionsTest(SimpleTestCase):
+    def test_buttons_beside_the_lead_are_the_headers_actions(self):
+        page = page_blocks.read(BAND_HEADER, path="/planning")
+
+        self.assertEqual(
+            _actions(page),
+            [
+                (
+                    "export",
+                    "Export",
+                    False,
+                    "/planning?export=csv&search=a+b&tab=core",
+                    False,
+                    True,
+                ),
+                (
+                    "plan_field_event",
+                    "Plan Field Event",
+                    False,
+                    "/work-plan/add",
+                    True,
+                    False,
+                ),
+            ],
+        )
+
+    def test_links_drawn_as_action_buttons_are_actions(self):
+        page = page_blocks.read(LINK_HEADER, path="/cluster-oversight/")
+
+        self.assertEqual(
+            _actions(page),
+            [
+                (
+                    "download_csv",
+                    "Download CSV",
+                    False,
+                    "/cluster-oversight/command?format=csv&fy=2027&view=clusters",
+                    False,
+                    True,
+                ),
+                (
+                    "scoring",
+                    "Scoring",
+                    False,
+                    "/cluster-oversight/scoring",
+                    False,
+                    False,
+                ),
+                ("export", "Export", False, "/staff-activity/export", False, True),
+                (
+                    "read_me",
+                    "Read me",
+                    False,
+                    "/team-performance/export-help",
+                    False,
+                    False,
+                ),
+                (
+                    "create_cluster",
+                    "Create Cluster",
+                    True,
+                    "/clusters/create-drawer",
+                    True,
+                    False,
+                ),
+            ],
+        )
+
+    def test_a_page_without_a_path_keeps_a_relative_link_as_written(self):
+        page = page_blocks.read(BAND_HEADER)
+
+        self.assertEqual(
+            page["header"]["actions"][0]["href"],
+            "?tab=core&district=&search=a+b&export=csv",
+        )
+
+    def test_the_header_band_is_never_read_again_as_a_block(self):
+        page = page_blocks.read(BAND_HEADER, path="/planning")
+
+        self.assertEqual(page["blocks"], [])
+
+
+PLANNING_CHIPS = """
+<main>
+<section class="card"><div><table class="edify-record-table">
+<thead><tr><th>ID</th><th>Visit Plan Status</th><th>Training Plan Status</th><th>Visit Lock</th></tr></thead>
+<tbody><tr><td>1546</td>
+<td class="px-4 py-3" data-label="Visit Plan Status" data-planning-badges="visits">
+  <span class="school-planning-badges"><span class="school-planning-badge" data-planning-tone="planned">1 Planned</span><span class="school-planning-badge" data-planning-tone="verified">1 Verified</span><span class="school-planning-badge" data-planning-tone="closed" data-visit-closed="staff" title="Held by a visit"><svg aria-hidden="true"><path d="M4.5 7V5"/></svg>Visit held<span class="sr-only">: Held by a visit</span></span></span>
+</td>
+<td class="px-4 py-3" data-label="Training Plan Status" data-planning-badges="trainings">
+  <span class="school-planning-badges"><span class="school-planning-badge" data-planning-tone="none">Not Planned</span></span>
+</td>
+<td data-label="Visit Lock" class="school-plan-table__lock" data-visit-lock="unlocked"><span class="school-planning-badge" data-planning-tone="open" data-visit-lock="unlocked"><svg aria-hidden="true"><path d="M10.5 1.5"/></svg>Unlocked</span></td>
+</tr><tr><td>1598</td>
+<td data-planning-badges="visits"><span class="school-planning-badges"><span class="school-planning-badge" data-planning-tone="none">Not Planned</span></span></td>
+<td data-planning-badges="trainings"><span class="school-planning-badges"><span class="school-planning-badge" data-planning-tone="awaiting">1 Awaiting Verification</span><span class="school-planning-badge" data-planning-tone="planned" data-cluster-meeting>1 Meeting Planned</span></span></td>
+<td data-label="Visit Lock" data-visit-lock="staff_scheduled"><span class="school-planning-badge" data-planning-tone="closed" data-visit-lock="staff_scheduled" title="It has had its visit."><svg aria-hidden="true"><path d="M4.5 7V5"/></svg>Staff visit scheduled</span></td>
+</tr><tr><td>1650</td><td>—</td><td>—</td>
+<td data-label="Visit Lock" data-visit-lock="not_applicable"><span class="edify-text-muted" aria-label="Not applicable">—</span></td>
+</tr></tbody></table></div></section>
+</main>
+"""
+
+AUTHORED_MORE = """
+<main>
+<form id="filters-form" hx-get="/clusters" class="edify-filter-row w-full" data-edify-filter-row>
+  <div class="edify-filter-row__field"><span class="edify-filter-label">Fiscal year</span>
+    <select name="fy" aria-label="Filter by fiscal year"><option value="2027" selected>FY 2027</option></select></div>
+  <div class="edify-filter-row__field"><span class="edify-filter-label">Quarter</span>
+    <select name="quarter" aria-label="Filter by quarter"><option value="">All</option></select></div>
+  <div class="edify-filter-more edify-filter-row__field" data-edify-filter-more>
+    <button type="button" data-edify-filter-more-toggle><span>More<span class="edify-filter-more__long"> filters</span></span></button>
+    <div class="edify-filter-more__panel" role="group" aria-label="More filters" data-edify-filter-more-panel hidden>
+      <div class="edify-filter-row__field"><span class="edify-filter-label">SSA Status</span>
+        <select name="ssa_status" aria-label="Filter by SSA status"><option value="">All</option></select></div>
+    </div>
+  </div>
+</form>
+</main>
+"""
+
+
+class PlanningChipsTest(SimpleTestCase):
+    """A school's plan-status and Visit Lock chips keep each chip's colour,
+    padlock and hover sentence (components/school_planning_badges.html,
+    partials/planning/visit_lock_cell.html); the cell's text is unchanged."""
+
+    def setUp(self):
+        table = page_blocks.read(PLANNING_CHIPS)["blocks"][0]["table"]
+        self.first, self.second, self.third = (r["cells"] for r in table["rows"])
+
+    def test_each_chip_is_a_pill_with_the_pages_tone(self):
+        visits, trainings, lock = self.first[1:]
+
+        self.assertEqual(visits["text"], "1 Planned1 VerifiedVisit held")
+        self.assertEqual(
+            visits["pills"],
+            [
+                {"text": "1 Planned", "tone": "planned", "title": ""},
+                {"text": "1 Verified", "tone": "verified", "title": ""},
+                {
+                    "text": "Visit held",
+                    "tone": "closed",
+                    "title": "Held by a visit",
+                    "icon": "lock",
+                },
+            ],
+        )
+        self.assertEqual(
+            trainings["pills"], [{"text": "Not Planned", "tone": "none", "title": ""}]
+        )
+        self.assertEqual(
+            lock["pills"],
+            [{"text": "Unlocked", "tone": "open", "title": "", "icon": "unlock"}],
+        )
+        self.assertFalse(lock["badge"])
+
+    def test_a_held_visits_lock_carries_its_sentence(self):
+        trainings, lock = self.second[2:]
+
+        self.assertEqual(
+            [p["tone"] for p in trainings["pills"]], ["awaiting", "planned"]
+        )
+        self.assertEqual(
+            lock["pills"],
+            [
+                {
+                    "text": "Staff visit scheduled",
+                    "tone": "closed",
+                    "title": "It has had its visit.",
+                    "icon": "lock",
+                }
+            ],
+        )
+
+    def test_a_cell_without_chips_has_no_pills(self):
+        self.assertTrue(all("pills" not in cell for cell in self.third))
+        self.assertEqual(self.third[3]["text"], "—")
+
+
+class AuthoredMoreFiltersTest(SimpleTestCase):
+    def test_a_filter_the_page_folds_under_more_says_so(self):
+        filters = page_blocks.read(AUTHORED_MORE)["blocks"][0]["filters"]["filters"]
+
+        self.assertEqual(
+            [(f["name"], f.get("more", False)) for f in filters],
+            [("fy", False), ("quarter", False), ("ssa_status", True)],
+        )

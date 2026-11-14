@@ -1,0 +1,49 @@
+[
+  {
+    "id": "go-fix-period-select-partner",
+    "tool": "page",
+    "where": "/partner-oversight/",
+    "questions": [
+      "*"
+    ],
+    "fields": [
+      ".blocks[0].filters.filters[0].value"
+    ],
+    "existing": "week",
+    "go": "month|quarter|fy",
+    "defect": "Partner Oversight's period select marks no option (the browser script sets it after load), so the existing feed always reads 'week' whatever period the page shows (agents 30, 31, 58).",
+    "decision": "Owner, 2026-11-13: 'Can you fix those from the go side'.",
+    "test": "internal/partneroversight.TestThePeriodSelectShowsThePeriodInUse"
+  },
+  {
+    "id": "go-fix-period-select-team-plan",
+    "tool": "page",
+    "where": "/team-planning-oversight/",
+    "questions": [
+      "*"
+    ],
+    "fields": [
+      ".blocks[1].filters.filters[0].value"
+    ],
+    "existing": "week",
+    "go": "month|quarter|fy",
+    "defect": "The Team Plan's period select marks no option (period_filter_bar.html; the browser script sets it after load), so the existing feed always reads 'week' whatever period the page shows (agents 31, 58).",
+    "decision": "Owner, 2026-11-13: 'Can you fix those from the go side'.",
+    "test": "internal/planningoversight.TestTheTeamPlanPeriodSelectShowsThePeriodInUse"
+  },
+  {
+    "id": "go-fix-notification-categories",
+    "tool": "notifications",
+    "where": "/notifications",
+    "questions": [
+      "*"
+    ],
+    "fields": [
+      "filters.categories"
+    ],
+    "relation": "deduplicated",
+    "defect": "The notification centre's Category select lists a category once for every moment it was raised: values_list('category').distinct() under the model's ordering is distinct on category and time (admin@ saw 'Availability' 95 times; agent 33).",
+    "decision": "Owner, 2026-11-13: 'Can you fix those from the go side'.",
+    "test": "internal/notificationcenter.TestTheCategorySelectListsEachCategoryOnce"
+  }
+]

@@ -30,6 +30,8 @@ from apps.schools.management.commands.export_school_directory_rules import (
 )
 
 EXPORT_PATH = Path("platform/backend/internal/staffactivity/rules.json")
+#: A person's detail address as the feed's gate is asked it.
+PERSON_PATH_SAMPLE = "/staff-activity/people/sample"
 
 #: Two summary strips the page can show: everything zero and nobody expected,
 #: and large figures with every helper on (``_kpi_items``). The feed's reading
@@ -90,6 +92,10 @@ def doors() -> dict:
         out[role.value] = {
             "page": RolePermissionService.can_view_page(user, "staff_activity")
             and bool(can_open_url(user, "/staff-activity")),
+            # A person's detail (staff_activity_person_view), one id standing
+            # for every person.
+            "person": RolePermissionService.can_view_page(user, "staff_activity")
+            and bool(can_open_url(user, PERSON_PATH_SAMPLE)),
         }
     return out
 
@@ -129,7 +135,11 @@ def rules() -> dict:
     from apps.hr.leave_services import PublicHolidayService
     from apps.mobile_feed import views as feed
     from apps.staff_activity import registry, services
-    from apps.staff_activity.models import OPEN_STATUSES
+    from apps.staff_activity.models import (
+        OPEN_STATUSES,
+        FollowUpStatus,
+        FollowUpTrigger,
+    )
 
     holidays = inspect.signature(PublicHolidayService.get_holidays_in_range)
     return {
@@ -165,6 +175,22 @@ def rules() -> dict:
             "online_seconds": presence.activity_setting("ONLINE_SECONDS"),
             "final_beat_seconds": presence.FINAL_BEAT_SECONDS,
             "session_cookie_age": settings.SESSION_COOKIE_AGE,
+        },
+        "person": {
+            "sessions_shown": services.SESSIONS_SHOWN,
+            "actions_shown": services.ACTIONS_SHOWN,
+            "follow_ups_shown": services.FOLLOW_UPS_SHOWN,
+            "suggestion_reasons": {
+                "no_login": services.NO_LOGIN_REASON,
+                "low_engagement": services.LOW_ENGAGEMENT_REASON,
+                "repeated_errors": services.REPEATED_ERRORS_REASON,
+            },
+            "follow_up_triggers": [
+                [str(key), str(label)] for key, label in FollowUpTrigger.choices
+            ],
+            "follow_up_statuses": [
+                [str(key), str(label)] for key, label in FollowUpStatus.choices
+            ],
         },
         "time_zone": settings.TIME_ZONE,
         "page_size": TABLE_PAGE_SIZE,

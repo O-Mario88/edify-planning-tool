@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	NotificationCenterService_GetNotificationCenter_FullMethodName = "/edify.screens.v1.NotificationCenterService/GetNotificationCenter"
+	NotificationCenterService_GetNotificationCenter_FullMethodName      = "/edify.screens.v1.NotificationCenterService/GetNotificationCenter"
+	NotificationCenterService_GetUnreadNotificationCount_FullMethodName = "/edify.screens.v1.NotificationCenterService/GetUnreadNotificationCount"
 )
 
 // NotificationCenterServiceClient is the client API for NotificationCenterService service.
@@ -33,6 +34,10 @@ const (
 // caller's own notifications: nothing in the request names whose they are.
 type NotificationCenterServiceClient interface {
 	GetNotificationCenter(ctx context.Context, in *GetNotificationCenterRequest, opts ...grpc.CallOption) (*GetNotificationCenterResponse, error)
+	// The top bar's bell: how many of the caller's notifications are unread and
+	// not resolved (apps.core.context_processors.sidebar_counts). Every signed-in
+	// role has the bell, so no role is refused.
+	GetUnreadNotificationCount(ctx context.Context, in *GetUnreadNotificationCountRequest, opts ...grpc.CallOption) (*GetUnreadNotificationCountResponse, error)
 }
 
 type notificationCenterServiceClient struct {
@@ -53,6 +58,16 @@ func (c *notificationCenterServiceClient) GetNotificationCenter(ctx context.Cont
 	return out, nil
 }
 
+func (c *notificationCenterServiceClient) GetUnreadNotificationCount(ctx context.Context, in *GetUnreadNotificationCountRequest, opts ...grpc.CallOption) (*GetUnreadNotificationCountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUnreadNotificationCountResponse)
+	err := c.cc.Invoke(ctx, NotificationCenterService_GetUnreadNotificationCount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NotificationCenterServiceServer is the server API for NotificationCenterService service.
 // All implementations must embed UnimplementedNotificationCenterServiceServer
 // for forward compatibility.
@@ -64,6 +79,10 @@ func (c *notificationCenterServiceClient) GetNotificationCenter(ctx context.Cont
 // caller's own notifications: nothing in the request names whose they are.
 type NotificationCenterServiceServer interface {
 	GetNotificationCenter(context.Context, *GetNotificationCenterRequest) (*GetNotificationCenterResponse, error)
+	// The top bar's bell: how many of the caller's notifications are unread and
+	// not resolved (apps.core.context_processors.sidebar_counts). Every signed-in
+	// role has the bell, so no role is refused.
+	GetUnreadNotificationCount(context.Context, *GetUnreadNotificationCountRequest) (*GetUnreadNotificationCountResponse, error)
 	mustEmbedUnimplementedNotificationCenterServiceServer()
 }
 
@@ -76,6 +95,9 @@ type UnimplementedNotificationCenterServiceServer struct{}
 
 func (UnimplementedNotificationCenterServiceServer) GetNotificationCenter(context.Context, *GetNotificationCenterRequest) (*GetNotificationCenterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetNotificationCenter not implemented")
+}
+func (UnimplementedNotificationCenterServiceServer) GetUnreadNotificationCount(context.Context, *GetUnreadNotificationCountRequest) (*GetUnreadNotificationCountResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUnreadNotificationCount not implemented")
 }
 func (UnimplementedNotificationCenterServiceServer) mustEmbedUnimplementedNotificationCenterServiceServer() {
 }
@@ -117,6 +139,24 @@ func _NotificationCenterService_GetNotificationCenter_Handler(srv interface{}, c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NotificationCenterService_GetUnreadNotificationCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUnreadNotificationCountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationCenterServiceServer).GetUnreadNotificationCount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationCenterService_GetUnreadNotificationCount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationCenterServiceServer).GetUnreadNotificationCount(ctx, req.(*GetUnreadNotificationCountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NotificationCenterService_ServiceDesc is the grpc.ServiceDesc for NotificationCenterService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -127,6 +167,10 @@ var NotificationCenterService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNotificationCenter",
 			Handler:    _NotificationCenterService_GetNotificationCenter_Handler,
+		},
+		{
+			MethodName: "GetUnreadNotificationCount",
+			Handler:    _NotificationCenterService_GetUnreadNotificationCount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

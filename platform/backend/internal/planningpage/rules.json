@@ -98,6 +98,7 @@
     "Accountant": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": false,
       "open_school": false,
       "page": true,
       "schedule": true
@@ -105,6 +106,7 @@
     "Admin": {
       "assign_partner": true,
       "bulk_schedule": false,
+      "field_event": true,
       "open_school": true,
       "page": true,
       "schedule": false
@@ -112,6 +114,7 @@
     "BusinessTransformationOfficer": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": false,
       "open_school": true,
       "page": false,
       "schedule": false
@@ -119,6 +122,7 @@
     "CCEO": {
       "assign_partner": true,
       "bulk_schedule": true,
+      "field_event": true,
       "open_school": true,
       "page": true,
       "schedule": true
@@ -126,6 +130,7 @@
     "ClusterLeader": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": false,
       "open_school": false,
       "page": false,
       "schedule": false
@@ -133,6 +138,7 @@
     "CountryDirector": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": true,
       "open_school": true,
       "page": true,
       "schedule": true
@@ -140,6 +146,7 @@
     "HumanResources": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": true,
       "open_school": false,
       "page": false,
       "schedule": false
@@ -147,6 +154,7 @@
     "ImpactAssessment": {
       "assign_partner": true,
       "bulk_schedule": false,
+      "field_event": true,
       "open_school": true,
       "page": true,
       "schedule": true
@@ -154,6 +162,7 @@
     "MfiLoanOfficer": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": false,
       "open_school": false,
       "page": false,
       "schedule": false
@@ -161,6 +170,7 @@
     "MfiPartnerAdmin": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": false,
       "open_school": false,
       "page": false,
       "schedule": false
@@ -168,6 +178,7 @@
     "PartnerAdmin": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": false,
       "open_school": false,
       "page": false,
       "schedule": false
@@ -175,6 +186,7 @@
     "PartnerFieldOfficer": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": false,
       "open_school": false,
       "page": false,
       "schedule": false
@@ -182,6 +194,7 @@
     "Program Lead": {
       "assign_partner": true,
       "bulk_schedule": true,
+      "field_event": true,
       "open_school": true,
       "page": true,
       "schedule": true
@@ -189,6 +202,7 @@
     "ProjectCoordinator": {
       "assign_partner": true,
       "bulk_schedule": true,
+      "field_event": true,
       "open_school": true,
       "page": true,
       "schedule": true
@@ -196,6 +210,7 @@
     "RegionalProgramLead": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": false,
       "open_school": false,
       "page": false,
       "schedule": false
@@ -203,6 +218,7 @@
     "RegionalVicePresident": {
       "assign_partner": false,
       "bulk_schedule": false,
+      "field_event": false,
       "open_school": false,
       "page": false,
       "schedule": false
@@ -241,6 +257,14 @@
     "deferred",
     "not_planned",
     "awaiting_owner_approval"
+  ],
+  "not_passed_query_keys": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
   ],
   "not_scheduled_statuses": [
     "completed",

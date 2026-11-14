@@ -15,9 +15,11 @@ import (
 // approved, closed) or off the plan (asked for by a Status of a left-out
 // state). Work still to be delivered (its day-off marks), work sent back or
 // handed in (the attention cards), work with money moving, SSA visits
-// awaiting scores, Core package slots, trainings (the cluster expansion) and
-// programme work are still the existing application's: a page listing any
-// of them is passed.
+// awaiting scores, Core package slots and programme work are still the
+// existing application's: a page listing any of them is passed. Piece 3e
+// added the Trainings and Group Trainings tables (the cluster expansion);
+// a session reaching a Core School and a Core School's training are still
+// passed.
 
 // planTablePageSize is how many rows a table pages by (TABLE_PAGE_SIZE).
 const planTablePageSize = 50
@@ -28,6 +30,7 @@ const (
 	tableMeetings
 	tableCoreVisits
 	tableProgrammeSchool
+	tableTrainings
 )
 
 // programmePageSize is how many rows a programme school section pages by.
@@ -43,6 +46,7 @@ type extra struct {
 	clusterDistrict, eventDistrict *string
 	endDate                        *time.Time
 	reviewNote, schoolSSAStatus    *string
+	activityName                   *string
 	// advances are the advances on its cost lines (_advances_of).
 	advances []advance
 }
@@ -67,6 +71,9 @@ type planRow struct {
 // PlanTablesResult is what the tables of a served page hold.
 type PlanTablesResult struct {
 	visits, meetings, core []*planRow
+	// trainings are the Trainings table (each session once a school it
+	// reached), group the Group Trainings table (each session once).
+	trainings, group []*planRow
 	// programme are the programme schools' sections, by type.
 	programme map[string][]*planRow
 	// statusShown is the Status select's value when the Core slots overwrite
@@ -84,7 +91,7 @@ type PlanTablesResult struct {
 func readExtras(ctx context.Context, db schooldirectory.Querier, ids []string, lines costLines) (map[string]*extra, error) {
 	out := map[string]*extra{}
 	rows, err := db.Query(ctx, `SELECT a.id, a.evidence_status, a.payment_status, a.meeting_kind, cd.name, ed.name, a.end_date,
-  a.pl_review_note, s.current_fy_ssa_status
+  a.pl_review_note, s.current_fy_ssa_status, a.activity_name_snapshot
 FROM activity a LEFT JOIN cluster c ON c.id = a.cluster_id LEFT JOIN district cd ON cd.id = c.district_id
 LEFT JOIN district ed ON ed.id = a.event_district_id LEFT JOIN school s ON s.id = a.school_id WHERE a.id = ANY($1)`, ids)
 	if err != nil {
@@ -94,7 +101,7 @@ LEFT JOIN district ed ON ed.id = a.event_district_id LEFT JOIN school s ON s.id 
 		var id string
 		x := &extra{}
 		if err := rows.Scan(&id, &x.evidence, &x.payment, &x.meetingKind, &x.clusterDistrict, &x.eventDistrict, &x.endDate,
-			&x.reviewNote, &x.schoolSSAStatus); err != nil {
+			&x.reviewNote, &x.schoolSSAStatus, &x.activityName); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("myplan: reading the rows' columns: %w", err)
 		}
@@ -174,7 +181,7 @@ func tableOf(a *activity, slots coreSlots) int {
 	case in(rules.Plan.VisitTypes, a.activityType):
 		return tableSchoolVisits
 	case in(rules.Plan.TrainingTypes, a.activityType):
-		return -1
+		return tableTrainings
 	case in(rules.Plan.MeetingTypes, a.activityType):
 		if !a.hasCluster {
 			return -1
@@ -259,6 +266,8 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, owners []st
 			res.visits = append(res.visits, r)
 		case tableMeetings:
 			res.meetings = append(res.meetings, r)
+		case tableTrainings:
+			res.trainings = append(res.trainings, r)
 		case tableProgrammeSchool:
 			if res.programme == nil {
 				res.programme = map[string][]*planRow{}
@@ -287,12 +296,19 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, owners []st
 		}
 		return out
 	}
+	expanded, ok, err := expandTrainings(ctx, db, pg, &res)
+	if err != nil || !ok {
+		return res, false, err
+	}
+	all = append(all, expanded...)
 	visits, meetings, coreRows := plain(res.visits), plain(res.meetings), plain(res.core)
 	tables := [][]*row{visits, meetings, coreRows}
 	kinds := rules.Rows.ProgrammeSchoolTypes
 	for _, kind := range kinds {
 		tables = append(tables, plain(res.programme[kind]))
 	}
+	trainingRows, groupRows := plain(res.trainings), plain(res.group)
+	tables = append(tables, trainingRows, groupRows)
 	if err := pg.finish(ctx, db, acts, tables...); err != nil {
 		return res, false, err
 	}
@@ -308,12 +324,13 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, owners []st
 		return out
 	}
 	res.visits, res.meetings, res.core = reorder(visits), reorder(meetings), reorder(coreRows)
+	res.trainings, res.group = reorder(trainingRows), reorder(groupRows)
 	for i, kind := range kinds {
 		if rows := tables[3+i]; len(rows) > 0 {
 			res.programme[kind] = reorder(rows)
 		}
 	}
-	for _, rows := range [][]*planRow{res.visits, res.meetings, res.core} {
+	for _, rows := range [][]*planRow{res.visits, res.meetings, res.core, res.trainings, res.group} {
 		if len(rows) > planTablePageSize {
 			return res, false, nil
 		}
@@ -366,7 +383,7 @@ func (r *planRow) settle(today time.Time) {
 func (r *planRow) plannedDistrict() string {
 	blank := func(v string) bool { return v == "" || v == dash || v == "Unknown" }
 	school := r.schoolDistrict
-	if !r.a.hasSchool {
+	if !r.a.hasSchool && !r.isClusterInvited {
 		school = "Unknown"
 		if isSet(r.a.eventDistrictID) {
 			school = str(r.x.eventDistrict)
@@ -491,4 +508,62 @@ func dayOffMarks(ctx context.Context, db schooldirectory.Querier, acts []*activi
 		work = append(work, calendarpage.DayOffWork{ID: a.id, Status: a.status, StaffID: str(a.staffID), Start: *start, End: end})
 	}
 	return calendarpage.DayOffMarks(ctx, db, work)
+}
+
+// expandTrainings is the cluster invited-school expansion over the
+// Trainings table: each session (a training at a cluster with no School ID)
+// is copied once to Group Trainings, then replaced on Trainings by a row
+// for each client school it reached (or by itself at the cluster when it
+// reached none); a programme school's row moves to that school type's
+// section. The session's own row stays on the cards only (no tick, no
+// completion columns). ok is false when a session reached a Core School:
+// its row is a Core School Trainings row, still the existing
+// application's. It returns the new rows.
+func expandTrainings(ctx context.Context, db schooldirectory.Querier, pg *page, res *PlanTablesResult) ([]*planRow, bool, error) {
+	if len(res.trainings) == 0 {
+		return nil, true, nil
+	}
+	plain := make([]*row, len(res.trainings))
+	for i, r := range res.trainings {
+		plain[i] = r.row
+	}
+	reached, err := pg.expandSessions(ctx, db, plain)
+	if err != nil {
+		return nil, false, err
+	}
+	clone := func(r *planRow, c *row) *planRow {
+		return &planRow{row: c, x: r.x, table: r.table, tone: r.tone, dayOff: r.dayOff, inTable: true, next: r.next}
+	}
+	var made, rebuilt []*planRow
+	for _, r := range res.trainings {
+		reaches, session := reached[r.row]
+		if !session {
+			rebuilt = append(rebuilt, r)
+			continue
+		}
+		r.inTable = false
+		group := clone(r, r.copy())
+		res.group = append(res.group, group)
+		made = append(made, group)
+		for _, x := range reaches {
+			c := clone(r, x.row)
+			switch {
+			case x.school == nil:
+				rebuilt = append(rebuilt, c)
+			case in(rules.Rows.ProgrammeSchoolTypes, x.school.schoolType):
+				c.table = tableProgrammeSchool
+				if res.programme == nil {
+					res.programme = map[string][]*planRow{}
+				}
+				res.programme[x.school.schoolType] = append(res.programme[x.school.schoolType], c)
+			case x.school.schoolType == "core":
+				return nil, false, nil
+			default:
+				rebuilt = append(rebuilt, c)
+			}
+			made = append(made, c)
+		}
+	}
+	res.trainings = rebuilt
+	return made, true, nil
 }

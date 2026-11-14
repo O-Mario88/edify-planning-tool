@@ -50,6 +50,9 @@ REVIEW_OVERDUE_DAYS = 0
 DEADLINE_HORIZON_DAYS = 30
 
 WAITING_ON_HR = "waiting_on_hr"
+#: A policy waiting on HR to be reviewed, fixed or published
+#: (_policies_awaiting_publication).
+POLICY_AWAITING_PUBLICATION_STATUSES = ("approved", "under_review", "returned")
 MANAGER_OVERDUE = "manager_overdue"
 PEOPLE_RISK = "people_risk"
 DEADLINES = "deadlines"
@@ -204,7 +207,7 @@ def _policies_awaiting_publication(principal) -> list[HRException]:
         return []
     out = []
     rows = DocumentAsset.objects.filter(
-        status__in=("approved", "under_review", "returned"), archived_at__isnull=True
+        status__in=POLICY_AWAITING_PUBLICATION_STATUSES, archived_at__isnull=True
     ).order_by("updated_at")[:25]
     for doc in rows:
         waiting_label = {

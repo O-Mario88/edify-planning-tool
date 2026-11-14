@@ -6,7 +6,7 @@ platform/backend/internal/iapages/rules.json: for each page Go answers, who
 may open it (the pages draw no workspace strip); which
 roles hold the IA verification permission (without it a reader sees only the
 work an Impact Assessment officer ran, `_ia_reach_q`); each activity
-type's label; and who may open a school's profile. A change to any of them must be exported again;
+type's label; who is offered a queue's Export; and who may open a school's profile. A change to any of them must be exported again;
 apps/activities/test_ia_pages_rules_export.py fails until it is.
 
     python manage.py export_ia_pages_rules
@@ -60,6 +60,13 @@ def rules() -> dict:
             role.value
             for role in EdifyRole
             if has_permission(_role_user(role.value), Permission.IA_VERIFY.value)
+        ),
+        # Who is offered a queue's Export (partials/ia/export_button.html:
+        # RolePermissionService.can_export, the data-export permission).
+        "export_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if RolePermissionService.can_export(_role_user(role.value), "")
         ),
         "activity_types": dict(ActivityType.choices),
         "query_keys_not_passed": sorted(NOT_PASSED),

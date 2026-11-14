@@ -48,6 +48,11 @@ type Doors struct {
 	Page     bool   `json:"page"`
 	Profiles bool   `json:"profiles"`
 	Strip    *Strip `json:"strip"`
+	// Consolidated is the header's Consolidated tables link (a reader of
+	// Country Planning Oversight).
+	Consolidated bool `json:"consolidated"`
+	// Export is the header's two exports, drawn while a project is open.
+	Export bool `json:"export"`
 }
 
 // Rules are the page's vocabularies.

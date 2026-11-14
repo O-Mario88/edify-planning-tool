@@ -140,98 +140,130 @@
     "Accountant": {
       "cluster": false,
       "directory": false,
+      "export": true,
       "loans": false,
-      "page": true
+      "page": true,
+      "scoring": false
     },
     "Admin": {
       "cluster": true,
       "directory": true,
+      "export": true,
       "loans": false,
-      "page": true
+      "page": true,
+      "scoring": true
     },
     "BusinessTransformationOfficer": {
       "cluster": false,
       "directory": false,
+      "export": true,
       "loans": true,
-      "page": false
+      "page": false,
+      "scoring": false
     },
     "CCEO": {
       "cluster": true,
       "directory": true,
+      "export": false,
       "loans": true,
-      "page": true
+      "page": true,
+      "scoring": false
     },
     "ClusterLeader": {
       "cluster": false,
       "directory": false,
+      "export": false,
       "loans": false,
-      "page": false
+      "page": false,
+      "scoring": false
     },
     "CountryDirector": {
       "cluster": true,
       "directory": true,
+      "export": true,
       "loans": true,
-      "page": true
+      "page": true,
+      "scoring": true
     },
     "HumanResources": {
       "cluster": false,
       "directory": false,
+      "export": false,
       "loans": false,
-      "page": false
+      "page": false,
+      "scoring": false
     },
     "ImpactAssessment": {
       "cluster": true,
       "directory": true,
+      "export": true,
       "loans": true,
-      "page": true
+      "page": true,
+      "scoring": true
     },
     "MfiLoanOfficer": {
       "cluster": false,
       "directory": false,
+      "export": false,
       "loans": true,
-      "page": false
+      "page": false,
+      "scoring": false
     },
     "MfiPartnerAdmin": {
       "cluster": false,
       "directory": false,
+      "export": false,
       "loans": true,
-      "page": false
+      "page": false,
+      "scoring": false
     },
     "PartnerAdmin": {
       "cluster": false,
       "directory": false,
+      "export": false,
       "loans": false,
-      "page": false
+      "page": false,
+      "scoring": false
     },
     "PartnerFieldOfficer": {
       "cluster": false,
       "directory": false,
+      "export": false,
       "loans": false,
-      "page": false
+      "page": false,
+      "scoring": false
     },
     "Program Lead": {
       "cluster": true,
       "directory": true,
+      "export": true,
       "loans": false,
-      "page": true
+      "page": true,
+      "scoring": false
     },
     "ProjectCoordinator": {
       "cluster": false,
       "directory": false,
+      "export": true,
       "loans": false,
-      "page": false
+      "page": false,
+      "scoring": false
     },
     "RegionalProgramLead": {
       "cluster": false,
       "directory": false,
+      "export": true,
       "loans": false,
-      "page": true
+      "page": true,
+      "scoring": false
     },
     "RegionalVicePresident": {
       "cluster": false,
       "directory": false,
+      "export": true,
       "loans": true,
-      "page": true
+      "page": true,
+      "scoring": false
     }
   },
   "feed_opens_sections": false,
@@ -239,6 +271,10 @@
     "disbursed",
     "active",
     "repaid"
+  ],
+  "impact_views": [
+    "clusters",
+    "courses"
   ],
   "last_activity_types": [
     "cluster_meeting",

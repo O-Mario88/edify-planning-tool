@@ -13,71 +13,99 @@
   "coordinator_role": "ProjectCoordinator",
   "doors": {
     "Accountant": {
+      "consolidated": false,
+      "export": true,
       "page": false,
       "profiles": false,
       "strip": null
     },
     "Admin": {
+      "consolidated": true,
+      "export": true,
       "page": true,
       "profiles": true,
       "strip": null
     },
     "BusinessTransformationOfficer": {
+      "consolidated": false,
+      "export": true,
       "page": false,
       "profiles": true,
       "strip": null
     },
     "CCEO": {
+      "consolidated": false,
+      "export": false,
       "page": true,
       "profiles": true,
       "strip": null
     },
     "ClusterLeader": {
+      "consolidated": false,
+      "export": false,
       "page": false,
       "profiles": false,
       "strip": null
     },
     "CountryDirector": {
+      "consolidated": true,
+      "export": true,
       "page": true,
       "profiles": true,
       "strip": null
     },
     "HumanResources": {
+      "consolidated": false,
+      "export": false,
       "page": false,
       "profiles": false,
       "strip": null
     },
     "ImpactAssessment": {
+      "consolidated": true,
+      "export": true,
       "page": true,
       "profiles": true,
       "strip": null
     },
     "MfiLoanOfficer": {
+      "consolidated": false,
+      "export": false,
       "page": false,
       "profiles": false,
       "strip": null
     },
     "MfiPartnerAdmin": {
+      "consolidated": false,
+      "export": false,
       "page": false,
       "profiles": false,
       "strip": null
     },
     "PartnerAdmin": {
+      "consolidated": false,
+      "export": false,
       "page": false,
       "profiles": false,
       "strip": null
     },
     "PartnerFieldOfficer": {
+      "consolidated": false,
+      "export": false,
       "page": false,
       "profiles": false,
       "strip": null
     },
     "Program Lead": {
+      "consolidated": false,
+      "export": true,
       "page": true,
       "profiles": true,
       "strip": null
     },
     "ProjectCoordinator": {
+      "consolidated": false,
+      "export": true,
       "page": true,
       "profiles": true,
       "strip": {
@@ -98,11 +126,15 @@
       }
     },
     "RegionalProgramLead": {
+      "consolidated": false,
+      "export": true,
       "page": false,
       "profiles": false,
       "strip": null
     },
     "RegionalVicePresident": {
+      "consolidated": true,
+      "export": true,
       "page": false,
       "profiles": false,
       "strip": null

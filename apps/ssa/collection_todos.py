@@ -52,6 +52,8 @@ KEYING_ROLES = frozenset(
 )
 #: How far back an uploader is reminded of their blocked rows.
 BLOCKED_ROWS_DAYS = 30
+#: The status of an import row that could not be imported.
+BLOCKED_ROW_STATUS = "blocked"
 
 
 def _row(
@@ -205,7 +207,7 @@ def _blocked_rows(principal, today) -> list[dict]:
         return []
     since = timezone.now() - timedelta(days=BLOCKED_ROWS_DAYS)
     blocked = SSAImportRow.objects.filter(
-        status="blocked", batch__uploaded_by=uid, batch__created_at__gte=since
+        status=BLOCKED_ROW_STATUS, batch__uploaded_by=uid, batch__created_at__gte=since
     ).aggregate(
         n=Count("id"),
         batches=Count("batch_id", distinct=True),

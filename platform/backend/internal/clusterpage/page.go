@@ -3,10 +3,12 @@ package clusterpage
 import (
 	"fmt"
 	"math"
+	"net/url"
 	"strconv"
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
@@ -18,25 +20,24 @@ const pageSize = 5
 func collapse(text string) string { return strings.Join(strings.Fields(text), " ") }
 
 // header is pages/clusters/index.html's header as the feed reads it: the
-// buttons each gated on the door the drawer behind it enforces (Export is a
-// link the feed does not offer).
-func header(d Doors) *screensv1.PageHeader {
+// primary Create Cluster and the two scheduling doors, each gated on the door
+// the drawer behind it enforces, then Export (the page's own query, as a CSV).
+func header(d Doors, query url.Values) *screensv1.PageHeader {
 	h := &screensv1.PageHeader{
 		Eyebrow:     "Schools & Field",
 		Title:       "Clusters",
 		Description: "Manage cluster performance, SSA weaknesses, meetings, trainings, and school-level improvement.",
 	}
-	button := func(key, label, href string) *screensv1.PageAction {
-		return &screensv1.PageAction{Key: key, Label: label, Enabled: true, Href: href, Drawer: true}
-	}
 	if d.Create {
-		h.Actions = append(h.Actions, button("create_cluster", "Create Cluster", "/clusters/create-drawer"))
+		h.Actions = append(h.Actions, pageheader.Drawer("Create Cluster", "/clusters/create-drawer", true))
 	}
 	if d.Plan {
 		h.Actions = append(h.Actions,
-			button("schedule_group_training", "Schedule Group Training", "/planning/schedule-modal?action=training"),
-			button("schedule_cluster_meeting", "Schedule Cluster Meeting", "/planning/schedule-modal?action=meeting"))
+			pageheader.Drawer("Schedule Group Training", "/planning/schedule-modal?action=training", false),
+			pageheader.Drawer("Schedule Cluster Meeting", "/planning/schedule-modal?action=meeting", false))
 	}
+	h.Actions = append(h.Actions,
+		pageheader.Download("Export", pageheader.QueryHref(Path, query, rules.NotPassedQueryKeys, "export", "csv")))
 	return h
 }
 
@@ -87,6 +88,10 @@ func filters(f filterState, fyOptions []string, districts, subCounties, staff []
 		selectBlock("ssa_status", "SSA status", f.ssaStatus, withAll([]option{{"done", "Complete"}, {"not_done", "Incomplete"}})),
 		selectBlock("cluster_risk", "Cluster risk", f.risk, withAll([]option{{"critical", "Critical"}, {"needs_attention", "Needs Attention"}, {"healthy", "Healthy"}})),
 		selectBlock("activity_status", "Activity status", f.activity, withAll([]option{{"pending", "Pending"}, {"completed", "Completed"}})),
+	}
+	// The template authors these three under its own More filters.
+	for _, folded := range list[len(list)-3:] {
+		folded.More = true
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: list}}}
 }
@@ -265,7 +270,9 @@ func record(c card, d Doors, fy string) *screensv1.PageRecord {
 		fact("SSA Required", strconv.Itoa(c.plan.Baseline), "alert"),
 		fact("Needing Cleanup", strconv.Itoa(c.plan.Cleanup), ""),
 		fact("Ready for Planning", strconv.Itoa(c.plan.Ready), "good"),
-		fact("Next Action", nextAction, riskTone(risk)),
+		// The card's CSS names a risk colour for Next Action, but
+		// `.school-record-row__metadata dd` wins: the page draws it plain.
+		fact("Next Action", nextAction, ""),
 	}
 	r.Details = []*screensv1.PageBlock{scoresPanel(c, fy)}
 	return r

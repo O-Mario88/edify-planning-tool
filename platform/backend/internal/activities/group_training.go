@@ -168,10 +168,25 @@ type groupPlan struct {
 	*plan
 	cluster cluster
 	invited []string
-	course  course
+	// courseID is the training a ceiling would count; blank for a meeting.
+	courseID string
 	// The year `_create` counts the ceiling in (an online session's row
 	// later takes its planned day's year, docs/migration/48).
 	ceilingFY string
+}
+
+// session is what differs between a Group Training and a cluster meeting
+// (docs/migration/49) once the drawer's fields are read: the training's
+// course and its fixed intervention, or the meeting's kind and the focus
+// the planner chose.
+type session struct {
+	activityType, purpose string
+	// A Group Training's course (nil for a meeting) and its intervention.
+	course *course
+	// A meeting's kind and the focus its planner named (blank: none).
+	meetingKind, focus string
+	// A meeting's item: the one the view resolves for its kind.
+	itemID string
 }
 
 // ScheduleGroupTraining makes the save, or refuses it in the existing words,
@@ -277,7 +292,8 @@ func (s *Service) prepareGroup(ctx context.Context, p auth.Principal, req GroupT
 	if cl == nil {
 		return nil, handOn("an unknown or removed cluster")
 	}
-	return s.createGroup(ctx, p, req, origin, now, today, day, *cl, *c, focus)
+	return s.createGroup(ctx, p, req, origin, now, today, day, *cl,
+		session{activityType: g.ActivityType, purpose: groupPurposeType, course: c, focus: focus})
 }
 
 func hasDuplicate(ids []string) bool {
@@ -293,21 +309,26 @@ func hasDuplicate(ids []string) bool {
 
 // createGroup is `_create` for the cluster session, to its transaction.
 func (s *Service) createGroup(ctx context.Context, p auth.Principal, req GroupTrainingRequest, origin Origin,
-	now, today, day time.Time, cl cluster, c course, focus string) (*groupPlan, error) {
+	now, today, day time.Time, cl cluster, ss session) (*groupPlan, error) {
 	g := rules.GroupTraining
-	// get_selectable_item(course, day) (2254): the course is the item.
-	it, err := selectableItem(ctx, s.db, c.ID, day)
+	itemID := ss.itemID
+	if ss.course != nil {
+		// The course is the item.
+		itemID = ss.course.ID
+	}
+	// get_selectable_item(item, day) (2254).
+	it, err := selectableItem(ctx, s.db, itemID, day)
 	if err != nil {
 		return nil, err
 	}
 	if it == nil {
 		return nil, refuse("The selected Activity Catalogue item is inactive, retired, outside its effective dates, or does not exist.")
 	}
-	if it.StandardSupport || it.WorkflowKind != g.ActivityType || !it.IsTrainingCourse ||
-		it.ParticipantMode != g.PerSchoolMode || rules.CalendarBlocksRefuse {
-		// Standard support (no gated course is), a per-total or
-		// by-category course, or a calendar that refuses: not ported.
-		return nil, handOn("the course is not a governed per-school cluster course")
+	if !sessionItemTaken(*it, ss) {
+		// A training: standard support (no gated course is), a per-total
+		// or by-category course. A meeting: a governed or not per-school
+		// item. Or a calendar that refuses. Not ported.
+		return nil, handOn("the item is not one Go takes for this cluster session")
 	}
 	scheduledUTC := day.UTC()
 	fy := schooldirectory.OperationalFY(scheduledUTC)
@@ -376,32 +397,34 @@ func (s *Service) createGroup(ctx context.Context, p auth.Principal, req GroupTr
 	if !ok {
 		return nil, handOn("the course has no version yet")
 	}
+	focus, focusSource, modes := sessionFocus(ss, it.Modes, need)
 	// The governed recommendation (3041–3100), unless the course's
-	// mappings take none.
+	// mappings take none; a meeting's standard item records the standard
+	// support it is (3100–3123).
 	reason, source := "", map[string]any{}
-	if !intersects(it.Modes, g.UngatedModes) {
+	if ss.course == nil {
+		reason, source = standardSupport("", focus, it.ID, nil)
+		source["context"] = "cluster"
+	} else if !intersects(it.Modes, g.UngatedModes) {
 		rec, err := recommendForCluster(ctx, s.db, cl.ID, it.ID, now, today)
 		if err != nil {
 			return nil, err
 		}
 		reason, source = rec.reason, rec.source()
 	}
-	focusSource := "planner"
-	if focus != "" {
-		focusSource = "course"
-	}
-	ev := assessCluster(g.ActivityType, focus, focusSource, c.modes(), need, today)
+	ev := assessCluster(ss.activityType, focus, focusSource, modes, need, today)
 	if reason == "" {
 		// plan_alignment.stamp: an empty reason takes the verdict's.
 		reason = reasonFor(ev)
 	}
 	row := newRow(rowInput{
-		now: now, day: day, fy: fy, quarter: quarterOf(scheduledUTC), activityType: g.ActivityType,
-		purpose: groupPurposeType, school: school{}, responsible: p.StaffProfileID, item: *it, version: version,
+		now: now, day: day, fy: fy, quarter: quarterOf(scheduledUTC), activityType: ss.activityType,
+		purpose: ss.purpose, school: school{}, responsible: p.StaffProfileID, item: *it, version: version,
 		goal: req.Goal, outcome: req.Outcome, deviation: req.DeviationReason, collects: false,
 		focus: focus, reason: reason, source: source, evidence: ev,
 	})
 	row.schoolID, row.planningSource, row.contextType = "", "cluster_planning", "cluster"
+	row.meetingKind = ss.meetingKind
 	row.group = &groupColumns{
 		clusterID: cl.ID, perSchool: perSchool, schoolCount: members, invited: len(req.Invited),
 		expected: perSchool * len(req.Invited), teachers: categories[0], leaders: categories[1], other: categories[2],
@@ -430,18 +453,56 @@ func (s *Service) createGroup(ctx context.Context, p auth.Principal, req GroupTr
 	if !req.Online && !verdict.Pooled && verdict.Refusal == "" {
 		return nil, handOn("the day does not pool the session")
 	}
-	if set, err := ceilingSet(ctx, s.db, p.StaffProfileID, c.ID, fy); err != nil || set {
-		if err != nil {
-			return nil, err
+	courseID := ""
+	if ss.course != nil {
+		courseID = ss.course.ID
+		if set, err := ceilingSet(ctx, s.db, p.StaffProfileID, courseID, fy); err != nil || set {
+			if err != nil {
+				return nil, err
+			}
+			return nil, handOn("a training ceiling is set for the course")
 		}
-		return nil, handOn("a training ceiling is set for the course")
 	}
 	// The day's batch is made where the cluster is (attach_activity_to_batch
 	// reads the session's district).
 	where := school{DistrictID: cl.DistrictID, DistrictName: cl.DistrictName, DistrictType: cl.DistrictType}
 	pl := &plan{p: p, school: where, item: *it, version: version, focus: focus, evidence: ev, row: row,
 		ownerUID: ownerUID, home: home, verdict: verdict, origin: origin, now: now}
-	return &groupPlan{plan: pl, cluster: cl, invited: req.Invited, course: c, ceilingFY: fy}, nil
+	return &groupPlan{plan: pl, cluster: cl, invited: req.Invited, courseID: courseID, ceilingFY: fy}, nil
+}
+
+// sessionItemTaken is whether Go takes the session's item: a training's
+// governed per-school course, or a meeting's standard per-school item.
+func sessionItemTaken(it item, ss session) bool {
+	g := rules.GroupTraining
+	if it.WorkflowKind != ss.activityType || it.ParticipantMode != g.PerSchoolMode || rules.CalendarBlocksRefuse {
+		return false
+	}
+	if ss.course != nil {
+		return !it.StandardSupport && it.IsTrainingCourse
+	}
+	return it.StandardSupport && !it.IsTrainingCourse
+}
+
+// sessionFocus is the session's intervention, where it came from, and the
+// mappings the verdict reads. A training's is its course's (`_create`
+// 2295–2318). A meeting's is the one its planner named, else
+// plan_alignment.default_focus over the invited schools' need (2928–2958).
+func sessionFocus(ss session, itemModes []string, need clusterNeed) (string, string, []string) {
+	if ss.course != nil {
+		if ss.focus != "" {
+			return ss.focus, "course", ss.course.modes()
+		}
+		return "", "planner", ss.course.modes()
+	}
+	if ss.focus != "" {
+		return ss.focus, "planner", itemModes
+	}
+	if planNature(ss.activityType, itemModes, false) == "support" &&
+		(len(itemModes) == 0 || in(itemModes, "any_ssa_intervention")) && len(need.Priorities) > 0 {
+		return need.Priorities[0], "ssa_default", itemModes
+	}
+	return "", "planner", itemModes
 }
 
 func intersects(a, b []string) bool {
@@ -591,11 +652,13 @@ func (s *Service) writeGroup(ctx context.Context, gp *groupPlan) (int64, error) 
 	if _, err := tx.Exec(ctx, `SELECT gateway_lock.lock_cluster($1)`, gp.cluster.ID); err != nil {
 		return 0, fmt.Errorf("activities: locking the cluster: %w", err)
 	}
-	if set, err := ceilingSet(ctx, tx, pl.row.responsible, gp.course.ID, gp.ceilingFY); err != nil || set {
-		if err != nil {
-			return 0, err
+	if gp.courseID != "" {
+		if set, err := ceilingSet(ctx, tx, pl.row.responsible, gp.courseID, gp.ceilingFY); err != nil || set {
+			if err != nil {
+				return 0, err
+			}
+			return 0, handOn("a training ceiling is set for the course")
 		}
-		return 0, handOn("a training ceiling is set for the course")
 	}
 	var identical bool
 	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM activity WHERE activity_type = $1 AND planned_date = $2

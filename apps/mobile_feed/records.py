@@ -32,6 +32,11 @@ FACT_TONES = (
     ("is-planned", "info"),
     ("is-attention", "caution"),
 )
+#: Holder classes that name a colour the page never shows: the cluster card's
+#: Next Action risk colour (`.cluster-card__metadata-action--critical
+#: :where(dt, dd)`) loses to `.school-record-row__metadata dd`, so the value
+#: is drawn plain (static/css/platform.css).
+UNSHOWN_TONE_CLASSES = ("cluster-card__metadata-action",)
 #: Slot marks after a count (V1..V4): the count already says it in words.
 SLOT_MARKS = "core-seq"
 #: A part the card loads on opening is fetched on an event the card raises,
@@ -228,6 +233,15 @@ def _value_text(value: Node) -> str:
     return " ".join("".join(parts).split())
 
 
+def _shown_classes(holder: Node) -> str:
+    """The holder's classes, less those whose colour the page never shows."""
+    return " ".join(
+        name
+        for name in holder.get("class").split()
+        if not name.startswith(UNSHOWN_TONE_CLASSES)
+    )
+
+
 def facts(listing: Node) -> list[dict]:
     """A list's "Label: value" pairs, each in the colour its holder gives it."""
     from apps.mobile_feed import page_blocks
@@ -238,7 +252,7 @@ def facts(listing: Node) -> list[dict]:
         value = holder.find(lambda n: n.tag == "dd") if holder is not None else None
         classes = " ".join(
             (
-                holder.get("class")
+                _shown_classes(holder)
                 if holder is not None and holder is not listing
                 else "",
                 value.get("class") if value is not None else "",

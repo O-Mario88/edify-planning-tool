@@ -29,6 +29,17 @@
     "training": "Training",
     "training_follow_up_visit": "Training Follow-up Visit"
   },
+  "export_roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+  ],
   "ia_verify_roles": [
     "ImpactAssessment"
   ],

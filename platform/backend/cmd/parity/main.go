@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/parity"
 	"io"
 	"net/http"
 	"net/url"
@@ -40,7 +41,7 @@ func main() {
 	existing := flag.String("existing", "http://localhost:8010", "the existing application")
 	users := flag.String("users", "", "comma-separated accounts to sign in as")
 	pause := flag.Duration("pause", 0, "wait between sign-ins, under the gateway's sign-in rate limit")
-	screen := flag.String("screen", "directory", "what to compare: directory, profile, page or navigation")
+	screen := flag.String("screen", "directory", "what to compare: directory, profile, page or navigation; coverage counts what Go answers itself")
 	pagePath := flag.String("path", "/clusters", "page: the page's web path, {id} filled from -ids")
 	pageIDs := flag.String("ids", "", "page: comma-separated ids for a path with {id}")
 	tab := flag.String("tab", "details", "profile: the tab to compare")
@@ -48,7 +49,15 @@ func main() {
 	period := flag.String("period", "", "profile: the part of the year asked (Q1…Q4, M1…M12)")
 	probe := flag.String("probe", "admin@edify.org", "profile: the account whose schools are sampled for every account")
 	sample := flag.Int("sample", 40, "profile: how many of the probe's schools each account is also asked")
+	inventory := flag.String("inventory", "", "coverage: docs/platform-page-inventory.json, to list the pages not in Go yet")
+	coverageOut := flag.String("out", "", "coverage: write the report here (docs/migration/coverage.md)")
 	flag.Parse()
+	list, err := parity.CheckedIn()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "parity:", err)
+		os.Exit(2)
+	}
+	intended = list
 	password := os.Getenv("EDIFY_PARITY_PASSWORD")
 	for _, address := range []string{*gateway, *existing} {
 		if u, err := url.Parse(address); err != nil || (u.Hostname() != "localhost" && u.Hostname() != "127.0.0.1") {
@@ -72,6 +81,10 @@ func main() {
 	if *screen == "navigation" {
 		os.Exit(runNavigation(ctx, signIn, screensv1connect.NewNavigationServiceClient(http.DefaultClient, *gateway),
 			*existing, password, strings.Split(*users, ","), *pause))
+	}
+	if *screen == "coverage" {
+		os.Exit(runCoverage(ctx, signIn, screensv1connect.NewPageScreenServiceClient(http.DefaultClient, *gateway),
+			*existing, password, strings.Split(*users, ","), *pause, *inventory, *coverageOut))
 	}
 	if *screen == "page" {
 		os.Exit(runPages(ctx, signIn, &pageRun{
@@ -317,11 +330,25 @@ func compareRows(goRows, oldRows []any, diffs *[]string) {
 }
 
 func walk(path string, a, b any, diffs *[]string) {
+	found := []parity.Diff{}
+	diffWalk(path, a, b, &found)
+	for _, d := range found {
+		*diffs = append(*diffs, d.Text)
+	}
+}
+
+// diffWalk records every difference between Go's answer a and the existing
+// one b as a field path and the two values as text, the form the list of
+// intended differences matches (internal/parity).
+func diffWalk(path string, a, b any, diffs *[]parity.Diff) {
+	add := func(goText, oldText, text string) {
+		*diffs = append(*diffs, parity.Diff{Field: path, Go: goText, Existing: oldText, Text: text})
+	}
 	switch av := a.(type) {
 	case map[string]any:
 		bv, ok := b.(map[string]any)
 		if !ok {
-			*diffs = append(*diffs, fmt.Sprintf("  %s: go %v, existing %v", path, a, b))
+			add(fmt.Sprint(a), fmt.Sprint(b), fmt.Sprintf("  %s: go %v, existing %v", path, a, b))
 			return
 		}
 		keys := map[string]bool{}
@@ -332,20 +359,21 @@ func walk(path string, a, b any, diffs *[]string) {
 			keys[k] = true
 		}
 		for k := range keys {
-			walk(path+"."+k, av[k], bv[k], diffs)
+			diffWalk(path+"."+k, av[k], bv[k], diffs)
 		}
 	case []any:
 		bv, ok := b.([]any)
 		if !ok || len(av) != len(bv) {
-			*diffs = append(*diffs, fmt.Sprintf("  %s: go %d items, existing %v items", path, len(av), lenOf(b)))
+			add(fmt.Sprintf("%d items", len(av)), fmt.Sprintf("%v items", lenOf(b)),
+				fmt.Sprintf("  %s: go %d items, existing %v items", path, len(av), lenOf(b)))
 			return
 		}
 		for i := range av {
-			walk(fmt.Sprintf("%s[%d]", path, i), av[i], bv[i], diffs)
+			diffWalk(fmt.Sprintf("%s[%d]", path, i), av[i], bv[i], diffs)
 		}
 	default:
 		if !reflect.DeepEqual(a, b) {
-			*diffs = append(*diffs, fmt.Sprintf("  %s: go %v, existing %v", path, a, b))
+			add(fmt.Sprint(a), fmt.Sprint(b), fmt.Sprintf("  %s: go %v, existing %v", path, a, b))
 		}
 	}
 }
