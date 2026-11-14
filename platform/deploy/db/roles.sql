@@ -453,3 +453,7 @@ GRANT SELECT (planned_month) ON activity TO edify_gateway_ro;
 GRANT SELECT (active_seconds) ON login_event TO edify_gateway_ro;
 GRANT SELECT (working_on) ON presence_time TO edify_gateway_ro;
 GRANT SELECT (id, trigger, due_date, created_at) ON staff_usage_follow_up TO edify_gateway_ro;
+
+-- Core School Oversight's recommendations (backlog core-recommendations): the
+-- recommended training each names, or why none is mapped.
+GRANT SELECT (recommended_item_id, unmapped_reason) ON ssa_recommendation TO edify_gateway_ro;
