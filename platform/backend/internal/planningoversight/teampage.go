@@ -105,8 +105,10 @@ func lensTabs() *screensv1.PageBlock {
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: tabs}}}
 }
 
-// teamFilters is period_filter_bar.html as the feed reads it: the period
-// select carries no selected option (Alpine sets it), so it reads its first.
+// teamFilters is period_filter_bar.html. The existing page's period select
+// carries no selected option (Alpine sets it), so its feed always reads the
+// first, "week"; Go shows the period in use (owner, 2026-11-13: "Can you fix
+// those from the go side"; intended.json go-fix-period-select-team-plan).
 func teamFilters(w teamPlan) *screensv1.PageBlock {
 	years := [][2]string{}
 	for _, fy := range w.fyOptions {
@@ -118,7 +120,7 @@ func teamFilters(w teamPlan) *screensv1.PageBlock {
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{
 		Filters: []*screensv1.PageFilter{
-			{Name: "period", Label: "Time period", Value: periodOptions[0][0], Options: options(periodOptions), Caption: "View"},
+			{Name: "period", Label: "Time period", Value: chosen(periodOptions, w.period.Kind), Options: options(periodOptions), Caption: "View"},
 			{Name: "fy", Label: "Financial year", Value: chosen(years, w.period.FY), Options: options(years), Caption: "FY"},
 			{Name: "month", Label: "Month", Value: chosen(months, strconv.Itoa(w.period.Month)), Options: options(months)},
 			{Name: "quarter", Label: "Financial quarter", Value: chosen(quarterOptions, w.period.Quarter), Options: options(quarterOptions), Caption: "Quarter"},

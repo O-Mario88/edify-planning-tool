@@ -123,3 +123,14 @@ func TestTeamPageTonesOnlyAHelperLine(t *testing.T) {
 		t.Errorf("section = %q", got)
 	}
 }
+
+// The Team Plan's period select shows the period in use, not always "week"
+// (owner, 2026-11-13; intended.json go-fix-period-select-team-plan).
+func TestTheTeamPlanPeriodSelectShowsThePeriodInUse(t *testing.T) {
+	for _, kind := range []string{"week", "month", "quarter", "fy"} {
+		block := teamFilters(teamPlan{period: partneroversight.Period{FY: "2027", Kind: kind, Quarter: "Q1", Month: 11}})
+		if got := block.GetFilters().GetFilters()[0]; got.GetName() != "period" || got.GetValue() != kind {
+			t.Fatalf("period %s: the select shows %q", kind, got.GetValue())
+		}
+	}
+}
