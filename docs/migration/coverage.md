@@ -22,16 +22,16 @@ The migration is complete when "Passed on to Django" is 0 everywhere and no page
 | `/schools/closed` | 540 | 40 | 0 | 0 |
 | `/staff-activity` | 326 | 1288 | 18 | 0 |
 | `/team-performance/` | 3237 | 257 | 0 | 0 |
-| `/team-planning-oversight/` | 511 | 1606 | 0 | 0 |
+| `/team-planning-oversight/` | 656 | 2845 | 240 | 0 |
 | `/todos` | 130 | 0 | 15 | 0 |
 | `/work-plan` | 3930 | 63 | 0 | 0 |
-| **all** | 23033 | 4996 | **523** | 0 |
+| **all** | 23178 | 6235 | **763** | 0 |
 
-Full pages of the existing application: 232; answered by a Go page: 13; not in Go yet: 219.
+Full pages of the existing application: 232; answered by a Go page: 14; not in Go yet: 218.
 
 ## Full pages not in Go yet
 
-- `/`
+- ``
 - `/accounts/accountability`
 - `/accounts/activities/<str:activity_id>`
 - `/accounts/activity-evidence/<str:activity_id>`
@@ -46,7 +46,6 @@ Full pages of the existing application: 232; answered by a Go page: 13; not in G
 - `/accounts/returned`
 - `/accounts/variance-review`
 - `/accounts/weekly-requests`
-- `/acting-leadership`
 - `/activities/<str:activity_id>/closure`
 - `/activities/<str:activity_id>/evidence/detail`
 - `/activities/<str:activity_id>/timeline`
