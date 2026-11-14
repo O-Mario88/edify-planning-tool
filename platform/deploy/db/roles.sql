@@ -598,3 +598,6 @@ GRANT SELECT (fy, status) ON hr_extra_work_scoring_policy TO edify_gateway_ro;
 GRANT SELECT (account_owner_status) ON school TO edify_gateway_ro;
 -- The partner's intake queues: an assignment's free-text purpose, shown when no coded one exists.
 GRANT SELECT (purpose) ON partner_assignment TO edify_gateway_ro;
+-- Partner Evidence: which evidence an activity must carry, and which kinds it holds (never the files).
+GRANT SELECT (evidence_profile_snapshot) ON activity TO edify_gateway_ro;
+GRANT SELECT (activity_id, kind, quarantined) ON evidence_record TO edify_gateway_ro;

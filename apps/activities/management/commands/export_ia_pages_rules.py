@@ -6,7 +6,7 @@ platform/backend/internal/iapages/rules.json: for each page Go answers, who
 may open it (the pages draw no workspace strip); which
 roles hold the IA verification permission (without it a reader sees only the
 work an Impact Assessment officer ran, `_ia_reach_q`); each activity
-type's label; who is offered a queue's Export; and who may open a school's profile. A change to any of them must be exported again;
+type's label; the evidence each activity must carry; the partner queue's length; who is offered a queue's Export; and who may open a school's profile. A change to any of them must be exported again;
 apps/activities/test_ia_pages_rules_export.py fails until it is.
 
     python manage.py export_ia_pages_rules
@@ -30,6 +30,7 @@ PAGES = {
     "/ia/duplicates/": "ia_duplicates",
     "/ia/returned/": "ia_returned",
     "/ia/history/": "ia_history",
+    "/ia/partner-evidence/": "ia_partner_evidence",
 }
 
 
@@ -42,6 +43,11 @@ def rules() -> dict:
         has_permission,
     )
     from apps.core.rbac import EdifyRole
+    from apps.evidence.requirements import (
+        PROFILE_REQUIRED_EVIDENCE,
+        REQUIRED_EVIDENCE,
+    )
+    from apps.frontend.views.ia_views import QUEUE_PAGE_SIZE
     from apps.mobile_feed.views import NOT_PASSED
 
     pages = {}
@@ -69,6 +75,15 @@ def rules() -> dict:
             if RolePermissionService.can_export(_role_user(role.value), "")
         ),
         "activity_types": dict(ActivityType.choices),
+        # The evidence each activity must carry (apps.evidence.requirements):
+        # by its evidence profile, else by its type.
+        "required_evidence": {
+            k: [str(kind) for kind in v] for k, v in REQUIRED_EVIDENCE.items()
+        },
+        "profile_required_evidence": {
+            k: [str(kind) for kind in v] for k, v in PROFILE_REQUIRED_EVIDENCE.items()
+        },
+        "queue_page_size": QUEUE_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),
         # Who may open a school's profile, so a school's name is a link
         # (apps.frontend.templatetags.school_links._may_open_profiles).

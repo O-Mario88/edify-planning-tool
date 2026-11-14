@@ -32,6 +32,13 @@ var rules = func() (r struct {
 	// ExportRoles are offered Returned Activities' and Verification
 	// History's Export (the data-export permission).
 	ExportRoles []string `json:"export_roles"`
+	// RequiredEvidence and ProfileRequiredEvidence are the evidence kinds an
+	// activity must carry, by type and by evidence profile
+	// (apps.evidence.requirements.required_kinds_for_activity).
+	RequiredEvidence        map[string][]string `json:"required_evidence"`
+	ProfileRequiredEvidence map[string][]string `json:"profile_required_evidence"`
+	// QueuePageSize is the partner queue's length (QUEUE_PAGE_SIZE).
+	QueuePageSize int `json:"queue_page_size"`
 	// SchoolProfileRoles may open a school's profile.
 	SchoolProfileRoles []string `json:"school_profile_roles"`
 	// QueryKeysNotPassed are the query keys the feed never passes to a page.

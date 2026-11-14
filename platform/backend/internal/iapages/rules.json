@@ -148,6 +148,58 @@
         }
       }
     },
+    "/ia/partner-evidence/": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": true
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    },
     "/ia/returned/": {
       "roles": {
         "Accountant": {
@@ -201,6 +253,24 @@
       }
     }
   },
+  "profile_required_evidence": {
+    "ADMIN_NONE": [],
+    "FOLLOW_UP_MEETING": [
+      "attendance_form"
+    ],
+    "SCHOOL_VISIT_FORM": [
+      "visit_form"
+    ],
+    "SSA_DATA_GATHERING": [
+      "visit_form"
+    ],
+    "TRAINING_ATTENDANCE": [
+      "attendance_form"
+    ],
+    "YOUTH_CAMP_SAFEGUARDING": [
+      "attendance_form"
+    ]
+  },
   "query_keys_not_passed": [
     "csv",
     "download",
@@ -209,6 +279,72 @@
     "pdf",
     "xlsx"
   ],
+  "queue_page_size": 50,
+  "required_evidence": {
+    "cluster_meeting": [
+      "attendance_form"
+    ],
+    "cluster_meeting_ssa_review": [
+      "attendance_form"
+    ],
+    "cluster_training": [
+      "attendance_form"
+    ],
+    "coaching_visit": [
+      "visit_form"
+    ],
+    "core_assessment_visit": [
+      "visit_form"
+    ],
+    "core_training": [
+      "attendance_form"
+    ],
+    "core_visit": [
+      "visit_form"
+    ],
+    "donor_visit": [
+      "visit_form"
+    ],
+    "follow_up_visit": [
+      "visit_form"
+    ],
+    "in_school_coaching_visit": [
+      "visit_form"
+    ],
+    "in_school_support": [
+      "visit_form"
+    ],
+    "in_school_training": [
+      "attendance_form"
+    ],
+    "project_activity": [
+      "visit_form"
+    ],
+    "school_improvement_training": [
+      "attendance_form"
+    ],
+    "school_invitation": [
+      "visit_form"
+    ],
+    "school_visit": [
+      "visit_form"
+    ],
+    "school_visit_ssa_collection": [
+      "visit_form"
+    ],
+    "social_visit": [
+      "visit_form"
+    ],
+    "story_gathering_visit": [
+      "visit_form"
+    ],
+    "training": [
+      "attendance_form"
+    ],
+    "training_follow_up_visit": [
+      "visit_form"
+    ]
+  },
   "school_profile_roles": [
     "Admin",
     "BusinessTransformationOfficer",
