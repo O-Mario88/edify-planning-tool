@@ -78,7 +78,13 @@ func (s *Service) suggest(ctx context.Context, p auth.Principal, route *routesv1
 		_, meters := insertion(pts, sc.at, straight, straight)
 		cands[i] = candidate{sc: sc, added: meters, measure: "straight_line"}
 	}
-	sort.SliceStable(cands, func(i, j int) bool { return cands[i].added < cands[j].added })
+	// Equal costs keep the School ID order, so the same day suggests the same schools.
+	sort.SliceStable(cands, func(i, j int) bool {
+		if cands[i].added != cands[j].added {
+			return cands[i].added < cands[j].added
+		}
+		return cands[i].sc.pin.Code < cands[j].sc.pin.Code
+	})
 	fy := schooldirectory.OperationalFY(now)
 	rules := schoolprofile.GateRules()
 	eligible := []candidate{}
@@ -99,7 +105,10 @@ func (s *Service) suggest(ctx context.Context, p auth.Principal, route *routesv1
 		if a, b := !eligible[i].gate.HasSSA, !eligible[j].gate.HasSSA; a != b {
 			return a
 		}
-		return eligible[i].addedSec < eligible[j].addedSec
+		if eligible[i].addedSec != eligible[j].addedSec {
+			return eligible[i].addedSec < eligible[j].addedSec
+		}
+		return eligible[i].sc.pin.Code < eligible[j].sc.pin.Code
 	})
 	used := route.GetTotals().GetFieldMinutes()
 	out := []*routesv1.Suggestion{}

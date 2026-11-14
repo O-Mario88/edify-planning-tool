@@ -129,3 +129,80 @@ select.edify-select {
     -webkit-line-clamp: none;
   }
 }
+
+/* Smart Route Planner map pins (components/route/RouteMap.tsx): a numbered
+   drop with the school's name on a card beside it, as the design draws them.
+   placeLabels() puts the card right or left of the pin, or hides it where
+   it would cover another (data-label). */
+.edify-route-pin {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 42px;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.edify-route-pin:hover,
+.edify-route-pin:focus-visible {
+  z-index: 3;
+}
+.edify-route-pin__drop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 6px rgb(15 23 42 / 0.35);
+}
+.edify-route-pin__number {
+  /* The number stays upright inside the turned drop. */
+  transform: rotate(45deg);
+  line-height: 1;
+}
+.edify-route-pin__label {
+  position: absolute;
+  top: -4px;
+  left: 40px;
+  width: max-content;
+  max-width: 170px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  white-space: normal;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.18);
+}
+.edify-route-pin[data-label="left"] .edify-route-pin__label {
+  left: auto;
+  right: 40px;
+}
+.edify-route-pin[data-label="hidden"] .edify-route-pin__label {
+  display: none;
+}
+.edify-route-pin[data-label="hidden"]:hover .edify-route-pin__label,
+.edify-route-pin[data-label="hidden"]:focus-visible .edify-route-pin__label {
+  display: block;
+}
+.edify-route-here {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1d6fe0;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 8px rgb(29 111 224 / 0.2);
+}

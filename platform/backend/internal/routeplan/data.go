@@ -180,7 +180,7 @@ func nearby(ctx context.Context, db schooldirectory.Querier, p auth.Principal, n
 	lat, lng := "COALESCE(gp.latitude, s.latitude)", "COALESCE(gp.longitude, s.longitude)"
 	where += " AND " + lat + " BETWEEN " + a.add(minLat-deg) + " AND " + a.add(maxLat+deg) +
 		" AND " + lng + " BETWEEN " + a.add(minLng-deg) + " AND " + a.add(maxLng+deg)
-	rows, err := db.Query(ctx, `SELECT `+schoolCols+` FROM `+schoolFrom+` WHERE `+where+` LIMIT `+strconv.Itoa(candidateLimit), *a...)
+	rows, err := db.Query(ctx, `SELECT `+schoolCols+` FROM `+schoolFrom+` WHERE `+where+` ORDER BY s.id LIMIT `+strconv.Itoa(candidateLimit), *a...)
 	if err != nil {
 		return nil, fmt.Errorf("routeplan: reading the nearby schools: %w", err)
 	}
