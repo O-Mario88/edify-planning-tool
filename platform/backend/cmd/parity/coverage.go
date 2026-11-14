@@ -78,8 +78,9 @@ type inventoryRoute struct {
 }
 
 // ownScreens are full pages Go answers through a screen of its own rather
-// than the page contract: the school profile (SchoolProfileService).
-var ownScreens = []string{"/schools/<str:school_id>"}
+// than the page contract: the school profile (SchoolProfileService) and
+// Acting Leadership (ActingLeadershipService, the app's own screen).
+var ownScreens = []string{"/schools/<str:school_id>", "/acting-leadership"}
 
 // notInGo are the inventory's full pages that no Go page answers yet, each
 // once (a route with and without its trailing slash is one page).
