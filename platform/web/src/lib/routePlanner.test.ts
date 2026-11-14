@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { RouteLegSchema, RouteTotalsSchema, SchoolPinSchema } from '@/gen/edify/routes/v1/routes_pb';
 
-import { directionsUrl, hoursMinutes, hrMin, km, legFigures, measureLabel, totalFigures } from './routePlanner';
+import { directionsUrl, hoursMinutes, hrMin, km, legFigures, measureLabel, pinTone, totalFigures } from './routePlanner';
 
 describe('figures are written as the designs write them', () => {
   it.each([
@@ -54,4 +54,11 @@ describe('directions go to the person’s own maps app, keyless', () => {
     expect(directionsUrl(stops, 'waze')).toBe('https://waze.com/ul?ll=0.300000,32.700000&navigate=yes');
   });
   it('a day with no placed school has no directions', () => expect(directionsUrl([stops[1]!])).toBeNull());
+});
+
+describe('a profile shows its own school as the plain blue pin', () => {
+  it('whatever the school is on the plan', () => {
+    expect(pinTone(create(SchoolPinSchema, { status: 'other' }), 'location')).toBe('planned');
+    expect(pinTone(create(SchoolPinSchema, { status: 'other' }))).toBe('other');
+  });
 });

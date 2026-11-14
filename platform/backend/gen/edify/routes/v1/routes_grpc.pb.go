@@ -23,6 +23,7 @@ const (
 	RoutePlannerService_PlanRoute_FullMethodName         = "/edify.routes.v1.RoutePlannerService/PlanRoute"
 	RoutePlannerService_GetSchoolPins_FullMethodName     = "/edify.routes.v1.RoutePlannerService/GetSchoolPins"
 	RoutePlannerService_GetSchoolDistance_FullMethodName = "/edify.routes.v1.RoutePlannerService/GetSchoolDistance"
+	RoutePlannerService_GetSchoolLocation_FullMethodName = "/edify.routes.v1.RoutePlannerService/GetSchoolLocation"
 )
 
 // RoutePlannerServiceClient is the client API for RoutePlannerService service.
@@ -54,6 +55,8 @@ type RoutePlannerServiceClient interface {
 	GetSchoolPins(ctx context.Context, in *GetSchoolPinsRequest, opts ...grpc.CallOption) (*GetSchoolPinsResponse, error)
 	// The distance between two of the reader's schools.
 	GetSchoolDistance(ctx context.Context, in *GetSchoolDistanceRequest, opts ...grpc.CallOption) (*GetSchoolDistanceResponse, error)
+	// One school's location for its profile (Location & Directions).
+	GetSchoolLocation(ctx context.Context, in *GetSchoolLocationRequest, opts ...grpc.CallOption) (*GetSchoolLocationResponse, error)
 }
 
 type routePlannerServiceClient struct {
@@ -104,6 +107,16 @@ func (c *routePlannerServiceClient) GetSchoolDistance(ctx context.Context, in *G
 	return out, nil
 }
 
+func (c *routePlannerServiceClient) GetSchoolLocation(ctx context.Context, in *GetSchoolLocationRequest, opts ...grpc.CallOption) (*GetSchoolLocationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSchoolLocationResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_GetSchoolLocation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoutePlannerServiceServer is the server API for RoutePlannerService service.
 // All implementations must embed UnimplementedRoutePlannerServiceServer
 // for forward compatibility.
@@ -133,6 +146,8 @@ type RoutePlannerServiceServer interface {
 	GetSchoolPins(context.Context, *GetSchoolPinsRequest) (*GetSchoolPinsResponse, error)
 	// The distance between two of the reader's schools.
 	GetSchoolDistance(context.Context, *GetSchoolDistanceRequest) (*GetSchoolDistanceResponse, error)
+	// One school's location for its profile (Location & Directions).
+	GetSchoolLocation(context.Context, *GetSchoolLocationRequest) (*GetSchoolLocationResponse, error)
 	mustEmbedUnimplementedRoutePlannerServiceServer()
 }
 
@@ -154,6 +169,9 @@ func (UnimplementedRoutePlannerServiceServer) GetSchoolPins(context.Context, *Ge
 }
 func (UnimplementedRoutePlannerServiceServer) GetSchoolDistance(context.Context, *GetSchoolDistanceRequest) (*GetSchoolDistanceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSchoolDistance not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) GetSchoolLocation(context.Context, *GetSchoolLocationRequest) (*GetSchoolLocationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSchoolLocation not implemented")
 }
 func (UnimplementedRoutePlannerServiceServer) mustEmbedUnimplementedRoutePlannerServiceServer() {}
 func (UnimplementedRoutePlannerServiceServer) testEmbeddedByValue()                             {}
@@ -248,6 +266,24 @@ func _RoutePlannerService_GetSchoolDistance_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoutePlannerService_GetSchoolLocation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSchoolLocationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).GetSchoolLocation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_GetSchoolLocation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).GetSchoolLocation(ctx, req.(*GetSchoolLocationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RoutePlannerService_ServiceDesc is the grpc.ServiceDesc for RoutePlannerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -270,6 +306,10 @@ var RoutePlannerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSchoolDistance",
 			Handler:    _RoutePlannerService_GetSchoolDistance_Handler,
+		},
+		{
+			MethodName: "GetSchoolLocation",
+			Handler:    _RoutePlannerService_GetSchoolLocation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

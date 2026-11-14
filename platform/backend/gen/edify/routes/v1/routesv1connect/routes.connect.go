@@ -45,6 +45,9 @@ const (
 	// RoutePlannerServiceGetSchoolDistanceProcedure is the fully-qualified name of the
 	// RoutePlannerService's GetSchoolDistance RPC.
 	RoutePlannerServiceGetSchoolDistanceProcedure = "/edify.routes.v1.RoutePlannerService/GetSchoolDistance"
+	// RoutePlannerServiceGetSchoolLocationProcedure is the fully-qualified name of the
+	// RoutePlannerService's GetSchoolLocation RPC.
+	RoutePlannerServiceGetSchoolLocationProcedure = "/edify.routes.v1.RoutePlannerService/GetSchoolLocation"
 )
 
 // RoutePlannerServiceClient is a client for the edify.routes.v1.RoutePlannerService service.
@@ -59,6 +62,8 @@ type RoutePlannerServiceClient interface {
 	GetSchoolPins(context.Context, *connect.Request[v1.GetSchoolPinsRequest]) (*connect.Response[v1.GetSchoolPinsResponse], error)
 	// The distance between two of the reader's schools.
 	GetSchoolDistance(context.Context, *connect.Request[v1.GetSchoolDistanceRequest]) (*connect.Response[v1.GetSchoolDistanceResponse], error)
+	// One school's location for its profile (Location & Directions).
+	GetSchoolLocation(context.Context, *connect.Request[v1.GetSchoolLocationRequest]) (*connect.Response[v1.GetSchoolLocationResponse], error)
 }
 
 // NewRoutePlannerServiceClient constructs a client for the edify.routes.v1.RoutePlannerService
@@ -96,6 +101,12 @@ func NewRoutePlannerServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(routePlannerServiceMethods.ByName("GetSchoolDistance")),
 			connect.WithClientOptions(opts...),
 		),
+		getSchoolLocation: connect.NewClient[v1.GetSchoolLocationRequest, v1.GetSchoolLocationResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceGetSchoolLocationProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("GetSchoolLocation")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -105,6 +116,7 @@ type routePlannerServiceClient struct {
 	planRoute         *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
 	getSchoolPins     *connect.Client[v1.GetSchoolPinsRequest, v1.GetSchoolPinsResponse]
 	getSchoolDistance *connect.Client[v1.GetSchoolDistanceRequest, v1.GetSchoolDistanceResponse]
+	getSchoolLocation *connect.Client[v1.GetSchoolLocationRequest, v1.GetSchoolLocationResponse]
 }
 
 // GetFieldDay calls edify.routes.v1.RoutePlannerService.GetFieldDay.
@@ -127,6 +139,11 @@ func (c *routePlannerServiceClient) GetSchoolDistance(ctx context.Context, req *
 	return c.getSchoolDistance.CallUnary(ctx, req)
 }
 
+// GetSchoolLocation calls edify.routes.v1.RoutePlannerService.GetSchoolLocation.
+func (c *routePlannerServiceClient) GetSchoolLocation(ctx context.Context, req *connect.Request[v1.GetSchoolLocationRequest]) (*connect.Response[v1.GetSchoolLocationResponse], error) {
+	return c.getSchoolLocation.CallUnary(ctx, req)
+}
+
 // RoutePlannerServiceHandler is an implementation of the edify.routes.v1.RoutePlannerService
 // service.
 type RoutePlannerServiceHandler interface {
@@ -140,6 +157,8 @@ type RoutePlannerServiceHandler interface {
 	GetSchoolPins(context.Context, *connect.Request[v1.GetSchoolPinsRequest]) (*connect.Response[v1.GetSchoolPinsResponse], error)
 	// The distance between two of the reader's schools.
 	GetSchoolDistance(context.Context, *connect.Request[v1.GetSchoolDistanceRequest]) (*connect.Response[v1.GetSchoolDistanceResponse], error)
+	// One school's location for its profile (Location & Directions).
+	GetSchoolLocation(context.Context, *connect.Request[v1.GetSchoolLocationRequest]) (*connect.Response[v1.GetSchoolLocationResponse], error)
 }
 
 // NewRoutePlannerServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -173,6 +192,12 @@ func NewRoutePlannerServiceHandler(svc RoutePlannerServiceHandler, opts ...conne
 		connect.WithSchema(routePlannerServiceMethods.ByName("GetSchoolDistance")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routePlannerServiceGetSchoolLocationHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceGetSchoolLocationProcedure,
+		svc.GetSchoolLocation,
+		connect.WithSchema(routePlannerServiceMethods.ByName("GetSchoolLocation")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.routes.v1.RoutePlannerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RoutePlannerServiceGetFieldDayProcedure:
@@ -183,6 +208,8 @@ func NewRoutePlannerServiceHandler(svc RoutePlannerServiceHandler, opts ...conne
 			routePlannerServiceGetSchoolPinsHandler.ServeHTTP(w, r)
 		case RoutePlannerServiceGetSchoolDistanceProcedure:
 			routePlannerServiceGetSchoolDistanceHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceGetSchoolLocationProcedure:
+			routePlannerServiceGetSchoolLocationHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -206,4 +233,8 @@ func (UnimplementedRoutePlannerServiceHandler) GetSchoolPins(context.Context, *c
 
 func (UnimplementedRoutePlannerServiceHandler) GetSchoolDistance(context.Context, *connect.Request[v1.GetSchoolDistanceRequest]) (*connect.Response[v1.GetSchoolDistanceResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.GetSchoolDistance is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) GetSchoolLocation(context.Context, *connect.Request[v1.GetSchoolLocationRequest]) (*connect.Response[v1.GetSchoolLocationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.GetSchoolLocation is not implemented"))
 }

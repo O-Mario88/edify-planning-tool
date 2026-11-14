@@ -98,6 +98,7 @@ export function directionsUrl(stops: readonly SchoolPin[], app: MapsApp = 'googl
 
 /** The pin's colour key, as the design's legend has them. */
 export function pinTone(pin: SchoolPin, kind?: string): 'planned' | 'suggested' | 'completed' | 'other' {
+  if (kind === 'location') return 'planned'; // a profile's own school: the plain blue pin
   if (pin.status === 'completed') return 'completed';
   if (kind === 'recommended' || pin.status === 'suggested') return 'suggested';
   if (pin.status === 'planned') return 'planned';

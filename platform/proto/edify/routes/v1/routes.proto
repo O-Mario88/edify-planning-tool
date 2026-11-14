@@ -27,6 +27,8 @@ service RoutePlannerService {
   rpc GetSchoolPins(GetSchoolPinsRequest) returns (GetSchoolPinsResponse);
   // The distance between two of the reader's schools.
   rpc GetSchoolDistance(GetSchoolDistanceRequest) returns (GetSchoolDistanceResponse);
+  // One school's location for its profile (Location & Directions).
+  rpc GetSchoolLocation(GetSchoolLocationRequest) returns (GetSchoolLocationResponse);
 }
 
 message Point {
@@ -212,4 +214,19 @@ message GetSchoolDistanceResponse {
   ProviderStatus provider = 4;
   // When the figures were worked out (RFC 3339).
   string calculated_at = 5;
+}
+
+message GetSchoolLocationRequest {
+  // The school's own id or its School ID, as the profile is opened with.
+  string school_id = 1;
+}
+
+message GetSchoolLocationResponse {
+  SchoolPin school = 1;
+  // How many of the reader's other schools are within the route engine's
+  // nearby radius (straight line).
+  int32 nearby_schools = 2;
+  double nearby_radius_km = 3;
+  // The reader may open the route planner.
+  bool can_plan = 4;
 }

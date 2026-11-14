@@ -49,6 +49,8 @@ export interface RouteMapProps {
   onView?: (sw: { lat: number; lng: number }, ne: { lat: number; lng: number }) => void;
   /** Positions the map (absolute inset-0 inside a sized box); relative by default. */
   className?: string;
+  /** The planner's legend; off for a single school's map. */
+  showLegend?: boolean;
 }
 
 function pinElement(stop: ItineraryStop): HTMLElement {
@@ -57,13 +59,14 @@ function pinElement(stop: ItineraryStop): HTMLElement {
   const root = document.createElement('button');
   root.type = 'button';
   root.className = 'edify-route-pin';
-  root.setAttribute('aria-label', `Stop ${stop.order}: ${school.name}`);
+  root.setAttribute('aria-label', stop.order ? `Stop ${stop.order}: ${school.name}` : school.name);
   const drop = document.createElement('span');
   drop.className = 'edify-route-pin__drop';
   drop.style.background = TONES[tone];
   const number = document.createElement('span');
   number.className = 'edify-route-pin__number';
-  number.textContent = String(stop.order);
+  // A route stop shows its place in the day; a single school's pin shows none.
+  number.textContent = stop.order ? String(stop.order) : '';
   drop.append(number);
   const label = document.createElement('span');
   label.className = 'edify-route-pin__label';
@@ -135,7 +138,7 @@ function fit(instance: MapLibreMap, extent: [[number, number], [number, number]]
   instance.fitBounds(extent, { padding: { top: pad, bottom: pad, left: pad, right: Math.min(pad * 2, width / 3) }, maxZoom: 14, duration: 0 });
 }
 
-export function RouteMap({ stops, path, others, chip, onSelect, onView, className }: RouteMapProps) {
+export function RouteMap({ stops, path, others, chip, onSelect, onView, className, showLegend = true }: RouteMapProps) {
   const box = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
@@ -372,6 +375,7 @@ export function RouteMap({ stops, path, others, chip, onSelect, onView, classNam
           </div>
         </div>
       ) : null}
+      {showLegend ? (
       <div data-map-overlay className="pointer-events-none absolute right-3 top-3 rounded-[12px] bg-white/95 px-4 py-3 text-[14px] shadow-md" aria-label="Map legend">
         {(
           [
@@ -386,6 +390,7 @@ export function RouteMap({ stops, path, others, chip, onSelect, onView, classNam
           </div>
         ))}
       </div>
+      ) : null}
       <div data-map-overlay className="absolute bottom-24 right-3 flex flex-col overflow-hidden rounded-[10px] bg-white shadow-md">
         <button type="button" onClick={() => zoom(1)} className="grid h-11 w-11 place-items-center text-slate-800 hover:bg-slate-50" aria-label="Zoom in">
           <RouteIcon name="plus" className="h-5 w-5" />

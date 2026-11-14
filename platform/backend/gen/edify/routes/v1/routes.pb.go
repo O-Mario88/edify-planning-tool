@@ -1446,6 +1446,122 @@ func (x *GetSchoolDistanceResponse) GetCalculatedAt() string {
 	return ""
 }
 
+type GetSchoolLocationRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The school's own id or its School ID, as the profile is opened with.
+	SchoolId      string `protobuf:"bytes,1,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSchoolLocationRequest) Reset() {
+	*x = GetSchoolLocationRequest{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSchoolLocationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSchoolLocationRequest) ProtoMessage() {}
+
+func (x *GetSchoolLocationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSchoolLocationRequest.ProtoReflect.Descriptor instead.
+func (*GetSchoolLocationRequest) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetSchoolLocationRequest) GetSchoolId() string {
+	if x != nil {
+		return x.SchoolId
+	}
+	return ""
+}
+
+type GetSchoolLocationResponse struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	School *SchoolPin             `protobuf:"bytes,1,opt,name=school,proto3" json:"school,omitempty"`
+	// How many of the reader's other schools are within the route engine's
+	// nearby radius (straight line).
+	NearbySchools  int32   `protobuf:"varint,2,opt,name=nearby_schools,json=nearbySchools,proto3" json:"nearby_schools,omitempty"`
+	NearbyRadiusKm float64 `protobuf:"fixed64,3,opt,name=nearby_radius_km,json=nearbyRadiusKm,proto3" json:"nearby_radius_km,omitempty"`
+	// The reader may open the route planner.
+	CanPlan       bool `protobuf:"varint,4,opt,name=can_plan,json=canPlan,proto3" json:"can_plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSchoolLocationResponse) Reset() {
+	*x = GetSchoolLocationResponse{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSchoolLocationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSchoolLocationResponse) ProtoMessage() {}
+
+func (x *GetSchoolLocationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSchoolLocationResponse.ProtoReflect.Descriptor instead.
+func (*GetSchoolLocationResponse) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetSchoolLocationResponse) GetSchool() *SchoolPin {
+	if x != nil {
+		return x.School
+	}
+	return nil
+}
+
+func (x *GetSchoolLocationResponse) GetNearbySchools() int32 {
+	if x != nil {
+		return x.NearbySchools
+	}
+	return 0
+}
+
+func (x *GetSchoolLocationResponse) GetNearbyRadiusKm() float64 {
+	if x != nil {
+		return x.NearbyRadiusKm
+	}
+	return 0
+}
+
+func (x *GetSchoolLocationResponse) GetCanPlan() bool {
+	if x != nil {
+		return x.CanPlan
+	}
+	return false
+}
+
 var File_edify_routes_v1_routes_proto protoreflect.FileDescriptor
 
 const file_edify_routes_v1_routes_proto_rawDesc = "" +
@@ -1587,12 +1703,20 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"\x04from\x18\x02 \x01(\v2\x1a.edify.routes.v1.SchoolPinR\x04from\x12*\n" +
 	"\x02to\x18\x03 \x01(\v2\x1a.edify.routes.v1.SchoolPinR\x02to\x12;\n" +
 	"\bprovider\x18\x04 \x01(\v2\x1f.edify.routes.v1.ProviderStatusR\bprovider\x12#\n" +
-	"\rcalculated_at\x18\x05 \x01(\tR\fcalculatedAt2\x8f\x03\n" +
+	"\rcalculated_at\x18\x05 \x01(\tR\fcalculatedAt\"7\n" +
+	"\x18GetSchoolLocationRequest\x12\x1b\n" +
+	"\tschool_id\x18\x01 \x01(\tR\bschoolId\"\xbb\x01\n" +
+	"\x19GetSchoolLocationResponse\x122\n" +
+	"\x06school\x18\x01 \x01(\v2\x1a.edify.routes.v1.SchoolPinR\x06school\x12%\n" +
+	"\x0enearby_schools\x18\x02 \x01(\x05R\rnearbySchools\x12(\n" +
+	"\x10nearby_radius_km\x18\x03 \x01(\x01R\x0enearbyRadiusKm\x12\x19\n" +
+	"\bcan_plan\x18\x04 \x01(\bR\acanPlan2\xfb\x03\n" +
 	"\x13RoutePlannerService\x12X\n" +
 	"\vGetFieldDay\x12#.edify.routes.v1.GetFieldDayRequest\x1a$.edify.routes.v1.GetFieldDayResponse\x12R\n" +
 	"\tPlanRoute\x12!.edify.routes.v1.PlanRouteRequest\x1a\".edify.routes.v1.PlanRouteResponse\x12^\n" +
 	"\rGetSchoolPins\x12%.edify.routes.v1.GetSchoolPinsRequest\x1a&.edify.routes.v1.GetSchoolPinsResponse\x12j\n" +
-	"\x11GetSchoolDistance\x12).edify.routes.v1.GetSchoolDistanceRequest\x1a*.edify.routes.v1.GetSchoolDistanceResponseB\xd8\x01\n" +
+	"\x11GetSchoolDistance\x12).edify.routes.v1.GetSchoolDistanceRequest\x1a*.edify.routes.v1.GetSchoolDistanceResponse\x12j\n" +
+	"\x11GetSchoolLocation\x12).edify.routes.v1.GetSchoolLocationRequest\x1a*.edify.routes.v1.GetSchoolLocationResponseB\xd8\x01\n" +
 	"\x13com.edify.routes.v1B\vRoutesProtoP\x01ZVgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/routes/v1;routesv1\xa2\x02\x03ERX\xaa\x02\x0fEdify.Routes.V1\xca\x02\x0fEdify\\Routes\\V1\xe2\x02\x1bEdify\\Routes\\V1\\GPBMetadata\xea\x02\x11Edify::Routes::V1b\x06proto3"
 
 var (
@@ -1607,7 +1731,7 @@ func file_edify_routes_v1_routes_proto_rawDescGZIP() []byte {
 	return file_edify_routes_v1_routes_proto_rawDescData
 }
 
-var file_edify_routes_v1_routes_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_edify_routes_v1_routes_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_edify_routes_v1_routes_proto_goTypes = []any{
 	(*Point)(nil),                     // 0: edify.routes.v1.Point
 	(*SchoolPin)(nil),                 // 1: edify.routes.v1.SchoolPin
@@ -1626,6 +1750,8 @@ var file_edify_routes_v1_routes_proto_goTypes = []any{
 	(*GetSchoolPinsResponse)(nil),     // 14: edify.routes.v1.GetSchoolPinsResponse
 	(*GetSchoolDistanceRequest)(nil),  // 15: edify.routes.v1.GetSchoolDistanceRequest
 	(*GetSchoolDistanceResponse)(nil), // 16: edify.routes.v1.GetSchoolDistanceResponse
+	(*GetSchoolLocationRequest)(nil),  // 17: edify.routes.v1.GetSchoolLocationRequest
+	(*GetSchoolLocationResponse)(nil), // 18: edify.routes.v1.GetSchoolLocationResponse
 }
 var file_edify_routes_v1_routes_proto_depIdxs = []int32{
 	0,  // 0: edify.routes.v1.SchoolPin.point:type_name -> edify.routes.v1.Point
@@ -1653,19 +1779,22 @@ var file_edify_routes_v1_routes_proto_depIdxs = []int32{
 	1,  // 22: edify.routes.v1.GetSchoolDistanceResponse.from:type_name -> edify.routes.v1.SchoolPin
 	1,  // 23: edify.routes.v1.GetSchoolDistanceResponse.to:type_name -> edify.routes.v1.SchoolPin
 	7,  // 24: edify.routes.v1.GetSchoolDistanceResponse.provider:type_name -> edify.routes.v1.ProviderStatus
-	9,  // 25: edify.routes.v1.RoutePlannerService.GetFieldDay:input_type -> edify.routes.v1.GetFieldDayRequest
-	11, // 26: edify.routes.v1.RoutePlannerService.PlanRoute:input_type -> edify.routes.v1.PlanRouteRequest
-	13, // 27: edify.routes.v1.RoutePlannerService.GetSchoolPins:input_type -> edify.routes.v1.GetSchoolPinsRequest
-	15, // 28: edify.routes.v1.RoutePlannerService.GetSchoolDistance:input_type -> edify.routes.v1.GetSchoolDistanceRequest
-	10, // 29: edify.routes.v1.RoutePlannerService.GetFieldDay:output_type -> edify.routes.v1.GetFieldDayResponse
-	12, // 30: edify.routes.v1.RoutePlannerService.PlanRoute:output_type -> edify.routes.v1.PlanRouteResponse
-	14, // 31: edify.routes.v1.RoutePlannerService.GetSchoolPins:output_type -> edify.routes.v1.GetSchoolPinsResponse
-	16, // 32: edify.routes.v1.RoutePlannerService.GetSchoolDistance:output_type -> edify.routes.v1.GetSchoolDistanceResponse
-	29, // [29:33] is the sub-list for method output_type
-	25, // [25:29] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	1,  // 25: edify.routes.v1.GetSchoolLocationResponse.school:type_name -> edify.routes.v1.SchoolPin
+	9,  // 26: edify.routes.v1.RoutePlannerService.GetFieldDay:input_type -> edify.routes.v1.GetFieldDayRequest
+	11, // 27: edify.routes.v1.RoutePlannerService.PlanRoute:input_type -> edify.routes.v1.PlanRouteRequest
+	13, // 28: edify.routes.v1.RoutePlannerService.GetSchoolPins:input_type -> edify.routes.v1.GetSchoolPinsRequest
+	15, // 29: edify.routes.v1.RoutePlannerService.GetSchoolDistance:input_type -> edify.routes.v1.GetSchoolDistanceRequest
+	17, // 30: edify.routes.v1.RoutePlannerService.GetSchoolLocation:input_type -> edify.routes.v1.GetSchoolLocationRequest
+	10, // 31: edify.routes.v1.RoutePlannerService.GetFieldDay:output_type -> edify.routes.v1.GetFieldDayResponse
+	12, // 32: edify.routes.v1.RoutePlannerService.PlanRoute:output_type -> edify.routes.v1.PlanRouteResponse
+	14, // 33: edify.routes.v1.RoutePlannerService.GetSchoolPins:output_type -> edify.routes.v1.GetSchoolPinsResponse
+	16, // 34: edify.routes.v1.RoutePlannerService.GetSchoolDistance:output_type -> edify.routes.v1.GetSchoolDistanceResponse
+	18, // 35: edify.routes.v1.RoutePlannerService.GetSchoolLocation:output_type -> edify.routes.v1.GetSchoolLocationResponse
+	31, // [31:36] is the sub-list for method output_type
+	26, // [26:31] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_edify_routes_v1_routes_proto_init() }
@@ -1679,7 +1808,7 @@ func file_edify_routes_v1_routes_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_routes_v1_routes_proto_rawDesc), len(file_edify_routes_v1_routes_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
