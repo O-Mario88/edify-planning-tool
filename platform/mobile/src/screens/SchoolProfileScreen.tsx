@@ -17,6 +17,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { ApiError } from '../api/connect';
 import { describe, useSession } from '../auth/SessionContext';
 import { SchoolLoanHistory, canSeeSchoolLoans } from './loans/SchoolLoanHistory';
+import { LocationCard } from './route/LocationCard';
 import type { PageAction } from '../gen/edify/screens/v1/page_pb';
 import type { GetSchoolProfileResponse } from '../gen/edify/screens/v1/school_profile_pb';
 import { fonts, useTheme } from '../theme';
@@ -60,11 +61,13 @@ interface SchoolProfileScreenProps {
   readonly onBack: () => void;
   /** The back link's words when the profile was opened from somewhere else (a field route). */
   readonly backLabel?: string;
+  /** Opens the route planner (Location & Directions' Find Nearby Schools). */
+  readonly onOpenRoute?: (url: string) => void;
   /** Open another school's profile (a link on this one). */
   readonly onOpenSchool: (schoolId: string) => void;
 }
 
-export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool, backLabel }: SchoolProfileScreenProps) {
+export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool, backLabel, onOpenRoute }: SchoolProfileScreenProps) {
   const { api, environment, signOut, state } = useSession();
   const activeRole = state.status === 'signedIn' ? state.session.activeRole : '';
   const { colors } = useTheme();
@@ -209,6 +212,7 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool, backLabel 
                 blocks={data.blocks}
                 onFilter={(name, value) => setQuery((current) => ({ ...current, [name]: value }))}
               />
+              {!query.tab || query.tab === 'overview' ? <LocationCard schoolId={schoolId} onOpenRoute={onOpenRoute} /> : null}
               {canSeeSchoolLoans(activeRole) && (!query.tab || query.tab === 'overview') ? (
                 <SchoolLoanHistory schoolId={schoolId} />
               ) : null}

@@ -85,7 +85,12 @@ function place() {
     pin.dataset.label = 'hidden';
   });
 }
-function fit() { if (extent) map.fitBounds(extent, { padding: { top: 120, bottom: 120, left: 70, right: 80 }, maxZoom: 14, duration: 300 }); }
+function fit() {
+  if (!extent) return;
+  // Room for the cards over the map, never more than the map can give.
+  const c = map.getContainer(); const v = Math.min(120, c.clientHeight / 4), h = Math.min(80, c.clientWidth / 5);
+  map.fitBounds(extent, { padding: { top: v, bottom: v, left: h, right: h }, maxZoom: 14, duration: 300 });
+}
 function line() {
   if (!scene) return { type: 'FeatureCollection', features: [] };
   const road = scene.path.length > 1;

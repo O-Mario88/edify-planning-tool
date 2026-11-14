@@ -329,6 +329,7 @@ function SignedIn({ session }: { readonly session: Session }) {
         schoolId={schoolId}
         onBack={() => (schoolFrom ? open(schoolFrom.url, schoolFrom.label) : open('/schools', 'Schools'))}
         backLabel={schoolFrom ? 'Back to route' : undefined}
+        onOpenRoute={(url) => open(url, 'Smart Route Planner')}
         onOpenSchool={openSchool}
       />
     );

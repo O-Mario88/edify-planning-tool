@@ -6,7 +6,7 @@
  * visit drawer, which is the only way a school joins the official plan.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Platform, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../../api/connect';
 import { useSession } from '../../auth/SessionContext';
@@ -14,8 +14,8 @@ import { RoutePlannerService } from '../../gen/edify/routes/v1/routes_pb';
 import type { GetFieldDayResponse, Itinerary, SchoolPin } from '../../gen/edify/routes/v1/routes_pb';
 import { fonts, spacing, useTheme } from '../../theme';
 import { PlanningDrawer } from '../../ui/planning/PlanningDrawer';
-import { PIN_TONES, ROUTE_DETAILS_URL, dateOf, directionsUrl, legText, placedStops, shortName } from './routeData';
-import type { MapsApp } from './routeData';
+import { chooseDirections } from './directions';
+import { PIN_TONES, ROUTE_DETAILS_URL, dateOf, legText, placedStops, shortName } from './routeData';
 import type { MapScene } from './routeMapHtml';
 import { RouteDetailsScreen, RoutePlannerScreen } from './RouteScreens';
 
@@ -116,20 +116,7 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
   const scene = useMemo(() => sceneOf(itinerary), [itinerary]);
   const areaLabel = district ? (day?.districts.find((d) => d.value === district)?.label ?? '') : day?.areaLabel ?? '';
 
-  // Directions in the person's own maps app: they choose which.
-  const directions = useCallback((stops: readonly SchoolPin[]) => {
-    const go = (app: MapsApp) => {
-      const target = directionsUrl(stops, app);
-      if (target) void Linking.openURL(target);
-    };
-    if (Platform.OS === 'web') return go('google');
-    Alert.alert('Get directions', 'Open the route in your maps app.', [
-      { text: 'Google Maps', onPress: () => go('google') },
-      ...(Platform.OS === 'ios' ? [{ text: 'Apple Maps', onPress: () => go('apple') }] : []),
-      { text: 'Waze', onPress: () => go('waze') },
-      { text: 'Cancel', style: 'cancel' as const },
-    ]);
-  }, []);
+  const directions = chooseDirections;
 
   if (error) {
     return (
