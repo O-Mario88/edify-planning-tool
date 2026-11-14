@@ -669,3 +669,7 @@ GRANT SELECT (audience, report_id, status) ON impact_report_release TO edify_gat
 -- targets left to reconcile. Not the actor or the saved preview.
 GRANT SELECT (district_id, from_staff_id, to_staff_id, open_activity_decision, reason, effective_date, school_count, activities_transferred, created_at) ON district_portfolio_transfer TO edify_gateway_ro;
 GRANT SELECT (school_id, from_staff_id, to_staff_id, open_activity_decision, reason, effective_date, transferred_activity_ids, batch_id, target_reconciliation_status, target_reconciliation_note, created_at) ON school_ownership_transfer TO edify_gateway_ro;
+
+-- Data Quality Center (internal/dataquality): each open issue's school, kind,
+-- wrong value, suggested fix and whether someone holds it.
+GRANT SELECT (school_id, issue_type, status, field_name, current_value, suggested_fix, assigned_to, created_at) ON data_quality_issue TO edify_gateway_ro;
