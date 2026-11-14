@@ -210,3 +210,127 @@ Edify Smart Routing must help staff accomplish more meaningful school visits wit
 It must combine school location, program priorities, eligible activities, travel feasibility and operational constraints into one intuitive field-planning experience.
 Preserve the production database and all existing business rules.
 Simple → Healthy → Focused.
+
+---
+
+# Addendum 1 (owner, 2026-11-14): Smart Route Intelligence brief and the screens to build
+
+The owner then sent a second brief, "SMART ROUTE INTELLIGENCE — NAMED SCHOOL PINS,
+AUTOMATIC DISTANCE CALCULATION & ADVANCED VISIT RECOMMENDATIONS", with two screen designs,
+and said: "This is the UI design for web route page and mobile Route page. I want it built
+exactly like that."
+
+## What the second brief adds (summary of its 17 sections; the owner's words govern)
+
+- Stack: web Next.js + TypeScript + Tailwind; mobile React Native + Expo + Expo Router; Go owns
+  school retrieval, authorization, the map-provider abstraction (Google Maps Platform evaluated
+  first), distances, route optimization, eligibility, scheduling and every write; Python only
+  for historical field-efficiency analytics. Coordinates come from the existing School
+  Directory, never a second directory.
+- Branch safety: feature/edify-go-rn-migration or a subordinate branch; no production DB, no
+  coordinate changes in production, no migrations against production, no load tests on
+  production, no merge to main, no deploy without approval; synthetic or sanitized data.
+- Automatic named pins: authorized coordinates through Go, validated lat/lng, the real school
+  name beside each pin, linked to the School ID; selected/scheduled highlighted; fit-to-pins.
+  Pin info: name, School ID, district, cluster, planning status, category, coordinate
+  verification. Tap → compact panel: View School, Select for Route, Add to Plan (if eligible),
+  Get Directions. Collision-aware labels, planned/selected labels first, cluster dense
+  unselected markers, never a bare number for a school. Status colours: orange Planned, green
+  Completed, distinct labelled Suggested / Selected / Unverified Location; map selection is
+  never an official plan.
+- Distances (Go): straight-line (Haversine) labelled "Straight-line distance"; road distance
+  from the provider labelled "Estimated road distance" returning origin/destination School
+  IDs, metres, km, duration, mode, availability, provider status, timestamp; an unavailable
+  state instead of invented numbers. Pairwise panel for any two authorized schools, drawn
+  route; a route matrix for shortlists within provider limits.
+- Multi-school itinerary: start, ordered schools, optional end; per leg from/to, road
+  distance, travel time, arrival, visit duration, departure; totals (distance, travel, time at
+  schools, field-day duration, selected vs feasible visits, conflicts) summed from real legs
+  only; partial routes shown as partial.
+- Two modes: A Fastest Route (order selected schools; start/end, fixed appointments, locked
+  positions, mode). B Recommended Field Day (planned schools, FY eligibility, portfolio, SSA
+  support needs, outstanding Cluster Actions, training follow-ups, appointments, visit
+  durations, working-day limits, road time, detours) — may suggest extra schools but never
+  creates an activity; only the user's confirmed scheduling through Go does.
+- "Schools Near My Route": authorized, eligible candidates near the route; extra distance and
+  time from inserting each candidate (not straight-line rank, no unexplained AI scores);
+  feasibility; plain-language reason; accept or dismiss; already-planned schools flagged so no
+  duplicate visit.
+- Constrained optimization with time windows, service durations, start/end, fixed vs flexible,
+  breaks, required vs optional; manual reorder with consequences shown; infeasible days explain
+  the conflict and offer alternatives.
+- School Profile: Location & Directions section (GPS, verification status, named pin, access
+  point, landmark note, Get Directions, Find Nearby Schools); report inaccurate coordinates
+  through a controlled verification workflow; missing coordinates never hide a school.
+- Route execution: current school, Get Directions, next stop, remaining sequence, official
+  status, back to My Plan, completion through the existing workflow; completion reflected
+  after the backend confirms; no proximity auto-complete; no background tracking by default.
+- Real-time sync with My Plan via Go events/refresh after commit; stale and conflicting
+  changes handled explicitly.
+- Performance/cost: >500 concurrent users; viewport loading, server-side filtering, spatial
+  lookup, clustering, lazy map code, routing only on meaningful actions, dedupe, throttling,
+  quotas, billing alerts, field masks, timeouts, monitoring, list fallback; geographic
+  shortlist before road matrices; honour provider storage/attribution terms.
+- Security: Go authorizes location reads, route selection, nearby discovery, schedule edits,
+  coordinate corrections, exports; no national coordinate endpoint; server keys never in
+  client bundles; device GPS only on explicit choice.
+- Tests (16 in the brief) and 20 deliverables, including a Current-vs-New UI comparison and a
+  final implementation report.
+- Final requirement: a CCEO opening My Plan sees scheduled schools named on a map, road
+  distances between them, a recommended order, nearby eligible schools with added distance and
+  time, and why — with every official change through Go's existing workflows.
+
+## Web design: "Smart Route Planner" (build exactly as drawn)
+
+- Top bar: search "Search schools, clusters…", notification bell with count, country picker
+  (Uganda flag).
+- Breadcrumb "My Plan > Smart Route Planner". Title with a blue map-pin icon: "Smart Route
+  Planner"; subtitle "Optimise your field visits with the most efficient route". Right: date
+  picker ("Tue, Apr 29, 2025" style, calendar icon, chevron) and a primary blue "Save Plan"
+  button.
+- KPI row of four cards: "5 Schools — Selected for today" (school icon, green tick);
+  "56.8 km — Total Distance" (route icon, car icon); "2h 15min — Total Travel Time" (clock,
+  info icons); "5h 30min — Total Field Time" (green calendar-tick icon, info icon).
+- Main row, three columns:
+  - Left: segmented "Map View" (active, blue) / "List View"; Filters card with "Clear All":
+    District select "All Districts", Cluster select "All Clusters", Status checkboxes
+    Planned (on), Suggested (on), Nearby (off).
+  - Centre: the interactive map with numbered blue pins 1–4 and a green pin 5 for the
+    suggested school, each with a white label card carrying the school name; the blue route
+    line through them; current-location dot; legend top right (Planned blue, Suggested green,
+    Other grey); zoom +/− and locate buttons bottom right; a bottom-left chip
+    "car 56.8 km | 2h 15min".
+  - Right: "Recommended Route" card (trophy icon, green "Recommended" pill) listing numbered
+    stops (blue 1–4, green 5) with school name, "12.4 km • 32 min" under it and "Arr. 09:00"
+    on the right; then "Route Summary": Total Distance, Travel Time, Total Time with icons;
+    buttons "Optimize Route" (outlined) and "Get Directions" (filled blue).
+- Bottom row: "Schools Near Your Route" card (lightbulb icon, "View All →") with a school row:
+  photo, name, green "Eligible" pill, "+6.2 km • 14 min | SSA Support Needed", outlined
+  "Add to Plan"; beside it a green "Great route!" card: "You can visit 5 schools efficiently
+  in one field day." with a route illustration.
+
+## Mobile design: two screens (build exactly as drawn)
+
+- App header: dark teal bar, menu, Edify logo, bell with count, profile; bottom tab bar Home,
+  My Plan (active, highlighted), Schools, Clusters, More.
+- Screen 1 "Smart Route Planner": pin icon, title, "Plan, optimise and navigate your school
+  visits"; date picker and district picker side by side; segmented Map View (active, dark
+  teal) / List View; map with zoom +/−, locate, layers buttons; top-right card "Recommended
+  Route 44.1 km • 1 hr 25 min ›" with green tick; numbered pins with label cards
+  "Nakasero P/S (8.8 km • 18 min)", orange pin for the recommended extra school, green
+  "Start (Kampala Office)" pin; legend Planned School blue / Recommended orange / Start-End
+  green; summary strip: Distance, Travel Time, Schools, Recommended (star); full-width dark
+  teal "Optimise Route" button with sparkle icon.
+- Screen 2 "Route Details": back arrow, title, "Tue, 24 Jun 2025 • Kampala District", overflow
+  menu; green "Recommended Field Day" banner ("An efficient and feasible route based on your
+  planned schools, school priorities and travel time."); segmented Itinerary (active) / Map /
+  Options; four stat tiles Total Distance, Total Travel, Visit Time, Visits; "Visit Sequence
+  (Recommended)" timeline: numbered stops with name, status pill (green Planned, orange
+  Recommended), "Visit: 30 min", "From Start: 12.5 km • 22 min" / "From 1: 8.8 km • 18 min",
+  chevron; "Schools Near My Route" (star, View All →) with photo, name, purple "High
+  Priority" pill, "2.8 km (≈ 8 min detour)", "Needs SSA support", outlined "Add to Plan";
+  footer buttons "Get Directions" (outlined) and "Start Field Day" (dark teal, play icon).
+
+The figures in the designs (km, minutes, school names, dates) are illustrations only: the
+built screens show real Edify schools and real provider results, and an unavailable state
+where the provider gives none.
