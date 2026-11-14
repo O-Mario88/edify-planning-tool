@@ -265,7 +265,3 @@ func Strip(title string, figures []StripFigure) *screensv1.PageBlock {
 	}
 	return strip(title, kpis...)
 }
-
-// BriefHelper is apps.core.metrics.payload.brief_helper, for the other pages
-// whose context figures are drawn by components/context_metrics.html.
-func BriefHelper(helper string) string { return briefHelper(helper) }
