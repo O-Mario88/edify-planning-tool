@@ -514,3 +514,8 @@ GRANT SELECT (reference, title, category, status, scheduled_date, created_at) ON
 GRANT SELECT (replacement_or_new_role, target_start_date, created_at) ON hr_vacancy TO edify_gateway_ro;
 -- Fiscal Year Planning: each year's delivery window and follow-up rule (never its notes or who opened it).
 GRANT SELECT (execution_start, execution_end, follow_up_visit_requires_prior_training) ON fiscal_year_planning_policy TO edify_gateway_ro;
+-- Policy Compliance: each acknowledgement's reading time, attestation, due day, role and time; a policy's
+-- required reading; whether a comment waits for the reader (its status and author's country, never its text).
+GRANT SELECT (document_id, version_id, role_at_acknowledgement, active_reading_seconds, offline_attestation, due_date, created_at) ON document_acknowledgement TO edify_gateway_ro;
+GRANT SELECT (required_reading_minutes) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (status, author_country) ON document_comment TO edify_gateway_ro;

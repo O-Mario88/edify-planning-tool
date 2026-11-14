@@ -1,0 +1,165 @@
+{
+  "completion_labels": {
+    "completed": "Completed reading",
+    "completed_offline": "Completed outside viewer",
+    "not_monitored": "Not monitored",
+    "not_read": "Did not read",
+    "partial": "Partial read"
+  },
+  "metric_drilldowns": {
+    "policy_acknowledgements_accepted": "/policy-compliance?state=agreed",
+    "policy_acknowledgements_overdue": "/policy-compliance?state=pending"
+  },
+  "metric_labels": {
+    "policy_acknowledgements_accepted": "Accepted",
+    "policy_acknowledgements_overdue": "Overdue"
+  },
+  "page_size": 50,
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "readable_statuses": [
+    "effective",
+    "published"
+  ],
+  "roles": {
+    "Accountant": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "Admin": {
+      "comments": true,
+      "page": true,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "CCEO": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "ClusterLeader": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "CountryDirector": {
+      "comments": true,
+      "page": true,
+      "scope_note": "Staff and partners in your country.",
+      "strip": null
+    },
+    "HumanResources": {
+      "comments": true,
+      "page": true,
+      "scope_note": "Every employee and partner in your remit.",
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "comments": true,
+      "page": true,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "Program Lead": {
+      "comments": false,
+      "page": true,
+      "scope_note": "Your supervised staff and managed partners. Acknowledgement status only — the private comment a person writes with their answer goes to HR.",
+      "strip": {
+        "label": "Performance & Coaching",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/team/coaching",
+            "label": "Coaching"
+          },
+          {
+            "active": false,
+            "href": "/performance-reviews",
+            "label": "Performance Reviews"
+          },
+          {
+            "active": false,
+            "href": "/recovery-plans",
+            "label": "Recovery Plans"
+          },
+          {
+            "active": false,
+            "href": "/cpd-learning",
+            "label": "Professional Development"
+          },
+          {
+            "active": true,
+            "href": "/policy-compliance",
+            "label": "Policy Compliance"
+          }
+        ]
+      }
+    },
+    "ProjectCoordinator": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "comments": false,
+      "page": false,
+      "scope_note": "Your authorised scope.",
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "comments": false,
+      "page": true,
+      "scope_note": "Regional summary across your deployment.",
+      "strip": null
+    }
+  },
+  "row_limit": 1000,
+  "states": {
+    "agreed": "Agreed",
+    "disagreed": "Disagreed",
+    "pending": "Pending",
+    "superseded": "Superseded"
+  }
+}

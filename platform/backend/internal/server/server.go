@@ -54,6 +54,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/policycompliance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmeschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectcapacity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectmonitoring"
@@ -132,6 +133,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			projectcapacity.NewService(pool, time.Now),
 			adminops.NewService(pool),
 			fyplanning.NewService(pool, time.Now),
+			policycompliance.NewService(pool, time.Now),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now),

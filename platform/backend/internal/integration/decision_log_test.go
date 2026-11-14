@@ -57,6 +57,14 @@ func compareGolden(t *testing.T, path string, answers []goldenAnswer) {
 			}
 			continue
 		}
+		if answer.Status == 403 {
+			// A page the role may open that refuses this reader.
+			if connect.CodeOf(err) != connect.CodePermissionDenied {
+				differing++
+				t.Errorf("%s %v: %v, want permission denied", answer.Email, answer.Query, err)
+			}
+			continue
+		}
 		if err != nil {
 			differing++
 			t.Errorf("%s %v: %v", answer.Email, answer.Query, err)
