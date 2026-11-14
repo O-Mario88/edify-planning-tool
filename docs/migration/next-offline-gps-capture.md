@@ -46,3 +46,5 @@ Acceptance: at a school with no signal, open a previously synced profile, captur
 - The app keeps its own navigation (App.tsx), not Expo Router; the brief's Expo Router line is not a change to make here.
 - Encrypted offline store: `expo-sqlite` with SQLCipher (config plugin), key generated on the device and held in SecureStore. Needs the native development build (`expo run:ios` / `run:android`), not Expo Go.
 - Device tests here are the iOS simulator and the Android emulator; real Android phones and iOS release builds need the owner's devices / signing.
+
+Test report: `offline-gps-capture-test-report.md`.

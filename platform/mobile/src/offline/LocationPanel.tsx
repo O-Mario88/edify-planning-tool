@@ -19,7 +19,6 @@ import { chooseDirections } from '../screens/route/directions';
 import { PIN_TONES, shortName } from '../screens/route/routeData';
 import { RouteMapView } from '../screens/route/RouteMapView';
 import type { MapScene } from '../screens/route/routeMapHtml';
-import { CaptureFlow } from './CaptureFlow';
 import { useOffline } from './OfflineContext';
 import { STATUS_TEXT } from './queueLogic';
 import type { CachedSchool, CaptureTarget, QueuedCapture } from './store';
@@ -54,10 +53,9 @@ export interface LocationPanelProps {
 
 export function LocationPanel({ school, verifiedByName = '', footer, onCaptured, canCapture: allowed }: LocationPanelProps) {
   const { colors } = useTheme();
-  const { store, account, revision, canCapture: packAllows } = useOffline();
+  const { store, account, revision, canCapture: packAllows, openCapture } = useOffline();
   const canCapture = (allowed ?? packAllows) && account !== null;
   const [local, setLocal] = useState<QueuedCapture[]>([]);
-  const [capturing, setCapturing] = useState<CaptureTarget | null>(null);
 
   useEffect(() => {
     if (!store || !account) return;
@@ -84,6 +82,8 @@ export function LocationPanel({ school, verifiedByName = '', footer, onCaptured,
     const legend: MapScene['legend'] = waiting ? [{ label: 'On record', tone: BLUE }, { label: 'Captured, not yet accepted', tone: PENDING_TONE }] : [];
     return { pins, path: [], legend, join: false, primaryId: hasPoint ? school.schoolId : waiting ? `${school.schoolId}:waiting` : undefined };
   }, [school, hasPoint, waiting]);
+
+  const setCapturing = (target: CaptureTarget) => openCapture({ school, target, onDone: (saved) => saved && onCaptured?.() });
 
   // Directions go to the entrance when there is one.
   const directions = () => {
@@ -158,16 +158,6 @@ export function LocationPanel({ school, verifiedByName = '', footer, onCaptured,
         </View>
       ) : null}
       {footer}
-      {capturing ? (
-        <CaptureFlow
-          school={school}
-          target={capturing}
-          onClose={(saved) => {
-            setCapturing(null);
-            if (saved) onCaptured?.();
-          }}
-        />
-      ) : null}
     </View>
   );
 }

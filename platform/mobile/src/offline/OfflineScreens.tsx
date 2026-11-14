@@ -24,7 +24,7 @@ const TIME = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', 
 /** The sync queue and the offline schools' state; also reached from More when online. */
 export function SyncQueueScreen() {
   const { colors } = useTheme();
-  const { store, account, revision, pendingCount, packAt, isOnline, isSignedIn, lastSync, syncNow, refreshPack } = useOffline();
+  const { store, storeError, account, revision, pendingCount, packAt, isOnline, isSignedIn, lastSync, syncNow, refreshPack } = useOffline();
   const [captures, setCaptures] = useState<QueuedCapture[]>([]);
   const [count, setCount] = useState(0);
   const [notice, setNotice] = useState('');
@@ -60,13 +60,16 @@ export function SyncQueueScreen() {
         Offline schools &amp; sync
       </Text>
       <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.card }]}>
-        <Text style={[styles.strong, { color: colors.text }]}>{isOnline ? 'Online' : 'Offline'}</Text>
+        <Text style={[styles.strong, { color: colors.text }]}>
+          {!isOnline ? 'Offline: no internet on this phone' : isSignedIn ? 'Online' : 'Connected to the internet, but Edify cannot be reached'}
+        </Text>
         <Text style={[styles.text, { color: colors.text }]}>
           {count} schools saved on this phone{packAt ? ` · updated ${TIME.format(new Date(packAt))}` : ''}
         </Text>
         <Text style={[styles.text, { color: pendingCount ? '#b45309' : colors.textMuted }]}>
           {pendingCount ? `${pendingCount} waiting to sync` : 'Nothing waiting to sync'}
         </Text>
+        {storeError ? <Text style={[styles.text, { color: colors.danger }]}>{storeError}</Text> : null}
         {lastSync?.needsSignIn ? <Text style={[styles.text, { color: colors.danger }]}>Sign in again to sync.</Text> : null}
         {notice ? <Text style={[styles.text, { color: colors.text }]}>{notice}</Text> : null}
         {isSignedIn ? (
@@ -142,8 +145,8 @@ export function OfflineFieldApp({ notice, onRetry, onSignOut }: OfflineFieldAppP
   const open = schools.find((s) => s.schoolId === openId) ?? null;
 
   return (
-    <View style={[styles.app, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
-      <View style={styles.banner}>
+    <View style={[styles.app, { backgroundColor: colors.bg }]}>
+      <View style={[styles.banner, { paddingTop: insets.top + spacing.sm }]}>
         <CloudOff size={18} color="#fff" />
         <View style={styles.flex}>
           <Text style={styles.bannerText}>Offline · your saved schools</Text>

@@ -10,7 +10,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MapPinned } from 'lucide-react-native';
 
 import { fonts, radius, spacing } from '../theme';
-import { CaptureFlow } from './CaptureFlow';
 import { todayLocal, useOffline } from './OfflineContext';
 import type { CachedSchool } from './store';
 import { useCachedSchool } from './useCachedSchool';
@@ -25,9 +24,8 @@ export interface VisitPromptProps {
 }
 
 export function VisitPrompt({ school, isVisitDay = false }: VisitPromptProps) {
-  const { store, account, canCapture, saveCapture, markChanged } = useOffline();
+  const { store, account, canCapture, saveCapture, markChanged, openCapture } = useOffline();
   const [isShown, setIsShown] = useState(false);
-  const [isCapturing, setIsCapturing] = useState(false);
   const [thanks, setThanks] = useState('');
   const today = todayLocal();
 
@@ -44,7 +42,7 @@ export function VisitPrompt({ school, isVisitDay = false }: VisitPromptProps) {
     };
   }, [store, account, school, canCapture, isVisitDay, today]);
 
-  if (!school || (!isShown && !thanks && !isCapturing)) return null;
+  if (!school || (!isShown && !thanks)) return null;
   const done = async (message: string) => {
     if (store && account) await store.markPrompted(account.userId, school.schoolId, today);
     setIsShown(false);
@@ -52,6 +50,14 @@ export function VisitPrompt({ school, isVisitDay = false }: VisitPromptProps) {
     markChanged();
   };
   const hasPoint = school.lat !== null;
+  const capture = () =>
+    openCapture({
+      school,
+      target: 'school',
+      onDone: (saved) => {
+        if (saved) void done(saved.status === 'saved_offline' ? 'Location saved on this phone. It syncs when you are online.' : saved.note);
+      },
+    });
 
   return (
     <View style={styles.card} accessibilityLiveRegion="polite">
@@ -78,12 +84,12 @@ export function VisitPrompt({ school, isVisitDay = false }: VisitPromptProps) {
                 >
                   <Text style={styles.primaryText}>Yes</Text>
                 </Pressable>
-                <Pressable style={styles.outline} accessibilityRole="button" onPress={() => setIsCapturing(true)}>
+                <Pressable style={styles.outline} accessibilityRole="button" onPress={capture}>
                   <Text style={styles.outlineText}>Correct Location</Text>
                 </Pressable>
               </>
             ) : (
-              <Pressable style={styles.primary} accessibilityRole="button" onPress={() => setIsCapturing(true)}>
+              <Pressable style={styles.primary} accessibilityRole="button" onPress={capture}>
                 <Text style={styles.primaryText}>Capture now</Text>
               </Pressable>
             )}
@@ -93,16 +99,6 @@ export function VisitPrompt({ school, isVisitDay = false }: VisitPromptProps) {
           </View>
         </>
       )}
-      {isCapturing ? (
-        <CaptureFlow
-          school={school}
-          target="school"
-          onClose={(saved) => {
-            setIsCapturing(false);
-            if (saved) void done(saved.status === 'saved_offline' ? 'Location saved on this phone. It syncs when you are online.' : saved.note);
-          }}
-        />
-      ) : null}
     </View>
   );
 }

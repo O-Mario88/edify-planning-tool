@@ -27,6 +27,13 @@ import type { GpsPolicy } from './gpsMath';
 import { COUNTED } from './queueLogic';
 import { openSqliteStore } from './sqliteStore';
 import type { CachedSchool, CaptureKind, CaptureTarget, OfflineStore, QueuedCapture } from './store';
+
+/** A capture sheet to show: drawn at the app's root so a screen re-rendering beneath never closes it. */
+export interface CaptureRequest {
+  readonly school: CachedSchool;
+  readonly target: CaptureTarget;
+  readonly onDone?: (saved: QueuedCapture | null) => void;
+}
 import { META } from './store';
 import { syncQueue } from './sync';
 import type { CaptureApi, SyncResult } from './sync';
@@ -62,6 +69,8 @@ interface Account {
 interface OfflineValue {
   /** The store is open (false on its first moments, or when it failed). */
   readonly isReady: boolean;
+  /** Why the phone's offline store could not be opened, if it could not. */
+  readonly storeError: string;
   readonly isOnline: boolean;
   /** Signed in now (false in offline field mode). */
   readonly isSignedIn: boolean;
@@ -79,6 +88,10 @@ interface OfflineValue {
   syncNow(): Promise<void>;
   refreshPack(): Promise<string>;
   markChanged(): void;
+  /** The capture sheet open now, if any (CaptureHost draws it). */
+  readonly captureRequest: CaptureRequest | null;
+  openCapture(request: CaptureRequest): void;
+  closeCapture(saved: QueuedCapture | null): void;
 }
 
 const OfflineContext = createContext<OfflineValue | null>(null);
@@ -143,6 +156,7 @@ export interface OfflineProviderProps {
 
 export function OfflineProvider({ signedIn, api, isUnreachable, onReconnect, children }: OfflineProviderProps) {
   const [store, setStore] = useState<OfflineStore | null>(null);
+  const [storeError, setStoreError] = useState('');
   const [isOnline, setIsOnline] = useState(true);
   const [account, setAccount] = useState<Account | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
@@ -151,6 +165,18 @@ export function OfflineProvider({ signedIn, api, isUnreachable, onReconnect, chi
   const [canCapture, setCanCapture] = useState(false);
   const [lastSync, setLastSync] = useState<SyncResult | null>(null);
   const [revision, setRevision] = useState(0);
+  const [captureRequest, setCaptureRequest] = useState<CaptureRequest | null>(null);
+  const openRequest = useRef<CaptureRequest | null>(null);
+  const openCapture = useCallback((request: CaptureRequest) => {
+    openRequest.current = request;
+    setCaptureRequest(request);
+  }, []);
+  const closeCapture = useCallback((saved: QueuedCapture | null) => {
+    const done = openRequest.current?.onDone;
+    openRequest.current = null;
+    setCaptureRequest(null);
+    done?.(saved);
+  }, []);
   const markChanged = useCallback(() => setRevision((n) => n + 1), []);
   const reconnect = useRef(onReconnect);
   reconnect.current = onReconnect;
@@ -163,7 +189,9 @@ export function OfflineProvider({ signedIn, api, isUnreachable, onReconnect, chi
         await opened.recoverSyncing();
         if (isCurrent) setStore(opened);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (isCurrent) setStoreError('This phone’s offline store could not be opened, so captures cannot be saved offline. Restart the app and try again.');
+      });
     return () => {
       isCurrent = false;
     };
@@ -371,6 +399,7 @@ export function OfflineProvider({ signedIn, api, isUnreachable, onReconnect, chi
   const value = useMemo<OfflineValue>(
     () => ({
       isReady: store !== null,
+      storeError,
       isOnline,
       isSignedIn,
       account,
@@ -385,8 +414,11 @@ export function OfflineProvider({ signedIn, api, isUnreachable, onReconnect, chi
       syncNow,
       refreshPack,
       markChanged,
+      captureRequest,
+      openCapture,
+      closeCapture,
     }),
-    [store, isOnline, isSignedIn, account, pendingCount, packAt, policy, canCapture, lastSync, revision, saveCapture, syncNow, refreshPack, markChanged],
+    [captureRequest, openCapture, closeCapture, store, storeError, isOnline, isSignedIn, account, pendingCount, packAt, policy, canCapture, lastSync, revision, saveCapture, syncNow, refreshPack, markChanged],
   );
   return <OfflineContext.Provider value={value}>{children}</OfflineContext.Provider>;
 }

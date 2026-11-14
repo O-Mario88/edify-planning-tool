@@ -36,6 +36,7 @@ import { LocationReportsScreen } from './src/screens/route/LocationReportsScreen
 import { LOCATION_REPORTS_URL, OFFLINE_QUEUE_URL, isRouteUrl, routeSection } from './src/screens/route/routeData';
 import { OfflineProvider, useOffline } from './src/offline/OfflineContext';
 import { OfflineFieldApp, SyncQueueScreen } from './src/offline/OfflineScreens';
+import { CaptureHost } from './src/offline/CaptureHost';
 import { AppShell, MENU_URL } from './src/shell/AppShell';
 import { ThemeProvider, signInPalette, spacing, useTheme } from './src/theme';
 import { DropdownLayer } from './src/ui/Dropdown';
@@ -145,6 +146,7 @@ function Root() {
   return (
     <OfflineProvider signedIn={signedIn} api={api} isUnreachable={state.status === 'unreachable'} onReconnect={() => void retry()}>
       <RootScreens />
+      <CaptureHost />
     </OfflineProvider>
   );
 }

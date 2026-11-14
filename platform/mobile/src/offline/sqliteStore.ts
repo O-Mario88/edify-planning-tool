@@ -14,7 +14,7 @@ import type { CachedSchool, CapturePatch, OfflineStore, PlannedVisit, QueuedCapt
 import { TO_SEND } from './queueLogic';
 import type { QueueStatus } from './queueLogic';
 
-const DATABASE = 'edify-offline.db';
+const DATABASE = 'edify-offline';
 const KEY_NAME = 'edify.offlineKey';
 
 const SCHEMA = `
@@ -162,16 +162,35 @@ const CAPTURE_PATCH_COLUMNS: Record<keyof CapturePatch, string> = {
   resultVersion: 'result_version',
 };
 
-/** Opens (and on first use creates) the encrypted store. */
-export async function openSqliteStore(): Promise<OfflineStore> {
-  const db = await SQLite.openDatabaseAsync(DATABASE);
+let opening: Promise<OfflineStore> | null = null;
+
+/**
+ * Opens (and on first use creates) the encrypted store, once per app
+ * process: two opens at once would each make a key, and the file would be
+ * encrypted with one while the keychain kept the other.
+ */
+export function openSqliteStore(): Promise<OfflineStore> {
+  opening ??= openOnce().catch((cause: unknown) => {
+    opening = null;
+    throw cause;
+  });
+  return opening;
+}
+
+async function openOnce(): Promise<OfflineStore> {
+  const key = await keyHex();
+  // The file is named for its key, so a key and its file always go together:
+  // should the keychain ever lose the key, the old file is left untouched
+  // and a new one is begun.
+  const tag = (await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, key)).slice(0, 12);
+  const db = await SQLite.openDatabaseAsync(`${DATABASE}-${tag}.db`);
   // SQLCipher: the key comes before anything else touches the file.
-  await db.execAsync(`PRAGMA key = "x'${await keyHex()}'"`);
+  await db.execAsync(`PRAGMA key = "x'${key}'"`);
   await db.execAsync('PRAGMA journal_mode = WAL;');
   await db.execAsync(SCHEMA);
   const params = (values: (string | number | null)[]) => values;
 
-  return {
+  const store: OfflineStore = {
     async meta(key) {
       const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM meta WHERE key = ?', key);
       return row?.value ?? null;
@@ -180,10 +199,12 @@ export async function openSqliteStore(): Promise<OfflineStore> {
       await db.runAsync('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', key, value);
     },
     async replacePack(userId, schools, planned: readonly PlannedVisit[]) {
-      await db.withExclusiveTransactionAsync(async (txn) => {
-        await txn.runAsync('DELETE FROM school WHERE user_id = ?', userId);
-        await txn.runAsync('DELETE FROM planned WHERE user_id = ?', userId);
-        const insertSchool = await txn.prepareAsync(
+      // One transaction on the keyed connection (an exclusive transaction
+      // opens a second connection, which has no key).
+      await db.withTransactionAsync(async () => {
+        await db.runAsync('DELETE FROM school WHERE user_id = ?', userId);
+        await db.runAsync('DELETE FROM planned WHERE user_id = ?', userId);
+        const insertSchool = await db.prepareAsync(
           `INSERT INTO school (user_id, school_id, code, name, district, cluster, category, location_status, lat, lng, version,
              entrance_lat, entrance_lng, verified_at, access_note, has_pending, last_confirmed_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -199,14 +220,14 @@ export async function openSqliteStore(): Promise<OfflineStore> {
           await insertSchool.finalizeAsync();
         }
         for (const p of planned) {
-          await txn.runAsync('INSERT INTO planned (user_id, date, school_id, activity_id) VALUES (?, ?, ?, ?)', userId, p.date, p.schoolId, p.activityId);
+          await db.runAsync('INSERT INTO planned (user_id, date, school_id, activity_id) VALUES (?, ?, ?, ?)', userId, p.date, p.schoolId, p.activityId);
         }
       });
     },
     async forgetOthers(userId) {
-      await db.withExclusiveTransactionAsync(async (txn) => {
-        await txn.runAsync('DELETE FROM school WHERE user_id <> ?', userId);
-        await txn.runAsync('DELETE FROM planned WHERE user_id <> ?', userId);
+      await db.withTransactionAsync(async () => {
+        await db.runAsync('DELETE FROM school WHERE user_id <> ?', userId);
+        await db.runAsync('DELETE FROM planned WHERE user_id <> ?', userId);
       });
     },
     async schools(userId) {
@@ -292,4 +313,22 @@ export async function openSqliteStore(): Promise<OfflineStore> {
       await db.runAsync('INSERT OR IGNORE INTO prompt (user_id, school_id, date) VALUES (?, ?, ?)', userId, schoolId, date);
     },
   };
+  return serialized(store);
+}
+
+/**
+ * Every call one after another: a transaction on the shared connection is
+ * not exclusive, so nothing may run beside it.
+ */
+function serialized(store: OfflineStore): OfflineStore {
+  let chain: Promise<unknown> = Promise.resolve();
+  const wrapped = {} as Record<string, unknown>;
+  for (const [name, fn] of Object.entries(store) as [string, (...args: unknown[]) => Promise<unknown>][]) {
+    wrapped[name] = (...args: unknown[]) => {
+      const run = chain.then(() => fn(...args));
+      chain = run.catch(() => undefined);
+      return run;
+    };
+  }
+  return wrapped as unknown as OfflineStore;
 }
