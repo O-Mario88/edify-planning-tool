@@ -663,3 +663,9 @@ GRANT SELECT (id, original_name, file_size) ON evidence_record TO edify_gateway_
 GRANT SELECT (title, created_at, programme_areas, fy, period_start, version, review_note, author_id, status, updated_at, reviewed_by_id, period_end, country) ON impact_report TO edify_gateway_ro;
 GRANT SELECT (report_id, status, due_date) ON impact_report_recommendation TO edify_gateway_ro;
 GRANT SELECT (audience, report_id, status) ON impact_report_release TO edify_gateway_ro;
+
+-- Ownership Transfers (internal/ownership): each district and school transfer's
+-- what, who from and to, when, the open-work decision and reason, and the
+-- targets left to reconcile. Not the actor or the saved preview.
+GRANT SELECT (district_id, from_staff_id, to_staff_id, open_activity_decision, reason, effective_date, school_count, activities_transferred, created_at) ON district_portfolio_transfer TO edify_gateway_ro;
+GRANT SELECT (school_id, from_staff_id, to_staff_id, open_activity_decision, reason, effective_date, transferred_activity_ids, batch_id, target_reconciliation_status, target_reconciliation_note, created_at) ON school_ownership_transfer TO edify_gateway_ro;

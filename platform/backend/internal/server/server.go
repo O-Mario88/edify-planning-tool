@@ -55,6 +55,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/navigation"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightportfolio"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ownership"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerassigned"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerusers"
@@ -151,6 +152,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			perfcycle.NewService(pool, time.Now),
 			closurequality.NewService(pool, time.Now),
 			iaframework.NewService(pool),
+			ownership.NewService(pool),
 			partnerassigned.NewService(pool),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
