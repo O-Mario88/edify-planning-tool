@@ -684,3 +684,7 @@ GRANT SELECT (id, status) ON partner_invoice TO edify_gateway_ro;
 -- SSA Verification (internal/ssaverify): who uploaded a record (never their
 -- own to decide) and who sent it back, with the reason the queue shows.
 GRANT SELECT (uploaded_by, returned_by_user_id, return_reason) ON ssa_record TO edify_gateway_ro;
+
+-- Programme Output Reports (internal/reports): each target type's approved
+-- value for a year and whether it is active. Not who set it or its scope.
+GRANT SELECT (fy, target_type, target_value, is_active) ON target_setting TO edify_gateway_ro;

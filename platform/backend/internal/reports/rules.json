@@ -1,0 +1,227 @@
+{
+  "achieved_statuses": [
+    "completed",
+    "ia_verified",
+    "accountant_confirmed",
+    "closed"
+  ],
+  "areas": [
+    {
+      "label": "School Visits",
+      "target_type": "SCHOOL_VISIT",
+      "types": [
+        "school_visit",
+        "follow_up_visit",
+        "coaching_visit",
+        "in_school_support",
+        "core_visit"
+      ]
+    },
+    {
+      "label": "Trainings Delivered",
+      "target_type": "TRAINING",
+      "types": [
+        "training",
+        "school_improvement_training",
+        "cluster_training",
+        "core_training"
+      ]
+    },
+    {
+      "label": "SSA Activities",
+      "target_type": "SSA",
+      "types": [
+        "ssa_activity"
+      ]
+    },
+    {
+      "label": "Cluster Meetings",
+      "target_type": "",
+      "types": [
+        "cluster_meeting"
+      ]
+    },
+    {
+      "label": "Partner Activities",
+      "target_type": "PARTNER_SUPPORT",
+      "types": [
+        "partner_activity"
+      ]
+    }
+  ],
+  "page_roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+  ],
+  "quarters": [
+    {
+      "code": "Q1",
+      "key": "q1",
+      "label": "Q1 (Oct - Dec)",
+      "order": 1
+    },
+    {
+      "code": "Q2",
+      "key": "q2",
+      "label": "Q2 (Jan - Mar)",
+      "order": 2
+    },
+    {
+      "code": "Q3",
+      "key": "q3",
+      "label": "Q3 (Apr - Jun)",
+      "order": 3
+    },
+    {
+      "code": "Q4",
+      "key": "q4",
+      "label": "Q4 (Jul - Sep)",
+      "order": 4
+    }
+  ],
+  "strips": {
+    "Admin": null,
+    "CountryDirector": null,
+    "ImpactAssessment": {
+      "label": "",
+      "scrolls": true,
+      "tabs": [
+        {
+          "active": false,
+          "href": "/ia/dashboard/",
+          "label": "Dashboard"
+        },
+        {
+          "active": false,
+          "href": "/ia/framework/",
+          "label": "Measurement Framework"
+        },
+        {
+          "active": false,
+          "href": "/ia/school-evidence/",
+          "label": "School Evidence"
+        },
+        {
+          "active": false,
+          "href": "/ssa/upload/",
+          "label": "SSA Upload Center"
+        },
+        {
+          "active": false,
+          "href": "/ssa/unmatched",
+          "label": "Unmatched SSA"
+        },
+        {
+          "active": false,
+          "href": "/ia/stories/",
+          "label": "Most Significant Change"
+        },
+        {
+          "active": false,
+          "href": "/ia/learning/",
+          "label": "Programme Learning"
+        },
+        {
+          "active": false,
+          "href": "/ia/lending-evidence/",
+          "label": "Lending Evidence"
+        },
+        {
+          "active": false,
+          "href": "/ia/impact-reports/",
+          "label": "Impact Reports"
+        },
+        {
+          "active": true,
+          "href": "/reports",
+          "label": "Programme Output Reports"
+        },
+        {
+          "active": false,
+          "href": "/analytics/publishing",
+          "label": "Publishing"
+        },
+        {
+          "active": false,
+          "href": "/decision-log",
+          "label": "Decision Log"
+        },
+        {
+          "active": false,
+          "href": "/country-planning-oversight/",
+          "label": "Country Oversight"
+        },
+        {
+          "active": false,
+          "href": "/cluster-oversight/",
+          "label": "Cluster Oversight"
+        },
+        {
+          "active": false,
+          "href": "/core-schools-oversight/",
+          "label": "Core Schools Oversight"
+        },
+        {
+          "active": false,
+          "href": "/ia/verification/",
+          "label": "Verification Queue"
+        },
+        {
+          "active": false,
+          "href": "/ia/partner-evidence/",
+          "label": "Partner Evidence"
+        },
+        {
+          "active": false,
+          "href": "/ssa/verification/",
+          "label": "SSA Verification"
+        },
+        {
+          "active": false,
+          "href": "/ia/returned/",
+          "label": "Returned Activities"
+        },
+        {
+          "active": false,
+          "href": "/evidence/",
+          "label": "Evidence Review"
+        },
+        {
+          "active": false,
+          "href": "/ia/duplicates/",
+          "label": "Duplicate Review"
+        },
+        {
+          "active": false,
+          "href": "/ia/compare/",
+          "label": "Evidence Compare"
+        },
+        {
+          "active": false,
+          "href": "/ia/history/",
+          "label": "Verification History"
+        },
+        {
+          "active": false,
+          "href": "/ia/analytics/",
+          "label": "Verification Analytics"
+        },
+        {
+          "active": false,
+          "href": "/ia/samples/",
+          "label": "Sample Checks"
+        },
+        {
+          "active": false,
+          "href": "/admin-panel/data-quality-center",
+          "label": "Data Quality"
+        }
+      ]
+    },
+    "ProjectCoordinator": null,
+    "RegionalVicePresident": null
+  }
+}
