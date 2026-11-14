@@ -54,6 +54,12 @@ RECENTLY_DONE = 8
 #: newest 50 of each.
 PLANNING_LIMIT = 50
 
+#: Team Plans (apps.admin_ops.team_plans): read by Admin and Impact Assessment
+#: (team_plans_view's own guard), not the Admin alone.
+TEAM_PLANS_PATH = "/admin-ops/team-plans"
+TEAM_PLANS_PERMISSION = "admin_team_plans"
+TEAM_PLANS_ROLES = ("Admin", "ImpactAssessment")
+
 #: The work item categories the Maintenance Calendar lists as open work.
 MAINTENANCE_CATEGORIES = ["preventive_maintenance", "corrective_maintenance"]
 
@@ -121,6 +127,33 @@ def rules() -> dict:
             str(s) for s in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED)
         ),
         "table_page_size": TABLE_PAGE_SIZE,
+        "team_plans": team_plans(),
+    }
+
+
+def team_plans() -> dict:
+    """Team Plans: who may open it, the statuses its plan leaves out, how many
+    rows it reads (PAGE_SIZE * 5) and shows (PAGE_SIZE), and the activity
+    labels."""
+    from apps.activities.models import ActivityType
+    from apps.admin_ops import team_plans as tp
+    from apps.core.permissions import RolePermissionService, can_open_url
+    from apps.core.rbac import EdifyRole
+
+    return {
+        "roles": sorted(
+            role.value
+            for role in EdifyRole
+            if role.value in TEAM_PLANS_ROLES
+            and RolePermissionService.can_view_page(
+                _role_user(role.value), TEAM_PLANS_PERMISSION
+            )
+            and bool(can_open_url(_role_user(role.value), TEAM_PLANS_PATH))
+        ),
+        "terminal_statuses": list(tp._TERMINAL),
+        "page_size": tp.PAGE_SIZE,
+        "read_limit": tp.PAGE_SIZE * 5,
+        "activity_types": {k: str(v) for k, v in ActivityType.choices},
     }
 
 

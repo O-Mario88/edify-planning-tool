@@ -123,3 +123,27 @@ func TestPlanningReadsTheBacklogIncidentsAndTickets(t *testing.T) {
 		t.Errorf("empty backlog and incidents: %v %v", r.Blocks[1], r.Blocks[2])
 	}
 }
+
+func TestTeamPlansWordsTheStatusAndStatesAsThePageDoes(t *testing.T) {
+	today := time.Date(2026, 11, 14, 0, 0, 0, 0, time.UTC)
+	for want, x := range map[string]planRow{
+		"Complete":                {Status: "closed"},
+		"Activity ID Missing":     {Status: "submitted_to_pl"},
+		"Returned for Correction": {Status: "returned_by_ia"},
+		"Due Today":               {Status: "scheduled", Planned: date(2026, 11, 14), Reschedules: 2},
+		"Rescheduled":             {Status: "scheduled", Planned: date(2026, 11, 30), Reschedules: 1},
+		"This Week":               {Status: "scheduled", Planned: date(2026, 11, 21)},
+		"Scheduled":               {Status: "scheduled", Planned: date(2026, 11, 22)},
+	} {
+		if got := planStatus(x, today); got != want {
+			t.Errorf("planStatus(%+v) = %q, want %q", x, got, want)
+		}
+	}
+	if pyTitle("not required") != "Not Required" || pyTitle("PARTLY_paid x2y") != "Partly_Paid X2Y" {
+		t.Errorf("title: %q %q", pyTitle("not required"), pyTitle("PARTLY_paid x2y"))
+	}
+	if financeState(planRow{}) != "No payment expected" || financeState(planRow{Delivery: "partner", Payment: "none"}) != "Not started" ||
+		financeState(planRow{Payment: "payment_approved"}) != "Payment Approved" {
+		t.Error("finance state")
+	}
+}

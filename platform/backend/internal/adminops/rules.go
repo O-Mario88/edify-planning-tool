@@ -54,13 +54,23 @@ var rules = func() (r struct {
 	MonitoringStatus       string      `json:"monitoring_status"`
 	ClosedIncidentStatuses []string    `json:"closed_incident_statuses"`
 	TablePageSize          int         `json:"table_page_size"`
-	Limits                 struct {
+	// TeamPlans is Team Plans' door (Admin and Impact Assessment), the
+	// statuses its plan leaves out, how many rows it reads and shows, and
+	// the activity labels.
+	TeamPlans struct {
+		Roles            []string          `json:"roles"`
+		TerminalStatuses []string          `json:"terminal_statuses"`
+		PageSize         int               `json:"page_size"`
+		ReadLimit        int               `json:"read_limit"`
+		ActivityTypes    map[string]string `json:"activity_types"`
+	} `json:"team_plans"`
+	Limits struct {
 		Tickets         int `json:"tickets"`
 		Incidents       int `json:"incidents"`
 		MaintenanceWork int `json:"maintenance_work"`
 	} `json:"limits"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Pages) == 0 || len(r.TicketStatuses) == 0 || r.Limits.Tickets == 0 || r.UntriagedTicketStatus == "" {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Pages) == 0 || len(r.TicketStatuses) == 0 || r.Limits.Tickets == 0 || r.UntriagedTicketStatus == "" || len(r.TeamPlans.Roles) == 0 || r.TeamPlans.ReadLimit == 0 {
 		panic(fmt.Sprintf("adminops: the embedded rules are unreadable: %v", err))
 	}
 	return r

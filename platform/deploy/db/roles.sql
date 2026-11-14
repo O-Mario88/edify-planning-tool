@@ -634,3 +634,7 @@ GRANT SELECT (role, permission_id) ON role_permission TO edify_gateway_ro;
 -- Completion Reviews (internal/plreview): when a completion was submitted for
 -- review, to date its wait. Not its decision or notes.
 GRANT SELECT (activity_id, updated_at) ON activity_completion_verification TO edify_gateway_ro;
+
+-- Team Plans (internal/adminops/teamplans.go): the week a plan item is planned
+-- in, for its week filter and order.
+GRANT SELECT (planned_week) ON activity TO edify_gateway_ro;

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -35,6 +36,12 @@ func NewService(db schooldirectory.Querier) *Service { return &Service{db: db, n
 
 // Build answers the three registers; every other path is not theirs.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == TeamPlansPath {
+		if !slices.Contains(rules.TeamPlans.Roles, p.ActiveRole) {
+			return nil, true, pagegate.ErrNotAvailable
+		}
+		return s.teamPlans(ctx, p, query)
+	}
 	page, ok := rules.Pages[path]
 	if !ok {
 		return nil, false, nil
