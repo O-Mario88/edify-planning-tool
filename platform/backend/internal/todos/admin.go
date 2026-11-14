@@ -198,9 +198,10 @@ func costCatalogueTodos(ctx context.Context, s *Service, r *reader) ([]todo, err
 // administrator while any partner organisation waits for its logins.
 func partnerUserSetupTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if !contains(rules.Admin.PartnerUserSetupRoles, r.role) {
-		// A superuser of another role is offered the row; Go answers
-		// none of them.
-		return nil, errPassOn
+		// The existing may_manage_partner_users also lets any superuser of
+		// another role through; Go decides by role alone (owner, 2026-11-13:
+		// "Can you fix those from the go side").
+		return nil, nil
 	}
 	pending := rules.Admin.PartnerUserSetupPending
 	names, err := s.strings(ctx, `SELECT name FROM partner WHERE deleted_at IS NULL AND user_setup_status = $1
