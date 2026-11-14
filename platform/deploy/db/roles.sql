@@ -621,3 +621,7 @@ GRANT SELECT (area_id, intervention) ON impact_outcome_area_domain TO edify_gate
 -- fired. Not a work item's description or resolution criteria.
 GRANT SELECT (id, severity, affected_route, next_action, incident_id, due_date, completed_at, verification_note) ON admin_ops_work_item TO edify_gateway_ro;
 GRANT SELECT (reference, occurrence_count) ON admin_system_incident TO edify_gateway_ro;
+
+-- The partner's Evidence page (internal/partnerassigned/evidence.go): when each
+-- upload arrived. Not the file, its name or its notes.
+GRANT SELECT (created_at) ON evidence_record TO edify_gateway_ro;

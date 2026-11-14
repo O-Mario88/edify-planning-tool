@@ -1,7 +1,8 @@
 """Write the partner's Assigned Schools and Assigned Activities rules for Go.
 
 Go builds Assigned Schools (/partner/assigned-schools) and Assigned
-Activities (/partner/assigned-activities) (apps.frontend.views.partner_views
+Activities (/partner/assigned-activities) and Evidence (/partner/evidence)
+(apps.frontend.views.partner_views
 ._assigned_intake and pages/partner/assigned_list.html) from what this
 command writes to platform/backend/internal/partnerassigned/rules.json: who
 may open each page; the assignment statuses the queue lists and how many;
@@ -32,7 +33,13 @@ EXPORT_PATH = Path("platform/backend/internal/partnerassigned/rules.json")
 PAGES = {
     "/partner/assigned-schools": "partner_schools",
     "/partner/assigned-activities": "partner_assignments",
+    "/partner/evidence": "partner_evidence",
 }
+
+#: partner_evidence_view: the newest uploads and the completed work still
+#: missing evidence it lists.
+EVIDENCE_LIMIT = 50
+MISSING_EVIDENCE_LIMIT = 10
 
 #: _assigned_intake's queue: these statuses, the newest 300.
 QUEUE_STATUSES = ["assigned", "pending_scheduling", "returned"]
@@ -42,6 +49,8 @@ QUEUE_LIMIT = 300
 def rules() -> dict:
     from django.conf import settings
 
+    from apps.activities.models import ActivityType
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
     from apps.core.pagination import TABLE_PAGE_SIZE
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
@@ -68,6 +77,11 @@ def rules() -> dict:
         "partner_role_bridge": bool(getattr(settings, "PARTNER_ROLE_BRIDGE", False)),
         "page_size": TABLE_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),
+        # The partner's Evidence page (partner_evidence_view).
+        "activity_types": {k: str(v) for k, v in ActivityType.choices},
+        "completed_work_statuses": list(COMPLETED_WORK_STATUSES),
+        "evidence_limit": EVIDENCE_LIMIT,
+        "missing_evidence_limit": MISSING_EVIDENCE_LIMIT,
     }
 
 

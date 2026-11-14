@@ -1,6 +1,9 @@
 package partnerassigned
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func str(s string) *string { return &s }
 
@@ -31,5 +34,33 @@ func TestATeamMemberIsOfferedScheduleAlone(t *testing.T) {
 	cells := page(SchoolsPath, true, false, rows, nil).GetBlocks()[0].GetTable().GetRows()[0].GetCells()
 	if cells[len(cells)-1].GetText() != "Schedule" {
 		t.Fatalf("team member decision %q", cells[len(cells)-1].GetText())
+	}
+}
+
+func TestEvidenceReadsTheMissingWorkAndRecentUploads(t *testing.T) {
+	at := time.Date(2026, 11, 14, 6, 41, 0, 0, time.UTC)
+	r := evidencePage([]upload{{School: str("Kasawo  Primary"), At: at, Quarantined: true}, {At: at}},
+		[]missing{{ID: "a1", Type: "school_visit", School: str("Katosi Primary")}, {ID: "a2", Type: "made_up"}})
+	if got := r.Blocks[0].GetPanel().Items[0].GetText(); got != "2 completed activities missing evidence" {
+		t.Errorf("count: %q", got)
+	}
+	items := r.Blocks[1].GetPanel().Items
+	if len(items) != 4 || items[0].GetText() != "Katosi Primary · "+rules.ActivityTypes["school_visit"] || items[2].GetText() != "Activity · made_up" {
+		t.Errorf("missing: %v", items)
+	}
+	if l := items[1].GetLinks().Links[0]; l.Text != "Upload Evidence" || l.Href != "/activities/a1/evidence" || !l.Drawer {
+		t.Errorf("upload link: %v", l)
+	}
+	recent := r.Blocks[2].GetPanel()
+	if recent.Title != "Recent Uploads" || len(recent.Items) != 6 || recent.Items[0].GetText() != "Kasawo Primary" ||
+		recent.Items[1].GetText() != "14 Nov 2026 09:41" || recent.Items[2].GetText() != "Quarantined" || recent.Items[3].GetText() != "Activity" || recent.Items[5].GetText() != "Received" {
+		t.Errorf("recent: %v", recent.Items)
+	}
+	one := evidencePage(nil, []missing{{ID: "a1", Type: "ssa"}})
+	if got := one.Blocks[0].GetPanel().Items[0].GetText(); got != "1 completed activity missing evidence" {
+		t.Errorf("one: %q", got)
+	}
+	if got := one.Blocks[2].GetPanel().Items[0].GetText(); got != "Evidence you upload for completed activities will appear here." {
+		t.Errorf("no uploads: %q", got)
 	}
 }

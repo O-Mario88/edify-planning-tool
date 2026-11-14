@@ -65,8 +65,14 @@ var rules = func() (r struct {
 	PartnerRoleBridge  bool                `json:"partner_role_bridge"`
 	PageSize           int                 `json:"page_size"`
 	QueryKeysNotPassed []string            `json:"query_keys_not_passed"`
+	// The Evidence page: the activity labels, the statuses that are
+	// completed work, and how many uploads and missing ones it lists.
+	ActivityTypes         map[string]string `json:"activity_types"`
+	CompletedWorkStatuses []string          `json:"completed_work_statuses"`
+	EvidenceLimit         int               `json:"evidence_limit"`
+	MissingEvidenceLimit  int               `json:"missing_evidence_limit"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) != 2 || len(r.QueueStatuses) == 0 || r.QueueLimit == 0 || r.PageSize == 0 {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) != 3 || len(r.CompletedWorkStatuses) == 0 || len(r.QueueStatuses) == 0 || r.QueueLimit == 0 || r.PageSize == 0 {
 		panic(fmt.Sprintf("partnerassigned: the embedded rules are unreadable: %v", err))
 	}
 	return r
@@ -114,6 +120,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	partners, err := s.partnerIDs(ctx, p)
 	if err != nil {
 		return nil, true, err
+	}
+	if path == EvidencePath {
+		return s.evidence(ctx, partners)
 	}
 	member, schools, err := s.teamMember(ctx, p)
 	if err != nil {
