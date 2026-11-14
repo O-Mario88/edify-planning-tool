@@ -36,7 +36,12 @@ var rules = func() (r struct {
 	WorkItemCategories       map[string]string `json:"work_item_categories"`
 	DoneWorkItemStatus       string            `json:"done_work_item_status"`
 	MaintenanceCategories    []string          `json:"maintenance_categories"`
-	Limits                   struct {
+	// Repairs are the Data Repair Center's catalogue, in its order.
+	Repairs []struct {
+		Key, Title, Description, Outcome, Referral string
+		Automatic                                  bool
+	} `json:"repairs"`
+	Limits struct {
 		Tickets         int `json:"tickets"`
 		Incidents       int `json:"incidents"`
 		MaintenanceWork int `json:"maintenance_work"`

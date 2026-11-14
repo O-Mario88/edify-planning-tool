@@ -214,3 +214,31 @@ func maintenancePage(templates []template, open []work) *screensv1.GetPageRespon
 		WebPath: MaintenancePath,
 	}
 }
+
+// repairPage is the Data Repair Center as the feed reads it: each repair's
+// title, its description, outcome and (for a referred one) why, whether it
+// applies itself or is referred, and its Dry Run link. The count of records
+// each affects is drawn beside it but is not a pill, so it is not read.
+func repairPage() *screensv1.GetPageResponse {
+	items := []*screensv1.PageListItem{}
+	for _, r := range rules.Repairs {
+		kind, tone := "Referred", "caution"
+		if r.Automatic {
+			kind, tone = "Automatic", "plain"
+		}
+		lines := []string{r.Description, "Outcome: " + r.Outcome}
+		if r.Referral != "" {
+			lines = append(lines, r.Referral)
+		}
+		it := item(r.Title, lines, []*screensv1.PageBadge{badge(kind, tone)}, "")
+		it.Actions = []*screensv1.PageAction{{Key: "button", Label: "Dry Run", Enabled: true, Href: RepairPath + "?repair=" + r.Key}}
+		items = append(items, it)
+	}
+	if len(items) == 0 {
+		items = append(items, item("No repairs are defined.", nil, nil, ""))
+	}
+	return &screensv1.GetPageResponse{
+		Header: header("Data Repair Center", "Controlled repairs use a dry run first, a reason always, verification and an audit row after. Normal business changes stay in their owning workflow."),
+		Blocks: []*screensv1.PageBlock{list(items)}, WebPath: RepairPath,
+	}
+}

@@ -19,6 +19,7 @@ const (
 	SupportPath     = "/admin-ops/support"
 	IncidentsPath   = "/admin-ops/incidents"
 	MaintenancePath = "/admin-ops/maintenance"
+	RepairPath      = "/data-repair"
 )
 
 // Service answers the registers from the existing database.
@@ -43,6 +44,13 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return s.support(ctx, query.Get("status"))
 	case IncidentsPath:
 		return s.incidents(ctx, query.Get("status"))
+	case RepairPath:
+		if query.Get("repair") != "" {
+			// A dry run writes an audit row (DataRepairService.dry_run): the
+			// existing application answers it.
+			return nil, false, nil
+		}
+		return repairPage(), true, nil
 	}
 	return s.maintenance(ctx)
 }

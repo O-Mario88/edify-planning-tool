@@ -179,8 +179,86 @@
           "page": false
         }
       }
+    },
+    "/data-repair": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": false
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
     }
   },
+  "repairs": [
+    {
+      "automatic": true,
+      "description": "A notification whose condition no longer holds keeps claiming the Admin's attention forever.",
+      "key": "stale_incident_notifications",
+      "outcome": "Each notification is archived; the incident is untouched.",
+      "referral": "",
+      "title": "Notifications for incidents that are already resolved"
+    },
+    {
+      "automatic": true,
+      "description": "A resolved incident stays reopenable; after a month without recurrence it belongs in the closed record.",
+      "key": "long_resolved_incidents",
+      "outcome": "Status moves resolved -> closed. A later recurrence still reopens it, so no history is lost.",
+      "referral": "",
+      "title": "Incidents resolved over 30 days ago and never closed"
+    },
+    {
+      "automatic": false,
+      "description": "The activity will never reach a fund request, so the work is planned but cannot be funded.",
+      "key": "uncosted_scheduled_activities",
+      "outcome": "No automatic change. Each is referred to the role that owns the costing decision.",
+      "referral": "Costing is a business decision with money attached. The platform must never invent a figure, so this repair raises an Admin work item to chase the owning role instead.",
+      "title": "Scheduled activities carrying no cost line"
+    }
+  ],
   "resolvable_ticket_statuses": [
     "fix_ready",
     "verification"
