@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/routes/v1/routes.proto.
  */
 export const file_edify_routes_v1_routes: GenFile = /*@__PURE__*/
-  fileDesc("ChxlZGlmeS9yb3V0ZXMvdjEvcm91dGVzLnByb3RvEg9lZGlmeS5yb3V0ZXMudjEiIQoFUG9pbnQSCwoDbGF0GAEgASgBEgsKA2xuZxgCIAEoASKEAgoJU2Nob29sUGluEhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRjb2RlGAIgASgJEgwKBG5hbWUYAyABKAkSEAoIZGlzdHJpY3QYBCABKAkSDwoHY2x1c3RlchgFIAEoCRIOCgZzdGF0dXMYBiABKAkSEAoIY2F0ZWdvcnkYByABKAkSFwoPbG9jYXRpb25fc3RhdHVzGAggASgJEiUKBXBvaW50GAkgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC2FjdGl2aXR5X2lkGAogASgJEhQKDHBsYW5uZWRfdGltZRgLIAEoCRIYChBjYW5fb3Blbl9wcm9maWxlGAwgASgIIuoBCghSb3V0ZUxlZxISCgpmcm9tX2xhYmVsGAEgASgJEhQKDHRvX3NjaG9vbF9pZBgCIAEoCRIcChRzdHJhaWdodF9saW5lX21ldGVycxgDIAEoAxIWCg5yb2FkX2F2YWlsYWJsZRgEIAEoCBITCgtyb2FkX21ldGVycxgFIAEoAxIUCgxyb2FkX3NlY29uZHMYBiABKAMSGAoQZXN0aW1hdGVfc2Vjb25kcxgHIAEoAxIkCgRwYXRoGAggAygLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC3JvYWRfc3RhdHVzGAkgASgJIuwBCg1JdGluZXJhcnlTdG9wEg0KBW9yZGVyGAEgASgFEioKBnNjaG9vbBgCIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SJgoDbGVnGAMgASgLMhkuZWRpZnkucm91dGVzLnYxLlJvdXRlTGVnEg8KB2Fycml2YWwYBCABKAkSEQoJZGVwYXJ0dXJlGAUgASgJEhUKDXZpc2l0X21pbnV0ZXMYBiABKAUSDgoGbG9ja2VkGAcgASgIEg0KBWZpeGVkGAggASgIEhAKCGNvbmZsaWN0GAkgASgJEgwKBGtpbmQYCiABKAki2QEKC1JvdXRlVG90YWxzEhwKFHN0cmFpZ2h0X2xpbmVfbWV0ZXJzGAEgASgDEhMKC3JvYWRfbWV0ZXJzGAIgASgDEhQKDHJvYWRfc2Vjb25kcxgDIAEoAxIVCg1yb2FkX2NvbXBsZXRlGAQgASgIEhgKEGVzdGltYXRlX3NlY29uZHMYBSABKAMSFQoNdmlzaXRfbWludXRlcxgGIAEoBRIVCg1maWVsZF9taW51dGVzGAcgASgFEhAKCHNlbGVjdGVkGAggASgFEhAKCGZlYXNpYmxlGAkgASgFIogCCglJdGluZXJhcnkSDAoEbW9kZRgBIAEoCRITCgtzdGFydF9sYWJlbBgCIAEoCRIlCgVzdGFydBgDIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBItCgVzdG9wcxgEIAMoCzIeLmVkaWZ5LnJvdXRlcy52MS5JdGluZXJhcnlTdG9wEiwKBnRvdGFscxgFIAEoCzIcLmVkaWZ5LnJvdXRlcy52MS5Sb3V0ZVRvdGFscxIRCgljb25mbGljdHMYBiADKAkSEwoLZXhwbGFuYXRpb24YByABKAkSLAoIdW5wbGFjZWQYCCADKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluIrkBCgpTdWdnZXN0aW9uEioKBnNjaG9vbBgBIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SFAoMYWRkZWRfbWV0ZXJzGAIgASgDEhUKDWFkZGVkX3NlY29uZHMYAyABKAMSDwoHbWVhc3VyZRgEIAEoCRIOCgZyZWFzb24YBSABKAkSDQoFbGFiZWwYBiABKAkSEAoIZWxpZ2libGUYByABKAgSEAoIZml0c19kYXkYCCABKAgiQwoOUHJvdmlkZXJTdGF0dXMSDAoEbmFtZRgBIAEoCRISCgpjb25maWd1cmVkGAIgASgIEg8KB21lc3NhZ2UYAyABKAkiLAoMRmlsdGVyT3B0aW9uEg0KBXZhbHVlGAEgASgJEg0KBWxhYmVsGAIgASgJImMKEkdldEZpZWxkRGF5UmVxdWVzdBIMCgRkYXRlGAEgASgJEhMKC2Rpc3RyaWN0X2lkGAIgASgJEhIKCmNsdXN0ZXJfaWQYAyABKAkSFgoObmVhcl9zY2hvb2xfaWQYBCABKAkinAMKE0dldEZpZWxkRGF5UmVzcG9uc2USDAoEZGF0ZRgBIAEoCRISCgpkYXRlX2xhYmVsGAIgASgJEisKB3BsYW5uZWQYAyADKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEi8KC3JlY29tbWVuZGVkGAQgASgLMhouZWRpZnkucm91dGVzLnYxLkl0aW5lcmFyeRIwCgtzdWdnZXN0aW9ucxgFIAMoCzIbLmVkaWZ5LnJvdXRlcy52MS5TdWdnZXN0aW9uEjEKCHByb3ZpZGVyGAYgASgLMh8uZWRpZnkucm91dGVzLnYxLlByb3ZpZGVyU3RhdHVzEjAKCWRpc3RyaWN0cxgHIAMoCzIdLmVkaWZ5LnJvdXRlcy52MS5GaWx0ZXJPcHRpb24SLwoIY2x1c3RlcnMYCCADKAsyHS5lZGlmeS5yb3V0ZXMudjEuRmlsdGVyT3B0aW9uEhIKCmFyZWFfbGFiZWwYCSABKAkSKQoFZm9jdXMYCiABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluIpkBChBQbGFuUm91dGVSZXF1ZXN0EgwKBGRhdGUYASABKAkSEgoKc2Nob29sX2lkcxgCIAMoCRIMCgRtb2RlGAMgASgJEhkKEWxvY2tlZF9zY2hvb2xfaWRzGAQgAygJEiUKBXN0YXJ0GAUgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC3N0YXJ0X2xhYmVsGAYgASgJInUKEVBsYW5Sb3V0ZVJlc3BvbnNlEi0KCWl0aW5lcmFyeRgBIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5JdGluZXJhcnkSMQoIcHJvdmlkZXIYAiABKAsyHy5lZGlmeS5yb3V0ZXMudjEuUHJvdmlkZXJTdGF0dXMipQEKFEdldFNjaG9vbFBpbnNSZXF1ZXN0EioKCnNvdXRoX3dlc3QYASABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSKgoKbm9ydGhfZWFzdBgCIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBITCgtkaXN0cmljdF9pZBgDIAEoCRISCgpjbHVzdGVyX2lkGAQgASgJEgwKBGRhdGUYBSABKAkiVAoVR2V0U2Nob29sUGluc1Jlc3BvbnNlEigKBHBpbnMYASADKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEhEKCXRydW5jYXRlZBgCIAEoCCJIChhHZXRTY2hvb2xEaXN0YW5jZVJlcXVlc3QSFgoOZnJvbV9zY2hvb2xfaWQYASABKAkSFAoMdG9fc2Nob29sX2lkGAIgASgJIt8BChlHZXRTY2hvb2xEaXN0YW5jZVJlc3BvbnNlEiYKA2xlZxgBIAEoCzIZLmVkaWZ5LnJvdXRlcy52MS5Sb3V0ZUxlZxIoCgRmcm9tGAIgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhImCgJ0bxgDIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SMQoIcHJvdmlkZXIYBCABKAsyHy5lZGlmeS5yb3V0ZXMudjEuUHJvdmlkZXJTdGF0dXMSFQoNY2FsY3VsYXRlZF9hdBgFIAEoCSItChhHZXRTY2hvb2xMb2NhdGlvblJlcXVlc3QSEQoJc2Nob29sX2lkGAEgASgJIosBChlHZXRTY2hvb2xMb2NhdGlvblJlc3BvbnNlEioKBnNjaG9vbBgBIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SFgoObmVhcmJ5X3NjaG9vbHMYAiABKAUSGAoQbmVhcmJ5X3JhZGl1c19rbRgDIAEoARIQCghjYW5fcGxhbhgEIAEoCDL7AwoTUm91dGVQbGFubmVyU2VydmljZRJYCgtHZXRGaWVsZERheRIjLmVkaWZ5LnJvdXRlcy52MS5HZXRGaWVsZERheVJlcXVlc3QaJC5lZGlmeS5yb3V0ZXMudjEuR2V0RmllbGREYXlSZXNwb25zZRJSCglQbGFuUm91dGUSIS5lZGlmeS5yb3V0ZXMudjEuUGxhblJvdXRlUmVxdWVzdBoiLmVkaWZ5LnJvdXRlcy52MS5QbGFuUm91dGVSZXNwb25zZRJeCg1HZXRTY2hvb2xQaW5zEiUuZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbFBpbnNSZXF1ZXN0GiYuZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbFBpbnNSZXNwb25zZRJqChFHZXRTY2hvb2xEaXN0YW5jZRIpLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xEaXN0YW5jZVJlcXVlc3QaKi5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sRGlzdGFuY2VSZXNwb25zZRJqChFHZXRTY2hvb2xMb2NhdGlvbhIpLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xMb2NhdGlvblJlcXVlc3QaKi5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sTG9jYXRpb25SZXNwb25zZULYAQoTY29tLmVkaWZ5LnJvdXRlcy52MUILUm91dGVzUHJvdG9QAVpWZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9yb3V0ZXMvdjE7cm91dGVzdjGiAgNFUliqAg9FZGlmeS5Sb3V0ZXMuVjHKAg9FZGlmeVxSb3V0ZXNcVjHiAhtFZGlmeVxSb3V0ZXNcVjFcR1BCTWV0YWRhdGHqAhFFZGlmeTo6Um91dGVzOjpWMWIGcHJvdG8z");
+  fileDesc("ChxlZGlmeS9yb3V0ZXMvdjEvcm91dGVzLnByb3RvEg9lZGlmeS5yb3V0ZXMudjEiIQoFUG9pbnQSCwoDbGF0GAEgASgBEgsKA2xuZxgCIAEoASKEAgoJU2Nob29sUGluEhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRjb2RlGAIgASgJEgwKBG5hbWUYAyABKAkSEAoIZGlzdHJpY3QYBCABKAkSDwoHY2x1c3RlchgFIAEoCRIOCgZzdGF0dXMYBiABKAkSEAoIY2F0ZWdvcnkYByABKAkSFwoPbG9jYXRpb25fc3RhdHVzGAggASgJEiUKBXBvaW50GAkgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC2FjdGl2aXR5X2lkGAogASgJEhQKDHBsYW5uZWRfdGltZRgLIAEoCRIYChBjYW5fb3Blbl9wcm9maWxlGAwgASgIIuoBCghSb3V0ZUxlZxISCgpmcm9tX2xhYmVsGAEgASgJEhQKDHRvX3NjaG9vbF9pZBgCIAEoCRIcChRzdHJhaWdodF9saW5lX21ldGVycxgDIAEoAxIWCg5yb2FkX2F2YWlsYWJsZRgEIAEoCBITCgtyb2FkX21ldGVycxgFIAEoAxIUCgxyb2FkX3NlY29uZHMYBiABKAMSGAoQZXN0aW1hdGVfc2Vjb25kcxgHIAEoAxIkCgRwYXRoGAggAygLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC3JvYWRfc3RhdHVzGAkgASgJIuwBCg1JdGluZXJhcnlTdG9wEg0KBW9yZGVyGAEgASgFEioKBnNjaG9vbBgCIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SJgoDbGVnGAMgASgLMhkuZWRpZnkucm91dGVzLnYxLlJvdXRlTGVnEg8KB2Fycml2YWwYBCABKAkSEQoJZGVwYXJ0dXJlGAUgASgJEhUKDXZpc2l0X21pbnV0ZXMYBiABKAUSDgoGbG9ja2VkGAcgASgIEg0KBWZpeGVkGAggASgIEhAKCGNvbmZsaWN0GAkgASgJEgwKBGtpbmQYCiABKAki2QEKC1JvdXRlVG90YWxzEhwKFHN0cmFpZ2h0X2xpbmVfbWV0ZXJzGAEgASgDEhMKC3JvYWRfbWV0ZXJzGAIgASgDEhQKDHJvYWRfc2Vjb25kcxgDIAEoAxIVCg1yb2FkX2NvbXBsZXRlGAQgASgIEhgKEGVzdGltYXRlX3NlY29uZHMYBSABKAMSFQoNdmlzaXRfbWludXRlcxgGIAEoBRIVCg1maWVsZF9taW51dGVzGAcgASgFEhAKCHNlbGVjdGVkGAggASgFEhAKCGZlYXNpYmxlGAkgASgFIogCCglJdGluZXJhcnkSDAoEbW9kZRgBIAEoCRITCgtzdGFydF9sYWJlbBgCIAEoCRIlCgVzdGFydBgDIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBItCgVzdG9wcxgEIAMoCzIeLmVkaWZ5LnJvdXRlcy52MS5JdGluZXJhcnlTdG9wEiwKBnRvdGFscxgFIAEoCzIcLmVkaWZ5LnJvdXRlcy52MS5Sb3V0ZVRvdGFscxIRCgljb25mbGljdHMYBiADKAkSEwoLZXhwbGFuYXRpb24YByABKAkSLAoIdW5wbGFjZWQYCCADKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluIrkBCgpTdWdnZXN0aW9uEioKBnNjaG9vbBgBIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SFAoMYWRkZWRfbWV0ZXJzGAIgASgDEhUKDWFkZGVkX3NlY29uZHMYAyABKAMSDwoHbWVhc3VyZRgEIAEoCRIOCgZyZWFzb24YBSABKAkSDQoFbGFiZWwYBiABKAkSEAoIZWxpZ2libGUYByABKAgSEAoIZml0c19kYXkYCCABKAgiQwoOUHJvdmlkZXJTdGF0dXMSDAoEbmFtZRgBIAEoCRISCgpjb25maWd1cmVkGAIgASgIEg8KB21lc3NhZ2UYAyABKAkiLAoMRmlsdGVyT3B0aW9uEg0KBXZhbHVlGAEgASgJEg0KBWxhYmVsGAIgASgJImMKEkdldEZpZWxkRGF5UmVxdWVzdBIMCgRkYXRlGAEgASgJEhMKC2Rpc3RyaWN0X2lkGAIgASgJEhIKCmNsdXN0ZXJfaWQYAyABKAkSFgoObmVhcl9zY2hvb2xfaWQYBCABKAkinAMKE0dldEZpZWxkRGF5UmVzcG9uc2USDAoEZGF0ZRgBIAEoCRISCgpkYXRlX2xhYmVsGAIgASgJEisKB3BsYW5uZWQYAyADKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEi8KC3JlY29tbWVuZGVkGAQgASgLMhouZWRpZnkucm91dGVzLnYxLkl0aW5lcmFyeRIwCgtzdWdnZXN0aW9ucxgFIAMoCzIbLmVkaWZ5LnJvdXRlcy52MS5TdWdnZXN0aW9uEjEKCHByb3ZpZGVyGAYgASgLMh8uZWRpZnkucm91dGVzLnYxLlByb3ZpZGVyU3RhdHVzEjAKCWRpc3RyaWN0cxgHIAMoCzIdLmVkaWZ5LnJvdXRlcy52MS5GaWx0ZXJPcHRpb24SLwoIY2x1c3RlcnMYCCADKAsyHS5lZGlmeS5yb3V0ZXMudjEuRmlsdGVyT3B0aW9uEhIKCmFyZWFfbGFiZWwYCSABKAkSKQoFZm9jdXMYCiABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluIpkBChBQbGFuUm91dGVSZXF1ZXN0EgwKBGRhdGUYASABKAkSEgoKc2Nob29sX2lkcxgCIAMoCRIMCgRtb2RlGAMgASgJEhkKEWxvY2tlZF9zY2hvb2xfaWRzGAQgAygJEiUKBXN0YXJ0GAUgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC3N0YXJ0X2xhYmVsGAYgASgJInUKEVBsYW5Sb3V0ZVJlc3BvbnNlEi0KCWl0aW5lcmFyeRgBIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5JdGluZXJhcnkSMQoIcHJvdmlkZXIYAiABKAsyHy5lZGlmeS5yb3V0ZXMudjEuUHJvdmlkZXJTdGF0dXMipQEKFEdldFNjaG9vbFBpbnNSZXF1ZXN0EioKCnNvdXRoX3dlc3QYASABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSKgoKbm9ydGhfZWFzdBgCIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBITCgtkaXN0cmljdF9pZBgDIAEoCRISCgpjbHVzdGVyX2lkGAQgASgJEgwKBGRhdGUYBSABKAkiVAoVR2V0U2Nob29sUGluc1Jlc3BvbnNlEigKBHBpbnMYASADKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEhEKCXRydW5jYXRlZBgCIAEoCCJIChhHZXRTY2hvb2xEaXN0YW5jZVJlcXVlc3QSFgoOZnJvbV9zY2hvb2xfaWQYASABKAkSFAoMdG9fc2Nob29sX2lkGAIgASgJIt8BChlHZXRTY2hvb2xEaXN0YW5jZVJlc3BvbnNlEiYKA2xlZxgBIAEoCzIZLmVkaWZ5LnJvdXRlcy52MS5Sb3V0ZUxlZxIoCgRmcm9tGAIgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhImCgJ0bxgDIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SMQoIcHJvdmlkZXIYBCABKAsyHy5lZGlmeS5yb3V0ZXMudjEuUHJvdmlkZXJTdGF0dXMSFQoNY2FsY3VsYXRlZF9hdBgFIAEoCSItChhHZXRTY2hvb2xMb2NhdGlvblJlcXVlc3QSEQoJc2Nob29sX2lkGAEgASgJIoECChlHZXRTY2hvb2xMb2NhdGlvblJlc3BvbnNlEioKBnNjaG9vbBgBIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SFgoObmVhcmJ5X3NjaG9vbHMYAiABKAUSGAoQbmVhcmJ5X3JhZGl1c19rbRgDIAEoARIQCghjYW5fcGxhbhgEIAEoCBISCgpjYW5fcmVwb3J0GAUgASgIEjcKDnBlbmRpbmdfcmVwb3J0GAYgASgLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0EhMKC2FjY2Vzc19ub3RlGAcgASgJEhIKCmNhbl9yZXZpZXcYCCABKAgioAMKDkxvY2F0aW9uUmVwb3J0EgoKAmlkGAEgASgJEioKBnNjaG9vbBgCIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SDAoEa2luZBgDIAEoCRIoCghwcm9wb3NlZBgEIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBIUCgxwb2ludF9zb3VyY2UYBSABKAkSEgoKYWNjdXJhY3lfbRgGIAEoARITCgthY2Nlc3Nfbm90ZRgHIAEoCRIMCgRub3RlGAggASgJEigKCHByZXZpb3VzGAkgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhQKDG1vdmVkX21ldGVycxgKIAEoAxIOCgZzdGF0dXMYCyABKAkSGAoQcmVwb3J0ZWRfYnlfbmFtZRgMIAEoCRITCgtyZXBvcnRlZF9hdBgNIAEoCRIYChByZXZpZXdlZF9ieV9uYW1lGA4gASgJEhMKC3Jldmlld2VkX2F0GA8gASgJEhMKC3Jldmlld19ub3RlGBAgASgJEg4KBmlzX293bhgRIAEoCCLOAQobUmVwb3J0U2Nob29sTG9jYXRpb25SZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRraW5kGAIgASgJEigKCHByb3Bvc2VkGAMgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhQKDHBvaW50X3NvdXJjZRgEIAEoCRISCgphY2N1cmFjeV9tGAUgASgBEhMKC2FjY2Vzc19ub3RlGAYgASgJEgwKBG5vdGUYByABKAkSFwoPaWRlbXBvdGVuY3lfa2V5GAggASgJIk8KHFJlcG9ydFNjaG9vbExvY2F0aW9uUmVzcG9uc2USLwoGcmVwb3J0GAEgASgLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0IiwKGkxpc3RMb2NhdGlvblJlcG9ydHNSZXF1ZXN0Eg4KBnN0YXR1cxgBIAEoCSJPChtMaXN0TG9jYXRpb25SZXBvcnRzUmVzcG9uc2USMAoHcmVwb3J0cxgBIAMoCzIfLmVkaWZ5LnJvdXRlcy52MS5Mb2NhdGlvblJlcG9ydCJQChtSZXZpZXdMb2NhdGlvblJlcG9ydFJlcXVlc3QSEQoJcmVwb3J0X2lkGAEgASgJEhAKCGRlY2lzaW9uGAIgASgJEgwKBG5vdGUYAyABKAkiTwocUmV2aWV3TG9jYXRpb25SZXBvcnRSZXNwb25zZRIvCgZyZXBvcnQYASABKAsyHy5lZGlmeS5yb3V0ZXMudjEuTG9jYXRpb25SZXBvcnQy1wYKE1JvdXRlUGxhbm5lclNlcnZpY2USWAoLR2V0RmllbGREYXkSIy5lZGlmeS5yb3V0ZXMudjEuR2V0RmllbGREYXlSZXF1ZXN0GiQuZWRpZnkucm91dGVzLnYxLkdldEZpZWxkRGF5UmVzcG9uc2USUgoJUGxhblJvdXRlEiEuZWRpZnkucm91dGVzLnYxLlBsYW5Sb3V0ZVJlcXVlc3QaIi5lZGlmeS5yb3V0ZXMudjEuUGxhblJvdXRlUmVzcG9uc2USXgoNR2V0U2Nob29sUGlucxIlLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xQaW5zUmVxdWVzdBomLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xQaW5zUmVzcG9uc2USagoRR2V0U2Nob29sRGlzdGFuY2USKS5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sRGlzdGFuY2VSZXF1ZXN0GiouZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbERpc3RhbmNlUmVzcG9uc2USagoRR2V0U2Nob29sTG9jYXRpb24SKS5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sTG9jYXRpb25SZXF1ZXN0GiouZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbExvY2F0aW9uUmVzcG9uc2UScwoUUmVwb3J0U2Nob29sTG9jYXRpb24SLC5lZGlmeS5yb3V0ZXMudjEuUmVwb3J0U2Nob29sTG9jYXRpb25SZXF1ZXN0Gi0uZWRpZnkucm91dGVzLnYxLlJlcG9ydFNjaG9vbExvY2F0aW9uUmVzcG9uc2UScAoTTGlzdExvY2F0aW9uUmVwb3J0cxIrLmVkaWZ5LnJvdXRlcy52MS5MaXN0TG9jYXRpb25SZXBvcnRzUmVxdWVzdBosLmVkaWZ5LnJvdXRlcy52MS5MaXN0TG9jYXRpb25SZXBvcnRzUmVzcG9uc2UScwoUUmV2aWV3TG9jYXRpb25SZXBvcnQSLC5lZGlmeS5yb3V0ZXMudjEuUmV2aWV3TG9jYXRpb25SZXBvcnRSZXF1ZXN0Gi0uZWRpZnkucm91dGVzLnYxLlJldmlld0xvY2F0aW9uUmVwb3J0UmVzcG9uc2VC2AEKE2NvbS5lZGlmeS5yb3V0ZXMudjFCC1JvdXRlc1Byb3RvUAFaVmdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvcm91dGVzL3YxO3JvdXRlc3YxogIDRVJYqgIPRWRpZnkuUm91dGVzLlYxygIPRWRpZnlcUm91dGVzXFYx4gIbRWRpZnlcUm91dGVzXFYxXEdQQk1ldGFkYXRh6gIRRWRpZnk6OlJvdXRlczo6VjFiBnByb3RvMw");
 
 /**
  * @generated from message edify.routes.v1.Point
@@ -836,6 +836,34 @@ export type GetSchoolLocationResponse = Message<"edify.routes.v1.GetSchoolLocati
    * @generated from field: bool can_plan = 4;
    */
   canPlan: boolean;
+
+  /**
+   * The reader may report this school's location (no report is open).
+   *
+   * @generated from field: bool can_report = 5;
+   */
+  canReport: boolean;
+
+  /**
+   * The open report, if one is waiting for review.
+   *
+   * @generated from field: edify.routes.v1.LocationReport pending_report = 6;
+   */
+  pendingReport?: LocationReport | undefined;
+
+  /**
+   * The verified location's access note (a landmark, the road in).
+   *
+   * @generated from field: string access_note = 7;
+   */
+  accessNote: string;
+
+  /**
+   * The reader may review reports.
+   *
+   * @generated from field: bool can_review = 8;
+   */
+  canReview: boolean;
 };
 
 /**
@@ -844,6 +872,276 @@ export type GetSchoolLocationResponse = Message<"edify.routes.v1.GetSchoolLocati
  */
 export const GetSchoolLocationResponseSchema: GenMessage<GetSchoolLocationResponse> = /*@__PURE__*/
   messageDesc(file_edify_routes_v1_routes, 18);
+
+/**
+ * @generated from message edify.routes.v1.LocationReport
+ */
+export type LocationReport = Message<"edify.routes.v1.LocationReport"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: edify.routes.v1.SchoolPin school = 2;
+   */
+  school?: SchoolPin | undefined;
+
+  /**
+   * wrong or missing.
+   *
+   * @generated from field: string kind = 3;
+   */
+  kind: string;
+
+  /**
+   * @generated from field: edify.routes.v1.Point proposed = 4;
+   */
+  proposed?: Point | undefined;
+
+  /**
+   * none, typed or device.
+   *
+   * @generated from field: string point_source = 5;
+   */
+  pointSource: string;
+
+  /**
+   * @generated from field: double accuracy_m = 6;
+   */
+  accuracyM: number;
+
+  /**
+   * @generated from field: string access_note = 7;
+   */
+  accessNote: string;
+
+  /**
+   * @generated from field: string note = 8;
+   */
+  note: string;
+
+  /**
+   * The location shown when it was reported, if there was one.
+   *
+   * @generated from field: edify.routes.v1.Point previous = 9;
+   */
+  previous?: Point | undefined;
+
+  /**
+   * Straight-line metres from the previous point to the proposed one.
+   *
+   * @generated from field: int64 moved_meters = 10;
+   */
+  movedMeters: bigint;
+
+  /**
+   * pending, approved or rejected.
+   *
+   * @generated from field: string status = 11;
+   */
+  status: string;
+
+  /**
+   * @generated from field: string reported_by_name = 12;
+   */
+  reportedByName: string;
+
+  /**
+   * RFC 3339.
+   *
+   * @generated from field: string reported_at = 13;
+   */
+  reportedAt: string;
+
+  /**
+   * @generated from field: string reviewed_by_name = 14;
+   */
+  reviewedByName: string;
+
+  /**
+   * @generated from field: string reviewed_at = 15;
+   */
+  reviewedAt: string;
+
+  /**
+   * @generated from field: string review_note = 16;
+   */
+  reviewNote: string;
+
+  /**
+   * The reader reported it, so may not review it.
+   *
+   * @generated from field: bool is_own = 17;
+   */
+  isOwn: boolean;
+};
+
+/**
+ * Describes the message edify.routes.v1.LocationReport.
+ * Use `create(LocationReportSchema)` to create a new message.
+ */
+export const LocationReportSchema: GenMessage<LocationReport> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 19);
+
+/**
+ * @generated from message edify.routes.v1.ReportSchoolLocationRequest
+ */
+export type ReportSchoolLocationRequest = Message<"edify.routes.v1.ReportSchoolLocationRequest"> & {
+  /**
+   * @generated from field: string school_id = 1;
+   */
+  schoolId: string;
+
+  /**
+   * wrong or missing.
+   *
+   * @generated from field: string kind = 2;
+   */
+  kind: string;
+
+  /**
+   * @generated from field: edify.routes.v1.Point proposed = 3;
+   */
+  proposed?: Point | undefined;
+
+  /**
+   * none, typed or device.
+   *
+   * @generated from field: string point_source = 4;
+   */
+  pointSource: string;
+
+  /**
+   * @generated from field: double accuracy_m = 5;
+   */
+  accuracyM: number;
+
+  /**
+   * @generated from field: string access_note = 6;
+   */
+  accessNote: string;
+
+  /**
+   * @generated from field: string note = 7;
+   */
+  note: string;
+
+  /**
+   * A retry with the same key never files a second report.
+   *
+   * @generated from field: string idempotency_key = 8;
+   */
+  idempotencyKey: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.ReportSchoolLocationRequest.
+ * Use `create(ReportSchoolLocationRequestSchema)` to create a new message.
+ */
+export const ReportSchoolLocationRequestSchema: GenMessage<ReportSchoolLocationRequest> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 20);
+
+/**
+ * @generated from message edify.routes.v1.ReportSchoolLocationResponse
+ */
+export type ReportSchoolLocationResponse = Message<"edify.routes.v1.ReportSchoolLocationResponse"> & {
+  /**
+   * @generated from field: edify.routes.v1.LocationReport report = 1;
+   */
+  report?: LocationReport | undefined;
+};
+
+/**
+ * Describes the message edify.routes.v1.ReportSchoolLocationResponse.
+ * Use `create(ReportSchoolLocationResponseSchema)` to create a new message.
+ */
+export const ReportSchoolLocationResponseSchema: GenMessage<ReportSchoolLocationResponse> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 21);
+
+/**
+ * @generated from message edify.routes.v1.ListLocationReportsRequest
+ */
+export type ListLocationReportsRequest = Message<"edify.routes.v1.ListLocationReportsRequest"> & {
+  /**
+   * pending (the default), approved or rejected.
+   *
+   * @generated from field: string status = 1;
+   */
+  status: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.ListLocationReportsRequest.
+ * Use `create(ListLocationReportsRequestSchema)` to create a new message.
+ */
+export const ListLocationReportsRequestSchema: GenMessage<ListLocationReportsRequest> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 22);
+
+/**
+ * @generated from message edify.routes.v1.ListLocationReportsResponse
+ */
+export type ListLocationReportsResponse = Message<"edify.routes.v1.ListLocationReportsResponse"> & {
+  /**
+   * @generated from field: repeated edify.routes.v1.LocationReport reports = 1;
+   */
+  reports: LocationReport[];
+};
+
+/**
+ * Describes the message edify.routes.v1.ListLocationReportsResponse.
+ * Use `create(ListLocationReportsResponseSchema)` to create a new message.
+ */
+export const ListLocationReportsResponseSchema: GenMessage<ListLocationReportsResponse> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 23);
+
+/**
+ * @generated from message edify.routes.v1.ReviewLocationReportRequest
+ */
+export type ReviewLocationReportRequest = Message<"edify.routes.v1.ReviewLocationReportRequest"> & {
+  /**
+   * @generated from field: string report_id = 1;
+   */
+  reportId: string;
+
+  /**
+   * approve or reject.
+   *
+   * @generated from field: string decision = 2;
+   */
+  decision: string;
+
+  /**
+   * Required to reject; optional to approve.
+   *
+   * @generated from field: string note = 3;
+   */
+  note: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.ReviewLocationReportRequest.
+ * Use `create(ReviewLocationReportRequestSchema)` to create a new message.
+ */
+export const ReviewLocationReportRequestSchema: GenMessage<ReviewLocationReportRequest> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 24);
+
+/**
+ * @generated from message edify.routes.v1.ReviewLocationReportResponse
+ */
+export type ReviewLocationReportResponse = Message<"edify.routes.v1.ReviewLocationReportResponse"> & {
+  /**
+   * @generated from field: edify.routes.v1.LocationReport report = 1;
+   */
+  report?: LocationReport | undefined;
+};
+
+/**
+ * Describes the message edify.routes.v1.ReviewLocationReportResponse.
+ * Use `create(ReviewLocationReportResponseSchema)` to create a new message.
+ */
+export const ReviewLocationReportResponseSchema: GenMessage<ReviewLocationReportResponse> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 25);
 
 /**
  * The Smart Route Planner (owner, 2026-11-14): a field day's schools on a
@@ -915,6 +1213,37 @@ export const RoutePlannerService: GenService<{
     methodKind: "unary";
     input: typeof GetSchoolLocationRequestSchema;
     output: typeof GetSchoolLocationResponseSchema;
+  },
+  /**
+   * Report that a school's location is wrong or missing, with a proposed
+   * point. Nothing changes until someone else approves it.
+   *
+   * @generated from rpc edify.routes.v1.RoutePlannerService.ReportSchoolLocation
+   */
+  reportSchoolLocation: {
+    methodKind: "unary";
+    input: typeof ReportSchoolLocationRequestSchema;
+    output: typeof ReportSchoolLocationResponseSchema;
+  },
+  /**
+   * The reports a reviewer may decide, oldest first.
+   *
+   * @generated from rpc edify.routes.v1.RoutePlannerService.ListLocationReports
+   */
+  listLocationReports: {
+    methodKind: "unary";
+    input: typeof ListLocationReportsRequestSchema;
+    output: typeof ListLocationReportsResponseSchema;
+  },
+  /**
+   * Approve (the point becomes the school's verified location) or reject.
+   *
+   * @generated from rpc edify.routes.v1.RoutePlannerService.ReviewLocationReport
+   */
+  reviewLocationReport: {
+    methodKind: "unary";
+    input: typeof ReviewLocationReportRequestSchema;
+    output: typeof ReviewLocationReportResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_routes_v1_routes, 0);

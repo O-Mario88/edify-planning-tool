@@ -356,3 +356,12 @@ Decision taken from it:
   keyless links.
 - With no routing server reachable, the planner still works on straight-line distances,
   labelled as such, and says road figures are unavailable.
+
+## Addendum 3 — Verify Location (built 2026-11-14)
+
+- Anyone who may open a school's profile can **Report location** (wrong or missing) on the Location & Directions card, with a typed point or the device's own location. The device is asked once, only when **Use my location** is pressed; a reading coarser than 200 m is refused.
+- Reviewers are **Program Lead, CountryDirector and Admin** (Claude's default; the owner may change it). Nobody reviews their own report; a rejection needs a reason. One report per school is open at a time; a retried send never files twice.
+- Approved points live in Go's own schema `field_routes` (`location_report`, `verified_location`; migration `0001_location_verification.sql`, roles in `deploy/db/routes_roles.sql`). The planner reads a verified point first. **The existing `school` and `school_geo_point` rows are never written.**
+- The gateway checks the schema is at its version (`routeschema.Spec.Ready`) and never migrates it; until it is ready, reports answer "not set up on this server yet" and the planner works as before.
+- Screens: profile card (web + app), web `/schools/location-reports`, app **More → Field Routes → Location Reports**.
+- Tested on the local test database only: web 1440 and 390, iPhone 18 Pro simulator (device location), Android Pixel 9 emulator (review). Staging needs `schemactl migrate` on the routes schema with approval.

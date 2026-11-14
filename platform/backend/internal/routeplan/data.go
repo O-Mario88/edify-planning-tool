@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -30,11 +31,45 @@ type school struct {
 
 func (s school) placed() bool { return Placed(s.pin.GetLocationStatus()) }
 
-const schoolCols = `s.id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(d.name, ''), COALESCE(c.name, ''),
-  COALESCE(s.school_type, ''), gp.latitude, gp.longitude, s.latitude, s.longitude`
+// verifiedLocations is whether field_routes (the reviewed locations) is
+// there to read; the gateway sets it once it has checked the schema.
+var verifiedLocations atomic.Bool
 
-const schoolFrom = `school s LEFT JOIN school_geo_point gp ON gp.school_id = s.id
+// schoolCols and schoolFrom read a school with its best point: a verified
+// location (field_routes), a corrected point (school_geo_point), then the
+// directory's own.
+func schoolCols() string {
+	verified := "NULL::float8, NULL::float8"
+	if verifiedLocations.Load() {
+		verified = "vl.lat, vl.lng"
+	}
+	return `s.id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(d.name, ''), COALESCE(c.name, ''),
+  COALESCE(s.school_type, ''), ` + verified + `, gp.latitude, gp.longitude, s.latitude, s.longitude`
+}
+
+func schoolFrom() string {
+	from := `school s LEFT JOIN school_geo_point gp ON gp.school_id = s.id
   LEFT JOIN district d ON d.id = s.district_id LEFT JOIN cluster c ON c.id = s.cluster_id`
+	if verifiedLocations.Load() {
+		from += ` LEFT JOIN field_routes.verified_location vl ON vl.school_id = s.id`
+	}
+	return from
+}
+
+// latExpr and lngExpr are a school's best point in SQL, for viewport filters.
+func latExpr() string {
+	if verifiedLocations.Load() {
+		return "COALESCE(vl.lat, gp.latitude, s.latitude)"
+	}
+	return "COALESCE(gp.latitude, s.latitude)"
+}
+
+func lngExpr() string {
+	if verifiedLocations.Load() {
+		return "COALESCE(vl.lng, gp.longitude, s.longitude)"
+	}
+	return "COALESCE(gp.longitude, s.longitude)"
+}
 
 type args []any
 
@@ -59,10 +94,14 @@ func reach(ctx context.Context, db schooldirectory.Querier, p auth.Principal, no
 func scanSchool(r pgx.CollectableRow, extra ...any) (school, error) {
 	var (
 		id, code, name, district, cluster, kind string
-		geoLat, geoLng, lat, lng                *float64
+		vLat, vLng, geoLat, geoLng, lat, lng    *float64
 	)
-	if err := r.Scan(append([]any{&id, &code, &name, &district, &cluster, &kind, &geoLat, &geoLng, &lat, &lng}, extra...)...); err != nil {
+	if err := r.Scan(append([]any{&id, &code, &name, &district, &cluster, &kind, &vLat, &vLng, &geoLat, &geoLng, &lat, &lng}, extra...)...); err != nil {
 		return school{}, err
+	}
+	// A reviewed location stands before the directory's; it is a corrected point too.
+	if vLat != nil && vLng != nil {
+		geoLat, geoLng = vLat, vLng
 	}
 	at, status := Locate(geoLat, geoLng, lat, lng)
 	label := Rules.SchoolTypes[kind]
@@ -81,8 +120,8 @@ func scanSchool(r pgx.CollectableRow, extra ...any) (school, error) {
 // were planned: those still live, and those done (green).
 func plannedDay(ctx context.Context, db schooldirectory.Querier, owners []string, day time.Time) ([]school, error) {
 	a := &args{}
-	rows, err := db.Query(ctx, `SELECT `+schoolCols+`, a.id, a.status
-FROM activity a JOIN `+schoolFrom+` ON s.id = a.school_id
+	rows, err := db.Query(ctx, `SELECT `+schoolCols()+`, a.id, a.status
+FROM activity a JOIN `+schoolFrom()+` ON s.id = a.school_id
 WHERE a.deleted_at IS NULL AND a.responsible_staff_id = ANY(`+a.add(owners)+`)
   AND a.activity_type = ANY(`+a.add(Rules.VisitTypes)+`) AND a.status <> ALL(`+a.add(Rules.NotLiveStatuses)+`)
   AND (a.scheduled_date AT TIME ZONE 'Africa/Kampala')::date = `+a.add(day.Format(time.DateOnly))+`::date
@@ -128,10 +167,10 @@ func viewport(ctx context.Context, db schooldirectory.Querier, p auth.Principal,
 		return nil, false, err
 	}
 	where += filters(a, district, cluster)
-	lat, lng := "COALESCE(gp.latitude, s.latitude)", "COALESCE(gp.longitude, s.longitude)"
+	lat, lng := latExpr(), lngExpr()
 	where += " AND " + lat + " BETWEEN " + a.add(sw.Lat) + " AND " + a.add(ne.Lat) +
 		" AND " + lng + " BETWEEN " + a.add(sw.Lng) + " AND " + a.add(ne.Lng)
-	rows, err := db.Query(ctx, `SELECT `+schoolCols+` FROM `+schoolFrom+` WHERE `+where+` ORDER BY s.name, s.id LIMIT `+strconv.Itoa(pinLimit+1), *a...)
+	rows, err := db.Query(ctx, `SELECT `+schoolCols()+` FROM `+schoolFrom()+` WHERE `+where+` ORDER BY s.name, s.id LIMIT `+strconv.Itoa(pinLimit+1), *a...)
 	if err != nil {
 		return nil, false, fmt.Errorf("routeplan: reading the schools in view: %w", err)
 	}
@@ -177,10 +216,10 @@ func nearby(ctx context.Context, db schooldirectory.Querier, p auth.Principal, n
 		minLat, maxLat = min(minLat, x.Lat), max(maxLat, x.Lat)
 		minLng, maxLng = min(minLng, x.Lng), max(maxLng, x.Lng)
 	}
-	lat, lng := "COALESCE(gp.latitude, s.latitude)", "COALESCE(gp.longitude, s.longitude)"
+	lat, lng := latExpr(), lngExpr()
 	where += " AND " + lat + " BETWEEN " + a.add(minLat-deg) + " AND " + a.add(maxLat+deg) +
 		" AND " + lng + " BETWEEN " + a.add(minLng-deg) + " AND " + a.add(maxLng+deg)
-	rows, err := db.Query(ctx, `SELECT `+schoolCols+` FROM `+schoolFrom+` WHERE `+where+` ORDER BY s.id LIMIT `+strconv.Itoa(candidateLimit), *a...)
+	rows, err := db.Query(ctx, `SELECT `+schoolCols()+` FROM `+schoolFrom()+` WHERE `+where+` ORDER BY s.id LIMIT `+strconv.Itoa(candidateLimit), *a...)
 	if err != nil {
 		return nil, fmt.Errorf("routeplan: reading the nearby schools: %w", err)
 	}
@@ -211,7 +250,7 @@ func schoolsByID(ctx context.Context, db schooldirectory.Querier, p auth.Princip
 	if err != nil {
 		return nil, err
 	}
-	rows, err := db.Query(ctx, `SELECT `+schoolCols+` FROM `+schoolFrom+` WHERE `+where+` AND s.id = ANY(`+a.add(ids)+`)`, *a...)
+	rows, err := db.Query(ctx, `SELECT `+schoolCols()+` FROM `+schoolFrom()+` WHERE `+where+` AND s.id = ANY(`+a.add(ids)+`)`, *a...)
 	if err != nil {
 		return nil, fmt.Errorf("routeplan: reading the chosen schools: %w", err)
 	}

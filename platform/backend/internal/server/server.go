@@ -79,6 +79,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/reports"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rolesmatrix"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan"
+	routeschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
@@ -239,7 +240,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewNotificationCenterServiceHandler(notificationcenter.NewHandler(notificationcenter.NewService(pool, notificationcenter.EmailConfigured(nil)), logger), options...))
 	mux.Handle(routesv1connect.NewRoutePlannerServiceHandler(routeplan.NewService(pool,
 		routeplan.RouterFor(cfg.Routing.Provider, cfg.Routing.OSRMURL, cfg.Routing.GoogleKey, cfg.Routing.DailyLimit, time.Now),
-		time.Now, logger), options...))
+		time.Now, logger).WithVerification(pool, routesSchemaReady(pool)), options...))
 	mux.Handle(messagingv1connect.NewMessagingServiceHandler(messaging.NewService(pool, time.Now, logger), options...))
 	clusterStore := clusterlead.NewStore(pool)
 	leadership := clusterlead.NewService(clusterStore, time.Now, clusterSchemaReady(pool), logger).
@@ -361,6 +362,12 @@ func LoansSchemaReady(pool *pgxpool.Pool) func(context.Context) error {
 
 // clusterSchemaReady says whether the Cluster Leader Portal's schema is at the
 // version this build needs. It never migrates: `clusterctl migrate` does.
+// routesSchemaReady checks field_routes (Verify Location) is at this
+// build's version; the gateway never migrates it.
+func routesSchemaReady(pool *pgxpool.Pool) func(context.Context) error {
+	return func(ctx context.Context) error { return routeschema.Spec.Ready(ctx, pool) }
+}
+
 func clusterSchemaReady(pool *pgxpool.Pool) func(context.Context) error {
 	return func(ctx context.Context) error {
 		applied, err := schema.Version(ctx, pool)

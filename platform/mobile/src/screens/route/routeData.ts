@@ -12,6 +12,8 @@ import { NavItemSchema, NavSectionSchema } from '../../gen/edify/screens/v1/navi
 
 export const ROUTE_URL = 'route:planner';
 export const ROUTE_DETAILS_URL = 'route:details';
+/** The reviewer's list of location reports (Verify Location). */
+export const LOCATION_REPORTS_URL = 'route:location-reports';
 
 /** The design's dark teal (the planner's chosen controls). */
 export const ROUTE_TEAL = '#0f4f52';
@@ -47,13 +49,16 @@ export function isRouteUrl(url: string): boolean {
   return url === ROUTE_URL || url.startsWith(`${ROUTE_URL}?`) || url === ROUTE_DETAILS_URL || url.startsWith(`${ROUTE_DETAILS_URL}?`);
 }
 
-/** The planner's menu section, or null for a role that does not plan. */
+/** Who reviews location reports (routeplan.ReviewerRoles); the gateway decides. */
+const REVIEWER_ROLES = new Set(['Program Lead', 'CountryDirector', 'Admin']);
+
+/** The planner's menu section, or null for a role that neither plans nor reviews locations. */
 export function routeSection(role: string): NavSection | null {
-  if (!PLANNER_ROLES.has(role)) return null;
-  return create(NavSectionSchema, {
-    label: 'Field Routes',
-    items: [create(NavItemSchema, { label: 'Smart Route Planner', url: ROUTE_URL, native: true })],
-  });
+  const items = [
+    ...(PLANNER_ROLES.has(role) ? [create(NavItemSchema, { label: 'Smart Route Planner', url: ROUTE_URL, native: true })] : []),
+    ...(REVIEWER_ROLES.has(role) ? [create(NavItemSchema, { label: 'Location Reports', url: LOCATION_REPORTS_URL, native: true })] : []),
+  ];
+  return items.length ? create(NavSectionSchema, { label: 'Field Routes', items }) : null;
 }
 
 export interface Figures {

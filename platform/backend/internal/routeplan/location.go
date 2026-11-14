@@ -30,6 +30,7 @@ func (s *Service) GetSchoolLocation(ctx context.Context, req *connect.Request[ro
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "school_id is required")
 	}
 	now := s.now()
+	verify := s.verifyReady(ctx)
 	sc, found, err := schoolByRef(ctx, s, p, ref)
 	if err != nil {
 		return nil, s.fail(ctx, err)
@@ -46,6 +47,15 @@ func (s *Service) GetSchoolLocation(ctx context.Context, req *connect.Request[ro
 		}
 		out.NearbySchools = int32(len(near))
 	}
+	if verify {
+		pending, access, err := s.pendingFor(ctx, p, sc.pin.GetSchoolId())
+		if err != nil {
+			return nil, s.fail(ctx, err)
+		}
+		out.PendingReport, out.AccessNote = pending, access
+		out.CanReport = MayOpenProfile(p.ActiveRole) && pending == nil
+		out.CanReview = MayReview(p.ActiveRole)
+	}
 	return connect.NewResponse(out), nil
 }
 
@@ -58,7 +68,7 @@ func schoolByRef(ctx context.Context, s *Service, p auth.Principal, ref string) 
 		return school{}, false, err
 	}
 	r := a.add(ref)
-	rows, err := s.db.Query(ctx, `SELECT `+schoolCols+` FROM `+schoolFrom+` WHERE `+where+` AND (s.id = `+r+` OR s.school_id = `+r+`) LIMIT 1`, *a...)
+	rows, err := s.db.Query(ctx, `SELECT `+schoolCols()+` FROM `+schoolFrom()+` WHERE `+where+` AND (s.id = `+r+` OR s.school_id = `+r+`) LIMIT 1`, *a...)
 	if err != nil {
 		return school{}, false, fmt.Errorf("routeplan: reading the school: %w", err)
 	}

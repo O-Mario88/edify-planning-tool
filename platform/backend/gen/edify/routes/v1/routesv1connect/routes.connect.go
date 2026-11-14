@@ -48,6 +48,15 @@ const (
 	// RoutePlannerServiceGetSchoolLocationProcedure is the fully-qualified name of the
 	// RoutePlannerService's GetSchoolLocation RPC.
 	RoutePlannerServiceGetSchoolLocationProcedure = "/edify.routes.v1.RoutePlannerService/GetSchoolLocation"
+	// RoutePlannerServiceReportSchoolLocationProcedure is the fully-qualified name of the
+	// RoutePlannerService's ReportSchoolLocation RPC.
+	RoutePlannerServiceReportSchoolLocationProcedure = "/edify.routes.v1.RoutePlannerService/ReportSchoolLocation"
+	// RoutePlannerServiceListLocationReportsProcedure is the fully-qualified name of the
+	// RoutePlannerService's ListLocationReports RPC.
+	RoutePlannerServiceListLocationReportsProcedure = "/edify.routes.v1.RoutePlannerService/ListLocationReports"
+	// RoutePlannerServiceReviewLocationReportProcedure is the fully-qualified name of the
+	// RoutePlannerService's ReviewLocationReport RPC.
+	RoutePlannerServiceReviewLocationReportProcedure = "/edify.routes.v1.RoutePlannerService/ReviewLocationReport"
 )
 
 // RoutePlannerServiceClient is a client for the edify.routes.v1.RoutePlannerService service.
@@ -64,6 +73,13 @@ type RoutePlannerServiceClient interface {
 	GetSchoolDistance(context.Context, *connect.Request[v1.GetSchoolDistanceRequest]) (*connect.Response[v1.GetSchoolDistanceResponse], error)
 	// One school's location for its profile (Location & Directions).
 	GetSchoolLocation(context.Context, *connect.Request[v1.GetSchoolLocationRequest]) (*connect.Response[v1.GetSchoolLocationResponse], error)
+	// Report that a school's location is wrong or missing, with a proposed
+	// point. Nothing changes until someone else approves it.
+	ReportSchoolLocation(context.Context, *connect.Request[v1.ReportSchoolLocationRequest]) (*connect.Response[v1.ReportSchoolLocationResponse], error)
+	// The reports a reviewer may decide, oldest first.
+	ListLocationReports(context.Context, *connect.Request[v1.ListLocationReportsRequest]) (*connect.Response[v1.ListLocationReportsResponse], error)
+	// Approve (the point becomes the school's verified location) or reject.
+	ReviewLocationReport(context.Context, *connect.Request[v1.ReviewLocationReportRequest]) (*connect.Response[v1.ReviewLocationReportResponse], error)
 }
 
 // NewRoutePlannerServiceClient constructs a client for the edify.routes.v1.RoutePlannerService
@@ -107,16 +123,37 @@ func NewRoutePlannerServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(routePlannerServiceMethods.ByName("GetSchoolLocation")),
 			connect.WithClientOptions(opts...),
 		),
+		reportSchoolLocation: connect.NewClient[v1.ReportSchoolLocationRequest, v1.ReportSchoolLocationResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceReportSchoolLocationProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("ReportSchoolLocation")),
+			connect.WithClientOptions(opts...),
+		),
+		listLocationReports: connect.NewClient[v1.ListLocationReportsRequest, v1.ListLocationReportsResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceListLocationReportsProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("ListLocationReports")),
+			connect.WithClientOptions(opts...),
+		),
+		reviewLocationReport: connect.NewClient[v1.ReviewLocationReportRequest, v1.ReviewLocationReportResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceReviewLocationReportProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("ReviewLocationReport")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // routePlannerServiceClient implements RoutePlannerServiceClient.
 type routePlannerServiceClient struct {
-	getFieldDay       *connect.Client[v1.GetFieldDayRequest, v1.GetFieldDayResponse]
-	planRoute         *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
-	getSchoolPins     *connect.Client[v1.GetSchoolPinsRequest, v1.GetSchoolPinsResponse]
-	getSchoolDistance *connect.Client[v1.GetSchoolDistanceRequest, v1.GetSchoolDistanceResponse]
-	getSchoolLocation *connect.Client[v1.GetSchoolLocationRequest, v1.GetSchoolLocationResponse]
+	getFieldDay          *connect.Client[v1.GetFieldDayRequest, v1.GetFieldDayResponse]
+	planRoute            *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
+	getSchoolPins        *connect.Client[v1.GetSchoolPinsRequest, v1.GetSchoolPinsResponse]
+	getSchoolDistance    *connect.Client[v1.GetSchoolDistanceRequest, v1.GetSchoolDistanceResponse]
+	getSchoolLocation    *connect.Client[v1.GetSchoolLocationRequest, v1.GetSchoolLocationResponse]
+	reportSchoolLocation *connect.Client[v1.ReportSchoolLocationRequest, v1.ReportSchoolLocationResponse]
+	listLocationReports  *connect.Client[v1.ListLocationReportsRequest, v1.ListLocationReportsResponse]
+	reviewLocationReport *connect.Client[v1.ReviewLocationReportRequest, v1.ReviewLocationReportResponse]
 }
 
 // GetFieldDay calls edify.routes.v1.RoutePlannerService.GetFieldDay.
@@ -144,6 +181,21 @@ func (c *routePlannerServiceClient) GetSchoolLocation(ctx context.Context, req *
 	return c.getSchoolLocation.CallUnary(ctx, req)
 }
 
+// ReportSchoolLocation calls edify.routes.v1.RoutePlannerService.ReportSchoolLocation.
+func (c *routePlannerServiceClient) ReportSchoolLocation(ctx context.Context, req *connect.Request[v1.ReportSchoolLocationRequest]) (*connect.Response[v1.ReportSchoolLocationResponse], error) {
+	return c.reportSchoolLocation.CallUnary(ctx, req)
+}
+
+// ListLocationReports calls edify.routes.v1.RoutePlannerService.ListLocationReports.
+func (c *routePlannerServiceClient) ListLocationReports(ctx context.Context, req *connect.Request[v1.ListLocationReportsRequest]) (*connect.Response[v1.ListLocationReportsResponse], error) {
+	return c.listLocationReports.CallUnary(ctx, req)
+}
+
+// ReviewLocationReport calls edify.routes.v1.RoutePlannerService.ReviewLocationReport.
+func (c *routePlannerServiceClient) ReviewLocationReport(ctx context.Context, req *connect.Request[v1.ReviewLocationReportRequest]) (*connect.Response[v1.ReviewLocationReportResponse], error) {
+	return c.reviewLocationReport.CallUnary(ctx, req)
+}
+
 // RoutePlannerServiceHandler is an implementation of the edify.routes.v1.RoutePlannerService
 // service.
 type RoutePlannerServiceHandler interface {
@@ -159,6 +211,13 @@ type RoutePlannerServiceHandler interface {
 	GetSchoolDistance(context.Context, *connect.Request[v1.GetSchoolDistanceRequest]) (*connect.Response[v1.GetSchoolDistanceResponse], error)
 	// One school's location for its profile (Location & Directions).
 	GetSchoolLocation(context.Context, *connect.Request[v1.GetSchoolLocationRequest]) (*connect.Response[v1.GetSchoolLocationResponse], error)
+	// Report that a school's location is wrong or missing, with a proposed
+	// point. Nothing changes until someone else approves it.
+	ReportSchoolLocation(context.Context, *connect.Request[v1.ReportSchoolLocationRequest]) (*connect.Response[v1.ReportSchoolLocationResponse], error)
+	// The reports a reviewer may decide, oldest first.
+	ListLocationReports(context.Context, *connect.Request[v1.ListLocationReportsRequest]) (*connect.Response[v1.ListLocationReportsResponse], error)
+	// Approve (the point becomes the school's verified location) or reject.
+	ReviewLocationReport(context.Context, *connect.Request[v1.ReviewLocationReportRequest]) (*connect.Response[v1.ReviewLocationReportResponse], error)
 }
 
 // NewRoutePlannerServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -198,6 +257,24 @@ func NewRoutePlannerServiceHandler(svc RoutePlannerServiceHandler, opts ...conne
 		connect.WithSchema(routePlannerServiceMethods.ByName("GetSchoolLocation")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routePlannerServiceReportSchoolLocationHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceReportSchoolLocationProcedure,
+		svc.ReportSchoolLocation,
+		connect.WithSchema(routePlannerServiceMethods.ByName("ReportSchoolLocation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routePlannerServiceListLocationReportsHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceListLocationReportsProcedure,
+		svc.ListLocationReports,
+		connect.WithSchema(routePlannerServiceMethods.ByName("ListLocationReports")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routePlannerServiceReviewLocationReportHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceReviewLocationReportProcedure,
+		svc.ReviewLocationReport,
+		connect.WithSchema(routePlannerServiceMethods.ByName("ReviewLocationReport")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.routes.v1.RoutePlannerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RoutePlannerServiceGetFieldDayProcedure:
@@ -210,6 +287,12 @@ func NewRoutePlannerServiceHandler(svc RoutePlannerServiceHandler, opts ...conne
 			routePlannerServiceGetSchoolDistanceHandler.ServeHTTP(w, r)
 		case RoutePlannerServiceGetSchoolLocationProcedure:
 			routePlannerServiceGetSchoolLocationHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceReportSchoolLocationProcedure:
+			routePlannerServiceReportSchoolLocationHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceListLocationReportsProcedure:
+			routePlannerServiceListLocationReportsHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceReviewLocationReportProcedure:
+			routePlannerServiceReviewLocationReportHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -237,4 +320,16 @@ func (UnimplementedRoutePlannerServiceHandler) GetSchoolDistance(context.Context
 
 func (UnimplementedRoutePlannerServiceHandler) GetSchoolLocation(context.Context, *connect.Request[v1.GetSchoolLocationRequest]) (*connect.Response[v1.GetSchoolLocationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.GetSchoolLocation is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) ReportSchoolLocation(context.Context, *connect.Request[v1.ReportSchoolLocationRequest]) (*connect.Response[v1.ReportSchoolLocationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.ReportSchoolLocation is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) ListLocationReports(context.Context, *connect.Request[v1.ListLocationReportsRequest]) (*connect.Response[v1.ListLocationReportsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.ListLocationReports is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) ReviewLocationReport(context.Context, *connect.Request[v1.ReviewLocationReportRequest]) (*connect.Response[v1.ReviewLocationReportResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.ReviewLocationReport is not implemented"))
 }

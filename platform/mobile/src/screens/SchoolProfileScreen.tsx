@@ -177,6 +177,9 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool, backLabel,
           scrollEventThrottle={16}
           contentContainerStyle={styles.page}
           keyboardShouldPersistTaps="handled"
+          // The Report location form sits at the foot of the profile: a
+          // focused field scrolls above the keyboard (iOS; Android resizes).
+          automaticallyAdjustKeyboardInsets
         >
           <Pressable onPress={onBack} accessibilityRole="link" hitSlop={8} style={styles.back}>
             <ChevronLeft size={14} color={colors.link} />

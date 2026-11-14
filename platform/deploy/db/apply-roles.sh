@@ -57,6 +57,8 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/cluster_roles.sql"
 # The School Loan Application Portal's Go-owned schema and its roles.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/loan_roles.sql"
+# The Smart Route Planner's Go-owned schema (location reports) and its roles.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/routes_roles.sql"
 # Signing in, which Go owns: exactly the existing sign-in's columns.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/identity_roles.sql"
 # The Decision Log's narrow view of the audit chain: decision rows, subject keys only.

@@ -30,6 +30,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dbguard"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ownedschema"
+	routeschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan/schema"
 )
 
 const (
@@ -40,6 +41,7 @@ const (
 var schemas = map[string]ownedschema.Spec{
 	clusterschema.Name: clusterschema.Spec,
 	loanschema.Name:    loanschema.Spec,
+	routeschema.Name:   routeschema.Spec,
 }
 
 func main() {

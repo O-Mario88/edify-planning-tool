@@ -29,6 +29,13 @@ service RoutePlannerService {
   rpc GetSchoolDistance(GetSchoolDistanceRequest) returns (GetSchoolDistanceResponse);
   // One school's location for its profile (Location & Directions).
   rpc GetSchoolLocation(GetSchoolLocationRequest) returns (GetSchoolLocationResponse);
+  // Report that a school's location is wrong or missing, with a proposed
+  // point. Nothing changes until someone else approves it.
+  rpc ReportSchoolLocation(ReportSchoolLocationRequest) returns (ReportSchoolLocationResponse);
+  // The reports a reviewer may decide, oldest first.
+  rpc ListLocationReports(ListLocationReportsRequest) returns (ListLocationReportsResponse);
+  // Approve (the point becomes the school's verified location) or reject.
+  rpc ReviewLocationReport(ReviewLocationReportRequest) returns (ReviewLocationReportResponse);
 }
 
 message Point {
@@ -235,4 +242,78 @@ message GetSchoolLocationResponse {
   double nearby_radius_km = 3;
   // The reader may open the route planner.
   bool can_plan = 4;
+  // The reader may report this school's location (no report is open).
+  bool can_report = 5;
+  // The open report, if one is waiting for review.
+  LocationReport pending_report = 6;
+  // The verified location's access note (a landmark, the road in).
+  string access_note = 7;
+  // The reader may review reports.
+  bool can_review = 8;
+}
+
+message LocationReport {
+  string id = 1;
+  SchoolPin school = 2;
+  // wrong or missing.
+  string kind = 3;
+  Point proposed = 4;
+  // none, typed or device.
+  string point_source = 5;
+  double accuracy_m = 6;
+  string access_note = 7;
+  string note = 8;
+  // The location shown when it was reported, if there was one.
+  Point previous = 9;
+  // Straight-line metres from the previous point to the proposed one.
+  int64 moved_meters = 10;
+  // pending, approved or rejected.
+  string status = 11;
+  string reported_by_name = 12;
+  // RFC 3339.
+  string reported_at = 13;
+  string reviewed_by_name = 14;
+  string reviewed_at = 15;
+  string review_note = 16;
+  // The reader reported it, so may not review it.
+  bool is_own = 17;
+}
+
+message ReportSchoolLocationRequest {
+  string school_id = 1;
+  // wrong or missing.
+  string kind = 2;
+  Point proposed = 3;
+  // none, typed or device.
+  string point_source = 4;
+  double accuracy_m = 5;
+  string access_note = 6;
+  string note = 7;
+  // A retry with the same key never files a second report.
+  string idempotency_key = 8;
+}
+
+message ReportSchoolLocationResponse {
+  LocationReport report = 1;
+}
+
+message ListLocationReportsRequest {
+  // pending (the default), approved or rejected.
+  string status = 1;
+}
+
+message ListLocationReportsResponse {
+  repeated LocationReport reports = 1;
+}
+
+message ReviewLocationReportRequest {
+  string report_id = 1;
+  // approve or reject.
+  string decision = 2;
+  // Required to reject; optional to approve.
+  string note = 3;
+}
+
+message ReviewLocationReportResponse {
+  LocationReport report = 1;
 }

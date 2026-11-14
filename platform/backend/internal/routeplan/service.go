@@ -20,6 +20,8 @@ type Service struct {
 	name   string
 	now    func() time.Time
 	logger *slog.Logger
+	// verify is the hold on field_routes (location reports); nil when off.
+	verify *verification
 }
 
 // RouterFor is the provider the configuration names, guarded. Every
@@ -48,6 +50,7 @@ func (s *Service) reader(ctx context.Context) (auth.Principal, error) {
 	if !ok {
 		return p, apierr.New(ctx, connect.CodeUnauthenticated, apierr.ReasonAuthMissing, "sign in first")
 	}
+	s.verifyReady(ctx)
 	if !MayPlan(p.ActiveRole) {
 		return p, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
 			"Access Denied: Your active role does not have permission to plan field routes.")

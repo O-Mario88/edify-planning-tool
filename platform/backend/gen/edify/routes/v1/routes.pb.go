@@ -1519,7 +1519,15 @@ type GetSchoolLocationResponse struct {
 	NearbySchools  int32   `protobuf:"varint,2,opt,name=nearby_schools,json=nearbySchools,proto3" json:"nearby_schools,omitempty"`
 	NearbyRadiusKm float64 `protobuf:"fixed64,3,opt,name=nearby_radius_km,json=nearbyRadiusKm,proto3" json:"nearby_radius_km,omitempty"`
 	// The reader may open the route planner.
-	CanPlan       bool `protobuf:"varint,4,opt,name=can_plan,json=canPlan,proto3" json:"can_plan,omitempty"`
+	CanPlan bool `protobuf:"varint,4,opt,name=can_plan,json=canPlan,proto3" json:"can_plan,omitempty"`
+	// The reader may report this school's location (no report is open).
+	CanReport bool `protobuf:"varint,5,opt,name=can_report,json=canReport,proto3" json:"can_report,omitempty"`
+	// The open report, if one is waiting for review.
+	PendingReport *LocationReport `protobuf:"bytes,6,opt,name=pending_report,json=pendingReport,proto3" json:"pending_report,omitempty"`
+	// The verified location's access note (a landmark, the road in).
+	AccessNote string `protobuf:"bytes,7,opt,name=access_note,json=accessNote,proto3" json:"access_note,omitempty"`
+	// The reader may review reports.
+	CanReview     bool `protobuf:"varint,8,opt,name=can_review,json=canReview,proto3" json:"can_review,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1580,6 +1588,555 @@ func (x *GetSchoolLocationResponse) GetCanPlan() bool {
 		return x.CanPlan
 	}
 	return false
+}
+
+func (x *GetSchoolLocationResponse) GetCanReport() bool {
+	if x != nil {
+		return x.CanReport
+	}
+	return false
+}
+
+func (x *GetSchoolLocationResponse) GetPendingReport() *LocationReport {
+	if x != nil {
+		return x.PendingReport
+	}
+	return nil
+}
+
+func (x *GetSchoolLocationResponse) GetAccessNote() string {
+	if x != nil {
+		return x.AccessNote
+	}
+	return ""
+}
+
+func (x *GetSchoolLocationResponse) GetCanReview() bool {
+	if x != nil {
+		return x.CanReview
+	}
+	return false
+}
+
+type LocationReport struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	School *SchoolPin             `protobuf:"bytes,2,opt,name=school,proto3" json:"school,omitempty"`
+	// wrong or missing.
+	Kind     string `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	Proposed *Point `protobuf:"bytes,4,opt,name=proposed,proto3" json:"proposed,omitempty"`
+	// none, typed or device.
+	PointSource string  `protobuf:"bytes,5,opt,name=point_source,json=pointSource,proto3" json:"point_source,omitempty"`
+	AccuracyM   float64 `protobuf:"fixed64,6,opt,name=accuracy_m,json=accuracyM,proto3" json:"accuracy_m,omitempty"`
+	AccessNote  string  `protobuf:"bytes,7,opt,name=access_note,json=accessNote,proto3" json:"access_note,omitempty"`
+	Note        string  `protobuf:"bytes,8,opt,name=note,proto3" json:"note,omitempty"`
+	// The location shown when it was reported, if there was one.
+	Previous *Point `protobuf:"bytes,9,opt,name=previous,proto3" json:"previous,omitempty"`
+	// Straight-line metres from the previous point to the proposed one.
+	MovedMeters int64 `protobuf:"varint,10,opt,name=moved_meters,json=movedMeters,proto3" json:"moved_meters,omitempty"`
+	// pending, approved or rejected.
+	Status         string `protobuf:"bytes,11,opt,name=status,proto3" json:"status,omitempty"`
+	ReportedByName string `protobuf:"bytes,12,opt,name=reported_by_name,json=reportedByName,proto3" json:"reported_by_name,omitempty"`
+	// RFC 3339.
+	ReportedAt     string `protobuf:"bytes,13,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	ReviewedByName string `protobuf:"bytes,14,opt,name=reviewed_by_name,json=reviewedByName,proto3" json:"reviewed_by_name,omitempty"`
+	ReviewedAt     string `protobuf:"bytes,15,opt,name=reviewed_at,json=reviewedAt,proto3" json:"reviewed_at,omitempty"`
+	ReviewNote     string `protobuf:"bytes,16,opt,name=review_note,json=reviewNote,proto3" json:"review_note,omitempty"`
+	// The reader reported it, so may not review it.
+	IsOwn         bool `protobuf:"varint,17,opt,name=is_own,json=isOwn,proto3" json:"is_own,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LocationReport) Reset() {
+	*x = LocationReport{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LocationReport) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LocationReport) ProtoMessage() {}
+
+func (x *LocationReport) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LocationReport.ProtoReflect.Descriptor instead.
+func (*LocationReport) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *LocationReport) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *LocationReport) GetSchool() *SchoolPin {
+	if x != nil {
+		return x.School
+	}
+	return nil
+}
+
+func (x *LocationReport) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *LocationReport) GetProposed() *Point {
+	if x != nil {
+		return x.Proposed
+	}
+	return nil
+}
+
+func (x *LocationReport) GetPointSource() string {
+	if x != nil {
+		return x.PointSource
+	}
+	return ""
+}
+
+func (x *LocationReport) GetAccuracyM() float64 {
+	if x != nil {
+		return x.AccuracyM
+	}
+	return 0
+}
+
+func (x *LocationReport) GetAccessNote() string {
+	if x != nil {
+		return x.AccessNote
+	}
+	return ""
+}
+
+func (x *LocationReport) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *LocationReport) GetPrevious() *Point {
+	if x != nil {
+		return x.Previous
+	}
+	return nil
+}
+
+func (x *LocationReport) GetMovedMeters() int64 {
+	if x != nil {
+		return x.MovedMeters
+	}
+	return 0
+}
+
+func (x *LocationReport) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *LocationReport) GetReportedByName() string {
+	if x != nil {
+		return x.ReportedByName
+	}
+	return ""
+}
+
+func (x *LocationReport) GetReportedAt() string {
+	if x != nil {
+		return x.ReportedAt
+	}
+	return ""
+}
+
+func (x *LocationReport) GetReviewedByName() string {
+	if x != nil {
+		return x.ReviewedByName
+	}
+	return ""
+}
+
+func (x *LocationReport) GetReviewedAt() string {
+	if x != nil {
+		return x.ReviewedAt
+	}
+	return ""
+}
+
+func (x *LocationReport) GetReviewNote() string {
+	if x != nil {
+		return x.ReviewNote
+	}
+	return ""
+}
+
+func (x *LocationReport) GetIsOwn() bool {
+	if x != nil {
+		return x.IsOwn
+	}
+	return false
+}
+
+type ReportSchoolLocationRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	SchoolId string                 `protobuf:"bytes,1,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
+	// wrong or missing.
+	Kind     string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	Proposed *Point `protobuf:"bytes,3,opt,name=proposed,proto3" json:"proposed,omitempty"`
+	// none, typed or device.
+	PointSource string  `protobuf:"bytes,4,opt,name=point_source,json=pointSource,proto3" json:"point_source,omitempty"`
+	AccuracyM   float64 `protobuf:"fixed64,5,opt,name=accuracy_m,json=accuracyM,proto3" json:"accuracy_m,omitempty"`
+	AccessNote  string  `protobuf:"bytes,6,opt,name=access_note,json=accessNote,proto3" json:"access_note,omitempty"`
+	Note        string  `protobuf:"bytes,7,opt,name=note,proto3" json:"note,omitempty"`
+	// A retry with the same key never files a second report.
+	IdempotencyKey string `protobuf:"bytes,8,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ReportSchoolLocationRequest) Reset() {
+	*x = ReportSchoolLocationRequest{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportSchoolLocationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportSchoolLocationRequest) ProtoMessage() {}
+
+func (x *ReportSchoolLocationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportSchoolLocationRequest.ProtoReflect.Descriptor instead.
+func (*ReportSchoolLocationRequest) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ReportSchoolLocationRequest) GetSchoolId() string {
+	if x != nil {
+		return x.SchoolId
+	}
+	return ""
+}
+
+func (x *ReportSchoolLocationRequest) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *ReportSchoolLocationRequest) GetProposed() *Point {
+	if x != nil {
+		return x.Proposed
+	}
+	return nil
+}
+
+func (x *ReportSchoolLocationRequest) GetPointSource() string {
+	if x != nil {
+		return x.PointSource
+	}
+	return ""
+}
+
+func (x *ReportSchoolLocationRequest) GetAccuracyM() float64 {
+	if x != nil {
+		return x.AccuracyM
+	}
+	return 0
+}
+
+func (x *ReportSchoolLocationRequest) GetAccessNote() string {
+	if x != nil {
+		return x.AccessNote
+	}
+	return ""
+}
+
+func (x *ReportSchoolLocationRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *ReportSchoolLocationRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
+}
+
+type ReportSchoolLocationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Report        *LocationReport        `protobuf:"bytes,1,opt,name=report,proto3" json:"report,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReportSchoolLocationResponse) Reset() {
+	*x = ReportSchoolLocationResponse{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportSchoolLocationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportSchoolLocationResponse) ProtoMessage() {}
+
+func (x *ReportSchoolLocationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportSchoolLocationResponse.ProtoReflect.Descriptor instead.
+func (*ReportSchoolLocationResponse) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ReportSchoolLocationResponse) GetReport() *LocationReport {
+	if x != nil {
+		return x.Report
+	}
+	return nil
+}
+
+type ListLocationReportsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// pending (the default), approved or rejected.
+	Status        string `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListLocationReportsRequest) Reset() {
+	*x = ListLocationReportsRequest{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListLocationReportsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListLocationReportsRequest) ProtoMessage() {}
+
+func (x *ListLocationReportsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListLocationReportsRequest.ProtoReflect.Descriptor instead.
+func (*ListLocationReportsRequest) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ListLocationReportsRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type ListLocationReportsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Reports       []*LocationReport      `protobuf:"bytes,1,rep,name=reports,proto3" json:"reports,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListLocationReportsResponse) Reset() {
+	*x = ListLocationReportsResponse{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListLocationReportsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListLocationReportsResponse) ProtoMessage() {}
+
+func (x *ListLocationReportsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListLocationReportsResponse.ProtoReflect.Descriptor instead.
+func (*ListLocationReportsResponse) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ListLocationReportsResponse) GetReports() []*LocationReport {
+	if x != nil {
+		return x.Reports
+	}
+	return nil
+}
+
+type ReviewLocationReportRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	ReportId string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
+	// approve or reject.
+	Decision string `protobuf:"bytes,2,opt,name=decision,proto3" json:"decision,omitempty"`
+	// Required to reject; optional to approve.
+	Note          string `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewLocationReportRequest) Reset() {
+	*x = ReviewLocationReportRequest{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewLocationReportRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewLocationReportRequest) ProtoMessage() {}
+
+func (x *ReviewLocationReportRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewLocationReportRequest.ProtoReflect.Descriptor instead.
+func (*ReviewLocationReportRequest) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ReviewLocationReportRequest) GetReportId() string {
+	if x != nil {
+		return x.ReportId
+	}
+	return ""
+}
+
+func (x *ReviewLocationReportRequest) GetDecision() string {
+	if x != nil {
+		return x.Decision
+	}
+	return ""
+}
+
+func (x *ReviewLocationReportRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+type ReviewLocationReportResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Report        *LocationReport        `protobuf:"bytes,1,opt,name=report,proto3" json:"report,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewLocationReportResponse) Reset() {
+	*x = ReviewLocationReportResponse{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewLocationReportResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewLocationReportResponse) ProtoMessage() {}
+
+func (x *ReviewLocationReportResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewLocationReportResponse.ProtoReflect.Descriptor instead.
+func (*ReviewLocationReportResponse) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ReviewLocationReportResponse) GetReport() *LocationReport {
+	if x != nil {
+		return x.Report
+	}
+	return nil
 }
 
 var File_edify_routes_v1_routes_proto protoreflect.FileDescriptor
@@ -1728,18 +2285,75 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"\bprovider\x18\x04 \x01(\v2\x1f.edify.routes.v1.ProviderStatusR\bprovider\x12#\n" +
 	"\rcalculated_at\x18\x05 \x01(\tR\fcalculatedAt\"7\n" +
 	"\x18GetSchoolLocationRequest\x12\x1b\n" +
-	"\tschool_id\x18\x01 \x01(\tR\bschoolId\"\xbb\x01\n" +
+	"\tschool_id\x18\x01 \x01(\tR\bschoolId\"\xe2\x02\n" +
 	"\x19GetSchoolLocationResponse\x122\n" +
 	"\x06school\x18\x01 \x01(\v2\x1a.edify.routes.v1.SchoolPinR\x06school\x12%\n" +
 	"\x0enearby_schools\x18\x02 \x01(\x05R\rnearbySchools\x12(\n" +
 	"\x10nearby_radius_km\x18\x03 \x01(\x01R\x0enearbyRadiusKm\x12\x19\n" +
-	"\bcan_plan\x18\x04 \x01(\bR\acanPlan2\xfb\x03\n" +
+	"\bcan_plan\x18\x04 \x01(\bR\acanPlan\x12\x1d\n" +
+	"\n" +
+	"can_report\x18\x05 \x01(\bR\tcanReport\x12F\n" +
+	"\x0epending_report\x18\x06 \x01(\v2\x1f.edify.routes.v1.LocationReportR\rpendingReport\x12\x1f\n" +
+	"\vaccess_note\x18\a \x01(\tR\n" +
+	"accessNote\x12\x1d\n" +
+	"\n" +
+	"can_review\x18\b \x01(\bR\tcanReview\"\xd0\x04\n" +
+	"\x0eLocationReport\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x122\n" +
+	"\x06school\x18\x02 \x01(\v2\x1a.edify.routes.v1.SchoolPinR\x06school\x12\x12\n" +
+	"\x04kind\x18\x03 \x01(\tR\x04kind\x122\n" +
+	"\bproposed\x18\x04 \x01(\v2\x16.edify.routes.v1.PointR\bproposed\x12!\n" +
+	"\fpoint_source\x18\x05 \x01(\tR\vpointSource\x12\x1d\n" +
+	"\n" +
+	"accuracy_m\x18\x06 \x01(\x01R\taccuracyM\x12\x1f\n" +
+	"\vaccess_note\x18\a \x01(\tR\n" +
+	"accessNote\x12\x12\n" +
+	"\x04note\x18\b \x01(\tR\x04note\x122\n" +
+	"\bprevious\x18\t \x01(\v2\x16.edify.routes.v1.PointR\bprevious\x12!\n" +
+	"\fmoved_meters\x18\n" +
+	" \x01(\x03R\vmovedMeters\x12\x16\n" +
+	"\x06status\x18\v \x01(\tR\x06status\x12(\n" +
+	"\x10reported_by_name\x18\f \x01(\tR\x0ereportedByName\x12\x1f\n" +
+	"\vreported_at\x18\r \x01(\tR\n" +
+	"reportedAt\x12(\n" +
+	"\x10reviewed_by_name\x18\x0e \x01(\tR\x0ereviewedByName\x12\x1f\n" +
+	"\vreviewed_at\x18\x0f \x01(\tR\n" +
+	"reviewedAt\x12\x1f\n" +
+	"\vreview_note\x18\x10 \x01(\tR\n" +
+	"reviewNote\x12\x15\n" +
+	"\x06is_own\x18\x11 \x01(\bR\x05isOwn\"\xa2\x02\n" +
+	"\x1bReportSchoolLocationRequest\x12\x1b\n" +
+	"\tschool_id\x18\x01 \x01(\tR\bschoolId\x12\x12\n" +
+	"\x04kind\x18\x02 \x01(\tR\x04kind\x122\n" +
+	"\bproposed\x18\x03 \x01(\v2\x16.edify.routes.v1.PointR\bproposed\x12!\n" +
+	"\fpoint_source\x18\x04 \x01(\tR\vpointSource\x12\x1d\n" +
+	"\n" +
+	"accuracy_m\x18\x05 \x01(\x01R\taccuracyM\x12\x1f\n" +
+	"\vaccess_note\x18\x06 \x01(\tR\n" +
+	"accessNote\x12\x12\n" +
+	"\x04note\x18\a \x01(\tR\x04note\x12'\n" +
+	"\x0fidempotency_key\x18\b \x01(\tR\x0eidempotencyKey\"W\n" +
+	"\x1cReportSchoolLocationResponse\x127\n" +
+	"\x06report\x18\x01 \x01(\v2\x1f.edify.routes.v1.LocationReportR\x06report\"4\n" +
+	"\x1aListLocationReportsRequest\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\"X\n" +
+	"\x1bListLocationReportsResponse\x129\n" +
+	"\areports\x18\x01 \x03(\v2\x1f.edify.routes.v1.LocationReportR\areports\"j\n" +
+	"\x1bReviewLocationReportRequest\x12\x1b\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x1a\n" +
+	"\bdecision\x18\x02 \x01(\tR\bdecision\x12\x12\n" +
+	"\x04note\x18\x03 \x01(\tR\x04note\"W\n" +
+	"\x1cReviewLocationReportResponse\x127\n" +
+	"\x06report\x18\x01 \x01(\v2\x1f.edify.routes.v1.LocationReportR\x06report2\xd7\x06\n" +
 	"\x13RoutePlannerService\x12X\n" +
 	"\vGetFieldDay\x12#.edify.routes.v1.GetFieldDayRequest\x1a$.edify.routes.v1.GetFieldDayResponse\x12R\n" +
 	"\tPlanRoute\x12!.edify.routes.v1.PlanRouteRequest\x1a\".edify.routes.v1.PlanRouteResponse\x12^\n" +
 	"\rGetSchoolPins\x12%.edify.routes.v1.GetSchoolPinsRequest\x1a&.edify.routes.v1.GetSchoolPinsResponse\x12j\n" +
 	"\x11GetSchoolDistance\x12).edify.routes.v1.GetSchoolDistanceRequest\x1a*.edify.routes.v1.GetSchoolDistanceResponse\x12j\n" +
-	"\x11GetSchoolLocation\x12).edify.routes.v1.GetSchoolLocationRequest\x1a*.edify.routes.v1.GetSchoolLocationResponseB\xd8\x01\n" +
+	"\x11GetSchoolLocation\x12).edify.routes.v1.GetSchoolLocationRequest\x1a*.edify.routes.v1.GetSchoolLocationResponse\x12s\n" +
+	"\x14ReportSchoolLocation\x12,.edify.routes.v1.ReportSchoolLocationRequest\x1a-.edify.routes.v1.ReportSchoolLocationResponse\x12p\n" +
+	"\x13ListLocationReports\x12+.edify.routes.v1.ListLocationReportsRequest\x1a,.edify.routes.v1.ListLocationReportsResponse\x12s\n" +
+	"\x14ReviewLocationReport\x12,.edify.routes.v1.ReviewLocationReportRequest\x1a-.edify.routes.v1.ReviewLocationReportResponseB\xd8\x01\n" +
 	"\x13com.edify.routes.v1B\vRoutesProtoP\x01ZVgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/routes/v1;routesv1\xa2\x02\x03ERX\xaa\x02\x0fEdify.Routes.V1\xca\x02\x0fEdify\\Routes\\V1\xe2\x02\x1bEdify\\Routes\\V1\\GPBMetadata\xea\x02\x11Edify::Routes::V1b\x06proto3"
 
 var (
@@ -1754,27 +2368,34 @@ func file_edify_routes_v1_routes_proto_rawDescGZIP() []byte {
 	return file_edify_routes_v1_routes_proto_rawDescData
 }
 
-var file_edify_routes_v1_routes_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_edify_routes_v1_routes_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_edify_routes_v1_routes_proto_goTypes = []any{
-	(*Point)(nil),                     // 0: edify.routes.v1.Point
-	(*SchoolPin)(nil),                 // 1: edify.routes.v1.SchoolPin
-	(*RouteLeg)(nil),                  // 2: edify.routes.v1.RouteLeg
-	(*ItineraryStop)(nil),             // 3: edify.routes.v1.ItineraryStop
-	(*RouteTotals)(nil),               // 4: edify.routes.v1.RouteTotals
-	(*Itinerary)(nil),                 // 5: edify.routes.v1.Itinerary
-	(*Suggestion)(nil),                // 6: edify.routes.v1.Suggestion
-	(*ProviderStatus)(nil),            // 7: edify.routes.v1.ProviderStatus
-	(*FilterOption)(nil),              // 8: edify.routes.v1.FilterOption
-	(*GetFieldDayRequest)(nil),        // 9: edify.routes.v1.GetFieldDayRequest
-	(*GetFieldDayResponse)(nil),       // 10: edify.routes.v1.GetFieldDayResponse
-	(*PlanRouteRequest)(nil),          // 11: edify.routes.v1.PlanRouteRequest
-	(*PlanRouteResponse)(nil),         // 12: edify.routes.v1.PlanRouteResponse
-	(*GetSchoolPinsRequest)(nil),      // 13: edify.routes.v1.GetSchoolPinsRequest
-	(*GetSchoolPinsResponse)(nil),     // 14: edify.routes.v1.GetSchoolPinsResponse
-	(*GetSchoolDistanceRequest)(nil),  // 15: edify.routes.v1.GetSchoolDistanceRequest
-	(*GetSchoolDistanceResponse)(nil), // 16: edify.routes.v1.GetSchoolDistanceResponse
-	(*GetSchoolLocationRequest)(nil),  // 17: edify.routes.v1.GetSchoolLocationRequest
-	(*GetSchoolLocationResponse)(nil), // 18: edify.routes.v1.GetSchoolLocationResponse
+	(*Point)(nil),                        // 0: edify.routes.v1.Point
+	(*SchoolPin)(nil),                    // 1: edify.routes.v1.SchoolPin
+	(*RouteLeg)(nil),                     // 2: edify.routes.v1.RouteLeg
+	(*ItineraryStop)(nil),                // 3: edify.routes.v1.ItineraryStop
+	(*RouteTotals)(nil),                  // 4: edify.routes.v1.RouteTotals
+	(*Itinerary)(nil),                    // 5: edify.routes.v1.Itinerary
+	(*Suggestion)(nil),                   // 6: edify.routes.v1.Suggestion
+	(*ProviderStatus)(nil),               // 7: edify.routes.v1.ProviderStatus
+	(*FilterOption)(nil),                 // 8: edify.routes.v1.FilterOption
+	(*GetFieldDayRequest)(nil),           // 9: edify.routes.v1.GetFieldDayRequest
+	(*GetFieldDayResponse)(nil),          // 10: edify.routes.v1.GetFieldDayResponse
+	(*PlanRouteRequest)(nil),             // 11: edify.routes.v1.PlanRouteRequest
+	(*PlanRouteResponse)(nil),            // 12: edify.routes.v1.PlanRouteResponse
+	(*GetSchoolPinsRequest)(nil),         // 13: edify.routes.v1.GetSchoolPinsRequest
+	(*GetSchoolPinsResponse)(nil),        // 14: edify.routes.v1.GetSchoolPinsResponse
+	(*GetSchoolDistanceRequest)(nil),     // 15: edify.routes.v1.GetSchoolDistanceRequest
+	(*GetSchoolDistanceResponse)(nil),    // 16: edify.routes.v1.GetSchoolDistanceResponse
+	(*GetSchoolLocationRequest)(nil),     // 17: edify.routes.v1.GetSchoolLocationRequest
+	(*GetSchoolLocationResponse)(nil),    // 18: edify.routes.v1.GetSchoolLocationResponse
+	(*LocationReport)(nil),               // 19: edify.routes.v1.LocationReport
+	(*ReportSchoolLocationRequest)(nil),  // 20: edify.routes.v1.ReportSchoolLocationRequest
+	(*ReportSchoolLocationResponse)(nil), // 21: edify.routes.v1.ReportSchoolLocationResponse
+	(*ListLocationReportsRequest)(nil),   // 22: edify.routes.v1.ListLocationReportsRequest
+	(*ListLocationReportsResponse)(nil),  // 23: edify.routes.v1.ListLocationReportsResponse
+	(*ReviewLocationReportRequest)(nil),  // 24: edify.routes.v1.ReviewLocationReportRequest
+	(*ReviewLocationReportResponse)(nil), // 25: edify.routes.v1.ReviewLocationReportResponse
 }
 var file_edify_routes_v1_routes_proto_depIdxs = []int32{
 	0,  // 0: edify.routes.v1.SchoolPin.point:type_name -> edify.routes.v1.Point
@@ -1804,21 +2425,35 @@ var file_edify_routes_v1_routes_proto_depIdxs = []int32{
 	1,  // 24: edify.routes.v1.GetSchoolDistanceResponse.to:type_name -> edify.routes.v1.SchoolPin
 	7,  // 25: edify.routes.v1.GetSchoolDistanceResponse.provider:type_name -> edify.routes.v1.ProviderStatus
 	1,  // 26: edify.routes.v1.GetSchoolLocationResponse.school:type_name -> edify.routes.v1.SchoolPin
-	9,  // 27: edify.routes.v1.RoutePlannerService.GetFieldDay:input_type -> edify.routes.v1.GetFieldDayRequest
-	11, // 28: edify.routes.v1.RoutePlannerService.PlanRoute:input_type -> edify.routes.v1.PlanRouteRequest
-	13, // 29: edify.routes.v1.RoutePlannerService.GetSchoolPins:input_type -> edify.routes.v1.GetSchoolPinsRequest
-	15, // 30: edify.routes.v1.RoutePlannerService.GetSchoolDistance:input_type -> edify.routes.v1.GetSchoolDistanceRequest
-	17, // 31: edify.routes.v1.RoutePlannerService.GetSchoolLocation:input_type -> edify.routes.v1.GetSchoolLocationRequest
-	10, // 32: edify.routes.v1.RoutePlannerService.GetFieldDay:output_type -> edify.routes.v1.GetFieldDayResponse
-	12, // 33: edify.routes.v1.RoutePlannerService.PlanRoute:output_type -> edify.routes.v1.PlanRouteResponse
-	14, // 34: edify.routes.v1.RoutePlannerService.GetSchoolPins:output_type -> edify.routes.v1.GetSchoolPinsResponse
-	16, // 35: edify.routes.v1.RoutePlannerService.GetSchoolDistance:output_type -> edify.routes.v1.GetSchoolDistanceResponse
-	18, // 36: edify.routes.v1.RoutePlannerService.GetSchoolLocation:output_type -> edify.routes.v1.GetSchoolLocationResponse
-	32, // [32:37] is the sub-list for method output_type
-	27, // [27:32] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	19, // 27: edify.routes.v1.GetSchoolLocationResponse.pending_report:type_name -> edify.routes.v1.LocationReport
+	1,  // 28: edify.routes.v1.LocationReport.school:type_name -> edify.routes.v1.SchoolPin
+	0,  // 29: edify.routes.v1.LocationReport.proposed:type_name -> edify.routes.v1.Point
+	0,  // 30: edify.routes.v1.LocationReport.previous:type_name -> edify.routes.v1.Point
+	0,  // 31: edify.routes.v1.ReportSchoolLocationRequest.proposed:type_name -> edify.routes.v1.Point
+	19, // 32: edify.routes.v1.ReportSchoolLocationResponse.report:type_name -> edify.routes.v1.LocationReport
+	19, // 33: edify.routes.v1.ListLocationReportsResponse.reports:type_name -> edify.routes.v1.LocationReport
+	19, // 34: edify.routes.v1.ReviewLocationReportResponse.report:type_name -> edify.routes.v1.LocationReport
+	9,  // 35: edify.routes.v1.RoutePlannerService.GetFieldDay:input_type -> edify.routes.v1.GetFieldDayRequest
+	11, // 36: edify.routes.v1.RoutePlannerService.PlanRoute:input_type -> edify.routes.v1.PlanRouteRequest
+	13, // 37: edify.routes.v1.RoutePlannerService.GetSchoolPins:input_type -> edify.routes.v1.GetSchoolPinsRequest
+	15, // 38: edify.routes.v1.RoutePlannerService.GetSchoolDistance:input_type -> edify.routes.v1.GetSchoolDistanceRequest
+	17, // 39: edify.routes.v1.RoutePlannerService.GetSchoolLocation:input_type -> edify.routes.v1.GetSchoolLocationRequest
+	20, // 40: edify.routes.v1.RoutePlannerService.ReportSchoolLocation:input_type -> edify.routes.v1.ReportSchoolLocationRequest
+	22, // 41: edify.routes.v1.RoutePlannerService.ListLocationReports:input_type -> edify.routes.v1.ListLocationReportsRequest
+	24, // 42: edify.routes.v1.RoutePlannerService.ReviewLocationReport:input_type -> edify.routes.v1.ReviewLocationReportRequest
+	10, // 43: edify.routes.v1.RoutePlannerService.GetFieldDay:output_type -> edify.routes.v1.GetFieldDayResponse
+	12, // 44: edify.routes.v1.RoutePlannerService.PlanRoute:output_type -> edify.routes.v1.PlanRouteResponse
+	14, // 45: edify.routes.v1.RoutePlannerService.GetSchoolPins:output_type -> edify.routes.v1.GetSchoolPinsResponse
+	16, // 46: edify.routes.v1.RoutePlannerService.GetSchoolDistance:output_type -> edify.routes.v1.GetSchoolDistanceResponse
+	18, // 47: edify.routes.v1.RoutePlannerService.GetSchoolLocation:output_type -> edify.routes.v1.GetSchoolLocationResponse
+	21, // 48: edify.routes.v1.RoutePlannerService.ReportSchoolLocation:output_type -> edify.routes.v1.ReportSchoolLocationResponse
+	23, // 49: edify.routes.v1.RoutePlannerService.ListLocationReports:output_type -> edify.routes.v1.ListLocationReportsResponse
+	25, // 50: edify.routes.v1.RoutePlannerService.ReviewLocationReport:output_type -> edify.routes.v1.ReviewLocationReportResponse
+	43, // [43:51] is the sub-list for method output_type
+	35, // [35:43] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_edify_routes_v1_routes_proto_init() }
@@ -1832,7 +2467,7 @@ func file_edify_routes_v1_routes_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_routes_v1_routes_proto_rawDesc), len(file_edify_routes_v1_routes_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

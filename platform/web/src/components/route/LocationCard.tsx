@@ -5,15 +5,20 @@
  * stored point on the map with its name, how sure that point is, directions
  * in the person's own maps app, and its nearby schools in the planner. A
  * school with no usable point says so and stays in every list and plan.
+ * Report Location sends a correction for someone else to review; an open
+ * report shows here, with Approve / Reject for a reviewer.
  */
 import { create, fromJson } from '@bufbuild/protobuf';
 import type { JsonValue } from '@bufbuild/protobuf';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 
 import { GetSchoolLocationResponseSchema, ItineraryStopSchema } from '@/gen/edify/routes/v1/routes_pb';
+import type { LocationReport } from '@/gen/edify/routes/v1/routes_pb';
 import { directionsUrl } from '@/lib/routePlanner';
 
+import { ReportDetails, ReportForm, ReviewControls } from './LocationReport';
 import { RouteIcon } from './RouteIcons';
 import { RouteMap } from './RouteMap';
 
@@ -26,6 +31,10 @@ const STATUS: Record<string, string> = {
 
 export function LocationCard({ answer: json }: { answer: JsonValue }) {
   const answer = useMemo(() => fromJson(GetSchoolLocationResponseSchema, json), [json]);
+  const router = useRouter();
+  const [pending, setPending] = useState<LocationReport | undefined>(answer.pendingReport);
+  const [isReporting, setIsReporting] = useState(false);
+  const [notice, setNotice] = useState('');
   const school = answer.school;
   const stops = useMemo(() => (school?.point ? [create(ItineraryStopSchema, { order: 0, school, kind: 'location' })] : []), [school]);
   if (!school) return null;
@@ -78,6 +87,56 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
           and plan.
         </p>
       )}
+      {answer.accessNote ? (
+        <p className="mt-3 text-[14px]">
+          <span className="text-[var(--edify-text-muted)]">Directions: </span>
+          <span className="font-medium">{answer.accessNote}</span>
+        </p>
+      ) : null}
+      {notice ? (
+        <p className="mt-3 rounded-[8px] bg-[#e8f1fd] px-3 py-2 text-[14px] text-[#0b4a9e]" role="status">
+          {notice}
+        </p>
+      ) : null}
+      {pending ? (
+        <div className="mt-3 space-y-3 rounded-[10px] border border-[#1d6fe0]/40 bg-[#f4f8fe] p-3" data-block="location-report">
+          <p className="flex items-center gap-2 text-[14px] font-semibold text-[#0b4a9e]">
+            <RouteIcon name="hourglass" className="h-4 w-4" /> Location report waiting for review
+          </p>
+          <ReportDetails report={pending} />
+          {answer.canReview ? (
+            <Link href="/schools/location-reports" className="text-[14px] font-semibold text-[#1d6fe0] hover:underline">
+              All location reports
+            </Link>
+          ) : null}
+          {answer.canReview ? (
+            <ReviewControls
+              report={pending}
+              onDecided={(decided) => {
+                setPending(undefined);
+                setNotice(decided.status === 'approved' ? 'Approved. This is now the verified location.' : 'Rejected. The location stays as it was.');
+                router.refresh();
+              }}
+            />
+          ) : null}
+        </div>
+      ) : null}
+      {!pending && answer.canReport && !isReporting ? (
+        <button type="button" className="mt-3 inline-flex h-10 items-center gap-2 rounded-[8px] px-1 font-semibold text-[#1d6fe0]" onClick={() => { setNotice(''); setIsReporting(true); }}>
+          <RouteIcon name="alert" className="h-4 w-4" /> Report location
+        </button>
+      ) : null}
+      {isReporting && school ? (
+        <ReportForm
+          school={school}
+          onCancel={() => setIsReporting(false)}
+          onFiled={(report) => {
+            setIsReporting(false);
+            setPending(report);
+            setNotice('Sent for review. The location changes only once someone else approves it.');
+          }}
+        />
+      ) : null}
     </section>
   );
 }

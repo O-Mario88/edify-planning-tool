@@ -19,11 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RoutePlannerService_GetFieldDay_FullMethodName       = "/edify.routes.v1.RoutePlannerService/GetFieldDay"
-	RoutePlannerService_PlanRoute_FullMethodName         = "/edify.routes.v1.RoutePlannerService/PlanRoute"
-	RoutePlannerService_GetSchoolPins_FullMethodName     = "/edify.routes.v1.RoutePlannerService/GetSchoolPins"
-	RoutePlannerService_GetSchoolDistance_FullMethodName = "/edify.routes.v1.RoutePlannerService/GetSchoolDistance"
-	RoutePlannerService_GetSchoolLocation_FullMethodName = "/edify.routes.v1.RoutePlannerService/GetSchoolLocation"
+	RoutePlannerService_GetFieldDay_FullMethodName          = "/edify.routes.v1.RoutePlannerService/GetFieldDay"
+	RoutePlannerService_PlanRoute_FullMethodName            = "/edify.routes.v1.RoutePlannerService/PlanRoute"
+	RoutePlannerService_GetSchoolPins_FullMethodName        = "/edify.routes.v1.RoutePlannerService/GetSchoolPins"
+	RoutePlannerService_GetSchoolDistance_FullMethodName    = "/edify.routes.v1.RoutePlannerService/GetSchoolDistance"
+	RoutePlannerService_GetSchoolLocation_FullMethodName    = "/edify.routes.v1.RoutePlannerService/GetSchoolLocation"
+	RoutePlannerService_ReportSchoolLocation_FullMethodName = "/edify.routes.v1.RoutePlannerService/ReportSchoolLocation"
+	RoutePlannerService_ListLocationReports_FullMethodName  = "/edify.routes.v1.RoutePlannerService/ListLocationReports"
+	RoutePlannerService_ReviewLocationReport_FullMethodName = "/edify.routes.v1.RoutePlannerService/ReviewLocationReport"
 )
 
 // RoutePlannerServiceClient is the client API for RoutePlannerService service.
@@ -57,6 +60,13 @@ type RoutePlannerServiceClient interface {
 	GetSchoolDistance(ctx context.Context, in *GetSchoolDistanceRequest, opts ...grpc.CallOption) (*GetSchoolDistanceResponse, error)
 	// One school's location for its profile (Location & Directions).
 	GetSchoolLocation(ctx context.Context, in *GetSchoolLocationRequest, opts ...grpc.CallOption) (*GetSchoolLocationResponse, error)
+	// Report that a school's location is wrong or missing, with a proposed
+	// point. Nothing changes until someone else approves it.
+	ReportSchoolLocation(ctx context.Context, in *ReportSchoolLocationRequest, opts ...grpc.CallOption) (*ReportSchoolLocationResponse, error)
+	// The reports a reviewer may decide, oldest first.
+	ListLocationReports(ctx context.Context, in *ListLocationReportsRequest, opts ...grpc.CallOption) (*ListLocationReportsResponse, error)
+	// Approve (the point becomes the school's verified location) or reject.
+	ReviewLocationReport(ctx context.Context, in *ReviewLocationReportRequest, opts ...grpc.CallOption) (*ReviewLocationReportResponse, error)
 }
 
 type routePlannerServiceClient struct {
@@ -117,6 +127,36 @@ func (c *routePlannerServiceClient) GetSchoolLocation(ctx context.Context, in *G
 	return out, nil
 }
 
+func (c *routePlannerServiceClient) ReportSchoolLocation(ctx context.Context, in *ReportSchoolLocationRequest, opts ...grpc.CallOption) (*ReportSchoolLocationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReportSchoolLocationResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_ReportSchoolLocation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *routePlannerServiceClient) ListLocationReports(ctx context.Context, in *ListLocationReportsRequest, opts ...grpc.CallOption) (*ListLocationReportsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListLocationReportsResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_ListLocationReports_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *routePlannerServiceClient) ReviewLocationReport(ctx context.Context, in *ReviewLocationReportRequest, opts ...grpc.CallOption) (*ReviewLocationReportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReviewLocationReportResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_ReviewLocationReport_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoutePlannerServiceServer is the server API for RoutePlannerService service.
 // All implementations must embed UnimplementedRoutePlannerServiceServer
 // for forward compatibility.
@@ -148,6 +188,13 @@ type RoutePlannerServiceServer interface {
 	GetSchoolDistance(context.Context, *GetSchoolDistanceRequest) (*GetSchoolDistanceResponse, error)
 	// One school's location for its profile (Location & Directions).
 	GetSchoolLocation(context.Context, *GetSchoolLocationRequest) (*GetSchoolLocationResponse, error)
+	// Report that a school's location is wrong or missing, with a proposed
+	// point. Nothing changes until someone else approves it.
+	ReportSchoolLocation(context.Context, *ReportSchoolLocationRequest) (*ReportSchoolLocationResponse, error)
+	// The reports a reviewer may decide, oldest first.
+	ListLocationReports(context.Context, *ListLocationReportsRequest) (*ListLocationReportsResponse, error)
+	// Approve (the point becomes the school's verified location) or reject.
+	ReviewLocationReport(context.Context, *ReviewLocationReportRequest) (*ReviewLocationReportResponse, error)
 	mustEmbedUnimplementedRoutePlannerServiceServer()
 }
 
@@ -172,6 +219,15 @@ func (UnimplementedRoutePlannerServiceServer) GetSchoolDistance(context.Context,
 }
 func (UnimplementedRoutePlannerServiceServer) GetSchoolLocation(context.Context, *GetSchoolLocationRequest) (*GetSchoolLocationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSchoolLocation not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) ReportSchoolLocation(context.Context, *ReportSchoolLocationRequest) (*ReportSchoolLocationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReportSchoolLocation not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) ListLocationReports(context.Context, *ListLocationReportsRequest) (*ListLocationReportsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListLocationReports not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) ReviewLocationReport(context.Context, *ReviewLocationReportRequest) (*ReviewLocationReportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReviewLocationReport not implemented")
 }
 func (UnimplementedRoutePlannerServiceServer) mustEmbedUnimplementedRoutePlannerServiceServer() {}
 func (UnimplementedRoutePlannerServiceServer) testEmbeddedByValue()                             {}
@@ -284,6 +340,60 @@ func _RoutePlannerService_GetSchoolLocation_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoutePlannerService_ReportSchoolLocation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReportSchoolLocationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).ReportSchoolLocation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_ReportSchoolLocation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).ReportSchoolLocation(ctx, req.(*ReportSchoolLocationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoutePlannerService_ListLocationReports_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListLocationReportsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).ListLocationReports(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_ListLocationReports_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).ListLocationReports(ctx, req.(*ListLocationReportsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoutePlannerService_ReviewLocationReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReviewLocationReportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).ReviewLocationReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_ReviewLocationReport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).ReviewLocationReport(ctx, req.(*ReviewLocationReportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RoutePlannerService_ServiceDesc is the grpc.ServiceDesc for RoutePlannerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -310,6 +420,18 @@ var RoutePlannerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSchoolLocation",
 			Handler:    _RoutePlannerService_GetSchoolLocation_Handler,
+		},
+		{
+			MethodName: "ReportSchoolLocation",
+			Handler:    _RoutePlannerService_ReportSchoolLocation_Handler,
+		},
+		{
+			MethodName: "ListLocationReports",
+			Handler:    _RoutePlannerService_ListLocationReports_Handler,
+		},
+		{
+			MethodName: "ReviewLocationReport",
+			Handler:    _RoutePlannerService_ReviewLocationReport_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
