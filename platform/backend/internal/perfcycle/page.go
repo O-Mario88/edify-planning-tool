@@ -114,7 +114,7 @@ func quarterEnd(today time.Time) (string, time.Time) {
 }
 
 // Build answers Path. A role the page lets in but whose controls these are
-// not is refused, as the view refuses it.
+// not is sent to the dashboard, as render_access_denied sends the feed.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if path != Path {
 		return nil, false, nil
@@ -123,7 +123,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, pagegate.ErrNotAvailable
 	}
 	if !slices.Contains(rules.ConsoleRoles, p.ActiveRole) {
-		return nil, true, pagegate.ErrForbidden
+		// render_access_denied: the feed is sent to the dashboard.
+		return &screensv1.GetPageResponse{Redirect: "/dashboard"}, true, nil
 	}
 	now := s.now().In(zone)
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
