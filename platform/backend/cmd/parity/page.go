@@ -121,10 +121,12 @@ func comparePages(answer parity.Answer, goAnswer *screensv1.GetPageResponse, goE
 	if goTied || oldTied {
 		tiedAnswers++
 	}
+	// A list accepted in another order is compared whole first.
+	reordered := intended.AcceptReordered(answer, goMap, oldMap)
 	found := []parity.Diff{}
 	diffWalk("", goMap, oldMap, &found)
 	unexpected, accepted := intended.Split(answer, found)
-	return parity.Lines(unexpected, 12), accepted
+	return parity.Lines(unexpected, 12), append(reordered, accepted...)
 }
 
 // each is the run once per id for a path with {id}, else the run itself.

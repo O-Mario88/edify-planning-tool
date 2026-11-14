@@ -20,6 +20,7 @@ import (
 	"math"
 	"math/big"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -102,9 +103,12 @@ SELECT EXISTS (SELECT 1 FROM hr_milestone_allocation a JOIN hr_priority_mileston
 
 type allocation struct {
 	id, milestoneID, title, priority, unit, measurement, countryID, priorityFY string
-	allocated, denominator, weight, milestoneWeight, milestoneTarget           *big.Rat
-	capAt100                                                                   bool
-	periods                                                                    []period
+	// The plan's order: the priority's sequence, then the milestone's.
+	sequence, sourceOrder                                            int
+	code                                                             string
+	allocated, denominator, weight, milestoneWeight, milestoneTarget *big.Rat
+	capAt100                                                         bool
+	periods                                                          []period
 }
 
 type period struct {
@@ -337,6 +341,27 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 	return c, nil
 }
 
+// inPlanOrder lists allocations in the plan's order: the priority's
+// sequence, the milestone's source order and code, then the ids. The
+// existing queryset sets no order, so its rows come as the planner reaches
+// them; the owner chose the plan's order (2026-11-14: "Yes, plan order").
+func inPlanOrder(allocs []allocation) {
+	sort.SliceStable(allocs, func(i, j int) bool {
+		a, b := allocs[i], allocs[j]
+		switch {
+		case a.sequence != b.sequence:
+			return a.sequence < b.sequence
+		case a.sourceOrder != b.sourceOrder:
+			return a.sourceOrder < b.sourceOrder
+		case a.code != b.code:
+			return a.code < b.code
+		case a.milestoneID != b.milestoneID:
+			return a.milestoneID < b.milestoneID
+		}
+		return a.id < b.id
+	})
+}
+
 func orZero(r *big.Rat) *big.Rat {
 	if r == nil {
 		return new(big.Rat)
@@ -421,12 +446,11 @@ func readAllocations(ctx context.Context, db schooldirectory.Querier, where stri
 	rows, err := db.Query(ctx, `
 SELECT a.id, a.milestone_id, COALESCE(m.title, ''), COALESCE(sp.title, ''), COALESCE(m.target_unit, ''), COALESCE(m.measurement_type, ''),
        COALESCE(sp.country_id, ''), COALESCE(sp.fy, ''), a.allocated_target::text, a.denominator::text, a.weight::text, m.weight::text,
-       m.target_value::text, m.cap_at_100
+       m.target_value::text, m.cap_at_100, sp.sequence, m.source_order, COALESCE(m.code, '')
 FROM hr_milestone_allocation a INNER JOIN hr_priority_milestone m ON a.milestone_id = m.id
 INNER JOIN hr_strategic_priority sp ON m.priority_id = sp.id
 LEFT OUTER JOIN staff_profile e ON a.employee_id = e.id
-WHERE (`+where+`)
-ORDER BY sp.sequence, m.source_order, m.code, m.id, a.id`, args...)
+WHERE (`+where+`)`, args...)
 	if err != nil {
 		return nil, fmt.Errorf("allocations: reading the allocations: %w", err)
 	}
@@ -435,7 +459,7 @@ ORDER BY sp.sequence, m.source_order, m.code, m.id, a.id`, args...)
 		var a allocation
 		var allocated, den, weight, mweight, mtarget *string
 		if err := rows.Scan(&a.id, &a.milestoneID, &a.title, &a.priority, &a.unit, &a.measurement, &a.countryID, &a.priorityFY,
-			&allocated, &den, &weight, &mweight, &mtarget, &a.capAt100); err != nil {
+			&allocated, &den, &weight, &mweight, &mtarget, &a.capAt100, &a.sequence, &a.sourceOrder, &a.code); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("allocations: reading an allocation: %w", err)
 		}
@@ -446,6 +470,7 @@ ORDER BY sp.sequence, m.source_order, m.code, m.id, a.id`, args...)
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("allocations: reading the allocations: %w", err)
 	}
+	inPlanOrder(out)
 	return out, nil
 }
 

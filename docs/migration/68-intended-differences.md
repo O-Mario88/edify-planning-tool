@@ -70,3 +70,14 @@ entries, every entry's test exists) and
   32 answers with the category list accepted as intended; the 12 differing are
   one live incident's "seen 182×/183×" counter changing between the two reads
   (the same as agent 33's run), not the fix.
+
+## 68.5 Additions (2026-11-14)
+
+- `"relation": "reordered"` on a list field (`.blocks[3].table.rows`): Go's
+  list must hold exactly the existing items, each as often, in another order.
+  `cmd/parity` compares such a field whole before walking its items; when the
+  entry accepts it the existing list stands in for Go's, so the items compare
+  as usual and any other difference in them still fails. First used by
+  `go-allocations-plan-order` (owner, 2026-11-14: "Yes, plan order"): the
+  existing Priorities page leaves its distributed priorities in whatever
+  order the database planner returns; Go lists them in the plan's order.

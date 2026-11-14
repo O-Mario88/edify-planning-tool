@@ -71,8 +71,9 @@ type Entry struct {
 	Go       string `json:"go"`
 	// Relation, instead of the two patterns, names how Go's value must
 	// follow from the existing one: "deduplicated" (a JSON list, Go's is the
-	// existing list with its repeats removed, first-seen order). The
-	// existing value must actually hold a repeat.
+	// existing list with its repeats removed, first-seen order; the
+	// existing value must actually hold a repeat) or "reordered" (a list
+	// field: Go's list is the existing items in another order).
 	Relation string `json:"relation,omitempty"`
 	// Defect is what is wrong in the existing application; Decision is the
 	// owner's decision (quoted, dated); Test is the unit test proving Go's
@@ -271,6 +272,53 @@ func (e Entry) values(d Diff) bool {
 // existing one.
 var relations = map[string]func(existing, goValue string) bool{
 	"deduplicated": deduplicated,
+	"reordered":    reordered,
+}
+
+// Reordered is the relation a list field is accepted under when Go's list
+// holds exactly the existing items in another order.
+const Reordered = "reordered"
+
+// reordered: both are JSON lists of the same items, each as often, in a
+// different order.
+func reordered(existing, goValue string) bool {
+	var old, mine []any
+	if json.Unmarshal([]byte(existing), &old) != nil || json.Unmarshal([]byte(goValue), &mine) != nil || len(old) != len(mine) {
+		return false
+	}
+	count := map[string]int{}
+	for _, v := range old {
+		key, _ := json.Marshal(v)
+		count[string(key)]++
+	}
+	for _, v := range mine {
+		key, _ := json.Marshal(v)
+		count[string(key)]--
+	}
+	for _, n := range count {
+		if n != 0 {
+			return false
+		}
+	}
+	a, _ := json.Marshal(old)
+	b, _ := json.Marshal(mine)
+	return string(a) != string(b)
+}
+
+// ReorderedFields are the list fields an entry accepts reordered on this
+// answer: the walk compares them as wholes before their items.
+func (l *List) ReorderedFields(a Answer) []string {
+	if l == nil {
+		return nil
+	}
+	out := []string{}
+	for _, e := range l.entries {
+		if e.Relation == Reordered && e.Tool == a.Tool && e.Where == a.Where &&
+			(slices.Contains(e.Questions, a.Question) || slices.Equal(e.Questions, []string{AnyQuestion})) {
+			out = append(out, e.Fields...)
+		}
+	}
+	return out
 }
 
 // deduplicated: both are JSON lists, the existing one holds a repeat, and
