@@ -1,0 +1,94 @@
+{
+  "limit": 50,
+  "monitor_roles": [
+    "Admin",
+    "ImpactAssessment"
+  ],
+  "roles": {
+    "Accountant": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "Admin": {
+      "acts": true,
+      "page": true,
+      "raises": true
+    },
+    "BusinessTransformationOfficer": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "CCEO": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "ClusterLeader": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "CountryDirector": {
+      "acts": false,
+      "page": true,
+      "raises": true
+    },
+    "HumanResources": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "ImpactAssessment": {
+      "acts": false,
+      "page": true,
+      "raises": false
+    },
+    "MfiLoanOfficer": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "MfiPartnerAdmin": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "PartnerAdmin": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "PartnerFieldOfficer": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "Program Lead": {
+      "acts": true,
+      "page": true,
+      "raises": false
+    },
+    "ProjectCoordinator": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "RegionalProgramLead": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    },
+    "RegionalVicePresident": {
+      "acts": false,
+      "page": false,
+      "raises": false
+    }
+  },
+  "statuses": {
+    "acknowledged": "Acknowledged",
+    "open": "Open",
+    "resolved": "Resolved"
+  }
+}

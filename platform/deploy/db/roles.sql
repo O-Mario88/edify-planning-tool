@@ -495,3 +495,7 @@ GRANT SELECT (source_engagement_id) ON cce_cceo_coaching TO edify_gateway_ro;
 -- agreed actions or the officer's response.
 GRANT SELECT (id, subject, kind, held_on, author_id, cceo_staff_id, cceo_user_id, country, follow_up_due, follow_up_done_at,
   shared_at, acknowledged_at, created_at) ON cce_cceo_coaching TO edify_gateway_ro;
+-- Quality Flags: a flag's raiser, assignee, what it is about, its note and
+-- recommendation, priority, due day, status and resolution note.
+GRANT SELECT (id, raised_by_user_id, raised_by_name, assigned_to_user_id, category, scope_name, note, recommended_action,
+  priority, due_date, status, resolution_note, created_at) ON cd_flag TO edify_gateway_ro;
