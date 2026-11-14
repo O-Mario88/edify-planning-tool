@@ -61,6 +61,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerassigned"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerusers"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/peopledirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/perfcycle"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
@@ -159,6 +160,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			dataquality.NewService(pool),
 			coverage.NewService(pool, time.Now),
 			ssaverify.NewService(pool, time.Now),
+			peopledirectory.NewService(pool, time.Now),
 			partnerassigned.NewService(pool),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
