@@ -468,3 +468,105 @@ GRANT SELECT (id, fy, title, instruction, assigner_id, assigner_role, assignee_i
   reviewer_id, due_date, status, return_reason, outcome, evidence_note, evidence_uri, contribution_points, submitted_at)
   ON hr_extra_assignment TO edify_gateway_ro;
 GRANT SELECT (fy, status) ON hr_extra_work_scoring_policy TO edify_gateway_ro;
+-- The HR registers (internal/hrregister, docs/migration/169-hr-registers.md):
+-- Organization Structure lists the People records in the viewer's reach
+-- with their title, department and lifecycle state. No staff number, Drive
+-- folder or any compensation column.
+GRANT SELECT (title, department, onboarding_state) ON staff_profile TO edify_gateway_ro;
+-- Recognition: who was recognised, where, for what (the category and the
+-- citation the register shows) and when. Not who awarded it.
+GRANT SELECT (staff_id, country, category, citation, awarded_on) ON hr_staff_recognition TO edify_gateway_ro;
+-- Health & Safety: each incident's country, the person affected, its day,
+-- place, category, severity, days lost and status. Not its description or
+-- the actions taken.
+GRANT SELECT (id, country, affected_staff_id, incident_date, location, category, severity, days_lost, status) ON hr_safety_incident TO edify_gateway_ro;
+-- Staff Onboarding: each plan's person, start and target days, status and
+-- age, and whether each checklist task is done. Not the probation decision.
+GRANT SELECT (id, staff_id, start_date, target_completion_date, status, created_at) ON hr_onboarding_plan TO edify_gateway_ro;
+GRANT SELECT (plan_id, is_completed) ON hr_onboarding_task TO edify_gateway_ro;
+-- Staff Offboarding: each exit's person, last working day, reason, handover
+-- owner and status. Not its notes or clearances.
+GRANT SELECT (id, staff_id, last_working_day, exit_reason, handover_owner_id, status) ON hr_offboarding TO edify_gateway_ro;
+-- Candidate Pipeline: each application's candidate, vacancy, stage and when
+-- it last changed; a candidate's name, and their email only to search it; a
+-- vacancy's role and country. Not a candidate's phone, CV or notes, nor a
+-- vacancy's salary band or budget.
+GRANT SELECT (id, candidate_id, vacancy_id, stage, updated_at) ON hr_application TO edify_gateway_ro;
+GRANT SELECT (id, name, email) ON hr_candidate TO edify_gateway_ro;
+GRANT SELECT (id, role, country) ON hr_vacancy TO edify_gateway_ro;
+-- Employment Compliance: each requirement's country, name and whether it is
+-- mandatory; each employee's record against one, its status, expiry day and
+-- who verified it. Not the evidence document or a requirement's description.
+GRANT SELECT (id, country, name, is_mandatory) ON hr_compliance_requirement TO edify_gateway_ro;
+GRANT SELECT (id, staff_id, requirement_id, status, expiry_date, verified_by_id) ON hr_employee_compliance_record TO edify_gateway_ro;
+-- The HR System Audit Log: an HR event's acting role, beside the action,
+-- actor, success, time and subject already granted. Never its payload.
+GRANT SELECT (actor_role) ON audit_log TO edify_gateway_ro;
+-- Workforce Planning: a vacancy's department and status, beside its role and
+-- country already granted.
+GRANT SELECT (department, status) ON hr_vacancy TO edify_gateway_ro;
+-- Policies & Documents: a policy or manual's slug, title, type, category,
+-- country, status, whether acknowledgement is required and its current
+-- version; that version's number and review day; who acknowledged which
+-- version and how. Not a document's file, owner or audience, nor an
+-- acknowledgement's comment.
+GRANT SELECT (id, slug, title, document_type, category, country, status, acknowledgement_required, current_version_id) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (id, version_number, review_date) ON document_version TO edify_gateway_ro;
+GRANT SELECT (id, document_id, version_id, user_id, state) ON document_acknowledgement TO edify_gateway_ro;
+-- Performance Recovery Plans: each plan's person, type, cause code, start
+-- and review days and status. Not the evidence, the action plan, the support
+-- or the outcome note.
+GRANT SELECT (id, staff_id, plan_type, cause, start_date, end_date, status) ON hr_pip_plan TO edify_gateway_ro;
+-- Performance Reviews: a review's period, year, due day, manager and the two
+-- ratings the register shows (the manager's to HR and Admin only), beside
+-- its person, type and stage already granted, and its legacy status (HR
+-- Analytics counts the reviews not yet "Completed" or "Closed"). Not the reflection,
+-- feedback, evidence or calibration note.
+GRANT SELECT (period, fy, due_date, manager_id, manager_rating, rating, status) ON hr_performance_review TO edify_gateway_ro;
+-- Compensation & Benefits: a record's person, salary band, medical cover,
+-- pension scheme, next review day and status. NEVER the salary, allowances,
+-- currency, other benefits or bank details, which the register does not
+-- show either.
+GRANT SELECT (id, staff_id, salary_band, medical_cover, pension_scheme, next_review_date, status) ON hr_compensation TO edify_gateway_ro;
+-- Staff Pulse Surveys: a survey's title, countries, window and status; each
+-- anonymous answer's scores, which Go only averages (no result under five
+-- answers). Never who answered, their key or their comment.
+GRANT SELECT (id, title, countries, opens_on, closes_on, status) ON hr_pulse_survey TO edify_gateway_ro;
+GRANT SELECT (survey_id, scores) ON hr_pulse_response TO edify_gateway_ro;
+
+-- Leave Policies (internal/leavepolicies, docs/migration/164-leave-policies.md):
+-- each leave type's label and key, beside the recorded public holidays
+-- already granted. Not the entitlements or approvers, which only the page's
+-- forms show.
+GRANT SELECT (label, leave_type) ON leave_type_policy TO edify_gateway_ro;
+
+-- Duplicate Review (internal/iapages, docs/migration/153-ia-duplicates.md):
+-- each flag's two activities, status, reason and when it was raised.
+GRANT SELECT (id, activity_id, duplicate_of_id, status, reason, created_at) ON ia_duplicate_activity TO edify_gateway_ro;
+-- Returned Activities: which activity a verification belongs to and the
+-- reasons it gave for returning it. Not the checklist, comments or verifier.
+GRANT SELECT (id, activity_id) ON ia_verification TO edify_gateway_ro;
+GRANT SELECT (verification_id, reason) ON ia_returned_reason TO edify_gateway_ro;
+-- Verification History: each verification's activity, verifier, time and
+-- whether it counts in analytics. Not its notes.
+GRANT SELECT (activity_id, verified_by, verified_at, analytics_included) ON ia_verification_history TO edify_gateway_ro;
+
+-- CCE monthly reports (internal/ccelead, docs/migration/136-cce-reports.md):
+-- each report's author, month, countries, status and when it was submitted
+-- and reviewed, and by whom. Not its written sections, figures or the
+-- review note.
+GRANT SELECT (id, author_id, status, period, countries, submitted_at, reviewed_at, reviewed_by_id, created_at) ON cce_regional_report TO edify_gateway_ro;
+-- Training Feedback: each observation's author, kind, subject, country,
+-- recommendation, day, sharing and acknowledgement times, the Programme Leads
+-- it is shared with, its training and its five ratings; whether a coaching
+-- record passed it on. Not the notes, feedback or the lead's response.
+GRANT SELECT (id, author_id, kind, subject, country, recommendation, held_on, feedback_shared_at, acknowledged_at, program_lead_ids,
+  activity_id, rating_biblical_integration, rating_need_alignment, rating_facilitation, rating_participation, rating_application, created_at)
+  ON cce_regional_engagement TO edify_gateway_ro;
+GRANT SELECT (source_engagement_id) ON cce_cceo_coaching TO edify_gateway_ro;
+-- My Coaching: a coaching record's subject, kind, day, author, officer (by
+-- People record and account), country, follow-up day and the times it was
+-- shared, acknowledged and followed up. Not its strengths, growth areas,
+-- agreed actions or the officer's response.
+GRANT SELECT (id, subject, kind, held_on, author_id, cceo_staff_id, cceo_user_id, country, follow_up_due, follow_up_done_at,
+  shared_at, acknowledged_at, created_at) ON cce_cceo_coaching TO edify_gateway_ro;

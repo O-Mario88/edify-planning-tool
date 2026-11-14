@@ -25,6 +25,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ccelead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
@@ -37,8 +38,11 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/extrawork"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iapages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/leavepolicies"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/messaging"
@@ -136,6 +140,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			oversightportfolio.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
 			extrawork.NewService(pool, time.Now),
+			hrregister.NewService(pool, time.Now),
+			leavepolicies.NewService(pool, time.Now),
+			iapages.NewService(pool, time.Now),
+			ccelead.NewService(pool, time.Now),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
 		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel ||

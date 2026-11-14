@@ -1,0 +1,168 @@
+//go:build integration
+
+package integration
+
+import (
+	"context"
+	"encoding/json"
+	"os"
+	"strings"
+	"testing"
+	"time"
+
+	"connectrpc.com/connect"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+)
+
+// iaPagesGolden is what internal/iapages/testdata/golden.py writes: the
+// rows it filed and the existing feed's answers over them, page by page.
+type iaPagesGolden struct {
+	Today   string                       `json:"today"`
+	Rows    map[string][]json.RawMessage `json:"rows"`
+	Answers []struct {
+		Email  string            `json:"email"`
+		Path   string            `json:"path"`
+		Query  map[string]string `json:"query"`
+		Status int               `json:"status"`
+		Body   json.RawMessage   `json:"body"`
+	} `json:"answers"`
+}
+
+// The existing feed's answers over duplicate flags the seed does not hold
+// (potential and decided, at a school and cluster-wide), compared whole. Skipped unless
+// EDIFY_IA_PAGES_GOLDEN names a file internal/iapages/testdata/
+// golden.py wrote today.
+func TestTheIAPagesMatchTheExistingFeedOverFlagsTheSeedLacks(t *testing.T) {
+	path := os.Getenv("EDIFY_IA_PAGES_GOLDEN")
+	if path == "" {
+		t.Skip("EDIFY_IA_PAGES_GOLDEN is not set")
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var golden iaPagesGolden
+	if err := json.Unmarshal(raw, &golden); err != nil {
+		t.Fatal(err)
+	}
+	if golden.Today != time.Now().In(mustNairobi(t)).Format(time.DateOnly) {
+		t.Skipf("the golden answers were written on %s", golden.Today)
+	}
+	ctx := context.Background()
+	// Children first; only the golden's own rows (ids starting "gia").
+	children := []string{"ia_verification_history", "ia_duplicate_activity", "ia_returned_reason", "ia_verification"}
+	// One transaction each way: a document and its current version name each
+	// other, and the foreign keys are checked when the transaction commits.
+	clear := func() {
+		tx, err := admin.Begin(ctx)
+		if err != nil {
+			t.Fatalf("clearing: %v", err)
+		}
+		defer func() { _ = tx.Rollback(ctx) }()
+		for _, table := range children {
+			if _, err := tx.Exec(ctx, `DELETE FROM "`+table+`" WHERE id LIKE 'gia%'`); err != nil {
+				t.Errorf("clearing %s: %v", table, err)
+				return
+			}
+		}
+		if err := tx.Commit(ctx); err != nil {
+			t.Errorf("clearing: %v", err)
+		}
+	}
+	clear()
+	t.Cleanup(clear)
+	tx, err := admin.Begin(ctx)
+	if err != nil {
+		t.Fatalf("filing: %v", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	for _, table := range []string{"ia_duplicate_activity", "ia_verification", "ia_returned_reason", "ia_verification_history"} {
+		for _, row := range golden.Rows[table] {
+			if _, err := tx.Exec(ctx, `INSERT INTO "`+table+`" SELECT * FROM json_populate_record(NULL::"`+table+`", $1::json)`, string(row)); err != nil {
+				t.Fatalf("filing a %s row: %v", table, err)
+			}
+		}
+	}
+	// Some of the database's own activities are returned by IA for the
+	// golden, then put back as they were.
+	type activityState struct {
+		ID        string `json:"id"`
+		Status    string `json:"status"`
+		UpdatedAt string `json:"updated_at"`
+	}
+	setStates := func(exec func(context.Context, string, ...any) error, key string) {
+		for _, raw := range golden.Rows[key] {
+			var a activityState
+			if err := json.Unmarshal(raw, &a); err != nil {
+				t.Fatalf("reading %s: %v", key, err)
+			}
+			if err := exec(ctx, `UPDATE activity SET status = $2, updated_at = $3::timestamptz WHERE id = $1`, a.ID, a.Status, a.UpdatedAt); err != nil {
+				t.Fatalf("setting an activity's state: %v", err)
+			}
+		}
+	}
+	setStates(func(ctx context.Context, sql string, args ...any) error {
+		_, err := tx.Exec(ctx, sql, args...)
+		return err
+	}, "activity_status")
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatalf("filing: %v", err)
+	}
+	t.Cleanup(func() {
+		setStates(func(ctx context.Context, sql string, args ...any) error {
+			_, err := admin.Exec(ctx, sql, args...)
+			return err
+		}, "activity_restore")
+	})
+	// Each account signs in once for every register (signing in is rate
+	// limited).
+	tokens := map[string]string{}
+	compared, differing, passedOn := 0, 0, 0
+	for _, answer := range golden.Answers {
+		token, ok := tokens[answer.Email]
+		if !ok {
+			borrowAccount(t, answer.Email)
+			token = sessionOf(t, answer.Email, seededPassword).GetAccessToken()
+			tokens[answer.Email] = token
+		}
+		got, err := pageOf(token, answer.Path, answer.Query)
+		if answer.Status != 200 {
+			if connect.CodeOf(err) != connect.CodeNotFound {
+				differing++
+				t.Errorf("%s %s %v: %v, want not found", answer.Email, answer.Path, answer.Query, err)
+			}
+			continue
+		}
+		if connect.CodeOf(err) == connect.CodeUnavailable && strings.Contains(err.Error(), "not available here yet") {
+			// A reader whose register Go does not build yet (a Programme
+			// Lead's Performance Reviews) is passed on, as the gateway does.
+			passedOn++
+			continue
+		}
+		if err != nil {
+			t.Fatalf("%s %s %v: %v", answer.Email, answer.Path, answer.Query, err)
+		}
+		want := &screensv1.GetPageResponse{}
+		if err := protojson.Unmarshal(answer.Body, want); err != nil {
+			t.Fatalf("the golden answer: %v", err)
+		}
+		compared++
+		if !proto.Equal(got, want) {
+			differing++
+			g, w := protojson.Format(got), protojson.Format(want)
+			at := 0
+			for at < len(g) && at < len(w) && g[at] == w[at] {
+				at++
+			}
+			t.Errorf("%s %s %v differs at byte %d:\n go:       …%s\n existing: …%s", answer.Email, answer.Path, answer.Query, at,
+				g[max(at-200, 0):min(at+200, len(g))], w[max(at-200, 0):min(at+200, len(w))])
+		}
+	}
+	t.Logf("%d answers of %d accounts compared, %d differing, %d passed on", compared, len(tokens), differing, passedOn)
+	if compared == 0 {
+		t.Fatal("no answer was compared")
+	}
+}
