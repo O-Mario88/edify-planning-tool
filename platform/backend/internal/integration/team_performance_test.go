@@ -170,13 +170,14 @@ func TestTeamPerformanceMatchesTheExistingFeedOverASyntheticYear(t *testing.T) {
 		t.Fatal(err)
 	}
 	fileTeamPerformanceRows(t)
+	clientFor := goldenSignInClients()
 	tokens := map[string]string{}
 	compared, differing := 0, 0
 	for _, answer := range golden {
 		token, ok := tokens[answer.Email]
 		if !ok {
 			borrowAccount(t, answer.Email)
-			result, err := signIn(t, signInClientAt(fmt.Sprintf("10.9.7.%d", len(tokens)+1)), answer.Email, seededPassword)
+			result, err := signIn(t, clientFor(len(tokens)+1), answer.Email, seededPassword)
 			if err != nil || result.GetSession() == nil {
 				t.Fatalf("signing in %s: %v", answer.Email, err)
 			}

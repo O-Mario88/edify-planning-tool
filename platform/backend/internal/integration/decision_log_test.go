@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1/identityv1connect"
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 )
 
@@ -33,15 +35,32 @@ type goldenAnswer struct {
 
 // compareGolden asks Go each question as its account and compares the
 // answer with the existing feed's as a whole message.
+// goldenCallerBlocks numbers the golden comparisons of one suite run. The
+// suite shares one gateway, whose sign-in limiter allows ten attempts a minute
+// from one address, so each comparison signs its accounts in from a block of
+// addresses of its own (10.20.<block>.<n>) rather than every golden starting
+// at the same address and running the limiter out once enough run in a row.
+var goldenCallerBlocks atomic.Int32
+
+// goldenSignInClients returns the sign-in client for the n-th account (from 1)
+// of a new golden comparison.
+func goldenSignInClients() func(n int) identityv1connect.SignInServiceClient {
+	block := goldenCallerBlocks.Add(1) % 250
+	return func(n int) identityv1connect.SignInServiceClient {
+		return signInClientAt(fmt.Sprintf("10.20.%d.%d", block, n))
+	}
+}
+
 func compareGolden(t *testing.T, path string, answers []goldenAnswer) {
 	t.Helper()
+	clientFor := goldenSignInClients()
 	tokens := map[string]string{}
 	compared, differing := 0, 0
 	for _, answer := range answers {
 		token, ok := tokens[answer.Email]
 		if !ok {
 			borrowAccount(t, answer.Email)
-			result, err := signIn(t, signInClientAt(fmt.Sprintf("10.9.7.%d", len(tokens)+1)), answer.Email, seededPassword)
+			result, err := signIn(t, clientFor(len(tokens)+1), answer.Email, seededPassword)
 			if err != nil || result.GetSession() == nil {
 				t.Fatalf("signing in %s: %v", answer.Email, err)
 			}
