@@ -100,3 +100,5 @@ School 1130 received a second, identical correction (same point, same reason, on
 - Real Android phones and an iOS release (TestFlight) build: need the owner's devices and signing.
 - Field accuracy (GPS under trees, indoors, poor reception): simulators report the accuracy they are given; only a phone at a school measures it.
 - Background sync while the app is closed: not promised; sync runs on opening, on reconnection, on returning to the app, after a capture and each minute while something waits.
+
+Next: `staging-field-routes-runbook.md` (prepared, awaiting the owner's approval).

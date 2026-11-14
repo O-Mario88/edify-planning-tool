@@ -48,3 +48,5 @@ Acceptance: at a school with no signal, open a previously synced profile, captur
 - Device tests here are the iOS simulator and the Android emulator; real Android phones and iOS release builds need the owner's devices / signing.
 
 Test report: `offline-gps-capture-test-report.md`.
+
+Staging runbook: `staging-field-routes-runbook.md` (prepared, awaiting approval).

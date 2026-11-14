@@ -88,6 +88,29 @@ func TestCheckDSN(t *testing.T) {
 			refused: "must use TLS",
 		},
 		{
+			name:    "staging refuses a URL that may fall back to plain text (no sslmode means prefer)",
+			policy:  Policy{Env: config.Staging, AllowedHosts: []string{"staging-db.internal"}},
+			dsn:     "postgresql://u:p@staging-db.internal/edify",
+			refused: "must use TLS",
+		},
+		{
+			name:    "staging refuses sslmode=prefer",
+			policy:  Policy{Env: config.Staging, AllowedHosts: []string{"staging-db.internal"}},
+			dsn:     "postgresql://u:p@staging-db.internal/edify?sslmode=prefer",
+			refused: "must use TLS",
+		},
+		{
+			name:    "staging refuses sslmode=allow",
+			policy:  Policy{Env: config.Staging, AllowedHosts: []string{"staging-db.internal"}},
+			dsn:     "postgresql://u:p@staging-db.internal/edify?sslmode=allow",
+			refused: "must use TLS",
+		},
+		{
+			name:   "staging accepts sslmode=verify-full",
+			policy: Policy{Env: config.Staging, AllowedHosts: []string{"staging-db.internal"}},
+			dsn:    "postgresql://u:p@staging-db.internal/edify?sslmode=verify-full",
+		},
+		{
 			name:   "staging on its named host with TLS",
 			policy: Policy{Env: config.Staging, AllowedHosts: []string{"staging-db.internal"}},
 			dsn:    "postgresql://u:p@staging-db.internal/edify?sslmode=require",
@@ -142,6 +165,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 	writers := map[string]string{
 		filepath.Join(root, "internal", "clusterlead") + sep: "cluster_leadership.",
 		filepath.Join(root, "internal", "loans") + sep:       "school_loans.",
+		// Location reports and captures: field_routes only, never the
+		// existing school coordinates (owner, 2026-11-14).
+		filepath.Join(root, "internal", "routeplan") + sep: "field_routes.",
 	}
 	// Signing in and account administration, which Go owns (owner brief,
 	// 2026-11-11), write the existing account tables, and the audit chain

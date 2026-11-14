@@ -167,7 +167,7 @@ func CheckDSN(policy Policy, dsn string) (Target, error) {
 			))
 		}
 	}
-	if policy.Env == config.Staging && parsed.TLSConfig == nil {
+	if policy.Env == config.Staging && !tlsOnly(parsed) {
 		return Target{}, refuse("staging connections must use TLS (sslmode=require or stricter)")
 	}
 	return target, nil
@@ -312,4 +312,19 @@ func contains(items []string, wanted string) bool {
 		}
 	}
 	return false
+}
+
+// tlsOnly is whether every way the connection may be made uses TLS. A URL
+// without sslmode, or with sslmode=prefer or allow, may fall back to plain
+// text, so it is not.
+func tlsOnly(parsed *pgconn.Config) bool {
+	if parsed.TLSConfig == nil {
+		return false
+	}
+	for _, fallback := range parsed.Fallbacks {
+		if fallback.TLSConfig == nil {
+			return false
+		}
+	}
+	return true
 }
