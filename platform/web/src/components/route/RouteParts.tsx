@@ -156,6 +156,7 @@ export function NearbyCard({
   onViewAll,
   showAll,
   inRoute,
+  around,
 }: {
   suggestions: readonly Suggestion[];
   onAdd: (s: Suggestion) => string;
@@ -164,6 +165,8 @@ export function NearbyCard({
   showAll: boolean;
   /** Schools already in the shown route (a suggestion only, until scheduled). */
   inRoute: ReadonlySet<string>;
+  /** The school the list is around (Find Nearby Schools), if any. */
+  around?: SchoolPin;
 }) {
   const shown = showAll ? suggestions : suggestions.slice(0, 1);
   return (
@@ -171,7 +174,7 @@ export function NearbyCard({
       <header className="flex items-center justify-between gap-3">
         <h2 id="near-route-title" className="flex items-center gap-3 text-[19px] font-semibold text-[var(--edify-text)]">
           <RouteIcon name="bulb" className="h-7 w-7 text-amber-400" />
-          Schools Near Your Route
+          {around ? `Schools Near ${around.name}` : 'Schools Near Your Route'}
         </h2>
         {suggestions.length > 1 ? (
           <button type="button" onClick={onViewAll} className="flex items-center gap-2 text-[15px] font-semibold text-[#1d6fe0]">
@@ -180,7 +183,7 @@ export function NearbyCard({
         ) : null}
       </header>
       {shown.length === 0 ? (
-        <p className="mt-4 text-[var(--edify-text-muted)]">No eligible schools near this route.</p>
+        <p className="mt-4 text-[var(--edify-text-muted)]">{around ? 'No eligible schools near this school.' : 'No eligible schools near this route.'}</p>
       ) : (
         <ul className="mt-4 space-y-3">
           {shown.map((s) => (
@@ -196,12 +199,15 @@ export function NearbyCard({
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 text-[16px] font-semibold text-[var(--edify-text)]">
                   {s.school?.name}
+                  <span className="text-[13px] font-normal text-[var(--edify-text-muted)]">ID {s.school?.code}</span>
                   <span className={`rounded-full px-3 py-0.5 text-[13px] font-semibold ${s.label === 'High Priority' ? 'bg-violet-50 text-violet-700' : 'bg-green-50 text-green-700'}`}>
                     {s.label}
                   </span>
                 </p>
                 <p className="mt-1 text-[14px] text-[var(--edify-text-muted)]">
-                  {Number(s.addedMeters) < 100 ? 'On the way' : `+${km(s.addedMeters)}`} • +{hoursMinutes(s.addedSeconds)}
+                  {around
+                    ? `${km(s.addedMeters)} away • ${hoursMinutes(s.addedSeconds)}`
+                    : `${Number(s.addedMeters) < 100 ? 'On the way' : `+${km(s.addedMeters)}`} • +${hoursMinutes(s.addedSeconds)}`}
                   {s.measure === 'straight_line' ? ' (straight line)' : ''}
                   <span className="mx-2 text-slate-300">|</span>
                   {s.label === 'High Priority' ? 'SSA Support Needed' : 'Support visit open'}

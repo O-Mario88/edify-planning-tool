@@ -47,9 +47,11 @@ export interface RoutePlannerProps {
   existingWebUrl: string;
   district: string;
   cluster: string;
+  /** Find Nearby Schools: the school the suggestions are around. */
+  near?: string;
 }
 
-export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster }: RoutePlannerProps) {
+export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, near = '' }: RoutePlannerProps) {
   const router = useRouter();
   const day = useMemo(() => fromJson(GetFieldDayResponseSchema, dayJson), [dayJson]);
   const [itinerary, setItinerary] = useState<Itinerary | undefined>(day.recommended);
@@ -60,7 +62,9 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster }
   const [pair, setPair] = useState<GetSchoolDistanceResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(day.provider?.message || null);
-  const [allNearby, setAllNearby] = useState(false);
+  const focus = day.focus;
+  // Around one school, every nearby school is listed at once.
+  const [allNearby, setAllNearby] = useState(Boolean(day.focus));
   // On a phone the filters fold away under their heading; wider, they stay open.
   const [filtersOpen, setFiltersOpen] = useState(false);
   const lastSelected = useRef<SchoolPin | null>(null);
@@ -68,11 +72,11 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster }
 
   const go = useCallback(
     (next: Record<string, string>) => {
-      const q = new URLSearchParams({ date: day.date, district, cluster, ...next });
+      const q = new URLSearchParams({ date: day.date, district, cluster, near, ...next });
       for (const [k, v] of [...q.entries()]) if (!v) q.delete(k);
       router.push(`/my-plan/smart-route?${q.toString()}`);
     },
-    [router, day.date, district, cluster],
+    [router, day.date, district, cluster, near],
   );
 
   const plan = useCallback(
@@ -124,7 +128,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster }
     }
   };
 
-  const focus = async (pin: SchoolPin) => {
+  const onPick = async (pin: SchoolPin) => {
     setSelected(pin);
     setPair(null);
     const previous = lastSelected.current;
@@ -225,6 +229,20 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster }
         </div>
       </header>
 
+      {focus ? (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[#1d6fe0]/40 bg-blue-50 px-4 py-3" role="status">
+          <p className="text-[15px] text-slate-800">
+            <strong>Schools near {focus.name}</strong> (ID {focus.code}):{' '}
+            {focus.point
+              ? `the eligible schools around it, nearest first, on the map and below.`
+              : 'this school has no usable location, so nearby schools cannot be found. It still appears in every list and plan.'}
+          </p>
+          <button type="button" onClick={() => go({ near: '' })} className="h-10 rounded-[8px] border border-[#1d6fe0] px-4 text-[14px] font-semibold text-[#1d6fe0]">
+            Show my day
+          </button>
+        </div>
+      ) : null}
+
       <div className="mt-6">
         <KpiRow itinerary={itinerary} />
       </div>
@@ -310,7 +328,17 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster }
           </div>
           {view === 'map' ? (
             <div className="relative min-h-[440px] md:min-h-[520px]">
-              <RouteMap stops={stops} path={show.planned ? path : []} others={others} chip={chip} onSelect={focus} onView={onView} className="absolute inset-0" />
+              <RouteMap
+                stops={stops}
+                path={show.planned ? path : []}
+                others={others}
+                chip={chip}
+                onSelect={onPick}
+                onView={onView}
+                className="absolute inset-0"
+                focus={focus}
+                fitOthers={Boolean(focus)}
+              />
               {selected ? (
                 <SchoolPanel
                   pin={selected}
@@ -343,7 +371,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster }
               ) : null}
             </header>
             <div className="mt-2">
-              <RouteList itinerary={itinerary} onFocus={focus} />
+              <RouteList itinerary={itinerary} onFocus={onPick} />
             </div>
             <RouteSummary itinerary={itinerary} />
             <div className="mt-5 grid grid-cols-2 gap-3 px-6">
@@ -371,7 +399,8 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster }
         <NearbyCard
           suggestions={day.suggestions}
           onAdd={addHref}
-          onFocus={focus}
+          onFocus={onPick}
+          around={focus}
           onViewAll={() => setAllNearby(!allNearby)}
           showAll={allNearby}
           inRoute={stopIds}

@@ -68,6 +68,12 @@ func (s *Service) suggest(ctx context.Context, p auth.Principal, route *routesv1
 	for _, sc := range planned {
 		except = append(except, sc.pin.SchoolId)
 	}
+	return s.suggestAround(ctx, p, pts, except, route.GetTotals().GetFieldMinutes(), "your planned schools", now, district, cluster)
+}
+
+// suggestAround is the eligible schools near pts (a route in order, or one
+// school), cheapest to reach first; nearWhat names pts in each reason.
+func (s *Service) suggestAround(ctx context.Context, p auth.Principal, pts []LatLng, except []string, used int32, nearWhat string, now time.Time, district, cluster string) ([]*routesv1.Suggestion, error) {
 	near, err := nearby(ctx, s.db, p, now, pts, except, district, cluster)
 	if err != nil {
 		return nil, err
@@ -110,14 +116,13 @@ func (s *Service) suggest(ctx context.Context, p auth.Principal, route *routesv1
 		}
 		return eligible[i].sc.pin.Code < eligible[j].sc.pin.Code
 	})
-	used := route.GetTotals().GetFieldMinutes()
 	out := []*routesv1.Suggestion{}
 	for _, c := range eligible {
 		pin := c.sc.pin
 		pin.Status = "suggested"
-		label, reason := "Eligible", "Eligible for a support visit in FY"+fy+", near your planned schools."
+		label, reason := "Eligible", "Eligible for a support visit in FY"+fy+", near "+nearWhat+"."
 		if !c.gate.HasSSA {
-			label, reason = "High Priority", "No confirmed SSA for FY"+fy+"; eligible for a support visit, near your planned schools."
+			label, reason = "High Priority", "No confirmed SSA for FY"+fy+"; eligible for a support visit, near "+nearWhat+"."
 		}
 		fits := int64(used)+c.addedSec/60+int64(Rules.Day.VisitMinutes) <= int64(Rules.Day.AvailableMinutes-Rules.Day.BufferMinutes)
 		if !fits {

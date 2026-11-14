@@ -15,6 +15,9 @@ import type { FeatureCollection } from 'geojson';
 import type { GeoJSONSource, Map as MapLibreMap, Marker as MapLibreMarker } from 'maplibre-gl';
 import { useEffect, useRef, useState } from 'react';
 
+import { create } from '@bufbuild/protobuf';
+
+import { ItineraryStopSchema } from '@/gen/edify/routes/v1/routes_pb';
 import type { ItineraryStop, SchoolPin } from '@/gen/edify/routes/v1/routes_pb';
 import { pinTone } from '@/lib/routePlanner';
 
@@ -51,6 +54,10 @@ export interface RouteMapProps {
   className?: string;
   /** The planner's legend; off for a single school's map. */
   showLegend?: boolean;
+  /** A school the view is about (Find Nearby Schools): a plain blue pin, off the route line. */
+  focus?: SchoolPin;
+  /** Fit the view to the other schools too (the schools around a focus). */
+  fitOthers?: boolean;
 }
 
 function pinElement(stop: ItineraryStop): HTMLElement {
@@ -138,7 +145,7 @@ function fit(instance: MapLibreMap, extent: [[number, number], [number, number]]
   instance.fitBounds(extent, { padding: { top: pad, bottom: pad, left: pad, right: Math.min(pad * 2, width / 3) }, maxZoom: 14, duration: 0 });
 }
 
-export function RouteMap({ stops, path, others, chip, onSelect, onView, className, showLegend = true }: RouteMapProps) {
+export function RouteMap({ stops, path, others, chip, onSelect, onView, className, showLegend = true, focus, fitOthers = false }: RouteMapProps) {
   const box = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
@@ -312,7 +319,8 @@ export function RouteMap({ stops, path, others, chip, onSelect, onView, classNam
       markers.current.forEach((m) => m.remove());
       markers.current = [];
       const bounds = new LngLatBounds();
-      for (const stop of stops) {
+      const drawn = focus?.point ? [...stops, create(ItineraryStopSchema, { order: 0, school: focus, kind: 'location' })] : stops;
+      for (const stop of drawn) {
         const point = stop.school?.point;
         if (!point) continue;
         const el = pinElement(stop);
@@ -323,6 +331,7 @@ export function RouteMap({ stops, path, others, chip, onSelect, onView, classNam
         markers.current.push(new Marker({ element: el, anchor: 'bottom' }).setLngLat([point.lng, point.lat]).addTo(instance));
         bounds.extend([point.lng, point.lat]);
       }
+      if (fitOthers) for (const o of others) if (o.point) bounds.extend([o.point.lng, o.point.lat]);
       (instance.getSource('route-line') as GeoJSONSource | undefined)?.setData(lineCollection(stops, path));
       requestAnimationFrame(() => placeLabels(markers.current.map((m) => m.getElement()), frame.current));
       if (!bounds.isEmpty()) {
@@ -334,7 +343,7 @@ export function RouteMap({ stops, path, others, chip, onSelect, onView, classNam
     return () => {
       cancelled = true;
     };
-  }, [ready, stops, path]);
+  }, [ready, stops, path, focus, fitOthers, others]);
 
   useEffect(() => {
     const instance = map.current;

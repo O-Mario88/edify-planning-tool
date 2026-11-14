@@ -155,6 +155,10 @@ message GetFieldDayRequest {
   string date = 1;
   string district_id = 2;
   string cluster_id = 3;
+  // Find Nearby Schools from a profile: the suggestions are the eligible
+  // schools around this school (its own id or School ID) instead of around
+  // the day's route.
+  string near_school_id = 4;
 }
 
 message GetFieldDayResponse {
@@ -168,6 +172,8 @@ message GetFieldDayResponse {
   repeated FilterOption districts = 7;
   repeated FilterOption clusters = 8;
   string area_label = 9;
+  // The school the suggestions are around, when one was asked for.
+  SchoolPin focus = 10;
 }
 
 message PlanRouteRequest {

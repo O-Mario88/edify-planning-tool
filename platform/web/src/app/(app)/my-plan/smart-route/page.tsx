@@ -23,11 +23,12 @@ export default async function SmartRoutePage({ searchParams }: { searchParams: S
   const date = one(q.date);
   const district = one(q.district);
   const cluster = one(q.cluster);
+  const near = one(q.near).slice(0, 64);
   let answer;
   let refused = '';
   try {
     answer = await asReader((token) =>
-      gatewayClient(RoutePlannerService, token).getFieldDay({ date, districtId: district, clusterId: cluster }),
+      gatewayClient(RoutePlannerService, token).getFieldDay({ date, districtId: district, clusterId: cluster, nearSchoolId: near }),
     );
   } catch (error) {
     if (!isNotFound(error)) throw error;
@@ -43,11 +44,12 @@ export default async function SmartRoutePage({ searchParams }: { searchParams: S
   }
   return (
     <RoutePlanner
-      key={`${answer.date}|${district}|${cluster}`}
+      key={`${answer.date}|${district}|${cluster}|${near}`}
       day={toJson(GetFieldDayResponseSchema, answer)}
       existingWebUrl={environment().existingWebUrl}
       district={district}
       cluster={cluster}
+      near={near}
     />
   );
 }

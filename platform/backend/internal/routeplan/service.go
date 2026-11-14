@@ -112,14 +112,39 @@ func (s *Service) GetFieldDay(ctx context.Context, req *connect.Request[routesv1
 	t := trip{schools: planned, kinds: map[string]string{}, mode: ModeFastest}
 	route, note := s.build(ctx, t)
 	district, cluster := req.Msg.GetDistrictId(), req.Msg.GetClusterId()
-	suggestions, err := s.suggest(ctx, p, route, planned, now, district, cluster)
+	var focus *school
+	if ref := req.Msg.GetNearSchoolId(); ref != "" {
+		sc, found, err := schoolByRef(ctx, s, p, ref)
+		if err != nil {
+			return nil, s.fail(ctx, err)
+		}
+		if !found {
+			// A school the reader may not see is never named or placed.
+			return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonSchoolNotFound, "school not found")
+		}
+		sc.pin.CanOpenProfile = MayOpenProfile(p.ActiveRole)
+		focus = &sc
+	}
+	var suggestions []*routesv1.Suggestion
+	switch {
+	case focus == nil:
+		suggestions, err = s.suggest(ctx, p, route, planned, now, district, cluster)
+	case focus.placed():
+		except := []string{focus.pin.SchoolId}
+		for _, sc := range planned {
+			except = append(except, sc.pin.SchoolId)
+		}
+		suggestions, err = s.suggestAround(ctx, p, []LatLng{focus.at}, except, route.GetTotals().GetFieldMinutes(), focus.pin.Name, now, district, cluster)
+	}
 	if err != nil {
 		return nil, s.fail(ctx, err)
 	}
 	for _, sg := range suggestions {
 		sg.School.CanOpenProfile = MayOpenProfile(p.ActiveRole)
 	}
-	if len(suggestions) > 0 && suggestions[0].FitsDay && len(route.GetStops()) > 0 {
+	// The best nearby school joins the day as a suggestion; not when the reader
+	// asked about one school's surroundings.
+	if focus == nil && len(suggestions) > 0 && suggestions[0].FitsDay && len(route.GetStops()) > 0 {
 		top := suggestions[0]
 		add, err := schoolsByID(ctx, s.db, p, now, []string{top.School.SchoolId})
 		if err != nil {
@@ -140,6 +165,9 @@ func (s *Service) GetFieldDay(ctx context.Context, req *connect.Request[routesv1
 	out := &routesv1.GetFieldDayResponse{Date: day.Format(time.DateOnly), DateLabel: day.Format("Mon, 02 Jan 2006"),
 		Recommended: route, Suggestions: suggestions, Provider: s.provider(note), Districts: districts, Clusters: clusters,
 		AreaLabel: area(planned)}
+	if focus != nil {
+		out.Focus = focus.pin
+	}
 	for _, sc := range planned {
 		out.Planned = append(out.Planned, sc.pin)
 	}

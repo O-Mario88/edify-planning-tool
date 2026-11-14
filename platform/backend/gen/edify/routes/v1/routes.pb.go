@@ -881,9 +881,13 @@ func (x *FilterOption) GetLabel() string {
 type GetFieldDayRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// "YYYY-MM-DD"; empty is today.
-	Date          string `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
-	DistrictId    string `protobuf:"bytes,2,opt,name=district_id,json=districtId,proto3" json:"district_id,omitempty"`
-	ClusterId     string `protobuf:"bytes,3,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	Date       string `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
+	DistrictId string `protobuf:"bytes,2,opt,name=district_id,json=districtId,proto3" json:"district_id,omitempty"`
+	ClusterId  string `protobuf:"bytes,3,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	// Find Nearby Schools from a profile: the suggestions are the eligible
+	// schools around this school (its own id or School ID) instead of around
+	// the day's route.
+	NearSchoolId  string `protobuf:"bytes,4,opt,name=near_school_id,json=nearSchoolId,proto3" json:"near_school_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -939,18 +943,27 @@ func (x *GetFieldDayRequest) GetClusterId() string {
 	return ""
 }
 
+func (x *GetFieldDayRequest) GetNearSchoolId() string {
+	if x != nil {
+		return x.NearSchoolId
+	}
+	return ""
+}
+
 type GetFieldDayResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Date  string                 `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
 	// The day's date as the page writes it ("Tue, 24 Jun 2025").
-	DateLabel     string          `protobuf:"bytes,2,opt,name=date_label,json=dateLabel,proto3" json:"date_label,omitempty"`
-	Planned       []*SchoolPin    `protobuf:"bytes,3,rep,name=planned,proto3" json:"planned,omitempty"`
-	Recommended   *Itinerary      `protobuf:"bytes,4,opt,name=recommended,proto3" json:"recommended,omitempty"`
-	Suggestions   []*Suggestion   `protobuf:"bytes,5,rep,name=suggestions,proto3" json:"suggestions,omitempty"`
-	Provider      *ProviderStatus `protobuf:"bytes,6,opt,name=provider,proto3" json:"provider,omitempty"`
-	Districts     []*FilterOption `protobuf:"bytes,7,rep,name=districts,proto3" json:"districts,omitempty"`
-	Clusters      []*FilterOption `protobuf:"bytes,8,rep,name=clusters,proto3" json:"clusters,omitempty"`
-	AreaLabel     string          `protobuf:"bytes,9,opt,name=area_label,json=areaLabel,proto3" json:"area_label,omitempty"`
+	DateLabel   string          `protobuf:"bytes,2,opt,name=date_label,json=dateLabel,proto3" json:"date_label,omitempty"`
+	Planned     []*SchoolPin    `protobuf:"bytes,3,rep,name=planned,proto3" json:"planned,omitempty"`
+	Recommended *Itinerary      `protobuf:"bytes,4,opt,name=recommended,proto3" json:"recommended,omitempty"`
+	Suggestions []*Suggestion   `protobuf:"bytes,5,rep,name=suggestions,proto3" json:"suggestions,omitempty"`
+	Provider    *ProviderStatus `protobuf:"bytes,6,opt,name=provider,proto3" json:"provider,omitempty"`
+	Districts   []*FilterOption `protobuf:"bytes,7,rep,name=districts,proto3" json:"districts,omitempty"`
+	Clusters    []*FilterOption `protobuf:"bytes,8,rep,name=clusters,proto3" json:"clusters,omitempty"`
+	AreaLabel   string          `protobuf:"bytes,9,opt,name=area_label,json=areaLabel,proto3" json:"area_label,omitempty"`
+	// The school the suggestions are around, when one was asked for.
+	Focus         *SchoolPin `protobuf:"bytes,10,opt,name=focus,proto3" json:"focus,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1046,6 +1059,13 @@ func (x *GetFieldDayResponse) GetAreaLabel() string {
 		return x.AreaLabel
 	}
 	return ""
+}
+
+func (x *GetFieldDayResponse) GetFocus() *SchoolPin {
+	if x != nil {
+		return x.Focus
+	}
+	return nil
 }
 
 type PlanRouteRequest struct {
@@ -1650,13 +1670,14 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"\amessage\x18\x03 \x01(\tR\amessage\":\n" +
 	"\fFilterOption\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"h\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\"\x8e\x01\n" +
 	"\x12GetFieldDayRequest\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12\x1f\n" +
 	"\vdistrict_id\x18\x02 \x01(\tR\n" +
 	"districtId\x12\x1d\n" +
 	"\n" +
-	"cluster_id\x18\x03 \x01(\tR\tclusterId\"\xcf\x03\n" +
+	"cluster_id\x18\x03 \x01(\tR\tclusterId\x12$\n" +
+	"\x0enear_school_id\x18\x04 \x01(\tR\fnearSchoolId\"\x81\x04\n" +
 	"\x13GetFieldDayResponse\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12\x1d\n" +
 	"\n" +
@@ -1668,7 +1689,9 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"\tdistricts\x18\a \x03(\v2\x1d.edify.routes.v1.FilterOptionR\tdistricts\x129\n" +
 	"\bclusters\x18\b \x03(\v2\x1d.edify.routes.v1.FilterOptionR\bclusters\x12\x1d\n" +
 	"\n" +
-	"area_label\x18\t \x01(\tR\tareaLabel\"\xd4\x01\n" +
+	"area_label\x18\t \x01(\tR\tareaLabel\x120\n" +
+	"\x05focus\x18\n" +
+	" \x01(\v2\x1a.edify.routes.v1.SchoolPinR\x05focus\"\xd4\x01\n" +
 	"\x10PlanRouteRequest\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12\x1d\n" +
 	"\n" +
@@ -1769,32 +1792,33 @@ var file_edify_routes_v1_routes_proto_depIdxs = []int32{
 	7,  // 12: edify.routes.v1.GetFieldDayResponse.provider:type_name -> edify.routes.v1.ProviderStatus
 	8,  // 13: edify.routes.v1.GetFieldDayResponse.districts:type_name -> edify.routes.v1.FilterOption
 	8,  // 14: edify.routes.v1.GetFieldDayResponse.clusters:type_name -> edify.routes.v1.FilterOption
-	0,  // 15: edify.routes.v1.PlanRouteRequest.start:type_name -> edify.routes.v1.Point
-	5,  // 16: edify.routes.v1.PlanRouteResponse.itinerary:type_name -> edify.routes.v1.Itinerary
-	7,  // 17: edify.routes.v1.PlanRouteResponse.provider:type_name -> edify.routes.v1.ProviderStatus
-	0,  // 18: edify.routes.v1.GetSchoolPinsRequest.south_west:type_name -> edify.routes.v1.Point
-	0,  // 19: edify.routes.v1.GetSchoolPinsRequest.north_east:type_name -> edify.routes.v1.Point
-	1,  // 20: edify.routes.v1.GetSchoolPinsResponse.pins:type_name -> edify.routes.v1.SchoolPin
-	2,  // 21: edify.routes.v1.GetSchoolDistanceResponse.leg:type_name -> edify.routes.v1.RouteLeg
-	1,  // 22: edify.routes.v1.GetSchoolDistanceResponse.from:type_name -> edify.routes.v1.SchoolPin
-	1,  // 23: edify.routes.v1.GetSchoolDistanceResponse.to:type_name -> edify.routes.v1.SchoolPin
-	7,  // 24: edify.routes.v1.GetSchoolDistanceResponse.provider:type_name -> edify.routes.v1.ProviderStatus
-	1,  // 25: edify.routes.v1.GetSchoolLocationResponse.school:type_name -> edify.routes.v1.SchoolPin
-	9,  // 26: edify.routes.v1.RoutePlannerService.GetFieldDay:input_type -> edify.routes.v1.GetFieldDayRequest
-	11, // 27: edify.routes.v1.RoutePlannerService.PlanRoute:input_type -> edify.routes.v1.PlanRouteRequest
-	13, // 28: edify.routes.v1.RoutePlannerService.GetSchoolPins:input_type -> edify.routes.v1.GetSchoolPinsRequest
-	15, // 29: edify.routes.v1.RoutePlannerService.GetSchoolDistance:input_type -> edify.routes.v1.GetSchoolDistanceRequest
-	17, // 30: edify.routes.v1.RoutePlannerService.GetSchoolLocation:input_type -> edify.routes.v1.GetSchoolLocationRequest
-	10, // 31: edify.routes.v1.RoutePlannerService.GetFieldDay:output_type -> edify.routes.v1.GetFieldDayResponse
-	12, // 32: edify.routes.v1.RoutePlannerService.PlanRoute:output_type -> edify.routes.v1.PlanRouteResponse
-	14, // 33: edify.routes.v1.RoutePlannerService.GetSchoolPins:output_type -> edify.routes.v1.GetSchoolPinsResponse
-	16, // 34: edify.routes.v1.RoutePlannerService.GetSchoolDistance:output_type -> edify.routes.v1.GetSchoolDistanceResponse
-	18, // 35: edify.routes.v1.RoutePlannerService.GetSchoolLocation:output_type -> edify.routes.v1.GetSchoolLocationResponse
-	31, // [31:36] is the sub-list for method output_type
-	26, // [26:31] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	1,  // 15: edify.routes.v1.GetFieldDayResponse.focus:type_name -> edify.routes.v1.SchoolPin
+	0,  // 16: edify.routes.v1.PlanRouteRequest.start:type_name -> edify.routes.v1.Point
+	5,  // 17: edify.routes.v1.PlanRouteResponse.itinerary:type_name -> edify.routes.v1.Itinerary
+	7,  // 18: edify.routes.v1.PlanRouteResponse.provider:type_name -> edify.routes.v1.ProviderStatus
+	0,  // 19: edify.routes.v1.GetSchoolPinsRequest.south_west:type_name -> edify.routes.v1.Point
+	0,  // 20: edify.routes.v1.GetSchoolPinsRequest.north_east:type_name -> edify.routes.v1.Point
+	1,  // 21: edify.routes.v1.GetSchoolPinsResponse.pins:type_name -> edify.routes.v1.SchoolPin
+	2,  // 22: edify.routes.v1.GetSchoolDistanceResponse.leg:type_name -> edify.routes.v1.RouteLeg
+	1,  // 23: edify.routes.v1.GetSchoolDistanceResponse.from:type_name -> edify.routes.v1.SchoolPin
+	1,  // 24: edify.routes.v1.GetSchoolDistanceResponse.to:type_name -> edify.routes.v1.SchoolPin
+	7,  // 25: edify.routes.v1.GetSchoolDistanceResponse.provider:type_name -> edify.routes.v1.ProviderStatus
+	1,  // 26: edify.routes.v1.GetSchoolLocationResponse.school:type_name -> edify.routes.v1.SchoolPin
+	9,  // 27: edify.routes.v1.RoutePlannerService.GetFieldDay:input_type -> edify.routes.v1.GetFieldDayRequest
+	11, // 28: edify.routes.v1.RoutePlannerService.PlanRoute:input_type -> edify.routes.v1.PlanRouteRequest
+	13, // 29: edify.routes.v1.RoutePlannerService.GetSchoolPins:input_type -> edify.routes.v1.GetSchoolPinsRequest
+	15, // 30: edify.routes.v1.RoutePlannerService.GetSchoolDistance:input_type -> edify.routes.v1.GetSchoolDistanceRequest
+	17, // 31: edify.routes.v1.RoutePlannerService.GetSchoolLocation:input_type -> edify.routes.v1.GetSchoolLocationRequest
+	10, // 32: edify.routes.v1.RoutePlannerService.GetFieldDay:output_type -> edify.routes.v1.GetFieldDayResponse
+	12, // 33: edify.routes.v1.RoutePlannerService.PlanRoute:output_type -> edify.routes.v1.PlanRouteResponse
+	14, // 34: edify.routes.v1.RoutePlannerService.GetSchoolPins:output_type -> edify.routes.v1.GetSchoolPinsResponse
+	16, // 35: edify.routes.v1.RoutePlannerService.GetSchoolDistance:output_type -> edify.routes.v1.GetSchoolDistanceResponse
+	18, // 36: edify.routes.v1.RoutePlannerService.GetSchoolLocation:output_type -> edify.routes.v1.GetSchoolLocationResponse
+	32, // [32:37] is the sub-list for method output_type
+	27, // [27:32] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_edify_routes_v1_routes_proto_init() }
