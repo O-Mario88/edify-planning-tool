@@ -56,6 +56,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	case ImpactPath:
 		return s.impact(ctx, p, query)
 	}
+	if strings.HasPrefix(path, PortalPrefix) {
+		return s.portal(ctx, p, path, query)
+	}
 	return nil, false, nil
 }
 

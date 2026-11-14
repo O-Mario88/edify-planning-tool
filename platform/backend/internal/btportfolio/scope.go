@@ -60,6 +60,15 @@ func memberships(ctx context.Context, db schooldirectory.Querier, userID string,
 	return out, nil
 }
 
+// MfiIDs is _mfi_ids_for: the lending partners the reader belongs to.
+func MfiIDs(ctx context.Context, db schooldirectory.Querier, userID string) ([]string, error) {
+	ids, err := memberships(ctx, db, userID, false)
+	if ids == nil {
+		ids = []string{}
+	}
+	return ids, err
+}
+
 // LoansWhere is scoped_loans as a condition on bt_mfi_loan l with its school
 // s: a partner administrator's partners' loans, a loan officer's own, the
 // programme's schools for Uganda-wide readers and CCEOs, nothing else.

@@ -745,3 +745,8 @@ GRANT SELECT (last_repayment_data_date, updated_at) ON bt_mfi_loan TO edify_gate
 -- baseline enrolment snapshot's learner count, status and order.
 GRANT SELECT (id, classification) ON bt_loan_impact_assessment TO edify_gateway_ro;
 GRANT SELECT (status, learner_count, created_at) ON bt_enrolment_snapshot TO edify_gateway_ro;
+
+-- MFI partner portal (internal/btpages/portal.go): a lending partner's
+-- monthly portfolio returns and their open row-level data issues.
+GRANT SELECT (id, reporting_month, source_type, valid_rows, total_rows, exception_rows, status, mfi_id) ON bt_portfolio_submission TO edify_gateway_ro;
+GRANT SELECT (submission_id, row_number, code, message, status) ON bt_portfolio_data_exception TO edify_gateway_ro;

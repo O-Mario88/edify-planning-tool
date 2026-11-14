@@ -10,7 +10,8 @@ workspace tabs are drawn for and who reads districts and schools as links;
 the words for each case, recommendation, loan,
 Salesforce, IA and impact status; and the registry labels of the portfolio
 figures; and the Loans register's application, repayment and frequency
-words. A change to any of them must be exported again;
+words, and the MFI portal's sections and return words. A change to any of
+them must be exported again;
 apps/business_transformation/test_bt_rules_export.py fails until it is.
 
     python manage.py export_bt_rules
@@ -121,6 +122,8 @@ def rules() -> dict:
         "portfolio": portfolio_rules(),
         # The Loans register (loan_register_context and loans.html).
         "loans": loan_rules(),
+        # The MFI partner portal (mfi_portal_context and mfi_portal.html).
+        "portal": portal_rules(),
     }
 
 
@@ -142,6 +145,22 @@ def loan_rules() -> dict:
             str(m.RepaymentStatus.OVERDUE_90_PLUS),
         ],
         "row_limit": 200,
+    }
+
+
+def portal_rules() -> dict:
+    from apps.business_transformation import models as m
+
+    field = m.PortfolioSubmission._meta.get_field("source_type")
+    # The sections and row limits are mfi_portal_context's own literals.
+    return {
+        "sections": ["dashboard", "loans", "monthly-return", "data-issues", "reports"],
+        "source_types": [[str(k), str(v)] for k, v in field.choices],
+        "submission_statuses": [
+            [str(k), str(v)] for k, v in m.PortfolioSubmissionStatus.choices
+        ],
+        "submissions_shown": 24,
+        "issues_shown": 100,
     }
 
 

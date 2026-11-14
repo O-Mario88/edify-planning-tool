@@ -353,22 +353,23 @@ func coverage(confirmed, loans int) string {
 }
 
 type loanRow struct {
-	ref, officer, code, school, district, region, mfi, purpose string
-	edtech                                                     bool
-	disbursed, approved, paid, outstanding                     *string
-	status, health, salesforce, salesforceID, ia, impact       string
-	lastData                                                   *time.Time
-	updated                                                    time.Time
+	ref, officer, schoolPK, code, school, district, region, mfi, purpose string
+	edtech                                                               bool
+	disbursed, approved, paid, outstanding                               *string
+	status, health, salesforce, salesforceID, ia, impact                 string
+	lastData                                                             *time.Time
+	updated                                                              time.Time
 }
 
-// loanRegister is the loan register table: the first 200 loans, the latest
-// disbursement first (undisbursed loans lead, as Postgres sorts nulls).
-func (s *Service) loanRegister(ctx context.Context, p auth.Principal, f btportfolio.Filters, now time.Time, query url.Values) ([]*screensv1.PageBlock, error) {
+// loanRows is loan_register_context's loans: the first 200 the reader may
+// see under the filters, the latest disbursement first (undisbursed loans
+// lead, as Postgres sorts nulls).
+func (s *Service) loanRows(ctx context.Context, p auth.Principal, f btportfolio.Filters, now time.Time) ([]loanRow, error) {
 	where, a, err := s.scopedLoans(ctx, p, f, now)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := s.db.Query(ctx, `SELECT l.external_loan_reference, l.assigned_officer_reference, COALESCE(s.school_id, ''), COALESCE(s.name, ''),
+	rows, err := s.db.Query(ctx, `SELECT l.external_loan_reference, l.assigned_officer_reference, COALESCE(s.id, ''), COALESCE(s.school_id, ''), COALESCE(s.name, ''),
   COALESCE(d.name, ''), COALESCE(g.name, ''), COALESCE(m.name, ''), COALESCE(p.label, ''), COALESCE(p.is_edtech, FALSE),
   l.disbursed_amount::text, l.approved_amount::text, r.amount_paid_during_period::text, r.outstanding_amount::text,
   l.status, COALESCE(r.status, ''), l.salesforce_status, COALESCE(l.salesforce_loan_id, ''), l.ia_validation_status, l.impact_status,
@@ -383,12 +384,21 @@ WHERE `+where+` ORDER BY l.disbursement_date DESC, l.created_at DESC LIMIT `+str
 	}
 	list, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (loanRow, error) {
 		var x loanRow
-		return x, r.Scan(&x.ref, &x.officer, &x.code, &x.school, &x.district, &x.region, &x.mfi, &x.purpose, &x.edtech,
+		return x, r.Scan(&x.ref, &x.officer, &x.schoolPK, &x.code, &x.school, &x.district, &x.region, &x.mfi, &x.purpose, &x.edtech,
 			&x.disbursed, &x.approved, &x.paid, &x.outstanding, &x.status, &x.health, &x.salesforce, &x.salesforceID,
 			&x.ia, &x.impact, &x.lastData, &x.updated)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("btpages: reading the loan register: %w", err)
+	}
+	return list, nil
+}
+
+// loanRegister is the loan register table.
+func (s *Service) loanRegister(ctx context.Context, p auth.Principal, f btportfolio.Filters, now time.Time, query url.Values) ([]*screensv1.PageBlock, error) {
+	list, err := s.loanRows(ctx, p, f, now)
+	if err != nil {
+		return nil, err
 	}
 	columns := []string{"Loan Reference", "School ID", "School", "MFI", "Purpose", "Amount", "Loan Status", "Repayment", "Salesforce", "IA", "Impact", "Last Updated", "Action"}
 	if len(list) == 0 {

@@ -237,6 +237,49 @@
     "monitoring",
     "deferred"
   ],
+  "portal": {
+    "issues_shown": 100,
+    "sections": [
+      "dashboard",
+      "loans",
+      "monthly-return",
+      "data-issues",
+      "reports"
+    ],
+    "source_types": [
+      [
+        "manual",
+        "Manual"
+      ],
+      [
+        "spreadsheet",
+        "Spreadsheet"
+      ],
+      [
+        "api",
+        "API"
+      ]
+    ],
+    "submission_statuses": [
+      [
+        "staged",
+        "Staged"
+      ],
+      [
+        "needs_correction",
+        "Needs correction"
+      ],
+      [
+        "imported",
+        "Imported"
+      ],
+      [
+        "certified",
+        "Certified"
+      ]
+    ],
+    "submissions_shown": 24
+  },
   "portfolio": {
     "assignment_statuses": [
       [
