@@ -105,6 +105,26 @@ def rules() -> dict:
         "ia_statuses": choices(m.IAValidationStatus),
         "impact_statuses": choices(m.LoanImpactStatus),
         "metric_labels": {key: get_metric(key).label for key in METRIC_KEYS},
+        # The two school-level portfolios (_intervention_school_portfolio_context).
+        "portfolio": portfolio_rules(),
+    }
+
+
+def portfolio_rules() -> dict:
+    from apps.business_transformation import services
+    from apps.core.enums import SchoolType, SsaIntervention
+    from apps.partners.models import PartnerAssignment
+
+    field = PartnerAssignment._meta.get_field("status")
+    return {
+        "financial_health": str(SsaIntervention.FINANCIAL_HEALTH),
+        "government_requirement": str(SsaIntervention.GOVERNMENT_REQUIREMENT),
+        "delivered_statuses": sorted(services._DELIVERED_ACTIVITY_STATUSES),
+        "open_support_statuses": sorted(services._OPEN_SUPPORT_STATUSES),
+        "assignment_statuses": [[str(k), str(v)] for k, v in field.choices],
+        "released_statuses": list(PartnerAssignment.RELEASED_STATUSES),
+        "school_types": [[str(k), str(v)] for k, v in SchoolType.choices],
+        "page_sizes": list(services._PORTFOLIO_PAGE_SIZES),
     }
 
 

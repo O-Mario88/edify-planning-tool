@@ -49,6 +49,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	switch path {
 	case OverviewPath:
 		return s.overview(ctx, p, query)
+	case FinancePath, GovernmentPath:
+		return s.portfolio(ctx, p, path, query)
 	}
 	return nil, false, nil
 }

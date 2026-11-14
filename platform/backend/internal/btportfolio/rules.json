@@ -140,6 +140,100 @@
     "monitoring",
     "deferred"
   ],
+  "portfolio": {
+    "assignment_statuses": [
+      [
+        "pending_scheduling",
+        "Waiting for the partner to schedule"
+      ],
+      [
+        "partner_scheduled",
+        "Scheduled by the partner"
+      ],
+      [
+        "returned_to_staff",
+        "Returned to staff"
+      ],
+      [
+        "assigned",
+        "Waiting for the partner to schedule (legacy)"
+      ],
+      [
+        "partner_pending_schedule",
+        "Waiting for the partner to schedule (legacy)"
+      ],
+      [
+        "scheduled",
+        "Scheduled (legacy)"
+      ],
+      [
+        "completed",
+        "Completed (legacy)"
+      ],
+      [
+        "returned",
+        "Returned (legacy)"
+      ],
+      [
+        "cancelled",
+        "Cancelled (legacy)"
+      ]
+    ],
+    "delivered_statuses": [
+      "accountant_confirmed",
+      "closed",
+      "completed",
+      "ia_verified"
+    ],
+    "financial_health": "financial_health",
+    "government_requirement": "government_requirement",
+    "open_support_statuses": [
+      "assigned_to_partner",
+      "awaiting_ia_verification",
+      "completion_started",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "in_progress",
+      "partner_scheduled",
+      "planned",
+      "rescheduled",
+      "salesforce_id_required",
+      "scheduled",
+      "submitted_to_pl"
+    ],
+    "page_sizes": [
+      10,
+      20,
+      50
+    ],
+    "released_statuses": [
+      "returned_to_staff",
+      "returned",
+      "cancelled"
+    ],
+    "school_types": [
+      [
+        "champion",
+        "Champion"
+      ],
+      [
+        "client",
+        "Client"
+      ],
+      [
+        "core",
+        "Core"
+      ],
+      [
+        "core_graduate",
+        "Core Graduate"
+      ],
+      [
+        "core_trained",
+        "Core Trained"
+      ]
+    ]
+  },
   "recommendation_kinds": [
     [
       "financial_health_training",

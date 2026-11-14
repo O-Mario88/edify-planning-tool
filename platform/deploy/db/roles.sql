@@ -721,3 +721,14 @@ GRANT SELECT (id, review_id, weight) ON hr_performance_priority TO edify_gateway
 -- and Salesforce loan id (filters and search), and the year a case opened.
 GRANT SELECT (registered_by, ia_validation_status, salesforce_loan_id) ON bt_mfi_loan TO edify_gateway_ro;
 GRANT SELECT (opened_fy) ON bt_case TO edify_gateway_ro;
+
+-- BT Business Accounting & Finance and Government Requirements
+-- (internal/btpages/portfolio.go): the intervention a partner assignment and
+-- a case recommendation are for; when a practice assessment was recorded; a
+-- compliance assessment's IA state and expiry; and each requirement's
+-- authority, country and whether it is active.
+GRANT SELECT (focus_intervention) ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (source_intervention) ON bt_case_recommendation TO edify_gateway_ro;
+GRANT SELECT (created_at) ON bt_financial_practice_assessment TO edify_gateway_ro;
+GRANT SELECT (ia_status, expiry_date) ON bt_school_compliance_assessment TO edify_gateway_ro;
+GRANT SELECT (responsible_authority, country_code, active) ON bt_compliance_requirement TO edify_gateway_ro;
