@@ -1,0 +1,24 @@
+{
+  "page_roles": [
+    "Admin"
+  ],
+  "page_size": 50,
+  "role_order": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin",
+    "ClusterLeader"
+  ]
+}

@@ -1,0 +1,68 @@
+package routeplan
+
+import "math"
+
+// LatLng is a point on the map.
+type LatLng struct{ Lat, Lng float64 }
+
+// Uganda's extent with a margin: a stored point outside it, or at 0,0, is
+// taken as a data-entry error and the school is flagged, never placed.
+const (
+	minLat, maxLat = -1.6, 4.4
+	minLng, maxLng = 29.4, 35.2
+)
+
+// Location statuses a pin carries.
+const (
+	LocationVerified = "verified" // a corrected point (school_geo_point)
+	LocationRecorded = "recorded" // the directory's own coordinates
+	LocationMissing  = "missing"
+	LocationInvalid  = "invalid"
+)
+
+// Locate is coords_for over the two real points a school can have — a
+// corrected geo point first, then the directory's — and the status the pin
+// shows. Centroids are not points and place nothing.
+func Locate(geoLat, geoLng, lat, lng *float64) (LatLng, string) {
+	if geoLat != nil && geoLng != nil {
+		return check(*geoLat, *geoLng, LocationVerified)
+	}
+	if lat != nil && lng != nil {
+		return check(*lat, *lng, LocationRecorded)
+	}
+	return LatLng{}, LocationMissing
+}
+
+func check(lat, lng float64, status string) (LatLng, string) {
+	if math.IsNaN(lat) || math.IsNaN(lng) || (lat == 0 && lng == 0) ||
+		lat < minLat || lat > maxLat || lng < minLng || lng > maxLng {
+		return LatLng{}, LocationInvalid
+	}
+	return LatLng{lat, lng}, status
+}
+
+// checkPoint is whether a point is a usable one in Uganda.
+func checkPoint(lat, lng float64) (LatLng, bool) {
+	at, status := check(lat, lng, LocationRecorded)
+	return at, status == LocationRecorded
+}
+
+// Placed is whether the status has a point.
+func Placed(status string) bool { return status == LocationVerified || status == LocationRecorded }
+
+// earthKm is the radius haversine_km uses.
+const earthKm = 6371.0
+
+// StraightMeters is SchoolCoordinateService.haversine_km in metres.
+func StraightMeters(a, b LatLng) int64 {
+	rad := math.Pi / 180
+	dLat, dLng := (b.Lat-a.Lat)*rad, (b.Lng-a.Lng)*rad
+	h := math.Pow(math.Sin(dLat/2), 2) + math.Cos(a.Lat*rad)*math.Cos(b.Lat*rad)*math.Pow(math.Sin(dLng/2), 2)
+	return int64(math.Round(2 * earthKm * math.Asin(math.Sqrt(h)) * 1000))
+}
+
+// EstimateSeconds is travel_minutes_for_km: the engine's planning estimate
+// over a straight line, in whole minutes.
+func EstimateSeconds(meters int64) int64 {
+	return int64(math.Round(float64(meters)/1000/Rules.PlanningSpeedKmh*60)) * 60
+}

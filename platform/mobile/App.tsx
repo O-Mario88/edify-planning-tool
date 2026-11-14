@@ -31,6 +31,12 @@ import { LEADERS_URL, SUPPORT_URL, canManageLeaders, leadersSection } from './sr
 import { SupportRequestsScreen } from './src/screens/cluster/SupportRequestsScreen';
 import { LoansRoute } from './src/screens/loans/LoansRoute';
 import { isLoansUrl, loansSection } from './src/screens/loans/loanRoutes';
+import { RouteFlow } from './src/screens/route/RouteFlow';
+import { LocationReportsScreen } from './src/screens/route/LocationReportsScreen';
+import { LOCATION_REPORTS_URL, OFFLINE_QUEUE_URL, isRouteUrl, routeSection } from './src/screens/route/routeData';
+import { OfflineProvider, useOffline } from './src/offline/OfflineContext';
+import { OfflineFieldApp, SyncQueueScreen } from './src/offline/OfflineScreens';
+import { CaptureHost } from './src/offline/CaptureHost';
 import { AppShell, MENU_URL } from './src/shell/AppShell';
 import { ThemeProvider, signInPalette, spacing, useTheme } from './src/theme';
 import { DropdownLayer } from './src/ui/Dropdown';
@@ -132,6 +138,40 @@ function hideLaunchScreen() {
 }
 
 function Root() {
+  const { state, retry, signOut, api } = useSession();
+  const signedIn = useMemo(
+    () => (state.status === 'signedIn' ? { userId: state.session.userId, name: state.session.name, role: state.session.activeRole } : null),
+    [state],
+  );
+  return (
+    <OfflineProvider signedIn={signedIn} api={api} isUnreachable={state.status === 'unreachable'} onReconnect={() => void retry()}>
+      <RootScreens />
+      <CaptureHost />
+    </OfflineProvider>
+  );
+}
+
+/** The saved sign-in could not be checked: the offline field app when the phone holds the person's schools. */
+function Unreachable({ notice }: { readonly notice: string }) {
+  const { retry, signOut } = useSession();
+  const { account } = useOffline();
+  if (account) {
+    return (
+      <>
+        <OfflineFieldApp notice={notice} onRetry={() => void retry()} onSignOut={() => void signOut()} />
+        <StatusBar style="light" />
+      </>
+    );
+  }
+  return (
+    <>
+      <LaunchView problem={notice} onRetry={() => void retry()} onSignOut={() => void signOut()} />
+      <StatusBar style="light" />
+    </>
+  );
+}
+
+function RootScreens() {
   const { state, retry, signOut } = useSession();
   // Hide the native launch screen once the app knows what to open; a slow
   // check hands over to the identical LaunchView, which then says so.
@@ -153,12 +193,7 @@ function Root() {
     );
   }
   if (state.status === 'unreachable') {
-    return (
-      <>
-        <LaunchView problem={state.notice} onRetry={() => void retry()} onSignOut={() => void signOut()} />
-        <StatusBar style="light" />
-      </>
-    );
+    return <Unreachable notice={state.notice} />;
   }
   if (state.status === 'signedOut') {
     return (
@@ -208,6 +243,14 @@ const PARTNER_ADMIN = 'PartnerAdmin';
 function SignedIn({ session }: { readonly session: Session }) {
   const { api } = useSession();
   const { isDark } = useTheme();
+  const { pendingCount, isOnline } = useOffline();
+  // Offline, or captures waiting: say so in the top bar, leading to the queue.
+  const shellStatus =
+    pendingCount > 0
+      ? { label: `${pendingCount} to sync`, url: OFFLINE_QUEUE_URL, isWarning: true }
+      : !isOnline
+        ? { label: 'Offline', url: OFFLINE_QUEUE_URL, isWarning: false }
+        : null;
   const [route, setRoute] = useState<Route>(HOME);
   const [searchSignal, setSearchSignal] = useState(0);
   const [navigation, setNavigation] = useState<GetNavigationResponse | null>(null);
@@ -247,6 +290,9 @@ function SignedIn({ session }: { readonly session: Session }) {
       (pathOf(url) === PARTNER_TEAM_URL && session.activeRole === PARTNER_ADMIN) ||
       pathOf(url) === ACTING_URL ||
       isLoansUrl(url) ||
+      isRouteUrl(url) ||
+      url === LOCATION_REPORTS_URL ||
+      url === OFFLINE_QUEUE_URL ||
       OWN_SCREENS.includes(pathOf(url)) ||
       pages.has(pathOf(url)) ||
       schoolOf(url) !== null,
@@ -256,8 +302,10 @@ function SignedIn({ session }: { readonly session: Session }) {
   const sections = useMemo(
     () => {
       const loans = loansSection(session.activeRole);
+      const routes = routeSection(session.activeRole);
       return [
         ...(navigation?.sections ?? []),
+        ...(routes ? [routes] : []),
         ...(canManageLeaders(session.activeRole) ? [leadersSection()] : []),
         ...(loans ? [loans] : []),
       ];
@@ -266,8 +314,14 @@ function SignedIn({ session }: { readonly session: Session }) {
   );
   const open = useCallback((url: string, label: string) => setRoute({ url, label }), []);
   const openPage = useCallback((url: string) => open(url, ''), [open]);
+  // A school opened from a field route (or the location reports) goes back there (same day).
+  const [schoolFrom, setSchoolFrom] = useState<Route | null>(null);
   const openSchool = useCallback(
-    (schoolId: string) => setRoute({ url: `/schools/${encodeURIComponent(schoolId)}`, label: 'School' }),
+    (schoolId: string) =>
+      setRoute((current) => {
+        setSchoolFrom(isRouteUrl(current.url) || current.url === LOCATION_REPORTS_URL ? current : null);
+        return { url: `/schools/${encodeURIComponent(schoolId)}`, label: 'School' };
+      }),
     [],
   );
 
@@ -292,6 +346,13 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <ActingLeadershipScreen />;
   } else if (isLoansUrl(route.url)) {
     screen = <LoansRoute key={route.url} url={route.url} />;
+  } else if (route.url === OFFLINE_QUEUE_URL) {
+    screen = <SyncQueueScreen onOpenSchool={openSchool} />;
+  } else if (route.url === LOCATION_REPORTS_URL) {
+    screen = <LocationReportsScreen onOpenSchool={openSchool} />;
+  } else if (isRouteUrl(route.url)) {
+    // One element for both screens, so the day survives planner ↔ details.
+    screen = <RouteFlow url={route.url} onOpen={open} onOpenSchool={openSchool} />;
   } else if (path === '/home') {
     screen = <HomeScreen onOpen={open} />;
   } else if (path === '/schools') {
@@ -313,7 +374,9 @@ function SignedIn({ session }: { readonly session: Session }) {
       <SchoolProfileScreen
         key={schoolId}
         schoolId={schoolId}
-        onBack={() => open('/schools', 'Schools')}
+        onBack={() => (schoolFrom ? open(schoolFrom.url, schoolFrom.label) : open('/schools', 'Schools'))}
+        backLabel={schoolFrom ? (schoolFrom.url === LOCATION_REPORTS_URL ? 'Back to reports' : 'Back to route') : undefined}
+        onOpenRoute={(url) => open(url, url === LOCATION_REPORTS_URL ? 'Location Reports' : 'Smart Route Planner')}
         onOpenSchool={openSchool}
       />
     );
@@ -325,10 +388,11 @@ function SignedIn({ session }: { readonly session: Session }) {
     <AppShell
       bottom={navigation?.bottom ?? []}
       // A school's profile belongs to the Schools tab, as on the web.
-      activeUrl={schoolOf(route.url) ? '/schools' : path}
+      activeUrl={schoolOf(route.url) ? '/schools' : isRouteUrl(route.url) ? '/my-plan' : path}
       onOpen={open}
       initials={initialsOf(session.name)}
       onSearch={handleSearch}
+      status={shellStatus}
     >
       {screen}
       <StatusBar style={isDark ? 'light' : 'dark'} />

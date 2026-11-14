@@ -51,7 +51,7 @@ func staffNames(ctx context.Context, db schooldirectory.Querier, ids []string) (
 SELECT sp.id, COALESCE(u.name, sp.id) FROM staff_profile sp LEFT JOIN "user" u ON u.id = sp.user_id
 WHERE sp.id = ANY($1) AND sp.deleted_at IS NULL
 UNION ALL
-SELECT u.id, u.name FROM "user" u WHERE u.id = ANY($1) AND u.deleted_at IS NULL
+SELECT u.id, u.name FROM "user" u WHERE u.id = ANY($1)
   AND u.id NOT IN (SELECT sp.id FROM staff_profile sp WHERE sp.id = ANY($1) AND sp.deleted_at IS NULL)`, ids)
 	if err != nil {
 		return nil, fmt.Errorf("iapages: reading the owners' names: %w", err)

@@ -28,6 +28,8 @@ interface AppShellProps {
   readonly onSearch: () => void;
   /** Messages and Notifications in the top bar; a Cluster Leader has neither. */
   readonly hasInbox?: boolean;
+  /** A short status in the top bar (offline, captures waiting to sync) and where it leads. */
+  readonly status?: { readonly label: string; readonly url: string; readonly isWarning: boolean } | null;
   readonly children: ReactNode;
 }
 
@@ -35,7 +37,7 @@ function pathOf(url: string): string {
   return url.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
 }
 
-export function AppShell({ bottom, activeUrl, onOpen, initials, onSearch, hasInbox = true, children }: AppShellProps) {
+export function AppShell({ bottom, activeUrl, onOpen, initials, onSearch, hasInbox = true, status = null, children }: AppShellProps) {
   const { colors, isDark, toggle } = useTheme();
   const insets = useSafeAreaInsets();
   const active = pathOf(activeUrl);
@@ -63,6 +65,18 @@ export function AppShell({ bottom, activeUrl, onOpen, initials, onSearch, hasInb
           <Search size={18} color={colors.primaryInk} />
         </Pressable>
         <View style={styles.topbarRight}>
+          {status ? (
+            <Pressable
+              onPress={() => onOpen(status.url, 'Offline schools & sync')}
+              style={[styles.status, { backgroundColor: status.isWarning ? '#fff7ed' : colors.surfaceMuted, borderColor: status.isWarning ? '#f59e0b' : colors.border }]}
+              accessibilityRole="button"
+              accessibilityLabel={status.label}
+            >
+              <Text style={[styles.statusText, { color: status.isWarning ? '#92400e' : colors.textMuted }]} numberOfLines={1}>
+                {status.label}
+              </Text>
+            </Pressable>
+          ) : null}
           {hasInbox ? (
             <>
               <Pressable
@@ -157,6 +171,8 @@ export function AppShell({ bottom, activeUrl, onOpen, initials, onSearch, hasInb
 }
 
 const styles = StyleSheet.create({
+  status: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, minHeight: 32, justifyContent: 'center', maxWidth: 140 },
+  statusText: { fontFamily: fonts.semibold, fontSize: 12 },
   frame: { flex: 1 },
   topbar: {
     flexDirection: 'row',

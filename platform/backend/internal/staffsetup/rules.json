@@ -1,0 +1,43 @@
+{
+  "district_profile_roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+  ],
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "page_roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment"
+  ],
+  "page_size": 50,
+  "pending_statuses": [
+    "pending",
+    "unmatched"
+  ],
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "school_profile_roles": [
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+  ]
+}

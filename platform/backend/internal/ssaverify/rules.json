@@ -1,0 +1,154 @@
+{
+  "collector_kinds": {
+    "ia": "Impact Assessment",
+    "partner": "Partner",
+    "staff": "Staff"
+  },
+  "country_director_role": "CountryDirector",
+  "ia_role": "ImpactAssessment",
+  "lead_role": "Program Lead",
+  "page_size": 50,
+  "queue_statuses": [
+    [
+      "pending",
+      "Waiting for verification"
+    ],
+    [
+      "returned",
+      "Returned for correction"
+    ]
+  ],
+  "roles": {
+    "Accountant": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "Admin": {
+      "ia_verify": false,
+      "page": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "CCEO": {
+      "ia_verify": false,
+      "page": true,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "ia_verify": false,
+      "page": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "ia_verify": true,
+      "page": true,
+      "strip": {
+        "label": "Impact Assessment",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/ia/dashboard/",
+            "label": "Overview"
+          },
+          {
+            "active": false,
+            "href": "/ia/framework/",
+            "label": "Framework & Strategy"
+          },
+          {
+            "active": false,
+            "href": "/ia/school-evidence/",
+            "label": "Baseline & Field Data"
+          },
+          {
+            "active": false,
+            "href": "/ia/stories/",
+            "label": "School Progress"
+          },
+          {
+            "active": false,
+            "href": "/ia/learning/",
+            "label": "Analysis & Learning"
+          },
+          {
+            "active": false,
+            "href": "/ia/impact-reports/",
+            "label": "Reporting & Accountability"
+          },
+          {
+            "active": true,
+            "href": "/ssa/verification/",
+            "label": "Data Quality & Verification"
+          }
+        ]
+      }
+    },
+    "MfiLoanOfficer": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "ia_verify": false,
+      "page": true,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "ia_verify": false,
+      "page": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "ia_verify": false,
+      "page": true,
+      "strip": null
+    }
+  },
+  "sources": {
+    "file_import": "File import",
+    "ia_keyed": "Keyed by Impact Assessment",
+    "partner_submitted": "Partner submission",
+    "staff_keyed": "Keyed by staff"
+  },
+  "staff_keyed_source": "staff_keyed",
+  "visit_review_roles": [
+    "ImpactAssessment",
+    "CountryDirector"
+  ]
+}

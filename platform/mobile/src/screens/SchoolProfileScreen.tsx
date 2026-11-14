@@ -17,6 +17,10 @@ import { ChevronLeft } from 'lucide-react-native';
 import { ApiError } from '../api/connect';
 import { describe, useSession } from '../auth/SessionContext';
 import { SchoolLoanHistory, canSeeSchoolLoans } from './loans/SchoolLoanHistory';
+import { LocationCard } from './route/LocationCard';
+import { LocationPanel } from '../offline/LocationPanel';
+import { useCachedSchool } from '../offline/useCachedSchool';
+import { SchoolVisitPrompt } from '../offline/VisitPrompt';
 import type { PageAction } from '../gen/edify/screens/v1/page_pb';
 import type { GetSchoolProfileResponse } from '../gen/edify/screens/v1/school_profile_pb';
 import { fonts, useTheme } from '../theme';
@@ -58,17 +62,22 @@ interface SchoolProfileScreenProps {
   /** The school's record id. */
   readonly schoolId: string;
   readonly onBack: () => void;
+  /** The back link's words when the profile was opened from somewhere else (a field route). */
+  readonly backLabel?: string;
+  /** Opens the route planner (Location & Directions' Find Nearby Schools). */
+  readonly onOpenRoute?: (url: string) => void;
   /** Open another school's profile (a link on this one). */
   readonly onOpenSchool: (schoolId: string) => void;
 }
 
-export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolProfileScreenProps) {
+export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool, backLabel, onOpenRoute }: SchoolProfileScreenProps) {
   const { api, environment, signOut, state } = useSession();
   const activeRole = state.status === 'signedIn' ? state.session.activeRole : '';
   const { colors } = useTheme();
   const [query, setQuery] = useState<ProfileQuery>(START);
   const [data, setData] = useState<GetSchoolProfileResponse | null>(null);
   const [error, setError] = useState('');
+  const cached = useCachedSchool(schoolId);
   const [isBusy, setIsBusy] = useState(false);
   const [isProjectOpen, setIsProjectOpen] = useState(false);
   const [webDrawer, setWebDrawer] = useState<string | null>(null);
@@ -172,10 +181,13 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolPr
           scrollEventThrottle={16}
           contentContainerStyle={styles.page}
           keyboardShouldPersistTaps="handled"
+          // The Report location form sits at the foot of the profile: a
+          // focused field scrolls above the keyboard (iOS; Android resizes).
+          automaticallyAdjustKeyboardInsets
         >
           <Pressable onPress={onBack} accessibilityRole="link" hitSlop={8} style={styles.back}>
             <ChevronLeft size={14} color={colors.link} />
-            <Text style={[styles.backText, { color: colors.link }]}>{header?.backLabel || 'Back to School Directory'}</Text>
+            <Text style={[styles.backText, { color: colors.link }]}>{backLabel || header?.backLabel || 'Back to School Directory'}</Text>
           </Pressable>
           {data && header ? (
             <>
@@ -185,6 +197,7 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolPr
                 </Text>
                 <Description text={header.description} />
               </View>
+              <SchoolVisitPrompt schoolId={schoolId} />
               <View style={styles.controls}>
                 {header.badges.map((badge, index) => (
                   <Badge key={badge.text} badge={badge} isWide={index === 0} />
@@ -207,9 +220,22 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolPr
                 blocks={data.blocks}
                 onFilter={(name, value) => setQuery((current) => ({ ...current, [name]: value }))}
               />
+              {!query.tab || query.tab === 'overview' ? <LocationCard schoolId={schoolId} onOpenRoute={onOpenRoute} /> : null}
               {canSeeSchoolLoans(activeRole) && (!query.tab || query.tab === 'overview') ? (
                 <SchoolLoanHistory schoolId={schoolId} />
               ) : null}
+            </>
+          ) : error && cached ? (
+            // No connection: the phone's own copy of the school, with Capture.
+            <>
+              <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+                {cached.name}
+              </Text>
+              <Text style={[styles.error, { color: colors.textMuted }]}>
+                School ID {cached.code || '—'} · {cached.district || 'No district'} · Offline: showing what this phone saved.
+              </Text>
+              <SchoolVisitPrompt schoolId={schoolId} />
+              <LocationPanel school={cached} />
             </>
           ) : error ? (
             <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">

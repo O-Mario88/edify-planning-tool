@@ -1,0 +1,39 @@
+{
+  "max_rows": 500,
+  "page_roles": [
+    "Admin",
+    "ImpactAssessment"
+  ],
+  "page_size": 50,
+  "reasons": {
+    "disaster": "Natural disaster or emergency",
+    "duplicate_record": "Duplicate or incorrect school record",
+    "facility": "Building or facility problem",
+    "financial": "Financial difficulties",
+    "government_closure": "Government closure",
+    "licensing": "Licence or registration issue",
+    "low_enrolment": "Low enrolment",
+    "management": "School management breakdown",
+    "merged": "Merged with another school",
+    "other": "Other",
+    "owner_decision": "Owner decision",
+    "relocated": "Relocated outside Edify scope",
+    "security": "Security or access problem",
+    "temporary_suspension": "Temporary suspension of operations",
+    "unconfirmed": "Unable to confirm continued operation"
+  },
+  "school_profile_roles": [
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+  ],
+  "stale_recording_days": 30,
+  "unresolved_duplicate": "potential",
+  "weak_ground_reasons": [
+    "unconfirmed"
+  ]
+}

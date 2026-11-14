@@ -1,0 +1,197 @@
+{
+  "deadline_horizon_days": 30,
+  "fold_from": 3,
+  "governing_roles": [
+    "HumanResources",
+    "Human Resources",
+    "Admin"
+  ],
+  "groups": [
+    {
+      "helper": "HR is the actor",
+      "key": "waiting_on_hr",
+      "label": "Waiting on HR"
+    },
+    {
+      "helper": "past their decision window",
+      "key": "manager_overdue",
+      "label": "Manager actions overdue"
+    },
+    {
+      "helper": "need a decision or a repair",
+      "key": "people_risk",
+      "label": "People-risk exceptions"
+    },
+    {
+      "helper": "inside the next 30 days",
+      "key": "deadlines",
+      "label": "Upcoming deadlines"
+    }
+  ],
+  "leave_decision_days": 3,
+  "live_states": [
+    "active",
+    "pending"
+  ],
+  "policy_awaiting_statuses": [
+    "approved",
+    "under_review",
+    "returned"
+  ],
+  "review_overdue_days": 0,
+  "reviewer_role_for": {
+    "Accountant": [
+      "CountryDirector"
+    ],
+    "CCEO": [
+      "Program Lead"
+    ],
+    "CountryDirector": [
+      "RegionalVicePresident"
+    ],
+    "HumanResources": [
+      "CountryDirector"
+    ],
+    "ImpactAssessment": [
+      "CountryDirector"
+    ],
+    "Program Lead": [
+      "CountryDirector"
+    ],
+    "ProjectCoordinator": [
+      "CountryDirector"
+    ],
+    "RegionalVicePresident": [
+      "Admin"
+    ]
+  },
+  "roles": {
+    "Accountant": {
+      "opens": [
+        "/leave/coverage",
+        "/my-professional-development/request",
+        "/performance-conversation"
+      ],
+      "page": false
+    },
+    "Admin": {
+      "opens": [
+        "/admin-panel/users",
+        "/compliance-register",
+        "/documents/",
+        "/hr/performance-cycle",
+        "/leave/approvals",
+        "/leave/coverage",
+        "/my-professional-development/request",
+        "/offboarding",
+        "/onboarding",
+        "/org-structure",
+        "/performance-conversation"
+      ],
+      "page": true
+    },
+    "BusinessTransformationOfficer": {
+      "opens": [],
+      "page": false
+    },
+    "CCEO": {
+      "opens": [
+        "/leave/coverage",
+        "/my-professional-development/request",
+        "/performance-conversation"
+      ],
+      "page": false
+    },
+    "ClusterLeader": {
+      "opens": [],
+      "page": false
+    },
+    "CountryDirector": {
+      "opens": [
+        "/documents/",
+        "/leave/approvals",
+        "/leave/coverage",
+        "/my-professional-development/request",
+        "/performance-conversation"
+      ],
+      "page": true
+    },
+    "HumanResources": {
+      "opens": [
+        "/compliance-register",
+        "/documents/",
+        "/hr/performance-cycle",
+        "/leave/approvals",
+        "/leave/coverage",
+        "/my-professional-development/request",
+        "/offboarding",
+        "/onboarding",
+        "/org-structure",
+        "/performance-conversation"
+      ],
+      "page": true
+    },
+    "ImpactAssessment": {
+      "opens": [
+        "/compliance-register",
+        "/documents/",
+        "/hr/performance-cycle",
+        "/leave/approvals",
+        "/leave/coverage",
+        "/my-professional-development/request",
+        "/offboarding",
+        "/onboarding",
+        "/org-structure",
+        "/performance-conversation"
+      ],
+      "page": true
+    },
+    "MfiLoanOfficer": {
+      "opens": [],
+      "page": false
+    },
+    "MfiPartnerAdmin": {
+      "opens": [],
+      "page": false
+    },
+    "PartnerAdmin": {
+      "opens": [],
+      "page": false
+    },
+    "PartnerFieldOfficer": {
+      "opens": [],
+      "page": false
+    },
+    "Program Lead": {
+      "opens": [
+        "/leave/approvals",
+        "/leave/coverage",
+        "/my-professional-development/request",
+        "/performance-conversation"
+      ],
+      "page": false
+    },
+    "ProjectCoordinator": {
+      "opens": [
+        "/my-professional-development/request",
+        "/performance-conversation"
+      ],
+      "page": false
+    },
+    "RegionalProgramLead": {
+      "opens": [],
+      "page": false
+    },
+    "RegionalVicePresident": {
+      "opens": [
+        "/documents/",
+        "/leave/approvals",
+        "/leave/coverage",
+        "/my-professional-development/request",
+        "/performance-conversation"
+      ],
+      "page": true
+    }
+  },
+  "visible_per_queue": 10
+}

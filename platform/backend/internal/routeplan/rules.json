@@ -1,0 +1,75 @@
+{
+  "closed_statuses": [
+    "permanently_closed",
+    "temporarily_closed"
+  ],
+  "completed_statuses": [
+    "accountant_confirmed",
+    "awaiting_ia_verification",
+    "closed",
+    "completed",
+    "ia_verified",
+    "submitted_to_pl"
+  ],
+  "day": {
+    "available_minutes": 480,
+    "buffer_minutes": 30,
+    "lunch_minutes": 60,
+    "start": "08:00",
+    "visit_minutes": 60,
+    "work_minutes": 540
+  },
+  "nearby_radius_km": 15,
+  "not_live_statuses": [
+    "awaiting_owner_approval",
+    "cancelled",
+    "deferred",
+    "not_planned",
+    "rejected"
+  ],
+  "planner_roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+  ],
+  "planning_speed_kmh": 30,
+  "school_profile_roles": [
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+  ],
+  "school_types": {
+    "champion": "Champion",
+    "client": "Client",
+    "core": "Core",
+    "core_graduate": "Core Graduate",
+    "core_trained": "Core Trained"
+  },
+  "visit_types": [
+    "baseline_ssa_visit",
+    "coaching_visit",
+    "core_assessment_visit",
+    "core_visit",
+    "donor_visit",
+    "follow_up_visit",
+    "in_school_coaching_visit",
+    "in_school_support",
+    "partner_ssa_collection",
+    "school_invitation",
+    "school_visit",
+    "school_visit_ssa_collection",
+    "social_visit",
+    "story_gathering_visit",
+    "training_follow_up_visit"
+  ]
+}

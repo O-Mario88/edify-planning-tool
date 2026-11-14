@@ -1,4 +1,9 @@
 {
+  "backlog_status": "backlog",
+  "closed_incident_statuses": [
+    "closed",
+    "resolved"
+  ],
   "closed_ticket_statuses": [
     "cancelled",
     "closed",
@@ -22,6 +27,13 @@
   "maintenance_categories": [
     "preventive_maintenance",
     "corrective_maintenance"
+  ],
+  "monitoring_status": "monitoring",
+  "my_plan_statuses": [
+    "scheduled",
+    "in_progress",
+    "waiting",
+    "monitoring"
   ],
   "pages": {
     "/admin-ops/incidents": {
@@ -128,7 +140,163 @@
         }
       }
     },
+    "/admin-ops/my-plan": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": false
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    },
+    "/admin-ops/planning": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": false
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    },
     "/admin-ops/support": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": false
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    },
+    "/data-repair": {
       "roles": {
         "Accountant": {
           "page": false
@@ -181,6 +349,34 @@
       }
     }
   },
+  "planning_limit": 50,
+  "recently_done": 8,
+  "repairs": [
+    {
+      "automatic": true,
+      "description": "A notification whose condition no longer holds keeps claiming the Admin's attention forever.",
+      "key": "stale_incident_notifications",
+      "outcome": "Each notification is archived; the incident is untouched.",
+      "referral": "",
+      "title": "Notifications for incidents that are already resolved"
+    },
+    {
+      "automatic": true,
+      "description": "A resolved incident stays reopenable; after a month without recurrence it belongs in the closed record.",
+      "key": "long_resolved_incidents",
+      "outcome": "Status moves resolved -> closed. A later recurrence still reopens it, so no history is lost.",
+      "referral": "",
+      "title": "Incidents resolved over 30 days ago and never closed"
+    },
+    {
+      "automatic": false,
+      "description": "The activity will never reach a fund request, so the work is planned but cannot be funded.",
+      "key": "uncosted_scheduled_activities",
+      "outcome": "No automatic change. Each is referred to the role that owns the costing decision.",
+      "referral": "Costing is a business decision with money attached. The platform must never invent a figure, so this repair raises an Admin work item to chase the owning role instead.",
+      "title": "Scheduled activities carrying no cost line"
+    }
+  ],
   "resolvable_ticket_statuses": [
     "fix_ready",
     "verification"
@@ -190,6 +386,68 @@
     "high": "High",
     "low": "Low",
     "medium": "Medium"
+  },
+  "severity_choices": [
+    [
+      "critical",
+      "Critical"
+    ],
+    [
+      "high",
+      "High"
+    ],
+    [
+      "medium",
+      "Medium"
+    ],
+    [
+      "low",
+      "Low"
+    ]
+  ],
+  "table_page_size": 50,
+  "team_plans": {
+    "activity_types": {
+      "baseline_ssa_visit": "SSA Visit",
+      "cluster_meeting": "Cluster Meeting",
+      "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+      "cluster_training": "Cluster Training",
+      "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+      "coaching_visit": "Coaching Visit",
+      "core_assessment_visit": "Core Assessment Visit",
+      "core_training": "Core Training",
+      "core_visit": "Core Visit",
+      "donor_visit": "Donor Visit",
+      "field_event": "Field Event",
+      "follow_up_visit": "Follow-up Visit",
+      "in_school_coaching_visit": "In-school Coaching Visit",
+      "in_school_support": "In-school Support",
+      "in_school_training": "In-school Training",
+      "partner_activity": "Partner Activity",
+      "partner_ssa_collection": "Partner SSA Collection",
+      "programme_event": "Programme Event",
+      "project_activity": "Project Activity",
+      "school_improvement_training": "School Improvement Training",
+      "school_invitation": "School Invitation",
+      "school_visit": "School Visit",
+      "school_visit_ssa_collection": "School Visit + SSA Collection",
+      "social_visit": "Social Visit",
+      "ssa_activity": "SSA Activity",
+      "story_gathering_visit": "Gathering Story",
+      "training": "Training",
+      "training_follow_up_visit": "Training Follow-up Visit"
+    },
+    "page_size": 50,
+    "read_limit": 250,
+    "roles": [
+      "Admin",
+      "ImpactAssessment"
+    ],
+    "terminal_statuses": [
+      "closed",
+      "cancelled",
+      "rejected"
+    ]
   },
   "ticket_categories": {
     "account_locked": "Account Locked",

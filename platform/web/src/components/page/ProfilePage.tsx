@@ -7,8 +7,12 @@
  * not open is the not-found page; a profile Go hands on (an acting reader, a
  * long Participation list) says so and opens the existing web.
  */
+import { toJson } from '@bufbuild/protobuf';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 
+import { LocationCard } from '@/components/route/LocationCard';
+import { GetSchoolLocationResponseSchema, RoutePlannerService } from '@/gen/edify/routes/v1/routes_pb';
 import type { PageAction, PageBlock } from '@/gen/edify/screens/v1/page_pb';
 import { SchoolProfileService } from '@/gen/edify/screens/v1/school_profile_pb';
 import type { GetSchoolProfileResponse } from '@/gen/edify/screens/v1/school_profile_pb';
@@ -16,6 +20,7 @@ import { asReader } from '@/lib/auth';
 import { environment } from '@/lib/environment';
 import { actionHref, drawerPageHref } from '@/lib/feedPage';
 import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
+import { ACCESS_COOKIE } from '@/lib/session';
 import { profileAsk, profileTabs, profileYear, splitRail, trailingPanels } from '@/lib/schoolProfile';
 
 import { PageHeader } from '../blocks/PageHeader';
@@ -91,7 +96,21 @@ export async function ProfilePage({ schoolId, query }: { schoolId: string; query
       ) : (
         <Body blocks={answer.blocks} {...props} sideBySide={activeTab === 'ssa'} />
       )}
+      {activeTab === 'overview' || activeTab === '' ? <SchoolLocation schoolId={schoolId} /> : null}
       {answer.selection?.actions.length ? <SelectionBar selection={answer.selection} pageHref={drawerHref} /> : null}
     </div>
   );
+}
+
+/** The Location & Directions card; a school whose location cannot be read shows the profile without it. */
+async function SchoolLocation({ schoolId }: { schoolId: string }) {
+  const token = (await cookies()).get(ACCESS_COOKIE)?.value;
+  if (!token) return null;
+  let json = null;
+  try {
+    json = toJson(GetSchoolLocationResponseSchema, await gatewayClient(RoutePlannerService, token).getSchoolLocation({ schoolId }));
+  } catch {
+    return null; // the profile is drawn without its location card
+  }
+  return <LocationCard answer={json} />;
 }

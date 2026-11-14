@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -19,18 +20,28 @@ const (
 	SupportPath     = "/admin-ops/support"
 	IncidentsPath   = "/admin-ops/incidents"
 	MaintenancePath = "/admin-ops/maintenance"
+	RepairPath      = "/data-repair"
+	MyPlanPath      = "/admin-ops/my-plan"
+	PlanningPath    = "/admin-ops/planning"
 )
 
 // Service answers the registers from the existing database.
 type Service struct {
-	db schooldirectory.Querier
+	db  schooldirectory.Querier
+	now func() time.Time
 }
 
 // NewService is the registers over db.
-func NewService(db schooldirectory.Querier) *Service { return &Service{db: db} }
+func NewService(db schooldirectory.Querier) *Service { return &Service{db: db, now: time.Now} }
 
 // Build answers the three registers; every other path is not theirs.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == TeamPlansPath {
+		if !slices.Contains(rules.TeamPlans.Roles, p.ActiveRole) {
+			return nil, true, pagegate.ErrNotAvailable
+		}
+		return s.teamPlans(ctx, p, query)
+	}
 	page, ok := rules.Pages[path]
 	if !ok {
 		return nil, false, nil
@@ -43,6 +54,17 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return s.support(ctx, query.Get("status"))
 	case IncidentsPath:
 		return s.incidents(ctx, query.Get("status"))
+	case RepairPath:
+		if query.Get("repair") != "" {
+			// A dry run writes an audit row (DataRepairService.dry_run): the
+			// existing application answers it.
+			return nil, false, nil
+		}
+		return repairPage(), true, nil
+	case MyPlanPath:
+		return s.myPlan(ctx)
+	case PlanningPath:
+		return s.planning(ctx, query)
 	}
 	return s.maintenance(ctx)
 }

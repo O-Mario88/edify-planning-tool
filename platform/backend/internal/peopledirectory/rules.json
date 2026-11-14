@@ -1,0 +1,86 @@
+{
+  "add_staff_roles": [
+    "Admin"
+  ],
+  "completed_statuses": [
+    "accountant_confirmed",
+    "closed",
+    "completed",
+    "ia_verified"
+  ],
+  "email_roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "Program Lead"
+  ],
+  "not_finished_statuses": [
+    "scheduled",
+    "rescheduled",
+    "in_progress",
+    "completion_started"
+  ],
+  "not_in_plan_statuses": [
+    "cancelled",
+    "deferred",
+    "not_planned",
+    "rejected"
+  ],
+  "page_roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalVicePresident"
+  ],
+  "page_size": 50,
+  "role_labels": {
+    "Accountant": "Accountants",
+    "Admin": "Admins",
+    "CCEO": "CCEOs",
+    "CountryDirector": "Country Directors",
+    "HumanResources": "HR",
+    "ImpactAssessment": "Impact Assessment",
+    "PartnerAdmin": "Partner Admins",
+    "PartnerFieldOfficer": "Partner Officers",
+    "Program Lead": "Program Leads",
+    "ProjectCoordinator": "Project Coordinators",
+    "RegionalProgramLead": "Regional Programme Leads",
+    "RegionalVicePresident": "RVPs"
+  },
+  "singular_role_labels": {
+    "Accountant": "Accountant",
+    "Admin": "Administrator",
+    "BusinessTransformationOfficer": "Business Transformation Officer",
+    "CCEO": "CCEO",
+    "CountryDirector": "Country Director",
+    "HumanResources": "Regional HR Director",
+    "ImpactAssessment": "Impact Assessment",
+    "MfiLoanOfficer": "MFI Loan Officer",
+    "MfiPartnerAdmin": "MFI Partner Admin",
+    "PartnerAdmin": "Partner Admin",
+    "PartnerFieldOfficer": "Partner Field Officer",
+    "Program Lead": "Programme Lead",
+    "ProjectCoordinator": "Project Coordinator",
+    "RegionalProgramLead": "Regional Programme Lead",
+    "RegionalVicePresident": "Regional Vice President"
+  },
+  "visit_types": [
+    "baseline_ssa_visit",
+    "coaching_visit",
+    "core_assessment_visit",
+    "core_visit",
+    "donor_visit",
+    "follow_up_visit",
+    "in_school_coaching_visit",
+    "in_school_support",
+    "partner_ssa_collection",
+    "school_invitation",
+    "school_visit",
+    "school_visit_ssa_collection",
+    "social_visit",
+    "story_gathering_visit",
+    "training_follow_up_visit"
+  ]
+}

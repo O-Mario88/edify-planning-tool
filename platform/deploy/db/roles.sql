@@ -594,3 +594,159 @@ GRANT SELECT (id, fy, title, instruction, assigner_id, assigner_role, assignee_i
   reviewer_id, due_date, status, return_reason, outcome, evidence_note, evidence_uri, contribution_points, submitted_at)
   ON hr_extra_assignment TO edify_gateway_ro;
 GRANT SELECT (fy, status) ON hr_extra_work_scoring_policy TO edify_gateway_ro;
+-- Staff Setup Queue: whether a school's uploaded owner is matched yet.
+GRANT SELECT (account_owner_status) ON school TO edify_gateway_ro;
+-- The partner's intake queues: an assignment's free-text purpose, shown when no coded one exists.
+GRANT SELECT (purpose) ON partner_assignment TO edify_gateway_ro;
+-- Partner Evidence: which evidence an activity must carry, and which kinds it holds (never the files).
+GRANT SELECT (evidence_profile_snapshot) ON activity TO edify_gateway_ro;
+GRANT SELECT (activity_id, kind, quarantined) ON evidence_record TO edify_gateway_ro;
+-- Sample Checks: each drawn sample, its check and its outcome.
+GRANT SELECT (id, subject_type, activity_id, ssa_record_id, method, original_verifier, sampled_at, status, outcome_note, checked_by, checked_at) ON ia_verification_sample TO edify_gateway_ro;
+
+-- Verification Analytics (internal/iapages/analytics.go): each decision's
+-- verification, verdict, verifier and time. Not its notes.
+GRANT SELECT (id, verification_id, decision, decided_by, decided_at) ON ia_verification_decision TO edify_gateway_ro;
+
+-- Most Significant Change review (internal/iapages/stories.go): who reviewed
+-- a story and why it went back, a schoolless story's country, and the outcome
+-- areas a story may be tagged with and their SSA domains. Not the narrative.
+GRANT SELECT (reviewed_by, return_reason, country) ON mscs_story TO edify_gateway_ro;
+GRANT SELECT (id, code, name, version) ON impact_outcome_area TO edify_gateway_ro;
+GRANT SELECT (area_id, intervention) ON impact_outcome_area_domain TO edify_gateway_ro;
+
+-- Admin My Plan and Admin Planning (internal/adminops/myplan.go, planning.go):
+-- each work item's severity, route, next action, incident, due and closing
+-- dates and verification note; an open incident's reference and how often it
+-- fired. Not a work item's description or resolution criteria.
+GRANT SELECT (id, severity, affected_route, next_action, incident_id, due_date, completed_at, verification_note) ON admin_ops_work_item TO edify_gateway_ro;
+GRANT SELECT (reference, occurrence_count) ON admin_system_incident TO edify_gateway_ro;
+
+-- The partner's Evidence page (internal/partnerassigned/evidence.go): when each
+-- upload arrived. Not the file, its name or its notes.
+GRANT SELECT (created_at) ON evidence_record TO edify_gateway_ro;
+
+-- Roles & Permissions matrix (internal/rolesmatrix): each permission's key and
+-- the roles that hold one. Not a permission's description.
+GRANT SELECT (id, key) ON permission TO edify_gateway_ro;
+GRANT SELECT (role, permission_id) ON role_permission TO edify_gateway_ro;
+
+-- Completion Reviews (internal/plreview): when a completion was submitted for
+-- review, to date its wait. Not its decision or notes.
+GRANT SELECT (activity_id, updated_at) ON activity_completion_verification TO edify_gateway_ro;
+
+-- Team Plans (internal/adminops/teamplans.go): the week a plan item is planned
+-- in, for its week filter and order.
+GRANT SELECT (planned_week) ON activity TO edify_gateway_ro;
+
+-- Closure Quality (internal/closurequality): how many of a closed school's
+-- activities wait on finance.
+GRANT SELECT (locked_activities_for_review) ON school_closure TO edify_gateway_ro;
+
+-- Measurement Framework (internal/iaframework): the catalogue item's programme;
+-- each measurement rule's window, threshold, mode, who wrote, submitted and
+-- reviewed it; a loan purpose's measurement profile; each indicator and outcome
+-- area version's words, author and reviewer. Not definitions' long text.
+GRANT SELECT (programme_category) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (id, review_note, follow_up_min_days, follow_up_expected_days, follow_up_max_days, priority, submitted_by, not_ssa_measured_reason, reviewed_by, mapping_mode, authored_by) ON activity_intervention_mapping TO edify_gateway_ro;
+GRANT SELECT (applicable_countries, verification_method, follow_up_days, measurement_profile_complete, impact_indicators) ON bt_loan_purpose TO edify_gateway_ro;
+GRANT SELECT (id, key, version, name, level, source, country, outcome_area_id, author_id, reviewed_by_id) ON impact_indicator_definition TO edify_gateway_ro;
+GRANT SELECT (author_id, reviewed_by_id) ON impact_outcome_area TO edify_gateway_ro;
+
+-- Evidence Compare (internal/iapages/compare.go): each upload's id (for its
+-- download link), original name and size. Not its storage path.
+GRANT SELECT (id, original_name, file_size) ON evidence_record TO edify_gateway_ro;
+
+-- Impact Reports (internal/iapages/reports.go): each report's title, period,
+-- programmes, version, author, reviewer and status; its recommendations' and
+-- releases' states. Not the report's methodology, findings or evidence.
+GRANT SELECT (title, created_at, programme_areas, fy, period_start, version, review_note, author_id, status, updated_at, reviewed_by_id, period_end, country) ON impact_report TO edify_gateway_ro;
+GRANT SELECT (report_id, status, due_date) ON impact_report_recommendation TO edify_gateway_ro;
+GRANT SELECT (audience, report_id, status) ON impact_report_release TO edify_gateway_ro;
+
+-- Ownership Transfers (internal/ownership): each district and school transfer's
+-- what, who from and to, when, the open-work decision and reason, and the
+-- targets left to reconcile. Not the actor or the saved preview.
+GRANT SELECT (district_id, from_staff_id, to_staff_id, open_activity_decision, reason, effective_date, school_count, activities_transferred, created_at) ON district_portfolio_transfer TO edify_gateway_ro;
+GRANT SELECT (school_id, from_staff_id, to_staff_id, open_activity_decision, reason, effective_date, transferred_activity_ids, batch_id, target_reconciliation_status, target_reconciliation_note, created_at) ON school_ownership_transfer TO edify_gateway_ro;
+
+-- Data Quality Center (internal/dataquality): each open issue's school, kind,
+-- wrong value, suggested fix and whether someone holds it.
+GRANT SELECT (school_id, issue_type, status, field_name, current_value, suggested_fix, assigned_to, created_at) ON data_quality_issue TO edify_gateway_ro;
+
+-- Completed Work & Payments (internal/partnerassigned/completed.go): what was
+-- paid against partner work, its reference and date, and whether it sits on a
+-- live invoice. Not who paid or the invoice's file.
+GRANT SELECT (activity_id, payment_type, payment_reference, payment_date, amount_paid) ON partner_payment TO edify_gateway_ro;
+GRANT SELECT (activity_id, invoice_id) ON partner_invoice_item TO edify_gateway_ro;
+GRANT SELECT (id, status) ON partner_invoice TO edify_gateway_ro;
+
+-- SSA Verification (internal/ssaverify): who uploaded a record (never their
+-- own to decide) and who sent it back, with the reason the queue shows.
+GRANT SELECT (uploaded_by, returned_by_user_id, return_reason) ON ssa_record TO edify_gateway_ro;
+
+-- Programme Output Reports (internal/reports): each target type's approved
+-- value for a year and whether it is active. Not who set it or its scope.
+GRANT SELECT (fy, target_type, target_value, is_active) ON target_setting TO edify_gateway_ro;
+
+-- Leave Tracker (internal/leavetracker): the working days a booked leave
+-- charges and its handover note, each person's remaining balance by type and
+-- year, and the leave a cover handover belongs to.
+GRANT SELECT (days_charged, coverage_notes) ON leave TO edify_gateway_ro;
+GRANT SELECT (staff_id, year, leave_type, remaining) ON leave_balance TO edify_gateway_ro;
+GRANT SELECT (leave_request_id) ON temporary_coverage_assignment TO edify_gateway_ro;
+
+-- Leave Approvals (internal/leaveapprovals): a request's reason (shown only
+-- to an authorised approver, as the existing page does), whether it carries a
+-- document (the page is passed on when it does), its cover's state, length,
+-- decision and when it was made; each leave type's approval floor; a
+-- balance's entitlement; and the monthly-plan items a leave falls on.
+GRANT SELECT (reason, attachment, coverage_status, days, reviewed_by_user_id, reviewed_at, created_at) ON leave TO edify_gateway_ro;
+GRANT SELECT (id, approver_role) ON leave_type_policy TO edify_gateway_ro;
+GRANT SELECT (id, entitlement) ON leave_balance TO edify_gateway_ro;
+GRANT SELECT (assignee_id, scheduled_date) ON monthly_plan_activity TO edify_gateway_ro;
+
+-- HR Today (internal/hrtoday): a development request's status, course, who
+-- it is for and when it was sent; when a policy last changed; which policy a
+-- version belongs to and whether it was replaced; a review's functional
+-- manager; and an agreement's priority weights.
+GRANT SELECT (status, course_name, staff_name, staff_id, submitted_at) ON pd_request TO edify_gateway_ro;
+GRANT SELECT (updated_at) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (document_id, superseded_at) ON document_version TO edify_gateway_ro;
+GRANT SELECT (functional_manager_id) ON hr_performance_review TO edify_gateway_ro;
+GRANT SELECT (id, review_id, weight) ON hr_performance_priority TO edify_gateway_ro;
+
+-- Business Transformation engine (internal/btportfolio, internal/btpages):
+-- who registered a loan (a loan officer's own book), its IA validation state
+-- and Salesforce loan id (filters and search), and the year a case opened.
+GRANT SELECT (registered_by, ia_validation_status, salesforce_loan_id) ON bt_mfi_loan TO edify_gateway_ro;
+GRANT SELECT (opened_fy) ON bt_case TO edify_gateway_ro;
+
+-- BT Business Accounting & Finance and Government Requirements
+-- (internal/btpages/portfolio.go): the intervention a partner assignment and
+-- a case recommendation are for; when a practice assessment was recorded; a
+-- compliance assessment's IA state and expiry; and each requirement's
+-- authority, country and whether it is active.
+GRANT SELECT (focus_intervention) ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (source_intervention) ON bt_case_recommendation TO edify_gateway_ro;
+GRANT SELECT (created_at) ON bt_financial_practice_assessment TO edify_gateway_ro;
+GRANT SELECT (ia_status, expiry_date) ON bt_school_compliance_assessment TO edify_gateway_ro;
+GRANT SELECT (responsible_authority, country_code, active) ON bt_compliance_requirement TO edify_gateway_ro;
+
+-- BT Loans register (internal/btpages/loans.go): what the latest repayment
+-- snapshot says was paid, and when a loan's repayment data and record last
+-- changed (the register's Last Updated column and the partner dashboard).
+GRANT SELECT (amount_paid_during_period) ON bt_repayment_snapshot TO edify_gateway_ro;
+GRANT SELECT (last_repayment_data_date, updated_at) ON bt_mfi_loan TO edify_gateway_ro;
+
+-- BT Impact & Reports (internal/btpages/impact.go) and the portfolio's reach
+-- and impact figures (internal/btportfolio/metrics.go): an impact
+-- assessment's id (the Prepare drawer) and classification, and a verified
+-- baseline enrolment snapshot's learner count, status and order.
+GRANT SELECT (id, classification) ON bt_loan_impact_assessment TO edify_gateway_ro;
+GRANT SELECT (status, learner_count, created_at) ON bt_enrolment_snapshot TO edify_gateway_ro;
+
+-- MFI partner portal (internal/btpages/portal.go): a lending partner's
+-- monthly portfolio returns and their open row-level data issues.
+GRANT SELECT (id, reporting_month, source_type, valid_rows, total_rows, exception_rows, status, mfi_id) ON bt_portfolio_submission TO edify_gateway_ro;
+GRANT SELECT (submission_id, row_number, code, message, status) ON bt_portfolio_data_exception TO edify_gateway_ro;

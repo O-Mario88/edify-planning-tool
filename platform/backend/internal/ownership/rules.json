@@ -1,0 +1,30 @@
+{
+  "district_profile_roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+  ],
+  "district_transfer_roles": [
+    "Admin",
+    "ImpactAssessment"
+  ],
+  "limits": {
+    "batches": 25,
+    "reconciliations": 50,
+    "transfers": 50
+  },
+  "open_activity_decisions": {
+    "keep": "Keep open activities with their current owner",
+    "transfer": "Transfer eligible open activities to the new owner"
+  },
+  "page_roles": [
+    "Admin",
+    "ImpactAssessment"
+  ],
+  "page_size": 50,
+  "required_reconciliation": "required"
+}

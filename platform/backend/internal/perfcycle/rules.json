@@ -1,0 +1,43 @@
+{
+  "active_onboarding_state": "active",
+  "console_roles": [
+    "HumanResources",
+    "Admin"
+  ],
+  "page_roles": [
+    "Admin",
+    "HumanResources",
+    "ImpactAssessment"
+  ],
+  "page_size": 50,
+  "review_type": "annual_priorities",
+  "stage_labels": {
+    "manager_assessment": "Returned for correction",
+    "not_started": "Draft — not started",
+    "priorities_agreed": "Approved & locked",
+    "priorities_draft": "Employee drafting",
+    "priorities_manager_review": "Manager review"
+  },
+  "windows": [
+    [
+      "priority_setting",
+      "FY priority setting"
+    ],
+    [
+      "q1",
+      "Q1 conversation"
+    ],
+    [
+      "mid_year",
+      "Mid-year review (Q2)"
+    ],
+    [
+      "q3",
+      "Q3 conversation"
+    ],
+    [
+      "year_end",
+      "End-of-year review (Q4)"
+    ]
+  ]
+}

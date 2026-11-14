@@ -3260,8 +3260,22 @@ def performance_signoff_view(request, review_id):
 # guards and audit rows apply; the view only gathers and dispatches.
 
 
+#: The roles the Performance Cycle Console's controls are for.
+CONSOLE_ROLES = ("HumanResources", "Admin")
+
+#: How the console words an agreement's stage; any other stage is its value
+#: in title case.
+CONSOLE_STAGE_LABELS = {
+    "not_started": "Draft — not started",
+    "priorities_draft": "Employee drafting",
+    "priorities_manager_review": "Manager review",
+    "priorities_agreed": "Approved & locked",
+    "manager_assessment": "Returned for correction",
+}
+
+
 def _require_hr(request):
-    return getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
+    return getattr(request.user, "active_role", "") in CONSOLE_ROLES
 
 
 @require_page_permission("performance_console")
@@ -3285,13 +3299,7 @@ def hr_performance_console_view(request):
         .select_related("staff__user")
         .order_by("staff__user__name")
     )
-    STAGE_LABELS = {
-        "not_started": "Draft — not started",
-        "priorities_draft": "Employee drafting",
-        "priorities_manager_review": "Manager review",
-        "priorities_agreed": "Approved & locked",
-        "manager_assessment": "Returned for correction",
-    }
+    STAGE_LABELS = CONSOLE_STAGE_LABELS
     review_rows = [
         {
             "review": r,

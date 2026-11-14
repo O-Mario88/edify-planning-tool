@@ -36,13 +36,41 @@ var rules = func() (r struct {
 	WorkItemCategories       map[string]string `json:"work_item_categories"`
 	DoneWorkItemStatus       string            `json:"done_work_item_status"`
 	MaintenanceCategories    []string          `json:"maintenance_categories"`
-	Limits                   struct {
+	// Repairs are the Data Repair Center's catalogue, in its order.
+	Repairs []struct {
+		Key, Title, Description, Outcome, Referral string
+		Automatic                                  bool
+	} `json:"repairs"`
+	// Admin My Plan and Admin Planning: the severities in order, the
+	// statuses My Plan's sections list, how much closed work it shows, how
+	// many open incidents and untriaged tickets Planning lists, the backlog
+	// and monitoring statuses, the incident statuses that are no longer
+	// open, and the backlog table's page size.
+	SeverityChoices        [][2]string `json:"severity_choices"`
+	MyPlanStatuses         []string    `json:"my_plan_statuses"`
+	RecentlyDone           int         `json:"recently_done"`
+	PlanningLimit          int         `json:"planning_limit"`
+	BacklogStatus          string      `json:"backlog_status"`
+	MonitoringStatus       string      `json:"monitoring_status"`
+	ClosedIncidentStatuses []string    `json:"closed_incident_statuses"`
+	TablePageSize          int         `json:"table_page_size"`
+	// TeamPlans is Team Plans' door (Admin and Impact Assessment), the
+	// statuses its plan leaves out, how many rows it reads and shows, and
+	// the activity labels.
+	TeamPlans struct {
+		Roles            []string          `json:"roles"`
+		TerminalStatuses []string          `json:"terminal_statuses"`
+		PageSize         int               `json:"page_size"`
+		ReadLimit        int               `json:"read_limit"`
+		ActivityTypes    map[string]string `json:"activity_types"`
+	} `json:"team_plans"`
+	Limits struct {
 		Tickets         int `json:"tickets"`
 		Incidents       int `json:"incidents"`
 		MaintenanceWork int `json:"maintenance_work"`
 	} `json:"limits"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Pages) == 0 || len(r.TicketStatuses) == 0 || r.Limits.Tickets == 0 || r.UntriagedTicketStatus == "" {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Pages) == 0 || len(r.TicketStatuses) == 0 || r.Limits.Tickets == 0 || r.UntriagedTicketStatus == "" || len(r.TeamPlans.Roles) == 0 || r.TeamPlans.ReadLimit == 0 {
 		panic(fmt.Sprintf("adminops: the embedded rules are unreadable: %v", err))
 	}
 	return r

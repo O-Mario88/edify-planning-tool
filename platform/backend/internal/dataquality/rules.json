@@ -1,0 +1,202 @@
+{
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "page_size": 50,
+  "roles": {
+    "Accountant": {
+      "page": false,
+      "school_profiles": false,
+      "setup_queue": false,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "school_profiles": true,
+      "setup_queue": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "school_profiles": true,
+      "setup_queue": false,
+      "strip": null
+    },
+    "CCEO": {
+      "page": false,
+      "school_profiles": true,
+      "setup_queue": false,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "school_profiles": false,
+      "setup_queue": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": false,
+      "school_profiles": true,
+      "setup_queue": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": false,
+      "school_profiles": false,
+      "setup_queue": true,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "school_profiles": true,
+      "setup_queue": true,
+      "strip": {
+        "label": "Impact Assessment",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/ia/dashboard/",
+            "label": "Overview"
+          },
+          {
+            "active": false,
+            "href": "/ia/framework/",
+            "label": "Framework & Strategy"
+          },
+          {
+            "active": false,
+            "href": "/ia/school-evidence/",
+            "label": "Baseline & Field Data"
+          },
+          {
+            "active": false,
+            "href": "/ia/stories/",
+            "label": "School Progress"
+          },
+          {
+            "active": false,
+            "href": "/ia/learning/",
+            "label": "Analysis & Learning"
+          },
+          {
+            "active": false,
+            "href": "/ia/impact-reports/",
+            "label": "Reporting & Accountability"
+          },
+          {
+            "active": true,
+            "href": "/admin-panel/data-quality-center",
+            "label": "Data Quality & Verification"
+          }
+        ]
+      }
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "school_profiles": false,
+      "setup_queue": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "school_profiles": false,
+      "setup_queue": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "school_profiles": false,
+      "setup_queue": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "school_profiles": false,
+      "setup_queue": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": false,
+      "school_profiles": true,
+      "setup_queue": false,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": false,
+      "school_profiles": true,
+      "setup_queue": false,
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "school_profiles": false,
+      "setup_queue": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": false,
+      "school_profiles": false,
+      "setup_queue": false,
+      "strip": null
+    }
+  },
+  "sections": [
+    [
+      "Missing Phone Numbers",
+      "missing_phone"
+    ],
+    [
+      "Missing Primary Contact",
+      "missing_contact"
+    ],
+    [
+      "Missing Enrollment Data",
+      "missing_enrollment"
+    ],
+    [
+      "Schools Without a Cluster",
+      "no_cluster"
+    ],
+    [
+      "Unmatched Staff Owners",
+      "unmatched_staff"
+    ],
+    [
+      "Schools Missing SSA",
+      "no_ssa"
+    ]
+  ],
+  "tiles": [
+    [
+      "Clean Schools",
+      "Clean",
+      "Fully complete verified roster"
+    ],
+    [
+      "Needs Review",
+      "Needs Review",
+      "Minor operational gaps"
+    ],
+    [
+      "Needs Cleanup",
+      "Needs Cleanup",
+      "Moderate gaps present"
+    ],
+    [
+      "Duplicate Risk",
+      "Duplicate Risk",
+      "Potential duplicate entries"
+    ],
+    [
+      "Missing Critical Data",
+      "Missing Critical Data",
+      "Missing owner/cluster info"
+    ]
+  ],
+  "unmatched_ssa_statuses": [
+    "pending",
+    "hold"
+  ]
+}

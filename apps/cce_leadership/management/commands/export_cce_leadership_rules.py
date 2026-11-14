@@ -66,6 +66,20 @@ PAGES = {
             "Agreed Coaching Actions Open",
         ],
     },
+    "/team/coaching": {
+        "permission": "team_coaching",
+        "drawers": [
+            "/team/coaching/new",
+            "/team/coaching/new?kind=field_observation",
+        ],
+        "source": "apps.frontend.views.coaching_views:_metric",
+        "metrics": [
+            "One-to-Ones Held This Month",
+            "Coaching Notes Not Yet Shared",
+            "Coaching Awaiting Officer Acknowledgement",
+            "Coaching Follow-Ups Due",
+        ],
+    },
     "/cce-leadership/feedback": {
         "permission": "cce_training_feedback",
         "drawers": [],
@@ -98,7 +112,7 @@ def pages() -> dict:
 
 
 def rules() -> dict:
-    from apps.cce_leadership import cadence, services
+    from apps.cce_leadership import cadence, coaching, services
     from apps.activities.models import ActivityType
     from apps.cce_leadership.models import (
         OBSERVATION_CRITERIA,
@@ -137,6 +151,11 @@ def rules() -> dict:
         "shareable_kinds": [str(k) for k in services.SHAREABLE_KINDS],
         # A coaching record's kinds, as the My Coaching filter offers them.
         "coaching_kinds": [[str(k), str(v)] for k, v in CoachingKind.choices],
+        # A coaching record's register states, and the day of the month a
+        # one-to-one falls due (Team Coaching).
+        "coaching_states": [[k, v] for k, v in coaching.STATE_CHOICES],
+        "one_to_one_kind": str(CoachingKind.ONE_TO_ONE),
+        "one_to_one_due_day": coaching.ONE_TO_ONE_DUE_DAY,
         # The meeting rhythm the role description sets (cadence.py).
         "cadence": {
             "rules": [

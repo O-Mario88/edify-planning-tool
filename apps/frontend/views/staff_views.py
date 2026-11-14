@@ -44,6 +44,31 @@ _NOT_FINISHED_IN_FIELD = (
 )
 
 
+#: Who may read a colleague's email address in the People Directory.
+DIRECTORY_EMAIL_ROLES = frozenset(
+    {"Admin", "HumanResources", "CountryDirector", "Program Lead"}
+)
+
+#: ROLE_LABELS names roles in the plural for headcounts; one person is one.
+SINGULAR_ROLE_LABELS = {
+    "CCEO": "CCEO",
+    "Program Lead": "Programme Lead",
+    "RegionalProgramLead": "Regional Programme Lead",
+    "CountryDirector": "Country Director",
+    "RegionalVicePresident": "Regional Vice President",
+    "ImpactAssessment": "Impact Assessment",
+    "Accountant": "Accountant",
+    "HumanResources": "Regional HR Director",
+    "ProjectCoordinator": "Project Coordinator",
+    "PartnerFieldOfficer": "Partner Field Officer",
+    "PartnerAdmin": "Partner Admin",
+    "BusinessTransformationOfficer": "Business Transformation Officer",
+    "MfiPartnerAdmin": "MFI Partner Admin",
+    "MfiLoanOfficer": "MFI Loan Officer",
+    "Admin": "Administrator",
+}
+
+
 # ─── STAFF DIRECTORY ──────────────────────────────────────────────────────────
 
 
@@ -55,12 +80,7 @@ def _directory_may_see_email(user) -> bool:
     already strips email for exactly this set on the API roster — the HTML
     directory rendered it to everyone.
     """
-    return getattr(user, "active_role", "") in {
-        "Admin",
-        "HumanResources",
-        "CountryDirector",
-        "Program Lead",
-    }
+    return getattr(user, "active_role", "") in DIRECTORY_EMAIL_ROLES
 
 
 def _directory_scope(user, qs):
@@ -244,24 +264,6 @@ def staff_directory_view(request):
         supervisee__user__in=page_staff
     ).values_list("supervisee_id", "supervisor__user__name"):
         reports_to.setdefault(supervisee_id, []).append(supervisor_name)
-    # ROLE_LABELS names roles in the plural for headcounts; one person is one.
-    singular = {
-        "CCEO": "CCEO",
-        "Program Lead": "Programme Lead",
-        "RegionalProgramLead": "Regional Programme Lead",
-        "CountryDirector": "Country Director",
-        "RegionalVicePresident": "Regional Vice President",
-        "ImpactAssessment": "Impact Assessment",
-        "Accountant": "Accountant",
-        "HumanResources": "Regional HR Director",
-        "ProjectCoordinator": "Project Coordinator",
-        "PartnerFieldOfficer": "Partner Field Officer",
-        "PartnerAdmin": "Partner Admin",
-        "BusinessTransformationOfficer": "Business Transformation Officer",
-        "MfiPartnerAdmin": "MFI Partner Admin",
-        "MfiLoanOfficer": "MFI Loan Officer",
-        "Admin": "Administrator",
-    }
 
     for u in page_staff:
         profile = getattr(u, "staff_profile", None)
@@ -284,7 +286,7 @@ def staff_directory_view(request):
                 "email": u.email,
                 "roles": u.roles or [],
                 "active_role": u.active_role,
-                "role_label": singular.get(
+                "role_label": SINGULAR_ROLE_LABELS.get(
                     u.active_role, ROLE_LABELS.get(u.active_role, u.active_role)
                 ),
                 "district": where,

@@ -58,12 +58,24 @@ func text(t string) *screensv1.PagePanelItem {
 // Build answers path for p. served is false for a path this package does not
 // answer.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != DuplicatesPath && path != ReturnedPath && path != HistoryPath {
+	if path != DuplicatesPath && path != ReturnedPath && path != HistoryPath && path != PartnerEvidencePath && path != SamplesPath && path != AnalyticsPath && path != StoriesPath && path != ComparePath && path != ReportsPath {
 		return nil, false, nil
 	}
 	role, ok := rules.Pages[path].Roles[p.ActiveRole]
 	if !ok || !role.Page {
 		return nil, true, pagegate.ErrNotAvailable
+	}
+	switch path {
+	case SamplesPath:
+		return s.samples(ctx, p, role, query)
+	case AnalyticsPath:
+		return s.analytics(ctx, p, query)
+	case StoriesPath:
+		return s.stories(ctx, p, role, query)
+	case ComparePath:
+		return s.compare(ctx, p, query)
+	case ReportsPath:
+		return s.reports(ctx, p, role, query)
 	}
 	where, args, err := reach(ctx, s.db, p, s.now(), nil)
 	if err != nil {
@@ -72,6 +84,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	switch path {
 	case ReturnedPath:
 		return s.returned(ctx, p, query, where, args)
+	case PartnerEvidencePath:
+		return s.partnerEvidence(ctx, p, query, where, args)
 	case HistoryPath:
 		return s.history(ctx, p, query, where, args)
 	}

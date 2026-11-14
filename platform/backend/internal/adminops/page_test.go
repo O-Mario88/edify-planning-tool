@@ -53,3 +53,18 @@ func TestAnIncidentsSeverityPillCarriesItsTone(t *testing.T) {
 		}
 	}
 }
+
+func TestTheRepairCatalogueReadsAsTheFeedReadsIt(t *testing.T) {
+	items := repairPage().GetBlocks()[0].GetList().GetItems()
+	if len(items) != 3 {
+		t.Fatalf("%d repairs", len(items))
+	}
+	first, last := items[0], items[2]
+	if first.GetTitle() != "Notifications for incidents that are already resolved" || first.GetBadges()[0].GetTone() != "plain" ||
+		first.GetActions()[0].GetHref() != "/data-repair?repair=stale_incident_notifications" || len(first.GetLines()) != 2 {
+		t.Fatalf("first %v", first)
+	}
+	if last.GetBadges()[0].GetText() != "Referred" || last.GetBadges()[0].GetTone() != "caution" || len(last.GetLines()) != 3 {
+		t.Fatalf("referred %v", last)
+	}
+}

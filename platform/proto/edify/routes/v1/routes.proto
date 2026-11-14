@@ -1,0 +1,474 @@
+syntax = "proto3";
+
+package edify.routes.v1;
+
+// The Smart Route Planner (owner, 2026-11-14): a field day's schools on a
+// map by their stored coordinates, the distances between them, a
+// recommended visiting order and the eligible schools near the route.
+//
+// Nothing here schedules, moves or completes an activity. A suggestion is
+// only a suggestion; Add to Plan opens the existing Schedule visit drawer,
+// and every official change goes through the existing scheduling saves.
+//
+// Distances are of two kinds and never mixed: straight_line_* is the
+// great-circle distance between stored coordinates (Haversine); road_* is
+// what the configured routing provider returned. Where the provider gave
+// nothing, road_available is false and no road figure is given. The
+// planning estimate is the existing route engine's (straight line at its
+// planning speed) and is labelled as such.
+service RoutePlannerService {
+  // The reader's field day: their schools planned that day, the
+  // recommended order, and nearby suggestions.
+  rpc GetFieldDay(GetFieldDayRequest) returns (GetFieldDayResponse);
+  // An itinerary for schools the reader chose, in the order asked or
+  // re-ordered by the chosen mode.
+  rpc PlanRoute(PlanRouteRequest) returns (PlanRouteResponse);
+  // The reader's schools inside a map viewport.
+  rpc GetSchoolPins(GetSchoolPinsRequest) returns (GetSchoolPinsResponse);
+  // The distance between two of the reader's schools.
+  rpc GetSchoolDistance(GetSchoolDistanceRequest) returns (GetSchoolDistanceResponse);
+  // One school's location for its profile (Location & Directions).
+  rpc GetSchoolLocation(GetSchoolLocationRequest) returns (GetSchoolLocationResponse);
+  // Report that a school's location is wrong or missing, with a proposed
+  // point. Nothing changes until someone else approves it.
+  rpc ReportSchoolLocation(ReportSchoolLocationRequest) returns (ReportSchoolLocationResponse);
+  // The reports a reviewer may decide, oldest first.
+  rpc ListLocationReports(ListLocationReportsRequest) returns (ListLocationReportsResponse);
+  // Approve (the point becomes the school's verified location) or reject.
+  rpc ReviewLocationReport(ReviewLocationReportRequest) returns (ReviewLocationReportResponse);
+  // A capture from the field (GPS, typed, or "the location is correct"),
+  // sent when the device has a connection. A retry with the same capture id
+  // returns the first answer. A first location by GPS at the policy's
+  // accuracy is accepted at once; anything else waits for review.
+  rpc SubmitLocationCapture(SubmitLocationCaptureRequest) returns (SubmitLocationCaptureResponse);
+  // The reader's schools and planned visits for working without a
+  // connection: the least the capture screen needs.
+  rpc GetOfflinePack(GetOfflinePackRequest) returns (GetOfflinePackResponse);
+  // Location changes accepted since a time, so clients refresh pins and
+  // cached schools.
+  rpc ListLocationChanges(ListLocationChangesRequest) returns (ListLocationChangesResponse);
+  // One school's location history: every capture and report and its decision.
+  rpc GetLocationHistory(GetLocationHistoryRequest) returns (GetLocationHistoryResponse);
+}
+
+message Point {
+  double lat = 1;
+  double lng = 2;
+}
+
+// SchoolPin is one school as the map draws it.
+message SchoolPin {
+  // The school's own id (its profile and drawers open on it).
+  string school_id = 1;
+  // The official Edify School ID.
+  string code = 2;
+  string name = 3;
+  string district = 4;
+  string cluster = 5;
+  // planned, completed, suggested or other.
+  string status = 6;
+  // The school's category in the existing words (Client, Core Trained …).
+  string category = 7;
+  // verified (a corrected point on record), recorded (the directory's
+  // coordinates), missing or invalid. Missing and invalid have no point.
+  string location_status = 8;
+  Point point = 9;
+  // The planned activity the school is on the day, if any.
+  string activity_id = 10;
+  // The planned time of that activity, "HH:MM", if it has one.
+  string planned_time = 11;
+  bool can_open_profile = 12;
+  // The location's version: 0 for the School Directory's own point, then
+  // one more for each accepted change.
+  int32 location_version = 13;
+  // The school's verified entrance / road access point, if it has one;
+  // navigation goes there.
+  Point entrance = 14;
+}
+
+message RouteLeg {
+  // The start's label or the previous school's name.
+  string from_label = 1;
+  string to_school_id = 2;
+  int64 straight_line_meters = 3;
+  bool road_available = 4;
+  int64 road_meters = 5;
+  int64 road_seconds = 6;
+  // The existing engine's planning estimate over the straight line.
+  int64 estimate_seconds = 7;
+  // The provider's road line, when it returned one.
+  repeated Point path = 8;
+  // Why there is no road figure, when there is none.
+  string road_status = 9;
+}
+
+message ItineraryStop {
+  int32 order = 1;
+  SchoolPin school = 2;
+  RouteLeg leg = 3;
+  // "HH:MM" on the day.
+  string arrival = 4;
+  string departure = 5;
+  int32 visit_minutes = 6;
+  // The school keeps its place when the order is recalculated.
+  bool locked = 7;
+  // The school has a fixed appointment time.
+  bool fixed = 8;
+  // Why the stop does not fit, if it does not.
+  string conflict = 9;
+  // planned (on the official plan) or recommended (a suggestion only).
+  string kind = 10;
+}
+
+message RouteTotals {
+  int64 straight_line_meters = 1;
+  // Road totals only add up legs the provider measured; road_complete says
+  // whether every leg was.
+  int64 road_meters = 2;
+  int64 road_seconds = 3;
+  bool road_complete = 4;
+  int64 estimate_seconds = 5;
+  int32 visit_minutes = 6;
+  // From leaving the start to finishing the last visit.
+  int32 field_minutes = 7;
+  int32 selected = 8;
+  int32 feasible = 9;
+}
+
+message Itinerary {
+  // fastest, recommended or as_given.
+  string mode = 1;
+  string start_label = 2;
+  Point start = 3;
+  repeated ItineraryStop stops = 4;
+  RouteTotals totals = 5;
+  repeated string conflicts = 6;
+  // One plain sentence on why this order.
+  string explanation = 7;
+  // The schools with no usable coordinates, which no leg can reach.
+  repeated SchoolPin unplaced = 8;
+}
+
+message Suggestion {
+  SchoolPin school = 1;
+  // What adding the school costs the route, measured by measure.
+  int64 added_meters = 2;
+  int64 added_seconds = 3;
+  // road or straight_line.
+  string measure = 4;
+  // The plain reason, from the existing rules.
+  string reason = 5;
+  // Eligible, High Priority or Already planned.
+  string label = 6;
+  bool eligible = 7;
+  bool fits_day = 8;
+}
+
+message ProviderStatus {
+  // google, osrm or none.
+  string name = 1;
+  bool configured = 2;
+  string message = 3;
+}
+
+message FilterOption {
+  string value = 1;
+  string label = 2;
+}
+
+message GetFieldDayRequest {
+  // "YYYY-MM-DD"; empty is today.
+  string date = 1;
+  string district_id = 2;
+  string cluster_id = 3;
+  // Find Nearby Schools from a profile: the suggestions are the eligible
+  // schools around this school (its own id or School ID) instead of around
+  // the day's route.
+  string near_school_id = 4;
+}
+
+message GetFieldDayResponse {
+  string date = 1;
+  // The day's date as the page writes it ("Tue, 24 Jun 2025").
+  string date_label = 2;
+  repeated SchoolPin planned = 3;
+  Itinerary recommended = 4;
+  repeated Suggestion suggestions = 5;
+  ProviderStatus provider = 6;
+  repeated FilterOption districts = 7;
+  repeated FilterOption clusters = 8;
+  string area_label = 9;
+  // The school the suggestions are around, when one was asked for.
+  SchoolPin focus = 10;
+}
+
+message PlanRouteRequest {
+  string date = 1;
+  // The schools, in the order the reader has them.
+  repeated string school_ids = 2;
+  // fastest, recommended or as_given.
+  string mode = 3;
+  // Schools that keep their place.
+  repeated string locked_school_ids = 4;
+  // Where the day starts; empty is the first school.
+  Point start = 5;
+  string start_label = 6;
+}
+
+message PlanRouteResponse {
+  Itinerary itinerary = 1;
+  ProviderStatus provider = 2;
+}
+
+message GetSchoolPinsRequest {
+  Point south_west = 1;
+  Point north_east = 2;
+  string district_id = 3;
+  string cluster_id = 4;
+  string date = 5;
+}
+
+message GetSchoolPinsResponse {
+  repeated SchoolPin pins = 1;
+  // More schools are in the viewport than were sent; zoom in for the rest.
+  bool truncated = 2;
+}
+
+message GetSchoolDistanceRequest {
+  string from_school_id = 1;
+  string to_school_id = 2;
+}
+
+message GetSchoolDistanceResponse {
+  RouteLeg leg = 1;
+  SchoolPin from = 2;
+  SchoolPin to = 3;
+  ProviderStatus provider = 4;
+  // When the figures were worked out (RFC 3339).
+  string calculated_at = 5;
+}
+
+message GetSchoolLocationRequest {
+  // The school's own id or its School ID, as the profile is opened with.
+  string school_id = 1;
+}
+
+message GetSchoolLocationResponse {
+  SchoolPin school = 1;
+  // How many of the reader's other schools are within the route engine's
+  // nearby radius (straight line).
+  int32 nearby_schools = 2;
+  double nearby_radius_km = 3;
+  // The reader may open the route planner.
+  bool can_plan = 4;
+  // The reader may report this school's location (no report is open).
+  bool can_report = 5;
+  // The open report, if one is waiting for review.
+  LocationReport pending_report = 6;
+  // The verified location's access note (a landmark, the road in).
+  string access_note = 7;
+  // The reader may review reports.
+  bool can_review = 8;
+  // The location's version, and when and by whom it was last verified.
+  int32 version = 9;
+  string verified_at = 10;
+  string verified_by_name = 11;
+  // The verified entrance / road access point, if any.
+  Point entrance = 12;
+  CapturePolicy policy = 13;
+  // The reader may capture this school's location by GPS.
+  bool can_capture = 14;
+  // When someone last said the location on record is right (RFC 3339).
+  string last_confirmed_at = 15;
+}
+
+// The thresholds a capture is judged by; the device shows the same.
+message CapturePolicy {
+  // At or better than good_m a fix is Good; up to confirm_m it needs the
+  // person's confirmation; beyond, recapture is recommended.
+  double good_m = 1;
+  double confirm_m = 2;
+  // A fix older than this when taken is stale.
+  int32 fresh_seconds = 3;
+  // A correction moving the school further than this is flagged.
+  int32 large_move_m = 4;
+}
+
+message LocationReport {
+  string id = 1;
+  SchoolPin school = 2;
+  // wrong or missing.
+  string kind = 3;
+  Point proposed = 4;
+  // none, typed or device.
+  string point_source = 5;
+  double accuracy_m = 6;
+  string access_note = 7;
+  string note = 8;
+  // The location shown when it was reported, if there was one.
+  Point previous = 9;
+  // Straight-line metres from the previous point to the proposed one.
+  int64 moved_meters = 10;
+  // pending, approved or rejected.
+  string status = 11;
+  string reported_by_name = 12;
+  // RFC 3339.
+  string reported_at = 13;
+  string reviewed_by_name = 14;
+  string reviewed_at = 15;
+  string review_note = 16;
+  // The reader reported it, so may not review it.
+  bool is_own = 17;
+  // school or entrance.
+  string target = 18;
+  // Why it waits for review: large_move, accuracy_fair, accuracy_poor,
+  // version_conflict, competing, typed_point, no_point, far_from_district,
+  // stale_capture, clock_skew, correction, entrance.
+  repeated string flags = 19;
+  // When the device took the fix (RFC 3339).
+  string captured_at = 20;
+  // The version this made, once accepted or approved.
+  int32 result_version = 21;
+  // new, correction or confirm.
+  string capture_kind = 22;
+  int32 sample_count = 23;
+  double spread_m = 24;
+  // The version the device knew when it captured.
+  int32 base_version = 25;
+}
+
+message SubmitLocationCaptureRequest {
+  // The device's id for this capture (a UUID); a retry sends the same.
+  string capture_id = 1;
+  string school_id = 2;
+  // school or entrance.
+  string target = 3;
+  // new, correction or confirm.
+  string kind = 4;
+  Point point = 5;
+  // none, typed or device.
+  string point_source = 6;
+  double accuracy_m = 7;
+  // When the device took the fix (RFC 3339).
+  string captured_at = 8;
+  int32 sample_count = 9;
+  double spread_m = 10;
+  // The location version the device showed when capturing.
+  int32 base_version = 11;
+  string reason = 12;
+  string access_note = 13;
+}
+
+message SubmitLocationCaptureResponse {
+  LocationReport capture = 1;
+  // accepted (the location changed now), pending (waits for review) or
+  // noted (a confirmation).
+  string outcome = 2;
+  // The school's location version after this.
+  int32 version = 3;
+  SchoolPin school = 4;
+  // One sentence for the person.
+  string message = 5;
+}
+
+message GetOfflinePackRequest {
+  // How many days of planned visits to include (default 14, at most 31).
+  int32 days = 1;
+}
+
+message OfflineSchool {
+  SchoolPin school = 1;
+  string verified_at = 2;
+  string access_note = 3;
+  // A capture or report on it waits for review.
+  bool has_pending = 4;
+  string last_confirmed_at = 5;
+}
+
+message PlannedVisit {
+  // "YYYY-MM-DD".
+  string date = 1;
+  string school_id = 2;
+  string activity_id = 3;
+}
+
+message GetOfflinePackResponse {
+  repeated OfflineSchool schools = 1;
+  repeated PlannedVisit planned = 2;
+  // RFC 3339.
+  string generated_at = 3;
+  CapturePolicy policy = 4;
+  bool can_capture = 5;
+  // More schools are in reach than were sent.
+  bool truncated = 6;
+  bool can_review = 7;
+}
+
+message LocationChange {
+  string school_id = 1;
+  string target = 2;
+  int32 version = 3;
+  Point point = 4;
+  // RFC 3339.
+  string changed_at = 5;
+}
+
+message ListLocationChangesRequest {
+  // RFC 3339; empty is the last day.
+  string since = 1;
+}
+
+message ListLocationChangesResponse {
+  repeated LocationChange changes = 1;
+  // The server's time, to send as the next since.
+  string now = 2;
+}
+
+message GetLocationHistoryRequest {
+  string school_id = 1;
+}
+
+message GetLocationHistoryResponse {
+  SchoolPin school = 1;
+  // Newest first.
+  repeated LocationReport entries = 2;
+}
+
+message ReportSchoolLocationRequest {
+  string school_id = 1;
+  // wrong or missing.
+  string kind = 2;
+  Point proposed = 3;
+  // none, typed or device.
+  string point_source = 4;
+  double accuracy_m = 5;
+  string access_note = 6;
+  string note = 7;
+  // A retry with the same key never files a second report.
+  string idempotency_key = 8;
+}
+
+message ReportSchoolLocationResponse {
+  LocationReport report = 1;
+}
+
+message ListLocationReportsRequest {
+  // pending (the default), approved or rejected.
+  string status = 1;
+}
+
+message ListLocationReportsResponse {
+  repeated LocationReport reports = 1;
+}
+
+message ReviewLocationReportRequest {
+  string report_id = 1;
+  // approve or reject.
+  string decision = 2;
+  // Required to reject; optional to approve.
+  string note = 3;
+}
+
+message ReviewLocationReportResponse {
+  LocationReport report = 1;
+}

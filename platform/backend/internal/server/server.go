@@ -17,6 +17,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1/identityv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/loans/v1/loansv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/messaging/v1/messagingv1connect"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/routes/v1/routesv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/schools/v1/schoolsv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accounts"
@@ -25,15 +26,19 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btpages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ccelead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurequality"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusteroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreoversight"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coverage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataquality"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/extrawork"
@@ -41,10 +46,14 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fyplanning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrtoday"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iaframework"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iapages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/leaveapprovals"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/leavepolicies"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/leavetracker"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/messaging"
@@ -53,21 +62,32 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/navigation"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightportfolio"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ownership"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerassigned"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerusers"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/peopledirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/perfcycle"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/policycompliance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmeschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectcapacity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectmonitoring"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/qualityflags"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/reports"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rolesmatrix"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan"
+	routeschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/signin"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ssaverify"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffactivity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffsetup"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teamperformance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teams"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
@@ -138,6 +158,23 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			fyplanning.NewService(pool, time.Now),
 			policycompliance.NewService(pool, time.Now),
 			partnerusers.NewService(teams.NewPartnerService(teamStore, accountService, time.Now)),
+			staffsetup.NewService(pool),
+			rolesmatrix.NewService(pool),
+			plreview.NewService(pool, time.Now),
+			perfcycle.NewService(pool, time.Now),
+			closurequality.NewService(pool, time.Now),
+			iaframework.NewService(pool),
+			ownership.NewService(pool),
+			dataquality.NewService(pool),
+			coverage.NewService(pool, time.Now),
+			ssaverify.NewService(pool, time.Now),
+			peopledirectory.NewService(pool, time.Now),
+			reports.NewService(pool, time.Now),
+			leavetracker.NewService(pool, time.Now),
+			leaveapprovals.NewService(pool, time.Now),
+			hrtoday.NewService(pool, time.Now),
+			btpages.NewService(pool, time.Now),
+			partnerassigned.NewService(pool),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now).WithTrainingSummary(trainingsummary.OwnSummary),
@@ -201,6 +238,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNotificationCenterServiceHandler(notificationcenter.NewHandler(notificationcenter.NewService(pool, notificationcenter.EmailConfigured(nil)), logger), options...))
+	mux.Handle(routesv1connect.NewRoutePlannerServiceHandler(routeplan.NewService(pool,
+		routeplan.RouterFor(cfg.Routing.Provider, cfg.Routing.OSRMURL, cfg.Routing.GoogleKey, cfg.Routing.DailyLimit, time.Now),
+		time.Now, logger).WithVerification(pool, routesSchemaReady(pool)), options...))
 	mux.Handle(messagingv1connect.NewMessagingServiceHandler(messaging.NewService(pool, time.Now, logger), options...))
 	clusterStore := clusterlead.NewStore(pool)
 	leadership := clusterlead.NewService(clusterStore, time.Now, clusterSchemaReady(pool), logger).
@@ -322,6 +362,12 @@ func LoansSchemaReady(pool *pgxpool.Pool) func(context.Context) error {
 
 // clusterSchemaReady says whether the Cluster Leader Portal's schema is at the
 // version this build needs. It never migrates: `clusterctl migrate` does.
+// routesSchemaReady checks field_routes (Verify Location) is at this
+// build's version; the gateway never migrates it.
+func routesSchemaReady(pool *pgxpool.Pool) func(context.Context) error {
+	return func(ctx context.Context) error { return routeschema.Spec.Ready(ctx, pool) }
+}
+
 func clusterSchemaReady(pool *pgxpool.Pool) func(context.Context) error {
 	return func(ctx context.Context) error {
 		applied, err := schema.Version(ctx, pool)
