@@ -1,0 +1,69 @@
+{
+  "default_country": "Uganda",
+  "roles": {
+    "Accountant": {
+      "manages": false,
+      "page": false
+    },
+    "Admin": {
+      "manages": true,
+      "page": true
+    },
+    "BusinessTransformationOfficer": {
+      "manages": false,
+      "page": false
+    },
+    "CCEO": {
+      "manages": false,
+      "page": false
+    },
+    "ClusterLeader": {
+      "manages": false,
+      "page": false
+    },
+    "CountryDirector": {
+      "manages": true,
+      "page": true
+    },
+    "HumanResources": {
+      "manages": false,
+      "page": false
+    },
+    "ImpactAssessment": {
+      "manages": true,
+      "page": true
+    },
+    "MfiLoanOfficer": {
+      "manages": false,
+      "page": false
+    },
+    "MfiPartnerAdmin": {
+      "manages": false,
+      "page": false
+    },
+    "PartnerAdmin": {
+      "manages": false,
+      "page": false
+    },
+    "PartnerFieldOfficer": {
+      "manages": false,
+      "page": false
+    },
+    "Program Lead": {
+      "manages": false,
+      "page": false
+    },
+    "ProjectCoordinator": {
+      "manages": false,
+      "page": false
+    },
+    "RegionalProgramLead": {
+      "manages": false,
+      "page": false
+    },
+    "RegionalVicePresident": {
+      "manages": false,
+      "page": false
+    }
+  }
+}

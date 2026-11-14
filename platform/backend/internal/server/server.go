@@ -37,6 +37,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fyplanning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
@@ -130,6 +131,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			qualityflags.NewService(pool, time.Now),
 			projectcapacity.NewService(pool, time.Now),
 			adminops.NewService(pool),
+			fyplanning.NewService(pool, time.Now),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now),

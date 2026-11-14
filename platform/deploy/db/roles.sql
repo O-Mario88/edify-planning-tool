@@ -512,3 +512,5 @@ GRANT SELECT (name, category, frequency_days, estimated_minutes, next_due_date) 
 GRANT SELECT (reference, title, category, status, scheduled_date, created_at) ON admin_ops_work_item TO edify_gateway_ro;
 -- Recruitment: a vacancy's type, target start and when it was requested (never its salary band or budget source).
 GRANT SELECT (replacement_or_new_role, target_start_date, created_at) ON hr_vacancy TO edify_gateway_ro;
+-- Fiscal Year Planning: each year's delivery window and follow-up rule (never its notes or who opened it).
+GRANT SELECT (execution_start, execution_end, follow_up_visit_requires_prior_training) ON fiscal_year_planning_policy TO edify_gateway_ro;
