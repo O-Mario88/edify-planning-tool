@@ -809,3 +809,13 @@ GRANT SELECT (title, target_unit, weight, cap_at_100) ON hr_priority_milestone T
 GRANT SELECT (id, milestone_id, counting_basis, catalogue_item_id, project_id, required_executor_type, required_delivery_method,
               school_type, target_intervention, active) ON hr_milestone_activity_rule TO edify_gateway_ro;
 GRANT SELECT (rule_id, activity_id, reversed_at, credited_value) ON hr_milestone_progress_credit TO edify_gateway_ro;
+
+-- The Cost Catalogue and Cost Intelligence (internal/costsettings): whether
+-- the published card is provisional; each rate's label, unit and version;
+-- each governed activity's workflow and the dates it is in force; and the
+-- cost review queue (its reason, amounts and status, newest first).
+GRANT SELECT (is_provisional) ON cost_catalogue TO edify_gateway_ro;
+GRANT SELECT (id, label, unit, version) ON cost_setting TO edify_gateway_ro;
+GRANT SELECT (workflow_kind, effective_from, effective_to) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (id, activity_id, reason_code, status, current_operational_cost, proposed_operational_cost, created_at)
+  ON activity_cost_review TO edify_gateway_ro;

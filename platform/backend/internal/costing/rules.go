@@ -202,3 +202,24 @@ func WithRateAliases(card map[string]int64) map[string]int64 {
 	}
 	return out
 }
+
+// Alias is a canonical rate and the renamed keys it answers for, in order.
+type Alias struct {
+	Key string
+	Old []string
+}
+
+// Aliases is apps.budget.reference.RATE_ALIASES, in its order.
+func Aliases() []Alias {
+	out := make([]Alias, len(rules.aliases))
+	for i, a := range rules.aliases {
+		out[i] = Alias{Key: a.key, Old: append([]string(nil), a.old...)}
+	}
+	return out
+}
+
+// IsCanonical is whether key is one of the registry's rates.
+func IsCanonical(key string) bool {
+	_, ok := rules.rateLabels[key]
+	return ok
+}

@@ -1,0 +1,207 @@
+{
+  "active_item_status": "active",
+  "activity_types": {
+    "admin": "Admin",
+    "field_event": "Field Event",
+    "programme_event": "Programme Event",
+    "school_visit": "School Visit",
+    "training": "Training",
+    "youth_camp": "Youth Camp"
+  },
+  "costing_profiles": {
+    "ADMIN_PARTNER_MEETING": [
+      "partner_activity",
+      ""
+    ],
+    "CLUSTER_MEETING": [
+      "cluster_meeting",
+      ""
+    ],
+    "CLUSTER_TRAINING": [
+      "cluster_training",
+      ""
+    ],
+    "CORE_SCHOOL_VISIT": [
+      "school_visit",
+      "core"
+    ],
+    "FIELD_TRAVEL": [
+      "field_event",
+      ""
+    ],
+    "GROUP_YOUTH_CAMP": [
+      "training",
+      ""
+    ],
+    "IN_SCHOOL_TRAINING": [
+      "in_school_training",
+      ""
+    ],
+    "ONETEST": [
+      "school_visit",
+      "onetest"
+    ],
+    "ONLINE_TRAINING": [
+      "training",
+      ""
+    ],
+    "PROGRAMME_EVENT": [
+      "programme_event",
+      ""
+    ],
+    "PROPRIETOR_CONFERENCE": [
+      "programme_event",
+      "proprietor_conference"
+    ],
+    "SSA_DATA_GATHERING": [
+      "baseline_ssa_visit",
+      ""
+    ],
+    "STAFF_SCHOOL_VISIT": [
+      "school_visit",
+      ""
+    ],
+    "STUDENT_CONFERENCE": [
+      "programme_event",
+      "student_conference"
+    ],
+    "TOT_TRAINING": [
+      "training",
+      "tot"
+    ]
+  },
+  "country": "Uganda",
+  "delivery_methods": {
+    "admin": "Admin",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_training": "Cluster Training",
+    "group": "Group",
+    "in_school_training": "In-school Training",
+    "online": "Online",
+    "programme_event": "Programme Event",
+    "school_visit": "School Visit"
+  },
+  "interventions": {
+    "christlike_behaviour": "Christlike Behaviour",
+    "enrolment": "Enrolment",
+    "exposure_to_word_of_god": "Exposure to the Word of God",
+    "financial_health": "Financial Health",
+    "government_requirement": "Government Requirements",
+    "leadership": "Leadership",
+    "learning_environment": "Learning Environment",
+    "teaching_environment": "Teacher's Environment"
+  },
+  "kind_labels": {
+    "operational": "Country Operational",
+    "reference": "Regional Standard Funding"
+  },
+  "operational_kind": "operational",
+  "published_status": "published",
+  "review_queue_limit": 20,
+  "review_queue_status": "submitted",
+  "review_reasons": {
+    "accommodation_needed": "Accommodation became necessary",
+    "cost_component_missing": "Required cost component is missing",
+    "other": "Other",
+    "participant_count_changed": "Participant count changed",
+    "route_conditions_changed": "Route conditions changed",
+    "school_location_inaccurate": "School location is inaccurate",
+    "transport_rate_changed": "Transport rate changed",
+    "venue_cost_changed": "Venue cost changed"
+  },
+  "roles": {
+    "Accountant": {
+      "doors": [
+        "/cost-intelligence"
+      ],
+      "manage": false,
+      "reference": true
+    },
+    "Admin": {
+      "doors": [
+        "/cost-intelligence",
+        "/cost-settings"
+      ],
+      "manage": false,
+      "reference": false
+    },
+    "BusinessTransformationOfficer": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "CCEO": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "ClusterLeader": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "CountryDirector": {
+      "doors": [
+        "/cost-settings"
+      ],
+      "manage": true,
+      "reference": true
+    },
+    "HumanResources": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "ImpactAssessment": {
+      "doors": [
+        "/cost-intelligence",
+        "/cost-settings"
+      ],
+      "manage": false,
+      "reference": false
+    },
+    "MfiLoanOfficer": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "MfiPartnerAdmin": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "PartnerAdmin": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "PartnerFieldOfficer": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "Program Lead": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "ProjectCoordinator": {
+      "doors": [],
+      "manage": false,
+      "reference": false
+    },
+    "RegionalProgramLead": {
+      "doors": [],
+      "manage": false,
+      "reference": true
+    },
+    "RegionalVicePresident": {
+      "doors": [
+        "/cost-intelligence"
+      ],
+      "manage": false,
+      "reference": true
+    }
+  },
+  "table_page_size": 50
+}

@@ -39,6 +39,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreoversight"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costsettings"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coverage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataquality"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
@@ -185,6 +186,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			partnerworkspace.NewService(pool, time.Now),
 			myteam.NewService(pool, time.Now),
 			myperformance.NewService(pool, time.Now),
+			costsettings.NewService(pool, time.Now),
 			platformhealth.NewService(pool, platformhealth.Facts{
 				Env: string(cfg.Env), Release: cfg.Release, Started: time.Now(), GoSaves: cfg.GoSaves.Names(),
 				ExistingApp: cfg.ExistingAppURL != "", RoutingProvider: cfg.Routing.Provider, OSRMURL: cfg.Routing.OSRMURL,
