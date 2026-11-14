@@ -291,7 +291,7 @@ func (s *Service) GetSchoolDistance(ctx context.Context, req *connect.Request[ro
 		r, err := s.router.Route(ctx, []LatLng{a.at, b.at})
 		if err == nil && len(r.Legs) == 1 && r.Legs[0].OK {
 			leg.RoadAvailable, leg.RoadMeters, leg.RoadSeconds = true, r.Legs[0].Meters, r.Legs[0].Seconds
-			for _, x := range r.Path {
+			for _, x := range Simplify(r.Path, lineTolerance) {
 				leg.Path = append(leg.Path, &routesv1.Point{Lat: x.Lat, Lng: x.Lng})
 			}
 		} else {

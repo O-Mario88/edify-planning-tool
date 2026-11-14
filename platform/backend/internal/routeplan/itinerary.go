@@ -190,7 +190,7 @@ func (s *Service) build(ctx context.Context, t trip) (*routesv1.Itinerary, Provi
 	if len(placed) == 1 && t.start == nil {
 		tot.RoadComplete = false
 	}
-	for _, p := range route.Path {
+	for _, p := range Simplify(route.Path, lineTolerance) {
 		// The whole line rides on the first leg; the apps draw it once.
 		out.Stops[0].Leg.Path = append(out.Stops[0].Leg.Path, &routesv1.Point{Lat: p.Lat, Lng: p.Lng})
 	}

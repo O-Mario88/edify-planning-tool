@@ -27,7 +27,7 @@ What was measured, how, and what was not. No figure here is estimated unless it 
 | Distance between two schools (road) | p50 5.8 ms, p95 7.2 ms |
 | School pins, whole-country view | p50 13.9 ms; capped at 400 pins (truncated), 48,050 bytes |
 | School pins, ~17 km view | p50 12.2 ms; 178 pins, 21,467 bytes |
-| Field-day answer size | 31,909 bytes (most of it the road line: ~1,400 points) |
+| Field-day answer size | 31,909 bytes with the road line at full detail (~1,400 points); 11,326 bytes after the line is simplified (points within 5 m of the line dropped) |
 | Road matrix size: shortlist vs every school | ~100 cells (5 stops + up to 5 candidates) vs 466,489 (683 × 683) |
 | Test day | 5 of 5 stops feasible, 0 conflicts, 5 eligible suggestions |
 
@@ -58,7 +58,8 @@ billing account before switching).
   "before" figure to compare against; the comparisons above are between this planner with and
   without its cache, view limit and shortlist.
 
-## Seen while measuring, worth doing
+## Changed after measuring
 
-- The road line is sent at full detail (~1,400 points for 65 km). Simplifying it on the server
-  would make the field-day answer much smaller with no visible change on a phone screen.
+- The road line was sent at full detail (~1,400 points for 65 km). It is now simplified on the
+  server (Douglas–Peucker, 5 m), which took the field-day answer from 31,909 to 11,326 bytes;
+  re-measured open times were unchanged (p50 82.9 ms cold, 40.6 ms cached).
