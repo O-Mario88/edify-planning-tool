@@ -269,10 +269,12 @@ func item(n row) *screensv1.NotificationItem {
 	return out
 }
 
-// categories are the Category select's options as the view lists them:
-// `values_list("category").distinct()` under the model's ordering, which
-// makes the statement distinct on (category, created_at), so a category
-// raised at several moments is listed again for each; empty ones dropped.
+// categories are the Category select's options: the reader's categories,
+// newest first, empty ones dropped, each once. The existing view's
+// `values_list("category").distinct()` runs under the model's ordering, so
+// it is distinct on (category, created_at) and lists a category again for
+// every moment it was raised; Go lists each once (owner, 2026-11-13: "Can you
+// fix those from the go side"; intended.json go-fix-notification-categories).
 func (s *Service) categories(ctx context.Context, userID string) ([]string, error) {
 	// Asked as an unnamed statement, so it is planned for this reader as the
 	// existing application's (client-bound) statement is: a cached generic
@@ -294,11 +296,22 @@ SELECT DISTINCT notification.category AS category, notification.created_at
 		if err := rows.Scan(&category, &at); err != nil {
 			return nil, fmt.Errorf("notificationcenter: reading a category: %w", err)
 		}
-		if category != "" {
-			out = append(out, category)
+		out = append(out, category)
+	}
+	return firstSeen(out), rows.Err()
+}
+
+// firstSeen keeps each non-empty category once, where it first appears.
+func firstSeen(categories []string) []string {
+	out := []string{}
+	seen := map[string]bool{}
+	for _, c := range categories {
+		if c != "" && !seen[c] {
+			seen[c] = true
+			out = append(out, c)
 		}
 	}
-	return out, rows.Err()
+	return out
 }
 
 // delivery is the "How you are told" settings: the person's preference (both

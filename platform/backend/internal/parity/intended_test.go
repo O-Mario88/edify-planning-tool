@@ -147,6 +147,34 @@ func TestTheCheckedInListLoadsAndEveryEntryHasItsTest(t *testing.T) {
 	}
 }
 
+func TestADeduplicatedRelationAcceptsOnlyTheSameListWithoutRepeats(t *testing.T) {
+	l, err := Load([]byte(`[{"id":"cats","tool":"notifications","where":"/notifications","questions":["*"],"fields":["filters.categories"],
+		"relation":"deduplicated","defect":"d","decision":"o","test":"internal/x.TestY"}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := Answer{ToolNotifications, "/notifications", "page 1"}
+	ok := func(old, new string) bool {
+		_, matched := l.Match(a, Diff{Field: "filters.categories", Existing: old, Go: new})
+		return matched
+	}
+	if !ok(`["a","b","a","c","b"]`, `["a","b","c"]`) {
+		t.Fatal("the list without its repeats, in first-seen order")
+	}
+	for name, pair := range map[string][2]string{
+		"another order":       {`["a","b","a"]`, `["b","a"]`},
+		"an item dropped":     {`["a","b","a"]`, `["a"]`},
+		"an item added":       {`["a","a"]`, `["a","z"]`},
+		"no repeats to fix":   {`["a","b"]`, `["a","b","c"]`},
+		"not a list":          {`a`, `a`},
+		"the same list again": {`["a","a"]`, `["a","a"]`},
+	} {
+		if ok(pair[0], pair[1]) {
+			t.Fatalf("%s: accepted", name)
+		}
+	}
+}
+
 func TestAnyQuestionMatchesOnlyItsPageFieldAndValues(t *testing.T) {
 	l, err := Load([]byte(`[{"id":"p","tool":"page","where":"/p","questions":["*"],"fields":[".f"],"existing":"week","go":"month|fy","defect":"d","decision":"o","test":"internal/x.TestY"}]`))
 	if err != nil {

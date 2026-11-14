@@ -54,3 +54,19 @@ Proved by `internal/parity` (exact match, near misses on question, field,
 page, tool, direction and partial pattern, shadow row pairing, refused
 entries, every entry's test exists) and
 `cmd/parity.TestComparePagesSetsAsideOnlyAListedDifference`.
+
+## 68.4 Additions (coordinator, 2026-11-13)
+
+- `"questions": ["*"]` matches every question on the entry's page; the field
+  and both values must still match exactly (first used by the period-select
+  fixes, where the difference shows wherever the page opens on a non-week
+  period).
+- `"relation": "deduplicated"` instead of the two patterns: Go's value (a JSON
+  list) must be the existing list with its repeats removed, first-seen order,
+  and the existing list must hold a repeat. First used by
+  go-fix-notification-categories.
+- `cmd/notificationparity` compares the filters field by field and accepts a
+  listed one. Run for admin@ on edify_gorn_dev: `32 compared, 12 differing`,
+  32 answers with the category list accepted as intended; the 12 differing are
+  one live incident's "seen 182×/183×" counter changing between the two reads
+  (the same as agent 33's run), not the fix.
