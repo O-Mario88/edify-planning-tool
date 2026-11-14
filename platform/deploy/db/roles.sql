@@ -638,3 +638,7 @@ GRANT SELECT (activity_id, updated_at) ON activity_completion_verification TO ed
 -- Team Plans (internal/adminops/teamplans.go): the week a plan item is planned
 -- in, for its week filter and order.
 GRANT SELECT (planned_week) ON activity TO edify_gateway_ro;
+
+-- Closure Quality (internal/closurequality): how many of a closed school's
+-- activities wait on finance.
+GRANT SELECT (locked_activities_for_review) ON school_closure TO edify_gateway_ro;

@@ -28,6 +28,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ccelead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurequality"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusteroversight"
@@ -147,6 +148,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			rolesmatrix.NewService(pool),
 			plreview.NewService(pool, time.Now),
 			perfcycle.NewService(pool, time.Now),
+			closurequality.NewService(pool, time.Now),
 			partnerassigned.NewService(pool),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
