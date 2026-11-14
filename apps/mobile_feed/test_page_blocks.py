@@ -1721,3 +1721,40 @@ class AuthoredMoreFiltersTest(SimpleTestCase):
             [(f["name"], f.get("more", False)) for f in filters],
             [("fy", False), ("quarter", False), ("ssa_status", True)],
         )
+
+
+LEDGER = """
+<main><div class="budget-ledger">
+<table class="budget-ledger-table">
+  <tbody>
+    <tr class="budget-ledger-band"><th colspan="6"><em>School Visit</em> <span>2 activities</span></th></tr>
+    <tr><th scope="row">Lunch</th><td>2</td><td>2</td><td>UGX 12,000</td><td>UGX 24,000</td><td>UGX 24,000</td></tr>
+  </tbody>
+  <tbody>
+    <tr class="budget-ledger-band"><th colspan="6"><em>Training</em> <span>1 activity</span></th></tr>
+    <tr><th scope="row">Venue Fee</th><td>1</td><td>20</td><td>UGX 50,000</td><td>UGX 50,000</td><td>UGX 50,000</td></tr>
+  </tbody>
+  <tfoot><tr><th colspan="4">Grand total</th><td>UGX 74,000</td><td>UGX 74,000</td></tr></tfoot>
+</table>
+</div></main>
+"""
+
+
+class GroupedTableTest(SimpleTestCase):
+    def test_a_headless_table_of_several_bodies_is_read_whole(self):
+        # The budget ledger draws one body an activity group; the app read
+        # the first body only and lost every other group and the total.
+        table = next(
+            b["table"] for b in page_blocks.read(LEDGER)["blocks"] if "table" in b
+        )
+
+        self.assertEqual(
+            [row["cells"][0]["text"] for row in table["rows"]],
+            [
+                "School Visit 2 activities",
+                "Lunch",
+                "Training 1 activity",
+                "Venue Fee",
+                "Grand total",
+            ],
+        )

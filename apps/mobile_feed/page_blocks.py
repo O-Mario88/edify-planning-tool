@@ -722,6 +722,11 @@ def _table(holder: Node, table: Node) -> dict:
         if not th.has(PICK_CELL)
     ]
     body = table.find(lambda n: n.tag == "tbody") or table
+    if head is None and len(table.find_all(lambda n: n.tag == "tbody")) > 1:
+        # A table without a head whose groups are its bodies (the budget
+        # ledger: one body an activity group, then the grand total) is read
+        # whole; the first body alone hid every group after the first.
+        body = table
     rows: list[dict] = []
     for row in body.find_all(lambda n: n.tag == "tr"):
         if head and _inside(row, head):
