@@ -2,8 +2,10 @@
 
 Go builds the Team Leave & Coverage Tracker (/leave/tracker,
 apps.frontend.views.leave_views.leave_tracker_view, drawn by
-pages/leave/leave_tracker.html) from what this command writes to
-platform/backend/internal/leavetracker/rules.json: who may open the page and
+pages/leave/leave_tracker.html) and the Team Availability Heatmap
+(/leave/team-availability, team_availability_view and
+pages/leave/team_availability.html) from what this command writes to
+platform/backend/internal/leavetracker/rules.json: who may open each page and
 the workspace strip each role is shown above it; which roles read their own
 team and which read everyone in the heatmap; the balance shown when a person
 has none for the year; how many people the heatmap lists; and the page size.
@@ -28,6 +30,7 @@ from apps.schools.management.commands.export_school_directory_rules import (
 EXPORT_PATH = Path("platform/backend/internal/leavetracker/rules.json")
 
 PAGE_PATH = "/leave/tracker"
+AVAILABILITY_PATH = "/leave/team-availability"
 
 
 def rules() -> dict:
@@ -49,6 +52,13 @@ def rules() -> dict:
             "page": RolePermissionService.can_view_page(user, "leave_tracker")
             and bool(can_open_url(user, PAGE_PATH)),
             "strip": strip(user, PAGE_PATH, "partials/_section_nav.html"),
+            "availability": RolePermissionService.can_view_page(
+                user, "team_availability"
+            )
+            and bool(can_open_url(user, AVAILABILITY_PATH)),
+            "availability_strip": strip(
+                user, AVAILABILITY_PATH, "partials/_section_nav.html"
+            ),
         }
     return {
         "roles": roles,

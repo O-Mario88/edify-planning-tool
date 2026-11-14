@@ -4,7 +4,9 @@
 // availability preview, as the existing page draws them
 // (apps.frontend.views.leave_views.leave_tracker_view over
 // apps.hr.leave_services, and pages/leave/leave_tracker.html) and the app's
-// feed reads them.
+// feed reads them; and the Team Availability Heatmap
+// (/leave/team-availability, team_availability_view and
+// pages/leave/team_availability.html) over the same heatmap.
 //
 // The existing page creates a person's balances for the year the first time
 // it lists them. Go never writes on a read: while any listed person still
@@ -49,8 +51,10 @@ var rulesJSON []byte
 
 var rules = func() (r struct {
 	Roles map[string]struct {
-		Page  bool               `json:"page"`
-		Strip *decisionlog.Strip `json:"strip"`
+		Page              bool               `json:"page"`
+		Strip             *decisionlog.Strip `json:"strip"`
+		Availability      bool               `json:"availability"`
+		AvailabilityStrip *decisionlog.Strip `json:"availability_strip"`
 	} `json:"roles"`
 	LeadRoles            []string       `json:"lead_roles"`
 	HeatmapEveryoneRoles []string       `json:"heatmap_everyone_roles"`
@@ -101,6 +105,9 @@ type coverage struct {
 
 // Build answers Path.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == AvailabilityPath {
+		return s.availability(ctx, p, query)
+	}
 	if path != Path {
 		return nil, false, nil
 	}
