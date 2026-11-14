@@ -180,8 +180,8 @@ func (b *inbox) threads(ctx context.Context, tab, search string) ([]threadRow, e
 		if m.lastReplyAt != nil {
 			lastAt = *m.lastReplyAt
 		}
-		badge, labelled := rules.ContextLabels[m.contextType]
-		if !labelled {
+		badge := contextLabel(m.contextType)
+		if badge == "" {
 			badge = m.contextType
 		}
 		rows = append(rows, threadRow{
