@@ -43,6 +43,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iaframework"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iapages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/leavepolicies"
@@ -149,6 +150,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			plreview.NewService(pool, time.Now),
 			perfcycle.NewService(pool, time.Now),
 			closurequality.NewService(pool, time.Now),
+			iaframework.NewService(pool),
 			partnerassigned.NewService(pool),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),

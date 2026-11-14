@@ -642,3 +642,13 @@ GRANT SELECT (planned_week) ON activity TO edify_gateway_ro;
 -- Closure Quality (internal/closurequality): how many of a closed school's
 -- activities wait on finance.
 GRANT SELECT (locked_activities_for_review) ON school_closure TO edify_gateway_ro;
+
+-- Measurement Framework (internal/iaframework): the catalogue item's programme;
+-- each measurement rule's window, threshold, mode, who wrote, submitted and
+-- reviewed it; a loan purpose's measurement profile; each indicator and outcome
+-- area version's words, author and reviewer. Not definitions' long text.
+GRANT SELECT (programme_category) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (id, review_note, follow_up_min_days, follow_up_expected_days, follow_up_max_days, priority, submitted_by, not_ssa_measured_reason, reviewed_by, mapping_mode, authored_by) ON activity_intervention_mapping TO edify_gateway_ro;
+GRANT SELECT (applicable_countries, verification_method, follow_up_days, measurement_profile_complete, impact_indicators) ON bt_loan_purpose TO edify_gateway_ro;
+GRANT SELECT (id, key, version, name, level, source, country, outcome_area_id, author_id, reviewed_by_id) ON impact_indicator_definition TO edify_gateway_ro;
+GRANT SELECT (author_id, reviewed_by_id) ON impact_outcome_area TO edify_gateway_ro;
