@@ -119,6 +119,22 @@ func inbox(r reader, args *[]any) string {
 	return "((addressed_role = " + l + " AND assigned_to_user_id = " + arg(r.id) + ") OR " + byRole + "))"
 }
 
+// InboxClause is _addressed_to_me_q for another page (My Team): the
+// condition on leadership_escalation naming what p decides, its arguments
+// appended to args; "" when p decides for no level.
+func InboxClause(ctx context.Context, db schooldirectory.Querier, p auth.Principal, args *[]any) (string, error) {
+	r := reader{id: p.UserID, role: rules.Roles[p.ActiveRole]}
+	if r.role.DecidesFor == "" {
+		return "", nil
+	}
+	country, err := (&Service{db: db}).countryOf(ctx, p.UserID)
+	if err != nil {
+		return "", err
+	}
+	r.country = country
+	return inbox(r, args), nil
+}
+
 // inInbox is the same condition for one row already read.
 func inInbox(r reader, e escalation) bool {
 	level := r.role.DecidesFor
