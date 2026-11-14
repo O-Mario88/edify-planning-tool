@@ -2,6 +2,7 @@ package hrregister
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -36,4 +37,26 @@ func PeopleReachUsers(ctx context.Context, db schooldirectory.Querier, p auth.Pr
 	}
 	where, args := r.profiles(args)
 	return "EXISTS (SELECT 1 FROM staff_profile sp WHERE sp.user_id = u.id AND " + where + ")", args, r.kind == reachTeam, nil
+}
+
+// PeopleReachLabel is people_reach(p).label() and whether the reach is none:
+// "All countries", "Your team", the one country, "N countries", or "No
+// countries".
+func PeopleReachLabel(ctx context.Context, db schooldirectory.Querier, p auth.Principal) (string, bool, error) {
+	r, err := peopleReach(ctx, db, p)
+	if err != nil {
+		return "", false, err
+	}
+	switch r.kind {
+	case reachAll:
+		return "All countries", false, nil
+	case reachTeam:
+		return "Your team", false, nil
+	case reachCountries:
+		if len(r.countries) == 1 {
+			return r.countries[0], false, nil
+		}
+		return strconv.Itoa(len(r.countries)) + " countries", false, nil
+	}
+	return "No countries", true, nil
 }

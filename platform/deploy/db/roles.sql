@@ -705,3 +705,13 @@ GRANT SELECT (reason, attachment, coverage_status, days, reviewed_by_user_id, re
 GRANT SELECT (id, approver_role) ON leave_type_policy TO edify_gateway_ro;
 GRANT SELECT (id, entitlement) ON leave_balance TO edify_gateway_ro;
 GRANT SELECT (assignee_id, scheduled_date) ON monthly_plan_activity TO edify_gateway_ro;
+
+-- HR Today (internal/hrtoday): a development request's status, course, who
+-- it is for and when it was sent; when a policy last changed; which policy a
+-- version belongs to and whether it was replaced; a review's functional
+-- manager; and an agreement's priority weights.
+GRANT SELECT (status, course_name, staff_name, staff_id, submitted_at) ON pd_request TO edify_gateway_ro;
+GRANT SELECT (updated_at) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (document_id, superseded_at) ON document_version TO edify_gateway_ro;
+GRANT SELECT (functional_manager_id) ON hr_performance_review TO edify_gateway_ro;
+GRANT SELECT (id, review_id, weight) ON hr_performance_priority TO edify_gateway_ro;
