@@ -29,6 +29,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btpages"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ccelead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
@@ -187,6 +188,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			myteam.NewService(pool, time.Now),
 			myperformance.NewService(pool, time.Now),
 			costsettings.NewService(pool, time.Now),
+			budgetpage.NewService(pool, time.Now),
 			platformhealth.NewService(pool, platformhealth.Facts{
 				Env: string(cfg.Env), Release: cfg.Release, Started: time.Now(), GoSaves: cfg.GoSaves.Names(),
 				ExistingApp: cfg.ExistingAppURL != "", RoutingProvider: cfg.Routing.Provider, OSRMURL: cfg.Routing.OSRMURL,

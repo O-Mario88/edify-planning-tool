@@ -819,3 +819,10 @@ GRANT SELECT (id, label, unit, version) ON cost_setting TO edify_gateway_ro;
 GRANT SELECT (workflow_kind, effective_from, effective_to) ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (id, activity_id, reason_code, status, current_operational_cost, proposed_operational_cost, created_at)
   ON activity_cost_review TO edify_gateway_ro;
+
+-- Budget (internal/budgetpage): each planned cost line's catalogue key,
+-- rate, quantity, kind, partner and owner, and the rates the day a line
+-- shares was priced at.
+GRANT SELECT (cost_setting_key, unit_cost, quantity, line_item_type, partner_id, responsible_user)
+  ON activity_schedule_cost_line TO edify_gateway_ro;
+GRANT SELECT (rate_snapshot) ON daily_visit_batch TO edify_gateway_ro;

@@ -1125,6 +1125,37 @@ def _activity_choice_label(field_name: str, value) -> str:
     return label_for(Activity, field_name, value)
 
 
+#: The ledger's training and meeting tables (they count sessions and
+#: participants), and the lines whose quantity is a headcount.
+LEDGER_TRAINING_TYPES = frozenset(
+    {
+        "training",
+        "in_school_training",
+        "school_improvement_training",
+        "cluster_training",
+        "core_training",
+        "cluster_training_ssa_collection",
+    }
+)
+LEDGER_MEETING_TYPES = frozenset({"cluster_meeting", "cluster_meeting_ssa_review"})
+LEDGER_PARTICIPANT_LINE_TYPES = frozenset(
+    {
+        "participant_meals",
+        "cluster_meeting_participant_meals",
+        "mobilisation",
+    }
+)
+LEDGER_PARTICIPANT_SETTING_KEYS = frozenset(
+    {
+        "group_training_participant_meal_cost_per_head",
+        "cluster_meeting_participant_meal_cost_per_head",
+        "meals_per_participant",
+        "mobilisation_per_participant",
+        "cluster_meeting_cost",
+    }
+)
+
+
 def budget_groups(
     selected_lines,
     user_names,
@@ -1139,27 +1170,10 @@ def budget_groups(
     # time.  Actual attendance takes precedence after completion; historical
     # cost lines remain a fallback for pre-headcount records created before the
     # dedicated Activity.expected_participants field was introduced.
-    training_types = {
-        "training",
-        "in_school_training",
-        "school_improvement_training",
-        "cluster_training",
-        "core_training",
-        "cluster_training_ssa_collection",
-    }
-    meeting_types = {"cluster_meeting", "cluster_meeting_ssa_review"}
-    participant_line_types = {
-        "participant_meals",
-        "cluster_meeting_participant_meals",
-        "mobilisation",
-    }
-    participant_setting_keys = {
-        "group_training_participant_meal_cost_per_head",
-        "cluster_meeting_participant_meal_cost_per_head",
-        "meals_per_participant",
-        "mobilisation_per_participant",
-        "cluster_meeting_cost",
-    }
+    training_types = LEDGER_TRAINING_TYPES
+    meeting_types = LEDGER_MEETING_TYPES
+    participant_line_types = LEDGER_PARTICIPANT_LINE_TYPES
+    participant_setting_keys = LEDGER_PARTICIPANT_SETTING_KEYS
 
     def table_kind(activity) -> str:
         # A non-school programme activity keeps the operational workflow type

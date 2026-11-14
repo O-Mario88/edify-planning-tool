@@ -1,0 +1,120 @@
+// Package budgetpage builds Budget (/budget) for the people whose budget is
+// their own or their team's: the planned activities' cost lines for a month,
+// a quarter or a year, grouped by activity and item, with each team
+// member's total for a Program Lead's team (apps.frontend.views.budget_views
+// .budget_view, apps.budget.services.budget_workspace and
+// pages/budgets/monthly.html).
+//
+// It reads; it never writes. It hands on to the existing application: a
+// country reader (their Budget carries the monthly approval workflow and
+// Finance Health), a reader with a section strip above the page, a reader
+// whose scope is the country, any query but the year, the date, the period,
+// the scope and the groups' page, a date or year that is not plainly one,
+// more groups than one page holds, and a day rate that is not a whole
+// number.
+//
+// The roles, names and sets are exported to rules.json by `manage.py
+// export_budget_rules`; apps/budget/test_budget_rules_export.py fails when
+// the two differ.
+package budgetpage
+
+import (
+	_ "embed"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"unicode"
+)
+
+//go:embed rules.json
+var rulesJSON []byte
+
+type role struct {
+	Page    bool `json:"page"`
+	Export  bool `json:"export"`
+	Strip   bool `json:"strip"`
+	Country bool `json:"country"`
+}
+
+var rules = func() (r struct {
+	Roles                  map[string]role   `json:"roles"`
+	RoleLabels             map[string]string `json:"role_labels"`
+	NonFundableStatuses    []string          `json:"non_fundable_statuses"`
+	ActivityTypes          map[string]string `json:"activity_types"`
+	ProgrammeActivityTypes map[string]string `json:"programme_activity_types"`
+	TrainingTypes          []string          `json:"training_types"`
+	MeetingTypes           []string          `json:"meeting_types"`
+	ParticipantLineTypes   []string          `json:"participant_line_types"`
+	ParticipantSettingKeys []string          `json:"participant_setting_keys"`
+	DayRateKeys            []string          `json:"day_rate_keys"`
+}) {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil {
+		panic(fmt.Sprintf("budgetpage: rules.json: %v", err))
+	}
+	if len(r.Roles) == 0 || len(r.NonFundableStatuses) == 0 {
+		panic("budgetpage: rules.json lacks its roles or statuses")
+	}
+	return r
+}()
+
+// Path is the page.
+const Path = "/budget"
+
+// groupsPageSize is TABLE_PAGE_SIZE: the groups one page of the ledger holds.
+const groupsPageSize = 50
+
+func in(list []string, s string) bool {
+	for _, x := range list {
+		if x == s {
+			return true
+		}
+	}
+	return false
+}
+
+// label is a choice field's display: its label, or the value itself.
+func label(choices map[string]string, value string) string {
+	if l, ok := choices[value]; ok {
+		return l
+	}
+	return value
+}
+
+// pyTitle is Python's str.title().
+func pyTitle(s string) string {
+	out := []rune{}
+	previousCased := false
+	for _, r := range s {
+		switch {
+		case unicode.IsLetter(r) && !previousCased:
+			out = append(out, unicode.ToTitle(r))
+		case unicode.IsLetter(r):
+			out = append(out, unicode.ToLower(r))
+		default:
+			out = append(out, r)
+		}
+		previousCased = unicode.IsLetter(r)
+	}
+	return string(out)
+}
+
+// ugx is the template's ugx filter over a whole number of shillings.
+func ugx(n int64) string {
+	s := fmt.Sprint(n)
+	sign := ""
+	if strings.HasPrefix(s, "-") {
+		sign, s = "-", s[1:]
+	}
+	for i := len(s) - 3; i > 0; i -= 3 {
+		s = s[:i] + "," + s[i:]
+	}
+	return "UGX " + sign + s
+}
+
+// activities is "activity" or "activities", as pluralize:'y,ies' writes it.
+func activities(n int) string {
+	if n == 1 {
+		return fmt.Sprintf("%d activity", n)
+	}
+	return fmt.Sprintf("%d activities", n)
+}

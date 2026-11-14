@@ -1,0 +1,196 @@
+{
+  "activity_types": {
+    "baseline_ssa_visit": "SSA Visit",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+    "cluster_training": "Cluster Training",
+    "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+    "coaching_visit": "Coaching Visit",
+    "core_assessment_visit": "Core Assessment Visit",
+    "core_training": "Core Training",
+    "core_visit": "Core Visit",
+    "donor_visit": "Donor Visit",
+    "field_event": "Field Event",
+    "follow_up_visit": "Follow-up Visit",
+    "in_school_coaching_visit": "In-school Coaching Visit",
+    "in_school_support": "In-school Support",
+    "in_school_training": "In-school Training",
+    "partner_activity": "Partner Activity",
+    "partner_ssa_collection": "Partner SSA Collection",
+    "programme_event": "Programme Event",
+    "project_activity": "Project Activity",
+    "school_improvement_training": "School Improvement Training",
+    "school_invitation": "School Invitation",
+    "school_visit": "School Visit",
+    "school_visit_ssa_collection": "School Visit + SSA Collection",
+    "social_visit": "Social Visit",
+    "ssa_activity": "SSA Activity",
+    "story_gathering_visit": "Gathering Story",
+    "training": "Training",
+    "training_follow_up_visit": "Training Follow-up Visit"
+  },
+  "day_rate_keys": [
+    "lunch_per_day",
+    "management_accommodation_per_night",
+    "primary_transport_per_day",
+    "secondary_accommodation_per_night",
+    "secondary_breakfast_per_day",
+    "secondary_overnight_dinner_per_day",
+    "secondary_transport_per_day"
+  ],
+  "meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "non_fundable_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "awaiting_owner_approval"
+  ],
+  "participant_line_types": [
+    "cluster_meeting_participant_meals",
+    "mobilisation",
+    "participant_meals"
+  ],
+  "participant_setting_keys": [
+    "cluster_meeting_cost",
+    "cluster_meeting_participant_meal_cost_per_head",
+    "group_training_participant_meal_cost_per_head",
+    "meals_per_participant",
+    "mobilisation_per_participant"
+  ],
+  "programme_activity_types": {
+    "admin": "Admin",
+    "alumni": "Alumni",
+    "edtech_for_schools": "EdTech for Schools",
+    "field_event": "Field Event",
+    "programme_event": "Programme Event",
+    "school_leadership_training": "School Leadership Training",
+    "school_visit": "School Visit",
+    "student_activities": "Student Activities",
+    "teacher_training": "Teacher Training",
+    "training": "Training",
+    "youth_camp": "Youth Camp"
+  },
+  "role_labels": {
+    "Accountant": "Accountants",
+    "Admin": "Admins",
+    "CCEO": "CCEOs",
+    "CountryDirector": "Country Directors",
+    "HumanResources": "HR",
+    "ImpactAssessment": "Impact Assessment",
+    "PartnerAdmin": "Partner Admins",
+    "PartnerFieldOfficer": "Partner Officers",
+    "Program Lead": "Program Leads",
+    "ProjectCoordinator": "Project Coordinators",
+    "RegionalProgramLead": "Regional Programme Leads",
+    "RegionalVicePresident": "RVPs"
+  },
+  "roles": {
+    "Accountant": {
+      "country": true,
+      "export": true,
+      "page": true,
+      "strip": false
+    },
+    "Admin": {
+      "country": true,
+      "export": true,
+      "page": true,
+      "strip": false
+    },
+    "BusinessTransformationOfficer": {
+      "country": false,
+      "export": false,
+      "page": false,
+      "strip": false
+    },
+    "CCEO": {
+      "country": false,
+      "export": true,
+      "page": true,
+      "strip": false
+    },
+    "ClusterLeader": {
+      "country": false,
+      "export": false,
+      "page": false,
+      "strip": false
+    },
+    "CountryDirector": {
+      "country": true,
+      "export": true,
+      "page": true,
+      "strip": false
+    },
+    "HumanResources": {
+      "country": false,
+      "export": false,
+      "page": false,
+      "strip": false
+    },
+    "ImpactAssessment": {
+      "country": true,
+      "export": true,
+      "page": true,
+      "strip": false
+    },
+    "MfiLoanOfficer": {
+      "country": false,
+      "export": false,
+      "page": false,
+      "strip": false
+    },
+    "MfiPartnerAdmin": {
+      "country": false,
+      "export": false,
+      "page": false,
+      "strip": false
+    },
+    "PartnerAdmin": {
+      "country": false,
+      "export": false,
+      "page": false,
+      "strip": false
+    },
+    "PartnerFieldOfficer": {
+      "country": false,
+      "export": false,
+      "page": false,
+      "strip": false
+    },
+    "Program Lead": {
+      "country": false,
+      "export": true,
+      "page": true,
+      "strip": false
+    },
+    "ProjectCoordinator": {
+      "country": false,
+      "export": true,
+      "page": true,
+      "strip": true
+    },
+    "RegionalProgramLead": {
+      "country": false,
+      "export": false,
+      "page": false,
+      "strip": false
+    },
+    "RegionalVicePresident": {
+      "country": true,
+      "export": true,
+      "page": true,
+      "strip": false
+    }
+  },
+  "training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "core_training",
+    "in_school_training",
+    "school_improvement_training",
+    "training"
+  ]
+}

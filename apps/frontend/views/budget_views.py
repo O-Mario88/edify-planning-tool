@@ -112,6 +112,17 @@ def monthly_budget_view(request):
     return _budget_redirect(request, period=request.GET.get("period", "month"))
 
 
+#: The roles whose Budget is the country's, with its approval workflow and
+#: Finance Health.
+COUNTRY_BUDGET_ROLES = (
+    "CountryDirector",
+    "Admin",
+    "Accountant",
+    "ImpactAssessment",
+    "RegionalVicePresident",
+)
+
+
 @require_page_permission("monthly_budget")
 def budget_view(request):
     """One plan-derived ledger for monthly, quarterly and annual budgets."""
@@ -137,13 +148,7 @@ def budget_view(request):
 
         return HttpResponseBadRequest("Choose a valid fiscal year and month.")
     role = request.user.active_role
-    is_country = role in (
-        "CountryDirector",
-        "Admin",
-        "Accountant",
-        "ImpactAssessment",
-        "RegionalVicePresident",
-    )
+    is_country = role in COUNTRY_BUDGET_ROLES
     period = request.GET.get("period", "month")
     if period not in ("month", "quarter", "fy"):
         period = "month"
