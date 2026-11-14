@@ -58,11 +58,13 @@ interface SchoolProfileScreenProps {
   /** The school's record id. */
   readonly schoolId: string;
   readonly onBack: () => void;
+  /** The back link's words when the profile was opened from somewhere else (a field route). */
+  readonly backLabel?: string;
   /** Open another school's profile (a link on this one). */
   readonly onOpenSchool: (schoolId: string) => void;
 }
 
-export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolProfileScreenProps) {
+export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool, backLabel }: SchoolProfileScreenProps) {
   const { api, environment, signOut, state } = useSession();
   const activeRole = state.status === 'signedIn' ? state.session.activeRole : '';
   const { colors } = useTheme();
@@ -175,7 +177,7 @@ export function SchoolProfileScreen({ schoolId, onBack, onOpenSchool }: SchoolPr
         >
           <Pressable onPress={onBack} accessibilityRole="link" hitSlop={8} style={styles.back}>
             <ChevronLeft size={14} color={colors.link} />
-            <Text style={[styles.backText, { color: colors.link }]}>{header?.backLabel || 'Back to School Directory'}</Text>
+            <Text style={[styles.backText, { color: colors.link }]}>{backLabel || header?.backLabel || 'Back to School Directory'}</Text>
           </Pressable>
           {data && header ? (
             <>

@@ -23,6 +23,13 @@ export const PIN_TONES = { planned: '#1d6fe0', suggested: '#f59e0b', completed: 
  */
 const PLANNER_ROLES = new Set(['CCEO', 'Program Lead', 'ProjectCoordinator', 'CountryDirector', 'ImpactAssessment', 'Admin', 'PartnerAdmin', 'PartnerFieldOfficer', 'Accountant']);
 
+/** The day a route URL carries (route:planner?date=YYYY-MM-DD), or ''. */
+export function dateOf(url: string): string {
+  const at = url.indexOf('?');
+  const date = at < 0 ? '' : (new URLSearchParams(url.slice(at + 1)).get('date') ?? '');
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
+}
+
 export function isRouteUrl(url: string): boolean {
   return url === ROUTE_URL || url.startsWith(`${ROUTE_URL}?`) || url === ROUTE_DETAILS_URL || url.startsWith(`${ROUTE_DETAILS_URL}?`);
 }

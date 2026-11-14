@@ -233,13 +233,13 @@ function SuggestionRow({ s, onAdd, onSelect }: { s: Suggestion; onAdd: () => voi
         </View>
         <View style={styles.inline}>
           <MapPin size={16} color={colors.textMuted} />
-          <Text style={[styles.rowSub, { color: colors.text }]}>
+          <Text style={[styles.rowSub, styles.inlineText, { color: colors.text }]}>
             {Number(s.addedMeters) < 100 ? 'On the way' : km(s.addedMeters)} (≈ {hrMin(s.addedSeconds)} detour{s.measure === 'road' ? '' : ', straight line'})
           </Text>
         </View>
         <View style={styles.inline}>
           <Target size={16} color={colors.textMuted} />
-          <Text style={[styles.rowSub, { color: colors.text }]}>{high ? 'Needs SSA support' : 'Support visit open'}</Text>
+          <Text style={[styles.rowSub, styles.inlineText, { color: colors.text }]}>{high ? 'Needs SSA support' : 'Support visit open'}</Text>
         </View>
       </View>
       <Pressable onPress={onAdd} style={styles.outline} accessibilityRole="button">
@@ -518,7 +518,8 @@ const styles = StyleSheet.create({
   pillRecommended: { backgroundColor: '#ffedd5', color: '#c2410c' },
   pillDone: { backgroundColor: '#15803d', color: '#fff' },
   pillHigh: { backgroundColor: '#ede9fe', color: '#6d28d9' },
-  inline: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
+  inline: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2, flexShrink: 1 },
+  inlineText: { flexShrink: 1 },
   banner: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1 },
   bannerOk: { backgroundColor: '#dcfce7', borderColor: '#bbf7d0' },
   bannerWarn: { backgroundColor: '#fffbeb', borderColor: '#fcd34d', flexDirection: 'column', alignItems: 'flex-start' },
@@ -528,8 +529,8 @@ const styles = StyleSheet.create({
   bannerTextWarn: { fontFamily: fonts.regular, fontSize: 14, color: '#92400e' },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   link: { fontFamily: fonts.semibold, fontSize: 15 },
-  suggestion: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.sm },
-  photo: { width: 84, height: 76, borderRadius: 10, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center' },
+  suggestion: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.sm },
+  photo: { width: 72, height: 72, borderRadius: 10, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center' },
   outline: { borderWidth: 2, borderColor: ROUTE_TEAL, borderRadius: radius.md, paddingHorizontal: 14, minHeight: 44, justifyContent: 'center' },
   outlineWide: { flexDirection: 'row', gap: 8, borderWidth: 1.5, borderColor: '#cbd5e1', borderRadius: radius.md, minHeight: 52, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
   outlineText: { fontFamily: fonts.semibold, fontSize: 15, color: ROUTE_TEAL },

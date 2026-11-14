@@ -271,8 +271,14 @@ function SignedIn({ session }: { readonly session: Session }) {
   );
   const open = useCallback((url: string, label: string) => setRoute({ url, label }), []);
   const openPage = useCallback((url: string) => open(url, ''), [open]);
+  // A school opened from a field route goes back to that route (same day).
+  const [schoolFrom, setSchoolFrom] = useState<Route | null>(null);
   const openSchool = useCallback(
-    (schoolId: string) => setRoute({ url: `/schools/${encodeURIComponent(schoolId)}`, label: 'School' }),
+    (schoolId: string) =>
+      setRoute((current) => {
+        setSchoolFrom(isRouteUrl(current.url) ? current : null);
+        return { url: `/schools/${encodeURIComponent(schoolId)}`, label: 'School' };
+      }),
     [],
   );
 
@@ -321,7 +327,8 @@ function SignedIn({ session }: { readonly session: Session }) {
       <SchoolProfileScreen
         key={schoolId}
         schoolId={schoolId}
-        onBack={() => open('/schools', 'Schools')}
+        onBack={() => (schoolFrom ? open(schoolFrom.url, schoolFrom.label) : open('/schools', 'Schools'))}
+        backLabel={schoolFrom ? 'Back to route' : undefined}
         onOpenSchool={openSchool}
       />
     );

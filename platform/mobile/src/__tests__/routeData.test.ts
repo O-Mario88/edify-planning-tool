@@ -1,7 +1,7 @@
 import { create } from '@bufbuild/protobuf';
 
 import { RouteLegSchema, RouteTotalsSchema, SchoolPinSchema } from '../gen/edify/routes/v1/routes_pb';
-import { ROUTE_URL, directionsUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
+import { ROUTE_URL, dateOf, directionsUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
 
 describe('the route planner in the app', () => {
   it('is listed for field staff only, natively', () => {
@@ -28,5 +28,13 @@ describe('the route planner in the app', () => {
     expect(directionsUrl(stops, 'google')).toContain('waypoints=0.300000%2C32.700000');
     expect(directionsUrl(stops, 'apple')).toBe('https://maps.apple.com/?daddr=0.300000,32.700000&dirflg=d');
     expect(directionsUrl([], 'waze')).toBeNull();
+  });
+});
+
+describe('the route keeps its day', () => {
+  it('reads the day from the route URL, and nothing else', () => {
+    expect(dateOf('route:details?date=2026-11-17')).toBe('2026-11-17');
+    expect(dateOf('route:planner')).toBe('');
+    expect(dateOf('route:planner?date=17/11/2026')).toBe('');
   });
 });

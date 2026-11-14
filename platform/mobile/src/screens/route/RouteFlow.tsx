@@ -14,7 +14,7 @@ import { RoutePlannerService } from '../../gen/edify/routes/v1/routes_pb';
 import type { GetFieldDayResponse, Itinerary, SchoolPin } from '../../gen/edify/routes/v1/routes_pb';
 import { fonts, spacing, useTheme } from '../../theme';
 import { PlanningDrawer } from '../../ui/planning/PlanningDrawer';
-import { PIN_TONES, ROUTE_DETAILS_URL, directionsUrl, legText, placedStops, shortName } from './routeData';
+import { PIN_TONES, ROUTE_DETAILS_URL, dateOf, directionsUrl, legText, placedStops, shortName } from './routeData';
 import type { MapsApp } from './routeData';
 import type { MapScene } from './routeMapHtml';
 import { RouteDetailsScreen, RoutePlannerScreen } from './RouteScreens';
@@ -60,7 +60,12 @@ export function sceneOf(itinerary: Itinerary | undefined): MapScene {
 export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
   const { api } = useSession();
   const { colors } = useTheme();
-  const [date, setDate] = useState(today());
+  const [date, setDateState] = useState(() => dateOf(url) || today());
+  // The day rides in the route's URL, so coming back from a school keeps it.
+  const setDate = (next: string) => {
+    setDateState(next);
+    onOpen(`${url.startsWith(ROUTE_DETAILS_URL) ? ROUTE_DETAILS_URL : 'route:planner'}?date=${next}`, 'Smart Route Planner');
+  };
   const [district, setDistrict] = useState('');
   const [day, setDay] = useState<GetFieldDayResponse | null>(null);
   const [itinerary, setItinerary] = useState<Itinerary | undefined>(undefined);
@@ -71,6 +76,7 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
   const [notice, setNotice] = useState('');
   const [isFieldDay, setIsFieldDay] = useState(false);
   const isDetails = url.startsWith(ROUTE_DETAILS_URL);
+  const dated = (base: string) => `${base}?date=${date}`;
 
   const load = useCallback(async () => {
     setError('');
@@ -159,7 +165,7 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
           {...common}
           locked={locked}
           isFieldDay={isFieldDay}
-          onBack={() => onOpen('route:planner', 'Smart Route Planner')}
+          onBack={() => onOpen(dated('route:planner'), 'Smart Route Planner')}
           onToggleLock={(id) => {
             const next = new Set(locked);
             if (next.has(id)) next.delete(id);
@@ -183,7 +189,7 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
           onDate={setDate}
           onDistrict={setDistrict}
           onOptimise={() => plan(ids(itinerary), 'fastest', locked)}
-          onOpenDetails={() => onOpen(ROUTE_DETAILS_URL, 'Route Details')}
+          onOpenDetails={() => onOpen(dated(ROUTE_DETAILS_URL), 'Route Details')}
         />
       )}
       {scheduling ? (
