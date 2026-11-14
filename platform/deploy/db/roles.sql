@@ -688,3 +688,10 @@ GRANT SELECT (uploaded_by, returned_by_user_id, return_reason) ON ssa_record TO 
 -- Programme Output Reports (internal/reports): each target type's approved
 -- value for a year and whether it is active. Not who set it or its scope.
 GRANT SELECT (fy, target_type, target_value, is_active) ON target_setting TO edify_gateway_ro;
+
+-- Leave Tracker (internal/leavetracker): the working days a booked leave
+-- charges and its handover note, each person's remaining balance by type and
+-- year, and the leave a cover handover belongs to.
+GRANT SELECT (days_charged, coverage_notes) ON leave TO edify_gateway_ro;
+GRANT SELECT (staff_id, year, leave_type, remaining) ON leave_balance TO edify_gateway_ro;
+GRANT SELECT (leave_request_id) ON temporary_coverage_assignment TO edify_gateway_ro;

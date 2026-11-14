@@ -519,6 +519,14 @@ def eligible_cover_api(request):
         return JsonResponse({"error": UNEXPECTED_MESSAGE}, status=400)
 
 
+#: The Leave Tracker's balance when a person has no row for the year yet.
+TRACKER_DEFAULT_BALANCES = {"personal_time_off": 21, "sick_leave": 14}
+#: The roles whose tracker heatmap reads everyone, not their own team.
+TRACKER_COUNTRY_SCOPE_SLUGS = ("CD", "HR", "ADMIN")
+#: How many people the tracker's heatmap preview lists.
+TRACKER_HEATMAP_LIMIT = 10
+
+
 @require_page_permission("leave_tracker")
 def leave_tracker_view(request):
     """HR, PL, and CD view of team balances and current coverages."""
@@ -603,8 +611,12 @@ def leave_tracker_view(request):
         }
 
     for sp in staff_list:
-        pto_remaining = balances_by_staff.get(sp.id, {}).get("personal_time_off", 21)
-        sick_remaining = balances_by_staff.get(sp.id, {}).get("sick_leave", 14)
+        pto_remaining = balances_by_staff.get(sp.id, {}).get(
+            "personal_time_off", TRACKER_DEFAULT_BALANCES["personal_time_off"]
+        )
+        sick_remaining = balances_by_staff.get(sp.id, {}).get(
+            "sick_leave", TRACKER_DEFAULT_BALANCES["sick_leave"]
+        )
         active_leave = active_leave_by_staff.get(sp.id)
         next_leave = next_leave_by_staff.get(sp.id)
 
@@ -663,8 +675,8 @@ def leave_tracker_view(request):
     # Next 4 weeks availability preview
     availability_preview = TeamAvailabilityService.get_4week_heatmap(
         getattr(user, "staff_profile", None),
-        country_scope=(role in ["CD", "HR", "ADMIN"]),
-        limit=10,
+        country_scope=(role in TRACKER_COUNTRY_SCOPE_SLUGS),
+        limit=TRACKER_HEATMAP_LIMIT,
     )
 
     context = {

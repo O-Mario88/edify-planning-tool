@@ -49,6 +49,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iapages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/leavepolicies"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/leavetracker"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/messaging"
@@ -163,6 +164,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			ssaverify.NewService(pool, time.Now),
 			peopledirectory.NewService(pool, time.Now),
 			reports.NewService(pool, time.Now),
+			leavetracker.NewService(pool, time.Now),
 			partnerassigned.NewService(pool),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
