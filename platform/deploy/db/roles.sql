@@ -457,3 +457,14 @@ GRANT SELECT (id, trigger, due_date, created_at) ON staff_usage_follow_up TO edi
 -- Core School Oversight's recommendations (backlog core-recommendations): the
 -- recommended training each names, or why none is mapped.
 GRANT SELECT (recommended_item_id, unmapped_reason) ON ssa_recommendation TO edify_gateway_ro;
+-- Extra Assigned Work (internal/extrawork, docs/migration/114-extra-work.md):
+-- the reader's assignments of a year as assignee, assigner, reviewer and
+-- supervising Programme Lead, the words the page shows of each (title,
+-- instruction, return reason, outcome and evidence note) and the points the
+-- verified ones earned; whether the year's scoring policy is approved. The
+-- evidence link's address is read only to know there is one; Go never shows
+-- it. No category, link to a priority, reason or verifier.
+GRANT SELECT (id, fy, title, instruction, assigner_id, assigner_role, assignee_id, assignee_role, supervising_pl_id,
+  reviewer_id, due_date, status, return_reason, outcome, evidence_note, evidence_uri, contribution_points, submitted_at)
+  ON hr_extra_assignment TO edify_gateway_ro;
+GRANT SELECT (fy, status) ON hr_extra_work_scoring_policy TO edify_gateway_ro;
