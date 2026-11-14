@@ -680,3 +680,7 @@ GRANT SELECT (school_id, issue_type, status, field_name, current_value, suggeste
 GRANT SELECT (activity_id, payment_type, payment_reference, payment_date, amount_paid) ON partner_payment TO edify_gateway_ro;
 GRANT SELECT (activity_id, invoice_id) ON partner_invoice_item TO edify_gateway_ro;
 GRANT SELECT (id, status) ON partner_invoice TO edify_gateway_ro;
+
+-- SSA Verification (internal/ssaverify): who uploaded a record (never their
+-- own to decide) and who sent it back, with the reason the queue shows.
+GRANT SELECT (uploaded_by, returned_by_user_id, return_reason) ON ssa_record TO edify_gateway_ro;

@@ -76,6 +76,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/signin"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ssaverify"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffactivity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffsetup"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teamperformance"
@@ -157,6 +158,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			ownership.NewService(pool),
 			dataquality.NewService(pool),
 			coverage.NewService(pool, time.Now),
+			ssaverify.NewService(pool, time.Now),
 			partnerassigned.NewService(pool),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
