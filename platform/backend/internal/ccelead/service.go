@@ -35,7 +35,12 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 // Build answers path for p. served is false for a path this package does not
 // answer.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != ReportsPath && path != FeedbackPath && path != EngagementsPath && path != MyCoachingPath {
+	if path != ReportsPath && path != FeedbackPath && path != EngagementsPath && path != MyCoachingPath && path != TeamCoachingPath {
+		return nil, false, nil
+	}
+	// An acting lead leads the appointing Lead's officers from that Lead's
+	// seat, which Team Coaching has not taken over: the existing page answers.
+	if path == TeamCoachingPath && p.InActingAppointment {
 		return nil, false, nil
 	}
 	role, ok := rules.Pages[path].Roles[p.ActiveRole]
@@ -49,6 +54,11 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if path == MyCoachingPath {
 		build = func(ctx context.Context, db schooldirectory.Querier, p auth.Principal, now time.Time) (register, error) {
 			return myCoaching(ctx, db, p, now, query)
+		}
+	}
+	if path == TeamCoachingPath {
+		build = func(ctx context.Context, db schooldirectory.Querier, p auth.Principal, now time.Time) (register, error) {
+			return teamCoaching(ctx, db, p, now, query)
 		}
 	}
 	if path == EngagementsPath {

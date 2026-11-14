@@ -26,10 +26,11 @@ type register struct {
 	rowActions                                       [][]action
 	actions                                          []action
 	emptyTitle, emptyBody                            string
-	// filters are the register's own selects; after are the cards drawn
+	// filters are the register's own selects; before is the card drawn
+	// above it (the Programme Lead's one-to-ones), after the cards drawn
 	// under it (the Regional Lead's rhythm).
-	filters []*screensv1.PageFilter
-	after   []*screensv1.PageBlock
+	filters       []*screensv1.PageFilter
+	before, after []*screensv1.PageBlock
 }
 
 func text(t string) *screensv1.PagePanelItem {
@@ -118,7 +119,9 @@ func render(reg register, role Role, query url.Values) *screensv1.GetPageRespons
 	if reg.notice != "" {
 		blocks = append(blocks, panel("", text(reg.notice)))
 	}
-	blocks = append(blocks, figures(reg.title, reg.metrics), panel(reg.registerTitle))
+	blocks = append(blocks, figures(reg.title, reg.metrics))
+	blocks = append(blocks, reg.before...)
+	blocks = append(blocks, panel(reg.registerTitle))
 	if len(reg.filters) > 0 {
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: reg.filters}}})
 	}

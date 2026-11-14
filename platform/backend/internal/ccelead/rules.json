@@ -143,6 +143,24 @@
       "Regional Lead feedback passed on"
     ]
   ],
+  "coaching_states": [
+    [
+      "draft",
+      "Not shared yet"
+    ],
+    [
+      "awaiting",
+      "Awaiting the officer"
+    ],
+    [
+      "acknowledged",
+      "Acknowledged"
+    ],
+    [
+      "follow_up",
+      "Follow-up due"
+    ]
+  ],
   "engagement_kinds": [
     [
       "pl_coaching",
@@ -194,18 +212,24 @@
     "Agreed Coaching Actions Open": "Agreed Coaching Actions Open",
     "Average Observation Rating": "Average Observation Rating",
     "Coaching Awaiting My Acknowledgement": "Coaching Awaiting My Acknowledgement",
+    "Coaching Awaiting Officer Acknowledgement": "Coaching Awaiting Officer Acknowledgement",
     "Coaching Conversations (30 Days)": "Coaching Conversations (30 Days)",
+    "Coaching Follow-Ups Due": "Coaching Follow-Ups Due",
     "Coaching I Have Acknowledged": "Coaching I Have Acknowledged",
+    "Coaching Notes Not Yet Shared": "Coaching Notes Not Yet Shared",
     "Country Reviews This Quarter": "Country Reviews This Quarter",
     "Engagements Overdue": "Engagements Overdue",
     "Feedback Acknowledged": "Feedback Acknowledged",
     "Feedback Awaiting Acknowledgement": "Feedback Awaiting Acknowledgement",
+    "One-to-Ones Held This Month": "One-to-Ones Held This Month",
     "Report Drafts": "Report Drafts",
     "Reports Acknowledged": "Reports Acknowledged",
     "Reports Awaiting Review": "Reports Awaiting Review",
     "Reports Returned": "Reports Returned",
     "Trainings Observed This Quarter": "Trainings Observed This Quarter"
   },
+  "one_to_one_due_day": 10,
+  "one_to_one_kind": "one_to_one",
   "page_size": 50,
   "pages": {
     "/cce-leadership/engagements": {
@@ -567,6 +591,135 @@
         "RegionalProgramLead": {
           "drawers": [],
           "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/team/coaching": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/team/coaching/new",
+            "/team/coaching/new?kind=field_observation"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [
+            "/team/coaching/new",
+            "/team/coaching/new?kind=field_observation"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [
+            "/team/coaching/new",
+            "/team/coaching/new?kind=field_observation"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [
+            "/team/coaching/new",
+            "/team/coaching/new?kind=field_observation"
+          ],
+          "page": true,
+          "strip": {
+            "label": "Performance & Coaching",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": true,
+                "href": "/team/coaching",
+                "label": "Coaching"
+              },
+              {
+                "active": false,
+                "href": "/performance-reviews",
+                "label": "Performance Reviews"
+              },
+              {
+                "active": false,
+                "href": "/recovery-plans",
+                "label": "Recovery Plans"
+              },
+              {
+                "active": false,
+                "href": "/cpd-learning",
+                "label": "Professional Development"
+              },
+              {
+                "active": false,
+                "href": "/policy-compliance",
+                "label": "Policy Compliance"
+              }
+            ]
+          }
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [
+            "/team/coaching/new",
+            "/team/coaching/new?kind=field_observation"
+          ],
+          "page": true,
           "strip": null
         },
         "RegionalVicePresident": {
