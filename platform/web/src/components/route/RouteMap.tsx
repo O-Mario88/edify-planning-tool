@@ -74,7 +74,7 @@ const overlaps = (a: DOMRect, b: DOMRect) => a.left < b.right && b.left < a.righ
 
 /**
  * Names never cover each other or a pin: each stop's name goes right of its
- * pin, else left, else it is hidden (the full name shows on hover and when
+ * pin, else left, below or above, else it is hidden (the full name shows on hover and when
  * the school is opened). Earlier stops choose first.
  */
 export function placeLabels(pins: readonly HTMLElement[], frame: HTMLElement | null) {
@@ -89,7 +89,7 @@ export function placeLabels(pins: readonly HTMLElement[], frame: HTMLElement | n
     // Another stop's pin, or a name already placed (a pin's own drop is not in the way).
     const blocked = (box: DOMRect) =>
       !inside(box) || drops.some((d, j) => j !== i && overlaps(d, box)) || labels.some((l) => overlaps(l, box));
-    for (const side of ['right', 'left'] as const) {
+    for (const side of ['right', 'left', 'below', 'above'] as const) {
       pin.dataset.label = side;
       const box = label.getBoundingClientRect();
       if (!blocked(box)) {

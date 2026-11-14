@@ -115,9 +115,9 @@ func (s *Service) suggest(ctx context.Context, p auth.Principal, route *routesv1
 	for _, c := range eligible {
 		pin := c.sc.pin
 		pin.Status = "suggested"
-		label, reason := "Eligible", "Eligible for a support visit this financial year, near your planned schools."
+		label, reason := "Eligible", "Eligible for a support visit in FY"+fy+", near your planned schools."
 		if !c.gate.HasSSA {
-			label, reason = "High Priority", "No confirmed SSA this financial year; eligible for a support visit, near your planned schools."
+			label, reason = "High Priority", "No confirmed SSA for FY"+fy+"; eligible for a support visit, near your planned schools."
 		}
 		fits := int64(used)+c.addedSec/60+int64(Rules.Day.VisitMinutes) <= int64(Rules.Day.AvailableMinutes-Rules.Day.BufferMinutes)
 		if !fits {

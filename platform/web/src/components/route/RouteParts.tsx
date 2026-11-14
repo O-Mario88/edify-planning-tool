@@ -201,7 +201,7 @@ export function NearbyCard({
                   </span>
                 </p>
                 <p className="mt-1 text-[14px] text-[var(--edify-text-muted)]">
-                  +{km(s.addedMeters)} • {hoursMinutes(s.addedSeconds)}
+                  {Number(s.addedMeters) < 100 ? 'On the way' : `+${km(s.addedMeters)}`} • +{hoursMinutes(s.addedSeconds)}
                   {s.measure === 'straight_line' ? ' (straight line)' : ''}
                   <span className="mx-2 text-slate-300">|</span>
                   {s.label === 'High Priority' ? 'SSA Support Needed' : 'Support visit open'}

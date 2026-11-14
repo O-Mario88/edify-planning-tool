@@ -190,6 +190,17 @@ select.edify-select {
   left: auto;
   right: 40px;
 }
+.edify-route-pin[data-label="below"] .edify-route-pin__label {
+  left: 50%;
+  top: 46px;
+  transform: translateX(-50%);
+}
+.edify-route-pin[data-label="above"] .edify-route-pin__label {
+  left: 50%;
+  top: auto;
+  bottom: 46px;
+  transform: translateX(-50%);
+}
 .edify-route-pin[data-label="hidden"] .edify-route-pin__label {
   display: none;
 }

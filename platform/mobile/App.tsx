@@ -31,6 +31,8 @@ import { LEADERS_URL, SUPPORT_URL, canManageLeaders, leadersSection } from './sr
 import { SupportRequestsScreen } from './src/screens/cluster/SupportRequestsScreen';
 import { LoansRoute } from './src/screens/loans/LoansRoute';
 import { isLoansUrl, loansSection } from './src/screens/loans/loanRoutes';
+import { RouteFlow } from './src/screens/route/RouteFlow';
+import { isRouteUrl, routeSection } from './src/screens/route/routeData';
 import { AppShell, MENU_URL } from './src/shell/AppShell';
 import { ThemeProvider, signInPalette, spacing, useTheme } from './src/theme';
 import { DropdownLayer } from './src/ui/Dropdown';
@@ -247,6 +249,7 @@ function SignedIn({ session }: { readonly session: Session }) {
       (pathOf(url) === PARTNER_TEAM_URL && session.activeRole === PARTNER_ADMIN) ||
       pathOf(url) === ACTING_URL ||
       isLoansUrl(url) ||
+      isRouteUrl(url) ||
       OWN_SCREENS.includes(pathOf(url)) ||
       pages.has(pathOf(url)) ||
       schoolOf(url) !== null,
@@ -256,8 +259,10 @@ function SignedIn({ session }: { readonly session: Session }) {
   const sections = useMemo(
     () => {
       const loans = loansSection(session.activeRole);
+      const routes = routeSection(session.activeRole);
       return [
         ...(navigation?.sections ?? []),
+        ...(routes ? [routes] : []),
         ...(canManageLeaders(session.activeRole) ? [leadersSection()] : []),
         ...(loans ? [loans] : []),
       ];
@@ -292,6 +297,9 @@ function SignedIn({ session }: { readonly session: Session }) {
     screen = <ActingLeadershipScreen />;
   } else if (isLoansUrl(route.url)) {
     screen = <LoansRoute key={route.url} url={route.url} />;
+  } else if (isRouteUrl(route.url)) {
+    // One element for both screens, so the day survives planner ↔ details.
+    screen = <RouteFlow url={route.url} onOpen={open} onOpenSchool={openSchool} />;
   } else if (path === '/home') {
     screen = <HomeScreen onOpen={open} />;
   } else if (path === '/schools') {
@@ -325,7 +333,7 @@ function SignedIn({ session }: { readonly session: Session }) {
     <AppShell
       bottom={navigation?.bottom ?? []}
       // A school's profile belongs to the Schools tab, as on the web.
-      activeUrl={schoolOf(route.url) ? '/schools' : path}
+      activeUrl={schoolOf(route.url) ? '/schools' : isRouteUrl(route.url) ? '/my-plan' : path}
       onOpen={open}
       initials={initialsOf(session.name)}
       onSearch={handleSearch}
