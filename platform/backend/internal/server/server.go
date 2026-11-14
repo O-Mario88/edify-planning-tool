@@ -68,6 +68,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/signin"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffactivity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffsetup"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teamperformance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teams"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
@@ -138,6 +139,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			fyplanning.NewService(pool, time.Now),
 			policycompliance.NewService(pool, time.Now),
 			partnerusers.NewService(teams.NewPartnerService(teamStore, accountService, time.Now)),
+			staffsetup.NewService(pool),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now).WithTrainingSummary(trainingsummary.OwnSummary),

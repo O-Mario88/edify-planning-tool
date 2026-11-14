@@ -594,3 +594,5 @@ GRANT SELECT (id, fy, title, instruction, assigner_id, assigner_role, assignee_i
   reviewer_id, due_date, status, return_reason, outcome, evidence_note, evidence_uri, contribution_points, submitted_at)
   ON hr_extra_assignment TO edify_gateway_ro;
 GRANT SELECT (fy, status) ON hr_extra_work_scoring_policy TO edify_gateway_ro;
+-- Staff Setup Queue: whether a school's uploaded owner is matched yet.
+GRANT SELECT (account_owner_status) ON school TO edify_gateway_ro;
