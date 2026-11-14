@@ -33,13 +33,15 @@ var Rules = func() (r struct {
 		VisitMinutes     int    `json:"visit_minutes"`
 		BufferMinutes    int    `json:"buffer_minutes"`
 	} `json:"day"`
-	NearbyRadiusKm     float64  `json:"nearby_radius_km"`
-	PlanningSpeedKmh   float64  `json:"planning_speed_kmh"`
-	VisitTypes         []string `json:"visit_types"`
-	CompletedStatuses  []string `json:"completed_statuses"`
-	NotLiveStatuses    []string `json:"not_live_statuses"`
-	PlannerRoles       []string `json:"planner_roles"`
-	SchoolProfileRoles []string `json:"school_profile_roles"`
+	NearbyRadiusKm     float64           `json:"nearby_radius_km"`
+	PlanningSpeedKmh   float64           `json:"planning_speed_kmh"`
+	VisitTypes         []string          `json:"visit_types"`
+	CompletedStatuses  []string          `json:"completed_statuses"`
+	NotLiveStatuses    []string          `json:"not_live_statuses"`
+	ClosedStatuses     []string          `json:"closed_statuses"`
+	SchoolTypes        map[string]string `json:"school_types"`
+	PlannerRoles       []string          `json:"planner_roles"`
+	SchoolProfileRoles []string          `json:"school_profile_roles"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil || r.Day.WorkMinutes == 0 || r.PlanningSpeedKmh == 0 {
 		panic(fmt.Sprintf("routeplan: the embedded rules are unreadable: %v", err))

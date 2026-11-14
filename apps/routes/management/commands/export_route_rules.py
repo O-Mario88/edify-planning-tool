@@ -6,7 +6,7 @@ working day, lunch, visit length, buffer, planning speed and nearby radius of
 the existing route engine (apps.routes.engine, apps.routes.location); which
 activity types are school visits and which statuses are done or no longer
 live work (apps.core.activity_types, apps.activities.completion_columns,
-apps.planning.visit_gate); and which roles may open the planner (My Plan's
+apps.planning.visit_gate); a closed school and each school type's words; and which roles may open the planner (My Plan's
 door) and a school's profile. A change to any of them must be exported
 again; apps/routes/test_route_rules_export.py fails until it is.
 
@@ -33,10 +33,12 @@ PLANNER_DOOR = "/my-plan"
 def rules() -> dict:
     from apps.activities import completion_columns
     from apps.core import activity_types
+    from apps.core.enums import SchoolType
     from apps.core.permissions import can_open_url
     from apps.core.rbac import EdifyRole
     from apps.planning import visit_gate as gate
     from apps.routes import engine, location
+    from apps.schools.lifecycle_models import CLOSED_STATUSES
 
     def roles_opening(path: str) -> list[str]:
         return sorted(
@@ -59,6 +61,8 @@ def rules() -> dict:
         "not_live_statuses": sorted(
             {*gate.DEAD_STATUSES, *gate.NOT_YET_PLANNED_STATUSES}
         ),
+        "closed_statuses": sorted(str(x) for x in CLOSED_STATUSES),
+        "school_types": {str(k): str(v) for k, v in SchoolType.choices},
         "planner_roles": roles_opening(PLANNER_DOOR),
         "school_profile_roles": roles_opening("/schools/0"),
     }

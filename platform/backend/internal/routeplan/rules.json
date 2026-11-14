@@ -1,4 +1,8 @@
 {
+  "closed_statuses": [
+    "permanently_closed",
+    "temporarily_closed"
+  ],
   "completed_statuses": [
     "accountant_confirmed",
     "awaiting_ia_verification",
@@ -44,6 +48,13 @@
     "Program Lead",
     "ProjectCoordinator"
   ],
+  "school_types": {
+    "champion": "Champion",
+    "client": "Client",
+    "core": "Core",
+    "core_graduate": "Core Graduate",
+    "core_trained": "Core Trained"
+  },
   "visit_types": [
     "baseline_ssa_visit",
     "coaching_visit",
