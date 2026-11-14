@@ -1,0 +1,21 @@
+{
+  "member_roles": {
+    "staff": "Staff",
+    "volunteer": "Volunteer"
+  },
+  "page_roles": [
+    "Admin",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+  ],
+  "page_size": 50,
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ]
+}

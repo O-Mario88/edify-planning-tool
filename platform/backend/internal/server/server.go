@@ -54,6 +54,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightportfolio"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerusers"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/policycompliance"
@@ -136,6 +137,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			adminops.NewService(pool),
 			fyplanning.NewService(pool, time.Now),
 			policycompliance.NewService(pool, time.Now),
+			partnerusers.NewService(teams.NewPartnerService(teamStore, accountService, time.Now)),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now).WithTrainingSummary(trainingsummary.OwnSummary),
