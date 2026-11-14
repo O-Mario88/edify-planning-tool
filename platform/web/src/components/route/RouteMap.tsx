@@ -30,8 +30,10 @@ const UGANDA_CENTRE: [number, number] = [32.58, 0.35];
 
 export const TONES = {
   planned: '#1d6fe0',
-  suggested: '#16a34a',
-  completed: '#15803d',
+  // Blue family only on the map (owner, 2026-11-14): suggested is a lighter,
+  // cyan-leaning blue beside planned; done is navy.
+  suggested: '#0284c7',
+  completed: '#1e3a8a',
   other: '#94a3b8',
 } as const;
 
@@ -167,7 +169,8 @@ export function RouteMap({ stops, path, others, chip, onSelect, onView, classNam
           style: MAP_STYLE,
           center: UGANDA_CENTRE,
           zoom: 9,
-          attributionControl: { compact: true },
+          // The map's credit is the small line drawn below (never a box over the map).
+          attributionControl: false,
         });
         instance = created;
         map.current = created;
@@ -401,6 +404,23 @@ export function RouteMap({ stops, path, others, chip, onSelect, onView, classNam
       >
         <RouteIcon name="locate" className="h-5 w-5" />
       </button>
+      <p
+        data-map-overlay
+        className="absolute bottom-1 right-16 rounded-[6px] bg-white/85 px-1.5 py-0.5 text-[10px] text-slate-600"
+      >
+        ©{' '}
+        <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">
+          OpenFreeMap
+        </a>{' '}
+        ©{' '}
+        <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener noreferrer">
+          OpenMapTiles
+        </a>{' '}
+        ©{' '}
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+          OpenStreetMap
+        </a>
+      </p>
       {chip ? (
         <div data-map-overlay className="absolute bottom-6 left-4 flex items-center gap-3 rounded-[12px] bg-white px-4 py-2.5 text-[15px] font-semibold text-slate-800 shadow-md">
           <RouteIcon name="car" className="h-5 w-5" />

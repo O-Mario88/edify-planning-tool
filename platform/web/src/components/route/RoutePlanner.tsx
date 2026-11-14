@@ -295,7 +295,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster }
                 {(
                   [
                     ['planned', 'Planned', 'accent-[#1d6fe0]'],
-                    ['suggested', 'Suggested', 'accent-green-600'],
+                    ['suggested', 'Suggested', 'accent-sky-600'],
                     ['nearby', 'Nearby', 'accent-slate-500'],
                   ] as const
                 ).map(([key, label, accent]) => (

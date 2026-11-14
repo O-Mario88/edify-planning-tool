@@ -101,7 +101,7 @@ export function RouteList({ itinerary, onFocus }: { itinerary: Itinerary | undef
           <button type="button" onClick={() => stop.school && onFocus(stop.school)} className="min-w-0 flex-1 text-left">
             <span className="flex flex-wrap items-center gap-x-2 text-[16px] font-semibold leading-snug text-[var(--edify-text)]">
               {stop.school?.name}
-              {stop.kind === 'recommended' ? <span className="rounded-full bg-green-50 px-2 py-0.5 text-[12px] font-semibold text-green-700">Suggested</span> : null}
+              {stop.kind === 'recommended' ? <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[12px] font-semibold text-sky-700">Suggested</span> : null}
               {stop.school?.status === 'completed' ? <span className="rounded-full bg-green-600 px-2 py-0.5 text-[12px] font-semibold text-white">Completed</span> : null}
             </span>
             <span className="mt-0.5 block text-[14px] text-[var(--edify-text-muted)]">

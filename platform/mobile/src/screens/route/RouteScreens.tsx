@@ -180,7 +180,7 @@ export function RoutePlannerScreen({
           <RouteMapView scene={scene} onSelect={onSelectSchool} />
           {stops.length ? (
             <Pressable onPress={onOpenDetails} style={styles.routeCard} accessibilityRole="button" accessibilityLabel="Open the recommended route">
-              <CheckCircle2 size={26} color="#ffffff" fill="#16a34a" />
+              <CheckCircle2 size={26} color="#ffffff" fill="#1d6fe0" />
               <View>
                 <Text style={styles.routeCardTitle}>Recommended Route</Text>
                 <Text style={styles.routeCardSub}>
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  routeCardTitle: { fontFamily: fonts.semibold, fontSize: 15, color: '#15803d' },
+  routeCardTitle: { fontFamily: fonts.semibold, fontSize: 15, color: '#1d6fe0' },
   routeCardSub: { fontFamily: fonts.semibold, fontSize: 15, color: '#0f172a' },
   card: { borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, gap: spacing.sm },
   figures: { flexDirection: 'row', borderWidth: 1, borderRadius: radius.lg, paddingVertical: spacing.md },
