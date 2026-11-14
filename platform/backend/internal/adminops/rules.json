@@ -1,0 +1,258 @@
+{
+  "closed_ticket_statuses": [
+    "cancelled",
+    "closed",
+    "duplicate",
+    "invalid",
+    "resolved"
+  ],
+  "done_work_item_status": "done",
+  "incident_statuses": {
+    "acknowledged": "Acknowledged",
+    "closed": "Closed",
+    "mitigated": "Mitigated",
+    "open": "Open",
+    "resolved": "Resolved"
+  },
+  "limits": {
+    "incidents": 200,
+    "maintenance_work": 50,
+    "tickets": 200
+  },
+  "maintenance_categories": [
+    "preventive_maintenance",
+    "corrective_maintenance"
+  ],
+  "pages": {
+    "/admin-ops/incidents": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": false
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    },
+    "/admin-ops/maintenance": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": false
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    },
+    "/admin-ops/support": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": false
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    }
+  },
+  "resolvable_ticket_statuses": [
+    "fix_ready",
+    "verification"
+  ],
+  "severities": {
+    "critical": "Critical",
+    "high": "High",
+    "low": "Low",
+    "medium": "Medium"
+  },
+  "ticket_categories": {
+    "account_locked": "Account Locked",
+    "broken_link": "Broken Link",
+    "cannot_access_page": "Cannot Access Page",
+    "cannot_log_in": "Cannot Log In",
+    "dead_button": "Dead Button",
+    "forgot_password": "Forgot Password",
+    "frozen_screen": "Frozen Screen",
+    "incorrect_data": "Incorrect Data or Status",
+    "incorrect_permission": "Incorrect Permission",
+    "message_problem": "Message Problem",
+    "missing_data": "Missing School / Activity / Budget",
+    "notification_problem": "Notification Problem",
+    "other": "Other",
+    "slow_page": "Slow Page",
+    "upload_problem": "Upload Problem"
+  },
+  "ticket_statuses": {
+    "cancelled": "Cancelled",
+    "closed": "Closed",
+    "duplicate": "Duplicate",
+    "fix_ready": "Fix Ready",
+    "in_progress": "In Progress",
+    "invalid": "Rejected as Invalid",
+    "more_info": "More Information Required",
+    "planned": "Planned",
+    "reopened": "Reopened",
+    "resolved": "Resolved",
+    "submitted": "Submitted",
+    "triaged": "Triaged",
+    "verification": "Verification",
+    "waiting_on_user": "Waiting on User"
+  },
+  "untriaged_ticket_status": "submitted",
+  "work_item_categories": {
+    "accessibility": "Accessibility",
+    "audit_integrity": "Audit Integrity",
+    "backend_defect": "Backend Defect",
+    "backup": "Backup and Restore",
+    "configuration": "Configuration",
+    "corrective_maintenance": "Corrective Maintenance",
+    "data_repair": "Data Repair",
+    "feature": "Feature Development",
+    "frontend_defect": "Frontend Defect",
+    "incident": "System Incident",
+    "integration": "Integration",
+    "job_failure": "Background Job",
+    "monitoring": "Post-Release Monitoring",
+    "performance": "Performance",
+    "preventive_maintenance": "Preventive Maintenance",
+    "release": "Release / Deployment",
+    "route_defect": "Route Defect",
+    "security": "Security",
+    "support": "User Support"
+  },
+  "work_item_statuses": {
+    "backlog": "Backlog",
+    "cancelled": "Cancelled",
+    "done": "Done",
+    "in_progress": "In Progress",
+    "monitoring": "Monitoring",
+    "scheduled": "Scheduled",
+    "waiting": "Waiting"
+  }
+}

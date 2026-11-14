@@ -501,3 +501,12 @@ GRANT SELECT (id, raised_by_user_id, raised_by_name, assigned_to_user_id, catego
   priority, due_date, status, resolution_note, created_at) ON cd_flag TO edify_gateway_ro;
 -- Project Capacity: an allocation's id, which its Edit capacity drawer opens.
 GRANT SELECT (id) ON project_staff_capacity TO edify_gateway_ro;
+-- Platform operations (Admin): a ticket's reference, title, category, status, the
+-- reporter's role, page and time (never its description, reporter or browser);
+-- an incident's title, severity, status, where and when it was last seen (never
+-- its samples or detail); the maintenance templates' schedule and the open
+-- maintenance work.
+GRANT SELECT (id, reference, title, category, status, reporter_role, route, created_at) ON admin_support_ticket TO edify_gateway_ro;
+GRANT SELECT (id, title, severity, status, affected_route, affected_component, last_detected_at) ON admin_system_incident TO edify_gateway_ro;
+GRANT SELECT (name, category, frequency_days, estimated_minutes, next_due_date) ON admin_maintenance_template TO edify_gateway_ro;
+GRANT SELECT (reference, title, category, status, scheduled_date, created_at) ON admin_ops_work_item TO edify_gateway_ro;
