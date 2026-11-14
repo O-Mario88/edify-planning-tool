@@ -499,3 +499,5 @@ GRANT SELECT (id, subject, kind, held_on, author_id, cceo_staff_id, cceo_user_id
 -- recommendation, priority, due day, status and resolution note.
 GRANT SELECT (id, raised_by_user_id, raised_by_name, assigned_to_user_id, category, scope_name, note, recommended_action,
   priority, due_date, status, resolution_note, created_at) ON cd_flag TO edify_gateway_ro;
+-- Project Capacity: an allocation's id, which its Edit capacity drawer opens.
+GRANT SELECT (id) ON project_staff_capacity TO edify_gateway_ro;
