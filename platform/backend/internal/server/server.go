@@ -139,11 +139,11 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			planningoversight.NewService(pool, time.Now),
 			oversightportfolio.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
-			extrawork.NewService(pool, time.Now),
 			hrregister.NewService(pool, time.Now),
 			leavepolicies.NewService(pool, time.Now),
 			iapages.NewService(pool, time.Now),
 			ccelead.NewService(pool, time.Now),
+			extrawork.NewService(pool, time.Now),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
 		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel ||

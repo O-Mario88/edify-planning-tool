@@ -29,6 +29,9 @@ var rules = func() (r struct {
 	} `json:"pages"`
 	IAVerifyRoles []string          `json:"ia_verify_roles"`
 	ActivityTypes map[string]string `json:"activity_types"`
+	// ExportRoles are offered Returned Activities' and Verification
+	// History's Export (the data-export permission).
+	ExportRoles []string `json:"export_roles"`
 	// SchoolProfileRoles may open a school's profile.
 	SchoolProfileRoles []string `json:"school_profile_roles"`
 	// QueryKeysNotPassed are the query keys the feed never passes to a page.

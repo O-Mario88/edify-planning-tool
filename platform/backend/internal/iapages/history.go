@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 )
 
@@ -19,7 +20,7 @@ const HistoryPath = "/ia/history/"
 // reach, the latest first, each with its school (else "Cluster-wide") and
 // cluster, partner, owner, verifier (an account's name, else the id as
 // stored) and whether it counts in analytics; 50 a page.
-func (s *Service) history(ctx context.Context, query url.Values, where string, args []any) (*screensv1.GetPageResponse, bool, error) {
+func (s *Service) history(ctx context.Context, p auth.Principal, query url.Values, where string, args []any) (*screensv1.GetPageResponse, bool, error) {
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`
 SELECT a.id, a.activity_type, a.school_id, sc.name, cl.name, p.name, a.responsible_staff_id,
        h.verified_by, vu.name, h.verified_at, h.analytics_included
@@ -57,7 +58,7 @@ ORDER BY h.verified_at DESC`, where), args...)
 	if err != nil {
 		return nil, true, err
 	}
-	header := &screensv1.PageHeader{Eyebrow: "Verification", Title: "Verification History",
+	header := &screensv1.PageHeader{Eyebrow: "Verification", Title: "Verification History", Actions: exportActions(p, HistoryPath, query),
 		Description: "Every activity certified by Impact Assessment, newest first, with who verified it and when."}
 	if len(entries) == 0 {
 		return &screensv1.GetPageResponse{Header: header, WebPath: HistoryPath, Blocks: []*screensv1.PageBlock{
