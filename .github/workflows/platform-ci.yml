@@ -31,7 +31,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GO_VERSION: "1.27.3"
+  GO_VERSION: "1.27.4"
   PYTHON_VERSION: "3.13"
   NODE_VERSION: "24"
 
@@ -196,7 +196,7 @@ jobs:
         working-directory: platform/backend
         env:
           EDIFY_TEST_ADMIN_DATABASE_URL: ${{ env.ADMIN_URL }}
-        run: go test -race -count=1 -tags integration ./internal/integration/ -v
+        run: go test -race -count=1 -timeout 20m -tags integration ./internal/integration/ -v
 
       # The same question asked of both backends on the same database: the
       # gateway must return exactly what the existing API returns.

@@ -4,7 +4,7 @@
 # The binary contains no migration code and the image holds no configuration:
 # every setting, including the database URL, arrives through the environment
 # and passes the production-protection guard before a connection is opened.
-FROM golang:1.27.3-alpine AS build
+FROM golang:1.27.4-alpine AS build
 WORKDIR /src/backend
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
