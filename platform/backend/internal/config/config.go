@@ -88,6 +88,9 @@ type Config struct {
 	// ClusterActions configures the Cluster Action Register's follow-up.
 	ClusterActions ClusterActions
 
+	// Routing configures the Route Planner's road distances.
+	Routing Routing
+
 	// SignIn configures signing in.
 	SignIn SignIn
 
@@ -155,6 +158,9 @@ func Load(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	if cfg.Loans, err = loadLoans(env, getenv); err != nil {
+		return Config{}, err
+	}
+	if cfg.Routing, err = loadRouting(getenv); err != nil {
 		return Config{}, err
 	}
 	if cfg.ClusterActions, err = loadClusterActions(getenv); err != nil {

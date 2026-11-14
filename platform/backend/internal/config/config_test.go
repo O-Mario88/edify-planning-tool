@@ -276,3 +276,30 @@ func TestClusterActionFollowUpIsConfiguredWithinBounds(t *testing.T) {
 		}
 	}
 }
+
+func TestRoutingDefaultsToStraightLinesAndChecksItsProvider(t *testing.T) {
+	cases := []struct {
+		env  map[string]string
+		want string
+		ok   bool
+	}{
+		{map[string]string{}, "none", true},
+		{map[string]string{envRoutingProvider: "osrm", envOSRMURL: "http://127.0.0.1:5000/"}, "osrm", true},
+		{map[string]string{envRoutingProvider: "osrm"}, "", false},
+		{map[string]string{envRoutingProvider: "osrm", envOSRMURL: "ftp://x"}, "", false},
+		{map[string]string{envRoutingProvider: "google"}, "", false},
+		{map[string]string{envRoutingProvider: "mapbox"}, "", false},
+		{map[string]string{envRoutingLimit: "0"}, "", false},
+	}
+	for _, c := range cases {
+		got, err := loadRouting(func(k string) string { return c.env[k] })
+		if (err == nil) != c.ok || (c.ok && got.Provider != c.want) {
+			t.Errorf("%v: %+v, %v", c.env, got, err)
+		}
+	}
+	if got, _ := loadRouting(func(k string) string {
+		return map[string]string{envRoutingProvider: "osrm", envOSRMURL: "http://127.0.0.1:5000/"}[k]
+	}); got.OSRMURL != "http://127.0.0.1:5000" || got.DailyLimit != defaultRoutingLimit {
+		t.Errorf("trimmed url and default limit: %+v", got)
+	}
+}

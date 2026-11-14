@@ -1,0 +1,215 @@
+syntax = "proto3";
+
+package edify.routes.v1;
+
+// The Smart Route Planner (owner, 2026-11-14): a field day's schools on a
+// map by their stored coordinates, the distances between them, a
+// recommended visiting order and the eligible schools near the route.
+//
+// Nothing here schedules, moves or completes an activity. A suggestion is
+// only a suggestion; Add to Plan opens the existing Schedule visit drawer,
+// and every official change goes through the existing scheduling saves.
+//
+// Distances are of two kinds and never mixed: straight_line_* is the
+// great-circle distance between stored coordinates (Haversine); road_* is
+// what the configured routing provider returned. Where the provider gave
+// nothing, road_available is false and no road figure is given. The
+// planning estimate is the existing route engine's (straight line at its
+// planning speed) and is labelled as such.
+service RoutePlannerService {
+  // The reader's field day: their schools planned that day, the
+  // recommended order, and nearby suggestions.
+  rpc GetFieldDay(GetFieldDayRequest) returns (GetFieldDayResponse);
+  // An itinerary for schools the reader chose, in the order asked or
+  // re-ordered by the chosen mode.
+  rpc PlanRoute(PlanRouteRequest) returns (PlanRouteResponse);
+  // The reader's schools inside a map viewport.
+  rpc GetSchoolPins(GetSchoolPinsRequest) returns (GetSchoolPinsResponse);
+  // The distance between two of the reader's schools.
+  rpc GetSchoolDistance(GetSchoolDistanceRequest) returns (GetSchoolDistanceResponse);
+}
+
+message Point {
+  double lat = 1;
+  double lng = 2;
+}
+
+// SchoolPin is one school as the map draws it.
+message SchoolPin {
+  // The school's own id (its profile and drawers open on it).
+  string school_id = 1;
+  // The official Edify School ID.
+  string code = 2;
+  string name = 3;
+  string district = 4;
+  string cluster = 5;
+  // planned, completed, suggested or other.
+  string status = 6;
+  // The school's category in the existing words (Client, Core Trained …).
+  string category = 7;
+  // verified (a corrected point on record), recorded (the directory's
+  // coordinates), missing or invalid. Missing and invalid have no point.
+  string location_status = 8;
+  Point point = 9;
+  // The planned activity the school is on the day, if any.
+  string activity_id = 10;
+  // The planned time of that activity, "HH:MM", if it has one.
+  string planned_time = 11;
+  bool can_open_profile = 12;
+}
+
+message RouteLeg {
+  // The start's label or the previous school's name.
+  string from_label = 1;
+  string to_school_id = 2;
+  int64 straight_line_meters = 3;
+  bool road_available = 4;
+  int64 road_meters = 5;
+  int64 road_seconds = 6;
+  // The existing engine's planning estimate over the straight line.
+  int64 estimate_seconds = 7;
+  // The provider's road line, when it returned one.
+  repeated Point path = 8;
+  // Why there is no road figure, when there is none.
+  string road_status = 9;
+}
+
+message ItineraryStop {
+  int32 order = 1;
+  SchoolPin school = 2;
+  RouteLeg leg = 3;
+  // "HH:MM" on the day.
+  string arrival = 4;
+  string departure = 5;
+  int32 visit_minutes = 6;
+  // The school keeps its place when the order is recalculated.
+  bool locked = 7;
+  // The school has a fixed appointment time.
+  bool fixed = 8;
+  // Why the stop does not fit, if it does not.
+  string conflict = 9;
+  // planned (on the official plan) or recommended (a suggestion only).
+  string kind = 10;
+}
+
+message RouteTotals {
+  int64 straight_line_meters = 1;
+  // Road totals only add up legs the provider measured; road_complete says
+  // whether every leg was.
+  int64 road_meters = 2;
+  int64 road_seconds = 3;
+  bool road_complete = 4;
+  int64 estimate_seconds = 5;
+  int32 visit_minutes = 6;
+  // From leaving the start to finishing the last visit.
+  int32 field_minutes = 7;
+  int32 selected = 8;
+  int32 feasible = 9;
+}
+
+message Itinerary {
+  // fastest, recommended or as_given.
+  string mode = 1;
+  string start_label = 2;
+  Point start = 3;
+  repeated ItineraryStop stops = 4;
+  RouteTotals totals = 5;
+  repeated string conflicts = 6;
+  // One plain sentence on why this order.
+  string explanation = 7;
+  // The schools with no usable coordinates, which no leg can reach.
+  repeated SchoolPin unplaced = 8;
+}
+
+message Suggestion {
+  SchoolPin school = 1;
+  // What adding the school costs the route, measured by measure.
+  int64 added_meters = 2;
+  int64 added_seconds = 3;
+  // road or straight_line.
+  string measure = 4;
+  // The plain reason, from the existing rules.
+  string reason = 5;
+  // Eligible, High Priority or Already planned.
+  string label = 6;
+  bool eligible = 7;
+  bool fits_day = 8;
+}
+
+message ProviderStatus {
+  // google, osrm or none.
+  string name = 1;
+  bool configured = 2;
+  string message = 3;
+}
+
+message FilterOption {
+  string value = 1;
+  string label = 2;
+}
+
+message GetFieldDayRequest {
+  // "YYYY-MM-DD"; empty is today.
+  string date = 1;
+  string district_id = 2;
+  string cluster_id = 3;
+}
+
+message GetFieldDayResponse {
+  string date = 1;
+  // The day's date as the page writes it ("Tue, 24 Jun 2025").
+  string date_label = 2;
+  repeated SchoolPin planned = 3;
+  Itinerary recommended = 4;
+  repeated Suggestion suggestions = 5;
+  ProviderStatus provider = 6;
+  repeated FilterOption districts = 7;
+  repeated FilterOption clusters = 8;
+  string area_label = 9;
+}
+
+message PlanRouteRequest {
+  string date = 1;
+  // The schools, in the order the reader has them.
+  repeated string school_ids = 2;
+  // fastest, recommended or as_given.
+  string mode = 3;
+  // Schools that keep their place.
+  repeated string locked_school_ids = 4;
+  // Where the day starts; empty is the first school.
+  Point start = 5;
+  string start_label = 6;
+}
+
+message PlanRouteResponse {
+  Itinerary itinerary = 1;
+  ProviderStatus provider = 2;
+}
+
+message GetSchoolPinsRequest {
+  Point south_west = 1;
+  Point north_east = 2;
+  string district_id = 3;
+  string cluster_id = 4;
+  string date = 5;
+}
+
+message GetSchoolPinsResponse {
+  repeated SchoolPin pins = 1;
+  // More schools are in the viewport than were sent; zoom in for the rest.
+  bool truncated = 2;
+}
+
+message GetSchoolDistanceRequest {
+  string from_school_id = 1;
+  string to_school_id = 2;
+}
+
+message GetSchoolDistanceResponse {
+  RouteLeg leg = 1;
+  SchoolPin from = 2;
+  SchoolPin to = 3;
+  ProviderStatus provider = 4;
+  // When the figures were worked out (RFC 3339).
+  string calculated_at = 5;
+}
