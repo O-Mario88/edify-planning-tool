@@ -785,3 +785,17 @@ GRANT SELECT (user_id, fy, month_of_fy, target, area_id) ON monthly_personal_tar
 GRANT SELECT (staff_id, fy, visits_target, trainings_target, group_trainings_target, cluster_meetings_target, ssa_target) ON staff_target_profile TO edify_gateway_ro;
 GRANT SELECT (user_id, fy, validation_status, area_id, credited_month, quantity) ON target_achievement_ledger TO edify_gateway_ro;
 GRANT SELECT (owner_id, fy) ON target_ledger_dirty TO edify_gateway_ro;
+
+-- My Performance (internal/myperformance): the reader's own commitments
+-- (each value's words, kind, the behaviour agreed, their reflection and the
+-- manager's observation) and development items, their development requests'
+-- year and order, whether a review holds conversation snapshots or
+-- amendments (Go passes those readers on), and whether the year has an
+-- approved allocation on a live, approved milestone (Go passes those on too,
+-- until the allocations engine is in Go).
+GRANT SELECT (review_id, kind, value_name, agreed_behaviour, employee_reflection, manager_evidence) ON hr_value_commitment TO edify_gateway_ro;
+GRANT SELECT (review_id, description) ON hr_development_plan_item TO edify_gateway_ro;
+GRANT SELECT (fy, created_at) ON pd_request TO edify_gateway_ro;
+GRANT SELECT (review_id) ON hr_performance_snapshot TO edify_gateway_ro;
+GRANT SELECT (priority_id) ON hr_priority_amendment TO edify_gateway_ro;
+GRANT SELECT (active, definition_status) ON hr_priority_milestone TO edify_gateway_ro;

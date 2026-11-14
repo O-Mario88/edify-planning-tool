@@ -58,6 +58,7 @@ import (
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/messaging"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myactions"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myperformance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myteam"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/navigation"
@@ -179,6 +180,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			partnerassigned.NewService(pool),
 			partnerworkspace.NewService(pool, time.Now),
 			myteam.NewService(pool, time.Now),
+			myperformance.NewService(pool, time.Now),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now).WithTrainingSummary(trainingsummary.OwnSummary),

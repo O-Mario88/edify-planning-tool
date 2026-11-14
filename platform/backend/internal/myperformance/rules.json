@@ -1,0 +1,135 @@
+{
+  "configure_roles": [
+    "ImpactAssessment",
+    "Admin",
+    "CountryDirector",
+    "RegionalVicePresident"
+  ],
+  "distribute_roles": [
+    "ImpactAssessment",
+    "Admin"
+  ],
+  "distribute_team_roles": [
+    "Program Lead",
+    "Admin"
+  ],
+  "manager_roles": [
+    "Program Lead",
+    "PL",
+    "CountryDirector",
+    "CD",
+    "RegionalVicePresident",
+    "RVP",
+    "HumanResources",
+    "HR",
+    "Admin"
+  ],
+  "roles": {
+    "Accountant": {
+      "page": true,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "CCEO": {
+      "page": true,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": true,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": true,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": true,
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": true,
+      "strip": null
+    }
+  },
+  "signed_stages": [
+    "signed_off",
+    "archived"
+  ],
+  "stage_labels": {
+    "approved": "Approved",
+    "draft": "Draft",
+    "employee_input": "Employee input",
+    "manager_review": "Manager review",
+    "not_started": "Draft — not started",
+    "returned": "Returned",
+    "signed_off": "Signed off"
+  },
+  "tabs": [
+    [
+      "distributed",
+      "Distributed Priorities"
+    ],
+    [
+      "values",
+      "Core Values"
+    ],
+    [
+      "spiritual",
+      "Spiritual Formation"
+    ],
+    [
+      "development",
+      "Professional Development"
+    ]
+  ],
+  "value_kinds": {
+    "spiritual": "Spiritual Formation",
+    "value": "Edify Value"
+  },
+  "window_labels": {
+    "priority_setting": "Priority Setting",
+    "q1": "Q1 Check-in",
+    "q2_midyear": "Q2 Mid-Year",
+    "q3": "Q3 Check-in",
+    "q4_yearend": "Q4 Year-End"
+  }
+}
